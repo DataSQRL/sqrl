@@ -162,11 +162,9 @@ public class SqrlToFlinkSqlGenerator {
   }
 
   private TableConfig getTableConfig(WriteSink sink) {
-    if (sink instanceof EngineSink) {
-      EngineSink engineSink = (EngineSink) sink;
+    if (sink instanceof EngineSink engineSink) {
       return engineSink.getStage().getEngine().getSinkConfig(engineSink.getNameId());
-    } else if (sink instanceof ExternalSink) {
-      ExternalSink externalSink = (ExternalSink) sink;
+    } else if (sink instanceof ExternalSink externalSink) {
       return externalSink.getTableSink().getConfiguration();
     } else {
       throw new RuntimeException("Could not get format for sink");
@@ -252,8 +250,7 @@ public class SqrlToFlinkSqlGenerator {
     String name;
     TableConfig tableConfig;
 
-    if (sink instanceof EngineSink) {
-      EngineSink engineSink = (EngineSink) sink;
+    if (sink instanceof EngineSink engineSink) {
       TableConfig engineConfig = engineSink.getStage().getEngine().getSinkConfig(engineSink.getNameId());
 
       StagePlan stagePlan = stagePlans.stream()
@@ -286,8 +283,7 @@ public class SqrlToFlinkSqlGenerator {
 
       tableConfig = configBuilder.build();
       name = engineSink.getNameId();
-    } else if (sink instanceof ExternalSink) {
-      ExternalSink externalSink = (ExternalSink) sink;
+    } else if (sink instanceof ExternalSink externalSink) {
       tableConfig = externalSink.getTableSink().getConfiguration();
       name = externalSink.getName();
     } else {
@@ -313,8 +309,7 @@ public class SqrlToFlinkSqlGenerator {
     String name;
     TableConfig tableConfig;
 
-    if (sink instanceof EngineSink) {
-      EngineSink engineSink = (EngineSink) sink;
+    if (sink instanceof EngineSink engineSink) {
       TableConfig engineConfig = engineSink.getStage().getEngine().getSinkConfig(engineSink.getNameId());
 
       StagePlan stagePlan = stagePlans.stream()
@@ -347,8 +342,7 @@ public class SqrlToFlinkSqlGenerator {
 
       tableConfig = configBuilder.build();
       name = engineSink.getNameId();
-    } else if (sink instanceof ExternalSink) {
-      ExternalSink externalSink = (ExternalSink) sink;
+    } else if (sink instanceof ExternalSink externalSink) {
       tableConfig = externalSink.getTableSink().getConfiguration();
       name = externalSink.getName();
     } else {

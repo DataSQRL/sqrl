@@ -502,8 +502,7 @@ public class GraphqlSchemaFactory {
   boolean isValidType(GraphQLType type) {
     type = unbox(type);
     // You can expand this logic depending on the intricacies of type validation
-    if (type instanceof GraphQLTypeReference) {
-      GraphQLTypeReference typeReference = (GraphQLTypeReference) type;
+    if (type instanceof GraphQLTypeReference typeReference) {
       for (GraphQLObjectType objectType : this.objectTypes) {
         if (typeReference.getName().equalsIgnoreCase(objectType.getName())) {
           return true;
@@ -515,10 +514,10 @@ public class GraphqlSchemaFactory {
   }
 
   private GraphQLType unbox(GraphQLType type) {
-    if (type instanceof GraphQLNonNull) {
-      return unbox(((GraphQLNonNull) type).getWrappedType());
-    } else if (type instanceof GraphQLList) {
-      return unbox(((GraphQLList) type).getWrappedType());
+    if (type instanceof GraphQLNonNull g) {
+      return unbox(g.getWrappedType());
+    } else if (type instanceof GraphQLList list) {
+      return unbox(list.getWrappedType());
     }
     return type;
   }

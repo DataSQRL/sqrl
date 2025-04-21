@@ -119,18 +119,16 @@ public abstract class SchemaWalker {
           Type<?> fieldType = field.getType();
           fieldType = unwrapNonNullType(fieldType);
 
-          if (fieldType instanceof ListType) {
-            Type<?> elementType = ((ListType) fieldType).getType();
+          if (fieldType instanceof ListType listType) {
+            Type<?> elementType = listType.getType();
             elementType = unwrapNonNullType(elementType);
 
-            if (componentType instanceof RelRecordType) {
+            if (componentType instanceof RelRecordType relRecordType) {
               // The array contains records
               ObjectTypeDefinition type1 = registry.getType(elementType)
                   .filter(f -> f instanceof ObjectTypeDefinition)
                   .map(f -> (ObjectTypeDefinition) f)
-                  .orElseThrow(); // Ensure it is an object type
-
-              RelRecordType relRecordType = (RelRecordType) componentType;
+                  .orElseThrow();
               walk(type1, path, Optional.of(relRecordType), registry);
             } else {
               // The array contains scalar types
@@ -152,8 +150,8 @@ public abstract class SchemaWalker {
     //Is not a scalar or a table function, do nothing
   }
   private Type<?> unwrapNonNullType(Type<?> type) {
-    if (type instanceof NonNullType) {
-      return unwrapNonNullType(((NonNullType) type).getType());
+    if (type instanceof NonNullType nullType) {
+      return unwrapNonNullType(nullType.getType());
     } else {
       return type;
     }

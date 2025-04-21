@@ -127,8 +127,8 @@ public class SqrlTableFunction implements TableFunction, TableOrFunctionAnalysis
 
   public static Multiplicity getMultiplicity(RelNode relNode) {
     Optional<Integer> limit = Optional.empty();
-    if (relNode instanceof Sort) {
-      limit = SqrlRexUtil.getLimit(((Sort)relNode).fetch);
+    if (relNode instanceof Sort sort) {
+      limit = SqrlRexUtil.getLimit(sort.fetch);
     }
     return limit.filter(i -> i<=1).map(i -> Multiplicity.ZERO_ONE).orElse(Multiplicity.MANY);
   }

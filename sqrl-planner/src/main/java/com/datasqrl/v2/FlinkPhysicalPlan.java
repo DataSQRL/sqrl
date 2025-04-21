@@ -81,8 +81,8 @@ public class FlinkPhysicalPlan implements EnginePhysicalPlan {
     public void add(SqlNode node, String nodeSql) {
       flinkSql.add(nodeSql);
       nodes.add(node);
-      if (node instanceof SqlCreateTable) {
-        for (SqlNode option : ((SqlCreateTable)node).getPropertyList().getList()){
+      if (node instanceof SqlCreateTable table) {
+        for (SqlNode option : table.getPropertyList().getList()){
           SqlTableOption sqlTableOption = (SqlTableOption)option;
           if (sqlTableOption.getKeyString().equalsIgnoreCase("connector")) {
             connectors.add(sqlTableOption.getValueString());

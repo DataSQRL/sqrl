@@ -19,7 +19,7 @@ public class JdbcIndexOptimization implements PhysicalPlanRewriter {
 
   @Override
   public boolean appliesTo(EnginePhysicalPlan plan) {
-    return plan instanceof JdbcPhysicalPlan &&
+    return plan instanceof JdbcPhysicalPlan jpp &&
         ((JdbcPhysicalPlan) plan).getStage().getEngine() instanceof AbstractJDBCDatabaseEngine;
   }
 

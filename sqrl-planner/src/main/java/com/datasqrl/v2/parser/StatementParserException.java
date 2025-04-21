@@ -27,7 +27,7 @@ public class StatementParserException extends RuntimeException {
   }
 
   public StatementParserException(ErrorLabel errorLabel, FileLocation fileLocation, String message, Object... args) {
-    super(args.length==0?message:String.format(message,args));
+    super(args.length==0?message:message.formatted(args));
     this.fileLocation  = fileLocation;
     this.errorLabel = errorLabel;
   }

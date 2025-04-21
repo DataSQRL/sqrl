@@ -27,8 +27,8 @@ public class CreateIndexDDL implements SqlDDLStatement {
     String indexType, columnExpression;
     switch (type) {
       case TEXT:
-        columnExpression = String.format("to_tsvector('english', %s )",
-            quoteIdentifier(columns).stream().map(col -> String.format("coalesce(%s, '')", col)).collect(
+        columnExpression = "to_tsvector('english', %s )".formatted(
+            quoteIdentifier(columns).stream().map(col -> "coalesce(%s, '')".formatted(col)).collect(
                 Collectors.joining(" || ' ' || ")));
         indexType = "GIN";
         break;
@@ -55,7 +55,7 @@ public class CreateIndexDDL implements SqlDDLStatement {
     }
 
     String createTable = "CREATE INDEX IF NOT EXISTS %s ON %s USING %s (%s)";
-    String sql = String.format(createTable, quoteIdentifier(indexName), quoteIdentifier(tableName), indexType,
+    String sql = createTable.formatted(quoteIdentifier(indexName), quoteIdentifier(tableName), indexType,
         columnExpression);
     return sql;
   }

@@ -95,8 +95,8 @@ public abstract class AbstractTableNamespaceObject<T> implements TableNamespaceO
 
     framework.getSchema().add(table.getNameId(), table);
     framework.getSchema().addTableMapping(path, table.getNameId());
-    if (table instanceof ProxyImportRelationalTable) {
-      AbstractRelationalTable impTable = ((ProxyImportRelationalTable) table).getBaseTable();
+    if (table instanceof ProxyImportRelationalTable relationalTable) {
+      AbstractRelationalTable impTable = relationalTable.getBaseTable();
       framework.getSchema().add(impTable.getNameId(), impTable);
     }
 

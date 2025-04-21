@@ -35,7 +35,7 @@ public abstract class SqrlDefinition implements SqrlStatement {
   }
 
   String getPrefix() {
-    return String.format("CREATE VIEW %s AS ", tableName.get().getLast().getDisplay());
+    return "CREATE VIEW %s AS ".formatted(tableName.get().getLast().getDisplay());
   }
 
   public NamePath getPath() {

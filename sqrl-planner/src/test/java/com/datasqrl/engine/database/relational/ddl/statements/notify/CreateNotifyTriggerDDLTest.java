@@ -11,17 +11,19 @@ public class CreateNotifyTriggerDDLTest {
   @Test
   public void testGetSql() {
     CreateNotifyTriggerDDL ddl = new CreateNotifyTriggerDDL("test_table", Arrays.asList("id", "name"));
-    String expectedSql = "CREATE OR REPLACE FUNCTION notify_on_test_table_insert()\n" +
-        "RETURNS TRIGGER AS $$\n" +
-        "BEGIN\n" +
-        "   PERFORM pg_notify('test_table_notify', jsonb_build_object('id', NEW.\"id\", 'name', NEW.\"name\")::text);\n" +
-        "   RETURN NEW;\n" +
-        "END;\n" +
-        "$$ LANGUAGE plpgsql;\n" +
-        "\n" +
-        "CREATE TRIGGER insert_notify_trigger\n" +
-        "AFTER INSERT ON \"test_table\"\n" +
-        "FOR EACH ROW EXECUTE PROCEDURE notify_on_test_table_insert();";
+    String expectedSql = """
+        CREATE OR REPLACE FUNCTION notify_on_test_table_insert()
+        RETURNS TRIGGER AS $$
+        BEGIN
+           PERFORM pg_notify('test_table_notify', jsonb_build_object('id', NEW."id", 'name', NEW."name")::text);
+           RETURN NEW;
+        END;
+        $$ LANGUAGE plpgsql;
+        
+        CREATE TRIGGER insert_notify_trigger
+        AFTER INSERT ON "test_table"
+        FOR EACH ROW EXECUTE PROCEDURE notify_on_test_table_insert();\
+        """;
     assertEquals(expectedSql, ddl.getSql());
   }
 

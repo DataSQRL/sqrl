@@ -154,8 +154,8 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
 
   @Override
   public RelNode visit(RelNode relNode) {
-    if (relNode instanceof TableFunctionScan) {
-      return visit((TableFunctionScan) relNode);
+    if (relNode instanceof TableFunctionScan scan) {
+      return visit(scan);
     }
     //TODO: add support for Snapshot
     //By default, we process a relnode as a RELATION type
@@ -205,8 +205,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     Optional<TableFunction> tableFunctionOpt = SqrlRexUtil.getCustomTableFunction(functionScan);
     errors.checkFatal(tableFunctionOpt.isPresent(), "Invalid table function encountered in query: %s", functionScan);
     TableFunction tableFunction = tableFunctionOpt.get();
-    if (tableFunction instanceof NestedRelationship) {
-      NestedRelationship nestedRel = (NestedRelationship)tableFunction;
+    if (tableFunction instanceof NestedRelationship nestedRel) {
       RexCall call = (RexCall) functionScan.getCall();
       Preconditions.checkArgument(call.getOperands().size()==1);
       int numColumns = nestedRel.getRowType().getFieldCount();
@@ -217,9 +216,8 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
           Optional.empty(),
           NowFilter.EMPTY, TopNConstraint.EMPTY,
           SortOrder.EMPTY, List.of()));
-    } else if (tableFunction instanceof QueryTableFunction) {
-      exec.requireFeature(EngineFeature.TABLE_FUNCTION_SCAN); //We only support table functions on the read side
-      QueryTableFunction tblFct = (QueryTableFunction) tableFunction;
+    } else if (tableFunction instanceof QueryTableFunction tblFct) {
+      exec.requireFeature(EngineFeature.TABLE_FUNCTION_SCAN);
       QueryRelationalTable queryTable = tblFct.getQueryTable();
       return setRelHolder(createAnnotatedRootTable(functionScan, queryTable));
     } else {
@@ -295,10 +293,10 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
       //It's a constrained primary key, remove it from the list
       idxOpt.flatMap(input.primaryKey::getForIndex).ifPresent(pksToRemove::add);
       //Check if this is the row_number of a partitioned window-over
-      if (idxOpt.isPresent() && input.relNode instanceof LogicalProject) {
-        RexNode column = ((LogicalProject) input.relNode).getProjects().get(idxOpt.orElseThrow());
-        if (column instanceof RexOver && column.isA(SqlKind.ROW_NUMBER)) {
-          newPk = ((RexOver)column).getWindow().partitionKeys.stream().map(n ->
+      if (idxOpt.isPresent() && input.relNode instanceof LogicalProject project) {
+        RexNode column = project.getProjects().get(idxOpt.orElseThrow());
+        if (column instanceof RexOver over && column.isA(SqlKind.ROW_NUMBER)) {
+          newPk = over.getWindow().partitionKeys.stream().map(n ->
                   CalciteUtil.getInputRefThroughTransform(n, List.of(CAST_TRANSFORM, COALESCE_TRANSFORM)))
               .map(opt -> opt.orElse(-1)).collect(Collectors.toUnmodifiableList());
           if (newPk.stream().anyMatch(idx -> idx<0)) {
@@ -373,8 +371,7 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
       RelNode base = logicalProject.getInput();
       RelCollation collation = RelCollations.EMPTY;
       Optional<Integer> limit = Optional.empty();
-      if (base instanceof LogicalSort) {
-        LogicalSort nestedSort = (LogicalSort) base;
+      if (base instanceof LogicalSort nestedSort) {
         base = nestedSort.getInput();
         collation = nestedSort.getCollation();
         limit = SqrlRexUtil.getLimit(nestedSort.fetch);

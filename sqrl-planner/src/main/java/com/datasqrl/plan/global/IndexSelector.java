@@ -335,8 +335,7 @@ public class IndexSelector {
 
     @Override
     public void visit(RelNode node, int ordinal, RelNode parent) {
-      if (node instanceof Join) {
-        Join join = (Join) node;
+      if (node instanceof Join join) {
         visit(join.getLeft(), 0, node);
         RelNode right = join.getRight();
         //Push join filter into right
@@ -344,23 +343,19 @@ public class IndexSelector {
         right = LogicalFilter.create(right, nestedCondition);
         right = applyPushDownFilters(right);
         visit(right, 1, node);
-      } else if (node instanceof TableScan && parent instanceof Filter) {
-        NamedTable table = getNamedTable((TableScan) node);
-        Filter filter = (Filter) parent;
+      } else if (node instanceof TableScan scan && parent instanceof Filter filter) {
+        NamedTable table = getNamedTable(scan);
         queryIndexSummaries.addAll(QueryIndexSummary.ofFilter(table, filter.getCondition(), rexUtil));
-      } else if (node instanceof TableScan && parent instanceof Sort) {
-        NamedTable table = getNamedTable((TableScan) node);
-        Sort sort = (Sort) parent;
+      } else if (node instanceof TableScan scan && parent instanceof Sort sort) {
+        NamedTable table = getNamedTable(scan);
         Optional<Integer> firstCollationIdx = getFirstCollation(sort);
         if (firstCollationIdx.isPresent() && hasLimit(sort)) {
           QueryIndexSummary.ofSort(table, firstCollationIdx.get()).map(queryIndexSummaries::add);
         }
-      } else if (node instanceof Project && parent instanceof Sort && node.getInput(0) instanceof TableScan) {
+      } else if (node instanceof Project project && parent instanceof Sort sort && node.getInput(0) instanceof TableScan) {
         NamedTable table = getNamedTable((TableScan) node.getInput(0));
-        Sort sort = (Sort) parent;
         Optional<Integer> firstCollationIdx = getFirstCollation(sort);
         if (firstCollationIdx.isPresent() && hasLimit(sort)) {
-          Project project = (Project) node;
           RexNode sortRex = project.getProjects().get(firstCollationIdx.get());
           QueryIndexSummary.ofSort(table, sortRex).map(queryIndexSummaries::add);
         }

@@ -92,10 +92,10 @@ public class MutationConfigurationImpl implements MutationConfiguration<DataFetc
           for (int i = 0; i < coords.getParameters().size(); i++) {
             String param = coords.getParameters().get(i);
             Object o = entry.get(param);
-            if (o instanceof UUID) {
-              o = ((UUID)o).toString();
-            } else if (o instanceof Timestamp) {
-              o = ((Timestamp) o).toLocalDateTime().atOffset(ZoneOffset.UTC);
+            if (o instanceof UUID iD) {
+              o = iD.toString();
+            } else if (o instanceof Timestamp timestamp) {
+              o = timestamp.toLocalDateTime().atOffset(ZoneOffset.UTC);
             }
             paramObj[i] = o;
           }

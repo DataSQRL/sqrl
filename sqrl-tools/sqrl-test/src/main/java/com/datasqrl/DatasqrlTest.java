@@ -154,15 +154,14 @@ public class DatasqrlTest {
       int requiredCheckpoints = 0;
       //todo: fix inject PackageJson and retrieve through interface
       Object testRunner = run.getPackageJson().get("test-runner");
-      if (testRunner instanceof Map) {
-        Map testRunnerMap = (Map) testRunner;
+      if (testRunner instanceof Map testRunnerMap) {
         Object o = testRunnerMap.get("delay-sec");
-        if (o instanceof Number) {
-          delaySec = ((Number) o).longValue();
+        if (o instanceof Number number) {
+          delaySec = number.longValue();
         }
         Object c = testRunnerMap.get("required-checkpoints");
-        if (c instanceof Number) {
-          requiredCheckpoints = ((Number) c).intValue();
+        if (c instanceof Number number) {
+          requiredCheckpoints = number.intValue();
         }
       }
 
@@ -274,28 +273,23 @@ public class DatasqrlTest {
     int exitCode = 0;
     if (!exceptions.isEmpty()) {
       for (Exception e : exceptions) {
-        if (e instanceof SnapshotMismatchException) {
-          SnapshotMismatchException ex = (SnapshotMismatchException) e;
+        if (e instanceof SnapshotMismatchException ex) {
           logRed("Snapshot mismatch for test: " + ex.getTestName());
           logRed("Expected: " + ex.getExpected());
           logRed("Actual  : " + ex.getActual());
           exitCode = 1;
-        } else if (e instanceof JobFailureException) {
-          JobFailureException ex = (JobFailureException) e;
+        } else if (e instanceof JobFailureException ex) {
           logRed("Flink job failed to start.");
           ex.printStackTrace();
           exitCode = 1;
-        } else if (e instanceof MissingSnapshotException) {
-          MissingSnapshotException ex = (MissingSnapshotException) e;
+        } else if (e instanceof MissingSnapshotException ex) {
           logRed("Snapshot on filesystem but not in result: " + ex.getTestName());
           exitCode = 1;
-        } else if (e instanceof SnapshotCreationException) {
-          SnapshotCreationException ex = (SnapshotCreationException) e;
+        } else if (e instanceof SnapshotCreationException ex) {
           logGreen("Snapshot created for test: " + ex.getTestName());
           logGreen("Rerun to verify.");
           exitCode = 1;
-        } else if (e instanceof SnapshotOkException) {
-          SnapshotOkException ex = (SnapshotOkException) e;
+        } else if (e instanceof SnapshotOkException ex) {
           logGreen("Snapshot OK for " + ex.getTestName());
         } else {
           System.err.println(e.getMessage());

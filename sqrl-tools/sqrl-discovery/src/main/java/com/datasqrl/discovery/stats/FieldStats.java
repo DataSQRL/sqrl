@@ -44,12 +44,12 @@ public class FieldStats implements Serializable {
           continue;
         }
         Type elementType;
-        if (next instanceof Map) {
+        if (next instanceof Map map) {
           elementType = RelationType.EMPTY;
           if (array.getRight() != 1) {
             errors.fatal("Nested arrays of objects are not supported: [%s]", o);
           }
-          RelationStats.validate((Map) next, errors, canonicalizer);
+          RelationStats.validate(map, errors, canonicalizer);
         } else {
           //since we flatmapped, this must be a scalar
           elementType = TypeSignatureUtil.getBasicType(next, errors);
@@ -60,8 +60,8 @@ public class FieldStats implements Serializable {
         if (type == null) {
           type = elementType;
         } else if (!elementType.equals(type)) {
-          if (type instanceof BasicType && elementType instanceof BasicType) {
-            type = BasicTypeManager.combineForced((BasicType) type, (BasicType) elementType);
+          if (type instanceof BasicType basicType && elementType instanceof BasicType basicType1) {
+            type = BasicTypeManager.combineForced(basicType, basicType1);
           } else {
             errors.fatal(
                 "Array contains elements with incompatible types: [%s]. Found [%s] and [%s]",
@@ -72,8 +72,8 @@ public class FieldStats implements Serializable {
       }
     } else if (o != null) {
       //Single element
-      if (o instanceof Map) {
-        RelationStats.validate((Map) o, errors, canonicalizer);
+      if (o instanceof Map map) {
+        RelationStats.validate(map, errors, canonicalizer);
       } else {
         //not an array or map => must be scalar
         TypeSignatureUtil.getBasicType(o, errors);
@@ -99,16 +99,16 @@ public class FieldStats implements Serializable {
           if (next == null) {
             continue;
           }
-          if (next instanceof Map) {
-            fieldStats.addNested((Map) next, canonicalizer);
+          if (next instanceof Map map) {
+            fieldStats.addNested(map, canonicalizer);
           }
           numElements++;
         }
         fieldStats.add(numElements);
       } else {
         fieldStats.add();
-        if (o instanceof Map) {
-          fieldStats.addNested((Map) o, canonicalizer);
+        if (o instanceof Map map) {
+          fieldStats.addNested(map, canonicalizer);
         }
       }
     }

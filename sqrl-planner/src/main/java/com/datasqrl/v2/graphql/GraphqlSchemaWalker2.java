@@ -144,17 +144,15 @@ public abstract class GraphqlSchemaWalker2 {
             Type<?> fieldType = field.getType();
             fieldType = unwrapNonNullType(fieldType);
 
-            if (fieldType instanceof ListType) {
-              Type<?> elementType = ((ListType) fieldType).getType();
+            if (fieldType instanceof ListType type) {
+              Type<?> elementType = type.getType();
               elementType = unwrapNonNullType(elementType);
 
-              if (componentType instanceof RelRecordType) { // the field is an array[record]
+              if (componentType instanceof RelRecordType relRecordType) { // the field is an array[record]
                 ObjectTypeDefinition elementObjectType = registry.getType(elementType)
                     .filter(f -> f instanceof ObjectTypeDefinition)
                     .map(f -> (ObjectTypeDefinition) f)
-                    .orElseThrow(); // Ensure it is an object type
-
-                RelRecordType relRecordType = (RelRecordType) componentType;
+                    .orElseThrow();
                 walkObjectType(false, elementObjectType, Optional.of(relRecordType), registry);
               } else {
                 // The array contains scalar types
@@ -194,8 +192,8 @@ public abstract class GraphqlSchemaWalker2 {
  */
 
   private Type<?> unwrapNonNullType(Type<?> type) {
-    if (type instanceof NonNullType) {
-      return unwrapNonNullType(((NonNullType) type).getType());
+    if (type instanceof NonNullType nullType) {
+      return unwrapNonNullType(nullType.getType());
     } else {
       return type;
     }

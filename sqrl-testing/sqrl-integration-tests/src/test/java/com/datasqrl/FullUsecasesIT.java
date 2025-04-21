@@ -23,7 +23,6 @@ import com.datasqrl.util.SnapshotTest.Snapshot;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -54,7 +53,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 @Slf4j
 @ExtendWith(MiniClusterExtension.class)
 public class FullUsecasesIT {
-  private static final Path RESOURCES = Paths.get("src/test/resources");
+  private static final Path RESOURCES = Path.of("src/test/resources");
   private static final Path USE_CASES = RESOURCES.resolve("usecases");
 
   private Snapshot snapshot;
@@ -87,7 +86,7 @@ public class FullUsecasesIT {
       new ScriptCriteria("seedshop-extended.sqrl", "run") // CustomerPromotionTest issue TODO
   );
 
-  static final Path PROJECT_ROOT = Paths.get(System.getProperty("user.dir"));
+  static final Path PROJECT_ROOT = Path.of(System.getProperty("user.dir"));
 
   private static TestContainerHook containerHook;
 

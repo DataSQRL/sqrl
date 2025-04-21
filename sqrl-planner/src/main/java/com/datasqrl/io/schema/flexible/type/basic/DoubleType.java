@@ -38,17 +38,17 @@ public class DoubleType extends AbstractBasicType<Double> {
     }
 
     public Double convert(Object o) {
-      if (o instanceof Double) {
-        return Double.valueOf((Double)o);
+      if (o instanceof Double double1) {
+        return Double.valueOf(double1);
       }
-      if (o instanceof Number) {
-        return Double.valueOf(((Number) o).doubleValue());
+      if (o instanceof Number number) {
+        return Double.valueOf(number.doubleValue());
       }
-      if (o instanceof Boolean) {
-        return ((Boolean) o).booleanValue() ? 1d : 0d;
+      if (o instanceof Boolean boolean1) {
+        return boolean1.booleanValue() ? 1d : 0d;
       }
-      if (o instanceof Duration) {
-        return ((Duration) o).toMillis() / 1000.0d;
+      if (o instanceof Duration duration) {
+        return duration.toMillis() / 1000.0d;
       }
       throw new IllegalArgumentException("Invalid type to convert: " + o.getClass());
     }

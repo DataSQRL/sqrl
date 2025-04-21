@@ -241,7 +241,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
   private RelNodeAnalysis fromSource(TableAnalysis tableAnalysis, RelNode input) {
     sourceTables.add(tableAnalysis);
     RelOptTable table = catalog.getTable(tableAnalysis.getIdentifier().toList());
-    LogicalTableScan scan = new LogicalTableScan(input.getCluster(), input.getTraitSet(), (input instanceof Hintable)?((Hintable)input).getHints():List.of(), table);
+    LogicalTableScan scan = new LogicalTableScan(input.getCluster(), input.getTraitSet(), (input instanceof Hintable h)?h.getHints():List.of(), table);
     return tableAnalysis.toRelNode(scan);
   }
 
@@ -294,10 +294,10 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
 
   @Override
   public RelNode visit(RelNode relNode) {
-    if (relNode instanceof TableFunctionScan) {
-      return visit((TableFunctionScan) relNode);
-    } else if (relNode instanceof Uncollect) {
-      return visit((Uncollect) relNode);
+    if (relNode instanceof TableFunctionScan scan) {
+      return visit(scan);
+    } else if (relNode instanceof Uncollect uncollect) {
+      return visit(uncollect);
     }
 
     //Default handling: if it has a single child, pass through, else use defaults
@@ -341,9 +341,8 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
     RexCall call = (RexCall) functionScan.getCall();
     if (call.getOperator() instanceof SqlUserDefinedTableFunction) {
       TableFunction tableFunction = ((SqlUserDefinedTableFunction)call.getOperator()).getFunction();
-      if (tableFunction instanceof SqrlTableFunction) {
-        capabilityAnalysis.add(EngineFeature.TABLE_FUNCTION_SCAN); //We only support table functions on the read side
-        SqrlTableFunction sqrlFct = (SqrlTableFunction) tableFunction;
+      if (tableFunction instanceof SqrlTableFunction sqrlFct) {
+        capabilityAnalysis.add(EngineFeature.TABLE_FUNCTION_SCAN);
         sourceTables.add(sqrlFct);
         return sourceTable(sqrlFct.getFunctionAnalysis().toRelNode(functionScan));
       }
@@ -411,16 +410,15 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
       //It's a constrained primary key, remove it from the list
       idxOpt.flatMap(input.primaryKey::getForIndex).ifPresent(pksToRemove::add);
       //Check if this is the row_number of a partitioned window-over
-      if (idxOpt.isPresent() && input.relNode instanceof LogicalProject) {
-        LogicalProject project = (LogicalProject) input.relNode;
+      if (idxOpt.isPresent() && input.relNode instanceof LogicalProject project) {
         RexNode column = project.getProjects().get(idxOpt.orElseThrow());
         //to be most recent distinct: a) only single filter on row_number, b) all other projects are RexInputRef,
         // c) over is ordered by timestamp DESC
         isMostRecentDistinct = conjunctions.size()==1 //a
             && IntStream.range(0, project.getProjects().size()).filter(i -> i!= idxOpt.get())
             .mapToObj(project.getProjects()::get).map(CalciteUtil::getInputRef).allMatch(Optional::isPresent); //b
-        if (column instanceof RexOver && column.isA(SqlKind.ROW_NUMBER)) {
-          RexWindow window = ((RexOver) column).getWindow();
+        if (column instanceof RexOver over && column.isA(SqlKind.ROW_NUMBER)) {
+          RexWindow window = over.getWindow();
           newPk = window.partitionKeys.stream().map(n ->
                   CalciteUtil.getInputRefThroughTransform(n, List.of(CAST_TRANSFORM, COALESCE_TRANSFORM)))
               .map(opt -> opt.orElse(-1)).collect(Collectors.toUnmodifiableList());

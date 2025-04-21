@@ -106,7 +106,7 @@ public class SimplePipeline implements ExecutionPipeline {
     List<EngineStage> engineList = getStage(engineType, engines);
     if (engineList.size()==1) return Optional.of(engineList.get(0));
     else if (engineList.isEmpty()) return Optional.empty();
-    throw new IllegalArgumentException(String.format("Expected a single %s engine but found multiple: %s", engineType, engineList));
+    throw new IllegalArgumentException("Expected a single %s engine but found multiple: %s".formatted(engineType, engineList));
   }
 
   @Override

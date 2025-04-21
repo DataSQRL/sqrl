@@ -55,7 +55,7 @@ public class SqrlAddColumnStatement extends SqrlDefinition implements StackableS
   }
 
   private static String addColumn(String columnName, String columnExpression, String innerBody) {
-    return String.format(ADD_COLUMN_SQL, columnExpression, columnName, innerBody);
+    return ADD_COLUMN_SQL.formatted(columnExpression, columnName, innerBody);
   }
 
   @Override

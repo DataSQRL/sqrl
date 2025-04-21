@@ -220,8 +220,8 @@ public class GraphQLEngineBuilder
   }
 
   private boolean isList(GraphQLOutputType fieldType) {
-    if (fieldType instanceof GraphQLNonNull) {
-      fieldType = (GraphQLOutputType)((GraphQLNonNull) fieldType).getWrappedType();
+    if (fieldType instanceof GraphQLNonNull g) {
+      fieldType = (GraphQLOutputType)g.getWrappedType();
     }
     return fieldType.getClass().equals(GraphQLList.class);
   }

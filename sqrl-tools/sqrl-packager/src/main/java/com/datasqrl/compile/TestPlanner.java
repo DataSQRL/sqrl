@@ -87,8 +87,7 @@ public class TestPlanner {
 
   private void extractQueriesAndMutations(Document document, List<GraphqlQuery> queries, List<GraphqlQuery> mutations, String prefix) {
     for (Definition definition : document.getDefinitions()) {
-      if (definition instanceof OperationDefinition) {
-        OperationDefinition operationDefinition = (OperationDefinition) definition;
+      if (definition instanceof OperationDefinition operationDefinition) {
         GraphqlQuery query = new GraphqlQuery(prefix, AstPrinter.printAst(operationDefinition));
         if (operationDefinition.getOperation() == Operation.QUERY) {
           queries.add(query);
@@ -195,38 +194,38 @@ public class TestPlanner {
       TypeDefinition<?> gqlComponentType = gqlComponentTypeOpt.get();
       if (fieldType.getSqlTypeName() == SqlTypeName.ARRAY
           && fieldType.getComponentType().getSqlTypeName() == SqlTypeName.ROW) {
-        if (gqlComponentType instanceof ObjectTypeDefinition) {
-          fieldBuilder.selectionSet(buildSelectionSet((ObjectTypeDefinition) gqlComponentType,
+        if (gqlComponentType instanceof ObjectTypeDefinition definition) {
+          fieldBuilder.selectionSet(buildSelectionSet(definition,
               fieldType.getComponentType(), document));
         }
       } else if (fieldType.getSqlTypeName() == SqlTypeName.ROW
-          && gqlComponentType instanceof ObjectTypeDefinition) {
+          && gqlComponentType instanceof ObjectTypeDefinition definition) {
         fieldBuilder.selectionSet(
-            buildSelectionSet((ObjectTypeDefinition) gqlComponentType, fieldType, document));
+            buildSelectionSet(definition, fieldType, document));
       }
     }
     return fieldBuilder.build();
   }
 
   private Optional<TypeDefinition<?>> unbox(Type type, Document document) {
-    if (type instanceof NonNullType) {
-      return unbox(((NonNullType) type).getType(), document);
+    if (type instanceof NonNullType nullType) {
+      return unbox(nullType.getType(), document);
     }
-    if (type instanceof ListType) {
-      return unbox(((ListType) type).getType(), document);
+    if (type instanceof ListType listType) {
+      return unbox(listType.getType(), document);
     }
 
-    if (type instanceof TypeName) {
-      String typeName = ((TypeName) type).getName();
+    if (type instanceof TypeName name) {
+      String typeName = name.getName();
       for (Definition definition : document.getDefinitions()) {
-        if (definition instanceof TypeDefinition && ((TypeDefinition<?>) definition).getName().equals(typeName)) {
-          return Optional.of((TypeDefinition<?>) definition);
+        if (definition instanceof TypeDefinition<?> typeDefinition && typeDefinition.getName().equals(typeName)) {
+          return Optional.of(typeDefinition);
         }
       }
       return Optional.empty();
     }
-    if (type instanceof TypeDefinition) {
-      return Optional.of((TypeDefinition<?>) type);
+    if (type instanceof TypeDefinition<?> definition) {
+      return Optional.of(definition);
     }
 
     return Optional.empty();

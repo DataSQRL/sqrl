@@ -45,7 +45,7 @@ public abstract class AbstractQueryExecutionContext implements QueryExecutionCon
   }
 
   public static String addLimitOffsetToQuery(String sqlQuery, String limit, String offset) {
-    return String.format("SELECT * FROM (%s) x LIMIT %s OFFSET %s", sqlQuery, limit, offset);
+    return "SELECT * FROM (%s) x LIMIT %s OFFSET %s".formatted(sqlQuery, limit, offset);
   }
 
 }

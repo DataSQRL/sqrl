@@ -70,8 +70,7 @@ public class GraphqlModelGenerator2 extends GraphqlSchemaWalker2 {
     String fieldName = atField.getName();
     List<InputValueDefinition> inputArguments = atField.getInputValueDefinitions();
     SubscriptionCoords subscriptionCoords;
-    if (executableQuery instanceof KafkaQuery) {
-      KafkaQuery kafkaQuery = (KafkaQuery) executableQuery;
+    if (executableQuery instanceof KafkaQuery kafkaQuery) {
       Map<String, String> filters = kafkaQuery.getFilterColumnNames().entrySet().stream().collect(
           Collectors.toMap(e -> inputArguments.get(e.getValue()).getName(), Entry::getKey));
       subscriptionCoords = new KafkaSubscriptionCoords(fieldName, kafkaQuery.getTopicName(), Map.of(), filters);

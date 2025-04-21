@@ -47,8 +47,8 @@ public class TextSearchTranslation implements OperatorRuleTransform {
             throw new IllegalArgumentException("Not a valid predicate");
           }
           //TODO generalize to other literals by adding ts_rank_cd to the filter condition
-          Preconditions.checkArgument(other instanceof RexLiteral &&
-                  ((RexLiteral) other).getValueAs(Number.class).doubleValue() == 0,
+          Preconditions.checkArgument(other instanceof RexLiteral rl &&
+                  rl.getValueAs(Number.class).doubleValue() == 0,
               "Expected comparison with 0 for %s", getFunctionName());
           //TODO: allow other languages
           RexLiteral language = rexBuilder.makeLiteral("english");

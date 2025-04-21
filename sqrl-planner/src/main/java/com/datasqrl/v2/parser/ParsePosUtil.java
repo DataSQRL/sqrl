@@ -28,12 +28,11 @@ public class ParsePosUtil {
       e = (Exception) e.getCause();
     }
     if (e instanceof SqlParseException || e instanceof SqlValidateException) {
-      FileLocation location = ParsePosUtil.convertPosition((e instanceof SqlParseException)?((SqlParseException) e).getPos():
+      FileLocation location = ParsePosUtil.convertPosition((e instanceof SqlParseException spe)?spe.getPos():
           ((SqlValidateException)e).getErrorPosition());
       String message = removeLineNumbersFromMessage(e.getMessage());
       return Optional.of(new MessageLocation(location, message));
-    } else if (e instanceof CalciteContextException) {
-      CalciteContextException calciteException = (CalciteContextException) e;
+    } else if (e instanceof CalciteContextException calciteException) {
       FileLocation location = new FileLocation(calciteException.getPosLine(), calciteException.getPosColumn());
       String message = removeLineNumbersFromMessage(calciteException.getMessage());
       return Optional.of(new MessageLocation(location, message));

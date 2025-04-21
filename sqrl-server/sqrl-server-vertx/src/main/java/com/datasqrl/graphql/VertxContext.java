@@ -47,8 +47,7 @@ public class VertxContext implements Context {
         @Override
         public Object get(DataFetchingEnvironment environment) {
           Object source = environment.getSource();
-          if (source instanceof JsonObject) {
-            JsonObject jsonObject = (JsonObject) source;
+          if (source instanceof JsonObject jsonObject) {
             Object value = jsonObject.getValue(getPropertyName());
             if (value != null) {
               return value;

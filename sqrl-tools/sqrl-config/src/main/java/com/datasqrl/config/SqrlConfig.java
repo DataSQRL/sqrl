@@ -123,7 +123,7 @@ interface SqrlConfig {
   static<T extends Enum<T>> T getEnum(Value<String> value, Class<T> clazz, Optional<T> defaultValue) {
     if (defaultValue.isPresent()) value = value.withDefault(defaultValue.get().name());
     return Enum.valueOf(clazz,value.map(String::toLowerCase).validate(v -> isEnumValue(v,clazz),
-        String.format("Use one of: %s",clazz.getEnumConstants())).get());
+        "Use one of: %s".formatted(clazz.getEnumConstants())).get());
   }
 
   static<T extends Enum<T>> boolean isEnumValue(String value, Class<T> clazz) {

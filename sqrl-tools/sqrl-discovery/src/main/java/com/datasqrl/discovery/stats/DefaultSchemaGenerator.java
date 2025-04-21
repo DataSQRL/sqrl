@@ -117,11 +117,11 @@ public class DefaultSchemaGenerator extends FlexibleTypeMatcher implements Schem
         BasicType type = null;
         for (FieldTypeStats fts : statTypes) {
           Type td = fts.getDetected();
-          if (td instanceof BasicType) {
+          if (td instanceof BasicType basicType) {
             if (type == null) {
-              type = (BasicType) td;
+              type = basicType;
             } else {
-              type = BasicTypeManager.combine(type, (BasicType) td,
+              type = BasicTypeManager.combine(type, basicType,
                       settings.maxCastingTypeDistance())
                   .orElse(null);
             }
@@ -145,11 +145,11 @@ public class DefaultSchemaGenerator extends FlexibleTypeMatcher implements Schem
           RelationStats nested = null;
           for (FieldTypeStats fts : statTypes) {
             Type td = fts.raw;
-            if (td instanceof BasicType) {
+            if (td instanceof BasicType basicType) {
               if (type == null) {
-                type = (BasicType) td;
+                type = basicType;
               } else {
-                type = BasicTypeManager.combineForced(type, (BasicType) td);
+                type = BasicTypeManager.combineForced(type, basicType);
               }
               maxArrayDepth = Math.max(fts.getArrayDepth(), maxArrayDepth);
             } else {

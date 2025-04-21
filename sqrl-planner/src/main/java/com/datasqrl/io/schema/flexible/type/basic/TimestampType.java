@@ -63,11 +63,11 @@ public class TimestampType extends AbstractBasicType<Instant> {
 
     @Override
     public Instant convert(Object o) {
-      if (o instanceof Instant) {
-        return (Instant) o;
+      if (o instanceof Instant instant) {
+        return instant;
       }
-      if (o instanceof Number) {
-        return Instant.ofEpochSecond(((Number) o).longValue());
+      if (o instanceof Number number) {
+        return Instant.ofEpochSecond(number.longValue());
       }
       throw new IllegalArgumentException("Invalid type to convert: " + o.getClass());
     }

@@ -88,32 +88,25 @@ public class GraphqlSchemaValidator2 extends GraphqlSchemaWalker2 {
 
   private Object validateStructurallyEqualTypes(FieldDefinition outputField, Optional<InputValueDefinition> argument, Type outputType, Type inputType, TypeDefinitionRegistry registry) {
     String argumentAppendix = argument.map(InputValueDefinition::getName).map(name -> "at argument " + name).orElse("");
-    if (inputType instanceof NonNullType) {
-      //subType may be nullable if type is non-null
-      NonNullType nonNullInputType = (NonNullType) inputType;
-      if (outputType instanceof NonNullType) {
-        NonNullType nonNullOutputType = (NonNullType) outputType;
+    if (inputType instanceof NonNullType nonNullInputType) {
+      if (outputType instanceof NonNullType nonNullOutputType) {
         return validateStructurallyEqualTypes(outputField, argument, nonNullOutputType.getType(), nonNullInputType.getType(), registry);
       } else {
         return validateStructurallyEqualTypes(outputField, argument, outputType, nonNullInputType.getType(), registry);
       }
-    } else if (inputType instanceof ListType) {
+    } else if (inputType instanceof ListType inputListType) {
       //subType must be a list
       checkState(outputType instanceof ListType, inputType.getSourceLocation(),
           "List type mismatch for field %s %s. Must match the input type.",outputField.getName(), argumentAppendix);
-      ListType inputListType = (ListType) inputType;
       ListType outputListType = (ListType) outputType;
       return validateStructurallyEqualTypes(outputField, argument, outputListType.getType(), inputListType.getType(), registry);
-    } else if (inputType instanceof TypeName) {
+    } else if (inputType instanceof TypeName inputTypeName) {
       //If subtype nonnull then it could return errors
       checkState(!(outputType instanceof NonNullType), inputType.getSourceLocation(),
           "Field %s %s requires non-null type",
           outputField.getName(), argumentAppendix);
       checkState(!(outputType instanceof ListType), inputType.getSourceLocation(),
           "List type found on field %s %s when the input is a scalar type", outputField.getName(), argumentAppendix);
-
-      //If typeName, resolve then
-      TypeName inputTypeName = (TypeName) inputType;
       TypeName outputTypeName = (TypeName) unboxNonNull(outputType);
       TypeDefinition inputTypeDef = registry.getType(inputTypeName).orElseThrow(
           () -> createThrowable(inputTypeName.getSourceLocation(), "Could not find type: %s", inputTypeName.getName()));
@@ -133,12 +126,11 @@ public class GraphqlSchemaValidator2 extends GraphqlSchemaWalker2 {
             "Enum types not matching for field %s %s: found %s but wanted %s", outputField.getName(), argumentAppendix,
             inputTypeDef.getName(), outputTypeDef.getName());
         return null;
-      } else if (inputTypeDef instanceof InputObjectTypeDefinition) {
+      } else if (inputTypeDef instanceof InputObjectTypeDefinition inputObjectTypeDef) {
         checkState(outputTypeDef instanceof ObjectTypeDefinition, inputType.getSourceLocation(),
             "Object types not matching for field %s %s: found %s but wanted %s",
             outputField.getName(), argumentAppendix, inputTypeDef.getName(), outputTypeDef.getName());
         ObjectTypeDefinition outputObjectTypeDef = (ObjectTypeDefinition) outputTypeDef;
-        InputObjectTypeDefinition inputObjectTypeDef = (InputObjectTypeDefinition) inputTypeDef;
         // walk object types
         return validateStructurallyEqualMutation(outputField, outputObjectTypeDef, inputObjectTypeDef, List.of(), registry);
       } else {
@@ -193,8 +185,8 @@ public class GraphqlSchemaValidator2 extends GraphqlSchemaWalker2 {
   private ObjectTypeDefinition getValidMutationOutputType(FieldDefinition fieldDefinition, TypeDefinitionRegistry registry) {
     Type type = fieldDefinition.getType();
 
-    if (type instanceof NonNullType) {
-      type = ((NonNullType) type).getType();
+    if (type instanceof NonNullType nullType) {
+      type = nullType.getType();
     }
     checkState(type instanceof TypeName, type.getSourceLocation(),
         "[%s] must be a singular output value", fieldDefinition.getName());
@@ -278,14 +270,11 @@ public class GraphqlSchemaValidator2 extends GraphqlSchemaWalker2 {
   }
 
   private Type convertGraphQLInputTypeToType(GraphQLInputType inputType, FieldDefinition atField) {
-    if (inputType instanceof GraphQLNonNull) {
-      GraphQLNonNull nonNull = (GraphQLNonNull) inputType;
+    if (inputType instanceof GraphQLNonNull nonNull) {
       return new NonNullType(convertGraphQLInputTypeToType((GraphQLInputType) nonNull.getWrappedType(), atField));
-    } else if (inputType instanceof graphql.schema.GraphQLList) {
-      graphql.schema.GraphQLList list = (graphql.schema.GraphQLList) inputType;
+    } else if (inputType instanceof graphql.schema.GraphQLList list) {
       return new ListType(convertGraphQLInputTypeToType((GraphQLInputType) list.getWrappedType(), atField));
-    } else if (inputType instanceof GraphQLNamedType) {
-      GraphQLNamedType namedType = (GraphQLNamedType) inputType;
+    } else if (inputType instanceof GraphQLNamedType namedType) {
       return new TypeName(namedType.getName());
     }
     throw createThrowable(atField.getSourceLocation(), "Unsupported GraphQLInputType %s", inputType.getClass().getName());
@@ -293,22 +282,22 @@ public class GraphqlSchemaValidator2 extends GraphqlSchemaWalker2 {
 
   private void checkValidArrayNonNullType(Type type) {
     Type root = type;
-    if (type instanceof NonNullType) {
-      type = ((NonNullType) type).getType();
+    if (type instanceof NonNullType nullType) {
+      type = nullType.getType();
     }
-    if (type instanceof ListType) {
-      type = ((ListType) type).getType();
+    if (type instanceof ListType listType) {
+      type = listType.getType();
     }
-    if (type instanceof NonNullType) {
-      type = ((NonNullType) type).getType();
+    if (type instanceof NonNullType nullType) {
+      type = nullType.getType();
     }
     checkState(type instanceof TypeName, root.getSourceLocation(),
         "Type must be a non-null array, array, or non-null");
   }
 
   private Type unboxNonNull(Type type) {
-    if (type instanceof NonNullType) { //TODO this should be always be false in the first call due to checkState(!(outputType instanceof NonNullType), ...)
-      return unboxNonNull(((NonNullType) type).getType());
+    if (type instanceof NonNullType nullType) { //TODO this should be always be false in the first call due to checkState(!(outputType instanceof NonNullType), ...)
+      return unboxNonNull(nullType.getType());
     }
     return type;
   }

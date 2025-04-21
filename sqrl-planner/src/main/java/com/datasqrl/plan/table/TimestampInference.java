@@ -6,7 +6,9 @@ package com.datasqrl.plan.table;
 import com.datasqrl.plan.util.IndexMap;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 
 import java.util.*;
 import java.util.function.Predicate;

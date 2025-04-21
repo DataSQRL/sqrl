@@ -79,8 +79,7 @@ public class FlinkTableBuilder {
     List<String> convertedColumns = new ArrayList<>();
     for (int i = 0; i < columnList.size(); i++) {
       SqlNode column = columnList.get(i);
-      if (column instanceof SqlTableColumn.SqlMetadataColumn) {
-        SqlTableColumn.SqlMetadataColumn columnMetadata = (SqlTableColumn.SqlMetadataColumn) column;
+      if (column instanceof SqlTableColumn.SqlMetadataColumn columnMetadata) {
         if (columnMetadata.getMetadataAlias().filter(alias -> alias.equalsIgnoreCase(metadataAlias)).isPresent()) {
           convertedColumns.add(columnMetadata.getName().getSimple());
           if (convertToRegular) {

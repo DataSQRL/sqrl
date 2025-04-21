@@ -76,8 +76,7 @@ public class GraphqlSchemaUtil2 {
 
     switch (type.getSqlTypeName()) {
       case OTHER:
-        if (type instanceof RawRelDataType) {
-          RawRelDataType rawRelDataType = (RawRelDataType) type;
+        if (type instanceof RawRelDataType rawRelDataType) {
           Class<?> originatingClass = rawRelDataType.getRawType().getOriginatingClass();
           if (originatingClass.isAssignableFrom(FlinkJsonType.class)) {
             return Optional.of(CustomScalars.JSON);

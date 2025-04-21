@@ -30,9 +30,7 @@ public class FlinkUnExpandingRelToSqlConverter extends RelToSqlConverter {
 
   public Result visit(LogicalWatermarkAssigner e) {
     Result rIn = dispatch(e.getInput());
-    if (rIn.node instanceof SqlSelect) {
-      //We don't want to process anything below the watermark assigner since those are table internals
-      SqlSelect select = (SqlSelect) rIn.node;
+    if (rIn.node instanceof SqlSelect select) {
       select.setSelectList(SqlNodeList.of(SqlIdentifier.STAR));
     }
     return rIn;

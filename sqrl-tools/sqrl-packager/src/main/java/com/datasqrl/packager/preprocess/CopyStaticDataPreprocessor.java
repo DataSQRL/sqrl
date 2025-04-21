@@ -78,7 +78,7 @@ public class CopyStaticDataPreprocessor implements Preprocessor {
 
   private static InputStream skipFirstLine(InputStream rawIn) throws IOException {
     // Make sure we can mark and reset (peek the next byte safely)
-    BufferedInputStream in = (rawIn instanceof BufferedInputStream) ? (BufferedInputStream) rawIn
+    BufferedInputStream in = (rawIn instanceof BufferedInputStream bis) ? bis
         : new BufferedInputStream(rawIn);
 
     while (true) {

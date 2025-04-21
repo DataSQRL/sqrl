@@ -50,8 +50,7 @@ public interface Constraints {
     Annotation[] annotations = field.getDeclaredAnnotations();
 
     for (Annotation annotation : annotations) {
-      if (annotation instanceof MinLength) {
-        MinLength lengthAnnotation = (MinLength) annotation;
+      if (annotation instanceof MinLength lengthAnnotation) {
         final int minLength = lengthAnnotation.min();
         value = value.validate(x -> ((String)x).length()>= minLength,
             "String needs to be at least length " + minLength);
@@ -60,14 +59,13 @@ public interface Constraints {
             "Value cannot be null");
       } else if (annotation instanceof NotEmpty) {
         value = value.validate(x -> {
-              if (x instanceof String) return StringUtils.isNotBlank((String)x);
-              if (x instanceof Collection) return ((Collection)x).size()>0;
+              if (x instanceof String string) return StringUtils.isNotBlank(string);
+              if (x instanceof Collection collection) return collection.size()>0;
               if (x.getClass().isArray()) return Array.getLength(x)>0;
               return true;
             },
             "Value cannot be empty");
-      } else if (annotation instanceof Regex) {
-        Regex regex = (Regex) annotation;
+      } else if (annotation instanceof Regex regex) {
         Pattern pattern = Pattern.compile(regex.match());
         value = value.validate(x -> pattern.matcher((String)x).matches(), "String does not match pattern " + regex.match());
       } else if (annotation instanceof Default) {

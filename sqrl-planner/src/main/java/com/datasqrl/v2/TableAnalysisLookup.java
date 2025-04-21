@@ -158,8 +158,7 @@ public class TableAnalysisLookup {
     public RelNode visit(LogicalAggregate aggregate) {
       List<AggregateCall> updatedCalls = aggregate.getAggCallList().stream().map(aggCall -> {
         SqlAggFunction aggFct = aggCall.getAggregation();
-        if (aggFct instanceof BridgingSqlAggFunction) {
-          BridgingSqlAggFunction func = (BridgingSqlAggFunction) aggFct;
+        if (aggFct instanceof BridgingSqlAggFunction func) {
           Optional<ContextResolvedFunction> normalizedFct = normalizeFunction(func.getResolvedFunction());
           if (normalizedFct.isPresent()) {
             BridgingSqlAggFunction normalizedFunc = BridgingSqlAggFunction.of(func.getDataTypeFactory(),

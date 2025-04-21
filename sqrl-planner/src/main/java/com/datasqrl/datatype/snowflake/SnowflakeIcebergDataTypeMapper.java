@@ -77,8 +77,7 @@ public class SnowflakeIcebergDataTypeMapper implements DataTypeMapper {
   @Override
   public Optional<CastFunction> convertType(RelDataType type) {
     // Explicit downcast
-    if (type instanceof RawRelDataType) {
-      RawRelDataType rawRelDataType = (RawRelDataType) type;
+    if (type instanceof RawRelDataType rawRelDataType) {
       if (rawRelDataType.getRawType().getDefaultConversion() == FlinkJsonType.class) {
         throw new RuntimeException("Writing json to snowflake not yet supported");
       }

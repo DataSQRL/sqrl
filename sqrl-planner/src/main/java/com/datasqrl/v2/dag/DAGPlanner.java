@@ -122,8 +122,8 @@ public class DAGPlanner {
         dag.eliminateInviableStages(pipeline);
       }
       //Assign stage to table
-      if (node instanceof TableNode) {
-        TableAnalysis table = ((TableNode) node).getTableAnalysis();
+      if (node instanceof TableNode tableNode) {
+        TableAnalysis table = tableNode.getTableAnalysis();
         ExecutionStage stage = node.getChosenStage();
         Preconditions.checkNotNull(stage);
         //table.assignStage(stage); //this stage on the config below
@@ -192,8 +192,7 @@ public class DAGPlanner {
           ExecutionStage exportStage = null;
           ObjectIdentifier targetTable = null;
           String originalTableName = null;
-          if (downstream instanceof ExportNode) {
-            ExportNode exportNode = (ExportNode) downstream;
+          if (downstream instanceof ExportNode exportNode) {
             originalTableName = exportNode.getSinkPath().getLast().getDisplay();
             if (exportNode.getSinkTo().isPresent()) {
               exportStage = exportNode.getSinkTo().get();
@@ -262,8 +261,8 @@ public class DAGPlanner {
       dag.allNodesByClassAndStage(PlannedNode.class, dataStoreStage).forEach(node -> {
 
         SqrlTableFunction function = null;
-        if (node instanceof TableFunctionNode) {
-          function = ((TableFunctionNode) node).getFunction();
+        if (node instanceof TableFunctionNode functionNode) {
+          function = functionNode.getFunction();
         } else {
           /*We also have to plan all TableNodes that have a downstream server consumer and convert
            those to tablefunctions of the same name as the table, so they can be executed in the server
@@ -449,10 +448,10 @@ public class DAGPlanner {
     public RelNode visit(TableScan scan) {
       RelOptTable table = scan.getTable();
       ObjectIdentifier tablePath;
-      if (table instanceof TableSourceTable) {
-        tablePath = ((TableSourceTable) table).contextResolvedTable().getIdentifier();
-      } else if (table instanceof ExpandingPreparingTable) {
-        List<String> names = ((ExpandingPreparingTable) table).getNames();
+      if (table instanceof TableSourceTable sourceTable) {
+        tablePath = sourceTable.contextResolvedTable().getIdentifier();
+      } else if (table instanceof ExpandingPreparingTable preparingTable) {
+        List<String> names = preparingTable.getNames();
         tablePath = ObjectIdentifier.of(names.get(0),names.get(1),names.get(2));
       } else {
         throw new UnsupportedOperationException("Unexpected table: "+ table.getClass());
@@ -480,8 +479,7 @@ public class DAGPlanner {
       RexCall call = (RexCall) scan.getCall();
       if (call.getOperator() instanceof SqlUserDefinedTableFunction) {
         TableFunction tableFunction = ((SqlUserDefinedTableFunction)call.getOperator()).getFunction();
-        if (tableFunction instanceof SqrlTableFunction) {
-          SqrlTableFunction sqrlFct = (SqrlTableFunction) tableFunction;
+        if (tableFunction instanceof SqrlTableFunction sqrlFct) {
           List<RexNode> operands = ((RexCall)scan.getCall()).getOperands();
           RelNode rewrittenNode = CalciteUtil.replaceParameters(sqrlFct.getRelNode(), operands);
           return rewrittenNode.accept(this);
@@ -492,8 +490,8 @@ public class DAGPlanner {
 
     @Override
     public RelNode visit(RelNode other) {
-      if (other instanceof LogicalTableFunctionScan) {
-        return visit((LogicalTableFunctionScan) other);
+      if (other instanceof LogicalTableFunctionScan scan) {
+        return visit(scan);
       }
       return super.visit(other);
     }

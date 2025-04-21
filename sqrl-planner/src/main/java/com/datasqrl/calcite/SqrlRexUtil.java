@@ -83,8 +83,8 @@ public class SqrlRexUtil {
   public static Optional<Integer> getLimit(RexNode limit) {
     if (limit == null) {
       return Optional.empty();
-    } else if (limit instanceof RexLiteral) {
-      return Optional.of(((RexLiteral) limit).getValueAs(Integer.class));
+    } else if (limit instanceof RexLiteral literal) {
+      return Optional.of(literal.getValueAs(Integer.class));
     } else {
       return Optional.empty();
     }
@@ -167,8 +167,8 @@ public class SqrlRexUtil {
   }
 
   private Optional<Integer> getInputRefIndex(RexNode node) {
-    if (node instanceof RexInputRef) {
-      return Optional.of(((RexInputRef) node).getIndex());
+    if (node instanceof RexInputRef ref) {
+      return Optional.of(ref.getIndex());
     }
     return Optional.empty();
   }
@@ -415,8 +415,8 @@ public class SqrlRexUtil {
   }
 
   public static boolean isDedupedRelNode(RelNode relNode, boolean includeAggregation, boolean allowFilter) {
-    if (relNode instanceof LogicalProject) {
-      if (SqrlRexUtil.isSimpleProject((LogicalProject) relNode)) {
+    if (relNode instanceof LogicalProject project) {
+      if (SqrlRexUtil.isSimpleProject(project)) {
         return isDedupedRelNode(relNode.getInput(0), includeAggregation, allowFilter);
       }
     }

@@ -67,8 +67,7 @@ public class FlexibleJsonFlinkFormatTypeMapper extends FlinkDataTypeMapper imple
       return Optional.of(DataTypeMappings.TO_JSON_ONLY);
     }
 
-    if (type instanceof RawRelDataType) {
-      RawRelDataType rawRelDataType = (RawRelDataType) type;
+    if (type instanceof RawRelDataType rawRelDataType) {
       if (rawRelDataType.getRawType().getDefaultConversion() == FlinkVectorType.class) {
         return Optional.of(DataTypeMappings.VECTOR_TO_DOUBLE_ONLY);
       } else if (rawRelDataType.getRawType().getDefaultConversion() == FlinkJsonType.class) {
@@ -129,8 +128,7 @@ public class FlexibleJsonFlinkFormatTypeMapper extends FlinkDataTypeMapper imple
       case MAP:
         return true;
       case OTHER:
-        if (type instanceof RawRelDataType) {
-          RawRelDataType rawRelDataType = (RawRelDataType) type;
+        if (type instanceof RawRelDataType rawRelDataType) {
           Class clazz = rawRelDataType.getRawType().getDefaultConversion();
           if (clazz == FlinkJsonType.class) {
             return true;

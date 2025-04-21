@@ -49,8 +49,7 @@ public class IcebergDataTypeMapper extends FlinkDataTypeMapper implements DataTy
       case ARRAY:
         if (getMapper(type.getComponentType()).isEmpty()) return Optional.empty();
     }
-    if (type instanceof RawRelDataType) {
-      RawRelDataType rawRelDataType = (RawRelDataType) type;
+    if (type instanceof RawRelDataType rawRelDataType) {
       if (rawRelDataType.getRawType().getDefaultConversion() == FlinkJsonType.class) {
         return Optional.of(DataTypeMappings.JSON_TO_STRING_ONLY);
       } else if (rawRelDataType.getRawType().getDefaultConversion() == FlinkVectorType.class) {
@@ -124,8 +123,7 @@ public class IcebergDataTypeMapper extends FlinkDataTypeMapper implements DataTy
     }
 
     // Explicit downcast
-    if (type instanceof RawRelDataType) {
-      RawRelDataType rawRelDataType = (RawRelDataType) type;
+    if (type instanceof RawRelDataType rawRelDataType) {
       if (rawRelDataType.getRawType().getDefaultConversion() == FlinkJsonType.class) {
         return Optional.of(
             new CastFunction(JsonToString.class.getName(),

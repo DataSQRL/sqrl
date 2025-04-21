@@ -52,10 +52,11 @@ public class FlinkSqlNodeFactoryTest {
 
     SqlCreateView createView = FlinkSqlNodeFactory.createView(tableName, select);
     String sql = unparse(createView);
-    String expectedSql = "CREATE VIEW `my_view`\n"
-        + "AS\n"
-        + "SELECT `*`\n"
-        + "FROM `source_table`";
+    String expectedSql = """
+        CREATE VIEW `my_view`
+        AS
+        SELECT `*`
+        FROM `source_table`""";
     assertEquals(expectedSql, sql.trim());
   }
 
@@ -69,9 +70,10 @@ public class FlinkSqlNodeFactoryTest {
 
     RichSqlInsert insert = FlinkSqlNodeFactory.createInsert(select, targetTable);
     String sql = unparse(insert);
-    String expectedSql = "INSERT INTO `target_table`\n"
-        + "(SELECT `*`\n"
-        + " FROM `source_table`)";
+    String expectedSql = """
+        INSERT INTO `target_table`
+        (SELECT `*`
+         FROM `source_table`)""";
     assertEquals(expectedSql, sql.trim());
   }
 
@@ -197,21 +199,22 @@ public class FlinkSqlNodeFactoryTest {
     );
     // Unparse and compare SQL strings
     String sql = unparse(createTable);
-    String expectedSql = "CREATE TABLE `my_table` (\n"
-        + "  `id` INTEGER NOT NULL,\n"
-        + "  `name` VARCHAR(255) CHARACTER SET `UTF-16LE` NOT NULL,\n"
-        + "  `timestamp_col` TIMESTAMP(0) NOT NULL,\n"
-        + "  `metadata_col1` VARCHAR(255) CHARACTER SET `UTF-16LE` NOT NULL METADATA FROM 'timestamp_col',\n"
-        + "  `metadata_col2` VARCHAR(255) CHARACTER SET `UTF-16LE` NOT NULL METADATA FROM 'timestamp' VIRTUAL,\n"
-        + "  PRIMARY KEY (`id`) NOT ENFORCED,\n"
-        + "  WATERMARK FOR `timestamp_col` AS `timestamp_col` - INTERVAL '5.0' SECOND\n"
-        + ")\n"
-        + "PARTITIONED BY (`name`)\n"
-        + "WITH (\n"
-        + "  'format' = 'csv',\n"
-        + "  'path' = '/tmp/data',\n"
-        + "  'connector' = 'filesystem'\n"
-        + ")";
+    String expectedSql = """
+        CREATE TABLE `my_table` (
+          `id` INTEGER NOT NULL,
+          `name` VARCHAR(255) CHARACTER SET `UTF-16LE` NOT NULL,
+          `timestamp_col` TIMESTAMP(0) NOT NULL,
+          `metadata_col1` VARCHAR(255) CHARACTER SET `UTF-16LE` NOT NULL METADATA FROM 'timestamp_col',
+          `metadata_col2` VARCHAR(255) CHARACTER SET `UTF-16LE` NOT NULL METADATA FROM 'timestamp' VIRTUAL,
+          PRIMARY KEY (`id`) NOT ENFORCED,
+          WATERMARK FOR `timestamp_col` AS `timestamp_col` - INTERVAL '5.0' SECOND
+        )
+        PARTITIONED BY (`name`)
+        WITH (
+          'format' = 'csv',
+          'path' = '/tmp/data',
+          'connector' = 'filesystem'
+        )""";
     assertEquals(expectedSql.trim(), sql.trim());
   }
 }

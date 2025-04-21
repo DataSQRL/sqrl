@@ -44,8 +44,7 @@ public class ConnectorConfImpl implements ConnectorConf {
     Map<String, Object> resultMap = new LinkedHashMap<>();
     for (Map.Entry<String, Object> entry : configMap.entrySet()) {
       Object value = entry.getValue();
-      if (value instanceof String) {
-        String strValue = (String) value;
+      if (value instanceof String strValue) {
         for (Map.Entry<Pattern, String> varMatch : variableMatcher.entrySet()) {
           strValue = varMatch.getKey().matcher(strValue).replaceAll(varMatch.getValue());
         }

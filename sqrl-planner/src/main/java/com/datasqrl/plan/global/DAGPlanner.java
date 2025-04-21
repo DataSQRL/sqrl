@@ -74,8 +74,8 @@ public class DAGPlanner {
         dag.eliminateInviableStages(pipeline);
       }
       //Assign stage to table
-      if (node instanceof SqrlDAG.TableNode) {
-        PhysicalTable table = ((SqrlDAG.TableNode) node).getTable();
+      if (node instanceof SqrlDAG.TableNode tableNode) {
+        PhysicalTable table = tableNode.getTable();
         ExecutionStage stage = node.getChosenStage();
         Preconditions.checkNotNull(stage);
         table.assignStage(stage); //this stage on the config below

@@ -81,9 +81,9 @@ public class RelWriterWithHints extends RelWriterImpl {
       }
     }
     //===== Added this code to print hints ========
-    if (withHints && rel instanceof Hintable) {
+    if (withHints && rel instanceof Hintable hintable) {
       int j = 0;
-      for (RelHint hint : ((Hintable) rel).getHints()) {
+      for (RelHint hint : hintable.getHints()) {
         if (j++ == 0) {
           s.append(" hints[");
         } else {

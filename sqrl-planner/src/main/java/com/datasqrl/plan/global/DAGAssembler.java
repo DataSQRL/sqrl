@@ -178,8 +178,8 @@ public class DAGAssembler {
     //Get all tables that are computed in the stream
     List<StreamStagePlan.TableDefinition> streamTables = new ArrayList<>();
     for (SqrlNode node : dag) { //Make sure we traverse the DAG from source to sink
-      if (node instanceof TableNode) {
-        PhysicalTable table = ((TableNode) node).getTable();
+      if (node instanceof TableNode tableNode) {
+        PhysicalTable table = tableNode.getTable();
         streamTables.add(new TableDefinition(table.getNameId(), table.getPlannedRelNode()));
       }
     }

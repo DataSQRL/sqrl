@@ -123,33 +123,26 @@ public class GraphqlSchemaValidator extends SchemaWalker {
 
   private Object validateStructurallyType(FieldDefinition field, Type definitionType,
       Type inputType, TypeDefinitionRegistry registry) {
-    if (inputType instanceof NonNullType) {
-      //subType may be nullable if type is non-null
-      NonNullType nonNullType = (NonNullType) inputType;
-      if (definitionType instanceof NonNullType) {
-        NonNullType nonNullDefinitionType = (NonNullType) definitionType;
+    if (inputType instanceof NonNullType nonNullType) {
+      if (definitionType instanceof NonNullType nonNullDefinitionType) {
         return validateStructurallyType(field, nonNullDefinitionType.getType(),
             nonNullType.getType(), registry);
       } else {
         return validateStructurallyType(field, definitionType, nonNullType.getType(), registry);
       }
-    } else if (inputType instanceof ListType) {
+    } else if (inputType instanceof ListType inputListType) {
       //subType must be a list
       checkState(definitionType instanceof ListType, definitionType.getSourceLocation(),
           "List type mismatch for field. Must match the input type. " + field.getName());
-      ListType inputListType = (ListType) inputType;
       ListType definitionListType = (ListType) definitionType;
       return validateStructurallyType(field, definitionListType.getType(), inputListType.getType(), registry);
-    } else if (inputType instanceof TypeName) {
+    } else if (inputType instanceof TypeName inputTypeName) {
       //If subtype nonnull then it could return errors
       checkState(!(definitionType instanceof NonNullType), definitionType.getSourceLocation(),
           "Non-null found on field %s, could result in errors if input type is null",
           field.getName());
       checkState(!(definitionType instanceof ListType), definitionType.getSourceLocation(),
           "List type found on field %s when the input is a scalar type", field.getName());
-
-      //If typeName, resolve then
-      TypeName inputTypeName = (TypeName) inputType;
       TypeName defTypeName = (TypeName) unboxNonNull(definitionType);
       TypeDefinition inputTypeDef = registry.getType(inputTypeName).orElseThrow(
           () -> createThrowable(inputTypeName.getSourceLocation(), "Could not find type: %s",
@@ -172,12 +165,11 @@ public class GraphqlSchemaValidator extends SchemaWalker {
             "Enum types not matching for field [%s]: found %s but wanted %s", field.getName(),
             inputTypeDef.getName(), defTypeDef.getName());
         return null;
-      } else if (inputTypeDef instanceof InputObjectTypeDefinition) {
+      } else if (inputTypeDef instanceof InputObjectTypeDefinition inputDefinition) {
         checkState(defTypeDef instanceof ObjectTypeDefinition, field.getSourceLocation(),
             "Return object type must match with an input object type not matching for field [%s]: found %s but wanted %s",
             field.getName(), inputTypeDef.getName(), defTypeDef.getName());
         ObjectTypeDefinition objectDefinition = (ObjectTypeDefinition) defTypeDef;
-        InputObjectTypeDefinition inputDefinition = (InputObjectTypeDefinition) inputTypeDef;
         return validateStructurallyEqualMutation(field, objectDefinition, inputDefinition,
             List.of(), registry);
       } else {
@@ -236,8 +228,8 @@ public class GraphqlSchemaValidator extends SchemaWalker {
 
   private ObjectTypeDefinition getValidMutationReturnType(FieldDefinition fieldDefinition, TypeDefinitionRegistry registry) {
     Type type = fieldDefinition.getType();
-    if (type instanceof NonNullType) {
-      type = ((NonNullType) type).getType();
+    if (type instanceof NonNullType nullType) {
+      type = nullType.getType();
     }
 
     checkState(type instanceof TypeName, type.getSourceLocation(),
@@ -305,14 +297,14 @@ public class GraphqlSchemaValidator extends SchemaWalker {
 
   private void checkValidArrayNonNullType(Type type) {
     Type root = type;
-    if (type instanceof NonNullType) {
-      type = ((NonNullType) type).getType();
+    if (type instanceof NonNullType nullType) {
+      type = nullType.getType();
     }
-    if (type instanceof ListType) {
-      type = ((ListType) type).getType();
+    if (type instanceof ListType listType) {
+      type = listType.getType();
     }
-    if (type instanceof NonNullType) {
-      type = ((NonNullType) type).getType();
+    if (type instanceof NonNullType nullType) {
+      type = nullType.getType();
     }
     checkState(type instanceof TypeName, root.getSourceLocation(),
         "Type must be a non-null array, array, or non-null");
@@ -333,22 +325,22 @@ public class GraphqlSchemaValidator extends SchemaWalker {
   private TypeDefinition unwrapObjectType(Type type, TypeDefinitionRegistry registry) {
     //type can be in a single array with any non-nulls, e.g. [customer!]!
     type = unboxNonNull(type);
-    if (type instanceof ListType) {
-      type = ((ListType) type).getType();
+    if (type instanceof ListType listType) {
+      type = listType.getType();
     }
     type = unboxNonNull(type);
 
     Optional<TypeDefinition> typeDef = registry.getType(type);
 
     checkState(typeDef.isPresent(), type.getSourceLocation(), "Could not find Object type [%s]",
-        type instanceof TypeName ? ((TypeName) type).getName() : type.toString());
+        type instanceof TypeName tn ? tn.getName() : type.toString());
 
     return typeDef.get();
   }
 
   private Type unboxNonNull(Type type) {
-    if (type instanceof NonNullType) {
-      return unboxNonNull(((NonNullType) type).getType());
+    if (type instanceof NonNullType nullType) {
+      return unboxNonNull(nullType.getType());
     }
     return type;
   }

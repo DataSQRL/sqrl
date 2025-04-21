@@ -20,7 +20,6 @@ import com.datasqrl.util.data.Sensors;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.SneakyThrows;
@@ -35,9 +34,9 @@ import org.junit.jupiter.api.TestInfo;
 public class TestCmd {
   public static final String PLAN_SQL = "flink-plan.sql";
 
-  private static final Path OUTPUT_DIR = Paths.get("src", "test", "resources", "output");
+  private static final Path OUTPUT_DIR = Path.of("src", "test", "resources", "output");
 
-  private static final Path RESOURCES = Paths.get("src/test/resources/");
+  private static final Path RESOURCES = Path.of("src/test/resources/");
   private static final Path SUBSCRIPTION_PATH = RESOURCES.resolve("subscriptions");
   private static final Path CC_PATH = RESOURCES.resolve("creditcard");
   private static final Path PROFILES_PATH = RESOURCES.resolve("profiles");
@@ -76,7 +75,7 @@ public class TestCmd {
 
   @Test
   public void compileMutations() {
-    Path root = Paths.get("../../sqrl-examples/mutations");
+    Path root = Path.of("../../sqrl-examples/mutations");
     execute(root,
         "compile", "script.sqrl",
         "schema.graphqls");
@@ -160,7 +159,7 @@ public class TestCmd {
             "-t", OUTPUT_DIR.toString(), "-a", "GraphQL");
     Path schemaFile = rootDir.resolve(GRAPHQL_NORMALIZED_FILE_NAME);
     assertTrue(Files.isRegularFile(schemaFile),
-        () -> String.format("Schema file could not be found: %s", schemaFile));
+        () -> "Schema file could not be found: %s".formatted(schemaFile));
     Files.deleteIfExists(schemaFile);
     createSnapshot();
   }

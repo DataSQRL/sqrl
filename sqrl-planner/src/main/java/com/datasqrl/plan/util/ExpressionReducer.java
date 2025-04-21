@@ -33,13 +33,13 @@ public class ExpressionReducer {
       RexNode reduce = reduced.get(i);
       if (!(reduce instanceof RexLiteral)) {
         throw new IllegalArgumentException(
-            String.format("Expression [%s] could not be reduced to literal, got: %s",
+            "Expression [%s] could not be reduced to literal, got: %s".formatted(
                 original.get(i), reduce));
       }
       Object value = ((RexLiteral) reduce).getValue2();
       if (!(value instanceof Number)) {
         throw new IllegalArgumentException(
-            String.format("Value of reduced literal [%s] is not a number: %s", reduce, value));
+            "Value of reduced literal [%s] is not a number: %s".formatted(reduce, value));
       }
       longs[i] = ((Number) value).longValue();
     }

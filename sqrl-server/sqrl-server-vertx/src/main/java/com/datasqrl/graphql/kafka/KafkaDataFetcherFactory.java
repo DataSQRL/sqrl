@@ -31,10 +31,10 @@ public class KafkaDataFetcherFactory {
           if (argValue == null) continue;
 
           Map<String, Object> objectMap;
-          if (data instanceof Map) {
-            objectMap = (Map) data;
-          } else if (data instanceof JsonObject) {
-            objectMap = ((JsonObject)data).getMap();
+          if (data instanceof Map map) {
+            objectMap = map;
+          } else if (data instanceof JsonObject object) {
+            objectMap = object.getMap();
           } else {
             objectMap = Map.of();
           }

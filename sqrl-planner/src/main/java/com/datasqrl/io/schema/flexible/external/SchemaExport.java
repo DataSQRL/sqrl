@@ -52,8 +52,7 @@ public class SchemaExport {
   private List<FieldDefinition> exportColumns(
       RelationType<FlexibleFieldSchema.Field> relation) {
     return relation.getFields().stream().map(this::export)
-        .filter(Optional::isPresent)
-        .map(Optional::get)
+        .flatMap(Optional::stream)
         .collect(Collectors.toList());
   }
 

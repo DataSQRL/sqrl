@@ -24,8 +24,8 @@ public class JsonDeserializer implements Deserializer<Map> {
       encodingValue = configs.get("deserializer.encoding");
     }
 
-    if (encodingValue instanceof String) {
-      this.encoding = (String)encodingValue;
+    if (encodingValue instanceof String string) {
+      this.encoding = string;
     }
 
   }

@@ -20,7 +20,7 @@ public class Format extends ScalarFunction implements AutoRegisterSystemFunction
     if (text == null) {
       return null;
     }
-    return String.format(text, (Object[]) arguments);
+    return text.formatted((Object[]) arguments);
   }
 
   @Override

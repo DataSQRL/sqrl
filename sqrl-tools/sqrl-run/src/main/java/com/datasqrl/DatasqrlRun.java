@@ -137,10 +137,10 @@ public class DatasqrlRun {
     if (packageJson.toFile().exists()) {
       Map packageJsonMap = getPackageJson();
       Object o = packageJsonMap.get("values");
-      if (o instanceof Map) {
-        Object c = ((Map)o).get("flink-config");
-        if (c instanceof Map) {
-          config.putAll((Map)c);
+      if (o instanceof Map map) {
+        Object c = map.get("flink-config");
+        if (c instanceof Map m) {
+          config.putAll(m);
         }
       }
     }
@@ -276,14 +276,12 @@ public class DatasqrlRun {
     List<Map<String, Object>> mutableTopics = new ArrayList<>(topics);
 
     Object o = getPackageJson().get("values");
-    if (o instanceof Map) {
-      Map vals = (Map) o;
+    if (o instanceof Map vals) {
       Object o1 = vals.get("create-topics");
-      if (o1 instanceof List) {
-        List topicList = (List)o1;
+      if (o1 instanceof List topicList) {
         for (Object t : topicList) {
-          if (t instanceof String) {
-            mutableTopics.add(Map.of("name", (String)t));
+          if (t instanceof String string) {
+            mutableTopics.add(Map.of("name", string));
           }
         }
       }
@@ -316,7 +314,7 @@ public class DatasqrlRun {
     }
     Map plan = objectMapper.readValue(file, Map.class);
 
-    String fullPostgresJDBCUrl = String.format("jdbc:postgresql://%s:%s/%s",
+    String fullPostgresJDBCUrl = "jdbc:postgresql://%s:%s/%s".formatted(
         getenv("PGHOST"), getenv("PGPORT"), getenv("PGDATABASE"));
     try (Connection connection = DriverManager.getConnection(fullPostgresJDBCUrl, getenv("PGUSER"), getenv("PGPASSWORD"))) {
       for (Map statement : (List<Map>) plan.get("statements")) {
@@ -392,8 +390,8 @@ public class DatasqrlRun {
     Map snowflake = (Map)engines.get("snowflake");
     if (snowflake != null) {
       Object url = snowflake.get("url");
-      if (url instanceof String) {
-        return Optional.of((String)url);
+      if (url instanceof String string) {
+        return Optional.of(string);
       }
     }
 

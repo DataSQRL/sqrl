@@ -36,7 +36,7 @@ public class JdbcEngineConfigDelegate {
         String dialect = matcher.group(1);
         this.dialect = dialect;
       } else {
-        throw new RuntimeException(String.format("Invalid database URL: %s", url));
+        throw new RuntimeException("Invalid database URL: %s".formatted(url));
       }
     }
   }

@@ -120,22 +120,23 @@ class WriteTest {
 
   private RootGraphqlModel getCustomerModel() {
     return RootGraphqlModel.builder()
-            .schema(StringSchema.builder().schema(""
-                    + "scalar DateTime\n"
-                + "type Query { "
-                    + "  customer: Customer "
-                    + "} "
-                    + "type Mutation {"
-                    + "  addCustomer(event: CreateCustomerEvent): Customer"
-                    + "} "
-                    + "input CreateCustomerEvent {"
-                    + "  customerid: Int"
-                    + "  ts: DateTime"
-                    + "} "
-                    + "type Customer {"
-                    + "  customerid: Int "
-                    + "  ts: DateTime"
-                    + "}").build())
+            .schema(StringSchema.builder().schema("""
+                scalar DateTime
+                type Query { \
+                  customer: Customer \
+                } \
+                type Mutation {\
+                  addCustomer(event: CreateCustomerEvent): Customer\
+                } \
+                input CreateCustomerEvent {\
+                  customerid: Int\
+                  ts: DateTime\
+                } \
+                type Customer {\
+                  customerid: Int \
+                  ts: DateTime\
+                }\
+                """).build())
             .query(ArgumentLookupQueryCoords.builder()
                     .parentType("Query")
                     .fieldName("customer")

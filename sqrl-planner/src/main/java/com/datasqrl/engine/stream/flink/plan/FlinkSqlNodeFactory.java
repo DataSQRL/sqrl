@@ -254,8 +254,8 @@ public class FlinkSqlNodeFactory {
           }
         }
 
-        if (metadataFnc instanceof SqlCall) {
-          node = getComputedColumn(columnName, (SqlCall) metadataFnc);
+        if (metadataFnc instanceof SqlCall call) {
+          node = getComputedColumn(columnName, call);
         } else {
           node = new SqlTableColumn.SqlMetadataColumn(
               SqlParserPos.ZERO,

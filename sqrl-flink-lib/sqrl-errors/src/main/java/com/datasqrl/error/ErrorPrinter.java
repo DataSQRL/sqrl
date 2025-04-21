@@ -24,7 +24,7 @@ public class ErrorPrinter {
   }
 
   public static String getHead(ErrorMessage errorMessage) {
-    return String.format("[%s] %s\n", errorMessage.getSeverity(), errorMessage.getMessage());
+    return "[%s] %s\n".formatted(errorMessage.getSeverity(), errorMessage.getMessage());
   }
 
 
@@ -36,7 +36,7 @@ public class ErrorPrinter {
     //print error severity and message
     b.append(getHead(errorMessage));
     //print error location
-    String fileLocation = (location.hasPrefix()?String.format("%s:",location.getPrefix().toLowerCase()):"") +
+    String fileLocation = (location.hasPrefix()?"%s:".formatted(location.getPrefix().toLowerCase()):"") +
         location.getPath();
     if (!fileLocation.trim().isEmpty()) {
       b.append("in ").append(fileLocation);

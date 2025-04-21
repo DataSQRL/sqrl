@@ -77,32 +77,33 @@ public class FlinkKafkaIntegrationTest {
         StreamTableEnvironment tableEnv = StreamTableEnvironment.create(env);
 
         // Define the DataGen source table with a large message field
-        String dataGenSourceDDL = "CREATE TABLE source_table (\n" +
-                "  id INT,\n" +
-                "  large_message STRING\n" +
-                ") WITH (\n" +
-                "  'connector' = 'datagen',\n" +
-                "  'number-of-rows' = '1',\n" +
-                "  'fields.id.kind' = 'sequence',\n" +
-                "  'fields.id.start' = '1',\n" +
-                "  'fields.id.end' = '1',\n" +
-                "  'fields.large_message.length' = '2048576'\n" + // Generate a 2 MB string
-                ")";
+        String dataGenSourceDDL = """
+                CREATE TABLE source_table (
+                  id INT,
+                  large_message STRING
+                ) WITH (
+                  'connector' = 'datagen',
+                  'number-of-rows' = '1',
+                  'fields.id.kind' = 'sequence',
+                  'fields.id.start' = '1',
+                  'fields.id.end' = '1',
+                  'fields.large_message.length' = '2048576'
+                )""";
 
         // Define the Kafka sink table with appropriate properties
-        String kafkaSinkDDL = String.format(
-                "CREATE TABLE sink_table (\n" +
-                "  id INT,\n" +
-                "  large_message STRING\n" +
-                ") WITH (\n" +
-                "  'connector' = 'kafka',\n" +
-                "  'topic' = 'test-topic',\n" +
-                "  'properties.bootstrap.servers' = '%s',\n" +
-                "  'key.format' = 'json',\n" +
-                "  'key.fields' = 'id',\n" +
-                "  'value.format' = 'json',\n" +
-                "  'properties.max.request.size' = '50000000'\n" + // Increase producer's max request size
-                ")", kafkaBootstrapServers);
+        String kafkaSinkDDL = """
+                CREATE TABLE sink_table (
+                  id INT,
+                  large_message STRING
+                ) WITH (
+                  'connector' = 'kafka',
+                  'topic' = 'test-topic',
+                  'properties.bootstrap.servers' = '%s',
+                  'key.format' = 'json',
+                  'key.fields' = 'id',
+                  'value.format' = 'json',
+                  'properties.max.request.size' = '50000000'
+                )""".formatted(kafkaBootstrapServers);
 
         // Execute the DDL statements to create the tables
         tableEnv.executeSql(dataGenSourceDDL);

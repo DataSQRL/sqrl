@@ -36,11 +36,9 @@ public class ImportExportAnalyzer {
         .map(ParsedObject::get)
         .flatMap(stmt -> {
           NamePath path;
-          if (stmt instanceof SqrlImportStatement) {
-            SqrlImportStatement importStmt = (SqrlImportStatement) stmt;
+          if (stmt instanceof SqrlImportStatement importStmt) {
             path = importStmt.getPackageIdentifier().get();
-          } else if (stmt instanceof SqrlExportStatement) {
-            SqrlExportStatement exportStatement = (SqrlExportStatement) stmt;
+          } else if (stmt instanceof SqrlExportStatement exportStatement) {
             path = exportStatement.getPackageIdentifier().get();
             if (SystemBuiltInConnectors.forExport(path.popLast()).isPresent()) {
               return Stream.of();

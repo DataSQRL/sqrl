@@ -117,8 +117,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
      */
     //Set watermark column for mutations based on 'timestamp' metadata
     for (SqlNode node : tableBuilder.getColumnList().getList()) {
-      if (node instanceof SqlTableColumn.SqlMetadataColumn) {
-        SqlTableColumn.SqlMetadataColumn metadataColumn = (SqlTableColumn.SqlMetadataColumn) node;
+      if (node instanceof SqlTableColumn.SqlMetadataColumn metadataColumn) {
         if (metadataColumn.getMetadataAlias().filter(s -> s.equalsIgnoreCase("timestamp")).isPresent()) {
           //TODO: make watermark configurable to 1 milli
           tableBuilder.setWatermarkMillis(metadataColumn.getName().getSimple(), 0);
@@ -151,12 +150,10 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
       ErrorCollector errors = query.getErrors();
       RelNode relNode = query.getRelNode();
       Map<String,Integer> filterColumns = new HashMap<>();
-      if (relNode instanceof Project && relNode.getRowType().equals(((Project) relNode).getInput().getRowType())) {
-        Project project = (Project) relNode;
+      if (relNode instanceof Project project && relNode.getRowType().equals(project.getInput().getRowType())) {
         relNode = project.getInput();
       }
-      if (relNode instanceof Filter) {
-        Filter filter = (Filter) relNode;
+      if (relNode instanceof Filter filter) {
         Consumer<Boolean> checkErrors = b -> errors.checkFatal(b, "Expected simple equality condition for Kafka filter: %s", filter.getCondition());
         relNode = filter.getInput();
         /*We expect that the filter is a simple AND condition of equality conditions of the sort `column = ?`

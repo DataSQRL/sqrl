@@ -6,7 +6,6 @@ import com.datasqrl.cmd.AssertStatusHook;
 import com.datasqrl.cmd.RootCommand;
 import com.datasqrl.cmd.StatusHook;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -18,7 +17,7 @@ import org.junit.jupiter.api.Test;
  * Tests some use cases in the test/resources/usecases folder using the `test` command.
  */
 public class UseCasesIT {
-  private static final Path RESOURCES = Paths.get("src/test/resources/usecases");
+  private static final Path RESOURCES = Path.of("src/test/resources/usecases");
 
   public void execute(String path, String script, String graphql) {
     execute("test", path, script, graphql, null);

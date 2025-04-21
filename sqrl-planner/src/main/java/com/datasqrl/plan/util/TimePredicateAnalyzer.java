@@ -86,12 +86,11 @@ public class TimePredicateAnalyzer {
 
   private Pair<Set<Integer>, RexNode> extractReferencesAndReplaceWithZero(RexNode rexNode,
       RexBuilder rexBuilder) {
-    if (rexNode instanceof RexInputRef) {
-      return Pair.of(Set.of(((RexInputRef) rexNode).getIndex()),
+    if (rexNode instanceof RexInputRef ref) {
+      return Pair.of(Set.of(ref.getIndex()),
           rexBuilder.makeZeroLiteral(rexNode.getType()));
     }
-    if (rexNode instanceof RexCall) {
-      RexCall call = (RexCall) rexNode;
+    if (rexNode instanceof RexCall call) {
       if (SqrlRexUtil.isNOW(call.getOperator())) {
         return Pair.of(Set.of(TimePredicate.NOW_INDEX),
             rexBuilder.makeZeroLiteral(rexNode.getType()));

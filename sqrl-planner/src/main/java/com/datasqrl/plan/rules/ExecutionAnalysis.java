@@ -64,7 +64,7 @@ public class ExecutionAnalysis {
     private final Collection<EngineCapability> capabilities;
 
     public CapabilityException(ExecutionStage stage, Collection<EngineCapability> capabilities) {
-      super(String.format("Execution stage [%s] does not support capabilities [%s].",
+      super("Execution stage [%s] does not support capabilities [%s].".formatted(
           stage.getName(), capabilities));
       this.capabilities = capabilities;
       this.stage = stage;

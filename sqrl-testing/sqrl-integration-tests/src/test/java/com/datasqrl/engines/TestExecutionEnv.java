@@ -72,7 +72,7 @@ public class TestExecutionEnv implements TestEngineVisitor<Void, TestEnvContext>
         if (statement.get("type").toString().equalsIgnoreCase("view")) {
           String viewName = (String)statement.get("name");
           ResultSet resultSet = conn.createStatement()
-              .executeQuery(String.format("SELECT * FROM \"%s\"", viewName));
+              .executeQuery("SELECT * FROM \"%s\"".formatted(viewName));
           String string = ResultSetPrinter.toString(resultSet, (c) -> true, (c) -> true);
           snapshot.addContent(string, viewName);
         }
@@ -177,7 +177,7 @@ public class TestExecutionEnv implements TestEngineVisitor<Void, TestEnvContext>
     Map<String, List<Map<String, String>>> snowflake = (Map<String, List<Map<String, String>>>) ((Map) map.get(
         "engines")).get("snowflake");
 
-    String url = (String)mapper.readValue(String.format("{\"url\": \"%s\"}",
+    String url = (String)mapper.readValue("{\"url\": \"%s\"}".formatted(
         packageJson.getEngines().getEngineConfig("snowflake").get()
             .toMap().get("url")), Map.class).get("url");
 
@@ -193,7 +193,7 @@ public class TestExecutionEnv implements TestEngineVisitor<Void, TestEnvContext>
 
       for (Map<String, String> ddls : snowflake.get("views")) {
         ResultSet execute = connection.createStatement()
-            .executeQuery(String.format("SELECT * FROM %s", ddls.get("name")));
+            .executeQuery("SELECT * FROM %s".formatted(ddls.get("name")));
         String string = ResultSetPrinter.toString(execute, (c) -> true, (c) -> true);
         snapshot.addContent(string, ddls.get("name"));
       }

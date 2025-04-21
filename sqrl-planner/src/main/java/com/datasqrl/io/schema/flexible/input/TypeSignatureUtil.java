@@ -36,8 +36,7 @@ public class TypeSignatureUtil {
         if (next == null) {
           continue;
         }
-        if (next instanceof Map) {
-          Map map = (Map) next;
+        if (next instanceof Map map) {
           if (numElements == 0) {
             rawType = RelationType.EMPTY;
             //Try to detect type
@@ -53,8 +52,8 @@ public class TypeSignatureUtil {
           if (numElements == 0) {
             rawType = getBasicType(next);
             //Try to detect type
-            if (next instanceof String) {
-              detectedType = detectFromString.apply((String) next);
+            if (next instanceof String string) {
+              detectedType = detectFromString.apply(string);
             }
           } else if (detectedType != null) {
             rawType = BasicTypeManager.combineForced((BasicType) rawType, getBasicType(next));
@@ -72,15 +71,15 @@ public class TypeSignatureUtil {
       }
     } else {
       //Single element
-      if (o instanceof Map) {
+      if (o instanceof Map map) {
         rawType = RelationType.EMPTY;
-        detectedType = detectFromComposite.apply((Map) o);
+        detectedType = detectFromComposite.apply(map);
       } else {
         //not an array or map => must be scalar
         rawType = getBasicType(o);
         //Try to detect type
-        if (o instanceof String) {
-          detectedType = detectFromString.apply((String) o);
+        if (o instanceof String string) {
+          detectedType = detectFromString.apply(string);
         }
       }
     }
@@ -95,8 +94,8 @@ public class TypeSignatureUtil {
   public static Collection<Object> array2Collection(Object arr) {
 //    Preconditions.checkArgument(isArray(arr));
     final Collection col;
-    if (arr instanceof Collection) {
-      col = (Collection) arr;
+    if (arr instanceof Collection collection) {
+      col = collection;
     } else {
       col = Arrays.asList((Object[]) arr);
     }

@@ -7,7 +7,8 @@ import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.module.resolver.ResourceResolver;
 import java.util.Optional;
-import lombok.*;
+import lombok.NonNull;
+import lombok.Value;
 
 import java.net.URI;
 import java.nio.file.Path;

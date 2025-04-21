@@ -164,13 +164,11 @@ public class GraphqlQueryBuilder {
       List<SqlOperator> operators = getOperators(macro.getDisplayName(), List.of(),
           getInternalParams(functions.get(0).getParameters()));
       if (operators.isEmpty()) {
-        throw new RuntimeException(String.format(
-            "Could not find operator: %s(%s)", macro.getDisplayName(), getInternalParams(functions.get(0).getParameters()).stream()
-                .map(SqrlFunctionParameter::getName)
-                .collect(Collectors.joining(","))));
+        throw new RuntimeException("Could not find operator: %s(%s)".formatted(macro.getDisplayName(), getInternalParams(functions.get(0).getParameters()).stream()
+            .map(SqrlFunctionParameter::getName)
+            .collect(Collectors.joining(","))));
       } else if (operators.size() > 1) {
-        throw new RuntimeException(String.format(
-            "Ambiguous operator: %s", macro.getDisplayName()));
+        throw new RuntimeException("Ambiguous operator: %s".formatted(macro.getDisplayName()));
       }
       return Pair.of((SqlUserDefinedTableFunction) Iterables.getOnlyElement(operators), true);
     }
@@ -265,12 +263,10 @@ public class GraphqlQueryBuilder {
   }
 
   public RelDataType graphqlToRelDataType(Type type, RelDataTypeFactory typeFactory) {
-    if (type instanceof NonNullType) {
-      NonNullType nonNullType = (NonNullType) type;
+    if (type instanceof NonNullType nonNullType) {
       return typeFactory.createTypeWithNullability(
           graphqlToRelDataType(nonNullType.getType(), typeFactory), false);
-    } else if (type instanceof ListType) {
-      ListType listType = (ListType) type;
+    } else if (type instanceof ListType listType) {
       return typeFactory.createArrayType(
           graphqlToRelDataType(listType.getType(), typeFactory), -1);
     }

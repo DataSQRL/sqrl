@@ -185,10 +185,10 @@ public class GraphQLServer extends AbstractVerticle {
     router.route().handler(LoggerHandler.create());
 
     MeterRegistry registry = BackendRegistries.getDefaultNow();
-    if (registry instanceof PrometheusMeterRegistry) {
+    if (registry instanceof PrometheusMeterRegistry meterRegistry) {
       router.route("/metrics").handler(ctx -> {
         ctx.response().putHeader("content-type", "text/plain");
-        ctx.response().end(((PrometheusMeterRegistry)registry).scrape());
+        ctx.response().end(meterRegistry.scrape());
       });
     }
 

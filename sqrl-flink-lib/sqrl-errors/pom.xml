@@ -9,11 +9,6 @@
   <artifactId>sqrl-errors</artifactId>
   <version>0.6.0-SNAPSHOT</version>
 
-  <properties>
-    <maven.compiler.source>11</maven.compiler.source>
-    <maven.compiler.target>11</maven.compiler.target>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-  </properties>
   <description>Error library</description>
 
   <url>https://www.datasqrl.com/</url>

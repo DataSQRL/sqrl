@@ -53,11 +53,11 @@ public class PostgresListenNotifyConsumer {
           if (queryResult.succeeded()) {
             log.info("LISTEN command executed successfully: {}", listenQuery);
           } else {
-            log.error(String.format("Unable to execute LISTEN command: %s", queryResult.cause().getMessage()), queryResult.cause());
+            log.error("Unable to execute LISTEN command: %s".formatted(queryResult.cause().getMessage()), queryResult.cause());
           }
         });
       } else {
-        log.error(String.format("Unable to establish connection. %s", res.cause().getMessage()), res.cause());
+        log.error("Unable to establish connection. %s".formatted(res.cause().getMessage()), res.cause());
       }
     });
   }

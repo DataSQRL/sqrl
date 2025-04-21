@@ -69,8 +69,7 @@ public class FlinkSqlGenerator {
     Map<String, String> config = new LinkedHashMap<>();
     List<String> plan = new ArrayList<>();
     for (SqlNode sqlNode : flinkSql) {
-      if (sqlNode instanceof SqlSet) {
-        SqlSet set = (SqlSet) sqlNode;
+      if (sqlNode instanceof SqlSet set) {
         config.put(set.getKeyString(), set.getValueString());
       } else {
         String sql = sqlNodeToString.convert(() -> sqlNode).getSql() + ";";

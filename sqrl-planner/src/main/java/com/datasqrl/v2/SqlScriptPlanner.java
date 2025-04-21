@@ -206,8 +206,7 @@ public class SqlScriptPlanner {
       /*Some SQRL statements extend previous statements, so we stack them to keep
       of the lineage as needed for planning
        */
-      if (sqlStatement instanceof StackableStatement) {
-        StackableStatement stackableStatement = (StackableStatement) sqlStatement;
+      if (sqlStatement instanceof StackableStatement stackableStatement) {
         if (stackableStatement.isRoot()) statementStack = new ArrayList<>();
         statementStack.add(stackableStatement);
       } else {
@@ -228,8 +227,8 @@ public class SqlScriptPlanner {
     //Process hints & documentation
     PlannerHints hints = PlannerHints.EMPTY;
     Optional<String> documentation = Optional.empty();
-    if (stmt instanceof SqrlStatement) {
-      SqrlComments comments = ((SqrlStatement)stmt).getComments();
+    if (stmt instanceof SqrlStatement statement) {
+      SqrlComments comments = statement.getComments();
       hints = PlannerHints.fromHints(comments);
       if (!comments.getDocumentation().isEmpty()) {
         documentation = Optional.of(comments.getDocumentation().stream().map(ParsedObject::get)
@@ -238,14 +237,13 @@ public class SqlScriptPlanner {
       }
     }
     HintsAndDocs hintsAndDocs = new HintsAndDocs(hints, documentation);
-    if (stmt instanceof SqrlImportStatement) {
-      addImport((SqrlImportStatement) stmt, hintsAndDocs, sqrlEnv, errors);
-    } else if (stmt instanceof SqrlExportStatement) {
-      addExport((SqrlExportStatement) stmt, sqrlEnv);
-    } else if (stmt instanceof SqrlCreateTableStatement) {
-      addSourceToDag(sqrlEnv.createTable(((SqrlCreateTableStatement) stmt).toSql(), getLogEngineBuilder(hintsAndDocs)), hintsAndDocs, sqrlEnv);
-    } else if (stmt instanceof SqrlDefinition) {
-      SqrlDefinition sqrlDef = (SqrlDefinition) stmt;
+    if (stmt instanceof SqrlImportStatement statement) {
+      addImport(statement, hintsAndDocs, sqrlEnv, errors);
+    } else if (stmt instanceof SqrlExportStatement statement) {
+      addExport(statement, sqrlEnv);
+    } else if (stmt instanceof SqrlCreateTableStatement statement) {
+      addSourceToDag(sqrlEnv.createTable(statement.toSql(), getLogEngineBuilder(hintsAndDocs)), hintsAndDocs, sqrlEnv);
+    } else if (stmt instanceof SqrlDefinition sqrlDef) {
       AccessModifier access = sqrlDef.getAccess();
       NamePath tablePath = sqrlDef.getPath();
       if (sqrlDef instanceof SqrlAddColumnStatement) {
@@ -269,8 +267,7 @@ public class SqlScriptPlanner {
 
       String originalSql = sqrlDef.toSql(sqrlEnv, statementStack);
       //Relationships and Table functions require special handling
-      if (sqrlDef instanceof SqrlTableFunctionStatement) {
-        SqrlTableFunctionStatement tblFctStmt = (SqrlTableFunctionStatement) sqrlDef;
+      if (sqrlDef instanceof SqrlTableFunctionStatement tblFctStmt) {
         ObjectIdentifier identifier = SqlNameUtil.toIdentifier(tblFctStmt.getPath().getFirst()); //TODO: this should be resolved against the current catalog and database
         final LinkedHashMap<Name, ParsedArgument> arguments = new LinkedHashMap<>();
         if (!tblFctStmt.getSignature().isEmpty()) {
@@ -329,8 +326,7 @@ public class SqlScriptPlanner {
         AccessVisibility visibility = new AccessVisibility(access, hints.isTest(), true, isHidden);
         addTableToDag(sqrlEnv.addView(originalSql, hints, errors), hintsAndDocs, visibility, sqrlEnv);
       }
-    } else if (stmt instanceof FlinkSQLStatement) { //Some other Flink table statement we pass right through
-      FlinkSQLStatement flinkStmt = (FlinkSQLStatement) stmt;
+    } else if (stmt instanceof FlinkSQLStatement flinkStmt) {
       SqlNode node = sqrlEnv.parseSQL(flinkStmt.getSql().get());
       if (node instanceof SqlCreateView || node instanceof SqlAlterViewAs) {
         //plan like other definitions from above
@@ -392,11 +388,11 @@ public class SqlScriptPlanner {
     Map<ExecutionStage, StageAnalysis> stageAnalysis = new HashMap<>();
     for (ExecutionStage executionStage : availableStages) {
       List<EngineCapability> unsupported = tableAnalysis.getRequiredCapabilities().stream().filter(capability -> {
-        if (capability instanceof EngineCapability.Feature) {
-          return !executionStage.supportsFeature(((Feature) capability).getFeature());
-        } else if (capability instanceof EngineCapability.Function) {
+        if (capability instanceof Feature feature) {
+          return !executionStage.supportsFeature(feature.getFeature());
+        } else if (capability instanceof EngineCapability.Function function) {
           return !executionStage.supportsFunction(
-              ((EngineCapability.Function) capability).getFunction());
+              function.getFunction());
         } else {
           throw new UnsupportedOperationException(capability.getName());
         }
@@ -575,10 +571,10 @@ public class SqlScriptPlanner {
    * @param sqrlEnv
    */
   private void addImport(NamespaceObject nsObject, Optional<String> alias, HintsAndDocs hintsAndDocs, Sqrl2FlinkSQLTranslator sqrlEnv) {
-    if (nsObject instanceof FlinkTableNamespaceObject) { //import a table
+    if (nsObject instanceof FlinkTableNamespaceObject object) { //import a table
       //TODO: for a create table statement without options (connector), we manage it internally
       // add pass it to Log engine for augmentation after validating/adding event-id and event-time metadata columns & checking no watermark/partition/constraint is present
-      ExternalFlinkTable flinkTable = ExternalFlinkTable.fromNamespaceObject((FlinkTableNamespaceObject) nsObject,
+      ExternalFlinkTable flinkTable = ExternalFlinkTable.fromNamespaceObject(object,
           alias, errorCollector);
       try {
         TableAnalysis tableAnalysis = sqrlEnv.createTableWithSchema(flinkTable.tableName.getDisplay(), flinkTable.sqlCreateTable,
@@ -588,14 +584,12 @@ public class SqlScriptPlanner {
       } catch (Throwable e) {
         throw flinkTable.errorCollector.handle(e);
       }
-    } else if (nsObject instanceof FlinkUdfNsObject) { //import a user-defined function
-      FlinkUdfNsObject fnsObject = (FlinkUdfNsObject) nsObject;
+    } else if (nsObject instanceof FlinkUdfNsObject fnsObject) {
       Preconditions.checkArgument(fnsObject.getFunction() instanceof UserDefinedFunction, "Expected UDF: " + fnsObject.getFunction());
       Class<?> udfClass = fnsObject.getFunction().getClass();
       String name = alias.orElseGet(() -> FlinkUdfNsObject.getFunctionNameFromClass(udfClass).getDisplay());
       sqrlEnv.addUserDefinedFunction(name, udfClass.getName(), false);
-    } else if (nsObject instanceof ScriptNamespaceObject) { //import a script
-      ScriptNamespaceObject scriptObject = (ScriptNamespaceObject) nsObject;
+    } else if (nsObject instanceof ScriptNamespaceObject scriptObject) {
       checkFatal(scriptObject.getTableName().isEmpty(), ErrorLabel.GENERIC, "Cannot import an individual table from SQRL script. Use * to import entire script: %s", scriptObject.getName());
       planMain(scriptObject.getScript(), sqrlEnv);
     } else {
@@ -730,8 +724,8 @@ public class SqlScriptPlanner {
 
       //Schema conversion
       Optional<RelDataType> schema = flinkTable.getSchema().map(tableSchema -> {
-        if (tableSchema instanceof RelDataTypeTableSchema) {
-          return ((RelDataTypeTableSchema) tableSchema).getRelDataType();
+        if (tableSchema instanceof RelDataTypeTableSchema typeTableSchema) {
+          return typeTableSchema.getRelDataType();
         } else {
           return SchemaToRelDataTypeFactory.load(tableSchema)
               .map(tableSchema, null, tableName, errorCollector);

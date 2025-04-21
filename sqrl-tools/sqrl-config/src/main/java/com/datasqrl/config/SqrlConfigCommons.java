@@ -177,7 +177,7 @@ public class SqrlConfigCommons implements SqrlConfig {
     errors.checkFatal(!isBasicClass(clazz), "Cannot map configuration onto a basic class: %s",
         clazz.getName());
     try {
-      T value = clazz.newInstance();
+      T value = clazz.getDeclaredConstructor().newInstance();
       for (Field field : clazz.getDeclaredFields()) {
         if (Modifier.isStatic(field.getModifiers()))
           continue;
@@ -207,8 +207,8 @@ public class SqrlConfigCommons implements SqrlConfig {
       }
       return new ValueImpl<>(prefix, errors, Optional.of(value));
     } catch (Exception e) {
-      if (e instanceof CollectedException)
-        throw (CollectedException) e;
+      if (e instanceof CollectedException exception)
+        throw exception;
       throw errors.exception("Could not map configuration values on "
           + "object of clazz [%s]: %s", clazz.getName(), e.toString());
     }
@@ -259,8 +259,8 @@ public class SqrlConfigCommons implements SqrlConfig {
           setProperty(field.getName(), fieldValue);
       }
     } catch (Exception e) {
-      if (e instanceof CollectedException)
-        throw (CollectedException) e;
+      if (e instanceof CollectedException exception)
+        throw exception;
       throw errors.exception("Could not access fields "
           + "of clazz [%s]: %s", clazz.getName(), e.getMessage());
     }

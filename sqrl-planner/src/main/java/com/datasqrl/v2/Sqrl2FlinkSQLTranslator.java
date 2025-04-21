@@ -273,19 +273,19 @@ public class Sqrl2FlinkSQLTranslator {
     SqlNode validated = flinkPlanner.validate(viewDef);
     RowLevelModificationContextUtils.clearContext();
     final SqlNode query;
-    if (validated instanceof SqlCreateView) {
-      query = ((SqlCreateView) validated).getQuery();
-    } else if (validated instanceof SqlAlterViewAs) {
-      query = ((SqlAlterViewAs) validated).getNewQuery();
+    if (validated instanceof SqlCreateView view) {
+      query = view.getQuery();
+    } else if (validated instanceof SqlAlterViewAs as) {
+      query = as.getNewQuery();
     } else throw new UnsupportedOperationException("Unexpected SQLnode: " + validated);
     RelRoot relRoot = toRelRoot(query, flinkPlanner);
     FlinkRelBuilder relBuilder = getRelBuilder(flinkPlanner);
     RelNode relNode = relRoot.rel;
     Optional<Sort> topLevelSort = Optional.empty();
     if (removeTopLevelSort) {
-      if (relNode instanceof Sort) {
+      if (relNode instanceof Sort sort) {
         //Remove top-level sort and attach it to TableAnalysis later
-        topLevelSort = Optional.of((Sort) relNode);
+        topLevelSort = Optional.of(sort);
         relNode = topLevelSort.get().getInput();
       } else {
         errors.warn("Expected top-level sort on relnode: %s",relNode.explain());
@@ -348,8 +348,8 @@ public class Sqrl2FlinkSQLTranslator {
   }
 
   public SqlNode getQueryFromView(SqlNode viewDef) {
-    return viewDef instanceof SqlCreateView?
-        ((SqlCreateView) viewDef).getQuery():
+    return viewDef instanceof SqlCreateView scv?
+        scv.getQuery():
         ((SqlAlterViewAs)viewDef).getNewQuery();
   }
 
@@ -360,8 +360,7 @@ public class Sqrl2FlinkSQLTranslator {
    * @return
    */
   public SqlNode updateViewQuery(SqlNode updatedQuery, SqlNode viewDef) {
-    if (viewDef instanceof SqlCreateView) {
-      SqlCreateView createView = (SqlCreateView) viewDef;
+    if (viewDef instanceof SqlCreateView createView) {
       return updatedQuery==createView.getQuery()?createView:
           new SqlCreateView(createView.getParserPosition(),
               createView.getViewName(), createView.getFieldList(), updatedQuery, createView.getReplace(),
@@ -401,13 +400,13 @@ public class Sqrl2FlinkSQLTranslator {
     Operation op = executeSqlNode(rewrittenViewDef);
     ObjectIdentifier identifier;
     Schema schema;
-    if (op instanceof AlterViewAsOperation) {
-      identifier = ((AlterViewAsOperation) op).getViewIdentifier();
-      schema = ((AlterViewAsOperation) op).getNewView().getUnresolvedSchema();
+    if (op instanceof AlterViewAsOperation operation) {
+      identifier = operation.getViewIdentifier();
+      schema = operation.getNewView().getUnresolvedSchema();
       tableLookup.removeTable(identifier); //remove previously planned view
-    } else if (op instanceof CreateViewOperation) {
-      identifier = ((CreateViewOperation) op).getViewIdentifier();
-      schema = ((CreateViewOperation) op).getCatalogView().getUnresolvedSchema();
+    } else if (op instanceof CreateViewOperation operation) {
+      identifier = operation.getViewIdentifier();
+      schema = operation.getCatalogView().getUnresolvedSchema();
     }
     else throw new UnsupportedOperationException(op.getClass().toString());
 
@@ -427,8 +426,8 @@ public class Sqrl2FlinkSQLTranslator {
   }
 
   private SqlNode removeSort(SqlNode sqlNode) {
-    if (sqlNode instanceof SqlOrderBy) {
-      return ((SqlOrderBy)sqlNode).query;
+    if (sqlNode instanceof SqlOrderBy by) {
+      return by.query;
     }
     return sqlNode;
   }
@@ -529,8 +528,8 @@ public class Sqrl2FlinkSQLTranslator {
 
     @Override
     public RelNode visit(RelNode other) {
-      if (other instanceof LogicalTableFunctionScan) {
-        return visit((LogicalTableFunctionScan) other);
+      if (other instanceof LogicalTableFunctionScan scan) {
+        return visit(scan);
       }
       return super.visit(other);
     }
@@ -733,9 +732,9 @@ public class Sqrl2FlinkSQLTranslator {
     SqlCreateFunction functionSql = FlinkSqlNodeFactory.createFunction(name, clazz, isSystem);
     Operation addFctOp = executeSqlNode(functionSql);
     //Function definitions are not in the compiled plan, have to add them explicitly but with fully resolved identifier
-    if (addFctOp instanceof CreateCatalogFunctionOperation) {
+    if (addFctOp instanceof CreateCatalogFunctionOperation operation) {
       functionSql = FlinkSqlNodeFactory.createFunction(FlinkSqlNodeFactory.identifier(
-          ((CreateCatalogFunctionOperation) addFctOp).getFunctionIdentifier()), clazz, isSystem);
+          operation.getFunctionIdentifier()), clazz, isSystem);
     }
     planBuilder.addFullyResolvedFunction(toSqlString(functionSql));
   }
@@ -750,20 +749,19 @@ public class Sqrl2FlinkSQLTranslator {
     for (int i = 0; i < schema.getColumns().size(); i++) {
       UnresolvedColumn column = schema.getColumns().get(i);
       AbstractDataType type = null;
-      if (column instanceof UnresolvedPhysicalColumn) {
-        type = ((UnresolvedPhysicalColumn) column).getDataType();
-      } else if (column instanceof UnresolvedMetadataColumn) {
-        type = ((UnresolvedMetadataColumn) column).getDataType();
-      } else if (column instanceof UnresolvedComputedColumn) {
-        UnresolvedComputedColumn computedColumn = (UnresolvedComputedColumn) column;
+      if (column instanceof UnresolvedPhysicalColumn physicalColumn) {
+        type = physicalColumn.getDataType();
+      } else if (column instanceof UnresolvedMetadataColumn metadataColumn) {
+        type = metadataColumn.getDataType();
+      } else if (column instanceof UnresolvedComputedColumn computedColumn) {
         if (expressionResolver==null) expressionResolver=getExpressionResolver(); //lazy initialization
         // Resolve the expression's data type
         ResolvedExpression resolvedExpression = expressionResolver.apply(computedColumn.getExpression());
         type = resolvedExpression.getOutputDataType();
       }
-      if (type instanceof DataType) {
+      if (type instanceof DataType dataType) {
         fields.add(new RelDataTypeFieldImpl(column.getName(),i,
-            typeFactory.createFieldTypeFromLogicalType(((DataType)type).getLogicalType())));
+            typeFactory.createFieldTypeFromLogicalType(dataType.getLogicalType())));
       } else {
         throw new StatementParserException(ErrorLabel.GENERIC, new FileLocation(i, 1),
             "Invalid type: " + column);

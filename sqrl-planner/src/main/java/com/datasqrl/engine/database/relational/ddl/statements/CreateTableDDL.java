@@ -25,10 +25,10 @@ public class CreateTableDDL implements SqlDDLStatement {
   public String getSql() {
     String primaryKeyStr = "";
     if (!primaryKeys.isEmpty()) {
-      primaryKeyStr = String.format(" , PRIMARY KEY (%s)", String.join(",", primaryKeys));
+      primaryKeyStr = " , PRIMARY KEY (%s)".formatted(String.join(",", primaryKeys));
     }
     String createTable = "CREATE TABLE IF NOT EXISTS %s (%s%s)";
-    String sql = String.format(createTable, name,
+    String sql = createTable.formatted(name,
         columns.stream().map(CreateTableDDL::fieldToSql).collect(Collectors.joining(", ")), primaryKeyStr);
 
     return sql;

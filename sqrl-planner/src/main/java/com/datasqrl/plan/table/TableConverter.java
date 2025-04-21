@@ -50,8 +50,8 @@ public class TableConverter {
       errors = errors.withConfig(tableSchema.getLocation().get());
     }
     RelDataType dataType;
-    if (tableSchema instanceof RelDataTypeTableSchema) {
-      dataType = ((RelDataTypeTableSchema) tableSchema).getRelDataType();
+    if (tableSchema instanceof RelDataTypeTableSchema schema) {
+      dataType = schema.getRelDataType();
     } else {
       dataType = SchemaToRelDataTypeFactory.load(tableSchema)
           .map(tableSchema, tableConfig, tableName, errors);
@@ -88,9 +88,9 @@ public class TableConverter {
         SqlNode sqlNode = framework.getQueryPlanner().parseCall(attribute);
 
         //Is a function call
-        if (sqlNode instanceof SqlCall) {
+        if (sqlNode instanceof SqlCall call) {
           SqlCallRewriter callRewriter = new SqlCallRewriter();
-          callRewriter.performCallRewrite((SqlCall) sqlNode);
+          callRewriter.performCallRewrite(call);
 
           addModules(framework, moduleLoader, errors, callRewriter.getFncModules());
           try {
@@ -100,15 +100,15 @@ public class TableConverter {
             typeBuilder.add(nameAdjuster.uniquifyName(columnName), rexNode.getType());
           } catch (Exception e) {
             throw new RuntimeException(
-                String.format("Could not evaluate metadata expression: %s. Reason: %s", attribute, e.getMessage()));
+                "Could not evaluate metadata expression: %s. Reason: %s".formatted(attribute, e.getMessage()));
           }
-        } else if (sqlNode instanceof SqlIdentifier) {
+        } else if (sqlNode instanceof SqlIdentifier identifier) {
           RelDataType relDataType = typeBuilder.build();
 
           RelDataTypeField field = relDataType.getField(attribute,
               false, false);
           if (field == null) {
-            throw new RuntimeException("Could not find metadata field:" + ((SqlIdentifier) sqlNode).getSimple());
+            throw new RuntimeException("Could not find metadata field:" + identifier.getSimple());
           }
           typeBuilder.add(nameAdjuster.uniquifyName(columnName), field.getType());
         } else { //is a metadata column
@@ -140,7 +140,7 @@ public class TableConverter {
     Preconditions.checkState(baseTblConfig.getTimestampColumn().isPresent(), "timestamp column missing");
     String timestampColumn = baseTblConfig.getTimestampColumn().get();
     if (!nameAdjuster.contains(timestampColumn)) {
-      throw new RuntimeException(String.format("Timestamp column not found: \"%s\". Must be one of: %s", timestampColumn, nameAdjuster));
+      throw new RuntimeException("Timestamp column not found: \"%s\". Must be one of: %s".formatted(timestampColumn, nameAdjuster));
     }
 
     TableType tableType = tableConfig.getConnectorConfig().getTableType();
