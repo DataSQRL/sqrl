@@ -45,7 +45,7 @@ Timestamp  : -
 Schema:
  - doc_id: INTEGER NOT NULL
  - category_id: INTEGER NOT NULL
- - vector: RAW('com.datasqrl.types.vector.FlinkVectorType', 'ADtjb20uZGF0YXNxcmwudHlwZXMudmVjdG9yLkZsaW5rVmVjdG9yVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAEAM2NvbS5kYXRhc3FybC50eXBlcy52ZWN0b3IuRmxpbmtWZWN0b3JUeXBlU2VyaWFsaXplcg==')
+ - vector: RAW('com.datasqrl.types.vector.FlinkVectorType', 'ADtjb20uZGF0YXNxcmwudHlwZXMudmVjdG9yLkZsaW5rVmVjdG9yVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM=')
 Plan:
 LogicalProject(doc_id=[$0], category_id=[$1], vector=[doubleToVector(CAST($2):DOUBLE NOT NULL ARRAY)])
   LogicalProject(doc_id=[$0], category_id=[$1], vector=[$2])
@@ -88,7 +88,7 @@ SELECT `doc_id`, `category_id`
 FROM `VectorData`;
 CREATE TABLE `CategoryCentroids_1` (
   `category_id` INTEGER NOT NULL,
-  `center_vector` RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQAvY29tLmRhdGFzcXJsLnR5cGVzLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),
+  `center_vector` RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
   PRIMARY KEY (`category_id`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
@@ -101,7 +101,7 @@ CREATE TABLE `CategoryCentroids_1` (
 CREATE TABLE `VectorData_2` (
   `doc_id` INTEGER NOT NULL,
   `category_id` INTEGER NOT NULL,
-  `vector` RAW('com.datasqrl.types.vector.FlinkVectorType', 'ADtjb20uZGF0YXNxcmwudHlwZXMudmVjdG9yLkZsaW5rVmVjdG9yVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAEAM2NvbS5kYXRhc3FybC50eXBlcy52ZWN0b3IuRmxpbmtWZWN0b3JUeXBlU2VyaWFsaXplcg=='),
+  `vector` RAW('com.datasqrl.types.vector.FlinkVectorType', 'ADtjb20uZGF0YXNxcmwudHlwZXMudmVjdG9yLkZsaW5rVmVjdG9yVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
   PRIMARY KEY (`doc_id`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
