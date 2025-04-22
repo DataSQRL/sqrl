@@ -44,9 +44,9 @@ public class CaseInsensitiveStream
     var result = stream.LA(i);
 
     return switch (result) {
-	case 0, IntStream.EOF -> result;
-	default -> Character.toUpperCase(result);
-	};
+    case 0, IntStream.EOF -> result;
+    default -> Character.toUpperCase(result);
+    };
   }
 
   @Override

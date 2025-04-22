@@ -238,12 +238,12 @@ public abstract class SqlUtil {
       return false;
     }
     return switch (node.getKind()) {
-	case CAST -> /* "CAST(e AS type)" is literal if "e" is literal */ isLiteral(((SqlCall) node).operand(0), true);
-	case MAP_VALUE_CONSTRUCTOR, ARRAY_VALUE_CONSTRUCTOR -> ((SqlCall) node).getOperandList().stream()
-	            .allMatch(o -> isLiteral(o, true));
-	case DEFAULT -> true; // DEFAULT is always NULL
-	default -> false;
-	};
+    case CAST -> /* "CAST(e AS type)" is literal if "e" is literal */ isLiteral(((SqlCall) node).operand(0), true);
+    case MAP_VALUE_CONSTRUCTOR, ARRAY_VALUE_CONSTRUCTOR -> ((SqlCall) node).getOperandList().stream()
+                .allMatch(o -> isLiteral(o, true));
+    case DEFAULT -> true; // DEFAULT is always NULL
+    default -> false;
+    };
   }
 
   /**
@@ -601,11 +601,11 @@ public abstract class SqlUtil {
     opTab.lookupOperatorOverloads(funcName, category, syntax, sqlOperators,
         nameMatcher);
     return switch (syntax) {
-	case FUNCTION -> Iterators.filter(sqlOperators.iterator(),
-	            Predicates.instanceOf(SqlFunction.class));
-	default -> Iterators.filter(sqlOperators.iterator(),
-	            operator -> Objects.requireNonNull(operator, "operator").getSyntax() == syntax);
-	};
+    case FUNCTION -> Iterators.filter(sqlOperators.iterator(),
+                Predicates.instanceOf(SqlFunction.class));
+    default -> Iterators.filter(sqlOperators.iterator(),
+                operator -> Objects.requireNonNull(operator, "operator").getSyntax() == syntax);
+    };
   }
 
   private static Iterator<SqlOperator> filterRoutinesByParameterCount(
@@ -983,13 +983,13 @@ public abstract class SqlUtil {
    */
   public static @Nullable String translateCharacterSetName(String name) {
     return switch (name) {
-	case "BIG5" -> "Big5";
-	case "LATIN1" -> "ISO-8859-1";
-	case "UTF8" -> "UTF-8";
-	case "UTF16", "UTF-16" -> ConversionUtil.NATIVE_UTF16_CHARSET_NAME;
-	case "GB2312", "GBK", "UTF-16BE", "UTF-16LE", "ISO-8859-1", "UTF-8" -> name;
-	default -> null;
-	};
+    case "BIG5" -> "Big5";
+    case "LATIN1" -> "ISO-8859-1";
+    case "UTF8" -> "UTF-8";
+    case "UTF16", "UTF-16" -> ConversionUtil.NATIVE_UTF16_CHARSET_NAME;
+    case "GB2312", "GBK", "UTF-16BE", "UTF-16LE", "ISO-8859-1", "UTF-8" -> name;
+    default -> null;
+    };
   }
 
   /**

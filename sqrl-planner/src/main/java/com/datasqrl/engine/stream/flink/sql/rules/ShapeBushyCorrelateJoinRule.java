@@ -23,7 +23,7 @@ public class ShapeBushyCorrelateJoinRule extends RelRule<ShapeBushyCorrelateJoin
 
   @Override
   public void onMatch(RelOptRuleCall relOptRuleCall) {
-	  LogicalCorrelate top = relOptRuleCall.rel(0);
+      LogicalCorrelate top = relOptRuleCall.rel(0);
     var left = relOptRuleCall.rel(1);
     var right = relOptRuleCall.rel(2);
 

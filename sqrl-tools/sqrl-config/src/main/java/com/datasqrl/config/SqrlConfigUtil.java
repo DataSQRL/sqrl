@@ -18,8 +18,8 @@ public class SqrlConfigUtil {
     var result = new LinkedHashMap<String, R>();
     config.toMap().forEach((key,value) -> {
       if (withoutKeys.contains(key) || key.equals(SqrlConfig.VERSION_KEY)) {
-		return;
-	}
+        return;
+    }
       result.put(key,valueFunction.apply(value));
     });
     return result;

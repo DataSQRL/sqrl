@@ -62,14 +62,14 @@ public interface Constraints {
       } else if (annotation instanceof NotEmpty) {
         value = value.validate(x -> {
               if (x instanceof String string) {
-				return StringUtils.isNotBlank(string);
-			}
+                return StringUtils.isNotBlank(string);
+            }
               if (x instanceof Collection collection) {
-				return collection.size()>0;
-			}
+                return collection.size()>0;
+            }
               if (x.getClass().isArray()) {
-				return Array.getLength(x)>0;
-			}
+                return Array.getLength(x)>0;
+            }
               return true;
             },
             "Value cannot be empty");

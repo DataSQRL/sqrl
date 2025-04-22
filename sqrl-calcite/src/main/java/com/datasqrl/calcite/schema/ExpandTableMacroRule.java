@@ -38,8 +38,8 @@ public class ExpandTableMacroRule extends RelRule<ExpandTableMacroRule.Config>
       var function = (SqrlTableMacro)((SqlUserDefinedTableFunction) call.getOperator()).getFunction();
       //Don't transform nested relationships
       if (function instanceof NestedRelationship) {
-		return;
-	}
+        return;
+    }
 
       var relNode = CalciteUtil.applyRexShuttleRecursively(function.getViewTransform().get(),
           new ReplaceArgumentWithOperand(((RexCall) node.getCall()).getOperands()));

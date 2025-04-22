@@ -18,9 +18,9 @@ public enum TableType {
 
   public boolean hasTimestamp() {
     return switch (this) {
-	case STREAM, VERSIONED_STATE, STATE -> true;
-	default -> false; //NESTED, LOOKUP, RELATION
-	};
+    case STREAM, VERSIONED_STATE, STATE -> true;
+    default -> false; //NESTED, LOOKUP, RELATION
+    };
   }
 
   public boolean isLocked() {
@@ -29,27 +29,27 @@ public enum TableType {
 
   public boolean hasPrimaryKey() {
     return switch (this) {
-	case STREAM, VERSIONED_STATE, STATE, LOOKUP, STATIC -> true;
-	default -> false; //NESTED and RELATION
-	};
+    case STREAM, VERSIONED_STATE, STATE, LOOKUP, STATIC -> true;
+    default -> false; //NESTED and RELATION
+    };
   }
 
   public TableType combine(TableType other) {
     if (this==LOOKUP || other==LOOKUP) {
-		return RELATION; //or throw exception?
-	}
+        return RELATION; //or throw exception?
+    }
     if (this==STATIC) {
-		return other;
-	}
+        return other;
+    }
     if (other==STATIC) {
-		return this;
-	}
+        return this;
+    }
     if (this==RELATION || other==RELATION) {
-		return RELATION;
-	}
+        return RELATION;
+    }
     if (this==STREAM && other==STREAM) {
-		return STREAM;
-	}
+        return STREAM;
+    }
     return STATE;
   }
 

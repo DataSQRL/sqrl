@@ -41,36 +41,36 @@ public class IndexSelectorConfigByDialect implements IndexSelectorConfig {
   @Override
   public boolean hasPrimaryKeyIndex() {
     return switch (dialect) {
-	case Postgres, MySQL, Oracle, H2, SQLite -> true;
-	case Iceberg -> false;
-	default -> throw new IllegalStateException("Dialect not supported:" + dialect.name());
-	};
+    case Postgres, MySQL, Oracle, H2, SQLite -> true;
+    case Iceberg -> false;
+    default -> throw new IllegalStateException("Dialect not supported:" + dialect.name());
+    };
   }
 
   @Override
   public int maxIndexes() {
     return switch (dialect) {
-	case Iceberg -> 1;
-	default -> 8;
-	};
+    case Iceberg -> 1;
+    default -> 8;
+    };
   }
 
   @Override
   public int maxIndexColumnSets() {
     return switch (dialect) {
-	case Iceberg -> Integer.MAX_VALUE;
-	default -> 50;
-	};
+    case Iceberg -> Integer.MAX_VALUE;
+    default -> 50;
+    };
   }
 
   @Override
   public EnumSet<IndexType> supportedIndexTypes() {
     return switch (dialect) {
-	case Postgres, MySQL, Oracle -> EnumSet.of(HASH, BTREE, TEXT, VECTOR_COSINE, VECTOR_EUCLID);
-	case H2, SQLite -> EnumSet.of(HASH, BTREE);
-	case Iceberg -> EnumSet.of(PBTREE);
-	default -> throw new IllegalStateException("Dialect not supported:" + dialect.name());
-	};
+    case Postgres, MySQL, Oracle -> EnumSet.of(HASH, BTREE, TEXT, VECTOR_COSINE, VECTOR_EUCLID);
+    case H2, SQLite -> EnumSet.of(HASH, BTREE);
+    case Iceberg -> EnumSet.of(PBTREE);
+    default -> throw new IllegalStateException("Dialect not supported:" + dialect.name());
+    };
   }
 
   @Override
@@ -78,9 +78,9 @@ public class IndexSelectorConfigByDialect implements IndexSelectorConfig {
     switch (dialect) {
       case Postgres:
         return switch (indexType) {
-		case HASH -> 1;
-		default -> maxIndexColumns;
-		};
+        case HASH -> 1;
+        default -> maxIndexColumns;
+        };
       case MySQL:
       case H2:
       case SQLite:
@@ -94,14 +94,14 @@ public class IndexSelectorConfigByDialect implements IndexSelectorConfig {
   @Override
   public double relativeIndexCost(IndexDefinition index) {
     return switch (index.getType()) {
-	case HASH -> 1;
-	case BTREE -> 1.5 + 0.1 * index.getColumns().size();
-	case PBTREE -> {
-		Preconditions.checkArgument(index.getPartitionOffset() >= 0);
-		yield 1 + 1.0/(index.getPartitionOffset()+1) + 0.1 * index.getColumns().size();
-	}
-	default -> 1;
-	};
+    case HASH -> 1;
+    case BTREE -> 1.5 + 0.1 * index.getColumns().size();
+    case PBTREE -> {
+        Preconditions.checkArgument(index.getPartitionOffset() >= 0);
+        yield 1 + 1.0/(index.getPartitionOffset()+1) + 0.1 * index.getColumns().size();
+    }
+    default -> 1;
+    };
   }
 
   public static IndexSelectorConfigByDialect of(JdbcDialect dialect) {

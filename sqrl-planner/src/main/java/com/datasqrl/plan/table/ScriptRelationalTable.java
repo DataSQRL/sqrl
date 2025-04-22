@@ -70,8 +70,8 @@ public abstract class ScriptRelationalTable extends AbstractRelationalTable
 
     public int addColumn(@NonNull AddedColumn column, @NonNull RelDataTypeFactory typeFactory) {
         if (isLocked()) {
-			throw new UnsupportedOperationException("Table is locked: " + getNameId());
-		}
+            throw new UnsupportedOperationException("Table is locked: " + getNameId());
+        }
         var index = numSelects;
         numSelects++;
         addedColumns.add(column);

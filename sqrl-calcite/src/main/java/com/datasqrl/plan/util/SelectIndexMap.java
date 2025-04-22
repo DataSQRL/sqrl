@@ -27,8 +27,8 @@ public class SelectIndexMap implements IndexMap, Serializable {
   @Override
   public int mapUnsafe(int index) {
     if (index<0 || index>=targets.length) {
-		return -1;
-	}
+        return -1;
+    }
     return targets[index];
   }
 

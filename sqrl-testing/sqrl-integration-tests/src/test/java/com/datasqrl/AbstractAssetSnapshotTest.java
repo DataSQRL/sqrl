@@ -59,8 +59,8 @@ public abstract class AbstractAssetSnapshotTest {
   public void setup(TestInfo testInfo) throws IOException {
     clearDir(outputDir);
     if (outputDir != null) {
-		Files.createDirectories(outputDir);
-	}
+        Files.createDirectories(outputDir);
+    }
   }
 
   @AfterEach
@@ -164,20 +164,20 @@ public abstract class AbstractAssetSnapshotTest {
     var code =
         new RootCommand(rootDir, statusHook).getCmd().execute(argsList.toArray(String[]::new));
     if (statusHook.isSuccess() && code != 0) {
-		Assertions.assertEquals(0, code);
-	}
+        Assertions.assertEquals(0, code);
+    }
     return statusHook;
   }
 
   public static String getDisplayName(Path path) {
     if (path == null) {
-		return "";
-	}
+        return "";
+    }
     var filename = path.getFileName().toString();
     var length = filename.indexOf('.');
     if (length < 0) {
-		length = filename.length();
-	}
+        length = filename.length();
+    }
     return filename.substring(0, length);
   }
 
@@ -239,8 +239,8 @@ public abstract class AbstractAssetSnapshotTest {
 
     public static TestNameModifier of(String filename) {
       if (Strings.isNullOrEmpty(filename)) {
-		return none;
-	}
+        return none;
+    }
       var name = FileUtil.separateExtension(filename).getLeft().toLowerCase();
       return Arrays.stream(TestNameModifier.values())
           .filter(mod -> name.endsWith(mod.name()))
@@ -250,8 +250,8 @@ public abstract class AbstractAssetSnapshotTest {
 
     public static TestNameModifier of(Path file) {
       if (file == null) {
-		return none;
-	}
+        return none;
+    }
       return TestNameModifier.of(file.getFileName().toString());
     }
   }

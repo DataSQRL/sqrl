@@ -276,18 +276,18 @@ public class TimestampInference {
     }
 
     @Override
-	public String toString() {
+    public String toString() {
       return "TS#" + index;
     }
 
     @Override
     public boolean equals(Object o) {
       if (this == o) {
-		return true;
-	}
+        return true;
+    }
       if (o == null || getClass() != o.getClass()) {
-		return false;
-	}
+        return false;
+    }
       var candidate = (Candidate) o;
       return getTimestamps() == candidate.getTimestamps() && index == candidate.index;
     }

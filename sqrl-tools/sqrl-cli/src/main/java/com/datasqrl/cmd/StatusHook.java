@@ -58,7 +58,7 @@ public interface StatusHook {
     }
 
     @Override
-	public boolean isFailed() {
+    public boolean isFailed() {
       return failed;
     }
   }

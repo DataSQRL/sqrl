@@ -35,7 +35,7 @@ public class StringType extends AbstractBasicType<String> {
     }
 
     @Override
-	public String convert(Object o) {
+    public String convert(Object o) {
       return o.toString();
     }
 

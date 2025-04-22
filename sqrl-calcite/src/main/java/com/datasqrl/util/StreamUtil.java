@@ -25,11 +25,11 @@ public class StreamUtil {
     var elements = new AtomicReference<T>(null);
     var count = stream.map(e -> { elements.set(e); return e;}).count();
     if (count==0) {
-		return Optional.empty();
-	} else if (count==1) {
-		return Optional.of(elements.get());
-	} else {
-		throw new IllegalArgumentException("Stream contains ["+count+"] elements");
-	}
+        return Optional.empty();
+    } else if (count==1) {
+        return Optional.of(elements.get());
+    } else {
+        throw new IllegalArgumentException("Stream contains ["+count+"] elements");
+    }
   }
 }

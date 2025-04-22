@@ -37,17 +37,17 @@ public interface ConnectorConf {
     public Map<String,String> toVariables() {
       Map<String,String> vars = new HashMap<>(variables);
       if (tableName!=null) {
-		vars.put("table-name", tableName);
-	}
+        vars.put("table-name", tableName);
+      }
       if (origTableName!=null) {
-		vars.put("original-table-name", origTableName);
-	}
+        vars.put("original-table-name", origTableName);
+      }
       if (filename!=null) {
-		vars.put("filename", filename);
-	}
+        vars.put("filename", filename);
+      }
       if (format!=null) {
-		vars.put("format", format);
-	}
+        vars.put("format", format);
+      }
       return vars;
     }
   }

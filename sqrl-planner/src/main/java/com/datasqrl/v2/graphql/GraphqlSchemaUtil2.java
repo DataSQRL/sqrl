@@ -45,11 +45,11 @@ public class GraphqlSchemaUtil2 {
 
   public static GraphQLType wrapMultiplicity(GraphQLType type, Multiplicity multiplicity) {
     return switch (multiplicity) {
-	case ZERO_ONE -> type;
-	case ONE -> GraphQLNonNull.nonNull(type);
-	case MANY -> GraphQLList.list(GraphQLNonNull.nonNull(type));
-	default -> GraphQLList.list(GraphQLNonNull.nonNull(type));
-	};
+    case ZERO_ONE -> type;
+    case ONE -> GraphQLNonNull.nonNull(type);
+    case MANY -> GraphQLList.list(GraphQLNonNull.nonNull(type));
+    default -> GraphQLList.list(GraphQLNonNull.nonNull(type));
+    };
   }
 
   public static boolean isValidGraphQLName(String name) {
@@ -175,8 +175,8 @@ public class GraphqlSchemaUtil2 {
     for (RelDataTypeField field : rowType.getFieldList()) {
       final var fieldPath = namePath.concat(Name.system(field.getName()));
       if (fieldPath.getLast().isHidden()) {
-		continue;
-	}
+        continue;
+    }
       var columnType = field.getType();
       getGraphQLType(metaType, columnType, fieldPath, extendedScalarTypes)
           .map(fieldType -> (GraphQLInputType) wrapNullable(fieldType, columnType))// recursively traverse

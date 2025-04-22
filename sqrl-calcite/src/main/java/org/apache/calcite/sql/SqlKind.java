@@ -1744,12 +1744,12 @@ public enum SqlKind {
    */
   public SqlKind reverse() {
     return switch (this) {
-	case GREATER_THAN -> LESS_THAN;
-	case GREATER_THAN_OR_EQUAL -> LESS_THAN_OR_EQUAL;
-	case LESS_THAN -> GREATER_THAN;
-	case LESS_THAN_OR_EQUAL -> GREATER_THAN_OR_EQUAL;
-	default -> this;
-	};
+    case GREATER_THAN -> LESS_THAN;
+    case GREATER_THAN_OR_EQUAL -> LESS_THAN_OR_EQUAL;
+    case LESS_THAN -> GREATER_THAN;
+    case LESS_THAN_OR_EQUAL -> GREATER_THAN_OR_EQUAL;
+    default -> this;
+    };
   }
 
   /**
@@ -1769,16 +1769,16 @@ public enum SqlKind {
    */
   public SqlKind negate() {
     return switch (this) {
-	case IS_TRUE -> IS_NOT_TRUE;
-	case IS_FALSE -> IS_NOT_FALSE;
-	case IS_NULL -> IS_NOT_NULL;
-	case IS_NOT_TRUE -> IS_TRUE;
-	case IS_NOT_FALSE -> IS_FALSE;
-	case IS_NOT_NULL -> IS_NULL;
-	case IS_DISTINCT_FROM -> IS_NOT_DISTINCT_FROM;
-	case IS_NOT_DISTINCT_FROM -> IS_DISTINCT_FROM;
-	default -> this;
-	};
+    case IS_TRUE -> IS_NOT_TRUE;
+    case IS_FALSE -> IS_NOT_FALSE;
+    case IS_NULL -> IS_NOT_NULL;
+    case IS_NOT_TRUE -> IS_TRUE;
+    case IS_NOT_FALSE -> IS_FALSE;
+    case IS_NOT_NULL -> IS_NULL;
+    case IS_DISTINCT_FROM -> IS_NOT_DISTINCT_FROM;
+    case IS_NOT_DISTINCT_FROM -> IS_DISTINCT_FROM;
+    default -> this;
+    };
   }
 
   /**
@@ -1797,23 +1797,23 @@ public enum SqlKind {
    */
   public SqlKind negateNullSafe() {
     return switch (this) {
-	case EQUALS -> NOT_EQUALS;
-	case NOT_EQUALS -> EQUALS;
-	case LESS_THAN -> GREATER_THAN_OR_EQUAL;
-	case GREATER_THAN -> LESS_THAN_OR_EQUAL;
-	case LESS_THAN_OR_EQUAL -> GREATER_THAN;
-	case GREATER_THAN_OR_EQUAL -> LESS_THAN;
-	case IN -> NOT_IN;
-	case NOT_IN -> IN;
-	case DRUID_IN -> DRUID_NOT_IN;
-	case DRUID_NOT_IN -> DRUID_IN;
-	case IS_TRUE -> IS_FALSE;
-	case IS_FALSE -> IS_TRUE;
-	case IS_NOT_TRUE -> IS_NOT_FALSE;
-	case IS_NOT_FALSE -> IS_NOT_TRUE;
-	case IS_NOT_NULL, IS_NULL -> this;
-	default -> this.negate();
-	};
+    case EQUALS -> NOT_EQUALS;
+    case NOT_EQUALS -> EQUALS;
+    case LESS_THAN -> GREATER_THAN_OR_EQUAL;
+    case GREATER_THAN -> LESS_THAN_OR_EQUAL;
+    case LESS_THAN_OR_EQUAL -> GREATER_THAN;
+    case GREATER_THAN_OR_EQUAL -> LESS_THAN;
+    case IN -> NOT_IN;
+    case NOT_IN -> IN;
+    case DRUID_IN -> DRUID_NOT_IN;
+    case DRUID_NOT_IN -> DRUID_IN;
+    case IS_TRUE -> IS_FALSE;
+    case IS_FALSE -> IS_TRUE;
+    case IS_NOT_TRUE -> IS_NOT_FALSE;
+    case IS_NOT_FALSE -> IS_NOT_TRUE;
+    case IS_NOT_NULL, IS_NULL -> this;
+    default -> this.negate();
+    };
   }
 
   /**

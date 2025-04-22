@@ -36,10 +36,10 @@ public class Publication extends PackageConfigurationImpl {
 
     private static String orEmpty(String input) {
         if (Strings.isNullOrEmpty(input)) {
-			return "";
-		} else {
-			return input;
-		}
+            return "";
+        } else {
+            return input;
+        }
     }
 
 }

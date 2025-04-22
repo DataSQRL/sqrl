@@ -170,8 +170,8 @@ public class ErrorCollector implements Iterable<ErrorMessage>, Serializable {
 
   protected void addInternal(@NonNull ErrorMessage error) {
     if (reportErrorsOnly && !error.isFatal()) {
-		return;
-	}
+        return;
+    }
     errors.addInternal(error);
   }
 

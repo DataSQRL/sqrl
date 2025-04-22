@@ -40,8 +40,8 @@ public class PhysicalPlan {
 
   public PhysicalPlan applyRewriting(Collection<PhysicalPlanRewriter> rewriters, Sqrl2FlinkSQLTranslator sqrlEnv) {
     if (rewriters.isEmpty()) {
-		return this;
-	}
+        return this;
+    }
     var builder = PhysicalPlan.builder();
     for (PhysicalStagePlan stagePlan : stagePlans) {
       var enginePlan = stagePlan.plan;

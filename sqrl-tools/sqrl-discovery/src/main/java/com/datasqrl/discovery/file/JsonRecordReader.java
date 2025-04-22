@@ -32,8 +32,8 @@ public class JsonRecordReader implements RecordReader {
     var reader = new BufferedReader(new InputStreamReader(input));
     return reader.lines().flatMap(line -> {
       if (Strings.isNullOrEmpty(line)) {
-		return Stream.of();
-	}
+        return Stream.of();
+    }
       try {
         return Stream.of((Map<String,Object>)mapper.readValue(line, LinkedHashMap.class));
       } catch (IOException e) {

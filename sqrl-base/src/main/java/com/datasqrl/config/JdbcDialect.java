@@ -15,12 +15,12 @@ public enum JdbcDialect {
 
   private boolean matches(String dialect) {
     if (name().equalsIgnoreCase(dialect)) {
-		return true;
-	}
+        return true;
+    }
     for (String synonym : synonyms) {
       if (synonym.equalsIgnoreCase(dialect)) {
-		return true;
-	}
+        return true;
+    }
     }
     return false;
   }

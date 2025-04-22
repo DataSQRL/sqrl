@@ -103,8 +103,8 @@ public class GraphqlSchemaFactory {
             LinkedHashMap::new, Collectors.toList()));
     for (Map.Entry<NamePath, List<SqrlTableMacro>> field : fieldPathToTables.entrySet()) {
       if (field.getKey().getLast().isHidden()) {
-		continue; // hidden field not exposed in graphQL queries
-	}
+        continue; // hidden field not exposed in graphQL queries
+    }
 
 //      if (goal == ExecutionGoal.TEST) {
 //        if (!path.getValue().get(0).isTest()) continue;
@@ -172,8 +172,8 @@ public class GraphqlSchemaFactory {
     for(ResolvedImport mutation : schema.getImports()) {
       var name = mutation.getName();
       if (name.startsWith(HIDDEN_PREFIX)) {
-		continue;
-	}
+        continue;
+    }
 
       var type = mutation.getRelDataType();
 
@@ -218,8 +218,8 @@ public class GraphqlSchemaFactory {
     outer: for (PhysicalRelationalTable table : streamTables) {
       var tableName = table.getTablePath().getDisplay();
       if (tableName.startsWith(HIDDEN_PREFIX)) {
-		continue;
-	}
+        continue;
+    }
 
       //check if primary keys are nullable:
       for (int i : table.getPrimaryKey().getPkIndexes()) {
@@ -255,17 +255,17 @@ public class GraphqlSchemaFactory {
     for (SqrlTableMacro rel : relationships) {
       var name = rel.getAbsolutePath().getDisplay();
       if (name.startsWith(HIDDEN_PREFIX) || !isValidGraphQLName(name)) {
-		continue;
-	}
+        continue;
+    }
 
       if (goal == ExecutionGoal.TEST) {
         if (!rel.isTest()) {
-			continue;
-		}
+            continue;
+        }
       } else {
         if (rel.isTest()) {
-			continue;
-		}
+            continue;
+        }
       }
 
       var field = GraphQLFieldDefinition.newFieldDefinition()
@@ -413,8 +413,8 @@ public class GraphqlSchemaFactory {
 
   private List<GraphQLArgument> generatePermuted(SqrlTableMacro macro) {
     if (macro instanceof NestedRelationship) {
-		return List.of();
-	}
+        return List.of();
+    }
     var tableName = schema.getPathToSysTableMap().get(macro.getAbsolutePath());
     if (tableName == null) {
       log.info("Table name null, to debug");
@@ -423,8 +423,8 @@ public class GraphqlSchemaFactory {
     var table = schema.getTable(tableName, false).getTable();
     List<ImmutableBitSet> keys = table.getStatistic().getKeys();
     if (keys.isEmpty()) {
-		return List.of(); //no pks
-	}
+        return List.of(); //no pks
+    }
     var pks = keys.get(0);
     var rowType = macro.getRowType();
     List<RelDataTypeField> primaryKeys = new ArrayList<>();

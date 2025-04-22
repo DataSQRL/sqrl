@@ -34,8 +34,8 @@ public Map<String, Object> toMapWithSubstitution(Map<String, String> variables) 
   private Map<String, Object> replaceVariablesInValues(Map<String, Object> configMap,
       Map<String, String> variables) {
     if (configMap.isEmpty() || variables.isEmpty()) {
-		return configMap;
-	}
+        return configMap;
+    }
 
     Map<Pattern, String> variableMatcher = variables.entrySet().stream()
         .collect(Collectors.toMap(e -> Pattern.compile(getVariableRegex(e.getKey()), Pattern.CASE_INSENSITIVE),

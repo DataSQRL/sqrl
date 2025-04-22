@@ -35,8 +35,8 @@ public class DAGFunctionExpansionRule extends RelOptRule {
         .filter(fct -> (fct instanceof QueryTableFunction)) //We want to preserve NestedRelationships and other types of table functions
         .map(QueryTableFunction.class::cast).orElse(null);
     if (tblFct==null) {
-		return;
-	}
+        return;
+    }
     var operands = ((RexCall)scan.getCall()).getOperands();
     var queryTable = tblFct.getQueryTable();
     var stage = queryTable.getAssignedStage().get();

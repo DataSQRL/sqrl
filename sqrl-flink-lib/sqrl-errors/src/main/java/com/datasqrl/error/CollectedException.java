@@ -11,8 +11,8 @@ public class CollectedException extends RuntimeException {
 
   public boolean isInternalError() {
     if (getCause() instanceof NullPointerException) {
-		return true;
-	}
+        return true;
+    }
     return getMessage() == null || getMessage().trim().isEmpty();
   }
 

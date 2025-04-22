@@ -135,13 +135,13 @@ public class InputFieldToRelDataType implements
     @Override
     public RelDataType visitScalarTypeDefinition(ScalarTypeDefinition node, FieldContext context) {
       var type = switch (node.getName()) {
-	case "Int" -> typeFactory.createSqlType(SqlTypeName.BIGINT);
-	case "Float" -> typeFactory.createSqlType(SqlTypeName.DECIMAL, 10, 5);
-	case "Boolean" -> typeFactory.createSqlType(SqlTypeName.BOOLEAN);
-	case "DateTime" -> typeFactory.createSqlType(SqlTypeName.TIMESTAMP, 3);
-	case "String", "ID" -> typeFactory.createSqlType(SqlTypeName.VARCHAR, Integer.MAX_VALUE);
-	default -> throw new RuntimeException("Unknown Type");
-	};
+    case "Int" -> typeFactory.createSqlType(SqlTypeName.BIGINT);
+    case "Float" -> typeFactory.createSqlType(SqlTypeName.DECIMAL, 10, 5);
+    case "Boolean" -> typeFactory.createSqlType(SqlTypeName.BOOLEAN);
+    case "DateTime" -> typeFactory.createSqlType(SqlTypeName.TIMESTAMP, 3);
+    case "String", "ID" -> typeFactory.createSqlType(SqlTypeName.VARCHAR, Integer.MAX_VALUE);
+    default -> throw new RuntimeException("Unknown Type");
+    };
       return typeFactory.createTypeWithNullability(type, true);
     }
   }

@@ -51,11 +51,11 @@ public class DAGPlannerTest extends AbstractAssetSnapshotTest {
 public Predicate<Path> getOutputDirFilter() {
     return path -> {
       if (path.getFileName().toString().equals("flink-sql-no-functions.sql")) {
-		return true;
-	}
+        return true;
+    }
       if (path.getFileName().toString().contains("flink") || path.getFileName().toString().contains("schema") || path.getFileName().toString().contains("views")) {
-		return false;
-	}
+        return false;
+    }
       return true;
     };
   }

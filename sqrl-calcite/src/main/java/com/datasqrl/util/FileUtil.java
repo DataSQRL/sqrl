@@ -41,8 +41,8 @@ public class FileUtil {
    */
   public static Path makeHiddenFolder(Path basePath, String folderName) throws IOException {
     if (!folderName.startsWith(".")) {
-		folderName = "." + folderName;
-	}
+        folderName = "." + folderName;
+    }
     var result = basePath.resolve(folderName);
     if (!Files.isDirectory(result)) {
       Files.createDirectories(result);
@@ -65,8 +65,8 @@ public class FileUtil {
 
   public static String addExtension(String filename, String extension) {
     if (!extension.startsWith(".")) {
-		extension = "." + extension;
-	}
+        extension = "." + extension;
+    }
     return filename + extension;
   }
 
@@ -77,8 +77,8 @@ public class FileUtil {
 
   public static boolean isEmptyDirectory(Path dir) throws IOException {
     if (!Files.isDirectory(dir)) {
-		return true;
-	}
+        return true;
+    }
     try (var entries = Files.list(dir)) {
       return !entries.findFirst().isPresent();
     }

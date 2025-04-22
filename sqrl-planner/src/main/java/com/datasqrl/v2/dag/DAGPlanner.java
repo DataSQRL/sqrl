@@ -170,8 +170,8 @@ public class DAGPlanner {
     Function<String,String> externalNameFct = name -> {
       var result = name+outputConfig.getTableSuffix();
       if (outputConfig.isAddUid()) {
-		result +="_"+exportTableCounter.incrementAndGet();
-	}
+        result +="_"+exportTableCounter.incrementAndGet();
+    }
       return result;
     };
     var planBuilder = PhysicalPlan.builder();
@@ -202,8 +202,8 @@ public class DAGPlanner {
             exportStage = downstream.getChosenStage();
             originalTableName = node.getTableAnalysis().getName();
             if (!downstreamStages.add(exportStage)) {
-				continue;
-			}
+                continue;
+            }
           }
           assert exportStage != null;
           Preconditions.checkArgument(exportStage.getEngine().getType().supportsExport(), "Execution stage [%s] does not support exporting [%s]", exportStage, node);
@@ -286,8 +286,8 @@ public class DAGPlanner {
           dbPlan.query(
               new Query(function, plannedRelNode, function.getFunctionAnalysis().getErrors()));
           if (function.getVisibility().isQueryable()) {
-			serverPlan.function(function);
-		}
+            serverPlan.function(function);
+        }
         }
       });
       var dbPhysicalPlan = dbEngine.plan(dbPlan.build());
@@ -568,8 +568,8 @@ public class DAGPlanner {
           var clonedOperands = this.visitList(call.operands, update);
           return call.clone(getNormalTimestampType(call.getType()), clonedOperands);
         } else {
-			return super.visitCall(call);
-		}
+            return super.visitCall(call);
+        }
       }
     }
   }

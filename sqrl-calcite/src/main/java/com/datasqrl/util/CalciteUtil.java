@@ -82,15 +82,15 @@ public class CalciteUtil {
 
   public static Optional<RelDataType> getNestedTableType(RelDataType type) {
     if (type.isStruct()) {
-		return Optional.of(type);
-	}
+        return Optional.of(type);
+    }
     return getArrayElementType(type).filter(RelDataType::isStruct);
   }
 
   public static boolean hasNestedTable(RelDataType type) {
     if (!type.isStruct()) {
-		return false;
-	}
+        return false;
+    }
     return type.getFieldList().stream().map(RelDataTypeField::getType).anyMatch(CalciteUtil::isNestedTable);
   }
 
@@ -146,14 +146,14 @@ public class CalciteUtil {
     var builder = getRelTypeBuilder(factory);
     var index = 0;
     if (index==atIndex) {
-		builder.add(fieldId, fieldType);
-	}
+        builder.add(fieldId, fieldType);
+    }
     for (RelDataTypeField field : relation.getFieldList()) {
       builder.add(field);
       index++;
       if (index==atIndex) {
-		builder.add(fieldId, fieldType);
-	}
+        builder.add(fieldId, fieldType);
+    }
     }
     Preconditions.checkArgument(index>=atIndex, "Provided index [%s] larger than length [%s]", atIndex, index);
     return builder.build();
@@ -273,12 +273,12 @@ public class CalciteUtil {
   public static Optional<Integer> isEqualToConstant(RexNode rexNode) {
     int arity;
     if (rexNode.isA(SqlKind.EQUALS)) {
-		arity = 2;
-	} else if (rexNode.isA(SqlKind.IS_NULL)) {
-		arity = 1;
-	} else {
-		return Optional.empty();
-	}
+        arity = 2;
+    } else if (rexNode.isA(SqlKind.IS_NULL)) {
+        arity = 1;
+    } else {
+        return Optional.empty();
+    }
 
     var operands = ((RexCall) rexNode).getOperands();
     assert arity==1 || arity==2;
@@ -293,20 +293,20 @@ public class CalciteUtil {
   public static int indexOf(String columnName, RelDataType type) {
     RelDataTypeField field = type.getField(columnName, false, false);
     if (field == null) {
-		return -1;
-	} else {
-		return field.getIndex();
-	}
+        return -1;
+    } else {
+        return field.getIndex();
+    }
   }
 
   public static boolean isConstant(RexNode rexNode) {
     if (rexNode instanceof RexLiteral || rexNode instanceof RexDynamicParam) {
-		return true;
-	}
+        return true;
+    }
     if (rexNode instanceof RexFieldAccess) {
       if (((RexFieldAccess) rexNode).getReferenceExpr() instanceof RexCorrelVariable) {
-		return true;
-	}
+        return true;
+    }
     }
     return false;
   }
@@ -354,18 +354,18 @@ public class CalciteUtil {
     private final RelDataTypeFactory.FieldInfoBuilder fieldBuilder;
 
     @Override
-	public RelDataTypeBuilder add(String name, RelDataType type) {
+    public RelDataTypeBuilder add(String name, RelDataType type) {
       return add(name, type, type.isNullable());
     }
 
     @Override
-	public RelDataTypeBuilder add(String name, RelDataType type, boolean nullable) {
+    public RelDataTypeBuilder add(String name, RelDataType type, boolean nullable) {
       fieldBuilder.add(name, type).nullable(nullable);
       return this;
     }
 
     @Override
-	public RelDataTypeBuilder add(RelDataTypeField field) {
+    public RelDataTypeBuilder add(RelDataTypeField field) {
       return add(field.getName(), field.getType());
     }
 
@@ -375,7 +375,7 @@ public class CalciteUtil {
     }
 
     @Override
-	public RelDataType build() {
+    public RelDataType build() {
       return fieldBuilder.build();
     }
   }
@@ -393,8 +393,8 @@ public class CalciteUtil {
     @Override
     protected RelNode visitChild(RelNode parent, int i, RelNode child) {
       if (i==0) {
-		parent = parent.accept(rexShuttle);
-	}
+        parent = parent.accept(rexShuttle);
+    }
       return super.visitChild(parent, i, child);
     }
   }
@@ -410,7 +410,7 @@ public class CalciteUtil {
     private final RelNode relNode;
 
     @Override
-	public RexNode visitDynamicParam(RexDynamicParam dynamicParam) {
+    public RexNode visitDynamicParam(RexDynamicParam dynamicParam) {
       var index = dynamicParam.getIndex();
       Preconditions.checkArgument(index>=0 && index<parameters.size(),
           "Query parameter index [%s] is out of bounds [%s] in: %s", relNode);
@@ -539,8 +539,8 @@ public class CalciteUtil {
     var offset = numFields;
     for (var i = 0; i < numFields; i++) {
       if (i==orderColIdx || i==timestampIdx || partition.contains(i)) {
-		continue;
-	}
+        continue;
+    }
       projects.add(lagFunction.apply(i));
       lagPairs.put(i, offset++);
     }
@@ -559,8 +559,8 @@ public class CalciteUtil {
     anyColumnDifferent.add(isFirstRow);
     for (var i = 0; i < numFields; i++) {
       if (i==orderColIdx || i==timestampIdx || partition.contains(i)) {
-		continue;
-	}
+        continue;
+    }
       RexNode col = relB.field(i);
       Preconditions.checkArgument(!CalciteUtil.isNestedTable(col.getType()),
           "Filtered distinct not supported on nested data [column %s]", fieldNames.get(i));
@@ -584,15 +584,15 @@ public class CalciteUtil {
 
   public static boolean isPotentialPrimaryKeyType(RelDataType type) {
     if (type.isNullable() || !(type instanceof BasicSqlType)) {
-		return false;
-	}
+        return false;
+    }
     var sqlType = type.getSqlTypeName();
     return switch (sqlType) {
-	case CHAR, VARCHAR, BOOLEAN, TINYINT, SMALLINT, INTEGER, BIGINT, FLOAT, REAL, DOUBLE, DATE, TIME,
-			TIMESTAMP, TIMESTAMP_WITH_LOCAL_TIME_ZONE, TIME_WITH_LOCAL_TIME_ZONE, DECIMAL ->
-		true;
-	default -> false;
-	};
+    case CHAR, VARCHAR, BOOLEAN, TINYINT, SMALLINT, INTEGER, BIGINT, FLOAT, REAL, DOUBLE, DATE, TIME,
+            TIMESTAMP, TIMESTAMP_WITH_LOCAL_TIME_ZONE, TIME_WITH_LOCAL_TIME_ZONE, DECIMAL ->
+        true;
+    default -> false;
+    };
   }
 
 }

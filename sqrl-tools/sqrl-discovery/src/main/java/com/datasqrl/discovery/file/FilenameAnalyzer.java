@@ -21,8 +21,8 @@ public class FilenameAnalyzer {
 
   public Optional<Components> analyze(Path file) {
     if (!Files.isRegularFile(file)) {
-		return Optional.empty();
-	}
+        return Optional.empty();
+    }
     return analyze(file.getFileName().toString());
   }
 

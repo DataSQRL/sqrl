@@ -20,8 +20,8 @@ public class HashColumns extends ScalarFunction implements AutoRegisterSystemFun
 
   public String eval(Object... objects) {
     if (objects.length==0) {
-		return "";
-	}
+        return "";
+    }
     try {
       var digest = MessageDigest.getInstance("MD5");  // Changed to MD5
       for (Object obj : objects) {

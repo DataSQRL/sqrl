@@ -36,7 +36,7 @@ public class ObjectType extends AbstractBasicType<Object> {
     }
 
     @Override
-	public Object convert(Object o) {
+    public Object convert(Object o) {
       return o;
     }
 
@@ -46,7 +46,7 @@ public class ObjectType extends AbstractBasicType<Object> {
     }
 
     @Override
-	public Optional<Object> parseDetected(Object original, ErrorCollector errors) {
+    public Optional<Object> parseDetected(Object original, ErrorCollector errors) {
       return Optional.of(original);
     }
 

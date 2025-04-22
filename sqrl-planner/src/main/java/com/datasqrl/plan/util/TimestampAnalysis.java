@@ -51,8 +51,8 @@ public class TimestampAnalysis {
       //Check that all operands are timestamps
       for (var i = 1; i < operands.size(); i=i+2) {
         if (!computesTimestamp(operands.get(i),timestamp)) {
-			return false;
-		}
+            return false;
+        }
       }
       return computesTimestamp(operands.get(operands.size()-1),timestamp); //check default/else
     } else if (call.getOperator().isName("greatest", false)) {

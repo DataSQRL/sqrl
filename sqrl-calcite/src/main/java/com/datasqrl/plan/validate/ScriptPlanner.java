@@ -254,9 +254,9 @@ public class ScriptPlanner implements StatementVisitor<Void, Void> {
         } else {
           if (!logger.equalsIgnoreCase(logManager.getEngineName())) {
             throw new IllegalStateException(String.format("""
-				The configured log engine is '%s'\
-				 while 'compiler.logger' is set to '%s'. Please change the logger to\
-				 the desired engine.""",
+                The configured log engine is '%s'\
+                 while 'compiler.logger' is set to '%s'. Please change the logger to\
+                 the desired engine.""",
                 logManager.getEngineName(), logger));
           }
           var sinkLog = logManager.create(modTable.getNameId(), sinkPath.getLast(),

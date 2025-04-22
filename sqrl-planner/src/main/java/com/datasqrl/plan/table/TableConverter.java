@@ -61,8 +61,8 @@ public class TableConverter {
     var metadataConfig = tableConfig.getMetadataConfig();
     for (String columnName : metadataConfig.getKeys()) {
       if (nameAdjuster.contains(columnName)) {
-		continue;
-	}
+        continue;
+    }
       errors.checkFatal(!nameAdjuster.contains(columnName), "Metadata column name already used in data: %s", columnName);
       var colConfig = metadataConfig.getMetadataEntry(columnName)
           .get();

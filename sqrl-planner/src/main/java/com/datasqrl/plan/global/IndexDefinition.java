@@ -47,11 +47,11 @@ public class IndexDefinition implements Comparable<IndexDefinition> {
 
   public int numEqualityColumnsRequired() {
     if (type.requiresAllColumns()) {
-		return columns.size();
-	}
+        return columns.size();
+    }
     if (type.isPartitioned()) {
-		return partitionOffset;
-	}
+        return partitionOffset;
+    }
     return 0;
   }
 

@@ -60,7 +60,7 @@ import lombok.SneakyThrows;
 
     private Future<Void> sendSubscribe() {
       Map<String, Object> payload = Map.of(
-//    		  "operationName", "breakMe",
+//              "operationName", "breakMe",
           "query", query
     );
       Map<String, Object> message = Map.of(

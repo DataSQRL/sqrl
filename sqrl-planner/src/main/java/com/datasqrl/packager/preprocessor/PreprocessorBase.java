@@ -13,7 +13,7 @@ import lombok.SneakyThrows;
 
 public abstract class PreprocessorBase implements Preprocessor {
 
-	@SneakyThrows
+    @SneakyThrows
   protected static boolean tableExists(Path basePath, String tableName) {
     String expectedFileName = NameUtil.namepath2Path(basePath, NamePath.of(tableName + DataSource.TABLE_FILE_SUFFIX)).getFileName().toString();
 

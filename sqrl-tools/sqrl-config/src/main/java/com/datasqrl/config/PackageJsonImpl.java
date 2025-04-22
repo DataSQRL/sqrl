@@ -23,7 +23,7 @@ public class PackageJsonImpl implements PackageJson {
   }
 
   public PackageJsonImpl(SqrlConfig sqrlConfig) {
-	this.sqrlConfig = sqrlConfig;
+    this.sqrlConfig = sqrlConfig;
   }
 
   @Override

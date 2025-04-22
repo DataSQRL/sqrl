@@ -143,7 +143,7 @@ public class PhysicalDAGPlan {
 
     final TableType type;
     @Override
-	public <R, C> R accept(QueryVisitor<R, C> visitor, C context) {
+    public <R, C> R accept(QueryVisitor<R, C> visitor, C context) {
       return visitor.accept(this, context);
     }
 
@@ -171,7 +171,7 @@ public class PhysicalDAGPlan {
     }
 
     @Override
-	public <R, C> R accept(SinkVisitor<R, C> visitor, C context) {
+    public <R, C> R accept(SinkVisitor<R, C> visitor, C context) {
       return visitor.accept(this, context);
     }
   }
@@ -188,7 +188,7 @@ public class PhysicalDAGPlan {
     }
 
     @Override
-	public <R, C> R accept(SinkVisitor<R, C> visitor, C context) {
+    public <R, C> R accept(SinkVisitor<R, C> visitor, C context) {
       return visitor.accept(this, context);
     }
   }
@@ -199,7 +199,7 @@ public class PhysicalDAGPlan {
     IdentifiedQuery query;
     RelNode relNode;
     @Override
-	public <R, C> R accept(QueryVisitor<R, C> visitor, C context) {
+    public <R, C> R accept(QueryVisitor<R, C> visitor, C context) {
       return visitor.accept(this, context);
     }
   }

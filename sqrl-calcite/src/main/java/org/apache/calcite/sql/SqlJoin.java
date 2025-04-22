@@ -75,22 +75,22 @@ public class SqlJoin extends SqlCall {
   private static SqlLiteral convertModifier(SqlLiteral joinType) {
     var joinTypeValue = (JoinType) joinType.getValue();
     return switch (joinTypeValue) {
-	case INNER_TEMPORAL, LEFT_TEMPORAL, RIGHT_TEMPORAL -> JoinModifier.TEMPORAL.symbol(joinType.getParserPosition());
-	case INNER_INTERVAL, LEFT_INTERVAL, RIGHT_INTERVAL -> JoinModifier.INTERVAL.symbol(joinType.getParserPosition());
-	case INNER_DEFAULT, LEFT_DEFAULT, RIGHT_DEFAULT -> JoinModifier.DEFAULT.symbol(joinType.getParserPosition());
-	case LEFT_OUTER, RIGHT_OUTER -> JoinModifier.OUTER.symbol(joinType.getParserPosition());
-	default -> JoinModifier.NONE.symbol(joinType.getParserPosition());
-	};
+    case INNER_TEMPORAL, LEFT_TEMPORAL, RIGHT_TEMPORAL -> JoinModifier.TEMPORAL.symbol(joinType.getParserPosition());
+    case INNER_INTERVAL, LEFT_INTERVAL, RIGHT_INTERVAL -> JoinModifier.INTERVAL.symbol(joinType.getParserPosition());
+    case INNER_DEFAULT, LEFT_DEFAULT, RIGHT_DEFAULT -> JoinModifier.DEFAULT.symbol(joinType.getParserPosition());
+    case LEFT_OUTER, RIGHT_OUTER -> JoinModifier.OUTER.symbol(joinType.getParserPosition());
+    default -> JoinModifier.NONE.symbol(joinType.getParserPosition());
+    };
   }
 
   private static SqlLiteral convertType(SqlLiteral joinType) {
     var joinTypeValue = (JoinType) joinType.getValue();
     return switch (joinTypeValue) {
-	case INNER_TEMPORAL, INNER_INTERVAL, INNER_DEFAULT -> JoinType.INNER.symbol(joinType.getParserPosition());
-	case LEFT_OUTER, LEFT_TEMPORAL, LEFT_INTERVAL, LEFT_DEFAULT -> JoinType.LEFT.symbol(joinType.getParserPosition());
-	case RIGHT_OUTER, RIGHT_TEMPORAL, RIGHT_INTERVAL, RIGHT_DEFAULT -> JoinType.RIGHT.symbol(joinType.getParserPosition());
-	default -> joinType;
-	};
+    case INNER_TEMPORAL, INNER_INTERVAL, INNER_DEFAULT -> JoinType.INNER.symbol(joinType.getParserPosition());
+    case LEFT_OUTER, LEFT_TEMPORAL, LEFT_INTERVAL, LEFT_DEFAULT -> JoinType.LEFT.symbol(joinType.getParserPosition());
+    case RIGHT_OUTER, RIGHT_TEMPORAL, RIGHT_INTERVAL, RIGHT_DEFAULT -> JoinType.RIGHT.symbol(joinType.getParserPosition());
+    default -> joinType;
+    };
   }
 
   public SqlJoin(SqlParserPos pos, SqlNode left, SqlLiteral natural,

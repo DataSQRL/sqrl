@@ -67,8 +67,8 @@ public class PipelineDAGExporter {
                 var table = tableNode.getTableAnalysis();
                 if (table.getSourceSinkTable().isPresent()) {
                     if (!includeImports) {
-						continue;
-					}
+                        continue;
+                    }
                     var source = table.getSourceSinkTable().get();
                     result.add(Source.builder()
                             .id(table.getIdentifier().asSummaryString())
@@ -111,8 +111,8 @@ public class PipelineDAGExporter {
             } else if (node instanceof TableFunctionNode) {
                 var fct = ((TableFunctionNode) node).getFunction();
                 if (fct.getVisibility().isAccessOnly() && !includeQueries) {
-					continue;
-				}
+                    continue;
+                }
                 result.add(Query.builder()
                         .id(node.getId())
                         .name(fct.getFullPath().toString())
@@ -132,8 +132,8 @@ public class PipelineDAGExporter {
 
     private String explain(RelNode relNode) {
         if (!includeLogicalPlan) {
-			return null;
-		}
+            return null;
+        }
         CalciteHacks.resetToSqrlMetadataProvider();
         if (withHints) {
             return RelWriterWithHints.explain(relNode);
@@ -186,11 +186,11 @@ public class PipelineDAGExporter {
         }
         public static NodeType from(TableType tableType) {
             return switch (tableType) {
-			case RELATION -> RELATION;
-			case STREAM -> STREAM;
-			case STATE, STATIC, LOOKUP, VERSIONED_STATE -> STATE;
-			default -> throw new UnsupportedOperationException("Unexpected type: " + tableType);
-			};
+            case RELATION -> RELATION;
+            case STREAM -> STREAM;
+            case STATE, STATIC, LOOKUP, VERSIONED_STATE -> STATE;
+            default -> throw new UnsupportedOperationException("Unexpected type: " + tableType);
+            };
         }
     }
 

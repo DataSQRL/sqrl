@@ -43,10 +43,10 @@ public class SqrlRexBuilder extends RexBuilder {
     if (value instanceof ByteString) {
       final var length = ((ByteString) value).length();
       return switch (toType.getSqlTypeName()) {
-	case BINARY -> SqlTypeUtil.comparePrecision(toType.getPrecision(), length) == 0;
-	case VARBINARY -> SqlTypeUtil.comparePrecision(toType.getPrecision(), length) >= 0;
-	default -> throw new AssertionError(toType);
-	};
+    case BINARY -> SqlTypeUtil.comparePrecision(toType.getPrecision(), length) == 0;
+    case VARBINARY -> SqlTypeUtil.comparePrecision(toType.getPrecision(), length) >= 0;
+    default -> throw new AssertionError(toType);
+    };
     }
 
     if (toType.getSqlTypeName() == SqlTypeName.DECIMAL) {
@@ -62,12 +62,12 @@ public class SqrlRexBuilder extends RexBuilder {
       }
       var l = decimalValue.longValue();
       return switch (sqlType) {
-	case TINYINT -> l >= Byte.MIN_VALUE && l <= Byte.MAX_VALUE;
-	case SMALLINT -> l >= Short.MIN_VALUE && l <= Short.MAX_VALUE;
-	case INTEGER -> l >= Integer.MIN_VALUE && l <= Integer.MAX_VALUE;
-	case BIGINT -> true;
-	default -> true;
-	};
+    case TINYINT -> l >= Byte.MIN_VALUE && l <= Byte.MAX_VALUE;
+    case SMALLINT -> l >= Short.MIN_VALUE && l <= Short.MAX_VALUE;
+    case INTEGER -> l >= Integer.MIN_VALUE && l <= Integer.MAX_VALUE;
+    case BIGINT -> true;
+    default -> true;
+    };
     }
 
     return true;

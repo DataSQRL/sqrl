@@ -33,21 +33,21 @@ public class JoinAnalysis {
   public JoinAnalysis makeA(Type type) {
     Preconditions.checkArgument(this.type.isCompatible(type), "Join types not compatible: %s vs %s", this.type, type);
     if (this.type==type) {
-		return this;
-	}
+        return this;
+    }
     return new JoinAnalysis(type,side,isFlipped);
   }
 
   public JoinAnalysis makeGeneric() {
     Preconditions.checkArgument(this.type==Type.DEFAULT || isGeneric(), "Join types not compatible: %s vs %s", this.type, type);
     if (isGeneric()) {
-		return this;
-	}
+        return this;
+    }
     if (side==Side.NONE) {
-		return new JoinAnalysis(Type.INNER, Side.NONE, isFlipped);
-	} else {
-		return new JoinAnalysis(Type.OUTER, side, isFlipped);
-	}
+        return new JoinAnalysis(Type.INNER, Side.NONE, isFlipped);
+    } else {
+        return new JoinAnalysis(Type.OUTER, side, isFlipped);
+    }
   }
 
   public boolean canBe(Type type) {
@@ -65,8 +65,8 @@ public class JoinAnalysis {
   public Side getOriginalSide() {
     Side orgSide = this.side;
     if (isFlipped) {
-		orgSide = orgSide.flip();
-	}
+        orgSide = orgSide.flip();
+    }
     return orgSide;
   }
 
@@ -77,14 +77,14 @@ public class JoinAnalysis {
   public JoinRelType export() {
     Preconditions.checkArgument(type!=Type.DEFAULT);
     if (side==Side.LEFT) {
-		return JoinRelType.LEFT;
-	}
+        return JoinRelType.LEFT;
+    }
     if (side==Side.RIGHT) {
-		return JoinRelType.RIGHT;
-	}
+        return JoinRelType.RIGHT;
+    }
     if (type==Type.OUTER) {
-		return JoinRelType.FULL;
-	}
+        return JoinRelType.FULL;
+    }
     return JoinRelType.INNER;
   }
 
@@ -94,8 +94,8 @@ public class JoinAnalysis {
 
     public boolean isCompatible(@NonNull Type other) {
       if ((this==DEFAULT) || ((this==INNER || this==OUTER) && (other==INTERVAL))) {
-		return true;
-	}
+        return true;
+    }
       return this==other;
     }
 
@@ -106,11 +106,11 @@ public class JoinAnalysis {
 
     public Side flip() {
       return switch (this) {
-	case LEFT -> RIGHT;
-	case RIGHT -> LEFT;
-	case NONE -> NONE;
-	default -> throw new IllegalStateException("Not a side: " + this);
-	};
+    case LEFT -> RIGHT;
+    case RIGHT -> LEFT;
+    case NONE -> NONE;
+    default -> throw new IllegalStateException("Not a side: " + this);
+    };
     }
 
   }
@@ -139,10 +139,10 @@ public class JoinAnalysis {
         return Type.INTERVAL;
       case DEFAULT:
         if (join==JoinRelType.LEFT || join==JoinRelType.RIGHT) {
-			return Type.INNER;
-		} else {
-			return Type.DEFAULT;
-		}
+            return Type.INNER;
+        } else {
+            return Type.DEFAULT;
+        }
       case OUTER:
       case NONE:
         if (join == JoinRelType.INNER) {

@@ -27,8 +27,8 @@ public class DAGBuilder {
     var priorNode = nodeLookup.put(node.getIdentifier(), node);
     //For AddColumn statements we need to replace the prior node in the DAG but we are guaranteed that no other node depends on it
     if (priorNode!=null) {
-		dagInputs.removeAll(priorNode);
-	}
+        dagInputs.removeAll(priorNode);
+    }
     node.getTableAnalysis().getFromTables().forEach(inputTable ->
         dagInputs.put(node, Objects.requireNonNull(nodeLookup.get(inputTable.getIdentifier()))));
   }

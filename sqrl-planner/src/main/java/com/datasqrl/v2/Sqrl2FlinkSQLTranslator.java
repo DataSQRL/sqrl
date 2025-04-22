@@ -269,8 +269,8 @@ public class Sqrl2FlinkSQLTranslator {
     } else if (validated instanceof SqlAlterViewAs as) {
       query = as.getNewQuery();
     } else {
-		throw new UnsupportedOperationException("Unexpected SQLnode: " + validated);
-	}
+        throw new UnsupportedOperationException("Unexpected SQLnode: " + validated);
+    }
     var relRoot = toRelRoot(query, flinkPlanner);
     var relBuilder = getRelBuilder(flinkPlanner);
     var relNode = relRoot.rel;
@@ -295,8 +295,8 @@ public class Sqrl2FlinkSQLTranslator {
 
   public RelRoot toRelRoot(SqlNode query, @Nullable FlinkPlannerImpl flinkPlanner) {
     if (flinkPlanner == null) {
-		flinkPlanner = this.validatorSupplier.get();
-	}
+        flinkPlanner = this.validatorSupplier.get();
+    }
     var context = new SqlNodeConvertContext(flinkPlanner, catalogManager);
     var validatedQuery = context.getSqlValidator().validate(query);
     return context.toRelRoot(validatedQuery);
@@ -304,8 +304,8 @@ public class Sqrl2FlinkSQLTranslator {
 
   public FlinkRelBuilder getRelBuilder(@Nullable FlinkPlannerImpl flinkPlanner) {
     if (flinkPlanner == null) {
-		flinkPlanner = this.validatorSupplier.get();
-	}
+        flinkPlanner = this.validatorSupplier.get();
+    }
     var config = flinkPlanner.config().getSqlToRelConverterConfig().withAddJsonTypeOperatorEnabled(false);
     //We are using a null schema because using the scan method on FlinkRelBuilder tries to expand views.
     //Need to construct LogicalTableScan manually.
@@ -405,8 +405,8 @@ public class Sqrl2FlinkSQLTranslator {
       identifier = operation.getViewIdentifier();
       schema = operation.getCatalogView().getUnresolvedSchema();
     } else {
-		throw new UnsupportedOperationException(op.getClass().toString());
-	}
+        throw new UnsupportedOperationException(op.getClass().toString());
+    }
 
     /* Stage 2: Analyze the RelNode/RelRoot
         - pull out top-level sort
@@ -521,8 +521,8 @@ public class Sqrl2FlinkSQLTranslator {
         if (newIndex!=dynamicParam.getIndex()) {
           return new RexDynamicParam(dynamicParam.getType(), newIndex);
         } else {
-			return dynamicParam;
-		}
+            return dynamicParam;
+        }
       }
     };
 
@@ -544,8 +544,8 @@ public class Sqrl2FlinkSQLTranslator {
     @Override
     protected RelNode visitChild(RelNode parent, int i, RelNode child) {
       if (i==0) {
-		parent = parent.accept(rexShuttle);
-	}
+        parent = parent.accept(rexShuttle);
+    }
       return super.visitChild(parent, i, child);
     }
   }
@@ -757,8 +757,8 @@ public class Sqrl2FlinkSQLTranslator {
         type = metadataColumn.getDataType();
       } else if (column instanceof UnresolvedComputedColumn computedColumn) {
         if (expressionResolver==null) {
-			expressionResolver=getExpressionResolver(); //lazy initialization
-		}
+            expressionResolver=getExpressionResolver(); //lazy initialization
+        }
         // Resolve the expression's data type
         var resolvedExpression = expressionResolver.apply(computedColumn.getExpression());
         type = resolvedExpression.getOutputDataType();
@@ -790,8 +790,8 @@ public class Sqrl2FlinkSQLTranslator {
    */
   public List<RelDataTypeField> parse2RelDataType(ParsedObject<String> dataTypeDefinition) {
     if (dataTypeDefinition.isEmpty()) {
-		return List.of();
-	}
+        return List.of();
+    }
     var createTableStatement = DATATYPE_PARSING_PREFIX + dataTypeDefinition.get() + ");";
     try {
       var op = (CreateTableOperation) getOperation(parseSQL(createTableStatement));

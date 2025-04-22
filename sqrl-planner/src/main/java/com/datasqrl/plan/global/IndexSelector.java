@@ -216,13 +216,13 @@ public class IndexSelector {
     var cost = config.relativeIndexCost(candidate);
     var bestcost = config.relativeIndexCost(bestCandidate);
     if (cost + EPSILON < bestcost) {
-		return true;
-	} else if (Precision.equals(cost,bestcost,2*EPSILON)) {
+        return true;
+    } else if (Precision.equals(cost,bestcost,2*EPSILON)) {
       //Make index selection deterministic by prefering smaller columns
       return orderingScore(candidate) < orderingScore(bestCandidate);
     } else {
-		return false;
-	}
+        return false;
+    }
   }
 
   private int orderingScore(IndexDefinition candidate) {
@@ -375,8 +375,8 @@ public class IndexSelector {
     private Optional<Integer> getFirstCollation(Sort sort) {
       var fieldCollations = sort.collation.getFieldCollations();
       if (fieldCollations.isEmpty()) {
-		return Optional.empty();
-	}
+        return Optional.empty();
+    }
       var firstCollation = fieldCollations.get(0);
       return Optional.of(firstCollation.getFieldIndex());
     }

@@ -110,10 +110,10 @@ interface SqrlConfig {
     default Optional<T> getOptional() {
       var value = this.withDefault(null).get();
       if (value==null) {
-		return Optional.empty();
-	} else {
-		return Optional.of(value);
-	}
+        return Optional.empty();
+    } else {
+        return Optional.of(value);
+    }
     }
 
     Value<T> withDefault(T defaultValue);
@@ -126,8 +126,8 @@ interface SqrlConfig {
 
   static<T extends Enum<T>> T getEnum(Value<String> value, Class<T> clazz, Optional<T> defaultValue) {
     if (defaultValue.isPresent()) {
-		value = value.withDefault(defaultValue.get().name());
-	}
+        value = value.withDefault(defaultValue.get().name());
+    }
     return Enum.valueOf(clazz,value.map(String::toLowerCase).validate(v -> isEnumValue(v,clazz),
         "Use one of: %s".formatted(clazz.getEnumConstants())).get());
   }

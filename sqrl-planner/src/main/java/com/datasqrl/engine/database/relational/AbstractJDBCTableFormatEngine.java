@@ -52,8 +52,8 @@ public abstract class AbstractJDBCTableFormatEngine extends AbstractJDBCEngine i
   @Override
   public void addQueryEngine(QueryEngine queryEngine) {
     if (!supportsQueryEngine(queryEngine)) {
-		throw new UnsupportedOperationException(getName() + " table format does not support query engine: " + queryEngine);
-	}
+        throw new UnsupportedOperationException(getName() + " table format does not support query engine: " + queryEngine);
+    }
     Preconditions.checkState(!queryEngines.containsKey(queryEngine.getName()), "Query engine already added: %s", queryEngine.getName());
     queryEngines.put(queryEngine.getName(), queryEngine);
   }

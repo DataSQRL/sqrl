@@ -152,10 +152,10 @@ public abstract class AbstractTableNamespaceObject<T> implements TableNamespaceO
     int[] pks = {0};
     if (!CalciteUtil.isArray(field.getType())) {
       if (field.getType().isNullable()) {
-		multiplicity = Multiplicity.ZERO_ONE;
-	} else {
-		multiplicity = Multiplicity.ONE;
-	}
+        multiplicity = Multiplicity.ZERO_ONE;
+    } else {
+        multiplicity = Multiplicity.ONE;
+    }
       pks = new int[0];
     }
     var name = path.getLast();

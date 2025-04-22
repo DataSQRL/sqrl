@@ -47,11 +47,11 @@ public class GraphqlSchemaUtil {
 
   public static GraphQLOutputType wrapMultiplicity(GraphQLOutputType type, Multiplicity multiplicity) {
     return switch (multiplicity) {
-	case ZERO_ONE -> type;
-	case ONE -> GraphQLNonNull.nonNull(type);
-	case MANY -> GraphQLList.list(GraphQLNonNull.nonNull(type));
-	default -> GraphQLList.list(GraphQLNonNull.nonNull(type));
-	};
+    case ZERO_ONE -> type;
+    case ONE -> GraphQLNonNull.nonNull(type);
+    case MANY -> GraphQLList.list(GraphQLNonNull.nonNull(type));
+    default -> GraphQLList.list(GraphQLNonNull.nonNull(type));
+    };
   }
 
   public static boolean isValidGraphQLName(String name) {
@@ -139,8 +139,8 @@ public class GraphqlSchemaUtil {
         builder.name(typeName);
         for (RelDataTypeField field : type.getFieldList()) {
           if (field.getName().startsWith(HIDDEN_PREFIX)) {
-			continue;
-		}
+            continue;
+        }
           getOutputType(field.getType(), namePath.concat(Name.system(field.getName())), seen, extendedScalarTypes)
               .ifPresent(fieldType -> builder.field(GraphQLFieldDefinition.newFieldDefinition()
                   .name(field.getName())
@@ -178,8 +178,8 @@ public class GraphqlSchemaUtil {
   private static String uniquify(String name, Set<String> seen) {
     var i = 0;
     while (seen.contains(name + (i == 0 ? "" : i))) {
-		i++;
-	}
+        i++;
+    }
     return name + (i == 0 ? "" : i);
   }
 
@@ -199,8 +199,8 @@ public class GraphqlSchemaUtil {
 
   public static Optional<GraphQLInputType> createInputTypeForRelDataType(RelDataType type, NamePath namePath, Set<String> seen, boolean extendedScalarTypes) {
     if (namePath.getLast().isHidden()) {
-		return Optional.empty();
-	}
+        return Optional.empty();
+    }
     if (!type.isNullable()) {
       return getGraphQLInputType(type, namePath, seen, extendedScalarTypes).map(GraphQLNonNull::nonNull);
     }

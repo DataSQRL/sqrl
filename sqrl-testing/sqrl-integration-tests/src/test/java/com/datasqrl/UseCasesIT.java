@@ -29,8 +29,8 @@ public class UseCasesIT {
     argsList.add(goal);
     argsList.add(script);
     if (!Strings.isNullOrEmpty(graphql)) {
-		argsList.add(graphql);
-	}
+        argsList.add(graphql);
+    }
     if (testSuffix!=null) {
       argsList.add("-s"); argsList.add("snapshots-"+testSuffix);
       argsList.add("--tests"); argsList.add("tests-"+testSuffix);
@@ -46,8 +46,8 @@ public class UseCasesIT {
     argsList.add("compile");
     argsList.add(script);
     if (!Strings.isNullOrEmpty(graphql)) {
-		argsList.add(graphql);
-	}
+        argsList.add(graphql);
+    }
     execute(RESOURCES.resolve(path),
         new AssertStatusHook(), argsList.toArray(a->new String[a]));
   }

@@ -31,10 +31,10 @@ public interface DataTypeMapping {
 
     default Optional<FunctionDefinition> getEngineMapping(Direction direction) {
       return switch (direction) {
-	case TO_DATABASE -> Optional.of(toEngineMapping());
-	case FROM_DATABASE -> fromEngineMapping();
-	default -> throw new UnsupportedOperationException("Unrecognized direction: " + direction);
-	};
+    case TO_DATABASE -> Optional.of(toEngineMapping());
+    case FROM_DATABASE -> fromEngineMapping();
+    default -> throw new UnsupportedOperationException("Unrecognized direction: " + direction);
+    };
     }
 
     /**
@@ -54,7 +54,7 @@ public interface DataTypeMapping {
   @AllArgsConstructor
   class SimpleMapper implements Mapper {
 
-	  FunctionDefinition toEngineMapping;
+      FunctionDefinition toEngineMapping;
     Optional<FunctionDefinition> fromEngineMapping;
 
     public SimpleMapper(FunctionDefinition toEngineMapping, FunctionDefinition fromEngineMapping) {

@@ -188,8 +188,8 @@ public class SqlScriptPlanner {
         }
         if (e instanceof ValidationException) {
           if (e.getCause()!=e) {
-			e = (Exception)e.getCause();
-		}
+            e = (Exception)e.getCause();
+        }
         }
 
         //Print stack trace for unknown exceptions
@@ -205,8 +205,8 @@ public class SqlScriptPlanner {
        */
       if (sqlStatement instanceof StackableStatement stackableStatement) {
         if (stackableStatement.isRoot()) {
-			statementStack = new ArrayList<>();
-		}
+            statementStack = new ArrayList<>();
+        }
         statementStack.add(stackableStatement);
       } else {
         statementStack = new ArrayList<>();
@@ -363,11 +363,11 @@ public class SqlScriptPlanner {
   private AccessModifier adjustAccess(AccessModifier access) {
     Preconditions.checkArgument(access!=AccessModifier.INHERIT);
     if (!generateAccessFunctions || (access==AccessModifier.QUERY && queryStages.isEmpty())) {
-		return AccessModifier.NONE;
-	}
+        return AccessModifier.NONE;
+    }
     if (access==AccessModifier.SUBSCRIPTION && subscriptionStages.isEmpty()) {
-		return AccessModifier.NONE;
-	}
+        return AccessModifier.NONE;
+    }
     return access;
   }
 
@@ -448,12 +448,12 @@ public class SqlScriptPlanner {
 
   private List<ExecutionStage> determineViableStages(AccessModifier access) {
     if (access == AccessModifier.QUERY) {
-		return queryStages;
-	} else if (access == AccessModifier.SUBSCRIPTION) {
-		return subscriptionStages;
-	} else {
-		return tableStages;
-	}
+        return queryStages;
+    } else if (access == AccessModifier.SUBSCRIPTION) {
+        return subscriptionStages;
+    } else {
+        return tableStages;
+    }
   }
 
   /**

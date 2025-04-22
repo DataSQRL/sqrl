@@ -28,10 +28,10 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
   public Optional<ConnectorFactory> create(SystemBuiltInConnectors builtInConnector) {
 
     return switch (builtInConnector) {
-	case PRINT_SINK -> Optional.of(createPrintConnectorFactory(null));
-	case LOCAL_FILE_SOURCE -> getConnectorConfig(builtInConnector.getName().getCanonical()).map(this::createLocalFile);
-	default -> throw new IllegalArgumentException("Unknown connector: " + builtInConnector);
-	};
+    case PRINT_SINK -> Optional.of(createPrintConnectorFactory(null));
+    case LOCAL_FILE_SOURCE -> getConnectorConfig(builtInConnector.getName().getCanonical()).map(this::createLocalFile);
+    default -> throw new IllegalArgumentException("Unknown connector: " + builtInConnector);
+    };
   }
 
   @Override
@@ -149,8 +149,8 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
       var timestampName = (String)map.get("timestamp-name");
 
       if (primaryKey != null && !primaryKey.isEmpty()) {
-		builder.setPrimaryKey(primaryKey.toArray(new String[0]));
-	}
+        builder.setPrimaryKey(primaryKey.toArray(new String[0]));
+    }
       if (timestampType != null && !timestampType.equalsIgnoreCase("NONE")) {//!=TimestampType.NONE
         builder.setType(ExternalDataType.source_and_sink);
         builder.setTimestampColumn(timestampName);
@@ -202,8 +202,8 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
 
       var timestampName = (String) map.get("timestamp-name");
       if (timestampName == null) {
-		timestampName = "event_time";
-	}
+        timestampName = "event_time";
+    }
       builder.setTimestampColumn(timestampName);
       builder.setWatermark(0);
 

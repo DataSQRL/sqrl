@@ -84,7 +84,7 @@ public class SqrlDAG extends AbstractDAG<SqrlNode, SqrlDAG> {
     private final Map<ExecutionStage, StageAnalysis> stageAnalysis;
 
     @Override
-	public abstract String getName();
+    public abstract String getName();
 
     public abstract String getId();
 

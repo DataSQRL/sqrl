@@ -34,8 +34,8 @@ public class PostgresDataFetcherFactory {
         for (Map.Entry<String, String> filter : coords.getFilters().entrySet()) {
           var argValue = args.get(filter.getKey());
           if (argValue == null) {
-			continue;
-		}
+            continue;
+        }
 
           Map<String, Object> objectMap;
           if (data instanceof Map map) {

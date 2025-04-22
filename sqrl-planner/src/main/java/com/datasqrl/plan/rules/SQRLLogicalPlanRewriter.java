@@ -285,8 +285,8 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
   private PrimaryKeyMap determinePK(LogicalValues logicalValues) {
     var tuples = logicalValues.getTuples();
     if (tuples.size()<=1) {
-		return PrimaryKeyMap.none();
-	}
+        return PrimaryKeyMap.none();
+    }
     return determinePK(logicalValues.getRowType());
   }
 
@@ -302,8 +302,8 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     for (var i = 0; i < fields.size(); i++) {
       var type = fields.get(i).getType();
       if (!CalciteUtil.isPotentialPrimaryKeyType(type)) {
-		continue;
-	}
+        continue;
+    }
       return PrimaryKeyMap.of(List.of(i));
     }
     throw errors.exception("Could not identify a primary key column for row type: %s", rowType);
@@ -316,8 +316,8 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
   public RelNode visit(LogicalFilter logicalFilter) {
     var input = getRelHolder(logicalFilter.getInput().accept(this));
     if (isRelation(input)) {
-		return processRelation(List.of(input),logicalFilter);
-	}
+        return processRelation(List.of(input),logicalFilter);
+    }
 
     input = input.inlineTopN(makeRelBuilder(), exec); //Filtering doesn't preserve deduplication
     var condition = logicalFilter.getCondition();
@@ -502,16 +502,16 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
           LPConverterUtil.getTimestampOrderIndex(collation, timestamp).isPresent());
       var resultType = TableType.STATE;
       if (baseInput.type.isStream() && topN.isDeduplication()) {
-		resultType = TableType.VERSIONED_STATE;
-	}
+        resultType = TableType.VERSIONED_STATE;
+    }
       return setRelHolder(baseInput.copy().relNode(relB.build()).type(resultType)
           .primaryKey(pk).select(select).timestamp(timestamp)
           .topN(topN).sort(SortOrder.EMPTY).build());
     }
     var rawInput = getRelHolder(logicalProject.getInput().accept(this));
     if (isRelation(rawInput)) {
-		return processRelation(List.of(rawInput),logicalProject);
-	}
+        return processRelation(List.of(rawInput),logicalProject);
+    }
     var trivialMapResult = getTrivialMapping(logicalProject, rawInput.select);
     if (trivialMapResult!=null && !trivialMapResult.getRight()) {
       //Inline trivial selects but only if it doesn't rename, so we don't lose names
@@ -552,8 +552,8 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
       if (inputRef.isPresent()) { //Direct mapping
         int originalIndex = inputRef.get();
         if (input.timestamp.isCandidate(originalIndex)) {
-			timestampBuilder.candidate(exp.i);
-		}
+            timestampBuilder.candidate(exp.i);
+        }
         mappedProjects.put(originalIndex, exp.i);
       } else if (TimestampAnalysis.computesTimestamp(mapRex, input.timestamp)) {
         //Check for preserved timestamps through certain function calls
@@ -651,8 +651,8 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     var leftIn = getRelHolder(logicalJoin.getLeft().accept(this));
     var rightIn = getRelHolder(logicalJoin.getRight().accept(this));
     if (isRelation(leftIn, rightIn)) {
-		return processRelation(List.of(leftIn, rightIn), logicalJoin);
-	}
+        return processRelation(List.of(leftIn, rightIn), logicalJoin);
+    }
 
     var leftInput = leftIn.inlineTopN(makeRelBuilder(), exec);
     var rightInput = rightIn.inlineTopN(makeRelBuilder(), exec);
@@ -772,8 +772,8 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     var singletonSide = Side.NONE;
     for (Side side : new Side[]{Side.LEFT, Side.RIGHT}) {
       if (isPKConstrained.get(side)) {
-		singletonSide = side;
-	}
+        singletonSide = side;
+    }
     }
     var joinedPk = new PrimaryKeyMap(combinedPkColumns);
 
@@ -896,8 +896,8 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
     } else if (leftInputF.type==TableType.STATIC) {
       resultType = rightInputF.type;
       if (joinAnalysis.isA(Side.NONE)) {
-		rootTable = rightInputF.streamRoot;
-	}
+        rootTable = rightInputF.streamRoot;
+    }
     } else if (rightInputF.type.isStream() && leftInputF.type.isStream()) {
       resultType = TableType.STREAM;
     } else {
@@ -1107,8 +1107,8 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
       }
     }
     if (timestampIdx<0) {
-		timestampIdx=input.timestamp.getBestCandidate(relB);
-	}
+        timestampIdx=input.timestamp.getBestCandidate(relB);
+    }
 
     var addedTimestamp =
         addTimestampAggregate(relB, groupByIdx, timestampIdx, aggregateCalls);
@@ -1354,8 +1354,8 @@ public class SQRLLogicalPlanRewriter extends AbstractSqrlRelShuttle<AnnotatedLP>
         //Treat this as a dedup with empty primary key if limit is 1 and timestamp order
         Timestamps timestamp = input.timestamp;
         if (timestampOrder.isPresent()) {
-			timestamp = Timestamps.ofFixed(timestampOrder.get());
-		}
+            timestamp = Timestamps.ofFixed(timestampOrder.get());
+        }
         result = input.copy().primaryKey(PrimaryKeyMap.none())
             .timestamp(timestamp).topN(topN).build();
       } else {

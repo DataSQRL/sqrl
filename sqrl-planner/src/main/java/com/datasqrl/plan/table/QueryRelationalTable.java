@@ -51,8 +51,8 @@ public List<OptimizerHint> getOptimizerHints() {
   @Override
   public List<ExecutionStage> getSupportedStages(ExecutionPipeline pipeline, ErrorCollector errors) {
     if (analyzedLP.getConfiguredStages().isEmpty()) {
-		return pipeline.getStages();
-	}
+        return pipeline.getStages();
+    }
     return analyzedLP.getConfiguredStages().stream().map(stage -> {
       var execStage = pipeline.getStage(stage.getStageName())
           .or(()->pipeline.getStageByType(stage.getStageName()));

@@ -14,8 +14,8 @@ public class SqrlDirectoryModule implements SqrlModule {
 
   public SqrlDirectoryModule(List<NamespaceObject> nsObjects) {
     if (nsObjects instanceof ArrayList) { //check for mutable lists to sort (for consistent tests and behavior)
-		nsObjects.sort(Comparator.comparing(NamespaceObject::getName));
-	}
+        nsObjects.sort(Comparator.comparing(NamespaceObject::getName));
+    }
     this.nsObjects = nsObjects;
   }
 

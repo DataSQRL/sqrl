@@ -96,8 +96,8 @@ public class DAGBuilder {
                                           Multimap<SqrlNode, SqrlNode> dagInputs,
                                           Map<PhysicalRelationalTable, TableNode> table2Node) {
     if (table2Node.containsKey(table)) {
-		return table2Node.get(table);
-	}
+        return table2Node.get(table);
+    }
     Set<PhysicalRelationalTable> inputTables = new LinkedHashSet<>();
     var configBuilder = table.getBaseConfig();
     configBuilder.sourceTableConsumer(inputTables::add);
@@ -117,8 +117,8 @@ public class DAGBuilder {
     Map<ExecutionStage, StageAnalysis> stageAnalysis = new LinkedHashMap<>();
     for (ExecutionStage stage : stages) {
       if (!stage.isCompute()) {
-		continue;
-	}
+        continue;
+    }
       StageAnalysis result;
       try {
         var plan = planner.apply(stage);

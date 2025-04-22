@@ -30,7 +30,7 @@ public class IntervalType extends AbstractBasicType<Duration> {
     }
 
     @Override
-	public Duration convert(Object o) {
+    public Duration convert(Object o) {
       if (o instanceof Duration duration) {
         return duration;
       }

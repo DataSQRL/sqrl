@@ -122,11 +122,11 @@ public class QueryIndexSummary {
       for (; i < indexDef.getColumns().size(); i++) {
         int colIndex = indexDef.getColumns().get(i);
         if (this.equalityColumns.contains(colIndex)) {
-			equalityCols.add(colIndex);
-		} else {
+            equalityCols.add(colIndex);
+        } else {
           if (this.inequalityColumns.contains(colIndex)) {
-			inequalityCols.add(colIndex);
-		}
+            inequalityCols.add(colIndex);
+        }
           break; //we have broken the equality chain of this index
         }
       }

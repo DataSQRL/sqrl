@@ -27,8 +27,8 @@ public class ParsedObject<O> {
 
   public<T> ParsedObject<T> map(Function<O,T> mapper) {
     if (object == null) {
-		return new ParsedObject<>(null, fileLocation);
-	}
+        return new ParsedObject<>(null, fileLocation);
+    }
     try {
       return new ParsedObject<>(mapper.apply(object), fileLocation);
     } catch (Exception e) {

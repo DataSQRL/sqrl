@@ -50,8 +50,8 @@ public class PrimaryKey {
 
   public static PrimaryKey of(PrimaryKeyMap pkMap) {
     if (pkMap.isUndefined()) {
-		return new PrimaryKey(null);
-	}
+        return new PrimaryKey(null);
+    }
     //Post-processing ensures the pk is simple
     var pkCols = ArrayUtil.toArray(pkMap.asSimpleList());
     return new PrimaryKey(pkCols);
@@ -59,10 +59,10 @@ public class PrimaryKey {
 
   public PrimaryKeyMap toKeyMap() {
     if (isUndefined()) {
-		return PrimaryKeyMap.UNDEFINED;
-	} else {
-		return PrimaryKeyMap.of(asList());
-	}
+        return PrimaryKeyMap.UNDEFINED;
+    } else {
+        return PrimaryKeyMap.of(asList());
+    }
   }
 
 }

@@ -70,8 +70,8 @@ public interface IndexSelectorConfig {
   default IndexType getPreferredGenericIndexType() {
     for (IndexType type : PREFERRED_GENERIC_INDEX) {
       if (supportedIndexTypes().contains(type)) {
-		return type;
-	}
+        return type;
+    }
     }
     throw new IllegalStateException("Does not support any preferred generic indexes");
   }

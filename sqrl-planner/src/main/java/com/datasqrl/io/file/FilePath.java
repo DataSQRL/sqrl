@@ -223,11 +223,11 @@ public class FilePath implements Serializable { //todo: move to io-core
     public String getSuffix() {
       var suffix = "";
       if (hasFormat()) {
-		suffix += "." + format;
-	}
+        suffix += "." + format;
+    }
       if (hasCompression()) {
-		suffix += "." + compression;
-	}
+        suffix += "." + compression;
+    }
       return suffix;
     }
 

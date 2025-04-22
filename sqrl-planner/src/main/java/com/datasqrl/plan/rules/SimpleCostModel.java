@@ -95,14 +95,14 @@ class SimpleCostModel implements ComputeCost {
 
       private double perSideCost(TableType tableType) {
         return switch (tableType) {
-		case STREAM -> 100;
-		case STATE -> 10;
-		case VERSIONED_STATE -> 4;
-		case STATIC -> 1;
-		case LOOKUP -> 2;
-		case RELATION -> 20;
-		default -> throw new UnsupportedOperationException();
-		};
+        case STREAM -> 100;
+        case STATE -> 10;
+        case VERSIONED_STATE -> 4;
+        case STATIC -> 1;
+        case LOOKUP -> 2;
+        case RELATION -> 20;
+        default -> throw new UnsupportedOperationException();
+        };
       }
 
       double run(RelNode node) {

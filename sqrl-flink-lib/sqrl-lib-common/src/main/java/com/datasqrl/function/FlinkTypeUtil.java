@@ -99,8 +99,8 @@ public class FlinkTypeUtil {
       var argCount = callContext.getArgumentDataTypes().size();
       var varArgs = argCount - staticTypes.size();
       if (varArgs < 0 || varArgs < minVariableArguments || varArgs > maxVariableArguments) {
-		return Optional.empty();
-	}
+        return Optional.empty();
+    }
       var result = new ArrayList<DataType>(argCount);
       result.addAll(staticTypes);
       for (var i = 0; i < varArgs; i++) {

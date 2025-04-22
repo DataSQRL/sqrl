@@ -24,8 +24,8 @@ public class ParsePosUtil {
 
   public static Optional<MessageLocation> convertFlinkParserException(Exception e) {
     if (e instanceof StatementParserException) {
-		return Optional.empty();
-	}
+        return Optional.empty();
+    }
     if (e.getCause() instanceof SqlParseException || e.getCause() instanceof SqlValidateException
       || e.getCause() instanceof CalciteContextException) {
       e = (Exception) e.getCause();

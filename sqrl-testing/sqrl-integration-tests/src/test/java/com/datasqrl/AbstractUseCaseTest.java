@@ -81,14 +81,14 @@ public class AbstractUseCaseTest extends AbstractAssetSnapshotTest {
   public Predicate<Path> getPlanDirFilter() {
     return path -> {
       if (path.getFileName().toString().equals("flink-sql-no-functions.sql")) {
-		return true;
-	}
+        return true;
+    }
       if (path.getFileName().toString().contains("flink")) {
-		return false;
-	}
+        return false;
+    }
       if (path.getFileName().toString().contains("schema") || path.getFileName().toString().contains("views") || List.of("kafka.json", "vertx.json").contains(path.getFileName().toString())) {
-		return true;
-	}
+        return true;
+    }
       return false;
     };
   }
@@ -113,13 +113,13 @@ public class AbstractUseCaseTest extends AbstractAssetSnapshotTest {
         var pkgFiles = getPackageFiles(path.getParent());
         Collections.sort(pkgFiles, Comparator.comparing(p -> p.toFile().getName()));
         if (pkgFiles.isEmpty()) {
-			pkgFiles.add(null);
-		}
+            pkgFiles.add(null);
+        }
         var graphQLFiles = getScriptGraphQLFiles(path);
         Collections.sort(graphQLFiles, Comparator.comparing(p -> p.toFile().getName()));
         if (graphQLFiles.isEmpty()) {
-			graphQLFiles.add(null);
-		}
+            graphQLFiles.add(null);
+        }
         return graphQLFiles.stream().flatMap(gql -> pkgFiles.stream().map(pkg -> Arguments.of(path, gql, pkg)));
       });
     }

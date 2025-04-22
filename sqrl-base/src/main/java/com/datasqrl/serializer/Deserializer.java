@@ -92,8 +92,8 @@ public class Deserializer {
   public <O> void writeJson(Path file, O object, boolean pretty) throws IOException {
     var writer = jsonMapper.writer();
     if (pretty) {
-		writer = writer.withDefaultPrettyPrinter();
-	}
+        writer = writer.withDefaultPrettyPrinter();
+    }
     writer.writeValue(file.toFile(),object);
   }
 

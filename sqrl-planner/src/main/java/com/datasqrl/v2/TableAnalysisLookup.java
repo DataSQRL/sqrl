@@ -61,18 +61,18 @@ public class TableAnalysisLookup {
           Collectors.toList());
       //return last one in case there are multiple matches
       if (allMatches.isEmpty()) {
-		return Optional.empty();
-	}
+        return Optional.empty();
+    }
       return Optional.of(allMatches.get(allMatches.size()-1));
     } else {
-		return Optional.empty();
-	}
+        return Optional.empty();
+    }
   }
 
   private static boolean matches(TableAnalysis tbl, RelNode otherRelNode) {
     if (tbl.getOriginalRelnode()==null) {
-		return false;
-	}
+        return false;
+    }
     return tbl.getOriginalRelnode().deepEquals(otherRelNode);
   }
 
@@ -133,12 +133,12 @@ public class TableAnalysisLookup {
           correlationIdAdjustment = correlationId.getId()-1;
         }
         if (correlationIdAdjustment == 0) {
-			return Optional.empty();
-		}
+            return Optional.empty();
+        }
         return Optional.of(new CorrelationId(correlationId.getId()-correlationIdAdjustment));
       } else {
-		return Optional.empty();
-	}
+        return Optional.empty();
+    }
     }
 
     private Optional<ContextResolvedFunction> normalizeFunction(ContextResolvedFunction resolvedFunc) {
@@ -213,8 +213,8 @@ public class TableAnalysisLookup {
     @Override
     protected RelNode visitChild(RelNode parent, int i, RelNode child) {
       if (i==0) {
-		parent = parent.accept(rexNormalizer);
-	}
+        parent = parent.accept(rexNormalizer);
+    }
       return super.visitChild(parent, i, child);
     }
 

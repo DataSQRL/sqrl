@@ -343,8 +343,8 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
       if (functionScan.getInputs().size()==1) {
         var input = getInputAnalyses(functionScan).get(0);
         if (input.hasNowFilter) {
-			errors.notice("Rewrite now-filter followed by a window aggregation to a sliding time window");
-		}
+            errors.notice("Rewrite now-filter followed by a window aggregation to a sliding time window");
+        }
         return setProcessResult(input.toBuilder().relNode(updateRelnode(functionScan, List.of(input.relNode))).hasNowFilter(false).build());
       }
     }
@@ -370,15 +370,15 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
   private PrimaryKeyMap determinePK(LogicalValues logicalValues) {
     var tuples = logicalValues.getTuples();
     if (tuples.size()<=1) {
-		return PrimaryKeyMap.none();
-	}
+        return PrimaryKeyMap.none();
+    }
     var rowType = logicalValues.getRowType();
     var fields = rowType.getFieldList();
     for (var i = 0; i < fields.size(); i++) {
       var type = fields.get(i).getType();
       if (!CalciteUtil.isPotentialPrimaryKeyType(type)) {
-		continue;
-	}
+        continue;
+    }
       //TODO: add check for unique column values
       return PrimaryKeyMap.of(List.of(i));
     }
@@ -423,8 +423,8 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
             isMostRecentDistinct = false;
           }
           if (window.orderKeys.isEmpty()) {
-			isMostRecentDistinct = false;
-		} else {
+            isMostRecentDistinct = false;
+        } else {
             var collation = window.orderKeys.get(0);
             if (!collation.getDirection().isDescending()
                 || !CalciteUtil.isRowTime(collation.getKey().getType())) {
@@ -435,8 +435,8 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
       }
     }
     if (isMostRecentDistinct) {
-		hasMostRecentDistinct = true;
-	}
+        hasMostRecentDistinct = true;
+    }
     PrimaryKeyMap pk = input.primaryKey;
     TableType type = input.getType();
     if (newPk != null) {
@@ -479,8 +479,8 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
       if (CalciteUtil.getInputRef(exp.e).filter(
           idx -> resultType.getFieldNames().get(exp.i)
               .equalsIgnoreCase(inputType.getFieldNames().get(idx))).isEmpty()) {
-		isTrivialProject = false;
-	}
+        isTrivialProject = false;
+    }
     }
     //Map the primary key columns
     var pk = PrimaryKeyMap.UNDEFINED;
@@ -501,8 +501,8 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
         }
       }
       if (!lostPrimaryKeyMapping) {
-		pk = pkBuilder.build();
-	}
+        pk = pkBuilder.build();
+    }
     }
     if (logicalProject.getProjects().stream().anyMatch(RexOver.class::isInstance)) {
       preservesBaseTable = false;
@@ -570,8 +570,8 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
     var singletonSide = Side.NONE;
     for (Side side : new Side[]{Side.LEFT, Side.RIGHT}) {
       if (isPKConstrained.get(side)) {
-		singletonSide = side;
-	}
+        singletonSide = side;
+    }
     }
 
 
@@ -641,9 +641,9 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
           Optional<String> leftName = findRowTimeCol.apply(leftIn.relNode.getRowType()),
               rightName = findRowTimeCol.apply(rightIn.relNode.getRowType());
           if (leftName.isPresent() && rightName.isPresent()) {
-			errors.notice("Add `%s = %s` JOIN condition to significantly improve performance",
+            errors.notice("Add `%s = %s` JOIN condition to significantly improve performance",
                 leftName.get(), rightName.get());
-		}
+        }
         } else {
           //TODO: add notice for inefficiency?
         }
@@ -710,8 +710,8 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
 
   private PrimaryKeyMap intersectPrimaryKeys(List<RelNodeAnalysis> inputs) {
     if (inputs.get(0).primaryKey.isUndefined()) {
-		return PrimaryKeyMap.UNDEFINED;
-	}
+        return PrimaryKeyMap.UNDEFINED;
+    }
     var pkLength = inputs.get(0).primaryKey.getLength();
     if (inputs.stream().allMatch(in -> in.primaryKey.getLength()==pkLength)) {
       var pkBuilder = PrimaryKeyMap.build();
@@ -721,8 +721,8 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
         for (var j = 1; j < inputs.size(); j++) {
           colset = colset.intersect(inputs.get(j).primaryKey.get(i));
           if (colset.isEmpty()) {
-			return PrimaryKeyMap.UNDEFINED;
-		}
+            return PrimaryKeyMap.UNDEFINED;
+        }
         }
         pkBuilder.add(colset);
       }

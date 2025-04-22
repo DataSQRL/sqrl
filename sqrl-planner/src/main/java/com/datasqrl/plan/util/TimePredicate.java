@@ -116,11 +116,11 @@ public class TimePredicate {
     var smallerRef = createRef(smallerIndex, rexBuilder, createInputRef, useCurrentTime);
     var largerRef = createRef(largerIndex, rexBuilder, createInputRef, useCurrentTime);
     SqlOperator op = switch (comparison) {
-	case EQUALS -> SqlStdOperatorTable.EQUALS;
-	case LESS_THAN -> SqlStdOperatorTable.LESS_THAN;
-	case LESS_THAN_OR_EQUAL -> SqlStdOperatorTable.LESS_THAN_OR_EQUAL;
-	default -> throw new UnsupportedOperationException(comparison.name());
-	};
+    case EQUALS -> SqlStdOperatorTable.EQUALS;
+    case LESS_THAN -> SqlStdOperatorTable.LESS_THAN;
+    case LESS_THAN_OR_EQUAL -> SqlStdOperatorTable.LESS_THAN_OR_EQUAL;
+    default -> throw new UnsupportedOperationException(comparison.name());
+    };
     if (intervalLength < 0) {
       smallerRef = rexBuilder.makeCall(SqlStdOperatorTable.DATETIME_PLUS, smallerRef,
           CalciteUtil.makeTimeInterval(intervalLength, rexBuilder));

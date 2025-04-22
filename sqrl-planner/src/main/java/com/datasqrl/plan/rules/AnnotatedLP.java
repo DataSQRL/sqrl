@@ -314,13 +314,13 @@ public class AnnotatedLP implements RelHolder {
 
   public AnnotatedLP withDefaultSort() {
     if (!topN.isEmpty()) {
-		return this;
-	}
+        return this;
+    }
     SortOrder newSort;
     if (sort.isEmpty()) {
       if (relNode instanceof LogicalSort) {
-		return this;
-	}
+        return this;
+    }
       newSort = getDefaultOrder(this);
     } else {
       newSort = sort.ensurePrimaryKeyPresent(primaryKey);
@@ -378,8 +378,8 @@ public class AnnotatedLP implements RelHolder {
     errors.checkFatal(type!=TableType.LOOKUP, "Lookup tables can only be used in temporal joins");
     var exec = config.getExecAnalysis();
     if (type==TableType.RELATION) {
-		exec.requireFeature(EngineFeature.RELATIONS);
-	}
+        exec.requireFeature(EngineFeature.RELATIONS);
+    }
 
     //Now filters are always inlined
     var input = this;

@@ -75,12 +75,12 @@ public class FlexibleSchemaInferencePreprocessor implements DiscoveryPreprocesso
       var fileComponents = match.get();
       var parentDir = file.getParent();
       if ((parentDir==null) || !Name.isValidNameStrict(fileComponents.getFilename())) {
-		return;
-	}
+        return;
+    }
       var tableName = Name.system(fileComponents.getFilename());
       if (hasSchemaOrConfig(parentDir, tableName)) {
-		return; //Don't infer schema if it's already present
-	}
+        return; //Don't infer schema if it's already present
+    }
       var compressor = FileCompression.of(fileComponents.getCompression());
       Optional<RecordReader> reader = ServiceLoaderDiscovery.findFirst(RecordReader.class,
           r -> r.getExtensions().contains(fileComponents.getExtension()));

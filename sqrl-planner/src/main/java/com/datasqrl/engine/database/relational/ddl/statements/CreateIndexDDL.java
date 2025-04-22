@@ -38,10 +38,10 @@ public class CreateIndexDDL implements SqlDDLStatement {
         Preconditions.checkArgument(columns.size()==1);
         String indexModifier;
         indexModifier = switch (type) {
-		case VECTOR_COSINE -> "vector_l2_ops";
-		case VECTOR_EUCLID -> "vector_cosine_ops";
-		default -> throw new UnsupportedOperationException(type.toString());
-		};
+        case VECTOR_COSINE -> "vector_l2_ops";
+        case VECTOR_EUCLID -> "vector_cosine_ops";
+        default -> throw new UnsupportedOperationException(type.toString());
+        };
         columnExpression = quoteIdentifier(columns.get(0)) + " " + indexModifier;
         indexType = "HNSW";
         break;

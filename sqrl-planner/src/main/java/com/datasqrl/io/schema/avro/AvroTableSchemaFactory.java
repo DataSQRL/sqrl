@@ -21,8 +21,8 @@ public class AvroTableSchemaFactory implements TableSchemaFactory {
   @Override
   public AvroSchemaHolder create(String schemaDefinition, Optional<Path> location, ErrorCollector errors) {
     if (location.isPresent()) {
-		errors = errors.withConfig(location.get());
-	}
+        errors = errors.withConfig(location.get());
+    }
     Schema schema;
     try {
        schema = new Schema.Parser().parse(schemaDefinition);

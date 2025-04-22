@@ -34,16 +34,16 @@ public class IndexHint extends ColumnNamesHint {
     public PlannerHint create(ParsedObject<SqrlHint> source) {
       var arguments = source.get().getOptions();
       if (arguments==null || arguments.isEmpty()) {
-		return new IndexHint(source, null, List.of()); //no hint
-	}
+        return new IndexHint(source, null, List.of()); //no hint
+    }
       if (arguments.size()<= 1) {
-		throw new StatementParserException(ErrorLabel.GENERIC, source.getFileLocation(),
-		      "Index hint requires at least two arguments: the name of the index type and at least one column.");
-	}
+        throw new StatementParserException(ErrorLabel.GENERIC, source.getFileLocation(),
+              "Index hint requires at least two arguments: the name of the index type and at least one column.");
+    }
       var optIndex = IndexType.fromName(arguments.get(0));
       if (optIndex.isEmpty()) {
-		throw new StatementParserException(ErrorLabel.GENERIC, source.getFileLocation(),  "Unknown index type: %s", arguments.get(0));
-	}
+        throw new StatementParserException(ErrorLabel.GENERIC, source.getFileLocation(),  "Unknown index type: %s", arguments.get(0));
+    }
       return new IndexHint(source, optIndex.get(), arguments.subList(1, arguments.size()));
     }
 

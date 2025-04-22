@@ -101,8 +101,8 @@ public class SqrlDAGExporter {
                         .build());
             } else if (node instanceof SqrlDAG.QueryNode) {
                 if (!includeQueries) {
-					continue;
-				}
+                    continue;
+                }
                 var query = ((SqrlDAG.QueryNode) node).getQuery();
                 result.add(Query.builder()
                         .id(node.getId())
@@ -122,8 +122,8 @@ public class SqrlDAGExporter {
 
     private String explain(RelNode relNode) {
         if (!includeLogicalPlan) {
-			return null;
-		}
+            return null;
+        }
         CalciteHacks.resetToSqrlMetadataProvider();
         if (withHints) {
             return RelWriterWithHints.explain(relNode);
@@ -134,8 +134,8 @@ public class SqrlDAGExporter {
 
     private String toSql(RelNode relNode) {
         if (!includeSQL) {
-			return null;
-		}
+            return null;
+        }
         return QueryPlanner.relToString(Dialect.CALCITE, relNode).getSql();
     }
 
@@ -173,8 +173,8 @@ public class SqrlDAGExporter {
     private static String collations2String(RelCollation collation, List<RelDataTypeField> fields) {
         var collations = collation.getFieldCollations();
         if (collations.isEmpty()) {
-			return "";
-		}
+            return "";
+        }
         return collations.stream().map(col -> fields.get(col.getFieldIndex()) + " " + col.shortString()).collect(Collectors.joining(", "));
     }
 
@@ -191,11 +191,11 @@ public class SqrlDAGExporter {
         }
         public static NodeType from(TableType tableType) {
             return switch (tableType) {
-			case RELATION -> RELATION;
-			case STREAM -> STREAM;
-			case STATE, STATIC, LOOKUP, VERSIONED_STATE -> STATE;
-			default -> throw new UnsupportedOperationException("Unexpected type: " + tableType);
-			};
+            case RELATION -> RELATION;
+            case STREAM -> STREAM;
+            case STATE, STATIC, LOOKUP, VERSIONED_STATE -> STATE;
+            default -> throw new UnsupportedOperationException("Unexpected type: " + tableType);
+            };
         }
     }
 

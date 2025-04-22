@@ -189,8 +189,8 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
     for (Map.Entry<IdentifiedQuery, QueryTemplate> entry : databaseQueries.entrySet()) {
       var optViewName = entry.getKey().getViewName();
       if (optViewName.isEmpty()) {
-		continue;
-	}
+        continue;
+    }
       var relNode = entry.getValue().getRelNode();
       if (upCastingMapper.isPresent()) {
         relNode = relNode.accept(new RelShuttleImpl(){
@@ -209,7 +209,7 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
           .collect(Collectors.toList()), pos);
 
       framework.getQueryPlanner();
-	var sqlNode = QueryPlanner
+    var sqlNode = QueryPlanner
           .relToSql(Dialect.POSTGRES, relNode).getSqlNode();
 
       var viewSql = createView(viewNameIdentifier, pos, columnList, sqlNode);
@@ -307,8 +307,8 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
         if (field.getType() instanceof RawRelDataType &&
             ((RawRelDataType) field.getType()).getRawType().getOriginatingClass()
                 == extension.typeClass()) {
-			statements.add(() -> extension.getExtensionDdl());
-		}
+            statements.add(() -> extension.getExtensionDdl());
+        }
       }
     }
 

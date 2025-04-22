@@ -46,7 +46,7 @@ public abstract class SimpleBasicType<J> extends AbstractBasicType<J> {
     }
 
     @Override
-	public boolean detectType(String original) {
+    public boolean detectType(String original) {
       try {
         stringParser.apply(original);
         return true;
@@ -56,7 +56,7 @@ public abstract class SimpleBasicType<J> extends AbstractBasicType<J> {
     }
 
     @Override
-	public Optional<J> parseDetected(Object original, ErrorCollector errors) {
+    public Optional<J> parseDetected(Object original, ErrorCollector errors) {
       if (original instanceof String string) {
         try {
           var result = stringParser.apply(string);

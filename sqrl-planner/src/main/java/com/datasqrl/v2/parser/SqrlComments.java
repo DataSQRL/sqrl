@@ -40,8 +40,8 @@ public class SqrlComments {
 
   public static SqrlComments parse(ParsedObject<String> comments) {
     if (comments.isEmpty() || Strings.isNullOrEmpty(comments.get())) {
-		return new SqrlComments(List.of(),List.of());
-	}
+        return new SqrlComments(List.of(),List.of());
+    }
     var commentMatcher = COMMENT_PATTERN.matcher(comments.get());
     List<ParsedObject<String>> docComments = new ArrayList<>();
     List<ParsedObject<SqrlHint>> hintComments = new ArrayList<>();
@@ -49,8 +49,8 @@ public class SqrlComments {
       var comment = commentMatcher.group();
       var commentContent = comment.substring(3, Math.max(comment.length()-2,3));
       if (Strings.isNullOrEmpty(commentContent)) {
-		continue;
-	}
+        continue;
+    }
       ParsedObject<String> parsedComment = comments.fromOffset(SqrlStatementParser.parse(commentContent,
           comments.get(), commentMatcher.start()+3));
       if (comment.startsWith(HINT_PREFIX)) {

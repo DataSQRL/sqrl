@@ -270,8 +270,8 @@ public class SqrlStatementParser {
 
   static ParsedObject<String> parse(String content, String statement, int charOffset) {
     if (content==null) {
-		return new ParsedObject<>(null, FileLocation.START);
-	}
+        return new ParsedObject<>(null, FileLocation.START);
+    }
 
     var fileLocation = computeFileLocation(statement, charOffset);
     return new ParsedObject<>(content, fileLocation);

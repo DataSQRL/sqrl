@@ -40,7 +40,7 @@ public class BigIntType extends AbstractBasicType<Long> {
     }
 
     @Override
-	public Long convert(Object o) {
+    public Long convert(Object o) {
       if (o instanceof Long long1) {
         return long1;
       }

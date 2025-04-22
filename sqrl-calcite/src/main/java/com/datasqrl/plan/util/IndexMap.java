@@ -88,8 +88,8 @@ public interface IndexMap {
     for (var target = 0; target < references.size(); target++) {
       int source = references.get(target);
       if (source>=0) {
-		mapping.putIfAbsent(source,target);
-	}
+        mapping.putIfAbsent(source,target);
+    }
     }
     return of(mapping);
   }

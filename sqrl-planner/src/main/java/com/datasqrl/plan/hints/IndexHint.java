@@ -21,8 +21,8 @@ public class IndexHint implements OptimizerHint {
 
   public static IndexHint of(String hintName, List<String> arguments, ErrorCollector errors) {
     if (arguments==null || arguments.isEmpty()) {
-		return NONE;
-	}
+        return NONE;
+    }
     List<String> columnNames;
     IndexType indexType;
     if (hintName.equalsIgnoreCase(PARTITION_KEY_HINT)) {

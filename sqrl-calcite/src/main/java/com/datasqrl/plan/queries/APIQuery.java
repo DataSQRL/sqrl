@@ -40,8 +40,8 @@ public class APIQuery implements IdentifiedQuery {
   @Override
   public Optional<Name> getViewName() {
     if (!getParameters().isEmpty()) {
-		return Optional.empty();
-	}
+        return Optional.empty();
+    }
     return Optional.of(namePath.getLast());
   }
 

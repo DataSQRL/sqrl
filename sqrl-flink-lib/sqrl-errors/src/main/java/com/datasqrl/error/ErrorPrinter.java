@@ -42,8 +42,8 @@ public class ErrorPrinter {
     if (!fileLocation.trim().isEmpty()) {
       b.append("in ").append(fileLocation);
       if (location.hasFile()) {
-		b.append(" [").append(location.getFile().toString()).append("]");
-	}
+        b.append(" [").append(location.getFile().toString()).append("]");
+    }
       b.append(":\n");
     }
 
@@ -90,8 +90,8 @@ public class ErrorPrinter {
     var result = label.getErrorDescription();
     if (!(result == null || result.trim().isEmpty())) {
       if (addSeparator) {
-		result = "--\n" + result;
-	}
+        result = "--\n" + result;
+    }
       return result;
     } else {
       return "";

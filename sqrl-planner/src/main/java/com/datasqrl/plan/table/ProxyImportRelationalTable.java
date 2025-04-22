@@ -41,17 +41,17 @@ public class ProxyImportRelationalTable extends PhysicalRelationalTable implemen
     super(rootTableId, tablePath, tableType, rowType, rowType.getFieldCount(), timestamp,  primaryKey, Container.EMPTY, tableStatistic);
     this.baseTable = baseTable;
     if (tableType.isLocked()) {
-		lock();
-	}
+        lock();
+    }
   }
 
   @Override
   public Optional<PhysicalRelationalTable> getStreamRoot() {
     if (getType().isStream()) {
-		return Optional.of(this);
-	} else {
-		return Optional.empty();
-	}
+        return Optional.of(this);
+    } else {
+        return Optional.empty();
+    }
   }
 
   @Override

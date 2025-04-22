@@ -38,7 +38,7 @@ public class DoubleType extends AbstractBasicType<Double> {
     }
 
     @Override
-	public Double convert(Object o) {
+    public Double convert(Object o) {
       if (o instanceof Double double1) {
         return double1;
       }

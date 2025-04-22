@@ -46,8 +46,8 @@ public class Timestamps {
     Preconditions.checkArgument(type!=Type.UNDEFINED || (candidates.isEmpty() && windows.isEmpty()), "Invalid timestamp definition");
     Preconditions.checkArgument(windows.stream().map(TimeWindow::getTimestampIndex).allMatch(candidates::contains));
     if (type==Type.AND && candidates.size()<2) {
-		type = Type.OR;
-	}
+        type = Type.OR;
+    }
     this.candidates = candidates;
     this.type = type;
     this.windows = windows;
@@ -125,11 +125,11 @@ public class Timestamps {
   @Override
   public boolean equals(Object o) {
     if (this == o) {
-		return true;
-	}
+        return true;
+    }
     if (o == null || getClass() != o.getClass()) {
-		return false;
-	}
+        return false;
+    }
     var that = (Timestamps) o;
     return Objects.equals(candidates, that.candidates) && type == that.type;
   }

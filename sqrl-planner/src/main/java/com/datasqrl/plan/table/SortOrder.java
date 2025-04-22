@@ -66,8 +66,8 @@ public class SortOrder implements PullupOperator {
 
   public SortOrder ensurePrimaryKeyPresent(PrimaryKeyMap pk) {
     if (pk.isUndefined()) {
-		return this;
-	}
+        return this;
+    }
     List<Integer> pkIdx = new ArrayList<>(pk.asSimpleList()); //PK must be simple after post-processing
     collation.getFieldCollations().stream().map(fc -> fc.getFieldIndex()).forEach(pkIdx::remove);
     if (pkIdx.isEmpty()) {

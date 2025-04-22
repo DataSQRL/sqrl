@@ -24,12 +24,12 @@ public class FileCompression {
 
   public static Optional<CompressionIO> of(String compression) {
     if (Strings.isNullOrEmpty(compression)) {
-		return Optional.of(new NoCompressionIO());
-	}
+        return Optional.of(new NoCompressionIO());
+    }
     final var compressionLower = compression.toLowerCase();
     if (!SUPPORTED_COMPRESSION_EXTENSIONS.contains(compressionLower)) {
-		return Optional.empty();
-	}
+        return Optional.empty();
+    }
     return ServiceLoaderDiscovery.findFirst(CompressionIO.class,
         cio -> cio.getExtensions().contains(compressionLower));
   }

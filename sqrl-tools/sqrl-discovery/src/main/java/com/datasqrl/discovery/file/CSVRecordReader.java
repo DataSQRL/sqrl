@@ -43,8 +43,8 @@ public class CSVRecordReader implements RecordReader {
     var headerLine = reader.readLine();
     var configOpt = inferConfig(headerLine);
     if (configOpt.isEmpty()) {
-		return Stream.of();
-	}
+        return Stream.of();
+    }
     var format = configOpt.get().getFormat();
     var header = configOpt.get().getHeader();
 
@@ -100,8 +100,8 @@ public class CSVRecordReader implements RecordReader {
     try (var parser = CSVParser.parse(headerLine, format)) {
       Optional<String[]> header = parser.stream().findFirst().flatMap(r -> {
         if (r.size()==0) {
-			return Optional.empty();
-		}
+            return Optional.empty();
+        }
         //Make sure all column names are valid
         if (!r.stream().allMatch(col -> !Strings.isNullOrEmpty(col) && Character.isLetter(col.charAt(0)))) {
           log.error("CSV header column names are invalid: {}", r);
@@ -110,8 +110,8 @@ public class CSVRecordReader implements RecordReader {
         return Optional.of(r.stream().toArray(String[]::new));
       });
       if (header.isPresent()) {
-		return Optional.of(new Config(format, header.get()));
-	}
+        return Optional.of(new Config(format, header.get()));
+    }
     }
     return Optional.empty();
   }

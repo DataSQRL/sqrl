@@ -62,8 +62,8 @@ public interface DatabaseQuery {
     @Override
     public Optional<Name> getViewName() {
       if (!paramters.isEmpty()) {
-		return Optional.empty();
-	}
+        return Optional.empty();
+    }
       return Optional.of(tableName);
     }
 

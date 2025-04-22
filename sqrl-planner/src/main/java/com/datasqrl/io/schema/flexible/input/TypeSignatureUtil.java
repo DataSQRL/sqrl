@@ -25,8 +25,8 @@ public class TypeSignatureUtil {
       Function<String, BasicType> detectFromString,
       Function<Map<String, Object>, BasicType> detectFromComposite) {
     if (o == null) {
-		return Optional.empty();
-	}
+        return Optional.empty();
+    }
     Type rawType = null;
     BasicType detectedType = null;
     var arrayDepth = 0;

@@ -90,7 +90,7 @@ public class RootGraphqlModel {
     String schema;
 
     @Override
-	public <R, C> R accept(SchemaVisitor<R, C> visitor, C context) {
+    public <R, C> R accept(SchemaVisitor<R, C> visitor, C context) {
       return visitor.visitStringDefinition(this, context);
     }
   }
@@ -270,7 +270,7 @@ public class RootGraphqlModel {
     }
 
     @Override
-	public <R, C> R accept(QueryCoordVisitor<R, C> visitor, C context) {
+    public <R, C> R accept(QueryCoordVisitor<R, C> visitor, C context) {
       return visitor.visitFieldLookup(this, context);
     }
   }
@@ -292,7 +292,7 @@ public class RootGraphqlModel {
     }
 
     @Override
-	public <R, C> R accept(QueryCoordVisitor<R, C> visitor, C context) {
+    public <R, C> R accept(QueryCoordVisitor<R, C> visitor, C context) {
       return visitor.visitArgumentLookup(this, context);
     }
   }
@@ -456,7 +456,7 @@ public class RootGraphqlModel {
     String key;
 
     @Override
-	public <R, C> R accept(ParameterHandlerVisitor<R, C> visitor, C context) {
+    public <R, C> R accept(ParameterHandlerVisitor<R, C> visitor, C context) {
       return visitor.visitSourceParameter(this, context);
     }
   }
@@ -472,7 +472,7 @@ public class RootGraphqlModel {
     String path;
 
     @Override
-	public <R, C> R accept(ParameterHandlerVisitor<R, C> visitor, C context) {
+    public <R, C> R accept(ParameterHandlerVisitor<R, C> visitor, C context) {
       return visitor.visitArgumentParameter(this, context);
     }
   }

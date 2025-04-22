@@ -19,8 +19,8 @@ public class TablePattern {
   public Pattern get(boolean withBoundary) {
     var updatedPattern = pattern;
     if (withBoundary) {
-		updatedPattern = addRegexBoundary(pattern);
-	}
+        updatedPattern = addRegexBoundary(pattern);
+    }
     return Pattern.compile(updatedPattern);
   }
 
@@ -28,11 +28,11 @@ public class TablePattern {
     var nameOffsets = getNameMatchOffsets(pattern);
     var updatedPattern = StringUtil.replaceSubstring(pattern, nameOffsets[0], nameOffsets[1], Pattern.quote(name));
     if (prefix.isPresent()) {
-		updatedPattern = Pattern.quote(prefix.get()) + updatedPattern;
-	}
+        updatedPattern = Pattern.quote(prefix.get()) + updatedPattern;
+    }
     if (suffix.isPresent()) {
-		updatedPattern = updatedPattern + Pattern.quote(suffix.get());
-	}
+        updatedPattern = updatedPattern + Pattern.quote(suffix.get());
+    }
     return updatedPattern;
   }
 
@@ -73,8 +73,8 @@ public class TablePattern {
     }
 
     if (startPos<0 || endPos<0) {
-		return null;
-	}
+        return null;
+    }
     return new int[]{startPos,endPos};
   }
 

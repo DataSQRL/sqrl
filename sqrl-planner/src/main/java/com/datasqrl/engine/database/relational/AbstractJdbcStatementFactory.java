@@ -138,8 +138,8 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
       for (DatabaseExtension extension : extensions) {
         if (field.getType() instanceof RawRelDataType &&
             ((RawRelDataType) field.getType()).getRawType().getOriginatingClass().equals(extension.typeClass())) {
-			matchedExtensions.add(extension);
-		}
+            matchedExtensions.add(extension);
+        }
       }
     }
 

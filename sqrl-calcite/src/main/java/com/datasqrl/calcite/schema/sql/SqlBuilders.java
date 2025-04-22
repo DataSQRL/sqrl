@@ -226,17 +226,17 @@ public class SqlBuilders {
     public SqlSelectBuilder rewriteExpressions(SqlShuttle shuttle) {
       select.setSelectList((SqlNodeList) select.getSelectList().accept(shuttle));
       if (select.getWhere() != null) {
-		select.setWhere(select.getWhere().accept(shuttle));
-	}
+        select.setWhere(select.getWhere().accept(shuttle));
+    }
       if (select.getGroup() != null) {
-		select.setGroupBy((SqlNodeList) select.getGroup().accept(shuttle));
-	}
+        select.setGroupBy((SqlNodeList) select.getGroup().accept(shuttle));
+    }
       if (select.getHaving() != null) {
-		select.setHaving(select.getHaving().accept(shuttle));
-	}
+        select.setHaving(select.getHaving().accept(shuttle));
+    }
       if (select.getOrderList() != null) {
-		select.setOrderBy((SqlNodeList) select.getOrderList().accept(shuttle));
-	}
+        select.setOrderBy((SqlNodeList) select.getOrderList().accept(shuttle));
+    }
 
       return this;
     }
@@ -276,8 +276,8 @@ public class SqlBuilders {
     public void appendWhere(SqlNode sqlNode) {
       List<SqlNode> nodes = new ArrayList<>();
       if (select.getWhere() != null) {
-		nodes.add(select.getWhere());
-	}
+        nodes.add(select.getWhere());
+    }
       nodes.add(sqlNode);
 
       this.setWhere(nodes);

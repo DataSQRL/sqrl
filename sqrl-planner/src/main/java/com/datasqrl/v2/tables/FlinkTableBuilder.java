@@ -115,8 +115,8 @@ public class FlinkTableBuilder {
 
   public FlinkTableBuilder setPartition(List<String> partitionColumns) {
     if (partitionColumns.isEmpty()) {
-		setPartitionKeyList(SqlNodeList.EMPTY);
-	}
+        setPartitionKeyList(SqlNodeList.EMPTY);
+    }
     setPartitionKeyList(FlinkSqlNodeFactory.createPartitionKeys(partitionColumns));
     return this;
   }
@@ -146,8 +146,8 @@ public class FlinkTableBuilder {
 
   public Optional<List<String>> getPrimaryKey() {
     if (tableConstraints.isEmpty()) {
-		return Optional.empty();
-	}
+        return Optional.empty();
+    }
     Preconditions.checkArgument(tableConstraints.size()==1, "Expected a single table constraint");
     var pkConstraint = tableConstraints.get(0);
     Preconditions.checkArgument(pkConstraint.isPrimaryKey(), "Expected a primary key constraint");

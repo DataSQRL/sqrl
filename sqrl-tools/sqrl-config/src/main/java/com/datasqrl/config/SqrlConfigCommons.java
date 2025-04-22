@@ -130,8 +130,8 @@ public class SqrlConfigCommons implements SqrlConfig {
     getAllKeys().forEach(relativeKey -> {
       var localKey = getLocalKey(relativeKey);
       if (!Strings.isNullOrEmpty(localKey)) {
-		localKeys.add(localKey);
-	}
+        localKeys.add(localKey);
+    }
     });
     return localKeys;
   }
@@ -141,8 +141,8 @@ public class SqrlConfigCommons implements SqrlConfig {
     config.getKeys(prefix).forEachRemaining(subKey -> {
       var suffix = relativeKey(subKey);
       if (!Strings.isNullOrEmpty(suffix)) {
-		allKeys.add(suffix);
-	}
+        allKeys.add(suffix);
+    }
     });
     return allKeys;
   }
@@ -158,8 +158,8 @@ public class SqrlConfigCommons implements SqrlConfig {
     var expandKey = expandKey(key);
     if (isBasicClass(clazz)) { //Direct mapping
       if (!config.containsKey(fullKey)) {
-		return new ValueImpl<>(expandKey, errors, Optional.empty());
-	}
+        return new ValueImpl<>(expandKey, errors, Optional.empty());
+    }
       return new ValueImpl<>(expandKey, errors, Optional.of(config.get(clazz, fullKey)));
     } else {
       //Try to map class by field
@@ -182,8 +182,8 @@ public <T> Value<T> allAs(Class<T> clazz) {
       var value = clazz.getDeclaredConstructor().newInstance();
       for (Field field : clazz.getDeclaredFields()) {
         if (Modifier.isStatic(field.getModifiers())) {
-			continue;
-		}
+            continue;
+        }
         field.setAccessible(true);
         Class<?> fieldClass = field.getType();
         Value configValue;
@@ -211,8 +211,8 @@ public <T> Value<T> allAs(Class<T> clazz) {
       return new ValueImpl<>(prefix, errors, Optional.of(value));
     } catch (Exception e) {
       if (e instanceof CollectedException exception) {
-		throw exception;
-	}
+        throw exception;
+    }
       throw errors.exception("Could not map configuration values on "
           + "object of clazz [%s]: %s", clazz.getName(), e.toString());
     }
@@ -256,18 +256,18 @@ public <T> Value<T> allAs(Class<T> clazz) {
     try {
       for (Field field : clazz.getDeclaredFields()) {
         if (Modifier.isStatic(field.getModifiers())) {
-			continue;
-		}
+            continue;
+        }
         field.setAccessible(true);
         var fieldValue = field.get(value);
         if (fieldValue != null) {
-			setProperty(field.getName(), fieldValue);
-		}
+            setProperty(field.getName(), fieldValue);
+        }
       }
     } catch (Exception e) {
       if (e instanceof CollectedException exception) {
-		throw exception;
-	}
+        throw exception;
+    }
       throw errors.exception("Could not access fields "
           + "of clazz [%s]: %s", clazz.getName(), e.getMessage());
     }
@@ -379,8 +379,8 @@ public <T> Value<T> allAs(Class<T> clazz) {
   public static boolean validateJsonFile(Path jsonFilePath, String schemaResourcePath,
       ErrorCollector errors) {
     if (schemaResourcePath == null) {
-		return true;
-	}
+        return true;
+    }
     var allErrors = errors.abortOnFatal(false); //so we can collect all errors
     var mapper = new ObjectMapper();
     JsonNode json, schemaNode;
@@ -407,8 +407,8 @@ public <T> Value<T> allAs(Class<T> clazz) {
       executionContext.getExecutionConfig().setFormatAssertionsEnabled(true);
     });
     if (validationMessages.isEmpty()) {
-		return true;
-	}
+        return true;
+    }
     validationMessages.forEach(vm -> {
       allErrors.fatal("%s at location [%s]", vm.getMessage(), vm.getInstanceLocation());
     });
@@ -545,8 +545,8 @@ public <T> Value<T> allAs(Class<T> clazz) {
       configs.forEach(config::setProperty);
       ErrorCollector configErrors = errors;
       if (!Strings.isNullOrEmpty(configFilename)) {
-		configErrors = configErrors.withConfig(configFilename);
-	}
+        configErrors = configErrors.withConfig(configFilename);
+    }
       return new SqrlConfigCommons(configErrors, configFilename, config, prefix);
     }
   }

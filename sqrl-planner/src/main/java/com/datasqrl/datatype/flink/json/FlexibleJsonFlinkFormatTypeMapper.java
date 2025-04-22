@@ -61,8 +61,8 @@ public class FlexibleJsonFlinkFormatTypeMapper extends FlinkDataTypeMapper imple
         return Optional.empty();
       case ARRAY:
         if (getMapper(type.getComponentType()).isEmpty()) {
-			return Optional.empty();
-		}
+            return Optional.empty();
+        }
     }
     if (type.getSqlTypeName() == SqlTypeName.ROW ||
         (type.getSqlTypeName() == SqlTypeName.ARRAY && type.getComponentType().getSqlTypeName() == SqlTypeName.ROW)) {

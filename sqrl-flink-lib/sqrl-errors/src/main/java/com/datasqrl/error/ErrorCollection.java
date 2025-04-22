@@ -42,8 +42,8 @@ public class ErrorCollection implements Iterable<ErrorMessage>, Serializable {
 
   public void addAll(@NonNull ErrorCollection other, ErrorLocation baseLocation) {
     if (other == null || !other.hasErrorsWarningsOrNotices()) {
-		return;
-	}
+        return;
+    }
     other.stream().forEach(err -> add(err, baseLocation));
   }
 

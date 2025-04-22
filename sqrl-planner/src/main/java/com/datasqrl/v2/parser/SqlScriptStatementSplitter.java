@@ -44,8 +44,8 @@ public class SqlScriptStatementSplitter {
    */
   public List<ParsedObject<String>> splitStatements(String script) {
     if (script.isBlank()) {
-		throw new StatementParserException("Script is empty");
-	}
+        throw new StatementParserException("Script is empty");
+    }
     var formatted =
         formatEndOfSqlFile(script)
             .replaceAll(LINE_COMMENT_PATTERN, "");
@@ -61,8 +61,8 @@ public class SqlScriptStatementSplitter {
     for (String line : formatted.split(LINE_DELIMITER)) {
       lineNo++;
       if (line.isBlank()) {
-		continue;
-	}
+        continue;
+    }
       if (current==null) {
         statementLineNo = lineNo;
         current = new StringBuilder();
@@ -117,8 +117,8 @@ public class SqlScriptStatementSplitter {
 
   public static String addStatementDelimiter(String statement) {
     if (statement.trim().endsWith(STATEMENT_DELIMITER)) {
-		return statement;
-	}
+        return statement;
+    }
     return statement + STATEMENT_DELIMITER;
   }
 

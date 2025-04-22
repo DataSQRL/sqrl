@@ -104,8 +104,8 @@ public class PrimaryKeyMap implements Serializable {
 
   public int getLength() {
     if (undefined) {
-		return -1;
-	}
+        return -1;
+    }
     return columns.size();
   }
 
@@ -130,8 +130,8 @@ public class PrimaryKeyMap implements Serializable {
 
   public PrimaryKeyMap makeSimple(RelDataType rowType) {
     if (undefined) {
-		return this;
-	}
+        return this;
+    }
     return PrimaryKeyMap.of(columns.stream().map(colSet -> colSet.pickBest(rowType))
         .collect(Collectors.toUnmodifiableList()));
   }
