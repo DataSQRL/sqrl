@@ -174,7 +174,7 @@ CREATE TABLE `MyOrdersIndexBtree_1` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `entries` RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQAvY29tLmRhdGFzcXJsLnR5cGVzLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),
+  `entries` RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
@@ -188,7 +188,7 @@ CREATE TABLE `MyOrdersIndexHash_2` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `entries` RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQAvY29tLmRhdGFzcXJsLnR5cGVzLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),
+  `entries` RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
@@ -202,7 +202,7 @@ CREATE TABLE `MyOrdersNoHint_3` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `entries` RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQAvY29tLmRhdGFzcXJsLnR5cGVzLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),
+  `entries` RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
@@ -216,7 +216,7 @@ CREATE TABLE `MyOrdersNoIndex_4` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `entries` RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQAvY29tLmRhdGFzcXJsLnR5cGVzLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),
+  `entries` RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
@@ -230,7 +230,7 @@ CREATE TABLE `MyOrdersTwoIndex_5` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `entries` RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQAvY29tLmRhdGFzcXJsLnR5cGVzLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),
+  `entries` RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
