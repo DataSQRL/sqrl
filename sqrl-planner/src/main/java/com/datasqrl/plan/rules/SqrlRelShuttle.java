@@ -38,7 +38,8 @@ public interface SqrlRelShuttle extends RelShuttle {
     return visit((RelNode) logicalCalc);
   }
 
-  default RelNode visit(LogicalExchange logicalExchange) {
+  @Override
+default RelNode visit(LogicalExchange logicalExchange) {
     return visit((RelNode) logicalExchange);
   }
 

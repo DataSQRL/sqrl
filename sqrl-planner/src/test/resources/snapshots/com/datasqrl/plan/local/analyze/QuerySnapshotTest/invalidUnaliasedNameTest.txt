@@ -1,8 +1,0 @@
->>>errors
-[FATAL] Selected column is missing a name. Try using the AS keyword.
-in script:<script> [5:13]:
-IMPORT ecommerce-data.Orders TIMESTAMP time;
-IMPORT ecommerce-data.Product TIMESTAMP _ingest_time;
-X := SELECT 10 FROM Orders;
-------------^
-

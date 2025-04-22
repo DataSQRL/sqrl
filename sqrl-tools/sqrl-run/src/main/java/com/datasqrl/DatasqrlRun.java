@@ -4,26 +4,13 @@
 package com.datasqrl;
 
 
-import com.datasqrl.canonicalizer.NameCanonicalizer;
-import com.datasqrl.graphql.GraphQLServer;
-import com.datasqrl.graphql.JsonEnvVarDeserializer;
-import com.datasqrl.graphql.config.ServerConfig;
-import com.datasqrl.graphql.server.RootGraphqlModel;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.io.Resources;
-import io.micrometer.prometheusmetrics.PrometheusConfig;
-import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
-import io.vertx.core.Vertx;
-import io.vertx.core.VertxOptions;
-import io.vertx.core.json.JsonObject;
-import io.vertx.micrometer.MicrometerMetricsOptions;
+import java.io.File;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -31,11 +18,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
+
 import org.apache.flink.api.common.JobStatus;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -49,13 +36,31 @@ import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.admin.NewTopic;
 
+import com.datasqrl.graphql.GraphQLServer;
+import com.datasqrl.graphql.JsonEnvVarDeserializer;
+import com.datasqrl.graphql.config.ServerConfig;
+import com.datasqrl.graphql.server.RootGraphqlModel;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.io.Resources;
+
+import io.micrometer.prometheusmetrics.PrometheusConfig;
+import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
+import io.vertx.core.Vertx;
+import io.vertx.core.VertxOptions;
+import io.vertx.core.json.JsonObject;
+import io.vertx.micrometer.MicrometerMetricsOptions;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+
 @Slf4j
 public class DatasqrlRun {
 
   private final Map<String, String> env;
   // Fix override
   Path build = Path.of(System.getProperty("user.dir")).resolve("build");
-  Path path = build.resolve("plan");
+  Path planPath = build.resolve("deploy").resolve("plan");
 
   ObjectMapper objectMapper = new ObjectMapper();
 
@@ -63,7 +68,7 @@ public class DatasqrlRun {
   TableResult execute;
 
   public static void main(String[] args) {
-    DatasqrlRun run = new DatasqrlRun();
+    var run = new DatasqrlRun();
     run.run(true);
   }
 
@@ -71,18 +76,18 @@ public class DatasqrlRun {
     this.env = System.getenv();
   }
 
-  public DatasqrlRun(Path path, Map<String, String> env) {
+  public DatasqrlRun(Path planPath, Map<String, String> env) {
     Map<String, String> newEnv = new HashMap<>();
     newEnv.putAll(System.getenv());
     newEnv.putAll(env);
     this.env = newEnv;
-    setPath(path);
+    setPlanPath(planPath);
   }
 
   @VisibleForTesting
-  public void setPath(Path path) {
-    this.path = path;
-    this.build = path.getParent();
+  public void setPlanPath(Path planPath) {
+    this.planPath = planPath;
+    this.build = planPath.getParent().getParent();
   }
 
   public TableResult run(boolean hold) {
@@ -91,12 +96,12 @@ public class DatasqrlRun {
 
     // Register the custom deserializer module
     objectMapper = new ObjectMapper();
-    SimpleModule module = new SimpleModule();
+    var module = new SimpleModule();
     module.addDeserializer(String.class, new JsonEnvVarDeserializer(env));
     objectMapper.registerModule(module);
 
     startVertx();
-    CompiledPlan plan = startFlink();
+    var plan = startFlink();
     execute = plan.execute();
     if (hold) {
       execute.print();
@@ -107,7 +112,7 @@ public class DatasqrlRun {
   public void stop() {
     if (execute != null) {
       try {
-        JobStatus status = execute.getJobClient().get().getJobStatus().get();
+        var status = execute.getJobClient().get().getJobStatus().get();
         if (status != JobStatus.FINISHED) {
           execute.getJobClient().get().cancel();
         }
@@ -135,10 +140,10 @@ public class DatasqrlRun {
     if (packageJson.toFile().exists()) {
       Map packageJsonMap = getPackageJson();
       Object o = packageJsonMap.get("values");
-      if (o instanceof Map) {
-        Object c = ((Map)o).get("flink-config");
-        if (c instanceof Map) {
-          config.putAll((Map)c);
+      if (o instanceof Map map) {
+        Object c = map.get("flink-config");
+        if (c instanceof Map m) {
+          config.putAll(m);
         }
       }
     }
@@ -207,12 +212,12 @@ public class DatasqrlRun {
     StreamTableEnvironment tEnv = StreamTableEnvironment.create(sEnv, tEnvConfig);
     TableResult tableResult = null;
 
-    Path flinkPath = path.resolve("flink.json");
+    Path flinkPath = planPath.resolve("flink.json");
     if (!flinkPath.toFile().exists()) {
-      throw new RuntimeException("Could not find flink plan.");
+      throw new RuntimeException("Could not find flink plan: " + flinkPath);
     }
 
-    Map map = objectMapper.readValue(path.resolve("flink.json").toFile(), Map.class);
+    Map map = objectMapper.readValue(planPath.resolve("flink.json").toFile(), Map.class);
     List<String> statements = (List<String>) map.get("flinkSql");
 
     for (int i = 0; i < statements.size()-1; i++) {
@@ -242,16 +247,16 @@ public class DatasqrlRun {
   }
 
   public String replaceWithEnv(String command) {
-    Map<String, String> envVariables = env;
-    Pattern pattern = Pattern.compile("\\$\\{(.*?)\\}");
+    var envVariables = env;
+    var pattern = Pattern.compile("\\$\\{(.*?)\\}");
 
-    String substitutedStr = command;
-    StringBuffer result = new StringBuffer();
+    var substitutedStr = command;
+    var result = new StringBuffer();
     // First pass to replace environment variables
-    Matcher matcher = pattern.matcher(substitutedStr);
+    var matcher = pattern.matcher(substitutedStr);
     while (matcher.find()) {
-      String key = matcher.group(1);
-      String envValue = envVariables.getOrDefault(key, "");
+      var key = matcher.group(1);
+      var envValue = envVariables.getOrDefault(key, "");
       matcher.appendReplacement(result, Matcher.quoteReplacement(envValue));
     }
     matcher.appendTail(result);
@@ -261,10 +266,10 @@ public class DatasqrlRun {
 
   @SneakyThrows
   public void initKafka() {
-    if (!path.resolve("kafka.json").toFile().exists()) {
+    if (!planPath.resolve("kafka.json").toFile().exists()) {
       return;
     }
-    Map<String, Object> map = objectMapper.readValue(path.resolve("kafka.json").toFile(), Map.class);
+    Map<String, Object> map = objectMapper.readValue(planPath.resolve("kafka.json").toFile(), Map.class);
     List<Map<String, Object>> topics = (List<Map<String, Object>>) map.get("topics");
 
     if (topics == null) {
@@ -274,14 +279,12 @@ public class DatasqrlRun {
     List<Map<String, Object>> mutableTopics = new ArrayList<>(topics);
 
     Object o = getPackageJson().get("values");
-    if (o instanceof Map) {
-      Map vals = (Map) o;
+    if (o instanceof Map vals) {
       Object o1 = vals.get("create-topics");
-      if (o1 instanceof List) {
-        List topicList = (List)o1;
+      if (o1 instanceof List topicList) {
         for (Object t : topicList) {
-          if (t instanceof String) {
-            mutableTopics.add(Map.of("name", (String)t));
+          if (t instanceof String string) {
+            mutableTopics.add(Map.of("name", string));
           }
         }
       }
@@ -293,8 +296,14 @@ public class DatasqrlRun {
     }
     props.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, getenv("PROPERTIES_BOOTSTRAP_SERVERS"));
     try (AdminClient adminClient = AdminClient.create(props)) {
-      for (Map<String, Object> topic : mutableTopics) {
-        NewTopic newTopic = new NewTopic((String) topic.get("name"), 1, (short) 1);
+      Set<String> existingTopics = adminClient.listTopics().names().get();
+
+      Set<String> requiredTopics = mutableTopics.stream().map(topic -> (String) topic.get("topicName")).collect(Collectors.toSet());
+      for (String topicName : requiredTopics) {
+        if(existingTopics.contains(topicName)) {
+          continue;
+        }
+        NewTopic newTopic = new NewTopic(topicName, 1, (short) 1);
         adminClient.createTopics(Collections.singletonList(newTopic)).all().get();
       }
     }
@@ -302,37 +311,24 @@ public class DatasqrlRun {
 
   @SneakyThrows
   public void initPostgres() {
-    if (!path.resolve("postgres.json").toFile().exists()) {
+    File file = planPath.resolve("postgres.json").toFile();
+    if (!file.exists()) {
       return;
     }
-    Map<String, Object> map = objectMapper.readValue(path.resolve("postgres.json").toFile(), Map.class);
-    List<Map<String, Object>> ddl = (List<Map<String, Object>>) map.get("ddl");
+    Map plan = objectMapper.readValue(file, Map.class);
 
-    //todo env + default
-    String format = String.format("jdbc:postgresql://%s:%s/%s",
+    String fullPostgresJDBCUrl = "jdbc:postgresql://%s:%s/%s".formatted(
         getenv("PGHOST"), getenv("PGPORT"), getenv("PGDATABASE"));
-    try (Connection connection = DriverManager.getConnection(format, getenv("PGUSER"), getenv("PGPASSWORD"))) {
-      for (Map<String, Object> statement : ddl) {
-        String sql = (String) statement.get("sql");
-        connection.createStatement().execute(sql);
+    try (Connection connection = DriverManager.getConnection(fullPostgresJDBCUrl, getenv("PGUSER"), getenv("PGPASSWORD"))) {
+      for (Map statement : (List<Map>) plan.get("statements")) {
+        log.info("Executing statement {} of type {}", statement.get("name"), statement.get("type"));
+        try (Statement stmt = connection.createStatement()) {
+          stmt.execute((String) statement.get("sql"));
+        }
       }
     } catch (Exception e) {
       e.printStackTrace();
     }
-
-    if (!path.resolve("vertx.json").toFile().exists()) {
-      List<Map<String, Object>> views = (List<Map<String, Object>>) map.get("views");
-
-      try (Connection connection = DriverManager.getConnection(format, getenv("PGUSER"), getenv("PGPASSWORD"))) {
-        for (Map<String, Object> statement : views) {
-          String sql = (String) statement.get("sql");
-          connection.createStatement().execute(sql);
-        }
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
-    }
-
   }
 
   private String getenv(String key) {
@@ -341,21 +337,30 @@ public class DatasqrlRun {
 
   @SneakyThrows
   public void startVertx() {
-    if (!path.resolve("vertx.json").toFile().exists()) {
+    if (!planPath.resolve("vertx.json").toFile().exists()) {
       return;
     }
     RootGraphqlModel rootGraphqlModel = objectMapper.readValue(
-        path.resolve("vertx.json").toFile(),
+        planPath.resolve("vertx.json").toFile(),
         ModelContainer.class).model;
+    if (rootGraphqlModel == null) {
+      return; //no graphql server queries
+    }
+
 
     URL resource = Resources.getResource("server-config.json");
     Map<String, Object> json = objectMapper.readValue(resource, Map.class);
     JsonObject config = new JsonObject(json);
 
-    ServerConfig serverConfig = new ServerConfig(config);
+    ServerConfig serverConfig = new ServerConfig(config) {
+      @Override
+      public String getEnvironmentVariable(String envVar) {
+        return getenv(envVar);
+      }
+    };
 
     // Set Postgres connection options from environment variables
-    if (path.resolve("postgres.json").toFile().exists()) {
+    if (planPath.resolve("postgres.json").toFile().exists()) {
       serverConfig.getPgConnectOptions()
           .setHost(getenv("PGHOST"))
           .setPort(Integer.parseInt(getenv("PGPORT")))
@@ -364,13 +369,7 @@ public class DatasqrlRun {
           .setDatabase(getenv("PGDATABASE"));
     }
 
-    GraphQLServer server = new GraphQLServer(rootGraphqlModel, serverConfig,
-        NameCanonicalizer.SYSTEM, getSnowflakeUrl()) {
-      @Override
-      public String getEnvironmentVariable(String envVar) {
-        return getenv(envVar);
-      }
-    };
+    GraphQLServer server = new GraphQLServer(rootGraphqlModel, serverConfig, getSnowflakeUrl());
 
     PrometheusMeterRegistry prometheusMeterRegistry = new PrometheusMeterRegistry(
         PrometheusConfig.DEFAULT);
@@ -390,12 +389,12 @@ public class DatasqrlRun {
   }
 
   public Optional<String> getSnowflakeUrl() {
-    Map engines = (Map)getPackageJson().get("engines");
-    Map snowflake = (Map)engines.get("snowflake");
+    var engines = (Map)getPackageJson().get("engines");
+    var snowflake = (Map)engines.get("snowflake");
     if (snowflake != null) {
-      Object url = snowflake.get("url");
-      if (url instanceof String) {
-        return Optional.of((String)url);
+      var url = snowflake.get("url");
+      if (url instanceof String string) {
+        return Optional.of(string);
       }
     }
 

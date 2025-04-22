@@ -3,31 +3,20 @@
  */
 package com.datasqrl.plan.global;
 
-import com.datasqrl.calcite.OperatorTable;
+import java.net.URL;
+import java.util.Collection;
+import java.util.Set;
+
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
-import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.plan.local.generate.ResolvedExport;
-import com.datasqrl.plan.rules.SqrlConverterConfig;
-import com.datasqrl.util.FunctionUtil;
+import com.datasqrl.plan.rules.SQRLConverter;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
-import com.datasqrl.plan.rules.SQRLConverter;
-import com.datasqrl.plan.table.PhysicalTable;
-import org.apache.flink.table.functions.UserDefinedFunction;
 
-import java.net.URL;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
 import lombok.AllArgsConstructor;
-import org.apache.calcite.sql.SqlOperator;
-import org.apache.flink.table.functions.FunctionDefinition;
 
 /**
  * The DAGPlanner currently makes the simplifying assumption that the execution pipeline consists of
@@ -47,10 +36,10 @@ public class DAGPlanner {
 
   public SqrlDAG build(Collection<ResolvedExport> exports) {
     //Prepare the inputs
-    DAGPreparation.Result prepResult = dagPreparation.prepareInputs(framework.getSchema(), exports);
+    var prepResult = dagPreparation.prepareInputs(framework.getSchema(), exports);
 
     //Assemble DAG
-    SqrlDAG dag = new DAGBuilder(sqrlConverter, pipeline, errors).build(prepResult.getQueries(), prepResult.getExports());
+    var dag = new DAGBuilder(sqrlConverter, pipeline, errors).build(prepResult.getQueries(), prepResult.getExports());
     for (SqrlDAG.SqrlNode node : dag) {
       if (!node.hasViableStage()) {
         errors.fatal("Could not find execution stage for [%s]. Stage analysis below.\n%s",node.getName(), node.toString());
@@ -74,55 +63,40 @@ public class DAGPlanner {
         dag.eliminateInviableStages(pipeline);
       }
       //Assign stage to table
-      if (node instanceof SqrlDAG.TableNode) {
-        PhysicalTable table = ((SqrlDAG.TableNode) node).getTable();
-        ExecutionStage stage = node.getChosenStage();
+      if (node instanceof SqrlDAG.TableNode tableNode) {
+        var table = tableNode.getTable();
+        var stage = node.getChosenStage();
         Preconditions.checkNotNull(stage);
         table.assignStage(stage); //this stage on the config below
       }
     }
     //Plan final version of all tables
     dag.allNodesByClass(SqrlDAG.TableNode.class).forEach( tableNode -> {
-      PhysicalTable table = tableNode.getTable();
-      SqrlConverterConfig config = table.getBaseConfig().build();
+      var table = tableNode.getTable();
+      var config = table.getBaseConfig().build();
       table.setPlannedRelNode(sqrlConverter.convert(table, config, errors.onlyErrors()));
     });
   }
 
   public PhysicalDAGPlan assemble(SqrlDAG logicalDag,
-      Set<URL> jars, Map<String, UserDefinedFunction> udfs) {
+      Set<URL> jars) {
     //Stitch DAG together
-    return assembler.assemble(logicalDag, jars, udfs);
+    return assembler.assemble(logicalDag, jars);
   }
 
   public SqrlDAG planLogical() {
-    List<ResolvedExport> exports = framework.getSchema().getExports();
-    SqrlDAG dag = build(exports);
+    var exports = framework.getSchema().getExports();
+    var dag = build(exports);
     optimize(dag);
     return dag;
   }
 
   public PhysicalDAGPlan planPhysical(SqrlDAG dag) {
-    return assemble(dag, framework.getSchema().getJars(),
-        extractFlinkFunctions(framework.getSqrlOperatorTable()));
+    return assemble(dag, framework.getSchema().getJars());
   }
 
   public PhysicalDAGPlan plan() {
-    return assemble(planLogical(), framework.getSchema().getJars(),
-        extractFlinkFunctions(framework.getSqrlOperatorTable()));
-  }
-
-  public Map<String, UserDefinedFunction> extractFlinkFunctions(
-      OperatorTable sqrlOperatorTable) {
-    Map<String, UserDefinedFunction> fncs = new HashMap<>();
-    for (Map.Entry<String, SqlOperator> fnc : sqrlOperatorTable.getUdfs().entrySet()) {
-      Optional<FunctionDefinition> definition = FunctionUtil.getBridgedFunction(fnc.getValue());
-      if (definition.isPresent()) {
-        if (definition.get() instanceof UserDefinedFunction) {
-          fncs.put(fnc.getKey(), (UserDefinedFunction)definition.get());
-        }
-      }
-    }
-    return fncs;
+    return assemble(planLogical(), framework.getSchema().getJars()
+    );
   }
 }

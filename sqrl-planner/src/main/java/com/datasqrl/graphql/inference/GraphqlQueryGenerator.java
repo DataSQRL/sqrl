@@ -1,24 +1,27 @@
 package com.datasqrl.graphql.inference;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+import org.apache.calcite.jdbc.SqrlSchema;
+import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeField;
+import org.apache.calcite.sql.validate.SqlNameMatcher;
+
 import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.graphql.APIConnectorManager;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.queries.APISource;
+
 import graphql.language.FieldDefinition;
 import graphql.language.InputValueDefinition;
 import graphql.language.NonNullType;
 import graphql.language.ObjectTypeDefinition;
 import graphql.language.Value;
 import graphql.schema.idl.TypeDefinitionRegistry;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
 import lombok.Getter;
-import org.apache.calcite.jdbc.SqrlSchema;
-import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rel.type.RelDataTypeField;
-import org.apache.calcite.sql.validate.SqlNameMatcher;
 
 /**
  * Returns a set of table functions that satisfy a graphql schema
@@ -38,7 +41,7 @@ public class GraphqlQueryGenerator extends SchemaWalker {
   @Override
   protected void walkSubscription(ObjectTypeDefinition m, FieldDefinition fieldDefinition,
       TypeDefinitionRegistry registry, APISource source) {
-    SqrlTableMacro tableFunction = schema.getTableFunction(fieldDefinition.getName());
+    var tableFunction = schema.getTableFunction(fieldDefinition.getName());
 
     subscriptions.add(tableFunction);
   }
@@ -63,13 +66,13 @@ public class GraphqlQueryGenerator extends SchemaWalker {
       FieldDefinition field, NamePath path, Optional<RelDataType> parentRel,
       List<SqrlTableMacro> functions) {
 
-    SqrlTableMacro macro = schema.getTableFunctions(path).get(0);
+    var macro = schema.getTableFunctions(path).get(0);
 
-    List<List<ArgCombination>> argCombinations = generateCombinations(
+    var argCombinations = generateCombinations(
         field.getInputValueDefinitions());
 
     for (List<ArgCombination> arg : argCombinations) {
-      APIQuery query = graphqlQueryBuilder.create(arg, macro, parentType.getName(), field,
+      var query = graphqlQueryBuilder.create(arg, macro, parentType.getName(), field,
           parentRel.orElse(null));
       queries.add(query);
     }

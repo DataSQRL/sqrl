@@ -1,17 +1,16 @@
 package com.datasqrl.util;
 
-import com.datasqrl.function.FunctionMetadata;
-import com.datasqrl.function.IndexableFunction;
-import com.datasqrl.function.InputPreservingFunction;
-import com.datasqrl.function.SqrlTimeTumbleFunction;
-
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.Optional;
+
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.planner.functions.bridging.BridgingSqlAggFunction;
 import org.apache.flink.table.planner.functions.bridging.BridgingSqlFunction;
+
+import com.datasqrl.function.FunctionMetadata;
+import com.datasqrl.function.SqrlTimeTumbleFunction;
 
 public class FunctionUtil {
 

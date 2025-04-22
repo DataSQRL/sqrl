@@ -1,8 +1,0 @@
-IMPORT time.*;
-IMPORT ecommerceTs.Customer;
-IMPORT ecommerceTs.Orders;
-IMPORT ecommerceTs.Product;
-ProductId := SELECT DISTINCT productid FROM Orders.entries;
-ProductOrders := SELECT o.id, p.productid FROM ProductId p JOIN Orders o JOIN o.entries e ON e.productid = p.productid;
-/*+ EXEC(streams) */
-ProductId.suborders := SELECT o.id as orderid, COUNT(1) AS numOrders, MAX(o.time) AS lastOrder FROM @ JOIN Orders o JOIN o.entries e ON e.productid = @.productid GROUP BY orderid ORDER BY numOrders DESC;

@@ -2,6 +2,7 @@ package com.datasqrl.config;
 
 import java.util.List;
 import java.util.Optional;
+
 import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
@@ -15,20 +16,24 @@ public class TableTableConfigImpl implements TableConfig.TableTableConfig {
   public static String PRIMARYKEY_KEY = "primary-key";
   public static String PARTITIONKEY_KEY = "partition-key";
 
-  public ExternalDataType getType() {
+  @Override
+public ExternalDataType getType() {
     return SqrlConfig.getEnum(sqrlConfig.asString(TYPE_KEY), ExternalDataType.class,
         Optional.of(ExternalDataType.source_and_sink));
   }
 
-  public long getWatermarkMillis() {
+  @Override
+public long getWatermarkMillis() {
     return sqrlConfig.asLong(WATERMARK_KEY).withDefault(-1L).get();
   }
 
-  public Optional<String> getTimestampColumn() {
+  @Override
+public Optional<String> getTimestampColumn() {
     return sqrlConfig.asString(TIMESTAMP_COL_KEY).getOptional();
   }
 
-  public Optional<List<String>> getPrimaryKey() {
+  @Override
+public Optional<List<String>> getPrimaryKey() {
     return sqrlConfig.asList(PRIMARYKEY_KEY, String.class).getOptional();
   }
 
@@ -40,7 +45,8 @@ public class TableTableConfigImpl implements TableConfig.TableTableConfig {
     return sqrlConfig.asList(PARTITIONKEY_KEY, String.class);
   }
 
-  public Optional<List<String>> getPartitionKey() {
+  @Override
+public Optional<List<String>> getPartitionKey() {
     if (!sqrlConfig.hasKey(PARTITIONKEY_KEY)) {
       return Optional.empty();
     }

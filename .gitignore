@@ -7,7 +7,6 @@ sqrl-examples/nutshop/data-medium/
 ## Test settings
 ##############################
 sqrl-core/src/test/resources/local.properties
-plan
 
 ##############################
 ## Java
@@ -72,6 +71,7 @@ tmp/
 sqrl-core/src/test/resources/local.properties
 .loadpath
 .factorypath
+m2e-target/
 
 ##############################
 ## NetBeans

@@ -2,6 +2,10 @@ package com.datasqrl.engine.log.kafka;
 
 import static com.datasqrl.engine.log.kafka.KafkaLogEngineFactory.ENGINE_NAME;
 
+import java.util.Optional;
+
+import org.apache.calcite.rel.type.RelDataType;
+
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.ConnectorFactory.IConnectorFactoryContext;
@@ -11,11 +15,9 @@ import com.datasqrl.io.tables.TableSchema;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.io.tables.TableSinkImpl;
 import com.datasqrl.io.tables.TableSource;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-
-import java.util.Optional;
-import org.apache.calcite.rel.type.RelDataType;
 
 @AllArgsConstructor
 @Getter

@@ -1,43 +1,14 @@
->>>sensorreading.schema.yml
----
-name: "sensorreading"
-schema_version: "1"
-partial_schema: false
-columns:
-- name: "sensorid"
-  type: "BIGINT"
-  tests:
-  - "not_null"
-- name: "time"
-  type: "TIMESTAMP"
-  tests:
-  - "not_null"
-- name: "temperature"
-  type: "DOUBLE"
-  tests:
-  - "not_null"
-- name: "humidity"
-  type: "DOUBLE"
-  tests:
-  - "not_null"
-
->>>sensorreading.table.json
-{
-  "flink" : {
-    "format" : "csv",
-    "path" : "${DATA_PATH}/sensorreading.csv.gz",
-    "source.monitor-interval" : 10000,
-    "connector" : "filesystem"
-  },
-  "metadata" : {
-    "_ingest_time" : {
-      "attribute" : "proctime()"
-    }
-  },
-  "version" : 1,
-  "table" : {
-    "type" : "source",
-    "primary-key" : [ "sensorid", "time", "temperature", "humidity" ],
-    "timestamp" : "_ingest_time"
-  }
-}
+>>>sensorreading.table.sql
+CREATE TABLE `sensorreading` (
+  `sensorid` BIGINT NOT NULL,
+  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `temperature` DOUBLE NOT NULL,
+  `humidity` DOUBLE NOT NULL,
+  `event_time` AS NOW(),
+  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.001' SECOND
+) WITH (
+  'connector' = 'filesystem',
+  'format' = 'csv',
+  'path' = '${DATA_PATH}/sensorreading.csv.gz',
+  'source.monitor-interval' = '10 sec'
+);

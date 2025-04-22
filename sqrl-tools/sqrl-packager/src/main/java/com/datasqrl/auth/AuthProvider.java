@@ -6,8 +6,6 @@ import static com.datasqrl.auth.AuthUtils.CLIENT_ID;
 import static com.datasqrl.auth.AuthUtils.REDIRECT_URI;
 import static com.datasqrl.auth.AuthUtils.TOKEN_ENDPOINT;
 
-import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonObject;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URLEncoder;
@@ -26,6 +24,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
+
+import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonObject;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
@@ -57,12 +58,12 @@ public class AuthProvider {
   }
 
   private Optional<String> refreshAccessToken(String refreshToken) {
-    JsonObject payload = new JsonObject();
+    var payload = new JsonObject();
     payload.put("grant_type", "refresh_token");
     payload.put("refresh_token", refreshToken);
     payload.put("client_id", CLIENT_ID);
 
-    HttpRequest request = HttpRequest.newBuilder()
+    var request = HttpRequest.newBuilder()
         .uri(URI.create(TOKEN_ENDPOINT))
         .header("Content-Type", "application/json")
         .header("Accept", "application/json")
@@ -72,15 +73,15 @@ public class AuthProvider {
     try {
       HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-      int statusCode = response.statusCode();
+      var statusCode = response.statusCode();
       if (statusCode == 200) {
-        JsonObject jsonResponse = new JsonObject(response.body());
+        var jsonResponse = new JsonObject(response.body());
 
-        String newAccessToken = jsonResponse.getString("access_token");
+        var newAccessToken = jsonResponse.getString("access_token");
         tokenManager.setAccessToken(newAccessToken);
 
         //Support rotating refresh tokens if enabled
-        String newRefreshToken = jsonResponse.containsKey("refresh_token") ?
+        var newRefreshToken = jsonResponse.containsKey("refresh_token") ?
             jsonResponse.getString("refresh_token") : refreshToken;
         tokenManager.setRefreshToken(newRefreshToken);
 
@@ -123,14 +124,14 @@ public class AuthProvider {
   }
 
   private void exchangeCodeForToken(String code, CompletableFuture<JsonObject> tokenFuture) {
-    JsonObject payload = new JsonObject()
+    var payload = new JsonObject()
         .put("grant_type", "authorization_code")
         .put("client_id", CLIENT_ID)
         .put("code_verifier", codeVerifier)
         .put("code", code)
         .put("redirect_uri", REDIRECT_URI);
 
-    HttpRequest request = HttpRequest.newBuilder().uri(URI.create(TOKEN_ENDPOINT))
+    var request = HttpRequest.newBuilder().uri(URI.create(TOKEN_ENDPOINT))
         .header("Content-Type", "application/json")
         .POST(HttpRequest.BodyPublishers.ofString(payload.toString())).build();
 
@@ -153,18 +154,18 @@ public class AuthProvider {
       "code_challenge", codeChallenge,
       "code_challenge_method", "S256");
 
-    String paramString = parameters.entrySet().stream()
+    var paramString = parameters.entrySet().stream()
         .map(entry -> entry.getKey() + "=" + URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8))
         .collect(Collectors.joining("&"));
 
-    String authUrl = AUTHORIZE_ENDPOINT + "?" + paramString;
+    var authUrl = AUTHORIZE_ENDPOINT + "?" + paramString;
 
     Runtime.getRuntime().exec("open " + authUrl);
   }
 
   private String getRandomString(int numBytes) {
-    SecureRandom random = new SecureRandom();
-    byte[] values = new byte[numBytes];
+    var random = new SecureRandom();
+    var values = new byte[numBytes];
     random.nextBytes(values);
     return Base64.getUrlEncoder().withoutPadding().encodeToString(values);
   }

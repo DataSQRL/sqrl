@@ -1,6 +1,18 @@
 package com.datasqrl.loaders;
 
 
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Optional;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
+import org.apache.flink.table.functions.UserDefinedFunction;
+
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.PackageJson;
@@ -8,12 +20,9 @@ import com.datasqrl.config.TableConfigLoader;
 import com.datasqrl.engine.log.LogManager;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.function.FlinkUdfNsObject;
-import com.datasqrl.config.ExternalDataType;
-import com.datasqrl.config.TableConfig;
 import com.datasqrl.io.tables.TableSchema;
 import com.datasqrl.io.tables.TableSchemaFactory;
-import com.datasqrl.io.tables.TableSink;
-import com.datasqrl.io.tables.TableSource;
+import com.datasqrl.loaders.FlinkTableNamespaceObject.FlinkTable;
 import com.datasqrl.module.NamespaceObject;
 import com.datasqrl.module.SqrlModule;
 import com.datasqrl.module.TableNamespaceObject;
@@ -25,18 +34,8 @@ import com.datasqrl.util.FileUtil;
 import com.datasqrl.util.StringUtil;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Preconditions;
-import java.io.File;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.List;
-import java.util.Optional;
-import java.util.function.Predicate;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
+
 import lombok.SneakyThrows;
-import org.apache.flink.table.functions.UserDefinedFunction;
 
 public class ObjectLoaderImpl implements ObjectLoader {
 
@@ -72,15 +71,12 @@ public class ObjectLoaderImpl implements ObjectLoader {
   @Override
   public Optional<SqrlModule> load(NamePath directory) {
     //Folders take precedence
-    List<Path> allItems = resourceResolver.loadPath(directory);
+    var allItems = resourceResolver.loadPath(directory);
 
     //Check for sqrl scripts
     if (allItems.isEmpty()) {
-      Optional<Path> graphqlFile = getFile(directory, Name.system(directory.getLast().toString() + ".graphqls"));
-      Optional<Path> sqrlFile = getFile(directory, Name.system(directory.getLast().toString() + ".sqrl"));
-
-      // Note: Graphql files are awkwardly loaded as an exceptional thing, so try to skip it if its there
-      if (sqrlFile.isPresent() && graphqlFile.isEmpty()) {
+      var sqrlFile = getFile(directory.popLast(), Name.system(directory.getLast().toString() + ".sqrl"));
+      if (sqrlFile.isPresent()) {
         return Optional.of(loadScript(directory, sqrlFile.get()));
       }
     }
@@ -95,7 +91,7 @@ public class ObjectLoaderImpl implements ObjectLoader {
   }
 
   private Optional<Path> getFile(NamePath directory, Name name) {
-    return resourceResolver.resolveFile(directory.popLast()
+    return resourceResolver.resolveFile(directory
         .concat(name));
   }
 
@@ -110,15 +106,14 @@ public class ObjectLoaderImpl implements ObjectLoader {
 
   @SneakyThrows
   private SqrlModule loadScript(NamePath namePath, Path path) {
-    return new ScriptSqrlModule(moduleLoader, Files.readString(path), Optional.empty(),
-        sqrlConfig, logManager, namePath);
+    return new ScriptSqrlModule(Files.readString(path), path, namePath);
   }
 
   @SneakyThrows
   private List<TableNamespaceObject> loadTable(Path path, NamePath basePath, List<Path> allItemsInPath) {
     String tableName = StringUtil.removeFromEnd(ResourceResolver.getFileName(path),DataSource.TABLE_FILE_SUFFIX);
     errors.checkFatal(Name.validName(tableName), "Not a valid table name: %s", tableName);
-    TableConfig tableConfig = tableConfigFactory.load(path, Name.system(tableName), errors);
+    String tableSQL = Files.readString(path);
 
     //Find all files associated with the table, i.e. that start with the table name followed by '.'
     List<Path> tablesFiles = allItemsInPath.stream().filter( file -> {
@@ -137,37 +132,7 @@ public class ObjectLoaderImpl implements ObjectLoader {
     errors.checkFatal(tableSchemas.size()<=1, "Found multiple schemas for table %s with configuration %s", tableName, path);
     Optional<TableSchema> tableSchema = tableSchemas.stream().findFirst();
 
-    ExternalDataType tableType = tableConfig.getBase().getType();
-
-    if (tableType == ExternalDataType.source ||
-        tableType == ExternalDataType.source_and_sink) {
-      errors.checkFatal(tableSchema.isPresent(), "Could not find schema file [%s] for table [%s]",
-          basePath + "/" + tableConfig.getName().getDisplay(), path);
-    }
-
-    switch (tableType) {
-      case source:
-        return new DataSource()
-            .readTableSource(tableSchema.get(), tableConfig, errors, basePath)
-            .map(t->new TableSourceNamespaceObject(t, tableFactory, moduleLoader))
-            .map(t->(TableNamespaceObject) t)
-            .map(List::of)
-            .orElse(List.of());
-      case sink:
-        return new DataSource()
-            .readTableSink(tableSchema, tableConfig, basePath)
-            .map(TableSinkNamespaceObject::new)
-            .map(t->(TableNamespaceObject) t)
-            .map(List::of).orElse(List.of());
-      case source_and_sink:
-        TableSource source = new DataSource().readTableSource(tableSchema.get(), tableConfig, errors, basePath)
-            .get();
-        TableSink sink = new DataSource().readTableSink(tableSchema, tableConfig, basePath)
-            .get();
-        return List.of(new TableSourceSinkNamespaceObject(source, sink, tableFactory, moduleLoader));
-      default:
-        throw new RuntimeException("Unknown table type: "+ tableType);
-    }
+    return List.of(new FlinkTableNamespaceObject(new FlinkTable(Name.system(tableName), tableSQL, path, tableSchema)));
   }
 
 
@@ -179,20 +144,21 @@ public class ObjectLoaderImpl implements ObjectLoader {
     ObjectNode json = SERIALIZER.mapJsonFile(path, ObjectNode.class);
     String jarPath = json.get("jarPath").asText();
     String functionClassName = json.get("functionClass").asText();
-
-    URL jarUrl = new File(jarPath).toURI().toURL();
-    Class<?> functionClass = loadClass(jarPath, functionClassName);
+    Optional<Path> path1 = resourceResolver.resolveFile(namePath.concat(Name.system(jarPath)));
+    URL jarUrl = path1.get().toUri().toURL();
+    Class<?> functionClass = loadClass(jarUrl, functionClassName);
     Preconditions.checkArgument(UDF_FUNCTION_CLASS.isAssignableFrom(functionClass), "Class is not a UserDefinedFunction");
 
     UserDefinedFunction udf = (UserDefinedFunction) functionClass.getDeclaredConstructor().newInstance();
 
     // Return a namespace object containing the created function
-    return List.of(new FlinkUdfNsObject(FlinkUdfNsObject.getFunctionName(udf), udf, Optional.of(jarUrl)));
+    String functionName = FlinkUdfNsObject.getFunctionName(udf);
+    return List.of(new FlinkUdfNsObject(functionName, udf, functionName, Optional.of(jarUrl)));
   }
 
   @SneakyThrows
-  private Class<?> loadClass(String jarPath, String functionClassName) {
-    URL[] urls = {new File(jarPath).toURI().toURL()};
+  private Class<?> loadClass(URL jarPath, String functionClassName) {
+    URL[] urls = {jarPath};
     URLClassLoader classLoader = new URLClassLoader(urls, Thread.currentThread().getContextClassLoader());
     return Class.forName(functionClassName, true, classLoader);
   }

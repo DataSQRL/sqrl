@@ -10,13 +10,10 @@ public enum MaterializationPreference {
   MUST, SHOULD, SHOULD_NOT, CANNOT;
 
   public boolean isMaterialize() {
-    switch (this) {
-      case MUST:
-      case SHOULD:
-        return true;
-      default:
-        return false;
-    }
+    return switch (this) {
+    case MUST, SHOULD -> true;
+    default -> false;
+    };
   }
 
   public boolean canMaterialize() {

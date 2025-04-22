@@ -1,13 +1,14 @@
 package com.datasqrl.plan.table;
 
-import com.datasqrl.plan.util.PrimaryKeyMap;
-import com.datasqrl.util.ArrayUtil;
-import com.google.common.base.Preconditions;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+
+import com.datasqrl.plan.util.PrimaryKeyMap;
+import com.datasqrl.util.ArrayUtil;
+import com.google.common.base.Preconditions;
+
 import lombok.Value;
-import org.apache.calcite.adapter.java.Array;
 
 @Value
 public class PrimaryKey {
@@ -48,15 +49,20 @@ public class PrimaryKey {
   }
 
   public static PrimaryKey of(PrimaryKeyMap pkMap) {
-    if (pkMap.isUndefined()) return new PrimaryKey(null);
+    if (pkMap.isUndefined()) {
+        return new PrimaryKey(null);
+    }
     //Post-processing ensures the pk is simple
-    int[] pkCols = ArrayUtil.toArray(pkMap.asSimpleList());
+    var pkCols = ArrayUtil.toArray(pkMap.asSimpleList());
     return new PrimaryKey(pkCols);
   }
 
   public PrimaryKeyMap toKeyMap() {
-    if (isUndefined()) return PrimaryKeyMap.UNDEFINED;
-    else return PrimaryKeyMap.of(asList());
+    if (isUndefined()) {
+        return PrimaryKeyMap.UNDEFINED;
+    } else {
+        return PrimaryKeyMap.of(asList());
+    }
   }
 
 }

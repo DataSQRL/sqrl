@@ -1,14 +1,16 @@
 package com.datasqrl.plan.table;
 
-import com.datasqrl.calcite.SqrlFramework;
-import com.datasqrl.canonicalizer.Name;
-import com.google.inject.Inject;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-import lombok.AllArgsConstructor;
-import lombok.NonNull;
+
 import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.commons.lang3.StringUtils;
+
+import com.datasqrl.canonicalizer.Name;
+import com.google.inject.Inject;
+
+import lombok.AllArgsConstructor;
+import lombok.NonNull;
 
 @AllArgsConstructor
 public class TableIdFactory {
@@ -27,7 +29,7 @@ public class TableIdFactory {
     if (!StringUtils.isEmpty(type)) {
       name = name.suffix(type);
     }
-    AtomicInteger counter = tableNameToIdMap.computeIfAbsent(name, k -> new AtomicInteger(0));
+    var counter = tableNameToIdMap.computeIfAbsent(name, k -> new AtomicInteger(0));
     return name.suffix(Integer.toString(counter.incrementAndGet()));
   }
 }

@@ -1,0 +1,14 @@
+[FATAL] Hint block contains non-hints
+in script:parsererror-hints-fail.sqrl [7:28]:
+  */ /* ignored comment */
+/*+ primary_key(id, name), index(name), another(key) */
+/*+ primary_key(id, name), index(name); another(key) */
+---------------------------^
+Invalid HINT provided.
+
+A hint comment block has the following structure
+```
+/*+ hint1, hint2(argument) */
+```
+Make sure a hint comment block contains ONLY hints and no other comments. Move additional comments into a separate comment block.
+

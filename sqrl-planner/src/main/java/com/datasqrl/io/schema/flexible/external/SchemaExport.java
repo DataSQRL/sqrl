@@ -3,27 +3,27 @@
  */
 package com.datasqrl.io.schema.flexible.external;
 
-import com.datasqrl.canonicalizer.SpecialName;
-import com.datasqrl.schema.constraint.Constraint;
-import com.datasqrl.schema.input.FlexibleFieldSchema;
-import com.datasqrl.schema.input.FlexibleTableSchema;
-import com.datasqrl.schema.input.RelationType;
-import com.datasqrl.schema.input.external.AbstractElementDefinition;
-import com.datasqrl.schema.input.external.FieldDefinition;
-import com.datasqrl.schema.input.external.FieldTypeDefinitionImpl;
-import com.datasqrl.schema.input.external.TableDefinition;
-import com.datasqrl.schema.type.Type;
-import com.datasqrl.schema.type.basic.BasicType;
-
-import com.google.common.base.Preconditions;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.datasqrl.canonicalizer.SpecialName;
+import com.datasqrl.io.schema.flexible.constraint.Constraint;
+import com.datasqrl.io.schema.flexible.input.FlexibleFieldSchema;
+import com.datasqrl.io.schema.flexible.input.FlexibleTableSchema;
+import com.datasqrl.io.schema.flexible.input.RelationType;
+import com.datasqrl.io.schema.flexible.input.external.AbstractElementDefinition;
+import com.datasqrl.io.schema.flexible.input.external.FieldDefinition;
+import com.datasqrl.io.schema.flexible.input.external.FieldTypeDefinitionImpl;
+import com.datasqrl.io.schema.flexible.input.external.TableDefinition;
+import com.datasqrl.io.schema.flexible.type.Type;
+import com.datasqrl.io.schema.flexible.type.basic.BasicType;
+import com.google.common.base.Preconditions;
+
 public class SchemaExport {
 
   public TableDefinition export(FlexibleTableSchema table) {
-    TableDefinition td = new TableDefinition();
+    var td = new TableDefinition();
     exportElement(td, table);
     td.tests = exportConstraints(table.getConstraints());
     td.partial_schema = table.isPartialSchema();
@@ -52,19 +52,18 @@ public class SchemaExport {
   private List<FieldDefinition> exportColumns(
       RelationType<FlexibleFieldSchema.Field> relation) {
     return relation.getFields().stream().map(this::export)
-        .filter(Optional::isPresent)
-        .map(Optional::get)
+        .flatMap(Optional::stream)
         .collect(Collectors.toList());
   }
 
   private Optional<FieldDefinition> export(FlexibleFieldSchema.Field field) {
-    FieldDefinition fd = new FieldDefinition();
+    var fd = new FieldDefinition();
     exportElement(fd, field);
     List<FlexibleFieldSchema.FieldType> types = field.getTypes();
     if (types.isEmpty()) {
       return Optional.empty();
     } else if (types.size() == 1 && types.get(0).getVariantName().equals(SpecialName.SINGLETON)) {
-      FieldTypeDefinitionImpl ftd = export(types.get(0));
+      var ftd = export(types.get(0));
       fd.type = ftd.type;
       fd.columns = ftd.columns;
       fd.tests = ftd.tests;
@@ -76,7 +75,7 @@ public class SchemaExport {
   }
 
   private FieldTypeDefinitionImpl export(FlexibleFieldSchema.FieldType fieldType) {
-    FieldTypeDefinitionImpl ftd = new FieldTypeDefinitionImpl();
+    var ftd = new FieldTypeDefinitionImpl();
     Type type = fieldType.getType();
     if (type instanceof BasicType) {
       ftd.type = SchemaImport.BasicTypeParse.export(fieldType);

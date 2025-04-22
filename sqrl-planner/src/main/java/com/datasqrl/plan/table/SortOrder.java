@@ -3,18 +3,20 @@
  */
 package com.datasqrl.plan.table;
 
-import com.datasqrl.plan.util.IndexMap;
-import com.datasqrl.plan.util.PrimaryKeyMap;
-import lombok.Value;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.apache.calcite.rel.RelCollation;
 import org.apache.calcite.rel.RelCollations;
 import org.apache.calcite.rel.RelFieldCollation;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.commons.collections.ListUtils;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
+import com.datasqrl.plan.util.IndexMap;
+import com.datasqrl.plan.util.PrimaryKeyMap;
+
+import lombok.Value;
 
 /**
  * TODO: Pullup sort orders through the logical plan and into the database (or discard if they no longer apply)
@@ -34,7 +36,7 @@ public class SortOrder implements PullupOperator {
     if (isEmpty()) {
       return this;
     }
-    RelCollation newCollation = RelCollations.of(collation.getFieldCollations().stream()
+    var newCollation = RelCollations.of(collation.getFieldCollations().stream()
         .map(fc -> fc.withFieldIndex(map.map(fc.getFieldIndex()))).collect(Collectors.toList()));
     return new SortOrder(newCollation);
   }
@@ -63,7 +65,9 @@ public class SortOrder implements PullupOperator {
   }
 
   public SortOrder ensurePrimaryKeyPresent(PrimaryKeyMap pk) {
-    if (pk.isUndefined()) return this;
+    if (pk.isUndefined()) {
+        return this;
+    }
     List<Integer> pkIdx = new ArrayList<>(pk.asSimpleList()); //PK must be simple after post-processing
     collation.getFieldCollations().stream().map(fc -> fc.getFieldIndex()).forEach(pkIdx::remove);
     if (pkIdx.isEmpty()) {

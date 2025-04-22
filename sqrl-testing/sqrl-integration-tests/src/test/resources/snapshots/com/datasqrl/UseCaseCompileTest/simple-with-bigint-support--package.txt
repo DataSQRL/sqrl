@@ -1,0 +1,127 @@
+>>>pipeline_explain.txt
+=== Orders
+ID:     default_catalog.default_database.Orders
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database.Orders__def
+Annotations:
+ - stream-root: Orders__def
+Primary Key: id, customerid, time
+Timestamp  : _ingest_time
+Schema:
+ - id: BIGINT NOT NULL
+ - customerid: BIGINT NOT NULL
+ - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - productid: BIGINT NOT NULL
+ - quantity: BIGINT NOT NULL
+ - unit_price: DOUBLE
+ - discount: DOUBLE
+ - _ingest_time: TIMESTAMP_LTZ(3) *PROCTIME* NOT NULL
+Plan:
+LogicalProject(id=[$0], customerid=[$1], time=[$2], productid=[$3], quantity=[$4], unit_price=[$5], discount=[$6], _ingest_time=[$7])
+  LogicalProject(id=[$0], customerid=[$1], time=[$2], productid=[$3], quantity=[$4], unit_price=[$5], discount=[$6], _ingest_time=[PROCTIME()])
+    LogicalTableScan(table=[[default_catalog, default_database, Orders__def]])
+SQL: CREATE VIEW `Orders`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`Orders__def`
+>>>flink-sql-no-functions.sql
+CREATE TEMPORARY TABLE `Orders__schema` (
+  `id` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `productid` BIGINT NOT NULL,
+  `quantity` BIGINT NOT NULL,
+  `unit_price` DOUBLE,
+  `discount` DOUBLE
+) WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `Orders__def` (
+  `_ingest_time` AS PROCTIME(),
+  PRIMARY KEY (`id`, `customerid`, `time`) NOT ENFORCED
+) WITH (
+  'format' = 'flexible-json',
+  'path' = '${DATA_PATH}/orders.jsonl',
+  'source.monitor-interval' = '10000',
+  'connector' = 'filesystem'
+)
+LIKE `Orders__schema`;
+CREATE VIEW `Orders`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`Orders__def`;
+CREATE VIEW `BigIntOrdersTest`
+AS
+SELECT *
+FROM `Orders`;
+CREATE TABLE `Orders_1` (
+  `id` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `productid` BIGINT NOT NULL,
+  `quantity` BIGINT NOT NULL,
+  `unit_price` DOUBLE,
+  `discount` DOUBLE,
+  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`id`, `customerid`, `time`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'table-name' = 'Orders_1'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`Orders_1`
+(SELECT *
+ FROM `default_catalog`.`default_database`.`Orders`)
+;
+END
+>>>kafka.json
+{
+  "topics" : [ ]
+}
+>>>postgres-schema.sql
+CREATE TABLE IF NOT EXISTS "Orders_1" ("id" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "time" TIMESTAMP WITH TIME ZONE NOT NULL, "productid" BIGINT NOT NULL, "quantity" BIGINT NOT NULL, "unit_price" DOUBLE PRECISION , "discount" DOUBLE PRECISION , "_ingest_time" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id","customerid","time"))
+>>>postgres-views.sql
+CREATE OR REPLACE VIEW "Orders"("id", "customerid", "time", "productid", "quantity", "unit_price", "discount", "_ingest_time") AS SELECT *
+FROM "Orders_1"
+>>>vertx.json
+{
+  "model" : {
+    "queries" : [
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "Orders",
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
+            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM \"Orders_1\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
+          }
+        }
+      }
+    ],
+    "mutations" : [ ],
+    "subscriptions" : [ ],
+    "schema" : {
+      "type" : "string",
+      "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Orders {\n  id: GraphQLBigInteger!\n  customerid: GraphQLBigInteger!\n  time: DateTime!\n  productid: GraphQLBigInteger!\n  quantity: GraphQLBigInteger!\n  unit_price: Float\n  discount: Float\n}\n\ntype Query {\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n}\n"
+    }
+  }
+}

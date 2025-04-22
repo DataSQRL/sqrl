@@ -11,7 +11,7 @@ import java.nio.file.Path;
 public class FileHash {
 
   public static String getFor(Path path) throws IOException {
-    try (InputStream is = Files.newInputStream(path)) {
+    try (var is = Files.newInputStream(path)) {
       return getFor(is);
     }
   }

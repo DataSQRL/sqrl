@@ -3,26 +3,29 @@
  */
 package com.datasqrl.schema;
 
-import com.datasqrl.calcite.function.SqrlTableMacro;
-import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.canonicalizer.NamePath;
 import java.util.List;
 import java.util.function.Supplier;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
+
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.schema.FunctionParameter;
 
+import com.datasqrl.calcite.function.SqrlTableMacro;
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.canonicalizer.NamePath;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
 @Getter
 @AllArgsConstructor
 public class Relationship implements SqrlTableMacro {
   private final Name name;
-  private final NamePath fullPath;
-  private final NamePath absolutePath;
-  private final JoinType joinType;
-  private final Multiplicity multiplicity;
+  private final NamePath fullPath; //todo: remove, we just have the absolutepath now
+  private final NamePath absolutePath; //todo: simplify the path to just type.field since we no longer do path walking
+  private final JoinType joinType;  //todo: remove
+  private final Multiplicity multiplicity; //derived from limit
 
   private final List<FunctionParameter> parameters;
   private final Supplier<RelNode> viewTransform;
@@ -39,7 +42,8 @@ public class Relationship implements SqrlTableMacro {
     return viewTransform.get().getRowType();
   }
 
-  public String getDisplayName() {
+  @Override
+public String getDisplayName() {
     return getFullPath().getDisplay();
   }
 

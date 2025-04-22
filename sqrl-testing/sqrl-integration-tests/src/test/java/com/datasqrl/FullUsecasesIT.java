@@ -2,9 +2,30 @@ package com.datasqrl;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.flink.table.api.TableResult;
+import org.apache.flink.test.junit5.MiniClusterExtension;
+import org.assertj.core.api.Assumptions;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+
 import com.datasqrl.cmd.AssertStatusHook;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.SqrlConfigCommons;
+import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.config.TestRunnerConfiguration;
 import com.datasqrl.engines.TestContainersForTestGoal;
 import com.datasqrl.engines.TestContainersForTestGoal.TestContainerHook;
@@ -17,39 +38,18 @@ import com.datasqrl.tests.TestExtension;
 import com.datasqrl.tests.UseCaseTestExtensions;
 import com.datasqrl.util.FlinkOperatorStatusChecker;
 import com.datasqrl.util.SnapshotTest.Snapshot;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.ToString;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.flink.table.api.ResultKind;
-import org.apache.flink.table.api.TableResult;
-import org.apache.flink.test.junit5.MiniClusterExtension;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
 
 @Slf4j
 @ExtendWith(MiniClusterExtension.class)
 public class FullUsecasesIT {
-  private static final Path RESOURCES = Paths.get("src/test/resources");
+  private static final Path RESOURCES = Path.of("src/test/resources");
   private static final Path USE_CASES = RESOURCES.resolve("usecases");
 
   private Snapshot snapshot;
@@ -61,25 +61,28 @@ public class FullUsecasesIT {
   }
 
   List<ScriptCriteria> disabledScripts = List.of(
+      new ScriptCriteria("flink-functions.sqrl", "test"), //not a full test case
+      new ScriptCriteria("flink-functions.sqrl", "run"), //not a full test case
+      new ScriptCriteria("conference-disabled.sqrl", "test"), //fails in build server
+      new ScriptCriteria("conference-disabled.sqrl", "run"), //fails in build server
+      new ScriptCriteria("iceberg-export.sqrl", "test"), //fails in build server
+      new ScriptCriteria("iceberg-export.sqrl", "run"), //fails in build server
       new ScriptCriteria("duckdb.sqrl", "test"), //fails in build server
       new ScriptCriteria("duckdb.sqrl", "run"), //fails in build server
-      new ScriptCriteria("snowflake.sqrl", "test"), //fails in build server
-      new ScriptCriteria("snowflake.sqrl", "run"), //fails in build server
-      new ScriptCriteria("sensors-mutation.sqrl", "test"), //flaky see sqrl script
+      new ScriptCriteria("snowflake-disabled.sqrl", "test"), //fails in build server
+      new ScriptCriteria("snowflake-disabled.sqrl", "run"), //fails in build server
       new ScriptCriteria("sensors-mutation.sqrl", "run"), //flaky see sqrl script
       new ScriptCriteria("sensors-full.sqrl", "test"), //flaky (too much data)
       new ScriptCriteria("sensors-full.sqrl", "run"), //flaky (too much data)
-      //new ScriptCriteria("sensors-teaser.sqrl", "test"),
-      //new ScriptCriteria("season-teaser.sqrl", "run"),
-//      new ScriptCriteria("comparison-functions.sqrl", "test"),
-//      new ScriptCriteria("comparison-functions.sqrl", "run"),
       new ScriptCriteria("analytics-only.sqrl", "test"),
       new ScriptCriteria("analytics-only.sqrl", "run"),
-      new ScriptCriteria("seedshop-extended.sqrl", "test"), // CustomerPromotionTest issue
-      new ScriptCriteria("seedshop-extended.sqrl", "run") // CustomerPromotionTest issue
+      new ScriptCriteria("postgres-log-disabled.sqrl", "test"),
+      new ScriptCriteria("postgres-log-disabled.sqrl", "run"),
+      new ScriptCriteria("seedshop-extended.sqrl", "test"), // CustomerPromotionTest issue TODO
+      new ScriptCriteria("seedshop-extended.sqrl", "run") // CustomerPromotionTest issue TODO
   );
 
-  static final Path PROJECT_ROOT = Paths.get(System.getProperty("user.dir"));
+  static final Path PROJECT_ROOT = Path.of(System.getProperty("user.dir"));
 
   private static TestContainerHook containerHook;
 
@@ -95,7 +98,7 @@ public class FullUsecasesIT {
 
   @BeforeAll
   public static void before() {
-    TestEngines engines = new EngineFactory()
+    var engines = new EngineFactory()
         .createAll();
 
     containerHook = engines.accept(new TestContainersForTestGoal(), null);
@@ -134,12 +137,15 @@ public class FullUsecasesIT {
   @SneakyThrows
   @ParameterizedTest
   @MethodSource("useCaseProvider")
-  public void testUseCase(UseCaseTestParameter param) {
+  public void testUseCase(UseCaseTestParameter param, TestInfo testInfo) {
     if (disabledScripts.contains(new ScriptCriteria(param.getSqrlFileName(), param.getGoal()))) {
       log.warn("Skipping disabled test:" + param.getSqrlFileName());
+      Assumptions.assumeThat(false).as("Skipping disabled test: %s" , param.getSqrlFileName()).isTrue();
       return;
     }
-    this.snapshot = new Snapshot(param.testName, param.getSqrlFileName().substring(0, param.getSqrlFileName().length()-5), new StringBuilder());
+    this.snapshot = Snapshot.of(
+        FullUsecasesIT.class, param.testName,
+        param.getSqrlFileName().substring(0, param.getSqrlFileName().length()-5));
     TestExtension testExtension = testExtensions.create(param.getTestName());
     testExtension.setup();
 
@@ -155,10 +161,18 @@ public class FullUsecasesIT {
         .packageJsonPath(param.getPackageJsonPath())
         .build();
 
-    executor.execute(new AssertStatusHook());
+    AssertStatusHook hook = new AssertStatusHook();
+    try {
+        executor.execute(hook);
+    } catch (Throwable e) {
+        if(hook.failure() != null) {
+            e.addSuppressed(hook.failure());
+        }
+        throw e;
+    }
 
     PackageJson packageJson = SqrlConfigCommons.fromFilesPackageJson(ErrorCollector.root(),
-        List.of(rootDir.resolve("build").resolve("package.json")));
+        List.of(rootDir.resolve(SqrlConstants.BUILD_DIR_NAME).resolve(SqrlConstants.PACKAGE_JSON)));
 
 
     try {
@@ -189,7 +203,7 @@ public class FullUsecasesIT {
       DatasqrlRun run = null;
       if (param.getGoal().equals("run")) {
         try {
-          run = new DatasqrlRun(context.getRootDir().resolve("build/plan"),
+          run = new DatasqrlRun(context.getRootDir().resolve(SqrlConstants.PLAN_PATH),
               context.getEnv());
           TableResult result = run.run(false);
          long delaySec = packageJson.getTestConfig().flatMap(TestRunnerConfiguration::getDelaySec)
@@ -244,34 +258,42 @@ public class FullUsecasesIT {
   @ParameterizedTest
   @MethodSource("useCaseProvider")
   @Disabled
-  public void runTestNumber(UseCaseTestParameter param) {
-    int i = 19;
+  public void runTestNumber(UseCaseTestParameter param, TestInfo testInfo) {
+    var i = 39;
     testNo++;
     System.out.println(testNo + ":" + param);
     if (i == testNo) {
-      testUseCase(param);
+      testUseCase(param, testInfo);
     }
   }
 
+  @ParameterizedTest
+  @MethodSource("useCaseProvider")
+  @Disabled
+  public void printUseCaseNumbers(UseCaseTestParameter param) {
+    testNo++;
+    System.out.println(testNo + ":" + param);
+  }
+
   static List<UseCaseTestParameter> useCaseProvider() throws Exception {
-    Path useCasesDir = USE_CASES;
+    var useCasesDir = USE_CASES;
     List<UseCaseTestParameter> params = new ArrayList<>();
 
     Files.list(useCasesDir).filter(Files::isDirectory).forEach(dir -> {
-      String useCaseName = dir.getFileName().toString();
+      var useCaseName = dir.getFileName().toString();
 
-      try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir)) {
+      try (var stream = Files.newDirectoryStream(dir)) {
         for (Path file : stream) {
-          String fileName = file.getFileName().toString();
+          var fileName = file.getFileName().toString();
 
           if (!fileName.endsWith(".sqrl")) {
             continue;
           }
 
-          String testName = fileName.substring(0, fileName.length() - 5);
-          String graphql = testName + ".graphqls";
-          String packageJson = "package-" + testName + ".json";
-          String testPath = "tests-" + testName;
+          var testName = fileName.substring(0, fileName.length() - 5);
+          var graphql = testName + ".graphqls";
+          var packageJson = "package-" + testName + ".json";
+          var testPath = "tests-" + testName;
           if (!file.getParent().resolve(graphql).toFile().exists()) {
             graphql = null;
           }
@@ -281,7 +303,7 @@ public class FullUsecasesIT {
           if (!file.getParent().resolve(testPath).toFile().exists()) {
             testPath = null;
           }
-          UseCaseTestParameter useCaseTestParameter = new UseCaseTestParameter(
+          var useCaseTestParameter = new UseCaseTestParameter(
               "usecases",
               "test",
               useCaseName,
@@ -295,7 +317,7 @@ public class FullUsecasesIT {
           params.add(useCaseTestParameter.cloneWithGoal("run"));
         }
       } catch (Exception e) {
-        e.printStackTrace();
+        fail("Unable to process use case: "+ useCaseName,e);
       }
     });
 

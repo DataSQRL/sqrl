@@ -1,17 +1,26 @@
 IMPORT sensor-local.SensorReading; -- Import sensor data
-IMPORT time.endOfSecond;  -- Import time function
 
-/* Aggregate sensor readings to second */
-SecReading := SELECT sensorid, endOfSecond(timestamp) as timeSec,
-        avg(temperature) as temp FROM SensorReading
-    GROUP BY sensorid, timeSec ORDER BY timeSec DESC;
+/** Returns the sensor temperature for a sensor by id from most recent.
+    Sensor temperature readings are averaged per second.
+ */
+/*+query_by_all(sensorid) */
+SecReading := SELECT sensorid, window_time as timeSec,
+        avg(temperature) as temp
+    FROM TABLE(TUMBLE(TABLE SensorReading, DESCRIPTOR(`timestamp`), INTERVAL '1' SECONDS))
+    GROUP BY sensorid, window_start, window_end, window_time
+    ORDER BY timeSec DESC;
 
 /* Get max temperature in last minute */
-SensorMaxTemp := SELECT sensorid, max(temp) as maxTemp
-    FROM SecReading
-    WHERE timeSec >= now() - INTERVAL 1 MINUTE
-    GROUP BY sensorid
-    ORDER BY maxTemp DESC;
+_SensorMaxTempWindow := SELECT sensorid, window_time, max(temp) as maxTemp
+    FROM TABLE(HOP(TABLE SecReading, DESCRIPTOR(timeSec), INTERVAL '5' SECONDS, INTERVAL '1' MINUTES))
+    GROUP BY sensorid, window_start, window_end, window_time;
+
+/**
+  Returns the maximum temperature recorded for a given sensor
+ */
+/*+query_by_any(sensorid) */
+SensorMaxTemp := DISTINCT _SensorMaxTempWindow ON sensorid ORDER BY window_time DESC;
+
 
 /* =======TEST CASES======== */
 
@@ -19,4 +28,4 @@ SensorMaxTemp := SELECT sensorid, max(temp) as maxTemp
 SecReadingTest := SELECT * FROM SecReading ORDER BY timeSec DESC, temp DESC LIMIT 5;
 
 /*+test */
-SensorMaxTempTest := SELECT * FROM SensorMaxTemp ORDER BY maxTemp DESC LIMIT 5;
+SensorMaxTempTest := SELECT sensorid, maxTemp FROM SensorMaxTemp ORDER BY maxTemp DESC LIMIT 5;

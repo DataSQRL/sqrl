@@ -1,1 +1,0 @@
-${jsonEncode(vertx["model"])}

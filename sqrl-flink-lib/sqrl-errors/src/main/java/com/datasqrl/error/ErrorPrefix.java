@@ -61,7 +61,7 @@ public enum ErrorPrefix implements ErrorLocation {
 
   @Override
   public String toString() {
-    String res = getPrefix();
+    var res = getPrefix();
     if (res == null) {
       return "";
     } else {

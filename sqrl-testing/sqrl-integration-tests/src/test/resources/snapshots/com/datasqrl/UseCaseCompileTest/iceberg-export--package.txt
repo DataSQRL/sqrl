@@ -1,0 +1,89 @@
+>>>pipeline_explain.txt
+=== _Applications
+ID:     default_catalog.default_database._Applications
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database._Applications__def
+Annotations:
+ - stream-root: _Applications__def
+Primary Key: id, updated_at
+Timestamp  : updated_at
+Schema:
+ - id: BIGINT NOT NULL
+ - customer_id: BIGINT NOT NULL
+ - loan_type_id: BIGINT NOT NULL
+ - amount: DOUBLE NOT NULL
+ - duration: BIGINT NOT NULL
+ - application_date: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - updated_at: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Plan:
+LogicalProject(id=[$0], customer_id=[$1], loan_type_id=[$2], amount=[$3], duration=[$4], application_date=[$5], updated_at=[$6])
+  LogicalWatermarkAssigner(rowtime=[updated_at], watermark=[-($6, 1:INTERVAL SECOND)])
+    LogicalTableScan(table=[[default_catalog, default_database, _Applications__def]])
+SQL: CREATE VIEW `_Applications`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`_Applications__def`
+=== iceberg-sink
+ID:     iceberg.iceberg-sink
+Type:   export
+Stage:  flink
+Inputs: default_catalog.default_database._Applications
+
+>>>flink-sql-no-functions.sql
+CREATE TEMPORARY TABLE `_Applications__schema` (
+  `id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `loan_type_id` BIGINT NOT NULL,
+  `amount` DOUBLE NOT NULL,
+  `duration` BIGINT NOT NULL,
+  `application_date` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+) WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `_Applications__def` (
+  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED,
+  WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '0.001' SECOND
+) WITH (
+  'format' = 'flexible-json',
+  'path' = '${DATA_PATH}/applications.jsonl',
+  'source.monitor-interval' = '10 sec',
+  'connector' = 'filesystem'
+)
+LIKE `_Applications__schema`;
+CREATE VIEW `_Applications`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`_Applications__def`;
+CREATE TEMPORARY TABLE `iceberg-sink_ex1__schema` (
+  `id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `loan_type_id` BIGINT NOT NULL,
+  `amount` DOUBLE NOT NULL,
+  `duration` BIGINT NOT NULL,
+  `application_date` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+) WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `iceberg-sink_ex1__def` (
+  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED
+) WITH (
+  'connector' = 'iceberg',
+  'catalog-table' = 'my-table',
+  'warehouse' = '/tmp/duckdb',
+  'catalog-type' = 'hadoop',
+  'catalog-name' = 'mydatabase'
+)
+LIKE `iceberg-sink_ex1__schema`;
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`iceberg-sink_ex1__def`
+(SELECT *
+ FROM `default_catalog`.`default_database`.`_Applications`)
+;
+END
+>>>iceberg-schema.sql
+
+>>>iceberg-views.sql
+

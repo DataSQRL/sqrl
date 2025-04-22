@@ -1,6 +1,0 @@
-IMPORT ecommerceTs.Product;
-IMPORT flink.*;
-IMPORT text.split;
-
-ProductFilter1 := SELECT * FROM Product WHERE array_contains(ARRAY[CAST('one' AS String), CAST('two' AS String)], name);
-ProductFilter2 := SELECT * FROM Product WHERE array_contains(split('one, two', ','), name);

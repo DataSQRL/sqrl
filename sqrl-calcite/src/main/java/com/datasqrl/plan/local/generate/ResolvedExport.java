@@ -1,10 +1,10 @@
 package com.datasqrl.plan.local.generate;
 
-import com.datasqrl.io.tables.TableSink;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Value;
 import org.apache.calcite.rel.RelNode;
+
+import com.datasqrl.io.tables.TableSink;
+
+import lombok.Value;
 
 @Value
 public class ResolvedExport {

@@ -3,17 +3,16 @@
  */
 package com.datasqrl.canonicalizer;
 
-import java.util.Objects;
-import java.util.stream.Collectors;
-import lombok.NonNull;
-
 import java.io.Serializable;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import lombok.NonNull;
 
 public abstract class AbstractPath<E extends Comparable, P extends AbstractPath<E, P>> implements
      Serializable, Comparable<P> {
@@ -27,13 +26,13 @@ public abstract class AbstractPath<E extends Comparable, P extends AbstractPath<
   protected abstract Constructor<E, P> constructor();
 
   public P concat(@NonNull E element) {
-    E[] newelements = Arrays.copyOf(elements, elements.length + 1);
+    var newelements = Arrays.copyOf(elements, elements.length + 1);
     newelements[elements.length] = element;
     return constructor().create(newelements);
   }
 
   public P concat(@NonNull P sub) {
-    E[] newelements = Arrays.copyOf(elements, elements.length + sub.elements.length);
+    var newelements = Arrays.copyOf(elements, elements.length + sub.elements.length);
     System.arraycopy(sub.elements, 0, newelements, elements.length, sub.elements.length);
     return constructor().create(newelements);
   }
@@ -42,7 +41,7 @@ public abstract class AbstractPath<E extends Comparable, P extends AbstractPath<
     if (depth == 0) {
       return constructor().root();
     }
-    E[] newelements = Arrays.copyOf(elements, depth);
+    var newelements = Arrays.copyOf(elements, depth);
     return constructor().create(newelements);
   }
 
@@ -97,7 +96,7 @@ public abstract class AbstractPath<E extends Comparable, P extends AbstractPath<
     } else if (!(other instanceof AbstractPath)) {
       return false;
     }
-    AbstractPath o = (AbstractPath) other;
+    var o = (AbstractPath) other;
     return Arrays.equals(elements, o.elements);
   }
 
@@ -117,19 +116,19 @@ public abstract class AbstractPath<E extends Comparable, P extends AbstractPath<
       return Optional.empty();
     }
 
-    E[] newNames = Arrays.copyOfRange(elements, 0, elements.length - 1);
+    var newNames = Arrays.copyOfRange(elements, 0, elements.length - 1);
     return Optional.of(constructor().create(newNames));
   }
 
   public P popFirst() {
 //    Preconditions.checkArgument(size() > 0);
-    E[] newNames = Arrays.copyOfRange(elements, 1, elements.length);
+    var newNames = Arrays.copyOfRange(elements, 1, elements.length);
     return constructor().create(newNames);
   }
 
   public P popLast() {
 //    Preconditions.checkArgument(size() > 0);
-    E[] newNames = Arrays.copyOfRange(elements, 0, elements.length - 1);
+    var newNames = Arrays.copyOfRange(elements, 0, elements.length - 1);
     return constructor().create(newNames);
   }
 
@@ -151,7 +150,7 @@ public abstract class AbstractPath<E extends Comparable, P extends AbstractPath<
     } else if (from == to) {
       return constructor().root();
     }
-    E[] newNames = Arrays.copyOfRange(elements, from, to);
+    var newNames = Arrays.copyOfRange(elements, from, to);
     return constructor().create(newNames);
   }
 
@@ -172,9 +171,9 @@ public abstract class AbstractPath<E extends Comparable, P extends AbstractPath<
     }
 
     public P parse(String path, Function<String, E> parser) {
-      String[] arr = path.split("\\.");
-      E[] elements = createArray(arr.length);
-      int i = 0;
+      var arr = path.split("\\.");
+      var elements = createArray(arr.length);
+      var i = 0;
       for (String e : arr) {
         elements[i++] = parser.apply(e);
       }
@@ -182,7 +181,7 @@ public abstract class AbstractPath<E extends Comparable, P extends AbstractPath<
     }
 
     public <E2> P of(Function<E2, E> converter, @NonNull E2[] elements) {
-      E[] arr = Arrays.stream(elements)
+      var arr = Arrays.stream(elements)
           .map(converter)
           .toArray(this::createArray);
       return create(arr);

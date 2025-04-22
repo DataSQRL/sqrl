@@ -1,15 +1,20 @@
-IMPORT schema.AddReading AS SensorReading;
-IMPORT time.endOfSecond;
+CREATE TABLE SensorReading (
+    sensorid INT NOT NULL,
+    temperature FLOAT NOT NULL,
+    event_time TIMESTAMP_LTZ(3) METADATA FROM 'timestamp'
+);
 
-/* Aggregate sensor readings to second */
-SecReading := SELECT sensorid, endOfSecond(event_time) as timeSec,
-                     avg(temperature) as temp
-              FROM SensorReading GROUP BY sensorid, timeSec;
+HighTempAlert := SUBSCRIBE SELECT * FROM SensorReading WHERE temperature > 50;
 
-/* Get max temperature in last minute per sensor */
-SensorMaxTemp := SELECT sensorid, max(temp) as maxTemp
-                 FROM SecReading
-                 WHERE timeSec >= now() - INTERVAL 1 MINUTE
-                 GROUP BY sensorid;
+_SensorMaxTempLastMinWindow := SELECT sensorid, window_time as endOfMin,
+                                      AVG(temperature) AS avg_temperature
+                     FROM TABLE(HOP(TABLE SensorReading, DESCRIPTOR(event_time), INTERVAL '10' SECONDS, INTERVAL '1' MINUTES))
+                     GROUP BY sensorid, window_start, window_end, window_time;
 
-EXPORT SensorReading TO logger.LogSensorReading;
+SensorMaxTempLastMin := DISTINCT _SensorMaxTempLastMinWindow ON sensorid ORDER BY endOfMin DESC;
+
+SensorAnalysis := SELECT sensorid, AVG(temperature) AS avg_temperatures,
+                           MAX(temperature) AS max_temperature
+                    FROM SensorReading GROUP BY sensorid ORDER BY sensorid DESC;
+
+SensorAnalysisById(sensorid INT NOT NULL) := SELECT * FROM SensorAnalysis WHERE sensorid = :sensorid;

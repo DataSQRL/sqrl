@@ -1,114 +1,88 @@
 package com.datasqrl.graphql;
 
-import static com.datasqrl.graphql.VertxJdbcClient.getDatabaseName;
 import static com.datasqrl.graphql.jdbc.SchemaConstants.LIMIT;
 import static com.datasqrl.graphql.jdbc.SchemaConstants.OFFSET;
 
-import com.datasqrl.graphql.VertxJdbcClient.PreparedSqrlQueryImpl;
-import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
-import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentParameter;
-import com.datasqrl.graphql.server.RootGraphqlModel.DuckDbQuery;
-import com.datasqrl.graphql.server.RootGraphqlModel.PagedDuckDbQuery;
-import com.datasqrl.graphql.server.RootGraphqlModel.ParameterHandlerVisitor;
-import com.datasqrl.graphql.server.RootGraphqlModel.JdbcParameterHandler;
-import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedPagedJdbcQuery;
-import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedJdbcQuery;
-import com.datasqrl.graphql.server.RootGraphqlModel.SourceParameter;
-import com.datasqrl.graphql.server.QueryExecutionContext;
-import com.datasqrl.graphql.server.GraphQLEngineBuilder;
-import graphql.schema.DataFetchingEnvironment;
-import io.vertx.core.Future;
-import io.vertx.core.Promise;
-import io.vertx.core.json.JsonObject;
-import io.vertx.sqlclient.PreparedQuery;
-import io.vertx.sqlclient.Row;
-import io.vertx.sqlclient.RowSet;
-import io.vertx.sqlclient.SqlClient;
-import io.vertx.sqlclient.Tuple;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-import lombok.SneakyThrows;
+
+import com.datasqrl.graphql.VertxJdbcClient.PreparedSqrlQueryImpl;
+import com.datasqrl.graphql.jdbc.AbstractQueryExecutionContext;
+import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
+import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedSqlQuery;
+
+import graphql.schema.DataFetchingEnvironment;
+import io.vertx.core.Future;
+import io.vertx.core.Promise;
+import io.vertx.core.json.JsonObject;
+import io.vertx.sqlclient.Row;
+import io.vertx.sqlclient.RowSet;
+import io.vertx.sqlclient.Tuple;
 import lombok.Value;
 
+/**
+ * It is the ExecutionContext per servlet type. It is responsible for executing the resolved SQL
+ * queries (paginated or not) in Vert.x and mapping the database resultSet to json for using in
+ * GraphQL responses. It also implements the parameters and arguments visitors for the {@link
+ * com.datasqrl.graphql.server.RootGraphqlModel} visitors
+ */
 @Value
-public class VertxQueryExecutionContext implements QueryExecutionContext,
-    ParameterHandlerVisitor<Object, QueryExecutionContext> {
+public class VertxQueryExecutionContext extends AbstractQueryExecutionContext {
   VertxContext context;
   DataFetchingEnvironment environment;
   Set<Argument> arguments;
-  Promise<Object> fut;
+  Promise<Object> future; // basically Vert.x completableFuture
 
   @Override
-  public CompletableFuture runQuery(GraphQLEngineBuilder server, ResolvedJdbcQuery pgQuery,
+  public CompletableFuture runQuery(ResolvedSqlQuery resolvedQuery,
       boolean isList) {
-    Object[] paramObj = new Object[pgQuery.getQuery().getParameters().size()];
-    for (int i = 0; i < pgQuery.getQuery().getParameters().size(); i++) {
-      JdbcParameterHandler param = pgQuery.getQuery().getParameters().get(i);
-      Object o = param.accept(this, this);
-      paramObj[i] = o;
+    var preparedQueryContainer = (PreparedSqrlQueryImpl) resolvedQuery.getPreparedQueryContainer();
+    final var paramObj = getParamArguments(resolvedQuery.getQuery().getParameters());
+    var query = resolvedQuery.getQuery();
+    var unpreparedSqlQuery = query.getSql();
+    switch (query.getPagination()) {
+      case NONE: break;
+      case LIMIT_AND_OFFSET:
+        Optional<Integer> limit = Optional.ofNullable(getEnvironment().getArgument(LIMIT));
+        Optional<Integer> offset = Optional.ofNullable(getEnvironment().getArgument(OFFSET));
+
+        //special case where database doesn't support binding for limit/offset => need to execute dynamically
+        if (!query.getDatabase().supportsLimitOffsetBinding) {
+          assert preparedQueryContainer == null;
+          unpreparedSqlQuery = AbstractQueryExecutionContext.addLimitOffsetToQuery(unpreparedSqlQuery,
+              limit.map(Object::toString).orElse("ALL"), String.valueOf(offset.orElse(0)));
+        } else {
+          paramObj.add(limit.orElse(Integer.MAX_VALUE));
+          paramObj.add(offset.orElse(0));
+        }
+        break;
+      default: throw new UnsupportedOperationException("Unsupported pagination: " + query.getPagination());
     }
 
-    String database = getDatabaseName(pgQuery.getQuery());
-
-    PreparedSqrlQueryImpl preparedQueryContainer = (PreparedSqrlQueryImpl) pgQuery.getPreparedQueryContainer();
+    // execute the preparedQuery with the arguments extracted above
     Future<RowSet<Row>> future;
+    var parameters = Tuple.from(paramObj);
     if (preparedQueryContainer == null) {
-      future = this.context.getSqlClient().execute(database,
-          pgQuery.getQuery().getSql(), Tuple.from(paramObj));
+      future = this.context.getSqlClient().execute(resolvedQuery.getQuery().getDatabase(),
+          unpreparedSqlQuery, parameters);
     } else {
-      PreparedQuery<RowSet<Row>> preparedQuery = preparedQueryContainer
+      var preparedQuery = preparedQueryContainer
           .getPreparedQuery();
-      future = this.context.getSqlClient().execute(database,
-          preparedQuery, Tuple.from(paramObj));
+      future = this.context.getSqlClient().execute(resolvedQuery.getQuery().getDatabase(),
+          preparedQuery, parameters);
     }
-
+    // map the resultSet to json for GraphQL response
     future
         .map(r -> resultMapper(r, isList))
-        .onSuccess(fut::complete)
+        .onSuccess(result -> this.future.complete(result))
         .onFailure(f -> {
           f.printStackTrace();
-          fut.fail(f);
+          this.future.fail(f);
         });
-    return new CompletableFuture();
-  }
-
-  @Override
-  public CompletableFuture runPagedJdbcQuery(ResolvedPagedJdbcQuery databaseQuery,
-      boolean isList, QueryExecutionContext context) {
-    Optional<Integer> limit = Optional.ofNullable(getEnvironment().getArgument(LIMIT));
-    Optional<Integer> offset = Optional.ofNullable(getEnvironment().getArgument(OFFSET));
-    Object[] paramObj = new Object[databaseQuery.getQuery().getParameters().size()];
-    for (int i = 0; i < databaseQuery.getQuery().getParameters().size(); i++) {
-      JdbcParameterHandler param = databaseQuery.getQuery().getParameters().get(i);
-      Object o = param.accept(this, this);
-      paramObj[i] = o;
-    }
-
-    //Add limit + offset
-    final String query = String.format("SELECT * FROM (%s) x LIMIT %s OFFSET %s",
-        databaseQuery.getQuery().getSql(),
-        limit.map(Object::toString).orElse("ALL"),
-        offset.orElse(0)
-    );
-
-    String database = getDatabaseName(databaseQuery.getQuery());
-
-    Future<RowSet<Row>> future = this.context.getSqlClient().execute(database,
-        query,Tuple.from(paramObj));
-
-    future
-      .map(r -> resultMapper(r, isList))
-      .onSuccess(fut::complete)
-      .onFailure(f -> {
-        f.printStackTrace();
-        fut.fail(f);
-      });
-
     return new CompletableFuture();
   }
 
@@ -116,27 +90,6 @@ public class VertxQueryExecutionContext implements QueryExecutionContext,
     List<JsonObject> o = StreamSupport.stream(r.spliterator(), false)
         .map(Row::toJson)
         .collect(Collectors.toList());
-
-    return isList
-        ? o
-        : (o.size() > 0 ? o.get(0) : null);
-  }
-
-  @SneakyThrows
-  @Override
-  public Object visitSourceParameter(SourceParameter sourceParameter,
-      QueryExecutionContext context) {
-    return context.getContext().createPropertyFetcher(sourceParameter.getKey())
-        .get(context.getEnvironment());
-  }
-
-  @Override
-  public Object visitArgumentParameter(ArgumentParameter argumentParameter,
-      QueryExecutionContext context) {
-    return context.getArguments().stream()
-        .filter(arg -> arg.getPath().equalsIgnoreCase(argumentParameter.getPath()))
-        .findFirst()
-        .map(f -> f.getValue())
-        .orElse(null);
+    return unboxList(o, isList);
   }
 }

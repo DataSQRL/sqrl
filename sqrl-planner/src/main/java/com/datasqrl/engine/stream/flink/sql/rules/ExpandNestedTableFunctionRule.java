@@ -1,25 +1,19 @@
 package com.datasqrl.engine.stream.flink.sql.rules;
 
-import com.datasqrl.schema.NestedRelationship;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
+
 import org.apache.calcite.plan.RelOptRuleCall;
 import org.apache.calcite.plan.RelRule;
 import org.apache.calcite.plan.RelRule.Config;
-import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.RelFactories;
 import org.apache.calcite.rel.core.TableFunctionScan;
-import org.apache.calcite.rel.logical.LogicalCorrelate;
 import org.apache.calcite.rel.logical.LogicalValues;
 import org.apache.calcite.rel.rules.TransformationRule;
 import org.apache.calcite.rex.RexCall;
-import org.apache.calcite.rex.RexNode;
-import org.apache.calcite.schema.TableFunction;
-import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
-import org.apache.calcite.tools.RelBuilder;
 import org.immutables.value.Value;
+
+import com.datasqrl.schema.NestedRelationship;
 
 public class ExpandNestedTableFunctionRule extends RelRule<Config>
     implements TransformationRule {
@@ -37,25 +31,23 @@ public class ExpandNestedTableFunctionRule extends RelRule<Config>
   public void onMatch(RelOptRuleCall relOptRuleCall) {
     TableFunctionScan scan = relOptRuleCall.rel(0);
 
-    RexCall call = (RexCall)scan.getCall();
+    var call = (RexCall)scan.getCall();
     if (!(call.getOperator() instanceof SqlUserDefinedTableFunction)) {
       return;
     }
 
-    SqlUserDefinedTableFunction tableFunction = (SqlUserDefinedTableFunction)call.getOperator();
-    TableFunction function = tableFunction.getFunction();
-    if (!(function instanceof NestedRelationship)) {
+    var tableFunction = (SqlUserDefinedTableFunction)call.getOperator();
+    var function = tableFunction.getFunction();
+    if (!(function instanceof NestedRelationship relationship)) {
       return;
     }
 
-    NestedRelationship relationship = (NestedRelationship) function;
-
-    RelBuilder relBuilder = relOptRuleCall.builder()
+    var relBuilder = relOptRuleCall.builder()
         .push(LogicalValues.createOneRow(relOptRuleCall.builder().getCluster()))
         .project(call.getOperands())
         .uncollect(List.of(), false);
 
-    RelNode relNode = relBuilder.build();
+    var relNode = relBuilder.build();
     relOptRuleCall.transformTo(relNode);
   }
 

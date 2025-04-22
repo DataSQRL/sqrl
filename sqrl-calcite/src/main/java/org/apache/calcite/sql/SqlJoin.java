@@ -16,19 +16,20 @@
  */
 package org.apache.calcite.sql;
 
+import java.util.List;
+import java.util.Objects;
 import java.util.function.UnaryOperator;
-import lombok.Getter;
+
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.util.SqlString;
 import org.apache.calcite.util.ImmutableNullableList;
 import org.apache.calcite.util.Util;
+import org.apache.flink.calcite.shaded.org.checkerframework.checker.nullness.qual.Nullable;
 
 import com.google.common.base.Preconditions;
 
-import java.util.List;
-import java.util.Objects;
-import org.apache.flink.calcite.shaded.org.checkerframework.checker.nullness.qual.Nullable;
+import lombok.Getter;
 
 /**
  * Parse tree node representing a {@code JOIN} clause.
@@ -72,48 +73,24 @@ public class SqlJoin extends SqlCall {
   }
 
   private static SqlLiteral convertModifier(SqlLiteral joinType) {
-    JoinType joinTypeValue = (JoinType) joinType.getValue();
-    switch (joinTypeValue) {
-      case INNER_TEMPORAL:
-      case LEFT_TEMPORAL:
-      case RIGHT_TEMPORAL:
-        return JoinModifier.TEMPORAL.symbol(joinType.getParserPosition());
-      case INNER_INTERVAL:
-      case LEFT_INTERVAL:
-      case RIGHT_INTERVAL:
-        return JoinModifier.INTERVAL.symbol(joinType.getParserPosition());
-      case INNER_DEFAULT:
-      case LEFT_DEFAULT:
-      case RIGHT_DEFAULT:
-        return JoinModifier.DEFAULT.symbol(joinType.getParserPosition());
-      case LEFT_OUTER:
-      case RIGHT_OUTER:
-        return JoinModifier.OUTER.symbol(joinType.getParserPosition());
-      default:
-        return JoinModifier.NONE.symbol(joinType.getParserPosition());
-    }
+    var joinTypeValue = (JoinType) joinType.getValue();
+    return switch (joinTypeValue) {
+    case INNER_TEMPORAL, LEFT_TEMPORAL, RIGHT_TEMPORAL -> JoinModifier.TEMPORAL.symbol(joinType.getParserPosition());
+    case INNER_INTERVAL, LEFT_INTERVAL, RIGHT_INTERVAL -> JoinModifier.INTERVAL.symbol(joinType.getParserPosition());
+    case INNER_DEFAULT, LEFT_DEFAULT, RIGHT_DEFAULT -> JoinModifier.DEFAULT.symbol(joinType.getParserPosition());
+    case LEFT_OUTER, RIGHT_OUTER -> JoinModifier.OUTER.symbol(joinType.getParserPosition());
+    default -> JoinModifier.NONE.symbol(joinType.getParserPosition());
+    };
   }
 
   private static SqlLiteral convertType(SqlLiteral joinType) {
-    JoinType joinTypeValue = (JoinType) joinType.getValue();
-    switch (joinTypeValue) {
-      case INNER_TEMPORAL:
-      case INNER_INTERVAL:
-      case INNER_DEFAULT:
-        return JoinType.INNER.symbol(joinType.getParserPosition());
-      case LEFT_OUTER:
-      case LEFT_TEMPORAL:
-      case LEFT_INTERVAL:
-      case LEFT_DEFAULT:
-        return JoinType.LEFT.symbol(joinType.getParserPosition());
-      case RIGHT_OUTER:
-      case RIGHT_TEMPORAL:
-      case RIGHT_INTERVAL:
-      case RIGHT_DEFAULT:
-        return JoinType.RIGHT.symbol(joinType.getParserPosition());
-      default:
-        return joinType;
-    }
+    var joinTypeValue = (JoinType) joinType.getValue();
+    return switch (joinTypeValue) {
+    case INNER_TEMPORAL, INNER_INTERVAL, INNER_DEFAULT -> JoinType.INNER.symbol(joinType.getParserPosition());
+    case LEFT_OUTER, LEFT_TEMPORAL, LEFT_INTERVAL, LEFT_DEFAULT -> JoinType.LEFT.symbol(joinType.getParserPosition());
+    case RIGHT_OUTER, RIGHT_TEMPORAL, RIGHT_INTERVAL, RIGHT_DEFAULT -> JoinType.RIGHT.symbol(joinType.getParserPosition());
+    default -> joinType;
+    };
   }
 
   public SqlJoin(SqlParserPos pos, SqlNode left, SqlLiteral natural,
@@ -135,7 +112,8 @@ public class SqlJoin extends SqlCall {
 
   //~ Methods ----------------------------------------------------------------
 
-  public SqlOperator getOperator() {
+  @Override
+public SqlOperator getOperator() {
     return OPERATOR;
   }
 
@@ -144,7 +122,8 @@ public class SqlJoin extends SqlCall {
     return SqlKind.JOIN;
   }
 
-  public List<SqlNode> getOperandList() {
+  @Override
+public List<SqlNode> getOperandList() {
     return ImmutableNullableList.of(left, natural, joinType, right,
         conditionType, condition, modifier);
   }
@@ -264,7 +243,7 @@ public class SqlJoin extends SqlCall {
         SqlCall call,
         int leftPrec,
         int rightPrec) {
-      final SqlJoin join = (SqlJoin) call;
+      final var join = (SqlJoin) call;
 
       join.left.unparse(
           writer,
@@ -297,7 +276,7 @@ public class SqlJoin extends SqlCall {
           throw Util.unexpected(join.getJoinType());
       }
       join.right.unparse(writer, getRightPrec(), rightPrec);
-      SqlNode joinCondition = join.condition;
+      var joinCondition = join.condition;
       if (joinCondition != null) {
         switch (join.getConditionType()) {
           case USING:
@@ -306,7 +285,7 @@ public class SqlJoin extends SqlCall {
             writer.keyword("USING");
             assert joinCondition instanceof SqlNodeList
                 : "joinCondition should be SqlNodeList, got " + joinCondition;
-            final SqlWriter.Frame frame =
+            final var frame =
                 writer.startList(FRAME_TYPE, "(", ")");
             joinCondition.unparse(writer, 0, 0);
             writer.endList(frame);

@@ -1,25 +1,26 @@
 package com.datasqrl.config;
 
-import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.io.tables.TableType;
-import java.net.URI;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
+
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.io.tables.TableType;
+
 import lombok.NonNull;
 
+/**
+ * Wraps a Flink CREATE TABLE definition to provide an abstracted interface to table definitions
+ * for the DataSQRL codebase with simple methods to access table configuration.
+ *
+ * Of particular importance is the table builder which is used to build sinks during DAG cutting.
+
+  TODO: trim this down once we get rid of SqrlToFlinkSQLGenerator and TableConverter
+ */
 public interface TableConfig {
 
-  TableConfig load(URI uri, Name last, ErrorCollector errors);
-
   ConnectorConfig getConnectorConfig();
-
-  MetadataConfig getMetadataConfig();
 
   TableTableConfig getBase();
 
@@ -31,23 +32,6 @@ public interface TableConfig {
 
   void toFile(Path tableConfigFile, boolean pretty);
 
-  interface MetadataEntry {
-
-    Optional<String> getType();
-
-    Optional<String> getAttribute();
-
-    Optional<Boolean> getVirtual();
-  }
-
-  interface MetadataConfig {
-
-    List<String> getKeys();
-
-    Optional<MetadataEntry> getMetadataEntry(String columnName);
-
-    Map<String, MetadataEntry> toMap();
-  }
 
   interface ConnectorConfig {
 
@@ -55,7 +39,8 @@ public interface TableConfig {
 
     void setProperty(String key, Object value);
 
-    Optional<Format> getFormat();
+    //return optional<string>
+    Optional<String> getFormat();
 
     TableType getTableType();
 
@@ -87,52 +72,28 @@ public interface TableConfig {
 
   }
 
-  interface Format {
+  /* TODO: remove the following once we get rid of SqrlToFlinkSQLGenerator and TableConverter
+   */
 
-    String getName();
+  MetadataConfig getMetadataConfig();
 
-    Optional<String> getSchemaType();
+  interface MetadataEntry {
 
-    @AllArgsConstructor
-    @Getter
-    abstract class BaseFormat implements Format {
+    Optional<String> getType();
 
-      @NonNull String name;
+    Optional<String> getAttribute();
 
-      @Override
-      public boolean equals(Object o) {
-        if (this == o) {
-          return true;
-        }
-        if (!(o instanceof Format)) {
-          return false;
-        }
-        Format that = (Format) o;
-        return name.equalsIgnoreCase(that.getName());
-      }
-
-      @Override
-      public int hashCode() {
-        return Objects.hash(name.toLowerCase());
-      }
-
-      @Override
-      public String toString() {
-        return name;
-      }
-
-      @Override
-      public Optional<String> getSchemaType() {
-        return Optional.empty();
-      }
-    }
-
-    class DefaultFormat extends BaseFormat {
-
-      public DefaultFormat(@NonNull String name) {
-        super(name);
-      }
-
-    }
+    Optional<Boolean> getVirtual();
   }
+
+  interface MetadataConfig {
+
+    List<String> getKeys();
+
+    Optional<MetadataEntry> getMetadataEntry(String columnName);
+
+    Map<String, MetadataEntry> toMap();
+  }
+
+
 }

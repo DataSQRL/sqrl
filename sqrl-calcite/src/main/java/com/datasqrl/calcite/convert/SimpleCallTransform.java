@@ -1,9 +1,9 @@
 package com.datasqrl.calcite.convert;
 
 import java.util.concurrent.atomic.AtomicBoolean;
+
 import org.apache.calcite.plan.RelOptRuleCall;
 import org.apache.calcite.plan.RelRule;
-import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.RelFactories;
 import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rel.rules.TransformationRule;
@@ -32,11 +32,11 @@ public class SimpleCallTransform extends RelRule<SimpleCallTransform.Config>
 
   @Override
   public void onMatch(RelOptRuleCall relOptRuleCall) {
-    LogicalProject filter = relOptRuleCall.rel(0);
+    var filter = relOptRuleCall.rel(0);
 
-    AtomicBoolean hasTransformed = new AtomicBoolean(false);
+    var hasTransformed = new AtomicBoolean(false);
 
-    RelNode newCall = filter.accept(new RexShuttle() {
+    var newCall = filter.accept(new RexShuttle() {
       @Override
       public RexNode visitCall(RexCall call) {
         if (call.getOperator().equals(operator)) {

@@ -16,17 +16,12 @@
  */
 package com.datasqrl.parse;
 
-import com.datasqrl.parse.SqlBaseParser.BackQuotedIdentifierContext;
-import com.datasqrl.parse.SqlBaseParser.QuotedIdentifierContext;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.regex.Pattern;
-import lombok.SneakyThrows;
-import lombok.Value;
+
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonToken;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -43,6 +38,11 @@ import org.apache.calcite.sql.ScriptNode;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqrlStatement;
 
+import com.datasqrl.parse.SqlBaseParser.BackQuotedIdentifierContext;
+import com.datasqrl.parse.SqlBaseParser.QuotedIdentifierContext;
+
+import lombok.Value;
+
 public class SqrlParserImpl implements SqrlParser {
 
   private final LexerErrorHandler lexerErrorHandler = new LexerErrorHandler();
@@ -53,23 +53,25 @@ public class SqrlParserImpl implements SqrlParser {
       .specialToken(SqlBaseLexer.INTEGER_VALUE, "<integer>")
       .build();
 
-  public ScriptNode parse(String sql) {
-    ScriptNode scriptNode = (ScriptNode) invokeParser("script", sql, SqlBaseParser::script);
+  @Override
+public ScriptNode parse(String sql) {
+    var scriptNode = (ScriptNode) invokeParser("script", sql, SqlBaseParser::script);
     scriptNode.setOriginalScript(sql);
     scriptNode.setScriptPath(Optional.empty());
     return scriptNode;
   }
 
-  public SqrlStatement parseStatement(String sql) {
+  @Override
+public SqrlStatement parseStatement(String sql) {
     return (SqrlStatement) invokeParser("statement", sql, SqlBaseParser::singleStatement);
   }
 
   private SqlNode invokeParser(String name, String sql,
       Function<SqlBaseParser, ParserRuleContext> parseFunction) {
     try {
-      SqlBaseLexer lexer = new SqlBaseLexer(new CaseInsensitiveStream(CharStreams.fromString(sql)));
-      CommonTokenStream tokenStream = new CommonTokenStream(lexer);
-      SqlBaseParser parser = new SqlBaseParser(tokenStream);
+      var lexer = new SqlBaseLexer(new CaseInsensitiveStream(CharStreams.fromString(sql)));
+      var tokenStream = new CommonTokenStream(lexer);
+      var parser = new SqlBaseParser(tokenStream);
 
       // Override the default error strategy to not attempt inserting or deleting a token.
       // Otherwise, it messes up error reporting
@@ -147,7 +149,7 @@ public class SqrlParserImpl implements SqrlParser {
       // we can't modify the tree during rule enter/exit event handling unless we're dealing with a terminal.
       // Otherwise, ANTLR gets confused an fires spurious notifications.
       if (!(context.getChild(0) instanceof TerminalNode)) {
-        int rule = ((ParserRuleContext) context.getChild(0)).getRuleIndex();
+        var rule = ((ParserRuleContext) context.getChild(0)).getRuleIndex();
         throw new AssertionError(
             "nonReserved can only contain tokens. Found nested rule: " + ruleNames.get(rule));
       }
@@ -155,7 +157,7 @@ public class SqrlParserImpl implements SqrlParser {
       // replace nonReserved words with IDENT tokens
       context.getParent().removeLastChild();
 
-      Token token = (Token) context.getChild(0).getPayload();
+      var token = (Token) context.getChild(0).getPayload();
 
       context.getParent().addChild(new CommonToken(
           new Pair<>(token.getTokenSource(), token.getInputStream()),

@@ -3,7 +3,6 @@
  */
 package com.datasqrl.io.tables;
 
-import java.net.URI;
 import java.nio.file.Path;
 import java.util.Optional;
 

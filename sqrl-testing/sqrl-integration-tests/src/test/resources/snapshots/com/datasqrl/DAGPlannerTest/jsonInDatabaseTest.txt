@@ -1,24 +1,12 @@
 >>>pipeline_explain.txt
 === Customer
-ID:     customer_2
-Type:   stream
-Stage:  flink
-Primary Key: customerid, lastUpdated
-Timestamp  : timestamp
-Schema:
- - customerid: BIGINT NOT NULL
- - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - lastUpdated: BIGINT NOT NULL
- - timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
-Plan:
-LogicalTableScan(table=[[customer_1]])
-
-=== Customer
-ID:     customer_3
+ID:     default_catalog.default_database.Customer
 Type:   state
 Stage:  flink
-Inputs: customer_2
+Inputs: default_catalog.default_database.CustomerStream
+Annotations:
+ - mostRecentDistinct: true
+ - stream-root: CustomerStream__def
 Primary Key: customerid
 Timestamp  : timestamp
 Schema:
@@ -26,1542 +14,869 @@ Schema:
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
- - timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
-Post Processors:
- - topN: partition=customerid limit=1 sort=#4: timestamp TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC 
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Plan:
-LogicalTableScan(table=[[customer_2]])
+LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
+  LogicalFilter(condition=[=($5, 1)])
+    LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4], __sqrlinternal_rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $4 DESC NULLS LAST)])
+      LogicalTableScan(table=[[default_catalog, default_database, CustomerStream]])
+SQL: CREATE VIEW `Customer`
+AS
+SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`
+FROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC NULLS LAST) AS `__sqrlinternal_rownum`
+  FROM `default_catalog`.`default_database`.`CustomerStream`) AS `t`
+WHERE `__sqrlinternal_rownum` = 1
+=== CustomerStream
+ID:     default_catalog.default_database.CustomerStream
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database.CustomerStream__def
+Annotations:
+ - stream-root: CustomerStream__def
+Primary Key: customerid, lastUpdated
+Timestamp  : timestamp
+Schema:
+ - customerid: BIGINT NOT NULL
+ - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - lastUpdated: BIGINT NOT NULL
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Plan:
+LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
+  LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
+    LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($3, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
+      LogicalTableScan(table=[[default_catalog, default_database, CustomerStream__def]])
+SQL: CREATE VIEW `CustomerStream`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`CustomerStream__def`
+=== ObjComplex
+ID:     default_catalog.default_database.ObjComplex
+Type:   state
+Stage:  postgres
+Inputs: default_catalog.default_database.Customer
+Annotations:
+ - stream-root: CustomerStream__def
+Primary Key: -
+Timestamp  : -
+Schema:
+ - obj: RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw==')
+Plan:
+LogicalProject(obj=[jsonObject(CONCAT('application#', $2), $0)])
+  LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW ObjComplex AS  SELECT jsonObject(concat('application#',CAST(name AS VARCHAR)), customerid) AS obj FROM Customer;
 
 === jsonArrayAggTable
-ID:     jsonarrayaggtable_1
+ID:     default_catalog.default_database.jsonArrayAggTable
 Type:   state
 Stage:  postgres
-Inputs: customer_3
-Primary Key: _name
-Timestamp  : __timestamp
+Inputs: default_catalog.default_database.Customer
+Primary Key: -
+Timestamp  : -
 Schema:
- - agg: RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI=')
- - _name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - __timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - agg: RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw==')
 Plan:
-LogicalProject(agg=[$1], _name=[$0], __timestamp=[$2])
-  LogicalAggregate(group=[{2}], agg=[jsonArrayAgg($2)], __timestamp=[MAX($4)])
-    LogicalTableScan(table=[[customer_3]])
+LogicalProject(agg=[$1])
+  LogicalAggregate(group=[{0}], agg=[jsonArrayAgg($0)])
+    LogicalProject(name=[$2])
+      LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW jsonArrayAggTable AS  SELECT jsonArrayAgg(name) AS agg FROM Customer GROUP BY name;
 
 === jsonArrayTable
-ID:     jsonarraytable_1
+ID:     default_catalog.default_database.jsonArrayTable
 Type:   state
 Stage:  postgres
-Inputs: customer_3
-Primary Key: _customerid
-Timestamp  : _timestamp
+Inputs: default_catalog.default_database.Customer
+Annotations:
+ - stream-root: CustomerStream__def
+Primary Key: -
+Timestamp  : -
 Schema:
- - obj: RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI=')
- - _customerid: BIGINT NOT NULL
- - _timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - obj: RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw==')
 Plan:
-LogicalProject(obj=[jsonArray($0)], _customerid=[$0], _timestamp=[$4])
-  LogicalTableScan(table=[[customer_3]])
+LogicalProject(obj=[jsonArray($0)])
+  LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW jsonArrayTable AS  SELECT jsonArray(customerid) AS obj FROM Customer;
 
 === jsonConcatTable
-ID:     jsonconcattable_1
+ID:     default_catalog.default_database.jsonConcatTable
 Type:   state
 Stage:  postgres
-Inputs: customer_3
-Primary Key: _customerid
-Timestamp  : _timestamp
+Inputs: default_catalog.default_database.Customer
+Annotations:
+ - stream-root: CustomerStream__def
+Primary Key: -
+Timestamp  : -
 Schema:
- - obj: RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI=')
- - _customerid: BIGINT NOT NULL
- - _timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - obj: RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw==')
 Plan:
-LogicalProject(obj=[jsonConcat(toJson('{"a": true}'), toJson('{"a": false}'))], _customerid=[$0], _timestamp=[$4])
-  LogicalTableScan(table=[[customer_3]])
+LogicalProject(obj=[jsonConcat(toJson('{"a": true}'), toJson('{"a": false}'))])
+  LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW jsonConcatTable AS  SELECT jsonConcat(toJson('{"a": true}'), toJson('{"a": false}')) AS obj FROM Customer;
 
 === jsonExistsTable
-ID:     jsonexiststable_1
+ID:     default_catalog.default_database.jsonExistsTable
 Type:   state
 Stage:  postgres
-Inputs: customer_3
-Primary Key: _customerid
-Timestamp  : _timestamp
+Inputs: default_catalog.default_database.Customer
+Annotations:
+ - stream-root: CustomerStream__def
+Primary Key: -
+Timestamp  : -
 Schema:
  - obj: BOOLEAN
- - _customerid: BIGINT NOT NULL
- - _timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
-LogicalProject(obj=[jsonExists(toJson('{"a": true}'), '$.a')], _customerid=[$0], _timestamp=[$4])
-  LogicalTableScan(table=[[customer_3]])
+LogicalProject(obj=[jsonExists(toJson('{"a": true}'), '$.a')])
+  LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW jsonExistsTable AS  SELECT jsonExists(toJson('{"a": true}'), '$.a') AS obj FROM Customer;
 
 === jsonExtractTable
-ID:     jsonextracttable_1
+ID:     default_catalog.default_database.jsonExtractTable
 Type:   state
 Stage:  postgres
-Inputs: customer_3
-Primary Key: _customerid
-Timestamp  : _timestamp
+Inputs: default_catalog.default_database.Customer
+Annotations:
+ - stream-root: CustomerStream__def
+Primary Key: -
+Timestamp  : -
 Schema:
  - obj: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
- - _customerid: BIGINT NOT NULL
- - _timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
-LogicalProject(obj=[jsonExtract(toJson('{"a": "hello"}'), CAST('$.a'):VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL, CAST('default'):VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL)], _customerid=[$0], _timestamp=[$4])
-  LogicalTableScan(table=[[customer_3]])
+LogicalProject(obj=[jsonExtract(toJson('{"a": "hello"}'), '$.a':VARCHAR(2147483647) CHARACTER SET "UTF-16LE", 'default':VARCHAR(2147483647) CHARACTER SET "UTF-16LE")])
+  LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW jsonExtractTable AS  SELECT jsonExtract(toJson('{"a": "hello"}'), CAST('$.a' AS varchar), CAST('default' AS varchar)) AS obj FROM Customer;
 
 === jsonObjectAggTable
-ID:     jsonobjectaggtable_1
+ID:     default_catalog.default_database.jsonObjectAggTable
 Type:   state
 Stage:  postgres
-Inputs: customer_3
-Primary Key: _name
-Timestamp  : __timestamp
+Inputs: default_catalog.default_database.Customer
+Primary Key: -
+Timestamp  : -
 Schema:
- - agg: RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI=')
- - _name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - __timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - agg: RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw==')
 Plan:
-LogicalProject(agg=[$1], _name=[$0], __timestamp=[$2])
-  LogicalAggregate(group=[{0}], agg=[jsonObjectAgg($1, $0)], __timestamp=[MAX($3)])
-    LogicalProject(name=[$2], $f1=['key'], customerid=[$0], timestamp=[$4])
-      LogicalTableScan(table=[[customer_3]])
+LogicalProject(agg=[$1])
+  LogicalAggregate(group=[{0}], agg=[jsonObjectAgg($1, $0)])
+    LogicalProject(name=[$2], $f1=['key'])
+      LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW jsonObjectAggTable AS  SELECT jsonObjectAgg('key', name) AS agg FROM Customer GROUP BY name;
 
 === jsonQueryTable
-ID:     jsonquerytable_1
+ID:     default_catalog.default_database.jsonQueryTable
 Type:   state
 Stage:  postgres
-Inputs: customer_3
-Primary Key: _customerid
-Timestamp  : _timestamp
+Inputs: default_catalog.default_database.Customer
+Annotations:
+ - stream-root: CustomerStream__def
+Primary Key: -
+Timestamp  : -
 Schema:
  - obj: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
- - _customerid: BIGINT NOT NULL
- - _timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
-LogicalProject(obj=[jsonQuery(toJson('{"a": {"b": 1}}'), '$.a')], _customerid=[$0], _timestamp=[$4])
-  LogicalTableScan(table=[[customer_3]])
+LogicalProject(obj=[jsonQuery(toJson('{"a": {"b": 1}}'), '$.a')])
+  LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW jsonQueryTable AS  SELECT jsonQuery(toJson('{"a": {"b": 1}}'), '$.a') AS obj FROM Customer;
 
 === jsonToStringTable
-ID:     jsontostringtable_1
+ID:     default_catalog.default_database.jsonToStringTable
 Type:   state
 Stage:  postgres
-Inputs: customer_3
-Primary Key: _customerid
-Timestamp  : _timestamp
+Inputs: default_catalog.default_database.Customer
+Annotations:
+ - stream-root: CustomerStream__def
+Primary Key: -
+Timestamp  : -
 Schema:
  - obj: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
- - _customerid: BIGINT NOT NULL
- - _timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
-LogicalProject(obj=[jsonToString(toJson('{"a": 1}'))], _customerid=[$0], _timestamp=[$4])
-  LogicalTableScan(table=[[customer_3]])
-
-=== ObjComplex
-ID:     objcomplex_1
-Type:   state
-Stage:  postgres
-Inputs: customer_3
-Primary Key: _customerid
-Timestamp  : _timestamp
-Schema:
- - obj: RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI=')
- - _customerid: BIGINT NOT NULL
- - _timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
-Plan:
-LogicalProject(obj=[jsonObject(CONCAT('application#', $2), $0)], _customerid=[$0], _timestamp=[$4])
-  LogicalTableScan(table=[[customer_3]])
-
-=== Orders
-ID:     orders_2
-Type:   stream
-Stage:  flink
-Primary Key: id, time
-Timestamp  : time
-Schema:
- - id: BIGINT NOT NULL
- - customerid: BIGINT NOT NULL
- - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
- - entries: RecordType(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
-Plan:
-LogicalTableScan(table=[[orders_1]])
-
-=== Product
-ID:     product_2
-Type:   stream
-Stage:  flink
-Primary Key: productid, name, description, category
-Timestamp  : _ingest_time
-Schema:
- - productid: BIGINT NOT NULL
- - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - description: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - category: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - _ingest_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
-Plan:
-LogicalTableScan(table=[[product_1]])
+LogicalProject(obj=[jsonToString(toJson('{"a": 1}'))])
+  LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW jsonToStringTable AS  SELECT jsonToString(toJson('{"a": 1}')) AS obj FROM Customer;
 
 === toJsonTable
-ID:     tojsontable_1
+ID:     default_catalog.default_database.toJsonTable
 Type:   state
 Stage:  postgres
-Inputs: customer_3
-Primary Key: _customerid
-Timestamp  : _timestamp
+Inputs: default_catalog.default_database.Customer
+Annotations:
+ - stream-root: CustomerStream__def
+Primary Key: -
+Timestamp  : -
 Schema:
- - obj: RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI=')
- - _customerid: BIGINT NOT NULL
- - _timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - obj: RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw==')
 Plan:
-LogicalProject(obj=[toJson('{"a": 1}')], _customerid=[$0], _timestamp=[$4])
-  LogicalTableScan(table=[[customer_3]])
+LogicalProject(obj=[toJson('{"a": 1}')])
+  LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW toJsonTable AS  SELECT toJson('{"a": 1}') AS obj FROM Customer;
 
->>>flink.json
-{
-  "flinkSql" : [
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptostring` AS 'com.datasqrl.time.TimestampToString' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `jsonobjectagg` AS 'com.datasqrl.json.JsonObjectAgg' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptoepochmilli` AS 'com.datasqrl.time.TimestampToEpochMilli' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofweek` AS 'com.datasqrl.time.EndOfWeek' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `jsonextract` AS 'com.datasqrl.json.JsonExtract' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `jsonarrayagg` AS 'com.datasqrl.json.JsonArrayAgg' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `jsonconcat` AS 'com.datasqrl.json.JsonConcat' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `parsetimestamp` AS 'com.datasqrl.time.ParseTimestamp' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `jsontostring` AS 'com.datasqrl.json.JsonToString' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `jsonobject` AS 'com.datasqrl.json.JsonObject' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `epochmillitotimestamp` AS 'com.datasqrl.time.EpochMilliToTimestamp' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `jsonquery` AS 'com.datasqrl.json.JsonQuery' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofminute` AS 'com.datasqrl.time.EndOfMinute' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `jsonexists` AS 'com.datasqrl.json.JsonExists' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `epochtotimestamp` AS 'com.datasqrl.time.EpochToTimestamp' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofday` AS 'com.datasqrl.time.EndOfDay' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofyear` AS 'com.datasqrl.time.EndOfYear' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofmonth` AS 'com.datasqrl.time.EndOfMonth' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `jsonarray` AS 'com.datasqrl.json.JsonArray' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `tojson` AS 'com.datasqrl.json.ToJson' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `ToJson` AS 'com.datasqrl.json.ToJson' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `timestamptoepoch` AS 'com.datasqrl.time.TimestampToEpoch' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofsecond` AS 'com.datasqrl.time.EndOfSecond' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `atzone` AS 'com.datasqrl.time.AtZone' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofhour` AS 'com.datasqrl.time.EndOfHour' LANGUAGE JAVA;",
-    "CREATE TEMPORARY TABLE `customer_1` (\n  `customerid` BIGINT NOT NULL,\n  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `lastUpdated` BIGINT NOT NULL,\n  `timestamp` AS EPOCHTOTIMESTAMP(`lastUpdated`),\n  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,\n  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND\n) WITH (\n  'format' = 'json',\n  'path' = 'file:/mock',\n  'source.monitor-interval' = '10000',\n  'connector' = 'filesystem',\n  'source.path.regex-pattern' = ''\n);",
-    "CREATE TEMPORARY TABLE `orders_1` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,\n  PRIMARY KEY (`id`, `time`) NOT ENFORCED,\n  WATERMARK FOR `time` AS `time` - INTERVAL '0.001' SECOND\n) WITH (\n  'format' = 'json',\n  'path' = 'file:/mock',\n  'source.monitor-interval' = '10000',\n  'connector' = 'filesystem',\n  'source.path.regex-pattern' = ''\n);",
-    "CREATE TEMPORARY TABLE `product_1` (\n  `productid` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`productid`, `name`, `description`, `category`) NOT ENFORCED,\n  WATERMARK FOR `_ingest_time` AS `_ingest_time` - INTERVAL '0.001' SECOND\n) WITH (\n  'format' = 'json',\n  'path' = 'file:/mock',\n  'source.monitor-interval' = '10000',\n  'connector' = 'filesystem',\n  'source.path.regex-pattern' = ''\n);",
-    "CREATE TEMPORARY TABLE `customer_3` (\n  `customerid` BIGINT NOT NULL,\n  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `lastUpdated` BIGINT NOT NULL,\n  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`customerid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'customer_3',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE TEMPORARY TABLE `orders_2` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `entries` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),\n  PRIMARY KEY (`id`, `time`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'orders_2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE TEMPORARY TABLE `product_2` (\n  `productid` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`productid`, `name`, `description`, `category`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'product_2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM `customer_1`;",
-    "CREATE VIEW `table$2`\nAS\nSELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`\nFROM `orders_1`;",
-    "CREATE VIEW `table$3`\nAS\nSELECT *\nFROM `product_1`;",
-    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `customer_3`\n(SELECT *\n FROM `table$1`)\n;\nINSERT INTO `orders_2`\n (SELECT *\n  FROM `table$2`)\n ;\n INSERT INTO `product_2`\n  (SELECT *\n   FROM `table$3`)\n  ;\n  END;"
-  ],
-  "connectors" : [
-    "jdbc-sqrl",
-    "filesystem"
-  ],
-  "formats" : [
-    "json"
-  ]
-}
+>>>flink-sql-no-functions.sql
+CREATE TEMPORARY TABLE `CustomerStream__schema` (
+  `customerid` BIGINT NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `lastUpdated` BIGINT NOT NULL
+) WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `CustomerStream__def` (
+  `timestamp` AS COALESCE(TO_TIMESTAMP_LTZ(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
+  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
+  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
+) WITH (
+  'format' = 'flexible-json',
+  'path' = 'file:/mock',
+  'source.monitor-interval' = '10 sec',
+  'connector' = 'filesystem'
+)
+LIKE `CustomerStream__schema`;
+CREATE VIEW `CustomerStream`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`CustomerStream__def`;
+CREATE VIEW `Customer`
+AS
+SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`
+FROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC NULLS LAST) AS `__sqrlinternal_rownum`
+  FROM `default_catalog`.`default_database`.`CustomerStream`) AS `t`
+WHERE `__sqrlinternal_rownum` = 1;
+CREATE VIEW `toJsonTable`
+AS
+SELECT TOJSON('{"a": 1}') AS `obj`
+FROM `Customer`;
+CREATE VIEW `jsonArrayTable`
+AS
+SELECT JSONARRAY(`customerid`) AS `obj`
+FROM `Customer`;
+CREATE VIEW `jsonObjectAggTable`
+AS
+SELECT JSONOBJECTAGG('key', `name`) AS `agg`
+FROM `Customer`
+GROUP BY `name`;
+CREATE VIEW `jsonToStringTable`
+AS
+SELECT JSONTOSTRING(TOJSON('{"a": 1}')) AS `obj`
+FROM `Customer`;
+CREATE VIEW `jsonExtractTable`
+AS
+SELECT JSONEXTRACT(TOJSON('{"a": "hello"}'), CAST('$.a' AS VARCHAR), CAST('default' AS VARCHAR)) AS `obj`
+FROM `Customer`;
+CREATE VIEW `jsonQueryTable`
+AS
+SELECT JSONQUERY(TOJSON('{"a": {"b": 1}}'), '$.a') AS `obj`
+FROM `Customer`;
+CREATE VIEW `jsonExistsTable`
+AS
+SELECT JSONEXISTS(TOJSON('{"a": true}'), '$.a') AS `obj`
+FROM `Customer`;
+CREATE VIEW `jsonConcatTable`
+AS
+SELECT JSONCONCAT(TOJSON('{"a": true}'), TOJSON('{"a": false}')) AS `obj`
+FROM `Customer`;
+CREATE VIEW `jsonArrayAggTable`
+AS
+SELECT JSONARRAYAGG(`name`) AS `agg`
+FROM `Customer`
+GROUP BY `name`;
+CREATE VIEW `ObjComplex`
+AS
+SELECT JSONOBJECT(CONCAT('application#', CAST(`name` AS VARCHAR)), `customerid`) AS `obj`
+FROM `Customer`;
+CREATE TABLE `Customer_1` (
+  `customerid` BIGINT NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `lastUpdated` BIGINT NOT NULL,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`customerid`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'table-name' = 'Customer_1'
+);
+CREATE TABLE `CustomerStream_2` (
+  `customerid` BIGINT NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `lastUpdated` BIGINT NOT NULL,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'table-name' = 'CustomerStream_2'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`Customer_1`
+(SELECT *
+ FROM `default_catalog`.`default_database`.`CustomerStream`)
+;
+INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
+ (SELECT *
+  FROM `default_catalog`.`default_database`.`CustomerStream`)
+ ;
+ END
 >>>kafka.json
 {
   "topics" : [ ]
 }
 >>>postgres.json
 {
-  "ddl" : [
+  "statements" : [
     {
-      "name" : "customer_3",
-      "columns" : [
-        "\"customerid\" BIGINT NOT NULL",
-        "\"email\" TEXT NOT NULL",
-        "\"name\" TEXT NOT NULL",
-        "\"lastUpdated\" BIGINT NOT NULL",
-        "\"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL"
-      ],
-      "primaryKeys" : [
-        "\"customerid\""
-      ],
-      "sql" : "CREATE TABLE IF NOT EXISTS customer_3 (\"customerid\" BIGINT NOT NULL,\"email\" TEXT NOT NULL,\"name\" TEXT NOT NULL,\"lastUpdated\" BIGINT NOT NULL,\"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\"));"
+      "name" : "Customer_1",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Customer_1\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\"))",
+      "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "email",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "lastUpdated",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "timestamp",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ]
     },
     {
-      "name" : "orders_2",
-      "columns" : [
-        "\"id\" BIGINT NOT NULL",
-        "\"customerid\" BIGINT NOT NULL",
-        "\"time\" TIMESTAMP WITH TIME ZONE NOT NULL",
-        "\"entries\" JSONB NOT NULL"
-      ],
-      "primaryKeys" : [
-        "\"id\"",
-        "\"time\""
-      ],
-      "sql" : "CREATE TABLE IF NOT EXISTS orders_2 (\"id\" BIGINT NOT NULL,\"customerid\" BIGINT NOT NULL,\"time\" TIMESTAMP WITH TIME ZONE NOT NULL,\"entries\" JSONB NOT NULL , PRIMARY KEY (\"id\",\"time\"));"
-    },
-    {
-      "name" : "product_2",
-      "columns" : [
-        "\"productid\" BIGINT NOT NULL",
-        "\"name\" TEXT NOT NULL",
-        "\"description\" TEXT NOT NULL",
-        "\"category\" TEXT NOT NULL",
-        "\"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL"
-      ],
-      "primaryKeys" : [
-        "\"productid\"",
-        "\"name\"",
-        "\"description\"",
-        "\"category\""
-      ],
-      "sql" : "CREATE TABLE IF NOT EXISTS product_2 (\"productid\" BIGINT NOT NULL,\"name\" TEXT NOT NULL,\"description\" TEXT NOT NULL,\"category\" TEXT NOT NULL,\"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"productid\",\"name\",\"description\",\"category\"));"
-    },
-    {
-      "indexName" : "orders_2_hash_c2",
-      "tableName" : "orders_2",
-      "columns" : [
-        "time"
-      ],
-      "type" : "HASH",
-      "sql" : "CREATE INDEX IF NOT EXISTS orders_2_hash_c2 ON orders_2 USING hash (\"time\");"
-    },
-    {
-      "indexName" : "product_2_btree_c0c2",
-      "tableName" : "product_2",
-      "columns" : [
-        "productid",
-        "description"
-      ],
-      "type" : "BTREE",
-      "sql" : "CREATE INDEX IF NOT EXISTS product_2_btree_c0c2 ON product_2 USING btree (\"productid\",\"description\");"
-    },
-    {
-      "indexName" : "product_2_btree_c1c2c3",
-      "tableName" : "product_2",
-      "columns" : [
-        "name",
-        "description",
-        "category"
-      ],
-      "type" : "BTREE",
-      "sql" : "CREATE INDEX IF NOT EXISTS product_2_btree_c1c2c3 ON product_2 USING btree (\"name\",\"description\",\"category\");"
-    },
-    {
-      "indexName" : "product_2_btree_c1c3c0",
-      "tableName" : "product_2",
-      "columns" : [
-        "name",
-        "category",
-        "productid"
-      ],
-      "type" : "BTREE",
-      "sql" : "CREATE INDEX IF NOT EXISTS product_2_btree_c1c3c0 ON product_2 USING btree (\"name\",\"category\",\"productid\");"
-    },
-    {
-      "indexName" : "product_2_btree_c2c3c0",
-      "tableName" : "product_2",
-      "columns" : [
-        "description",
-        "category",
-        "productid"
-      ],
-      "type" : "BTREE",
-      "sql" : "CREATE INDEX IF NOT EXISTS product_2_btree_c2c3c0 ON product_2 USING btree (\"description\",\"category\",\"productid\");"
-    },
-    {
-      "indexName" : "product_2_btree_c3c0",
-      "tableName" : "product_2",
-      "columns" : [
-        "category",
-        "productid"
-      ],
-      "type" : "BTREE",
-      "sql" : "CREATE INDEX IF NOT EXISTS product_2_btree_c3c0 ON product_2 USING btree (\"category\",\"productid\");"
-    }
-  ],
-  "views" : [
-    {
-      "name" : "Product",
-      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"product_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"description\", \"category\";"
-    },
-    {
-      "name" : "jsonQueryTable",
-      "sql" : "CREATE OR REPLACE VIEW \"jsonQueryTable\"(\"obj\", \"_customerid\", \"_timestamp\") AS SELECT JSONB_PATH_QUERY(CAST('{\"a\": {\"b\": 1}}' AS JSONB), '$.a') AS \"obj\", \"customerid\" AS \"_customerid\", \"timestamp\" AS \"_timestamp\"\nFROM \"customer_3\"\nORDER BY \"customerid\";"
+      "name" : "CustomerStream_2",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerStream_2\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\",\"lastUpdated\"))",
+      "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "email",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "lastUpdated",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "timestamp",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ]
     },
     {
       "name" : "Customer",
-      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_3\"\nORDER BY \"customerid\";"
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"Customer_1\"",
+      "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "email",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "lastUpdated",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "timestamp",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ]
     },
     {
-      "name" : "jsonArrayAggTable",
-      "sql" : "CREATE OR REPLACE VIEW \"jsonArrayAggTable\"(\"agg\", \"_name\", \"__timestamp\") AS SELECT JSONB_AGG(\"name\") AS \"agg\", \"name\" AS \"_name\", MAX(\"timestamp\") AS \"__timestamp\"\nFROM \"customer_3\"\nGROUP BY \"name\"\nORDER BY \"name\";"
-    },
-    {
-      "name" : "jsonConcatTable",
-      "sql" : "CREATE OR REPLACE VIEW \"jsonConcatTable\"(\"obj\", \"_customerid\", \"_timestamp\") AS SELECT CAST('{\"a\": true}' AS JSONB) || CAST('{\"a\": false}' AS JSONB) AS \"obj\", \"customerid\" AS \"_customerid\", \"timestamp\" AS \"_timestamp\"\nFROM \"customer_3\"\nORDER BY \"customerid\";"
-    },
-    {
-      "name" : "jsonExistsTable",
-      "sql" : "CREATE OR REPLACE VIEW \"jsonExistsTable\"(\"obj\", \"_customerid\", \"_timestamp\") AS SELECT JSONB_PATH_EXISTS(CAST('{\"a\": true}' AS JSONB), '$.a') AS \"obj\", \"customerid\" AS \"_customerid\", \"timestamp\" AS \"_timestamp\"\nFROM \"customer_3\"\nORDER BY \"customerid\";"
-    },
-    {
-      "name" : "Orders",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"orders_2\"\nORDER BY \"time\" DESC NULLS LAST, \"id\";"
+      "name" : "CustomerStream",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerStream\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"CustomerStream_2\"",
+      "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "email",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "lastUpdated",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "timestamp",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ]
     },
     {
       "name" : "ObjComplex",
-      "sql" : "CREATE OR REPLACE VIEW \"ObjComplex\"(\"obj\", \"_customerid\", \"_timestamp\") AS SELECT JSONB_BUILD_OBJECT(CONCAT('application#', \"name\"), \"customerid\") AS \"obj\", \"customerid\" AS \"_customerid\", \"timestamp\" AS \"_timestamp\"\nFROM \"customer_3\"\nORDER BY \"customerid\";"
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"ObjComplex\"(\"obj\") AS SELECT JSONB_BUILD_OBJECT(CONCAT('application#', \"name\"), \"customerid\") AS \"obj\"\nFROM \"Customer_1\"",
+      "fields" : [
+        {
+          "name" : "obj",
+          "type" : "JSONB",
+          "nullable" : true
+        }
+      ]
     },
     {
-      "name" : "jsonToStringTable",
-      "sql" : "CREATE OR REPLACE VIEW \"jsonToStringTable\"(\"obj\", \"_customerid\", \"_timestamp\") AS SELECT CAST('{\"a\": 1}' AS JSONB) #>> '{}' AS \"obj\", \"customerid\" AS \"_customerid\", \"timestamp\" AS \"_timestamp\"\nFROM \"customer_3\"\nORDER BY \"customerid\";"
+      "name" : "jsonArrayAggTable",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"jsonArrayAggTable\"(\"agg\") AS SELECT JSONB_AGG(\"name\") AS \"agg\"\nFROM \"Customer_1\"\nGROUP BY \"name\"",
+      "fields" : [
+        {
+          "name" : "agg",
+          "type" : "JSONB",
+          "nullable" : true
+        }
+      ]
     },
     {
       "name" : "jsonArrayTable",
-      "sql" : "CREATE OR REPLACE VIEW \"jsonArrayTable\"(\"obj\", \"_customerid\", \"_timestamp\") AS SELECT JSONB_BUILD_ARRAY(\"customerid\") AS \"obj\", \"customerid\" AS \"_customerid\", \"timestamp\" AS \"_timestamp\"\nFROM \"customer_3\"\nORDER BY \"customerid\";"
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"jsonArrayTable\"(\"obj\") AS SELECT JSONB_BUILD_ARRAY(\"customerid\") AS \"obj\"\nFROM \"Customer_1\"",
+      "fields" : [
+        {
+          "name" : "obj",
+          "type" : "JSONB",
+          "nullable" : true
+        }
+      ]
     },
     {
-      "name" : "toJsonTable",
-      "sql" : "CREATE OR REPLACE VIEW \"toJsonTable\"(\"obj\", \"_customerid\", \"_timestamp\") AS SELECT CAST('{\"a\": 1}' AS JSONB) AS \"obj\", \"customerid\" AS \"_customerid\", \"timestamp\" AS \"_timestamp\"\nFROM \"customer_3\"\nORDER BY \"customerid\";"
+      "name" : "jsonConcatTable",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"jsonConcatTable\"(\"obj\") AS SELECT CAST('{\"a\": true}' AS JSONB) || CAST('{\"a\": false}' AS JSONB) AS \"obj\"\nFROM \"Customer_1\"",
+      "fields" : [
+        {
+          "name" : "obj",
+          "type" : "JSONB",
+          "nullable" : true
+        }
+      ]
+    },
+    {
+      "name" : "jsonExistsTable",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"jsonExistsTable\"(\"obj\") AS SELECT JSONB_PATH_EXISTS(CAST('{\"a\": true}' AS JSONB), '$.a') AS \"obj\"\nFROM \"Customer_1\"",
+      "fields" : [
+        {
+          "name" : "obj",
+          "type" : "BOOLEAN",
+          "nullable" : true
+        }
+      ]
     },
     {
       "name" : "jsonExtractTable",
-      "sql" : "CREATE OR REPLACE VIEW \"jsonExtractTable\"(\"obj\", \"_customerid\", \"_timestamp\") AS SELECT JSONEXTRACT(CAST('{\"a\": \"hello\"}' AS JSONB), CAST('$.a' AS TEXT), CAST('default' AS TEXT)) AS \"obj\", \"customerid\" AS \"_customerid\", \"timestamp\" AS \"_timestamp\"\nFROM \"customer_3\"\nORDER BY \"customerid\";"
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"jsonExtractTable\"(\"obj\") AS SELECT COALESCE(JSONB_PATH_QUERY_FIRST(CAST('{\"a\": \"hello\"}' AS JSONB), '$.a') #>> '{}', 'default') AS \"obj\"\nFROM \"Customer_1\"",
+      "fields" : [
+        {
+          "name" : "obj",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ]
     },
     {
       "name" : "jsonObjectAggTable",
-      "sql" : "CREATE OR REPLACE VIEW \"jsonObjectAggTable\"(\"agg\", \"_name\", \"__timestamp\") AS SELECT JSONB_OBJECT_AGG('key', \"name\") AS \"agg\", \"name\" AS \"_name\", MAX(\"timestamp\") AS \"__timestamp\"\nFROM \"customer_3\"\nGROUP BY \"name\"\nORDER BY \"name\";"
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"jsonObjectAggTable\"(\"agg\") AS SELECT JSONB_OBJECT_AGG('key', \"name\") AS \"agg\"\nFROM \"Customer_1\"\nGROUP BY \"name\"",
+      "fields" : [
+        {
+          "name" : "agg",
+          "type" : "JSONB",
+          "nullable" : true
+        }
+      ]
+    },
+    {
+      "name" : "jsonQueryTable",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"jsonQueryTable\"(\"obj\") AS SELECT JSONB_PATH_QUERY(CAST('{\"a\": {\"b\": 1}}' AS JSONB), '$.a') AS \"obj\"\nFROM \"Customer_1\"",
+      "fields" : [
+        {
+          "name" : "obj",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ]
+    },
+    {
+      "name" : "jsonToStringTable",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"jsonToStringTable\"(\"obj\") AS SELECT CAST('{\"a\": 1}' AS JSONB) #>> '{}' AS \"obj\"\nFROM \"Customer_1\"",
+      "fields" : [
+        {
+          "name" : "obj",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ]
+    },
+    {
+      "name" : "toJsonTable",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"toJsonTable\"(\"obj\") AS SELECT CAST('{\"a\": 1}' AS JSONB) AS \"obj\"\nFROM \"Customer_1\"",
+      "fields" : [
+        {
+          "name" : "obj",
+          "type" : "JSONB",
+          "nullable" : true
+        }
+      ]
     }
   ]
 }
 >>>vertx.json
 {
   "model" : {
-    "coords" : [
+    "queries" : [
       {
         "type" : "args",
         "parentType" : "Query",
         "fieldName" : "Customer",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"customer_3\"\nORDER BY \"customerid\"",
-              "parameters" : [ ]
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
             }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "customerid"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"customer_3\"\nWHERE \"customerid\" = $1",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "customerid"
-                }
-              ]
-            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM \"Customer_1\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
           }
-        ]
+        }
       },
       {
         "type" : "args",
         "parentType" : "Query",
-        "fieldName" : "jsonArrayAggTable",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT JSONB_AGG(\"name\") AS \"agg\", \"name\" AS \"_name\", MAX(\"timestamp\") AS \"__timestamp\"\nFROM \"customer_3\"\nGROUP BY \"name\"\nORDER BY \"name\"",
-              "parameters" : [ ]
+        "fieldName" : "CustomerStream",
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
             }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM \"CustomerStream_2\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
           }
-        ]
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "jsonArrayTable",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT JSONB_BUILD_ARRAY(\"customerid\") AS \"obj\", \"customerid\" AS \"_customerid\", \"timestamp\" AS \"_timestamp\"\nFROM \"customer_3\"\nORDER BY \"customerid\"",
-              "parameters" : [ ]
-            }
-          }
-        ]
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "jsonConcatTable",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT CAST('{\"a\": true}' AS JSONB) || CAST('{\"a\": false}' AS JSONB) AS \"obj\", \"customerid\" AS \"_customerid\", \"timestamp\" AS \"_timestamp\"\nFROM \"customer_3\"\nORDER BY \"customerid\"",
-              "parameters" : [ ]
-            }
-          }
-        ]
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "jsonExistsTable",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT JSONB_PATH_EXISTS(CAST('{\"a\": true}' AS JSONB), '$.a') AS \"obj\", \"customerid\" AS \"_customerid\", \"timestamp\" AS \"_timestamp\"\nFROM \"customer_3\"\nORDER BY \"customerid\"",
-              "parameters" : [ ]
-            }
-          }
-        ]
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "jsonExtractTable",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT COALESCE(JSONB_PATH_QUERY_FIRST(CAST('{\"a\": \"hello\"}' AS JSONB), CAST('$.a' AS TEXT)) #>> '{}', CAST('default' AS TEXT)) AS \"obj\", \"customerid\" AS \"_customerid\", \"timestamp\" AS \"_timestamp\"\nFROM \"customer_3\"\nORDER BY \"customerid\"",
-              "parameters" : [ ]
-            }
-          }
-        ]
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "jsonObjectAggTable",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT JSONB_OBJECT_AGG('key', \"name\") AS \"agg\", \"name\" AS \"_name\", MAX(\"timestamp\") AS \"__timestamp\"\nFROM \"customer_3\"\nGROUP BY \"name\"\nORDER BY \"name\"",
-              "parameters" : [ ]
-            }
-          }
-        ]
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "jsonQueryTable",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT JSONB_PATH_QUERY(CAST('{\"a\": {\"b\": 1}}' AS JSONB), '$.a') AS \"obj\", \"customerid\" AS \"_customerid\", \"timestamp\" AS \"_timestamp\"\nFROM \"customer_3\"\nORDER BY \"customerid\"",
-              "parameters" : [ ]
-            }
-          }
-        ]
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "jsonToStringTable",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT CAST('{\"a\": 1}' AS JSONB) #>> '{}' AS \"obj\", \"customerid\" AS \"_customerid\", \"timestamp\" AS \"_timestamp\"\nFROM \"customer_3\"\nORDER BY \"customerid\"",
-              "parameters" : [ ]
-            }
-          }
-        ]
+        }
       },
       {
         "type" : "args",
         "parentType" : "Query",
         "fieldName" : "ObjComplex",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT JSONB_BUILD_OBJECT(CONCAT('application#', \"name\"), \"customerid\") AS \"obj\", \"customerid\" AS \"_customerid\", \"timestamp\" AS \"_timestamp\"\nFROM \"customer_3\"\nORDER BY \"customerid\"",
-              "parameters" : [ ]
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
             }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT JSONB_BUILD_OBJECT(CONCAT('application#', \"name\"), \"customerid\") AS \"obj\"\nFROM \"Customer_1\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
           }
-        ]
+        }
       },
       {
         "type" : "args",
         "parentType" : "Query",
-        "fieldName" : "Orders",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"orders_2\"\nORDER BY \"time\" DESC NULLS LAST, \"id\"",
-              "parameters" : [ ]
+        "fieldName" : "jsonArrayAggTable",
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
             }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "time"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"time\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "time"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "id"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1\nORDER BY \"time\" DESC NULLS LAST",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "id"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "id"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "time"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "id"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "time"
-                }
-              ]
-            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT JSONB_AGG(\"name\") AS \"agg\"\nFROM \"Customer_1\"\nGROUP BY \"name\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
           }
-        ]
+        }
       },
       {
         "type" : "args",
         "parentType" : "Query",
-        "fieldName" : "Product",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"product_2\"\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"description\", \"category\"",
-              "parameters" : [ ]
+        "fieldName" : "jsonArrayTable",
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
             }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "description"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"description\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"category\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "description"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "category"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"category\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\", \"description\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "category"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "description"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "category"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"description\" = $1 AND \"category\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"name\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "description"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "category"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "name"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "category"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"name\" = $1 AND \"category\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"description\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "name"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "category"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "name"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"name\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"description\", \"category\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "name"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "productid"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "description"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "category"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"description\" = $2 AND \"category\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "productid"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "description"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "category"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "productid"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "description"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"description\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\", \"category\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "productid"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "description"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "productid"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "name"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"description\", \"category\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "productid"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "name"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "name"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "description"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "category"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"name\" = $1 AND \"description\" = $2 AND \"category\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "name"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "description"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "category"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "name"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "description"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"name\" = $1 AND \"description\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"productid\", \"category\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "name"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "description"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "productid"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "category"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"category\" = $2\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\", \"description\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "productid"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "category"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "productid"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"name\", \"description\", \"category\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "productid"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "productid"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "name"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "description"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"description\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"category\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "productid"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "name"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "description"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "productid"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "name"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "category"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"category\" = $3\nORDER BY \"_ingest_time\" DESC NULLS LAST, \"description\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "productid"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "name"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "category"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "productid"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "name"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "description"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "category"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"product_2\"\nWHERE \"productid\" = $1 AND \"name\" = $2 AND \"description\" = $3 AND \"category\" = $4\nORDER BY \"_ingest_time\" DESC NULLS LAST",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "productid"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "name"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "description"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "category"
-                }
-              ]
-            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT JSONB_BUILD_ARRAY(\"customerid\") AS \"obj\"\nFROM \"Customer_1\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
           }
-        ]
+        }
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "jsonConcatTable",
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
+            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT CAST('{\"a\": true}' AS JSONB) || CAST('{\"a\": false}' AS JSONB) AS \"obj\"\nFROM \"Customer_1\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
+          }
+        }
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "jsonExistsTable",
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
+            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT JSONB_PATH_EXISTS(CAST('{\"a\": true}' AS JSONB), '$.a') AS \"obj\"\nFROM \"Customer_1\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
+          }
+        }
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "jsonExtractTable",
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
+            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT COALESCE(JSONB_PATH_QUERY_FIRST(CAST('{\"a\": \"hello\"}' AS JSONB), '$.a') #>> '{}', 'default') AS \"obj\"\nFROM \"Customer_1\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
+          }
+        }
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "jsonObjectAggTable",
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
+            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT JSONB_OBJECT_AGG('key', \"name\") AS \"agg\"\nFROM \"Customer_1\"\nGROUP BY \"name\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
+          }
+        }
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "jsonQueryTable",
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
+            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT JSONB_PATH_QUERY(CAST('{\"a\": {\"b\": 1}}' AS JSONB), '$.a') AS \"obj\"\nFROM \"Customer_1\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
+          }
+        }
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "jsonToStringTable",
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
+            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT CAST('{\"a\": 1}' AS JSONB) #>> '{}' AS \"obj\"\nFROM \"Customer_1\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
+          }
+        }
       },
       {
         "type" : "args",
         "parentType" : "Query",
         "fieldName" : "toJsonTable",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT CAST('{\"a\": 1}' AS JSONB) AS \"obj\", \"customerid\" AS \"_customerid\", \"timestamp\" AS \"_timestamp\"\nFROM \"customer_3\"\nORDER BY \"customerid\"",
-              "parameters" : [ ]
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
             }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT CAST('{\"a\": 1}' AS JSONB) AS \"obj\"\nFROM \"Customer_1\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
           }
-        ]
+        }
       }
     ],
     "mutations" : [ ],
     "subscriptions" : [ ],
     "schema" : {
       "type" : "string",
-      "type" : "string",
-      "schema" : "type Customer {\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\nscalar JSON\n\ntype ObjComplex {\n  obj: JSON\n}\n\ntype Orders {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  entries(limit: Int = 10, offset: Int = 0): [entries!]\n}\n\ntype Product {\n  productid: Float!\n  name: String!\n  description: String!\n  category: String!\n}\n\ntype Query {\n  Customer(customerid: Float, limit: Int = 10, offset: Int = 0): [Customer!]\n  jsonArrayAggTable(limit: Int = 10, offset: Int = 0): [jsonArrayAggTable!]\n  jsonArrayTable(limit: Int = 10, offset: Int = 0): [jsonArrayTable!]\n  jsonConcatTable(limit: Int = 10, offset: Int = 0): [jsonConcatTable!]\n  jsonExistsTable(limit: Int = 10, offset: Int = 0): [jsonExistsTable!]\n  jsonExtractTable(limit: Int = 10, offset: Int = 0): [jsonExtractTable!]\n  jsonObjectAggTable(limit: Int = 10, offset: Int = 0): [jsonObjectAggTable!]\n  jsonQueryTable(limit: Int = 10, offset: Int = 0): [jsonQueryTable!]\n  jsonToStringTable(limit: Int = 10, offset: Int = 0): [jsonToStringTable!]\n  ObjComplex(limit: Int = 10, offset: Int = 0): [ObjComplex!]\n  Orders(id: Float, time: DateTime, limit: Int = 10, offset: Int = 0): [Orders!]\n  Product(productid: Float, name: String, description: String, category: String, limit: Int = 10, offset: Int = 0): [Product!]\n  toJsonTable(limit: Int = 10, offset: Int = 0): [toJsonTable!]\n}\n\ntype entries {\n  productid: Float!\n  quantity: Float!\n  unit_price: Float!\n  discount: Float\n}\n\ntype jsonArrayAggTable {\n  agg: JSON\n}\n\ntype jsonArrayTable {\n  obj: JSON\n}\n\ntype jsonConcatTable {\n  obj: JSON\n}\n\ntype jsonExistsTable {\n  obj: Boolean\n}\n\ntype jsonExtractTable {\n  obj: String\n}\n\ntype jsonObjectAggTable {\n  agg: JSON\n}\n\ntype jsonQueryTable {\n  obj: String\n}\n\ntype jsonToStringTable {\n  obj: String\n}\n\ntype toJsonTable {\n  obj: JSON\n}\n"
+      "schema" : "type Customer {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n}\n\ntype CustomerStream {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\n\"A JSON scalar\"\nscalar JSON\n\ntype ObjComplex {\n  obj: JSON\n}\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerStream(limit: Int = 10, offset: Int = 0): [CustomerStream!]\n  ObjComplex(limit: Int = 10, offset: Int = 0): [ObjComplex!]\n  jsonArrayAggTable(limit: Int = 10, offset: Int = 0): [jsonArrayAggTable!]\n  jsonArrayTable(limit: Int = 10, offset: Int = 0): [jsonArrayTable!]\n  jsonConcatTable(limit: Int = 10, offset: Int = 0): [jsonConcatTable!]\n  jsonExistsTable(limit: Int = 10, offset: Int = 0): [jsonExistsTable!]\n  jsonExtractTable(limit: Int = 10, offset: Int = 0): [jsonExtractTable!]\n  jsonObjectAggTable(limit: Int = 10, offset: Int = 0): [jsonObjectAggTable!]\n  jsonQueryTable(limit: Int = 10, offset: Int = 0): [jsonQueryTable!]\n  jsonToStringTable(limit: Int = 10, offset: Int = 0): [jsonToStringTable!]\n  toJsonTable(limit: Int = 10, offset: Int = 0): [toJsonTable!]\n}\n\ntype jsonArrayAggTable {\n  agg: JSON\n}\n\ntype jsonArrayTable {\n  obj: JSON\n}\n\ntype jsonConcatTable {\n  obj: JSON\n}\n\ntype jsonExistsTable {\n  obj: Boolean\n}\n\ntype jsonExtractTable {\n  obj: String\n}\n\ntype jsonObjectAggTable {\n  agg: JSON\n}\n\ntype jsonQueryTable {\n  obj: String\n}\n\ntype jsonToStringTable {\n  obj: String\n}\n\ntype toJsonTable {\n  obj: JSON\n}\n"
     }
   }
 }

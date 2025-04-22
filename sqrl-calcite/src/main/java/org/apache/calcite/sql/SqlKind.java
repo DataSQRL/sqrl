@@ -16,12 +16,12 @@
  */
 package org.apache.calcite.sql;
 
-import com.google.common.collect.Sets;
-
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.Locale;
 import java.util.Set;
+
+import com.google.common.collect.Sets;
 
 /**
  * Enumerates the possible types of {@link SqlNode}.
@@ -1743,18 +1743,13 @@ public enum SqlKind {
    * <p>For example, {@code GREATER_THAN.reverse()} returns {@link #LESS_THAN}.
    */
   public SqlKind reverse() {
-    switch (this) {
-      case GREATER_THAN:
-        return LESS_THAN;
-      case GREATER_THAN_OR_EQUAL:
-        return LESS_THAN_OR_EQUAL;
-      case LESS_THAN:
-        return GREATER_THAN;
-      case LESS_THAN_OR_EQUAL:
-        return GREATER_THAN_OR_EQUAL;
-      default:
-        return this;
-    }
+    return switch (this) {
+    case GREATER_THAN -> LESS_THAN;
+    case GREATER_THAN_OR_EQUAL -> LESS_THAN_OR_EQUAL;
+    case LESS_THAN -> GREATER_THAN;
+    case LESS_THAN_OR_EQUAL -> GREATER_THAN_OR_EQUAL;
+    default -> this;
+    };
   }
 
   /**
@@ -1773,26 +1768,17 @@ public enum SqlKind {
    * <p>This is why negate() != negateNullSafe() for these operators.
    */
   public SqlKind negate() {
-    switch (this) {
-      case IS_TRUE:
-        return IS_NOT_TRUE;
-      case IS_FALSE:
-        return IS_NOT_FALSE;
-      case IS_NULL:
-        return IS_NOT_NULL;
-      case IS_NOT_TRUE:
-        return IS_TRUE;
-      case IS_NOT_FALSE:
-        return IS_FALSE;
-      case IS_NOT_NULL:
-        return IS_NULL;
-      case IS_DISTINCT_FROM:
-        return IS_NOT_DISTINCT_FROM;
-      case IS_NOT_DISTINCT_FROM:
-        return IS_DISTINCT_FROM;
-      default:
-        return this;
-    }
+    return switch (this) {
+    case IS_TRUE -> IS_NOT_TRUE;
+    case IS_FALSE -> IS_NOT_FALSE;
+    case IS_NULL -> IS_NOT_NULL;
+    case IS_NOT_TRUE -> IS_TRUE;
+    case IS_NOT_FALSE -> IS_FALSE;
+    case IS_NOT_NULL -> IS_NULL;
+    case IS_DISTINCT_FROM -> IS_NOT_DISTINCT_FROM;
+    case IS_NOT_DISTINCT_FROM -> IS_DISTINCT_FROM;
+    default -> this;
+    };
   }
 
   /**
@@ -1810,43 +1796,24 @@ public enum SqlKind {
    * </ul>
    */
   public SqlKind negateNullSafe() {
-    switch (this) {
-      case EQUALS:
-        return NOT_EQUALS;
-      case NOT_EQUALS:
-        return EQUALS;
-      case LESS_THAN:
-        return GREATER_THAN_OR_EQUAL;
-      case GREATER_THAN:
-        return LESS_THAN_OR_EQUAL;
-      case LESS_THAN_OR_EQUAL:
-        return GREATER_THAN;
-      case GREATER_THAN_OR_EQUAL:
-        return LESS_THAN;
-      case IN:
-        return NOT_IN;
-      case NOT_IN:
-        return IN;
-      case DRUID_IN:
-        return DRUID_NOT_IN;
-      case DRUID_NOT_IN:
-        return DRUID_IN;
-      case IS_TRUE:
-        return IS_FALSE;
-      case IS_FALSE:
-        return IS_TRUE;
-      case IS_NOT_TRUE:
-        return IS_NOT_FALSE;
-      case IS_NOT_FALSE:
-        return IS_NOT_TRUE;
-      // (NOT x) IS NULL => x IS NULL
-      // Similarly (NOT x) IS NOT NULL => x IS NOT NULL
-      case IS_NOT_NULL:
-      case IS_NULL:
-        return this;
-      default:
-        return this.negate();
-    }
+    return switch (this) {
+    case EQUALS -> NOT_EQUALS;
+    case NOT_EQUALS -> EQUALS;
+    case LESS_THAN -> GREATER_THAN_OR_EQUAL;
+    case GREATER_THAN -> LESS_THAN_OR_EQUAL;
+    case LESS_THAN_OR_EQUAL -> GREATER_THAN;
+    case GREATER_THAN_OR_EQUAL -> LESS_THAN;
+    case IN -> NOT_IN;
+    case NOT_IN -> IN;
+    case DRUID_IN -> DRUID_NOT_IN;
+    case DRUID_NOT_IN -> DRUID_IN;
+    case IS_TRUE -> IS_FALSE;
+    case IS_FALSE -> IS_TRUE;
+    case IS_NOT_TRUE -> IS_NOT_FALSE;
+    case IS_NOT_FALSE -> IS_NOT_TRUE;
+    case IS_NOT_NULL, IS_NULL -> this;
+    default -> this.negate();
+    };
   }
 
   /**
@@ -1865,7 +1832,7 @@ public enum SqlKind {
   @SafeVarargs
   private static <E extends Enum<E>> EnumSet<E> concat(EnumSet<E> set0,
       EnumSet<E>... sets) {
-    EnumSet<E> set = set0.clone();
+    var set = set0.clone();
     for (EnumSet<E> s : sets) {
       set.addAll(s);
     }

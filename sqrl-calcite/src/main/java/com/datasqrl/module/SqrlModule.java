@@ -1,8 +1,9 @@
 package com.datasqrl.module;
 
-import com.datasqrl.canonicalizer.Name;
 import java.util.List;
 import java.util.Optional;
+
+import com.datasqrl.canonicalizer.Name;
 
 public interface SqrlModule {
 

@@ -3,12 +3,14 @@
  */
 package com.datasqrl.plan.hints;
 
-import com.google.common.base.Preconditions;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
+import java.util.List;
+
 import org.apache.calcite.rel.hint.RelHint;
 
-import java.util.List;
+import com.google.common.base.Preconditions;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 @AllArgsConstructor
 public class TumbleAggregationHint implements SqrlHint {
@@ -61,7 +63,7 @@ public class TumbleAggregationHint implements SqrlHint {
 
     @Override
     public TumbleAggregationHint fromHint(RelHint hint) {
-      List<String> options = hint.listOptions;
+      var options = hint.listOptions;
       Preconditions.checkArgument(options.size() == 5, "Invalid hint: %s", hint);
       return new TumbleAggregationHint(Integer.valueOf(options.get(0)),
           Type.valueOf(options.get(1)),

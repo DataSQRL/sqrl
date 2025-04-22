@@ -9,6 +9,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
 import lombok.NonNull;
 
 public class ErrorCollection implements Iterable<ErrorMessage>, Serializable {
@@ -29,10 +30,10 @@ public class ErrorCollection implements Iterable<ErrorMessage>, Serializable {
   }
 
   protected void add(@NonNull ErrorMessage err, ErrorLocation baseLocation) {
-    ErrorLocation errLoc = err.getLocation();
+    var errLoc = err.getLocation();
     if (!errLoc.hasPrefix()) {
       //Adjust relative location
-      ErrorLocation newloc = baseLocation.append(errLoc);
+      var newloc = baseLocation.append(errLoc);
       err = new ErrorMessage.Implementation(err.getErrorLabel(), err.getMessage(), newloc,
           err.getSeverity());
     }
@@ -40,7 +41,9 @@ public class ErrorCollection implements Iterable<ErrorMessage>, Serializable {
   }
 
   public void addAll(@NonNull ErrorCollection other, ErrorLocation baseLocation) {
-    if (other == null || !other.hasErrorsWarningsOrNotices()) return;
+    if (other == null || !other.hasErrorsWarningsOrNotices()) {
+        return;
+    }
     other.stream().forEach(err -> add(err, baseLocation));
   }
 
@@ -54,7 +57,7 @@ public class ErrorCollection implements Iterable<ErrorMessage>, Serializable {
 
   public String combineMessages(ErrorMessage.Severity minSeverity, String prefix,
       String delimiter) {
-    String suffix = "";
+    var suffix = "";
     if (errors != null) {
       suffix = errors.stream().filter(m -> m.getSeverity().compareTo(minSeverity) >= 0)
           .map(ErrorMessage::toString)

@@ -1,16 +1,14 @@
 package com.datasqrl.engine.log.kafka.serializer;
 
+import java.io.IOException;
+import java.io.Serializable;
+
+import org.apache.kafka.clients.admin.NewTopic;
+
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import com.google.auto.service.AutoService;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
-import org.apache.commons.codec.binary.Base64;
-import org.apache.kafka.clients.admin.NewTopic;
 
 @AutoService(StdSerializer.class)
 public class NewTopicSerializer<T extends Serializable> extends StdSerializer<NewTopic> {

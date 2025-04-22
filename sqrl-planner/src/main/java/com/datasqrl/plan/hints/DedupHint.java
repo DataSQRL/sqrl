@@ -3,11 +3,12 @@
  */
 package com.datasqrl.plan.hints;
 
+import org.apache.calcite.rel.hint.RelHint;
+
 import com.google.common.base.Preconditions;
-import java.util.List;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import org.apache.calcite.rel.hint.RelHint;
 
 @AllArgsConstructor
 @Getter
@@ -41,7 +42,7 @@ public class DedupHint implements SqrlHint {
 
     @Override
     public DedupHint fromHint(RelHint hint) {
-      List<String> opts = hint.listOptions;
+      var opts = hint.listOptions;
       Preconditions.checkArgument(opts.size() == 0, "Invalid hint: %s", hint);
       return new DedupHint();
     }

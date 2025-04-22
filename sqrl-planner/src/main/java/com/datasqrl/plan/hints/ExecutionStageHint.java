@@ -3,11 +3,14 @@
  */
 package com.datasqrl.plan.hints;
 
-import com.google.common.base.Preconditions;
 import java.util.List;
+
+import org.apache.calcite.rel.hint.RelHint;
+
+import com.google.common.base.Preconditions;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import org.apache.calcite.rel.hint.RelHint;
 
 @Getter
 @AllArgsConstructor
@@ -38,7 +41,7 @@ public class ExecutionStageHint implements SqrlHint {
 
     @Override
     public ExecutionStageHint fromHint(RelHint hint) {
-      List<String> options = hint.listOptions;
+      var options = hint.listOptions;
       Preconditions.checkArgument(options.size() == 1, "Invalid hint: %s", hint);
       return new ExecutionStageHint(options.get(0));
     }

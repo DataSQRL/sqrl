@@ -1,43 +1,13 @@
->>>application_updates.schema.yml
----
-name: "application_updates"
-schema_version: "1"
-partial_schema: false
-columns:
-- name: "loan_application_id"
-  type: "BIGINT"
-  tests:
-  - "not_null"
-- name: "status"
-  type: "STRING"
-  tests:
-  - "not_null"
-- name: "message"
-  type: "STRING"
-  tests:
-  - "not_null"
-- name: "event_time"
-  type: "TIMESTAMP"
-  tests:
-  - "not_null"
-
->>>application_updates.table.json
-{
-  "flink" : {
-    "format" : "flexible-json",
-    "path" : "${DATA_PATH}/application_updates.jsonl",
-    "source.monitor-interval" : 10000,
-    "connector" : "filesystem"
-  },
-  "metadata" : {
-    "_ingest_time" : {
-      "attribute" : "proctime()"
-    }
-  },
-  "version" : 1,
-  "table" : {
-    "type" : "source",
-    "primary-key" : [ "loan_application_id", "status", "message", "event_time" ],
-    "timestamp" : "_ingest_time"
-  }
-}
+>>>application_updates.table.sql
+CREATE TABLE `application_updates` (
+  `loan_application_id` BIGINT NOT NULL,
+  `status` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `message` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.001' SECOND
+) WITH (
+  'connector' = 'filesystem',
+  'format' = 'flexible-json',
+  'path' = '${DATA_PATH}/application_updates.jsonl',
+  'source.monitor-interval' = '10 sec'
+);

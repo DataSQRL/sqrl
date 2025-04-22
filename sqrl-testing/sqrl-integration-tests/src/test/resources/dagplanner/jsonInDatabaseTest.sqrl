@@ -1,10 +1,5 @@
-IMPORT time.*;
-IMPORT ecommerceTs.Customer;
-IMPORT ecommerceTs.Orders;
-IMPORT ecommerceTs.Product;
-IMPORT json.*;
-IMPORT string.*;
-Customer := DISTINCT Customer ON customerid ORDER BY timestamp DESC;
+IMPORT ecommerceTs.Customer AS CustomerStream;
+Customer := DISTINCT CustomerStream ON customerid ORDER BY `timestamp` DESC;
 /*+ EXEC(database) */ toJsonTable := SELECT toJson('{"a": 1}') AS obj FROM Customer;
 /*+ EXEC(database) */ jsonArrayTable := SELECT jsonArray(customerid) AS obj FROM Customer;
 /*+ EXEC(database) */ jsonObjectAggTable := SELECT jsonObjectAgg('key', name) AS agg FROM Customer GROUP BY name;

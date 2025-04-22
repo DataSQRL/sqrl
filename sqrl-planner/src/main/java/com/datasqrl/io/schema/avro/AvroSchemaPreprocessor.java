@@ -1,12 +1,14 @@
 package com.datasqrl.io.schema.avro;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.regex.Pattern;
+
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.packager.preprocessor.PreprocessorBase;
 import com.datasqrl.util.StringUtil;
 import com.google.common.base.Preconditions;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.regex.Pattern;
+
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
 

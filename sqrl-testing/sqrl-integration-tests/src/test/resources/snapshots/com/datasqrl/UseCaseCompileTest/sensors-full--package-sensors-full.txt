@@ -1,98 +1,131 @@
 >>>pipeline_explain.txt
 === HighTemp
-ID:     hightemp_1
+ID:     default_catalog.default_database.HighTemp
 Type:   stream
 Stage:  flink
-Inputs: secreading_1, sensors_3
+Inputs: default_catalog.default_database.SecReading, default_catalog.default_database.Sensors
+Annotations:
+ - stream-root: SensorReading__def
 Primary Key: sensorid, timeSec
 Timestamp  : timeSec
 Schema:
- - machineid: BIGINT NOT NULL
+ - machineId: BIGINT NOT NULL
  - sensorid: BIGINT NOT NULL
  - temp: DOUBLE NOT NULL
- - timeSec: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
-Post Processors:
- - sort: #3: timeSec TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC
+ - timeSec: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Plan:
-LogicalProject(machineid=[$5], sensorid=[$0], temp=[$2], timeSec=[$1])
-  LogicalJoin(condition=[=($4, $3)], joinType=[inner]) hints[TemporalJoinHint options:[1]]
-    LogicalProject(sensorid=[$0], timeSec=[$1], temp=[$2], sensorid3=[$0])
-      LogicalFilter(condition=[>($2, 35)])
-        LogicalTableScan(table=[[secreading_1]])
-    LogicalFilter(condition=[=($4, 1)]) hints[DedupHint]
-      LogicalProject(id=[$0], machineId=[$1], placed=[$2], timestamp=[$3], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $3 DESC NULLS FIRST)])
-        LogicalTableScan(table=[[sensors_3]])
-
-=== lastHour
-ID:     lasthour_1
-Type:   state
-Stage:  flink
-Inputs: secreading_1, sensors_3
-Primary Key: __pk1_id
-Timestamp  : _timeSec
-Schema:
- - __pk1_id: BIGINT NOT NULL
- - maxTemp: DOUBLE NOT NULL
- - avgTemp: DOUBLE NOT NULL
- - _timeSec: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
-Post Processors:
- - topN: partition=__pk1_id limit=1 sort=#3: _timeSec TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC-nulls-last 
-Plan:
-LogicalProject(__pk1_id=[$1], maxTemp=[$2], avgTemp=[$3], _timeSec=[$0])
-  LogicalAggregate(group=[{1, 4}], maxTemp=[MAX($2)], avgTemp=[AVG($2)]) hints[SlidingAggregationHint options:[1, 3600000, 72000]]
-    LogicalJoin(condition=[=($4, $3)], joinType=[inner]) hints[TemporalJoinHint options:[1]]
-      LogicalProject(sensorid=[$0], timeSec=[$1], temp=[$2], sensorid3=[$0])
-        LogicalTableScan(table=[[secreading_1]])
-      LogicalFilter(condition=[=($4, 1)]) hints[DedupHint]
-        LogicalProject(id=[$0], machineId=[$1], placed=[$2], timestamp=[$3], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $3 DESC NULLS FIRST)])
-          LogicalTableScan(table=[[sensors_3]])
+LogicalProject(machineId=[$4], sensorid=[$0], temp=[$2], timeSec=[$1])
+  LogicalFilter(condition=[>($2, 35)])
+    LogicalCorrelate(correlation=[$cor5], joinType=[inner], requiredColumns=[{0, 1}])
+      LogicalTableScan(table=[[default_catalog, default_database, SecReading]])
+      LogicalFilter(condition=[=($cor5.sensorid, $0)])
+        LogicalSnapshot(period=[$cor5.timeSec])
+          LogicalTableScan(table=[[default_catalog, default_database, Sensors]])
+SQL: CREATE VIEW HighTemp AS  SELECT machineId, sensorid, temp, timeSec
+            FROM SecReading r JOIN Sensors FOR SYSTEM_TIME AS OF r.`timeSec` s ON r.sensorid = s.id
+            WHERE temp > 35;
 
 === Machine
-ID:     machine_1
+ID:     default_catalog.default_database.Machine
 Type:   state
 Stage:  flink
-Inputs: secreading_1, sensors_3
-Primary Key: machineid
-Timestamp  : _timeSec
+Inputs: default_catalog.default_database.SecReading, default_catalog.default_database.Sensors
+Primary Key: machineId
+Timestamp  : -
 Schema:
- - machineid: BIGINT NOT NULL
+ - machineId: BIGINT NOT NULL
  - maxTemp: DOUBLE NOT NULL
  - avgTemp: DOUBLE NOT NULL
- - _timeSec: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
-Post Processors:
- - topN: partition=machineid limit=1 sort=#3: _timeSec TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC-nulls-last 
 Plan:
-LogicalProject(machineid=[$1], maxTemp=[$2], avgTemp=[$3], _timeSec=[$0])
-  LogicalAggregate(group=[{1, 5}], maxTemp=[MAX($2)], avgTemp=[AVG($2)]) hints[SlidingAggregationHint options:[1, 3600000, 72000]]
-    LogicalJoin(condition=[=($4, $3)], joinType=[inner]) hints[TemporalJoinHint options:[1]]
-      LogicalProject(sensorid=[$0], timeSec=[$1], temp=[$2], sensorid3=[$0])
-        LogicalTableScan(table=[[secreading_1]])
-      LogicalFilter(condition=[=($4, 1)]) hints[DedupHint]
-        LogicalProject(id=[$0], machineId=[$1], placed=[$2], timestamp=[$3], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $3 DESC NULLS FIRST)])
-          LogicalTableScan(table=[[sensors_3]])
+LogicalAggregate(group=[{0}], maxTemp=[MAX($1)], avgTemp=[AVG($1)])
+  LogicalProject(machineId=[$4], temp=[$2])
+    LogicalCorrelate(correlation=[$cor1], joinType=[inner], requiredColumns=[{0, 1}])
+      LogicalTableScan(table=[[default_catalog, default_database, SecReading]])
+      LogicalFilter(condition=[=($cor1.sensorid, $0)])
+        LogicalSnapshot(period=[$cor1.timeSec])
+          LogicalTableScan(table=[[default_catalog, default_database, Sensors]])
+SQL: CREATE VIEW Machine AS  SELECT machineId, max(temp) as maxTemp,
+    avg(temp) as avgTemp
+    FROM SecReading r JOIN Sensors FOR SYSTEM_TIME AS OF r.`timeSec` s ON r.sensorid = s.id
+    GROUP BY machineId;
 
 === SecReading
-ID:     secreading_1
+ID:     default_catalog.default_database.SecReading
 Type:   stream
 Stage:  flink
-Inputs: sensorreading_2
+Inputs: default_catalog.default_database.SensorReading
+Annotations:
+ - features: STREAM_WINDOW_AGGREGATION (feature)
+ - stream-root: SensorReading__def
+ - sort: [1 DESC-nulls-last]
 Primary Key: sensorid, timeSec
 Timestamp  : timeSec
 Schema:
  - sensorid: BIGINT NOT NULL
- - timeSec: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - timeSec: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - temp: DOUBLE NOT NULL
-Post Processors:
- - sort: #1: timeSec TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC
 Plan:
-LogicalAggregate(group=[{0, 1}], temp=[AVG($2)]) hints[TumbleAggregationHint options:[1, FUNCTION, 4, 1000, 0]]
-  LogicalProject(sensorid=[$0], timeSec=[endOfSecond($4)], temperature=[$2], time=[$1], timestamp=[$4])
-    LogicalTableScan(table=[[sensorreading_2]])
+LogicalProject(sensorid=[$0], timeSec=[$3], temp=[$4])
+  LogicalAggregate(group=[{0, 1, 2, 3}], temp=[AVG($4)])
+    LogicalProject(sensorid=[$0], window_start=[$5], window_end=[$6], timeSec=[$7], temperature=[$2])
+      LogicalTableFunctionScan(invocation=[TUMBLE(DESCRIPTOR($4), 1000:INTERVAL SECOND)], rowType=[RecordType(BIGINT sensorid, BIGINT time, DOUBLE temperature, DOUBLE humidity, TIMESTAMP_LTZ(3) *ROWTIME* timestamp, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end, TIMESTAMP_LTZ(3) *ROWTIME* window_time)])
+        LogicalProject(sensorid=[$0], time=[$1], temperature=[$2], humidity=[$3], timestamp=[$4])
+          LogicalTableScan(table=[[default_catalog, default_database, SensorReading]])
+SQL: CREATE VIEW SecReading AS  SELECT sensorid, window_time as timeSec,
+                     avg(temperature) as temp
+              FROM TABLE(TUMBLE(TABLE SensorReading, DESCRIPTOR(`timestamp`), INTERVAL '1' SECONDS))
+              GROUP BY sensorid, window_start, window_end, window_time
+              ORDER BY timeSec DESC;
 
+=== SecReadingByTemp
+ID:     default_catalog.default_database.SecReadingByTemp
+Type:   query
+Stage:  postgres
+Inputs: default_catalog.default_database.SecReading
+Annotations:
+ - stream-root: SensorReading__def
+ - parameters: temp
+ - base-table: SecReading
+Plan:
+LogicalSort(sort0=[$1], dir0=[ASC-nulls-first], fetch=[10])
+  LogicalProject(sensorid=[$0], timeSec=[$1], temp=[$2])
+    LogicalFilter(condition=[>($2, ?0)])
+      LogicalTableScan(table=[[default_catalog, default_database, SecReading]])
+SQL: CREATE VIEW SecReadingByTemp AS  SELECT * FROM SecReading WHERE temp > ?     ORDER BY timeSec ASC LIMIT 10;
+
+=== SensorLastHour
+ID:     default_catalog.default_database.SensorLastHour
+Type:   state
+Stage:  flink
+Inputs: default_catalog.default_database._SensorMaxTempWindow
+Annotations:
+ - mostRecentDistinct: true
+ - stream-root: SensorReading__def
+Primary Key: sensorid
+Timestamp  : window_time
+Schema:
+ - sensorid: BIGINT NOT NULL
+ - window_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+ - avgTemp: DOUBLE NOT NULL
+ - maxTemp: DOUBLE NOT NULL
+Plan:
+LogicalProject(sensorid=[$0], window_time=[$1], avgTemp=[$2], maxTemp=[$3])
+  LogicalFilter(condition=[=($4, 1)])
+    LogicalProject(sensorid=[$0], window_time=[$1], avgTemp=[$2], maxTemp=[$3], __sqrlinternal_rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $1 DESC NULLS LAST)])
+      LogicalTableScan(table=[[default_catalog, default_database, _SensorMaxTempWindow]])
+SQL: CREATE VIEW `SensorLastHour`
+AS
+SELECT `sensorid`, `window_time`, `avgTemp`, `maxTemp`
+FROM (SELECT `sensorid`, `window_time`, `avgTemp`, `maxTemp`, ROW_NUMBER() OVER (PARTITION BY `sensorid` ORDER BY `window_time` DESC NULLS LAST) AS `__sqrlinternal_rownum`
+  FROM `default_catalog`.`default_database`.`_SensorMaxTempWindow`) AS `t`
+WHERE `__sqrlinternal_rownum` = 1
 === SensorReading
-ID:     sensorreading_2
+ID:     default_catalog.default_database.SensorReading
 Type:   stream
 Stage:  flink
+Inputs: default_catalog.default_database.SensorReading__def
+Annotations:
+ - stream-root: SensorReading__def
 Primary Key: sensorid, time
 Timestamp  : timestamp
 Schema:
@@ -100,892 +133,634 @@ Schema:
  - time: BIGINT NOT NULL
  - temperature: DOUBLE NOT NULL
  - humidity: DOUBLE NOT NULL
- - timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Plan:
-LogicalTableScan(table=[[sensorreading_1]])
-
-=== Sensors
-ID:     sensors_2
+LogicalProject(sensorid=[$0], time=[$1], temperature=[$2], humidity=[$3], timestamp=[$4])
+  LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
+    LogicalProject(sensorid=[$0], time=[$1], temperature=[$2], humidity=[$3], timestamp=[EPOCHMILLITOTIMESTAMP($1)])
+      LogicalTableScan(table=[[default_catalog, default_database, SensorReading__def]])
+SQL: CREATE VIEW `SensorReading`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`SensorReading__def`
+=== SensorUpdates
+ID:     default_catalog.default_database.SensorUpdates
 Type:   stream
 Stage:  flink
+Inputs: default_catalog.default_database.SensorUpdates__def
+Annotations:
+ - stream-root: SensorUpdates__def
 Primary Key: id, placed
 Timestamp  : timestamp
 Schema:
  - id: BIGINT NOT NULL
  - machineId: BIGINT NOT NULL
  - placed: BIGINT NOT NULL
- - timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Plan:
-LogicalTableScan(table=[[sensors_1]])
-
+LogicalProject(id=[$0], machineId=[$1], placed=[$2], timestamp=[$3])
+  LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($3, 1:INTERVAL SECOND)])
+    LogicalProject(id=[$0], machineId=[$1], placed=[$2], timestamp=[EPOCHMILLITOTIMESTAMP($2)])
+      LogicalTableScan(table=[[default_catalog, default_database, SensorUpdates__def]])
+SQL: CREATE VIEW `SensorUpdates`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`SensorUpdates__def`
 === Sensors
-ID:     sensors_3
+ID:     default_catalog.default_database.Sensors
 Type:   state
 Stage:  flink
-Inputs: sensors_2
+Inputs: default_catalog.default_database.SensorUpdates
+Annotations:
+ - mostRecentDistinct: true
+ - stream-root: SensorUpdates__def
 Primary Key: id
 Timestamp  : timestamp
 Schema:
  - id: BIGINT NOT NULL
  - machineId: BIGINT NOT NULL
  - placed: BIGINT NOT NULL
- - timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
-Post Processors:
- - topN: partition=id limit=1 sort=#3: timestamp TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC 
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Plan:
-LogicalTableScan(table=[[sensors_2]])
+LogicalProject(id=[$0], machineId=[$1], placed=[$2], timestamp=[$3])
+  LogicalFilter(condition=[=($4, 1)])
+    LogicalProject(id=[$0], machineId=[$1], placed=[$2], timestamp=[$3], __sqrlinternal_rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $3 DESC NULLS LAST)])
+      LogicalTableScan(table=[[default_catalog, default_database, SensorUpdates]])
+SQL: CREATE VIEW `Sensors`
+AS
+SELECT `id`, `machineId`, `placed`, `timestamp`
+FROM (SELECT `id`, `machineId`, `placed`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `timestamp` DESC NULLS LAST) AS `__sqrlinternal_rownum`
+  FROM `default_catalog`.`default_database`.`SensorUpdates`) AS `t`
+WHERE `__sqrlinternal_rownum` = 1
+=== _SensorMaxTempWindow
+ID:     default_catalog.default_database._SensorMaxTempWindow
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database.SecReading
+Annotations:
+ - features: STREAM_WINDOW_AGGREGATION (feature)
+ - stream-root: SensorReading__def
+Primary Key: -
+Timestamp  : window_time
+Schema:
+ - sensorid: BIGINT NOT NULL
+ - window_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+ - avgTemp: DOUBLE NOT NULL
+ - maxTemp: DOUBLE NOT NULL
+Plan:
+LogicalProject(sensorid=[$0], window_time=[$3], avgTemp=[$4], maxTemp=[$5])
+  LogicalAggregate(group=[{0, 1, 2, 3}], avgTemp=[AVG($4)], maxTemp=[MAX($4)])
+    LogicalProject(sensorid=[$0], window_start=[$3], window_end=[$4], window_time=[$5], temp=[$2])
+      LogicalTableFunctionScan(invocation=[HOP(DESCRIPTOR($1), 60000:INTERVAL MINUTE, 3600000:INTERVAL MINUTE)], rowType=[RecordType(BIGINT sensorid, TIMESTAMP_LTZ(3) *ROWTIME* timeSec, DOUBLE temp, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end, TIMESTAMP_LTZ(3) *ROWTIME* window_time)])
+        LogicalProject(sensorid=[$0], timeSec=[$1], temp=[$2])
+          LogicalTableScan(table=[[default_catalog, default_database, SecReading]])
+SQL: CREATE VIEW _SensorMaxTempWindow AS  SELECT sensorid, window_time, avg(temp) as avgTemp, max(temp) as maxTemp
+                        FROM TABLE(HOP(TABLE SecReading, DESCRIPTOR(timeSec), INTERVAL '1' MINUTES, INTERVAL '60' MINUTES))
+                        GROUP BY sensorid, window_start, window_end, window_time;
 
->>>flink.json
-{
-  "flinkSql" : [
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `epochmillitotimestamp` AS 'com.datasqrl.time.EpochMilliToTimestamp' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `endofsecond` AS 'com.datasqrl.time.EndOfSecond' LANGUAGE JAVA;",
-    "CREATE TEMPORARY TABLE `sensorreading_1` (\n  `sensorid` BIGINT NOT NULL,\n  `time` BIGINT NOT NULL,\n  `temperature` DOUBLE NOT NULL,\n  `humidity` DOUBLE NOT NULL,\n  `timestamp` AS EPOCHMILLITOTIMESTAMP(`time`),\n  PRIMARY KEY (`sensorid`, `time`) NOT ENFORCED,\n  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND\n) WITH (\n  'format' = 'flexible-csv',\n  'path' = '${DATA_PATH}/sensorreading.csv.gz',\n  'connector' = 'filesystem',\n  'flexible-csv.skip-header' = 'true'\n);",
-    "CREATE TEMPORARY TABLE `sensors_1` (\n  `id` BIGINT NOT NULL,\n  `machineId` BIGINT NOT NULL,\n  `placed` BIGINT NOT NULL,\n  `timestamp` AS EPOCHMILLITOTIMESTAMP(`placed`),\n  PRIMARY KEY (`id`, `placed`) NOT ENFORCED,\n  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND\n) WITH (\n  'format' = 'flexible-json',\n  'path' = '${DATA_PATH}/sensors.jsonl',\n  'connector' = 'filesystem'\n);",
-    "CREATE TEMPORARY TABLE `hightemp_1` (\n  `machineid` BIGINT NOT NULL,\n  `sensorid` BIGINT NOT NULL,\n  `temp` DOUBLE NOT NULL,\n  `timeSec` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`sensorid`, `timeSec`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'hightemp_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE TEMPORARY TABLE `lasthour_1` (\n  `__pk1_id` BIGINT NOT NULL,\n  `maxTemp` DOUBLE NOT NULL,\n  `avgTemp` DOUBLE NOT NULL,\n  `_timeSec` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`__pk1_id`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'lasthour_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE TEMPORARY TABLE `machine_1` (\n  `machineid` BIGINT NOT NULL,\n  `maxTemp` DOUBLE NOT NULL,\n  `avgTemp` DOUBLE NOT NULL,\n  `_timeSec` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`machineid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'machine_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE TEMPORARY TABLE `secreading_1` (\n  `sensorid` BIGINT NOT NULL,\n  `timeSec` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `temp` DOUBLE NOT NULL,\n  PRIMARY KEY (`sensorid`, `timeSec`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'secreading_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE TEMPORARY TABLE `sensorreading_2` (\n  `sensorid` BIGINT NOT NULL,\n  `time` BIGINT NOT NULL,\n  `temperature` DOUBLE NOT NULL,\n  `humidity` DOUBLE NOT NULL,\n  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`sensorid`, `time`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'sensorreading_2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE TEMPORARY TABLE `sensors_3` (\n  `id` BIGINT NOT NULL,\n  `machineId` BIGINT NOT NULL,\n  `placed` BIGINT NOT NULL,\n  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`id`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'sensors_3',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM (SELECT `id`, `machineId`, `placed`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `timestamp` DESC) AS `_rownum`\n  FROM `sensors_1`) AS `t`\nWHERE `_rownum` = 1;",
-    "CREATE VIEW `table$2`\nAS\nSELECT `sensorid`, ENDOFSECOND(`timestamp`) AS `timeSec`, `temperature`, `time`, `timestamp`\nFROM `sensorreading_1`;",
-    "CREATE VIEW `table$3`\nAS\nSELECT `t0`.`machineId` AS `machineid`, `$cor3`.`sensorid`, `$cor3`.`temp`, `$cor3`.`timeSec`\nFROM (SELECT `sensorid`, `timeSec`, `temp`, `sensorid` AS `sensorid3`\n  FROM (SELECT `sensorid`, `window_time` AS `timeSec`, AVG(`temperature`) AS `temp`\n    FROM TABLE(TUMBLE(TABLE `table$2`, DESCRIPTOR(`timestamp`), INTERVAL '1' SECOND(4), INTERVAL '0' SECOND(1))) AS `t2`\n    GROUP BY `sensorid`, `window_start`, `window_end`, `window_time`) AS `t4`\n  WHERE `temp` > 35) AS `$cor3`\n INNER JOIN `table$1` FOR SYSTEM_TIME AS OF `$cor3`.`timeSec` AS `t0` ON `t0`.`id` = `$cor3`.`sensorid3`;",
-    "CREATE VIEW `table$4`\nAS\nSELECT *\nFROM (SELECT `id`, `machineId`, `placed`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `timestamp` DESC) AS `_rownum`\n  FROM `sensors_1`) AS `t`\nWHERE `_rownum` = 1;",
-    "CREATE VIEW `table$5`\nAS\nSELECT `sensorid`, ENDOFSECOND(`timestamp`) AS `timeSec`, `temperature`, `time`, `timestamp`\nFROM `sensorreading_1`;",
-    "CREATE VIEW `table$6`\nAS\nSELECT *\nFROM (SELECT `sensorid`, `window_time` AS `timeSec`, AVG(`temperature`) AS `temp`, `sensorid` AS `sensorid3`\n  FROM TABLE(TUMBLE(TABLE `table$5`, DESCRIPTOR(`timestamp`), INTERVAL '1' SECOND(4), INTERVAL '0' SECOND(1))) AS `t2`\n  GROUP BY `sensorid`, `window_start`, `window_end`, `window_time`) AS `$cor5`\n INNER JOIN `table$4` FOR SYSTEM_TIME AS OF `$cor5`.`timeSec` AS `t0` ON `t0`.`id` = `$cor5`.`sensorid3`;",
-    "CREATE VIEW `table$7`\nAS\nSELECT `id` AS `__pk1_id`, MAX(`temp`) AS `maxTemp`, AVG(`temp`) AS `avgTemp`, `window_time` AS `_timeSec`\nFROM TABLE(HOP(TABLE `table$6`, DESCRIPTOR(`timeSec`), INTERVAL '72' SECOND(5), INTERVAL '3600' SECOND(7))) AS `t6`\nGROUP BY `id`, `window_start`, `window_end`, `window_time`;",
-    "CREATE VIEW `table$8`\nAS\nSELECT *\nFROM (SELECT `id`, `machineId`, `placed`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `timestamp` DESC) AS `_rownum`\n  FROM `sensors_1`) AS `t`\nWHERE `_rownum` = 1;",
-    "CREATE VIEW `table$9`\nAS\nSELECT `sensorid`, ENDOFSECOND(`timestamp`) AS `timeSec`, `temperature`, `time`, `timestamp`\nFROM `sensorreading_1`;",
-    "CREATE VIEW `table$10`\nAS\nSELECT *\nFROM (SELECT `sensorid`, `window_time` AS `timeSec`, AVG(`temperature`) AS `temp`, `sensorid` AS `sensorid3`\n  FROM TABLE(TUMBLE(TABLE `table$9`, DESCRIPTOR(`timestamp`), INTERVAL '1' SECOND(4), INTERVAL '0' SECOND(1))) AS `t2`\n  GROUP BY `sensorid`, `window_start`, `window_end`, `window_time`) AS `$cor7`\n INNER JOIN `table$8` FOR SYSTEM_TIME AS OF `$cor7`.`timeSec` AS `t0` ON `t0`.`id` = `$cor7`.`sensorid3`;",
-    "CREATE VIEW `table$11`\nAS\nSELECT `machineId` AS `machineid`, MAX(`temp`) AS `maxTemp`, AVG(`temp`) AS `avgTemp`, `window_time` AS `_timeSec`\nFROM TABLE(HOP(TABLE `table$10`, DESCRIPTOR(`timeSec`), INTERVAL '72' SECOND(5), INTERVAL '3600' SECOND(7))) AS `t6`\nGROUP BY `machineId`, `window_start`, `window_end`, `window_time`;",
-    "CREATE VIEW `table$12`\nAS\nSELECT `sensorid`, ENDOFSECOND(`timestamp`) AS `timeSec`, `temperature`, `time`, `timestamp`\nFROM `sensorreading_1`;",
-    "CREATE VIEW `table$13`\nAS\nSELECT `sensorid`, `window_time` AS `timeSec`, AVG(`temperature`) AS `temp`\nFROM TABLE(TUMBLE(TABLE `table$12`, DESCRIPTOR(`timestamp`), INTERVAL '1' SECOND(4), INTERVAL '0' SECOND(1))) AS `t0`\nGROUP BY `sensorid`, `window_start`, `window_end`, `window_time`;",
-    "CREATE VIEW `table$14`\nAS\nSELECT *\nFROM `sensorreading_1`;",
-    "CREATE VIEW `table$15`\nAS\nSELECT *\nFROM `sensors_1`;",
-    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `hightemp_1`\n(SELECT *\n FROM `table$3`)\n;\nINSERT INTO `lasthour_1`\n (SELECT *\n  FROM `table$7`)\n ;\n INSERT INTO `machine_1`\n  (SELECT *\n   FROM `table$11`)\n  ;\n  INSERT INTO `secreading_1`\n   (SELECT *\n    FROM `table$13`)\n   ;\n   INSERT INTO `sensorreading_2`\n    (SELECT *\n     FROM `table$14`)\n    ;\n    INSERT INTO `sensors_3`\n     (SELECT *\n      FROM `table$15`)\n     ;\n     END;"
-  ],
-  "connectors" : [
-    "jdbc-sqrl",
-    "filesystem"
-  ],
-  "formats" : [
-    "flexible-json",
-    "flexible-csv"
-  ]
-}
+>>>flink-sql-no-functions.sql
+CREATE TEMPORARY TABLE `SensorReading__schema` (
+  `sensorid` BIGINT NOT NULL,
+  `time` BIGINT NOT NULL,
+  `temperature` DOUBLE NOT NULL,
+  `humidity` DOUBLE NOT NULL
+) WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `SensorReading__def` (
+  `timestamp` AS EPOCHMILLITOTIMESTAMP(`time`),
+  PRIMARY KEY (`sensorid`, `time`) NOT ENFORCED,
+  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
+) WITH (
+  'format' = 'flexible-csv',
+  'path' = '${DATA_PATH}/sensorreading.csv.gz',
+  'connector' = 'filesystem',
+  'flexible-csv.skip-header' = 'true'
+)
+LIKE `SensorReading__schema`;
+CREATE VIEW `SensorReading`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`SensorReading__def`;
+CREATE TEMPORARY TABLE `SensorUpdates__schema` (
+  `id` BIGINT NOT NULL,
+  `machineId` BIGINT NOT NULL,
+  `placed` BIGINT NOT NULL
+) WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `SensorUpdates__def` (
+  `timestamp` AS EPOCHMILLITOTIMESTAMP(`placed`),
+  PRIMARY KEY (`id`, `placed`) NOT ENFORCED,
+  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
+) WITH (
+  'format' = 'flexible-json',
+  'path' = '${DATA_PATH}/sensors.jsonl',
+  'connector' = 'filesystem'
+)
+LIKE `SensorUpdates__schema`;
+CREATE VIEW `SensorUpdates`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`SensorUpdates__def`;
+CREATE VIEW `SecReading`
+AS
+SELECT `sensorid`, `window_time` AS `timeSec`, AVG(`temperature`) AS `temp`
+FROM TABLE(TUMBLE(TABLE `SensorReading`, DESCRIPTOR(`timestamp`), INTERVAL '1' SECOND))
+GROUP BY `sensorid`, `window_start`, `window_end`, `window_time`;
+CREATE VIEW `Sensors`
+AS
+SELECT `id`, `machineId`, `placed`, `timestamp`
+FROM (SELECT `id`, `machineId`, `placed`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `timestamp` DESC NULLS LAST) AS `__sqrlinternal_rownum`
+  FROM `default_catalog`.`default_database`.`SensorUpdates`) AS `t`
+WHERE `__sqrlinternal_rownum` = 1;
+CREATE VIEW `_SensorMaxTempWindow`
+AS
+SELECT `sensorid`, `window_time`, AVG(`temp`) AS `avgTemp`, MAX(`temp`) AS `maxTemp`
+FROM TABLE(HOP(TABLE `SecReading`, DESCRIPTOR(`timeSec`), INTERVAL '1' MINUTE, INTERVAL '60' MINUTE))
+GROUP BY `sensorid`, `window_start`, `window_end`, `window_time`;
+CREATE VIEW `SensorLastHour`
+AS
+SELECT `sensorid`, `window_time`, `avgTemp`, `maxTemp`
+FROM (SELECT `sensorid`, `window_time`, `avgTemp`, `maxTemp`, ROW_NUMBER() OVER (PARTITION BY `sensorid` ORDER BY `window_time` DESC NULLS LAST) AS `__sqrlinternal_rownum`
+  FROM `default_catalog`.`default_database`.`_SensorMaxTempWindow`) AS `t`
+WHERE `__sqrlinternal_rownum` = 1;
+CREATE VIEW `Machine`
+AS
+SELECT `machineId`, MAX(`temp`) AS `maxTemp`, AVG(`temp`) AS `avgTemp`
+FROM `SecReading` AS `r`
+ INNER JOIN `Sensors` FOR SYSTEM_TIME AS OF `r`.`timeSec` AS `s` ON `r`.`sensorid` = `s`.`id`
+GROUP BY `machineId`;
+CREATE VIEW `MachineCountTest`
+AS
+SELECT COUNT(*) AS `num`
+FROM `Machine`;
+CREATE VIEW `HighTemp`
+AS
+SELECT `machineId`, `sensorid`, `temp`, `timeSec`
+FROM `SecReading` AS `r`
+ INNER JOIN `Sensors` FOR SYSTEM_TIME AS OF `r`.`timeSec` AS `s` ON `r`.`sensorid` = `s`.`id`
+WHERE `temp` > 35;
+CREATE VIEW `HighTempTest`
+AS
+SELECT COUNT(*) AS `num`, AVG(`temp`) AS `avg_temp`
+FROM `HighTemp`;
+CREATE TABLE `HighTemp_1` (
+  `machineId` BIGINT NOT NULL,
+  `sensorid` BIGINT NOT NULL,
+  `temp` DOUBLE NOT NULL,
+  `timeSec` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`sensorid`, `timeSec`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'table-name' = 'HighTemp_1'
+);
+CREATE TABLE `Machine_2` (
+  `machineId` BIGINT NOT NULL,
+  `maxTemp` DOUBLE NOT NULL,
+  `avgTemp` DOUBLE NOT NULL,
+  PRIMARY KEY (`machineId`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'table-name' = 'Machine_2'
+);
+CREATE TABLE `SecReading_3` (
+  `sensorid` BIGINT NOT NULL,
+  `timeSec` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `temp` DOUBLE NOT NULL,
+  PRIMARY KEY (`sensorid`, `timeSec`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'table-name' = 'SecReading_3'
+);
+CREATE TABLE `SensorLastHour_4` (
+  `sensorid` BIGINT NOT NULL,
+  `window_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `avgTemp` DOUBLE NOT NULL,
+  `maxTemp` DOUBLE NOT NULL,
+  PRIMARY KEY (`sensorid`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'table-name' = 'SensorLastHour_4'
+);
+CREATE TABLE `SensorReading_5` (
+  `sensorid` BIGINT NOT NULL,
+  `time` BIGINT NOT NULL,
+  `temperature` DOUBLE NOT NULL,
+  `humidity` DOUBLE NOT NULL,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`sensorid`, `time`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'table-name' = 'SensorReading_5'
+);
+CREATE TABLE `SensorUpdates_6` (
+  `id` BIGINT NOT NULL,
+  `machineId` BIGINT NOT NULL,
+  `placed` BIGINT NOT NULL,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`id`, `placed`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'table-name' = 'SensorUpdates_6'
+);
+CREATE TABLE `Sensors_7` (
+  `id` BIGINT NOT NULL,
+  `machineId` BIGINT NOT NULL,
+  `placed` BIGINT NOT NULL,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`id`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'table-name' = 'Sensors_7'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`HighTemp_1`
+(SELECT *
+ FROM `default_catalog`.`default_database`.`HighTemp`)
+;
+INSERT INTO `default_catalog`.`default_database`.`Machine_2`
+ (SELECT *
+  FROM `default_catalog`.`default_database`.`Machine`)
+ ;
+ INSERT INTO `default_catalog`.`default_database`.`SecReading_3`
+  (SELECT *
+   FROM `default_catalog`.`default_database`.`SecReading`)
+  ;
+  INSERT INTO `default_catalog`.`default_database`.`SensorLastHour_4`
+   (SELECT *
+    FROM `default_catalog`.`default_database`.`_SensorMaxTempWindow`)
+   ;
+   INSERT INTO `default_catalog`.`default_database`.`SensorReading_5`
+    (SELECT *
+     FROM `default_catalog`.`default_database`.`SensorReading`)
+    ;
+    INSERT INTO `default_catalog`.`default_database`.`SensorUpdates_6`
+     (SELECT *
+      FROM `default_catalog`.`default_database`.`SensorUpdates`)
+     ;
+     INSERT INTO `default_catalog`.`default_database`.`Sensors_7`
+      (SELECT *
+       FROM `default_catalog`.`default_database`.`SensorUpdates`)
+      ;
+      END
 >>>kafka.json
 {
   "topics" : [ ]
 }
->>>postgres.json
-{
-  "ddl" : [
-    {
-      "name" : "hightemp_1",
-      "columns" : [
-        "\"machineid\" BIGINT NOT NULL",
-        "\"sensorid\" BIGINT NOT NULL",
-        "\"temp\" DOUBLE PRECISION NOT NULL",
-        "\"timeSec\" TIMESTAMP WITH TIME ZONE NOT NULL"
-      ],
-      "primaryKeys" : [
-        "\"sensorid\"",
-        "\"timeSec\""
-      ],
-      "sql" : "CREATE TABLE IF NOT EXISTS hightemp_1 (\"machineid\" BIGINT NOT NULL,\"sensorid\" BIGINT NOT NULL,\"temp\" DOUBLE PRECISION NOT NULL,\"timeSec\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"sensorid\",\"timeSec\"));"
-    },
-    {
-      "name" : "lasthour_1",
-      "columns" : [
-        "\"__pk1_id\" BIGINT NOT NULL",
-        "\"maxTemp\" DOUBLE PRECISION NOT NULL",
-        "\"avgTemp\" DOUBLE PRECISION NOT NULL",
-        "\"_timeSec\" TIMESTAMP WITH TIME ZONE NOT NULL"
-      ],
-      "primaryKeys" : [
-        "\"__pk1_id\""
-      ],
-      "sql" : "CREATE TABLE IF NOT EXISTS lasthour_1 (\"__pk1_id\" BIGINT NOT NULL,\"maxTemp\" DOUBLE PRECISION NOT NULL,\"avgTemp\" DOUBLE PRECISION NOT NULL,\"_timeSec\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"__pk1_id\"));"
-    },
-    {
-      "name" : "machine_1",
-      "columns" : [
-        "\"machineid\" BIGINT NOT NULL",
-        "\"maxTemp\" DOUBLE PRECISION NOT NULL",
-        "\"avgTemp\" DOUBLE PRECISION NOT NULL",
-        "\"_timeSec\" TIMESTAMP WITH TIME ZONE NOT NULL"
-      ],
-      "primaryKeys" : [
-        "\"machineid\""
-      ],
-      "sql" : "CREATE TABLE IF NOT EXISTS machine_1 (\"machineid\" BIGINT NOT NULL,\"maxTemp\" DOUBLE PRECISION NOT NULL,\"avgTemp\" DOUBLE PRECISION NOT NULL,\"_timeSec\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"machineid\"));"
-    },
-    {
-      "name" : "secreading_1",
-      "columns" : [
-        "\"sensorid\" BIGINT NOT NULL",
-        "\"timeSec\" TIMESTAMP WITH TIME ZONE NOT NULL",
-        "\"temp\" DOUBLE PRECISION NOT NULL"
-      ],
-      "primaryKeys" : [
-        "\"sensorid\"",
-        "\"timeSec\""
-      ],
-      "sql" : "CREATE TABLE IF NOT EXISTS secreading_1 (\"sensorid\" BIGINT NOT NULL,\"timeSec\" TIMESTAMP WITH TIME ZONE NOT NULL,\"temp\" DOUBLE PRECISION NOT NULL , PRIMARY KEY (\"sensorid\",\"timeSec\"));"
-    },
-    {
-      "name" : "sensorreading_2",
-      "columns" : [
-        "\"sensorid\" BIGINT NOT NULL",
-        "\"time\" BIGINT NOT NULL",
-        "\"temperature\" DOUBLE PRECISION NOT NULL",
-        "\"humidity\" DOUBLE PRECISION NOT NULL",
-        "\"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL"
-      ],
-      "primaryKeys" : [
-        "\"sensorid\"",
-        "\"time\""
-      ],
-      "sql" : "CREATE TABLE IF NOT EXISTS sensorreading_2 (\"sensorid\" BIGINT NOT NULL,\"time\" BIGINT NOT NULL,\"temperature\" DOUBLE PRECISION NOT NULL,\"humidity\" DOUBLE PRECISION NOT NULL,\"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"sensorid\",\"time\"));"
-    },
-    {
-      "name" : "sensors_3",
-      "columns" : [
-        "\"id\" BIGINT NOT NULL",
-        "\"machineId\" BIGINT NOT NULL",
-        "\"placed\" BIGINT NOT NULL",
-        "\"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL"
-      ],
-      "primaryKeys" : [
-        "\"id\""
-      ],
-      "sql" : "CREATE TABLE IF NOT EXISTS sensors_3 (\"id\" BIGINT NOT NULL,\"machineId\" BIGINT NOT NULL,\"placed\" BIGINT NOT NULL,\"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"id\"));"
-    },
-    {
-      "indexName" : "hightemp_1_hash_c3",
-      "tableName" : "hightemp_1",
-      "columns" : [
-        "timeSec"
-      ],
-      "type" : "HASH",
-      "sql" : "CREATE INDEX IF NOT EXISTS hightemp_1_hash_c3 ON hightemp_1 USING hash (\"timeSec\");"
-    },
-    {
-      "indexName" : "secreading_1_btree_c2",
-      "tableName" : "secreading_1",
-      "columns" : [
-        "temp"
-      ],
-      "type" : "BTREE",
-      "sql" : "CREATE INDEX IF NOT EXISTS secreading_1_btree_c2 ON secreading_1 USING btree (\"temp\");"
-    },
-    {
-      "indexName" : "secreading_1_hash_c1",
-      "tableName" : "secreading_1",
-      "columns" : [
-        "timeSec"
-      ],
-      "type" : "HASH",
-      "sql" : "CREATE INDEX IF NOT EXISTS secreading_1_hash_c1 ON secreading_1 USING hash (\"timeSec\");"
-    },
-    {
-      "indexName" : "sensorreading_2_hash_c1",
-      "tableName" : "sensorreading_2",
-      "columns" : [
-        "time"
-      ],
-      "type" : "HASH",
-      "sql" : "CREATE INDEX IF NOT EXISTS sensorreading_2_hash_c1 ON sensorreading_2 USING hash (\"time\");"
-    },
-    {
-      "indexName" : "sensors_3_hash_c1",
-      "tableName" : "sensors_3",
-      "columns" : [
-        "machineId"
-      ],
-      "type" : "HASH",
-      "sql" : "CREATE INDEX IF NOT EXISTS sensors_3_hash_c1 ON sensors_3 USING hash (\"machineId\");"
-    }
-  ],
-  "views" : [
-    {
-      "name" : "Machine",
-      "sql" : "CREATE OR REPLACE VIEW \"Machine\"(\"machineid\", \"maxTemp\", \"avgTemp\", \"_timeSec\") AS SELECT *\nFROM \"machine_1\"\nORDER BY \"machineid\";"
-    },
-    {
-      "name" : "Sensors",
-      "sql" : "CREATE OR REPLACE VIEW \"Sensors\"(\"id\", \"machineId\", \"placed\", \"timestamp\") AS SELECT *\nFROM \"sensors_3\"\nORDER BY \"id\";"
-    },
-    {
-      "name" : "HighTemp",
-      "sql" : "CREATE OR REPLACE VIEW \"HighTemp\"(\"machineid\", \"sensorid\", \"temp\", \"timeSec\") AS SELECT *\nFROM \"hightemp_1\"\nORDER BY \"timeSec\" DESC, \"sensorid\";"
-    },
-    {
-      "name" : "SecReading",
-      "sql" : "CREATE OR REPLACE VIEW \"SecReading\"(\"sensorid\", \"timeSec\", \"temp\") AS SELECT *\nFROM \"secreading_1\"\nORDER BY \"timeSec\" DESC, \"sensorid\";"
-    },
-    {
-      "name" : "SensorReading",
-      "sql" : "CREATE OR REPLACE VIEW \"SensorReading\"(\"sensorid\", \"time\", \"temperature\", \"humidity\", \"timestamp\") AS SELECT *\nFROM \"sensorreading_2\"\nORDER BY \"timestamp\" DESC NULLS LAST, \"sensorid\", \"time\";"
-    }
-  ]
-}
+>>>postgres-schema.sql
+CREATE TABLE IF NOT EXISTS "HighTemp_1" ("machineId" BIGINT NOT NULL, "sensorid" BIGINT NOT NULL, "temp" DOUBLE PRECISION NOT NULL, "timeSec" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("sensorid","timeSec"));
+CREATE TABLE IF NOT EXISTS "Machine_2" ("machineId" BIGINT NOT NULL, "maxTemp" DOUBLE PRECISION NOT NULL, "avgTemp" DOUBLE PRECISION NOT NULL , PRIMARY KEY ("machineId"));
+CREATE TABLE IF NOT EXISTS "SecReading_3" ("sensorid" BIGINT NOT NULL, "timeSec" TIMESTAMP WITH TIME ZONE NOT NULL, "temp" DOUBLE PRECISION NOT NULL , PRIMARY KEY ("sensorid","timeSec"));
+CREATE TABLE IF NOT EXISTS "SensorLastHour_4" ("sensorid" BIGINT NOT NULL, "window_time" TIMESTAMP WITH TIME ZONE NOT NULL, "avgTemp" DOUBLE PRECISION NOT NULL, "maxTemp" DOUBLE PRECISION NOT NULL , PRIMARY KEY ("sensorid"));
+CREATE TABLE IF NOT EXISTS "SensorReading_5" ("sensorid" BIGINT NOT NULL, "time" BIGINT NOT NULL, "temperature" DOUBLE PRECISION NOT NULL, "humidity" DOUBLE PRECISION NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("sensorid","time"));
+CREATE TABLE IF NOT EXISTS "SensorUpdates_6" ("id" BIGINT NOT NULL, "machineId" BIGINT NOT NULL, "placed" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id","placed"));
+CREATE TABLE IF NOT EXISTS "Sensors_7" ("id" BIGINT NOT NULL, "machineId" BIGINT NOT NULL, "placed" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));
+
+CREATE INDEX IF NOT EXISTS "Sensors_7_hash_c1" ON "Sensors_7" USING hash ("machineId")
+>>>postgres-views.sql
+CREATE OR REPLACE VIEW "HighTemp"("machineId", "sensorid", "temp", "timeSec") AS SELECT *
+FROM "HighTemp_1";
+CREATE OR REPLACE VIEW "Machine"("machineId", "maxTemp", "avgTemp") AS SELECT *
+FROM "Machine_2";
+CREATE OR REPLACE VIEW "SecReading"("sensorid", "timeSec", "temp") AS SELECT *
+FROM (SELECT "sensorid", "timeSec", "temp"
+  FROM "SecReading_3"
+  ORDER BY "timeSec" DESC NULLS LAST) AS "t1";
+CREATE OR REPLACE VIEW "SensorLastHour"("sensorid", "window_time", "avgTemp", "maxTemp") AS SELECT *
+FROM "SensorLastHour_4";
+CREATE OR REPLACE VIEW "SensorReading"("sensorid", "time", "temperature", "humidity", "timestamp") AS SELECT *
+FROM "SensorReading_5";
+CREATE OR REPLACE VIEW "SensorUpdates"("id", "machineId", "placed", "timestamp") AS SELECT *
+FROM "SensorUpdates_6";
+CREATE OR REPLACE VIEW "Sensors"("id", "machineId", "placed", "timestamp") AS SELECT *
+FROM "Sensors_7"
 >>>vertx.json
 {
   "model" : {
-    "coords" : [
+    "queries" : [
       {
         "type" : "args",
         "parentType" : "Query",
         "fieldName" : "HighTemp",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"hightemp_1\"\nORDER BY \"timeSec\" DESC, \"sensorid\"",
-              "parameters" : [ ]
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
             }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "sensorid"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "timeSec"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"hightemp_1\"\nWHERE \"sensorid\" = $1 AND \"timeSec\" = $2\nORDER BY \"timeSec\" DESC",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "sensorid"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "timeSec"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "sensorid"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"hightemp_1\"\nWHERE \"sensorid\" = $1\nORDER BY \"timeSec\" DESC",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "sensorid"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "timeSec"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"hightemp_1\"\nWHERE \"timeSec\" = $1\nORDER BY \"timeSec\" DESC, \"sensorid\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "timeSec"
-                }
-              ]
-            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM \"HighTemp_1\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
           }
-        ]
+        }
       },
       {
         "type" : "args",
         "parentType" : "Query",
         "fieldName" : "Machine",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "machineid"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"machine_1\"\nWHERE \"machineid\" = $1",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "machineid"
-                }
-              ]
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
             }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"machine_1\"\nORDER BY \"machineid\"",
-              "parameters" : [ ]
-            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM \"Machine_2\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
           }
-        ]
+        }
       },
       {
         "type" : "args",
         "parentType" : "Machine",
         "fieldName" : "sensors",
-        "matchs" : [
-          {
-            "arguments" : [
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
+            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM \"Sensors_7\"\nWHERE \"machineId\" = $1",
+            "parameters" : [
               {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
+                "type" : "source",
+                "key" : "machineId"
               }
             ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"sensors_3\"\nWHERE \"machineId\" = $1\nORDER BY \"id\"",
-              "parameters" : [
-                {
-                  "type" : "source",
-                  "type" : "source",
-                  "key" : "machineid"
-                }
-              ]
-            }
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
           }
-        ]
+        }
       },
       {
         "type" : "args",
         "parentType" : "Sensors",
         "fieldName" : "lastHour",
-        "matchs" : [
-          {
-            "arguments" : [ ],
-            "query" : {
-              "type" : "JdbcQuery",
-              "type" : "JdbcQuery",
-              "sql" : "SELECT *\nFROM \"lasthour_1\"\nWHERE \"__pk1_id\" = $1",
-              "parameters" : [
-                {
-                  "type" : "source",
-                  "type" : "source",
-                  "key" : "id"
-                }
-              ]
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
             }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM \"SensorLastHour_4\"\nWHERE $1 = \"sensorid\"",
+            "parameters" : [
+              {
+                "type" : "source",
+                "key" : "id"
+              }
+            ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
           }
-        ]
-      },
-      {
-        "type" : "args",
-        "parentType" : "lastHour",
-        "fieldName" : "parent",
-        "matchs" : [
-          {
-            "arguments" : [ ],
-            "query" : {
-              "type" : "JdbcQuery",
-              "type" : "JdbcQuery",
-              "sql" : "SELECT *\nFROM \"sensors_3\"\nWHERE \"id\" = $1",
-              "parameters" : [
-                {
-                  "type" : "source",
-                  "type" : "source",
-                  "key" : "__pk1_id"
-                }
-              ]
-            }
-          }
-        ]
+        }
       },
       {
         "type" : "args",
         "parentType" : "Sensors",
         "fieldName" : "readings",
-        "matchs" : [
-          {
-            "arguments" : [
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
+            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM (SELECT \"sensorid\", \"timeSec\", \"temp\"\n  FROM \"SecReading_3\"\n  ORDER BY \"timeSec\" DESC NULLS LAST) AS \"t\"\nWHERE \"sensorid\" = $1",
+            "parameters" : [
               {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
+                "type" : "source",
+                "key" : "id"
               }
             ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"secreading_1\"\nWHERE \"sensorid\" = $1\nORDER BY \"timeSec\" DESC",
-              "parameters" : [
-                {
-                  "type" : "source",
-                  "type" : "source",
-                  "key" : "id"
-                }
-              ]
-            }
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
           }
-        ]
+        }
       },
       {
         "type" : "args",
         "parentType" : "Query",
         "fieldName" : "SecReading",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"secreading_1\"\nORDER BY \"timeSec\" DESC, \"sensorid\"",
-              "parameters" : [ ]
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
             }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "sensorid"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "timeSec"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"secreading_1\"\nWHERE \"sensorid\" = $1 AND \"timeSec\" = $2\nORDER BY \"timeSec\" DESC",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "sensorid"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "timeSec"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "timeSec"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"secreading_1\"\nWHERE \"timeSec\" = $1\nORDER BY \"timeSec\" DESC, \"sensorid\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "timeSec"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "sensorid"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"secreading_1\"\nWHERE \"sensorid\" = $1\nORDER BY \"timeSec\" DESC",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "sensorid"
-                }
-              ]
-            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM (SELECT \"sensorid\", \"timeSec\", \"temp\"\n  FROM \"SecReading_3\"\n  ORDER BY \"timeSec\" DESC NULLS LAST) AS \"t\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
           }
-        ]
+        }
       },
       {
         "type" : "args",
         "parentType" : "Query",
-        "fieldName" : "SecReadingByTemp",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "temp"
-              }
-            ],
-            "query" : {
-              "type" : "JdbcQuery",
-              "type" : "JdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT \"sensorid\", \"timeSec\", \"temp\"\n  FROM \"secreading_1\"\n  WHERE \"temp\" > $1\n  ORDER BY \"timeSec\"\n  FETCH NEXT 10 ROWS ONLY) AS \"t0\"\nORDER BY \"timeSec\" DESC",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "temp"
-                }
-              ]
+        "fieldName" : "SensorLastHour",
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
             }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM \"SensorLastHour_4\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
           }
-        ]
+        }
       },
       {
         "type" : "args",
         "parentType" : "Query",
         "fieldName" : "SensorReading",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "sensorid"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "time"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"sensorreading_2\"\nWHERE \"sensorid\" = $1 AND \"time\" = $2\nORDER BY \"timestamp\" DESC NULLS LAST",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "sensorid"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "time"
-                }
-              ]
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
             }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "sensorid"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"sensorreading_2\"\nWHERE \"sensorid\" = $1\nORDER BY \"timestamp\" DESC NULLS LAST, \"time\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "sensorid"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "time"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"sensorreading_2\"\nWHERE \"time\" = $1\nORDER BY \"timestamp\" DESC NULLS LAST, \"sensorid\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "time"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"sensorreading_2\"\nORDER BY \"timestamp\" DESC NULLS LAST, \"sensorid\", \"time\"",
-              "parameters" : [ ]
-            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM \"SensorReading_5\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
           }
-        ]
+        }
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "SensorUpdates",
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
+            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM \"SensorUpdates_6\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
+          }
+        }
       },
       {
         "type" : "args",
         "parentType" : "Query",
         "fieldName" : "Sensors",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"sensors_3\"\nORDER BY \"id\"",
-              "parameters" : [ ]
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
             }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "id"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"sensors_3\"\nWHERE \"id\" = $1",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "id"
-                }
-              ]
-            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM \"Sensors_7\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
           }
-        ]
+        }
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "SecReadingByTemp",
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "temp"
+            },
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
+            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM (SELECT \"sensorid\", \"timeSec\", \"temp\"\n  FROM \"SecReading_3\"\n  ORDER BY \"timeSec\" DESC NULLS LAST) AS \"t\"\nWHERE \"temp\" > $1\nORDER BY \"timeSec\" NULLS FIRST\nFETCH NEXT 10 ROWS ONLY",
+            "parameters" : [
+              {
+                "type" : "arg",
+                "path" : "temp"
+              }
+            ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
+          }
+        }
       }
     ],
     "mutations" : [ ],
     "subscriptions" : [ ],
     "schema" : {
       "type" : "string",
-      "type" : "string",
-      "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype HighTemp {\n  machineid: Float!\n  sensorid: Float!\n  temp: Float!\n  timeSec: DateTime!\n}\n\ntype Machine {\n  machineid: Float!\n  maxTemp: Float!\n  avgTemp: Float!\n  sensors(limit: Int = 10, offset: Int = 0): [Sensors!]\n}\n\ntype Query {\n  HighTemp(sensorid: Float, timeSec: DateTime, limit: Int = 10, offset: Int = 0): [HighTemp!]\n  Machine(machineid: Float, limit: Int = 10, offset: Int = 0): [Machine!]\n  SecReading(sensorid: Float, timeSec: DateTime, limit: Int = 10, offset: Int = 0): [SecReading!]\n  SecReadingByTemp(temp: Int!): [SecReadingByTemp!]\n  SensorReading(sensorid: Float, time: Float, limit: Int = 10, offset: Int = 0): [SensorReading!]\n  Sensors(id: Float, limit: Int = 10, offset: Int = 0): [Sensors!]\n}\n\ntype SecReading {\n  sensorid: Float!\n  timeSec: DateTime!\n  temp: Float!\n}\n\ntype SecReadingByTemp {\n  sensorid: Float!\n  timeSec: DateTime!\n  temp: Float!\n}\n\ntype SensorReading {\n  sensorid: Float!\n  time: Float!\n  temperature: Float!\n  humidity: Float!\n  timestamp: DateTime!\n}\n\ntype Sensors {\n  id: Float!\n  machineId: Float!\n  placed: Float!\n  timestamp: DateTime!\n  lastHour: lastHour\n  readings(limit: Int = 10, offset: Int = 0): [SecReading!]\n}\n\ntype lastHour {\n  maxTemp: Float!\n  avgTemp: Float!\n  parent: Sensors!\n}\n"
+      "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype HighTemp {\n  machineId: GraphQLBigInteger!\n  sensorid: GraphQLBigInteger!\n  temp: Float!\n  timeSec: DateTime!\n}\n\ntype Machine {\n  machineId: GraphQLBigInteger!\n  maxTemp: Float!\n  avgTemp: Float!\n  sensors(limit: Int = 10, offset: Int = 0): [Sensors!]\n}\n\ntype Query {\n  HighTemp(limit: Int = 10, offset: Int = 0): [HighTemp!]\n  Machine(limit: Int = 10, offset: Int = 0): [Machine!]\n  SecReading(limit: Int = 10, offset: Int = 0): [SecReading!]\n  SensorLastHour(limit: Int = 10, offset: Int = 0): [SensorLastHour!]\n  SensorReading(limit: Int = 10, offset: Int = 0): [SensorReading!]\n  SensorUpdates(limit: Int = 10, offset: Int = 0): [SensorUpdates!]\n  Sensors(limit: Int = 10, offset: Int = 0): [Sensors!]\n  SecReadingByTemp(temp: Int!, limit: Int = 10, offset: Int = 0): [SecReading!]\n}\n\ntype SecReading {\n  sensorid: GraphQLBigInteger!\n  timeSec: DateTime!\n  temp: Float!\n}\n\ntype SensorLastHour {\n  sensorid: GraphQLBigInteger!\n  window_time: DateTime!\n  avgTemp: Float!\n  maxTemp: Float!\n}\n\ntype SensorReading {\n  sensorid: GraphQLBigInteger!\n  time: GraphQLBigInteger!\n  temperature: Float!\n  humidity: Float!\n  timestamp: DateTime!\n}\n\ntype SensorUpdates {\n  id: GraphQLBigInteger!\n  machineId: GraphQLBigInteger!\n  placed: GraphQLBigInteger!\n  timestamp: DateTime!\n}\n\ntype Sensors {\n  id: GraphQLBigInteger!\n  machineId: GraphQLBigInteger!\n  placed: GraphQLBigInteger!\n  timestamp: DateTime!\n  lastHour(limit: Int = 10, offset: Int = 0): [SensorLastHour!]\n  readings(limit: Int = 10, offset: Int = 0): [SecReading!]\n}\n"
     }
   }
 }

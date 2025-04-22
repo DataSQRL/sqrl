@@ -1,59 +1,18 @@
->>>products.schema.yml
----
-name: "products"
-schema_version: "1"
-partial_schema: false
-columns:
-- name: "id"
-  type: "BIGINT"
-  tests:
-  - "not_null"
-- name: "name"
-  type: "STRING"
-  tests:
-  - "not_null"
-- name: "sizing"
-  type: "STRING"
-  tests:
-  - "not_null"
-- name: "weight_in_gram"
-  type: "BIGINT"
-  tests:
-  - "not_null"
-- name: "type"
-  type: "STRING"
-  tests:
-  - "not_null"
-- name: "category"
-  type: "STRING"
-  tests:
-  - "not_null"
-- name: "usda_id"
-  type: "BIGINT"
-  tests:
-  - "not_null"
-- name: "updated"
-  type: "TIMESTAMP"
-  tests:
-  - "not_null"
-
->>>products.table.json
-{
-  "flink" : {
-    "format" : "flexible-json",
-    "path" : "${DATA_PATH}/products.jsonl",
-    "source.monitor-interval" : 10000,
-    "connector" : "filesystem"
-  },
-  "metadata" : {
-    "_ingest_time" : {
-      "attribute" : "proctime()"
-    }
-  },
-  "version" : 1,
-  "table" : {
-    "type" : "source",
-    "primary-key" : [ "id", "name", "sizing", "weight_in_gram", "type", "category", "usda_id", "updated" ],
-    "timestamp" : "_ingest_time"
-  }
-}
+>>>products.table.sql
+CREATE TABLE `products` (
+  `id` BIGINT NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `sizing` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `weight_in_gram` BIGINT NOT NULL,
+  `type` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `usda_id` BIGINT NOT NULL,
+  `updated` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `event_time` AS NOW(),
+  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.001' SECOND
+) WITH (
+  'connector' = 'filesystem',
+  'format' = 'flexible-json',
+  'path' = '${DATA_PATH}/products.jsonl',
+  'source.monitor-interval' = '10 sec'
+);

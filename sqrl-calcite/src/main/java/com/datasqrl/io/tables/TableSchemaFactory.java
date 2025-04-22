@@ -1,12 +1,12 @@
 package com.datasqrl.io.tables;
 
+import java.nio.file.Path;
+import java.util.Optional;
+
 import com.datasqrl.config.TableConfig;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.util.ServiceLoaderDiscovery;
 import com.google.common.base.Preconditions;
-import java.net.URI;
-import java.nio.file.Path;
-import java.util.Optional;
 
 public interface TableSchemaFactory {
 
@@ -20,8 +20,9 @@ public interface TableSchemaFactory {
    * @deprecated Should not be used anymore and will be removed once factored out of Flink
    * executable plan
    */
-  default TableSchema create(String schemaDefinition, ErrorCollector errors) {
-    TableSchema schema = create(schemaDefinition, Optional.empty(), errors);
+  @Deprecated
+default TableSchema create(String schemaDefinition, ErrorCollector errors) {
+    var schema = create(schemaDefinition, Optional.empty(), errors);
     Preconditions.checkArgument(!errors.hasErrors(), "Encountered errors processing internal schema: %s", errors);
     return schema;
   }

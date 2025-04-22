@@ -1,7 +1,0 @@
-{
-  "version": "1",
-  "test-runner": {
-    "delay-sec" : -1,
-    "required-checkpoints" : 1
-  }
-}

@@ -1,18 +1,21 @@
 package com.datasqrl.datatype;
 
-import com.datasqrl.json.FlinkJsonType;
-import java.lang.reflect.Field;
-import lombok.SneakyThrows;
 import org.apache.flink.api.common.typeutils.TypeSerializer;
 import org.apache.flink.core.memory.DataOutputSerializer;
 import org.apache.flink.table.annotation.DataTypeHint;
 import org.apache.flink.table.annotation.InputGroup;
 import org.apache.flink.table.functions.ScalarFunction;
 
+import com.datasqrl.function.AutoRegisterSystemFunction;
+import com.google.auto.service.AutoService;
+
+import lombok.SneakyThrows;
+
 /**
  * Converts an annotated data type to
  */
-public class SerializeToBytes extends ScalarFunction {
+@AutoService(AutoRegisterSystemFunction.class)
+public class SerializeToBytes extends ScalarFunction implements AutoRegisterSystemFunction {
 
   @SneakyThrows
   public byte[] eval(@DataTypeHint(inputGroup = InputGroup.ANY) Object object) {

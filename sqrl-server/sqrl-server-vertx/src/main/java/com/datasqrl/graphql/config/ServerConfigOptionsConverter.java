@@ -24,7 +24,7 @@ public class ServerConfigOptionsConverter {
     serverConfig.setHttpServerOptions(
         new HttpServerOptions(json.getJsonObject("httpServerOptions") == null
             ? new JsonObject() : json.getJsonObject("httpServerOptions")));
-    PgConnectOptions pgConnectOptions =  json.getJsonObject("pgConnectOptions") == null
+    var pgConnectOptions =  json.getJsonObject("pgConnectOptions") == null
         ? PgConnectOptions.fromEnv()
         : new PgConnectOptions(json.getJsonObject("pgConnectOptions"));
     serverConfig.setPgConnectOptions(pgConnectOptions);

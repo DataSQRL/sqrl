@@ -1,51 +1,30 @@
 package com.datasqrl.datatype.flink.avro;
 
-import com.datasqrl.config.TableConfig;
-import com.datasqrl.config.TableConfig.Format;
-import com.datasqrl.datatype.DataTypeMapper;
-import com.datasqrl.datatype.SerializeToBytes;
-import com.datasqrl.datatype.flink.FlinkDataTypeMapper;
-import com.datasqrl.engine.stream.flink.connector.CastFunction;
-import com.datasqrl.json.FlinkJsonType;
-import com.datasqrl.json.JsonToString;
-import com.datasqrl.vector.FlinkVectorType;
-import com.datasqrl.vector.VectorToDouble;
-import com.google.auto.service.AutoService;
 import java.util.Optional;
+
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 
-@AutoService(DataTypeMapper.class)
-public class AvroFlinkFormatTypeMapper extends FlinkDataTypeMapper {
+import com.datasqrl.config.TableConfig;
+import com.datasqrl.datatype.DataTypeMapper;
+import com.datasqrl.datatype.DataTypeMapping;
+import com.datasqrl.datatype.DataTypeMappings;
+import com.datasqrl.datatype.SerializeToBytes;
+import com.datasqrl.datatype.flink.FlinkDataTypeMapper;
+import com.datasqrl.engine.stream.flink.connector.CastFunction;
+import com.datasqrl.types.json.FlinkJsonType;
+import com.datasqrl.types.json.functions.JsonToString;
+import com.datasqrl.types.vector.FlinkVectorType;
+import com.datasqrl.types.vector.functions.VectorToDouble;
+import com.google.auto.service.AutoService;
 
-  public boolean nativeTypeSupport(RelDataType type) {
+@AutoService(DataTypeMapper.class)
+public class AvroFlinkFormatTypeMapper extends FlinkDataTypeMapper implements DataTypeMapping {
+
+  @Override
+  public Optional<Mapper> getMapper(RelDataType type) {
+    //These are the supported types
     switch (type.getSqlTypeName()) {
-      case REAL:
-      case INTERVAL_YEAR:
-      case INTERVAL_YEAR_MONTH:
-      case INTERVAL_MONTH:
-      case INTERVAL_DAY:
-      case INTERVAL_DAY_HOUR:
-      case INTERVAL_DAY_MINUTE:
-      case INTERVAL_DAY_SECOND:
-      case INTERVAL_HOUR:
-      case INTERVAL_HOUR_MINUTE:
-      case INTERVAL_HOUR_SECOND:
-      case INTERVAL_MINUTE:
-      case INTERVAL_MINUTE_SECOND:
-      case INTERVAL_SECOND:
-      case NULL:
-      case SYMBOL:
-      case DISTINCT:
-      case STRUCTURED:
-      case OTHER:
-      case CURSOR:
-      case COLUMN_LIST:
-      case DYNAMIC_STAR:
-      case GEOMETRY:
-      case SARG:
-      default:
-        return false;
       case TINYINT:
       case BOOLEAN:
       case SMALLINT:
@@ -67,20 +46,44 @@ public class AvroFlinkFormatTypeMapper extends FlinkDataTypeMapper {
       case MAP:
       case MULTISET:
       case ROW:
-        return true;
-      case ANY:
-        return false;
+        return Optional.empty(); //These are supported
     }
+    if (type instanceof RawRelDataType rawRelDataType) {
+      if (rawRelDataType.getRawType().getDefaultConversion() == FlinkJsonType.class) {
+        return Optional.of(DataTypeMappings.JSON_TO_STRING_ONLY);
+      } else if (rawRelDataType.getRawType().getDefaultConversion() == FlinkVectorType.class) {
+        return Optional.of(DataTypeMappings.VECTOR_TO_DOUBLE_ONLY);
+      }
+    }
+
+    // Cast needed, convert to bytes
+    return Optional.of(DataTypeMappings.TO_BYTES_ONLY);
   }
 
   @Override
+@Deprecated
+  public boolean nativeTypeSupport(RelDataType type) {
+    return switch (type.getSqlTypeName()) {
+    case REAL, INTERVAL_YEAR, INTERVAL_YEAR_MONTH, INTERVAL_MONTH, INTERVAL_DAY, INTERVAL_DAY_HOUR, INTERVAL_DAY_MINUTE, INTERVAL_DAY_SECOND, INTERVAL_HOUR, INTERVAL_HOUR_MINUTE, INTERVAL_HOUR_SECOND, INTERVAL_MINUTE,
+            INTERVAL_MINUTE_SECOND, INTERVAL_SECOND, NULL, SYMBOL, DISTINCT, STRUCTURED, OTHER, CURSOR, COLUMN_LIST, DYNAMIC_STAR, GEOMETRY,
+            SARG ->
+        false;
+    default -> false;
+    case TINYINT, BOOLEAN, SMALLINT, INTEGER, BIGINT, DECIMAL, FLOAT, DOUBLE, DATE, TIME, TIME_WITH_LOCAL_TIME_ZONE, TIMESTAMP,
+            TIMESTAMP_WITH_LOCAL_TIME_ZONE, CHAR, VARCHAR, BINARY, VARBINARY, ARRAY, MAP, MULTISET, ROW ->
+        true;
+    case ANY -> false;
+    };
+  }
+
+  @Override
+  @Deprecated
   public Optional<CastFunction> convertType(RelDataType type) {
     if (nativeTypeSupport(type)) {
       return Optional.empty(); //no cast needed
     }
 
-    if (type instanceof RawRelDataType) {
-      RawRelDataType rawRelDataType = (RawRelDataType) type;
+    if (type instanceof RawRelDataType rawRelDataType) {
       if (rawRelDataType.getRawType().getDefaultConversion() == FlinkJsonType.class) {
         return Optional.of(
             new CastFunction(JsonToString.class.getName(),
@@ -94,21 +97,17 @@ public class AvroFlinkFormatTypeMapper extends FlinkDataTypeMapper {
 
     // Cast needed, convert to bytes
     return Optional.of(
-        new CastFunction(SerializeToBytes.class.getSimpleName(),
+        new CastFunction(SerializeToBytes.class.getName(),
             convert(new SerializeToBytes())));
   }
 
   @Override
+  @Deprecated
   public boolean isTypeOf(TableConfig tableConfig) {
-    Optional<Format> formatOpt = tableConfig.getConnectorConfig().getFormat();
-    if (formatOpt.isEmpty()) {
-      return false;
-    }
-
-    Format format = formatOpt.get();
-
-
-    return format.getName().equalsIgnoreCase("avro") || format.getName()
-        .equalsIgnoreCase("avro-confluent");
+    return tableConfig.getConnectorConfig().getFormat().map(
+        format -> format.equalsIgnoreCase("avro") ||
+            format.equalsIgnoreCase("avro-confluent")
+    ).orElse(false);
   }
+
 }

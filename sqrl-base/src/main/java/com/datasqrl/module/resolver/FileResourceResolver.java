@@ -2,14 +2,15 @@ package com.datasqrl.module.resolver;
 
 import static com.datasqrl.util.NameUtil.namepath2Path;
 
-import com.datasqrl.canonicalizer.NamePath;
-import com.google.common.base.Preconditions;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import com.datasqrl.canonicalizer.NamePath;
+import com.google.common.base.Preconditions;
+
 import lombok.SneakyThrows;
 
 public class FileResourceResolver implements ResourceResolver {
@@ -19,10 +20,6 @@ public class FileResourceResolver implements ResourceResolver {
   public FileResourceResolver(Path baseDir) {
     Preconditions.checkState(Files.isDirectory(baseDir));
     this.baseDir = baseDir;
-  }
-
-  public Optional<URI> resolve(Path path) {
-    return Optional.of(path.toFile().toURI());
   }
 
   @Override
@@ -45,7 +42,7 @@ public class FileResourceResolver implements ResourceResolver {
 
   @Override
   public Optional<Path> resolveFile(NamePath namePath) {
-    Path path = namepath2Path(baseDir, namePath);
+    var path = namepath2Path(baseDir, namePath);
     if (!Files.exists(path)) {
       return Optional.empty();
     }

@@ -6,6 +6,31 @@ package com.datasqrl.plan.rules;
 import static com.datasqrl.error.ErrorCode.MULTIPLE_PRIMARY_KEY;
 import static com.datasqrl.error.ErrorCode.PRIMARY_KEY_NULLABLE;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.OptionalInt;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import org.apache.calcite.rel.RelCollation;
+import org.apache.calcite.rel.RelCollations;
+import org.apache.calcite.rel.RelFieldCollation;
+import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.logical.LogicalSort;
+import org.apache.calcite.rel.type.RelDataTypeField;
+import org.apache.calcite.rex.RexFieldCollation;
+import org.apache.calcite.rex.RexInputRef;
+import org.apache.calcite.rex.RexNode;
+import org.apache.calcite.sql.SqlKind;
+import org.apache.calcite.sql.fun.SqlStdOperatorTable;
+import org.apache.calcite.tools.RelBuilder;
+
+import com.datasqrl.calcite.SqrlRexUtil;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.engine.EngineFeature;
@@ -14,40 +39,25 @@ import com.datasqrl.io.tables.TableType;
 import com.datasqrl.plan.hints.DedupHint;
 import com.datasqrl.plan.hints.SqrlHint;
 import com.datasqrl.plan.hints.TopNHint;
-import com.datasqrl.plan.table.*;
+import com.datasqrl.plan.table.NameAdjuster;
+import com.datasqrl.plan.table.NowFilter;
+import com.datasqrl.plan.table.PhysicalRelationalTable;
+import com.datasqrl.plan.table.PullupOperator;
+import com.datasqrl.plan.table.SortOrder;
+import com.datasqrl.plan.table.Timestamps;
 import com.datasqrl.plan.table.Timestamps.Type;
-import com.datasqrl.plan.util.SelectIndexMap;
-import com.datasqrl.plan.util.PrimaryKeyMap;
+import com.datasqrl.plan.table.TopNConstraint;
 import com.datasqrl.plan.util.IndexMap;
-import com.datasqrl.calcite.SqrlRexUtil;
+import com.datasqrl.plan.util.PrimaryKeyMap;
+import com.datasqrl.plan.util.SelectIndexMap;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ContiguousSet;
-
-import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.ToString;
 import lombok.Value;
-import org.apache.calcite.rel.RelCollation;
-import org.apache.calcite.rel.RelCollations;
-import org.apache.calcite.rel.RelFieldCollation;
-import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.rel.logical.LogicalSort;
-import org.apache.calcite.rel.metadata.RelMetadataQuery;
-import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rel.type.RelDataTypeField;
-import org.apache.calcite.rex.RexBuilder;
-import org.apache.calcite.rex.RexFieldCollation;
-import org.apache.calcite.rex.RexInputRef;
-import org.apache.calcite.rex.RexNode;
-import org.apache.calcite.sql.SqlKind;
-import org.apache.calcite.sql.fun.SqlStdOperatorTable;
-import org.apache.calcite.tools.RelBuilder;
 
 @Value
 @AllArgsConstructor
@@ -107,7 +117,7 @@ public class AnnotatedLP implements RelHolder {
   }
 
   public AnnotatedLPBuilder copy() {
-    AnnotatedLPBuilder builder = AnnotatedLP.builder();
+    var builder = AnnotatedLP.builder();
     builder.relNode(relNode);
     builder.type(type);
     builder.primaryKey(primaryKey);
@@ -123,6 +133,11 @@ public class AnnotatedLP implements RelHolder {
 
   public int getFieldLength() {
     return relNode.getRowType().getFieldCount();
+  }
+
+  public List<String> getFieldNamesWithIndex(List<Integer> indexes) {
+    var alpFields = relNode.getRowType().getFieldList();
+    return indexes.stream().map(i -> alpFields.get(i).getName() + "[" + i + "]").collect(Collectors.toList());
   }
 
   /**
@@ -145,24 +160,24 @@ public class AnnotatedLP implements RelHolder {
 
     SortOrder newSort = sort;
     if (topN.isDistinct() || (topN.hasPartition() && topN.hasLimit())) { //distinct or (hasPartition and hasLimit)
-      final RelDataType inputType = relBuilder.peek().getRowType();
-      RexBuilder rexBuilder = relBuilder.getRexBuilder();
+      final var inputType = relBuilder.peek().getRowType();
+      var rexBuilder = relBuilder.getRexBuilder();
 
       List<Integer> projectIdx = ContiguousSet.closedOpen(0, inputType.getFieldCount()).asList();
       List<Integer> partitionIdx = topN.getPartition();
 
-      int rowFunctionColumns = 1;
+      var rowFunctionColumns = 1;
       if (topN.isDistinct()) { //It's a partitioned distinct
         rowFunctionColumns += topN.hasLimit() ? 2 : 1;
       }
-      int projectLength = projectIdx.size() + rowFunctionColumns;
+      var projectLength = projectIdx.size() + rowFunctionColumns;
 
       //Create references for all projects and partition keys
       List<RexNode> partitionKeys = new ArrayList<>(partitionIdx.size());
       List<RexNode> projects = new ArrayList<>(projectLength);
       List<String> projectNames = new ArrayList<>(projectLength);
       for (Integer idx : projectIdx) {
-        RexInputRef ref = RexInputRef.of(idx, inputType);
+        var ref = RexInputRef.of(idx, inputType);
         projects.add(ref);
         projectNames.add(relBuilder.peek().getRowType().getFieldNames().get(idx));
         if (partitionIdx.contains(idx)) {
@@ -187,7 +202,7 @@ public class AnnotatedLP implements RelHolder {
             .forEach(fieldCollations::add);
       }
 
-      SqrlRexUtil rexUtil = new SqrlRexUtil(relBuilder.getTypeFactory());
+      var rexUtil = new SqrlRexUtil(relBuilder.getTypeFactory());
       //Add row_number (since it always applies)
       projects.add(rexUtil.createRowFunction(SqlStdOperatorTable.ROW_NUMBER, partitionKeys,
           fieldCollations));
@@ -208,7 +223,7 @@ public class AnnotatedLP implements RelHolder {
       }
 
       relBuilder.project(projects, projectNames);
-      RelDataType windowType = relBuilder.peek().getRowType();
+      var windowType = relBuilder.peek().getRowType();
       //Add filter
       List<RexNode> conditions = new ArrayList<>();
       if (topN.isDistinct()) {
@@ -226,12 +241,12 @@ public class AnnotatedLP implements RelHolder {
       }
 
       relBuilder.filter(conditions);
-      PrimaryKeyMap newPk = primaryKey.remap(IndexMap.IDENTITY);
-      SelectIndexMap newSelect = select.remap(IndexMap.IDENTITY);
+      var newPk = primaryKey.remap(IndexMap.IDENTITY);
+      var newSelect = select.remap(IndexMap.IDENTITY);
       if (topN.hasLimit(1) || topN.isDistinct()) { //Drop sort since it doesn't apply globally
         newSort = SortOrder.EMPTY;
       } else { //Add partitioned sort on top
-        SortOrder sortByRowNum = SortOrder.of(topN.getPartition(),
+        var sortByRowNum = SortOrder.of(topN.getPartition(),
             RelCollations.of(new RelFieldCollation(rowNumberIdx,
                 RelFieldCollation.Direction.ASCENDING, RelFieldCollation.NullDirection.LAST)));
         newSort = newSort.ifEmpty(sortByRowNum);
@@ -298,10 +313,14 @@ public class AnnotatedLP implements RelHolder {
   }
 
   public AnnotatedLP withDefaultSort() {
-    if (!topN.isEmpty()) return this;
+    if (!topN.isEmpty()) {
+        return this;
+    }
     SortOrder newSort;
     if (sort.isEmpty()) {
-      if (relNode instanceof LogicalSort) return this;
+      if (relNode instanceof LogicalSort) {
+        return this;
+    }
       newSort = getDefaultOrder(this);
     } else {
       newSort = sort.ensurePrimaryKeyPresent(primaryKey);
@@ -324,10 +343,10 @@ public class AnnotatedLP implements RelHolder {
 
   public AnnotatedLP toRelation(RelBuilder relB, ExecutionAnalysis exec) {
     //inline everything
-    AnnotatedLP inlined = inlineNowFilter(relB, exec).inlineTopN(relB, exec).inlineSort(relB, exec);
+    var inlined = inlineNowFilter(relB, exec).inlineTopN(relB, exec).inlineSort(relB, exec);
     //add select for select map
     relB.push(inlined.relNode);
-    SqrlRexUtil rexUtil = new SqrlRexUtil(relB);
+    var rexUtil = new SqrlRexUtil(relB);
     relB.project(rexUtil.getProjection(inlined.select, relB.peek()));
 
     return AnnotatedLP.build(relB.build(), TableType.RELATION,
@@ -357,11 +376,13 @@ public class AnnotatedLP implements RelHolder {
   public AnnotatedLP postProcess(@NonNull RelBuilder relBuilder, RelNode originalRelNode,
       SqrlConverterConfig config, boolean inlinePullups, ErrorCollector errors) {
     errors.checkFatal(type!=TableType.LOOKUP, "Lookup tables can only be used in temporal joins");
-    ExecutionAnalysis exec = config.getExecAnalysis();
-    if (type==TableType.RELATION) exec.requireFeature(EngineFeature.RELATIONS);
+    var exec = config.getExecAnalysis();
+    if (type==TableType.RELATION) {
+        exec.requireFeature(EngineFeature.RELATIONS);
+    }
 
     //Now filters are always inlined
-    AnnotatedLP input = this;
+    var input = this;
     if (inlinePullups) {
       //Inline all pullups and don't pass them downstream in the DAG
       input = this.inlineAll(relBuilder, exec);
@@ -392,7 +413,7 @@ public class AnnotatedLP implements RelHolder {
     List<Integer> projectIndexes = new ArrayList<>();
     List<String> projectNames = new ArrayList<>();
     //Add all the selects first
-    for (int i = 0; i < input.select.getSourceLength(); i++) {
+    for (var i = 0; i < input.select.getSourceLength(); i++) {
       projectIndexes.add(input.select.map(i));
       projectNames.add(originalFieldNames.get(i));
     }
@@ -402,20 +423,20 @@ public class AnnotatedLP implements RelHolder {
       //The user is manually overwriting the primary key.
       List<Integer> chosenPks = new ArrayList<>();
       for (String pkName : config.primaryKeyNames) {
-        OptionalInt pkIndex = IntStream.range(0, projectNames.size()).filter(i -> projectNames.get(i).equalsIgnoreCase(pkName)).findFirst();
+        var pkIndex = IntStream.range(0, projectNames.size()).filter(i -> projectNames.get(i).equalsIgnoreCase(pkName)).findFirst();
         errors.checkFatal(pkIndex.isPresent(), "Primary key column %s not found in query", pkName);
         chosenPks.add(pkIndex.getAsInt());
       }
       primaryKey = PrimaryKeyMap.of(chosenPks);
     } else if (!input.primaryKey.isUndefined()) {
       List<Integer> chosenPks = new ArrayList<>();
-      for (int i = 0; i < input.primaryKey.getLength(); i++) {
-        PrimaryKeyMap.ColumnSet columnSet = input.primaryKey.get(i);
+      for (var i = 0; i < input.primaryKey.getLength(); i++) {
+        var columnSet = input.primaryKey.get(i);
         //Find all indexes that map onto pk columns
-        int[] newPkIndexes = IntStream.range(0, projectIndexes.size()).filter(idx -> columnSet.contains(projectIndexes.get(idx))).toArray();
+        var newPkIndexes = IntStream.range(0, projectIndexes.size()).filter(idx -> columnSet.contains(projectIndexes.get(idx))).toArray();
         List<Integer> oldPkIndexes = Arrays.stream(newPkIndexes).mapToObj(projectIndexes::get).collect(Collectors.toList());
         if (newPkIndexes.length > 1) {
-          errors.warn(MULTIPLE_PRIMARY_KEY, "A primary key column is mapped to multiple columns in query: %s",
+          errors.notice(MULTIPLE_PRIMARY_KEY, "A primary key column is mapped to multiple columns in query: %s",
                   oldPkIndexes.stream().map(getFieldName).collect(Collectors.toList()));
         }
         if (newPkIndexes.length == 0) {
@@ -458,9 +479,9 @@ public class AnnotatedLP implements RelHolder {
       timestampBuilder = Timestamps.builder().type(Type.UNDEFINED);
     } else {
       timestampBuilder = Timestamps.builder().type(Type.OR);
-      boolean mappedAny = false;
+      var mappedAny = false;
       for (Integer timeIdx : input.timestamp.getCandidates()) {
-        int newIdx = projectIndexes.indexOf(timeIdx);
+        var newIdx = projectIndexes.indexOf(timeIdx);
         if (newIdx >= 0) {
           timestampBuilder.candidate(newIdx);
           mappedAny = true;
@@ -469,7 +490,7 @@ public class AnnotatedLP implements RelHolder {
       }
       if (!mappedAny) {
         //if no timestamp candidate has been mapped, map the best one to preserve a timestamp
-        Integer bestCandidate = input.timestamp.getBestCandidate(relBuilder);
+        var bestCandidate = input.timestamp.getBestCandidate(relBuilder);
         timestampBuilder.candidate(projectIndexes.size());
         projectIndexes.add(bestCandidate);
         projectNames.add(makeMeta.apply(bestCandidate));
@@ -479,7 +500,7 @@ public class AnnotatedLP implements RelHolder {
 
     //Make sure we preserve sort orders if they aren't selected
     for (RelFieldCollation fieldcol : input.sort.getCollation().getFieldCollations()) {
-      int newIdx = projectIndexes.indexOf(fieldcol.getFieldIndex());
+      var newIdx = projectIndexes.indexOf(fieldcol.getFieldIndex());
       if (newIdx < 0) {
         projectIndexes.add(fieldcol.getFieldIndex());
         projectNames.add(makeMeta.apply(fieldcol.getFieldIndex()));
@@ -492,17 +513,17 @@ public class AnnotatedLP implements RelHolder {
             idx==PK_LITERAL_IDENTIFIER?relBuilder.literal(1):RexInputRef.of(idx, relBuilder.peek().getRowType()))
             .collect(Collectors.toUnmodifiableList());
 
-    IndexMap remap = IndexMap.of(projectIndexes);
-    SelectIndexMap updatedSelect = SelectIndexMap.identity(input.select.getSourceLength(), input.select.getSourceLength());
+    var remap = IndexMap.of(projectIndexes);
+    var updatedSelect = SelectIndexMap.identity(input.select.getSourceLength(), input.select.getSourceLength());
 
     //Only add projection if it adds anything, i.e. it changes what is selected or renames it
-    List<String> peekedFieldNames = relBuilder.peek().getRowType().getFieldNames();
+    var peekedFieldNames = relBuilder.peek().getRowType().getFieldNames();
     if (!projectIndexes.equals(ContiguousSet.closedOpen(0, peekedFieldNames.size()).asList())
      || IntStream.range(0, peekedFieldNames.size()).filter(i ->projectNames.get(i)!=null)
         .anyMatch(i -> !projectNames.get(i).equals(peekedFieldNames.get(i)))) {
       relBuilder.project(projects, projectNames, true);
     }
-    RelNode relNode = relBuilder.build();
+    var relNode = relBuilder.build();
 
 
     return new AnnotatedLP(relNode, input.type, primaryKey,
@@ -514,7 +535,7 @@ public class AnnotatedLP implements RelHolder {
 
 
   public double estimateRowCount() {
-    final RelMetadataQuery mq = relNode.getCluster().getMetadataQuery();
+    final var mq = relNode.getCluster().getMetadataQuery();
     return mq.getRowCount(relNode);
     //return 1.0d;
   }

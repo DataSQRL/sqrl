@@ -1,22 +1,27 @@
 package com.datasqrl.io.schema.avro;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
-import com.datasqrl.calcite.type.TypeFactory;
-import com.datasqrl.error.ErrorCollector;
 import java.util.Arrays;
-import java.util.IdentityHashMap;
 import java.util.List;
+
 import org.apache.avro.LogicalType;
 import org.apache.avro.LogicalTypes;
 import org.apache.avro.Schema;
 import org.apache.avro.Schema.Type;
 import org.apache.avro.SchemaBuilder;
 import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import com.datasqrl.error.ErrorCollector;
 
 public class AvroToRelDataTypeConverterTest {
 
@@ -32,117 +37,117 @@ public class AvroToRelDataTypeConverterTest {
   @Test
   public void testPrimitiveTypes() {
     // INT
-    Schema intSchema = Schema.create(Type.INT);
-    RelDataType intType = converter.convert(intSchema);
+    var intSchema = Schema.create(Type.INT);
+    var intType = converter.convert(intSchema);
     assertEquals(SqlTypeName.INTEGER, intType.getSqlTypeName());
 
     // LONG
-    Schema longSchema = Schema.create(Type.LONG);
-    RelDataType longType = converter.convert(longSchema);
+    var longSchema = Schema.create(Type.LONG);
+    var longType = converter.convert(longSchema);
     assertEquals(SqlTypeName.BIGINT, longType.getSqlTypeName());
 
     // STRING
-    Schema stringSchema = Schema.create(Type.STRING);
-    RelDataType stringType = converter.convert(stringSchema);
+    var stringSchema = Schema.create(Type.STRING);
+    var stringType = converter.convert(stringSchema);
     assertEquals(SqlTypeName.VARCHAR, stringType.getSqlTypeName());
 
     // BOOLEAN
-    Schema booleanSchema = Schema.create(Type.BOOLEAN);
-    RelDataType booleanType = converter.convert(booleanSchema);
+    var booleanSchema = Schema.create(Type.BOOLEAN);
+    var booleanType = converter.convert(booleanSchema);
     assertEquals(SqlTypeName.BOOLEAN, booleanType.getSqlTypeName());
 
     // FLOAT
-    Schema floatSchema = Schema.create(Type.FLOAT);
-    RelDataType floatType = converter.convert(floatSchema);
+    var floatSchema = Schema.create(Type.FLOAT);
+    var floatType = converter.convert(floatSchema);
     assertEquals(SqlTypeName.FLOAT, floatType.getSqlTypeName());
 
     // DOUBLE
-    Schema doubleSchema = Schema.create(Type.DOUBLE);
-    RelDataType doubleType = converter.convert(doubleSchema);
+    var doubleSchema = Schema.create(Type.DOUBLE);
+    var doubleType = converter.convert(doubleSchema);
     assertEquals(SqlTypeName.DOUBLE, doubleType.getSqlTypeName());
 
     // BYTES
-    Schema bytesSchema = Schema.create(Type.BYTES);
-    RelDataType bytesType = converter.convert(bytesSchema);
+    var bytesSchema = Schema.create(Type.BYTES);
+    var bytesType = converter.convert(bytesSchema);
     assertEquals(SqlTypeName.VARBINARY, bytesType.getSqlTypeName());
 
     // NULL
-    Schema nullSchema = Schema.create(Type.NULL);
-    RelDataType nullType = converter.convert(nullSchema);
+    var nullSchema = Schema.create(Type.NULL);
+    var nullType = converter.convert(nullSchema);
     assertEquals(SqlTypeName.NULL, nullType.getSqlTypeName());
   }
 
   @Test
   public void testLogicalTypes() {
     // Decimal (Bytes)
-    LogicalTypes.Decimal decimalLogicalType = LogicalTypes.decimal(10, 2);
-    Schema decimalSchema = Schema.create(Type.BYTES);
+    var decimalLogicalType = LogicalTypes.decimal(10, 2);
+    var decimalSchema = Schema.create(Type.BYTES);
     decimalLogicalType.addToSchema(decimalSchema);
-    RelDataType decimalType = converter.convert(decimalSchema);
+    var decimalType = converter.convert(decimalSchema);
     assertEquals(SqlTypeName.DECIMAL, decimalType.getSqlTypeName());
     assertEquals(10, decimalType.getPrecision());
     assertEquals(2, decimalType.getScale());
 
     // Decimal (Fixed)
-    Schema fixedDecimalSchema = Schema.createFixed("DecimalFixed", null, null, 16);
+    var fixedDecimalSchema = Schema.createFixed("DecimalFixed", null, null, 16);
     decimalLogicalType.addToSchema(fixedDecimalSchema);
-    RelDataType fixedDecimalType = converter.convert(fixedDecimalSchema);
+    var fixedDecimalType = converter.convert(fixedDecimalSchema);
     assertEquals(SqlTypeName.DECIMAL, fixedDecimalType.getSqlTypeName());
     assertEquals(10, fixedDecimalType.getPrecision());
     assertEquals(2, fixedDecimalType.getScale());
 
     // Date
-    Schema dateSchema = Schema.create(Type.INT);
+    var dateSchema = Schema.create(Type.INT);
     LogicalTypes.date().addToSchema(dateSchema);
-    RelDataType dateType = converter.convert(dateSchema);
+    var dateType = converter.convert(dateSchema);
     assertEquals(SqlTypeName.DATE, dateType.getSqlTypeName());
 
     // Time (millis)
-    Schema timeMillisSchema = Schema.create(Type.INT);
+    var timeMillisSchema = Schema.create(Type.INT);
     LogicalTypes.timeMillis().addToSchema(timeMillisSchema);
-    RelDataType timeMillisType = converter.convert(timeMillisSchema);
+    var timeMillisType = converter.convert(timeMillisSchema);
     assertEquals(SqlTypeName.TIME, timeMillisType.getSqlTypeName());
     assertEquals(0, timeMillisType.getPrecision());
 
     // Time (micros)
-    Schema timeMicrosSchema = Schema.create(Type.LONG);
+    var timeMicrosSchema = Schema.create(Type.LONG);
     LogicalTypes.timeMicros().addToSchema(timeMicrosSchema);
-    RelDataType timeMicrosType = converter.convert(timeMicrosSchema);
+    var timeMicrosType = converter.convert(timeMicrosSchema);
     assertEquals(SqlTypeName.TIME, timeMicrosType.getSqlTypeName());
     assertEquals(0, timeMicrosType.getPrecision());
 
     // Timestamp (millis)
-    Schema timestampMillisSchema = Schema.create(Type.LONG);
+    var timestampMillisSchema = Schema.create(Type.LONG);
     LogicalTypes.timestampMillis().addToSchema(timestampMillisSchema);
-    RelDataType timestampMillisType = converter.convert(timestampMillisSchema);
+    var timestampMillisType = converter.convert(timestampMillisSchema);
     assertEquals(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, timestampMillisType.getSqlTypeName());
     assertEquals(3, timestampMillisType.getPrecision());
 
     // Timestamp (micros)
-    Schema timestampMicrosSchema = Schema.create(Type.LONG);
+    var timestampMicrosSchema = Schema.create(Type.LONG);
     LogicalTypes.timestampMicros().addToSchema(timestampMicrosSchema);
-    RelDataType timestampMicrosType = converter.convert(timestampMicrosSchema);
+    var timestampMicrosType = converter.convert(timestampMicrosSchema);
     assertEquals(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, timestampMicrosType.getSqlTypeName());
     assertEquals(6, timestampMicrosType.getPrecision());
 
     // Local Timestamp (millis)
-    Schema timestampLocalMillisSchema = Schema.create(Type.LONG);
+    var timestampLocalMillisSchema = Schema.create(Type.LONG);
     LogicalTypes.localTimestampMillis().addToSchema(timestampLocalMillisSchema);
-    RelDataType timestampLocalMillisType = converter.convert(timestampLocalMillisSchema);
+    var timestampLocalMillisType = converter.convert(timestampLocalMillisSchema);
     assertEquals(SqlTypeName.TIMESTAMP, timestampLocalMillisType.getSqlTypeName());
     assertEquals(3, timestampLocalMillisType.getPrecision());
 
     // Local Timestamp (micros)
-    Schema timestampLocalMicrosSchema = Schema.create(Type.LONG);
+    var timestampLocalMicrosSchema = Schema.create(Type.LONG);
     LogicalTypes.localTimestampMicros().addToSchema(timestampLocalMicrosSchema);
-    RelDataType timestampLocalMicrosType = converter.convert(timestampLocalMicrosSchema);
+    var timestampLocalMicrosType = converter.convert(timestampLocalMicrosSchema);
     assertEquals(SqlTypeName.TIMESTAMP, timestampLocalMicrosType.getSqlTypeName());
     assertEquals(6, timestampLocalMicrosType.getPrecision());
 
     // UUID
-    Schema uuidSchema = Schema.create(Type.STRING);
+    var uuidSchema = Schema.create(Type.STRING);
     LogicalTypes.uuid().addToSchema(uuidSchema);
-    RelDataType uuidType = converter.convert(uuidSchema);
+    var uuidType = converter.convert(uuidSchema);
     assertEquals(SqlTypeName.VARCHAR, uuidType.getSqlTypeName());
     assertEquals(Integer.MAX_VALUE, uuidType.getPrecision());
   }
@@ -150,17 +155,17 @@ public class AvroToRelDataTypeConverterTest {
   @Test
   public void testUnionTypes() {
     // Union of NULL and INT (nullable INT)
-    Schema nullableIntSchema = Schema.createUnion(
+    var nullableIntSchema = Schema.createUnion(
         Arrays.asList(Schema.create(Type.NULL), Schema.create(Type.INT)));
-    RelDataType nullableIntType = converter.convert(nullableIntSchema);
+    var nullableIntType = converter.convert(nullableIntSchema);
     assertEquals(SqlTypeName.INTEGER, nullableIntType.getSqlTypeName());
     assertTrue(nullableIntType.isNullable());
 
     // Union with multiple non-null types (should report an error)
-    Schema invalidUnionSchema = Schema.createUnion(
+    var invalidUnionSchema = Schema.createUnion(
         Arrays.asList(Schema.create(Type.INT), Schema.create(Type.STRING)));
     try {
-      RelDataType invalidUnionType = converter.convert(invalidUnionSchema);
+      var invalidUnionType = converter.convert(invalidUnionSchema);
       System.out.println(invalidUnionType);
       fail("Expected failure");
     } catch (Exception e) {}
@@ -170,27 +175,27 @@ public class AvroToRelDataTypeConverterTest {
   @Test
   public void testRecordType() {
     // Create a record schema with various fields
-    Schema recordSchema = SchemaBuilder.record("TestRecord").fields()
+    var recordSchema = SchemaBuilder.record("TestRecord").fields()
         .requiredString("name")
         .optionalInt("age")
         .name("balance").type().optional().type(LogicalTypes.decimal(10, 2).addToSchema(Schema.create(Type.BYTES)))
         .endRecord();
 
-    RelDataType recordType = converter.convert(recordSchema);
+    var recordType = converter.convert(recordSchema);
     assertNotNull(recordType);
     assertEquals(3, recordType.getFieldCount());
 
-    RelDataTypeField nameField = recordType.getFieldList().get(0);
+    var nameField = recordType.getFieldList().get(0);
     assertEquals("name", nameField.getName());
     assertEquals(SqlTypeName.VARCHAR, nameField.getType().getSqlTypeName());
     assertFalse(nameField.getType().isNullable());
 
-    RelDataTypeField ageField = recordType.getFieldList().get(1);
+    var ageField = recordType.getFieldList().get(1);
     assertEquals("age", ageField.getName());
     assertEquals(SqlTypeName.INTEGER, ageField.getType().getSqlTypeName());
     assertTrue(ageField.getType().isNullable());
 
-    RelDataTypeField balanceField = recordType.getFieldList().get(2);
+    var balanceField = recordType.getFieldList().get(2);
     assertEquals("balance", balanceField.getName());
     assertEquals(SqlTypeName.DECIMAL, balanceField.getType().getSqlTypeName());
     assertEquals(10, balanceField.getType().getPrecision());
@@ -201,8 +206,8 @@ public class AvroToRelDataTypeConverterTest {
   @Test
   public void testArrayType() {
     // Array of INT
-    Schema arraySchema = Schema.createArray(Schema.create(Type.INT));
-    RelDataType arrayType = converter.convert(arraySchema);
+    var arraySchema = Schema.createArray(Schema.create(Type.INT));
+    var arrayType = converter.convert(arraySchema);
     assertEquals(SqlTypeName.ARRAY, arrayType.getSqlTypeName());
     RelDataType elementType = arrayType.getComponentType();
     assertEquals(SqlTypeName.INTEGER, elementType.getSqlTypeName());
@@ -211,8 +216,8 @@ public class AvroToRelDataTypeConverterTest {
   @Test
   public void testMapType() {
     // Map of STRING to LONG
-    Schema mapSchema = Schema.createMap(Schema.create(Type.LONG));
-    RelDataType mapType = converter.convert(mapSchema);
+    var mapSchema = Schema.createMap(Schema.create(Type.LONG));
+    var mapType = converter.convert(mapSchema);
     assertEquals(SqlTypeName.MAP, mapType.getSqlTypeName());
     RelDataType keyType = mapType.getKeyType();
     RelDataType valueType = mapType.getValueType();
@@ -224,18 +229,18 @@ public class AvroToRelDataTypeConverterTest {
   public void testEnumType() {
     // Enum with symbols
     List<String> symbols = Arrays.asList("RED", "GREEN", "BLUE");
-    Schema enumSchema = Schema.createEnum("Color", null, null, symbols);
-    RelDataType enumType = converter.convert(enumSchema);
+    var enumSchema = Schema.createEnum("Color", null, null, symbols);
+    var enumType = converter.convert(enumSchema);
     assertEquals(SqlTypeName.VARCHAR, enumType.getSqlTypeName());
-    int expectedLength = symbols.stream().mapToInt(String::length).max().orElse(1);
+    var expectedLength = symbols.stream().mapToInt(String::length).max().orElse(1);
 //    assertEquals(expectedLength, enumType.getPrecision());
   }
 
   @Test
   public void testFixedType() {
     // Fixed type without logical type (should map to VARBINARY)
-    Schema fixedSchema = Schema.createFixed("FixedType", null, null, 16);
-    RelDataType fixedType = converter.convert(fixedSchema);
+    var fixedSchema = Schema.createFixed("FixedType", null, null, 16);
+    var fixedType = converter.convert(fixedSchema);
     assertEquals(SqlTypeName.VARBINARY, fixedType.getSqlTypeName());
     assertEquals(16, fixedType.getPrecision());
   }
@@ -243,39 +248,39 @@ public class AvroToRelDataTypeConverterTest {
   @Test
   public void testComplexRecord() {
     // Record with nested record, array, and map
-    Schema innerRecordSchema = SchemaBuilder.record("InnerRecord").fields()
+    var innerRecordSchema = SchemaBuilder.record("InnerRecord").fields()
         .requiredInt("innerField")
         .endRecord();
 
-    Schema complexRecordSchema = SchemaBuilder.record("ComplexRecord").fields()
+    var complexRecordSchema = SchemaBuilder.record("ComplexRecord").fields()
         .name("nestedRecord").type(innerRecordSchema).noDefault()
         .name("intArray").type().array().items().intType().noDefault()
         .name("stringMap").type().map().values().stringType().noDefault()
         .endRecord();
 
-    RelDataType complexRecordType = converter.convert(complexRecordSchema);
+    var complexRecordType = converter.convert(complexRecordSchema);
     assertNotNull(complexRecordType);
     assertEquals(3, complexRecordType.getFieldCount());
 
     // Validate nested record field
-    RelDataTypeField nestedRecordField = complexRecordType.getFieldList().get(0);
+    var nestedRecordField = complexRecordType.getFieldList().get(0);
     assertEquals("nestedRecord", nestedRecordField.getName());
-    RelDataType nestedRecordType = nestedRecordField.getType();
+    var nestedRecordType = nestedRecordField.getType();
     assertEquals(SqlTypeName.ROW, nestedRecordType.getSqlTypeName());
     assertEquals(1, nestedRecordType.getFieldCount());
     assertEquals(SqlTypeName.INTEGER, nestedRecordType.getFieldList().get(0).getType().getSqlTypeName());
 
     // Validate array field
-    RelDataTypeField intArrayField = complexRecordType.getFieldList().get(1);
+    var intArrayField = complexRecordType.getFieldList().get(1);
     assertEquals("intArray", intArrayField.getName());
-    RelDataType intArrayType = intArrayField.getType();
+    var intArrayType = intArrayField.getType();
     assertEquals(SqlTypeName.ARRAY, intArrayType.getSqlTypeName());
     assertEquals(SqlTypeName.INTEGER, intArrayType.getComponentType().getSqlTypeName());
 
     // Validate map field
-    RelDataTypeField stringMapField = complexRecordType.getFieldList().get(2);
+    var stringMapField = complexRecordType.getFieldList().get(2);
     assertEquals("stringMap", stringMapField.getName());
-    RelDataType stringMapType = stringMapField.getType();
+    var stringMapType = stringMapField.getType();
     assertEquals(SqlTypeName.MAP, stringMapType.getSqlTypeName());
     assertEquals(SqlTypeName.VARCHAR, stringMapType.getKeyType().getSqlTypeName());
     assertEquals(SqlTypeName.VARCHAR, stringMapType.getValueType().getSqlTypeName());
@@ -284,7 +289,7 @@ public class AvroToRelDataTypeConverterTest {
   @Test
   public void testInvalidSchema() {
     // Invalid schema: Union with multiple non-null types
-    Schema invalidUnionSchema = Schema.createUnion(
+    var invalidUnionSchema = Schema.createUnion(
         Arrays.asList(Schema.create(Type.INT), Schema.create(Type.STRING)));
     RelDataType type = null;
     try {
@@ -299,30 +304,30 @@ public class AvroToRelDataTypeConverterTest {
   @Test
   public void testNullableFieldsInRecord() {
     // Record with nullable fields
-    Schema recordSchema = SchemaBuilder.record("NullableRecord").fields()
+    var recordSchema = SchemaBuilder.record("NullableRecord").fields()
         .name("nullableInt").type().unionOf().nullType().and().intType().endUnion().noDefault()
         .name("nonNullableString").type().stringType().noDefault()
         .endRecord();
 
-    RelDataType recordType = converter.convert(recordSchema);
+    var recordType = converter.convert(recordSchema);
     assertNotNull(recordType);
     assertEquals(2, recordType.getFieldCount());
 
-    RelDataTypeField nullableIntField = recordType.getFieldList().get(0);
+    var nullableIntField = recordType.getFieldList().get(0);
     assertTrue(nullableIntField.getType().isNullable());
 
-    RelDataTypeField nonNullableStringField = recordType.getFieldList().get(1);
+    var nonNullableStringField = recordType.getFieldList().get(1);
     assertFalse(nonNullableStringField.getType().isNullable());
   }
 
   @Test
   public void testNestedLogicalTypes() {
     // Array of timestamps
-    Schema timestampSchema = Schema.create(Type.LONG);
+    var timestampSchema = Schema.create(Type.LONG);
     LogicalTypes.timestampMicros().addToSchema(timestampSchema);
-    Schema arraySchema = Schema.createArray(timestampSchema);
+    var arraySchema = Schema.createArray(timestampSchema);
 
-    RelDataType arrayType = converter.convert(arraySchema);
+    var arrayType = converter.convert(arraySchema);
     assertEquals(SqlTypeName.ARRAY, arrayType.getSqlTypeName());
     RelDataType elementType = arrayType.getComponentType();
     assertEquals(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, elementType.getSqlTypeName());
@@ -332,20 +337,20 @@ public class AvroToRelDataTypeConverterTest {
   @Test
   public void testEmptyRecord() {
     // Empty record
-    Schema emptyRecordSchema = SchemaBuilder.record("EmptyRecord").fields().endRecord();
-    RelDataType emptyRecordType = converter.convert(emptyRecordSchema);
+    var emptyRecordSchema = SchemaBuilder.record("EmptyRecord").fields().endRecord();
+    var emptyRecordType = converter.convert(emptyRecordSchema);
     assertEquals(SqlTypeName.ROW, emptyRecordType.getSqlTypeName());
   }
 
   @Test
   public void testUnsupportedLogicalType() {
     // Add an unsupported logical type to a schema
-    Schema unsupportedLogicalSchema = Schema.create(Type.INT);
+    var unsupportedLogicalSchema = Schema.create(Type.INT);
     LogicalTypes.LogicalTypeFactory customFactory = schema -> new LogicalType("custom-logical-type");
     LogicalTypes.register("custom-logical-type", customFactory);
     new LogicalType("custom-logical-type").addToSchema(unsupportedLogicalSchema);
 
-    RelDataType type = converter.convert(unsupportedLogicalSchema);
+    var type = converter.convert(unsupportedLogicalSchema);
     assertEquals(SqlTypeName.INTEGER, type.getSqlTypeName()); // Should default to base type
   }
 
@@ -358,14 +363,14 @@ public class AvroToRelDataTypeConverterTest {
   @Test
   public void testRecursiveSchema() {
     // Recursive record schema (simplified for test)
-    Schema recursiveSchema = SchemaBuilder.record("Node").fields()
+    var recursiveSchema = SchemaBuilder.record("Node").fields()
         .name("value").type().intType().noDefault()
         .name("next").type().optional().type("Node")
         .endRecord();
 
     // Since the converter doesn't handle recursive schemas, it should report an error
     try {
-      RelDataType type = converter.convert(recursiveSchema);
+      var type = converter.convert(recursiveSchema);
       fail("Should fail");
     } catch (Exception e) {}
     assertTrue(errors.hasErrors());
@@ -374,13 +379,13 @@ public class AvroToRelDataTypeConverterTest {
   @Test
   public void testSchemaWithAliases() {
     // Schema with aliases (should be ignored in conversion)
-    Schema aliasedSchema = SchemaBuilder.record("OriginalName")
+    var aliasedSchema = SchemaBuilder.record("OriginalName")
         .aliases("Alias1", "Alias2")
         .fields()
         .requiredString("field")
         .endRecord();
 
-    RelDataType type = converter.convert(aliasedSchema);
+    var type = converter.convert(aliasedSchema);
     assertNotNull(type);
     assertEquals("OriginalName", aliasedSchema.getName());
     assertEquals(1, type.getFieldCount());

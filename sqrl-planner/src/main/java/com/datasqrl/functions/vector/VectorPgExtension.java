@@ -2,18 +2,18 @@ package com.datasqrl.functions.vector;
 
 import static com.datasqrl.function.FlinkUdfNsObject.getFunctionNameFromClass;
 
-import com.datasqrl.sql.PgExtension;
-import com.datasqrl.sql.SqlDDLStatement;
-import com.datasqrl.vector.FlinkVectorType;
-import com.datasqrl.vector.VectorFunctions;
-import com.google.auto.service.AutoService;
-
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@AutoService(PgExtension.class)
-public class VectorPgExtension implements PgExtension {
-  public final SqlDDLStatement ddlStatement = () -> "CREATE EXTENSION IF NOT EXISTS vector;";
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.sql.DatabaseExtension;
+import com.datasqrl.types.vector.FlinkVectorType;
+import com.datasqrl.types.vector.functions.VectorFunctions;
+import com.google.auto.service.AutoService;
+
+@AutoService(DatabaseExtension.class)
+public class VectorPgExtension implements DatabaseExtension {
+  public static final String ddlStatement = "CREATE EXTENSION IF NOT EXISTS vector";
 
   @Override
   public Class typeClass() {
@@ -21,14 +21,14 @@ public class VectorPgExtension implements PgExtension {
   }
 
   @Override
-  public Set<String> operators() {
+  public Set<Name> operators() {
     return VectorFunctions.functions.stream()
-        .map(f->getFunctionNameFromClass(f.getClass()).getDisplay())
+        .map(f->getFunctionNameFromClass(f.getClass()))
         .collect(Collectors.toSet());
   }
 
   @Override
-  public SqlDDLStatement getExtensionDdl() {
+  public String getExtensionDdl() {
     return ddlStatement;
   }
 }

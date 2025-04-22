@@ -1,0 +1,3 @@
+IMPORT createTable.*;
+
+MachineTempHourlyById(machineid INT NOT NULL) := SELECT * FROM MachineTempByHour WHERE machineid = :machineid;

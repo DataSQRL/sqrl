@@ -1,0 +1,66 @@
+IMPORT ecommerceTs.Customer;
+IMPORT ecommerceTs.Orders AS ExternalOrders;
+IMPORT ecommerceTs.* AS _;
+
+CustomerByTime2 := DISTINCT Customer ON customerid ORDER BY `timestamp` DESC NULLS LAST;
+
+/*+filtered_distinct_order*/
+CustomerFilteredDistinct := DISTINCT Customer ON customerid ORDER BY lastUpdated DESC;
+
+AnotherCustomer := SELECT customerid, email, lastUpdated FROM _customer WHERE customerid > 100;
+
+CustomerByMultipleTime := DISTINCT Customer ON customerid, email ORDER BY `timestamp` DESC, lastUpdated ASC;
+ExplicitDistinct := SELECT customerid, `timestamp`, name FROM (SELECT *, (ROW_NUMBER() OVER (PARTITION BY customerid ORDER BY `timestamp` DESC)) AS _rownum FROM Customer) WHERE (_rownum = 1);
+
+--maps to explicit distinct (check rowtype)
+InvalidDistinct := SELECT customerid, `timestamp`, name AS namee FROM (SELECT *, (ROW_NUMBER() OVER (PARTITION BY customerid ORDER BY `timestamp` DESC)) AS _rownum FROM Customer) WHERE (_rownum = 1);
+
+MissedTemporalJoin := SELECT * FROM ExternalOrders o JOIN ExplicitDistinct c ON o.customerid = c.customerid;
+TemporalJoin := SELECT * FROM ExternalOrders o JOIN ExplicitDistinct FOR SYSTEM_TIME AS OF `time` c ON o.customerid = c.customerid;
+
+Customer.related := SELECT * FROM Customer other WHERE this.customerid = other.customerid ORDER BY other.`timestamp`;
+
+Customer.relatedByLength(length INT) := SELECT * FROM Customer other WHERE this.customerid = other.customerid
+                AND CHAR_LENGTH(other.email) >= :length ORDER BY other.`timestamp`;
+
+
+/** This is for selected customers
+    and their orders
+  */ /* ignored comment */
+/*+ primary_key(customerid, name), index(hash, name) */
+SelectCustomers := SELECT * From Customer WHERE customerid > 0 ORDER BY `timestamp` DESC LIMIT 10;
+
+CustomerSubscription := SUBSCRIBE SELECT * FROM Customer;
+
+CustomerById(minId INT) := SELECT * FROM Customer WHERE customerid > :minId;
+
+TableFunctionCallsTblFct(arg1 INT, arg2 INT NOT NULL) := SELECT * FROM Table(CustomerById(:arg2)) WHERE customerid > :arg1;
+
+CustomerSubscriptionById(minId INT) := SUBSCRIBE SELECT * FROM Customer WHERE customerid = :minId;
+
+
+UnnestOrders := SELECT o.id, o.customerid, o.`time`, e.productid, e.quantity, e.discount FROM ExternalOrders o CROSS JOIN UNNEST(entries) e;
+UnnestOrders.newId := id + productid;
+
+CREATE TABLE Orders (
+    orderid INT,
+    amount FLOAT,
+    PRIMARY KEY (orderid) NOT ENFORCED
+);
+
+CustomerTimeWindow := SELECT
+                          window_start, window_end,
+                          COUNT(DISTINCT email) AS unique_email_count
+                      FROM TABLE(
+                              TUMBLE(TABLE SelectCustomers, DESCRIPTOR(`timestamp`), INTERVAL '1' MINUTE)
+                           )
+                      GROUP BY
+                          window_start, window_end;
+
+/*+ test, workload */
+CustomerTimeWindowTest := SELECT * FROM CustomerTimeWindow ORDER BY window_end DESC;
+
+CustomerQuery(id BIGINT) := SELECT * FROM AnotherCustomer WHERE customerid = :id;
+
+EXPORT CustomerTimeWindow TO print.TimeWindow;
+EXPORT TemporalJoin TO mysink.customersink;

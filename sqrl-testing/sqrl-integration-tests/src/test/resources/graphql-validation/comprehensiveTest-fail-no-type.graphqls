@@ -1,0 +1,3 @@
+type Query {
+    AnotherCustomer(limit: Int = 10, offset: Int = 0): [AnotherCustomer!]
+}

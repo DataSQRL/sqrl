@@ -12,20 +12,15 @@ public enum TableType {
   STATE, //table with natural primary key that ensures uniqueness but not a versioned change-stream
   LOOKUP, //table that allows lookup by primary key but no other form of processing
   //=add to temporal join
-  RELATION, //Relational data without timestamp, primary key or explicit stream-state semantics
-  //=overload in generic visit(RelNode) in parent, inline select map, and select query stage
+  RELATION, //the default state if we cannot infer it
   STATIC; //A set of data that does not change over time and valid for all time (e.g. values, table functions, or nested data)
   //=use timestamp of other side in join, update generic aggregate logic, write to database without timestamp
 
   public boolean hasTimestamp() {
-    switch(this) {
-      case STREAM:
-      case VERSIONED_STATE:
-      case STATE:
-        return true;
-      default:
-        return false; //NESTED, LOOKUP, RELATION
-    }
+    return switch (this) {
+    case STREAM, VERSIONED_STATE, STATE -> true;
+    default -> false; //NESTED, LOOKUP, RELATION
+    };
   }
 
   public boolean isLocked() {
@@ -33,16 +28,33 @@ public enum TableType {
   }
 
   public boolean hasPrimaryKey() {
-    switch(this) {
-      case STREAM:
-      case VERSIONED_STATE:
-      case STATE:
-      case LOOKUP:
-      case STATIC:
-        return true;
-      default:
-        return false; //NESTED and RELATION
+    return switch (this) {
+    case STREAM, VERSIONED_STATE, STATE, LOOKUP, STATIC -> true;
+    default -> false; //NESTED and RELATION
+    };
+  }
+
+  public TableType combine(TableType other) {
+    if (this==LOOKUP || other==LOOKUP) {
+        return RELATION; //or throw exception?
     }
+    if (this==STATIC) {
+        return other;
+    }
+    if (other==STATIC) {
+        return this;
+    }
+    if (this==RELATION || other==RELATION) {
+        return RELATION;
+    }
+    if (this==STREAM && other==STREAM) {
+        return STREAM;
+    }
+    return STATE;
+  }
+
+  public boolean supportsTemporalJoin() {
+    return this == VERSIONED_STATE || this == LOOKUP;
   }
 
   public boolean isStream() {

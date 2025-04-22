@@ -3,9 +3,9 @@
  */
 package com.datasqrl.util.data;
 
-import com.datasqrl.util.TestResources;
-
 import java.nio.file.Path;
+
+import com.datasqrl.util.TestResources;
 
 public class BookClub {
 

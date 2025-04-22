@@ -1,35 +1,30 @@
 package com.datasqrl.engine.database.relational;
 
+import java.util.LinkedHashMap;
+import java.util.List;
+
+import org.apache.calcite.sql.SqlIdentifier;
+import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqlNodeList;
+import org.apache.calcite.sql.parser.SqlParserPos;
+
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.PackageJson.EmptyEngineConfig;
-import com.datasqrl.engine.EnginePhysicalPlan;
-import com.datasqrl.engine.database.DatabasePhysicalPlan;
+import com.datasqrl.datatype.DataTypeMapping;
+import com.datasqrl.datatype.flink.iceberg.IcebergDataTypeMapper;
+import com.datasqrl.engine.database.DatabasePhysicalPlanOld;
 import com.datasqrl.engine.database.QueryEngine;
-import com.datasqrl.engine.database.QueryTemplate;
-import com.datasqrl.engine.database.relational.ddl.statements.CreateIndexDDL;
-import com.datasqrl.engine.database.relational.ddl.statements.DropIndexDDL;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.plan.global.PhysicalDAGPlan.DatabaseStagePlan;
-import com.datasqrl.plan.global.PhysicalDAGPlan.ReadQuery;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
-import com.datasqrl.plan.queries.IdentifiedQuery;
 import com.datasqrl.sql.SqlDDLStatement;
-import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+
 import lombok.NonNull;
-import org.apache.calcite.sql.SqlIdentifier;
-import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqlNodeList;
-import org.apache.calcite.sql.parser.SqlParserPos;
 
 public class IcebergEngine extends AbstractJDBCTableFormatEngine {
 
@@ -54,7 +49,18 @@ public class IcebergEngine extends AbstractJDBCTableFormatEngine {
   }
 
   @Override
-  public DatabasePhysicalPlan plan(StagePlan plan, List<StageSink> inputs, ExecutionPipeline pipeline,
+  public JdbcStatementFactory getStatementFactory() {
+    return new IcebergStatementFactory();
+  }
+
+  @Override
+  public DataTypeMapping getTypeMapping() {
+    return new IcebergDataTypeMapper();
+  }
+
+  @Override
+  @Deprecated
+  public DatabasePhysicalPlanOld plan(StagePlan plan, List<StageSink> inputs, ExecutionPipeline pipeline,
       List<StagePlan> stagePlans, SqrlFramework framework, ErrorCollector errorCollector) {
 
     List<SqlDDLStatement> sinkDDL;
@@ -66,12 +72,13 @@ public class IcebergEngine extends AbstractJDBCTableFormatEngine {
 
 
     //The plan for reading by each query engine
-    LinkedHashMap<String, DatabasePhysicalPlan> queryEnginePlans = new LinkedHashMap<>();
+    var queryEnginePlans = new LinkedHashMap<String, DatabasePhysicalPlanOld>();
     queryEngines.forEach((name, queryEngine) -> queryEnginePlans.put(name,
-        queryEngine.plan(connectorFactory, connectorConfig, plan, inputs, pipeline, stagePlans, framework, errorCollector)));
+        queryEngine.plan(connectorFactory, engineConfig, plan, inputs, pipeline, stagePlans, framework, errorCollector)));
 
     //We pick the first DDL from the engines
-    sinkDDL = queryEnginePlans.values().stream().map(DatabasePhysicalPlan::getDdl).findFirst().get();
+    sinkDDL = queryEnginePlans.values().stream().map(DatabasePhysicalPlanOld::getDdl).findFirst()
+        .orElse(List.of());
 
     //Uncomment for debug
 //    StreamUtil.filterByClass(inputs,
@@ -97,6 +104,7 @@ public class IcebergEngine extends AbstractJDBCTableFormatEngine {
       SqlNodeList columnList, SqlNode viewSqlNode) {
     throw new UnsupportedOperationException("Should not be called since we overwrite #plan");
   }
+
 
 
 }

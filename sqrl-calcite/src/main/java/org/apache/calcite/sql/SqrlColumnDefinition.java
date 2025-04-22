@@ -1,8 +1,8 @@
 package org.apache.calcite.sql;
 
-import lombok.Getter;
-import lombok.Value;
 import org.apache.calcite.sql.parser.SqlParserPos;
+
+import lombok.Getter;
 
 @Getter
 public class SqrlColumnDefinition extends SqrlSqlNode {

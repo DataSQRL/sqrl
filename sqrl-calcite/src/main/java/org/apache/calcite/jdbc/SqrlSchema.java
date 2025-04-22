@@ -1,5 +1,23 @@
 package org.apache.calcite.jdbc;
 
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import org.apache.calcite.schema.Table;
+import org.apache.calcite.schema.TableFunction;
+import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.util.NameMultimap;
+import org.apache.flink.table.functions.UserDefinedFunction;
+
 import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.Name;
@@ -10,33 +28,15 @@ import com.datasqrl.plan.local.generate.ResolvedExport;
 import com.datasqrl.plan.queries.APIMutation;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.queries.APISubscription;
-import com.datasqrl.plan.util.PrimaryKeyMap.Builder;
 import com.datasqrl.plan.validate.ResolvedImport;
-import com.datasqrl.plan.validate.ScriptPlanner.Mutation;
 import com.datasqrl.schema.Relationship;
 import com.datasqrl.schema.RootSqrlTable;
 import com.datasqrl.util.StreamUtil;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Iterables;
 import com.google.inject.Singleton;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+
 import lombok.Getter;
-import org.apache.calcite.schema.Table;
-import org.apache.calcite.schema.TableFunction;
-import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqlOperator;
-import org.apache.calcite.util.NameMultimap;
 
 @Getter
 @Singleton
@@ -52,14 +52,14 @@ public class SqrlSchema extends SimpleCalciteSchema {
   //Required for looking up tables
   private final Map<NamePath, String> pathToSysTableMap = new LinkedHashMap<>();
 
-  private final Map<String, SqlOperator> udf = new LinkedHashMap<>();
-  private final Map<List<String>, SqlOperator> udfListMap = new LinkedHashMap<>();
-  private final Map<List<String>, SqlOperator> internalNames = new LinkedHashMap<>();
+  private final Map<String, UserDefinedFunction> udf = new LinkedHashMap<>();
 
   private final AtomicInteger uniqueCompilerId = new AtomicInteger(0);
   private final AtomicInteger uniquePkId = new AtomicInteger(0);
   private final AtomicInteger uniqueMacroInt = new AtomicInteger(0);
   private final Map<Name, AtomicInteger> tableNameToIdMap = new LinkedHashMap<>();
+
+  private final Map<String, String> fncAlias = new HashMap<>();
 
   //API
 
@@ -102,13 +102,13 @@ public class SqrlSchema extends SimpleCalciteSchema {
   }
 
   public void clearFunctions(NamePath path) {
-    String fncName = path.getDisplay();
+    var fncName = path.getDisplay();
     if (this.functionMap.containsKey(fncName, false)) {
-      NamePath prefix = path;
+      var prefix = path;
       for (NamePath key : pathToAbsolutePathMap.keySet()) {
         if (key.size() >= prefix.size() && key.subList(0, prefix.size()).equals(prefix)) {
-          String name = key.getDisplay();
-          List<FunctionEntry> functionEntries = this.functionMap.map().get(name);
+          var name = key.getDisplay();
+          var functionEntries = this.functionMap.map().get(name);
           for (FunctionEntry entry : new ArrayList<>(functionEntries)) {
             this.functionMap.remove(name, entry);
           }
@@ -162,17 +162,15 @@ public class SqrlSchema extends SimpleCalciteSchema {
     return (SqrlTableMacro)Iterables.getOnlyElement(getFunctions(name, false));
   }
 
-  public void addFunction(String canonicalName, SqlOperator function) {
-    this.udf.put(nameCanonicalizer.getCanonical(canonicalName), function);
-    this.udfListMap.put(List.of(nameCanonicalizer.getCanonical(canonicalName)), function);
-    this.internalNames.put(List.of(function.getName()), function);
-  }
-
   public void addAdditionalSql(Set<SqlNode> addlSql) {
     this.addlSql.addAll(addlSql);
   }
 
   public NameMultimap<FunctionEntry> getFunctionMap() {
     return this.functionMap;
+  }
+
+  public void addFunctionAlias(String name, String function) {
+    fncAlias.put(name.toLowerCase(), function);
   }
 }

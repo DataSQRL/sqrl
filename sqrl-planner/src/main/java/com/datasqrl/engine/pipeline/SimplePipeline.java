@@ -3,22 +3,24 @@
  */
 package com.datasqrl.engine.pipeline;
 
-import com.datasqrl.config.EngineFactory.Type;
-import com.datasqrl.engine.ExecutionEngine;
-import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.util.StreamUtil;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.HashMultimap;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import com.datasqrl.config.EngineType;
+import com.datasqrl.engine.ExecutionEngine;
+import com.datasqrl.error.ErrorCollector;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.HashMultimap;
+
 import lombok.Value;
 
 /**
- * Simple pipeline that does not support any branching (i.e. it's a straight line)
+ * A simple pipeline that has a single stream, log, and server engine with support
+ * for multiple databases.
  */
 @Value
 public class SimplePipeline implements ExecutionPipeline {
@@ -46,19 +48,24 @@ public class SimplePipeline implements ExecutionPipeline {
 
     List<EngineStage> stages = new ArrayList<>();
     //A simple pipeline expects a certain set of stages
-    Optional<EngineStage> logStage = getSingleStage(Type.LOG, engines);
-    Optional<EngineStage> streamStage = getSingleStage(Type.STREAMS, engines);
+    var logStage = getSingleStage(EngineType.LOG, engines);
+    var streamStage = getSingleStage(EngineType.STREAMS, engines);
     errors.checkFatal(streamStage.isPresent(), "Need to configure an enabled stream engine");
-    List<EngineStage> dbStages = getStage(Type.DATABASE, engines);
-    Optional<EngineStage> serverStage = getSingleStage(Type.SERVER, engines);
+    var dbStages = getStage(EngineType.DATABASE, engines);
+    //TODO: create two stages for each configured server: one for logStage and one for dbStages
+    var serverStage = getSingleStage(EngineType.SERVER, engines);
+    var exportStages = getStage(EngineType.EXPORT, engines);
 
     logStage.ifPresent(ls -> {
       stages.add(ls);
       streamStage.ifPresent(ss -> downstream.put(ls, ss));
+      streamStage.ifPresent(ss -> upstream.put(ls, ss));
+      serverStage.ifPresent(vs -> downstream.put(ls, vs));
     });
     streamStage.ifPresent(ss -> {
       stages.add(ss);
       logStage.ifPresent(ls -> upstream.put(ss, ls));
+      logStage.ifPresent(ls -> downstream.put(ss, ls));
       dbStages.forEach(dbs -> downstream.put(ss, dbs));
     });
     for (EngineStage dbStage : dbStages) {
@@ -66,9 +73,14 @@ public class SimplePipeline implements ExecutionPipeline {
       streamStage.ifPresent(ss -> upstream.put(dbStage, ss));
       serverStage.ifPresent(vs -> downstream.put(dbStage, vs));
     }
+    for (EngineStage exportStage : exportStages) {
+      stages.add(exportStage);
+      streamStage.ifPresent(ss -> downstream.put(exportStage, ss));
+    }
     serverStage.ifPresent(vs -> {
       stages.add(vs);
       dbStages.forEach(dbs -> upstream.put(vs, dbs));
+      logStage.ifPresent(ls -> upstream.put(vs, ls));
     });
     //Engines that support computation can have themselves as up/downstream
     for (EngineStage stage : stages) {
@@ -78,11 +90,12 @@ public class SimplePipeline implements ExecutionPipeline {
       }
     }
 
+
     return new SimplePipeline(stages.stream().map(ExecutionStage.class::cast).collect(Collectors.toUnmodifiableList()),
         upstream, downstream);
   }
 
-  private static List<EngineStage> getStage(Type engineType,
+  private static List<EngineStage> getStage(EngineType engineType,
       Map<String, ExecutionEngine> engines) {
     List<EngineStage> engineList = engines.entrySet().stream()
         .filter(e -> e.getValue().getType() == engineType)
@@ -91,11 +104,14 @@ public class SimplePipeline implements ExecutionPipeline {
     return engineList;
   }
 
-  private static Optional<EngineStage> getSingleStage(Type engineType, Map<String, ExecutionEngine> engines) {
-    List<EngineStage> engineList = getStage(engineType, engines);
-    if (engineList.size()==1) return Optional.of(engineList.get(0));
-    else if (engineList.isEmpty()) return Optional.empty();
-    throw new IllegalArgumentException(String.format("Expected a single %s engine but found multiple: %s", engineType, engineList));
+  private static Optional<EngineStage> getSingleStage(EngineType engineType, Map<String, ExecutionEngine> engines) {
+    var engineList = getStage(engineType, engines);
+    if (engineList.size()==1) {
+        return Optional.of(engineList.get(0));
+    } else if (engineList.isEmpty()) {
+        return Optional.empty();
+    }
+    throw new IllegalArgumentException("Expected a single %s engine but found multiple: %s".formatted(engineType, engineList));
   }
 
   @Override

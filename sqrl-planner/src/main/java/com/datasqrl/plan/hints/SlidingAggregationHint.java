@@ -3,12 +3,14 @@
  */
 package com.datasqrl.plan.hints;
 
-import com.google.common.base.Preconditions;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
+import java.util.List;
+
 import org.apache.calcite.rel.hint.RelHint;
 
-import java.util.List;
+import com.google.common.base.Preconditions;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 @AllArgsConstructor
 @Getter
@@ -43,7 +45,7 @@ public class SlidingAggregationHint implements SqrlHint {
 
     @Override
     public SlidingAggregationHint fromHint(RelHint hint) {
-      List<String> options = hint.listOptions;
+      var options = hint.listOptions;
       Preconditions.checkArgument(hint.listOptions.size() == 3, "Invalid hint: %s", hint);
       return new SlidingAggregationHint(Integer.valueOf(options.get(0)),
           Long.valueOf(options.get(1)), Long.valueOf(options.get(2)));

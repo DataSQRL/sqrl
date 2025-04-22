@@ -1,0 +1,169 @@
+type AnotherCustomer {
+    customerid: GraphQLBigInteger!
+    email: String!
+    lastUpdated: GraphQLBigInteger!
+}
+
+type Customer {
+    customerid: GraphQLBigInteger!
+    email: String!
+    name: String!
+    lastUpdated: GraphQLBigInteger!
+    timestamp: DateTime
+    related(limit: Int = 10, offset: Int = 0): [Customer!]
+    relatedByLength(length: Int, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+type CustomerByMultipleTime {
+    customerid: GraphQLBigInteger!
+    email: String!
+    name: String!
+    lastUpdated: GraphQLBigInteger!
+    timestamp: DateTime
+}
+
+type CustomerByTime2 {
+    customerid: GraphQLBigInteger!
+    email: String!
+    name: String!
+    lastUpdated: GraphQLBigInteger!
+    timestamp: DateTime
+}
+
+type CustomerFilteredDistinct {
+    customerid: GraphQLBigInteger!
+    email: String!
+    name: String!
+    lastUpdated: GraphQLBigInteger!
+    timestamp: DateTime
+}
+
+type CustomerTimeWindow {
+    window_start: DateTime!
+    window_end: DateTime!
+    unique_email_count: GraphQLBigInteger!
+}
+
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+
+type ExplicitDistinct {
+    customerid: GraphQLBigInteger!
+    timestamp: DateTime
+    name: String!
+}
+
+type ExternalOrders {
+    id: GraphQLBigInteger!
+    customerid: GraphQLBigInteger!
+    time: DateTime!
+    entries: [ExternalOrders_entriesOutput]!
+}
+
+type ExternalOrders_entriesOutput {
+    productid: GraphQLBigInteger!
+    quantity: GraphQLBigInteger!
+    unit_price: Float!
+    discount: Float
+}
+
+"An arbitrary precision signed integer"
+scalar GraphQLBigInteger
+
+type InvalidDistinct {
+    customerid: GraphQLBigInteger!
+    timestamp: DateTime
+    namee: String!
+}
+
+type MissedTemporalJoin {
+    id: GraphQLBigInteger!
+    customerid: GraphQLBigInteger!
+    time: DateTime!
+    entries: [MissedTemporalJoin_entriesOutput]!
+    customerid0: GraphQLBigInteger!
+    timestamp: DateTime
+    name: String!
+}
+
+type MissedTemporalJoin_entriesOutput {
+    productid: GraphQLBigInteger!
+    quantity: GraphQLBigInteger!
+    unit_price: Float!
+    discount: Float
+}
+
+type Mutation {
+    Orders(event: OrdersInput!): OrdersResultOutput!
+}
+
+type Orders {
+    orderid: Int!
+    amount: Float
+}
+
+input OrdersInput {
+    orderid: Int!
+    amount: Float
+}
+
+type OrdersResultOutput {
+    orderid: Int!
+    amount: Float
+}
+
+type Query {
+    AnotherCustomer(limit: Int = 10, offset: Int = 0): [AnotherCustomer!]
+    Customer(limit: Int = 10, offset: Int = 0): [Customer!]
+    CustomerByMultipleTime(limit: Int = 10, offset: Int = 0): [CustomerByMultipleTime!]
+    CustomerByTime2(limit: Int = 10, offset: Int = 0): [CustomerByTime2!]
+    CustomerFilteredDistinct(limit: Int = 10, offset: Int = 0): [CustomerFilteredDistinct!]
+    CustomerTimeWindow(limit: Int = 10, offset: Int = 0): [CustomerTimeWindow!]
+    ExplicitDistinct(limit: Int = 10, offset: Int = 0): [ExplicitDistinct!]
+    ExternalOrders(limit: Int = 10, offset: Int = 0): [ExternalOrders!]
+    InvalidDistinct(limit: Int = 10, offset: Int = 0): [InvalidDistinct!]
+    MissedTemporalJoin(limit: Int = 10, offset: Int = 0): [MissedTemporalJoin!]
+    Orders(limit: Int = 10, offset: Int = 0): [Orders!]
+    """
+    This is for selected customers
+    and their orders
+    """
+    SelectCustomers(limit: Int = 10, offset: Int = 0): [Customer!]
+    TemporalJoin(limit: Int = 10, offset: Int = 0): [TemporalJoin!]
+    UnnestOrders(limit: Int = 10, offset: Int = 0): [UnnestOrders!]
+    CustomerById(minId: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+    CustomerQuery(id: GraphQLBigInteger!, limit: Int = 10, offset: Int = 0): [AnotherCustomer!]
+    TableFunctionCallsTblFct(arg1: Int, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+type Subscription {
+    CustomerSubscription: Customer
+    CustomerSubscriptionById(minId: Int!): Customer
+}
+
+type TemporalJoin {
+    id: GraphQLBigInteger!
+    customerid: GraphQLBigInteger!
+    time: DateTime!
+    entries: [TemporalJoin_entriesOutput]!
+    customerid0: GraphQLBigInteger!
+    timestamp: DateTime
+    name: String!
+}
+
+type TemporalJoin_entriesOutput {
+    productid: GraphQLBigInteger!
+    quantity: GraphQLBigInteger!
+    unit_price: Float!
+    discount: Float
+}
+
+type UnnestOrders {
+    id: GraphQLBigInteger!
+    customerid: GraphQLBigInteger!
+    time: DateTime!
+    productid: GraphQLBigInteger!
+    quantity: GraphQLBigInteger!
+    discount: Float
+    newId: GraphQLBigInteger!
+}

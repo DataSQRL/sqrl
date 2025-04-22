@@ -1,9 +1,10 @@
 package com.datasqrl.config;
 
+import java.nio.file.Path;
+
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.error.ErrorCollector;
-import java.net.URI;
-import java.nio.file.Path;
+
 import lombok.NonNull;
 
 public interface TableConfigLoader {

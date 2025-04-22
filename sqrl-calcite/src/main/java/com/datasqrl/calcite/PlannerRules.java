@@ -1,5 +1,7 @@
 package com.datasqrl.calcite;
 
+import java.util.List;
+
 import org.apache.calcite.adapter.enumerable.EnumerableRules;
 import org.apache.calcite.config.CalciteSystemProperty;
 import org.apache.calcite.interpreter.Bindables;
@@ -14,9 +16,6 @@ import org.apache.calcite.rel.rules.PruneEmptyRules;
 import org.apache.calcite.rel.rules.materialize.MaterializedViewRules;
 import org.apache.calcite.rel.stream.StreamRules;
 import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
-import org.apache.flink.calcite.shaded.com.google.common.collect.UnmodifiableIterator;
-
-import java.util.List;
 
 public class PlannerRules {
 

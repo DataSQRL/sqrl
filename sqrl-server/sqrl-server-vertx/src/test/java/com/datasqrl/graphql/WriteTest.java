@@ -8,19 +8,42 @@ import static org.apache.kafka.clients.producer.ProducerConfig.VALUE_SERIALIZER_
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
-import com.datasqrl.canonicalizer.NameCanonicalizer;
-import com.datasqrl.graphql.io.SinkConsumer;
-import com.datasqrl.graphql.io.SinkProducer;
+import java.time.Duration;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.errors.WakeupException;
+import org.apache.kafka.streams.integration.utils.EmbeddedKafkaCluster;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.utility.DockerImageName;
+
+import com.datasqrl.graphql.config.ServerConfig;
+import com.datasqrl.graphql.jdbc.DatabaseType;
 import com.datasqrl.graphql.server.GraphQLEngineBuilder;
+import com.datasqrl.graphql.server.PaginationType;
 import com.datasqrl.graphql.server.RootGraphqlModel;
-import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentLookupCoords;
-import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentSet;
-import com.datasqrl.graphql.server.RootGraphqlModel.JdbcQuery;
+import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentLookupQueryCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.KafkaMutationCoords;
-import com.datasqrl.graphql.server.RootGraphqlModel.MutationCoords;
+import com.datasqrl.graphql.server.RootGraphqlModel.QueryWithArguments;
+import com.datasqrl.graphql.server.RootGraphqlModel.SqlQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.StringSchema;
-import com.google.common.collect.Maps;
+
 import graphql.ExecutionInput;
 import graphql.ExecutionResult;
 import graphql.GraphQL;
@@ -30,31 +53,7 @@ import io.vertx.junit5.VertxExtension;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
-import java.time.Duration;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Properties;
-
 import lombok.SneakyThrows;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.common.errors.WakeupException;
-import org.apache.kafka.streams.integration.utils.EmbeddedKafkaCluster;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mockito;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.utility.DockerImageName;
 
 @ExtendWith(VertxExtension.class)
 @Testcontainers
@@ -75,11 +74,12 @@ class WriteTest {
   //Todo Add Kafka
 
   private PgPool client;
-  Map<String, SinkProducer> mutations;
-  Map<String, SinkConsumer> subscriptions;
 
+  Vertx vertx;
   RootGraphqlModel model;
   String topicName = "topic-1";
+
+  ServerConfig config;
 
   @SneakyThrows
   @BeforeEach
@@ -97,20 +97,18 @@ class WriteTest {
     options.setCachePreparedStatements(true);
     options.setPipeliningLimit(100_000);
 
+    config = mock(ServerConfig.class);
+    when(config.getPgConnectOptions()).thenReturn(options);
+    when(config.getEnvironmentVariable(any())).thenReturn(CLUSTER.bootstrapServers());
+
     PgPool client = PgPool.pool(vertx, options, new PoolOptions());
     this.client = client;
+    this.vertx = vertx;
     this.model = getCustomerModel();
-    GraphQLServer graphQLServer = new GraphQLServer(null, null, null, Optional.empty());
-    GraphQLServer serverSpy = Mockito.spy(graphQLServer);
-    Mockito.when(serverSpy.getEnvironmentVariable("PROPERTIES_BOOTSTRAP_SERVERS"))
-        .thenReturn(CLUSTER.bootstrapServers());
-
-    this.mutations = serverSpy.constructSinkProducers(model, vertx);
-    this.subscriptions = serverSpy.constructSubscriptions(model, vertx, Promise.promise());
   }
 
   private Properties getKafkaProps() {
-    Properties props = new Properties();
+    var props = new Properties();
     props.put("bootstrap.servers", CLUSTER.bootstrapServers());
     props.put(ConsumerConfig.GROUP_ID_CONFIG, "kafka-test-listener");
     props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer");
@@ -124,30 +122,32 @@ class WriteTest {
 
   private RootGraphqlModel getCustomerModel() {
     return RootGraphqlModel.builder()
-            .schema(StringSchema.builder().schema(""
-                    + "scalar DateTime\n"
-                + "type Query { "
-                    + "  customer: Customer "
-                    + "} "
-                    + "type Mutation {"
-                    + "  addCustomer(event: CreateCustomerEvent): Customer"
-                    + "} "
-                    + "input CreateCustomerEvent {"
-                    + "  customerid: Int"
-                    + "  ts: DateTime"
-                    + "} "
-                    + "type Customer {"
-                    + "  customerid: Int "
-                    + "  ts: DateTime"
-                    + "}").build())
-            .coord(ArgumentLookupCoords.builder()
+            .schema(StringSchema.builder().schema("""
+                scalar DateTime
+                type Query { \
+                  customer: Customer \
+                } \
+                type Mutation {\
+                  addCustomer(event: CreateCustomerEvent): Customer\
+                } \
+                input CreateCustomerEvent {\
+                  customerid: Int\
+                  ts: DateTime\
+                } \
+                type Customer {\
+                  customerid: Int \
+                  ts: DateTime\
+                }\
+                """).build())
+            .query(ArgumentLookupQueryCoords.builder()
                     .parentType("Query")
                     .fieldName("customer")
-                    .match(ArgumentSet.builder()
-                            .query(new JdbcQuery("SELECT customerid FROM Customer", List.of()))
+                    .exec(QueryWithArguments.builder()
+                            .query(new SqlQuery("SELECT customerid FROM Customer", List.of(),
+                                PaginationType.NONE, DatabaseType.POSTGRES))
                             .build())
                     .build())
-            .mutation(new KafkaMutationCoords("addCustomer", topicName,
+            .mutation(new KafkaMutationCoords("addCustomer", topicName, Map.of(),
                 Map.of()))
             .build();
   }
@@ -168,8 +168,11 @@ class WriteTest {
     consumer.subscribe(Collections.singletonList(topicName));
 
     GraphQL graphQL = model.accept(
-        new GraphQLEngineBuilder(),
-        new VertxContext(new VertxJdbcClient(Map.of("postgres",client)), mutations, subscriptions, NameCanonicalizer.SYSTEM))
+        new GraphQLEngineBuilder.Builder()
+            .withMutationConfiguration(new MutationConfigurationImpl(model, vertx, config))
+            .withSubscriptionConfiguration(new SubscriptionConfigurationImpl(model, vertx, config, Promise.promise(), null))
+            .build(),
+        new VertxContext(new VertxJdbcClient(Map.of(DatabaseType.POSTGRES,client))))
         .build();
 
     ExecutionInput executionInput = ExecutionInput.newExecutionInput()

@@ -1,51 +1,30 @@
 package com.datasqrl.datatype.flink.iceberg;
 
-import com.datasqrl.config.TableConfig;
-import com.datasqrl.datatype.DataTypeMapper;
-import com.datasqrl.datatype.SerializeToBytes;
-import com.datasqrl.datatype.flink.FlinkDataTypeMapper;
-import com.datasqrl.engine.stream.flink.connector.CastFunction;
-import com.datasqrl.json.FlinkJsonType;
-import com.datasqrl.json.JsonToString;
-import com.datasqrl.vector.FlinkVectorType;
-import com.datasqrl.vector.VectorToDouble;
-import com.google.auto.service.AutoService;
 import java.util.Optional;
+
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 
-@AutoService(DataTypeMapper.class)
-public class IcebergDataTypeMapper extends FlinkDataTypeMapper {
+import com.datasqrl.config.TableConfig;
+import com.datasqrl.datatype.DataTypeMapper;
+import com.datasqrl.datatype.DataTypeMapping;
+import com.datasqrl.datatype.DataTypeMappings;
+import com.datasqrl.datatype.SerializeToBytes;
+import com.datasqrl.datatype.flink.FlinkDataTypeMapper;
+import com.datasqrl.engine.stream.flink.connector.CastFunction;
+import com.datasqrl.types.json.FlinkJsonType;
+import com.datasqrl.types.json.functions.JsonToString;
+import com.datasqrl.types.vector.FlinkVectorType;
+import com.datasqrl.types.vector.functions.VectorToDouble;
+import com.google.auto.service.AutoService;
 
-  public boolean nativeTypeSupport(RelDataType type) {
+@AutoService(DataTypeMapper.class)
+public class IcebergDataTypeMapper extends FlinkDataTypeMapper implements DataTypeMapping {
+
+
+  @Override
+  public Optional<Mapper> getMapper(RelDataType type) {
     switch (type.getSqlTypeName()) {
-      case REAL:
-      case INTERVAL_YEAR:
-      case INTERVAL_YEAR_MONTH:
-      case INTERVAL_MONTH:
-      case INTERVAL_DAY:
-      case INTERVAL_DAY_HOUR:
-      case INTERVAL_DAY_MINUTE:
-      case INTERVAL_DAY_SECOND:
-      case INTERVAL_HOUR:
-      case INTERVAL_HOUR_MINUTE:
-      case INTERVAL_HOUR_SECOND:
-      case INTERVAL_MINUTE:
-      case INTERVAL_MINUTE_SECOND:
-      case INTERVAL_SECOND:
-      case NULL:
-      case SYMBOL:
-      case DISTINCT:
-      case STRUCTURED:
-      case OTHER:
-      case CURSOR:
-      case COLUMN_LIST:
-      case DYNAMIC_STAR:
-      case GEOMETRY:
-      case SARG:
-      case ANY:
-      default:
-        return false;
       case TINYINT:
       case BOOLEAN:
       case SMALLINT:
@@ -65,11 +44,79 @@ public class IcebergDataTypeMapper extends FlinkDataTypeMapper {
       case VARBINARY:
       case MULTISET:
       case MAP:
-      case ROW: //todo iterate over the row
-        return true;
+      case ROW:
+        return Optional.empty();
       case ARRAY:
-        return nativeTypeSupport(type.getComponentType());
+        if (getMapper(type.getComponentType()).isEmpty()) {
+            return Optional.empty();
+        }
     }
+    if (type instanceof RawRelDataType rawRelDataType) {
+      if (rawRelDataType.getRawType().getDefaultConversion() == FlinkJsonType.class) {
+        return Optional.of(DataTypeMappings.JSON_TO_STRING_ONLY);
+      } else if (rawRelDataType.getRawType().getDefaultConversion() == FlinkVectorType.class) {
+        return Optional.of(DataTypeMappings.VECTOR_TO_DOUBLE_ONLY);
+      }
+    }
+
+    // Cast needed, convert to bytes
+    return Optional.of(DataTypeMappings.TO_BYTES_ONLY);
+  }
+
+  @Override
+public boolean nativeTypeSupport(RelDataType type) {
+    return switch (type.getSqlTypeName()) {
+    case REAL:
+    case INTERVAL_YEAR:
+    case INTERVAL_YEAR_MONTH:
+    case INTERVAL_MONTH:
+    case INTERVAL_DAY:
+    case INTERVAL_DAY_HOUR:
+    case INTERVAL_DAY_MINUTE:
+    case INTERVAL_DAY_SECOND:
+    case INTERVAL_HOUR:
+    case INTERVAL_HOUR_MINUTE:
+    case INTERVAL_HOUR_SECOND:
+    case INTERVAL_MINUTE:
+    case INTERVAL_MINUTE_SECOND:
+    case INTERVAL_SECOND:
+    case NULL:
+    case SYMBOL:
+    case DISTINCT:
+    case STRUCTURED:
+    case OTHER:
+    case CURSOR:
+    case COLUMN_LIST:
+    case DYNAMIC_STAR:
+    case GEOMETRY:
+    case SARG:
+    case ANY:
+    default:
+        yield false;
+    case TINYINT:
+    case BOOLEAN:
+    case SMALLINT:
+    case INTEGER:
+    case BIGINT:
+    case DECIMAL:
+    case FLOAT:
+    case DOUBLE:
+    case DATE:
+    case TIME:
+    case TIME_WITH_LOCAL_TIME_ZONE:
+    case TIMESTAMP:
+    case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
+    case CHAR:
+    case VARCHAR:
+    case BINARY:
+    case VARBINARY:
+    case MULTISET:
+    case MAP:
+    case ROW: //todo iterate over the row
+        yield true;
+    case ARRAY:
+        yield nativeTypeSupport(type.getComponentType());
+    };
   }
 
   @Override
@@ -79,8 +126,7 @@ public class IcebergDataTypeMapper extends FlinkDataTypeMapper {
     }
 
     // Explicit downcast
-    if (type instanceof RawRelDataType) {
-      RawRelDataType rawRelDataType = (RawRelDataType) type;
+    if (type instanceof RawRelDataType rawRelDataType) {
       if (rawRelDataType.getRawType().getDefaultConversion() == FlinkJsonType.class) {
         return Optional.of(
             new CastFunction(JsonToString.class.getName(),
@@ -94,18 +140,18 @@ public class IcebergDataTypeMapper extends FlinkDataTypeMapper {
 
     // Cast needed, convert to bytes
     return Optional.of(
-        new CastFunction(SerializeToBytes.class.getSimpleName(),
+        new CastFunction(SerializeToBytes.class.getName(),
             convert(new SerializeToBytes())));
   }
 
   @Override
   public boolean isTypeOf(TableConfig tableConfig) {
-    Optional<String> connectorNameOpt = tableConfig.getConnectorConfig().getConnectorName();
+    var connectorNameOpt = tableConfig.getConnectorConfig().getConnectorName();
     if (connectorNameOpt.isEmpty()) {
       return false;
     }
 
-    String connectorName = connectorNameOpt.get();
+    var connectorName = connectorNameOpt.get();
     return connectorName.equalsIgnoreCase("iceberg");
   }
 }

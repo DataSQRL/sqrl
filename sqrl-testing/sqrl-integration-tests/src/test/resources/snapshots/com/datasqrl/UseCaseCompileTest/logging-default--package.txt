@@ -1,39 +1,72 @@
 >>>pipeline_explain.txt
 === Data
-ID:     data_2
+ID:     default_catalog.default_database.Data
 Type:   stream
 Stage:  flink
-Primary Key: id
-Timestamp  : timestamp
+Inputs: default_catalog.default_database.Data__def
+Annotations:
+ - stream-root: Data__def
+Primary Key: ID
+Timestamp  : TIMESTAMP
 Schema:
- - id: BIGINT NOT NULL
- - epoch_timestamp: BIGINT NOT NULL
- - some_value: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - ID: BIGINT NOT NULL
+ - EPOCH_TIMESTAMP: BIGINT NOT NULL
+ - SOME_VALUE: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - TIMESTAMP: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Plan:
-LogicalTableScan(table=[[data_1]])
-
-=== logger.LogData
-ID:     data_2_1
+LogicalProject(ID=[$0], EPOCH_TIMESTAMP=[$1], SOME_VALUE=[$2], TIMESTAMP=[$3])
+  LogicalWatermarkAssigner(rowtime=[TIMESTAMP], watermark=[-($3, 1:INTERVAL SECOND)])
+    LogicalProject(ID=[$0], EPOCH_TIMESTAMP=[$1], SOME_VALUE=[$2], TIMESTAMP=[EPOCHMILLITOTIMESTAMP($1)])
+      LogicalTableScan(table=[[default_catalog, default_database, Data__def]])
+SQL: CREATE VIEW `Data`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`Data__def`
+=== LogData
+ID:     logger.LogData
 Type:   export
 Stage:  flink
-Inputs: data_2
+Inputs: default_catalog.default_database.Data
 
->>>flink.json
-{
-  "flinkSql" : [
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `epochmillitotimestamp` AS 'com.datasqrl.time.EpochMilliToTimestamp' LANGUAGE JAVA;",
-    "CREATE TEMPORARY TABLE `data_1` (\n  `id` BIGINT NOT NULL,\n  `epoch_timestamp` BIGINT NOT NULL,\n  `some_value` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `timestamp` AS EPOCHMILLITOTIMESTAMP(`epoch_timestamp`),\n  PRIMARY KEY (`id`) NOT ENFORCED,\n  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND\n) WITH (\n  'fields.id.end' = '9',\n  'fields.epoch_timestamp.kind' = 'sequence',\n  'number-of-rows' = '10',\n  'connector' = 'datagen',\n  'fields.epoch_timestamp.end' = '1719319565',\n  'fields.some_value.kind' = 'random',\n  'fields.id.kind' = 'sequence',\n  'fields.id.start' = '0',\n  'fields.epoch_timestamp.start' = '1719318565'\n);",
-    "CREATE TEMPORARY TABLE `data_2_1` (\n  `id` BIGINT NOT NULL,\n  `epoch_timestamp` BIGINT NOT NULL,\n  `some_value` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL\n) WITH (\n  'connector' = 'print',\n  'print-identifier' = 'LogData'\n);",
-    "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM `data_1`;",
-    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `data_2_1`\n(SELECT *\n FROM `table$1`)\n;\nEND;"
-  ],
-  "connectors" : [
-    "print",
-    "datagen"
-  ],
-  "formats" : [ ]
-}
+>>>flink-sql-no-functions.sql
+CREATE TABLE `Data__def` (
+  `ID` BIGINT NOT NULL,
+  `EPOCH_TIMESTAMP` BIGINT NOT NULL,
+  `SOME_VALUE` STRING NOT NULL,
+  `TIMESTAMP` AS EPOCHMILLITOTIMESTAMP(`EPOCH_TIMESTAMP`),
+  PRIMARY KEY (`ID`) NOT ENFORCED,
+  WATERMARK FOR `TIMESTAMP` AS `TIMESTAMP` - INTERVAL '0.001' SECOND
+) WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10',
+  'fields.ID.kind' = 'sequence',
+  'fields.ID.start' = '0',
+  'fields.ID.end' = '9',
+  'fields.EPOCH_TIMESTAMP.kind' = 'sequence',
+  'fields.EPOCH_TIMESTAMP.start' = '1719318565000',
+  'fields.EPOCH_TIMESTAMP.end' = '1719319565000',
+  'fields.SOME_VALUE.kind' = 'random'
+);
+CREATE VIEW `Data`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`Data__def`;
+CREATE TABLE `LogData_1` (
+  `ID` BIGINT NOT NULL,
+  `EPOCH_TIMESTAMP` BIGINT NOT NULL,
+  `SOME_VALUE` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `TIMESTAMP` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`ID`) NOT ENFORCED
+) WITH (
+  'connector' = 'print',
+  'print-identifier' = 'LogData'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`LogData_1`
+(SELECT *
+ FROM `default_catalog`.`default_database`.`Data`)
+;
+END
 >>>kafka.json
 {
   "topics" : [ ]

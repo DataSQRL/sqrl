@@ -4,10 +4,8 @@
 package com.datasqrl.plan.table;
 
 import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.canonicalizer.ReservedName;
-import lombok.NonNull;
 
-import java.util.List;
+import lombok.NonNull;
 
 /**
  * An abstract source table that represents the source of table data.

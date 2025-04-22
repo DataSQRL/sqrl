@@ -1,5 +1,6 @@
 IMPORT seedshop-avro.Orders;
 IMPORT time.*;
 
-OrderCount := SELECT endOfSecond(_source_time) timeSec, COUNT(1) as number, SUM(i.quantity) as volume FROM Orders o JOIN o.items i
-                    GROUP BY timeSec;
+OrderCount := SELECT id, COUNT(1) as number, SUM(i.quantity) as volume
+              FROM Orders o CROSS JOIN UNNEST(o.items) i
+              GROUP BY id;

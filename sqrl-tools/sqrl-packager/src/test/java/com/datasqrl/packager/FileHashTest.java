@@ -3,15 +3,17 @@
  */
 package com.datasqrl.packager;
 
-import com.datasqrl.packager.util.FileHash;
-import lombok.SneakyThrows;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.io.InputStream;
+import java.nio.file.Path;
+
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-import java.io.InputStream;
-import java.nio.file.Paths;
+import com.datasqrl.packager.util.FileHash;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import lombok.SneakyThrows;
 
 @Disabled
 public class FileHashTest {
@@ -27,7 +29,7 @@ public class FileHashTest {
     @Disabled
     @SneakyThrows
     public void generateHash() {
-        System.out.println(FileHash.getFor(Paths.get("/Users/matthias/git/sqrl-repository/testdata/8_e-WN-FzfckOREZ85JY6pv6ktQ.zip")));
+        System.out.println(FileHash.getFor(Path.of("/Users/matthias/git/sqrl-repository/testdata/8_e-WN-FzfckOREZ85JY6pv6ktQ.zip")));
     }
 
 }

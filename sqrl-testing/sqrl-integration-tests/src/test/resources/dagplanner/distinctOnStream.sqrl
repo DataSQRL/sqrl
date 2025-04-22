@@ -1,0 +1,11 @@
+IMPORT ecommerceTs.Customer;
+
+CustomerUpdates := SELECT
+                          customerid, window_time AS endOfMin, COUNT(1) AS total
+                      FROM TABLE(
+                              TUMBLE(TABLE Customer, DESCRIPTOR(`timestamp`), INTERVAL '1' MINUTE)
+                           )
+                      GROUP BY
+                          customerid, window_start, window_end, window_time;
+
+DistinctCustomerUpdates := DISTINCT CustomerUpdates ON customerid ORDER BY endOfMin DESC;

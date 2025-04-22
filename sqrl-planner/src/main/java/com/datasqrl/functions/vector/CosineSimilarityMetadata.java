@@ -1,11 +1,12 @@
 package com.datasqrl.functions.vector;
 
+import java.util.EnumSet;
+
 import com.datasqrl.function.FunctionMetadata;
 import com.datasqrl.function.IndexType;
 import com.datasqrl.function.IndexableFunction;
-import com.datasqrl.vector.CosineSimilarity;
+import com.datasqrl.types.vector.functions.CosineSimilarity;
 import com.google.auto.service.AutoService;
-import java.util.EnumSet;
 
 @AutoService(FunctionMetadata.class)
 public class CosineSimilarityMetadata implements IndexableFunction {
@@ -32,7 +33,7 @@ public class CosineSimilarityMetadata implements IndexableFunction {
 
   @Override
   public EnumSet<IndexType> getSupportedIndexes() {
-    return EnumSet.of(IndexType.VEC_COSINE);
+    return EnumSet.of(IndexType.VECTOR_COSINE);
   }
 
   @Override

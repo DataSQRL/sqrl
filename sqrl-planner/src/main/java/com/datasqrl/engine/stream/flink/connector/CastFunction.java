@@ -1,12 +1,17 @@
 package com.datasqrl.engine.stream.flink.connector;
 
+import org.apache.flink.table.functions.UserDefinedFunction;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import org.apache.calcite.sql.SqlFunction;
 
 @AllArgsConstructor
 @Getter
 public class CastFunction {
   String className;
-  SqlFunction function;
+  UserDefinedFunction function;
+
+  public String getName() {
+    return getFunction().getClass().getSimpleName();
+  }
 }

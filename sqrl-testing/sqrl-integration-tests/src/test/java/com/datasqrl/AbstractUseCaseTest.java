@@ -1,48 +1,47 @@
 package com.datasqrl;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.datasqrl.cmd.AssertStatusHook;
-import com.datasqrl.util.FileUtil;
-import com.datasqrl.util.SnapshotTest.Snapshot;
-import com.google.common.base.Strings;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import lombok.AllArgsConstructor;
+
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 
+import com.datasqrl.cmd.AssertStatusHook;
+import com.datasqrl.util.SnapshotTest.Snapshot;
+
+import lombok.AllArgsConstructor;
+
 public class AbstractUseCaseTest extends AbstractAssetSnapshotTest {
 
+  /*
+  We snapshot the GraphQL schema only if it is not provided
+   */
   private boolean hasGraphQL = false;
 
-  protected AbstractUseCaseTest(Path usecaseDirectory) {
-    super(usecaseDirectory.resolve("deploy-assets"));
+  protected AbstractUseCaseTest() {
+    super(null);
   }
 
 
-  void testUsecase(Path script, Path graphQlFile, Path packageFile) {
+  void testUsecase(Path script, Path graphQLFile, Path packageFile) {
     assertTrue(Files.exists(script));
-    Path baseDir = script.getParent();
-    //Check if GraphQL exists
-    Path graphQLFile = baseDir.resolve(FileUtil.separateExtension(script).getKey() + ".graphqls");
-
+    var baseDir = script.getParent();
     List<String> arguments = new ArrayList<>();
     arguments.add("compile");
     arguments.add(script.getFileName().toString());
-    hasGraphQL = graphQlFile!=null;
-    if (hasGraphQL) {
+    //Add optional GraphQL schema and package configuration if present
+    if (graphQLFile!=null) {
+      hasGraphQL = true;
       assert Files.exists(graphQLFile);
       arguments.add(graphQLFile.getFileName().toString());
     }
@@ -50,21 +49,23 @@ public class AbstractUseCaseTest extends AbstractAssetSnapshotTest {
       assert Files.exists(packageFile);
       arguments.add("-c"); arguments.add(packageFile.getFileName().toString());
     }
-//    arguments.add("-t"); arguments.add(deployDir.toString());
-    arguments.add("--profile");
-    arguments.add(getProjectRoot().resolve("profiles/default").toString());
-//    arguments.add("-t"); arguments.add(deployDir.toString());
-    String testname = Stream.of(script, graphQlFile, packageFile)
+    var testname = Stream.of(script, graphQLFile, packageFile)
         .map(AbstractAssetSnapshotTest::getDisplayName)
         .collect(Collectors.joining("-"));
-    AssertStatusHook hook = execute(baseDir, arguments.toArray(new String[0]));
+    var hook = execute(baseDir, arguments);
     snapshot(testname, hook);
   }
 
+  /**
+   * Either snapshot the results in the plan and build directory (if successful)
+   * or the error message (if it failed)
+   * @param testname
+   * @param hook
+   */
   public void snapshot(String testname, AssertStatusHook hook) {
     this.snapshot = Snapshot.of(testname, getClass());
     if (hook.isFailed()) {
-      createFailSnapshot(hook.getFailMessage());
+      createMessageSnapshot(hook.getMessages());
     } else {
       createSnapshot();
     }
@@ -77,10 +78,26 @@ public class AbstractUseCaseTest extends AbstractAssetSnapshotTest {
   }
 
   @Override
-  public Predicate<Path> getDeployDirFilter() {
-    return file -> false;
+  public Predicate<Path> getPlanDirFilter() {
+    return path -> {
+      if (path.getFileName().toString().equals("flink-sql-no-functions.sql")) {
+        return true;
+    }
+      if (path.getFileName().toString().contains("flink")) {
+        return false;
+    }
+      if (path.getFileName().toString().contains("schema") || path.getFileName().toString().contains("views") || List.of("kafka.json", "vertx.json").contains(path.getFileName().toString())) {
+        return true;
+    }
+      return false;
+    };
   }
 
+  /**
+   * Iterates over all SQRL scripts in a given directory (and sub-directories)
+   * and for each script, finds all associated package.json and GraphQL schema (*.graphqls) files
+   * (i.e. they start with the same name). All combinations of those files are a single test case.
+   */
   @AllArgsConstructor
   public abstract static class SqrlScriptsAndLocalPackages implements ArgumentsProvider {
 
@@ -93,22 +110,19 @@ public class AbstractUseCaseTest extends AbstractAssetSnapshotTest {
       return getSQRLScripts(directory, includeFails)
           .sorted(Comparator.comparing(p -> p.toFile().getName()))
           .flatMap(path -> {
-        List<Path> pkgFiles = getPackageFiles(path.getParent());
+        var pkgFiles = getPackageFiles(path.getParent());
         Collections.sort(pkgFiles, Comparator.comparing(p -> p.toFile().getName()));
-        if (pkgFiles.isEmpty()) pkgFiles.add(null);
-        List<Path> graphQLFiles = getScriptGraphQLFiles(path);
+        if (pkgFiles.isEmpty()) {
+            pkgFiles.add(null);
+        }
+        var graphQLFiles = getScriptGraphQLFiles(path);
         Collections.sort(graphQLFiles, Comparator.comparing(p -> p.toFile().getName()));
-        if (graphQLFiles.isEmpty()) graphQLFiles.add(null);
+        if (graphQLFiles.isEmpty()) {
+            graphQLFiles.add(null);
+        }
         return graphQLFiles.stream().flatMap(gql -> pkgFiles.stream().map(pkg -> Arguments.of(path, gql, pkg)));
       });
     }
   }
 
-  private Path getProjectRoot() {
-    Path currentPath = Paths.get(System.getProperty("user.dir"));
-    while (!currentPath.getFileName().toString().equals("sqrl-testing")) {
-      currentPath = currentPath.getParent();
-    }
-    return currentPath.getParent();
-  }
 }

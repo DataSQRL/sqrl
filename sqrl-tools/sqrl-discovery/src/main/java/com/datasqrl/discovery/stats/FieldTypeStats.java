@@ -3,12 +3,14 @@
  */
 package com.datasqrl.discovery.stats;
 
-import com.datasqrl.canonicalizer.NameCanonicalizer;
-import com.datasqrl.schema.input.TypeSignature;
-import com.datasqrl.schema.type.Type;
 import java.io.Serializable;
 import java.util.Map;
 import java.util.Objects;
+
+import com.datasqrl.canonicalizer.NameCanonicalizer;
+import com.datasqrl.io.schema.flexible.input.TypeSignature;
+import com.datasqrl.io.schema.flexible.type.Type;
+
 import lombok.NonNull;
 
 public class FieldTypeStats implements Serializable, Cloneable, TypeSignature {
@@ -116,7 +118,7 @@ public class FieldTypeStats implements Serializable, Cloneable, TypeSignature {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    FieldTypeStats that = (FieldTypeStats) o;
+    var that = (FieldTypeStats) o;
     return raw.equals(that.raw) && detected.equals(that.detected) && arrayDepth == that.arrayDepth;
   }
 
@@ -127,7 +129,7 @@ public class FieldTypeStats implements Serializable, Cloneable, TypeSignature {
 
   @Override
   public String toString() {
-    String result = "{" + raw.toString();
+    var result = "{" + raw.toString();
     if (!raw.equals(detected)) {
       result += "|" + detected.toString();
     }

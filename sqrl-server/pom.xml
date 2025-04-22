@@ -3,17 +3,11 @@
   <parent>
     <groupId>com.datasqrl</groupId>
     <artifactId>sqrl-root</artifactId>
-    <version>0.5.8-SNAPSHOT</version>
+    <version>0.6.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>sqrl-server</artifactId>
   <packaging>pom</packaging>
-
-  <properties>
-    <maven.compiler.source>11</maven.compiler.source>
-    <maven.compiler.target>11</maven.compiler.target>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-  </properties>
 
   <modules>
     <module>sqrl-server-core</module>

@@ -3,10 +3,12 @@
  */
 package com.datasqrl.io.tables;
 
+import java.util.Optional;
+
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.TableConfig;
-import java.util.Optional;
+
 import lombok.Getter;
 
 /**
@@ -24,7 +26,7 @@ public class TableSource extends TableInput {
 
   public static TableSource create(TableConfig tableConfig, NamePath basePath, TableSchema schema) {
 //    getErrors().checkFatal(getBase().getType().isSource(), "Table is not a source: %s", name);
-    Name tableName = tableConfig.getName();
+    var tableName = tableConfig.getName();
     return new TableSource(tableConfig, basePath.concat(tableName), tableName, schema);
   }
 }

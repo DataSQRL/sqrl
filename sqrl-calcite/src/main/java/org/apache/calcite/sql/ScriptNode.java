@@ -16,14 +16,15 @@ package org.apache.calcite.sql;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
-import lombok.Getter;
-import lombok.Setter;
+
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.util.SqlVisitor;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.sql.validate.SqlValidatorScope;
 import org.apache.calcite.util.Litmus;
-import org.checkerframework.checker.units.qual.C;
+
+import lombok.Getter;
+import lombok.Setter;
 
 @Getter
 public final class ScriptNode

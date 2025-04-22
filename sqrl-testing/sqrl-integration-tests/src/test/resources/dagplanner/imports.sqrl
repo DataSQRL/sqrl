@@ -1,3 +1,4 @@
-IMPORT ecommerce.Customer;
-IMPORT ecommerce.Orders;
-IMPORT ecommerce.Product;
+IMPORT ecommerceTs.Customer;
+/*+query_by_all(productid) */
+IMPORT ecommerceTs.Product;
+

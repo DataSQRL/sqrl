@@ -1,9 +1,11 @@
 package com.datasqrl.plan.rules;
 
-import com.datasqrl.engine.pipeline.ExecutionStage;
-import com.datasqrl.plan.table.PhysicalRelationalTable;
 import java.util.List;
 import java.util.function.Consumer;
+
+import com.datasqrl.engine.pipeline.ExecutionStage;
+import com.datasqrl.plan.table.PhysicalRelationalTable;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -51,6 +53,15 @@ public class SqrlConverterConfig {
    */
   @Builder.Default
   boolean addDefaultPrimaryKey = false;
+
+  /**
+   * Whether to make sure that the order by column used in the distinct on clause
+   * is ignored during deduplication, i.e. that no update is emitted if only the
+   * order by column changed and all other columns remain the same.
+   * This requires some extra SQL logic to ensure if the column is not watermarked.
+   */
+  @Builder.Default
+  boolean filterDistinctOrder = false;
 
   public SqrlConverterConfig withStage(ExecutionStage stage) {
     return toBuilder().stage(stage).build();

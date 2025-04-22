@@ -1,13 +1,13 @@
 package com.datasqrl.plan.table;
 
-import com.datasqrl.canonicalizer.Name;
-import com.google.common.base.Preconditions;
+import java.util.Collection;
+import java.util.Set;
 import java.util.TreeSet;
+
 import org.apache.calcite.sql.validate.SqlValidatorUtil;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import com.datasqrl.canonicalizer.Name;
+import com.google.common.base.Preconditions;
 
 /**
  * NameAdjuster makes sure that any additional columns we add to a table (e.g. primary keys or timestamps) are unique and do
@@ -30,7 +30,7 @@ public class NameAdjuster {
     }
 
     public String uniquifyName(String name) {
-        String uniqueName = SqlValidatorUtil.uniquify(
+        var uniqueName = SqlValidatorUtil.uniquify(
                 name,
                 names,
                 SqlValidatorUtil.EXPR_SUGGESTER);

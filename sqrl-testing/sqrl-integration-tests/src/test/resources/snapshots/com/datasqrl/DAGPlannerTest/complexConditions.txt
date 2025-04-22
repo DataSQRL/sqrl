@@ -1,8 +1,11 @@
 >>>pipeline_explain.txt
 === Customer
-ID:     customer_2
+ID:     default_catalog.default_database.Customer
 Type:   stream
 Stage:  flink
+Inputs: default_catalog.default_database.Customer__def
+Annotations:
+ - stream-root: Customer__def
 Primary Key: customerid, lastUpdated
 Timestamp  : timestamp
 Schema:
@@ -10,1029 +13,1037 @@ Schema:
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
- - timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Plan:
-LogicalTableScan(table=[[customer_1]])
-
+LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
+  LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
+    LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($3, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
+      LogicalTableScan(table=[[default_catalog, default_database, Customer__def]])
+SQL: CREATE VIEW `Customer`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`Customer__def`
 === Orders
-ID:     orders_2
+ID:     default_catalog.default_database.Orders
 Type:   stream
 Stage:  flink
+Inputs: default_catalog.default_database.Orders__def
+Annotations:
+ - features: DENORMALIZE (feature)
+ - stream-root: Orders__def
 Primary Key: id, time
 Timestamp  : time
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
- - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
- - entries: RecordType(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
+ - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+ - entries: RecordType:peek_no_expand(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
 Plan:
-LogicalTableScan(table=[[orders_1]])
+LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3])
+  LogicalWatermarkAssigner(rowtime=[time], watermark=[-($2, 1:INTERVAL SECOND)])
+    LogicalTableScan(table=[[default_catalog, default_database, Orders__def]])
+SQL: CREATE VIEW `Orders`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`Orders__def`
+=== Product
+ID:     default_catalog.default_database.Product
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database.Product__def
+Annotations:
+ - stream-root: Product__def
+Primary Key: productid, name, description, category
+Timestamp  : _ingest_time
+Schema:
+ - productid: BIGINT NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - description: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - category: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - _ingest_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Plan:
+LogicalProject(productid=[$0], name=[$1], description=[$2], category=[$3], _ingest_time=[$4])
+  LogicalWatermarkAssigner(rowtime=[_ingest_time], watermark=[-($4, 1:INTERVAL SECOND)])
+    LogicalTableScan(table=[[default_catalog, default_database, Product__def]])
+SQL: CREATE VIEW `Product`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`Product__def`
+=== ProductFilter1
+ID:     default_catalog.default_database.ProductFilter1
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database.Product
+Annotations:
+ - stream-root: Product__def
+Primary Key: productid, name, description, category
+Timestamp  : _ingest_time
+Schema:
+ - productid: BIGINT NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - description: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - category: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - _ingest_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Plan:
+LogicalProject(productid=[$0], name=[$1], description=[$2], category=[$3], _ingest_time=[$4])
+  LogicalFilter(condition=[array_contains(ARRAY('one':VARCHAR(2147483647) CHARACTER SET "UTF-16LE", 'two':VARCHAR(2147483647) CHARACTER SET "UTF-16LE"), $1)])
+    LogicalTableScan(table=[[default_catalog, default_database, Product]])
+SQL: CREATE VIEW ProductFilter1 AS  SELECT * FROM Product WHERE array_contains(ARRAY[CAST('one' AS String), CAST('two' AS String)], name);
+
+=== ProductFilter2
+ID:     default_catalog.default_database.ProductFilter2
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database.Product
+Annotations:
+ - stream-root: Product__def
+Primary Key: productid, name, description, category
+Timestamp  : _ingest_time
+Schema:
+ - productid: BIGINT NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - description: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - category: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - _ingest_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Plan:
+LogicalProject(productid=[$0], name=[$1], description=[$2], category=[$3], _ingest_time=[$4])
+  LogicalFilter(condition=[array_contains(split('one, two', ','), $1)])
+    LogicalTableScan(table=[[default_catalog, default_database, Product]])
+SQL: CREATE VIEW ProductFilter2 AS  SELECT * FROM Product WHERE array_contains(split('one, two', ','), name);
 
 === SelectOrders1
-ID:     selectorders1_1
-Type:   state
-Stage:  postgres
-Inputs: customer_2, orders_2
+ID:     default_catalog.default_database.SelectOrders1
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database.Customer, default_catalog.default_database.Orders
+Annotations:
+ - stream-root: Orders__def
 Primary Key: id, time
 Timestamp  : time
 Schema:
  - id: BIGINT NOT NULL
- - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Plan:
 LogicalProject(id=[$0], time=[$2])
-  LogicalJoin(condition=[>($1, $4)], joinType=[inner]) hints[JoinCostHint options:[STREAM, STATE, 0, RIGHT]]
-    LogicalTableScan(table=[[orders_2]])
-    LogicalAggregate(group=[{}], agg#0=[SINGLE_VALUE($0)], __timestamp=[MAX($4)])
-      LogicalFilter(condition=[=($2, CAST('foo'):VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL)])
-        LogicalTableScan(table=[[customer_2]])
+  LogicalFilter(condition=[>($1, $SCALAR_QUERY({
+LogicalProject(customerid=[$0])
+  LogicalFilter(condition=[=($2, 'foo')])
+    LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+}))])
+    LogicalTableScan(table=[[default_catalog, default_database, Orders]])
+SQL: CREATE VIEW SelectOrders1 AS  SELECT o.id, o.`time` FROM Orders o WHERE o.customerid > (SELECT c.customerid FROM Customer c WHERE c.name = 'foo');
 
 === SelectOrders2
-ID:     selectorders2_1
-Type:   state
-Stage:  postgres
-Inputs: customer_2, orders_2
-Primary Key: id, time, _i
-Timestamp  : time
-Schema:
- - id: BIGINT NOT NULL
- - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
- - _i: BOOLEAN
-Plan:
-LogicalProject(id=[$0], time=[$2], _i=[$8])
-  LogicalFilter(condition=[OR(=($4, 0), AND(IS NULL($8), >=($5, $4)))])
-    LogicalJoin(condition=[=($1, $7)], joinType=[left]) hints[JoinCostHint options:[STATE, STATE, 1, NONE]]
-      LogicalJoin(condition=[true], joinType=[inner]) hints[JoinCostHint options:[STREAM, STATE, 0, RIGHT]]
-        LogicalTableScan(table=[[orders_2]])
-        LogicalProject(c=[$0], ck=[$0], __timestamp=[$1])
-          LogicalAggregate(group=[{}], c=[COUNT()], __timestamp=[MAX($4)])
-            LogicalFilter(condition=[=($2, CAST('foo'):VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL)])
-              LogicalTableScan(table=[[customer_2]])
-      LogicalAggregate(group=[{0, 1}], __timestamp=[MAX($3)])
-        LogicalProject(customerid=[$0], i=[true], lastUpdated=[$3], timestamp=[$4])
-          LogicalFilter(condition=[=($2, CAST('foo'):VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL)])
-            LogicalTableScan(table=[[customer_2]])
-
-=== SelectOrders3
-ID:     selectorders3_1
-Type:   state
-Stage:  postgres
-Inputs: customer_2, orders_2
+ID:     default_catalog.default_database.SelectOrders2
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database.Customer, default_catalog.default_database.Orders
+Annotations:
+ - stream-root: Orders__def
 Primary Key: id, time
 Timestamp  : time
 Schema:
  - id: BIGINT NOT NULL
- - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Plan:
 LogicalProject(id=[$0], time=[$2])
-  LogicalJoin(condition=[=($1, $4)], joinType=[inner]) hints[JoinCostHint options:[STREAM, STATE, 1, RIGHT]]
-    LogicalTableScan(table=[[orders_2]])
-    LogicalAggregate(group=[{0}], __timestamp=[MAX($4)])
-      LogicalFilter(condition=[=($2, CAST('foo'):VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL)])
-        LogicalTableScan(table=[[customer_2]])
+  LogicalFilter(condition=[NOT(IN($1, {
+LogicalProject(customerid=[$0])
+  LogicalFilter(condition=[=($2, 'foo')])
+    LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+}))])
+    LogicalTableScan(table=[[default_catalog, default_database, Orders]])
+SQL: CREATE VIEW SelectOrders2 AS  SELECT o.id, o.`time` FROM Orders o WHERE o.customerid NOT IN (SELECT c.customerid FROM Customer c WHERE c.name = 'foo');
 
-=== SelectOrders4
-ID:     selectorders4_1
-Type:   state
-Stage:  postgres
-Inputs: customer_2, orders_2
+=== SelectOrders3
+ID:     default_catalog.default_database.SelectOrders3
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database.Customer, default_catalog.default_database.Orders
+Annotations:
+ - stream-root: Orders__def
 Primary Key: id, time
 Timestamp  : time
 Schema:
  - id: BIGINT NOT NULL
- - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
- - cc: BIGINT
+ - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Plan:
-LogicalProject(id=[$0], time=[$2], cc=[CASE(IS NULL($7), 0:BIGINT, $7)])
-  LogicalJoin(condition=[=($1, $6)], joinType=[left]) hints[JoinCostHint options:[STATE, STATE, 1, RIGHT]]
-    LogicalJoin(condition=[=($1, $4)], joinType=[inner]) hints[JoinCostHint options:[STREAM, STATE, 1, RIGHT]]
-      LogicalTableScan(table=[[orders_2]])
-      LogicalAggregate(group=[{0}], __timestamp=[MAX($4)])
-        LogicalFilter(condition=[=($2, CAST('foo'):VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL)])
-          LogicalTableScan(table=[[customer_2]])
-    LogicalAggregate(group=[{5}], EXPR$0=[COUNT()], __timestamp=[MAX($7)])
-      LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4], customerid0=[$5], __timestamp=[$6], __timestamp7=[GREATEST($4, $6)])
-        LogicalJoin(condition=[>($0, $5)], joinType=[inner]) hints[JoinCostHint options:[STREAM, STATE, 0, NONE]]
-          LogicalTableScan(table=[[customer_2]])
-          LogicalAggregate(group=[{1}], __timestamp=[MAX($6)])
-            LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3], customerid0=[$4], __timestamp=[$5], __timestamp6=[GREATEST($2, $5)])
-              LogicalJoin(condition=[=($1, $4)], joinType=[inner]) hints[JoinCostHint options:[STREAM, STATE, 1, RIGHT]]
-                LogicalTableScan(table=[[orders_2]])
-                LogicalAggregate(group=[{0}], __timestamp=[MAX($4)])
-                  LogicalFilter(condition=[=($2, CAST('foo'):VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL)])
-                    LogicalTableScan(table=[[customer_2]])
+LogicalProject(id=[$0], time=[$2])
+  LogicalFilter(condition=[IN($1, {
+LogicalProject(customerid=[$0])
+  LogicalFilter(condition=[=($2, 'foo')])
+    LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+})])
+    LogicalTableScan(table=[[default_catalog, default_database, Orders]])
+SQL: CREATE VIEW SelectOrders3 AS  SELECT o.id, o.`time` FROM Orders o WHERE o.customerid IN (SELECT c.customerid FROM Customer c WHERE c.name = 'foo');
 
->>>flink.json
-{
-  "flinkSql" : [
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `ToJson` AS 'com.datasqrl.json.ToJson' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `epochtotimestamp` AS 'com.datasqrl.time.EpochToTimestamp' LANGUAGE JAVA;",
-    "CREATE TEMPORARY TABLE `customer_1` (\n  `customerid` BIGINT NOT NULL,\n  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `lastUpdated` BIGINT NOT NULL,\n  `timestamp` AS EPOCHTOTIMESTAMP(`lastUpdated`),\n  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,\n  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND\n) WITH (\n  'format' = 'json',\n  'path' = 'file:/mock',\n  'source.monitor-interval' = '10000',\n  'connector' = 'filesystem',\n  'source.path.regex-pattern' = ''\n);",
-    "CREATE TEMPORARY TABLE `orders_1` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,\n  PRIMARY KEY (`id`, `time`) NOT ENFORCED,\n  WATERMARK FOR `time` AS `time` - INTERVAL '0.001' SECOND\n) WITH (\n  'format' = 'json',\n  'path' = 'file:/mock',\n  'source.monitor-interval' = '10000',\n  'connector' = 'filesystem',\n  'source.path.regex-pattern' = ''\n);",
-    "CREATE TEMPORARY TABLE `customer_2` (\n  `customerid` BIGINT NOT NULL,\n  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `lastUpdated` BIGINT NOT NULL,\n  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'customer_2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE TEMPORARY TABLE `orders_2` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `entries` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),\n  PRIMARY KEY (`id`, `time`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'orders_2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM `customer_1`;",
-    "CREATE VIEW `table$2`\nAS\nSELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`\nFROM `orders_1`;",
-    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `customer_2`\n(SELECT *\n FROM `table$1`)\n;\nINSERT INTO `orders_2`\n (SELECT *\n  FROM `table$2`)\n ;\n END;"
-  ],
-  "connectors" : [
-    "jdbc-sqrl",
-    "filesystem"
-  ],
-  "formats" : [
-    "json"
-  ]
-}
+>>>flink-sql-no-functions.sql
+CREATE TEMPORARY TABLE `Orders__schema` (
+  `id` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL
+) WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `Orders__def` (
+  PRIMARY KEY (`id`, `time`) NOT ENFORCED,
+  WATERMARK FOR `time` AS `time` - INTERVAL '0.001' SECOND
+) WITH (
+  'format' = 'flexible-json',
+  'path' = 'file:/mock',
+  'source.monitor-interval' = '10 sec',
+  'connector' = 'filesystem'
+)
+LIKE `Orders__schema`;
+CREATE VIEW `Orders`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`Orders__def`;
+CREATE TEMPORARY TABLE `Customer__schema` (
+  `customerid` BIGINT NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `lastUpdated` BIGINT NOT NULL
+) WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `Customer__def` (
+  `timestamp` AS COALESCE(TO_TIMESTAMP_LTZ(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
+  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
+  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
+) WITH (
+  'format' = 'flexible-json',
+  'path' = 'file:/mock',
+  'source.monitor-interval' = '10 sec',
+  'connector' = 'filesystem'
+)
+LIKE `Customer__schema`;
+CREATE VIEW `Customer`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`Customer__def`;
+CREATE TEMPORARY TABLE `Product__schema` (
+  `productid` BIGINT NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+) WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `Product__def` (
+  PRIMARY KEY (`productid`, `name`, `description`, `category`) NOT ENFORCED,
+  WATERMARK FOR `_ingest_time` AS `_ingest_time` - INTERVAL '0.001' SECOND
+) WITH (
+  'format' = 'flexible-json',
+  'path' = 'file:/mock',
+  'source.monitor-interval' = '10 sec',
+  'connector' = 'filesystem'
+)
+LIKE `Product__schema`;
+CREATE VIEW `Product`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`Product__def`;
+CREATE VIEW `SelectOrders1`
+AS
+SELECT `o`.`id`, `o`.`time`
+FROM `Orders` AS `o`
+WHERE `o`.`customerid` > (SELECT `c`.`customerid`
+   FROM `Customer` AS `c`
+   WHERE `c`.`name` = 'foo');
+CREATE VIEW `SelectOrders2`
+AS
+SELECT `o`.`id`, `o`.`time`
+FROM `Orders` AS `o`
+WHERE `o`.`customerid` NOT IN (SELECT `c`.`customerid`
+   FROM `Customer` AS `c`
+   WHERE `c`.`name` = 'foo');
+CREATE VIEW `SelectOrders3`
+AS
+SELECT `o`.`id`, `o`.`time`
+FROM `Orders` AS `o`
+WHERE `o`.`customerid` IN (SELECT `c`.`customerid`
+   FROM `Customer` AS `c`
+   WHERE `c`.`name` = 'foo');
+CREATE VIEW `ProductFilter1`
+AS
+SELECT *
+FROM `Product`
+WHERE ARRAY_CONTAINS(ARRAY[CAST('one' AS STRING), CAST('two' AS STRING)], `name`);
+CREATE VIEW `ProductFilter2`
+AS
+SELECT *
+FROM `Product`
+WHERE ARRAY_CONTAINS(SPLIT('one, two', ','), `name`);
+CREATE TABLE `Customer_1` (
+  `customerid` BIGINT NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `lastUpdated` BIGINT NOT NULL,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'table-name' = 'Customer_1'
+);
+CREATE TABLE `Orders_2` (
+  `id` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `entries` RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
+  PRIMARY KEY (`id`, `time`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'table-name' = 'Orders_2'
+);
+CREATE TABLE `Product_3` (
+  `productid` BIGINT NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`productid`, `name`, `description`, `category`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'table-name' = 'Product_3'
+);
+CREATE TABLE `ProductFilter1_4` (
+  `productid` BIGINT NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`productid`, `name`, `description`, `category`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'table-name' = 'ProductFilter1_4'
+);
+CREATE TABLE `ProductFilter2_5` (
+  `productid` BIGINT NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`productid`, `name`, `description`, `category`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'table-name' = 'ProductFilter2_5'
+);
+CREATE TABLE `SelectOrders1_6` (
+  `id` BIGINT NOT NULL,
+  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`id`, `time`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'table-name' = 'SelectOrders1_6'
+);
+CREATE TABLE `SelectOrders2_7` (
+  `id` BIGINT NOT NULL,
+  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`id`, `time`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'table-name' = 'SelectOrders2_7'
+);
+CREATE TABLE `SelectOrders3_8` (
+  `id` BIGINT NOT NULL,
+  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`id`, `time`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'table-name' = 'SelectOrders3_8'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`Customer_1`
+(SELECT *
+ FROM `default_catalog`.`default_database`.`Customer`)
+;
+INSERT INTO `default_catalog`.`default_database`.`Orders_2`
+ (SELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`
+  FROM `default_catalog`.`default_database`.`Orders`)
+ ;
+ INSERT INTO `default_catalog`.`default_database`.`Product_3`
+  (SELECT *
+   FROM `default_catalog`.`default_database`.`Product`)
+  ;
+  INSERT INTO `default_catalog`.`default_database`.`ProductFilter1_4`
+   (SELECT *
+    FROM `default_catalog`.`default_database`.`ProductFilter1`)
+   ;
+   INSERT INTO `default_catalog`.`default_database`.`ProductFilter2_5`
+    (SELECT *
+     FROM `default_catalog`.`default_database`.`ProductFilter2`)
+    ;
+    INSERT INTO `default_catalog`.`default_database`.`SelectOrders1_6`
+     (SELECT *
+      FROM `default_catalog`.`default_database`.`SelectOrders1`)
+     ;
+     INSERT INTO `default_catalog`.`default_database`.`SelectOrders2_7`
+      (SELECT *
+       FROM `default_catalog`.`default_database`.`SelectOrders2`)
+      ;
+      INSERT INTO `default_catalog`.`default_database`.`SelectOrders3_8`
+       (SELECT *
+        FROM `default_catalog`.`default_database`.`SelectOrders3`)
+       ;
+       END
 >>>kafka.json
 {
   "topics" : [ ]
 }
 >>>postgres.json
 {
-  "ddl" : [
+  "statements" : [
     {
-      "name" : "customer_2",
-      "columns" : [
-        "\"customerid\" BIGINT NOT NULL",
-        "\"email\" TEXT NOT NULL",
-        "\"name\" TEXT NOT NULL",
-        "\"lastUpdated\" BIGINT NOT NULL",
-        "\"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL"
-      ],
-      "primaryKeys" : [
-        "\"customerid\"",
-        "\"lastUpdated\""
-      ],
-      "sql" : "CREATE TABLE IF NOT EXISTS customer_2 (\"customerid\" BIGINT NOT NULL,\"email\" TEXT NOT NULL,\"name\" TEXT NOT NULL,\"lastUpdated\" BIGINT NOT NULL,\"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\",\"lastUpdated\"));"
+      "name" : "Customer_1",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Customer_1\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\",\"lastUpdated\"))",
+      "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "email",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "lastUpdated",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "timestamp",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ]
     },
     {
-      "name" : "orders_2",
-      "columns" : [
-        "\"id\" BIGINT NOT NULL",
-        "\"customerid\" BIGINT NOT NULL",
-        "\"time\" TIMESTAMP WITH TIME ZONE NOT NULL",
-        "\"entries\" JSONB NOT NULL"
-      ],
-      "primaryKeys" : [
-        "\"id\"",
-        "\"time\""
-      ],
-      "sql" : "CREATE TABLE IF NOT EXISTS orders_2 (\"id\" BIGINT NOT NULL,\"customerid\" BIGINT NOT NULL,\"time\" TIMESTAMP WITH TIME ZONE NOT NULL,\"entries\" JSONB NOT NULL , PRIMARY KEY (\"id\",\"time\"));"
+      "name" : "Orders_2",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Orders_2\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB  , PRIMARY KEY (\"id\",\"time\"))",
+      "fields" : [
+        {
+          "name" : "id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "entries",
+          "type" : "JSONB",
+          "nullable" : true
+        }
+      ]
     },
     {
-      "indexName" : "customer_2_hash_c2",
-      "tableName" : "customer_2",
-      "columns" : [
-        "name"
-      ],
-      "type" : "HASH",
-      "sql" : "CREATE INDEX IF NOT EXISTS customer_2_hash_c2 ON customer_2 USING hash (\"name\");"
+      "name" : "Product_3",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Product_3\" (\"productid\" BIGINT NOT NULL, \"name\" TEXT NOT NULL, \"description\" TEXT NOT NULL, \"category\" TEXT NOT NULL, \"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"productid\",\"name\",\"description\",\"category\"))",
+      "fields" : [
+        {
+          "name" : "productid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "description",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "category",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "_ingest_time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ]
     },
     {
-      "indexName" : "customer_2_hash_c3",
-      "tableName" : "customer_2",
-      "columns" : [
-        "lastUpdated"
-      ],
-      "type" : "HASH",
-      "sql" : "CREATE INDEX IF NOT EXISTS customer_2_hash_c3 ON customer_2 USING hash (\"lastUpdated\");"
+      "name" : "ProductFilter1_4",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"ProductFilter1_4\" (\"productid\" BIGINT NOT NULL, \"name\" TEXT NOT NULL, \"description\" TEXT NOT NULL, \"category\" TEXT NOT NULL, \"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"productid\",\"name\",\"description\",\"category\"))",
+      "fields" : [
+        {
+          "name" : "productid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "description",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "category",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "_ingest_time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ]
     },
     {
-      "indexName" : "orders_2_btree_c1",
-      "tableName" : "orders_2",
-      "columns" : [
-        "customerid"
-      ],
-      "type" : "BTREE",
-      "sql" : "CREATE INDEX IF NOT EXISTS orders_2_btree_c1 ON orders_2 USING btree (\"customerid\");"
+      "name" : "ProductFilter2_5",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"ProductFilter2_5\" (\"productid\" BIGINT NOT NULL, \"name\" TEXT NOT NULL, \"description\" TEXT NOT NULL, \"category\" TEXT NOT NULL, \"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"productid\",\"name\",\"description\",\"category\"))",
+      "fields" : [
+        {
+          "name" : "productid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "description",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "category",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "_ingest_time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ]
     },
     {
-      "indexName" : "orders_2_hash_c2",
-      "tableName" : "orders_2",
-      "columns" : [
-        "time"
-      ],
-      "type" : "HASH",
-      "sql" : "CREATE INDEX IF NOT EXISTS orders_2_hash_c2 ON orders_2 USING hash (\"time\");"
-    }
-  ],
-  "views" : [
-    {
-      "name" : "SelectOrders2",
-      "sql" : "CREATE OR REPLACE VIEW \"SelectOrders2\"(\"id\", \"time\", \"_i\") AS SELECT \"orders_2\".\"id\", \"orders_2\".\"time\", \"t4\".\"i\" AS \"_i\"\nFROM \"orders_2\"\n CROSS JOIN (SELECT COUNT(*) AS \"c\", COUNT(*) AS \"ck\", MAX(\"timestamp\") AS \"__timestamp\"\n  FROM \"customer_2\"\n  WHERE \"name\" = 'foo') AS \"t1\"\n LEFT JOIN (SELECT \"customerid\", TRUE AS \"i\", MAX(\"timestamp\") AS \"__timestamp\"\n  FROM \"customer_2\"\n  WHERE \"name\" = 'foo'\n  GROUP BY \"customerid\", TRUE) AS \"t4\" ON \"orders_2\".\"customerid\" = \"t4\".\"customerid\"\nWHERE \"t1\".\"c\" = 0 OR \"t4\".\"i\" IS NULL AND \"t1\".\"ck\" >= \"t1\".\"c\"\nORDER BY \"orders_2\".\"id\", \"orders_2\".\"time\", \"t4\".\"i\";"
+      "name" : "SelectOrders1_6",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"SelectOrders1_6\" (\"id\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"id\",\"time\"))",
+      "fields" : [
+        {
+          "name" : "id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ]
     },
     {
-      "name" : "SelectOrders1",
-      "sql" : "CREATE OR REPLACE VIEW \"SelectOrders1\"(\"id\", \"time\") AS SELECT \"orders_2\".\"id\", \"orders_2\".\"time\"\nFROM \"orders_2\"\n INNER JOIN (SELECT SINGLE_VALUE(\"customerid\") AS \"$f0\", MAX(\"timestamp\") AS \"__timestamp\"\n  FROM \"customer_2\"\n  WHERE \"name\" = 'foo') AS \"t0\" ON \"orders_2\".\"customerid\" > \"t0\".\"$f0\"\nORDER BY \"orders_2\".\"id\", \"orders_2\".\"time\";"
+      "name" : "SelectOrders2_7",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"SelectOrders2_7\" (\"id\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"id\",\"time\"))",
+      "fields" : [
+        {
+          "name" : "id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ]
     },
     {
-      "name" : "SelectOrders3",
-      "sql" : "CREATE OR REPLACE VIEW \"SelectOrders3\"(\"id\", \"time\") AS SELECT \"orders_2\".\"id\", \"orders_2\".\"time\"\nFROM \"orders_2\"\n INNER JOIN (SELECT \"customerid\", MAX(\"timestamp\") AS \"__timestamp\"\n  FROM \"customer_2\"\n  WHERE \"name\" = 'foo'\n  GROUP BY \"customerid\") AS \"t0\" ON \"orders_2\".\"customerid\" = \"t0\".\"customerid\"\nORDER BY \"orders_2\".\"id\", \"orders_2\".\"time\";"
-    },
-    {
-      "name" : "Orders",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"orders_2\"\nORDER BY \"time\" DESC NULLS LAST, \"id\";"
+      "name" : "SelectOrders3_8",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"SelectOrders3_8\" (\"id\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"id\",\"time\"))",
+      "fields" : [
+        {
+          "name" : "id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ]
     },
     {
       "name" : "Customer",
-      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_2\"\nORDER BY \"timestamp\" DESC NULLS LAST, \"customerid\", \"lastUpdated\";"
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"Customer_1\"",
+      "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "email",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "lastUpdated",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "timestamp",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ]
     },
     {
-      "name" : "SelectOrders4",
-      "sql" : "CREATE OR REPLACE VIEW \"SelectOrders4\"(\"id\", \"time\", \"cc\") AS SELECT \"orders_2\".\"id\", \"orders_2\".\"time\", CASE WHEN \"t6\".\"EXPR$0\" IS NULL THEN 0 ELSE \"t6\".\"EXPR$0\" END AS \"cc\"\nFROM \"orders_2\"\n INNER JOIN (SELECT \"customerid\", MAX(\"timestamp\") AS \"__timestamp\"\n  FROM \"customer_2\"\n  WHERE \"name\" = 'foo'\n  GROUP BY \"customerid\") AS \"t0\" ON \"orders_2\".\"customerid\" = \"t0\".\"customerid\"\n LEFT JOIN (SELECT \"t4\".\"customerid\" AS \"customerid0\", COUNT(*) AS \"EXPR$0\", MAX(GREATEST(\"customer_20\".\"timestamp\", \"t4\".\"__timestamp\")) AS \"__timestamp\"\n  FROM \"customer_2\" AS \"customer_20\"\n   INNER JOIN (SELECT \"orders_20\".\"customerid\", MAX(GREATEST(\"orders_20\".\"time\", \"t2\".\"__timestamp\")) AS \"__timestamp\"\n    FROM \"orders_2\" AS \"orders_20\"\n     INNER JOIN (SELECT \"customerid\", MAX(\"timestamp\") AS \"__timestamp\"\n      FROM \"customer_2\"\n      WHERE \"name\" = 'foo'\n      GROUP BY \"customerid\") AS \"t2\" ON \"orders_20\".\"customerid\" = \"t2\".\"customerid\"\n    GROUP BY \"orders_20\".\"customerid\") AS \"t4\" ON \"customer_20\".\"customerid\" > \"t4\".\"customerid\"\n  GROUP BY \"t4\".\"customerid\") AS \"t6\" ON \"orders_2\".\"customerid\" = \"t6\".\"customerid0\"\nORDER BY \"orders_2\".\"id\", \"orders_2\".\"time\";"
+      "name" : "Orders",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"Orders_2\"",
+      "fields" : [
+        {
+          "name" : "id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "entries",
+          "type" : "JSONB",
+          "nullable" : true
+        }
+      ]
+    },
+    {
+      "name" : "Product",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"Product_3\"",
+      "fields" : [
+        {
+          "name" : "productid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "description",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "category",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "_ingest_time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ]
+    },
+    {
+      "name" : "ProductFilter1",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"ProductFilter1\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"ProductFilter1_4\"",
+      "fields" : [
+        {
+          "name" : "productid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "description",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "category",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "_ingest_time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ]
+    },
+    {
+      "name" : "ProductFilter2",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"ProductFilter2\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"ProductFilter2_5\"",
+      "fields" : [
+        {
+          "name" : "productid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "description",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "category",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "_ingest_time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ]
+    },
+    {
+      "name" : "SelectOrders1",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"SelectOrders1\"(\"id\", \"time\") AS SELECT *\nFROM \"SelectOrders1_6\"",
+      "fields" : [
+        {
+          "name" : "id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ]
+    },
+    {
+      "name" : "SelectOrders2",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"SelectOrders2\"(\"id\", \"time\") AS SELECT *\nFROM \"SelectOrders2_7\"",
+      "fields" : [
+        {
+          "name" : "id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ]
+    },
+    {
+      "name" : "SelectOrders3",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"SelectOrders3\"(\"id\", \"time\") AS SELECT *\nFROM \"SelectOrders3_8\"",
+      "fields" : [
+        {
+          "name" : "id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ]
     }
   ]
 }
 >>>vertx.json
 {
   "model" : {
-    "coords" : [
+    "queries" : [
       {
         "type" : "args",
         "parentType" : "Query",
         "fieldName" : "Customer",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"customer_2\"\nORDER BY \"timestamp\" DESC NULLS LAST, \"customerid\", \"lastUpdated\"",
-              "parameters" : [ ]
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
             }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "customerid"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "lastUpdated"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"customer_2\"\nWHERE \"customerid\" = $1 AND \"lastUpdated\" = $2\nORDER BY \"timestamp\" DESC NULLS LAST",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "customerid"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "lastUpdated"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "lastUpdated"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"customer_2\"\nWHERE \"lastUpdated\" = $1\nORDER BY \"timestamp\" DESC NULLS LAST, \"customerid\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "lastUpdated"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "customerid"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"customer_2\"\nWHERE \"customerid\" = $1\nORDER BY \"timestamp\" DESC NULLS LAST, \"lastUpdated\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "customerid"
-                }
-              ]
-            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM \"Customer_1\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
           }
-        ]
+        }
       },
       {
         "type" : "args",
         "parentType" : "Query",
         "fieldName" : "Orders",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "time"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"time\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "time"
-                }
-              ]
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
             }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"orders_2\"\nORDER BY \"time\" DESC NULLS LAST, \"id\"",
-              "parameters" : [ ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "id"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "time"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "id"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "time"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "id"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1\nORDER BY \"time\" DESC NULLS LAST",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "id"
-                }
-              ]
-            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM \"Orders_2\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
           }
-        ]
+        }
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "Product",
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
+            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM \"Product_3\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
+          }
+        }
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "ProductFilter1",
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
+            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM \"ProductFilter1_4\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
+          }
+        }
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "ProductFilter2",
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
+            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM \"ProductFilter2_5\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
+          }
+        }
       },
       {
         "type" : "args",
         "parentType" : "Query",
         "fieldName" : "SelectOrders1",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "id"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\"\n  FROM \"orders_2\"\n   INNER JOIN (SELECT SINGLE_VALUE(\"customerid\") AS \"$f0\", MAX(\"timestamp\") AS \"__timestamp\"\n    FROM \"customer_2\"\n    WHERE \"name\" = 'foo') AS \"t0\" ON \"orders_2\".\"customerid\" > \"t0\".\"$f0\") AS \"t1\"\nWHERE \"t1\".\"id\" = $1\nORDER BY \"time\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "id"
-                }
-              ]
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
             }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "time"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\"\n  FROM \"orders_2\"\n   INNER JOIN (SELECT SINGLE_VALUE(\"customerid\") AS \"$f0\", MAX(\"timestamp\") AS \"__timestamp\"\n    FROM \"customer_2\"\n    WHERE \"name\" = 'foo') AS \"t0\" ON \"orders_2\".\"customerid\" > \"t0\".\"$f0\") AS \"t1\"\nWHERE \"t1\".\"time\" = $1\nORDER BY \"id\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "time"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"orders_2\".\"id\", \"orders_2\".\"time\"\nFROM \"orders_2\"\n INNER JOIN (SELECT SINGLE_VALUE(\"customerid\") AS \"$f0\", MAX(\"timestamp\") AS \"__timestamp\"\n  FROM \"customer_2\"\n  WHERE \"name\" = 'foo') AS \"t0\" ON \"orders_2\".\"customerid\" > \"t0\".\"$f0\"\nORDER BY \"orders_2\".\"id\", \"orders_2\".\"time\"",
-              "parameters" : [ ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "id"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "time"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\"\n  FROM \"orders_2\"\n   INNER JOIN (SELECT SINGLE_VALUE(\"customerid\") AS \"$f0\", MAX(\"timestamp\") AS \"__timestamp\"\n    FROM \"customer_2\"\n    WHERE \"name\" = 'foo') AS \"t0\" ON \"orders_2\".\"customerid\" > \"t0\".\"$f0\") AS \"t1\"\nWHERE \"t1\".\"id\" = $1 AND \"t1\".\"time\" = $2",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "id"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "time"
-                }
-              ]
-            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM \"SelectOrders1_6\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
           }
-        ]
+        }
       },
       {
         "type" : "args",
         "parentType" : "Query",
         "fieldName" : "SelectOrders2",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"orders_2\".\"id\", \"orders_2\".\"time\", \"t4\".\"i\" AS \"_i\"\nFROM \"orders_2\"\n CROSS JOIN (SELECT COUNT(*) AS \"c\", COUNT(*) AS \"ck\", MAX(\"timestamp\") AS \"__timestamp\"\n  FROM \"customer_2\"\n  WHERE \"name\" = 'foo') AS \"t1\"\n LEFT JOIN (SELECT \"customerid\", TRUE AS \"i\", MAX(\"timestamp\") AS \"__timestamp\"\n  FROM \"customer_2\"\n  WHERE \"name\" = 'foo'\n  GROUP BY \"customerid\", TRUE) AS \"t4\" ON \"orders_2\".\"customerid\" = \"t4\".\"customerid\"\nWHERE \"t1\".\"c\" = 0 OR \"t4\".\"i\" IS NULL AND \"t1\".\"ck\" >= \"t1\".\"c\"\nORDER BY \"orders_2\".\"id\", \"orders_2\".\"time\", \"t4\".\"i\"",
-              "parameters" : [ ]
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
             }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "time"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\", \"t4\".\"i\" AS \"_i\"\n  FROM \"orders_2\"\n   CROSS JOIN (SELECT COUNT(*) AS \"c\", COUNT(*) AS \"ck\", MAX(\"timestamp\") AS \"__timestamp\"\n    FROM \"customer_2\"\n    WHERE \"name\" = 'foo') AS \"t1\"\n   LEFT JOIN (SELECT \"customerid\", TRUE AS \"i\", MAX(\"timestamp\") AS \"__timestamp\"\n    FROM \"customer_2\"\n    WHERE \"name\" = 'foo'\n    GROUP BY \"customerid\", TRUE) AS \"t4\" ON \"orders_2\".\"customerid\" = \"t4\".\"customerid\"\n  WHERE \"t1\".\"c\" = 0 OR \"t4\".\"i\" IS NULL AND \"t1\".\"ck\" >= \"t1\".\"c\") AS \"t6\"\nWHERE \"t6\".\"time\" = $1\nORDER BY \"id\", \"_i\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "time"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "id"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\", \"t4\".\"i\" AS \"_i\"\n  FROM \"orders_2\"\n   CROSS JOIN (SELECT COUNT(*) AS \"c\", COUNT(*) AS \"ck\", MAX(\"timestamp\") AS \"__timestamp\"\n    FROM \"customer_2\"\n    WHERE \"name\" = 'foo') AS \"t1\"\n   LEFT JOIN (SELECT \"customerid\", TRUE AS \"i\", MAX(\"timestamp\") AS \"__timestamp\"\n    FROM \"customer_2\"\n    WHERE \"name\" = 'foo'\n    GROUP BY \"customerid\", TRUE) AS \"t4\" ON \"orders_2\".\"customerid\" = \"t4\".\"customerid\"\n  WHERE \"t1\".\"c\" = 0 OR \"t4\".\"i\" IS NULL AND \"t1\".\"ck\" >= \"t1\".\"c\") AS \"t6\"\nWHERE \"t6\".\"id\" = $1\nORDER BY \"time\", \"_i\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "id"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "id"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "time"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\", \"t4\".\"i\" AS \"_i\"\n  FROM \"orders_2\"\n   CROSS JOIN (SELECT COUNT(*) AS \"c\", COUNT(*) AS \"ck\", MAX(\"timestamp\") AS \"__timestamp\"\n    FROM \"customer_2\"\n    WHERE \"name\" = 'foo') AS \"t1\"\n   LEFT JOIN (SELECT \"customerid\", TRUE AS \"i\", MAX(\"timestamp\") AS \"__timestamp\"\n    FROM \"customer_2\"\n    WHERE \"name\" = 'foo'\n    GROUP BY \"customerid\", TRUE) AS \"t4\" ON \"orders_2\".\"customerid\" = \"t4\".\"customerid\"\n  WHERE \"t1\".\"c\" = 0 OR \"t4\".\"i\" IS NULL AND \"t1\".\"ck\" >= \"t1\".\"c\") AS \"t6\"\nWHERE \"t6\".\"id\" = $1 AND \"t6\".\"time\" = $2\nORDER BY \"_i\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "id"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "time"
-                }
-              ]
-            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM \"SelectOrders2_7\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
           }
-        ]
+        }
       },
       {
         "type" : "args",
         "parentType" : "Query",
         "fieldName" : "SelectOrders3",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"orders_2\".\"id\", \"orders_2\".\"time\"\nFROM \"orders_2\"\n INNER JOIN (SELECT \"customerid\", MAX(\"timestamp\") AS \"__timestamp\"\n  FROM \"customer_2\"\n  WHERE \"name\" = 'foo'\n  GROUP BY \"customerid\") AS \"t0\" ON \"orders_2\".\"customerid\" = \"t0\".\"customerid\"\nORDER BY \"orders_2\".\"id\", \"orders_2\".\"time\"",
-              "parameters" : [ ]
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
             }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "time"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\"\n  FROM \"orders_2\"\n   INNER JOIN (SELECT \"customerid\", MAX(\"timestamp\") AS \"__timestamp\"\n    FROM \"customer_2\"\n    WHERE \"name\" = 'foo'\n    GROUP BY \"customerid\") AS \"t0\" ON \"orders_2\".\"customerid\" = \"t0\".\"customerid\") AS \"t1\"\nWHERE \"t1\".\"time\" = $1\nORDER BY \"id\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "time"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "id"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\"\n  FROM \"orders_2\"\n   INNER JOIN (SELECT \"customerid\", MAX(\"timestamp\") AS \"__timestamp\"\n    FROM \"customer_2\"\n    WHERE \"name\" = 'foo'\n    GROUP BY \"customerid\") AS \"t0\" ON \"orders_2\".\"customerid\" = \"t0\".\"customerid\") AS \"t1\"\nWHERE \"t1\".\"id\" = $1\nORDER BY \"time\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "id"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "id"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "time"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\"\n  FROM \"orders_2\"\n   INNER JOIN (SELECT \"customerid\", MAX(\"timestamp\") AS \"__timestamp\"\n    FROM \"customer_2\"\n    WHERE \"name\" = 'foo'\n    GROUP BY \"customerid\") AS \"t0\" ON \"orders_2\".\"customerid\" = \"t0\".\"customerid\") AS \"t1\"\nWHERE \"t1\".\"id\" = $1 AND \"t1\".\"time\" = $2",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "id"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "time"
-                }
-              ]
-            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM \"SelectOrders3_8\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
           }
-        ]
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "SelectOrders4",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT \"orders_2\".\"id\", \"orders_2\".\"time\", CASE WHEN \"t6\".\"EXPR$0\" IS NULL THEN 0 ELSE \"t6\".\"EXPR$0\" END AS \"cc\"\nFROM \"orders_2\"\n INNER JOIN (SELECT \"customerid\", MAX(\"timestamp\") AS \"__timestamp\"\n  FROM \"customer_2\"\n  WHERE \"name\" = 'foo'\n  GROUP BY \"customerid\") AS \"t0\" ON \"orders_2\".\"customerid\" = \"t0\".\"customerid\"\n LEFT JOIN (SELECT \"t4\".\"customerid\" AS \"customerid0\", COUNT(*) AS \"EXPR$0\", MAX(GREATEST(\"customer_20\".\"timestamp\", \"t4\".\"__timestamp\")) AS \"__timestamp\"\n  FROM \"customer_2\" AS \"customer_20\"\n   INNER JOIN (SELECT \"orders_20\".\"customerid\", MAX(GREATEST(\"orders_20\".\"time\", \"t2\".\"__timestamp\")) AS \"__timestamp\"\n    FROM \"orders_2\" AS \"orders_20\"\n     INNER JOIN (SELECT \"customerid\", MAX(\"timestamp\") AS \"__timestamp\"\n      FROM \"customer_2\"\n      WHERE \"name\" = 'foo'\n      GROUP BY \"customerid\") AS \"t2\" ON \"orders_20\".\"customerid\" = \"t2\".\"customerid\"\n    GROUP BY \"orders_20\".\"customerid\") AS \"t4\" ON \"customer_20\".\"customerid\" > \"t4\".\"customerid\"\n  GROUP BY \"t4\".\"customerid\") AS \"t6\" ON \"orders_2\".\"customerid\" = \"t6\".\"customerid0\"\nORDER BY \"orders_2\".\"id\", \"orders_2\".\"time\"",
-              "parameters" : [ ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "id"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\", CASE WHEN \"t6\".\"EXPR$0\" IS NULL THEN 0 ELSE \"t6\".\"EXPR$0\" END AS \"cc\"\n  FROM \"orders_2\"\n   INNER JOIN (SELECT \"customerid\", MAX(\"timestamp\") AS \"__timestamp\"\n    FROM \"customer_2\"\n    WHERE \"name\" = 'foo'\n    GROUP BY \"customerid\") AS \"t0\" ON \"orders_2\".\"customerid\" = \"t0\".\"customerid\"\n   LEFT JOIN (SELECT \"t4\".\"customerid\" AS \"customerid0\", COUNT(*) AS \"EXPR$0\", MAX(GREATEST(\"customer_20\".\"timestamp\", \"t4\".\"__timestamp\")) AS \"__timestamp\"\n    FROM \"customer_2\" AS \"customer_20\"\n     INNER JOIN (SELECT \"orders_20\".\"customerid\", MAX(GREATEST(\"orders_20\".\"time\", \"t2\".\"__timestamp\")) AS \"__timestamp\"\n      FROM \"orders_2\" AS \"orders_20\"\n       INNER JOIN (SELECT \"customerid\", MAX(\"timestamp\") AS \"__timestamp\"\n        FROM \"customer_2\"\n        WHERE \"name\" = 'foo'\n        GROUP BY \"customerid\") AS \"t2\" ON \"orders_20\".\"customerid\" = \"t2\".\"customerid\"\n      GROUP BY \"orders_20\".\"customerid\") AS \"t4\" ON \"customer_20\".\"customerid\" > \"t4\".\"customerid\"\n    GROUP BY \"t4\".\"customerid\") AS \"t6\" ON \"orders_2\".\"customerid\" = \"t6\".\"customerid0\") AS \"t7\"\nWHERE \"t7\".\"id\" = $1\nORDER BY \"time\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "id"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "time"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\", CASE WHEN \"t6\".\"EXPR$0\" IS NULL THEN 0 ELSE \"t6\".\"EXPR$0\" END AS \"cc\"\n  FROM \"orders_2\"\n   INNER JOIN (SELECT \"customerid\", MAX(\"timestamp\") AS \"__timestamp\"\n    FROM \"customer_2\"\n    WHERE \"name\" = 'foo'\n    GROUP BY \"customerid\") AS \"t0\" ON \"orders_2\".\"customerid\" = \"t0\".\"customerid\"\n   LEFT JOIN (SELECT \"t4\".\"customerid\" AS \"customerid0\", COUNT(*) AS \"EXPR$0\", MAX(GREATEST(\"customer_20\".\"timestamp\", \"t4\".\"__timestamp\")) AS \"__timestamp\"\n    FROM \"customer_2\" AS \"customer_20\"\n     INNER JOIN (SELECT \"orders_20\".\"customerid\", MAX(GREATEST(\"orders_20\".\"time\", \"t2\".\"__timestamp\")) AS \"__timestamp\"\n      FROM \"orders_2\" AS \"orders_20\"\n       INNER JOIN (SELECT \"customerid\", MAX(\"timestamp\") AS \"__timestamp\"\n        FROM \"customer_2\"\n        WHERE \"name\" = 'foo'\n        GROUP BY \"customerid\") AS \"t2\" ON \"orders_20\".\"customerid\" = \"t2\".\"customerid\"\n      GROUP BY \"orders_20\".\"customerid\") AS \"t4\" ON \"customer_20\".\"customerid\" > \"t4\".\"customerid\"\n    GROUP BY \"t4\".\"customerid\") AS \"t6\" ON \"orders_2\".\"customerid\" = \"t6\".\"customerid0\") AS \"t7\"\nWHERE \"t7\".\"time\" = $1\nORDER BY \"id\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "time"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "id"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "time"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM (SELECT \"orders_2\".\"id\", \"orders_2\".\"time\", CASE WHEN \"t6\".\"EXPR$0\" IS NULL THEN 0 ELSE \"t6\".\"EXPR$0\" END AS \"cc\"\n  FROM \"orders_2\"\n   INNER JOIN (SELECT \"customerid\", MAX(\"timestamp\") AS \"__timestamp\"\n    FROM \"customer_2\"\n    WHERE \"name\" = 'foo'\n    GROUP BY \"customerid\") AS \"t0\" ON \"orders_2\".\"customerid\" = \"t0\".\"customerid\"\n   LEFT JOIN (SELECT \"t4\".\"customerid\" AS \"customerid0\", COUNT(*) AS \"EXPR$0\", MAX(GREATEST(\"customer_20\".\"timestamp\", \"t4\".\"__timestamp\")) AS \"__timestamp\"\n    FROM \"customer_2\" AS \"customer_20\"\n     INNER JOIN (SELECT \"orders_20\".\"customerid\", MAX(GREATEST(\"orders_20\".\"time\", \"t2\".\"__timestamp\")) AS \"__timestamp\"\n      FROM \"orders_2\" AS \"orders_20\"\n       INNER JOIN (SELECT \"customerid\", MAX(\"timestamp\") AS \"__timestamp\"\n        FROM \"customer_2\"\n        WHERE \"name\" = 'foo'\n        GROUP BY \"customerid\") AS \"t2\" ON \"orders_20\".\"customerid\" = \"t2\".\"customerid\"\n      GROUP BY \"orders_20\".\"customerid\") AS \"t4\" ON \"customer_20\".\"customerid\" > \"t4\".\"customerid\"\n    GROUP BY \"t4\".\"customerid\") AS \"t6\" ON \"orders_2\".\"customerid\" = \"t6\".\"customerid0\") AS \"t7\"\nWHERE \"t7\".\"id\" = $1 AND \"t7\".\"time\" = $2",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "id"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "time"
-                }
-              ]
-            }
-          }
-        ]
+        }
       }
     ],
     "mutations" : [ ],
     "subscriptions" : [ ],
     "schema" : {
       "type" : "string",
-      "type" : "string",
-      "schema" : "type Customer {\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype Orders {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  entries(limit: Int = 10, offset: Int = 0): [entries!]\n}\n\ntype Query {\n  Customer(customerid: Float, lastUpdated: Float, limit: Int = 10, offset: Int = 0): [Customer!]\n  Orders(id: Float, time: DateTime, limit: Int = 10, offset: Int = 0): [Orders!]\n  SelectOrders1(id: Float, time: DateTime, limit: Int = 10, offset: Int = 0): [SelectOrders1!]\n  SelectOrders2(id: Float, time: DateTime, limit: Int = 10, offset: Int = 0): [SelectOrders2!]\n  SelectOrders3(id: Float, time: DateTime, limit: Int = 10, offset: Int = 0): [SelectOrders3!]\n  SelectOrders4(id: Float, time: DateTime, limit: Int = 10, offset: Int = 0): [SelectOrders4!]\n}\n\ntype SelectOrders1 {\n  id: Float!\n  time: DateTime!\n}\n\ntype SelectOrders2 {\n  id: Float!\n  time: DateTime!\n}\n\ntype SelectOrders3 {\n  id: Float!\n  time: DateTime!\n}\n\ntype SelectOrders4 {\n  id: Float!\n  time: DateTime!\n  cc: Float\n}\n\ntype entries {\n  productid: Float!\n  quantity: Float!\n  unit_price: Float!\n  discount: Float\n}\n"
+      "schema" : "type Customer {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Orders {\n  id: GraphQLBigInteger!\n  customerid: GraphQLBigInteger!\n  time: DateTime!\n  entries: [Orders_entriesOutput]!\n}\n\ntype Orders_entriesOutput {\n  productid: GraphQLBigInteger!\n  quantity: GraphQLBigInteger!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Product {\n  productid: GraphQLBigInteger!\n  name: String!\n  description: String!\n  category: String!\n}\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n  Product(limit: Int = 10, offset: Int = 0): [Product!]\n  ProductFilter1(limit: Int = 10, offset: Int = 0): [Product!]\n  ProductFilter2(limit: Int = 10, offset: Int = 0): [Product!]\n  SelectOrders1(limit: Int = 10, offset: Int = 0): [SelectOrders1!]\n  SelectOrders2(limit: Int = 10, offset: Int = 0): [SelectOrders2!]\n  SelectOrders3(limit: Int = 10, offset: Int = 0): [SelectOrders3!]\n}\n\ntype SelectOrders1 {\n  id: GraphQLBigInteger!\n  time: DateTime!\n}\n\ntype SelectOrders2 {\n  id: GraphQLBigInteger!\n  time: DateTime!\n}\n\ntype SelectOrders3 {\n  id: GraphQLBigInteger!\n  time: DateTime!\n}\n"
     }
   }
 }

@@ -1,0 +1,8 @@
+IMPORT ecommerceTs.Customer;
+
+/** This is for selected customers
+    and their orders
+  */ /* ignored comment */
+/*+ primary_key(id, name), index(name), another(key) */
+/*+ primary_key(id, name), index(name); another(key) */
+SelectCustomers := SELECT * From Customer WHERE customerid > 0 ORDER BY `timestamp` DESC LIMIT 10;

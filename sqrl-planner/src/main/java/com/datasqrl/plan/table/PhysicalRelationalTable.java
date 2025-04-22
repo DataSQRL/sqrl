@@ -3,29 +3,30 @@
  */
 package com.datasqrl.plan.table;
 
-import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.engine.pipeline.ExecutionPipeline;
-import com.datasqrl.engine.pipeline.ExecutionStage;
-import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.io.tables.TableType;
-import com.datasqrl.plan.hints.OptimizerHint;
-import com.datasqrl.plan.rules.SQRLConverter;
-import com.datasqrl.plan.rules.SqrlConverterConfig;
-import com.datasqrl.plan.table.PullupOperator.Container;
-import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.Setter;
+
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.schema.Statistic;
 import org.apache.calcite.schema.Statistics;
 import org.apache.calcite.util.ImmutableBitSet;
-import org.apache.commons.lang3.tuple.Pair;
+
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.engine.pipeline.ExecutionPipeline;
+import com.datasqrl.engine.pipeline.ExecutionStage;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.io.tables.TableType;
+import com.datasqrl.plan.hints.OptimizerHint;
+import com.datasqrl.plan.rules.SQRLConverter;
+import com.datasqrl.plan.rules.SqrlConverterConfig;
+import com.google.common.base.Preconditions;
+
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.Setter;
 
 /**
  * A relational table that is defined by the user query in the SQRL script.
@@ -43,14 +44,14 @@ public abstract class PhysicalRelationalTable extends ScriptRelationalTable impl
   protected final PrimaryKey primaryKey;
   @NonNull
   protected Timestamps timestamp;
-
-  protected PullupOperator.Container pullups;
-
-  protected RelNode plannedRelNode;
-  @Setter
-  protected Optional<ExecutionStage> assignedStage = Optional.empty();
   @NonNull
   protected final TableStatistic tableStatistic;
+
+  protected PullupOperator.Container pullups;
+  protected RelNode plannedRelNode;
+
+  @Setter
+  protected Optional<ExecutionStage> assignedStage = Optional.empty();
 
   public PhysicalRelationalTable(Name rootTableId, @NonNull NamePath tablePath, @NonNull TableType type,
                                   RelDataType rowType, int numSelects, @NonNull Timestamps timestamp,
@@ -65,7 +66,8 @@ public abstract class PhysicalRelationalTable extends ScriptRelationalTable impl
     this.tableStatistic = tableStatistic;
   }
 
-  public Name getTableName() {
+  @Override
+public Name getTableName() {
     return tablePath.getLast();
   }
 
@@ -87,11 +89,14 @@ public abstract class PhysicalRelationalTable extends ScriptRelationalTable impl
     return assignedStage;
   }
 
-  public abstract List<ExecutionStage> getSupportedStages(ExecutionPipeline pipeline, ErrorCollector errors);
+  @Override
+public abstract List<ExecutionStage> getSupportedStages(ExecutionPipeline pipeline, ErrorCollector errors);
 
-  public abstract SqrlConverterConfig.SqrlConverterConfigBuilder getBaseConfig();
+  @Override
+public abstract SqrlConverterConfig.SqrlConverterConfigBuilder getBaseConfig();
 
-  public void assignStage(ExecutionStage stage) {
+  @Override
+public void assignStage(ExecutionStage stage) {
     this.assignedStage = Optional.of(stage);
   }
 
@@ -108,7 +113,7 @@ public abstract class PhysicalRelationalTable extends ScriptRelationalTable impl
   @Override
   public void setPlannedRelNode(@NonNull SQRLConverter.TablePlan planned) {
     Preconditions.checkArgument(plannedRelNode == null, "Table has already been planned");
-    RelNode relNode = planned.getRelNode();
+    var relNode = planned.getRelNode();
     Preconditions.checkArgument(relNode.getRowType().equalsSansFieldNames(getRowType()), "Row types do not match: %s vs %s", getRowType(), relNode.getRowType());
     Preconditions.checkArgument(relNode.getRowType().getFieldNames().subList(0,getNumSelects()).equals(getRowType().getFieldNames().subList(0,getNumSelects())), "Names do not match");
     this.plannedRelNode = relNode;
@@ -125,11 +130,12 @@ public abstract class PhysicalRelationalTable extends ScriptRelationalTable impl
     return this;
   }
 
-  public Statistic getStatistic() {
+  @Override
+public Statistic getStatistic() {
     if (tableStatistic.isUnknown()) {
       return Statistics.UNKNOWN;
     }
-    ArrayList<ImmutableBitSet> keys = new ArrayList<>();
+    var keys = new ArrayList<ImmutableBitSet>();
     if (primaryKey.isDefined()) {
       keys.add(ImmutableBitSet.of(primaryKey.asArray()));
     }

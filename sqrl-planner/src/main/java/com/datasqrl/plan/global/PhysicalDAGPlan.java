@@ -3,6 +3,16 @@
  */
 package com.datasqrl.plan.global;
 
+import java.net.URL;
+import java.util.Collection;
+import java.util.List;
+import java.util.OptionalInt;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.type.RelDataType;
+
 import com.datasqrl.engine.log.Log;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
@@ -10,19 +20,10 @@ import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.io.tables.TableType;
 import com.datasqrl.plan.queries.IdentifiedQuery;
 import com.datasqrl.util.StreamUtil;
-import java.net.URL;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.OptionalInt;
-import java.util.Set;
-import java.util.stream.Collectors;
+
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.Value;
-import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.rel.type.RelDataType;
-import org.apache.flink.table.functions.UserDefinedFunction;
 
 @Value
 public class PhysicalDAGPlan {
@@ -75,8 +76,6 @@ public class PhysicalDAGPlan {
     List<TableDefinition> tableDefinitions;
 
     Set<URL> jars;
-
-    Map<String, UserDefinedFunction> udfs;
 
     @Value
     public static class TableDefinition {
@@ -143,6 +142,7 @@ public class PhysicalDAGPlan {
     final RelNode relNode;
 
     final TableType type;
+    @Override
     public <R, C> R accept(QueryVisitor<R, C> visitor, C context) {
       return visitor.accept(this, context);
     }
@@ -170,6 +170,7 @@ public class PhysicalDAGPlan {
       return getNameId();
     }
 
+    @Override
     public <R, C> R accept(SinkVisitor<R, C> visitor, C context) {
       return visitor.accept(this, context);
     }
@@ -186,6 +187,7 @@ public class PhysicalDAGPlan {
       this.tableSink = tableSink;
     }
 
+    @Override
     public <R, C> R accept(SinkVisitor<R, C> visitor, C context) {
       return visitor.accept(this, context);
     }
@@ -196,6 +198,7 @@ public class PhysicalDAGPlan {
 
     IdentifiedQuery query;
     RelNode relNode;
+    @Override
     public <R, C> R accept(QueryVisitor<R, C> visitor, C context) {
       return visitor.accept(this, context);
     }

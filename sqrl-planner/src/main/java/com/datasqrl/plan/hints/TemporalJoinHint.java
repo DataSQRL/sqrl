@@ -3,14 +3,12 @@
  */
 package com.datasqrl.plan.hints;
 
-import com.google.common.base.Preconditions;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 import org.apache.calcite.rel.hint.RelHint;
 
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
+import com.google.common.base.Preconditions;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
@@ -42,7 +40,7 @@ public class TemporalJoinHint implements SqrlHint {
 
     @Override
     public TemporalJoinHint fromHint(RelHint hint) {
-      List<String> options = hint.listOptions;
+      var options = hint.listOptions;
       Preconditions.checkArgument(options.size() == 1, "Invalid hint: %s", hint);
       int streamTimeIdx = Integer.valueOf(options.get(0));
       return new TemporalJoinHint(streamTimeIdx);

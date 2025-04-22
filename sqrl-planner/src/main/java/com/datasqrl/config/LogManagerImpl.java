@@ -1,19 +1,21 @@
 package com.datasqrl.config;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import org.apache.calcite.rel.type.RelDataType;
+
 import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.config.EngineFactory.Type;
 import com.datasqrl.engine.log.Log;
 import com.datasqrl.engine.log.LogEngine;
 import com.datasqrl.engine.log.LogFactory;
 import com.datasqrl.engine.log.LogManager;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.google.inject.Inject;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+
 import lombok.Getter;
-import org.apache.calcite.rel.type.RelDataType;
 
 /**
  * Central manager for log creation.
@@ -26,8 +28,8 @@ public class LogManagerImpl implements LogManager {
 
   @Inject
   public LogManagerImpl(ExecutionPipeline pipeline) {
-    proxiedFactory = pipeline.getStage(Type.LOG)
-        .map(stage -> (LogEngine) stage.get(0).getEngine())
+    proxiedFactory = pipeline.getStageByType(EngineType.LOG)
+        .map(stage -> (LogEngine) stage.getEngine())
         .map(LogEngine::getLogFactory);
   }
 
@@ -39,7 +41,7 @@ public class LogManagerImpl implements LogManager {
   @Override
   public Log create(String logId, Name logName, RelDataType schema, List<String> primaryKey,
       Timestamp timestamp) {
-    Log log = proxiedFactory.orElseThrow(() -> new IllegalStateException("No log engine configured"))
+    var log = proxiedFactory.orElseThrow(() -> new IllegalStateException("No log engine configured"))
         .create(logId, logName, schema, primaryKey, timestamp);
     logs.put(logId, log);
     return log;

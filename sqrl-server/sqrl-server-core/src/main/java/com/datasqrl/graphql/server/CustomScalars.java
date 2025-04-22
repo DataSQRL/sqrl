@@ -1,11 +1,13 @@
 package com.datasqrl.graphql.server;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+
 import graphql.Scalars;
+import graphql.scalars.ExtendedScalars;
 import graphql.scalars.datetime.DateTimeScalar;
 import graphql.schema.Coercing;
 import graphql.schema.GraphQLScalarType;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 
 public class CustomScalars {
 
@@ -15,9 +17,8 @@ public class CustomScalars {
       .coercing(new Coercing() {
         @Override
         public Object serialize(Object dataFetcherResult) {
-          if (dataFetcherResult instanceof Double) {
-            Double doubleValue = (Double) dataFetcherResult;
-            BigDecimal bd = new BigDecimal(doubleValue)
+          if (dataFetcherResult instanceof Double doubleValue) {
+            var bd = new BigDecimal(doubleValue)
                 .setScale(8, RoundingMode.HALF_UP)
                 .stripTrailingZeros();
             //Convert back to normal readable number
@@ -41,4 +42,8 @@ public class CustomScalars {
 
 
   public static final GraphQLScalarType DATETIME = DateTimeScalar.INSTANCE;
+  public static final GraphQLScalarType DATE =  ExtendedScalars.Date;
+  public static final GraphQLScalarType TIME =  ExtendedScalars.LocalTime;
+  public static final GraphQLScalarType JSON =  ExtendedScalars.Json;
+  public static final GraphQLScalarType GRAPHQL_BIGINTEGER =  ExtendedScalars.GraphQLBigInteger.transform(builder->builder.name("GraphQLBigInteger"));
 }

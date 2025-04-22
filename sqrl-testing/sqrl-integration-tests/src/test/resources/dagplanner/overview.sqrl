@@ -1,0 +1,42 @@
+-- This imports data from an external source. The source is defined in ecommerceTs/customer.table.sql and has an (optional)
+-- schema defined in customer.schema.yml. DataSQRL supports multiple schema formats such as Avro.
+IMPORT ecommerceTs.Customer AS CustomerImport;
+-- Orders has nested data `entries` (see orders.schema.yml)
+IMPORT ecommerceTs.Orders;
+
+-- We can also define table as data source, those become mutations. _uuid is a special column for the UUID generated
+-- on the server and the timestamp metadata is for the Kafka timestamp
+CREATE TABLE SimpleOrders (
+    _uuid VARCHAR NOT NULL METADATA FROM 'uuid',
+    orderid INT,
+    customerid BIGINT,
+    amount FLOAT,
+    orderTime TIMESTAMP_LTZ(3) METADATA FROM 'timestamp'
+);
+
+-- We can then define tables. This is a "standard" table.
+LargeOrders := SELECT * FROM SimpleOrders WHERE amount > 100;
+
+-- DataSQRL supports some custom syntax for convenience, like turning a CDC stream into a state table
+Customer := DISTINCT CustomerImport ON customerid ORDER BY `timestamp` DESC;
+
+-- A relationship, `this.customerid` gets replaced with an internal parameter that gets substituted with customerid on the parent table Customer
+Customer.orders := SELECT * FROM SimpleOrders o WHERE this.customerid = o.customerid ORDER BY o.orderTime DESC;
+
+-- This is a function, customerid is an explicit (i.e. not internal) parameter
+CustomerById(customerid BIGINT NOT NULL) := SELECT * FROM Customer WHERE customerid = :customerid;
+
+-- We can then get fancy and combine the two: relationship with explicit parameters
+-- this.customerid is an internal parameter and minAmount is an explicit/external parameter
+Customer.largeOrders(minAmount FLOAT NOT NULL) := SELECT * FROM SimpleOrders o WHERE this.customerid = o.customerid AND o.amount >= :minAmount ORDER BY o.amount DESC;
+
+-- This is a subscription with a filter based on the parameter
+LargeOrderSubscription(customerid BIGINT) := SUBSCRIBE SELECT * FROM LargeOrders WHERE customerid = :customerid;
+
+-- To access nested data, we have to use the unnest function in a cross join
+UnnestOrders := SELECT o.id, o.customerid, o.`time`, e.productid, e.quantity, e.discount FROM Orders o CROSS JOIN UNNEST(entries) e;
+
+-- We can export to sink, like this build in 'print' sink
+EXPORT UnnestOrders TO print.Unnestorders;
+-- or an explicitly defined sink in mysink/customersink.table.sql
+EXPORT CustomerImport TO mysink.customersink;

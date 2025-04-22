@@ -1,9 +1,10 @@
 package com.datasqrl.graphql.kafka;
 
-import com.datasqrl.graphql.io.SinkConsumer;
-import io.vertx.core.json.JsonObject;
-import io.vertx.kafka.client.consumer.KafkaConsumer;
 import java.util.function.Consumer;
+
+import com.datasqrl.graphql.io.SinkConsumer;
+
+import io.vertx.kafka.client.consumer.KafkaConsumer;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 

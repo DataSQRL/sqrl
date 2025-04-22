@@ -2,17 +2,11 @@
   <parent>
     <groupId>com.datasqrl</groupId>
     <artifactId>sqrl-tools</artifactId>
-    <version>0.5.8-SNAPSHOT</version>
+    <version>0.6.0-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>sqrl-run</artifactId>
-
-  <properties>
-    <maven.compiler.source>11</maven.compiler.source>
-    <maven.compiler.target>11</maven.compiler.target>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-  </properties>
 
   <dependencies>
     <dependency>
@@ -81,16 +75,19 @@
       <version>1.19.1</version>
     </dependency>
     <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-flexible-json</artifactId>
+      <groupId>com.datasqrl.flinkrunner</groupId>
+      <artifactId>postgresql-connector</artifactId>
+      <version>${flinkrunner.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-flexible-csv</artifactId>
+      <groupId>com.datasqrl.flinkrunner</groupId>
+      <artifactId>flexible-json-format</artifactId>
+      <version>${flinkrunner.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-json</artifactId>
+      <groupId>com.datasqrl.flinkrunner</groupId>
+      <artifactId>flexible-csv-format</artifactId>
+      <version>${flinkrunner.version}</version>
     </dependency>
     <dependency>
       <groupId>com.datasqrl</groupId>
@@ -107,10 +104,6 @@
     <dependency>
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-vector</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-jdbc-1.19</artifactId>
     </dependency>
     <dependency>
       <groupId>org.testcontainers</groupId>
@@ -331,10 +324,6 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
-        <version>3.2.4</version>
-        <configuration>
-          <createDependencyReducedPom>false</createDependencyReducedPom>
-        </configuration>
         <executions>
           <execution>
             <phase>package</phase>
@@ -344,6 +333,7 @@
             <configuration>
               <finalName>sqrl-run</finalName>
               <shadedArtifactAttached>true</shadedArtifactAttached>
+              <createDependencyReducedPom>false</createDependencyReducedPom>
               <minimizeJar>false</minimizeJar>
               <transformers>
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">

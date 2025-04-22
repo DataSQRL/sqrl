@@ -5,26 +5,31 @@ import static com.datasqrl.graphql.server.TypeDefinitionRegistryUtil.getQueryTyp
 import static com.datasqrl.graphql.server.TypeDefinitionRegistryUtil.getSubscriptionType;
 import static com.datasqrl.graphql.util.GraphqlCheckUtil.checkState;
 
-import com.datasqrl.calcite.function.SqrlTableMacro;
-import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.graphql.APIConnectorManager;
-import com.datasqrl.plan.queries.APISource;
-import graphql.language.FieldDefinition;
-import graphql.language.ObjectTypeDefinition;
-import graphql.language.TypeDefinition;
-import graphql.schema.idl.SchemaParser;
-import graphql.schema.idl.TypeDefinitionRegistry;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import lombok.extern.slf4j.Slf4j;
+
 import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rel.type.RelRecordType;
 import org.apache.calcite.sql.validate.SqlNameMatcher;
+
+import com.datasqrl.calcite.function.SqrlTableMacro;
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.graphql.APIConnectorManager;
+import com.datasqrl.plan.queries.APISource;
+
+import graphql.language.FieldDefinition;
+import graphql.language.ListType;
+import graphql.language.NonNullType;
+import graphql.language.ObjectTypeDefinition;
+import graphql.language.Type;
+import graphql.schema.idl.SchemaParser;
+import graphql.schema.idl.TypeDefinitionRegistry;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public abstract class SchemaWalker {
@@ -43,13 +48,13 @@ public abstract class SchemaWalker {
   protected final Set<ObjectTypeDefinition> seen = new HashSet<>();
 
   public void walk(APISource source) {
-    TypeDefinitionRegistry registry = (new SchemaParser()).parse(source.getSchemaDefinition());
+    var registry = (new SchemaParser()).parse(source.getSchemaDefinition());
 
-    ObjectTypeDefinition queryType = getQueryType(registry);
-    Optional<ObjectTypeDefinition> mutationType = getMutationType(registry);
+    var queryType = getQueryType(registry);
+    var mutationType = getMutationType(registry);
     mutationType.ifPresent(m->walkMutation(m, registry, source));
 
-    Optional<ObjectTypeDefinition> subscriptionType = getSubscriptionType(registry);
+    var subscriptionType = getSubscriptionType(registry);
     subscriptionType.ifPresent(s->walkSubscription(s, registry, source));
 
     walk(queryType, NamePath.ROOT, Optional.empty(), registry);
@@ -88,7 +93,7 @@ public abstract class SchemaWalker {
   private void walk(ObjectTypeDefinition type, FieldDefinition field, NamePath path,
       Optional<RelDataType> rel, TypeDefinitionRegistry registry) {
     //1. Check to see if we have a table function or a reldatatype of this field.
-    List<SqrlTableMacro> functions = schema.getTableFunctions(path);
+    var functions = schema.getTableFunctions(path);
 
     //Check to see if there exists a relationship on the schema
     if (!functions.isEmpty()) {
@@ -102,16 +107,39 @@ public abstract class SchemaWalker {
       if (relDataTypeField != null) {
         //If it's a row (or array of rows), walk into it
         if (relDataTypeField.getType() instanceof RelRecordType) {
-          ObjectTypeDefinition type1 = registry.getType(field.getType())
+          var type1 = registry.getType(field.getType())
               .filter(f -> f instanceof ObjectTypeDefinition).map(f -> (ObjectTypeDefinition) f)
               .orElseThrow();//assure it is a object type
 
-          RelRecordType relRecordType = (RelRecordType) relDataTypeField.getType();
+          var relRecordType = (RelRecordType) relDataTypeField.getType();
           walk(type1, path, Optional.of(relRecordType), registry);
           return;
         } else if (relDataTypeField.getType().getComponentType() != null) {
-          //array todo
-          throw new RuntimeException();
+          RelDataType componentType = relDataTypeField.getType().getComponentType();
+
+          // Unwrap the field's type to get the element type
+          Type<?> fieldType = field.getType();
+          fieldType = unwrapNonNullType(fieldType);
+
+          if (fieldType instanceof ListType listType) {
+            Type<?> elementType = listType.getType();
+            elementType = unwrapNonNullType(elementType);
+
+            if (componentType instanceof RelRecordType relRecordType) {
+              // The array contains records
+              var type1 = registry.getType(elementType)
+                  .filter(f -> f instanceof ObjectTypeDefinition)
+                  .map(f -> (ObjectTypeDefinition) f)
+                  .orElseThrow();
+              walk(type1, path, Optional.of(relRecordType), registry);
+            } else {
+              // The array contains scalar types
+              visitScalar(type, field, path, rel.get(), relDataTypeField);
+            }
+          } else {
+            throw new RuntimeException("Expected ListType for array field");
+          }
+          return;
         }
 
         visitScalar(type, field, path, rel.get(), relDataTypeField);
@@ -123,7 +151,13 @@ public abstract class SchemaWalker {
 
     //Is not a scalar or a table function, do nothing
   }
-
+  private Type<?> unwrapNonNullType(Type<?> type) {
+    if (type instanceof NonNullType nullType) {
+      return unwrapNonNullType(nullType.getType());
+    } else {
+      return type;
+    }
+  }
   protected abstract void visitUnknownObject(ObjectTypeDefinition type, FieldDefinition field,
       NamePath path, Optional<RelDataType> rel);
 
@@ -132,7 +166,7 @@ public abstract class SchemaWalker {
 
   public Object visitQuery(ObjectTypeDefinition type, FieldDefinition field, NamePath path,
       Optional<RelDataType> rel, List<SqrlTableMacro> functions, TypeDefinitionRegistry registry) {
-     Optional<TypeDefinition> optType = registry.getType(field.getType());
+     var optType = registry.getType(field.getType());
      checkState(optType.isPresent(), field.getType().getSourceLocation(), "Could not find object in graphql type registry");
 
     // Let;s check for all the types here.
@@ -141,11 +175,11 @@ public abstract class SchemaWalker {
         "Could not infer non-object type on graphql schema: %s", type.getName());
     if (optType.get() instanceof ObjectTypeDefinition) {
 
-      ObjectTypeDefinition currentType = (ObjectTypeDefinition) optType.get();
+      var currentType = (ObjectTypeDefinition) optType.get();
       visitQuery(type, currentType, field, path, rel, functions);
-      RelDataType rowType = functions.get(0).getRowType();
+      var rowType = functions.get(0).getRowType();
       // simple query, no frills
-      NamePath orDefault = schema.getPathToAbsolutePathMap().getOrDefault(path, path);
+      var orDefault = schema.getPathToAbsolutePathMap().getOrDefault(path, path);
       walk(currentType, orDefault, Optional.of(rowType), registry);
     } else {
       throw new RuntimeException();

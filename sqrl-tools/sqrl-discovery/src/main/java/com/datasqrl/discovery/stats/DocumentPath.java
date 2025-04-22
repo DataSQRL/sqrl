@@ -17,7 +17,7 @@ public class DocumentPath {
   }
 
   public DocumentPath resolve(String sub) {
-    String[] newnames = Arrays.copyOf(names, names.length + 1);
+    var newnames = Arrays.copyOf(names, names.length + 1);
     newnames[names.length] = sub;
     return new DocumentPath(newnames);
   }

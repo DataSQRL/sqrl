@@ -1,9 +1,9 @@
 package com.datasqrl.calcite.convert;
 
 import java.util.concurrent.atomic.AtomicBoolean;
+
 import org.apache.calcite.plan.RelOptRuleCall;
 import org.apache.calcite.plan.RelRule;
-import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.RelFactories;
 import org.apache.calcite.rel.logical.LogicalFilter;
 import org.apache.calcite.rel.rules.TransformationRule;
@@ -33,12 +33,12 @@ public class SimplePredicateTransform extends RelRule<SimplePredicateTransform.C
 
   @Override
   public void onMatch(RelOptRuleCall relOptRuleCall) {
-    LogicalFilter filter = relOptRuleCall.rel(0);
+    var filter = relOptRuleCall.rel(0);
 
-    RexBuilder rexBuilder = relOptRuleCall.builder().getRexBuilder();
-    AtomicBoolean hasTransformed = new AtomicBoolean(false);
+    var rexBuilder = relOptRuleCall.builder().getRexBuilder();
+    var hasTransformed = new AtomicBoolean(false);
 
-    RelNode newFilter = filter.accept(new RexShuttle() {
+    var newFilter = filter.accept(new RexShuttle() {
       @Override
       public RexNode visitCall(RexCall call) {
         /**
@@ -55,8 +55,7 @@ public class SimplePredicateTransform extends RelRule<SimplePredicateTransform.C
       private boolean isPredicateContainingOp(RexCall call) {
         if (call.getType().getSqlTypeName() == SqlTypeName.BOOLEAN) {
           for (RexNode op : call.getOperands()) {
-            if (op instanceof RexCall) {
-              RexCall call1 = (RexCall) op;
+            if (op instanceof RexCall call1) {
               if (call1.getOperator().equals(operator)) {
                 return true;
               }

@@ -1,6 +1,5 @@
 package com.datasqrl.config;
 
-import com.datasqrl.error.ErrorCollector;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -8,6 +7,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
+
+import com.datasqrl.error.ErrorCollector;
 
 /**
  * Interface for accessing configuration files that provides convenience methods
@@ -28,8 +29,15 @@ interface SqrlConfig {
    */
   int getVersion();
 
-  public SqrlConfig getSubConfig(String name);
-  public boolean hasSubConfig(String name);
+  SqrlConfig getSubConfig(String name);
+
+  boolean hasSubConfig(String name);
+
+  /**
+   * Throws an error if the sub configuration does not exist or is empty
+   * @param name
+   */
+  void validateSubConfig(String name);
 
   /**
    * Returns the keys that are at the local level in the configuration
@@ -100,9 +108,12 @@ interface SqrlConfig {
     T get();
 
     default Optional<T> getOptional() {
-      T value = this.withDefault(null).get();
-      if (value==null) return Optional.empty();
-      else return Optional.of(value);
+      var value = this.withDefault(null).get();
+      if (value==null) {
+        return Optional.empty();
+    } else {
+        return Optional.of(value);
+    }
     }
 
     Value<T> withDefault(T defaultValue);
@@ -114,9 +125,11 @@ interface SqrlConfig {
   }
 
   static<T extends Enum<T>> T getEnum(Value<String> value, Class<T> clazz, Optional<T> defaultValue) {
-    if (defaultValue.isPresent()) value = value.withDefault(defaultValue.get().name());
+    if (defaultValue.isPresent()) {
+        value = value.withDefault(defaultValue.get().name());
+    }
     return Enum.valueOf(clazz,value.map(String::toLowerCase).validate(v -> isEnumValue(v,clazz),
-        String.format("Use one of: %s",clazz.getEnumConstants())).get());
+        "Use one of: %s".formatted(clazz.getEnumConstants())).get());
   }
 
   static<T extends Enum<T>> boolean isEnumValue(String value, Class<T> clazz) {
