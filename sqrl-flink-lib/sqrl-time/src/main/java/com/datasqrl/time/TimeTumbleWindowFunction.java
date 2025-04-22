@@ -1,7 +1,5 @@
 package com.datasqrl.time;
 
-import com.datasqrl.function.FlinkTypeUtil;
-import com.datasqrl.function.FlinkTypeUtil.VariableArguments;
 //import com.google.common.base.Preconditions;
 import java.time.Duration;
 import java.time.Instant;
@@ -9,15 +7,21 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
-import lombok.AllArgsConstructor;
+
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.catalog.DataTypeFactory;
 import org.apache.flink.table.functions.ScalarFunction;
 import org.apache.flink.table.types.inference.TypeInference;
 
+import com.datasqrl.function.AutoRegisterSystemFunction;
+import com.datasqrl.function.FlinkTypeUtil;
+import com.datasqrl.function.FlinkTypeUtil.VariableArguments;
+
+import lombok.AllArgsConstructor;
+
 @AllArgsConstructor
 public abstract class TimeTumbleWindowFunction extends ScalarFunction implements
-    TimeTumbleWindowFunctionEval {
+    TimeTumbleWindowFunctionEval, AutoRegisterSystemFunction {
 
   protected final ChronoUnit timeUnit;
   protected final ChronoUnit offsetUnit;
@@ -55,21 +59,21 @@ public abstract class TimeTumbleWindowFunction extends ScalarFunction implements
 //        offsetUnit.getDuration().multipliedBy(offset).compareTo(timeUnit.getDuration()) < 0,
 //        "Offset of %s %s is larger than %s", offset, offsetUnit, timeUnit);
 
-    ZonedDateTime time = ZonedDateTime.ofInstant(instant, ZoneOffset.UTC);
-    ZonedDateTime truncated = time.minus(offset, offsetUnit).truncatedTo(timeUnit);
+    var time = ZonedDateTime.ofInstant(instant, ZoneOffset.UTC);
+    var truncated = time.minus(offset, offsetUnit).truncatedTo(timeUnit);
 
-    long multipleToAdd = 1;
+    var multipleToAdd = 1L;
     if (multiple > 1) {
-      ZonedDateTime truncatedBase = truncated.with(TemporalAdjusters.firstDayOfYear())
+      var truncatedBase = truncated.with(TemporalAdjusters.firstDayOfYear())
           .truncatedTo(ChronoUnit.DAYS);
-      ZonedDateTime timeBase = time.with(TemporalAdjusters.firstDayOfYear())
+      var timeBase = time.with(TemporalAdjusters.firstDayOfYear())
           .truncatedTo(ChronoUnit.DAYS);
       if (!timeBase.equals(truncatedBase)) {
         //We slipped into the prior base unit (i.e. year) due to offset.
         return timeBase.plus(offset, offsetUnit).minusNanos(1).toInstant();
       }
-      Duration timeToBase = Duration.between(truncatedBase, truncated);
-      long numberToBase = timeToBase.dividedBy(timeUnit.getDuration());
+      var timeToBase = Duration.between(truncatedBase, truncated);
+      var numberToBase = timeToBase.dividedBy(timeUnit.getDuration());
       multipleToAdd = multiple - (numberToBase % multiple);
     }
 

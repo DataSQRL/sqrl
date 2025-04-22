@@ -3,15 +3,17 @@
  */
 package com.datasqrl.plan.hints;
 
-import com.datasqrl.plan.rules.JoinAnalysis;
-import com.datasqrl.plan.rules.JoinAnalysis.Side;
-import com.datasqrl.io.tables.TableType;
-import com.google.common.base.Preconditions;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
+import java.util.List;
+
 import org.apache.calcite.rel.hint.RelHint;
 
-import java.util.List;
+import com.datasqrl.io.tables.TableType;
+import com.datasqrl.plan.rules.JoinAnalysis;
+import com.datasqrl.plan.rules.JoinAnalysis.Side;
+import com.google.common.base.Preconditions;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 @AllArgsConstructor
 @Getter
@@ -56,7 +58,7 @@ public class JoinCostHint implements SqrlHint {
 
     @Override
     public JoinCostHint fromHint(RelHint hint) {
-      List<String> opts = hint.listOptions;
+      var opts = hint.listOptions;
       Preconditions.checkArgument(opts.size() == 4, "Invalid hint: %s", hint);
       return new JoinCostHint(TableType.valueOf(opts.get(0)), TableType.valueOf(opts.get(1)),
           Integer.valueOf(hint.listOptions.get(2)), Side.valueOf(hint.listOptions.get(3)));

@@ -33,6 +33,7 @@ if [ "$1" == "run" ] || [ "$1" == "test" ]; then
         export POSTGRES_HOST=localhost
         export POSTGRES_PORT=5432
         export JDBC_URL="jdbc:postgresql://localhost:5432/datasqrl"
+        export JDBC_AUTHORITY="localhost:5432/datasqrl"
         export PGHOST="localhost"
         export PGUSER="postgres"
         export JDBC_USERNAME="postgres"

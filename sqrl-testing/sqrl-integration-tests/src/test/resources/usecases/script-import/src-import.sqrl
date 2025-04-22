@@ -1,4 +1,0 @@
-IMPORT src.*;
-
-/*+test*/
-MyTest := SELECT * FROM Customers;

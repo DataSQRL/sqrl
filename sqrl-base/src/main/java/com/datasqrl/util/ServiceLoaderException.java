@@ -1,7 +1,6 @@
 package com.datasqrl.util;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class ServiceLoaderException extends RuntimeException {
 
@@ -13,7 +12,7 @@ public class ServiceLoaderException extends RuntimeException {
   }
 
   public ServiceLoaderException(Class<?> clazz, List<String> identifiers) {
-    super(String.format("Could not load %s dependency for identifier(s): %s", clazz.getSimpleName(), String.join(",",identifiers)));
+    super("Could not load %s dependency for identifier(s): %s".formatted(clazz.getSimpleName(), String.join(",", identifiers)));
     this.clazz = clazz;
     this.identifiers = identifiers;
   }

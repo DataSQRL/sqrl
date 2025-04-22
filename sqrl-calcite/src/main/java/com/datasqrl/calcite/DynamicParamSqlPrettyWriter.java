@@ -1,11 +1,12 @@
 package com.datasqrl.calcite;
 
-import lombok.Getter;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.calcite.sql.SqlWriterConfig;
 import org.apache.calcite.sql.pretty.SqlPrettyWriter;
 
-import java.util.ArrayList;
-import java.util.List;
+import lombok.Getter;
 
 public class DynamicParamSqlPrettyWriter extends SqlPrettyWriter {
 

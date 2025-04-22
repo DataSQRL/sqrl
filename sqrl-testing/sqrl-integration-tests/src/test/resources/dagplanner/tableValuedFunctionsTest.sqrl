@@ -1,0 +1,17 @@
+IMPORT ecommerceTs.Customer;
+
+CustomerTumble := SELECT window_start, window_end, COUNT(customerid) AS total
+                FROM TABLE(TUMBLE(TABLE Customer, DESCRIPTOR(`timestamp`), INTERVAL '10' MINUTES))
+                GROUP BY window_start, window_end;
+
+CustomerHop := SELECT window_start, window_end, COUNT(customerid) AS total
+                  FROM TABLE(HOP(TABLE Customer, DESCRIPTOR(`timestamp`), INTERVAL '5' MINUTES, INTERVAL '10' MINUTES))
+                  GROUP BY window_start, window_end;
+
+CustomerCumulate := SELECT window_start, window_end, COUNT(customerid) AS total
+                  FROM TABLE(CUMULATE(TABLE Customer, DESCRIPTOR(`timestamp`), INTERVAL '5' MINUTES, INTERVAL '10' MINUTES))
+                  GROUP BY window_start, window_end;
+
+CustomerSession := SELECT customerid, window_start, window_end, COUNT(customerid) AS total
+                  FROM TABLE(SESSION(TABLE Customer PARTITION BY customerid, DESCRIPTOR(`timestamp`), INTERVAL '10' MINUTES))
+                  GROUP BY window_start, window_end, customerid;

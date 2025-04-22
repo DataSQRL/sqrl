@@ -1,51 +1,61 @@
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-
 # SQRL Specification
-This is the specification for SQRL, a declarative SQL query language developed at DataSQRL for describing data pipelines. SQRL stands for *"**S**tructured **Q**uery and **R**eaction **L**anguage"* because it extends SQL with support for streaming data and the ability to react to data in realtime. In addition, SQRL adds a number of convenience features that make it development-friendly.
 
-## Table Type System
-In SQRL, every table is assigned a specific type that influences how queries interact with the data, the semantic validity of those queries, and how data is processed by different engines.
+SQRL is an extension of ANSI SQL, specifically FLinkSQL, which adds support for table, function, and relationship definitions as well as source and sink management. 
+The motivation behind SQRL is to extend FlinkSQL into a development language for reactive data processing.
+The "R" that SQRL adds to SQL stands for "reactive" and "relationships".
 
-SQRL recognizes several distinct table types, each with unique characteristics and use cases:
-- **STREAM**: Comprises a stream of immutable records, each identified by a synthetic primary key and timestamp. These tables are ideal for representing events or actions over time.
+## FlinkSQL
+
+SQRL extends the syntax and semantics of [FlinkSQL](https://nightlies.apache.org/flink/flink-docs-stable/docs/dev/table/sql/overview/) for table and view definitions.
+
+Specifically, SQRL supports the entire FlinkSQL syntax for:
+
+* CREATE TABLE, CATALOG, DATABASE, VIEW, FUNCTION
+* SELECT (queries) within the definitions above
+* USE
+
+Refer to the [FlinkSQL documentation](https://nightlies.apache.org/flink/flink-docs-stable/docs/dev/table/sql/overview/) for a detailed specification. 
+Note, that SQRL may lag behind the most current version of FlinkSQL. SQRL currently extends
+FlinkSQL 1.19 - make sure to adjust the version in the documentation links as needed.
+
+The following assumes basic familiarity with ANSI SQL and FlinkSQL in particular, and only specify elements unique to SQRL.
+
+## Statements
+
+SQRL scripts consist of a sequence of statements. Statements are delimited by semi-colon (`;`).
+Only one statement is allowed per line but a statement can span multiple lines.
+
+```sql
+ValidCustomer := SELECT * FROM Customer WHERE customerid > 0 AND email IS NOT NULL;
+```
+
+A statement defines one or multiple tables and functions which can reference previously defined tables/functions. The table and function definitions form a data processing DAG (directed acyclic graph): each table and function definition represents a node in the DAG with edges the tables and functions that occur in its definition body. 
+
+The DAG defines how the data flows from sources to exposed sinks and the data transformations that happen in between. Each node in the DAG is executed by one of the [configured engines](configuration.md#engines).
+
+### Type System
+In SQRL, every table and function has a type based on how the table represents data. The type determines the the semantic validity of queries against tables and how data is processed by different engines.
+
+SQRL assigns one of the following types to tables based on the definition:
+- **STREAM**: Represents a stream of immutable records with an assigned timestamp (often referred to as the "event time"). Stream tables represent events or actions over time.
 - **VERSIONED_STATE**: Contains records with a natural primary key and a timestamp, tracking changes over time to each record, thereby creating a change-stream.
 - **STATE**: Similar to VERSIONED_STATE but without tracking the history of changes. Each record is uniquely identified by its natural primary key.
 - **LOOKUP**: Supports lookup operations using a primary key but does not allow further processing of the data.
-- **RELATION**: Represents relational data that lacks a primary key, timestamp, or explicit streaming semantics. It is used primarily for static relational data integration.
-- **STATIC**: Consists of data that does not change over time, such as constants, table functions, or nested data structures. This type is treated as universally valid across all time points.
+- **STATIC**: Consists of data that does not change over time, such as constants.
 
-These table types will be used throughout this specification to further describe the semantics of sql queries.
+## IMPORT Statement
 
-## Functions
-Functions in SQRL are designed to be engine-agnostic, ensuring that their implementation is consistent across different platforms and execution environments. This uniformity is crucial for maintaining the semantic integrity of functions when executed under various systems.
-
-**Characteristics of Functions**
-- **Engine Agnosticism**: Functions are defined in a way that does not depend on the specifics of the underlying engine.
-- **Semantic Consistency**: Regardless of the engine used, function should preserve their semantic meaning.
-- **Mixed Engine Support**: While functions are designed to be widely supported, some may have mixed support depending on the engine's capabilities.
-- **Nullability Awareness**: Functions in SQRL retain nullability information. This feature is vital for correct schema generation downstream, ensuring that data integrity is maintained through the potential propagation of null values.
-- **Time-Preserving Capabilities**: A significant feature of SQRL functions is their ability to handle time-based data efficiently. Time-preserving functions can manipulate and interpret timestamps in a way that aligns with the temporal dynamics of data streams.
-
-For example, a time-preserving function called 'endOfWeek' could be implemented to aggregate timestamps into time windows. Time windows are a means to divide time into discrete buckets and aggregate all stream records within each bucket to produce a new stream table that contains one row for each aggregate.
-```sql
-Users.spending := SELECT endOfWeek(p.time) AS week,
-         sum(t.price) AS spend, sum(t.saving) AS saved
-      FROM @.purchases p JOIN p.totals t
-      GROUP BY week ORDER BY week DESC;
-```
-
-## Import
-*IMPORT qualifiedName (AS? alias=identifier)?*
+*IMPORT qualifiedName (AS? identifier)?*
 
 An import in SQRL describes a **table**, **function**, or other **sqrl script** to be added to the schema. Import paths use the dot character `.` to separate path components.
 
 ```sql
 IMPORT datasqrl.seedshop.Orders;
 ```
-Imports are intended to act much like language dependencies. The SQRL specification does not describe how imports are resolved and is up to the implementation.
 
-Imports can end with a `*` to import all items on that level of the qualified path.
+The last element of the import path is the table or function identifier. The prior elements define the filesystem paths relative to the build directory where the table or function definition can be found. The example above maps to the relative path `datasqrl/seedshop/` for the identifier `Orders` which resolves to the filename `Orders.table.sql` that contains the table definition. Take a look at [the advanced configuration](advanced.md) for more information on importing functions and other scripts.
+
+Paths are case insensitive. Import paths can end with a `*` to import all items on that level of the qualified path.
 ```sql
 IMPORT mypackage.*;
 ```
@@ -55,304 +65,199 @@ Imports can be aliased using the `AS` keyword. Imports that end with a `*` canno
 IMPORT datasqrl.seedshop.Orders AS MyOrders;
 ```
 
-## Export
+## CREATE TABLE Statement
 
-*EXPORT table=tablePath TO sink=qualifiedName;*
+```sql
+CREATE TABLE Customer (
+  customerid BIGINT,
+  email STRING,
+  update_time TIMESTAMP_LTZ(3)
+) WITH (
+    'connector': 'datagen'
+);
+```
+CREATE TABLE statements define a data source in SQRL. SQRL supports the full FlinkSQL syntax for creating tables with connectors to external data sources.
 
-The `EXPORT` statement is an explicit sink to a data system, like a kafka topic or database table. Import paths and export sink paths should be resolved the same way.
+A table created without a connector is an "internal" data source that is managed by compiled data pipeline. A table with a connector is managed by an external data system that the compiled data pipeline connects to and are therefore "external" data sources. External data sources with connectors are treated exactly as they are in Flink.
+
+### Internal CREATE TABLE
+
+Tables created in SQRL without a connector are exposed through an [interface](#interface) that data can be inserted into. The following special conventions apply to these tables:
+
+* Only unenforced primary keys are supported which means SQRL will not fail an insert if a record for the primary key already exists but instead update the record. In other words, all inserts are upserts.
+* The `timestamp` metadata column represents the insert time of a record.
+* All computed columns (i.e. columns that are defined by an expression) in the table schema definition are computed prior to or upon insert into the table, which means the data is static when being read. This applies specifically to non-deterministic and time functions.
+* If the table contains a column named `_uuid` that column is treated as a computed column with the field value computed on insert as a randomly generated UUID. If no primary key is defined, this column is considered to uniquely identify a record in the data stream represented by the table.
+
+```sql
+CREATE TABLE Customer (
+  customerid BIGINT,
+  email STRING,
+  update_time TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
+  PRIMARY KEY (customerid) NOT ENFORCED
+);
+```
+
+## Definition Statement
+
+In addition to the CREATE VIEW statement that FlinkSQL supports, SQRL recognizes the following statements for defining tables and functions.
+
+SQRL native definitions use the assignment operator `:=` to define the element on the left-hand side with the definition body on the right-hand side.
+
+Definitions are uniquely identified by name and trying to reuse a name will produce an error. This also applies to functions with different signatures as SQRL does not support overloading.
+
+### Table Definition Statement
+
+*identifier := select-query;*
+
+Defines a new table as a select query. This operation translates to a `CREATE VIEW` statement in conventional SQL syntax.
+
+```sql
+ValidCustomer := SELECT * FROM Customer WHERE customerid > 0 AND email IS NOT NULL;
+```
+
+### DISTINCT Statement
+
+*identifier := DISTINCT identifier ON column-names ORDER BY column-name;*
+
+Distinct statements select the most recent version of each row (determined by the `ORDER BY` clause) for each primary key (determined by the `ON` columns). 
+The distinct operator deduplicates a stream table that represents a changelog stream into the underlying state table. 
+
+```sql
+DistinctProducts := DISTINCT Products ON id ORDER BY updated DESC;
+```
+
+### Function Definition Statement
+
+*identifier(arguments-declaration) := select-query;*
+
+Defines a new function with the declared list of arguments which constitute the function signature. The body of a function definition is a SELECT query that references the arguments as variables. An argument is referenced by name preceded by a column `:`.
+
+```sql
+CustomerByEmail(email STRING) := SELECT * FROM Customer WHERE email = :email;
+```
+
+### Relationship Definition Statement
+
+*parent-table.identifier(arguments-declaration) := select-query;* 
+
+A relationship is a function defined within the context of a parent table.
+A relationship relates records from the parent table to other records through
+the SELECT query in the definition body.
+
+Use `this.column-name` to reference column from the parent table in the SELECT query. For relationships, arguments are optional.
+
+```sql
+Customer.orders := SELECT * FROM Orders o WHERE o.customerid = this.id;
+```
+Defines a relationship without arguments. It references the `id` column from the parent `Customer` table via `this.id`.
+
+```sql
+Customer.highValueOrders(minAmount BIGINT) := SELECT * FROM Orders o WHERE o.customerid = this.id AND o.amount > :minAmount;
+```
+This relationship is similar to the one defined above but with an argument `minAmount` that is referenced in the SELECT query as the variable `:minAmount`.
+
+### Column Addition Statement
+
+*table-name.column-name := expression*
+
+Adds a column to a previously defined table defined via a SQL expression that's in the body of the definition.
+Columns can only be added immediately following the table definition. Multiple columns can be added to the same table.
+
+Adding columns is useful for expressions that reference other columns in the table.
+
+```sql
+OrderEntries := SELECT o.id, o.time, e.productid, e.q AS quantity, e.p AS unit_price, coalesce(e.d,0.0) AS discount FROM Orders o CROSS JOIN UNNEST(o.entries) e;
+OrderEntries.total = quantity * unit_price - discount;
+```
+
+## Interface
+
+The tables and functions defined in a SQRL script are exposed through an interface. The term "interface" is used generically to describe a means by which a client, user, or external system can access the processed data. The interface depends on the [configured engines](configuration.md#engines): API endpoints for servers, queries and views for databases, and topics for logs. An interface is a sink in the data processing DAG that's defined by a SQRL script.
+
+How a table or function is exposed in the interface depends on the access type. The access type is one of the following:
+
+* **Query**: The data is returned on request, e.g. by querying the database, accessing a GraphQL query endpoint on the server, GET request for the REST API in the server, etc.  
+* **Subscription**: The data is pushed to the client, e.g. by publishing it to a topic in the log, a GraphQL subscription on the server, etc.
+* **None**: The data is not exposed in the interface.
+
+The default access type is "Query".
+
+### Hidden Tables and Functions
+
+Hidden tables and functions have access type "None". A table or function is hidden if the name starts with an underscore `_`.
+
+```sql
+_HiddenCustomer := SELECT id, email FROM Customer;
+```
+
+### SUBSCRIBE Statement
+
+Using the `SUBSCRIBE` keyword in front of the SELECT query in the definition body sets the access type for a table or function to "Subscription".
+
+```sql
+HighOrderAlert := SUBSCRIBE SELECT * FROM Orders WHERE total > 1000;
+```
+
+### Internal CREATE TABLE
+
+CREATE TABLE statements that define an [internal data source](#internal-create-table) are exposed as topics in the log, GraphQL mutations in the server, or REST POST requests in the server.
+The input type is defined by mapping all column types to native data types of the interface schema. Computed and metadata columns are not included in the input type since those are computed on insert.
+
+### API Types
+
+When the interface is an API, tables and functions are exposed through endpoints of the same name and argument signature (i.e. the argument names and types must match).
+
+In addition, the result type of the endpoint must match the schema of the table or function. That means, each field of the result type must match a column of or relationship on the table/function by name and the field type must be compatible.
+The field type is compatible with the column/relationship type iff:
+* For scalar or collection types there is a native mapping from one type system to the other
+* For structured types (i.e. nested or relationship), the mapping applies recursively.
+
+#### Base Tables
+
+In the case where the API types are generated from the SQRL script the collection of result types is reduced by only generating result types for base tables identified by the base table name.
+
+The base table for a defined table or function is the right-most table in the relational tree of the SELECT query from the definition body if and only if that table type is equal to the defined table type. If no such table exists, the base table is the table itself.
+
+The result type for a table or function is the result type generated for that table's base table.
+Hidden columns, i.e. columns where the name starts with an underscore `_`, are not included in the generated result type.
+
+### EXPORT Statement
+
+*EXPORT identifier TO qualifiedName;*
+
+`EXPORT` statements define an explicit subscription interface to an external data system. The `EXPORT` statement is an explicit sink to a data system, like a kafka topic or database table. Import paths and export sink paths are resolved the same way with the last element of the path being the identifier and the prior elements defining the relative filesystem path.
+
+Sinks are defined using FlinkSQL's CREATE TABLE syntax with connector configuration.
 
 ```sql
 EXPORT UserPromotion TO mysink.promotion;
 ```
 
-Export statements are most commonly used to export data to an external system, but it could refer to other components such as console log print statements or to a log engine. It is up to the underlying implementation to determine what modules are available by default for import and export paths. 
-```sql
-EXPORT UserPromotion TO print.promotion;
-EXPORT UserPromotion TO log.promotion;
-```
+SQRL supports a few generic sinks that do not have to be defined explicitly:
 
-:::note
-Exports do not describe the connector mapping when an optimizer splits the workload between multiple engines. 
-:::
-
-## Create Table
-```sql
-CREATE TABLE MyTable(
-  myCol bigint,
-  myCol2 bigint
-);
-```
-SQRL allows a 'create table' statement. Create table statements describe a table that the SQRL implementation provides storage for. The implementation can optionally bring additional fields, such as a primary key and timestamp.
-
-## Assignment operator
-The assignment operator `:=` is used to specify the structure and contents of the right-hand side to the left-hand side. This operation is akin to the 'CREATE VIEW' statement in conventional SQL.
-
-## Distinct
-```sql
-Products := DISTINCT Products ON id ORDER BY updated DESC;
-```
-
-Distinct statements in SQRL are designed to select the most recent version of each row based on a specified key, effectively implementing deduplication in streaming data or ensuring data uniqueness in database systems.
-
-## Queries
-```sql
-MyTable := SELECT * FROM Table;
-```
-
-**Naming and Selecting Columns**
-
-In SQRL, all columns must be explicitly named.
-```sql
-// Invalid
-MyTable := SELECT COUNT() FROM Table;
-
-// Valid
-MyTable := SELECT COUNT() AS cnt FROM Table;
-```
-
-**Table Shadowing**
-
-Tables can be shadowed, meaning a new table can be created with the same name as an existing one.
+* **print**: Prints table records to stdout with the identifier as a prefix.
+* **logger**: Sends the table records to the [configured](configuration.md#compiler) logger.
+* **log**: Publishes the table records to a topic in the [configured log engine](configuration.md#engines). Creates a topic with the identifier as the name.
 
 ```sql
-MyTable := SELECT * FROM MyTable;
+EXPORT UserPromotion TO logger.promotion;
 ```
-
-**Hidden Tables and Columns**
-
-When the name of a table or column starts with the underscore character _, it is considered hidden. Hidden tables and columns are not exposed in the API or imported by other scripts.
-
-```sql
-_MyHiddenTable := SELECT * FROM MyTable WHERE ...;
-```
-
-Example of Hidden Column:
-
-```
-MyTable := SELECT id, _hiddenColumn FROM Table;
-```
-In this example, _hiddenColumn will not be exposed in the API.
-
-**Usage of Hidden Tables**
-
-Hidden tables are useful for intermediate calculations or data transformations that should not be accessible externally.
-
-```sql
-_tempData := SELECT * FROM MyTable WHERE condition;
-```
-In this example, _tempData is used for an internal operation and is not exposed.
-
-## Nested Query
-Nested tables represent parent-child relationships and simplify aggregations by parent rows.
-```
-MyTable.query := SELECT * FROM x;
-```
-
-We can query a nested table globally, i.e., over all rows in the table, or locally, i.e., only the rows associated with a given parent row.
-
-**Global Aggregation**
-```sql
-Order_totals := SELECT sum(total) as price, 
-    sum(coalesce(discount, 0.0)) as saving FROM Orders.items;
-```
-In this example, the Order_totals table contains a single aggregate that sums up the total and discount over all items in all orders. The result is one global aggregation over all order items.
-
-**Local Aggregation**
-```sql
-Orders.totals := SELECT sum(total) as price, 
-    sum(coalesce(discount, 0.0)) as saving FROM @.items;
-```
-This statement aggregates all items for each order. The result is one local aggregate for each row in the Orders table.
-
-**Difference Between Global and Local Aggregation**
-
-The difference between the two statements lies in the FROM clause. The first statement references the Orders.items table globally, meaning it considers all rows in the Orders.items table without any specific parent context.
-
-The second statement references the Orders.items table locally by accessing the items relationship column on Orders. This makes it a localized query, defining a new nested table totals under the Orders table. The query on the right-hand side of the statement is interpreted in the context of each row in the parent table. The at-sign @ is used to refer to the parent row in a localized query. Hence, @.items means "all items that are associated with the current order record through the items relationship".
-
-**Usage of Nested Table Definitions**
-
-Nested table definitions are a convenient way to express GROUP BY and WINDOW queries by grouping on the rows in the parent table. This allows for more intuitive and organized data aggregation, making it easier to manage complex data relationships and calculations.
-
-#### Join types
-SQRL provides additional join types outside of standard SQL:
-- Default join
-- Temporal join
-- Interval join
-
-**Default Join**
-
-A join without a qualifier is a default join. It is up to the implementation to decide the best join type given the conditions of the join.
-```sql
-DefaultJoinExample := SELECT * FROM TableA JOIN TableB ON TableA.id = TableB.id;
-```
-
-**Inner Join**
-
-Inner joins are explicit inner joins. In stream processing contexts, this can mean maintaining the state on both sides of the join to allow proper semantics, which can be expensive.
-```sql
-InnerJoinExample := SELECT * FROM TableA INNER JOIN TableB ON TableA.id = TableB.id;
-```
-
-**Left Join and Left Outer Join**
-
-In SQRL, a left join and a left outer join are distinct. Left joins can let the implementation decide the best join type. Left outer joins are explicit left joins.
-
-```sql
-LeftJoinExample := SELECT * FROM TableA LEFT JOIN TableB ON TableA.id = TableB.id;
-LeftOuterJoinExample := SELECT * FROM TableA LEFT OUTER JOIN TableB ON TableA.id = TableB.id;
-```
-
-**Temporal Join**
-
-SQRL supports temporal joins between stream and state tables when joining on the state table's key. Temporal joins use the row from the state table at the timestamp of the stream row.
-
-```sql
-TemporalJoinExample := 
-  SELECT l.login_time, t.transaction_time, t.amount
-  FROM Logins l 
-  TEMPORAL JOIN Transactions t 
-  ON l.account_id = t.account_id;
-```
-
-**Interval Join**
-
-Interval joins are defined by specifying upper and lower time bounds. The INTERVAL JOIN condition specifies that a transaction must occur within a specified time frame after a login to be included in the join.
-```sql
-CustomerActivity := 
-  SELECT l.login_time, t.transaction_time, t.amount
-  FROM Logins l 
-  INTERVAL JOIN Transactions t 
-  ON l.account_id = t.account_id 
-  AND t.transaction_time BETWEEN l.login_time AND l.login_time + INTERVAL '1' HOUR;
-```
-This correlates logins with transactions that happen shortly after, capturing a critical timeframe for activity analysis.
-
-**Example: Temporal Joins in E-commerce**
-
-Temporal joins are essential in SQRL as they define different semantics, joining stream tables with state tables. For example, in an e-commerce scenario, if the price changes on a product, you do not want to retroactively update already placed orders.
-```sql
-IMPORT ecommerce.Orders;  // is a stream
-IMPORT ecommerce.Products;  // is a stream
-
-VersionedProducts := DISTINCT Product ON productid;  // converts to a versioned state table
-
-OrdersWithPrice := 
-  SELECT * 
-  FROM Orders
-  JOIN VersionedProducts;  // join on stream and state becomes a temporal join
-```
-In this example, VersionedProducts becomes a versioned state table, and the join with Orders ensures that each order reflects the product price at the time of the order, not the current product price.
-
-## Expressions
-Expressions in SQRL allow you to define new columns based on calculations or transformations of existing columns.
-```sql
-Products.weight_in_oz := weight_in_gram / 28.35;
-```
-
-**Defining New Columns**
-
-This statement adds a new column weight_in_oz to the existing Products table, which converts the product weight to ounces. The column name is the last item in the table path.
-
-**Expression Constraints**
-
-Expressions cannot be shadowed. Once an expression is defined, it cannot be overridden or redefined in the same context.
-
-Once a table is queried, new columns cannot be added. Tables become immutable once referenced in a query.
-
-**Nested Expressions and Window Functions**
-
-Nested expressions can evaluate window functions, allowing for calculations over a set of rows related to the current row.
-
-```sql
-MyRow.num := RANK();
-```
-In this example, MyRow.num is defined using the RANK() window function, which assigns a rank to each row within the partition of the dataset.
-
-## Relationships
-Relationships in SQRL make data relationships explicit, simplify joins, and allow API consumers to navigate through the data efficiently.
-
-**Defining Relationships**
-
-A relationship is defined using a JOIN expression, interpreted for each row of the table on which the relationship is defined. The at-sign @ refers to each row.
-
-```sql
-Users.purchases := JOIN Orders ON Orders.customerid = @.id;
-```
-This statement defines a purchases column in the Users table, relating each user to their corresponding orders where customerid matches the user's id.
-
-**Benefits**
-- **Simplifies Joins**: Avoids repetitive join statements.
-- **Explicit Relationships**: Makes data relationships clear and easy to follow
-
-**Using Relationships in Queries**
-```sql
-Users.spending := 
-  SELECT endOfWeek(p.time) AS week,
-         sum(t.price) AS spend, 
-         sum(t.saving) AS saved
-  FROM @.purchases p 
-  JOIN p.totals t
-  GROUP BY week 
-  ORDER BY week DESC;
-```
-This example defines a spending nested table under Users, aggregating order totals for all purchases of each user. The FROM @.purchases expands to FROM @ JOIN Orders p ON p.customerid = @.id.
-
-## Parameters
-Join declarations and tables in SQRL support parameters, allowing for dynamic queries.
-
-Parameters use the SQL variable syntax, the `@` followed by the variable name. This is not to be confused with localized queries
-
-```sql
-MyTable.byId(@val: BIGINT) := JOIN Table t ON t.id = @.id AND @val > 50;
-MyTableById(@id: STRING) := SELECT * FROM Table t WHERE t.id = @id;
-```
-
-**Arguments**
-
-Arguments may be provided in any syntactic order and maintain identical semantic meaning.
-<!--
-Parameters are
-1. Ordered
-2. Named
-
-A named parameter can be referenced:
-```sql
-MyTable := SELECT * FROM table1.table2(name => x).table3;
-```
--->
-
-Parameterized queries are useful when describing different views of a table.
-```sql
-ProductById(@ProductID: String) := 
-  SELECT * FROM UniqueInventory 
-  WHERE ProductID = @ProductID;
-```
-
-## Table Paths
-In SQRL, table paths are traversed like a graph, not as subschemas.
-
-```sql
-Users.spending := SELECT endOfWeek(p.time) AS week,
-         sum(t.price) AS spend, sum(t.saving) AS saved
-      FROM @.purchases p JOIN p.totals t
-      GROUP BY week ORDER BY week DESC;
-```
-This statement defines a nested table `spending` underneath `Users` which aggregates over the nested order `totals` for all purchases of each user. Relationships used in `FROM` and `JOIN` are expanded to their original definition. That means, `FROM @.purchases` gets expanded to `FROM @ JOIN Orders p ON p.customerid = @.id`.
-
 
 ## Comments
+
 SQRL supports the use of comments within the code to provide hints, enhance readability, provide documentation, and explain the logic of complex queries or operations.
 
 SQRL supports two types of comments:
 
-**Single-line Comments**: These are initiated with double forward slashes (//). Everything following the // on the same line is considered part of the comment.
+**Single-line Comments**: These are initiated with double dashes `--`. Everything following the `--` on the same line is considered part of the comment.
 ```sql
-// This is a single-line comment explaining the next SQL command
+-- This is a single-line comment explaining the next SQL command
 IMPORT data.SalesRecords;
 ```
+Only single-line comments are supported at the end of statements on the same line.
 
-**Multi-line Comments**: These are enclosed between /* and */. Everything within these markers is treated as a comment, regardless of the number of lines. T
+**Multi-line Comments**: These are enclosed between `/*` and `*/`. Everything within these markers is treated as a comment, regardless of the number of lines.
 ```sql
 /*
  * This is a multi-line comment.
@@ -362,11 +267,124 @@ IMPORT data.SalesRecords;
 IMPORT data.StockAdjustments;
 ```
 
-## Hints
-Hints are included within multi-line comments and are prefixed with a plus sign (+) followed by the hint type and optional parameters. These hints do not alter the SQL syntax but suggest how the underlying engine should treat the subsequent SQL commands. Hints are placed above assignment statements.
+Multi-line comments that start with `/**` are documentations strings. Documentation strings are added to the API documentation (if a server engine is configured) and generated metadata for a table or function.
+
+## SQRL Hints
+
+SQRL Hints are included within multi-line comments and are prefixed with a plus sign `+` followed by the hint type and optional parameters. These hints do not alter the SQL semantics (like FlinkSQL hints inside SELECT queries do that SQRL also supports) but are used by the SQRL planner and optimizer. 
+
+Hints are placed *before* assignment statements.
 
 ```sql
-// The below hint suggests that the following query should be executed on the stream engine.
-/* +exec(streams) */
+-- The below hint suggests that the following query should be executed in Postgres.
+/* +exec(postgres) */
 MyTable := SELECT * FROM InventoryStream;
 ```
+
+SQRL supports the following hints.
+
+### Primary Key Hint
+
+*+primary_key(column-names...)*
+
+Assigns a primary key to the table defined below. The primary key uniquely identifies records in the table. This is needed when SQRL cannot automatically determine the primary key and the table is persisted to a database that requires one.
+
+```sql
+/*+primary_key(id, productid) */
+OrderEntries := SELECT o.id, o.time, e.productid, e.quantity FROM Orders o CROSS JOIN UNNEST(o.entries) e;
+```
+
+This hint only applies to table definitions.
+
+### Query Hints
+
+*+query_by_all(column-names...)*
+
+*+query_by_any(column-names...)*
+
+*+no_query*
+
+By default, the query or subscription interface for a table returns all records in that table without filters. Query hints modify the interface:
+
+* **query_by_all**: The interface for the table filters by the columns listed in the hint. That means, the interface has an argument for each column and filters for the records where the provided values match the column values (i.e. an AND condition of `column = column-value`). Values must be provided for all columns (i.e. none are optional).
+* **query_by_any**: The interface for the table filters by the columns listed in the hint like `query_by_all` but values for the columns are optional. If a value is not provided for a column the filter does not apply for that column (i.e. an AND condition of `column-value IS NULL OR column = column-value`).
+* **no_query**: Sets the access type for the table to "None" so that no interface is generated.
+
+```sql
+/*+query_by_any(email, name) */
+Customers := SELECT id, email, name, last_updated FROM CustomerStream WHERE id IS NOT NULL; 
+```
+
+This hint only applies to table definitions.
+
+### Test Hint
+
+*+test*
+
+Marks a table as a test case. Test tables are only exposed when executing tests, otherwise their access type is "None". See [the test runner documentation](cli.md#test-command) for more details on testing SQRL scripts.
+
+```sql
+/*+test */
+CustomerTest := SELECT * FROM Customer WHERE email IS NULL ORDER BY id ASC; 
+```
+
+This hint only applies to table definitions.
+
+### Workload Hint
+
+*+workload*
+
+Marks a table as a workload which means that the access type is "None" but the table is included as a sink in the data processing DAG and therefore included in the planning and optimization.
+
+Tables that simulate user workloads are annotated with this hint. This hint is often combined with `+test` to include test cases in the planning without exposing them in the interface.
+
+```sql
+/*+test, workload */
+CustomerByIdTest := SELECT * FROM Customer WHERE id = 5;
+```
+
+This hint only applies to table definitions.
+
+### Execution Hint
+
+*+exec(engine_name)*
+
+An execution hint specifically defines the engine that executes this table. Usually, the DataSQRL optimizer will determine which engine executes a particular table based on a cost model. This hint gives the user control over that assignment.
+The optimizer will optimize the other assignments based on the user provided ones. Beware that tables which are downstream from other tables must be assigned engines that sit downstream in the infrastructure topology. Otherwise DataSQRL cannot find a feasible computation DAG.
+
+### Index Hint
+
+*+index(index-type, column-names...)*
+
+For tables that are persisted into a database, the SQRL optimizer automatically determines index structures based on the exposed interface and workload queries. With the index hint, index structures can be defined manually and overwrite the optimized indexes.
+
+An index hint takes the type as the first argument and a list of columns to index in the given order.
+The following index types are supported:
+
+* **HASH**: A hash index
+* **BTREE**: A b-tree index
+* **TEXT**: A text search index
+* **VECTOR_COSINE**: A vector index using cosine distance
+* **VECTOR_EUCLID**: A vector index using euclid or L2 distance
+
+If an index hint with no argument is provided, no index structures will be created for that table.
+
+```sql
+/*+index(btree, customerid, last_updated) */
+Customers := SELECT id, email, name, last_updated FROM CustomerStream; 
+```
+
+This hint only applies to table definitions.
+
+### Partition Key Hint
+
+*+partition_key(column-names...)*
+
+For tables that are persisted into an external data system that supports data partitioning, the `partition_key` hint defines the list of columns by which the data is partitioned.
+
+```sql
+/*+partition_key(partition_id) */
+Customers := SELECT id % 8 AS partition_id, id, email, name, last_updated FROM CustomerStream; 
+```
+
+This hint only applies to table definitions.

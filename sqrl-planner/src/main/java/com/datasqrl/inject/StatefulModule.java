@@ -1,8 +1,9 @@
 package com.datasqrl.inject;
 
+import org.apache.calcite.jdbc.SqrlSchema;
+
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
-import org.apache.calcite.jdbc.SqrlSchema;
 
 /**
  * Contains stateful dependencies for planning of a single script

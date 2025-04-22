@@ -3,18 +3,18 @@
  */
 package com.datasqrl.plan.util;
 
-import com.datasqrl.util.CalciteHacks;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.List;
+
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.externalize.RelWriterImpl;
 import org.apache.calcite.rel.hint.Hintable;
 import org.apache.calcite.rel.hint.RelHint;
-import org.apache.calcite.rel.metadata.RelMetadataQuery;
 import org.apache.calcite.sql.SqlExplainLevel;
 import org.apache.calcite.util.Pair;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.util.List;
+import com.datasqrl.util.CalciteHacks;
 
 /**
  * Methods copied from Calcite's {@link RelWriterImpl} to add hints to the output
@@ -28,8 +28,8 @@ public class RelWriterWithHints extends RelWriterImpl {
   }
 
   public static String explain(RelNode rel) {
-    StringWriter sw = new StringWriter();
-    RelWriterWithHints writer = new RelWriterWithHints(new PrintWriter(sw));
+    var sw = new StringWriter();
+    var writer = new RelWriterWithHints(new PrintWriter(sw));
     rel.explain(writer);
     return sw.toString();
   }
@@ -43,8 +43,8 @@ public class RelWriterWithHints extends RelWriterImpl {
   @Override
   protected void explain_(RelNode rel,
       List<Pair<String, Object>> values) {
-    List<RelNode> inputs = rel.getInputs();
-    final RelMetadataQuery mq = rel.getCluster().getMetadataQuery();
+    var inputs = rel.getInputs();
+    final var mq = rel.getCluster().getMetadataQuery();
     CalciteHacks.resetToSqrlMetadataProvider();
 
     //removed b/c of
@@ -54,14 +54,14 @@ public class RelWriterWithHints extends RelWriterImpl {
 //      return;
 //    }
 
-    StringBuilder s = new StringBuilder();
+    var s = new StringBuilder();
     spacer.spaces(s);
     if (withIdPrefix) {
       s.append(rel.getId()).append(":");
     }
     s.append(rel.getRelTypeName());
     if (detailLevel != SqlExplainLevel.NO_ATTRIBUTES) {
-      int j = 0;
+      var j = 0;
       for (Pair<String, Object> value : values) {
         if (value.right instanceof RelNode) {
           continue;
@@ -81,9 +81,9 @@ public class RelWriterWithHints extends RelWriterImpl {
       }
     }
     //===== Added this code to print hints ========
-    if (withHints && rel instanceof Hintable) {
-      int j = 0;
-      for (RelHint hint : ((Hintable) rel).getHints()) {
+    if (withHints && rel instanceof Hintable hintable) {
+      var j = 0;
+      for (RelHint hint : hintable.getHints()) {
         if (j++ == 0) {
           s.append(" hints[");
         } else {

@@ -3,13 +3,17 @@
  */
 package com.datasqrl.discovery.stats;
 
-import com.datasqrl.error.ErrorCollector;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
+
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
+import com.datasqrl.error.ErrorCollector;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-
-import java.util.*;
 
 public class RelationStats implements
     Accumulator<Map<String, Object>, RelationStats, NameCanonicalizer> {
@@ -30,8 +34,9 @@ public class RelationStats implements
     this.fieldStats = fieldStats;
   }
 
-  public RelationStats clone() {
-    RelationStats copy = new RelationStats();
+  @Override
+public RelationStats clone() {
+    var copy = new RelationStats();
     copy.merge(this);
     return copy;
   }
@@ -47,7 +52,7 @@ public class RelationStats implements
     }
     Set<Name> names = new HashSet<>(value.size());
     for (Map.Entry<String, Object> entry : value.entrySet()) {
-      String name = entry.getKey();
+      var name = entry.getKey();
       if (Strings.isNullOrEmpty(name)) {
         errors.fatal("Invalid name: %s", name);
       }
@@ -67,8 +72,8 @@ public class RelationStats implements
   public void add(Map<String, Object> value, NameCanonicalizer canonicalizer) {
     count++;
     for (Map.Entry<String, Object> entry : value.entrySet()) {
-      Name name = Name.of(entry.getKey(), canonicalizer);
-      FieldStats fieldAccum = fieldStats.get(name);
+      var name = Name.of(entry.getKey(), canonicalizer);
+      var fieldAccum = fieldStats.get(name);
       if (fieldAccum == null) {
         fieldAccum = new FieldStats();
         fieldStats.put(name, fieldAccum);
@@ -81,7 +86,7 @@ public class RelationStats implements
   public void merge(RelationStats acc) {
     count += acc.count;
     acc.fieldStats.forEach((k, v) -> {
-      FieldStats fieldaccum = fieldStats.get(k);
+      var fieldaccum = fieldStats.get(k);
       if (fieldaccum == null) {
         fieldaccum = new FieldStats();
         fieldStats.put(k, fieldaccum);

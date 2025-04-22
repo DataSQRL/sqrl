@@ -1,7 +1,5 @@
 package com.datasqrl.graphql.config;
 
-import io.vertx.core.json.JsonObject;
-
 public class ServletConfigOptionsConverter {
 
   public static void fromJson(Iterable<java.util.Map.Entry<String, Object>> json, ServletConfig obj) {
@@ -19,7 +17,7 @@ public class ServletConfigOptionsConverter {
           break;
         case "usePgPool":
           if (member.getValue() instanceof Boolean) {
-            obj.setUsePgPool(((Boolean)member.getValue()).booleanValue());
+            obj.setUsePgPool(((Boolean)member.getValue()));
           }
           break;
       }

@@ -1,12 +1,14 @@
 package com.datasqrl.packager.preprocess;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.regex.Pattern;
+
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.loaders.DataSource;
 import com.datasqrl.util.FileUtil;
 import com.google.common.base.Preconditions;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.regex.Pattern;
+
 import lombok.SneakyThrows;
 
 public class DataSystemPreprocessor implements Preprocessor {

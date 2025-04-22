@@ -12,7 +12,7 @@ public class GeneratePackageId {
   private static final Base64.Encoder encoder = Base64.getUrlEncoder().withoutPadding();
 
   public static String generate() {
-    byte[] buffer = new byte[20];
+    var buffer = new byte[20];
     random.nextBytes(buffer);
     return encoder.encodeToString(buffer);
   }

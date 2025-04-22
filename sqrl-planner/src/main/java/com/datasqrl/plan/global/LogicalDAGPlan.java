@@ -1,7 +1,9 @@
 package com.datasqrl.plan.global;
 
-import com.datasqrl.engine.log.Log;
 import java.util.List;
+
+import com.datasqrl.engine.log.Log;
+
 import lombok.Value;
 
 @Value

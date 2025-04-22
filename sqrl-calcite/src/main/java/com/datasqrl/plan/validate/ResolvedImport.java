@@ -1,9 +1,11 @@
 package com.datasqrl.plan.validate;
 
+import org.apache.calcite.rel.type.RelDataType;
+
 import com.datasqrl.config.TableConfig;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import org.apache.calcite.rel.type.RelDataType;
 
 @Getter
 @AllArgsConstructor

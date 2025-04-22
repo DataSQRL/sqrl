@@ -7,6 +7,7 @@ package com.datasqrl.canonicalizer;
 //import com.google.common.base.Strings;
 import java.io.Serializable;
 import java.util.function.Function;
+
 import lombok.NonNull;
 
 /**
@@ -37,7 +38,7 @@ public interface Name extends Serializable, Comparable<Name> {
    * @return true if the names are identical, else false
    */
   default boolean matches(String canonicalName) {
-    String canonical = getCanonical();
+    var canonical = getCanonical();
     return canonicalName.startsWith(canonical) &&
         (canonical.length()==canonicalName.length() ||
             (canonicalName.length()>canonical.length() && canonicalName.charAt(canonical.length())==NAME_DELIMITER));
@@ -116,7 +117,9 @@ public interface Name extends Serializable, Comparable<Name> {
   }
 
   static String hiddenString(String name) {
-    if (isHiddenString(name)) return name;
+    if (isHiddenString(name)) {
+        return name;
+    }
     return HIDDEN_PREFIX + name;
   }
 

@@ -1,10 +1,13 @@
 package com.datasqrl.calcite.convert;
 
-import com.datasqrl.calcite.Dialect;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.sql.SqlNode;
 
-//Service loader interface
+import com.datasqrl.calcite.Dialect;
+
+/**
+ * Converts a RelNode to a SqlNode for a given dialect
+ */
 public interface RelToSqlNode {
   SqlNodes convert(RelNode relNode);
 

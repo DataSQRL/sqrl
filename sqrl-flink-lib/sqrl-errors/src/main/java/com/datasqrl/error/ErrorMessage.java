@@ -28,7 +28,7 @@ public interface ErrorMessage {
   }
 
   default String toStringNoSeverity() {
-    String loc = getLocation().toString();
+    var loc = getLocation().toString();
     if (loc == null || loc.trim().isEmpty()) {
       loc += ": ";
     }
@@ -74,7 +74,7 @@ public interface ErrorMessage {
     if (args == null || args.length == 0) {
       return msgTemplate;
     }
-    return String.format(msgTemplate, args);
+    return msgTemplate.formatted(args);
   }
 
 }

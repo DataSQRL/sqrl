@@ -1,15 +1,16 @@
 package com.datasqrl.calcite.dialect;
 
-import com.datasqrl.calcite.Dialect;
-import com.datasqrl.function.translations.SqlTranslation;
-import com.datasqrl.util.ServiceLoaderDiscovery;
 import java.util.Map;
 import java.util.stream.Collectors;
-import org.apache.calcite.avatica.util.Casing;
+
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlDialect;
 import org.apache.calcite.sql.SqlWriter;
 import org.apache.calcite.sql.dialect.SnowflakeSqlDialect;
+
+import com.datasqrl.calcite.Dialect;
+import com.datasqrl.function.translations.SqlTranslation;
+import com.datasqrl.util.ServiceLoaderDiscovery;
 
 public class ExtendedSnowflakeSqlDialect extends SnowflakeSqlDialect {
   public static final Map<String, SqlTranslation> translationMap = ServiceLoaderDiscovery

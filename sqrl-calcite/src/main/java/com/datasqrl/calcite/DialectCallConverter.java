@@ -1,14 +1,11 @@
 package com.datasqrl.calcite;
 
-import com.datasqrl.calcite.function.RuleTransform;
-import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.util.ServiceLoaderDiscovery;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.stream.Collectors;
+
 import org.apache.calcite.plan.RelOptPlanner;
 import org.apache.calcite.plan.RelRule;
 import org.apache.calcite.rel.RelNode;
@@ -21,22 +18,32 @@ import org.apache.calcite.rex.RexShuttle;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.tools.Programs;
 
+import com.datasqrl.calcite.function.OperatorRuleTransform;
+import com.datasqrl.canonicalizer.Name;
+
+/**
+ * Use {@link OperatorRuleTransformer} instead
+ */
+@Deprecated
 public class DialectCallConverter {
+
   private final RelOptPlanner planner;
 
-  public static final Map<Name, RuleTransform> transformMap = ServiceLoaderDiscovery.getAll(RuleTransform.class)
-      .stream().collect(Collectors.toMap(t->Name.system(t.getRuleOperatorName()), t->t));
+  public static final Map<Name, OperatorRuleTransform> transformMap = Map.of();
+//  = ServiceLoaderDiscovery.getAll(
+//          OperatorRuleTransform.class)
+//      .stream().collect(Collectors.toMap(t->Name.system(t.getRuleOperatorName()), t->t));
 
   public DialectCallConverter(RelOptPlanner planner) {
     this.planner = planner;
   }
 
   public RelNode convert(Dialect dialect, RelNode relNode) {
-    Map<SqlOperator, RuleTransform> transforms = extractFunctionTransforms(relNode);
+    var transforms = extractFunctionTransforms(relNode);
 
     List<RelRule> rules = new ArrayList<>();
-    for (Entry<SqlOperator, RuleTransform> transform : transforms.entrySet()) {
-      rules.addAll(transform.getValue().transform(dialect, transform.getKey()));
+    for (Entry<SqlOperator, OperatorRuleTransform> transform : transforms.entrySet()) {
+      rules.addAll(transform.getValue().transform(transform.getKey()));
     }
 
     relNode = Programs.hep(rules, false, null)
@@ -46,14 +53,14 @@ public class DialectCallConverter {
     return relNode;
   }
 
-  private Map<SqlOperator, RuleTransform> extractFunctionTransforms(RelNode relNode) {
-    Map<SqlOperator, RuleTransform> transforms = new HashMap<>();
+  private Map<SqlOperator, OperatorRuleTransform> extractFunctionTransforms(RelNode relNode) {
+    Map<SqlOperator, OperatorRuleTransform> transforms = new HashMap<>();
     relNode.accept(new RelShuttleImpl() {
 
       @Override
       public RelNode visit(LogicalAggregate aggregate) {
         for (AggregateCall call : aggregate.getAggCallList()) {
-          RuleTransform transform = transformMap.get(
+          var transform = transformMap.get(
               Name.system(call.getAggregation().getName()));
           if (transform != null) {
             transforms.put(call.getAggregation(), transform);
@@ -68,7 +75,7 @@ public class DialectCallConverter {
         parent.accept(new RexShuttle(){
           @Override
           public RexNode visitCall(RexCall call) {
-            RuleTransform transform = transformMap.get(
+            var transform = transformMap.get(
                 Name.system(call.getOperator().getName()));
             if (transform != null) {
               transforms.put(call.getOperator(), transform);

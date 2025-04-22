@@ -1,9 +1,0 @@
-IMPORT ecommerce.Orders;
-IMPORT ecommerce.Customer;
-IMPORT time.*;
-Customer := DISTINCT Customer ON customerid ORDER BY _ingest_time DESC;
-Orders2 := SELECT o2.id AS id FROM Orders o2 INNER JOIN (SELECT id, customerid, time FROM Orders) AS o ON o.id = o2.id AND o.time=o2.time AND o.customerid = o2.customerid;
-EntryCount := SELECT e.quantity * e.unit_price - e.discount as price FROM Orders.entries e;
-Orders.total := SELECT SUM(e.quantity * e.unit_price - e.discount) as price, COUNT(e.quantity) as num, SUM(e.discount) as discount FROM @.entries e;
-OrdersInline := SELECT o.id, o.customerid, o.time, t.price, t.num FROM Orders o JOIN o.total t;
-Customer.orders_by_day := SELECT endOfDay(o.time) as day, SUM(o.price) as total_price, SUM(o.num) as total_num FROM @ JOIN OrdersInline o ON o.customerid = @.customerid GROUP BY day;

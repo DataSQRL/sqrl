@@ -4,11 +4,13 @@ import static com.datasqrl.config.ConfigurationTest.CONFIG_DIR;
 import static com.datasqrl.config.ConfigurationTest.testForErrors;
 import static org.junit.jupiter.api.Assertions.fail;
 
-import com.datasqrl.error.ErrorCollector;
 import java.nio.file.Path;
 import java.util.List;
+
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+
+import com.datasqrl.error.ErrorCollector;
 
 public class PackageJsonSchemaTest {
 
@@ -25,7 +27,7 @@ public class PackageJsonSchemaTest {
       "onlyVersionFieldExists.json"
   })
   public void testValidConfigFile(String configFileName) {
-    ErrorCollector errors = ErrorCollector.root();
+    var errors = ErrorCollector.root();
     try {
       SqrlConfigCommons.fromFilesPackageJson(errors, List.of(TEST_CASES.resolve(configFileName)));
     } catch (Exception e) {

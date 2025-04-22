@@ -1,47 +1,14 @@
->>>machinegroup.schema.yml
----
-name: "machinegroup"
-schema_version: "1"
-partial_schema: false
-columns:
-- name: "groupId"
-  type: "BIGINT"
-  tests:
-  - "not_null"
-- name: "groupName"
-  type: "STRING"
-  tests:
-  - "not_null"
-- name: "created"
-  type: "TIMESTAMP"
-  tests:
-  - "not_null"
-- name: "machines"
-  columns:
-  - name: "machineId"
-    type: "BIGINT"
-    tests:
-    - "not_null"
-  tests:
-  - "not_null"
-
->>>machinegroup.table.json
-{
-  "flink" : {
-    "format" : "flexible-json",
-    "path" : "${DATA_PATH}/machinegroup.jsonl.gz",
-    "source.monitor-interval" : 10000,
-    "connector" : "filesystem"
-  },
-  "metadata" : {
-    "_ingest_time" : {
-      "attribute" : "proctime()"
-    }
-  },
-  "version" : 1,
-  "table" : {
-    "type" : "source",
-    "primary-key" : [ "groupId", "groupName", "created" ],
-    "timestamp" : "_ingest_time"
-  }
-}
+>>>machinegroup.table.sql
+CREATE TABLE `machinegroup` (
+  `groupId` BIGINT NOT NULL,
+  `groupName` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `created` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `machines` ROW(`machineId` BIGINT NOT NULL) NOT NULL ARRAY NOT NULL,
+  `event_time` AS NOW(),
+  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.001' SECOND
+) WITH (
+  'connector' = 'filesystem',
+  'format' = 'flexible-json',
+  'path' = '${DATA_PATH}/machinegroup.jsonl.gz',
+  'source.monitor-interval' = '10 sec'
+);

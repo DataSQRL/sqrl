@@ -6,7 +6,6 @@
 //import static org.junit.jupiter.api.Assertions.assertEquals;
 //import static org.junit.jupiter.api.Assertions.fail;
 //
-//import com.datasqrl.canonicalizer.NameCanonicalizer;
 //import com.datasqrl.graphql.server.RootGraphqlModel;
 //import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentLookupCoords;
 //import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentParameter;

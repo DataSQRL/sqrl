@@ -1,19 +1,19 @@
 package com.datasqrl.loaders;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.TableConfigLoader;
 import com.datasqrl.engine.log.LogManager;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.module.NamespaceObject;
 import com.datasqrl.module.SqrlModule;
 import com.datasqrl.module.resolver.ResourceResolver;
 import com.datasqrl.plan.table.CalciteTableFactory;
 import com.google.inject.Inject;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+
 import lombok.AllArgsConstructor;
 
 @AllArgsConstructor(onConstructor_=@Inject)
@@ -35,7 +35,7 @@ public class ModuleLoaderImpl implements ModuleLoader {
       return Optional.of(cache.get(namePath));
     }
 
-    Optional<SqrlModule> module = getModuleOpt(namePath);
+    var module = getModuleOpt(namePath);
     module.ifPresent(sqrlModule -> cache.put(namePath, sqrlModule));
 
     return module;
@@ -43,7 +43,7 @@ public class ModuleLoaderImpl implements ModuleLoader {
 
   public Optional<SqrlModule> getModuleOpt(NamePath namePath) {
     // Load modules from standard library
-    Optional<SqrlModule> module = loadFromStandardLibrary(namePath);
+    var module = loadFromStandardLibrary(namePath);
     if (module.isPresent()) {
       return module;
     }
@@ -53,7 +53,7 @@ public class ModuleLoaderImpl implements ModuleLoader {
   }
 
   private Optional<SqrlModule> loadFromStandardLibrary(NamePath namePath) {
-    List<NamespaceObject> lib = standardLibraryLoader.load(namePath);
+    var lib = standardLibraryLoader.load(namePath);
     if (lib.isEmpty()) {
       return Optional.empty();
     }

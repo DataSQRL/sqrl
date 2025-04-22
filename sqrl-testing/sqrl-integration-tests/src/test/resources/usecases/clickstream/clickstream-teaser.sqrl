@@ -1,19 +1,20 @@
 IMPORT clickstream-local.Click;  -- Import data
-/* Most visited pages in the last day */
+/* Most visited pages */
 Trending := SELECT url, count(1) AS total
-    FROM Click WHERE timestamp > now() - INTERVAL 1 DAY
-    GROUP BY url ORDER BY total DESC;
+    FROM Click
+    GROUP BY url ORDER BY total DESC, url ASC;
 /* Find next page visits within 10 minutes */
 VisitAfter := SELECT b.url AS beforeURL, a.url AS afterURL,
-    a.timestamp AS timestamp
+    a.`timestamp` AS `timestamp`
     FROM Click b JOIN Click a ON b.userid=a.userid AND
-        b.timestamp < a.timestamp AND
-        b.timestamp >= a.timestamp - INTERVAL 10 MINUTE;
+        b.`timestamp` < a.`timestamp` AND
+        b.`timestamp` >= a.`timestamp` - INTERVAL 10 MINUTE;
 /* Recommend pages that are visited shortly after */
+/*+query_by_all(url) */
 Recommendation := SELECT beforeURL AS url, afterURL AS rec,
     count(1) AS frequency FROM VisitAfter
-    GROUP BY url, rec ORDER BY url ASC, frequency DESC;
+    GROUP BY beforeURL, afterURL ORDER BY url ASC, frequency DESC;
 /*+test */
 RankTest := SELECT url, count(1) AS total
             FROM Click
-            GROUP BY url ORDER BY total DESC;
+            GROUP BY url ORDER BY total DESC, url ASC;

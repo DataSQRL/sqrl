@@ -1,9 +1,11 @@
 package com.datasqrl.graphql.util;
 
+import org.apache.calcite.sql.parser.SqlParserPos;
+
 import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.parse.SqrlAstException;
+
 import graphql.language.SourceLocation;
-import org.apache.calcite.sql.parser.SqlParserPos;
 
 public class GraphqlCheckUtil {
 

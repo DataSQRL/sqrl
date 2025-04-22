@@ -1,6 +1,7 @@
 package com.datasqrl.graphql;
 
 import com.google.inject.Inject;
+
 import graphql.schema.idl.SchemaParser;
 import lombok.experimental.Delegate;
 

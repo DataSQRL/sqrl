@@ -1,17 +1,24 @@
 package com.datasqrl;
 
+import java.nio.file.Path;
+import java.util.Map;
+import java.util.Optional;
+
+import org.apache.calcite.rel.type.RelDataTypeFactory;
+import org.apache.calcite.tools.RelBuilder;
+
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.SqrlFrameworkImpl;
 import com.datasqrl.calcite.SqrlTableFactory;
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.config.PackageJson.CompilerConfig;
 import com.datasqrl.config.PackageJson;
-import com.datasqrl.config.TableConfigLoader;
+import com.datasqrl.config.PackageJson.CompilerConfig;
 import com.datasqrl.config.SqrlCompilerConfiguration;
 import com.datasqrl.config.SqrlConfigPipeline;
 import com.datasqrl.config.SqrlRelBuilder;
+import com.datasqrl.config.TableConfigLoader;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.APIConnectorManager;
@@ -26,11 +33,6 @@ import com.datasqrl.plan.SqrlPlanningTableFactory;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.name.Named;
-import java.nio.file.Path;
-import java.util.Map;
-import java.util.Optional;
-import org.apache.calcite.rel.type.RelDataTypeFactory;
-import org.apache.calcite.tools.RelBuilder;
 
 public class MockSqrlInjector extends AbstractModule {
 

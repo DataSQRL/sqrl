@@ -3,7 +3,16 @@ package com.datasqrl.parse;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.apache.calcite.sql.*;
+
+import org.apache.calcite.sql.SqlCall;
+import org.apache.calcite.sql.SqlDataTypeSpec;
+import org.apache.calcite.sql.SqlDynamicParam;
+import org.apache.calcite.sql.SqlHint;
+import org.apache.calcite.sql.SqlIdentifier;
+import org.apache.calcite.sql.SqlIntervalQualifier;
+import org.apache.calcite.sql.SqlLiteral;
+import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.util.SqlShuttle;
 
@@ -20,14 +29,13 @@ public class PositionAdjustingSqlShuttle extends SqlShuttle {
 
   @Override
   public SqlNode visit(SqlCall call) {
-    SqlNode[] adjustedOperands = call.getOperandList().stream()
+    var adjustedOperands = call.getOperandList().stream()
         .map(operand -> operand == null ? null : operand.accept(this))
         .toArray(SqlNode[]::new);
-    SqlParserPos adjustedPos = adjustPosition(call.getParserPosition());
+    var adjustedPos = adjustPosition(call.getParserPosition());
 
     //Hints are special, otherwise they get rewritten as basic calls
-    if (call instanceof SqlHint) {
-      SqlHint hint = (SqlHint) call;
+    if (call instanceof SqlHint hint) {
       return new SqlHint(adjustedPos,
           (SqlIdentifier) hint.getOperandList().get(0).accept(this),
           (SqlNodeList)hint.getOperandList().get(1).accept(this),
@@ -64,7 +72,7 @@ public class PositionAdjustingSqlShuttle extends SqlShuttle {
   @Override
   public SqlNode visit(SqlIdentifier id) {
     List<SqlParserPos> components = new ArrayList<>();
-    for (int i = 0; i < id.names.size(); i++) {
+    for (var i = 0; i < id.names.size(); i++) {
       components.add(adjustPosition(id.getComponentParserPosition(i)));
     }
 

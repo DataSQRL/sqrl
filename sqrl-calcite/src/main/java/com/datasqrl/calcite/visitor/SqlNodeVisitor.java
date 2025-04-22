@@ -1,6 +1,5 @@
 package com.datasqrl.calcite.visitor;
 
-import com.google.common.base.Preconditions;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlJoin;
@@ -14,6 +13,8 @@ import org.apache.calcite.sql.SqlUnresolvedFunction;
 import org.apache.calcite.sql.StatementVisitor;
 import org.apache.calcite.sql.fun.SqlCollectionTableOperator;
 import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
+
+import com.google.common.base.Preconditions;
 
 public abstract class SqlNodeVisitor<R, C> implements
     SqlRelationVisitor<R, C>,

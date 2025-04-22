@@ -1,8 +1,9 @@
 package com.datasqrl.util;
 
-import com.datasqrl.plan.rules.SqrlRelMetadataProvider;
 import org.apache.calcite.rel.metadata.JaninoRelMetadataProvider;
 import org.apache.calcite.rel.metadata.RelMetadataQueryBase;
+
+import com.datasqrl.plan.rules.SqrlRelMetadataProvider;
 
 public class CalciteHacks {
 

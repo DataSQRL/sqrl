@@ -1,24 +1,22 @@
 package com.datasqrl;
 
-import com.datasqrl.actions.WriteDag;
 import java.nio.file.Path;
 import java.util.function.Predicate;
+
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
+import com.datasqrl.actions.DagWriter;
+
 /**
- * Compiles the use cases in the test/resources/usecases folder and snapshots the
- * deployment assets
+ * Creates a DAG plan for a single use case test (clickstream)
  */
 public class DAGWriterJsonTest extends AbstractUseCaseTest {
 
   public static final Path USECASE_DIR = getResourcesDirectory("usecases/clickstream");
 
-  protected DAGWriterJsonTest() {
-    super(USECASE_DIR);
-  }
-
-  @ParameterizedTest
+  @Override
+@ParameterizedTest
   @ArgumentsSource(UseCaseFiles.class)
   void testUsecase(Path script, Path graphQlFile, Path packageFile) {
     super.testUsecase(script, graphQlFile, packageFile);
@@ -30,11 +28,13 @@ public class DAGWriterJsonTest extends AbstractUseCaseTest {
     }
   }
 
-  public Predicate<Path> getBuildDirFilter() {
-    return path -> path.getFileName().toString().endsWith(WriteDag.EXPLAIN_JSON_FILENAME);
+  @Override
+public Predicate<Path> getBuildDirFilter() {
+    return path -> path.getFileName().toString().endsWith(DagWriter.EXPLAIN_JSON_FILENAME);
   }
 
-  public Predicate<Path> getPlanDirFilter() {
+  @Override
+public Predicate<Path> getPlanDirFilter() {
     return path -> false;
   }
 

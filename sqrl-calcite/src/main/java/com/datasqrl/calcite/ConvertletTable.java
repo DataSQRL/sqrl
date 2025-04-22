@@ -2,7 +2,6 @@ package com.datasqrl.calcite;
 
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.SqlCall;
-import org.apache.calcite.sql.SqlIntervalLiteral;
 import org.apache.calcite.sql.SqlIntervalQualifier;
 import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
@@ -16,12 +15,12 @@ public class ConvertletTable implements SqlRexConvertletTable {
 
   //workaround for FLINK-31279
   private static RexNode convertCall(SqlRexContext cx, SqlCall call) {
-    SqlNode n = call.operand(0);
-    SqlIntervalQualifier intervalQualifier = (SqlIntervalQualifier)call.operand(1);
-    SqlIntervalLiteral literal = SqlLiteral.createInterval(1, "1", intervalQualifier, call.getParserPosition());
-    SqlCall multiply = SqlStdOperatorTable.MULTIPLY
+    var n = call.operand(0);
+    var intervalQualifier = (SqlIntervalQualifier)call.operand(1);
+    var literal = SqlLiteral.createInterval(1, "1", intervalQualifier, call.getParserPosition());
+    var multiply = SqlStdOperatorTable.MULTIPLY
         .createCall(call.getParserPosition(), new SqlNode[]{literal, n});
-    RexNode rexNode = cx.convertExpression(multiply);
+    var rexNode = cx.convertExpression(multiply);
     return rexNode;
   }
 

@@ -3,10 +3,12 @@
  */
 package com.datasqrl.util.data;
 
-import com.datasqrl.util.TestDataset;
-import com.datasqrl.util.TestScript;
 import java.nio.file.Path;
 import java.util.Set;
+
+import com.datasqrl.util.TestDataset;
+import com.datasqrl.util.TestScript;
+
 import lombok.Getter;
 
 public class RetailNested implements TestDataset {

@@ -3,8 +3,9 @@
  */
 package com.datasqrl.error;
 
-import com.datasqrl.error.ErrorLocation.FileRange;
 import java.util.stream.Collectors;
+
+import com.datasqrl.error.ErrorLocation.FileRange;
 
 /**
  * Prints a pretty error message
@@ -24,34 +25,36 @@ public class ErrorPrinter {
   }
 
   public static String getHead(ErrorMessage errorMessage) {
-    return String.format("[%s] %s\n", errorMessage.getSeverity(), errorMessage.getMessage());
+    return "[%s] %s\n".formatted(errorMessage.getSeverity(), errorMessage.getMessage());
   }
 
 
   public static String prettyPrint(ErrorMessage errorMessage) {
-    ErrorLocation location = errorMessage.getLocation();
+    var location = errorMessage.getLocation();
 //    Preconditions.checkNotNull(location, "Error location can not be null");
-    StringBuilder b = new StringBuilder();
+    var b = new StringBuilder();
 
     //print error severity and message
     b.append(getHead(errorMessage));
     //print error location
-    String fileLocation = (location.hasPrefix()?String.format("%s:",location.getPrefix().toLowerCase()):"") +
+    String fileLocation = (location.hasPrefix()?"%s:".formatted(location.getPrefix().toLowerCase()):"") +
         location.getPath();
     if (!fileLocation.trim().isEmpty()) {
       b.append("in ").append(fileLocation);
-      if (location.hasFile()) b.append(" [").append(location.getFile().toString()).append("]");
+      if (location.hasFile()) {
+        b.append(" [").append(location.getFile().toString()).append("]");
+    }
       b.append(":\n");
     }
 
-    boolean addSeparator = false;
+    var addSeparator = false;
     if (location.hasFile() && !isAllZero(location.getFile())) {
       //print previous 2 lines
       //print line
       //print arrow pointing to offset
-      FileRange fileRange = location.getFile();
+      var fileRange = location.getFile();
       if (fileRange.isLocation()) {
-        String codeSnippet = location.getSourceMap().getRange(new FileRange(Math.max(1,
+        var codeSnippet = location.getSourceMap().getRange(new FileRange(Math.max(1,
             fileRange.getFromLine()-LINES_BEFORE_LOCATION),1,
             fileRange.getToLine(), Integer.MAX_VALUE));
         b.append(codeSnippet);
@@ -62,7 +65,7 @@ public class ErrorPrinter {
         //print range starting at fromOffset=0
         b.append("-".repeat(fileRange.getFromOffset()-1));
         b.append("v\n");
-        String codeSnippet = location.getSourceMap().getRange(new FileRange(fileRange.getFromLine(),1,
+        var codeSnippet = location.getSourceMap().getRange(new FileRange(fileRange.getFromLine(),1,
             fileRange.getToLine(), fileRange.getToOffset()));
         b.append(codeSnippet).append("\n");
         addSeparator = true;
@@ -83,10 +86,12 @@ public class ErrorPrinter {
   }
 
   public static String getErrorDescription(ErrorMessage errorMessage, boolean addSeparator) {
-    ErrorLabel label = errorMessage.getErrorLabel();
-    String result = label.getErrorDescription();
+    var label = errorMessage.getErrorLabel();
+    var result = label.getErrorDescription();
     if (!(result == null || result.trim().isEmpty())) {
-      if (addSeparator) result = "--\n" + result;
+      if (addSeparator) {
+        result = "--\n" + result;
+    }
       return result;
     } else {
       return "";

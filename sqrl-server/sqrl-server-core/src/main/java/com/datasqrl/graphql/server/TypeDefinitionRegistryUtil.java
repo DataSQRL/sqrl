@@ -1,11 +1,11 @@
 package com.datasqrl.graphql.server;
 
+import java.util.Optional;
+import java.util.function.Supplier;
+
 import graphql.language.ObjectTypeDefinition;
 import graphql.language.SchemaDefinition;
 import graphql.schema.idl.TypeDefinitionRegistry;
-import java.util.Optional;
-import java.util.function.Supplier;
-import java.util.regex.Pattern;
 
 public class TypeDefinitionRegistryUtil {
 
@@ -47,7 +47,7 @@ public class TypeDefinitionRegistryUtil {
   }
 
   public static Optional<ObjectTypeDefinition> getType(TypeDefinitionRegistry registry, Supplier<String> supplier) {
-    String queryTypeName = supplier.get();
+    var queryTypeName = supplier.get();
     return registry.getType(queryTypeName)
         .filter(f->f instanceof ObjectTypeDefinition)
         .map(f->(ObjectTypeDefinition)f);

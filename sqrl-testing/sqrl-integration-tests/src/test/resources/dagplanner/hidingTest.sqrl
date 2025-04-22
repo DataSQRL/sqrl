@@ -1,0 +1,10 @@
+IMPORT ecommerceTs.Customer;
+IMPORT ecommerceTs.Customer AS _HiddenCustomer;
+IMPORT ecommerceTs.* AS _; --imports all tables as hidden
+
+AnotherCustomer := SELECT * FROM _customer WHERE customerid > 0;
+
+_SomeCustomer := SELECT * FROM Customer WHERE customerid > 1;
+
+FinalCustomer := SELECT customerid, lastUpdated FROM _SomeCustomer;
+

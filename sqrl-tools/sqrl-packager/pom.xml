@@ -2,7 +2,7 @@
   <parent>
     <groupId>com.datasqrl</groupId>
     <artifactId>sqrl-tools</artifactId>
-    <version>0.5.10-SNAPSHOT</version>
+    <version>0.6.0-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
@@ -160,6 +160,13 @@
       <groupId>org.mockito</groupId>
       <artifactId>mockito-junit-jupiter</artifactId>
     </dependency>
+    
+    <dependency>
+	  <groupId>org.assertj</groupId>
+	  <artifactId>assertj-core</artifactId>
+	  <version>3.24.2</version>
+	  <scope>test</scope>
+	</dependency>
   </dependencies>
 
 </project>

@@ -1,9 +1,10 @@
 package com.datasqrl.discovery.preprocessor;
 
-import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.packager.preprocess.Preprocessor;
 import java.nio.file.Files;
 import java.nio.file.Path;
+
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.packager.preprocess.Preprocessor;
 
 public interface DiscoveryPreprocessor extends Preprocessor {
 
@@ -11,7 +12,9 @@ public interface DiscoveryPreprocessor extends Preprocessor {
 
   @Override
   default void processFile(Path file, ProcessorContext processorContext, ErrorCollector errors) {
-    if (!runDiscovery(file.getParent())) return;
+    if (!runDiscovery(file.getParent())) {
+        return;
+    }
     discoverFile(file, processorContext, errors);
   }
 
@@ -30,7 +33,7 @@ public interface DiscoveryPreprocessor extends Preprocessor {
     }
 
     // Check if the directory contains a file named .nodiscovery
-    Path noDiscoveryFilePath = directory.resolve(DISABLE_DISCOVERY_FILENAME);
+    var noDiscoveryFilePath = directory.resolve(DISABLE_DISCOVERY_FILENAME);
     return !Files.exists(noDiscoveryFilePath) || Files.isDirectory(noDiscoveryFilePath);
   }
 

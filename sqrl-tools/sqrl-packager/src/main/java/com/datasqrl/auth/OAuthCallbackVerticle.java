@@ -3,11 +3,12 @@ package com.datasqrl.auth;
 import static com.datasqrl.auth.AuthUtils.CALLBACK_ENDPOINT;
 import static com.datasqrl.auth.AuthUtils.CALLBACK_SERVER_PORT;
 
+import java.util.function.Consumer;
+
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
-import java.util.function.Consumer;
 
 public class OAuthCallbackVerticle extends AbstractVerticle {
 
@@ -22,7 +23,7 @@ public class OAuthCallbackVerticle extends AbstractVerticle {
 
   @Override
   public void start(Promise<Void> startPromise) throws Exception {
-    Router router = Router.router(vertx);
+    var router = Router.router(vertx);
 
     router.route(CALLBACK_ENDPOINT).handler(this::handleAuthCallback);
 

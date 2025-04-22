@@ -1,17 +1,30 @@
 package com.datasqrl.plan.util;
 
-import com.datasqrl.util.StreamUtil;
-import com.google.common.base.Preconditions;
 import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import com.google.common.collect.Iterables;
-import lombok.*;
 import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rel.type.RelDataTypeField;
+
+import com.datasqrl.util.StreamUtil;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Iterables;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Singular;
+import lombok.ToString;
+import lombok.Value;
 
 /**
  * This class keeps track of the column indexes that are part of the primary key.
@@ -23,6 +36,7 @@ public class PrimaryKeyMap implements Serializable {
   public static final PrimaryKeyMap UNDEFINED = new PrimaryKeyMap();
   @Singular
   final List<ColumnSet> columns;
+  @Getter
   final boolean undefined;
 
   public PrimaryKeyMap(List<ColumnSet> columns) {
@@ -56,9 +70,10 @@ public class PrimaryKeyMap implements Serializable {
     return new Builder();
   }
 
-  public boolean isUndefined() {
-    return undefined;
+  public boolean isDefined() {
+    return !isUndefined();
   }
+
 
   @Override
   public boolean equals(Object o) {
@@ -68,7 +83,7 @@ public class PrimaryKeyMap implements Serializable {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    PrimaryKeyMap that = (PrimaryKeyMap) o;
+    var that = (PrimaryKeyMap) o;
     return undefined == that.undefined && Objects.equals(columns, that.columns);
   }
 
@@ -88,6 +103,9 @@ public class PrimaryKeyMap implements Serializable {
   }
 
   public int getLength() {
+    if (undefined) {
+        return -1;
+    }
     return columns.size();
   }
 
@@ -110,6 +128,14 @@ public class PrimaryKeyMap implements Serializable {
     return columns.stream().map(ColumnSet::getOnly).collect(Collectors.toUnmodifiableList());
   }
 
+  public PrimaryKeyMap makeSimple(RelDataType rowType) {
+    if (undefined) {
+        return this;
+    }
+    return PrimaryKeyMap.of(columns.stream().map(colSet -> colSet.pickBest(rowType))
+        .collect(Collectors.toUnmodifiableList()));
+  }
+
   public List<ColumnSet> asSubList(int length) {
     Preconditions.checkArgument(length <= getLength());
     return new ArrayList<>(columns.subList(0, length));
@@ -126,7 +152,7 @@ public class PrimaryKeyMap implements Serializable {
 
   public Builder toBuilder() {
     Preconditions.checkArgument(!isUndefined(), "Cannot build on undefined primary key");
-    Builder builder = build();
+    var builder = build();
     columns.forEach(builder::add);
     return builder;
   }
@@ -150,6 +176,16 @@ public class PrimaryKeyMap implements Serializable {
       return Iterables.getOnlyElement(indexes);
     }
 
+    public boolean isEmpty() {
+      return indexes.isEmpty();
+    }
+
+    public ColumnSet intersect(ColumnSet other) {
+      Set<Integer> intersection = new HashSet<>(indexes);
+      intersection.retainAll(other.indexes);
+      return new ColumnSet(intersection);
+    }
+
     public boolean contains(int index) {
       return indexes.contains(index);
     }
@@ -167,9 +203,9 @@ public class PrimaryKeyMap implements Serializable {
     }
 
     public int pickBest(RelDataType rowType) {
-      List<RelDataTypeField> fields = rowType.getFieldList();
+      var fields = rowType.getFieldList();
       //Try to pick the first not-null
-      Optional<Integer> nonNullPk = indexes.stream()
+      var nonNullPk = indexes.stream()
           .filter(idx -> !fields.get(idx).getType().isNullable()).sorted().findFirst();
       //Otherwise, pick the first
       return nonNullPk.orElseGet(() -> indexes.stream().sorted().findFirst().get());

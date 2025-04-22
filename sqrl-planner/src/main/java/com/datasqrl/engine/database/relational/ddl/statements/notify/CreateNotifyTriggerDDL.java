@@ -1,9 +1,11 @@
 package com.datasqrl.engine.database.relational.ddl.statements.notify;
 
-import com.datasqrl.sql.SqlDDLStatement;
-import com.google.common.base.Preconditions;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import com.datasqrl.sql.SqlDDLStatement;
+import com.google.common.base.Preconditions;
+
 import lombok.NonNull;
 
 public class CreateNotifyTriggerDDL implements SqlDDLStatement {
@@ -19,26 +21,27 @@ public class CreateNotifyTriggerDDL implements SqlDDLStatement {
 
   @Override
   public String getSql() {
-    return String.format(
-        "CREATE OR REPLACE FUNCTION notify_on_%1$s_insert()\n" +
-            "RETURNS TRIGGER AS $$\n" +
-            "BEGIN\n" +
-            "   PERFORM pg_notify('%1$s_notify', %2$s);\n" +
-            "   RETURN NEW;\n" +
-            "END;\n" +
-            "$$ LANGUAGE plpgsql;\n" +
-            "\n" +
-            "CREATE TRIGGER insert_notify_trigger\n" +
-            "AFTER INSERT ON \"%1$s\"\n" +
-            "FOR EACH ROW EXECUTE PROCEDURE notify_on_%1$s_insert();", tableName, createPayload());
+    return """
+        CREATE OR REPLACE FUNCTION notify_on_%1$s_insert()
+        RETURNS TRIGGER AS $$
+        BEGIN
+           PERFORM pg_notify('%1$s_notify', %2$s);
+           RETURN NEW;
+        END;
+        $$ LANGUAGE plpgsql;
+
+        CREATE TRIGGER insert_notify_trigger
+        AFTER INSERT ON "%1$s"
+        FOR EACH ROW EXECUTE PROCEDURE notify_on_%1$s_insert();\
+        """.formatted(tableName, createPayload());
   }
 
   private String createPayload() {
-    String argumentList = primaryKeys.stream()
+    var argumentList = primaryKeys.stream()
         .map(pk ->
-            String.format("'%s', NEW.\"%s\"", pk, pk))
+            "'%s', NEW.\"%s\"".formatted(pk, pk))
         .collect(Collectors.joining(", "));
 
-    return String.format("jsonb_build_object(%s)::text", argumentList);
+    return "jsonb_build_object(%s)::text".formatted(argumentList);
   }
 }

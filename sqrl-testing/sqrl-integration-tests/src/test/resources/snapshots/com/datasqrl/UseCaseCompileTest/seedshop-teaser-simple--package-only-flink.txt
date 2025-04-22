@@ -1,2 +1,0 @@
-[FATAL] Flink stage empty. No queries or exports were found.
-

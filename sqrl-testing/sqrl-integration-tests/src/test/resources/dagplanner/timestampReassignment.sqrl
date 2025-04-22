@@ -1,12 +1,6 @@
 IMPORT ecommerceTs.Customer;
-IMPORT ecommerceTs.Orders;
 
 -- This correctly makes 'updatedTime' the new timestamp
-Customer2 := SELECT timestamp AS updatedTime, * FROM Customer;
+Customer2 := SELECT `timestamp` AS updatedTime, * FROM Customer;
 CustomerByTime2 := DISTINCT Customer2 ON customerid ORDER BY updatedTime DESC;
-OrderCustomerJoin := SELECT * FROM Orders o TEMPORAL JOIN CustomerByTime2 c ON c.customerid = o.customerid;
-
--- This does not change the timestamp
-Customer3 := SELECT *, timestamp AS updatedTime FROM Customer;
-CustomerByTime3 := DISTINCT Customer3 ON customerid ORDER BY updatedTime DESC;
 

@@ -1,25 +1,26 @@
 package com.datasqrl.packager.preprocess;
 
-import static com.datasqrl.actions.WriteDag.DATA_DIR;
+import static com.datasqrl.config.SqrlConstants.DATA_DIR;
 
-import com.datasqrl.discovery.file.FilenameAnalyzer;
-import com.datasqrl.discovery.file.FilenameAnalyzer.Components;
-import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.discovery.file.FileCompression;
-import com.datasqrl.discovery.file.FileCompression.CompressionIO;
-import com.google.auto.service.AutoService;
-import java.io.BufferedReader;
+import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.Set;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import com.datasqrl.discovery.file.FileCompression;
+import com.datasqrl.discovery.file.FileCompression.CompressionIO;
+import com.datasqrl.discovery.file.FilenameAnalyzer;
+import com.datasqrl.discovery.file.FilenameAnalyzer.Components;
+import com.datasqrl.error.ErrorCollector;
+import com.google.common.io.ByteStreams;
+
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
@@ -62,18 +63,49 @@ public class CopyStaticDataPreprocessor implements Preprocessor {
   }
 
   private void copyFileSkipFirstLine(Path from, Path to, CompressionIO fileCompress) {
-    try (BufferedReader reader = new BufferedReader(new InputStreamReader(fileCompress.decompress(new FileInputStream(from.toFile()))));
-        PrintWriter writer = new PrintWriter(fileCompress.compress(new FileOutputStream(to.toFile())))) {
-      // Skip the first line
-      reader.readLine();
-      // Read from the second line until file end
-      String line;
-      while ((line = reader.readLine()) != null) {
-        writer.println(line);
-      }
+    try (var in = fileCompress.decompress(new FileInputStream(from.toFile()));
+        var out = fileCompress.compress(new FileOutputStream(to.toFile()))) {
+
+      copyFileSkipFirstLine(in, out);
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  public void copyFileSkipFirstLine(InputStream in, OutputStream out) throws IOException {
+    var afterFirstLine = skipFirstLine(in);
+    ByteStreams.copy(afterFirstLine, out);
+  }
+
+  private static InputStream skipFirstLine(InputStream rawIn) throws IOException {
+    // Make sure we can mark and reset (peek the next byte safely)
+    var in = (rawIn instanceof BufferedInputStream bis) ? bis
+        : new BufferedInputStream(rawIn);
+
+    while (true) {
+      in.mark(1);
+      var b = in.read();
+      if (b == -1) {
+        // End of stream, no more lines
+        break;
+      } else if (b == '\n') {
+        // Found line break (Unix), done skipping
+        break;
+      } else if (b == '\r') {
+        // Might be Windows-style \r\n or old Mac \r
+        in.mark(1);
+        var next = in.read();
+        if (next != '\n' && next != -1) {
+          // It's not \n, so reset => unread that byte
+          in.reset();
+        }
+        // done skipping the first line
+        break;
+      }
+      // Otherwise keep reading until we find line break or EOF
+    }
+
+    return in;
   }
 
 }

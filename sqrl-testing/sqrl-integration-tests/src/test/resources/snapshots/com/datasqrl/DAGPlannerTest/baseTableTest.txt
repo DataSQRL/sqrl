@@ -1,0 +1,779 @@
+>>>pipeline_explain.txt
+=== Customer
+ID:     default_catalog.default_database.Customer
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database.Customer__def
+Annotations:
+ - stream-root: Customer__def
+Primary Key: customerid, lastUpdated
+Timestamp  : timestamp
+Schema:
+ - customerid: BIGINT NOT NULL
+ - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - lastUpdated: BIGINT NOT NULL
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Plan:
+LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
+  LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
+    LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($3, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
+      LogicalTableScan(table=[[default_catalog, default_database, Customer__def]])
+SQL: CREATE VIEW `Customer`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`Customer__def`
+=== CustomerById
+ID:     default_catalog.default_database.CustomerById
+Type:   query
+Stage:  postgres
+Inputs: default_catalog.default_database.CustomerWithEmail
+Annotations:
+ - stream-root: Customer__def
+ - parameters: id
+ - base-table: Customer
+Plan:
+LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
+  LogicalFilter(condition=[=($0, ?0)])
+    LogicalTableScan(table=[[default_catalog, default_database, CustomerWithEmail]])
+SQL: CREATE VIEW CustomerById AS  SELECT * FROM CustomerWithEmail WHERE customerid = ?  ;
+
+=== CustomerWithEmail
+ID:     default_catalog.default_database.CustomerWithEmail
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database.Customer
+Annotations:
+ - stream-root: Customer__def
+Primary Key: customerid, lastUpdated
+Timestamp  : timestamp
+Schema:
+ - customerid: BIGINT NOT NULL
+ - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - lastUpdated: BIGINT NOT NULL
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Plan:
+LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
+  LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW CustomerWithEmail AS  SELECT * FROM Customer WHERE email IS NOT NULL;
+
+=== DistinctCustomer
+ID:     default_catalog.default_database.DistinctCustomer
+Type:   state
+Stage:  flink
+Inputs: default_catalog.default_database.Customer
+Annotations:
+ - mostRecentDistinct: true
+ - stream-root: Customer__def
+Primary Key: customerid
+Timestamp  : timestamp
+Schema:
+ - customerid: BIGINT NOT NULL
+ - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - lastUpdated: BIGINT NOT NULL
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Plan:
+LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
+  LogicalFilter(condition=[=($5, 1)])
+    LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4], __sqrlinternal_rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $4 DESC NULLS LAST)])
+      LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW `DistinctCustomer`
+AS
+SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`
+FROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC NULLS LAST) AS `__sqrlinternal_rownum`
+  FROM `default_catalog`.`default_database`.`Customer`) AS `t`
+WHERE `__sqrlinternal_rownum` = 1
+=== DistinctCustomerById
+ID:     default_catalog.default_database.DistinctCustomerById
+Type:   query
+Stage:  postgres
+Inputs: default_catalog.default_database.DistinctCustomer
+Annotations:
+ - stream-root: Customer__def
+ - parameters: id
+ - base-table: DistinctCustomer
+Plan:
+LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
+  LogicalFilter(condition=[=($0, ?0)])
+    LogicalTableScan(table=[[default_catalog, default_database, DistinctCustomer]])
+SQL: CREATE VIEW DistinctCustomerById AS  SELECT * FROM DistinctCustomer WHERE customerid = ?  ;
+
+=== Product
+ID:     default_catalog.default_database.Product
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database._Product
+Annotations:
+ - stream-root: _Product__def
+Primary Key: productid, name, description, category
+Timestamp  : _ingest_time
+Schema:
+ - productid: BIGINT NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - description: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - category: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - _ingest_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Plan:
+LogicalProject(productid=[$0], name=[$1], description=[$2], category=[$3], _ingest_time=[$4])
+  LogicalTableScan(table=[[default_catalog, default_database, _Product]])
+SQL: CREATE VIEW Product AS  SELECT * FROM _Product WHERE name is NOT NULL;
+
+=== ProductByCategory
+ID:     default_catalog.default_database.ProductByCategory
+Type:   query
+Stage:  postgres
+Inputs: default_catalog.default_database.Product
+Annotations:
+ - stream-root: _Product__def
+ - parameters: category
+ - base-table: Product
+Plan:
+LogicalProject(productid=[$0], name=[$1], description=[$2], category=[$3], _ingest_time=[$4])
+  LogicalFilter(condition=[=($3, ?0)])
+    LogicalTableScan(table=[[default_catalog, default_database, Product]])
+SQL: CREATE VIEW ProductByCategory AS  SELECT * FROM Product WHERE category = ?        ;
+
+=== _Product
+ID:     default_catalog.default_database._Product
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database._Product__def
+Annotations:
+ - stream-root: _Product__def
+Primary Key: productid, name, description, category
+Timestamp  : _ingest_time
+Schema:
+ - productid: BIGINT NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - description: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - category: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - _ingest_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Plan:
+LogicalProject(productid=[$0], name=[$1], description=[$2], category=[$3], _ingest_time=[$4])
+  LogicalWatermarkAssigner(rowtime=[_ingest_time], watermark=[-($4, 1:INTERVAL SECOND)])
+    LogicalTableScan(table=[[default_catalog, default_database, _Product__def]])
+SQL: CREATE VIEW `_Product`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`_Product__def`
+>>>flink-sql-no-functions.sql
+CREATE TEMPORARY TABLE `Customer__schema` (
+  `customerid` BIGINT NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `lastUpdated` BIGINT NOT NULL
+) WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `Customer__def` (
+  `timestamp` AS COALESCE(TO_TIMESTAMP_LTZ(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
+  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
+  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
+) WITH (
+  'format' = 'flexible-json',
+  'path' = 'file:/mock',
+  'source.monitor-interval' = '10 sec',
+  'connector' = 'filesystem'
+)
+LIKE `Customer__schema`;
+CREATE VIEW `Customer`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`Customer__def`;
+CREATE TEMPORARY TABLE `_Product__schema` (
+  `productid` BIGINT NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+) WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `_Product__def` (
+  PRIMARY KEY (`productid`, `name`, `description`, `category`) NOT ENFORCED,
+  WATERMARK FOR `_ingest_time` AS `_ingest_time` - INTERVAL '0.001' SECOND
+) WITH (
+  'format' = 'flexible-json',
+  'path' = 'file:/mock',
+  'source.monitor-interval' = '10 sec',
+  'connector' = 'filesystem'
+)
+LIKE `_Product__schema`;
+CREATE VIEW `_Product`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`_Product__def`;
+CREATE VIEW `CustomerWithEmail`
+AS
+SELECT *
+FROM `Customer`
+WHERE `email` IS NOT NULL;
+CREATE VIEW `DistinctCustomer`
+AS
+SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`
+FROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC NULLS LAST) AS `__sqrlinternal_rownum`
+  FROM `default_catalog`.`default_database`.`Customer`) AS `t`
+WHERE `__sqrlinternal_rownum` = 1;
+CREATE VIEW `Product`
+AS
+SELECT *
+FROM `_Product`
+WHERE `name` IS NOT NULL;
+CREATE TABLE `Customer_1` (
+  `customerid` BIGINT NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `lastUpdated` BIGINT NOT NULL,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'table-name' = 'Customer_1'
+);
+CREATE TABLE `CustomerWithEmail_2` (
+  `customerid` BIGINT NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `lastUpdated` BIGINT NOT NULL,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'table-name' = 'CustomerWithEmail_2'
+);
+CREATE TABLE `DistinctCustomer_3` (
+  `customerid` BIGINT NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `lastUpdated` BIGINT NOT NULL,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`customerid`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'table-name' = 'DistinctCustomer_3'
+);
+CREATE TABLE `Product_4` (
+  `productid` BIGINT NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`productid`, `name`, `description`, `category`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'table-name' = 'Product_4'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`Customer_1`
+(SELECT *
+ FROM `default_catalog`.`default_database`.`Customer`)
+;
+INSERT INTO `default_catalog`.`default_database`.`CustomerWithEmail_2`
+ (SELECT *
+  FROM `default_catalog`.`default_database`.`CustomerWithEmail`)
+ ;
+ INSERT INTO `default_catalog`.`default_database`.`DistinctCustomer_3`
+  (SELECT *
+   FROM `default_catalog`.`default_database`.`Customer`)
+  ;
+  INSERT INTO `default_catalog`.`default_database`.`Product_4`
+   (SELECT *
+    FROM `default_catalog`.`default_database`.`Product`)
+   ;
+   END
+>>>kafka.json
+{
+  "topics" : [ ]
+}
+>>>postgres.json
+{
+  "statements" : [
+    {
+      "name" : "Customer_1",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Customer_1\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\",\"lastUpdated\"))",
+      "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "email",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "lastUpdated",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "timestamp",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ]
+    },
+    {
+      "name" : "CustomerWithEmail_2",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerWithEmail_2\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\",\"lastUpdated\"))",
+      "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "email",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "lastUpdated",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "timestamp",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ]
+    },
+    {
+      "name" : "DistinctCustomer_3",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"DistinctCustomer_3\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\"))",
+      "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "email",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "lastUpdated",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "timestamp",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ]
+    },
+    {
+      "name" : "Product_4",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Product_4\" (\"productid\" BIGINT NOT NULL, \"name\" TEXT NOT NULL, \"description\" TEXT NOT NULL, \"category\" TEXT NOT NULL, \"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"productid\",\"name\",\"description\",\"category\"))",
+      "fields" : [
+        {
+          "name" : "productid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "description",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "category",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "_ingest_time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ]
+    },
+    {
+      "name" : "Customer",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"Customer_1\"",
+      "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "email",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "lastUpdated",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "timestamp",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ]
+    },
+    {
+      "name" : "CustomerWithEmail",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerWithEmail\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"CustomerWithEmail_2\"",
+      "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "email",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "lastUpdated",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "timestamp",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ]
+    },
+    {
+      "name" : "DistinctCustomer",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"DistinctCustomer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"DistinctCustomer_3\"",
+      "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "email",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "lastUpdated",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "timestamp",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ]
+    },
+    {
+      "name" : "Product",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"Product_4\"",
+      "fields" : [
+        {
+          "name" : "productid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "description",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "category",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "_ingest_time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ]
+    },
+    {
+      "name" : "Product_4_hash_c3",
+      "type" : "INDEX",
+      "sql" : "CREATE INDEX IF NOT EXISTS \"Product_4_hash_c3\" ON \"Product_4\" USING hash (\"category\")"
+    }
+  ]
+}
+>>>vertx.json
+{
+  "model" : {
+    "queries" : [
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "Customer",
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
+            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM \"Customer_1\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
+          }
+        }
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "CustomerWithEmail",
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
+            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM \"CustomerWithEmail_2\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
+          }
+        }
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "DistinctCustomer",
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
+            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM \"DistinctCustomer_3\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
+          }
+        }
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "Product",
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
+            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM \"Product_4\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
+          }
+        }
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "CustomerById",
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "id"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
+            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM \"CustomerWithEmail_2\"\nWHERE \"customerid\" = $1",
+            "parameters" : [
+              {
+                "type" : "arg",
+                "path" : "id"
+              }
+            ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
+          }
+        }
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "DistinctCustomerById",
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "id"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
+            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM \"DistinctCustomer_3\"\nWHERE \"customerid\" = $1",
+            "parameters" : [
+              {
+                "type" : "arg",
+                "path" : "id"
+              }
+            ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
+          }
+        }
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "ProductByCategory",
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
+            },
+            {
+              "type" : "variable",
+              "path" : "category"
+            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM \"Product_4\"\nWHERE \"category\" = $1",
+            "parameters" : [
+              {
+                "type" : "arg",
+                "path" : "category"
+              }
+            ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
+          }
+        }
+      }
+    ],
+    "mutations" : [ ],
+    "subscriptions" : [ ],
+    "schema" : {
+      "type" : "string",
+      "schema" : "type Customer {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype DistinctCustomer {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n}\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Product {\n  productid: GraphQLBigInteger!\n  name: String!\n  description: String!\n  category: String!\n}\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerWithEmail(limit: Int = 10, offset: Int = 0): [Customer!]\n  DistinctCustomer(limit: Int = 10, offset: Int = 0): [DistinctCustomer!]\n  Product(limit: Int = 10, offset: Int = 0): [Product!]\n  CustomerById(id: GraphQLBigInteger!, limit: Int = 10, offset: Int = 0): [Customer!]\n  DistinctCustomerById(id: GraphQLBigInteger!, limit: Int = 10, offset: Int = 0): [DistinctCustomer!]\n  ProductByCategory(category: String!, limit: Int = 10, offset: Int = 0): [Product!]\n}\n"
+    }
+  }
+}

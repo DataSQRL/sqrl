@@ -1,37 +1,42 @@
 IMPORT sensor-local.SensorReading; -- Import sensor data
-IMPORT sensor-local.Sensors;
-IMPORT time.endOfSecond;           -- Import time function
+IMPORT sensor-local.Sensors AS SensorUpdates;
 
 /* Aggregate sensor readings to second */
-SecReading := SELECT sensorid, endOfSecond(timestamp) as timeSec,
-        avg(temperature) as temp FROM SensorReading
-    GROUP BY sensorid, timeSec ORDER BY timeSec DESC;
+/*+primary_key(sensorid, timeSec) */
+SecReading := SELECT sensorid, window_time as timeSec,
+                     avg(temperature) as temp
+              FROM TABLE(TUMBLE(TABLE SensorReading, DESCRIPTOR(`timestamp`), INTERVAL '1' SECONDS))
+              GROUP BY sensorid, window_start, window_end, window_time
+              ORDER BY timeSec DESC;
 
-SecReadingByTemp(@temp: Int) := SELECT * FROM SecReading WHERE temp > @temp ORDER BY timeSec ASC LIMIT 10;
+SecReadingByTemp(temp Int NOT NULL) := SELECT * FROM SecReading WHERE temp > :temp ORDER BY timeSec ASC LIMIT 10;
 
 /* Create table of sensors and relate to readings */
-Sensors := DISTINCT Sensors ON id ORDER BY timestamp DESC;
-Sensors.readings := JOIN SecReading r ON r.sensorid = @.id;
-Sensors.lastHour := SELECT max(temp) as maxTemp, avg(temp) as avgTemp
-                       FROM @.readings
-                       WHERE timeSec >= now() - INTERVAL 1 HOUR;
+Sensors := DISTINCT SensorUpdates ON id ORDER BY `timestamp` DESC;
+Sensors.readings := SELECT * FROM SecReading r WHERE r.sensorid = this.id;
+
+/* Get max temperature in last hour */
+_SensorMaxTempWindow := SELECT sensorid, window_time, avg(temp) as avgTemp, max(temp) as maxTemp
+                        FROM TABLE(HOP(TABLE SecReading, DESCRIPTOR(timeSec), INTERVAL '1' MINUTES, INTERVAL '60' MINUTES))
+                        GROUP BY sensorid, window_start, window_end, window_time;
+SensorLastHour := DISTINCT _SensorMaxTempWindow ON sensorid ORDER BY window_time DESC;
+
+Sensors.lastHour := SELECT * FROM SensorLastHour WHERE this.id = sensorid;
+
 /* Create table of machines with recent temperature */
-Machine := SELECT machineid, max(temp) as maxTemp,
+Machine := SELECT machineId, max(temp) as maxTemp,
     avg(temp) as avgTemp
-    FROM Sensors s JOIN s.readings
-    WHERE timeSec >= now() - INTERVAL 1 HOUR
-    GROUP BY machineid;
+    FROM SecReading r JOIN Sensors FOR SYSTEM_TIME AS OF r.`timeSec` s ON r.sensorid = s.id
+    GROUP BY machineId;
 
 /*+test */
 MachineCountTest := SELECT COUNT(*) num FROM Machine;
 
-Machine.sensors := JOIN Sensors s ON s.machineid = @.machineid;
+Machine.sensors := SELECT * FROM Sensors s WHERE s.machineId = this.machineId;
 
-HighTemp := SELECT machineid, sensorid, temp, timeSec
-            FROM Sensors s JOIN s.readings
+HighTemp := SELECT machineId, sensorid, temp, timeSec
+            FROM SecReading r JOIN Sensors FOR SYSTEM_TIME AS OF r.`timeSec` s ON r.sensorid = s.id
             WHERE temp > 35;
 
 /*+test */
 HighTempTest := SELECT COUNT(*) as num, AVG(temp) as avg_temp FROM HighTemp;
-
-/* EXPORT HighTemp TO print.tempWarning;*/

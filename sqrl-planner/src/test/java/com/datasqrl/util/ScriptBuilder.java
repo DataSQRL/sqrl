@@ -3,11 +3,12 @@
  */
 package com.datasqrl.util;
 
-import com.datasqrl.canonicalizer.NamePath;
-import lombok.Value;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import com.datasqrl.canonicalizer.NamePath;
+
+import lombok.Value;
 
 @Value
 public class ScriptBuilder {
@@ -60,7 +61,7 @@ public class ScriptBuilder {
   }
 
   public static ScriptBuilder of(String... statements) {
-    ScriptBuilder s = new ScriptBuilder();
+    var s = new ScriptBuilder();
     for (String statement : statements) {
       s.add(statement);
     }

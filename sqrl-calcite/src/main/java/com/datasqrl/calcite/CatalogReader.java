@@ -1,16 +1,19 @@
 package com.datasqrl.calcite;
 
-import com.datasqrl.calcite.type.TypeFactory;
-import com.datasqrl.canonicalizer.NamePath;
 import java.util.List;
 import java.util.Optional;
-import lombok.Getter;
+
 import org.apache.calcite.config.CalciteConnectionConfig;
 import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.prepare.CalciteCatalogReader;
 import org.apache.calcite.sql.validate.SqlNameMatchers;
 import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
+
+import com.datasqrl.calcite.type.TypeFactory;
+import com.datasqrl.canonicalizer.NamePath;
+
+import lombok.Getter;
 
 public class CatalogReader extends CalciteCatalogReader {
 
@@ -23,8 +26,8 @@ public class CatalogReader extends CalciteCatalogReader {
   }
 
   public Optional<RelOptTable> getTableFromPath(NamePath names) {
-    NamePath absolutePath = getSqrlAbsolutePath(names);
-    String sysTableName = schema.getPathToSysTableMap().get(absolutePath);
+    var absolutePath = getSqrlAbsolutePath(names);
+    var sysTableName = schema.getPathToSysTableMap().get(absolutePath);
     if (sysTableName == null) {
       return Optional.empty();
     }
@@ -33,7 +36,7 @@ public class CatalogReader extends CalciteCatalogReader {
   }
 
   public NamePath getSqrlAbsolutePath(NamePath path) {
-    NamePath rel = schema.getPathToAbsolutePathMap().get(path);
+    var rel = schema.getPathToAbsolutePathMap().get(path);
     return (rel == null) ? path : rel;
   }
 }

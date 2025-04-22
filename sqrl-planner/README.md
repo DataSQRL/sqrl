@@ -1,8 +1,13 @@
-The DataSQRL planner takes the abstract syntax tree (AST) of a SQRL script as input and produces the physical plan of an optimized data pipeline as output.
+# SQRL Planner
+
+The planner parses the SQRL script, creates the computation DAG, optimizes the DAG, and produces the deployment artifacts for all components in the data pipeline.
+The DataSQRL planner builds on the Apache FLink parser and planner which in turn uses Apache Calcite. Hence, familiarity with Flink and Calcite is required to understand this codebase. 
 
 The planner has the following stages:
-- **Transpiler**: Converts the SQRL script AST and produces a logical plan with special SQRL annotations. In the process, it resolves any dependencies using the loaders.
-- **Logical Plan Converters**: Converts and optimizes the SQRL-specific logical plan into a vanilla SQL logical plan with some physical execution hints.
-- **Query Planner**: Takes the API definition (currently, DataSQRL only supports GraphQL schemas) and produces a set of queries.
-- **DAG Planner**: Takes the individual SQL logical plans for each table and the API queries and stitches them into one global DAG that is optimized.
-- **Physical Planner**: Takes the Optimized DAG and produces a physical plan for each execution engine in the pipeline.
+- Parser: Converts the SQRL script to individual statements for the planner. 
+- Planner: Converts the statements to SqlNodes (i.e. AST) and RelNodes (i.e. relational trees) using Flink's parser and planner.
+- DAG: Builds, optimizes, and assembles the computation DAG that a SQRL script defines.
+- Physical Plans: The DAG assembly splits the DAG into sub-DAGs that are executed by the configured engines in the pipeline. Each engine produces a physical plan. Post-processors are executed to optimize or otherwise adjust those physical plans.
+- API Generation: Generates a GraphQL API for all the endpoints that are exposed in the DAG. This is skipped if the API is provided by the user.
+- API Execution Plan: Based on the (generated) API and the compiled physical plans, the physical plan for the server is generated.
+- Deployment Assets: The deployment assets are generated from the optimized physical plans and written to the `build/plan` directory.

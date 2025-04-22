@@ -3,14 +3,14 @@
  */
 package com.datasqrl.engine.pipeline;
 
-import com.datasqrl.config.EngineFactory.Type;
-import com.datasqrl.engine.ExecutionEngine;
-import com.datasqrl.util.StreamUtil;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
+
+import com.datasqrl.config.EngineType;
+import com.datasqrl.engine.server.ServerEngine;
+import com.datasqrl.util.StreamUtil;
 
 public interface ExecutionPipeline {
 
@@ -18,6 +18,14 @@ public interface ExecutionPipeline {
 
   default List<ExecutionStage> getReadStages() {
     return getStages().stream().filter(ExecutionStage::isRead).collect(Collectors.toList());
+  }
+
+  /**
+   * An execution pipeline can only have a single server engine
+   * @return
+   */
+  default Optional<ServerEngine> getServerEngine() {
+    return StreamUtil.getOnlyElement(getStagesByType(EngineType.SERVER).stream().map(stage -> (ServerEngine)stage.getEngine()).distinct());
   }
 
   default boolean hasReadStages() {
@@ -31,24 +39,30 @@ public interface ExecutionPipeline {
   default Optional<ExecutionStage> getStage(String name) {
     return StreamUtil.getOnlyElement(getStages().stream().filter(s -> s.getName().equalsIgnoreCase(name)));
   }
+
   default Optional<ExecutionStage> getStageByType(String type) {
     return StreamUtil.getOnlyElement(getStages().stream().filter(s -> s.getEngine().getType().name().equalsIgnoreCase(type)));
   }
 
+  default Optional<ExecutionStage> getStageByType(EngineType type) {
+    return StreamUtil.getOnlyElement(getStages().stream()
+        .filter(s -> s.getEngine().getType().equals(type)));
+  }
+
   /**
    * We currently make the simplifying assumption that an {@link ExecutionPipeline} contains at most
-   * one stage for any {@link Type}. This is not true in full generality and
+   * one stage for any {@link EngineType}. This is not true in full generality and
    * requires significant changes to the DAGPlanner and import mechanism to support.
    *
    * @param type
-   * @return the stage for a given {@link Type}.
+   * @return the stage for a given {@link EngineType}.
    */
-  default Optional<List<ExecutionStage>> getStage(Type type) {
-    List<ExecutionStage> executionStageStream = getStages().stream()
+  default List<ExecutionStage> getStagesByType(EngineType type) {
+    return getStages().stream()
         .filter(s -> s.getEngine().getType().equals(type))
         .collect(Collectors.toList());
-    return executionStageStream.isEmpty() ? Optional.empty() : Optional.of(executionStageStream);
   }
+
 
 
 }

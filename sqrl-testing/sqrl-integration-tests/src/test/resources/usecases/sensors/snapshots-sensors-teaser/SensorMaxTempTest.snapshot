@@ -1,1 +1,1 @@
-{"data":{"SensorMaxTempTest":[{"sensorid":9.0,"maxTemp":102.43826972},{"sensorid":2.0,"maxTemp":98.97829214},{"sensorid":1.0,"maxTemp":98.82523372},{"sensorid":15.0,"maxTemp":98.7222152},{"sensorid":12.0,"maxTemp":98.61149275}]}}
+{"data":{"SensorMaxTempTest":[{"sensorid":9,"maxTemp":102.43826972},{"sensorid":2,"maxTemp":98.98913765},{"sensorid":1,"maxTemp":98.83090199},{"sensorid":15,"maxTemp":98.76127431},{"sensorid":12,"maxTemp":98.66542336}]}}

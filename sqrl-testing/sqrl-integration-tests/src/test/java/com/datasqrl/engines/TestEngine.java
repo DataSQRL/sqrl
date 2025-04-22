@@ -1,11 +1,13 @@
 package com.datasqrl.engines;
 
-import com.datasqrl.config.PackageJson;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+
+import com.datasqrl.config.PackageJson;
+
 import lombok.Getter;
 
 public interface TestEngine {
@@ -174,7 +176,7 @@ public interface TestEngine {
     public TestEngines create(PackageJson packageJson) {
       List<TestEngine> testEngines = new ArrayList<>();
       for (String engine : packageJson.getEnabledEngines()) {
-        Function<PackageJson, TestEngine> constructor = TestEngine.getEngineConstructor(engine);
+        var constructor = TestEngine.getEngineConstructor(engine);
         if (constructor != null) {
           testEngines.add(constructor.apply(packageJson));
         } else {
@@ -189,7 +191,7 @@ public interface TestEngine {
     public TestEngines createAll() {
       List<TestEngine> testEngines = new ArrayList<>();
       for (String engine : List.of("postgres", "kafka", "snowflake")) {
-        Function<PackageJson, TestEngine> constructor = TestEngine.getEngineConstructor(engine);
+        var constructor = TestEngine.getEngineConstructor(engine);
         if (constructor != null) {
           testEngines.add(constructor.apply(null));
         } else {

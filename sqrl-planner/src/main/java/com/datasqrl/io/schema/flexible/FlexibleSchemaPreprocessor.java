@@ -1,17 +1,16 @@
 package com.datasqrl.io.schema.flexible;
 
-import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.packager.preprocess.Preprocessor;
-import com.datasqrl.packager.preprocessor.PreprocessorBase;
-import com.datasqrl.util.StringUtil;
-import com.google.auto.service.AutoService;
-import com.google.common.base.Preconditions;
-import lombok.NoArgsConstructor;
-import lombok.SneakyThrows;
-
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.regex.Pattern;
+
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.packager.preprocessor.PreprocessorBase;
+import com.datasqrl.util.StringUtil;
+import com.google.common.base.Preconditions;
+
+import lombok.NoArgsConstructor;
+import lombok.SneakyThrows;
 
 @NoArgsConstructor
 public class FlexibleSchemaPreprocessor extends PreprocessorBase {

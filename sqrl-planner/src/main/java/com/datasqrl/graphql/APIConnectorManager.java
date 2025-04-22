@@ -1,5 +1,8 @@
 package com.datasqrl.graphql;
 
+import java.util.List;
+import java.util.Map;
+
 import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.engine.log.Log;
@@ -9,8 +12,6 @@ import com.datasqrl.plan.queries.APIMutation;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.plan.queries.APISubscription;
-import java.util.List;
-import java.util.Map;
 
 public interface APIConnectorManager extends APIConnectorLookup {
 
@@ -30,7 +31,9 @@ public interface APIConnectorManager extends APIConnectorLookup {
 
   ModuleLoader getModuleLoader();
 
+  @Override
   List<APIQuery> getQueries();
 
+  @Override
   Map<SqrlTableMacro, Log> getExports();
 }

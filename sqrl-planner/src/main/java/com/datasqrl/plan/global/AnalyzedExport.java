@@ -1,12 +1,13 @@
 package com.datasqrl.plan.global;
 
-import com.datasqrl.engine.log.Log;
+import java.util.OptionalInt;
+
+import org.apache.calcite.rel.RelNode;
+
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.plan.local.generate.ResolvedExport;
-import java.util.Optional;
-import java.util.OptionalInt;
+
 import lombok.Value;
-import org.apache.calcite.rel.RelNode;
 
 @Value
 public class AnalyzedExport {

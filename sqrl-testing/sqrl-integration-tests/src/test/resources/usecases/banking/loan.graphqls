@@ -1,7 +1,42 @@
+type AddChatMessage {
+  role: String!
+  content: String!
+  name: String
+  context: AddChatMessage_contextOutput!
+  event_time: DateTime
+}
+
+input AddChatMessageInput {
+  role: String!
+  content: String!
+  name: String
+  context: AddChatMessage_contextInput!
+}
+
+type AddChatMessageResultOutput {
+  role: String!
+  content: String!
+  name: String
+  context: AddChatMessageResult_contextOutput!
+  event_time: DateTime
+}
+
+type AddChatMessageResult_contextOutput {
+  customerid: Int
+}
+
+input AddChatMessage_contextInput {
+  customerid: Int
+}
+
+type AddChatMessage_contextOutput {
+  customerid: Int
+}
+
 type ApplicationAlert {
-  id: Int!
-  loan_type_id: Int!
-  customer_id: Int!
+  id: GraphQLBigInteger!
+  customer_id: GraphQLBigInteger!
+  loan_type_id: GraphQLBigInteger!
   max_amount: Float!
   min_amount: Float!
   amount: Float!
@@ -9,116 +44,144 @@ type ApplicationAlert {
 
 type ApplicationStatus {
   status: String!
-  message: String!
-  id: Int!
-  customer_id: Int!
-  loan_type_id: Int!
+  message: String
+  event_time: DateTime
+  id: GraphQLBigInteger!
+  customer_id: GraphQLBigInteger!
+  loan_type_id: GraphQLBigInteger!
   amount: Float!
-  duration: Int!
+  duration: GraphQLBigInteger!
+  max_amount: Float!
+  min_amount: Float!
 }
 
 type ApplicationUpdates {
-  loan_application_id: Int!
+  loan_application_id: GraphQLBigInteger!
   status: String!
-  message: String!
-  event_time: String!
-  application: Applications!
+  message: String
+  event_time: DateTime
+  application(limit: Int = 10, offset: Int = 0): [Applications!]
+}
+
+input ApplicationUpdatesInput {
+  loan_application_id: GraphQLBigInteger!
+  status: String!
+  message: String
+}
+
+type ApplicationUpdatesResultOutput {
+  loan_application_id: GraphQLBigInteger!
+  status: String!
+  message: String
+  event_time: DateTime
 }
 
 type Applications {
-  id: Int!
-  customer_id: Int!
-  loan_type_id: Int!
+  id: GraphQLBigInteger!
+  customer_id: GraphQLBigInteger!
+  loan_type_id: GraphQLBigInteger!
   amount: Float!
-  duration: Int!
-  application_date: String!
-  updated_at: String!
-  updates: [ApplicationUpdates!]
-  loanType: LoanTypes!
+  duration: GraphQLBigInteger!
+  application_date: DateTime!
+  updated_at: DateTime!
+  loanType(limit: Int = 10, offset: Int = 0): [LoanTypes!]
+  updates(limit: Int = 10, offset: Int = 0): [ApplicationUpdates!]
 }
 
-type Customers {
-  id: Int!
-  first_name: String!
-  last_name: String!
-  email: String!
-  phone: String!
-  address: String!
-  date_of_birth: String!
-  updated_at: String!
-  applications(limit: Int = 20, offset: Int = 0): [Applications!]
-  overview: [overview!]
-}
-
-type LoanTypes {
-  id: Int!
-  name: String!
-  description: String!
-  interest_rate: Float!
-  max_amount: Float!
-  min_amount: Float!
-  max_duration: Int!
-  min_duration: Int!
-  updated_at: String!
-}
-
-type Query {
-  ApplicationStatus: [ApplicationStatus!]
-  Applications(id: Int!): [Applications!]
-  Customers(id: Int!): [Customers!]
-  LoanTypes(id: Int): [LoanTypes!]
-  ApplicationAlert: [ApplicationAlert!]
-  ApplicationUpdates: [ApplicationUpdates!]
-  CustomerChatMessage(customerid: Int!, limit: Int = 10, offset: Int = 0): [CustomerChatMessage!]
+type ApplicationsStream {
+  id: GraphQLBigInteger!
+  customer_id: GraphQLBigInteger!
+  loan_type_id: GraphQLBigInteger!
+  amount: Float!
+  duration: GraphQLBigInteger!
+  application_date: DateTime!
+  updated_at: DateTime!
 }
 
 type CustomerChatMessage {
   role: String!
   content: String!
   name: String
-  customerid: Int!
-  timestamp: String!
+  customerid: Int
+  timestamp: DateTime
   uuid: String!
 }
 
-type overview {
-  loan_type_id: Int!
-  total_amount: Float!
-  total_loans: Int!
+type Customers {
+  id: GraphQLBigInteger!
+  first_name: String!
+  last_name: String!
+  email: String!
+  phone: String!
+  address: String!
+  date_of_birth: String!
+  updated_at: DateTime!
+  applications(limit: Int = 10, offset: Int = 0): [Applications!]
+  overview(limit: Int = 10, offset: Int = 0): [Customers_overview!]
 }
 
-type Subscription {
-  ApplicationAlert: ApplicationAlert!
+type CustomersStream {
+  id: GraphQLBigInteger!
+  first_name: String!
+  last_name: String!
+  email: String!
+  phone: String!
+  address: String!
+  date_of_birth: String!
+  updated_at: DateTime!
+}
+
+type Customers_overview {
+  loan_type_id: GraphQLBigInteger!
+  total_amount: Float!
+  total_loans: GraphQLBigInteger!
+}
+
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+
+"An arbitrary precision signed integer"
+scalar GraphQLBigInteger
+
+type LoanTypes {
+  id: GraphQLBigInteger!
+  name: String!
+  description: String!
+  interest_rate: Float!
+  max_amount: Float!
+  min_amount: Float!
+  max_duration: GraphQLBigInteger!
+  min_duration: GraphQLBigInteger!
+  updated_at: DateTime!
+}
+
+type LoanTypesStream {
+  id: GraphQLBigInteger!
+  name: String!
+  description: String!
+  interest_rate: Float!
+  max_amount: Float!
+  min_amount: Float!
+  max_duration: GraphQLBigInteger!
+  min_duration: GraphQLBigInteger!
+  updated_at: DateTime!
 }
 
 type Mutation {
-  ApplicationUpdates(event: ApplicationUpdateEvent!): ApplicationUpdateEventResult!
-  AddChatMessage(message: ChatMessageInput!): CreatedChatMessage
+  AddChatMessage(event: AddChatMessageInput!): AddChatMessageResultOutput!
+  ApplicationUpdates(event: ApplicationUpdatesInput!): ApplicationUpdatesResultOutput!
 }
 
-input ApplicationUpdateEvent {
-  loan_application_id: Int!
-  status: String!
-  message: String!
-}
-
-type ApplicationUpdateEventResult {
-  loan_application_id: Int!
-  message: String!
-}
-
-
-input ChatMessageInput {
-  role: String!
-  content: String!
-  name: String
-  context: ChatMessageContextInput
-}
-
-input ChatMessageContextInput {
-  customerid: Int
-}
-
-type CreatedChatMessage {
-  event_time: String!
+type Query {
+  AddChatMessage(limit: Int = 10, offset: Int = 0): [AddChatMessage!]
+  ApplicationAlert(limit: Int = 10, offset: Int = 0): [ApplicationAlert!]
+  ApplicationStatus(limit: Int = 10, offset: Int = 0): [ApplicationStatus!]
+  ApplicationUpdates(limit: Int = 10, offset: Int = 0): [ApplicationUpdates!]
+  Applications(limit: Int = 10, offset: Int = 0): [Applications!]
+  ApplicationsStream(limit: Int = 10, offset: Int = 0): [ApplicationsStream!]
+  CustomerChatMessage(limit: Int = 10, offset: Int = 0): [CustomerChatMessage!]
+  Customers(limit: Int = 10, offset: Int = 0): [Customers!]
+  CustomersStream(limit: Int = 10, offset: Int = 0): [CustomersStream!]
+  LoanTypes(limit: Int = 10, offset: Int = 0): [LoanTypes!]
+  LoanTypesStream(limit: Int = 10, offset: Int = 0): [LoanTypesStream!]
 }

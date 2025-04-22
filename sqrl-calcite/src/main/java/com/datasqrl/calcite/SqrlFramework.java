@@ -1,19 +1,13 @@
 package com.datasqrl.calcite;
 
-import com.datasqrl.calcite.type.TypeFactory;
-import com.datasqrl.canonicalizer.NameCanonicalizer;
-
-import com.google.inject.Inject;
 import java.util.Map;
 import java.util.Optional;
-import lombok.Getter;
+import java.util.Properties;
+
 import org.apache.calcite.config.CalciteConnectionConfigImpl;
 import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.rel.hint.HintStrategyTable;
 import org.apache.calcite.rel.metadata.RelMetadataProvider;
-import org.apache.calcite.sql.SqlOperatorTable;
-
-import java.util.Properties;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.util.SqlOperatorTables;
 import org.apache.flink.configuration.Configuration;
@@ -24,6 +18,12 @@ import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.apache.flink.table.planner.calcite.FlinkTypeSystem;
 import org.apache.flink.table.planner.calcite.RexFactory;
 import org.apache.flink.table.planner.catalog.FunctionCatalogOperatorTable;
+
+import com.datasqrl.calcite.type.TypeFactory;
+import com.datasqrl.canonicalizer.NameCanonicalizer;
+import com.google.inject.Inject;
+
+import lombok.Getter;
 
 @Getter
 public class SqrlFramework {
@@ -61,17 +61,17 @@ public class SqrlFramework {
 
     this.relMetadataProvider = relMetadataProvider;
 
-    Properties info = new Properties();
+    var info = new Properties();
     info.setProperty("caseSensitive", "false");
-    CalciteConnectionConfigImpl config = new CalciteConnectionConfigImpl(info);
+    var config = new CalciteConnectionConfigImpl(info);
 
     this.nameCanonicalizer = nameCanonicalizer;
     this.catalogReader = new CatalogReader(schema, typeFactory, config);
-    TableEnvironmentImpl tableEnvironment = TableEnvironmentImpl.create(
+    var tableEnvironment = TableEnvironmentImpl.create(
         Configuration.fromMap(Map.of()));
     this.flinkFunctionCatalog = TableEnvExtractor.getFunctionCatalog(tableEnvironment);
 
-    SqlOperatorTable chain = SqlOperatorTables.chain(
+    var chain = SqlOperatorTables.chain(
         new FunctionCatalogOperatorTable(
             flinkFunctionCatalog,
             tableEnvironment.getCatalogManager().getDataTypeFactory(),

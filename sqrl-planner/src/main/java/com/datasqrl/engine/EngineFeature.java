@@ -37,6 +37,9 @@ public enum EngineFeature {
   RELATIONS,
   //Engine supports partitioning by key on write
   PARTITIONING,
+  //Engine requires that the primary key is not null
+  REQUIRES_NOT_NULL_PRIMARY_KEY,
+
   //Engine supports data monitoring
   DATA_MONITORING;
 
@@ -45,13 +48,15 @@ public enum EngineFeature {
       EXPORT, DATA_MONITORING);
 
   public static EnumSet<EngineFeature> STANDARD_DATABASE = EnumSet.of(NOW, GLOBAL_SORT, MATERIALIZE_ON_KEY,
-      MULTI_RANK, TABLE_FUNCTION_SCAN, RELATIONS, DENORMALIZE);
+      MULTI_RANK, TABLE_FUNCTION_SCAN, RELATIONS, DENORMALIZE, REQUIRES_NOT_NULL_PRIMARY_KEY);
 
   public static EnumSet<EngineFeature> STANDARD_TABLE_FORMAT = EnumSet.of(MATERIALIZE_ON_KEY,
       DENORMALIZE, PARTITIONING);
 
   public static EnumSet<EngineFeature> STANDARD_QUERY = EnumSet.of(NOW, GLOBAL_SORT,
       MULTI_RANK, TABLE_FUNCTION_SCAN, RELATIONS);
+
+  public static EnumSet<EngineFeature> STANDARD_LOG = EnumSet.noneOf(EngineFeature.class);
 
 
   public static EnumSet<EngineFeature> NO_CAPABILITIES = EnumSet.noneOf(EngineFeature.class);

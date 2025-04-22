@@ -3,19 +3,22 @@
  */
 package com.datasqrl.loaders;
 
-import com.datasqrl.canonicalizer.Name;
+import java.util.Optional;
+
+import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.TableConfig;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.io.tables.*;
-import com.datasqrl.canonicalizer.NamePath;
-import lombok.extern.slf4j.Slf4j;
+import com.datasqrl.io.tables.TableSchema;
+import com.datasqrl.io.tables.TableSink;
+import com.datasqrl.io.tables.TableSinkImpl;
+import com.datasqrl.io.tables.TableSource;
 
-import java.util.Optional;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class DataSource {
 
-  public static final String TABLE_FILE_SUFFIX = ".table.json";
+  public static final String TABLE_FILE_SUFFIX = ".table.sql";
   public static final String DATASYSTEM_FILE_PREFIX = "dynamic.sink";
 
   public Optional<TableSource> readTableSource(TableSchema tableSchema, TableConfig tableConfig,

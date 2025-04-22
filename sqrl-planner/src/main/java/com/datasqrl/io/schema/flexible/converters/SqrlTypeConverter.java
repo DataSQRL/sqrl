@@ -3,7 +3,7 @@
  */
 package com.datasqrl.io.schema.flexible.converters;
 
-import com.datasqrl.schema.type.SqrlTypeVisitor;
+import com.datasqrl.io.schema.flexible.type.SqrlTypeVisitor;
 
 public interface SqrlTypeConverter<T> extends SqrlTypeVisitor<T, Void> {
 

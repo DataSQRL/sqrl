@@ -15,8 +15,8 @@ public class StringUtil {
         if (start < 0 || end > original.length() || start > end) {
             throw new IllegalArgumentException("Invalid start or end position");
         }
-        String before = original.substring(0, start);
-        String after = original.substring(end);
+        var before = original.substring(0, start);
+        var after = original.substring(end);
         return before + replacement + after;
     }
 

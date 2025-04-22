@@ -1,20 +1,24 @@
 package com.datasqrl.time;
 
-import com.datasqrl.function.FlinkTypeUtil;
 import java.time.Instant;
-import lombok.AllArgsConstructor;
+
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.catalog.DataTypeFactory;
 import org.apache.flink.table.functions.ScalarFunction;
 import org.apache.flink.table.types.inference.TypeInference;
 
+import com.datasqrl.function.AutoRegisterSystemFunction;
+import com.datasqrl.function.FlinkTypeUtil;
+
+import lombok.AllArgsConstructor;
+
 @AllArgsConstructor
-  public abstract class AbstractTimestampToEpoch extends ScalarFunction {
+  public abstract class AbstractTimestampToEpoch extends ScalarFunction implements AutoRegisterSystemFunction {
 
     private final boolean isMilli;
 
     public Long eval(Instant instant) {
-      long epoch = instant.toEpochMilli();
+      var epoch = instant.toEpochMilli();
       if (!isMilli) {
         epoch = epoch / 1000;
       }

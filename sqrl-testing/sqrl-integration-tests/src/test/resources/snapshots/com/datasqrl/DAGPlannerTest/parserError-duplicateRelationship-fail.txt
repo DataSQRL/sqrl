@@ -1,0 +1,10 @@
+[FATAL] Function or relationship [Customer.related] already exists in catalog
+in script:parsererror-duplicaterelationship-fail.sqrl [4:1]:
+Customer.related := SELECT * FROM Customer other WHERE this.customerid = other.customerid ORDER BY other.`timestamp`;
+-- overloads are not permitted
+Customer.related(length INT) := SELECT * FROM Customer other WHERE this.customerid = other.customerid
+^
+A function or relationship with that name already exists.
+SQRL does not support function overloading, i.e. functions or relationships
+with identical names but different parameter signatures.
+

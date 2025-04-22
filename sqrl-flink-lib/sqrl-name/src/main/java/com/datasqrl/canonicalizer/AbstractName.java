@@ -27,7 +27,7 @@ public abstract class AbstractName implements Name {
     } else if (!(other instanceof Name)) {
       return false;
     }
-    Name o = (Name) other;
+    var o = (Name) other;
     return getCanonical().equals(o.getCanonical());
   }
 

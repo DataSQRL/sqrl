@@ -3,7 +3,7 @@
   <parent>
     <groupId>com.datasqrl</groupId>
     <artifactId>sqrl-server</artifactId>
-    <version>0.5.10-SNAPSHOT</version>
+    <version>0.6.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>sqrl-server-vertx</artifactId>
@@ -38,6 +38,11 @@
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-web-openapi</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>jakarta.annotation</groupId>
+      <artifactId>jakarta.annotation-api</artifactId>
+      <version>1.3.5</version>
     </dependency>
     <dependency>
       <groupId>io.vertx</groupId>
@@ -239,7 +244,7 @@
     <dependency>
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-server-core</artifactId>
-      <version>0.5.10-SNAPSHOT</version>
+      <version>0.6.0-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>org.mockito</groupId>

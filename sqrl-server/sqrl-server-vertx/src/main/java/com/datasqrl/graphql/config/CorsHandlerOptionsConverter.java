@@ -1,11 +1,11 @@
 package com.datasqrl.graphql.config;
 
-import io.vertx.core.http.HttpMethod;
-import io.vertx.core.json.JsonObject;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+
+import io.vertx.core.json.JsonObject;
 
 public class CorsHandlerOptionsConverter {
 

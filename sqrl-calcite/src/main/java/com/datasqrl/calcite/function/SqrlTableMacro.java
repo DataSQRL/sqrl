@@ -1,14 +1,16 @@
 package com.datasqrl.calcite.function;
 
-import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.schema.Multiplicity;
-import com.datasqrl.schema.Relationship.JoinType;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.function.Supplier;
+
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.schema.TableFunction;
+
+import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.schema.Multiplicity;
+import com.datasqrl.schema.Relationship.JoinType;
 
 public interface SqrlTableMacro extends TableFunction {
 

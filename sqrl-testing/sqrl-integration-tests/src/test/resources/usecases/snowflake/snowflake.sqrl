@@ -1,7 +1,0 @@
-IMPORT data.applications as _applications;
-IMPORT data.applications as _applications2;
-
-SnowflakeQuery(@customerId: BIGINT) := SELECT * FROM _applications WHERE customer_id = @customerId;
-
-/*+exec(iceberg)*/
-MySnowflakeTable := SELECT * FROM _applications2;

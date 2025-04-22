@@ -1,0 +1,397 @@
+>>>pipeline_explain.txt
+=== Customer
+ID:     default_catalog.default_database.Customer
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database.Customer__def
+Annotations:
+ - stream-root: Customer__def
+Primary Key: customerid, lastUpdated
+Timestamp  : timestamp
+Schema:
+ - customerid: BIGINT NOT NULL
+ - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - lastUpdated: BIGINT NOT NULL
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Plan:
+LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
+  LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
+    LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($3, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
+      LogicalTableScan(table=[[default_catalog, default_database, Customer__def]])
+SQL: CREATE VIEW `Customer`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`Customer__def`
+=== CustomerByEmail
+ID:     default_catalog.default_database.CustomerByEmail
+Type:   query
+Stage:  postgres
+Inputs: default_catalog.default_database.Customer
+Annotations:
+ - stream-root: Customer__def
+ - parameters: email, id
+ - base-table: Customer
+Plan:
+LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
+  LogicalFilter(condition=[AND(=(?0, $1), OR(IS NULL(?1), =(?1, $0)))])
+    LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW CustomerByEmail AS  SELECT * FROM Customer WHERE ?      = email AND (?   IS NULL OR ?   = customerid);
+
+=== CustomerByIds
+ID:     default_catalog.default_database.CustomerByIds
+Type:   query
+Stage:  postgres
+Inputs: default_catalog.default_database.Customer
+Annotations:
+ - stream-root: Customer__def
+ - parameters: ids
+ - base-table: Customer
+Plan:
+LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
+  LogicalFilter(condition=[array_contains(CAST(?0):BIGINT NOT NULL ARRAY, $0)])
+    LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW CustomerByIds AS  SELECT * FROM Customer WHERE array_contains(CAST(?    AS BIGINT ARRAY), customerid);
+
+=== CustomerByNothing
+ID:     default_catalog.default_database.CustomerByNothing
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database.Customer
+Annotations:
+ - stream-root: Customer__def
+Primary Key: customerid, lastUpdated
+Timestamp  : timestamp
+Schema:
+ - customerid: BIGINT NOT NULL
+ - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - lastUpdated: BIGINT NOT NULL
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Plan:
+LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
+  LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW CustomerByNothing AS  SELECT * FROM Customer;
+
+=== SelectCustomer
+ID:     default_catalog.default_database.SelectCustomer
+Type:   query
+Stage:  postgres
+Inputs: default_catalog.default_database.CustomerByEmail
+Annotations:
+ - features: TABLE_FUNCTION_SCAN (feature)
+ - stream-root: Customer__def
+ - parameters: id
+ - base-table: Customer
+Plan:
+LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
+  LogicalTableFunctionScan(invocation=[CustomerByEmail('john@doe.com', ?0)], rowType=[RecordType(BIGINT customerid, VARCHAR(2147483647) email, VARCHAR(2147483647) name, BIGINT lastUpdated, TIMESTAMP_LTZ(3) *ROWTIME* timestamp)], elementType=[class [Ljava.lang.Object;])
+SQL: CREATE VIEW SelectCustomer AS  SELECT * FROM TABLE(CustomerByEmail(email => 'john@doe.com', id => ?  ));
+
+>>>flink-sql-no-functions.sql
+CREATE TEMPORARY TABLE `Customer__schema` (
+  `customerid` BIGINT NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `lastUpdated` BIGINT NOT NULL
+) WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `Customer__def` (
+  `timestamp` AS COALESCE(TO_TIMESTAMP_LTZ(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
+  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
+  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
+) WITH (
+  'format' = 'flexible-json',
+  'path' = 'file:/mock',
+  'source.monitor-interval' = '10 sec',
+  'connector' = 'filesystem'
+)
+LIKE `Customer__schema`;
+CREATE VIEW `Customer`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`Customer__def`;
+CREATE VIEW `CustomerByNothing`
+AS
+SELECT *
+FROM `Customer`;
+CREATE TABLE `Customer_1` (
+  `customerid` BIGINT NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `lastUpdated` BIGINT NOT NULL,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'table-name' = 'Customer_1'
+);
+CREATE TABLE `CustomerByNothing_2` (
+  `customerid` BIGINT NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `lastUpdated` BIGINT NOT NULL,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+) WITH (
+  'connector' = 'kafka',
+  'format' = 'flexible-json',
+  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
+  'properties.group.id' = '${PROPERTIES_GROUP_ID}',
+  'scan.startup.mode' = 'group-offsets',
+  'properties.auto.offset.reset' = 'earliest',
+  'topic' = 'CustomerByNothing'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`Customer_1`
+(SELECT *
+ FROM `default_catalog`.`default_database`.`Customer`)
+;
+INSERT INTO `default_catalog`.`default_database`.`CustomerByNothing_2`
+ (SELECT *
+  FROM `default_catalog`.`default_database`.`CustomerByNothing`)
+ ;
+ END
+>>>kafka.json
+{
+  "topics" : [
+    {
+      "topicName" : "CustomerByNothing",
+      "tableName" : "CustomerByNothing_2",
+      "numPartitions" : 1,
+      "replicationFactor" : 1,
+      "replicasAssignments" : { },
+      "config" : { }
+    }
+  ]
+}
+>>>postgres.json
+{
+  "statements" : [
+    {
+      "name" : "Customer_1",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Customer_1\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\",\"lastUpdated\"))",
+      "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "email",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "lastUpdated",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "timestamp",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ]
+    },
+    {
+      "name" : "Customer",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"Customer_1\"",
+      "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "email",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "lastUpdated",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "timestamp",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ]
+    },
+    {
+      "name" : "Customer_1_btree_c1c0",
+      "type" : "INDEX",
+      "sql" : "CREATE INDEX IF NOT EXISTS \"Customer_1_btree_c1c0\" ON \"Customer_1\" USING btree (\"email\",\"customerid\")"
+    }
+  ]
+}
+>>>vertx.json
+{
+  "model" : {
+    "queries" : [
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "Customer",
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
+            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM \"Customer_1\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
+          }
+        }
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "CustomerByEmail",
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "id"
+            },
+            {
+              "type" : "variable",
+              "path" : "email"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
+            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM \"Customer_1\"\nWHERE $1 = \"email\" AND ($2 IS NULL OR $2 = \"customerid\")",
+            "parameters" : [
+              {
+                "type" : "arg",
+                "path" : "email"
+              },
+              {
+                "type" : "arg",
+                "path" : "id"
+              }
+            ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
+          }
+        }
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "CustomerByIds",
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
+            },
+            {
+              "type" : "variable",
+              "path" : "ids"
+            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM \"Customer_1\"\nWHERE ARRAY_CONTAINS(CAST($1 AS JSONB), \"customerid\")",
+            "parameters" : [
+              {
+                "type" : "arg",
+                "path" : "ids"
+              }
+            ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
+          }
+        }
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "SelectCustomer",
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "id"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
+            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM \"Customer_1\"\nWHERE 'john@doe.com' = \"email\" AND ($1 IS NULL OR $1 = \"customerid\")",
+            "parameters" : [
+              {
+                "type" : "arg",
+                "path" : "id"
+              }
+            ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
+          }
+        }
+      }
+    ],
+    "mutations" : [ ],
+    "subscriptions" : [
+      {
+        "type" : "kafka",
+        "fieldName" : "CustomerByNothing",
+        "topic" : "CustomerByNothing",
+        "sinkConfig" : { },
+        "filters" : { }
+      }
+    ],
+    "schema" : {
+      "type" : "string",
+      "schema" : "type Customer {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerByEmail(email: String!, id: GraphQLBigInteger, limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerByIds(ids: [GraphQLBigInteger]!, limit: Int = 10, offset: Int = 0): [Customer!]\n  SelectCustomer(id: GraphQLBigInteger, limit: Int = 10, offset: Int = 0): [Customer!]\n}\n\ntype Subscription {\n  CustomerByNothing: Customer\n}\n"
+    }
+  }
+}

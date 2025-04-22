@@ -2,24 +2,27 @@ package com.datasqrl.engine.database.relational;
 
 import static com.datasqrl.engine.EngineFeature.STANDARD_TABLE_FORMAT;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 import com.datasqrl.config.ConnectorFactoryContext;
 import com.datasqrl.config.ConnectorFactoryFactory;
-import com.datasqrl.config.EngineFactory.Type;
+import com.datasqrl.config.EngineType;
 import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.config.TableConfig;
 import com.datasqrl.engine.EngineFeature;
-import com.datasqrl.engine.ExecutionEngine;
+import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.database.AnalyticDatabaseEngine;
+import com.datasqrl.engine.database.CombinedEnginePlan;
 import com.datasqrl.engine.database.DatabaseEngine;
 import com.datasqrl.engine.database.QueryEngine;
+import com.datasqrl.engine.export.ExportEngine;
+import com.datasqrl.graphql.jdbc.DatabaseType;
 import com.datasqrl.plan.global.IndexSelectorConfig;
+import com.datasqrl.v2.dag.plan.MaterializationStagePlan;
 import com.google.common.base.Preconditions;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import lombok.Getter;
+
 import lombok.NonNull;
-import org.apache.flink.table.functions.FunctionDefinition;
 
 /**
  * Abstract implementation of a relational table format database engine.
@@ -36,24 +39,28 @@ import org.apache.flink.table.functions.FunctionDefinition;
  * a) the DDL for importing the Iceberg table from the catalog and b) the queries translated to that engine.
  */
 public abstract class AbstractJDBCTableFormatEngine extends AbstractJDBCEngine implements
-    DatabaseEngine, AnalyticDatabaseEngine {
+    DatabaseEngine, AnalyticDatabaseEngine, ExportEngine {
 
-  @Getter
-  final EngineConfig connectorConfig;
   final ConnectorFactoryFactory connectorFactory;
   final Map<String, QueryEngine> queryEngines = new LinkedHashMap<>();
 
-  public AbstractJDBCTableFormatEngine(String name, @NonNull EngineConfig connectorConfig, ConnectorFactoryFactory connectorFactory) {
-    super(name, Type.DATABASE, STANDARD_TABLE_FORMAT);
-    this.connectorConfig = connectorConfig;
+  public AbstractJDBCTableFormatEngine(String name, @NonNull EngineConfig engineConfig, ConnectorFactoryFactory connectorFactory) {
+    super(name, EngineType.DATABASE, STANDARD_TABLE_FORMAT, engineConfig, connectorFactory);
     this.connectorFactory = connectorFactory;
   }
 
   @Override
   public void addQueryEngine(QueryEngine queryEngine) {
-    if (!supportsQueryEngine(queryEngine)) throw new UnsupportedOperationException(getName() + " table format does not support query engine: " + queryEngine);
+    if (!supportsQueryEngine(queryEngine)) {
+        throw new UnsupportedOperationException(getName() + " table format does not support query engine: " + queryEngine);
+    }
     Preconditions.checkState(!queryEngines.containsKey(queryEngine.getName()), "Query engine already added: %s", queryEngine.getName());
     queryEngines.put(queryEngine.getName(), queryEngine);
+  }
+
+  @Override
+  protected DatabaseType getDatabaseType() {
+    return DatabaseType.NONE;
   }
 
   @Override
@@ -62,21 +69,35 @@ public abstract class AbstractJDBCTableFormatEngine extends AbstractJDBCEngine i
         queryEngines.values().stream().allMatch(queryEngine -> queryEngine.supports(capability));
   }
 
-//  @Override
+  @Override
+  public EnginePhysicalPlan plan(MaterializationStagePlan stagePlan) {
+    var planBuilder = CombinedEnginePlan.builder();
+    planBuilder.plan("", super.plan(stagePlan));
+
+    queryEngines.forEach((name, engine) -> {
+      planBuilder.plan(name, engine.plan(stagePlan));
+    });
+
+    return planBuilder.build();
+  }
+
+  //  @Override
 //  public boolean supports(FunctionDefinition function) {
 //    return queryEngines.values().stream().allMatch(queryEngine -> queryEngine.supports(function));
 //  }
 
   @Override
+  @Deprecated
   public TableConfig getSinkConfig(String tableName) {
     return connectorFactory
-        .create(Type.DATABASE, getDialect().getId())
+        .create(EngineType.DATABASE, getDialect().getId())
         .orElseThrow(()-> new RuntimeException("Could not obtain sink for dialect: " + getDialect()))
         .createSourceAndSink(
             new ConnectorFactoryContext(tableName, Map.of("table-name", tableName)));
   }
 
   @Override
+  @Deprecated
   public IndexSelectorConfig getIndexSelectorConfig() {
     return IndexSelectorConfigByDialect.of(getDialect());
   }

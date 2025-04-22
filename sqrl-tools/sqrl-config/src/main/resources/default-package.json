@@ -1,0 +1,105 @@
+{
+  "version": "1",
+  "enabled-engines": ["vertx", "postgres", "kafka", "flink"],
+  "compile" : {
+    "sqrl-version": "0.5.10",
+    "flink-build-image": "gradle:8.6-jdk11",
+    "sqrl-vertx-image": "datasqrl/sqrl-server:v0.5.10"
+  },
+  "engines" : {
+    "flink" : {
+      "connectors": {
+        "postgres": {
+          "connector": "jdbc-sqrl",
+          "password": "${JDBC_PASSWORD}",
+          "driver": "org.postgresql.Driver",
+          "username": "${JDBC_USERNAME}",
+          "url": "jdbc:postgresql://${JDBC_AUTHORITY}",
+          "table-name": "${sqrl:table-name}"
+        },
+        "kafka": {
+          "connector" : "kafka",
+          "format" : "flexible-json",
+          "properties.bootstrap.servers": "${PROPERTIES_BOOTSTRAP_SERVERS}",
+          "properties.group.id": "${PROPERTIES_GROUP_ID}",
+          "scan.startup.mode" : "group-offsets",
+          "properties.auto.offset.reset" : "earliest",
+          "topic" : "${sqrl:original-table-name}"
+        },
+        "kafka-keyed": {
+          "connector" : "kafka",
+          "value.format" : "flexible-json",
+          "key.format": "raw",
+          "key.fields": "${sqrl:kafka-key}",
+          "properties.bootstrap.servers": "${PROPERTIES_BOOTSTRAP_SERVERS}",
+          "properties.group.id": "${PROPERTIES_GROUP_ID}",
+          "scan.startup.mode" : "group-offsets",
+          "properties.auto.offset.reset" : "earliest",
+          "topic" : "${sqrl:original-table-name}"
+        },
+        "kafka-upsert": {
+          "connector" : "upsert-kafka",
+          "value.format" : "flexible-json",
+          "key.format": "raw",
+          "properties.bootstrap.servers": "${PROPERTIES_BOOTSTRAP_SERVERS}",
+          "properties.group.id": "${PROPERTIES_GROUP_ID}",
+          "topic" : "${sqrl:original-table-name}"
+        },
+        "localfile": {
+          "connector" : "filesystem",
+          "format" : "${sqrl:format}",
+          "path" : "${DATA_PATH}/${sqrl:filename}",
+          "source.monitor-interval" : "10 sec"
+        },
+        "iceberg": {
+          "connector": "iceberg",
+          "catalog-table": "${sqrl:table-name}"
+        },
+        "postgres_log-source": {
+          "connector": "postgres-cdc",
+          "hostname": "${PGHOST}",
+          "port": "5432",
+          "username": "${JDBC_USERNAME}",
+          "password": "${JDBC_PASSWORD}",
+          "database-name": "datasqrl",
+          "schema-name": "public",
+          "table-name": "${sqrl:table-name}",
+          "slot.name": "flink_slot",
+          "decoding.plugin.name": "pgoutput",
+          "debezium.slot.drop_on_stop": "false"
+        },
+        "postgres_log-sink": {
+          "connector": "jdbc-sqrl",
+          "password": "${JDBC_PASSWORD}",
+          "driver": "org.postgresql.Driver",
+          "username": "${JDBC_USERNAME}",
+          "url": "jdbc:postgresql://${JDBC_AUTHORITY}",
+          "table-name": "${sqrl:table-name}"
+        },
+        "print": {
+          "connector": "print",
+          "print-identifier": "${sqrl:original-table-name}"
+        }
+      }
+    },
+    "snowflake" : {
+      "schema-type": "aws-glue",
+      "catalog-name": "${SNOWFLAKE_CATALOG_NAME}",
+      "external-volume": "${SNOWFLAKE_EXTERNAL_VOLUME}",
+      "url": "jdbc:snowflake://${SNOWFLAKE_ID}.snowflakecomputing.com/?user=${SNOWFLAKE_USER}&password=${SNOWFLAKE_PASSWORD}&warehouse=COMPUTE_WH&db=MYSNOWFLAKEDB&schema=public&disableSslHostnameVerification=true"
+    }
+  },
+  "test-runner": {
+    "delay-sec": 30
+  },
+  "package": {
+    "name": "datasqrl.profile.default",
+    "version": "0.5.10",
+    "variant": "dev",
+    "latest": true,
+    "description": "A docker compose datasqrl profile",
+    "homepage": "https://dev.datasqrl.com/datasqrl/packages/datasqrl.profile.default",
+    "documentation": "https://dev.datasqrl.com/datasqrl/packages/datasqrl.profile.default",
+    "topics": [ "profile" ]
+  }
+}

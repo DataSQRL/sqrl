@@ -1,10 +1,12 @@
 package com.datasqrl.auth;
 
-import com.datasqrl.util.FileUtil;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
+
+import com.datasqrl.util.FileUtil;
+
 import lombok.SneakyThrows;
 
 public class TokenManager {

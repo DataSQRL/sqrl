@@ -1,6 +1,7 @@
 package com.datasqrl.calcite;
 
 import java.util.function.UnaryOperator;
+
 import org.apache.calcite.avatica.util.Quoting;
 import org.apache.calcite.sql.SqlWriterConfig;
 import org.apache.calcite.sql.parser.SqlParser;

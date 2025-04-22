@@ -3,6 +3,10 @@
  */
 package com.datasqrl.plan.table;
 
+import java.util.Optional;
+
+import org.apache.calcite.rel.type.RelDataType;
+
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
@@ -11,10 +15,9 @@ import com.datasqrl.io.tables.TableType;
 import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.plan.rules.LPAnalysis;
 import com.google.inject.Inject;
+
 import lombok.AllArgsConstructor;
-import java.util.Optional;
 import lombok.Getter;
-import org.apache.calcite.rel.type.RelDataType;
 
 @Getter
 @AllArgsConstructor(onConstructor_=@Inject)
@@ -30,13 +33,13 @@ public class CalciteTableFactory {
 
   public ImportedRelationalTableImpl createImportedTable(RelDataType rootType,
       TableSource tableSource, Name tableName) {
-    Name importName = tableIdFactory.createTableId(tableName);
+    var importName = tableIdFactory.createTableId(tableName);
     return new ImportedRelationalTableImpl(importName, rootType, tableSource);
   }
 
   public ProxyImportRelationalTable createProxyTable(RelDataType rootType, NamePath tablePath,
       ImportedRelationalTableImpl importedTable, TableType tableType, Optional<Integer> timestampIndex, PrimaryKey primaryKey) {
-    Name proxyName = tableIdFactory.createTableId(tablePath.getLast());
+    var proxyName = tableIdFactory.createTableId(tablePath.getLast());
     return new ProxyImportRelationalTable(
         proxyName,
         tablePath,
@@ -48,7 +51,7 @@ public class CalciteTableFactory {
   }
 
   public PhysicalRelationalTable createPhysicalRelTable(NamePath tablePath, LPAnalysis analyzedLP) {
-    Name tableId = tableIdFactory.createTableId(tablePath.getLast());
+    var tableId = tableIdFactory.createTableId(tablePath.getLast());
     return new QueryRelationalTable(tableId, tablePath, analyzedLP);
   }
 

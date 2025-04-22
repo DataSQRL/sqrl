@@ -1,10 +1,12 @@
 package com.datasqrl.config;
 
-import com.datasqrl.error.ErrorCollector;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import com.datasqrl.error.ErrorCollector;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -19,12 +21,6 @@ public interface PackageJson {
   DiscoveryConfig getDiscovery();
 
   DependenciesConfig getDependencies();
-
-  boolean hasProfileKey();
-
-  List<String> getProfiles();
-
-  void setProfiles(String[] profiles);
 
   void toFile(Path path, boolean pretty);
 
@@ -46,6 +42,8 @@ public interface PackageJson {
 
     ExplainConfig getExplain();
 
+    OutputConfig getOutput();
+
     Optional<String> getSnapshotPath();
 
     void setSnapshotPath(String string);
@@ -53,6 +51,15 @@ public interface PackageJson {
     boolean isAddArguments();
 
     String getLogger();
+
+    boolean isExtendedScalarTypes();
+  }
+
+  interface OutputConfig {
+
+    boolean isAddUid();
+
+    String getTableSuffix();
   }
 
   interface ExplainConfig {
@@ -84,13 +91,15 @@ public interface PackageJson {
   interface EnginesConfig {
 
     Optional<EngineConfig> getEngineConfig(String engineId);
+
+    EngineConfig getEngineConfigOrErr(String engineId);
   }
 
   interface EngineConfig {
 
     String getEngineName();
 
-    @Deprecated(since="Migrate to templates or static objects")
+    @Deprecated(since = "Migrate to templates or static objects")
     Map<String, Object> toMap();
 
     ConnectorsConfig getConnectors();
@@ -124,7 +133,6 @@ public interface PackageJson {
   interface DiscoveryConfig {
 
     DataDiscoveryConfig getDataDiscoveryConfig();
-
   }
 
   interface DataDiscoveryConfig {
@@ -133,5 +141,4 @@ public interface PackageJson {
 
     ErrorCollector getErrors();
   }
-
 }

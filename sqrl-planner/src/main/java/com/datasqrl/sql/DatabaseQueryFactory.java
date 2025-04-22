@@ -2,24 +2,26 @@ package com.datasqrl.sql;
 
 import static com.datasqrl.canonicalizer.Name.HIDDEN_PREFIX;
 
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+
+import org.apache.calcite.jdbc.SqrlSchema;
+
 import com.datasqrl.calcite.SqrlFramework;
-import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentParameter;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.schema.NestedRelationship;
 import com.google.inject.Inject;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
+
 import lombok.AllArgsConstructor;
-import org.apache.calcite.jdbc.SqrlSchema;
 
 @AllArgsConstructor(onConstructor_=@Inject)
 public class DatabaseQueryFactory {
   SqrlFramework framework;
 
   public List<APIQuery> generateQueries(SqrlSchema schema) {
-    AtomicInteger i = new AtomicInteger();
+    var i = new AtomicInteger();
 
     return schema.getTableFunctions()
         .stream().filter(f -> !(f instanceof NestedRelationship))

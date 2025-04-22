@@ -3,13 +3,13 @@
  */
 package com.datasqrl.engine.pipeline;
 
-import com.datasqrl.engine.EngineFeature;
-import com.datasqrl.engine.ExecutionEngine;
-
 import java.util.Collection;
 
 import org.apache.calcite.sql.SqlOperator;
-import org.apache.flink.table.functions.FunctionDefinition;
+
+import com.datasqrl.config.EngineType;
+import com.datasqrl.engine.EngineFeature;
+import com.datasqrl.engine.ExecutionEngine;
 
 public interface ExecutionStage {
 
@@ -17,6 +17,10 @@ public interface ExecutionStage {
 
   default boolean supportsAllFeatures(Collection<EngineFeature> capabilities) {
     return capabilities.stream().allMatch(this::supportsFeature);
+  }
+
+  default EngineType getType() {
+    return getEngine().getType();
   }
 
   boolean supportsFeature(EngineFeature capability);

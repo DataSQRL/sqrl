@@ -1,6 +1,7 @@
 package com.datasqrl.engine.log.postgres;
 
 import com.datasqrl.config.EngineFactory;
+import com.datasqrl.config.EngineType;
 import com.datasqrl.engine.IExecutionEngine;
 import com.google.auto.service.AutoService;
 
@@ -15,8 +16,8 @@ public class PostgresLogEngineFactory implements EngineFactory {
   }
 
   @Override
-  public Type getEngineType() {
-    return Type.LOG;
+  public EngineType getEngineType() {
+    return EngineType.LOG;
   }
 
   @Override

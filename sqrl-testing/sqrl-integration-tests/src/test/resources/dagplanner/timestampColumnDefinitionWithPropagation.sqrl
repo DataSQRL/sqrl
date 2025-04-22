@@ -1,3 +1,0 @@
-IMPORT time.*;
-IMPORT ecommerceTs.Customer;
-CustomerCopy := SELECT endOfMonth(endOfMonth(timestamp)) as month, timestamp  FROM Customer;

@@ -3,8 +3,9 @@
  */
 package com.datasqrl.plan.rules;
 
-import com.google.common.base.Preconditions;
 import org.apache.calcite.rel.RelNode;
+
+import com.google.common.base.Preconditions;
 
 public abstract class AbstractSqrlRelShuttle<V extends RelHolder> implements SqrlRelShuttle {
 
@@ -17,7 +18,7 @@ public abstract class AbstractSqrlRelShuttle<V extends RelHolder> implements Sqr
 
   protected V getRelHolder(RelNode node) {
     Preconditions.checkArgument(this.relHolder.getRelNode().equals(node));
-    V relHolder = this.relHolder;
+    var relHolder = this.relHolder;
     this.relHolder = null;
     return relHolder;
   }

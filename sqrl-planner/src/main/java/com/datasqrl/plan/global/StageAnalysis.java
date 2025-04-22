@@ -1,16 +1,16 @@
 package com.datasqrl.plan.global;
 
-import com.datasqrl.engine.EngineFeature;
+import java.util.Collection;
+
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.plan.rules.ComputeCost;
 import com.datasqrl.plan.rules.EngineCapability;
 import com.datasqrl.plan.rules.ExecutionAnalysis.CapabilityException;
-import java.util.Collection;
+
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Value;
-import org.apache.calcite.rel.RelNode;
 
 @Getter
 @AllArgsConstructor
@@ -39,21 +39,19 @@ public abstract class StageAnalysis {
 
     ComputeCost cost;
     boolean supported;
-    RelNode relNode;
 
-    public Cost(ExecutionStage stage, ComputeCost cost, boolean supported, RelNode relNode) {
+    public Cost(ExecutionStage stage, ComputeCost cost, boolean supported) {
       super(stage);
       this.cost = cost;
       this.supported = supported;
-      this.relNode = relNode;
     }
 
     @Override
     public String getMessage() {
       if (supported) {
-        return String.format("Stage [%s] supported at cost: %s", getName(), cost);
+        return "Stage [%s] supported at cost: %s".formatted(getName(), cost);
       } else {
-        return String.format("Stage [%s] has been eliminated  due to high cost: %s",getName(), cost);
+        return "Stage [%s] has been eliminated  due to high cost: %s".formatted(getName(), cost);
       }
     }
 
@@ -63,10 +61,10 @@ public abstract class StageAnalysis {
     }
 
     public Cost tooExpensive() {
-      return new Cost(super.getStage(), cost, false, relNode);
+      return new Cost(super.getStage(), cost, false);
     }
 
-  };
+  }
 
 
 
@@ -83,7 +81,7 @@ public abstract class StageAnalysis {
 
     @Override
     public String getMessage() {
-      return String.format("Stage [%s] does not support capabilities: %s", getName(), capabilities);
+      return "Stage [%s] does not support capabilities: %s".formatted(getName(), capabilities);
     }
   }
 
@@ -102,10 +100,10 @@ public abstract class StageAnalysis {
 
     @Override
     public String getMessage() {
-      return String.format("%s [%s] does not support stage [%s] or any %s stages",
-          upstream?"Upstream input":"Downstream consumer",
+      return "%s [%s] does not support stage [%s] or any %s stages".formatted(
+          upstream ? "Upstream input" : "Downstream consumer",
           tableName, getName(),
-          upstream?"prior":"subsequent");
+          upstream ? "prior" : "subsequent");
     }
   }
 

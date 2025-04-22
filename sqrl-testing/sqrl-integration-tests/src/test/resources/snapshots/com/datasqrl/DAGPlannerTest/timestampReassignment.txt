@@ -1,1138 +1,475 @@
 >>>pipeline_explain.txt
-=== Customer2
-ID:     customer2_1
+=== Customer
+ID:     default_catalog.default_database.Customer
 Type:   stream
 Stage:  flink
-Inputs: customer_2
+Inputs: default_catalog.default_database.Customer__def
+Annotations:
+ - stream-root: Customer__def
 Primary Key: customerid, lastUpdated
-Timestamp  : updatedTime
+Timestamp  : timestamp
 Schema:
- - updatedTime: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
- - timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Plan:
+LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
+  LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
+    LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($3, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
+      LogicalTableScan(table=[[default_catalog, default_database, Customer__def]])
+SQL: CREATE VIEW `Customer`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`Customer__def`
+=== Customer2
+ID:     default_catalog.default_database.Customer2
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database.Customer
+Annotations:
+ - stream-root: Customer__def
+Primary Key: customerid, lastUpdated
+Timestamp  : updatedTime
+Schema:
+ - updatedTime: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+ - customerid: BIGINT NOT NULL
+ - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - lastUpdated: BIGINT NOT NULL
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Plan:
 LogicalProject(updatedTime=[$4], customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
-  LogicalTableScan(table=[[customer_2]])
-
-=== Customer3
-ID:     customer3_1
-Type:   stream
-Stage:  flink
-Inputs: customer_2
-Primary Key: customerid, lastUpdated
-Timestamp  : timestamp
-Schema:
- - customerid: BIGINT NOT NULL
- - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - lastUpdated: BIGINT NOT NULL
- - timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
- - updatedTime: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
-Plan:
-LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4], updatedTime=[$4])
-  LogicalTableScan(table=[[customer_2]])
-
-=== Customer
-ID:     customer_2
-Type:   stream
-Stage:  flink
-Primary Key: customerid, lastUpdated
-Timestamp  : timestamp
-Schema:
- - customerid: BIGINT NOT NULL
- - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - lastUpdated: BIGINT NOT NULL
- - timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
-Plan:
-LogicalTableScan(table=[[customer_1]])
+  LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW Customer2 AS  SELECT `timestamp` AS updatedTime, * FROM Customer;
 
 === CustomerByTime2
-ID:     customerbytime2_1
+ID:     default_catalog.default_database.CustomerByTime2
 Type:   state
 Stage:  flink
-Inputs: customer2_1
+Inputs: default_catalog.default_database.Customer2
+Annotations:
+ - mostRecentDistinct: true
+ - stream-root: Customer__def
 Primary Key: customerid
 Timestamp  : updatedTime
 Schema:
- - updatedTime: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - updatedTime: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
- - timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
-Post Processors:
- - topN: partition=customerid limit=1 sort=#0: updatedTime TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) DESC 
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Plan:
-LogicalTableScan(table=[[customer2_1]])
-
-=== CustomerByTime3
-ID:     customerbytime3_1
-Type:   state
-Stage:  flink
-Inputs: customer3_1
-Primary Key: customerid
-Timestamp  : timestamp
-Schema:
- - customerid: BIGINT NOT NULL
- - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - lastUpdated: BIGINT NOT NULL
- - timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
- - updatedTime: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
-Plan:
-LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4], updatedTime=[$5])
+LogicalProject(updatedTime=[$0], customerid=[$1], email=[$2], name=[$3], lastUpdated=[$4], timestamp=[$5])
   LogicalFilter(condition=[=($6, 1)])
-    LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4], updatedTime=[$5], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $5 DESC NULLS FIRST)])
-      LogicalTableScan(table=[[customer3_1]])
-
-=== OrderCustomerJoin
-ID:     ordercustomerjoin_1
-Type:   stream
-Stage:  flink
-Inputs: customerbytime2_1, orders_2
-Primary Key: id, time
-Timestamp  : time
-Schema:
- - id: BIGINT NOT NULL
- - customerid: BIGINT NOT NULL
- - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
- - entries: RecordType(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
- - updatedTime: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
- - customerid0: BIGINT NOT NULL
- - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - lastUpdated: BIGINT NOT NULL
- - timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
-Plan:
-LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3], updatedTime=[$4], customerid0=[$5], email=[$6], name=[$7], lastUpdated=[$8], timestamp=[$9])
-  LogicalJoin(condition=[=($5, $1)], joinType=[inner]) hints[TemporalJoinHint options:[2]]
-    LogicalTableScan(table=[[orders_2]])
-    LogicalFilter(condition=[=($6, 1)]) hints[DedupHint]
-      LogicalProject(updatedTime=[$0], customerid=[$1], email=[$2], name=[$3], lastUpdated=[$4], timestamp=[$5], _rownum=[ROW_NUMBER() OVER (PARTITION BY $1 ORDER BY $0 DESC NULLS FIRST)])
-        LogicalTableScan(table=[[customerbytime2_1]])
-
-=== Orders
-ID:     orders_2
-Type:   stream
-Stage:  flink
-Primary Key: id, time
-Timestamp  : time
-Schema:
- - id: BIGINT NOT NULL
- - customerid: BIGINT NOT NULL
- - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
- - entries: RecordType(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
-Plan:
-LogicalTableScan(table=[[orders_1]])
-
->>>flink.json
-{
-  "flinkSql" : [
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `ToJson` AS 'com.datasqrl.json.ToJson' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `epochToTimestamp` AS 'com.datasqrl.time.EpochToTimestamp' LANGUAGE JAVA;",
-    "CREATE TEMPORARY TABLE `customer_1` (\n  `customerid` BIGINT NOT NULL,\n  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `lastUpdated` BIGINT NOT NULL,\n  `timestamp` AS EPOCHTOTIMESTAMP(`lastUpdated`),\n  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,\n  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND\n) WITH (\n  'format' = 'json',\n  'path' = 'file:/mock',\n  'source.monitor-interval' = '10000',\n  'connector' = 'filesystem',\n  'source.path.regex-pattern' = ''\n);",
-    "CREATE TEMPORARY TABLE `orders_1` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,\n  PRIMARY KEY (`id`, `time`) NOT ENFORCED,\n  WATERMARK FOR `time` AS `time` - INTERVAL '0.001' SECOND\n) WITH (\n  'format' = 'json',\n  'path' = 'file:/mock',\n  'source.monitor-interval' = '10000',\n  'connector' = 'filesystem',\n  'source.path.regex-pattern' = ''\n);",
-    "CREATE TEMPORARY TABLE `customer2_1` (\n  `updatedTime` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `lastUpdated` BIGINT NOT NULL,\n  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'customer2_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE TEMPORARY TABLE `customer3_1` (\n  `customerid` BIGINT NOT NULL,\n  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `lastUpdated` BIGINT NOT NULL,\n  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `updatedTime` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'customer3_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE TEMPORARY TABLE `customer_2` (\n  `customerid` BIGINT NOT NULL,\n  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `lastUpdated` BIGINT NOT NULL,\n  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'customer_2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE TEMPORARY TABLE `customerbytime2_1` (\n  `updatedTime` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `lastUpdated` BIGINT NOT NULL,\n  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`customerid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'customerbytime2_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE TEMPORARY TABLE `customerbytime3_1` (\n  `customerid` BIGINT NOT NULL,\n  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `lastUpdated` BIGINT NOT NULL,\n  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `updatedTime` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`customerid`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'customerbytime3_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE TEMPORARY TABLE `ordercustomerjoin_1` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `entries` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),\n  `updatedTime` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `customerid0` BIGINT NOT NULL,\n  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `lastUpdated` BIGINT NOT NULL,\n  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`id`, `time`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'ordercustomerjoin_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE TEMPORARY TABLE `orders_2` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `entries` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),\n  PRIMARY KEY (`id`, `time`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'orders_2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE VIEW `table$1`\nAS\nSELECT `timestamp` AS `updatedTime`, `customerid`, `email`, `name`, `lastUpdated`, `timestamp`\nFROM `customer_1`;",
-    "CREATE VIEW `table$2`\nAS\nSELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, `timestamp` AS `updatedTime`\nFROM `customer_1`;",
-    "CREATE VIEW `table$3`\nAS\nSELECT *\nFROM `customer_1`;",
-    "CREATE VIEW `table$4`\nAS\nSELECT `timestamp` AS `updatedTime`, `customerid`, `email`, `name`, `lastUpdated`, `timestamp`\nFROM `customer_1`;",
-    "CREATE VIEW `table$5`\nAS\nSELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, `updatedTime`\nFROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, `updatedTime`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `updatedTime` DESC) AS `_rownum`\n  FROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, `timestamp` AS `updatedTime`\n    FROM `customer_1`) AS `t`) AS `t0`\nWHERE `_rownum` = 1;",
-    "CREATE VIEW `table$6`\nAS\nSELECT *\nFROM (SELECT `updatedTime`, `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `updatedTime` DESC) AS `_rownum`\n  FROM (SELECT `timestamp` AS `updatedTime`, `customerid`, `email`, `name`, `lastUpdated`, `timestamp`\n    FROM `customer_1`) AS `t`) AS `t0`\nWHERE `_rownum` = 1;",
-    "CREATE VIEW `table$7`\nAS\nSELECT `$cor0`.`id`, `$cor0`.`customerid`, `$cor0`.`time`, `default_catalog`.`default_database`.`ToJson`(`$cor0`.`entries`) AS `entries`, `t1`.`updatedTime`, `t1`.`customerid` AS `customerid0`, `t1`.`email`, `t1`.`name`, `t1`.`lastUpdated`, `t1`.`timestamp`\nFROM `orders_1` AS `$cor0`\n INNER JOIN `table$6` FOR SYSTEM_TIME AS OF `$cor0`.`time` AS `t1` ON `t1`.`customerid` = `$cor0`.`customerid`;",
-    "CREATE VIEW `table$8`\nAS\nSELECT `id`, `customerid`, `time`, `default_catalog`.`default_database`.`ToJson`(`entries`) AS `entries`\nFROM `orders_1`;",
-    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `customer2_1`\n(SELECT *\n FROM `table$1`)\n;\nINSERT INTO `customer3_1`\n (SELECT *\n  FROM `table$2`)\n ;\n INSERT INTO `customer_2`\n  (SELECT *\n   FROM `table$3`)\n  ;\n  INSERT INTO `customerbytime2_1`\n   (SELECT *\n    FROM `table$4`)\n   ;\n   INSERT INTO `customerbytime3_1`\n    (SELECT *\n     FROM `table$5`)\n    ;\n    INSERT INTO `ordercustomerjoin_1`\n     (SELECT *\n      FROM `table$7`)\n     ;\n     INSERT INTO `orders_2`\n      (SELECT *\n       FROM `table$8`)\n      ;\n      END;"
-  ],
-  "connectors" : [
-    "jdbc-sqrl",
-    "filesystem"
-  ],
-  "formats" : [
-    "json"
-  ]
-}
+    LogicalProject(updatedTime=[$0], customerid=[$1], email=[$2], name=[$3], lastUpdated=[$4], timestamp=[$5], __sqrlinternal_rownum=[ROW_NUMBER() OVER (PARTITION BY $1 ORDER BY $0 DESC NULLS LAST)])
+      LogicalTableScan(table=[[default_catalog, default_database, Customer2]])
+SQL: CREATE VIEW `CustomerByTime2`
+AS
+SELECT `updatedTime`, `customerid`, `email`, `name`, `lastUpdated`, `timestamp`
+FROM (SELECT `updatedTime`, `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `updatedTime` DESC NULLS LAST) AS `__sqrlinternal_rownum`
+  FROM `default_catalog`.`default_database`.`Customer2`) AS `t`
+WHERE `__sqrlinternal_rownum` = 1
+>>>flink-sql-no-functions.sql
+CREATE TEMPORARY TABLE `Customer__schema` (
+  `customerid` BIGINT NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `lastUpdated` BIGINT NOT NULL
+) WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `Customer__def` (
+  `timestamp` AS COALESCE(TO_TIMESTAMP_LTZ(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
+  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
+  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
+) WITH (
+  'format' = 'flexible-json',
+  'path' = 'file:/mock',
+  'source.monitor-interval' = '10 sec',
+  'connector' = 'filesystem'
+)
+LIKE `Customer__schema`;
+CREATE VIEW `Customer`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`Customer__def`;
+CREATE VIEW `Customer2`
+AS
+SELECT `timestamp` AS `updatedTime`, *
+FROM `Customer`;
+CREATE VIEW `CustomerByTime2`
+AS
+SELECT `updatedTime`, `customerid`, `email`, `name`, `lastUpdated`, `timestamp`
+FROM (SELECT `updatedTime`, `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `updatedTime` DESC NULLS LAST) AS `__sqrlinternal_rownum`
+  FROM `default_catalog`.`default_database`.`Customer2`) AS `t`
+WHERE `__sqrlinternal_rownum` = 1;
+CREATE TABLE `Customer_1` (
+  `customerid` BIGINT NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `lastUpdated` BIGINT NOT NULL,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'table-name' = 'Customer_1'
+);
+CREATE TABLE `Customer2_2` (
+  `updatedTime` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `lastUpdated` BIGINT NOT NULL,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'table-name' = 'Customer2_2'
+);
+CREATE TABLE `CustomerByTime2_3` (
+  `updatedTime` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `lastUpdated` BIGINT NOT NULL,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`customerid`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'table-name' = 'CustomerByTime2_3'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`Customer_1`
+(SELECT *
+ FROM `default_catalog`.`default_database`.`Customer`)
+;
+INSERT INTO `default_catalog`.`default_database`.`Customer2_2`
+ (SELECT `updatedTime`, `customerid`, `email`, `name`, `lastUpdated`, CAST(`timestamp` AS TIMESTAMP(3) WITH LOCAL TIME ZONE) AS `timestamp`
+  FROM `default_catalog`.`default_database`.`Customer2`)
+ ;
+ INSERT INTO `default_catalog`.`default_database`.`CustomerByTime2_3`
+  (SELECT `updatedTime`, `customerid`, `email`, `name`, `lastUpdated`, CAST(`timestamp` AS TIMESTAMP(3) WITH LOCAL TIME ZONE) AS `timestamp`
+   FROM `default_catalog`.`default_database`.`Customer2`)
+  ;
+  END
 >>>kafka.json
 {
   "topics" : [ ]
 }
 >>>postgres.json
 {
-  "ddl" : [
+  "statements" : [
     {
-      "name" : "customer2_1",
-      "columns" : [
-        "\"updatedTime\" TIMESTAMP WITH TIME ZONE NOT NULL",
-        "\"customerid\" BIGINT NOT NULL",
-        "\"email\" TEXT NOT NULL",
-        "\"name\" TEXT NOT NULL",
-        "\"lastUpdated\" BIGINT NOT NULL",
-        "\"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL"
-      ],
-      "primaryKeys" : [
-        "\"customerid\"",
-        "\"lastUpdated\""
-      ],
-      "sql" : "CREATE TABLE IF NOT EXISTS customer2_1 (\"updatedTime\" TIMESTAMP WITH TIME ZONE NOT NULL,\"customerid\" BIGINT NOT NULL,\"email\" TEXT NOT NULL,\"name\" TEXT NOT NULL,\"lastUpdated\" BIGINT NOT NULL,\"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\",\"lastUpdated\"));"
+      "name" : "Customer_1",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Customer_1\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\",\"lastUpdated\"))",
+      "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "email",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "lastUpdated",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "timestamp",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ]
     },
     {
-      "name" : "customer3_1",
-      "columns" : [
-        "\"customerid\" BIGINT NOT NULL",
-        "\"email\" TEXT NOT NULL",
-        "\"name\" TEXT NOT NULL",
-        "\"lastUpdated\" BIGINT NOT NULL",
-        "\"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL",
-        "\"updatedTime\" TIMESTAMP WITH TIME ZONE NOT NULL"
-      ],
-      "primaryKeys" : [
-        "\"customerid\"",
-        "\"lastUpdated\""
-      ],
-      "sql" : "CREATE TABLE IF NOT EXISTS customer3_1 (\"customerid\" BIGINT NOT NULL,\"email\" TEXT NOT NULL,\"name\" TEXT NOT NULL,\"lastUpdated\" BIGINT NOT NULL,\"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL,\"updatedTime\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\",\"lastUpdated\"));"
+      "name" : "Customer2_2",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Customer2_2\" (\"updatedTime\" TIMESTAMP WITH TIME ZONE NOT NULL, \"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\",\"lastUpdated\"))",
+      "fields" : [
+        {
+          "name" : "updatedTime",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "email",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "lastUpdated",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "timestamp",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ]
     },
     {
-      "name" : "customer_2",
-      "columns" : [
-        "\"customerid\" BIGINT NOT NULL",
-        "\"email\" TEXT NOT NULL",
-        "\"name\" TEXT NOT NULL",
-        "\"lastUpdated\" BIGINT NOT NULL",
-        "\"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL"
-      ],
-      "primaryKeys" : [
-        "\"customerid\"",
-        "\"lastUpdated\""
-      ],
-      "sql" : "CREATE TABLE IF NOT EXISTS customer_2 (\"customerid\" BIGINT NOT NULL,\"email\" TEXT NOT NULL,\"name\" TEXT NOT NULL,\"lastUpdated\" BIGINT NOT NULL,\"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\",\"lastUpdated\"));"
+      "name" : "CustomerByTime2_3",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerByTime2_3\" (\"updatedTime\" TIMESTAMP WITH TIME ZONE NOT NULL, \"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\"))",
+      "fields" : [
+        {
+          "name" : "updatedTime",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "email",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "lastUpdated",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "timestamp",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ]
     },
-    {
-      "name" : "customerbytime2_1",
-      "columns" : [
-        "\"updatedTime\" TIMESTAMP WITH TIME ZONE NOT NULL",
-        "\"customerid\" BIGINT NOT NULL",
-        "\"email\" TEXT NOT NULL",
-        "\"name\" TEXT NOT NULL",
-        "\"lastUpdated\" BIGINT NOT NULL",
-        "\"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL"
-      ],
-      "primaryKeys" : [
-        "\"customerid\""
-      ],
-      "sql" : "CREATE TABLE IF NOT EXISTS customerbytime2_1 (\"updatedTime\" TIMESTAMP WITH TIME ZONE NOT NULL,\"customerid\" BIGINT NOT NULL,\"email\" TEXT NOT NULL,\"name\" TEXT NOT NULL,\"lastUpdated\" BIGINT NOT NULL,\"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\"));"
-    },
-    {
-      "name" : "customerbytime3_1",
-      "columns" : [
-        "\"customerid\" BIGINT NOT NULL",
-        "\"email\" TEXT NOT NULL",
-        "\"name\" TEXT NOT NULL",
-        "\"lastUpdated\" BIGINT NOT NULL",
-        "\"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL",
-        "\"updatedTime\" TIMESTAMP WITH TIME ZONE NOT NULL"
-      ],
-      "primaryKeys" : [
-        "\"customerid\""
-      ],
-      "sql" : "CREATE TABLE IF NOT EXISTS customerbytime3_1 (\"customerid\" BIGINT NOT NULL,\"email\" TEXT NOT NULL,\"name\" TEXT NOT NULL,\"lastUpdated\" BIGINT NOT NULL,\"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL,\"updatedTime\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\"));"
-    },
-    {
-      "name" : "ordercustomerjoin_1",
-      "columns" : [
-        "\"id\" BIGINT NOT NULL",
-        "\"customerid\" BIGINT NOT NULL",
-        "\"time\" TIMESTAMP WITH TIME ZONE NOT NULL",
-        "\"entries\" JSONB NOT NULL",
-        "\"updatedTime\" TIMESTAMP WITH TIME ZONE NOT NULL",
-        "\"customerid0\" BIGINT NOT NULL",
-        "\"email\" TEXT NOT NULL",
-        "\"name\" TEXT NOT NULL",
-        "\"lastUpdated\" BIGINT NOT NULL",
-        "\"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL"
-      ],
-      "primaryKeys" : [
-        "\"id\"",
-        "\"time\""
-      ],
-      "sql" : "CREATE TABLE IF NOT EXISTS ordercustomerjoin_1 (\"id\" BIGINT NOT NULL,\"customerid\" BIGINT NOT NULL,\"time\" TIMESTAMP WITH TIME ZONE NOT NULL,\"entries\" JSONB NOT NULL,\"updatedTime\" TIMESTAMP WITH TIME ZONE NOT NULL,\"customerid0\" BIGINT NOT NULL,\"email\" TEXT NOT NULL,\"name\" TEXT NOT NULL,\"lastUpdated\" BIGINT NOT NULL,\"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"id\",\"time\"));"
-    },
-    {
-      "name" : "orders_2",
-      "columns" : [
-        "\"id\" BIGINT NOT NULL",
-        "\"customerid\" BIGINT NOT NULL",
-        "\"time\" TIMESTAMP WITH TIME ZONE NOT NULL",
-        "\"entries\" JSONB NOT NULL"
-      ],
-      "primaryKeys" : [
-        "\"id\"",
-        "\"time\""
-      ],
-      "sql" : "CREATE TABLE IF NOT EXISTS orders_2 (\"id\" BIGINT NOT NULL,\"customerid\" BIGINT NOT NULL,\"time\" TIMESTAMP WITH TIME ZONE NOT NULL,\"entries\" JSONB NOT NULL , PRIMARY KEY (\"id\",\"time\"));"
-    },
-    {
-      "indexName" : "customer2_1_hash_c4",
-      "tableName" : "customer2_1",
-      "columns" : [
-        "lastUpdated"
-      ],
-      "type" : "HASH",
-      "sql" : "CREATE INDEX IF NOT EXISTS customer2_1_hash_c4 ON customer2_1 USING hash (\"lastUpdated\");"
-    },
-    {
-      "indexName" : "customer3_1_hash_c3",
-      "tableName" : "customer3_1",
-      "columns" : [
-        "lastUpdated"
-      ],
-      "type" : "HASH",
-      "sql" : "CREATE INDEX IF NOT EXISTS customer3_1_hash_c3 ON customer3_1 USING hash (\"lastUpdated\");"
-    },
-    {
-      "indexName" : "customer_2_hash_c3",
-      "tableName" : "customer_2",
-      "columns" : [
-        "lastUpdated"
-      ],
-      "type" : "HASH",
-      "sql" : "CREATE INDEX IF NOT EXISTS customer_2_hash_c3 ON customer_2 USING hash (\"lastUpdated\");"
-    },
-    {
-      "indexName" : "ordercustomerjoin_1_hash_c2",
-      "tableName" : "ordercustomerjoin_1",
-      "columns" : [
-        "time"
-      ],
-      "type" : "HASH",
-      "sql" : "CREATE INDEX IF NOT EXISTS ordercustomerjoin_1_hash_c2 ON ordercustomerjoin_1 USING hash (\"time\");"
-    },
-    {
-      "indexName" : "orders_2_hash_c2",
-      "tableName" : "orders_2",
-      "columns" : [
-        "time"
-      ],
-      "type" : "HASH",
-      "sql" : "CREATE INDEX IF NOT EXISTS orders_2_hash_c2 ON orders_2 USING hash (\"time\");"
-    }
-  ],
-  "views" : [
     {
       "name" : "Customer",
-      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer_2\"\nORDER BY \"timestamp\" DESC NULLS LAST, \"customerid\", \"lastUpdated\";"
-    },
-    {
-      "name" : "CustomerByTime2",
-      "sql" : "CREATE OR REPLACE VIEW \"CustomerByTime2\"(\"updatedTime\", \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customerbytime2_1\"\nORDER BY \"customerid\";"
-    },
-    {
-      "name" : "CustomerByTime3",
-      "sql" : "CREATE OR REPLACE VIEW \"CustomerByTime3\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", \"updatedTime\") AS SELECT *\nFROM \"customerbytime3_1\"\nORDER BY \"customerid\";"
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"Customer_1\"",
+      "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "email",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "lastUpdated",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "timestamp",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ]
     },
     {
       "name" : "Customer2",
-      "sql" : "CREATE OR REPLACE VIEW \"Customer2\"(\"updatedTime\", \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"customer2_1\"\nORDER BY \"updatedTime\" DESC NULLS LAST, \"customerid\", \"lastUpdated\";"
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"Customer2\"(\"updatedTime\", \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"Customer2_2\"",
+      "fields" : [
+        {
+          "name" : "updatedTime",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "email",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "lastUpdated",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "timestamp",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ]
     },
     {
-      "name" : "OrderCustomerJoin",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomerJoin\"(\"id\", \"customerid\", \"time\", \"entries\", \"updatedTime\", \"customerid0\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"ordercustomerjoin_1\"\nORDER BY \"time\" DESC NULLS LAST, \"id\";"
-    },
-    {
-      "name" : "Customer3",
-      "sql" : "CREATE OR REPLACE VIEW \"Customer3\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\", \"updatedTime\") AS SELECT *\nFROM \"customer3_1\"\nORDER BY \"timestamp\" DESC NULLS LAST, \"customerid\", \"lastUpdated\";"
-    },
-    {
-      "name" : "Orders",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"orders_2\"\nORDER BY \"time\" DESC NULLS LAST, \"id\";"
+      "name" : "CustomerByTime2",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerByTime2\"(\"updatedTime\", \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"CustomerByTime2_3\"",
+      "fields" : [
+        {
+          "name" : "updatedTime",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "email",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "lastUpdated",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "timestamp",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ]
     }
   ]
 }
 >>>vertx.json
 {
   "model" : {
-    "coords" : [
+    "queries" : [
       {
         "type" : "args",
         "parentType" : "Query",
         "fieldName" : "Customer",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"customer_2\"\nORDER BY \"timestamp\" DESC NULLS LAST, \"customerid\", \"lastUpdated\"",
-              "parameters" : [ ]
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
             }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "customerid"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "lastUpdated"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"customer_2\"\nWHERE \"customerid\" = $1 AND \"lastUpdated\" = $2\nORDER BY \"timestamp\" DESC NULLS LAST",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "customerid"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "lastUpdated"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "lastUpdated"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"customer_2\"\nWHERE \"lastUpdated\" = $1\nORDER BY \"timestamp\" DESC NULLS LAST, \"customerid\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "lastUpdated"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "customerid"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"customer_2\"\nWHERE \"customerid\" = $1\nORDER BY \"timestamp\" DESC NULLS LAST, \"lastUpdated\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "customerid"
-                }
-              ]
-            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM \"Customer_1\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
           }
-        ]
+        }
       },
       {
         "type" : "args",
         "parentType" : "Query",
         "fieldName" : "Customer2",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"customer2_1\"\nORDER BY \"updatedTime\" DESC NULLS LAST, \"customerid\", \"lastUpdated\"",
-              "parameters" : [ ]
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
             }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "customerid"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"customer2_1\"\nWHERE \"customerid\" = $1\nORDER BY \"updatedTime\" DESC NULLS LAST, \"lastUpdated\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "customerid"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "lastUpdated"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"customer2_1\"\nWHERE \"lastUpdated\" = $1\nORDER BY \"updatedTime\" DESC NULLS LAST, \"customerid\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "lastUpdated"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "customerid"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "lastUpdated"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"customer2_1\"\nWHERE \"customerid\" = $1 AND \"lastUpdated\" = $2\nORDER BY \"updatedTime\" DESC NULLS LAST",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "customerid"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "lastUpdated"
-                }
-              ]
-            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM \"Customer2_2\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
           }
-        ]
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "Customer3",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "customerid"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"customer3_1\"\nWHERE \"customerid\" = $1\nORDER BY \"timestamp\" DESC NULLS LAST, \"lastUpdated\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "customerid"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "lastUpdated"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"customer3_1\"\nWHERE \"lastUpdated\" = $1\nORDER BY \"timestamp\" DESC NULLS LAST, \"customerid\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "lastUpdated"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "customerid"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "lastUpdated"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"customer3_1\"\nWHERE \"customerid\" = $1 AND \"lastUpdated\" = $2\nORDER BY \"timestamp\" DESC NULLS LAST",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "customerid"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "lastUpdated"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"customer3_1\"\nORDER BY \"timestamp\" DESC NULLS LAST, \"customerid\", \"lastUpdated\"",
-              "parameters" : [ ]
-            }
-          }
-        ]
+        }
       },
       {
         "type" : "args",
         "parentType" : "Query",
         "fieldName" : "CustomerByTime2",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"customerbytime2_1\"\nORDER BY \"customerid\"",
-              "parameters" : [ ]
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
             }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "customerid"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"customerbytime2_1\"\nWHERE \"customerid\" = $1",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "customerid"
-                }
-              ]
-            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM \"CustomerByTime2_3\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
           }
-        ]
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "CustomerByTime3",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "customerid"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"customerbytime3_1\"\nWHERE \"customerid\" = $1",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "customerid"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"customerbytime3_1\"\nORDER BY \"customerid\"",
-              "parameters" : [ ]
-            }
-          }
-        ]
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "OrderCustomerJoin",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "id"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"ordercustomerjoin_1\"\nWHERE \"id\" = $1\nORDER BY \"time\" DESC NULLS LAST",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "id"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"ordercustomerjoin_1\"\nORDER BY \"time\" DESC NULLS LAST, \"id\"",
-              "parameters" : [ ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "time"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"ordercustomerjoin_1\"\nWHERE \"time\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "time"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "id"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "time"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"ordercustomerjoin_1\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "id"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "time"
-                }
-              ]
-            }
-          }
-        ]
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "Orders",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "id"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "time"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1 AND \"time\" = $2\nORDER BY \"time\" DESC NULLS LAST",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "id"
-                },
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "time"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "time"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"time\" = $1\nORDER BY \"time\" DESC NULLS LAST, \"id\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "time"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "id"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"orders_2\"\nWHERE \"id\" = $1\nORDER BY \"time\" DESC NULLS LAST",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "id"
-                }
-              ]
-            }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"orders_2\"\nORDER BY \"time\" DESC NULLS LAST, \"id\"",
-              "parameters" : [ ]
-            }
-          }
-        ]
+        }
       }
     ],
     "mutations" : [ ],
     "subscriptions" : [ ],
     "schema" : {
       "type" : "string",
-      "type" : "string",
-      "schema" : "type Customer {\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n  timestamp: DateTime!\n}\n\ntype Customer2 {\n  updatedTime: DateTime!\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n  timestamp: DateTime!\n}\n\ntype Customer3 {\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n  timestamp: DateTime!\n  updatedTime: DateTime!\n}\n\ntype CustomerByTime2 {\n  updatedTime: DateTime!\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n  timestamp: DateTime!\n}\n\ntype CustomerByTime3 {\n  customerid: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n  timestamp: DateTime!\n  updatedTime: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\ntype OrderCustomerJoin {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  updatedTime: DateTime!\n  customerid0: Float!\n  email: String!\n  name: String!\n  lastUpdated: Float!\n  timestamp: DateTime!\n  entries(limit: Int = 10, offset: Int = 0): [entries!]\n}\n\ntype Orders {\n  id: Float!\n  customerid: Float!\n  time: DateTime!\n  entries(limit: Int = 10, offset: Int = 0): [entries!]\n}\n\ntype Query {\n  Customer(customerid: Float, lastUpdated: Float, limit: Int = 10, offset: Int = 0): [Customer!]\n  Customer2(customerid: Float, lastUpdated: Float, limit: Int = 10, offset: Int = 0): [Customer2!]\n  Customer3(customerid: Float, lastUpdated: Float, limit: Int = 10, offset: Int = 0): [Customer3!]\n  CustomerByTime2(customerid: Float, limit: Int = 10, offset: Int = 0): [CustomerByTime2!]\n  CustomerByTime3(customerid: Float, limit: Int = 10, offset: Int = 0): [CustomerByTime3!]\n  OrderCustomerJoin(id: Float, time: DateTime, limit: Int = 10, offset: Int = 0): [OrderCustomerJoin!]\n  Orders(id: Float, time: DateTime, limit: Int = 10, offset: Int = 0): [Orders!]\n}\n\ntype entries {\n  productid: Float!\n  quantity: Float!\n  unit_price: Float!\n  discount: Float\n}\n\ntype entries_ {\n  productid: Float!\n  quantity: Float!\n  unit_price: Float!\n  discount: Float\n}\n"
+      "schema" : "type Customer {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n}\n\ntype Customer2 {\n  updatedTime: DateTime!\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n}\n\ntype CustomerByTime2 {\n  updatedTime: DateTime!\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  Customer2(limit: Int = 10, offset: Int = 0): [Customer2!]\n  CustomerByTime2(limit: Int = 10, offset: Int = 0): [CustomerByTime2!]\n}\n"
     }
   }
 }

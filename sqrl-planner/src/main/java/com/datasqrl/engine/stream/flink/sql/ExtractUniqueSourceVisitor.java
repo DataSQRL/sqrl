@@ -1,14 +1,17 @@
 package com.datasqrl.engine.stream.flink.sql;
 
-import com.datasqrl.plan.global.PhysicalDAGPlan.WriteQuery;
-import com.datasqrl.plan.table.ImportedRelationalTable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import lombok.Getter;
+
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelVisitor;
 import org.apache.calcite.rel.core.TableScan;
+
+import com.datasqrl.plan.global.PhysicalDAGPlan.WriteQuery;
+import com.datasqrl.plan.table.ImportedRelationalTable;
+
+import lombok.Getter;
 
 public class ExtractUniqueSourceVisitor extends RelVisitor {
 
@@ -17,8 +20,7 @@ public class ExtractUniqueSourceVisitor extends RelVisitor {
 
   @Override
   public void visit(RelNode node, int ordinal, RelNode parent) {
-    if (node instanceof TableScan) {
-      TableScan tableScan = (TableScan) node;
+    if (node instanceof TableScan tableScan) {
       ImportedRelationalTable table = tableScan.getTable().unwrap(ImportedRelationalTable.class);
       tableMap.put(table.getNameId(), table);
     }

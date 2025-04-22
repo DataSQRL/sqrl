@@ -3,9 +3,10 @@
  */
 package com.datasqrl.discovery.stats;
 
-import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.schema.input.FlexibleTableSchema;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.io.schema.flexible.input.FlexibleTableSchema;
+
 import lombok.NonNull;
 
 public interface SchemaGenerator {

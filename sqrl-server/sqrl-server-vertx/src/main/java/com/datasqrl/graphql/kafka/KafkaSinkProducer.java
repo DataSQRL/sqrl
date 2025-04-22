@@ -1,18 +1,15 @@
 package com.datasqrl.graphql.kafka;
 
+import java.time.Instant;
+import java.util.Map;
+
 import com.datasqrl.graphql.io.SinkProducer;
 import com.datasqrl.graphql.io.SinkResult;
+
 import io.vertx.core.Future;
-import io.vertx.core.json.JsonObject;
 import io.vertx.kafka.client.producer.KafkaProducer;
 import io.vertx.kafka.client.producer.KafkaProducerRecord;
 import io.vertx.kafka.client.producer.RecordMetadata;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
 import lombok.AllArgsConstructor;
 
 @AllArgsConstructor

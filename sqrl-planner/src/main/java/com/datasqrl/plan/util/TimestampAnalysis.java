@@ -3,21 +3,26 @@
  */
 package com.datasqrl.plan.util;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+import org.apache.calcite.rel.core.AggregateCall;
+import org.apache.calcite.rex.RexBuilder;
+import org.apache.calcite.rex.RexCall;
+import org.apache.calcite.rex.RexNode;
+import org.apache.calcite.rex.RexUtil;
+import org.apache.calcite.sql.SqlKind;
+import org.apache.calcite.sql.fun.SqlStdOperatorTable;
+
 import com.datasqrl.function.SqrlTimeTumbleFunction;
 import com.datasqrl.plan.table.Timestamps;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.FunctionUtil;
 import com.google.common.base.Preconditions;
 
-import java.util.*;
-
 import lombok.NonNull;
 import lombok.Value;
-import org.apache.calcite.rel.core.AggregateCall;
-import org.apache.calcite.rex.*;
-import org.apache.calcite.sql.SqlKind;
-import org.apache.calcite.sql.SqlOperator;
-import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 
 public class TimestampAnalysis {
 
@@ -32,21 +37,22 @@ public class TimestampAnalysis {
     if (!(CalciteUtil.isTimestamp(rexNode.getType()))) {
       return false;
     }
-    Optional<Integer> inputRef = CalciteUtil.getNonAlteredInputRef(rexNode);
+    var inputRef = CalciteUtil.getNonAlteredInputRef(rexNode);
     if (inputRef.isPresent()) {
       return timestamp.isCandidate(inputRef.get());
     }
-    if (!(rexNode instanceof RexCall)) {
+    if (!(rexNode instanceof RexCall call)) {
       return false;
     }
-    RexCall call = (RexCall) rexNode;
-    SqlOperator operator = call.getOperator();
-    List<RexNode> operands = call.getOperands();
+    var operator = call.getOperator();
+    var operands = call.getOperands();
     if (operator.getKind().equals(SqlKind.CASE)) {
       Preconditions.checkArgument(operands.size()>=3 && operands.size()%2==1, "Invalid operand list: %s",operands );
       //Check that all operands are timestamps
-      for (int i = 1; i < operands.size(); i=i+2) {
-        if (!computesTimestamp(operands.get(i),timestamp)) return false;
+      for (var i = 1; i < operands.size(); i=i+2) {
+        if (!computesTimestamp(operands.get(i),timestamp)) {
+            return false;
+        }
       }
       return computesTimestamp(operands.get(operands.size()-1),timestamp); //check default/else
     } else if (call.getOperator().isName("greatest", false)) {
@@ -57,39 +63,38 @@ public class TimestampAnalysis {
 
 
   public static Optional<Timestamps.TimeWindow> extractTumbleWindow(int index, RexNode rexNode, RexBuilder rexBuilder, Timestamps timestamps) {
-    if (!(rexNode instanceof RexCall)) {
+    if (!(rexNode instanceof RexCall call)) {
       return Optional.empty();
     }
-    RexCall call = (RexCall) rexNode;
     Optional<SqrlTimeTumbleFunction> fnc = FunctionUtil.getBridgedFunction(call.getOperator())
             .flatMap(FunctionUtil::getSqrlTimeTumbleFunction);
     if (fnc.isEmpty()) {
       return Optional.empty();
     }
-    SqrlTimeTumbleFunction tumbleFct = fnc.get();
+    var tumbleFct = fnc.get();
     //Validate time bucketing function: First argument is timestamp, all others must be constants
     Preconditions.checkArgument(call.getOperands().size() > 0,
             "Tumble window function must have at least one argument");
-    RexNode timestamp = call.getOperands().get(0);
-    Optional<Integer> optIndex = CalciteUtil.getNonAlteredInputRef(timestamp);
+    var timestamp = call.getOperands().get(0);
+    var optIndex = CalciteUtil.getNonAlteredInputRef(timestamp);
     if (optIndex.isEmpty() || !timestamps.isCandidate(optIndex.get())) {
       return Optional.empty();
     }
     int timestampIdx = optIndex.get();
     List<RexNode> operands = new ArrayList<>();
-    for (int i = 1; i < call.getOperands().size(); i++) {
-      RexNode operand = call.getOperands().get(i);
+    for (var i = 1; i < call.getOperands().size(); i++) {
+      var operand = call.getOperands().get(i);
       Preconditions.checkArgument(RexUtil.isConstant(operand),
               "All non-timestamp arguments must be constants");
       operands.add(operand);
     }
-    long[] operandValues = new long[0];
+    var operandValues = new long[0];
     if (!operands.isEmpty()) {
-      ExpressionReducer reducer = new ExpressionReducer();
+      var reducer = new ExpressionReducer();
       operandValues = reducer.reduce2Long(rexBuilder,
               operands); //throws exception if arguments cannot be reduced
     }
-    SqrlTimeTumbleFunction.Specification spec = tumbleFct.getSpecification(operandValues);
+    var spec = tumbleFct.getSpecification(operandValues);
     return Optional.of(new Timestamps.SimpleTumbleWindow(index, timestampIdx, spec.getWindowWidthMillis(),
             spec.getWindowOffsetMillis()));
   }
@@ -103,8 +108,8 @@ public class TimestampAnalysis {
 
   public static Optional<MaxTimestamp> findMaxTimestamp(List<AggregateCall> aggregateCalls,
                                                         Timestamps timestamp) {
-    for (int idx = 0; idx < aggregateCalls.size(); idx++) {
-      AggregateCall aggCall = aggregateCalls.get(idx);
+    for (var idx = 0; idx < aggregateCalls.size(); idx++) {
+      var aggCall = aggregateCalls.get(idx);
       if (aggCall.getAggregation().equals(SqlStdOperatorTable.MAX)
           && aggCall.getArgList().size()==1 && aggCall.filterArg==-1
           && !aggCall.isApproximate() && !aggCall.isDistinct()

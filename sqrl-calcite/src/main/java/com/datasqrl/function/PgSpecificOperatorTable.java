@@ -2,7 +2,9 @@ package com.datasqrl.function;
 
 import static com.datasqrl.function.CalciteFunctionUtil.lightweightOp;
 
-import org.apache.calcite.sql.*;
+import org.apache.calcite.sql.SqlBinaryOperator;
+import org.apache.calcite.sql.SqlKind;
+import org.apache.calcite.sql.SqlUnresolvedFunction;
 import org.apache.calcite.sql.type.ReturnTypes;
 import org.apache.calcite.sql.type.SqlTypeName;
 

@@ -3,16 +3,16 @@
  */
 package com.datasqrl.util.data;
 
+import java.nio.file.Path;
+import java.util.LinkedHashMap;
+import java.util.Set;
+
 import com.datasqrl.util.ScriptBuilder;
 import com.datasqrl.util.TestDataset;
 import com.datasqrl.util.TestGraphQLSchema;
 import com.datasqrl.util.TestScript;
-import java.util.LinkedHashMap;
-import lombok.Getter;
 
-import java.nio.file.Path;
-import java.util.Map;
-import java.util.Set;
+import lombok.Getter;
 
 public class Retail implements TestDataset {
 
@@ -28,7 +28,7 @@ public class Retail implements TestDataset {
   }
 
   private LinkedHashMap<RetailScriptNames, TestScript> createTestScripts() {
-    LinkedHashMap linkedHashMap = new LinkedHashMap();
+    var linkedHashMap = new LinkedHashMap();
     linkedHashMap.put(RetailScriptNames.ORDER_STATS,
         TestScript.of(this, BASE_PATH.resolve("c360-orderstats.sqrl"),
             "orders", "entries", "totals", "customerorderstats").build());
@@ -83,7 +83,7 @@ public class Retail implements TestDataset {
   }
 
   public ScriptBuilder getImports() {
-    ScriptBuilder builder = new ScriptBuilder();
+    var builder = new ScriptBuilder();
     builder.append("IMPORT time.*");
     builder.append("IMPORT ecommerce-data.Customer TIMESTAMP _ingest_time");
     builder.append("IMPORT ecommerce-data.Orders TIMESTAMP time");

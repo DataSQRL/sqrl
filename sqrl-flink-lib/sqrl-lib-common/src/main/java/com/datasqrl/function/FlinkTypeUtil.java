@@ -4,10 +4,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import lombok.Builder;
-import lombok.Singular;
-import lombok.SneakyThrows;
-import lombok.Value;
+
 import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.types.DataType;
 import org.apache.flink.table.types.inference.ArgumentCount;
@@ -18,11 +15,16 @@ import org.apache.flink.table.types.inference.TypeInference;
 import org.apache.flink.table.types.inference.TypeStrategy;
 import org.apache.flink.table.types.inference.utils.AdaptedCallContext;
 
+import lombok.Builder;
+import lombok.Singular;
+import lombok.SneakyThrows;
+import lombok.Value;
+
 public class FlinkTypeUtil {
 
   public static TypeStrategy nullPreservingOutputStrategy(DataType outputType) {
     return callContext -> {
-      DataType type = getFirstArgumentType(callContext);
+      var type = getFirstArgumentType(callContext);
 
       if (type.getLogicalType().isNullable()) {
         return Optional.of(outputType.nullable());
@@ -75,7 +77,7 @@ public class FlinkTypeUtil {
       return new ArgumentCount() {
         @Override
         public boolean isValidCount(int count) {
-          int variableCount = count - staticTypes.size();
+          var variableCount = count - staticTypes.size();
           return variableCount >= minVariableArguments && variableCount <= maxVariableArguments;
         }
 
@@ -94,13 +96,14 @@ public class FlinkTypeUtil {
     @Override
     public Optional<List<DataType>> inferInputTypes(CallContext callContext,
         boolean throwOnFailure) {
-      int argCount = callContext.getArgumentDataTypes().size();
-      int varArgs = argCount - staticTypes.size();
-      if (varArgs < 0 || varArgs < minVariableArguments || varArgs > maxVariableArguments)
+      var argCount = callContext.getArgumentDataTypes().size();
+      var varArgs = argCount - staticTypes.size();
+      if (varArgs < 0 || varArgs < minVariableArguments || varArgs > maxVariableArguments) {
         return Optional.empty();
-      ArrayList<DataType> result = new ArrayList<>(argCount);
+    }
+      var result = new ArrayList<DataType>(argCount);
       result.addAll(staticTypes);
-      for (int i = 0; i < varArgs; i++) {
+      for (var i = 0; i < varArgs; i++) {
         result.add(variableType);
       }
       return Optional.of(result);

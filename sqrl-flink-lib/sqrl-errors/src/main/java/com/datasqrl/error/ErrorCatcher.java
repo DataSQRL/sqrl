@@ -1,12 +1,14 @@
 package com.datasqrl.error;
 
-import com.datasqrl.error.ErrorMessage.Implementation;
-import com.datasqrl.error.ErrorMessage.Severity;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.ServiceLoader;
+
+import com.datasqrl.error.ErrorMessage.Implementation;
+import com.datasqrl.error.ErrorMessage.Severity;
+
 import lombok.Getter;
 
 public class ErrorCatcher implements Serializable {
@@ -32,7 +34,9 @@ public class ErrorCatcher implements Serializable {
   }
 
   public CollectedException handle(Throwable e) {
-    if (e instanceof CollectedException) return (CollectedException) e; //has already been handled
+    if (e instanceof CollectedException exception) {
+        return exception; //has already been handled
+    }
     Optional<ErrorHandler> handler = Optional.ofNullable(handlers.get(e.getClass()));
     ErrorMessage msg;
     if (handler.isPresent()) {

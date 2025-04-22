@@ -1,10 +1,10 @@
 package com.datasqrl.util;
 
-import com.datasqrl.calcite.SqrlFramework;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Supplier;
-import lombok.SneakyThrows;
+
 import org.apache.calcite.DataContext;
 import org.apache.calcite.adapter.java.JavaTypeFactory;
 import org.apache.calcite.linq4j.Enumerator;
@@ -14,8 +14,9 @@ import org.apache.calcite.linq4j.QueryProviderImpl;
 import org.apache.calcite.linq4j.Queryable;
 import org.apache.calcite.schema.SchemaPlus;
 
-import java.util.HashMap;
-import java.util.Optional;
+import com.datasqrl.calcite.SqrlFramework;
+
+import lombok.SneakyThrows;
 
 
 public class DataContextImpl implements DataContext {

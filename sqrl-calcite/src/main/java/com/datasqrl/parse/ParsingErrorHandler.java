@@ -16,8 +16,6 @@
  */
 package com.datasqrl.parse;
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
 import java.util.ArrayDeque;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -26,7 +24,7 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
-import lombok.extern.slf4j.Slf4j;
+
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.NoViableAltException;
 import org.antlr.v4.runtime.Parser;
@@ -41,9 +39,13 @@ import org.antlr.v4.runtime.atn.ATNState;
 import org.antlr.v4.runtime.atn.NotSetTransition;
 import org.antlr.v4.runtime.atn.RuleStopState;
 import org.antlr.v4.runtime.atn.RuleTransition;
-import org.antlr.v4.runtime.atn.Transition;
 import org.antlr.v4.runtime.atn.WildcardTransition;
 import org.antlr.v4.runtime.misc.IntervalSet;
+
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 class ParsingErrorHandler
@@ -69,9 +71,9 @@ class ParsingErrorHandler
   public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line,
       int charPositionInLine, String message, RecognitionException e) {
     try {
-      Parser parser = (Parser) recognizer;
+      var parser = (Parser) recognizer;
 
-      ATN atn = parser.getATN();
+      var atn = parser.getATN();
 
       ATNState currentState;
       Token currentToken;
@@ -91,13 +93,13 @@ class ParsingErrorHandler
         context = parser.getContext();
       }
 
-      Analyzer analyzer = new Analyzer(atn, parser.getVocabulary(), specialRules, specialTokens,
+      var analyzer = new Analyzer(atn, parser.getVocabulary(), specialRules, specialTokens,
           ignoredRules, parser.getTokenStream());
-      Multimap<Integer, String> candidates = analyzer
+      var candidates = analyzer
           .process(currentState, currentToken.getTokenIndex(), context);
 
       // pick the candidate tokens associated largest token index processed (i.e., the path that consumed the most input)
-      String expected = candidates.asMap().entrySet().stream()
+      var expected = candidates.asMap().entrySet().stream()
           .max(Comparator.comparing(Map.Entry::getKey))
           .get()
           .getValue().stream()
@@ -179,15 +181,15 @@ class ParsingErrorHandler
       activeStates.add(start);
 
       while (!activeStates.isEmpty()) {
-        ParsingState current = activeStates.poll();
+        var current = activeStates.poll();
 
-        ATNState state = current.state;
-        int tokenIndex = current.tokenIndex;
-        CallerContext caller = current.caller;
+        var state = current.state;
+        var tokenIndex = current.tokenIndex;
+        var caller = current.caller;
 
         if (state.getStateType() == ATNState.BLOCK_START
             || state.getStateType() == ATNState.RULE_START) {
-          int rule = state.ruleIndex;
+          var rule = state.ruleIndex;
 
           if (specialRules.containsKey(rule)) {
             candidates.put(tokenIndex, specialRules.get(rule));
@@ -208,8 +210,8 @@ class ParsingErrorHandler
           continue;
         }
 
-        for (int i = 0; i < state.getNumberOfTransitions(); i++) {
-          Transition transition = state.transition(i);
+        for (var i = 0; i < state.getNumberOfTransitions(); i++) {
+          var transition = state.transition(i);
 
           if (transition instanceof RuleTransition) {
             activeStates.add(new ParsingState(transition.target, tokenIndex,
@@ -219,14 +221,14 @@ class ParsingErrorHandler
           } else if (transition instanceof WildcardTransition) {
             throw new UnsupportedOperationException("not yet implemented: wildcard transition");
           } else {
-            IntervalSet labels = transition.label();
+            var labels = transition.label();
 
             if (transition instanceof NotSetTransition) {
               labels = labels
                   .complement(IntervalSet.of(Token.MIN_USER_TOKEN_TYPE, atn.maxTokenType));
             }
 
-            int currentToken = stream.get(tokenIndex).getType();
+            var currentToken = stream.get(tokenIndex).getType();
             if (labels.contains(currentToken)) {
               activeStates.add(new ParsingState(transition.target, tokenIndex + 1, caller));
             } else {
@@ -255,9 +257,9 @@ class ParsingErrorHandler
         return null;
       }
 
-      CallerContext parent = makeCallStack(context.parent);
+      var parent = makeCallStack(context.parent);
 
-      ATNState followState = ((RuleTransition) atn.states.get(context.invokingState)
+      var followState = ((RuleTransition) atn.states.get(context.invokingState)
           .transition(0)).followState;
       return new CallerContext(parent, followState);
     }

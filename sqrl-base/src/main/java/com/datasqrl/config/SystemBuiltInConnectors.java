@@ -1,8 +1,10 @@
 package com.datasqrl.config;
 
+import java.util.Optional;
+
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
-import java.util.Optional;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -17,6 +19,11 @@ public enum SystemBuiltInConnectors {
 
   final Name name;
   final ExternalDataType type;
+
+  @Override
+  public String toString() {
+    return name.getCanonical();
+  }
 
   public static Optional<SystemBuiltInConnectors> forExport(Name name) {
     for (SystemBuiltInConnectors connector : values()) {

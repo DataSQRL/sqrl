@@ -3,21 +3,9 @@ package com.datasqrl.graphql.jdbc;
 import static com.datasqrl.graphql.jdbc.SchemaConstants.LIMIT;
 import static com.datasqrl.graphql.jdbc.SchemaConstants.OFFSET;
 
-import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
-import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentParameter;
-import com.datasqrl.graphql.server.RootGraphqlModel.ParameterHandlerVisitor;
-import com.datasqrl.graphql.server.RootGraphqlModel.JdbcParameterHandler;
-import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedPagedJdbcQuery;
-import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedJdbcQuery;
-import com.datasqrl.graphql.server.RootGraphqlModel.SourceParameter;
-import com.datasqrl.graphql.server.QueryExecutionContext;
-import com.datasqrl.graphql.server.GraphQLEngineBuilder;
-import graphql.schema.DataFetchingEnvironment;
-import graphql.schema.PropertyDataFetcher;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -26,12 +14,17 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+
+import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
+import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedSqlQuery;
+import com.datasqrl.graphql.server.RootGraphqlModel.SqlQuery;
+
+import graphql.schema.DataFetchingEnvironment;
 import lombok.SneakyThrows;
 import lombok.Value;
 
 @Value
-public class JdbcExecutionContext implements QueryExecutionContext,
-    ParameterHandlerVisitor<Object, QueryExecutionContext> {
+public class JdbcExecutionContext extends AbstractQueryExecutionContext {
 
   JdbcContext context;
   DataFetchingEnvironment environment;
@@ -39,82 +32,72 @@ public class JdbcExecutionContext implements QueryExecutionContext,
 
   @SneakyThrows
   @Override
-  public CompletableFuture runQuery(GraphQLEngineBuilder graphQLEngineBuilder, ResolvedJdbcQuery query,
+  public CompletableFuture runQuery(ResolvedSqlQuery resolvedQuery,
       boolean isList) {
+    PreparedSqrlQueryImpl preparedQueryContainer = ((PreparedSqrlQueryImpl) resolvedQuery.getPreparedQueryContainer());
+    final List paramObj = getParamArguments(resolvedQuery.getQuery().getParameters());
+    SqlQuery query = resolvedQuery.getQuery();
+    String unpreparedSqlQuery = query.getSql();
+    switch (query.getPagination()) {
+      case NONE: break;
+      case LIMIT_AND_OFFSET:
+        Optional<Integer> limit = Optional.ofNullable(getEnvironment().getArgument(LIMIT));
+        Optional<Integer> offset = Optional.ofNullable(getEnvironment().getArgument(OFFSET));
 
-    Object[] paramObj = new Object[query.getQuery().getParameters().size()];
-    for (int i = 0; i < query.getQuery().getParameters().size(); i++) {
-      JdbcParameterHandler param = query.getQuery().getParameters().get(i);
-      Object o = param.accept(this, this);
-      paramObj[i] = o;
-    }
-    //Look at graphql response for list type here
-    PreparedSqrlQueryImpl p = ((PreparedSqrlQueryImpl) query.getPreparedQueryContainer());
-
-    return CompletableFuture.supplyAsync(()-> {
-      try (PreparedStatement statement = p.getConnection()
-          .prepareStatement(p.getPreparedQuery())) {
-        for (int i = 0; i < paramObj.length; i++) {
-          statement.setObject(i + 1, paramObj[i]);
+        //special case where database doesn't support binding for limit/offset => need to execute dynamically
+        if (!query.getDatabase().supportsLimitOffsetBinding) {
+          assert preparedQueryContainer == null;
+          unpreparedSqlQuery = AbstractQueryExecutionContext.addLimitOffsetToQuery(unpreparedSqlQuery,
+              limit.map(Object::toString).orElse("ALL"), String.valueOf(offset.orElse(0)));
+        } else {
+          paramObj.add(limit.orElse(Integer.MAX_VALUE));
+          paramObj.add(offset.orElse(0));
         }
-        ResultSet resultSet = statement.executeQuery();
-
-        return unboxList(resultSetToList(resultSet), isList);
-      } catch (SQLException e) {
-        throw new RuntimeException(e);
-      }
-    });
-  }
-
-  public static Object unboxList(List<Map<String, Object>> o, boolean isList) {
-    return isList
-        ? o
-        : (o.size() > 0 ? o.get(0) : null);
-  }
-
-  @Override
-  public CompletableFuture runPagedJdbcQuery(ResolvedPagedJdbcQuery pgQuery,
-      boolean isList, QueryExecutionContext context) {
-    Optional<Integer> limit = Optional.ofNullable(getEnvironment().getArgument(LIMIT));
-    Optional<Integer> offset = Optional.ofNullable(getEnvironment().getArgument(OFFSET));
-    Object[] paramObj = new Object[pgQuery.getQuery().getParameters().size()];
-    for (int i = 0; i < pgQuery.getQuery().getParameters().size(); i++) {
-      JdbcParameterHandler param = pgQuery.getQuery().getParameters().get(i);
-      Object o = param.accept(this, this);
-      paramObj[i] = o;
+        break;
+      default: throw new UnsupportedOperationException("Unsupported pagination: " + query.getPagination());
     }
 
-    //Add limit + offset
-    final String query = String.format("SELECT * FROM (%s) x LIMIT %s OFFSET %s",
-        pgQuery.getQuery().getSql(),
-        limit.map(Object::toString).orElse("ALL"),
-        offset.orElse(0)
-    );
+    if (preparedQueryContainer!= null) {
+      return CompletableFuture.supplyAsync(() -> {
+        try (PreparedStatement statement = preparedQueryContainer.getConnection()
+            .prepareStatement(preparedQueryContainer.getPreparedQuery())) {
+          for (int i = 0; i < paramObj.size(); i++) {
+            statement.setObject(i + 1, paramObj.get(i));
+          }
+          ResultSet resultSet = statement.executeQuery();
 
-    return CompletableFuture.supplyAsync(()-> {
-      Connection connection = this.context.getClient().getConnection();
-
-      try (PreparedStatement statement = connection.prepareStatement(query)) {
-        for (int i = 0; i < paramObj.length; i++) {
-          statement.setObject(i + 1, paramObj[i]);
+          return unboxList(resultSetToList(resultSet), isList);
+        } catch (SQLException e) {
+          throw new RuntimeException(e);
         }
-        ResultSet resultSet = statement.executeQuery();
+      });
+    } else {
+      final String sqlQuery = unpreparedSqlQuery;
+      return CompletableFuture.supplyAsync(()-> {
+        Connection connection = this.context.getClient().getConnection();
 
-        return unboxList(resultSetToList(resultSet), isList);
-      } catch (SQLException e) {
-        throw new RuntimeException(e);
-      }
-    });
+        try (PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
+          for (int i = 0; i < paramObj.size(); i++) {
+            statement.setObject(i + 1, paramObj.get(i));
+          }
+          ResultSet resultSet = statement.executeQuery();
+
+          return unboxList(resultSetToList(resultSet), isList);
+        } catch (SQLException e) {
+          throw new RuntimeException(e);
+        }
+      });
+    }
   }
 
   private List<Map<String, Object>> resultSetToList(ResultSet resultSet) throws SQLException {
     List<Map<String, Object>> rows = new ArrayList<>();
-    ResultSetMetaData metaData = resultSet.getMetaData();
-    int columnCount = metaData.getColumnCount();
+    var metaData = resultSet.getMetaData();
+    var columnCount = metaData.getColumnCount();
 
     while (resultSet.next()) {
       Map<String, Object> row = new LinkedHashMap<>(columnCount);
-      for (int i = 1; i <= columnCount; i++) {
+      for (var i = 1; i <= columnCount; i++) {
         row.put(metaData.getColumnLabel(i), resultSet.getObject(i));
       }
       rows.add(row);
@@ -122,20 +105,5 @@ public class JdbcExecutionContext implements QueryExecutionContext,
     return rows;
   }
 
-  @Override
-  public Object visitSourceParameter(SourceParameter sourceParameter,
-      QueryExecutionContext context) {
-    return PropertyDataFetcher.fetching(sourceParameter.getKey())
-        .get(context.getEnvironment());
-  }
 
-  @Override
-  public Object visitArgumentParameter(ArgumentParameter argumentParameter,
-      QueryExecutionContext context) {
-    return context.getArguments().stream()
-        .filter(arg -> arg.getPath().equalsIgnoreCase(argumentParameter.getPath()))
-        .findFirst()
-        .map(f -> f.getValue())
-        .orElse(null);
-  }
 }

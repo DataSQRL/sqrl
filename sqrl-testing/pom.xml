@@ -3,7 +3,7 @@
   <parent>
     <groupId>com.datasqrl</groupId>
     <artifactId>sqrl-root</artifactId>
-    <version>0.5.10-SNAPSHOT</version>
+    <version>0.6.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>sqrl-testing</artifactId>
@@ -11,8 +11,5 @@
 
   <modules>
     <module>sqrl-integration-tests</module>
-    <module>sqrl-flink-1.16</module>
-    <module>sqrl-flink-1.17</module>
-    <module>sqrl-flink-1.18</module>
   </modules>
 </project>

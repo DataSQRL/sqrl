@@ -3,18 +3,20 @@
  */
 package com.datasqrl.plan.queries;
 
+import java.util.List;
+import java.util.Optional;
+
+import org.apache.calcite.rel.RelNode;
+
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
-import com.datasqrl.graphql.server.RootGraphqlModel.JdbcParameterHandler;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import com.datasqrl.graphql.server.RootGraphqlModel.QueryParameterHandler;
+
 import lombok.EqualsAndHashCode;
 import lombok.EqualsAndHashCode.Include;
 import lombok.ToString;
 import lombok.Value;
-import org.apache.calcite.rel.RelNode;
 
 @Value
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
@@ -27,9 +29,9 @@ public class APIQuery implements IdentifiedQuery {
   NamePath namePath;
   // Query
   RelNode relNode;
-  // Where parameters come from
-  List<JdbcParameterHandler> parameters;
-  // How arguments are matched
+  // Where parameters come from (where parameters come from at runtime)
+  List<QueryParameterHandler> parameters;
+  // How arguments are matched (matching the arguments in the signature of the functions)
   List<Argument> graphqlArguments;
   // Has a limit/offset
   boolean isLimitOffset;
@@ -37,7 +39,9 @@ public class APIQuery implements IdentifiedQuery {
 
   @Override
   public Optional<Name> getViewName() {
-    if (!getParameters().isEmpty()) return Optional.empty();
+    if (!getParameters().isEmpty()) {
+        return Optional.empty();
+    }
     return Optional.of(namePath.getLast());
   }
 

@@ -1,54 +1,115 @@
-name: Latest Docker Build and Push
+
+name: Docker Build and Push
 
 on:
   push:
-    branches: [main, v0.5.9-release]
+    branches:
+      - main
+      - sqrl-0.5.x
+      - v0.5.9-release
+    tags:
+      - "v*.*.*"
+  pull_request:
 
 jobs:
-  build:
+  docker:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-    if: "!contains(github.event.head_commit.message, 'maven-release-plugin')"
+    timeout-minutes: 45
+    permissions:
+      contents: write
+      packages: write
+    strategy:
+      matrix:
+        target:
+          - context: sqrl-tools
+            name: cmd
+          - context: sqrl-server/sqrl-server-vertx
+            name: sqrl-server
+          - context: sqrl-tools/sqrl-flink-runner/target
+            name: sqrl-flink-runner
+
     steps:
       - name: Setup Timezone
         uses: szenius/set-timezone@v1.1
         with:
           timezoneLinux: "America/Los_Angeles"
-      - name: checkout
+
+      - name: Checkout Code
         uses: actions/checkout@v3
-      - name: Set up JDK 11
+
+      - name: Set up JDK
         uses: actions/setup-java@v3
         with:
-          java-version: '11'
+          java-version: '17'
           distribution: 'adopt'
           cache: maven
+
+      - name: Generate settings.xml
+        run: |
+          mkdir -p ~/.m2
+          cat <<EOF > ~/.m2/settings.xml
+          <settings>
+            <servers>
+              <server>
+                <id>github</id>
+                <username>${{ github.actor }}</username>
+                <password>${{ secrets.GITHUB_TOKEN }}</password>
+              </server>
+            </servers>
+          </settings>
+          EOF
+
+      - name: Download dependencies
+        run: |
+          set -x
+          mvn -B org.apache.maven.plugins:maven-dependency-plugin:3.8.1:go-offline de.qaware.maven:go-offline-maven-plugin:1.2.8:resolve-dependencies
+
       - name: Build SQRL
         env:
           DATASQRL_TOKEN: ${{ secrets.DATASQRL_TOKEN }}
-        run: mvn -T 1 -B -U -e clean package
-      # Set up Docker
+        run: mvn -T 1 -B -U -e clean package -DskipTests=true
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
-      - name: Login to Docker Hub
+
+      - name: Log in to Docker or GitHub Packages
         uses: docker/login-action@v2
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-      - name: Build and Push sqrl-cli Dev
+          registry: ${{ github.event_name == 'pull_request' && 'ghcr.io' || '' }}
+          username: ${{ github.event_name == 'pull_request' && github.actor || secrets.DOCKER_USERNAME }}
+          password: ${{ github.event_name == 'pull_request' && secrets.GITHUB_TOKEN || secrets.DOCKER_PASSWORD }}
+
+      - name: Determine Version and Tag Suffix
+        id: vars
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "TAG_SUFFIX=pr-${{ github.event.pull_request.number }}" >> $GITHUB_ENV
+            echo "REGISTRY=ghcr.io/datasqrl" >> $GITHUB_ENV
+          elif [[ "${GITHUB_REF_TYPE}}" == "tag" ]]; then
+            VERSION=${GITHUB_REF#refs/tags/}
+            echo "TAG_SUFFIX=${VERSION}" >> $GITHUB_ENV
+            echo "LATEST_TAG=true" >> $GITHUB_ENV
+            echo "REGISTRY=datasqrl" >> $GITHUB_ENV
+          else
+            VERSION=$(mvn -q -DforceStdout help:evaluate -Dexpression=project.version)
+            echo "TAG_SUFFIX=v${VERSION}" >> $GITHUB_ENV
+            echo "REGISTRY=datasqrl" >> $GITHUB_ENV
+            if [[ "${GITHUB_REF}" == "refs/heads/main" ]]; then
+              echo "DEV_TAG=true" >> $GITHUB_ENV
+            fi
+          fi
+
+      - name: Build and Push ${{ matrix.target.name }} Image
         uses: docker/build-push-action@v3
         with:
-          context: sqrl-tools
-          file: sqrl-tools/Dockerfile
+          context: ${{ matrix.target.context }}
+          file: ${{ matrix.target.context }}/Dockerfile
           push: true
-          tags: datasqrl/cmd:dev
-          platforms: linux/amd64,linux/arm64
-      - name: Build and Push sqrl-vertx Docker
-        uses: docker/build-push-action@v3
-        with:
-          context: sqrl-server/sqrl-server-vertx
-          file: sqrl-server/sqrl-server-vertx/Dockerfile
-          push: true
-          tags: datasqrl/sqrl-server:dev
+          tags: |
+            ${{ env.REGISTRY }}/${{ matrix.target.name }}:${{ env.TAG_SUFFIX }}
+            ${{ env.DEV_TAG == 'true' && format('{0}/{1}:dev', env.REGISTRY, matrix.target.name) || '' }}
+            ${{ env.LATEST_TAG == 'true' && format('{0}/{1}:latest', env.REGISTRY, matrix.target.name) || '' }}
           platforms: linux/amd64,linux/arm64

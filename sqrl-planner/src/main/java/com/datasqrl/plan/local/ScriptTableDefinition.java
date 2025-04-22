@@ -3,11 +3,13 @@
  */
 package com.datasqrl.plan.local;
 
+import java.util.Map;
+
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.plan.table.PhysicalRelationalTable;
 import com.datasqrl.plan.table.ScriptRelationalTable;
 import com.datasqrl.util.StreamUtil;
-import java.util.Map;
+
 import lombok.Getter;
 import lombok.NonNull;
 

@@ -3,8 +3,9 @@
  */
 package com.datasqrl.error;
 
-import com.datasqrl.error.ErrorLocation.FileRange;
 import java.io.Serializable;
+
+import com.datasqrl.error.ErrorLocation.FileRange;
 
 public interface SourceMap extends Serializable {
 

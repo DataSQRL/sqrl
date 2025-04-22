@@ -3,32 +3,39 @@
  */
 package com.datasqrl.config;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.apache.commons.lang3.tuple.Pair;
+
 import com.datasqrl.cmd.EngineKeys;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.IExecutionEngine;
 import com.datasqrl.engine.database.DatabaseEngine;
 import com.datasqrl.engine.database.QueryEngine;
+import com.datasqrl.engine.export.PrintEngineFactory;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.SimplePipeline;
-import com.datasqrl.engine.stream.StreamEngine;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.util.ServiceLoaderDiscovery;
 import com.datasqrl.util.StreamUtil;
 import com.google.inject.Injector;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
+
 import lombok.Getter;
 import lombok.NonNull;
-import org.apache.commons.lang3.tuple.Pair;
 
 /**
  * Configuration for the engines
  * <p>
  */
 public class PipelineFactory {
+
+  public static final List<String> defaultEngines = List.of(PrintEngineFactory.NAME);
 
   private final Injector injector;
   private final List<String> enabledEngines;
@@ -42,11 +49,15 @@ public class PipelineFactory {
     this.engineConfig = engineConfig;
   }
 
-  private Map<String, ExecutionEngine> getEngines(Optional<EngineFactory.Type> engineType) {
+  private Map<String, ExecutionEngine> getEngines(Optional<EngineType> engineType) {
     Map<String, ExecutionEngine> engines = new HashMap<>();
-    for (String engineId : enabledEngines) {
-      if (engineId.equalsIgnoreCase(EngineKeys.TEST)) continue;
-      EngineFactory engineFactory = ServiceLoaderDiscovery.get(
+    Set<String> allEngines = new HashSet<>(enabledEngines);
+    allEngines.addAll(defaultEngines);
+    for (String engineId : allEngines) {
+      if (engineId.equalsIgnoreCase(EngineKeys.TEST)) {
+        continue;
+    }
+      var engineFactory = ServiceLoaderDiscovery.get(
           EngineFactory.class,
           EngineFactory::getEngineName,
           engineId);
@@ -70,10 +81,10 @@ public class PipelineFactory {
     return getEngines(Optional.empty());
   }
 
-  public Pair<String,ExecutionEngine> getEngine(EngineFactory.Type type) {
-    Map<String,ExecutionEngine> engines = getEngines(Optional.of(type));
+  public Pair<String,ExecutionEngine> getEngine(EngineType type) {
+    var engines = getEngines(Optional.of(type));
     //Todo: error collector
-    ErrorCollector errors = ErrorCollector.root();
+    var errors = ErrorCollector.root();
     errors.checkFatal(!engines.isEmpty(), "Need to configure a %s engine", type.name().toLowerCase());
     errors.checkFatal(engines.size()==1, "Currently support only a single %s engine", type.name().toLowerCase());
     return Pair.of(engines.entrySet().iterator().next());

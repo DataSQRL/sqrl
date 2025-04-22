@@ -1,10 +1,10 @@
 package com.datasqrl.plan.rules;
 
-import com.datasqrl.engine.EngineFeature;
-import lombok.Value;
-import org.apache.calcite.sql.SqlFunction;
 import org.apache.calcite.sql.SqlOperator;
-import org.apache.flink.table.functions.FunctionDefinition;
+
+import com.datasqrl.engine.EngineFeature;
+
+import lombok.Value;
 
 public interface EngineCapability {
 

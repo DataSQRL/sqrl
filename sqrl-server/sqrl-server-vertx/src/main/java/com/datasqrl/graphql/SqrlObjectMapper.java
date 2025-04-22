@@ -4,6 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
+/**
+ * Configures a Jackson ObjectMapper for JSON serialization/deserialization.
+ */
 public class SqrlObjectMapper {
 
   public static final ObjectMapper mapper = new ObjectMapper();

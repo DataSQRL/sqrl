@@ -3,12 +3,13 @@
  */
 package com.datasqrl.discovery.stats;
 
-import com.datasqrl.canonicalizer.NameCanonicalizer;
-import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.canonicalizer.NamePath;
-import com.google.common.base.Preconditions;
 import java.util.Map;
+
+import com.datasqrl.canonicalizer.NameCanonicalizer;
+import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.error.ErrorCollector;
+import com.google.common.base.Preconditions;
+
 import lombok.ToString;
 
 @ToString
@@ -45,10 +46,10 @@ public class SourceTableStatistics implements
   }
 
   public RelationStats getRelationStats(NamePath path) {
-    RelationStats current = relation;
-    for (int i = 0; i < path.size(); i++) {
-      Name n = path.get(i);
-      FieldStats field = current.fieldStats.get(n);
+    var current = relation;
+    for (var i = 0; i < path.size(); i++) {
+      var n = path.get(i);
+      var field = current.fieldStats.get(n);
       if (field == null) {
         return RelationStats.EMPTY;
       }

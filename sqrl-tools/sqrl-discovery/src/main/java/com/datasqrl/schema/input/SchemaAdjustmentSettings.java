@@ -8,7 +8,7 @@ import java.io.Serializable;
 
 public interface SchemaAdjustmentSettings extends Serializable {
 
-  SchemaAdjustmentSettings DEFAULT = new SchemaAdjustmentSettings() {
+  com.datasqrl.io.schema.flexible.input.SchemaAdjustmentSettings DEFAULT = new com.datasqrl.io.schema.flexible.input.SchemaAdjustmentSettings() {
   };
 
   default boolean deepenArrays() {

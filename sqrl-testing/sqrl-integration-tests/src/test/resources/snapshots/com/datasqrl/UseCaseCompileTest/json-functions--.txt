@@ -1,240 +1,220 @@
 >>>pipeline_explain.txt
-=== json
-ID:     json_2
+=== Json
+ID:     default_catalog.default_database.Json
 Type:   stream
 Stage:  flink
+Inputs: default_catalog.default_database.Json__def
+Annotations:
+ - stream-root: Json__def
 Primary Key: id
 Timestamp  : timestamp
 Schema:
  - id: BIGINT NOT NULL
  - val: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Plan:
-LogicalTableScan(table=[[json_1]])
-
+LogicalProject(id=[$0], val=[$1], timestamp=[$2])
+  LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($2, 1:INTERVAL SECOND)])
+    LogicalTableScan(table=[[default_catalog, default_database, Json__def]])
+SQL: CREATE VIEW `Json`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`Json__def`
 === UnmodifiedJsonData
-ID:     unmodifiedjsondata_1
+ID:     default_catalog.default_database.UnmodifiedJsonData
 Type:   stream
 Stage:  flink
-Inputs: json_2
+Inputs: default_catalog.default_database.Json
+Annotations:
+ - stream-root: Json__def
+ - sort: [0 ASC-nulls-first]
 Primary Key: id
-Timestamp  : _timestamp
+Timestamp  : -
 Schema:
  - id: BIGINT NOT NULL
  - val: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - json_col: RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI=')
- - json_col_2: RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI=')
- - json_col_3: RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI=')
- - json_col_4: RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI=')
- - _timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
-Post Processors:
- - sort: #0: id BIGINT ASC
+ - json_col: RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw==')
+ - json_col_2: RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw==')
+ - json_col_3: RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw==')
+ - json_col_4: RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw==')
 Plan:
-LogicalProject(id=[$0], val=[$1], json_col=[TOJSON('{"a": 1}')], json_col_2=[TOJSON('{"a": 2}')], json_col_3=[TOJSON('{"b": 1}')], json_col_4=[TOJSON('{"b": 2}')], _timestamp=[$2])
-  LogicalTableScan(table=[[json_2]])
+LogicalProject(id=[$0], val=[$1], json_col=[TOJSON('{"a": 1}')], json_col_2=[TOJSON('{"a": 2}')], json_col_3=[TOJSON('{"b": 1}')], json_col_4=[TOJSON('{"b": 2}')])
+  LogicalTableScan(table=[[default_catalog, default_database, Json]])
+SQL: CREATE VIEW UnmodifiedJsonData AS  SELECT id,
+                             val,
+                             TOJSON('{"a": 1}') AS json_col,
+                             TOJSON('{"a": 2}') AS json_col_2,
+                             TOJSON('{"b": 1}') AS json_col_3,
+                             TOJSON('{"b": 2}') AS json_col_4
+                     FROM Json
+                     ORDER BY id;
 
->>>flink.json
-{
-  "flinkSql" : [
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `jsonExtract` AS 'com.datasqrl.json.JsonExtract' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `jsonQuery` AS 'com.datasqrl.json.JsonQuery' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `toJson` AS 'com.datasqrl.json.ToJson' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `jsonArrayAgg` AS 'com.datasqrl.json.JsonArrayAgg' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `jsonObjectAgg` AS 'com.datasqrl.json.JsonObjectAgg' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `jsonExists` AS 'com.datasqrl.json.JsonExists' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `jsonConcat` AS 'com.datasqrl.json.JsonConcat' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `jsonObject` AS 'com.datasqrl.json.JsonObject' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `jsonArray` AS 'com.datasqrl.json.JsonArray' LANGUAGE JAVA;",
-    "CREATE TEMPORARY FUNCTION IF NOT EXISTS `jsonToString` AS 'com.datasqrl.json.JsonToString' LANGUAGE JAVA;",
-    "CREATE TEMPORARY TABLE `json_1` (\n  `id` BIGINT NOT NULL,\n  `val` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`id`) NOT ENFORCED,\n  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND\n) WITH (\n  'format' = 'flexible-json',\n  'path' = '${DATA_PATH}/json.jsonl',\n  'connector' = 'filesystem'\n);",
-    "CREATE TEMPORARY TABLE `json_2` (\n  `id` BIGINT NOT NULL,\n  `val` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`id`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'json_2',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE TEMPORARY TABLE `unmodifiedjsondata_1` (\n  `id` BIGINT NOT NULL,\n  `val` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `json_col` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),\n  `json_col_2` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),\n  `json_col_3` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),\n  `json_col_4` RAW('com.datasqrl.json.FlinkJsonType', 'ADFjb20uZGF0YXNxcmwuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQApY29tLmRhdGFzcXJsLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),\n  `_timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  PRIMARY KEY (`id`) NOT ENFORCED\n) WITH (\n  'password' = '${JDBC_PASSWORD}',\n  'connector' = 'jdbc-sqrl',\n  'driver' = 'org.postgresql.Driver',\n  'table-name' = 'unmodifiedjsondata_1',\n  'url' = '${JDBC_URL}',\n  'username' = '${JDBC_USERNAME}'\n);",
-    "CREATE VIEW `table$1`\nAS\nSELECT *\nFROM `json_1`;",
-    "CREATE VIEW `table$2`\nAS\nSELECT `id`, `val`, `default_catalog`.`default_database`.`TOJSON`('{\"a\": 1}') AS `json_col`, `default_catalog`.`default_database`.`TOJSON`('{\"a\": 2}') AS `json_col_2`, `default_catalog`.`default_database`.`TOJSON`('{\"b\": 1}') AS `json_col_3`, `default_catalog`.`default_database`.`TOJSON`('{\"b\": 2}') AS `json_col_4`, `timestamp` AS `_timestamp`\nFROM `json_1`;",
-    "EXECUTE STATEMENT SET BEGIN\nINSERT INTO `json_2`\n(SELECT *\n FROM `table$1`)\n;\nINSERT INTO `unmodifiedjsondata_1`\n (SELECT *\n  FROM `table$2`)\n ;\n END;"
-  ],
-  "connectors" : [
-    "jdbc-sqrl",
-    "filesystem"
-  ],
-  "formats" : [
-    "flexible-json"
-  ]
-}
+>>>flink-sql-no-functions.sql
+CREATE TEMPORARY TABLE `Json__schema` (
+  `id` BIGINT NOT NULL,
+  `val` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+) WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `Json__def` (
+  PRIMARY KEY (`id`) NOT ENFORCED,
+  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
+) WITH (
+  'format' = 'flexible-json',
+  'path' = '${DATA_PATH}/json.jsonl',
+  'connector' = 'filesystem'
+)
+LIKE `Json__schema`;
+CREATE VIEW `Json`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`Json__def`;
+CREATE VIEW `UnmodifiedJsonData`
+AS
+SELECT `id`, `val`, TOJSON('{"a": 1}') AS `json_col`, TOJSON('{"a": 2}') AS `json_col_2`, TOJSON('{"b": 1}') AS `json_col_3`, TOJSON('{"b": 2}') AS `json_col_4`
+FROM `Json`;
+CREATE VIEW `JsonArrayTest`
+AS
+SELECT `id`, JSONARRAY(`id`, `json_col`) AS `json_array_string_function`, JSONARRAY(`json_col`, `json_col_2`) AS `json_array_json_function`
+FROM `UnmodifiedJsonData`;
+CREATE VIEW `JsonConcatTest`
+AS
+SELECT `id`, JSONCONCAT(`json_col`, `json_col_2`) AS `json_concat_same_key_function`, JSONCONCAT(`json_col`, `json_col_3`) AS `json_concat_diff_key_function`
+FROM `UnmodifiedJsonData`;
+CREATE VIEW `JsonExistsTest`
+AS
+SELECT `id`, JSONEXISTS(`json_col`, '$.a') AS `json_exists_function`, JSONEXISTS(`json_col`, '$.nonExistentPath') AS `json_not_exists_function`
+FROM `UnmodifiedJsonData`;
+CREATE VIEW `JsonExtractTest`
+AS
+SELECT `id`, JSONEXTRACT(`json_col`, '$.a') AS `json_extract_function`, JSONEXTRACT(`json_col`, '$.nonExistentPath') AS `json_extract_not_exists_function`, JSONEXTRACT(`json_col`, '$.nonExistentPath', 'default') AS `json_extract_with_default_function`, JSONEXTRACT(`json_col`, '$.a', 100) AS `json_extract_with_default_int_function`
+FROM `UnmodifiedJsonData`;
+CREATE VIEW `JsonArrayAggTest`
+AS
+SELECT `val`, JSONARRAYAGG(`json_col`) AS `json_array_agg_function`
+FROM `UnmodifiedJsonData`
+GROUP BY `val`;
+CREATE VIEW `JsonObjectAggTest`
+AS
+SELECT `val`, JSONOBJECTAGG('key', `json_col`) AS `json_object_agg_function`
+FROM `UnmodifiedJsonData`
+GROUP BY `val`;
+CREATE VIEW `ToJsonTest`
+AS
+SELECT `id`, TOJSON(`json_col`) AS `to_json_function`
+FROM `UnmodifiedJsonData`;
+CREATE TABLE `Json_1` (
+  `id` BIGINT NOT NULL,
+  `val` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`id`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'table-name' = 'Json_1'
+);
+CREATE TABLE `UnmodifiedJsonData_2` (
+  `id` BIGINT NOT NULL,
+  `val` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `json_col` RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
+  `json_col_2` RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
+  `json_col_3` RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
+  `json_col_4` RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
+  PRIMARY KEY (`id`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'table-name' = 'UnmodifiedJsonData_2'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`Json_1`
+(SELECT *
+ FROM `default_catalog`.`default_database`.`Json`)
+;
+INSERT INTO `default_catalog`.`default_database`.`UnmodifiedJsonData_2`
+ (SELECT *
+  FROM `default_catalog`.`default_database`.`UnmodifiedJsonData`)
+ ;
+ END
 >>>kafka.json
 {
   "topics" : [ ]
 }
->>>postgres.json
-{
-  "ddl" : [
-    {
-      "name" : "json_2",
-      "columns" : [
-        "\"id\" BIGINT NOT NULL",
-        "\"val\" TEXT NOT NULL",
-        "\"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL"
-      ],
-      "primaryKeys" : [
-        "\"id\""
-      ],
-      "sql" : "CREATE TABLE IF NOT EXISTS json_2 (\"id\" BIGINT NOT NULL,\"val\" TEXT NOT NULL,\"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"id\"));"
-    },
-    {
-      "name" : "unmodifiedjsondata_1",
-      "columns" : [
-        "\"id\" BIGINT NOT NULL",
-        "\"val\" TEXT NOT NULL",
-        "\"json_col\" JSONB ",
-        "\"json_col_2\" JSONB ",
-        "\"json_col_3\" JSONB ",
-        "\"json_col_4\" JSONB ",
-        "\"_timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL"
-      ],
-      "primaryKeys" : [
-        "\"id\""
-      ],
-      "sql" : "CREATE TABLE IF NOT EXISTS unmodifiedjsondata_1 (\"id\" BIGINT NOT NULL,\"val\" TEXT NOT NULL,\"json_col\" JSONB ,\"json_col_2\" JSONB ,\"json_col_3\" JSONB ,\"json_col_4\" JSONB ,\"_timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"id\"));"
-    }
-  ],
-  "views" : [
-    {
-      "name" : "json",
-      "sql" : "CREATE OR REPLACE VIEW \"json\"(\"id\", \"val\", \"timestamp\") AS SELECT *\nFROM \"json_2\"\nORDER BY \"timestamp\" DESC NULLS LAST, \"id\";"
-    },
-    {
-      "name" : "UnmodifiedJsonData",
-      "sql" : "CREATE OR REPLACE VIEW \"UnmodifiedJsonData\"(\"id\", \"val\", \"json_col\", \"json_col_2\", \"json_col_3\", \"json_col_4\", \"_timestamp\") AS SELECT *\nFROM \"unmodifiedjsondata_1\"\nORDER BY \"id\";"
-    }
-  ]
-}
+>>>postgres-schema.sql
+CREATE TABLE IF NOT EXISTS "Json_1" ("id" BIGINT NOT NULL, "val" TEXT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));
+CREATE TABLE IF NOT EXISTS "UnmodifiedJsonData_2" ("id" BIGINT NOT NULL, "val" TEXT NOT NULL, "json_col" JSONB , "json_col_2" JSONB , "json_col_3" JSONB , "json_col_4" JSONB  , PRIMARY KEY ("id"))
+>>>postgres-views.sql
+CREATE OR REPLACE VIEW "Json"("id", "val", "timestamp") AS SELECT *
+FROM "Json_1";
+CREATE OR REPLACE VIEW "UnmodifiedJsonData"("id", "val", "json_col", "json_col_2", "json_col_3", "json_col_4") AS SELECT *
+FROM (SELECT "id", "val", "json_col", "json_col_2", "json_col_3", "json_col_4"
+  FROM "UnmodifiedJsonData_2"
+  ORDER BY "id" NULLS FIRST) AS "t1"
 >>>vertx.json
 {
   "model" : {
-    "coords" : [
+    "queries" : [
       {
         "type" : "args",
         "parentType" : "Query",
-        "fieldName" : "json",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"json_2\"\nORDER BY \"timestamp\" DESC NULLS LAST, \"id\"",
-              "parameters" : [ ]
+        "fieldName" : "Json",
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
             }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "id"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"json_2\"\nWHERE \"id\" = $1\nORDER BY \"timestamp\" DESC NULLS LAST",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "id"
-                }
-              ]
-            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM \"Json_1\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
           }
-        ]
+        }
       },
       {
         "type" : "args",
         "parentType" : "Query",
         "fieldName" : "UnmodifiedJsonData",
-        "matchs" : [
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"unmodifiedjsondata_1\"\nORDER BY \"id\"",
-              "parameters" : [ ]
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
             }
-          },
-          {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "id"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "PagedJdbcQuery",
-              "type" : "PagedJdbcQuery",
-              "sql" : "SELECT *\nFROM \"unmodifiedjsondata_1\"\nWHERE \"id\" = $1\nORDER BY \"id\"",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "type" : "arg",
-                  "path" : "id"
-                }
-              ]
-            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM (SELECT \"id\", \"val\", \"json_col\", \"json_col_2\", \"json_col_3\", \"json_col_4\"\n  FROM \"UnmodifiedJsonData_2\"\n  ORDER BY \"id\" NULLS FIRST) AS \"t\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
           }
-        ]
+        }
       }
     ],
     "mutations" : [ ],
     "subscriptions" : [ ],
     "schema" : {
       "type" : "string",
-      "type" : "string",
-      "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\ntype Query {\n  json(id: Float, limit: Int = 10, offset: Int = 0): [json!]\n  UnmodifiedJsonData(id: Float, limit: Int = 10, offset: Int = 0): [UnmodifiedJsonData!]\n}\n\ntype UnmodifiedJsonData {\n  id: Float!\n  val: String!\n  json_col: JSON\n  json_col_2: JSON\n  json_col_3: JSON\n  json_col_4: JSON\n}\n\ntype json {\n  id: Float!\n  val: String!\n  timestamp: DateTime!\n}\n"
+      "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\n\"A JSON scalar\"\nscalar JSON\n\ntype Json {\n  id: GraphQLBigInteger!\n  val: String!\n  timestamp: DateTime!\n}\n\ntype Query {\n  Json(limit: Int = 10, offset: Int = 0): [Json!]\n  UnmodifiedJsonData(limit: Int = 10, offset: Int = 0): [UnmodifiedJsonData!]\n}\n\ntype UnmodifiedJsonData {\n  id: GraphQLBigInteger!\n  val: String!\n  json_col: JSON\n  json_col_2: JSON\n  json_col_3: JSON\n  json_col_4: JSON\n}\n"
     }
   }
 }

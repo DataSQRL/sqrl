@@ -29,7 +29,7 @@ public class ReservedName extends AbstractName {
   public static final ReservedName SYSTEM_PRIMARY_KEY = new ReservedName(SYSTEM_HIDDEN_PREFIX + "pk");
   public static final ReservedName PARENT = new ReservedName("parent");
   public static final ReservedName ALL = new ReservedName("*");
-  public static final ReservedName VARIABLE_PREFIX = new ReservedName("@");
+  public static final ReservedName VARIABLE_PREFIX = new ReservedName("$");
 
   public static final ReservedName MUTATION_TIME = new ReservedName("event_time");
   public static final ReservedName MUTATION_PRIMARY_KEY = UUID;

@@ -1,23 +1,28 @@
 package com.datasqrl.inject;
 
+import java.nio.file.Path;
+
+import org.apache.calcite.rel.type.RelDataTypeFactory;
+import org.apache.calcite.tools.RelBuilder;
+
 import com.datasqrl.MainScriptImpl;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.SqrlFrameworkImpl;
 import com.datasqrl.calcite.SqrlTableFactory;
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
+import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.ConnectorFactoryFactoryImpl;
 import com.datasqrl.config.LogManagerImpl;
-import com.datasqrl.config.PackageJson.CompilerConfig;
-import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.PackageJson;
-import com.datasqrl.config.TableConfigLoader;
+import com.datasqrl.config.PackageJson.CompilerConfig;
 import com.datasqrl.config.SqrlCompilerConfiguration;
 import com.datasqrl.config.SqrlConfigPipeline;
+import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.config.SqrlRelBuilder;
+import com.datasqrl.config.TableConfigLoader;
 import com.datasqrl.config.TableConfigLoaderImpl;
 import com.datasqrl.discovery.preprocessor.FlexibleSchemaInferencePreprocessor;
-import com.datasqrl.engine.log.LogFactory;
 import com.datasqrl.engine.log.LogManager;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
@@ -36,7 +41,6 @@ import com.datasqrl.packager.preprocess.JarPreprocessor;
 import com.datasqrl.packager.preprocess.Preprocessor;
 import com.datasqrl.packager.preprocess.ScriptPreprocessor;
 import com.datasqrl.packager.preprocess.TablePreprocessor;
-import com.datasqrl.packager.repository.Repository;
 import com.datasqrl.plan.CreateTableResolver;
 import com.datasqrl.plan.CreateTableResolverImpl;
 import com.datasqrl.plan.MainScript;
@@ -47,9 +51,6 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Named;
-import java.nio.file.Path;
-import org.apache.calcite.rel.type.RelDataTypeFactory;
-import org.apache.calcite.tools.RelBuilder;
 
 public class SqrlInjector extends AbstractModule {
 
@@ -59,17 +60,15 @@ public class SqrlInjector extends AbstractModule {
   private final Path targetDir;
   private final PackageJson sqrlConfig;
   private final ExecutionGoal goal;
-  private final Repository repository;
 
   public SqrlInjector(ErrorCollector errors, Path rootDir, Path targetDir,
-      PackageJson sqrlConfig, ExecutionGoal goal, Repository repository) {
+      PackageJson sqrlConfig, ExecutionGoal goal) {
     this.errors = errors;
     this.rootDir = rootDir;
-    this.buildDir = rootDir.resolve("build");
+    this.buildDir = rootDir.resolve(SqrlConstants.BUILD_DIR_NAME);
     this.targetDir = targetDir;
     this.sqrlConfig = sqrlConfig;
     this.goal = goal;
-    this.repository = repository;
   }
 
   @Override
@@ -132,11 +131,6 @@ public class SqrlInjector extends AbstractModule {
   @Provides
   public PackageJson provideSqrlConfig() {
     return sqrlConfig;
-  }
-
-  @Provides
-  public Repository provideRepository() {
-    return repository;
   }
 
   @Provides

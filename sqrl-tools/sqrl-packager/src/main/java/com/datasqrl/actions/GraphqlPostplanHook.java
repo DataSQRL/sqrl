@@ -1,7 +1,9 @@
 package com.datasqrl.actions;
 
+import java.util.Optional;
+
 import com.datasqrl.calcite.SqrlFramework;
-import com.datasqrl.config.EngineFactory.Type;
+import com.datasqrl.config.EngineType;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.server.ServerPhysicalPlan;
@@ -11,7 +13,7 @@ import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.graphql.server.RootGraphqlModel.StringSchema;
 import com.datasqrl.plan.queries.APISource;
 import com.google.inject.Inject;
-import java.util.Optional;
+
 import lombok.AllArgsConstructor;
 
 @AllArgsConstructor(onConstructor_ = @Inject)
@@ -22,17 +24,17 @@ public class GraphqlPostplanHook {
   private final APIConnectorManager apiManager;
 
   public Optional<RootGraphqlModel> updatePlan(Optional<APISource> source, PhysicalPlan physicalPlan) {
-    if (pipeline.getStage(Type.SERVER).isEmpty()) {
+    if (pipeline.getStageByType(EngineType.SERVER).isEmpty()) {
       return Optional.empty();
     }
 
     Optional<RootGraphqlModel> root;
     if (source.isPresent()) {
-      GraphqlModelGenerator modelGen = new GraphqlModelGenerator(
+      var modelGen = new GraphqlModelGenerator(
           framework.getCatalogReader().nameMatcher(), framework.getSchema(),
           physicalPlan.getDatabaseQueries(), framework.getQueryPlanner(), apiManager, physicalPlan);
       modelGen.walk(source.get());
-      RootGraphqlModel model = RootGraphqlModel.builder().coords(modelGen.getCoords())
+      var model = RootGraphqlModel.builder().queries(modelGen.getCoords())
           .mutations(modelGen.getMutations()).subscriptions(modelGen.getSubscriptions())
           .schema(StringSchema.builder().schema(source.get().getSchemaDefinition()).build())
           .build();

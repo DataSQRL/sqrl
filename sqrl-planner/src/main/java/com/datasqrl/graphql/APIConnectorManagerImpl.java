@@ -1,12 +1,26 @@
 package com.datasqrl.graphql;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import org.apache.calcite.jdbc.SqrlSchema;
+import org.apache.calcite.rel.type.RelDataTypeFactory;
+import org.apache.calcite.rel.type.RelDataTypeField;
+import org.apache.calcite.rel.type.RelDataTypeFieldImpl;
+
 import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.engine.log.Log;
-import com.datasqrl.engine.log.LogFactory.Timestamp;
 import com.datasqrl.engine.log.LogFactory;
+import com.datasqrl.engine.log.LogFactory.Timestamp;
 import com.datasqrl.engine.log.LogManager;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableSource;
@@ -24,20 +38,9 @@ import com.datasqrl.plan.table.PhysicalRelationalTable;
 import com.datasqrl.schema.RootSqrlTable;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import org.apache.calcite.jdbc.SqrlSchema;
-import org.apache.calcite.rel.type.RelDataTypeFactory;
-import org.apache.calcite.rel.type.RelDataTypeField;
-import org.apache.calcite.rel.type.RelDataTypeFieldImpl;
 
 @Getter
 @Singleton
@@ -66,16 +69,16 @@ public class APIConnectorManagerImpl implements APIConnectorManager {
    */
   @Override
   public void addMutation(APIMutation mutation) {
-    NamePath apiNamePath = apiToModulePath(mutation.getSource());
-    Optional<SqrlModule> module = moduleLoader.getModule(apiNamePath);
+    var apiNamePath = apiToModulePath(mutation.getSource());
+    var module = moduleLoader.getModule(apiNamePath);
     if (module.isPresent() && module.get().getNamespaceObject(mutation.getName()).isPresent()) {
-      Optional<NamespaceObject> log = module.get().getNamespaceObject(mutation.getName());
+      var log = module.get().getNamespaceObject(mutation.getName());
       errors.checkFatal(log.isPresent(), "Could not load mutation endpoint for %s", mutation);
       if (log.get() instanceof TableSourceSinkNamespaceObject) {
         errors.checkFatal(log.get() instanceof TableSourceSinkNamespaceObject,
             "Loaded mutation endpoint for %s from module %s is not a source and sink", mutation,
             module.get());
-        TableSourceSinkNamespaceObject sourceSink = (TableSourceSinkNamespaceObject) log.get();
+        var sourceSink = (TableSourceSinkNamespaceObject) log.get();
         sqrlSchema.getMutations().put(mutation, sourceSink.getSource());
       }
       throw new RuntimeException("Could not find mutation in module " + apiNamePath.getDisplay());
@@ -83,14 +86,14 @@ public class APIConnectorManagerImpl implements APIConnectorManager {
       //Create module if log engine is set
       errors.checkFatal(logEngine.hasLogEngine(), "Cannot create mutation %s: Could not load "
           + "module for %s and no log engine configured", mutation, apiNamePath);
-      SqrlModule logModule = sqrlSchema.getModules().get(apiNamePath);
+      var logModule = sqrlSchema.getModules().get(apiNamePath);
       if (logModule == null) {
         logModule = new LogModule();
         sqrlSchema.getModules().put(apiNamePath, logModule);
       }
-      String logId = getLogId(mutation);
+      var logId = getLogId(mutation);
       //TODO: add _event_id to mutation schema and provide as primary key
-      Log log = createLog(logId, mutation.getName(), mutation.getSchema(), List.of(mutation.getPkName()),
+      var log = createLog(logId, mutation.getName(), mutation.getSchema(), List.of(mutation.getPkName()),
           new Timestamp(mutation.getTimestampName(), LogFactory.TimestampType.LOG_TIME));
       ((LogModule) logModule).addEntry(mutation.getName(), log);
       sqrlSchema.getMutations().put(mutation, log.getSource());
@@ -107,8 +110,8 @@ public class APIConnectorManagerImpl implements APIConnectorManager {
   public Log addSubscription(APISubscription subscription, SqrlTableMacro sqrlTable) {
     errors.checkFatal(logEngine.hasLogEngine(),
         "Cannot create subscriptions because no log engine is configured");
-    RootSqrlTable rootSqrlTable = (RootSqrlTable) sqrlTable;
-    PhysicalRelationalTable table = ((PhysicalRelationalTable) rootSqrlTable.getInternalTable());
+    var rootSqrlTable = (RootSqrlTable) sqrlTable;
+    var table = ((PhysicalRelationalTable) rootSqrlTable.getInternalTable());
     //kafka upsert
 //    errors.checkFatal(table.getRoot().getType() == TableType.STREAM,
 //        "Table %s for subscription %s is not a stream table", table.getTableName(), subscription.getName());
@@ -118,7 +121,7 @@ public class APIConnectorManagerImpl implements APIConnectorManager {
       log = ((Log) sqrlSchema.getApiExports().get(sqrlTable));
     } else {
       //otherwise create new log for it
-      String logId = table.getNameId();
+      var logId = table.getNameId();
       RelDataTypeField tableSchema = new RelDataTypeFieldImpl(table.getTableName().getDisplay(), -1,
           table.getRowType());
       List<String> pks = IntStream.of(table.getPrimaryKey().getPkIndexes())
