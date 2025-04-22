@@ -50,16 +50,4 @@ public class PostgresJdbcEngine extends AbstractJDBCDatabaseEngine {
     return new PostgresDDLFactory();
   }
 
-  @Deprecated
-  PostgresSqlNodeToString sqlToString = new PostgresSqlNodeToString();
-
-  @Override
-  @Deprecated
-  protected String createView(SqlIdentifier viewNameIdentifier, SqlParserPos pos,
-      SqlNodeList columnList, SqlNode viewSqlNode) {
-    var createView = new SqlCreatePostgresView(pos, true,
-        viewNameIdentifier, columnList,
-        viewSqlNode);
-    return sqlToString.convert(() -> createView).getSql() + ";";
-  }
 }

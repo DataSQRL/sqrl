@@ -3,7 +3,8 @@ package com.datasqrl.graphql.util;
 import org.apache.calcite.sql.parser.SqlParserPos;
 
 import com.datasqrl.error.ErrorLabel;
-import com.datasqrl.parse.SqrlAstException;
+import com.datasqrl.error.ErrorLocation.FileLocation;
+import com.datasqrl.v2.parser.StatementParserException;
 
 import graphql.language.SourceLocation;
 
@@ -15,20 +16,20 @@ public class GraphqlCheckUtil {
     }
   }
 
-  public static SqrlAstException createUnknownThrowable(String message, Object... args) {
+  public static StatementParserException createUnknownThrowable(String message, Object... args) {
     return createThrowable(new SourceLocation(0,0), message, args);
   }
 
-  public static SqrlAstException createThrowable(SourceLocation sourceLocation, String message, Object... args) {
-    return new SqrlAstException(ErrorLabel.GENERIC,
+  public static StatementParserException createThrowable(SourceLocation sourceLocation, String message, Object... args) {
+    return new StatementParserException(ErrorLabel.GENERIC,
         toParserPos(sourceLocation),
         message, args);
   }
 
-  public static SqlParserPos toParserPos(SourceLocation sourceLocation) {
+  public static FileLocation toParserPos(SourceLocation sourceLocation) {
     if (sourceLocation == null) {
-      return new SqlParserPos(0,0);
+      return new FileLocation(0,0);
     }
-    return new SqlParserPos(sourceLocation.getLine(), sourceLocation.getColumn());
+    return new FileLocation(sourceLocation.getLine(), sourceLocation.getColumn());
   }
 }

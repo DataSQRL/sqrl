@@ -6,18 +6,14 @@ import java.util.Optional;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-import com.datasqrl.actions.CreateDatabaseQueries;
 import com.datasqrl.actions.DagWriter;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.config.BuildPath;
 import com.datasqrl.config.GraphqlSourceFactory;
 import com.datasqrl.engine.PhysicalPlan;
-import com.datasqrl.engine.PhysicalPlanner;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.server.ServerPhysicalPlan;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.graphql.APIConnectorManagerImpl;
-import com.datasqrl.graphql.inference.GraphQLMutationExtraction;
 import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.plan.MainScript;
 import com.datasqrl.plan.global.PhysicalPlanRewriter;
@@ -38,19 +34,15 @@ public class CompilationProcessV2 {
 
   private final SqlScriptPlanner planner;
   private final ModuleLoader moduleLoader;
-  private final APIConnectorManagerImpl apiConnectorManager;
   private final DAGPlanner dagPlanner;
   private final BuildPath buildPath;
   private final MainScript mainScript;
-  private final PhysicalPlanner physicalPlanner;
   private final GenerateCoords generateCoords;
-  private final CreateDatabaseQueries createDatabaseQueries;
   private final InferGraphqlSchema2 inferGraphqlSchema;
   private final DagWriter writeDeploymentArtifactsHook;
   //  private final FlinkSqlGenerator flinkSqlGenerator;
   private final GraphqlSourceFactory graphqlSourceFactory;
   private final ExecutionGoal executionGoal;
-  private final GraphQLMutationExtraction graphQLMutationExtraction;
   private final ExecutionPipeline pipeline;
   private final ErrorCollector errors;
 

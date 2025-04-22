@@ -16,7 +16,6 @@ import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.module.FunctionNamespaceObject;
-import com.datasqrl.plan.validate.ScriptPlanner;
 
 import lombok.SneakyThrows;
 import lombok.Value;
@@ -37,42 +36,7 @@ public class FlinkUdfNsObject implements FunctionNamespaceObject<FunctionDefinit
     this.sqlName = sqlName;
     this.jarUrl = jarUrl;
   }
-
-  @SneakyThrows
-  @Override
-  public boolean apply(ScriptPlanner planner, Optional<String> objectName, SqrlFramework framework, ErrorCollector errors) {
-    String name = objectName.orElseGet(() -> getThisFunctionName(function));
-
-    jarUrl.ifPresent(url-> {
-      try {
-        framework.getFlinkFunctionCatalog()
-            .registerFunctionJarResources(name, List.of(new ResourceUri(ResourceType.JAR, url.toURI().toString())));
-      } catch (URISyntaxException e) {
-        throw new RuntimeException(e);
-      }
-    });
-
-    if (function instanceof UserDefinedFunction) {
-      UserDefinedFunction udf = (UserDefinedFunction)function;
-      framework.getFlinkFunctionCatalog()
-          .registerCatalogFunction(UnresolvedIdentifier.of(name), udf.getClass(), true);
-      framework.getSchema().getUdf().put(name, udf);
-    } else if (function instanceof BuiltInFunctionDefinition) {
-      //if name is different from function name, create function alias
-      framework.getSchema().addFunctionAlias(name.toLowerCase(), sqlName.toLowerCase());
-    }
-
-    jarUrl.ifPresent((url)->framework.getSchema().addJar(url));
-    return true;
-  }
-  public String getThisFunctionName(FunctionDefinition function) {
-    if (function instanceof BuiltInFunctionDefinition) {
-      return this.name.getDisplay();
-    }
-
-    return getFunctionNameFromClass(function.getClass()).getDisplay();
-  }
-
+ 
   public static String getFunctionName(FunctionDefinition function) {
     if (function instanceof BuiltInFunctionDefinition) {
       return ((BuiltInFunctionDefinition) function).getName();

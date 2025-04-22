@@ -11,7 +11,6 @@ import com.datasqrl.engine.log.LogManager;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.module.SqrlModule;
 import com.datasqrl.module.resolver.ResourceResolver;
-import com.datasqrl.plan.table.CalciteTableFactory;
 import com.google.inject.Inject;
 
 import lombok.AllArgsConstructor;
@@ -22,7 +21,6 @@ public class ModuleLoaderImpl implements ModuleLoader {
   final StandardLibraryLoader standardLibraryLoader = new StandardLibraryLoader();
   private final ResourceResolver resourceResolver;
   private final ErrorCollector errors;
-  private final CalciteTableFactory tableFactory;
   private final TableConfigLoader tableConfigFactory;
   private final PackageJson sqrlConfig;
   private final LogManager logManager;
@@ -61,13 +59,13 @@ public class ModuleLoaderImpl implements ModuleLoader {
   }
 
   private Optional<SqrlModule> loadFromFileSystem(NamePath namePath) {
-    return new ObjectLoaderImpl(resourceResolver, errors, tableFactory, this, tableConfigFactory, sqrlConfig, logManager)
+    return new ObjectLoaderImpl(resourceResolver, errors, this, tableConfigFactory, sqrlConfig, logManager)
         .load(namePath);
   }
 
   @Override
   public String toString() {
-    return new ObjectLoaderImpl(resourceResolver, errors, tableFactory, this, tableConfigFactory, sqrlConfig, logManager).toString();
+    return new ObjectLoaderImpl(resourceResolver, errors, this, tableConfigFactory, sqrlConfig, logManager).toString();
   }
 
 }

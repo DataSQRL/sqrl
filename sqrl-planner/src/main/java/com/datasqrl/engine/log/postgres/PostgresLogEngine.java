@@ -71,39 +71,6 @@ public class PostgresLogEngine extends ExecutionEngine.Base implements LogEngine
   }
 
   @Override
-  public EnginePhysicalPlan plan(StagePlan plan, List<StageSink> inputs, ExecutionPipeline pipeline,
-      List<StagePlan> stagePlans, SqrlFramework framework, ErrorCollector errorCollector) {
-
-    Preconditions.checkArgument(plan instanceof LogStagePlan);
-
-    var factory = new JdbcDDLServiceLoader()
-        .load(JdbcDialect.Postgres)
-        .orElseThrow(() -> new RuntimeException("Could not find DDL factory"));
-
-    var postgresDDLFactory = (PostgresDDLFactory) factory;
-
-    List<SqlDDLStatement> ddl = new ArrayList<>();
-    List<ListenNotifyAssets> queries = new ArrayList<>();
-    List<InsertStatement> inserts = new ArrayList<>();
-    var dbPlan = (LogStagePlan) plan;
-    for (Log log : dbPlan.getLogs()) {
-      var pgTable = (PostgresTable) log;
-      var tableName = pgTable.getTableName();
-      var dataType = pgTable.getTableSchema().getRelDataType();
-      ddl.add(postgresDDLFactory.createTable(tableName, dataType.getFieldList(), pgTable.getPrimaryKeys()));
-      ddl.add(postgresDDLFactory.createNotify(tableName, pgTable.getPrimaryKeys()));
-
-      var listenNotifyAssets = postgresDDLFactory.createNotifyHelperDDLs(framework, tableName, dataType, pgTable.getPrimaryKeys());
-      queries.add(listenNotifyAssets);
-
-      var insertStatement = postgresDDLFactory.createInsertHelperDMLs(tableName, dataType);
-      inserts.add(insertStatement);
-    }
-
-    return new PostgresLogPhysicalPlan(ddl, queries, inserts);
-  }
-
-  @Override
   public EnginePhysicalPlan plan(MaterializationStagePlan stagePlan) {
     throw new UnsupportedOperationException("not yet supported");
   }

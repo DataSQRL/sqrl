@@ -55,17 +55,6 @@ public class PrintEngine implements ExportEngine {
   }
 
   @Override
-  public TableConfig getSinkConfig(String sinkName) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public EnginePhysicalPlan plan(StagePlan plan, List<StageSink> inputs, ExecutionPipeline pipeline,
-      List<StagePlan> stagePlans, SqrlFramework framework, ErrorCollector errorCollector) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public String getName() {
     return PrintEngineFactory.NAME;
   }

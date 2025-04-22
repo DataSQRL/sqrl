@@ -12,7 +12,6 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.module.NamespaceObject;
 import com.datasqrl.module.SqrlModule;
 import com.datasqrl.plan.MainScript;
-import com.datasqrl.plan.validate.ScriptPlanner;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -61,12 +60,6 @@ public class ScriptSqrlModule implements SqrlModule {
           return scriptContent;
         }
       };
-    }
-
-    @Override
-    public boolean apply(ScriptPlanner planner, Optional<String> objectName,
-        SqrlFramework framework, ErrorCollector errors) {
-      throw new UnsupportedOperationException();
     }
   }
 }

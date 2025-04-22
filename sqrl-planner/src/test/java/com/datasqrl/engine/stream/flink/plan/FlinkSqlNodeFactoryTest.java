@@ -36,8 +36,8 @@ public class FlinkSqlNodeFactoryTest {
 
   private String unparse(SqlNode node) {
     return QueryPlanner.sqlToString(Dialect.FLINK, ()->node).getSql();
-
   }
+
   @Test
   void testCreateView() {
     var tableName = "my_view";
