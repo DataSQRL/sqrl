@@ -1,0 +1,343 @@
+>>>pipeline_explain.txt
+=== iceberg_parquet_table
+ID:     default_catalog.default_database.iceberg_parquet_table
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database.iceberg_parquet_table__def
+Primary Key: -
+Timestamp  : -
+Schema:
+ - user_id: INTEGER
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+Plan:
+LogicalProject(user_id=[$0], name=[$1])
+  LogicalTableScan(table=[[default_catalog, default_database, iceberg_parquet_table__def]])
+SQL: CREATE VIEW `iceberg_parquet_table`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`iceberg_parquet_table__def`
+=== kafka_avro_table
+ID:     default_catalog.default_database.kafka_avro_table
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database.kafka_avro_table__def
+Primary Key: -
+Timestamp  : -
+Schema:
+ - user_id: INTEGER
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+Plan:
+LogicalProject(user_id=[$0], name=[$1])
+  LogicalTableScan(table=[[default_catalog, default_database, kafka_avro_table__def]])
+SQL: CREATE VIEW `kafka_avro_table`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`kafka_avro_table__def`
+=== kafka_debezium_table
+ID:     default_catalog.default_database.kafka_debezium_table
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database.kafka_debezium_table__def
+Primary Key: -
+Timestamp  : -
+Schema:
+ - user_id: INTEGER
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+Plan:
+LogicalProject(user_id=[$0], name=[$1])
+  LogicalTableScan(table=[[default_catalog, default_database, kafka_debezium_table__def]])
+SQL: CREATE VIEW `kafka_debezium_table`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`kafka_debezium_table__def`
+=== upsert_kafka_confluent_avro
+ID:     default_catalog.default_database.upsert_kafka_confluent_avro
+Type:   state
+Stage:  flink
+Inputs: default_catalog.default_database.upsert_kafka_confluent_avro__def
+Primary Key: user_id
+Timestamp  : -
+Schema:
+ - user_id: INTEGER NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+Plan:
+LogicalProject(user_id=[$0], name=[$1])
+  LogicalTableScan(table=[[default_catalog, default_database, upsert_kafka_confluent_avro__def]])
+SQL: CREATE VIEW `upsert_kafka_confluent_avro`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`upsert_kafka_confluent_avro__def`
+>>>flink-sql-no-functions.sql
+CREATE TABLE `kafka_avro_table__def` (
+  `user_id` INTEGER,
+  `name` STRING
+) WITH (
+  'connector' = 'kafka',
+  'topic' = 'users-avro',
+  'properties.bootstrap.servers' = 'localhost:9092',
+  'properties.group.id' = 'flink-kafka-avro-group',
+  'format' = 'avro'
+);
+CREATE VIEW `kafka_avro_table`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`kafka_avro_table__def`;
+CREATE TABLE `upsert_kafka_confluent_avro__def` (
+  `user_id` INTEGER,
+  `name` STRING,
+  PRIMARY KEY (`user_id`) NOT ENFORCED
+) WITH (
+  'connector' = 'upsert-kafka',
+  'topic' = 'users-upsert',
+  'properties.group.id' = 'flink-kafka-avro-group',
+  'properties.bootstrap.servers' = 'localhost:9092',
+  'key.format' = 'avro-confluent',
+  'key.avro-confluent.schema-registry.url' = 'http://localhost:8081',
+  'value.format' = 'avro-confluent',
+  'value.avro-confluent.schema-registry.url' = 'http://localhost:8081'
+);
+CREATE VIEW `upsert_kafka_confluent_avro`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`upsert_kafka_confluent_avro__def`;
+CREATE TABLE `kafka_debezium_table__def` (
+  `user_id` INTEGER,
+  `name` STRING
+) WITH (
+  'connector' = 'kafka',
+  'topic' = 'users-debezium',
+  'properties.group.id' = 'flink-kafka-avro-group',
+  'properties.bootstrap.servers' = 'localhost:9092',
+  'format' = 'debezium-json'
+);
+CREATE VIEW `kafka_debezium_table`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`kafka_debezium_table__def`;
+CREATE TABLE `iceberg_parquet_table__def` (
+  `user_id` INTEGER,
+  `name` STRING
+)
+PARTITIONED BY (`user_id`)
+WITH (
+  'connector' = 'iceberg',
+  'catalog-name' = 'local_fs',
+  'catalog-type' = 'hadoop',
+  'warehouse' = 'file:///tmp/iceberg/warehouse',
+  'format-version' = '2',
+  'write.format.default' = 'parquet'
+);
+CREATE VIEW `iceberg_parquet_table`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`iceberg_parquet_table__def`;
+CREATE TABLE `_jdbc_table__def` (
+  `user_id` INTEGER,
+  `name` STRING
+) WITH (
+  'connector' = 'jdbc',
+  'url' = 'jdbc:postgresql://localhost:5432/mydb',
+  'table-name' = 'users',
+  'username' = 'myuser',
+  'password' = 'mypassword'
+);
+CREATE VIEW `_jdbc_table`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`_jdbc_table__def`;
+CREATE TABLE `iceberg_parquet_table_1` (
+  `user_id` INTEGER,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'table-name' = 'iceberg_parquet_table_1'
+);
+CREATE TABLE `kafka_avro_table_2` (
+  `user_id` INTEGER,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'table-name' = 'kafka_avro_table_2'
+);
+CREATE TABLE `kafka_debezium_table_3` (
+  `user_id` INTEGER,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'table-name' = 'kafka_debezium_table_3'
+);
+CREATE TABLE `upsert_kafka_confluent_avro_4` (
+  `user_id` INTEGER NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`user_id`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'table-name' = 'upsert_kafka_confluent_avro_4'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`iceberg_parquet_table_1`
+(SELECT `user_id`, `name`, HASHCOLUMNS(`user_id`, `name`) AS `__pk_hash`
+ FROM `default_catalog`.`default_database`.`iceberg_parquet_table`)
+;
+INSERT INTO `default_catalog`.`default_database`.`kafka_avro_table_2`
+ (SELECT `user_id`, `name`, HASHCOLUMNS(`user_id`, `name`) AS `__pk_hash`
+  FROM `default_catalog`.`default_database`.`kafka_avro_table`)
+ ;
+ INSERT INTO `default_catalog`.`default_database`.`kafka_debezium_table_3`
+  (SELECT `user_id`, `name`, HASHCOLUMNS(`user_id`, `name`) AS `__pk_hash`
+   FROM `default_catalog`.`default_database`.`kafka_debezium_table`)
+  ;
+  INSERT INTO `default_catalog`.`default_database`.`upsert_kafka_confluent_avro_4`
+   (SELECT *
+    FROM `default_catalog`.`default_database`.`upsert_kafka_confluent_avro`)
+   ;
+   END
+>>>kafka.json
+{
+  "topics" : [ ]
+}
+>>>postgres-schema.sql
+CREATE TABLE IF NOT EXISTS "iceberg_parquet_table_1" ("user_id" INTEGER , "name" TEXT , "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "kafka_avro_table_2" ("user_id" INTEGER , "name" TEXT , "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "kafka_debezium_table_3" ("user_id" INTEGER , "name" TEXT , "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "upsert_kafka_confluent_avro_4" ("user_id" INTEGER NOT NULL, "name" TEXT  , PRIMARY KEY ("user_id"))
+>>>postgres-views.sql
+CREATE OR REPLACE VIEW "iceberg_parquet_table"("user_id", "name") AS SELECT "user_id", "name"
+FROM "iceberg_parquet_table_1";
+CREATE OR REPLACE VIEW "kafka_avro_table"("user_id", "name") AS SELECT "user_id", "name"
+FROM "kafka_avro_table_2";
+CREATE OR REPLACE VIEW "kafka_debezium_table"("user_id", "name") AS SELECT "user_id", "name"
+FROM "kafka_debezium_table_3";
+CREATE OR REPLACE VIEW "upsert_kafka_confluent_avro"("user_id", "name") AS SELECT *
+FROM "upsert_kafka_confluent_avro_4"
+>>>vertx.json
+{
+  "model" : {
+    "queries" : [
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "iceberg_parquet_table",
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
+            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT \"user_id\", \"name\"\nFROM \"iceberg_parquet_table_1\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
+          }
+        }
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "kafka_avro_table",
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
+            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT \"user_id\", \"name\"\nFROM \"kafka_avro_table_2\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
+          }
+        }
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "kafka_debezium_table",
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
+            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT \"user_id\", \"name\"\nFROM \"kafka_debezium_table_3\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
+          }
+        }
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "upsert_kafka_confluent_avro",
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
+            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM \"upsert_kafka_confluent_avro_4\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
+          }
+        }
+      }
+    ],
+    "mutations" : [ ],
+    "subscriptions" : [ ],
+    "schema" : {
+      "type" : "string",
+      "schema" : "\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Query {\n  iceberg_parquet_table(limit: Int = 10, offset: Int = 0): [iceberg_parquet_table!]\n  kafka_avro_table(limit: Int = 10, offset: Int = 0): [kafka_avro_table!]\n  kafka_debezium_table(limit: Int = 10, offset: Int = 0): [kafka_debezium_table!]\n  upsert_kafka_confluent_avro(limit: Int = 10, offset: Int = 0): [upsert_kafka_confluent_avro!]\n}\n\ntype iceberg_parquet_table {\n  user_id: Int\n  name: String\n}\n\ntype kafka_avro_table {\n  user_id: Int\n  name: String\n}\n\ntype kafka_debezium_table {\n  user_id: Int\n  name: String\n}\n\ntype upsert_kafka_confluent_avro {\n  user_id: Int!\n  name: String\n}\n"
+    }
+  }
+}
