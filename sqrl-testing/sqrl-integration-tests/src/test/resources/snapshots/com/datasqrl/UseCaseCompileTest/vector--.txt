@@ -40,7 +40,7 @@ SQL: CREATE VIEW DocumentSimilarity AS  SELECT v2.doc_id, cosineSimilarity(v1.ve
 ID:     default_catalog.default_database.VectorData
 Type:   state
 Stage:  flink
-Primary Key: 
+Primary Key: doc_id
 Timestamp  : -
 Schema:
  - doc_id: INTEGER NOT NULL
@@ -82,6 +82,10 @@ CREATE VIEW `CentroidTest`
 AS
 SELECT `category_id`, `center_vector`
 FROM `CategoryCentroids`;
+CREATE VIEW `DataTest`
+AS
+SELECT `doc_id`, `category_id`
+FROM `VectorData`;
 CREATE TABLE `CategoryCentroids_1` (
   `category_id` INTEGER NOT NULL,
   `center_vector` RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAQAvY29tLmRhdGFzcXJsLnR5cGVzLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXI='),
@@ -98,8 +102,7 @@ CREATE TABLE `VectorData_2` (
   `doc_id` INTEGER NOT NULL,
   `category_id` INTEGER NOT NULL,
   `vector` RAW('com.datasqrl.types.vector.FlinkVectorType', 'ADtjb20uZGF0YXNxcmwudHlwZXMudmVjdG9yLkZsaW5rVmVjdG9yVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAEAM2NvbS5kYXRhc3FybC50eXBlcy52ZWN0b3IuRmxpbmtWZWN0b3JUeXBlU2VyaWFsaXplcg=='),
-  `__pk_hash` INTEGER NOT NULL,
-  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+  PRIMARY KEY (`doc_id`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
   'password' = '${JDBC_PASSWORD}',
@@ -114,7 +117,7 @@ INSERT INTO `default_catalog`.`default_database`.`CategoryCentroids_1`
  FROM `default_catalog`.`default_database`.`CategoryCentroids`)
 ;
 INSERT INTO `default_catalog`.`default_database`.`VectorData_2`
- (SELECT `doc_id`, `category_id`, `vector`, 1 AS `__pk_hash`
+ (SELECT *
   FROM `default_catalog`.`default_database`.`VectorData`)
  ;
  END
@@ -126,9 +129,9 @@ INSERT INTO `default_catalog`.`default_database`.`VectorData_2`
 CREATE EXTENSION IF NOT EXISTS vector;
 
 CREATE TABLE IF NOT EXISTS "CategoryCentroids_1" ("category_id" INTEGER NOT NULL, "center_vector" JSONB  , PRIMARY KEY ("category_id"));
-CREATE TABLE IF NOT EXISTS "VectorData_2" ("doc_id" INTEGER NOT NULL, "category_id" INTEGER NOT NULL, "vector" VECTOR , "__pk_hash" INTEGER NOT NULL , PRIMARY KEY ("__pk_hash"))
+CREATE TABLE IF NOT EXISTS "VectorData_2" ("doc_id" INTEGER NOT NULL, "category_id" INTEGER NOT NULL, "vector" VECTOR  , PRIMARY KEY ("doc_id"))
 >>>postgres-views.sql
-CREATE OR REPLACE VIEW "VectorData"("doc_id", "category_id", "vector") AS SELECT "doc_id", "category_id", "vector"
+CREATE OR REPLACE VIEW "VectorData"("doc_id", "category_id", "vector") AS SELECT *
 FROM "VectorData_2"
 >>>vertx.json
 {
@@ -184,7 +187,7 @@ FROM "VectorData_2"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT \"doc_id\", \"category_id\", \"vector\"\nFROM \"VectorData_2\"",
+            "sql" : "SELECT *\nFROM \"VectorData_2\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
@@ -212,7 +215,7 @@ FROM "VectorData_2"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT \"t0\".\"doc_id\", 1 - (\"t\".\"vector\" <=> \"t0\".\"vector\") AS \"score\"\nFROM (SELECT \"doc_id\", \"category_id\", \"vector\"\n  FROM \"VectorData_2\") AS \"t\"\n INNER JOIN (SELECT \"doc_id\", \"category_id\", \"vector\"\n  FROM \"VectorData_2\") AS \"t0\" ON \"t\".\"doc_id\" <> \"t0\".\"doc_id\"\nWHERE \"t\".\"doc_id\" = $1\nORDER BY 1 - (\"t\".\"vector\" <=> \"t0\".\"vector\") DESC NULLS LAST, \"t0\".\"doc_id\" NULLS FIRST",
+            "sql" : "SELECT \"VectorData_22\".\"doc_id\", 1 - (\"VectorData_20\".\"vector\" <=> \"VectorData_22\".\"vector\") AS \"score\"\nFROM \"VectorData_2\" AS \"VectorData_20\"\n INNER JOIN \"VectorData_2\" AS \"VectorData_22\" ON \"VectorData_20\".\"doc_id\" <> \"VectorData_22\".\"doc_id\"\nWHERE \"VectorData_20\".\"doc_id\" = $1\nORDER BY 1 - (\"VectorData_20\".\"vector\" <=> \"VectorData_22\".\"vector\") DESC NULLS LAST, \"VectorData_22\".\"doc_id\" NULLS FIRST",
             "parameters" : [
               {
                 "type" : "arg",
