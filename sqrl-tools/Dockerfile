@@ -1,4 +1,4 @@
-FROM eclipse-temurin:11-jdk-noble
+FROM eclipse-temurin:17-jdk-noble
 WORKDIR /usr/src/app
 ARG POSTGRES_VERSION=15
 
