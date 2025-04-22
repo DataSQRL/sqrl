@@ -2,14 +2,15 @@ package com.datasqrl.v2.parser;
 
 import static com.datasqrl.v2.parser.ParsePosUtil.convertPosition;
 
+import org.apache.calcite.sql.parser.SqlParseException;
+import org.apache.flink.table.api.SqlParserException;
+
 import com.datasqrl.error.ErrorHandler;
 import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.error.ErrorLocation;
 import com.datasqrl.error.ErrorLocation.FileLocation;
 import com.datasqrl.error.ErrorMessage;
 import com.google.auto.service.AutoService;
-import org.apache.calcite.sql.parser.SqlParseException;
-import org.apache.flink.table.api.SqlParserException;
 
 @AutoService(ErrorHandler.class)
 public class SqlParserExceptionHandler implements ErrorHandler<SqlParserException> {
@@ -22,7 +23,7 @@ public class SqlParserExceptionHandler implements ErrorHandler<SqlParserExceptio
     } else {
       location = new FileLocation(1,1);
     }
-    ErrorLocation loc = baseLocation.hasFile()?baseLocation.atFile(location):baseLocation;
+    var loc = baseLocation.hasFile()?baseLocation.atFile(location):baseLocation;
     return new ErrorMessage.Implementation(ErrorLabel.GENERIC, e.getMessage(),
         loc,ErrorMessage.Severity.FATAL);
   }

@@ -1,5 +1,16 @@
 package com.datasqrl.plan.local.generate;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.function.Supplier;
+
+import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.schema.Function;
+import org.apache.calcite.schema.FunctionParameter;
+import org.apache.calcite.sql.SqlHint;
+import org.apache.calcite.sql.SqlNodeList;
+import org.apache.calcite.sql.SqrlTableFunctionDef;
+
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
@@ -8,16 +19,8 @@ import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.plan.table.CalciteTableFactory;
 import com.datasqrl.plan.table.PhysicalRelationalTable;
 import com.datasqrl.plan.validate.ScriptPlanner;
-import java.util.List;
-import java.util.Optional;
-import java.util.function.Supplier;
+
 import lombok.Getter;
-import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.schema.Function;
-import org.apache.calcite.schema.FunctionParameter;
-import org.apache.calcite.sql.SqlHint;
-import org.apache.calcite.sql.SqlNodeList;
-import org.apache.calcite.sql.SqrlTableFunctionDef;
 
 @Getter
 public class SqrlTableNamespaceObject extends AbstractTableNamespaceObject<PhysicalRelationalTable> {

@@ -1,10 +1,12 @@
 package com.datasqrl.v2.tables;
 
+import java.util.Map;
+import java.util.Optional;
+
 import com.datasqrl.config.TableConfig;
 import com.datasqrl.io.tables.TableType;
 import com.google.common.collect.ImmutableMap;
-import java.util.Map;
-import java.util.Optional;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -36,15 +38,16 @@ public class FlinkConnectorConfig implements TableConfig.ConnectorConfig {
 
   Map<String, String> options;
 
-  public Optional<String> getFormat() {
+  @Override
+public Optional<String> getFormat() {
     return Optional.ofNullable(options.get(FORMAT_KEY))
         .or(() -> Optional.ofNullable(options.get(VALUE_FORMAT_KEY)));
   }
 
   @Override
   public TableType getTableType() {
-    String connectorName = getConnectorName().get().toLowerCase();
-    TableType tableType = CONNECTOR_TYPE_MAP.get(connectorName);
+    var connectorName = getConnectorName().get().toLowerCase();
+    var tableType = CONNECTOR_TYPE_MAP.get(connectorName);
     if (tableType == null) {
       log.debug("Defaulting '{}' connector to STREAM table for import.", connectorName);
       tableType = TableType.STREAM;

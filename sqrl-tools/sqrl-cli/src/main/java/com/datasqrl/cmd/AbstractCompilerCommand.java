@@ -6,6 +6,17 @@ package com.datasqrl.cmd;
 import static com.datasqrl.config.ScriptConfigImpl.GRAPHQL_NORMALIZED_FILE_NAME;
 import static com.datasqrl.config.SqrlConstants.PACKAGE_JSON;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import org.apache.calcite.jdbc.SqrlSchema;
+import org.apache.commons.lang3.tuple.Pair;
+
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.compile.CompilationProcessV2;
@@ -24,18 +35,9 @@ import com.datasqrl.inject.StatefulModule;
 import com.datasqrl.packager.Packager;
 import com.datasqrl.plan.validate.ExecutionGoal;
 import com.google.inject.Guice;
-import com.google.inject.Injector;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
+
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.calcite.jdbc.SqrlSchema;
-import org.apache.commons.lang3.tuple.Pair;
 import picocli.CommandLine;
 
 @Slf4j
@@ -59,7 +61,8 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
       description = "Target directory for deployment artifacts and plans")
   protected Path targetDir = DEFAULT_TARGET_DIR;
 
-  @SneakyThrows
+  @Override
+@SneakyThrows
   public void execute(ErrorCollector errors) {
     execute(errors, root.rootDir.resolve("snapshots"), Optional.empty(), ExecutionGoal.COMPILE);
   }
@@ -67,11 +70,11 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
   public void execute(
       ErrorCollector errors, Path snapshotPath, Optional<Path> testsPath, ExecutionGoal goal) {
 
-    PackageBootstrap packageBootstrap = new PackageBootstrap(errors);
-    PackageJson sqrlConfig =
+    var packageBootstrap = new PackageBootstrap(errors);
+    var sqrlConfig =
         packageBootstrap.bootstrap(root.rootDir, this.root.packageFiles, this.files);
 
-    Optional<String> snapshotPathConf = sqrlConfig.getCompilerConfig().getSnapshotPath();
+    var snapshotPathConf = sqrlConfig.getCompilerConfig().getSnapshotPath();
     if (snapshotPathConf.isEmpty()) {
       sqrlConfig.getCompilerConfig().setSnapshotPath(snapshotPath.toAbsolutePath().toString());
     }
@@ -93,18 +96,18 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
     errors.checkFatal(
         Files.isDirectory(root.rootDir), "Not a valid root directory: %s", root.rootDir);
 
-    Injector injector =
+    var injector =
         Guice.createInjector(
             new SqrlInjector(errors, root.rootDir, getTargetDir(), sqrlConfig, getGoal()),
             new StatefulModule(new SqrlSchema(new TypeFactory(), NameCanonicalizer.SYSTEM)));
 
-    Packager packager = injector.getInstance(Packager.class);
+    var packager = injector.getInstance(Packager.class);
     packager.preprocess(errors.withLocation(ErrorPrefix.CONFIG.resolve(PACKAGE_JSON)));
     if (errors.hasErrors()) {
       return;
     }
 
-    CompilationProcessV2 compilationProcess = injector.getInstance(CompilationProcessV2.class);
+    var compilationProcess = injector.getInstance(CompilationProcessV2.class);
     testsPath.ifPresent(this::validateTestPath);
 
     Pair<PhysicalPlan, ? extends TestPlan> plan = compilationProcess.executeCompilation(testsPath);

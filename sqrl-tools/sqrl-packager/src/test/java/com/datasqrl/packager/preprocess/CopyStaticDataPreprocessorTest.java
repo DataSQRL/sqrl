@@ -21,26 +21,26 @@ public class CopyStaticDataPreprocessorTest {
 	void givenTextWithMultipleLines_whenCopyFileSkipFirstLine_thenFirstLineIsRemovedAndRestPreserved(
 			String escapedLineEnding, String expectedContent) throws IOException {
 		// given
-		String lineEnding = unescape(escapedLineEnding);
-		String expected = unescape(expectedContent);
-		String input = "first line" + lineEnding + expected;
+		var lineEnding = unescape(escapedLineEnding);
+		var expected = unescape(expectedContent);
+		var input = "first line" + lineEnding + expected;
 
-		ByteArrayInputStream in = new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		var in = new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
+		var out = new ByteArrayOutputStream();
 
 		// when
 		underTest.copyFileSkipFirstLine(in, out);
 
 		// then
-		String result = out.toString(StandardCharsets.UTF_8);
+		var result = out.toString(StandardCharsets.UTF_8);
 		assertThat(result).as("Line ending: %s", repr(lineEnding)).isEqualTo(expected);
 	}
 
 	@Test
 	void givenSingleLineFile_whenCopyFileSkipFirstLine_thenOutputIsEmpty() throws IOException {
-		String input = "only line";
-		ByteArrayInputStream in = new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		var input = "only line";
+		var in = new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
+		var out = new ByteArrayOutputStream();
 
 		underTest.copyFileSkipFirstLine(in, out);
 
@@ -49,8 +49,8 @@ public class CopyStaticDataPreprocessorTest {
 
 	@Test
 	void givenEmptyFile_whenCopyFileSkipFirstLine_thenOutputIsEmpty() throws IOException {
-		ByteArrayInputStream in = new ByteArrayInputStream(new byte[0]);
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		var in = new ByteArrayInputStream(new byte[0]);
+		var out = new ByteArrayOutputStream();
 
 		underTest.copyFileSkipFirstLine(in, out);
 
@@ -59,28 +59,28 @@ public class CopyStaticDataPreprocessorTest {
 
 	@Test
 	void givenLongFirstLine_whenCopyFileSkipFirstLine_thenSecondLineAndBeyondArePreserved() throws IOException {
-		String lineEnding = "\n";
-		String longFirstLine = "A".repeat(10_000);
-		String input = longFirstLine + lineEnding + "second" + lineEnding + "third";
+		var lineEnding = "\n";
+		var longFirstLine = "A".repeat(10_000);
+		var input = longFirstLine + lineEnding + "second" + lineEnding + "third";
 
-		ByteArrayInputStream in = new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		var in = new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
+		var out = new ByteArrayOutputStream();
 
 		underTest.copyFileSkipFirstLine(in, out);
 
-		String result = out.toString(StandardCharsets.UTF_8);
+		var result = out.toString(StandardCharsets.UTF_8);
 		assertThat(result).isEqualTo("second\nthird");
 	}
 
 	@Test
 	void givenFirstLineIsJustLineBreak_whenCopyFileSkipFirstLine_thenAllOtherLinesRemain() throws IOException {
-		String input = "\nsecond\nthird";
-		ByteArrayInputStream in = new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		var input = "\nsecond\nthird";
+		var in = new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
+		var out = new ByteArrayOutputStream();
 
 		underTest.copyFileSkipFirstLine(in, out);
 
-		String result = out.toString(StandardCharsets.UTF_8);
+		var result = out.toString(StandardCharsets.UTF_8);
 		assertThat(result).isEqualTo("second\nthird");
 	}
 

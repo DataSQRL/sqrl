@@ -5,7 +5,6 @@ package com.datasqrl.io.schema.flexible;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.io.schema.flexible.constraint.Cardinality;
 import com.datasqrl.io.schema.flexible.constraint.ConstraintHelper;
 import com.datasqrl.io.schema.flexible.input.FlexibleFieldSchema;
 import com.datasqrl.io.schema.flexible.input.FlexibleSchemaHelper;
@@ -13,6 +12,7 @@ import com.datasqrl.io.schema.flexible.input.FlexibleTableSchema;
 import com.datasqrl.io.schema.flexible.input.RelationType;
 import com.datasqrl.io.schema.flexible.type.ArrayType;
 import com.datasqrl.io.schema.flexible.type.Type;
+
 import lombok.AllArgsConstructor;
 import lombok.Value;
 
@@ -41,8 +41,8 @@ public class FlexibleTableConverter {
 
     for (FlexibleFieldSchema.Field field : relation.getFields()) {
       for (FlexibleFieldSchema.FieldType ftype : field.getTypes()) {
-        Name fieldName = FlexibleSchemaHelper.getCombinedName(field, ftype);
-        boolean isMixedType = field.getTypes().size() > 1;
+        var fieldName = FlexibleSchemaHelper.getCombinedName(field, ftype);
+        var isMixedType = field.getTypes().size() > 1;
         visitFieldType(path, fieldName, ftype, isMixedType, visitor);
       }
     }
@@ -52,11 +52,11 @@ public class FlexibleTableConverter {
   private <T> void visitFieldType(NamePath path, Name fieldName,
       FlexibleFieldSchema.FieldType ftype,
       boolean isMixedType, Visitor<T> visitor) {
-    boolean nullable = isMixedType || !ConstraintHelper.isNonNull(ftype.getConstraints());
-    boolean isSingleton = false;
+    var nullable = isMixedType || !ConstraintHelper.isNonNull(ftype.getConstraints());
+    var isSingleton = false;
     if (ftype.getType() instanceof RelationType) {
       isSingleton = isSingleton(ftype);
-      T nestedTable = visitRelation(path, fieldName,
+      var nestedTable = visitRelation(path, fieldName,
           (RelationType<FlexibleFieldSchema.Field>) ftype.getType(), true,
           isSingleton, visitor);
       nullable = isMixedType || hasZeroOneMultiplicity(ftype);
@@ -67,7 +67,7 @@ public class FlexibleTableConverter {
     } else {
       //Make array if it has arrayDepth
       Type type = ftype.getType();
-      for (int i = 0; i < ftype.getArrayDepth(); i++) {
+      for (var i = 0; i < ftype.getArrayDepth(); i++) {
         type = new ArrayType(type);
       }
       visitor.addField(fieldName, type, nullable);
@@ -79,7 +79,7 @@ public class FlexibleTableConverter {
   }
 
   private static boolean hasZeroOneMultiplicity(FlexibleFieldSchema.FieldType ftype) {
-    Cardinality card = ConstraintHelper.getCardinality(ftype.getConstraints());
+    var card = ConstraintHelper.getCardinality(ftype.getConstraints());
     return card.isSingleton() && card.getMin() == 0;
   }
 

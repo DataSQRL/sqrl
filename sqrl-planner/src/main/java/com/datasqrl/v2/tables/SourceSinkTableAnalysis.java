@@ -1,10 +1,13 @@
 package com.datasqrl.v2.tables;
 
-import com.datasqrl.v2.dag.plan.MutationQuery;
 import javax.annotation.Nullable;
+
+import org.apache.flink.table.api.Schema;
+
+import com.datasqrl.v2.dag.plan.MutationQuery;
+
 import lombok.NonNull;
 import lombok.Value;
-import org.apache.flink.table.api.Schema;
 
 /**
  * Metadata we keep track off for imported/exported tables and their definition

@@ -1,18 +1,19 @@
 package com.datasqrl.packager.preprocess;
 
-import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.config.PackageJson;
-import com.datasqrl.error.ErrorCollector;
-import com.google.common.base.Preconditions;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
+
+import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.config.PackageJson;
+import com.datasqrl.error.ErrorCollector;
+import com.google.common.base.Preconditions;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.Value;
 
 public interface Preprocessor {
 

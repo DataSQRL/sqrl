@@ -4,6 +4,7 @@
 package com.datasqrl.error;
 
 import java.util.Arrays;
+
 import lombok.NonNull;
 import lombok.Value;
 
@@ -57,7 +58,8 @@ class ErrorLocationImpl implements ErrorLocation {
   }
 
 
-  public ErrorLocation resolve(@NonNull String loc) {
+  @Override
+public ErrorLocation resolve(@NonNull String loc) {
 //    Preconditions.checkArgument(!Strings.isNullOrEmpty(loc), "Invalid location provided");
     String[] newnames = Arrays.copyOf(names, names.length + 1);
     newnames[names.length] = loc;
@@ -86,7 +88,7 @@ class ErrorLocationImpl implements ErrorLocation {
 
   @Override
   public String toString() {
-    String result = getPath();
+    var result = getPath();
     if (prefix != null) {
       if (result == null || result.trim().isEmpty()) {
         result = prefix;

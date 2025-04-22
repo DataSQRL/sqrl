@@ -48,8 +48,7 @@ public class FlinkSqrlPostgresDataTypeMapper extends FlinkDataTypeMapper impleme
         type.getSqlTypeName() == SqlTypeName.ROW || type.getSqlTypeName() == SqlTypeName.ARRAY) {
       return Optional.of(DataTypeMappings.TO_JSON_ONLY);
     }
-    if (type instanceof RawRelDataType) {
-      RawRelDataType rawRelDataType = (RawRelDataType) type;
+    if (type instanceof RawRelDataType rawRelDataType) {
       Class clazz = rawRelDataType.getRawType().getDefaultConversion();
       if (clazz == FlinkJsonType.class || clazz == FlinkVectorType.class) {
         return Optional.empty();
@@ -60,7 +59,8 @@ public class FlinkSqrlPostgresDataTypeMapper extends FlinkDataTypeMapper impleme
     return Optional.of(DataTypeMappings.TO_BYTES_ONLY);
   }
 
-  public boolean nativeTypeSupport(RelDataType type) {
+  @Override
+public boolean nativeTypeSupport(RelDataType type) {
     switch (type.getSqlTypeName()) {
       case TINYINT:
       case REAL:
@@ -108,8 +108,7 @@ public class FlinkSqrlPostgresDataTypeMapper extends FlinkDataTypeMapper impleme
       case VARBINARY:
         return true;
       case OTHER:
-        if (type instanceof RawRelDataType) {
-          RawRelDataType rawRelDataType = (RawRelDataType) type;
+        if (type instanceof RawRelDataType rawRelDataType) {
           Class clazz = rawRelDataType.getRawType().getDefaultConversion();
           if (clazz == FlinkJsonType.class || clazz == FlinkVectorType.class) {
             return true;
@@ -141,17 +140,17 @@ public class FlinkSqrlPostgresDataTypeMapper extends FlinkDataTypeMapper impleme
 
   @Override
   public boolean isTypeOf(TableConfig tableConfig) {
-    Optional<String> connectorNameOpt = tableConfig.getConnectorConfig().getConnectorName();
+    var connectorNameOpt = tableConfig.getConnectorConfig().getConnectorName();
     if (connectorNameOpt.isEmpty()) {
       return false;
     }
 
-    String connectorName = connectorNameOpt.get();
+    var connectorName = connectorNameOpt.get();
     if (!connectorName.equalsIgnoreCase("jdbc-sqrl")) {
       return false;
     }
 
-    String driver = (String)tableConfig.getConnectorConfig().toMap().get("driver");
+    var driver = (String)tableConfig.getConnectorConfig().toMap().get("driver");
     if (driver == null) {
       return false;
     }

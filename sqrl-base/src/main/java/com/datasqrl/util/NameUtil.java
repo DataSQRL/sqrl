@@ -1,8 +1,9 @@
 package com.datasqrl.util;
 
-import com.datasqrl.canonicalizer.NamePath;
 import java.nio.file.Path;
 import java.util.List;
+
+import com.datasqrl.canonicalizer.NamePath;
 
 public class NameUtil {
 

@@ -5,12 +5,10 @@ package com.datasqrl.plan.util;
 
 import static com.datasqrl.function.CalciteFunctionUtil.lightweightOp;
 
-import com.datasqrl.util.CalciteUtil;
-import com.google.common.base.Preconditions;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
-import lombok.Value;
+
 import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
@@ -19,6 +17,11 @@ import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.type.ReturnTypes;
 import org.apache.calcite.sql.type.SqlTypeName;
+
+import com.datasqrl.util.CalciteUtil;
+import com.google.common.base.Preconditions;
+
+import lombok.Value;
 
 /**
  * Represents a timestamp predicate that is normalized into the form: smallerIndex <=/= largerIndex
@@ -110,23 +113,14 @@ public class TimePredicate {
 
   public RexNode createRexNode(RexBuilder rexBuilder, Function<Integer, RexInputRef> createInputRef,
       boolean useCurrentTime) {
-    RexNode smallerRef = createRef(smallerIndex, rexBuilder, createInputRef, useCurrentTime);
-    RexNode largerRef = createRef(largerIndex, rexBuilder, createInputRef, useCurrentTime);
-    SqlOperator op;
-    switch (comparison) {
-      case EQUALS:
-        op = SqlStdOperatorTable.EQUALS;
-        break;
-      case LESS_THAN:
-        op = SqlStdOperatorTable.LESS_THAN;
-        break;
-      case LESS_THAN_OR_EQUAL:
-        op = SqlStdOperatorTable.LESS_THAN_OR_EQUAL;
-        break;
-      default:
-        throw new UnsupportedOperationException(comparison.name());
-    }
-
+    var smallerRef = createRef(smallerIndex, rexBuilder, createInputRef, useCurrentTime);
+    var largerRef = createRef(largerIndex, rexBuilder, createInputRef, useCurrentTime);
+    SqlOperator op = switch (comparison) {
+	case EQUALS -> SqlStdOperatorTable.EQUALS;
+	case LESS_THAN -> SqlStdOperatorTable.LESS_THAN;
+	case LESS_THAN_OR_EQUAL -> SqlStdOperatorTable.LESS_THAN_OR_EQUAL;
+	default -> throw new UnsupportedOperationException(comparison.name());
+	};
     if (intervalLength < 0) {
       smallerRef = rexBuilder.makeCall(SqlStdOperatorTable.DATETIME_PLUS, smallerRef,
           CalciteUtil.makeTimeInterval(intervalLength, rexBuilder));

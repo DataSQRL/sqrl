@@ -8,6 +8,32 @@ import static com.datasqrl.config.ScriptConfigImpl.GRAPHQL_KEY;
 import static com.datasqrl.config.ScriptConfigImpl.MAIN_KEY;
 import static com.datasqrl.util.NameUtil.namepath2Path;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.StringWriter;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import org.apache.commons.collections4.ListUtils;
+import org.apache.commons.lang3.StringUtils;
+
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.compile.TestPlan;
 import com.datasqrl.config.BuildPath;
@@ -32,34 +58,16 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
+
 import freemarker.template.Configuration;
 import freemarker.template.DefaultMapAdapter;
 import freemarker.template.Template;
 import freemarker.template.TemplateExceptionHandler;
 import freemarker.template.TemplateMethodModelEx;
 import freemarker.template.TemplateModelException;
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.StringWriter;
-import java.io.Writer;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.StandardOpenOption;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.SneakyThrows;
-import org.apache.commons.collections4.ListUtils;
-import org.apache.commons.lang3.StringUtils;
 
 @Getter
 @AllArgsConstructor(onConstructor_ = @Inject)
@@ -95,7 +103,7 @@ public class Packager {
 
   /** Helper function for retrieving listed dependencies. */
   private void retrieveDependencies(ErrorCollector errors) {
-    ErrorCollector depErrors = errors.resolve(DependenciesConfigImpl.DEPENDENCIES_KEY);
+    var depErrors = errors.resolve(DependenciesConfigImpl.DEPENDENCIES_KEY);
     retrieveDependencies(config.getDependencies().getDependencies(), depErrors)
         .forEach(failedDep -> depErrors.fatal("Could not retrieve dependency: %s", failedDep));
   }
@@ -138,7 +146,7 @@ public class Packager {
           if (file.isPresent()) {
             errors.checkFatal(
                 Files.isRegularFile(file.get()), "Could not locate %s file: %s", key, file.get());
-            String normalizedPath = rootDir.relativize(file.get()).normalize().toString();
+            var normalizedPath = rootDir.relativize(file.get()).normalize().toString();
             if (key.equals(MAIN_KEY)) {
               scriptConfig.setMainScript(normalizedPath);
             } else if (key.equals(GRAPHQL_KEY)) {
@@ -163,10 +171,10 @@ public class Packager {
    * @throws IOException
    */
   private Map<String, Optional<Path>> copyScriptFilesToBuildDir() throws IOException {
-    ScriptConfig scriptConfig = config.getScriptConfig();
+    var scriptConfig = config.getScriptConfig();
     Map<String, Optional<Path>> destinationPaths = new HashMap<>();
     if (scriptConfig.getMainScript().isPresent()) {
-      Path destinationPath =
+      var destinationPath =
           copyRelativeFile(
               rootDir.getRootDir().resolve(scriptConfig.getMainScript().get()),
               rootDir.getRootDir(),
@@ -174,7 +182,7 @@ public class Packager {
       destinationPaths.put(MAIN_KEY, Optional.of(destinationPath));
     }
     if (scriptConfig.getGraphql().isPresent()) {
-      Path destinationPath =
+      var destinationPath =
           copyRelativeFile(
               rootDir.getRootDir().resolve(scriptConfig.getGraphql().get()),
               rootDir.getRootDir(),
@@ -214,7 +222,7 @@ public class Packager {
 
   private boolean retrieveDependency(
       Path rootDir, Path buildDir, NamePath packagePath, Dependency dependency) throws IOException {
-    Path targetPath = namepath2Path(buildDir, packagePath);
+    var targetPath = namepath2Path(buildDir, packagePath);
     Preconditions.checkArgument(
         FileUtil.isEmptyDirectory(targetPath),
         "Dependency [%s] conflicts with existing module structure in directory: [%s]",
@@ -222,8 +230,8 @@ public class Packager {
         targetPath);
 
     // Determine the directory in the root that corresponds to the dependency's name
-    String depName = dependency.getName();
-    Path sourcePath = namepath2Path(rootDir, NamePath.parse(depName));
+    var depName = dependency.getName();
+    var sourcePath = namepath2Path(rootDir, NamePath.parse(depName));
 
     // Check if the source directory exists and is indeed a directory
     if (Files.isDirectory(sourcePath)) {
@@ -234,7 +242,7 @@ public class Packager {
             @Override
             public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs)
                 throws IOException {
-              Path targetDir = targetPath.resolve(sourcePath.relativize(dir));
+              var targetDir = targetPath.resolve(sourcePath.relativize(dir));
               Files.createDirectories(targetDir);
               return FileVisitResult.CONTINUE;
             }
@@ -263,7 +271,7 @@ public class Packager {
   public static Path copyFile(Path srcFile, Path destDir, Path relativeDestPath)
       throws IOException {
     Preconditions.checkArgument(Files.isRegularFile(srcFile), "Is not a file: %s", srcFile);
-    Path targetPath = canonicalizePath(destDir.resolve(relativeDestPath));
+    var targetPath = canonicalizePath(destDir.resolve(relativeDestPath));
     if (!Files.exists(targetPath.getParent())) {
       Files.createDirectories(targetPath.getParent());
     }
@@ -374,7 +382,7 @@ public class Packager {
         .forEach(
             path -> {
               try {
-                Path destination =
+                var destination =
                     buildDir.resolve(SqrlConstants.DATA_DIR).resolve(path.getFileName());
                 destination.toFile().mkdirs();
                 Files.copy(path, destination, StandardCopyOption.REPLACE_EXISTING);
@@ -391,7 +399,7 @@ public class Packager {
         .forEach(
             path -> {
               try {
-                Path destination =
+                var destination =
                     buildDir.resolve(SqrlConstants.LIB_DIR).resolve(path.getFileName());
                 // Ensure the parent directories exist
                 Files.createDirectories(destination.getParent());
@@ -494,10 +502,10 @@ public class Packager {
     }
 
     // extract the template filename
-    String templateName = path.getFileName().toString();
+    var templateName = path.getFileName().toString();
 
     // configure Freemarker
-    Configuration cfg = new Configuration(Configuration.VERSION_2_3_32);
+    var cfg = new Configuration(Configuration.VERSION_2_3_32);
     cfg.setDirectoryForTemplateLoading(path.getParent().toFile());
     cfg.setDefaultEncoding("UTF-8");
     cfg.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
@@ -505,15 +513,15 @@ public class Packager {
     cfg.setSharedVariable("jsonEncode", new JsonEncoderMethod());
 
     // load and process the template
-    Template template = cfg.getTemplate(templateName);
+    var template = cfg.getTemplate(templateName);
     Writer out = new StringWriter();
     template.process(config, out);
 
     // remove .ftl extension
-    String outputFileName = templateName.substring(0, templateName.length() - 4);
+    var outputFileName = templateName.substring(0, templateName.length() - 4);
 
     // write
-    Path outputPath = destination.getParent().resolve(outputFileName);
+    var outputPath = destination.getParent().resolve(outputFileName);
     Files.write(outputPath, out.toString().getBytes());
   }
 
@@ -525,8 +533,8 @@ public class Packager {
         throw new TemplateModelException("JsonEncoderMethod expects one argument.");
       }
       try {
-        Object obj = arguments.get(0);
-        Object wrappedObject = ((DefaultMapAdapter) obj).getWrappedObject();
+        var obj = arguments.get(0);
+        var wrappedObject = ((DefaultMapAdapter) obj).getWrappedObject();
         return SqrlObjectMapper.INSTANCE.writeValueAsString(wrappedObject);
       } catch (Exception e) {
         throw new TemplateModelException("Error processing JSON encoding", e);
@@ -536,7 +544,7 @@ public class Packager {
 
   public static Optional<List<Path>> findPackageFile(Path rootDir, List<Path> packageFiles) {
     if (packageFiles.isEmpty()) {
-      Path defaultPkg = rootDir.resolve(SqrlConstants.DEFAULT_PACKAGE);
+      var defaultPkg = rootDir.resolve(SqrlConstants.DEFAULT_PACKAGE);
       if (Files.isRegularFile(defaultPkg)) {
         return Optional.of(List.of(defaultPkg));
       } else {

@@ -1,12 +1,14 @@
 package com.datasqrl.plan.queries;
 
-import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.canonicalizer.NamePath;
-import lombok.EqualsAndHashCode;
-import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rel.type.RelDataTypeFieldImpl;
+
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.canonicalizer.NamePath;
+
+import lombok.EqualsAndHashCode;
+import lombok.Value;
 
 @Value
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)

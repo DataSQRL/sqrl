@@ -3,6 +3,12 @@
  */
 package com.datasqrl.plan.table;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import org.apache.calcite.rel.type.RelDataType;
+
 import com.datasqrl.calcite.TimestampAssignableTable;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
@@ -15,13 +21,9 @@ import com.datasqrl.plan.rules.SqrlConverterConfig;
 import com.datasqrl.plan.table.PullupOperator.Container;
 import com.datasqrl.plan.table.Timestamps.Type;
 import com.google.common.base.Preconditions;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 import lombok.Getter;
 import lombok.NonNull;
-import org.apache.calcite.rel.type.RelDataType;
 
 /**
  * A relational table that is defined by the imported data from a {@link TableSource}.
@@ -38,13 +40,18 @@ public class ProxyImportRelationalTable extends PhysicalRelationalTable implemen
       ImportedRelationalTableImpl baseTable, TableStatistic tableStatistic) {
     super(rootTableId, tablePath, tableType, rowType, rowType.getFieldCount(), timestamp,  primaryKey, Container.EMPTY, tableStatistic);
     this.baseTable = baseTable;
-    if (tableType.isLocked()) lock();
+    if (tableType.isLocked()) {
+		lock();
+	}
   }
 
   @Override
   public Optional<PhysicalRelationalTable> getStreamRoot() {
-    if (getType().isStream()) return Optional.of(this);
-    else return Optional.empty();
+    if (getType().isStream()) {
+		return Optional.of(this);
+	} else {
+		return Optional.empty();
+	}
   }
 
   @Override
@@ -59,7 +66,7 @@ public class ProxyImportRelationalTable extends PhysicalRelationalTable implemen
 
   @Override
   public SqrlConverterConfig.SqrlConverterConfigBuilder getBaseConfig() {
-    SqrlConverterConfig.SqrlConverterConfigBuilder builder = SqrlConverterConfig.builder();
+    var builder = SqrlConverterConfig.builder();
     getAssignedStage().ifPresent(stage -> builder.stage(stage));
     return builder;
   }

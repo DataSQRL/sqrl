@@ -2,6 +2,9 @@ package com.datasqrl.engine.database.relational;
 
 import static com.datasqrl.engine.EngineFeature.STANDARD_TABLE_FORMAT;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 import com.datasqrl.config.ConnectorFactoryContext;
 import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.EngineType;
@@ -18,9 +21,7 @@ import com.datasqrl.graphql.jdbc.DatabaseType;
 import com.datasqrl.plan.global.IndexSelectorConfig;
 import com.datasqrl.v2.dag.plan.MaterializationStagePlan;
 import com.google.common.base.Preconditions;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import lombok.Getter;
+
 import lombok.NonNull;
 
 /**
@@ -50,7 +51,9 @@ public abstract class AbstractJDBCTableFormatEngine extends AbstractJDBCEngine i
 
   @Override
   public void addQueryEngine(QueryEngine queryEngine) {
-    if (!supportsQueryEngine(queryEngine)) throw new UnsupportedOperationException(getName() + " table format does not support query engine: " + queryEngine);
+    if (!supportsQueryEngine(queryEngine)) {
+		throw new UnsupportedOperationException(getName() + " table format does not support query engine: " + queryEngine);
+	}
     Preconditions.checkState(!queryEngines.containsKey(queryEngine.getName()), "Query engine already added: %s", queryEngine.getName());
     queryEngines.put(queryEngine.getName(), queryEngine);
   }
@@ -68,7 +71,7 @@ public abstract class AbstractJDBCTableFormatEngine extends AbstractJDBCEngine i
 
   @Override
   public EnginePhysicalPlan plan(MaterializationStagePlan stagePlan) {
-    CombinedEnginePlan.CombinedEnginePlanBuilder planBuilder = CombinedEnginePlan.builder();
+    var planBuilder = CombinedEnginePlan.builder();
     planBuilder.plan("", super.plan(stagePlan));
 
     queryEngines.forEach((name, engine) -> {

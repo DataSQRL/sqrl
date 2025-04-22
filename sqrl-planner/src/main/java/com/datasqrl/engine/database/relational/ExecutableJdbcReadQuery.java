@@ -1,10 +1,12 @@
 package com.datasqrl.engine.database.relational;
 
+import java.util.List;
+import java.util.Optional;
+
 import com.datasqrl.engine.ExecutableQuery;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.graphql.jdbc.DatabaseType;
-import java.util.List;
-import java.util.Optional;
+
 import lombok.Builder;
 import lombok.Value;
 

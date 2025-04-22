@@ -1,30 +1,13 @@
 package com.datasqrl.engine.database.relational;
 
-import com.datasqrl.calcite.DialectCallConverter;
-import com.datasqrl.calcite.OperatorRuleTransformer;
-import com.datasqrl.calcite.convert.RelToSqlNode;
-import com.datasqrl.calcite.convert.RelToSqlNode.SqlNodes;
-import com.datasqrl.calcite.convert.SqlNodeToString;
-import com.datasqrl.calcite.dialect.postgres.SqlCreatePostgresView;
-import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.engine.database.relational.JdbcStatement.Field;
-import com.datasqrl.engine.database.relational.JdbcStatement.Type;
-import com.datasqrl.engine.database.relational.ddl.statements.CreateTableDDL;
-import com.datasqrl.engine.stream.flink.sql.RelToFlinkSql;
-import com.datasqrl.sql.DatabaseExtension;
-import com.datasqrl.util.CalciteUtil;
-import com.datasqrl.v2.dag.plan.MaterializationStagePlan.Query;
-import com.datasqrl.v2.tables.SqrlTableFunction;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import lombok.AllArgsConstructor;
+
 import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.rel.rel2sql.RelToSqlConverter;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexCall;
@@ -37,6 +20,20 @@ import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.pretty.SqlPrettyWriter;
 import org.apache.flink.table.planner.plan.schema.RawRelDataType;
+
+import com.datasqrl.calcite.OperatorRuleTransformer;
+import com.datasqrl.calcite.convert.RelToSqlNode;
+import com.datasqrl.calcite.convert.SqlNodeToString;
+import com.datasqrl.calcite.dialect.postgres.SqlCreatePostgresView;
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.engine.database.relational.JdbcStatement.Field;
+import com.datasqrl.engine.database.relational.JdbcStatement.Type;
+import com.datasqrl.engine.database.relational.ddl.statements.CreateTableDDL;
+import com.datasqrl.sql.DatabaseExtension;
+import com.datasqrl.util.CalciteUtil;
+import com.datasqrl.v2.dag.plan.MaterializationStagePlan.Query;
+
+import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
 public abstract class AbstractJdbcStatementFactory implements JdbcStatementFactory {
@@ -51,20 +48,20 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
   }
 
   public QueryResult createQuery(String viewName, RelNode relNode, boolean withView) {
-    RelNode rewrittenRelNode = dialectCallConverter.convert(relNode);
-    SqlNodes sqlNode = relToSqlConverter.convert(rewrittenRelNode);
-    String sql = sqlNodeToString.convert(sqlNode).getSql();
-    ExecutableJdbcReadQuery.ExecutableJdbcReadQueryBuilder qBuilder = ExecutableJdbcReadQuery.builder();
+    var rewrittenRelNode = dialectCallConverter.convert(relNode);
+    var sqlNode = relToSqlConverter.convert(rewrittenRelNode);
+    var sql = sqlNodeToString.convert(sqlNode).getSql();
+    var qBuilder = ExecutableJdbcReadQuery.builder();
     qBuilder.sql(sql);
 
     JdbcStatement view = null;
     if (withView) {
-      SqlIdentifier viewNameIdentifier = new SqlIdentifier(viewName, SqlParserPos.ZERO);
-      SqlNodeList columnList = new SqlNodeList(relNode.getRowType().getFieldList().stream()
+      var viewNameIdentifier = new SqlIdentifier(viewName, SqlParserPos.ZERO);
+      var columnList = new SqlNodeList(relNode.getRowType().getFieldList().stream()
           .map(f->new SqlIdentifier(f.getName(), SqlParserPos.ZERO))
           .collect(Collectors.toList()), SqlParserPos.ZERO);
-      String viewSql = createView(viewNameIdentifier, columnList, sqlNode.getSqlNode());
-      RelDataType datatype = relNode.getRowType();
+      var viewSql = createView(viewNameIdentifier, columnList, sqlNode.getSqlNode());
+      var datatype = relNode.getRowType();
       view = new JdbcStatement(viewName, Type.VIEW, viewSql, datatype, getColumns(datatype.getFieldList()));
     }
     return new JdbcStatementFactory.QueryResult(qBuilder, view);
@@ -72,8 +69,8 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
 
   @Override
   public JdbcStatement createTable(JdbcEngineCreateTable createTable) {
-    String tableName = createTable.getTable().getTableName();
-    CreateTableDDL ddl = createTable(tableName, createTable.getDatatype().getFieldList(),
+    var tableName = createTable.getTable().getTableName();
+    var ddl = createTable(tableName, createTable.getDatatype().getFieldList(),
         createTable.getTable().getPrimaryKey().get());
     return new JdbcStatement(tableName, Type.TABLE, ddl.getSql(), createTable.getDatatype(),
         ddl.getColumns());
@@ -81,9 +78,9 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
 
   public CreateTableDDL createTable(String name, List<RelDataTypeField> fields, List<String> primaryKeys) {
     //TODO: Move to SqlNode
-    String tableName = quoteIdentifier(name);
-    List<Field> columns = getColumns(fields);
-    List<String> pks = quoteValues(primaryKeys);
+    var tableName = quoteIdentifier(name);
+    var columns = getColumns(fields);
+    var pks = quoteValues(primaryKeys);
     return new CreateTableDDL(tableName, columns, pks);
   }
 
@@ -94,12 +91,12 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
   }
 
   protected JdbcStatement.Field toField(RelDataTypeField field) {
-    SqlDataTypeSpec castSpec = getSqlType(field.getType());
-    SqlPrettyWriter sqlPrettyWriter = new SqlPrettyWriter();
+    var castSpec = getSqlType(field.getType());
+    var sqlPrettyWriter = new SqlPrettyWriter();
     castSpec.unparse(sqlPrettyWriter, 0, 0);
-    String typeName = sqlPrettyWriter.toSqlString().getSql();
+    var typeName = sqlPrettyWriter.toSqlString().getSql();
 
-    RelDataType datatype = field.getType();
+    var datatype = field.getType();
 
     return new Field(field.getName(), typeName, datatype.isNullable());
   }
@@ -108,7 +105,7 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
 
   protected String createView(SqlIdentifier viewNameIdentifier,
       SqlNodeList columnList, SqlNode viewSqlNode) {
-    SqlCreatePostgresView createView = new SqlCreatePostgresView(SqlParserPos.ZERO, true,
+    var createView = new SqlCreatePostgresView(SqlParserPos.ZERO, true,
         viewNameIdentifier, columnList,
         viewSqlNode);
     return sqlNodeToString.convert(() -> createView).getSql();
@@ -140,8 +137,9 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
       //See if we use a type from an extension by matching on class
       for (DatabaseExtension extension : extensions) {
         if (field.getType() instanceof RawRelDataType &&
-            ((RawRelDataType) field.getType()).getRawType().getOriginatingClass().equals(extension.typeClass()))
-          matchedExtensions.add(extension);
+            ((RawRelDataType) field.getType()).getRawType().getOriginatingClass().equals(extension.typeClass())) {
+			matchedExtensions.add(extension);
+		}
       }
     }
 

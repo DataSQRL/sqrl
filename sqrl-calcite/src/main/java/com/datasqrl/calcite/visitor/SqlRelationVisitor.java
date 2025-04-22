@@ -1,6 +1,8 @@
 package com.datasqrl.calcite.visitor;
 
-import org.apache.calcite.sql.*;
+import org.apache.calcite.sql.SqlCall;
+import org.apache.calcite.sql.SqlIdentifier;
+import org.apache.calcite.sql.SqlJoin;
 
 public interface SqlRelationVisitor<R, C> extends SqlTopLevelRelationVisitor<R,C> {
   R visitAliasedRelation(SqlCall node, C context);

@@ -3,19 +3,6 @@
  */
 package com.datasqrl.io.schema.flexible.converters;
 
-import com.datasqrl.calcite.type.TypeFactory;
-import com.datasqrl.util.CalciteUtil;
-import com.datasqrl.io.schema.flexible.type.ArrayType;
-import com.datasqrl.io.schema.flexible.type.Type;
-import com.datasqrl.io.schema.flexible.type.basic.AbstractBasicType;
-import com.datasqrl.io.schema.flexible.type.basic.BooleanType;
-import com.datasqrl.io.schema.flexible.type.basic.TimestampType;
-import com.datasqrl.io.schema.flexible.type.basic.DoubleType;
-import com.datasqrl.io.schema.flexible.type.basic.BigIntType;
-import com.datasqrl.io.schema.flexible.type.basic.IntervalType;
-import com.datasqrl.io.schema.flexible.type.basic.StringType;
-import java.util.Optional;
-import lombok.Value;
 import org.apache.calcite.avatica.util.TimeUnit;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
@@ -24,6 +11,20 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.BasicSqlType;
 import org.apache.calcite.sql.type.IntervalSqlType;
 import org.apache.calcite.sql.type.SqlTypeName;
+
+import com.datasqrl.calcite.type.TypeFactory;
+import com.datasqrl.io.schema.flexible.type.ArrayType;
+import com.datasqrl.io.schema.flexible.type.Type;
+import com.datasqrl.io.schema.flexible.type.basic.AbstractBasicType;
+import com.datasqrl.io.schema.flexible.type.basic.BigIntType;
+import com.datasqrl.io.schema.flexible.type.basic.BooleanType;
+import com.datasqrl.io.schema.flexible.type.basic.DoubleType;
+import com.datasqrl.io.schema.flexible.type.basic.IntervalType;
+import com.datasqrl.io.schema.flexible.type.basic.StringType;
+import com.datasqrl.io.schema.flexible.type.basic.TimestampType;
+import com.datasqrl.util.CalciteUtil;
+
+import lombok.Value;
 
 @Value
 public class SqrlTypeRelDataTypeConverter implements SqrlTypeConverter<RelDataType> {
@@ -126,7 +127,7 @@ public class SqrlTypeRelDataTypeConverter implements SqrlTypeConverter<RelDataTy
         default:
       }
     }
-    Optional<RelDataType> arrayComponent = CalciteUtil.getArrayElementType(datatype);
+    var arrayComponent = CalciteUtil.getArrayElementType(datatype);
     if (arrayComponent.isPresent()) {
       return new ArrayType(convert(arrayComponent.get()));
     }

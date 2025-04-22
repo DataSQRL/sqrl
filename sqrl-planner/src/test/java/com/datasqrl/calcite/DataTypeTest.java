@@ -1,6 +1,9 @@
 package com.datasqrl.calcite;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.sql.type.SqlTypeName;
@@ -16,7 +19,7 @@ public class DataTypeTest {
   @BeforeEach
   public void setUp() {
 
-    SqrlFramework framework = new SqrlFramework();
+    var framework = new SqrlFramework();
 
     // Initialize QueryPlanner with mocked framework
     queryPlanner = new QueryPlanner(framework);
@@ -29,8 +32,8 @@ public class DataTypeTest {
     @Test
     @DisplayName("Parse VARCHAR Type")
     void testParseVarchar() {
-      String datatype = "VARCHAR(100)";
-      RelDataType type = queryPlanner.parseDatatype(datatype);
+      var datatype = "VARCHAR(100)";
+      var type = queryPlanner.parseDatatype(datatype);
       assertEquals(SqlTypeName.VARCHAR, type.getSqlTypeName());
       assertEquals(100, type.getPrecision());
       assertTrue(type.isNullable());
@@ -39,8 +42,8 @@ public class DataTypeTest {
     @Test
     @DisplayName("Parse INTEGER Type")
     void testParseInteger() {
-      String datatype = "INTEGER";
-      RelDataType type = queryPlanner.parseDatatype(datatype);
+      var datatype = "INTEGER";
+      var type = queryPlanner.parseDatatype(datatype);
       assertEquals(SqlTypeName.INTEGER, type.getSqlTypeName());
       assertTrue(type.isNullable());
     }
@@ -48,8 +51,8 @@ public class DataTypeTest {
     @Test
     @DisplayName("Parse TIMESTAMP Type")
     void testParseTimestamp() {
-      String datatype = "TIMESTAMP(3)";
-      RelDataType type = queryPlanner.parseDatatype(datatype);
+      var datatype = "TIMESTAMP(3)";
+      var type = queryPlanner.parseDatatype(datatype);
       assertEquals(SqlTypeName.TIMESTAMP, type.getSqlTypeName());
       assertEquals(3, type.getPrecision());
       assertTrue(type.isNullable());
@@ -58,8 +61,8 @@ public class DataTypeTest {
     @Test
     @DisplayName("Parse TIMESTAMP Type")
     void testParseTimestampLtz() {
-      String datatype = "TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)";
-      RelDataType type = queryPlanner.parseDatatype(datatype);
+      var datatype = "TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)";
+      var type = queryPlanner.parseDatatype(datatype);
       assertEquals(SqlTypeName.TIMESTAMP_WITH_LOCAL_TIME_ZONE, type.getSqlTypeName());
       assertEquals(3, type.getPrecision());
       assertTrue(type.isNullable());
@@ -73,8 +76,8 @@ public class DataTypeTest {
     @Test
     @DisplayName("Parse BOOLEAN Type")
     void testParseBoolean() {
-      String datatype = "BOOLEAN";
-      RelDataType type = queryPlanner.parseDatatype(datatype);
+      var datatype = "BOOLEAN";
+      var type = queryPlanner.parseDatatype(datatype);
       assertEquals(SqlTypeName.BOOLEAN, type.getSqlTypeName());
       assertTrue(type.isNullable());
     }
@@ -82,8 +85,8 @@ public class DataTypeTest {
     @Test
     @DisplayName("Parse DOUBLE Type")
     void testParseDouble() {
-      String datatype = "DOUBLE";
-      RelDataType type = queryPlanner.parseDatatype(datatype);
+      var datatype = "DOUBLE";
+      var type = queryPlanner.parseDatatype(datatype);
       assertEquals(SqlTypeName.DOUBLE, type.getSqlTypeName());
       assertTrue(type.isNullable());
     }
@@ -91,8 +94,8 @@ public class DataTypeTest {
     @Test
     @DisplayName("Parse BIGINT Type")
     void testParseBigInt() {
-      String datatype = "BIGINT";
-      RelDataType type = queryPlanner.parseDatatype(datatype);
+      var datatype = "BIGINT";
+      var type = queryPlanner.parseDatatype(datatype);
       assertEquals(SqlTypeName.BIGINT, type.getSqlTypeName());
       assertTrue(type.isNullable());
     }
@@ -101,8 +104,8 @@ public class DataTypeTest {
   @Test
   @DisplayName("Parse 'GraphQLBigInteger' to BIGINT")
   void testParseBigInteger() {
-    String datatype = "GraphQLBigInteger";
-    RelDataType type = queryPlanner.parseDatatype(datatype);
+    var datatype = "GraphQLBigInteger";
+    var type = queryPlanner.parseDatatype(datatype);
     assertEquals(SqlTypeName.BIGINT, type.getSqlTypeName());
     assertFalse(type.isNullable());
   }
@@ -114,8 +117,8 @@ public class DataTypeTest {
     @Test
     @DisplayName("Parse 'string' Alias to VARCHAR")
     void testParseStringAlias() {
-      String datatype = "string";
-      RelDataType type = queryPlanner.parseDatatype(datatype);
+      var datatype = "string";
+      var type = queryPlanner.parseDatatype(datatype);
       assertEquals(SqlTypeName.VARCHAR, type.getSqlTypeName());
       assertTrue(type.isNullable());
     }
@@ -123,8 +126,8 @@ public class DataTypeTest {
     @Test
     @DisplayName("Parse 'int' Alias to INTEGER")
     void testParseIntAlias() {
-      String datatype = "int";
-      RelDataType type = queryPlanner.parseDatatype(datatype);
+      var datatype = "int";
+      var type = queryPlanner.parseDatatype(datatype);
       assertEquals(SqlTypeName.INTEGER, type.getSqlTypeName());
       assertTrue(type.isNullable());
     }
@@ -132,8 +135,8 @@ public class DataTypeTest {
     @Test
     @DisplayName("Parse 'datetime' Alias to TIMESTAMP")
     void testParseDatetimeAlias() {
-      String datatype = "datetime";
-      RelDataType type = queryPlanner.parseDatatype(datatype);
+      var datatype = "datetime";
+      var type = queryPlanner.parseDatatype(datatype);
       assertEquals(SqlTypeName.TIMESTAMP, type.getSqlTypeName());
       assertEquals(3, type.getPrecision());
       assertFalse(type.isNullable());
@@ -147,8 +150,8 @@ public class DataTypeTest {
     @Test
     @DisplayName("Parse MAP Type")
     void testParseMapType() {
-      String datatype = "MAP<STRING, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)>";
-      RelDataType type = queryPlanner.parseDatatype(datatype);
+      var datatype = "MAP<STRING, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)>";
+      var type = queryPlanner.parseDatatype(datatype);
       assertEquals(SqlTypeName.MAP, type.getSqlTypeName());
 
       RelDataType keyType = type.getKeyType();
@@ -162,8 +165,8 @@ public class DataTypeTest {
     @Test
     @DisplayName("Parse ROW Type")
     void testParseRowType() {
-      String datatype = "ROW<name STRING, age INT>";
-      RelDataType type = queryPlanner.parseDatatype(datatype);
+      var datatype = "ROW<name STRING, age INT>";
+      var type = queryPlanner.parseDatatype(datatype);
       assertEquals(SqlTypeName.ROW, type.getSqlTypeName());
 
       assertEquals(2, type.getFieldCount());
@@ -177,8 +180,8 @@ public class DataTypeTest {
     @Test
     @DisplayName("Parse ARRAY Type")
     void testParseArrayType() {
-      String datatype = "ARRAY<DOUBLE>";
-      RelDataType type = queryPlanner.parseDatatype(datatype);
+      var datatype = "ARRAY<DOUBLE>";
+      var type = queryPlanner.parseDatatype(datatype);
       assertEquals(SqlTypeName.ARRAY, type.getSqlTypeName());
 
       RelDataType elementType = type.getComponentType();
@@ -194,8 +197,8 @@ public class DataTypeTest {
     @Test
     @DisplayName("Parse Nullable INTEGER Type")
     void testParseNullableInteger() {
-      String datatype = "INTEGER NULL";
-      RelDataType type = queryPlanner.parseDatatype(datatype);
+      var datatype = "INTEGER NULL";
+      var type = queryPlanner.parseDatatype(datatype);
       assertEquals(SqlTypeName.INTEGER, type.getSqlTypeName());
       assertTrue(type.isNullable());
     }
@@ -203,8 +206,8 @@ public class DataTypeTest {
     @Test
     @DisplayName("Parse NOT NULL VARCHAR Type")
     void testParseNotNullVarchar() {
-      String datatype = "VARCHAR(50) NOT NULL";
-      RelDataType type = queryPlanner.parseDatatype(datatype);
+      var datatype = "VARCHAR(50) NOT NULL";
+      var type = queryPlanner.parseDatatype(datatype);
       assertEquals(SqlTypeName.VARCHAR, type.getSqlTypeName());
       assertEquals(50, type.getPrecision());
       assertFalse(type.isNullable());
@@ -213,8 +216,8 @@ public class DataTypeTest {
     @Test
     @DisplayName("Parse Not Null MAP Type")
     void testParseNullableMapType() {
-      String datatype = "MAP<STRING, INTEGER> NOT NULL";
-      RelDataType type = queryPlanner.parseDatatype(datatype);
+      var datatype = "MAP<STRING, INTEGER> NOT NULL";
+      var type = queryPlanner.parseDatatype(datatype);
       assertEquals(SqlTypeName.MAP, type.getSqlTypeName());
       assertFalse(type.isNullable());
 
@@ -228,8 +231,8 @@ public class DataTypeTest {
     @Test
     @DisplayName("Parse NOT NULL ROW Type")
     void testParseNotNullRowType() {
-      String datatype = "ROW<name STRING, age INT> NOT NULL";
-      RelDataType type = queryPlanner.parseDatatype(datatype);
+      var datatype = "ROW<name STRING, age INT> NOT NULL";
+      var type = queryPlanner.parseDatatype(datatype);
       assertEquals(SqlTypeName.ROW, type.getSqlTypeName());
       assertFalse(type.isNullable());
 
@@ -248,13 +251,13 @@ public class DataTypeTest {
     @Test
     @DisplayName("Parse Unsupported Data Type")
     void testParseUnsupportedType() {
-      String datatype = "UNSUPPORTED_TYPE";
+      var datatype = "UNSUPPORTED_TYPE";
       Exception exception = assertThrows(RuntimeException.class, () -> {
         queryPlanner.parseDatatype(datatype);
       });
 
-      String expectedMessage = "Unknown identifier";
-      String actualMessage = exception.getMessage();
+      var expectedMessage = "Unknown identifier";
+      var actualMessage = exception.getMessage();
 
       assertTrue(actualMessage.contains(expectedMessage));
     }
@@ -262,7 +265,7 @@ public class DataTypeTest {
     @Test
     @DisplayName("Parse Malformed MAP Type")
     void testParseMalformedMapType() {
-      String datatype = "MAP<STRING INTEGER>"; // Missing comma
+      var datatype = "MAP<STRING INTEGER>"; // Missing comma
       Exception exception = assertThrows(RuntimeException.class, () -> {
         queryPlanner.parseDatatype(datatype);
       });

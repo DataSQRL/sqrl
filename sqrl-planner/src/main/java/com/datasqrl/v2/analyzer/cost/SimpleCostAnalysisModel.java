@@ -3,12 +3,14 @@
  */
 package com.datasqrl.v2.analyzer.cost;
 
+import java.util.List;
+
 import com.datasqrl.engine.database.AnalyticDatabaseEngine;
 import com.datasqrl.engine.pipeline.ExecutionStage;
-import com.datasqrl.v2.analyzer.TableAnalysis;
 import com.datasqrl.plan.rules.ComputeCost;
+import com.datasqrl.v2.analyzer.TableAnalysis;
 import com.google.common.base.Preconditions;
-import java.util.List;
+
 import lombok.NonNull;
 import lombok.Value;
 
@@ -27,7 +29,7 @@ class SimpleCostAnalysisModel implements ComputeCost {
   }
 
   public static SimpleCostAnalysisModel of(ExecutionStage executionStage, TableAnalysis tableAnalysis) {
-    double cost = 1.0;
+    var cost = 1.0;
     switch (executionStage.getEngine().getType()) {
       case DATABASE:
         //Currently we make the simplifying assumption that database execution is the baseline and we compare
@@ -62,7 +64,7 @@ class SimpleCostAnalysisModel implements ComputeCost {
   }
 
   public static double joinCost(List<CostAnalysis> costs) {
-    double joinCost = 1.0;
+    var joinCost = 1.0;
     for (CostAnalysis costAnalysis : costs) {
       if (costAnalysis instanceof JoinCostAnalysis) {
         joinCost *= costAnalysis.getCostMultiplier();

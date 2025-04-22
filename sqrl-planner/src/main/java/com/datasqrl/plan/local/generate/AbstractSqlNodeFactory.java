@@ -1,6 +1,7 @@
 package com.datasqrl.plan.local.generate;
 
 import java.util.List;
+
 import org.apache.calcite.sql.JoinType;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlIdentifier;

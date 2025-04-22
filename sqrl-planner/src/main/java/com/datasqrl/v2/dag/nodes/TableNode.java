@@ -1,13 +1,14 @@
 package com.datasqrl.v2.dag.nodes;
 
 
-import com.datasqrl.engine.pipeline.ExecutionStage;
-import com.datasqrl.v2.analyzer.TableAnalysis;
-import com.datasqrl.v2.analyzer.TableOrFunctionAnalysis.FullIdentifier;
-import com.datasqrl.v2.dag.plan.MutationQuery;
-import com.datasqrl.plan.global.StageAnalysis;
 import java.util.Map;
 import java.util.Optional;
+
+import com.datasqrl.engine.pipeline.ExecutionStage;
+import com.datasqrl.plan.global.StageAnalysis;
+import com.datasqrl.v2.analyzer.TableAnalysis;
+import com.datasqrl.v2.dag.plan.MutationQuery;
+
 import lombok.Getter;
 
 /**
@@ -34,7 +35,9 @@ public class TableNode extends PlannedNode {
   }
 
   public Optional<MutationQuery> getMutation() {
-    if (!isSource()) return Optional.empty();
+    if (!isSource()) {
+		return Optional.empty();
+	}
     return Optional.ofNullable(tableAnalysis.getSourceSinkTable().get().getMutationDefinition());
   }
 

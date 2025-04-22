@@ -5,6 +5,7 @@ package com.datasqrl.v2.analyzer.cost;
 
 import com.datasqrl.io.tables.TableType;
 import com.datasqrl.plan.rules.JoinAnalysis.Side;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -28,7 +29,7 @@ public class JoinCostAnalysis implements CostAnalysis {
 
   @Override
   public double getCostMultiplier() {
-    double localCost = 0.0;
+    var localCost = 0.0;
     if (getSingletonSide()!= Side.LEFT) {
       localCost += perSideCost(getLeftType());
     }
@@ -43,22 +44,15 @@ public class JoinCostAnalysis implements CostAnalysis {
   }
 
   private double perSideCost(TableType tableType) {
-    switch (tableType) {
-      case STREAM:
-        return 100;
-      case STATE:
-        return 10;
-      case VERSIONED_STATE:
-        return 4;
-      case STATIC:
-        return 1;
-      case LOOKUP:
-        return 2;
-      case RELATION:
-        return 20;
-      default:
-        throw new UnsupportedOperationException();
-    }
+    return switch (tableType) {
+	case STREAM -> 100;
+	case STATE -> 10;
+	case VERSIONED_STATE -> 4;
+	case STATIC -> 1;
+	case LOOKUP -> 2;
+	case RELATION -> 20;
+	default -> throw new UnsupportedOperationException();
+	};
   }
 
 

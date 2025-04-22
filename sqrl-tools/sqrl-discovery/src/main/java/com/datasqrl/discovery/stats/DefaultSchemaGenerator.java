@@ -3,9 +3,17 @@
  */
 package com.datasqrl.discovery.stats;
 
-import com.datasqrl.error.ErrorCollector;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.SpecialName;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.schema.flexible.constraint.Cardinality;
 import com.datasqrl.io.schema.flexible.constraint.Constraint;
 import com.datasqrl.io.schema.flexible.constraint.NotNull;
@@ -14,16 +22,14 @@ import com.datasqrl.io.schema.flexible.input.FlexibleTableSchema;
 import com.datasqrl.io.schema.flexible.input.FlexibleTypeMatcher;
 import com.datasqrl.io.schema.flexible.input.RelationType;
 import com.datasqrl.io.schema.flexible.input.SchemaAdjustmentSettings;
-import com.datasqrl.io.schema.flexible.type.Type;
 import com.datasqrl.io.schema.flexible.type.basic.BasicType;
 import com.datasqrl.io.schema.flexible.type.basic.BasicTypeManager;
 import com.datasqrl.io.schema.flexible.type.basic.StringType;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
-import lombok.NonNull;
 
-import java.util.*;
+import lombok.NonNull;
 
 /**
  * This class is not thread-safe and should be used to merge one schema at a time.
@@ -36,17 +42,19 @@ public class DefaultSchemaGenerator extends FlexibleTypeMatcher implements Schem
     super(settings);
   }
 
-  public FlexibleTableSchema mergeSchema(@NonNull SourceTableStatistics tableStats,
+  @Override
+public FlexibleTableSchema mergeSchema(@NonNull SourceTableStatistics tableStats,
                                                     @NonNull FlexibleTableSchema tableDef, @NonNull ErrorCollector errors) {
     isComplete = !tableDef.isPartialSchema();
-    FlexibleTableSchema.Builder builder = new FlexibleTableSchema.Builder();
+    var builder = new FlexibleTableSchema.Builder();
     builder.copyFrom(tableDef);
     builder.setPartialSchema(false);
     builder.setFields(merge(tableStats.relation, tableDef.getFields(), errors));
     return builder.build();
   }
 
-  public FlexibleTableSchema mergeSchema(@NonNull SourceTableStatistics tableStats,
+  @Override
+public FlexibleTableSchema mergeSchema(@NonNull SourceTableStatistics tableStats,
                                                     @NonNull Name tableName, @NonNull ErrorCollector errors) {
     return mergeSchema(tableStats, FlexibleTableSchema.empty(tableName), errors);
   }
@@ -55,7 +63,7 @@ public class DefaultSchemaGenerator extends FlexibleTypeMatcher implements Schem
                                                 @NonNull RelationType<FlexibleFieldSchema.Field> fields,
                                                 @NonNull ErrorCollector errors) {
     Set<Name> coveredNames = new HashSet<>();
-    long numRecords = relation.getCount();
+    var numRecords = relation.getCount();
     RelationType.Builder<FlexibleFieldSchema.Field> builder = RelationType.build();
     for (FlexibleFieldSchema.Field f : fields) {
       builder.add(
@@ -78,17 +86,17 @@ public class DefaultSchemaGenerator extends FlexibleTypeMatcher implements Schem
                                   FlexibleFieldSchema.Field fieldDef,
                                   @NonNull Name fieldName, long numRecords, @NonNull ErrorCollector errors) {
     Preconditions.checkArgument(fieldDef != null || !isComplete);
-    FlexibleFieldSchema.Field.Builder builder = new FlexibleFieldSchema.Field.Builder();
+    var builder = new FlexibleFieldSchema.Field.Builder();
     if (fieldDef != null) {
       builder.copyFrom(fieldDef);
     } else {
       builder.setName(Name.changeDisplayName(fieldName, fieldStats.getDisplayName()));
     }
-    boolean statsNotNull = false;
+    var statsNotNull = false;
     if (fieldStats != null) {
       statsNotNull = fieldStats.numNulls == 0 && fieldStats.count == numRecords;
     }
-    List<FlexibleFieldSchema.FieldType> types = merge(
+    var types = merge(
         fieldStats != null ? fieldStats.types.keySet() : Collections.EMPTY_SET,
         fieldDef != null ? fieldDef.getTypes() : Collections.EMPTY_LIST, statsNotNull, fieldName, errors);
     builder.setTypes(types);
@@ -108,7 +116,7 @@ public class DefaultSchemaGenerator extends FlexibleTypeMatcher implements Schem
       FlexibleFieldSchema.FieldType result = null;
       List<Constraint> constraints =
           statsNotNull ? List.of(NotNull.INSTANCE) : Collections.EMPTY_LIST;
-      int maxArrayDepth = 0;
+      var maxArrayDepth = 0;
       if (statTypes.isEmpty()) { //All field values where null, use String as default type
         Preconditions.checkArgument(!statsNotNull);
         result = new FlexibleFieldSchema.FieldType(SpecialName.SINGLETON, StringType.INSTANCE,
@@ -116,12 +124,12 @@ public class DefaultSchemaGenerator extends FlexibleTypeMatcher implements Schem
       } else {
         BasicType type = null;
         for (FieldTypeStats fts : statTypes) {
-          Type td = fts.getDetected();
-          if (td instanceof BasicType) {
+          var td = fts.getDetected();
+          if (td instanceof BasicType basicType) {
             if (type == null) {
-              type = (BasicType) td;
+              type = basicType;
             } else {
-              type = BasicTypeManager.combine(type, (BasicType) td,
+              type = BasicTypeManager.combine(type, basicType,
                       settings.maxCastingTypeDistance())
                   .orElse(null);
             }
@@ -141,15 +149,15 @@ public class DefaultSchemaGenerator extends FlexibleTypeMatcher implements Schem
           //Combine all of the encountered raw types
           maxArrayDepth = 0;
           type = null;
-          int nestedRelationArrayDepth = 0;
+          var nestedRelationArrayDepth = 0;
           RelationStats nested = null;
           for (FieldTypeStats fts : statTypes) {
-            Type td = fts.raw;
-            if (td instanceof BasicType) {
+            var td = fts.raw;
+            if (td instanceof BasicType basicType) {
               if (type == null) {
-                type = (BasicType) td;
+                type = basicType;
               } else {
-                type = BasicTypeManager.combineForced(type, (BasicType) td);
+                type = BasicTypeManager.combineForced(type, basicType);
               }
               maxArrayDepth = Math.max(fts.getArrayDepth(), maxArrayDepth);
             } else {
@@ -171,7 +179,7 @@ public class DefaultSchemaGenerator extends FlexibleTypeMatcher implements Schem
                 RelationType.EMPTY, errors);
             if (result != null) {
               //Need to embed basictype into nested relation as value
-              FlexibleFieldSchema.Field.Builder b = new FlexibleFieldSchema.Field.Builder();
+              var b = new FlexibleFieldSchema.Field.Builder();
               b.setName(SpecialName.VALUE);
               b.setTypes(Collections.singletonList(result));
               nestedType = RelationType.<FlexibleFieldSchema.Field>build()
@@ -202,7 +210,7 @@ public class DefaultSchemaGenerator extends FlexibleTypeMatcher implements Schem
       Multimap<FlexibleFieldSchema.FieldType, FieldTypeStats> typePairing = ArrayListMultimap.create();
       for (FieldTypeStats fts : statTypes) {
         //Try to match on raw first
-        FlexibleFieldSchema.FieldType match = matchType(fts, fieldTypes);
+        var match = matchType(fts, fieldTypes);
         if (match != null) {
           if (!match.getType().getClass().equals(fts.getRaw().getClass())
               || match.getArrayDepth() != fts.getArrayDepth()) {

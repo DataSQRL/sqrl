@@ -3,9 +3,10 @@
  */
 package com.datasqrl.engine.database.relational.ddl;
 
-import com.datasqrl.config.JdbcDialect;
 import java.util.Optional;
 import java.util.ServiceLoader;
+
+import com.datasqrl.config.JdbcDialect;
 
 /**
  * Loads via ServiceLoader

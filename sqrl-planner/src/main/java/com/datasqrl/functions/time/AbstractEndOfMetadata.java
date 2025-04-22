@@ -1,8 +1,10 @@
 package com.datasqrl.functions.time;
 
+import java.time.temporal.ChronoUnit;
+
 import com.datasqrl.function.SqrlTimeTumbleFunction;
 import com.google.common.base.Preconditions;
-import java.time.temporal.ChronoUnit;
+
 import lombok.AllArgsConstructor;
 
 public abstract class AbstractEndOfMetadata implements SqrlTimeTumbleFunction {

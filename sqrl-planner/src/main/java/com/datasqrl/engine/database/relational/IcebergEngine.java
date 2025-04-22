@@ -1,5 +1,13 @@
 package com.datasqrl.engine.database.relational;
 
+import java.util.LinkedHashMap;
+import java.util.List;
+
+import org.apache.calcite.sql.SqlIdentifier;
+import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqlNodeList;
+import org.apache.calcite.sql.parser.SqlParserPos;
+
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.JdbcDialect;
@@ -15,13 +23,8 @@ import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
 import com.datasqrl.sql.SqlDDLStatement;
 import com.google.inject.Inject;
-import java.util.LinkedHashMap;
-import java.util.List;
+
 import lombok.NonNull;
-import org.apache.calcite.sql.SqlIdentifier;
-import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqlNodeList;
-import org.apache.calcite.sql.parser.SqlParserPos;
 
 public class IcebergEngine extends AbstractJDBCTableFormatEngine {
 
@@ -69,14 +72,14 @@ public class IcebergEngine extends AbstractJDBCTableFormatEngine {
 
 
     //The plan for reading by each query engine
-    LinkedHashMap<String, DatabasePhysicalPlanOld> queryEnginePlans = new LinkedHashMap<>();
+    var queryEnginePlans = new LinkedHashMap<String, DatabasePhysicalPlanOld>();
     queryEngines.forEach((name, queryEngine) -> queryEnginePlans.put(name,
         queryEngine.plan(connectorFactory, engineConfig, plan, inputs, pipeline, stagePlans, framework, errorCollector)));
 
     //We pick the first DDL from the engines
     sinkDDL = queryEnginePlans.values().stream().map(DatabasePhysicalPlanOld::getDdl).findFirst()
         .orElse(List.of());
-    
+
     //Uncomment for debug
 //    StreamUtil.filterByClass(inputs,
 //        EngineSink.class).forEach(s -> {

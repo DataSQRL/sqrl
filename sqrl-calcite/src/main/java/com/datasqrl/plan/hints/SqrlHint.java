@@ -3,14 +3,15 @@
  */
 package com.datasqrl.plan.hints;
 
-import lombok.NonNull;
+import java.util.List;
+import java.util.Optional;
+
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.hint.Hintable;
 import org.apache.calcite.rel.hint.RelHint;
 import org.apache.calcite.tools.RelBuilder;
 
-import java.util.List;
-import java.util.Optional;
+import lombok.NonNull;
 
 public interface SqrlHint {
 

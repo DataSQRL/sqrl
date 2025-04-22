@@ -2,6 +2,23 @@ package com.datasqrl.engine.database.relational;
 
 import static com.datasqrl.function.CalciteFunctionUtil.lightweightOp;
 
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.RelShuttleImpl;
+import org.apache.calcite.rel.core.TableScan;
+import org.apache.calcite.rel.logical.LogicalTableFunctionScan;
+import org.apache.calcite.rex.RexBuilder;
+import org.apache.calcite.rex.RexNode;
+import org.apache.calcite.sql.SqlIdentifier;
+import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqlNodeList;
+import org.apache.calcite.sql.fun.SqlStdOperatorTable;
+import org.apache.calcite.sql.parser.SqlParserPos;
+
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.config.ConnectorFactoryFactory;
@@ -20,22 +37,8 @@ import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
 import com.datasqrl.plan.queries.IdentifiedQuery;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+
 import lombok.NonNull;
-import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.rel.RelShuttleImpl;
-import org.apache.calcite.rel.core.TableScan;
-import org.apache.calcite.rel.logical.LogicalTableFunctionScan;
-import org.apache.calcite.rex.RexBuilder;
-import org.apache.calcite.rex.RexNode;
-import org.apache.calcite.sql.SqlIdentifier;
-import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqlNodeList;
-import org.apache.calcite.sql.fun.SqlStdOperatorTable;
-import org.apache.calcite.sql.parser.SqlParserPos;
 
 public class DuckDBEngine extends AbstractJDBCQueryEngine {
 
@@ -70,16 +73,16 @@ public class DuckDBEngine extends AbstractJDBCQueryEngine {
       StagePlan plan, List<StageSink> inputs, ExecutionPipeline pipeline,
       List<StagePlan> stagePlans, SqrlFramework framework, ErrorCollector errorCollector) {
     Preconditions.checkArgument(plan instanceof DatabaseStagePlan);
-    DatabaseStagePlan dbPlan = (DatabaseStagePlan) plan;
-    DatabasePhysicalPlanOld physicalPlan = super.plan(plan, inputs, pipeline, stagePlans, framework, errorCollector);
+    var dbPlan = (DatabaseStagePlan) plan;
+    var physicalPlan = super.plan(plan, inputs, pipeline, stagePlans, framework, errorCollector);
     physicalPlan.removeIndexDdl();
 
     Map<IdentifiedQuery, QueryTemplate> databaseQueries = new LinkedHashMap<>();
 
     dbPlan.getQueries().forEach( readQuery -> {
-      RelNode relNode = readQuery.getRelNode();
+      var relNode = readQuery.getRelNode();
 
-      RelNode replaced = relNode.accept(new RelShuttleImpl() {
+      var replaced = relNode.accept(new RelShuttleImpl() {
         @Override
         public RelNode visit(TableScan scan) {
           Map<String, Object> map = connectorFactory.getConfig("iceberg").toMap();

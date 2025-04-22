@@ -2,42 +2,15 @@ package com.datasqrl.v2.graphql;
 
 import static com.datasqrl.canonicalizer.Name.HIDDEN_PREFIX;
 import static com.datasqrl.canonicalizer.Name.isHiddenString;
-import static com.datasqrl.graphql.generate.GraphqlSchemaUtil.createOutputTypeForRelDataType;
 import static com.datasqrl.graphql.jdbc.SchemaConstants.LIMIT;
 import static com.datasqrl.graphql.jdbc.SchemaConstants.OFFSET;
-import static com.datasqrl.v2.graphql.GraphqlSchemaUtil2.*;
-import static graphql.schema.GraphQLNonNull.nonNull;
+import static com.datasqrl.v2.graphql.GraphqlSchemaUtil2.getGraphQLOutputType;
+import static com.datasqrl.v2.graphql.GraphqlSchemaUtil2.isValidGraphQLName;
+import static com.datasqrl.v2.graphql.GraphqlSchemaUtil2.uniquifyNameForPath;
+import static com.datasqrl.v2.graphql.GraphqlSchemaUtil2.wrapMultiplicity;
 
-import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.config.PackageJson.CompilerConfig;
-import com.datasqrl.engine.server.ServerPhysicalPlan;
-import com.datasqrl.graphql.generate.GraphqlSchemaUtil;
-import com.datasqrl.plan.validate.ResolvedImport;
-import com.datasqrl.schema.Multiplicity;
-import com.datasqrl.v2.analyzer.TableAnalysis;
-import com.datasqrl.v2.dag.plan.MutationQuery;
-import com.datasqrl.v2.tables.SqrlFunctionParameter;
-import com.datasqrl.graphql.server.CustomScalars;
-import com.datasqrl.v2.parser.AccessModifier;
-import com.datasqrl.v2.tables.SqrlTableFunction;
-import com.google.inject.Inject;
-import graphql.Scalars;
-import graphql.language.IntValue;
-import graphql.schema.GraphQLArgument;
-import graphql.schema.GraphQLFieldDefinition;
-import graphql.schema.GraphQLInputType;
-import graphql.schema.GraphQLList;
-import graphql.schema.GraphQLNonNull;
-import graphql.schema.GraphQLObjectType;
-import graphql.schema.GraphQLObjectType.Builder;
-import graphql.schema.GraphQLOutputType;
-import graphql.schema.GraphQLScalarType;
-import graphql.schema.GraphQLSchema;
-import graphql.schema.GraphQLType;
-import graphql.schema.GraphQLTypeReference;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -45,11 +18,32 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.calcite.rel.type.RelDataType;
+
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.schema.FunctionParameter;
 import org.apache.commons.collections.ListUtils;
+
+import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.config.PackageJson.CompilerConfig;
+import com.datasqrl.engine.server.ServerPhysicalPlan;
+import com.datasqrl.graphql.server.CustomScalars;
+import com.datasqrl.schema.Multiplicity;
+import com.datasqrl.v2.analyzer.TableAnalysis;
+import com.datasqrl.v2.dag.plan.MutationQuery;
+import com.datasqrl.v2.parser.AccessModifier;
+import com.datasqrl.v2.tables.SqrlFunctionParameter;
+import com.datasqrl.v2.tables.SqrlTableFunction;
+import com.google.inject.Inject;
+
+import graphql.Scalars;
+import graphql.language.IntValue;
+import graphql.schema.GraphQLArgument;
+import graphql.schema.GraphQLFieldDefinition;
+import graphql.schema.GraphQLObjectType;
+import graphql.schema.GraphQLOutputType;
+import graphql.schema.GraphQLSchema;
+import graphql.schema.GraphQLTypeReference;
+import lombok.extern.slf4j.Slf4j;
 
 /**
   * Creates a default graphql schema based on the SQRL schema
@@ -68,7 +62,7 @@ public class GraphqlSchemaFactory2 {
 
   public Optional<GraphQLSchema> generate(ServerPhysicalPlan serverPlan) {
     //configure the schema builder
-    GraphQLSchema.Builder graphQLSchemaBuilder = GraphQLSchema.newSchema();
+    var graphQLSchemaBuilder = GraphQLSchema.newSchema();
     if (extendedScalarTypes) { // use the plural parameter name in place of only bigInteger to avoid having a conf parameter of each special type mapping feature in the future
       graphQLSchemaBuilder.additionalTypes(Set.of(CustomScalars.GRAPHQL_BIGINTEGER));
     }
@@ -78,7 +72,7 @@ public class GraphqlSchemaFactory2 {
     createQueriesOrSubscriptionsObjectType(serverPlan, AccessModifier.NONE);
 
     // process query table functions
-    final Optional<GraphQLObjectType> queriesObjectType = createQueriesOrSubscriptionsObjectType(serverPlan, AccessModifier.QUERY);
+    final var queriesObjectType = createQueriesOrSubscriptionsObjectType(serverPlan, AccessModifier.QUERY);
 
     queriesObjectType.ifPresentOrElse(
         graphQLSchemaBuilder::query,
@@ -86,11 +80,11 @@ public class GraphqlSchemaFactory2 {
     );
 
     // process subscriptions table functions
-    final Optional<GraphQLObjectType> subscriptionsObjectType = createQueriesOrSubscriptionsObjectType(serverPlan, AccessModifier.SUBSCRIPTION);
+    final var subscriptionsObjectType = createQueriesOrSubscriptionsObjectType(serverPlan, AccessModifier.SUBSCRIPTION);
     subscriptionsObjectType.ifPresent(graphQLSchemaBuilder::subscription);
 
     // process mutations table functions
-    final Optional<GraphQLObjectType> mutationsObjectType = createMutationsObjectType(serverPlan.getMutations());
+    final var mutationsObjectType = createMutationsObjectType(serverPlan.getMutations());
     mutationsObjectType.ifPresent(graphQLSchemaBuilder::mutation);
 
     graphQLSchemaBuilder.additionalTypes(new LinkedHashSet<>(objectTypes)); // the cleaned types
@@ -130,7 +124,7 @@ public class GraphqlSchemaFactory2 {
         tableAnalysis = tableFunction.getFunctionAnalysis();
         typeNamePath = tableFunction.getFullPath();
       }
-      Optional<GraphQLObjectType> resultType = createTableResultType(
+      var resultType = createTableResultType(
           typeNamePath, tableAnalysis,
           tableFunctionsByTheirParentPath.getOrDefault(typeNamePath, List.of()) // List of table functions which parent is tableFunction (its relationships).
       );
@@ -140,12 +134,12 @@ public class GraphqlSchemaFactory2 {
     final List<SqrlTableFunction> rootTableFunctions = tableFunctions.stream()
             .filter(tableFunction -> !tableFunction.isRelationship())
             .collect(Collectors.toList());
-    Optional<GraphQLObjectType> rootObjectType = createRootType(rootTableFunctions, tableFunctionsType);
+    var rootObjectType = createRootType(rootTableFunctions, tableFunctionsType);
     return rootObjectType;
   }
 
   private Optional<GraphQLObjectType> createTableResultType(NamePath typePath, TableAnalysis table, List<SqrlTableFunction> itsRelationships) {
-    String typeName = uniquifyNameForPath(typePath);
+    var typeName = uniquifyNameForPath(typePath);
     if (definedTypeNames.contains(typeName)) { //If we already defined this type, move on
       return Optional.empty();
     }
@@ -159,10 +153,10 @@ public class GraphqlSchemaFactory2 {
 
     // non-relationship fields
     // now all relationships are functions that are separate from the rowType. So there can no more have relationship fields inside it
-    RelDataType rowType = table.getRowType();
+    var rowType = table.getRowType();
     List<GraphQLFieldDefinition> fields = new ArrayList<>();
     for (RelDataTypeField field : rowType.getFieldList()) {
-      final NamePath fieldPath = typePath.concat(NamePath.of(field.getName()));
+      final var fieldPath = typePath.concat(NamePath.of(field.getName()));
       createRelDataTypeField(field, fieldPath).map(fields::add);
     }
 
@@ -173,7 +167,7 @@ public class GraphqlSchemaFactory2 {
 
     assert !fields.isEmpty(): "Invalid table: " + table;
 
-    GraphQLObjectType objectType = GraphQLObjectType.newObject()
+    var objectType = GraphQLObjectType.newObject()
             .name(typeName)
             .fields(fields)
             .build();
@@ -185,18 +179,18 @@ public class GraphqlSchemaFactory2 {
     if (mutations.isEmpty()) {
       return Optional.empty();
     }
-    Builder builder = GraphQLObjectType.newObject().name("Mutation");
+    var builder = GraphQLObjectType.newObject().name("Mutation");
     for (MutationQuery mutation : mutations) {
-      String name = mutation.getName().getDisplay();
-      GraphQLInputType inputType = GraphqlSchemaUtil2.getGraphQLInputType(mutation.getInputDataType(), NamePath.of(name), extendedScalarTypes)
+      var name = mutation.getName().getDisplay();
+      var inputType = GraphqlSchemaUtil2.getGraphQLInputType(mutation.getInputDataType(), NamePath.of(name), extendedScalarTypes)
           .orElseThrow(
           () -> new IllegalArgumentException("Could not create input type for mutation: " + mutation.getName()));
       // Create the 'event' argument which should mirror the structure of the type
-      GraphQLArgument inputArgument = GraphQLArgument.newArgument()
+      var inputArgument = GraphQLArgument.newArgument()
           .name("event")
           .type(inputType)
           .build();
-      GraphQLFieldDefinition.Builder mutationFieldBuilder = GraphQLFieldDefinition.newFieldDefinition()
+      var mutationFieldBuilder = GraphQLFieldDefinition.newFieldDefinition()
           .name(name)
           .argument(inputArgument)
           .type(GraphqlSchemaUtil2.getGraphQLOutputType(mutation.getOutputDataType(), NamePath.of(name.concat("Result")), extendedScalarTypes).get());
@@ -215,16 +209,16 @@ public class GraphqlSchemaFactory2 {
     List<GraphQLFieldDefinition> fields = new ArrayList<>();
 
     for (SqrlTableFunction tableFunction : rootTableFunctions) {
-      String tableFunctionName = tableFunction.getFullPath().getDisplay();
+      var tableFunctionName = tableFunction.getFullPath().getDisplay();
       if (!isValidGraphQLName(tableFunctionName)) {
         continue;
       }
 
-      final GraphQLOutputType type =
+      final var type =
           tableFunctionsType == AccessModifier.QUERY
             ? (GraphQLOutputType) wrapMultiplicity(createTypeReference(tableFunction), tableFunction.getMultiplicity())
             : createTypeReference(tableFunction); // type is nullable because there can be no update in the subscription
-      GraphQLFieldDefinition.Builder fieldBuilder = GraphQLFieldDefinition.newFieldDefinition()
+      var fieldBuilder = GraphQLFieldDefinition.newFieldDefinition()
           .name(tableFunctionName)
           .type(type)
           .arguments(createArguments(tableFunction));
@@ -234,10 +228,10 @@ public class GraphqlSchemaFactory2 {
     if (fields.isEmpty()) {
       return Optional.empty();
     }
-    String rootTypeName = tableFunctionsType.name().toLowerCase();
+    var rootTypeName = tableFunctionsType.name().toLowerCase();
     rootTypeName = Character.toUpperCase(rootTypeName.charAt(0)) + rootTypeName.substring(1);
     // rootTypeName == "Query" or "Subscription"
-    GraphQLObjectType rootQueryObjectType = GraphQLObjectType.newObject()
+    var rootQueryObjectType = GraphQLObjectType.newObject()
         .name(rootTypeName)
         .fields(fields)
         .build();
@@ -270,13 +264,13 @@ public class GraphqlSchemaFactory2 {
    * this.customerid = o.customerid; }</pre> Create a type reference for the orders field in the Customer table.
    */
   private Optional<GraphQLFieldDefinition> createRelationshipField(SqrlTableFunction relationship) {
-    String fieldName = relationship.getFullPath().getLast().getDisplay();
+    var fieldName = relationship.getFullPath().getLast().getDisplay();
     if (!isValidGraphQLName(fieldName) || isHiddenString(fieldName)) {
       return Optional.empty();
     }
 
     // reference the type that will be defined when the table function relationship is processed
-    GraphQLFieldDefinition field = GraphQLFieldDefinition.newFieldDefinition()
+    var field = GraphQLFieldDefinition.newFieldDefinition()
         .name(fieldName)
         .type((GraphQLOutputType) wrapMultiplicity(createTypeReference(relationship), relationship.getMultiplicity()))
         .arguments(createArguments(relationship))
@@ -305,13 +299,13 @@ public class GraphqlSchemaFactory2 {
   }
 
   private List<GraphQLArgument> generateLimitAndOffsetArguments() {
-    GraphQLArgument limit = GraphQLArgument.newArgument()
+    var limit = GraphQLArgument.newArgument()
         .name(LIMIT)
         .type(Scalars.GraphQLInt)
         .defaultValueLiteral(IntValue.of(10))
         .build();
 
-    GraphQLArgument offset = GraphQLArgument.newArgument()
+    var offset = GraphQLArgument.newArgument()
         .name(OFFSET)
         .type(Scalars.GraphQLInt)
         .defaultValueLiteral(IntValue.of(0))
@@ -324,7 +318,7 @@ public class GraphqlSchemaFactory2 {
   }
 
   private GraphQLOutputType createTypeReference(SqrlTableFunction tableFunction) {
-    String typeName =
+    var typeName =
         tableFunction.getFunctionAnalysis().getOptionalBaseTable().isPresent()
             ? tableFunction.getBaseTable().getName()
             : uniquifyNameForPath(tableFunction.getFullPath());

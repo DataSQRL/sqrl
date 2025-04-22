@@ -1,20 +1,31 @@
 package com.datasqrl.v2.tables;
 
-import com.datasqrl.calcite.SqrlRexUtil;
-import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.engine.ExecutableQuery;
-import com.datasqrl.io.tables.TableType;
-import com.datasqrl.v2.analyzer.TableAnalysis;
-import com.datasqrl.v2.analyzer.TableOrFunctionAnalysis;
-import com.datasqrl.schema.Multiplicity;
-import com.datasqrl.v2.util.Documented;
-import com.google.common.base.Preconditions;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+
 import javax.annotation.Nullable;
+
+import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.core.Sort;
+import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeFactory;
+import org.apache.calcite.schema.FunctionParameter;
+import org.apache.calcite.schema.TableFunction;
+import org.apache.flink.table.catalog.ObjectIdentifier;
+
+import com.datasqrl.calcite.SqrlRexUtil;
+import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.engine.ExecutableQuery;
+import com.datasqrl.io.tables.TableType;
+import com.datasqrl.schema.Multiplicity;
+import com.datasqrl.v2.analyzer.TableAnalysis;
+import com.datasqrl.v2.analyzer.TableOrFunctionAnalysis;
+import com.datasqrl.v2.util.Documented;
+import com.google.common.base.Preconditions;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Builder.Default;
@@ -24,13 +35,6 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 import lombok.ToString;
-import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.rel.core.Sort;
-import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rel.type.RelDataTypeFactory;
-import org.apache.calcite.schema.FunctionParameter;
-import org.apache.calcite.schema.TableFunction;
-import org.apache.flink.table.catalog.ObjectIdentifier;
 
 /**
  * Represents a function in DataSQRL.
@@ -112,7 +116,8 @@ public class SqrlTableFunction implements TableFunction, TableOrFunctionAnalysis
     return functionAnalysis.getRelNode();
   }
 
-  public RelDataType getRowType() {
+  @Override
+public RelDataType getRowType() {
     return getRowType(null, null);
   }
 
@@ -127,8 +132,8 @@ public class SqrlTableFunction implements TableFunction, TableOrFunctionAnalysis
 
   public static Multiplicity getMultiplicity(RelNode relNode) {
     Optional<Integer> limit = Optional.empty();
-    if (relNode instanceof Sort) {
-      limit = SqrlRexUtil.getLimit(((Sort)relNode).fetch);
+    if (relNode instanceof Sort sort) {
+      limit = SqrlRexUtil.getLimit(sort.fetch);
     }
     return limit.filter(i -> i<=1).map(i -> Multiplicity.ZERO_ONE).orElse(Multiplicity.MANY);
   }

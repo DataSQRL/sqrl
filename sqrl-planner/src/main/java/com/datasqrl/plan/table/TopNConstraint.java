@@ -3,19 +3,20 @@
  */
 package com.datasqrl.plan.table;
 
-import com.datasqrl.plan.util.IndexMap;
-import com.google.common.base.Preconditions;
-import lombok.NonNull;
-import lombok.Value;
-import org.apache.calcite.rel.RelCollation;
-import org.apache.calcite.rel.RelCollations;
-import org.apache.calcite.rel.RelFieldCollation;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.apache.calcite.rel.RelFieldCollation.NullDirection;
+
+import org.apache.calcite.rel.RelCollation;
+import org.apache.calcite.rel.RelCollations;
+import org.apache.calcite.rel.RelFieldCollation;
+
+import com.datasqrl.plan.util.IndexMap;
+import com.google.common.base.Preconditions;
+
+import lombok.NonNull;
+import lombok.Value;
 
 @Value
 public class TopNConstraint implements PullupOperator {
@@ -70,7 +71,7 @@ public class TopNConstraint implements PullupOperator {
     if (isEmpty()) {
       return this;
     }
-    RelCollation newCollation = map.map(collation);
+    var newCollation = map.map(collation);
     List<Integer> newPartition = partition.stream().map(i -> map.map(i))
         .collect(Collectors.toList());
     return new TopNConstraint(newPartition, distinct, newCollation, limit, isTimestampOrder);
@@ -84,7 +85,7 @@ public class TopNConstraint implements PullupOperator {
 
   public static TopNConstraint makeDeduplication(List<Integer> partitionByIndexes,
       int timestampIndex) {
-    RelCollation collation = RelCollations.of(
+    var collation = RelCollations.of(
         new RelFieldCollation(timestampIndex, RelFieldCollation.Direction.DESCENDING,
             RelFieldCollation.NullDirection.LAST));
     return new TopNConstraint(partitionByIndexes, false, collation, Optional.of(1),

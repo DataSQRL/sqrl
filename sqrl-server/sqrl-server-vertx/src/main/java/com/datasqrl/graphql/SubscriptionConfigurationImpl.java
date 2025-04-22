@@ -6,6 +6,10 @@ import static org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG;
 import static org.apache.kafka.clients.consumer.ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG;
 import static org.apache.kafka.clients.consumer.ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.io.SinkConsumer;
 import com.datasqrl.graphql.kafka.KafkaDataFetcherFactory;
@@ -20,13 +24,11 @@ import com.datasqrl.graphql.server.RootGraphqlModel.PostgresSubscriptionCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.SubscriptionCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.SubscriptionCoordsVisitor;
 import com.datasqrl.graphql.server.SubscriptionConfiguration;
+
 import graphql.schema.DataFetcher;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.kafka.client.consumer.KafkaConsumer;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -67,12 +69,12 @@ public class SubscriptionConfigurationImpl implements SubscriptionConfiguration<
       public DataFetcher<?> visit(PostgresSubscriptionCoords coords, Context context) {
         Map<String, SinkConsumer> subscriptions = new HashMap<>();
         for (SubscriptionCoords sub: root.getSubscriptions()) {
-          PostgresSubscriptionCoords pgSub = (PostgresSubscriptionCoords) sub;
-          PostgresListenNotifyConsumer pgConsumer = new PostgresListenNotifyConsumer(client,
+          var pgSub = (PostgresSubscriptionCoords) sub;
+          var pgConsumer = new PostgresListenNotifyConsumer(client,
               pgSub.getListenQuery(), pgSub.getOnNotifyQuery(), pgSub.getParameters(), vertx,
               config.getPgConnectOptions());
 
-          PostgresSinkConsumer pgSinkConsumer = new PostgresSinkConsumer(pgConsumer);
+          var pgSinkConsumer = new PostgresSinkConsumer(pgConsumer);
 
           subscriptions.put(pgSub.getFieldName(), pgSinkConsumer);
         }

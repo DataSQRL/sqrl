@@ -3,12 +3,12 @@
  */
 package com.datasqrl.io.schema.flexible.type.basic;
 
-import com.datasqrl.io.schema.flexible.type.SqrlTypeVisitor;
-
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+
+import com.datasqrl.io.schema.flexible.type.SqrlTypeVisitor;
 
 public class DoubleType extends AbstractBasicType<Double> {
 
@@ -37,18 +37,19 @@ public class DoubleType extends AbstractBasicType<Double> {
       return FLOAT_CLASSES;
     }
 
-    public Double convert(Object o) {
-      if (o instanceof Double) {
-        return Double.valueOf((Double)o);
+    @Override
+	public Double convert(Object o) {
+      if (o instanceof Double double1) {
+        return double1;
       }
-      if (o instanceof Number) {
-        return Double.valueOf(((Number) o).doubleValue());
+      if (o instanceof Number number) {
+        return number.doubleValue();
       }
-      if (o instanceof Boolean) {
-        return ((Boolean) o).booleanValue() ? 1d : 0d;
+      if (o instanceof Boolean boolean1) {
+        return boolean1 ? 1d : 0d;
       }
-      if (o instanceof Duration) {
-        return ((Duration) o).toMillis() / 1000.0d;
+      if (o instanceof Duration duration) {
+        return duration.toMillis() / 1000.0d;
       }
       throw new IllegalArgumentException("Invalid type to convert: " + o.getClass());
     }
@@ -67,7 +68,8 @@ public class DoubleType extends AbstractBasicType<Double> {
   }
 
 
-  public <R, C> R accept(SqrlTypeVisitor<R, C> visitor, C context) {
+  @Override
+public <R, C> R accept(SqrlTypeVisitor<R, C> visitor, C context) {
     return visitor.visitDoubleType(this, context);
   }
 }

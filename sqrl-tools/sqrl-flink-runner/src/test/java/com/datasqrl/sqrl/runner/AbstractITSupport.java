@@ -36,7 +36,6 @@ import org.testcontainers.utility.DockerImageName;
 import com.datasqrl.cmd.RootCommand;
 import com.nextbreakpoint.flink.client.api.ApiException;
 import com.nextbreakpoint.flink.client.api.FlinkApi;
-import com.nextbreakpoint.flink.client.model.JobIdsWithStatusOverview;
 import com.nextbreakpoint.flink.client.model.TerminationMode;
 
 import lombok.SneakyThrows;
@@ -77,7 +76,7 @@ public class AbstractITSupport {
       return client.getJobsOverview() != null;
     });
 
-    final JobIdsWithStatusOverview statusOverview = client.getJobIdsWithStatusesOverview();
+    final var statusOverview = client.getJobIdsWithStatusesOverview();
     statusOverview.getJobs().forEach(jobIdWithStatus -> {
       try {
         client.cancelJob(jobIdWithStatus.getId(), TerminationMode.CANCEL);
@@ -109,7 +108,7 @@ public class AbstractITSupport {
     }
     if (statusHook.isSuccess() && code != 0)
       Assertions.assertEquals(0, code);
-    
+
     return Path.of("target/test-classes/use-cases", name, "deploy/plan/flink-compiled-plan.json");
   }
 

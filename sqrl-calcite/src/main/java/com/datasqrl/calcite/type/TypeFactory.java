@@ -1,23 +1,15 @@
 
 package com.datasqrl.calcite.type;
 
-import com.google.inject.Singleton;
 import java.lang.reflect.Type;
-import java.math.BigDecimal;
-import java.time.Instant;
-import java.util.List;
-import java.util.Map;
-import org.apache.calcite.avatica.util.ByteString;
-import org.apache.calcite.jdbc.JavaTypeFactoryImpl;
+
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
-import org.apache.calcite.rel.type.RelDataTypeFactoryImpl;
-import org.apache.calcite.sql.type.BasicSqlType;
-import org.apache.calcite.sql.type.IntervalSqlType;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.apache.flink.table.planner.calcite.FlinkTypeSystem;
-import org.apache.flink.table.planner.plan.schema.RawRelDataType;
+
+import com.google.inject.Singleton;
 
 @Singleton
 public class TypeFactory extends FlinkTypeFactory {

@@ -1,20 +1,19 @@
 package com.datasqrl.calcite;
 
-import com.google.inject.Inject;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
+
 import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.calcite.sql.SqlFunctionCategory;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlOperatorTable;
 import org.apache.calcite.sql.SqlSyntax;
-import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.validate.SqlNameMatcher;
 import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable;
+
+import com.google.inject.Inject;
 
 public class OperatorTable implements SqlOperatorTable {
 

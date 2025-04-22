@@ -1,10 +1,11 @@
 package com.datasqrl.calcite.function;
 
-import com.datasqrl.calcite.Dialect;
+import java.util.List;
+
 import org.apache.calcite.plan.RelRule;
 import org.apache.calcite.sql.SqlOperator;
 
-import java.util.List;
+import com.datasqrl.calcite.Dialect;
 
 /**
  * Generates a rule for a given dialect to rewrite a function with structural changes to the logical plan.

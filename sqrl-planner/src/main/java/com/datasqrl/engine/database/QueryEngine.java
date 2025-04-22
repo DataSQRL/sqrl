@@ -1,5 +1,7 @@
 package com.datasqrl.engine.database;
 
+import java.util.List;
+
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.PackageJson.EngineConfig;
@@ -10,7 +12,6 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
 import com.datasqrl.v2.dag.plan.MaterializationStagePlan;
-import java.util.List;
 
 /**
  * A {@link QueryEngine} executes queries against a {@link DatabaseEngine} that supports the query

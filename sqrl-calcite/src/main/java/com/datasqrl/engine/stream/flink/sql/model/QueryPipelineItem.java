@@ -1,12 +1,13 @@
 package com.datasqrl.engine.stream.flink.sql.model;
 
+import org.apache.calcite.sql.SqlNode;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.sql.SqlNode;
 
 
 @Getter

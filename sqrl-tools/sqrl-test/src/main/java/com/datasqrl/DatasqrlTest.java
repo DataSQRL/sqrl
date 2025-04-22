@@ -1,12 +1,5 @@
 package com.datasqrl;
 
-import com.datasqrl.DatasqrlTest.GraphqlQuery;
-import com.datasqrl.DatasqrlTest.SubscriptionQuery.SubscriptionPayload;
-import com.datasqrl.util.FlinkOperatorStatusChecker;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -14,28 +7,30 @@ import java.net.http.HttpResponse;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
-
-import io.vertx.core.http.WebSocketClient;
-import io.vertx.core.http.WebSocketClientOptions;
-import io.vertx.core.http.WebSocketConnectOptions;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.SneakyThrows;
-import lombok.Value;
 
 import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.common.JobStatus;
 import org.apache.flink.core.execution.JobClient;
 import org.apache.flink.table.api.TableResult;
+
+import com.datasqrl.DatasqrlTest.SubscriptionQuery.SubscriptionPayload;
+import com.datasqrl.util.FlinkOperatorStatusChecker;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.SneakyThrows;
+import lombok.Value;
 
 /**
  * The test runner executes the test against the running DataSQRL pipeline and snapshots the results.
@@ -62,8 +57,8 @@ public class DatasqrlTest {
   private final ObjectMapper objectMapper = new ObjectMapper();
 
   public static void main(String[] args) {
-    DatasqrlTest test = new DatasqrlTest();
-    int returnCode = test.run();
+    var test = new DatasqrlTest();
+    var returnCode = test.run();
     System.exit(returnCode);
   }
 
@@ -111,7 +106,7 @@ public class DatasqrlTest {
       List<SubscriptionClient> subscriptionClients = List.of();
   //2. Execute subscription & mutation queries against the API and snapshot results
       if (testPlanOpt.isPresent()) {
-        TestPlan testPlan = testPlanOpt.get();        
+        TestPlan testPlan = testPlanOpt.get();
               //TODO: Etienne run all subscription queries async and collect the results.
 
         // 1. add the graphql subscriptions to the test plan
@@ -154,15 +149,14 @@ public class DatasqrlTest {
       int requiredCheckpoints = 0;
       //todo: fix inject PackageJson and retrieve through interface
       Object testRunner = run.getPackageJson().get("test-runner");
-      if (testRunner instanceof Map) {
-        Map testRunnerMap = (Map) testRunner;
+      if (testRunner instanceof Map testRunnerMap) {
         Object o = testRunnerMap.get("delay-sec");
-        if (o instanceof Number) {
-          delaySec = ((Number) o).longValue();
+        if (o instanceof Number number) {
+          delaySec = number.longValue();
         }
         Object c = testRunnerMap.get("required-checkpoints");
-        if (c instanceof Number) {
-          requiredCheckpoints = ((Number) c).intValue();
+        if (c instanceof Number number) {
+          requiredCheckpoints = number.intValue();
         }
       }
 
@@ -274,28 +268,23 @@ public class DatasqrlTest {
     int exitCode = 0;
     if (!exceptions.isEmpty()) {
       for (Exception e : exceptions) {
-        if (e instanceof SnapshotMismatchException) {
-          SnapshotMismatchException ex = (SnapshotMismatchException) e;
+        if (e instanceof SnapshotMismatchException ex) {
           logRed("Snapshot mismatch for test: " + ex.getTestName());
           logRed("Expected: " + ex.getExpected());
           logRed("Actual  : " + ex.getActual());
           exitCode = 1;
-        } else if (e instanceof JobFailureException) {
-          JobFailureException ex = (JobFailureException) e;
+        } else if (e instanceof JobFailureException ex) {
           logRed("Flink job failed to start.");
           ex.printStackTrace();
           exitCode = 1;
-        } else if (e instanceof MissingSnapshotException) {
-          MissingSnapshotException ex = (MissingSnapshotException) e;
+        } else if (e instanceof MissingSnapshotException ex) {
           logRed("Snapshot on filesystem but not in result: " + ex.getTestName());
           exitCode = 1;
-        } else if (e instanceof SnapshotCreationException) {
-          SnapshotCreationException ex = (SnapshotCreationException) e;
+        } else if (e instanceof SnapshotCreationException ex) {
           logGreen("Snapshot created for test: " + ex.getTestName());
           logGreen("Rerun to verify.");
           exitCode = 1;
-        } else if (e instanceof SnapshotOkException) {
-          SnapshotOkException ex = (SnapshotOkException) e;
+        } else if (e instanceof SnapshotOkException ex) {
           logGreen("Snapshot OK for " + ex.getTestName());
         } else {
           System.err.println(e.getMessage());
@@ -371,16 +360,16 @@ public class DatasqrlTest {
     String name;
     String query;
   }
-  
+
   @Value
   public static class SubscriptionQuery{
-    
+
     @JsonIgnore
     String name;
     Long id;
     String type;
     SubscriptionPayload  payload;
-    
+
     @Value
     public static class SubscriptionPayload {
       String query;

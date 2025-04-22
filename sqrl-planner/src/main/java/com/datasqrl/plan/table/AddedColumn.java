@@ -1,19 +1,19 @@
 package com.datasqrl.plan.table;
 
-import com.datasqrl.plan.util.IndexMap;
-import com.datasqrl.util.CalciteUtil;
-import com.google.common.base.Preconditions;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.Setter;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.tools.RelBuilder;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.datasqrl.plan.util.IndexMap;
+import com.google.common.base.Preconditions;
+
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.Setter;
 
 @Getter
 public class AddedColumn {
@@ -41,11 +41,11 @@ public class AddedColumn {
 
 
     public int appendTo(@NonNull RelBuilder relBuilder, int atIndex, @NonNull IndexMap indexMap) {
-        RelDataType baseType = relBuilder.peek().getRowType();
-        int noBaseFields = baseType.getFieldCount();
+        var baseType = relBuilder.peek().getRowType();
+        var noBaseFields = baseType.getFieldCount();
         List<String> fieldNames = new ArrayList<>(noBaseFields + 1);
         List<RexNode> rexNodes = new ArrayList<>(noBaseFields + 1);
-        for (int i = 0; i < noBaseFields; i++) {
+        for (var i = 0; i < noBaseFields; i++) {
             fieldNames.add(i, null); //Calcite will infer name
             rexNodes.add(i, RexInputRef.of(i, baseType));
         }

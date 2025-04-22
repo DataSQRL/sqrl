@@ -20,31 +20,22 @@ package org.apache.calcite.sql.validate;
 
 import static org.apache.calcite.util.Static.RESOURCE;
 
-import com.datasqrl.calcite.CatalogReader;
-import com.datasqrl.util.ReflectionUtil;
-import com.google.common.base.Preconditions;
 import java.util.List;
-import org.apache.calcite.plan.RelOptTable.ToRelContext;
-import org.apache.calcite.prepare.RelOptTableImpl;
-import org.apache.calcite.rel.RelNode;
+
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
-import org.apache.calcite.sql.JoinConditionType;
-import org.apache.calcite.sql.JoinType;
-import org.apache.calcite.sql.SqlCall;
-import org.apache.calcite.sql.SqlCallBinding;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlJoin;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
-import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlOperatorTable;
 import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.type.SqlTypeUtil;
 import org.apache.calcite.util.Util;
 import org.apache.flink.table.planner.calcite.FlinkCalciteSqlValidator;
-import org.apache.flink.table.planner.plan.schema.ExpandingPreparingTable;
-import org.apache.flink.table.planner.plan.stats.FlinkStatistic;
+
+import com.datasqrl.util.ReflectionUtil;
+import com.google.common.base.Preconditions;
 
 public class SqrlSqlValidator extends FlinkCalciteSqlValidator {
 
@@ -56,14 +47,15 @@ public class SqrlSqlValidator extends FlinkCalciteSqlValidator {
     this.catalogReader = catalogReader;
   }
 
-  protected void validateJoin(SqlJoin join, SqlValidatorScope scope) {
-    SqlNode left = join.getLeft();
-    SqlNode right = join.getRight();
-    SqlNode condition = join.getCondition();
-    boolean natural = join.isNatural();
-    final JoinType joinType = join.getJoinType();
-    final JoinConditionType conditionType = join.getConditionType();
-    final SqlValidatorScope joinScope = scopes.get(join);
+  @Override
+protected void validateJoin(SqlJoin join, SqlValidatorScope scope) {
+    var left = join.getLeft();
+    var right = join.getRight();
+    var condition = join.getCondition();
+    var natural = join.isNatural();
+    final var joinType = join.getJoinType();
+    final var conditionType = join.getConditionType();
+    final var joinScope = scopes.get(join);
     validateFrom(left, unknownType, joinScope);
     validateFrom(right, unknownType, joinScope);
 
@@ -74,22 +66,22 @@ public class SqrlSqlValidator extends FlinkCalciteSqlValidator {
         break;
       case ON:
         Preconditions.checkArgument(condition != null);
-        SqlNode expandedCondition = expand(condition, joinScope);
+        var expandedCondition = expand(condition, joinScope);
         join.setOperand(5, expandedCondition);
         condition = join.getCondition();
         validateWhereOrOn(joinScope, condition, "ON");
 //        checkRollUp(null, join, condition, joinScope, "ON");
         break;
       case USING:
-        SqlNodeList list = (SqlNodeList) condition;
+        var list = (SqlNodeList) condition;
 
          //Parser ensures that using clause is not empty.
         Preconditions.checkArgument(list.size() > 0, "Empty USING clause");
         for (SqlNode node : list) {
-          SqlIdentifier id = (SqlIdentifier) node;
-          final RelDataType leftColType = (RelDataType)ReflectionUtil.invokeSuperPrivateMethod(this,
+          var id = (SqlIdentifier) node;
+          final var leftColType = (RelDataType)ReflectionUtil.invokeSuperPrivateMethod(this,
               "validateUsingCol", List.of(SqlIdentifier.class, SqlNode.class), id, left);
-          final RelDataType rightColType = (RelDataType)ReflectionUtil.invokeSuperPrivateMethod(this,
+          final var rightColType = (RelDataType)ReflectionUtil.invokeSuperPrivateMethod(this,
               "validateUsingCol", List.of(SqlIdentifier.class, SqlNode.class), id, right);
           if (!SqlTypeUtil.isComparable(leftColType, rightColType)) {
             throw newValidationError(
@@ -119,17 +111,17 @@ public class SqrlSqlValidator extends FlinkCalciteSqlValidator {
 
       // Join on fields that occur exactly once on each side. Ignore
       // fields that occur more than once on either side.
-      final RelDataType leftRowType = getNamespace(left).getRowType();
-      final RelDataType rightRowType = getNamespace(right).getRowType();
-      final SqlNameMatcher nameMatcher = catalogReader.nameMatcher();
-      List<String> naturalColumnNames =
+      final var leftRowType = getNamespace(left).getRowType();
+      final var rightRowType = getNamespace(right).getRowType();
+      final var nameMatcher = catalogReader.nameMatcher();
+      var naturalColumnNames =
           SqlValidatorUtil.deriveNaturalJoinColumnList(
               nameMatcher, leftRowType, rightRowType);
 
       // Check compatibility of the chosen columns.
       for (String name : naturalColumnNames) {
-        final RelDataType leftColType = nameMatcher.field(leftRowType, name).getType();
-        final RelDataType rightColType = nameMatcher.field(rightRowType, name).getType();
+        final var leftColType = nameMatcher.field(leftRowType, name).getType();
+        final var rightColType = nameMatcher.field(rightRowType, name).getType();
         if (!SqlTypeUtil.isComparable(leftColType, rightColType)) {
           throw newValidationError(
               join,
@@ -154,11 +146,7 @@ public class SqrlSqlValidator extends FlinkCalciteSqlValidator {
         break;
       case COMMA:
       case CROSS:
-        if (condition != null) {
-          throw newValidationError(
-              join.getConditionTypeNode(), RESOURCE.crossJoinDisallowsCondition());
-        }
-        if (natural) {
+        if ((condition != null) || natural) {
           throw newValidationError(
               join.getConditionTypeNode(), RESOURCE.crossJoinDisallowsCondition());
         }
@@ -168,7 +156,8 @@ public class SqrlSqlValidator extends FlinkCalciteSqlValidator {
     }
   }
 
-  public SqlNode getAggregate(SqlSelect select) {
+  @Override
+public SqlNode getAggregate(SqlSelect select) {
     return super.getAggregate(select);
   }
 }

@@ -1,15 +1,18 @@
 package com.datasqrl.v2.dag.plan;
 
+import java.util.List;
+
+import org.apache.calcite.rel.RelNode;
+
 import com.datasqrl.calcite.SqrlRexUtil;
 import com.datasqrl.engine.database.EngineCreateTable;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.v2.tables.SqrlTableFunction;
-import java.util.List;
+
 import lombok.Singular;
 import lombok.Value;
 import lombok.experimental.SuperBuilder;
-import org.apache.calcite.rel.RelNode;
 
 /**
  * During DAG planning, we use this stage plan to keep track of all

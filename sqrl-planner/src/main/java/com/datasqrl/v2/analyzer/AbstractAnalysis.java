@@ -1,10 +1,12 @@
 package com.datasqrl.v2.analyzer;
 
-import com.datasqrl.util.CalciteUtil;
 import java.util.Optional;
+
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
+
+import com.datasqrl.util.CalciteUtil;
 
 public interface AbstractAnalysis {
 
@@ -36,8 +38,11 @@ public interface AbstractAnalysis {
 
   default int getFieldIndex(String fieldName) {
     RelDataTypeField field = getRowType().getField(fieldName, false, false);
-    if (field == null) return -1;
-    else return field.getIndex();
+    if (field == null) {
+		return -1;
+	} else {
+		return field.getIndex();
+	}
   }
 
   default boolean hasField(String fieldName) {
@@ -45,7 +50,9 @@ public interface AbstractAnalysis {
   }
 
   default Optional<Integer> getRowTime() {
-    if (!hasRowType()) return Optional.empty();
+    if (!hasRowType()) {
+		return Optional.empty();
+	}
     return CalciteUtil.findBestRowTimeIndex(getRowType());
   }
 

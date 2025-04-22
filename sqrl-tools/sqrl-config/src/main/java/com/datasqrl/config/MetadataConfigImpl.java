@@ -1,11 +1,13 @@
 package com.datasqrl.config;
 
-import com.datasqrl.config.TableConfig.MetadataEntry;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+
+import com.datasqrl.config.TableConfig.MetadataEntry;
+
 import lombok.AllArgsConstructor;
 
 @AllArgsConstructor

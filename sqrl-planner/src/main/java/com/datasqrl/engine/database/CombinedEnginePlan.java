@@ -1,11 +1,12 @@
 package com.datasqrl.engine.database;
 
-import com.datasqrl.engine.EnginePhysicalPlan;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import com.datasqrl.engine.EnginePhysicalPlan;
+
 import lombok.Builder;
 import lombok.Singular;
 import lombok.Value;

@@ -3,26 +3,25 @@ package com.datasqrl.graphql;
 import static com.datasqrl.graphql.jdbc.SchemaConstants.LIMIT;
 import static com.datasqrl.graphql.jdbc.SchemaConstants.OFFSET;
 
-import com.datasqrl.graphql.VertxJdbcClient.PreparedSqrlQueryImpl;
-import com.datasqrl.graphql.jdbc.AbstractQueryExecutionContext;
-import com.datasqrl.graphql.jdbc.JdbcExecutionContext;
-import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
-import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedSqlQuery;
-import com.datasqrl.graphql.server.RootGraphqlModel.SqlQuery;
-import graphql.schema.DataFetchingEnvironment;
-import io.vertx.core.Future;
-import io.vertx.core.Promise;
-import io.vertx.core.json.JsonObject;
-import io.vertx.sqlclient.PreparedQuery;
-import io.vertx.sqlclient.Row;
-import io.vertx.sqlclient.RowSet;
-import io.vertx.sqlclient.Tuple;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+
+import com.datasqrl.graphql.VertxJdbcClient.PreparedSqrlQueryImpl;
+import com.datasqrl.graphql.jdbc.AbstractQueryExecutionContext;
+import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
+import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedSqlQuery;
+
+import graphql.schema.DataFetchingEnvironment;
+import io.vertx.core.Future;
+import io.vertx.core.Promise;
+import io.vertx.core.json.JsonObject;
+import io.vertx.sqlclient.Row;
+import io.vertx.sqlclient.RowSet;
+import io.vertx.sqlclient.Tuple;
 import lombok.Value;
 
 /**
@@ -41,10 +40,10 @@ public class VertxQueryExecutionContext extends AbstractQueryExecutionContext {
   @Override
   public CompletableFuture runQuery(ResolvedSqlQuery resolvedQuery,
       boolean isList) {
-    PreparedSqrlQueryImpl preparedQueryContainer = (PreparedSqrlQueryImpl) resolvedQuery.getPreparedQueryContainer();
-    final List paramObj = getParamArguments(resolvedQuery.getQuery().getParameters());
-    SqlQuery query = resolvedQuery.getQuery();
-    String unpreparedSqlQuery = query.getSql();
+    var preparedQueryContainer = (PreparedSqrlQueryImpl) resolvedQuery.getPreparedQueryContainer();
+    final var paramObj = getParamArguments(resolvedQuery.getQuery().getParameters());
+    var query = resolvedQuery.getQuery();
+    var unpreparedSqlQuery = query.getSql();
     switch (query.getPagination()) {
       case NONE: break;
       case LIMIT_AND_OFFSET:
@@ -54,7 +53,7 @@ public class VertxQueryExecutionContext extends AbstractQueryExecutionContext {
         //special case where database doesn't support binding for limit/offset => need to execute dynamically
         if (!query.getDatabase().supportsLimitOffsetBinding) {
           assert preparedQueryContainer == null;
-          unpreparedSqlQuery = JdbcExecutionContext.addLimitOffsetToQuery(unpreparedSqlQuery,
+          unpreparedSqlQuery = AbstractQueryExecutionContext.addLimitOffsetToQuery(unpreparedSqlQuery,
               limit.map(Object::toString).orElse("ALL"), String.valueOf(offset.orElse(0)));
         } else {
           paramObj.add(limit.orElse(Integer.MAX_VALUE));
@@ -66,12 +65,12 @@ public class VertxQueryExecutionContext extends AbstractQueryExecutionContext {
 
     // execute the preparedQuery with the arguments extracted above
     Future<RowSet<Row>> future;
-    Tuple parameters = Tuple.from(paramObj);
+    var parameters = Tuple.from(paramObj);
     if (preparedQueryContainer == null) {
       future = this.context.getSqlClient().execute(resolvedQuery.getQuery().getDatabase(),
           unpreparedSqlQuery, parameters);
     } else {
-      PreparedQuery<RowSet<Row>> preparedQuery = preparedQueryContainer
+      var preparedQuery = preparedQueryContainer
           .getPreparedQuery();
       future = this.context.getSqlClient().execute(resolvedQuery.getQuery().getDatabase(),
           preparedQuery, parameters);

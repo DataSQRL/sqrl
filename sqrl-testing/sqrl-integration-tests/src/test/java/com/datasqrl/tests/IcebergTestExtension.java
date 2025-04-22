@@ -2,10 +2,8 @@ package com.datasqrl.tests;
 
 import static junit.framework.TestCase.assertTrue;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import lombok.SneakyThrows;
 
 public class IcebergTestExtension extends DuckdbTestExtension {
 

@@ -3,14 +3,6 @@ package com.datasqrl.packager;
 import static com.datasqrl.packager.Packager.canonicalizePath;
 import static com.datasqrl.util.NameUtil.namepath2Path;
 
-import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.config.BuildPath;
-import com.datasqrl.config.PackageJson;
-import com.datasqrl.config.SqrlConstants;
-import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.packager.preprocess.Preprocessor;
-import com.datasqrl.packager.preprocess.Preprocessor.ProcessorContext;
-import com.google.inject.Inject;
 import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -19,6 +11,16 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.config.BuildPath;
+import com.datasqrl.config.PackageJson;
+import com.datasqrl.config.SqrlConstants;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.packager.preprocess.Preprocessor;
+import com.datasqrl.packager.preprocess.Preprocessor.ProcessorContext;
+import com.google.inject.Inject;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.SneakyThrows;
@@ -62,7 +64,7 @@ public class Preprocessors {
    * Invokes the given preprocessor and copies relative files.
    */
   protected void invokePreprocessor(Preprocessor preprocessor, Path userDir, PreprocessorsContext ctx) {
-    ProcessorContext context = new ProcessorContext(ctx.rootDir, ctx.buildDir, ctx.config);
+    var context = new ProcessorContext(ctx.rootDir, ctx.buildDir, ctx.config);
     log.trace("Invoking preprocessor: {}", preprocessor.getClass());
     preprocessor.processFile(userDir, context, ctx.errors);
     copyRelativeFiles(context.getDependencies(),
@@ -75,7 +77,7 @@ public class Preprocessors {
       return namepath2Path(buildDir, name.get());
     }
 
-    Path relDir = rootDir.relativize(userDir);
+    var relDir = rootDir.relativize(userDir);
 
     //Check if we at the root folder, if so, copy it to the root dir
     if (relDir.getParent() == null) {

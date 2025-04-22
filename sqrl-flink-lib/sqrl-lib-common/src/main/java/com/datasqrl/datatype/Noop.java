@@ -4,7 +4,6 @@ import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.catalog.DataTypeFactory;
 import org.apache.flink.table.functions.ScalarFunction;
 import org.apache.flink.table.types.inference.InputTypeStrategies;
-import org.apache.flink.table.types.inference.InputTypeStrategy;
 import org.apache.flink.table.types.inference.TypeInference;
 import org.apache.flink.table.types.inference.TypeStrategies;
 
@@ -20,7 +19,7 @@ public class Noop extends ScalarFunction implements AutoRegisterSystemFunction{
 
   @Override
   public TypeInference getTypeInference(DataTypeFactory typeFactory) {
-    InputTypeStrategy inputTypeStrategy = InputTypeStrategies.compositeSequence()
+    var inputTypeStrategy = InputTypeStrategies.compositeSequence()
         .finishWithVarying(InputTypeStrategies.WILDCARD);
 
     return TypeInference.newBuilder().inputTypeStrategy(inputTypeStrategy).outputTypeStrategy(

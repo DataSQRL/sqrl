@@ -3,7 +3,6 @@ package com.datasqrl.v2.hint;
 import com.datasqrl.v2.parser.ParsedObject;
 import com.datasqrl.v2.parser.SqrlHint;
 import com.google.auto.service.AutoService;
-import java.util.List;
 
 /**
  * Assigns a partition key to a table that is persisted into a data system engine.

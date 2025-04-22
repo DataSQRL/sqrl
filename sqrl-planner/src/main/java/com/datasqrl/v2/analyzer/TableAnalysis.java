@@ -1,18 +1,24 @@
 package com.datasqrl.v2.analyzer;
 
 
-import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.plan.table.TableStatistic;
-import com.datasqrl.v2.analyzer.cost.CostAnalysis;
-import com.datasqrl.v2.hint.PlannerHints;
-import com.datasqrl.v2.tables.SourceSinkTableAnalysis;
-import com.datasqrl.io.tables.TableType;
-import com.datasqrl.plan.rules.EngineCapability;
-import com.datasqrl.plan.util.PrimaryKeyMap;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+
+import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.core.Sort;
+import org.apache.flink.table.catalog.ObjectIdentifier;
+
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.io.tables.TableType;
+import com.datasqrl.plan.rules.EngineCapability;
+import com.datasqrl.plan.table.TableStatistic;
+import com.datasqrl.plan.util.PrimaryKeyMap;
+import com.datasqrl.v2.analyzer.cost.CostAnalysis;
+import com.datasqrl.v2.hint.PlannerHints;
+import com.datasqrl.v2.tables.SourceSinkTableAnalysis;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -20,9 +26,6 @@ import lombok.EqualsAndHashCode.Include;
 import lombok.NonNull;
 import lombok.ToString.Exclude;
 import lombok.Value;
-import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.rel.core.Sort;
-import org.apache.flink.table.catalog.ObjectIdentifier;
 
 /**
  * The analysis of a planned table or function definition.
@@ -165,7 +168,8 @@ public class TableAnalysis implements TableOrFunctionAnalysis {
   }
 
 
-  public RelNode getRelNode() {
+  @Override
+public RelNode getRelNode() {
     return collapsedRelnode;
   }
 

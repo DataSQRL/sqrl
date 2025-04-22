@@ -3,6 +3,7 @@ package com.datasqrl.engine.stream.flink.sql.rules;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+
 import org.apache.calcite.plan.RelOptRuleCall;
 import org.apache.calcite.plan.RelRule;
 import org.apache.calcite.rel.RelNode;
@@ -22,16 +23,16 @@ public class ShapeBushyCorrelateJoinRule extends RelRule<ShapeBushyCorrelateJoin
 
   @Override
   public void onMatch(RelOptRuleCall relOptRuleCall) {
-    LogicalCorrelate top = relOptRuleCall.rel(0);
-    LogicalCorrelate left = relOptRuleCall.rel(1);
-    RelNode right = relOptRuleCall.rel(2);
+	  LogicalCorrelate top = relOptRuleCall.rel(0);
+    var left = relOptRuleCall.rel(1);
+    var right = relOptRuleCall.rel(2);
 
-    RelBuilder builder = relOptRuleCall.builder()
+    var builder = relOptRuleCall.builder()
         .transform(config -> config.withSimplify(false).withPruneInputOfAggregate(false)
             .withBloat(-10000).withSimplifyLimit(false).withPushJoinCondition(false)
         );
 
-    RelNode relNode = builder
+    var relNode = builder
         .push(left)
         .project(allNodes(builder, builder.peek()),
             builder.peek().getRowType().getFieldNames(), true)

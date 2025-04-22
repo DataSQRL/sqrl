@@ -4,6 +4,16 @@ import static com.datasqrl.graphql.server.TypeDefinitionRegistryUtil.getMutation
 import static com.datasqrl.graphql.util.GraphqlCheckUtil.checkState;
 import static com.datasqrl.graphql.util.GraphqlCheckUtil.createThrowable;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeFactory;
+import org.apache.calcite.rel.type.RelDataTypeField;
+import org.apache.calcite.rel.type.RelDataTypeFieldImpl;
+import org.apache.calcite.sql.type.SqlTypeName;
+
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.graphql.visitor.GraphqlDefinitionVisitor;
@@ -12,7 +22,7 @@ import com.datasqrl.graphql.visitor.GraphqlInputValueDefinitionVisitor;
 import com.datasqrl.graphql.visitor.GraphqlSchemaVisitor;
 import com.datasqrl.graphql.visitor.GraphqlTypeVisitor;
 import com.datasqrl.util.CalciteUtil;
-import com.datasqrl.util.RelDataTypeBuilder;
+
 import graphql.language.EnumTypeDefinition;
 import graphql.language.EnumValueDefinition;
 import graphql.language.FieldDefinition;
@@ -25,16 +35,8 @@ import graphql.language.ScalarTypeDefinition;
 import graphql.language.TypeDefinition;
 import graphql.language.TypeName;
 import graphql.schema.idl.TypeDefinitionRegistry;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Setter;
-import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rel.type.RelDataTypeFactory;
-import org.apache.calcite.rel.type.RelDataTypeField;
-import org.apache.calcite.rel.type.RelDataTypeFieldImpl;
-import org.apache.calcite.sql.type.SqlTypeName;
 
 @AllArgsConstructor
 public class InputFieldToRelDataType implements
@@ -62,15 +64,15 @@ public class InputFieldToRelDataType implements
 //    validateReturnType(fieldType); todo
 
     checkState(node.getInputValueDefinitions().size() == 1, node.getSourceLocation(),"Too many arguments for mutation '%s'. Must have exactly one.", node.getName());
-    InputValueDefinition def = node.getInputValueDefinitions().get(0);
+    var def = node.getInputValueDefinitions().get(0);
     checkState(def.getType() instanceof NonNullType, node.getSourceLocation(), "Mutation '%s' input argument must be non-array and non-null", node.getName());
     checkState(((NonNullType) def.getType()).getType() instanceof TypeName,  node.getSourceLocation(),"Mutation '%s' input argument must be non-array and non-null", node.getName());
 
-    TypeDefinition typeDef =
+    var typeDef =
         GraphqlSchemaVisitor.accept(new TypeResolver(), ((NonNullType) def.getType()).getType(), typeDefinitionRegistry)
             .orElseThrow(()->createThrowable( node.getSourceLocation(),"Could not find type:" + def.getName()));
 
-    RelDataType relDataType = GraphqlSchemaVisitor.accept(new InputObjectToRelDataType(),
+    var relDataType = GraphqlSchemaVisitor.accept(new InputObjectToRelDataType(),
         typeDef, new FieldContext());
 
     return new RelDataTypeFieldImpl(node.getName(), -1, relDataType);
@@ -85,7 +87,7 @@ public class InputFieldToRelDataType implements
     @Override
     public RelDataType visitInputObjectTypeDefinition(InputObjectTypeDefinition node,
         FieldContext context) {
-      RelDataTypeBuilder typeBuilder = CalciteUtil.getRelTypeBuilder(typeFactory);
+      var typeBuilder = CalciteUtil.getRelTypeBuilder(typeFactory);
       node.getInputValueDefinitions().forEach(field ->
           typeBuilder.add(field.getName(), GraphqlSchemaVisitor.accept(this, field,
               new FieldContext())));
@@ -99,7 +101,7 @@ public class InputFieldToRelDataType implements
 
     @Override
     public RelDataType visitListType(ListType node, FieldContext context) {
-      RelDataType type = typeFactory.createTypeWithNullability(
+      var type = typeFactory.createTypeWithNullability(
           TypeFactory.wrapInArray(typeFactory, GraphqlSchemaVisitor.accept(this, node.getType(), context)),
           true);
       return type;
@@ -114,7 +116,7 @@ public class InputFieldToRelDataType implements
 
     @Override
     public RelDataType visitTypeName(TypeName node, FieldContext context) {
-      TypeDefinition typeDef = typeDefinitionRegistry.getType(node.getName())
+      var typeDef = typeDefinitionRegistry.getType(node.getName())
           .orElseThrow(()-> new RuntimeException("Could not find node:" + node.getName()));
 
       return GraphqlSchemaVisitor.accept(this, typeDef, context);
@@ -132,27 +134,14 @@ public class InputFieldToRelDataType implements
 
     @Override
     public RelDataType visitScalarTypeDefinition(ScalarTypeDefinition node, FieldContext context) {
-      RelDataType type;
-      switch (node.getName()) {
-        case "Int":
-          type = typeFactory.createSqlType(SqlTypeName.BIGINT);
-          break;
-        case "Float":
-          type = typeFactory.createSqlType(SqlTypeName.DECIMAL, 10, 5);
-          break;
-        case "Boolean":
-          type = typeFactory.createSqlType(SqlTypeName.BOOLEAN);
-          break;
-        case "DateTime":
-          type = typeFactory.createSqlType(SqlTypeName.TIMESTAMP, 3);
-          break;
-        case "String":
-        case "ID":
-          type = typeFactory.createSqlType(SqlTypeName.VARCHAR, Integer.MAX_VALUE);
-          break;
-        default:
-          throw new RuntimeException("Unknown Type");
-      }
+      var type = switch (node.getName()) {
+	case "Int" -> typeFactory.createSqlType(SqlTypeName.BIGINT);
+	case "Float" -> typeFactory.createSqlType(SqlTypeName.DECIMAL, 10, 5);
+	case "Boolean" -> typeFactory.createSqlType(SqlTypeName.BOOLEAN);
+	case "DateTime" -> typeFactory.createSqlType(SqlTypeName.TIMESTAMP, 3);
+	case "String", "ID" -> typeFactory.createSqlType(SqlTypeName.VARCHAR, Integer.MAX_VALUE);
+	default -> throw new RuntimeException("Unknown Type");
+	};
       return typeFactory.createTypeWithNullability(type, true);
     }
   }

@@ -60,15 +60,16 @@ public class FlexibleJsonFlinkFormatTypeMapper extends FlinkDataTypeMapper imple
       case MULTISET:
         return Optional.empty();
       case ARRAY:
-        if (getMapper(type.getComponentType()).isEmpty()) return Optional.empty();
+        if (getMapper(type.getComponentType()).isEmpty()) {
+			return Optional.empty();
+		}
     }
     if (type.getSqlTypeName() == SqlTypeName.ROW ||
         (type.getSqlTypeName() == SqlTypeName.ARRAY && type.getComponentType().getSqlTypeName() == SqlTypeName.ROW)) {
       return Optional.of(DataTypeMappings.TO_JSON_ONLY);
     }
 
-    if (type instanceof RawRelDataType) {
-      RawRelDataType rawRelDataType = (RawRelDataType) type;
+    if (type instanceof RawRelDataType rawRelDataType) {
       if (rawRelDataType.getRawType().getDefaultConversion() == FlinkVectorType.class) {
         return Optional.of(DataTypeMappings.VECTOR_TO_DOUBLE_ONLY);
       } else if (rawRelDataType.getRawType().getDefaultConversion() == FlinkJsonType.class) {
@@ -81,7 +82,8 @@ public class FlexibleJsonFlinkFormatTypeMapper extends FlinkDataTypeMapper imple
   }
 
 
-  public boolean nativeTypeSupport(RelDataType type) {
+  @Override
+public boolean nativeTypeSupport(RelDataType type) {
     switch (type.getSqlTypeName()) {
       case REAL:
       case NULL:
@@ -129,8 +131,7 @@ public class FlexibleJsonFlinkFormatTypeMapper extends FlinkDataTypeMapper imple
       case MAP:
         return true;
       case OTHER:
-        if (type instanceof RawRelDataType) {
-          RawRelDataType rawRelDataType = (RawRelDataType) type;
+        if (type instanceof RawRelDataType rawRelDataType) {
           Class clazz = rawRelDataType.getRawType().getDefaultConversion();
           if (clazz == FlinkJsonType.class) {
             return true;

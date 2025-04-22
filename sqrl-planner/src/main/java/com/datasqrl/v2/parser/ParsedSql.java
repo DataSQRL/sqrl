@@ -1,7 +1,8 @@
 package com.datasqrl.v2.parser;
 
-import lombok.Value;
 import org.apache.calcite.sql.SqlNode;
+
+import lombok.Value;
 
 @Value
 public class ParsedSql {

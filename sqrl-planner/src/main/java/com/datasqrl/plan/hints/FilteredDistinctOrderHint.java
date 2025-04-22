@@ -2,7 +2,7 @@ package com.datasqrl.plan.hints;
 
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.rules.SqrlConverterConfig.SqrlConverterConfigBuilder;
-import java.util.List;
+
 import lombok.Value;
 
 @Value

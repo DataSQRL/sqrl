@@ -1,37 +1,38 @@
 package com.datasqrl.datatype;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Objects;
+
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.catalog.DataTypeFactory;
 import org.apache.flink.table.functions.ScalarFunction;
 import org.apache.flink.table.types.inference.InputTypeStrategies;
-import org.apache.flink.table.types.inference.InputTypeStrategy;
 import org.apache.flink.table.types.inference.TypeInference;
 import org.apache.flink.table.types.inference.TypeStrategies;
 
 import com.datasqrl.function.AutoRegisterSystemFunction;
 import com.google.auto.service.AutoService;
 
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.nio.charset.StandardCharsets;
-import java.util.Objects;
-
 @AutoService(AutoRegisterSystemFunction.class)
 public class HashColumns extends ScalarFunction implements AutoRegisterSystemFunction{
 
   public String eval(Object... objects) {
-    if (objects.length==0) return "";
+    if (objects.length==0) {
+		return "";
+	}
     try {
-      MessageDigest digest = MessageDigest.getInstance("MD5");  // Changed to MD5
+      var digest = MessageDigest.getInstance("MD5");  // Changed to MD5
       for (Object obj : objects) {
-        int hash = Objects.hashCode(obj); //to handle null objects
+        var hash = Objects.hashCode(obj); //to handle null objects
         digest.update(Integer.toString(hash).getBytes(StandardCharsets.UTF_8));
       }
 
-      byte[] hashBytes = digest.digest();
-      StringBuilder hexString = new StringBuilder(2 * hashBytes.length);
+      var hashBytes = digest.digest();
+      var hexString = new StringBuilder(2 * hashBytes.length);
       for (byte b : hashBytes) {
-        String hex = Integer.toHexString(0xff & b);
+        var hex = Integer.toHexString(0xff & b);
         if (hex.length() == 1) {
           hexString.append('0');
         }
@@ -45,7 +46,7 @@ public class HashColumns extends ScalarFunction implements AutoRegisterSystemFun
 
   @Override
   public TypeInference getTypeInference(DataTypeFactory typeFactory) {
-    InputTypeStrategy inputTypeStrategy = InputTypeStrategies.compositeSequence()
+    var inputTypeStrategy = InputTypeStrategies.compositeSequence()
         .finishWithVarying(InputTypeStrategies.WILDCARD);
 
     return TypeInference.newBuilder().inputTypeStrategy(inputTypeStrategy).outputTypeStrategy(

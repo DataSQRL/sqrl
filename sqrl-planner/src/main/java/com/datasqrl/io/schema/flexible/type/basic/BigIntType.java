@@ -3,13 +3,13 @@
  */
 package com.datasqrl.io.schema.flexible.type.basic;
 
-import com.datasqrl.io.schema.flexible.type.SqrlTypeVisitor;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+
+import com.datasqrl.io.schema.flexible.type.SqrlTypeVisitor;
 
 public class BigIntType extends AbstractBasicType<Long> {
 
@@ -39,21 +39,22 @@ public class BigIntType extends AbstractBasicType<Long> {
       return INT_CLASSES;
     }
 
-    public Long convert(Object o) {
-      if (o instanceof Long) {
-        return (Long) o;
+    @Override
+	public Long convert(Object o) {
+      if (o instanceof Long long1) {
+        return long1;
       }
-      if (o instanceof Number) {
-        return ((Number) o).longValue();
+      if (o instanceof Number number) {
+        return number.longValue();
       }
-      if (o instanceof Boolean) {
-        return ((Boolean) o).booleanValue() ? 1L : 0L;
+      if (o instanceof Boolean boolean1) {
+        return boolean1 ? 1L : 0L;
       }
-      if (o instanceof Duration) {
-        return ((Duration) o).toMillis();
+      if (o instanceof Duration duration) {
+        return duration.toMillis();
       }
-      if (o instanceof Instant) {
-        return ((Instant) o).getEpochSecond();
+      if (o instanceof Instant instant) {
+        return instant.getEpochSecond();
       }
       throw new IllegalArgumentException("Invalid type to convert: " + o.getClass());
     }
@@ -73,7 +74,8 @@ public class BigIntType extends AbstractBasicType<Long> {
     }
   }
 
-  public <R, C> R accept(SqrlTypeVisitor<R, C> visitor, C context) {
+  @Override
+public <R, C> R accept(SqrlTypeVisitor<R, C> visitor, C context) {
     return visitor.visitBigIntType(this, context);
   }
 }

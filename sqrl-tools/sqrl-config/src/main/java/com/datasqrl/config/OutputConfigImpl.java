@@ -25,7 +25,7 @@ public class OutputConfigImpl implements PackageJson.OutputConfig {
   String tableSuffix = "";
 
   public static OutputConfigImpl from(SqrlConfig config) {
-    OutputConfigImplBuilder builder = builder();
+    var builder = builder();
     config.asBool("add-uid").getOptional().ifPresent(builder::addUid);
     config.asString("table-suffix").getOptional().ifPresent(builder::tableSuffix);
     return builder.build();

@@ -1,7 +1,8 @@
 package com.datasqrl.sql;
 
-import com.datasqrl.canonicalizer.Name;
 import java.util.Set;
+
+import com.datasqrl.canonicalizer.Name;
 
 /**
  * Some databases require extensions to be loaded to support certain types

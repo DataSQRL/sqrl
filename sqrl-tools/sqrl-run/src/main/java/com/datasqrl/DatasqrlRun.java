@@ -4,20 +4,6 @@
 package com.datasqrl;
 
 
-import com.datasqrl.graphql.GraphQLServer;
-import com.datasqrl.graphql.JsonEnvVarDeserializer;
-import com.datasqrl.graphql.config.ServerConfig;
-import com.datasqrl.graphql.server.RootGraphqlModel;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.io.Resources;
-import io.micrometer.prometheusmetrics.PrometheusConfig;
-import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
-import io.vertx.core.Vertx;
-import io.vertx.core.VertxOptions;
-import io.vertx.core.json.JsonObject;
-import io.vertx.micrometer.MicrometerMetricsOptions;
 import java.io.File;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -36,8 +22,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
+
 import org.apache.flink.api.common.JobStatus;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -50,6 +35,24 @@ import org.apache.flink.table.operations.StatementSetOperation;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.admin.NewTopic;
+
+import com.datasqrl.graphql.GraphQLServer;
+import com.datasqrl.graphql.JsonEnvVarDeserializer;
+import com.datasqrl.graphql.config.ServerConfig;
+import com.datasqrl.graphql.server.RootGraphqlModel;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.io.Resources;
+
+import io.micrometer.prometheusmetrics.PrometheusConfig;
+import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
+import io.vertx.core.Vertx;
+import io.vertx.core.VertxOptions;
+import io.vertx.core.json.JsonObject;
+import io.vertx.micrometer.MicrometerMetricsOptions;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class DatasqrlRun {
@@ -65,7 +68,7 @@ public class DatasqrlRun {
   TableResult execute;
 
   public static void main(String[] args) {
-    DatasqrlRun run = new DatasqrlRun();
+    var run = new DatasqrlRun();
     run.run(true);
   }
 
@@ -93,12 +96,12 @@ public class DatasqrlRun {
 
     // Register the custom deserializer module
     objectMapper = new ObjectMapper();
-    SimpleModule module = new SimpleModule();
+    var module = new SimpleModule();
     module.addDeserializer(String.class, new JsonEnvVarDeserializer(env));
     objectMapper.registerModule(module);
 
     startVertx();
-    CompiledPlan plan = startFlink();
+    var plan = startFlink();
     execute = plan.execute();
     if (hold) {
       execute.print();
@@ -109,7 +112,7 @@ public class DatasqrlRun {
   public void stop() {
     if (execute != null) {
       try {
-        JobStatus status = execute.getJobClient().get().getJobStatus().get();
+        var status = execute.getJobClient().get().getJobStatus().get();
         if (status != JobStatus.FINISHED) {
           execute.getJobClient().get().cancel();
         }
@@ -137,10 +140,10 @@ public class DatasqrlRun {
     if (packageJson.toFile().exists()) {
       Map packageJsonMap = getPackageJson();
       Object o = packageJsonMap.get("values");
-      if (o instanceof Map) {
-        Object c = ((Map)o).get("flink-config");
-        if (c instanceof Map) {
-          config.putAll((Map)c);
+      if (o instanceof Map map) {
+        Object c = map.get("flink-config");
+        if (c instanceof Map m) {
+          config.putAll(m);
         }
       }
     }
@@ -244,16 +247,16 @@ public class DatasqrlRun {
   }
 
   public String replaceWithEnv(String command) {
-    Map<String, String> envVariables = env;
-    Pattern pattern = Pattern.compile("\\$\\{(.*?)\\}");
+    var envVariables = env;
+    var pattern = Pattern.compile("\\$\\{(.*?)\\}");
 
-    String substitutedStr = command;
-    StringBuffer result = new StringBuffer();
+    var substitutedStr = command;
+    var result = new StringBuffer();
     // First pass to replace environment variables
-    Matcher matcher = pattern.matcher(substitutedStr);
+    var matcher = pattern.matcher(substitutedStr);
     while (matcher.find()) {
-      String key = matcher.group(1);
-      String envValue = envVariables.getOrDefault(key, "");
+      var key = matcher.group(1);
+      var envValue = envVariables.getOrDefault(key, "");
       matcher.appendReplacement(result, Matcher.quoteReplacement(envValue));
     }
     matcher.appendTail(result);
@@ -276,14 +279,12 @@ public class DatasqrlRun {
     List<Map<String, Object>> mutableTopics = new ArrayList<>(topics);
 
     Object o = getPackageJson().get("values");
-    if (o instanceof Map) {
-      Map vals = (Map) o;
+    if (o instanceof Map vals) {
       Object o1 = vals.get("create-topics");
-      if (o1 instanceof List) {
-        List topicList = (List)o1;
+      if (o1 instanceof List topicList) {
         for (Object t : topicList) {
-          if (t instanceof String) {
-            mutableTopics.add(Map.of("name", (String)t));
+          if (t instanceof String string) {
+            mutableTopics.add(Map.of("name", string));
           }
         }
       }
@@ -316,7 +317,7 @@ public class DatasqrlRun {
     }
     Map plan = objectMapper.readValue(file, Map.class);
 
-    String fullPostgresJDBCUrl = String.format("jdbc:postgresql://%s:%s/%s",
+    String fullPostgresJDBCUrl = "jdbc:postgresql://%s:%s/%s".formatted(
         getenv("PGHOST"), getenv("PGPORT"), getenv("PGDATABASE"));
     try (Connection connection = DriverManager.getConnection(fullPostgresJDBCUrl, getenv("PGUSER"), getenv("PGPASSWORD"))) {
       for (Map statement : (List<Map>) plan.get("statements")) {
@@ -388,12 +389,12 @@ public class DatasqrlRun {
   }
 
   public Optional<String> getSnowflakeUrl() {
-    Map engines = (Map)getPackageJson().get("engines");
-    Map snowflake = (Map)engines.get("snowflake");
+    var engines = (Map)getPackageJson().get("engines");
+    var snowflake = (Map)engines.get("snowflake");
     if (snowflake != null) {
-      Object url = snowflake.get("url");
-      if (url instanceof String) {
-        return Optional.of((String)url);
+      var url = snowflake.get("url");
+      if (url instanceof String string) {
+        return Optional.of(string);
       }
     }
 

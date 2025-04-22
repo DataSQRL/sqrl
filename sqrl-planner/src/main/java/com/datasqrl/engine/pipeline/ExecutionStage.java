@@ -3,14 +3,13 @@
  */
 package com.datasqrl.engine.pipeline;
 
-import com.datasqrl.config.EngineType;
-import com.datasqrl.engine.EngineFeature;
-import com.datasqrl.engine.ExecutionEngine;
-
 import java.util.Collection;
 
 import org.apache.calcite.sql.SqlOperator;
-import org.apache.flink.table.functions.FunctionDefinition;
+
+import com.datasqrl.config.EngineType;
+import com.datasqrl.engine.EngineFeature;
+import com.datasqrl.engine.ExecutionEngine;
 
 public interface ExecutionStage {
 

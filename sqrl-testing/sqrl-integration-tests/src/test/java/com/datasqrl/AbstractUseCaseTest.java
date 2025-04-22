@@ -2,12 +2,8 @@ package com.datasqrl;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.datasqrl.cmd.AssertStatusHook;
-import com.datasqrl.util.FileUtil;
-import com.datasqrl.util.SnapshotTest.Snapshot;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -15,11 +11,15 @@ import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import lombok.AllArgsConstructor;
 
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
+
+import com.datasqrl.cmd.AssertStatusHook;
+import com.datasqrl.util.SnapshotTest.Snapshot;
+
+import lombok.AllArgsConstructor;
 
 public class AbstractUseCaseTest extends AbstractAssetSnapshotTest {
 
@@ -35,7 +35,7 @@ public class AbstractUseCaseTest extends AbstractAssetSnapshotTest {
 
   void testUsecase(Path script, Path graphQLFile, Path packageFile) {
     assertTrue(Files.exists(script));
-    Path baseDir = script.getParent();
+    var baseDir = script.getParent();
     List<String> arguments = new ArrayList<>();
     arguments.add("compile");
     arguments.add(script.getFileName().toString());
@@ -49,10 +49,10 @@ public class AbstractUseCaseTest extends AbstractAssetSnapshotTest {
       assert Files.exists(packageFile);
       arguments.add("-c"); arguments.add(packageFile.getFileName().toString());
     }
-    String testname = Stream.of(script, graphQLFile, packageFile)
+    var testname = Stream.of(script, graphQLFile, packageFile)
         .map(AbstractAssetSnapshotTest::getDisplayName)
         .collect(Collectors.joining("-"));
-    AssertStatusHook hook = execute(baseDir, arguments);
+    var hook = execute(baseDir, arguments);
     snapshot(testname, hook);
   }
 
@@ -80,10 +80,15 @@ public class AbstractUseCaseTest extends AbstractAssetSnapshotTest {
   @Override
   public Predicate<Path> getPlanDirFilter() {
     return path -> {
-      if (path.getFileName().toString().equals("flink-sql-no-functions.sql")) return true;
-      if (path.getFileName().toString().contains("flink")) return false;
-      if (path.getFileName().toString().contains("schema") || path.getFileName().toString().contains("views")) return true;
-      if (List.of("kafka.json", "vertx.json").contains(path.getFileName().toString())) return true;
+      if (path.getFileName().toString().equals("flink-sql-no-functions.sql")) {
+		return true;
+	}
+      if (path.getFileName().toString().contains("flink")) {
+		return false;
+	}
+      if (path.getFileName().toString().contains("schema") || path.getFileName().toString().contains("views") || List.of("kafka.json", "vertx.json").contains(path.getFileName().toString())) {
+		return true;
+	}
       return false;
     };
   }
@@ -105,12 +110,16 @@ public class AbstractUseCaseTest extends AbstractAssetSnapshotTest {
       return getSQRLScripts(directory, includeFails)
           .sorted(Comparator.comparing(p -> p.toFile().getName()))
           .flatMap(path -> {
-        List<Path> pkgFiles = getPackageFiles(path.getParent());
+        var pkgFiles = getPackageFiles(path.getParent());
         Collections.sort(pkgFiles, Comparator.comparing(p -> p.toFile().getName()));
-        if (pkgFiles.isEmpty()) pkgFiles.add(null);
-        List<Path> graphQLFiles = getScriptGraphQLFiles(path);
+        if (pkgFiles.isEmpty()) {
+			pkgFiles.add(null);
+		}
+        var graphQLFiles = getScriptGraphQLFiles(path);
         Collections.sort(graphQLFiles, Comparator.comparing(p -> p.toFile().getName()));
-        if (graphQLFiles.isEmpty()) graphQLFiles.add(null);
+        if (graphQLFiles.isEmpty()) {
+			graphQLFiles.add(null);
+		}
         return graphQLFiles.stream().flatMap(gql -> pkgFiles.stream().map(pkg -> Arguments.of(path, gql, pkg)));
       });
     }

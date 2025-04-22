@@ -1,15 +1,15 @@
 package com.datasqrl.packager.preprocessor;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.stream.Stream;
+
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.loaders.DataSource;
 import com.datasqrl.packager.preprocess.Preprocessor;
 import com.datasqrl.util.NameUtil;
 
 import lombok.SneakyThrows;
-
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.stream.Stream;
 
 public abstract class PreprocessorBase implements Preprocessor {
 

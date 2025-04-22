@@ -3,9 +3,11 @@
  */
 package com.datasqrl.io.impl;
 
-import com.datasqrl.canonicalizer.NameCanonicalizer;
 import java.io.Serializable;
 import java.util.Locale;
+
+import com.datasqrl.canonicalizer.NameCanonicalizer;
+
 import lombok.Getter;
 
 @Getter

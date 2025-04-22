@@ -5,6 +5,7 @@ import com.datasqrl.config.Constraints.Default;
 import com.datasqrl.config.Constraints.MinLength;
 import com.datasqrl.io.impl.CanonicalizerConfiguration;
 import com.google.common.base.Strings;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;

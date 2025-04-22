@@ -3,13 +3,14 @@
  */
 package com.datasqrl.engine.pipeline;
 
-import com.datasqrl.config.EngineType;
-import com.datasqrl.engine.server.ServerEngine;
-import com.datasqrl.util.StreamUtil;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import com.datasqrl.config.EngineType;
+import com.datasqrl.engine.server.ServerEngine;
+import com.datasqrl.util.StreamUtil;
 
 public interface ExecutionPipeline {
 

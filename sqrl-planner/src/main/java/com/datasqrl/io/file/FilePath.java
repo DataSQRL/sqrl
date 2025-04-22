@@ -3,9 +3,6 @@
  */
 package com.datasqrl.io.file;
 
-import com.datasqrl.util.BaseFileUtil;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -16,17 +13,21 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import lombok.AllArgsConstructor;
-import lombok.NonNull;
-import lombok.Value;
-import org.apache.commons.lang3.tuple.Pair;
+
 import org.apache.flink.connector.file.src.compression.StandardDeCompressors;
 import org.apache.flink.core.fs.FileStatus;
 import org.apache.flink.core.fs.FileSystem;
 import org.apache.flink.core.fs.Path;
+
+import com.datasqrl.util.BaseFileUtil;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
+
+import lombok.AllArgsConstructor;
+import lombok.NonNull;
+import lombok.Value;
 
 /**
  * Represents a file that is identified by a URI.
@@ -61,13 +62,13 @@ public class FilePath implements Serializable { //todo: move to io-core
 
   public Status getStatus() throws IOException {
     if (isURL()) {
-      try (InputStream is = flinkPath.toUri().toURL().openStream()) {
+      try (var is = flinkPath.toUri().toURL().openStream()) {
         return new Status(false, is.available(), null, this);
       } catch (Throwable e) {
         return Status.NOT_EXIST;
       }
     } else {
-      FileStatus status = getFileSystem().getFileStatus(flinkPath);
+      var status = getFileSystem().getFileStatus(flinkPath);
       if (status == null) {
         return Status.NOT_EXIST;
       } else {
@@ -81,13 +82,13 @@ public class FilePath implements Serializable { //todo: move to io-core
   }
 
   public boolean isURL() {
-    String scheme = getScheme();
+    var scheme = getScheme();
     return !Strings.isNullOrEmpty(scheme) && URL_SCHEMES.contains(getScheme());
   }
 
   public List<Status> listFiles() throws IOException {
     Preconditions.checkArgument(!isURL());
-    FileStatus[] files = getFileSystem().listStatus(flinkPath);
+    var files = getFileSystem().listStatus(flinkPath);
     return Arrays.stream(files).map(Status::new).collect(Collectors.toList());
   }
 
@@ -104,10 +105,10 @@ public class FilePath implements Serializable { //todo: move to io-core
   }
 
   public Optional<NameComponents> getComponents(Pattern filenamePattern) {
-    String fullName = getFileName();
+    var fullName = getFileName();
     String compression = "", format = "";
-    Pair<String, String> extPair = BaseFileUtil.separateExtension(fullName);
-    String extension = extPair.getRight();
+    var extPair = BaseFileUtil.separateExtension(fullName);
+    var extension = extPair.getRight();
     if (!Strings.isNullOrEmpty(extension) && COMPRESSION_EXTENSIONS.contains(extension)) {
       compression = extension;
       fullName = extPair.getLeft();
@@ -119,9 +120,9 @@ public class FilePath implements Serializable { //todo: move to io-core
       fullName = extPair.getLeft();
     }
     //Match pattern
-    String identifier = fullName;
+    var identifier = fullName;
     if (filenamePattern != null) {
-      Matcher matcher = filenamePattern.matcher(fullName);
+      var matcher = filenamePattern.matcher(fullName);
       if (matcher.find()) {
         if (matcher.groupCount() > 0) {
           identifier = matcher.group(1);
@@ -148,7 +149,7 @@ public class FilePath implements Serializable { //todo: move to io-core
     } else {
       is = getFileSystem().open(flinkPath);
     }
-    NameComponents components = getComponents(null).get();
+    var components = getComponents(null).get();
     if (components.hasCompression()) {
       is = StandardDeCompressors.getDecompressorForExtension(components.getCompression())
           .create(is);
@@ -172,7 +173,7 @@ public class FilePath implements Serializable { //todo: move to io-core
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    FilePath filePath = (FilePath) o;
+    var filePath = (FilePath) o;
     return filePath.flinkPath.equals(flinkPath);
   }
 
@@ -220,9 +221,13 @@ public class FilePath implements Serializable { //todo: move to io-core
     }
 
     public String getSuffix() {
-      String suffix = "";
-      if (hasFormat()) suffix += "." + format;
-      if (hasCompression()) suffix += "." + compression;
+      var suffix = "";
+      if (hasFormat()) {
+		suffix += "." + format;
+	}
+      if (hasCompression()) {
+		suffix += "." + compression;
+	}
       return suffix;
     }
 

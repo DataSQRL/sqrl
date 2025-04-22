@@ -1,9 +1,10 @@
 package com.datasqrl.engine.log.kafka;
 
+import java.util.Map;
+
 import com.datasqrl.engine.ExecutableQuery;
 import com.datasqrl.engine.pipeline.ExecutionStage;
-import java.util.List;
-import java.util.Map;
+
 import lombok.Value;
 
 @Value

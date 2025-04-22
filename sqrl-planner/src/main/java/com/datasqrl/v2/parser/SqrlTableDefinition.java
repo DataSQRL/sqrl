@@ -1,7 +1,6 @@
 package com.datasqrl.v2.parser;
 
 import com.datasqrl.canonicalizer.NamePath;
-import java.util.List;
 
 /**
  * A partially parsed SQRL definition. Some elements are extracted but the

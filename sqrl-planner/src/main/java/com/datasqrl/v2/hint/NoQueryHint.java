@@ -1,10 +1,11 @@
 package com.datasqrl.v2.hint;
 
+import java.util.List;
+
 import com.datasqrl.v2.parser.ParsedObject;
 import com.datasqrl.v2.parser.SqrlHint;
 import com.google.auto.service.AutoService;
 import com.google.common.base.Preconditions;
-import java.util.List;
 
 public class NoQueryHint extends ColumnNamesHint implements QueryByHint  {
 

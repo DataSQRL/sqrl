@@ -5,6 +5,7 @@ package com.datasqrl.config;
 
 import com.datasqrl.error.ErrorCollector;
 import com.google.common.base.Strings;
+
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -21,7 +22,7 @@ public class DependencyImpl implements Dependency {
 
   public DependencyImpl() {
   }
-  
+
   public DependencyImpl(SqrlConfig sqrlConfig) {
     name = sqrlConfig.asString("name").getOptional()
         .orElse(null);

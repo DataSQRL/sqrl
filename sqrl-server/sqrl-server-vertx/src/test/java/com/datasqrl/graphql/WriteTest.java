@@ -12,32 +12,12 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import com.datasqrl.graphql.config.ServerConfig;
-import com.datasqrl.graphql.jdbc.DatabaseType;
-import com.datasqrl.graphql.server.GraphQLEngineBuilder;
-import com.datasqrl.graphql.server.PaginationType;
-import com.datasqrl.graphql.server.RootGraphqlModel;
-import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentLookupQueryCoords;
-import com.datasqrl.graphql.server.RootGraphqlModel.QueryWithArguments;
-import com.datasqrl.graphql.server.RootGraphqlModel.SqlQuery;
-import com.datasqrl.graphql.server.RootGraphqlModel.KafkaMutationCoords;
-import com.datasqrl.graphql.server.RootGraphqlModel.StringSchema;
-import graphql.ExecutionInput;
-import graphql.ExecutionResult;
-import graphql.GraphQL;
-import io.vertx.core.Promise;
-import io.vertx.core.Vertx;
-import io.vertx.junit5.VertxExtension;
-import io.vertx.pgclient.PgConnectOptions;
-import io.vertx.pgclient.PgPool;
-import io.vertx.sqlclient.PoolOptions;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import lombok.SneakyThrows;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -52,6 +32,28 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
+
+import com.datasqrl.graphql.config.ServerConfig;
+import com.datasqrl.graphql.jdbc.DatabaseType;
+import com.datasqrl.graphql.server.GraphQLEngineBuilder;
+import com.datasqrl.graphql.server.PaginationType;
+import com.datasqrl.graphql.server.RootGraphqlModel;
+import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentLookupQueryCoords;
+import com.datasqrl.graphql.server.RootGraphqlModel.KafkaMutationCoords;
+import com.datasqrl.graphql.server.RootGraphqlModel.QueryWithArguments;
+import com.datasqrl.graphql.server.RootGraphqlModel.SqlQuery;
+import com.datasqrl.graphql.server.RootGraphqlModel.StringSchema;
+
+import graphql.ExecutionInput;
+import graphql.ExecutionResult;
+import graphql.GraphQL;
+import io.vertx.core.Promise;
+import io.vertx.core.Vertx;
+import io.vertx.junit5.VertxExtension;
+import io.vertx.pgclient.PgConnectOptions;
+import io.vertx.pgclient.PgPool;
+import io.vertx.sqlclient.PoolOptions;
+import lombok.SneakyThrows;
 
 @ExtendWith(VertxExtension.class)
 @Testcontainers
@@ -106,7 +108,7 @@ class WriteTest {
   }
 
   private Properties getKafkaProps() {
-    Properties props = new Properties();
+    var props = new Properties();
     props.put("bootstrap.servers", CLUSTER.bootstrapServers());
     props.put(ConsumerConfig.GROUP_ID_CONFIG, "kafka-test-listener");
     props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer");
@@ -120,22 +122,23 @@ class WriteTest {
 
   private RootGraphqlModel getCustomerModel() {
     return RootGraphqlModel.builder()
-            .schema(StringSchema.builder().schema(""
-                    + "scalar DateTime\n"
-                + "type Query { "
-                    + "  customer: Customer "
-                    + "} "
-                    + "type Mutation {"
-                    + "  addCustomer(event: CreateCustomerEvent): Customer"
-                    + "} "
-                    + "input CreateCustomerEvent {"
-                    + "  customerid: Int"
-                    + "  ts: DateTime"
-                    + "} "
-                    + "type Customer {"
-                    + "  customerid: Int "
-                    + "  ts: DateTime"
-                    + "}").build())
+            .schema(StringSchema.builder().schema("""
+                scalar DateTime
+                type Query { \
+                  customer: Customer \
+                } \
+                type Mutation {\
+                  addCustomer(event: CreateCustomerEvent): Customer\
+                } \
+                input CreateCustomerEvent {\
+                  customerid: Int\
+                  ts: DateTime\
+                } \
+                type Customer {\
+                  customerid: Int \
+                  ts: DateTime\
+                }\
+                """).build())
             .query(ArgumentLookupQueryCoords.builder()
                     .parentType("Query")
                     .fieldName("customer")

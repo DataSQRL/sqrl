@@ -4,23 +4,21 @@
 package com.datasqrl.util;
 
 
-import com.google.common.base.Strings;
-import com.google.common.io.Resources;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.URI;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
-import java.util.stream.Stream;
-import lombok.SneakyThrows;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.lang3.tuple.Pair;
+
+import com.google.common.base.Strings;
+import com.google.common.io.Resources;
+
+import lombok.SneakyThrows;
 
 /**
  * Contains a set of static methods for handling with files and folders.
@@ -42,8 +40,10 @@ public class FileUtil {
    * @throws IOException
    */
   public static Path makeHiddenFolder(Path basePath, String folderName) throws IOException {
-    if (!folderName.startsWith(".")) folderName = "." + folderName;
-    Path result = basePath.resolve(folderName);
+    if (!folderName.startsWith(".")) {
+		folderName = "." + folderName;
+	}
+    var result = basePath.resolve(folderName);
     if (!Files.isDirectory(result)) {
       Files.createDirectories(result);
       if (SystemUtils.IS_OS_WINDOWS) {
@@ -64,18 +64,22 @@ public class FileUtil {
   }
 
   public static String addExtension(String filename, String extension) {
-    if (!extension.startsWith(".")) extension = "." + extension;
+    if (!extension.startsWith(".")) {
+		extension = "." + extension;
+	}
     return filename + extension;
   }
 
   public static String readResource(String resourceName) throws IOException {
-    URL url = Resources.getResource(resourceName);
+    var url = Resources.getResource(resourceName);
     return Resources.toString(url, StandardCharsets.UTF_8);
   }
 
   public static boolean isEmptyDirectory(Path dir) throws IOException {
-    if (!Files.isDirectory(dir)) return true;
-    try (Stream<Path> entries = Files.list(dir)) {
+    if (!Files.isDirectory(dir)) {
+		return true;
+	}
+    try (var entries = Files.list(dir)) {
       return !entries.findFirst().isPresent();
     }
   }
@@ -94,7 +98,7 @@ public class FileUtil {
     if (Strings.isNullOrEmpty(fileName)) {
       return null;
     }
-    int offset = fileName.lastIndexOf(DELIMITER_CHAR);
+    var offset = fileName.lastIndexOf(DELIMITER_CHAR);
     if (offset == -1) {
       return Pair.of(fileName, "");
     } else {

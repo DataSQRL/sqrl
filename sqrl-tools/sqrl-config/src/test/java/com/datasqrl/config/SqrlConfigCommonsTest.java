@@ -1,6 +1,6 @@
 package com.datasqrl.config;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -22,7 +22,7 @@ class SqrlConfigCommonsTest {
 
     @Test
     void givenNoPaths_whenCreatingConfig_thenReturnDefaults() {
-        PackageJson underTest = SqrlConfigCommons.fromFilesPackageJson(errors, List.of());
+        var underTest = SqrlConfigCommons.fromFilesPackageJson(errors, List.of());
 
         assertThat(underTest).isNotNull();
         assertThat(underTest.getVersion()).isEqualTo(1);
@@ -36,7 +36,7 @@ class SqrlConfigCommonsTest {
 
     @Test
     void givenSinglePath_whenCreatingConfig_thenOverrideDefaults() {
-        PackageJson underTest = SqrlConfigCommons.fromFilesPackageJson(errors, List.of(Path.of("src/test/resources/config/test-package.json")));
+        var underTest = SqrlConfigCommons.fromFilesPackageJson(errors, List.of(Path.of("src/test/resources/config/test-package.json")));
 
         assertThat(underTest).isNotNull();
         assertThat(underTest.getVersion()).isEqualTo(1);

@@ -3,8 +3,8 @@ package com.datasqrl.plan.rules;
 import com.datasqrl.engine.EngineFeature;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.pipeline.ExecutionStage;
+
 import lombok.Value;
-import org.apache.flink.table.functions.FunctionDefinition;
 
 @Value
 public final class IdealExecutionStage implements ExecutionStage {

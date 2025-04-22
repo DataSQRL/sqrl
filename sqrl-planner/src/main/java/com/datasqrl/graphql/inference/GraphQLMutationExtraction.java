@@ -2,6 +2,15 @@ package com.datasqrl.graphql.inference;
 
 import static com.datasqrl.graphql.server.TypeDefinitionRegistryUtil.getMutationTypeName;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.calcite.rel.type.RelDataTypeFactory;
+import org.apache.calcite.rel.type.RelDataTypeField;
+import org.apache.calcite.rel.type.RelDataTypeFieldImpl;
+import org.apache.calcite.rel.type.RelRecordType;
+import org.apache.calcite.sql.type.SqlTypeName;
+
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.ReservedName;
@@ -13,19 +22,11 @@ import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.plan.queries.APIMutation;
 import com.datasqrl.plan.queries.APISource;
 import com.google.inject.Inject;
+
 import graphql.language.ObjectTypeDefinition;
-import graphql.schema.idl.TypeDefinitionRegistry;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.calcite.rel.type.RelDataTypeFactory;
-import org.apache.calcite.rel.type.RelDataTypeField;
-import org.apache.calcite.rel.type.RelDataTypeFieldImpl;
-import org.apache.calcite.rel.type.RelRecordType;
-import org.apache.calcite.sql.type.SqlTypeName;
 
 @Slf4j
 @AllArgsConstructor(onConstructor_=@Inject)
@@ -39,8 +40,8 @@ public class GraphQLMutationExtraction {
   private final APIConnectorManager connectorManager;
 
   public void analyze(APISource apiSource) {
-    TypeDefinitionRegistry registry = schemaParser.parse(apiSource.getSchemaDefinition());
-    ObjectTypeDefinition mutationType = (ObjectTypeDefinition) registry
+    var registry = schemaParser.parse(apiSource.getSchemaDefinition());
+    var mutationType = (ObjectTypeDefinition) registry
         .getType(getMutationTypeName(registry))
         .orElse(null);
 
@@ -51,10 +52,10 @@ public class GraphQLMutationExtraction {
           new InputFieldToRelDataType(registry, typeFactory, canonicalizer),
           mutationType, registry);
 
-      List<RelDataTypeField> addedFields = appendFields(types);
+      var addedFields = appendFields(types);
 
       for (RelDataTypeField namedType : addedFields) {
-        APIMutation apiMutation = new APIMutation(Name.system(namedType.getName()), apiSource,
+        var apiMutation = new APIMutation(Name.system(namedType.getName()), apiSource,
             namedType.getType(), ReservedName.MUTATION_TIME.getDisplay(), ReservedName.MUTATION_PRIMARY_KEY.getDisplay());
         connectorManager.addMutation(apiMutation);
       }
@@ -64,7 +65,7 @@ public class GraphQLMutationExtraction {
   private List<RelDataTypeField> appendFields(List<RelDataTypeField> types) {
     List<RelDataTypeField> newFields = new ArrayList<>();
     for (RelDataTypeField field : types) {
-      RelRecordType relRecordType = (RelRecordType) field.getType();
+      var relRecordType = (RelRecordType) field.getType();
       List<RelDataTypeField> fields = new ArrayList<>(relRecordType.getFieldList());
 //      fields.add(new RelDataTypeFieldImpl(DEFAULT_EVENT_TIME_NAME, relRecordType.getFieldList().size(),
 //          typeFactory.createSqlType(SqlTypeName.TIMESTAMP, 3)));

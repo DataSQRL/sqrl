@@ -1,8 +1,10 @@
 package com.datasqrl.engine.database.relational;
 
+import java.util.List;
+
 import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.v2.dag.plan.MaterializationStagePlan.Query;
-import java.util.List;
+
 import lombok.Value;
 
 public interface JdbcStatementFactory {

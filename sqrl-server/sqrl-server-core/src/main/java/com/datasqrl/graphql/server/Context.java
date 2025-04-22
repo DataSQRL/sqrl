@@ -1,11 +1,12 @@
 package com.datasqrl.graphql.server;
 
+import java.util.Set;
+
 import com.datasqrl.graphql.jdbc.JdbcClient;
 import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedQuery;
+
 import graphql.schema.DataFetcher;
-import java.util.Map;
-import java.util.Set;
 
 //  @Value
 

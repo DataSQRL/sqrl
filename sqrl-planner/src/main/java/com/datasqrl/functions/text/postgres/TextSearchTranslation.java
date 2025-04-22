@@ -1,14 +1,8 @@
 package com.datasqrl.functions.text.postgres;
 
-import com.datasqrl.calcite.Dialect;
-import com.datasqrl.calcite.convert.SimpleCallTransform.SimpleCallTransformConfig;
-import com.datasqrl.calcite.convert.SimplePredicateTransform.SimplePredicateTransformConfig;
-import com.datasqrl.calcite.function.OperatorRuleTransform;
-import com.datasqrl.function.PgSpecificOperatorTable;
-import com.google.auto.service.AutoService;
-import com.google.common.base.Preconditions;
 import java.util.List;
 import java.util.stream.Collectors;
+
 import org.apache.calcite.plan.RelRule;
 import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexCall;
@@ -17,6 +11,14 @@ import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
+
+import com.datasqrl.calcite.Dialect;
+import com.datasqrl.calcite.convert.SimpleCallTransform.SimpleCallTransformConfig;
+import com.datasqrl.calcite.convert.SimplePredicateTransform.SimplePredicateTransformConfig;
+import com.datasqrl.calcite.function.OperatorRuleTransform;
+import com.datasqrl.function.PgSpecificOperatorTable;
+import com.google.auto.service.AutoService;
+import com.google.common.base.Preconditions;
 
 @AutoService(OperatorRuleTransform.class)
 public class TextSearchTranslation implements OperatorRuleTransform {
@@ -47,12 +49,12 @@ public class TextSearchTranslation implements OperatorRuleTransform {
             throw new IllegalArgumentException("Not a valid predicate");
           }
           //TODO generalize to other literals by adding ts_rank_cd to the filter condition
-          Preconditions.checkArgument(other instanceof RexLiteral &&
-                  ((RexLiteral) other).getValueAs(Number.class).doubleValue() == 0,
+          Preconditions.checkArgument(other instanceof RexLiteral rl &&
+                  rl.getValueAs(Number.class).doubleValue() == 0,
               "Expected comparison with 0 for %s", getFunctionName());
           //TODO: allow other languages
-          RexLiteral language = rexBuilder.makeLiteral("english");
-          List<RexNode> operands = textSearch.getOperands();
+          var language = rexBuilder.makeLiteral("english");
+          var operands = textSearch.getOperands();
           Preconditions.checkArgument(operands.size() > 1);
 
           //to_tsvector(col1  ' '  coalesce(col2,'')) @@ to_tsquery(:query) AND ts_rank_cd(col1..., :query) > 0.1
@@ -65,8 +67,8 @@ public class TextSearchTranslation implements OperatorRuleTransform {
 //          Preconditions.checkArgument(FunctionUtil.getSqrlFunction(call.getOperator())
 //                  .filter(fct -> fct.getFunctionName().equals(Name.system("TextSearch"))).isPresent(),
 //              "Not a valid %s predicate", getFunctionName());
-          RexLiteral language = rexBuilder.getRexBuilder().makeLiteral("english");
-          List<RexNode> operands = call.getOperands();
+          var language = rexBuilder.getRexBuilder().makeLiteral("english");
+          var operands = call.getOperands();
           Preconditions.checkArgument(operands.size() > 1);
           return rexBuilder.getRexBuilder().makeCall(
               PgSpecificOperatorTable.TS_RANK_CD,
@@ -97,14 +99,14 @@ public class TextSearchTranslation implements OperatorRuleTransform {
 
   private RexNode makeTsVector(RexBuilder rexBuilder, RexLiteral language,
       List<RexNode> columns) {
-    RexLiteral space = rexBuilder.makeLiteral(" ");
+    var space = rexBuilder.makeLiteral(" ");
     List<RexNode> args = columns.stream()
         .map(col -> rexBuilder.makeCall(SqlStdOperatorTable.COALESCE, col, space))
         .collect(Collectors.toList());
     RexNode arg;
     if (args.size() > 1) {
       arg = args.get(0);
-      for (int i = 1; i < args.size(); i++) {
+      for (var i = 1; i < args.size(); i++) {
         arg = rexBuilder.makeCall(SqlStdOperatorTable.CONCAT, rexBuilder.makeCall(
             SqlStdOperatorTable.CONCAT, arg, space), args.get(i));
       }

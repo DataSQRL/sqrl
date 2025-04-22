@@ -1,8 +1,9 @@
 package com.datasqrl.util;
 
-import com.datasqrl.canonicalizer.Name;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
+
+import com.datasqrl.canonicalizer.Name;
 
 public interface RelDataTypeBuilder {
 

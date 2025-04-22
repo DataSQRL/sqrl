@@ -1,8 +1,8 @@
 package com.datasqrl.config;
 
-import com.datasqrl.canonicalizer.Name;
 import java.util.Map;
-import java.util.Optional;
+
+import com.datasqrl.canonicalizer.Name;
 
 public interface ConnectorFactory {
   TableConfig createSourceAndSink(IConnectorFactoryContext context);

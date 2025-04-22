@@ -3,14 +3,9 @@ package com.datasqrl.graphql.jdbc;
 import static com.datasqrl.graphql.jdbc.SchemaConstants.LIMIT;
 import static com.datasqrl.graphql.jdbc.SchemaConstants.OFFSET;
 
-import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
-import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedSqlQuery;
-import com.datasqrl.graphql.server.RootGraphqlModel.SqlQuery;
-import graphql.schema.DataFetchingEnvironment;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -19,6 +14,12 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+
+import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
+import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedSqlQuery;
+import com.datasqrl.graphql.server.RootGraphqlModel.SqlQuery;
+
+import graphql.schema.DataFetchingEnvironment;
 import lombok.SneakyThrows;
 import lombok.Value;
 
@@ -46,7 +47,7 @@ public class JdbcExecutionContext extends AbstractQueryExecutionContext {
         //special case where database doesn't support binding for limit/offset => need to execute dynamically
         if (!query.getDatabase().supportsLimitOffsetBinding) {
           assert preparedQueryContainer == null;
-          unpreparedSqlQuery = JdbcExecutionContext.addLimitOffsetToQuery(unpreparedSqlQuery,
+          unpreparedSqlQuery = AbstractQueryExecutionContext.addLimitOffsetToQuery(unpreparedSqlQuery,
               limit.map(Object::toString).orElse("ALL"), String.valueOf(offset.orElse(0)));
         } else {
           paramObj.add(limit.orElse(Integer.MAX_VALUE));
@@ -91,12 +92,12 @@ public class JdbcExecutionContext extends AbstractQueryExecutionContext {
 
   private List<Map<String, Object>> resultSetToList(ResultSet resultSet) throws SQLException {
     List<Map<String, Object>> rows = new ArrayList<>();
-    ResultSetMetaData metaData = resultSet.getMetaData();
-    int columnCount = metaData.getColumnCount();
+    var metaData = resultSet.getMetaData();
+    var columnCount = metaData.getColumnCount();
 
     while (resultSet.next()) {
       Map<String, Object> row = new LinkedHashMap<>(columnCount);
-      for (int i = 1; i <= columnCount; i++) {
+      for (var i = 1; i <= columnCount; i++) {
         row.put(metaData.getColumnLabel(i), resultSet.getObject(i));
       }
       rows.add(row);

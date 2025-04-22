@@ -1,16 +1,12 @@
 package com.datasqrl.engine.database.relational;
 
-import com.datasqrl.calcite.Dialect;
-import com.datasqrl.calcite.DialectCallConverter;
-import com.datasqrl.calcite.OperatorRuleTransformer;
-import com.datasqrl.calcite.convert.RelToSqlNode;
-import com.datasqrl.calcite.convert.SqlNodeToString;
-import com.datasqrl.calcite.dialect.ExtendedPostgresSqlDialect;
-import com.datasqrl.plan.global.IndexDefinition;
-import com.datasqrl.v2.dag.plan.MaterializationStagePlan.Query;
-import java.util.List;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.sql.SqlDataTypeSpec;
+
+import com.datasqrl.calcite.Dialect;
+import com.datasqrl.calcite.OperatorRuleTransformer;
+import com.datasqrl.calcite.dialect.ExtendedPostgresSqlDialect;
+import com.datasqrl.plan.global.IndexDefinition;
 
 public class IcebergStatementFactory extends AbstractJdbcStatementFactory {
 

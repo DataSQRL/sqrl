@@ -5,14 +5,13 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.Correlate;
 import org.apache.calcite.rel.core.CorrelationId;
 import org.apache.calcite.rel.core.Project;
 import org.apache.calcite.rel.core.TableScan;
-import org.apache.calcite.rel.hint.RelHint;
 import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexProgram;
 import org.apache.calcite.sql.JoinConditionType;
@@ -25,7 +24,6 @@ import org.apache.calcite.sql.SqlJoin;
 import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
-import org.apache.calcite.sql.SqlTableRef;
 import org.apache.calcite.sql.SqlUtil;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
@@ -46,18 +44,18 @@ public class RelToSqlConverterWithHints extends org.apache.calcite.rel.rel2sql.R
   //SQRL: add hints
   @Override
   public SqlImplementor.Result visit(Project e) {
-    SqlImplementor.Result x = this.visitInput(e, 0, new SqlImplementor.Clause[]{Clause.SELECT});
+    var x = this.visitInput(e, 0, new SqlImplementor.Clause[]{Clause.SELECT});
     this.parseCorrelTable(e, x);
-    SqlImplementor.Builder builder = x.builder(e);
+    var builder = x.builder(e);
     if (!isStar(e.getProjects(), e.getInput().getRowType(), e.getRowType())) {
       List<SqlNode> selectList = new ArrayList();
 
       SqlNode sqlExpr;
       for(Iterator var5 = e.getProjects().iterator(); var5.hasNext(); this.addSelect(selectList, sqlExpr, e.getRowType())) {
-        RexNode ref = (RexNode)var5.next();
+        var ref = (RexNode)var5.next();
         sqlExpr = builder.context.toSql((RexProgram)null, ref);
         if (SqlUtil.isNullLiteral(sqlExpr, false)) {
-          RelDataTypeField field = (RelDataTypeField)e.getRowType().getFieldList().get(selectList.size());
+          var field = e.getRowType().getFieldList().get(selectList.size());
           sqlExpr = this.castNullType(sqlExpr, field.getType());
         }
       }
@@ -81,7 +79,7 @@ public class RelToSqlConverterWithHints extends org.apache.calcite.rel.rel2sql.R
 
   private SqlNode castNullType(SqlNode nullLiteral, RelDataType type) {
     SqlNode typeNode = this.dialect.getCastSpec(type);
-    return (SqlNode)(typeNode == null ? nullLiteral : SqlStdOperatorTable.CAST.createCall(POS, new SqlNode[]{nullLiteral, typeNode}));
+    return typeNode == null ? nullLiteral : SqlStdOperatorTable.CAST.createCall(POS, new SqlNode[]{nullLiteral, typeNode});
   }
 
 
@@ -91,9 +89,9 @@ public class RelToSqlConverterWithHints extends org.apache.calcite.rel.rel2sql.R
   @Override
   public SqlImplementor.Result visit(Correlate e) {
     //sqrl: change e.getRowType() to e.getInput(0).getRowType()
-    SqlImplementor.Result leftResult = this.visitInput(e, 0).resetAlias(e.getCorrelVariable(), e.getInput(0).getRowType());
+    var leftResult = this.visitInput(e, 0).resetAlias(e.getCorrelVariable(), e.getInput(0).getRowType());
     parseCorrelTable(e, leftResult);
-    SqlImplementor.Result rightResult = this.visitInput(e, 1);
+    var rightResult = this.visitInput(e, 1);
     SqlNode rightLateral = SqlStdOperatorTable.LATERAL.createCall(POS, new SqlNode[]{rightResult.node});
     SqlNode rightLateralAs = SqlStdOperatorTable.AS.createCall(POS, new SqlNode[]{rightLateral, new SqlIdentifier(rightResult.neededAlias, POS)});
     SqlNode join = new SqlJoin(POS, leftResult.asFrom(), SqlLiteral.createBoolean(false, POS),
@@ -102,10 +100,7 @@ public class RelToSqlConverterWithHints extends org.apache.calcite.rel.rel2sql.R
   }
 
   private void parseCorrelTable(RelNode relNode, SqlImplementor.Result x) {
-    Iterator itr = relNode.getVariablesSet().iterator();
-
-    while(itr.hasNext()) {
-      CorrelationId id = (CorrelationId)itr.next();
+    for (CorrelationId id : relNode.getVariablesSet()) {
       this.correlTableMap.put(id, x.qualifiedContext());
     }
   }
@@ -119,12 +114,11 @@ public class RelToSqlConverterWithHints extends org.apache.calcite.rel.rel2sql.R
    */
   @Override
   public SqlImplementor.Result visit(TableScan e) {
-    Result result = super.visit(e);
-    if (result.node instanceof SqlIdentifier) {
-      SqlIdentifier tableId = (SqlIdentifier) result.node;
+    var result = super.visit(e);
+    if (result.node instanceof SqlIdentifier tableId) {
       if (tableId.names.size() > 1) {
-        SqlIdentifier simpleId = new SqlIdentifier(tableId.names.get(tableId.names.size()-1), SqlParserPos.ZERO);
-        return this.result((SqlNode)simpleId, ImmutableList.of(Clause.FROM), e, (Map)null);
+        var simpleId = new SqlIdentifier(tableId.names.get(tableId.names.size()-1), SqlParserPos.ZERO);
+        return this.result(simpleId, ImmutableList.of(Clause.FROM), e, (Map)null);
       }
     }
     return result;

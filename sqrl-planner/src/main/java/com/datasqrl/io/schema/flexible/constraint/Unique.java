@@ -3,11 +3,13 @@
  */
 package com.datasqrl.io.schema.flexible.constraint;
 
-import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.io.schema.flexible.type.Type;
 import java.util.Map;
 import java.util.Optional;
+
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.io.schema.flexible.type.Type;
+
 import lombok.Getter;
 
 @Getter

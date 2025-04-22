@@ -2,6 +2,18 @@ package com.datasqrl.discovery;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
+
+import org.apache.calcite.jdbc.SqrlSchema;
+import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.ArgumentsProvider;
+import org.junit.jupiter.params.provider.ArgumentsSource;
+
 import com.datasqrl.AbstractAssetSnapshotTest;
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
@@ -16,18 +28,8 @@ import com.datasqrl.packager.preprocess.Preprocessor.ProcessorContext;
 import com.datasqrl.plan.validate.ExecutionGoal;
 import com.datasqrl.util.SnapshotTest.Snapshot;
 import com.google.inject.Guice;
-import com.google.inject.Injector;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.function.Predicate;
-import java.util.stream.Stream;
+
 import lombok.SneakyThrows;
-import org.apache.calcite.jdbc.SqrlSchema;
-import org.junit.jupiter.api.extension.ExtensionContext;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.ArgumentsProvider;
-import org.junit.jupiter.params.provider.ArgumentsSource;
 
 public class FlexibleSchemaInferencePreprocessorTest extends AbstractAssetSnapshotTest {
 
@@ -45,7 +47,7 @@ public class FlexibleSchemaInferencePreprocessorTest extends AbstractAssetSnapsh
       System.out.println(ErrorPrinter.prettyPrint(errors));
       throw e;
     }
-    Injector injector =
+    var injector =
         Guice.createInjector(
             new SqrlInjector(
                 ErrorCollector.root(),

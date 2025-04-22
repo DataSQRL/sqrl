@@ -1,23 +1,25 @@
 package com.datasqrl.graphql;
 
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.datasqrl.graphql.jdbc.JdbcClient;
 import com.datasqrl.graphql.server.Context;
 import com.datasqrl.graphql.server.GraphQLEngineBuilder;
-import com.datasqrl.graphql.jdbc.JdbcClient;
 import com.datasqrl.graphql.server.QueryExecutionContext;
 import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.VariableArgument;
+
 import graphql.schema.DataFetcher;
 import graphql.schema.DataFetchingEnvironment;
 import graphql.schema.PropertyDataFetcher;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.handler.graphql.schema.VertxDataFetcher;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 import lombok.Value;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Purpose: Implements Context for Vert.x, providing SQL clients and data fetchers. Collaboration:
@@ -43,13 +45,12 @@ public class VertxContext implements Context {
   public interface VertxCreateCaseInsensitivePropertyDataFetcher {
 
     static PropertyDataFetcher<Object> createCaseInsensitive(String propertyName) {
-      return new PropertyDataFetcher<Object>(propertyName) {
+      return new PropertyDataFetcher<>(propertyName) {
         @Override
         public Object get(DataFetchingEnvironment environment) {
-          Object source = environment.getSource();
-          if (source instanceof JsonObject) {
-            JsonObject jsonObject = (JsonObject) source;
-            Object value = jsonObject.getValue(getPropertyName());
+          var source = environment.getSource();
+          if (source instanceof JsonObject jsonObject) {
+            var value = jsonObject.getValue(getPropertyName());
             if (value != null) {
               return value;
             }

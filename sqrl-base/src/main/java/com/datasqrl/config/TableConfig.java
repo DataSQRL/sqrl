@@ -1,16 +1,13 @@
 package com.datasqrl.config;
 
-import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.io.tables.TableType;
-import java.net.URI;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
+
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.io.tables.TableType;
+
 import lombok.NonNull;
 
 /**

@@ -1,8 +1,26 @@
 package com.datasqrl;
 
-import static com.datasqrl.config.SqrlConstants.PLAN_PATH;
 import static org.junit.jupiter.api.Assertions.fail;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.flink.table.api.TableResult;
+import org.apache.flink.test.junit5.MiniClusterExtension;
+import org.assertj.core.api.Assumptions;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import com.datasqrl.cmd.AssertStatusHook;
 import com.datasqrl.config.PackageJson;
@@ -20,41 +38,18 @@ import com.datasqrl.tests.TestExtension;
 import com.datasqrl.tests.UseCaseTestExtensions;
 import com.datasqrl.util.FlinkOperatorStatusChecker;
 import com.datasqrl.util.SnapshotTest.Snapshot;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.ToString;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.flink.table.api.ResultKind;
-import org.apache.flink.table.api.TableResult;
-import org.apache.flink.test.junit5.MiniClusterExtension;
-import org.assertj.core.api.Assumptions;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.TestInfo;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
 
 @Slf4j
 @ExtendWith(MiniClusterExtension.class)
 public class FullUsecasesIT {
-  private static final Path RESOURCES = Paths.get("src/test/resources");
+  private static final Path RESOURCES = Path.of("src/test/resources");
   private static final Path USE_CASES = RESOURCES.resolve("usecases");
 
   private Snapshot snapshot;
@@ -87,7 +82,7 @@ public class FullUsecasesIT {
       new ScriptCriteria("seedshop-extended.sqrl", "run") // CustomerPromotionTest issue TODO
   );
 
-  static final Path PROJECT_ROOT = Paths.get(System.getProperty("user.dir"));
+  static final Path PROJECT_ROOT = Path.of(System.getProperty("user.dir"));
 
   private static TestContainerHook containerHook;
 
@@ -103,7 +98,7 @@ public class FullUsecasesIT {
 
   @BeforeAll
   public static void before() {
-    TestEngines engines = new EngineFactory()
+    var engines = new EngineFactory()
         .createAll();
 
     containerHook = engines.accept(new TestContainersForTestGoal(), null);
@@ -264,7 +259,7 @@ public class FullUsecasesIT {
   @MethodSource("useCaseProvider")
   @Disabled
   public void runTestNumber(UseCaseTestParameter param, TestInfo testInfo) {
-    int i = 39;
+    var i = 39;
     testNo++;
     System.out.println(testNo + ":" + param);
     if (i == testNo) {
@@ -281,24 +276,24 @@ public class FullUsecasesIT {
   }
 
   static List<UseCaseTestParameter> useCaseProvider() throws Exception {
-    Path useCasesDir = USE_CASES;
+    var useCasesDir = USE_CASES;
     List<UseCaseTestParameter> params = new ArrayList<>();
 
     Files.list(useCasesDir).filter(Files::isDirectory).forEach(dir -> {
-      String useCaseName = dir.getFileName().toString();
+      var useCaseName = dir.getFileName().toString();
 
-      try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir)) {
+      try (var stream = Files.newDirectoryStream(dir)) {
         for (Path file : stream) {
-          String fileName = file.getFileName().toString();
+          var fileName = file.getFileName().toString();
 
           if (!fileName.endsWith(".sqrl")) {
             continue;
           }
 
-          String testName = fileName.substring(0, fileName.length() - 5);
-          String graphql = testName + ".graphqls";
-          String packageJson = "package-" + testName + ".json";
-          String testPath = "tests-" + testName;
+          var testName = fileName.substring(0, fileName.length() - 5);
+          var graphql = testName + ".graphqls";
+          var packageJson = "package-" + testName + ".json";
+          var testPath = "tests-" + testName;
           if (!file.getParent().resolve(graphql).toFile().exists()) {
             graphql = null;
           }
@@ -308,7 +303,7 @@ public class FullUsecasesIT {
           if (!file.getParent().resolve(testPath).toFile().exists()) {
             testPath = null;
           }
-          UseCaseTestParameter useCaseTestParameter = new UseCaseTestParameter(
+          var useCaseTestParameter = new UseCaseTestParameter(
               "usecases",
               "test",
               useCaseName,

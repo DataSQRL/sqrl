@@ -1,11 +1,10 @@
 package com.datasqrl.plan.local.generate;
 
-import com.datasqrl.canonicalizer.ReservedName;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import lombok.Value;
+
 import org.apache.calcite.sql.JoinConditionType;
 import org.apache.calcite.sql.JoinType;
 import org.apache.calcite.sql.SqlCall;
@@ -19,6 +18,10 @@ import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
+
+import com.datasqrl.canonicalizer.ReservedName;
+
+import lombok.Value;
 
 @Value
 public class SqlNodeFactory implements AbstractSqlNodeFactory {
@@ -55,7 +58,8 @@ public class SqlNodeFactory implements AbstractSqlNodeFactory {
     return new SqlNodeList(nodes, baseParserPos);
   }
 
-  public SqlCall callAs(SqlNode node, String alias) {
+  @Override
+public SqlCall callAs(SqlNode node, String alias) {
     Objects.requireNonNull(node, "node must not be null");
     Objects.requireNonNull(alias, "alias must not be null");
 
@@ -71,7 +75,8 @@ public class SqlNodeFactory implements AbstractSqlNodeFactory {
     return toIdentifier(Arrays.asList(names));
   }
 
-  public SqlNodeList prependList(SqlNodeList original, List<SqlNode> toPrepend) {
+  @Override
+public SqlNodeList prependList(SqlNodeList original, List<SqlNode> toPrepend) {
     List<SqlNode> nodes = new ArrayList<>(toPrepend);
     if (original != null) {
       nodes.addAll(original.getList());

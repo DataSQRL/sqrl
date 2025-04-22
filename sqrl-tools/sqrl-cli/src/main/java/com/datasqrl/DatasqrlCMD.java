@@ -9,8 +9,8 @@ import com.datasqrl.cmd.RootCommand;
 public class DatasqrlCMD {
 
   public static void main(String[] args) {
-    RootCommand rootCommand = new RootCommand();
-    int exitCode = rootCommand.getCmd().execute(args);
+    var rootCommand = new RootCommand();
+    var exitCode = rootCommand.getCmd().execute(args);
     exitCode += (rootCommand.getStatusHook().isSuccess()?0:1);
     System.exit(exitCode);
   }

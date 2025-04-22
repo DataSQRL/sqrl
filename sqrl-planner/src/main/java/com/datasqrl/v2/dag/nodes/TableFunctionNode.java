@@ -1,14 +1,13 @@
 package com.datasqrl.v2.dag.nodes;
 
-import com.datasqrl.engine.pipeline.ExecutionStage;
-import com.datasqrl.v2.analyzer.TableAnalysis;
-import com.datasqrl.v2.analyzer.TableOrFunctionAnalysis.FullIdentifier;
-import com.datasqrl.v2.tables.SqrlTableFunction;
-import com.datasqrl.plan.global.StageAnalysis;
 import java.util.Map;
-import java.util.stream.Collectors;
+
+import com.datasqrl.engine.pipeline.ExecutionStage;
+import com.datasqrl.plan.global.StageAnalysis;
+import com.datasqrl.v2.analyzer.TableAnalysis;
+import com.datasqrl.v2.tables.SqrlTableFunction;
+
 import lombok.Getter;
-import org.apache.calcite.schema.FunctionParameter;
 
 /**
  * Represents a table function in the DAG

@@ -3,9 +3,6 @@
  */
 package com.datasqrl.plan.table;
 
-import com.datasqrl.canonicalizer.Name;
-import lombok.EqualsAndHashCode;
-import lombok.NonNull;
 import org.apache.calcite.linq4j.tree.Expression;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
@@ -13,6 +10,11 @@ import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.schema.SchemaPlus;
 import org.apache.calcite.schema.Schemas;
 import org.apache.calcite.schema.impl.AbstractTable;
+
+import com.datasqrl.canonicalizer.Name;
+
+import lombok.EqualsAndHashCode;
+import lombok.NonNull;
 
 /**
  * A relational table is a Calcite table that represents a relation in standard relational algebra.

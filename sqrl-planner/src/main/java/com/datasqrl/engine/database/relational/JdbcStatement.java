@@ -1,9 +1,12 @@
 package com.datasqrl.engine.database.relational;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.List;
-import lombok.Value;
+
 import org.apache.calcite.rel.type.RelDataType;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import lombok.Value;
 
 @Value
 public class JdbcStatement {

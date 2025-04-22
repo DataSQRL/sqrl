@@ -1,11 +1,5 @@
 package com.datasqrl;
 
-import com.datasqrl.cmd.AssertStatusHook;
-import com.datasqrl.cmd.RootCommand;
-import com.datasqrl.config.SqrlConstants;
-import com.datasqrl.util.FileUtil;
-import com.datasqrl.util.SnapshotTest.Snapshot;
-import com.google.common.base.Strings;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileVisitResult;
@@ -20,8 +14,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
-import lombok.AllArgsConstructor;
-import lombok.SneakyThrows;
+
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -30,6 +23,16 @@ import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
+
+import com.datasqrl.cmd.AssertStatusHook;
+import com.datasqrl.cmd.RootCommand;
+import com.datasqrl.config.SqrlConstants;
+import com.datasqrl.util.FileUtil;
+import com.datasqrl.util.SnapshotTest.Snapshot;
+import com.google.common.base.Strings;
+
+import lombok.AllArgsConstructor;
+import lombok.SneakyThrows;
 
 /**
  * Abstract base class for snapshot testing, i.e. comparing the produced results against previously
@@ -55,7 +58,9 @@ public abstract class AbstractAssetSnapshotTest {
   @BeforeEach
   public void setup(TestInfo testInfo) throws IOException {
     clearDir(outputDir);
-    if (outputDir != null) Files.createDirectories(outputDir);
+    if (outputDir != null) {
+		Files.createDirectories(outputDir);
+	}
   }
 
   @AfterEach
@@ -155,18 +160,24 @@ public abstract class AbstractAssetSnapshotTest {
   protected AssertStatusHook execute(Path rootDir, List<String> argsList) {
     this.buildDir = rootDir.resolve(SqrlConstants.BUILD_DIR_NAME);
     this.planDir = buildDir.resolve(SqrlConstants.DEPLOY_DIR_NAME).resolve(SqrlConstants.PLAN_DIR);
-    AssertStatusHook statusHook = new AssertStatusHook();
-    int code =
+    var statusHook = new AssertStatusHook();
+    var code =
         new RootCommand(rootDir, statusHook).getCmd().execute(argsList.toArray(String[]::new));
-    if (statusHook.isSuccess() && code != 0) Assertions.assertEquals(0, code);
+    if (statusHook.isSuccess() && code != 0) {
+		Assertions.assertEquals(0, code);
+	}
     return statusHook;
   }
 
   public static String getDisplayName(Path path) {
-    if (path == null) return "";
-    String filename = path.getFileName().toString();
-    int length = filename.indexOf('.');
-    if (length < 0) length = filename.length();
+    if (path == null) {
+		return "";
+	}
+    var filename = path.getFileName().toString();
+    var length = filename.indexOf('.');
+    if (length < 0) {
+		length = filename.length();
+	}
     return filename.substring(0, length);
   }
 
@@ -227,8 +238,10 @@ public abstract class AbstractAssetSnapshotTest {
     fail; // This test is expected to fail and we are testing the error message
 
     public static TestNameModifier of(String filename) {
-      if (Strings.isNullOrEmpty(filename)) return none;
-      String name = FileUtil.separateExtension(filename).getLeft().toLowerCase();
+      if (Strings.isNullOrEmpty(filename)) {
+		return none;
+	}
+      var name = FileUtil.separateExtension(filename).getLeft().toLowerCase();
       return Arrays.stream(TestNameModifier.values())
           .filter(mod -> name.endsWith(mod.name()))
           .findFirst()
@@ -236,7 +249,9 @@ public abstract class AbstractAssetSnapshotTest {
     }
 
     public static TestNameModifier of(Path file) {
-      if (file == null) return none;
+      if (file == null) {
+		return none;
+	}
       return TestNameModifier.of(file.getFileName().toString());
     }
   }

@@ -4,6 +4,7 @@
 package com.datasqrl.io.schema.flexible.input;
 
 import com.datasqrl.io.schema.flexible.type.Type;
+
 import lombok.NonNull;
 import lombok.Value;
 

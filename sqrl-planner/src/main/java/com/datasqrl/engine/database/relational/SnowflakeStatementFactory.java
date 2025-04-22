@@ -1,7 +1,12 @@
 package com.datasqrl.engine.database.relational;
 
+import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.sql.SqlDataTypeSpec;
+import org.apache.calcite.sql.SqlIdentifier;
+import org.apache.calcite.sql.SqlLiteral;
+import org.apache.calcite.sql.parser.SqlParserPos;
+
 import com.datasqrl.calcite.Dialect;
-import com.datasqrl.calcite.DialectCallConverter;
 import com.datasqrl.calcite.OperatorRuleTransformer;
 import com.datasqrl.calcite.convert.SnowflakeRelToSqlNode;
 import com.datasqrl.calcite.convert.SnowflakeSqlNodeToString;
@@ -9,13 +14,7 @@ import com.datasqrl.calcite.dialect.ExtendedPostgresSqlDialect;
 import com.datasqrl.calcite.dialect.snowflake.SqlCreateIcebergTableFromObjectStorage;
 import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.engine.database.relational.JdbcStatement.Type;
-import com.datasqrl.engine.database.relational.ddl.statements.CreateTableDDL;
 import com.datasqrl.plan.global.IndexDefinition;
-import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.sql.SqlDataTypeSpec;
-import org.apache.calcite.sql.SqlIdentifier;
-import org.apache.calcite.sql.SqlLiteral;
-import org.apache.calcite.sql.parser.SqlParserPos;
 
 public class SnowflakeStatementFactory extends AbstractJdbcStatementFactory {
 
@@ -28,7 +27,7 @@ public class SnowflakeStatementFactory extends AbstractJdbcStatementFactory {
 
   @Override
   public JdbcStatement createTable(JdbcEngineCreateTable createTable) {
-    String tableName = createTable.getTable().getTableName();
+    var tableName = createTable.getTable().getTableName();
     return new JdbcStatement(tableName, Type.TABLE, getSnowflakeCreateTable(tableName));
   }
 
@@ -36,7 +35,7 @@ public class SnowflakeStatementFactory extends AbstractJdbcStatementFactory {
     SqlLiteral externalVolume = SqlLiteral.createCharString(
         (String)engineConfig.toMap().get("external-volume"), SqlParserPos.ZERO);
 
-    SqlCreateIcebergTableFromObjectStorage icebergTable = new SqlCreateIcebergTableFromObjectStorage(SqlParserPos.ZERO,
+    var icebergTable = new SqlCreateIcebergTableFromObjectStorage(SqlParserPos.ZERO,
         true, false,
         new SqlIdentifier(tableName, SqlParserPos.ZERO),
         externalVolume,

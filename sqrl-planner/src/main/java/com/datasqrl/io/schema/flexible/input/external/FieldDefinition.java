@@ -5,6 +5,7 @@ package com.datasqrl.io.schema.flexible.input.external;
 
 import java.util.List;
 import java.util.Map;
+
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 

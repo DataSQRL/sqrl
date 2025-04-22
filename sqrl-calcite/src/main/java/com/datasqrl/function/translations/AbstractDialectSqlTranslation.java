@@ -1,10 +1,12 @@
 package com.datasqrl.function.translations;
 
-import com.datasqrl.calcite.Dialect;
-import com.datasqrl.function.CalciteFunctionUtil;
-import lombok.Getter;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.flink.table.functions.FunctionDefinition;
+
+import com.datasqrl.calcite.Dialect;
+import com.datasqrl.function.CalciteFunctionUtil;
+
+import lombok.Getter;
 
 @Getter
 public abstract class AbstractDialectSqlTranslation implements SqlTranslation {

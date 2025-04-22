@@ -1,17 +1,16 @@
 package com.datasqrl.engine.server;
 
+import java.util.List;
+
 import com.datasqrl.engine.EnginePhysicalPlan;
-import com.datasqrl.graphql.SqrlObjectMapper;
 import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.v2.dag.plan.MutationQuery;
 import com.datasqrl.v2.tables.SqrlTableFunction;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import java.util.List;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.Singular;
-import lombok.SneakyThrows;
 
 @AllArgsConstructor
 @Getter

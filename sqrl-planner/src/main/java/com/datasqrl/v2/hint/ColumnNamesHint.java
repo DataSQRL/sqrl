@@ -1,14 +1,15 @@
 package com.datasqrl.v2.hint;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Function;
+
+import org.apache.calcite.rel.type.RelDataTypeField;
+
 import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.v2.parser.ParsedObject;
 import com.datasqrl.v2.parser.SqrlHint;
 import com.datasqrl.v2.parser.StatementParserException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Function;
-import org.apache.calcite.rel.type.RelDataTypeField;
-import org.apache.calcite.tools.Planner;
 
 /**
  * A hint that has column names
@@ -51,7 +52,7 @@ public abstract class ColumnNamesHint extends PlannerHint {
     List<String> colNames = new ArrayList<>();
     List<Integer> colIndexes = new ArrayList<>();
     for (String colName : getColumnNames()) {
-      RelDataTypeField field = fieldByIndex.apply(colName);
+      var field = fieldByIndex.apply(colName);
       if (field == null) {
         throw new StatementParserException(ErrorLabel.GENERIC, getSource().getFileLocation(),
             "%s hint reference column [%s] that does not exist in table", getName(), colName);

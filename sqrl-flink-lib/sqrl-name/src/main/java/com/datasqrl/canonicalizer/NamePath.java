@@ -6,6 +6,7 @@ package com.datasqrl.canonicalizer;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+
 import lombok.NonNull;
 
 public final class NamePath extends AbstractPath<Name, NamePath> {

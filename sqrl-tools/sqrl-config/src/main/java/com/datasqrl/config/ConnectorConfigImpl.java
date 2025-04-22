@@ -1,10 +1,11 @@
 package com.datasqrl.config;
 
-import com.datasqrl.io.tables.TableType;
-import com.datasqrl.util.ServiceLoaderDiscovery;
-import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 import java.util.Optional;
+
+import com.datasqrl.io.tables.TableType;
+import com.google.common.collect.ImmutableMap;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -30,15 +31,16 @@ public class ConnectorConfigImpl implements TableConfig.ConnectorConfig {
       "postgres-cdc", TableType.VERSIONED_STATE
   );
 
-  public Optional<String> getFormat() {
+  @Override
+public Optional<String> getFormat() {
     return config.asString(FORMAT_KEY).getOptional()
       .or(() -> config.asString(VALUE_FORMAT_KEY).getOptional());
   }
 
   @Override
   public TableType getTableType() {
-    String connectorName = getConnectorName().get().toLowerCase();
-    TableType tableType = CONNECTOR_TYPE_MAP.get(connectorName);
+    var connectorName = getConnectorName().get().toLowerCase();
+    var tableType = CONNECTOR_TYPE_MAP.get(connectorName);
     if (tableType == null) {
       log.debug("Defaulting '{}' connector to STREAM table for import.", connectorName);
       tableType = TableType.STREAM;

@@ -1,5 +1,11 @@
 package com.datasqrl.plan.global;
 
+import java.util.List;
+import java.util.Optional;
+
+import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.schema.FunctionParameter;
+
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.config.EngineType;
 import com.datasqrl.engine.pipeline.ExecutionStage;
@@ -9,13 +15,9 @@ import com.datasqrl.plan.queries.IdentifiedQuery;
 import com.datasqrl.plan.rules.SQRLConverter;
 import com.datasqrl.plan.table.AbstractRelationalTable;
 import com.datasqrl.plan.table.PhysicalRelationalTable;
-import com.datasqrl.plan.table.QueryRelationalTable;
 import com.google.common.base.Preconditions;
-import java.util.List;
-import java.util.Optional;
+
 import lombok.Value;
-import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.schema.FunctionParameter;
 
 public interface DatabaseQuery {
 
@@ -27,17 +29,17 @@ public interface DatabaseQuery {
 
   static DatabaseQuery.Instance of(AbstractRelationalTable table) {
     Preconditions.checkArgument(table instanceof PhysicalRelationalTable, "Expected physical table");
-    PhysicalRelationalTable vTable = (PhysicalRelationalTable)table;
+    var vTable = (PhysicalRelationalTable)table;
     Preconditions.checkArgument(vTable.isRoot());
-    ExecutionStage stage = vTable.getAssignedStage().get();
+    var stage = vTable.getAssignedStage().get();
     //TODO: We don't yet support server queries directly against materialized tables. Need a database stage in between.
     Preconditions.checkArgument(stage.getEngine().getType()== EngineType.DATABASE, "We do not yet support queries directly against stream");
     return new Instance(vTable.getNameId(), vTable.getTableName(), List.of(), vTable.getPlannedRelNode(), stage);
   }
 
   static DatabaseQuery.Instance of(QueryTableFunction function) {
-    QueryRelationalTable queryTable = function.getQueryTable();
-    ExecutionStage assignedStage = queryTable.getAssignedStage().get();
+    var queryTable = function.getQueryTable();
+    var assignedStage = queryTable.getAssignedStage().get();
     Preconditions.checkArgument(assignedStage.getEngine().getType()== EngineType.DATABASE);
     return new Instance(queryTable.getNameId(), queryTable.getTableName(), function.getParameters(), queryTable.getPlannedRelNode(), assignedStage);
   }
@@ -59,7 +61,9 @@ public interface DatabaseQuery {
 
     @Override
     public Optional<Name> getViewName() {
-      if (!paramters.isEmpty()) return Optional.empty();
+      if (!paramters.isEmpty()) {
+		return Optional.empty();
+	}
       return Optional.of(tableName);
     }
 

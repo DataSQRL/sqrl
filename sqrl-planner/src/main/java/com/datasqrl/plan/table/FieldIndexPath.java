@@ -3,9 +3,11 @@
  */
 package com.datasqrl.plan.table;
 
-import com.datasqrl.util.AbstractPath;
-import lombok.NonNull;
 import org.apache.commons.lang3.ArrayUtils;
+
+import com.datasqrl.util.AbstractPath;
+
+import lombok.NonNull;
 
 public final class FieldIndexPath extends AbstractPath<Integer, FieldIndexPath> {
 

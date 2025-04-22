@@ -1,11 +1,11 @@
 package com.datasqrl.v2.util;
 
-import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.v2.tables.SqrlTableFunction;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.v2.tables.SqrlTableFunction;
 
 public class SqrTableFunctionUtil {
     public static Optional<SqrlTableFunction> getTableFunctionFromPath(List<SqrlTableFunction> tableFunctions, NamePath path) {

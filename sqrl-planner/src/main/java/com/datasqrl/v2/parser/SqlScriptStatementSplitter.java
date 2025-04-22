@@ -1,9 +1,11 @@
 package com.datasqrl.v2.parser;
 
-import com.datasqrl.error.ErrorLocation.FileLocation;
-import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.datasqrl.error.ErrorLocation.FileLocation;
+import com.google.common.base.Preconditions;
+
 import lombok.AllArgsConstructor;
 import lombok.Value;
 
@@ -41,8 +43,10 @@ public class SqlScriptStatementSplitter {
    * @return A list of individual SQL statements.
    */
   public List<ParsedObject<String>> splitStatements(String script) {
-    if (script.isBlank()) throw new StatementParserException("Script is empty");
-    String formatted =
+    if (script.isBlank()) {
+		throw new StatementParserException("Script is empty");
+	}
+    var formatted =
         formatEndOfSqlFile(script)
             .replaceAll(LINE_COMMENT_PATTERN, "");
     if (removeBlockComments) {
@@ -52,11 +56,13 @@ public class SqlScriptStatementSplitter {
     List<ParsedObject<String>> statements = new ArrayList<>();
 
     StringBuilder current = null;
-    int statementLineNo = 0;
-    int lineNo = 0;
+    var statementLineNo = 0;
+    var lineNo = 0;
     for (String line : formatted.split(LINE_DELIMITER)) {
       lineNo++;
-      if (line.isBlank()) continue;
+      if (line.isBlank()) {
+		continue;
+	}
       if (current==null) {
         statementLineNo = lineNo;
         current = new StringBuilder();
@@ -74,7 +80,7 @@ public class SqlScriptStatementSplitter {
   public static FileLocation computeOffset(String statement, int position) {
     Preconditions.checkArgument(position>=0 && position<=statement.length());
     int lineNo = 1, columnNo = 1;
-    for (int i = 0; i < position; i++) {
+    for (var i = 0; i < position; i++) {
       columnNo++;
       if (statement.charAt(i) == '\n') {
         lineNo++;
@@ -91,8 +97,8 @@ public class SqlScriptStatementSplitter {
    * @return Formatted SQL content.
    */
   public static String formatEndOfSqlFile(String sqlScript) {
-    String trimmed = sqlScript.trim();
-    StringBuilder formatted = new StringBuilder();
+    var trimmed = sqlScript.trim();
+    var formatted = new StringBuilder();
     formatted.append(trimmed);
     if (!trimmed.endsWith(STATEMENT_DELIMITER)) {
       formatted.append(STATEMENT_DELIMITER);
@@ -103,14 +109,16 @@ public class SqlScriptStatementSplitter {
 
   public static String removeStatementDelimiter(String statement) {
     if (statement.trim().endsWith(STATEMENT_DELIMITER)) {
-      int idx = statement.lastIndexOf(STATEMENT_DELIMITER);
+      var idx = statement.lastIndexOf(STATEMENT_DELIMITER);
       return statement.substring(0, idx);
     }
     return statement;
   }
 
   public static String addStatementDelimiter(String statement) {
-    if (statement.trim().endsWith(STATEMENT_DELIMITER)) return statement;
+    if (statement.trim().endsWith(STATEMENT_DELIMITER)) {
+		return statement;
+	}
     return statement + STATEMENT_DELIMITER;
   }
 

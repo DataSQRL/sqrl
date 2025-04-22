@@ -3,7 +3,7 @@ package com.datasqrl.plan.hints;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
-import java.util.Optional;
+
 import lombok.Value;
 
 @Value
@@ -15,7 +15,7 @@ class PipelineStageHint implements OptimizerHint {
   String stageName;
 
   public ExecutionStage getStage(ExecutionPipeline pipeline, ErrorCollector errors) {
-    Optional<ExecutionStage> stage = pipeline.getStage(stageName)
+    var stage = pipeline.getStage(stageName)
         .or(() -> pipeline.getStageByType(stageName));
     errors.checkFatal(stage.isPresent(),
         "Could not find execution stage [%s] specified in optimizer hint", stageName);

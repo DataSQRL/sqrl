@@ -1,15 +1,10 @@
 package com.datasqrl.calcite;
 
-import com.datasqrl.calcite.function.OperatorRuleTransform;
-import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.util.ServiceLoaderDiscovery;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.stream.Collectors;
-import org.apache.calcite.plan.RelOptPlanner;
+
 import org.apache.calcite.plan.RelRule;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
@@ -20,6 +15,10 @@ import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.tools.Programs;
+
+import com.datasqrl.calcite.function.OperatorRuleTransform;
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.util.ServiceLoaderDiscovery;
 
 /**
  * Converts functions to the given dialect via rule transformations.
@@ -46,7 +45,7 @@ public class OperatorRuleTransformer {
 
   public RelNode convert(RelNode relNode) {
     //Identify all functions that require transformations and add them to the rule set
-    Map<SqlOperator, OperatorRuleTransform> transforms = extractFunctionTransforms(relNode);
+    var transforms = extractFunctionTransforms(relNode);
     List<RelRule> rules = transforms.entrySet().stream()
         .flatMap(transform -> transform.getValue().transform(transform.getKey()).stream())
         .collect(Collectors.toList());
@@ -65,7 +64,7 @@ public class OperatorRuleTransformer {
       @Override
       public RelNode visit(LogicalAggregate aggregate) {
         for (AggregateCall call : aggregate.getAggCallList()) {
-          OperatorRuleTransform transform = transformMap.get(
+          var transform = transformMap.get(
               Name.system(call.getAggregation().getName()));
           if (transform != null) {
             transforms.put(call.getAggregation(), transform);
@@ -80,7 +79,7 @@ public class OperatorRuleTransformer {
         parent.accept(new RexShuttle(){
           @Override
           public RexNode visitCall(RexCall call) {
-            OperatorRuleTransform transform = transformMap.get(
+            var transform = transformMap.get(
                 Name.system(call.getOperator().getName()));
             if (transform != null) {
               transforms.put(call.getOperator(), transform);

@@ -3,17 +3,18 @@
  */
 package com.datasqrl.plan.hints;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.apache.calcite.rel.hint.RelHint;
 import org.apache.calcite.sql.SqlHint;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.parser.SqlParserPos;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 @AllArgsConstructor
 @Getter
@@ -59,7 +60,7 @@ public class TopNHint implements SqrlHint {
 
     @Override
     public TopNHint fromHint(RelHint hint) {
-      Type type = Type.valueOf(hint.hintName);
+      var type = Type.valueOf(hint.hintName);
       List<Integer> partition = hint.listOptions.stream().map(Integer::parseInt)
           .collect(Collectors.toList());
       return new TopNHint(type, partition);

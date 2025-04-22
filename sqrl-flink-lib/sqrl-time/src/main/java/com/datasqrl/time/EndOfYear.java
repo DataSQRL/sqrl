@@ -21,12 +21,14 @@ public class EndOfYear extends TimeTumbleWindowFunction {
     super(ChronoUnit.YEARS, ChronoUnit.DAYS);
   }
 
-  public Instant eval(Instant instant) {
+  @Override
+public Instant eval(Instant instant) {
     return ZonedDateTime.ofInstant(instant, ZoneOffset.UTC)
         .with(TemporalAdjusters.firstDayOfNextYear()).truncatedTo(ChronoUnit.DAYS).minusNanos(1).toInstant();
   }
 
-  public Instant eval(Instant instant, Long multiple, Long offset) {
+  @Override
+public Instant eval(Instant instant, Long multiple, Long offset) {
     if (multiple == null) {
       multiple = 1L;
     }
@@ -37,15 +39,15 @@ public class EndOfYear extends TimeTumbleWindowFunction {
     }
 //    Preconditions.checkArgument(offset >= 0 && offset < 365, "Invalid offset in days: %s", offset);
 
-    ZonedDateTime time = ZonedDateTime.ofInstant(instant, ZoneOffset.UTC)
+    var time = ZonedDateTime.ofInstant(instant, ZoneOffset.UTC)
         .truncatedTo(ChronoUnit.DAYS);
     if (time.getDayOfYear() > offset) {
       time = time.with(TemporalAdjusters.firstDayOfNextYear());
     } else {
       time = time.with(TemporalAdjusters.firstDayOfYear());
     }
-    int modulus = multiple.intValue();
-    int yearsToAdd = (modulus - time.getYear() % modulus) % modulus;
+    var modulus = multiple.intValue();
+    var yearsToAdd = (modulus - time.getYear() % modulus) % modulus;
 
     time = time.plusYears(yearsToAdd).plusDays(offset);
     return time.minusNanos(1).toInstant();

@@ -3,8 +3,7 @@ package com.datasqrl.calcite.schema;
 import com.datasqrl.calcite.CatalogReader;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
-import java.util.ArrayList;
-import java.util.List;
+
 import lombok.Getter;
 
 @Getter

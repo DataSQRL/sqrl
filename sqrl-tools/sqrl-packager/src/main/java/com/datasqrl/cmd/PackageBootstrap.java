@@ -1,5 +1,14 @@
 package com.datasqrl.cmd;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.regex.Pattern;
+
 import com.datasqrl.config.Dependency;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.PackageJson.DependenciesConfig;
@@ -9,14 +18,7 @@ import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrefix;
 import com.datasqrl.packager.Packager;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.regex.Pattern;
+
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;

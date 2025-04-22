@@ -2,13 +2,6 @@ package com.datasqrl.packager.preprocess;
 
 import static com.datasqrl.config.SqrlConstants.DATA_DIR;
 
-import com.datasqrl.discovery.file.FilenameAnalyzer;
-import com.datasqrl.discovery.file.FilenameAnalyzer.Components;
-import com.datasqrl.error.ErrorCollector;
-import com.google.common.io.ByteStreams;
-import com.datasqrl.discovery.file.FileCompression;
-import com.datasqrl.discovery.file.FileCompression.CompressionIO;
-
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -20,6 +13,14 @@ import java.nio.file.Path;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
+
+import com.datasqrl.discovery.file.FileCompression;
+import com.datasqrl.discovery.file.FileCompression.CompressionIO;
+import com.datasqrl.discovery.file.FilenameAnalyzer;
+import com.datasqrl.discovery.file.FilenameAnalyzer.Components;
+import com.datasqrl.error.ErrorCollector;
+import com.google.common.io.ByteStreams;
+
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
@@ -72,18 +73,18 @@ public class CopyStaticDataPreprocessor implements Preprocessor {
   }
 
   public void copyFileSkipFirstLine(InputStream in, OutputStream out) throws IOException {
-    InputStream afterFirstLine = skipFirstLine(in);
+    var afterFirstLine = skipFirstLine(in);
     ByteStreams.copy(afterFirstLine, out);
   }
 
   private static InputStream skipFirstLine(InputStream rawIn) throws IOException {
     // Make sure we can mark and reset (peek the next byte safely)
-    BufferedInputStream in = (rawIn instanceof BufferedInputStream) ? (BufferedInputStream) rawIn
+    var in = (rawIn instanceof BufferedInputStream bis) ? bis
         : new BufferedInputStream(rawIn);
 
     while (true) {
       in.mark(1);
-      int b = in.read();
+      var b = in.read();
       if (b == -1) {
         // End of stream, no more lines
         break;
@@ -93,7 +94,7 @@ public class CopyStaticDataPreprocessor implements Preprocessor {
       } else if (b == '\r') {
         // Might be Windows-style \r\n or old Mac \r
         in.mark(1);
-        int next = in.read();
+        var next = in.read();
         if (next != '\n' && next != -1) {
           // It's not \n, so reset => unread that byte
           in.reset();

@@ -1,17 +1,17 @@
 package com.datasqrl.v2.dag.nodes;
 
+import java.util.Comparator;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.plan.global.StageAnalysis;
-import com.datasqrl.plan.global.StageAnalysis.Cost;
 import com.datasqrl.util.AbstractDAG;
 import com.datasqrl.util.StreamUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
-import java.util.Comparator;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.stream.Collectors;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
@@ -28,7 +28,8 @@ public abstract class PipelineNode implements AbstractDAG.Node, Comparable<Pipel
   @Getter
   private final Map<ExecutionStage, StageAnalysis> stageAnalysis;
 
-  public String getName() {
+  @Override
+public String getName() {
     return type + " " + getId();
   }
 
@@ -49,7 +50,7 @@ public abstract class PipelineNode implements AbstractDAG.Node, Comparable<Pipel
    * @return true, if other stages were eliminated, else false
    */
   public boolean setCheapestStage() {
-    StageAnalysis.Cost cheapest = findCheapestStage(stageAnalysis);
+    var cheapest = findCheapestStage(stageAnalysis);
     return StreamUtil.filterByClass(stageAnalysis.values(),
             StageAnalysis.Cost.class).filter(other -> !cheapest.equals(other))
         .map(other ->
@@ -57,7 +58,7 @@ public abstract class PipelineNode implements AbstractDAG.Node, Comparable<Pipel
   }
 
   public static StageAnalysis.Cost findCheapestStage(Map<ExecutionStage, StageAnalysis> stageAnalysis) {
-    Optional<Cost> stage = StreamUtil.filterByClass(stageAnalysis.values(),
+    var stage = StreamUtil.filterByClass(stageAnalysis.values(),
             StageAnalysis.Cost.class)
         .sorted(Comparator.comparing(StageAnalysis.Cost::getCost)).findFirst();
     Preconditions.checkArgument(stage.isPresent());
@@ -96,7 +97,7 @@ public abstract class PipelineNode implements AbstractDAG.Node, Comparable<Pipel
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    PipelineNode that = (PipelineNode) o;
+    var that = (PipelineNode) o;
     return Objects.equals(getName(), that.getName());
   }
 

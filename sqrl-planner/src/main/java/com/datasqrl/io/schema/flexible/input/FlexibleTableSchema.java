@@ -3,10 +3,12 @@
  */
 package com.datasqrl.io.schema.flexible.input;
 
-import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.io.schema.flexible.constraint.Constraint;
 import java.util.Collections;
 import java.util.List;
+
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.io.schema.flexible.constraint.Constraint;
+
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -56,7 +58,7 @@ public class FlexibleTableSchema extends FlexibleFieldSchema {
   }
 
   public static FlexibleTableSchema empty(Name name) {
-    Builder b = new Builder();
+    var b = new Builder();
     b.setName(name);
     b.setFields(RelationType.EMPTY);
     return b.build();

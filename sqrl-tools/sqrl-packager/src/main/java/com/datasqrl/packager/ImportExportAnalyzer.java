@@ -4,21 +4,23 @@
 package com.datasqrl.packager;
 
 
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import com.datasqrl.MainScriptImpl;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.SystemBuiltInConnectors;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.loaders.ModuleLoader;
+import com.datasqrl.util.SqlNameUtil;
 import com.datasqrl.v2.parser.ParsedObject;
 import com.datasqrl.v2.parser.SqrlExportStatement;
 import com.datasqrl.v2.parser.SqrlImportStatement;
 import com.datasqrl.v2.parser.SqrlStatementParser;
-import com.datasqrl.loaders.ModuleLoader;
-import com.datasqrl.util.SqlNameUtil;
 import com.google.inject.Inject;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 
@@ -36,11 +38,9 @@ public class ImportExportAnalyzer {
         .map(ParsedObject::get)
         .flatMap(stmt -> {
           NamePath path;
-          if (stmt instanceof SqrlImportStatement) {
-            SqrlImportStatement importStmt = (SqrlImportStatement) stmt;
+          if (stmt instanceof SqrlImportStatement importStmt) {
             path = importStmt.getPackageIdentifier().get();
-          } else if (stmt instanceof SqrlExportStatement) {
-            SqrlExportStatement exportStatement = (SqrlExportStatement) stmt;
+          } else if (stmt instanceof SqrlExportStatement exportStatement) {
             path = exportStatement.getPackageIdentifier().get();
             if (SystemBuiltInConnectors.forExport(path.popLast()).isPresent()) {
               return Stream.of();

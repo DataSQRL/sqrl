@@ -1,13 +1,15 @@
 package com.datasqrl.engine.database.relational;
 
+import java.util.List;
+import java.util.Map;
+import java.util.function.Predicate;
+
 import com.datasqrl.engine.database.DatabasePhysicalPlanOld;
 import com.datasqrl.engine.database.QueryTemplate;
 import com.datasqrl.plan.queries.IdentifiedQuery;
 import com.datasqrl.sql.SqlDDLStatement;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Predicate;
+
 import lombok.Value;
 
 @Value

@@ -1,29 +1,31 @@
 package com.datasqrl.io.schema.flexible.converters;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeField;
+
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.SpecialName;
 import com.datasqrl.io.schema.flexible.constraint.Constraint;
+import com.datasqrl.io.schema.flexible.FlexibleTableSchemaHolder;
 import com.datasqrl.io.schema.flexible.constraint.NotNull;
 import com.datasqrl.io.schema.flexible.input.FlexibleFieldSchema.Field;
 import com.datasqrl.io.schema.flexible.input.FlexibleFieldSchema.FieldType;
 import com.datasqrl.io.schema.flexible.input.FlexibleTableSchema;
-import com.datasqrl.io.schema.flexible.FlexibleTableSchemaHolder;
 import com.datasqrl.io.schema.flexible.input.RelationType;
 import com.datasqrl.io.schema.flexible.input.SchemaElementDescription;
 import com.datasqrl.util.CalciteUtil;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rel.type.RelDataTypeField;
 
 public class RelDataTypeToFlexibleSchema {
 
   private static final NameCanonicalizer canonicalizer = NameCanonicalizer.SYSTEM;
 
   public static FlexibleTableSchemaHolder createFlexibleSchema(RelDataTypeField tableType) {
-    FlexibleTableSchema schema = new FlexibleTableSchema(
+    var schema = new FlexibleTableSchema(
         Name.system(tableType.getName()), new SchemaElementDescription(""), null, false,
         createFields(tableType.getType().getFieldList()),
         List.of());
@@ -34,8 +36,8 @@ public class RelDataTypeToFlexibleSchema {
     List<Field> fields = new ArrayList<>();
     for (RelDataTypeField field: relFields) {
       List<Constraint> constraints = field.getType().isNullable()?List.of():List.of(NotNull.INSTANCE);
-      Optional<RelDataType> nestedType = CalciteUtil.getNestedTableType(field.getType());
-      Name fieldName = canonicalizer.name(field.getName());
+      var nestedType = CalciteUtil.getNestedTableType(field.getType());
+      var fieldName = canonicalizer.name(field.getName());
       if (nestedType.isPresent()) {
         RelationType<?> relType = createFields(nestedType.get().getFieldList());
         fields.add(new Field(
@@ -50,8 +52,8 @@ public class RelDataTypeToFlexibleSchema {
             ))
         ));
       } else {
-        RelDataType fieldType = field.getType();
-        int arrayDepth = 0;
+        var fieldType = field.getType();
+        var arrayDepth = 0;
         Optional<RelDataType> elementType;
         while ((elementType = CalciteUtil.getArrayElementType(fieldType)).isPresent()) {
           fieldType = elementType.get();

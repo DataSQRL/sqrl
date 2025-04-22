@@ -3,20 +3,20 @@
  */
 package com.datasqrl.util;
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Multimaps;
-import com.google.common.collect.Streams;
 import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
+import com.google.common.collect.Streams;
 
 
 public abstract class AbstractDAG<E extends AbstractDAG.Node, D extends AbstractDAG<E, D>> implements
@@ -69,7 +69,7 @@ public abstract class AbstractDAG<E extends AbstractDAG.Node, D extends Abstract
    * @return
    */
   public D trimToSinks() {
-    Set<E> reached = (Set<E>) getAllInputsFromSource(getSinks(), true);
+    var reached = getAllInputsFromSource(getSinks(), true);
     return create(Multimaps.filterKeys(inputs, e -> reached.contains(e)));
   }
 //
@@ -81,7 +81,7 @@ public abstract class AbstractDAG<E extends AbstractDAG.Node, D extends Abstract
     Set<E> reached = new HashSet<>();
     Deque<E> next = new ArrayDeque<>(elements);
     while (!next.isEmpty()) {
-      E n = next.removeFirst();
+      var n = next.removeFirst();
       if (!reached.contains(n)) {
         reached.add(n);
         next.addAll(inputs.get(n));
@@ -131,8 +131,8 @@ public abstract class AbstractDAG<E extends AbstractDAG.Node, D extends Abstract
 
     @Override
     public E next() {
-      E toReturn = next;
-      Multimap<E, E> lookup = source2sink?outputs:inputs;
+      var toReturn = next;
+      var lookup = source2sink?outputs:inputs;
       toVisit.addAll(lookup.get(toReturn));
       visited.add(toReturn);
       next = null;
@@ -153,13 +153,13 @@ public abstract class AbstractDAG<E extends AbstractDAG.Node, D extends Abstract
    * @return whether message passing converged within the given number of maxIterations
    */
   protected boolean messagePassing(Function<E,Boolean> processNode, int maxIterations) {
-    int iteration = 0;
-    boolean nodeChanged = true;
+    var iteration = 0;
+    var nodeChanged = true;
     while (nodeChanged && iteration < maxIterations) {
       nodeChanged = false;
-      OrderedIterator iter = new OrderedIterator(iteration%2==0); //reverse order of traversal
+      var iter = new OrderedIterator(iteration%2==0); //reverse order of traversal
       while (iter.hasNext()) {
-        E node = iter.next();
+        var node = iter.next();
         nodeChanged |= processNode.apply(node);
       }
     }
@@ -168,7 +168,7 @@ public abstract class AbstractDAG<E extends AbstractDAG.Node, D extends Abstract
 
   @Override
   public String toString() {
-    StringBuilder s = new StringBuilder();
+    var s = new StringBuilder();
     for (E node : this) { //list from source to sink
       s.append("- Node [").append(node.getName()).append("]:\n");
       s.append(node.toString()).append("\n");

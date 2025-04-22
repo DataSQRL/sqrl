@@ -3,14 +3,18 @@
  */
 package com.datasqrl.plan.rules;
 
-import com.datasqrl.plan.global.QueryIndexSummary;
-import com.datasqrl.plan.global.QueryIndexSummary.IndexableFunctionCall;
-import com.datasqrl.plan.table.ScriptRelationalTable;
-import com.datasqrl.v2.analyzer.TableAnalysis;
 import org.apache.calcite.rel.core.Join;
-import org.apache.calcite.rel.metadata.*;
+import org.apache.calcite.rel.metadata.BuiltInMetadata;
+import org.apache.calcite.rel.metadata.ReflectiveRelMetadataProvider;
+import org.apache.calcite.rel.metadata.RelMdSelectivity;
+import org.apache.calcite.rel.metadata.RelMetadataProvider;
+import org.apache.calcite.rel.metadata.RelMetadataQuery;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.util.BuiltInMethod;
+
+import com.datasqrl.plan.global.QueryIndexSummary;
+import com.datasqrl.plan.global.QueryIndexSummary.IndexableFunctionCall;
+import com.datasqrl.v2.analyzer.TableAnalysis;
 
 public class SqrlRelMdSelectivity extends RelMdSelectivity
     implements BuiltInMetadata.Selectivity.Handler {
@@ -28,7 +32,7 @@ public class SqrlRelMdSelectivity extends RelMdSelectivity
   public static Double getSelectivity(TableAnalysis table,
                                       QueryIndexSummary constraints) {
     //TODO: use actual selectivity statistics from table
-    double selectivity = 1.0d;
+    var selectivity = 1.0d;
     selectivity *= Math.pow(0.05,constraints.getEqualityColumns().size());
     selectivity *= Math.pow(0.5,constraints.getInequalityColumns().size());
     for (IndexableFunctionCall fcall : constraints.getFunctionCalls()) {

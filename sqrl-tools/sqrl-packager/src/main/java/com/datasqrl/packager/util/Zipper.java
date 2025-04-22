@@ -1,14 +1,15 @@
 package com.datasqrl.packager.util;
 
-import com.datasqrl.util.FileUtil;
-import net.lingala.zip4j.ZipFile;
-import net.lingala.zip4j.model.ExcludeFileFilter;
-import net.lingala.zip4j.model.ZipParameters;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.stream.Collectors;
+
+import com.datasqrl.util.FileUtil;
+
+import net.lingala.zip4j.ZipFile;
+import net.lingala.zip4j.model.ExcludeFileFilter;
+import net.lingala.zip4j.model.ZipParameters;
 
 public class Zipper {
 
@@ -17,12 +18,15 @@ public class Zipper {
     public static void compress(Path zipFile, Path directory) throws IOException {
         Files.deleteIfExists(zipFile);
         ExcludeFileFilter excludeFilter = file -> file.getName().endsWith(ZIP_EXTENSION);
-        ZipParameters zipParameters = new ZipParameters();
+        var zipParameters = new ZipParameters();
         zipParameters.setExcludeFileFilter(excludeFilter);
-        ZipFile zip = new ZipFile(zipFile.toFile());
+        var zip = new ZipFile(zipFile.toFile());
         for (Path p : Files.list(directory).collect(Collectors.toList())) {
-            if (Files.isRegularFile(p) && !FileUtil.isExtension(p, ZIP_EXTENSION)) zip.addFile(p.toFile());
-            else if (Files.isDirectory(p)) zip.addFolder(p.toFile(), zipParameters);
+            if (Files.isRegularFile(p) && !FileUtil.isExtension(p, ZIP_EXTENSION)) {
+				zip.addFile(p.toFile());
+			} else if (Files.isDirectory(p)) {
+				zip.addFolder(p.toFile(), zipParameters);
+			}
         }
     }
 

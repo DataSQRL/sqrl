@@ -3,13 +3,15 @@
  */
 package com.datasqrl.plan.rules;
 
-import com.datasqrl.plan.global.MaterializationPreference;
-import com.google.common.base.Preconditions;
-import lombok.AllArgsConstructor;
-import lombok.Value;
+import java.util.List;
+
 import org.apache.commons.collections.ListUtils;
 
-import java.util.List;
+import com.datasqrl.plan.global.MaterializationPreference;
+import com.google.common.base.Preconditions;
+
+import lombok.AllArgsConstructor;
+import lombok.Value;
 
 @Value
 @AllArgsConstructor
@@ -29,7 +31,7 @@ public class MaterializationInference {
   }
 
   MaterializationInference update(MaterializationPreference preference, String reason) {
-    MaterializationInference other = new MaterializationInference(preference,
+    var other = new MaterializationInference(preference,
         ListUtils.union(this.reasons, List.of(reason)));
     Preconditions.checkArgument(this.preference.isCompatible(preference),
         "Incompatible materialization preferences: [%s] vs [%s]",

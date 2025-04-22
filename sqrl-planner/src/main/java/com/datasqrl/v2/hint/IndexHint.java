@@ -1,13 +1,14 @@
 package com.datasqrl.v2.hint;
 
+import java.util.List;
+
 import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.function.IndexType;
 import com.datasqrl.v2.parser.ParsedObject;
 import com.datasqrl.v2.parser.SqrlHint;
 import com.datasqrl.v2.parser.StatementParserException;
 import com.google.auto.service.AutoService;
-import java.util.List;
-import java.util.Optional;
+
 import lombok.Getter;
 
 /**
@@ -31,12 +32,18 @@ public class IndexHint extends ColumnNamesHint {
 
     @Override
     public PlannerHint create(ParsedObject<SqrlHint> source) {
-      List<String> arguments = source.get().getOptions();
-      if (arguments==null || arguments.isEmpty()) return new IndexHint(source, null, List.of()); //no hint
-      if (arguments.size()<= 1) throw new StatementParserException(ErrorLabel.GENERIC, source.getFileLocation(),
-          "Index hint requires at least two arguments: the name of the index type and at least one column.");
-      Optional<IndexType> optIndex = IndexType.fromName(arguments.get(0));
-      if (optIndex.isEmpty()) throw new StatementParserException(ErrorLabel.GENERIC, source.getFileLocation(),  "Unknown index type: %s", arguments.get(0));
+      var arguments = source.get().getOptions();
+      if (arguments==null || arguments.isEmpty()) {
+		return new IndexHint(source, null, List.of()); //no hint
+	}
+      if (arguments.size()<= 1) {
+		throw new StatementParserException(ErrorLabel.GENERIC, source.getFileLocation(),
+		      "Index hint requires at least two arguments: the name of the index type and at least one column.");
+	}
+      var optIndex = IndexType.fromName(arguments.get(0));
+      if (optIndex.isEmpty()) {
+		throw new StatementParserException(ErrorLabel.GENERIC, source.getFileLocation(),  "Unknown index type: %s", arguments.get(0));
+	}
       return new IndexHint(source, optIndex.get(), arguments.subList(1, arguments.size()));
     }
 

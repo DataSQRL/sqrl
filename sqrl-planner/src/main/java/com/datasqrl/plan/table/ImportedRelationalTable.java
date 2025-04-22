@@ -3,8 +3,9 @@
  */
 package com.datasqrl.plan.table;
 
-import com.datasqrl.io.tables.TableSource;
 import org.apache.calcite.rel.type.RelDataType;
+
+import com.datasqrl.io.tables.TableSource;
 
 public interface ImportedRelationalTable extends SourceRelationalTable {
 

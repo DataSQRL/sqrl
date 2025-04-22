@@ -3,6 +3,10 @@
  */
 package com.datasqrl.serializer;
 
+import java.io.IOException;
+import java.util.ServiceLoader;
+import java.util.function.Function;
+
 import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
@@ -11,9 +15,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.google.common.base.Preconditions;
 
-import java.io.IOException;
-import java.util.ServiceLoader;
-import java.util.function.Function;
 import lombok.Getter;
 
 @Getter
@@ -33,12 +34,12 @@ public class JacksonDeserializer<T> extends StdDeserializer<T> {
   @Override
   public T deserialize(JsonParser jsonParser, DeserializationContext deserializationContext)
       throws IOException, JacksonException {
-    final ObjectMapper mapper = (ObjectMapper) jsonParser.getCodec();
+    final var mapper = (ObjectMapper) jsonParser.getCodec();
     final JsonNode node = mapper.readTree(jsonParser);
 
     Preconditions.checkArgument(node.get(typeKey) != null, "Object has no type [%s]: %s", typeKey,
         node);
-    String type = node.get(typeKey).asText();
+    var type = node.get(typeKey).asText();
 
     ServiceLoader<T> serviceLoader = ServiceLoader.load(superType);
     for (T subType : serviceLoader) {

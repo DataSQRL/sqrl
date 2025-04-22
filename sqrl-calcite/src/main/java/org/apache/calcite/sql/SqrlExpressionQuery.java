@@ -1,8 +1,10 @@
 package org.apache.calcite.sql;
 
 import java.util.Optional;
-import lombok.Getter;
+
 import org.apache.calcite.sql.parser.SqlParserPos;
+
+import lombok.Getter;
 
 @Getter
 public class SqrlExpressionQuery extends SqrlAssignment {

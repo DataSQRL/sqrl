@@ -25,7 +25,7 @@ public class ArrayType implements Type {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    ArrayType that = (ArrayType) o;
+    var that = (ArrayType) o;
     return Objects.equals(subType, that.subType);
   }
 
@@ -39,7 +39,8 @@ public class ArrayType implements Type {
     return "[" + subType.toString() + "]";
   }
 
-  public <R, C> R accept(SqrlTypeVisitor<R, C> visitor, C context) {
+  @Override
+public <R, C> R accept(SqrlTypeVisitor<R, C> visitor, C context) {
     return visitor.visitArrayType(this, context);
   }
 }

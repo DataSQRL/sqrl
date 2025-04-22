@@ -2,6 +2,7 @@ package com.datasqrl.engine.stream.flink.plan;
 
 import java.util.List;
 import java.util.Set;
+
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.commons.collections.ListUtils;

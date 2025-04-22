@@ -1,8 +1,10 @@
 package com.datasqrl.engine.log.kafka;
 
-import com.datasqrl.engine.database.EngineCreateTable;
 import java.util.List;
 import java.util.Map;
+
+import com.datasqrl.engine.database.EngineCreateTable;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

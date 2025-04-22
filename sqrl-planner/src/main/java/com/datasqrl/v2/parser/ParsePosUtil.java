@@ -1,15 +1,16 @@
 package com.datasqrl.v2.parser;
 
-import com.datasqrl.error.ErrorLocation.FileLocation;
 import java.util.Optional;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import lombok.Value;
+
 import org.apache.calcite.runtime.CalciteContextException;
 import org.apache.calcite.sql.parser.SqlParseException;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.flink.sql.parser.error.SqlValidateException;
-import org.apache.flink.table.api.ValidationException;
+
+import com.datasqrl.error.ErrorLocation.FileLocation;
+
+import lombok.Value;
 
 /**
  * Utility for mapping Flink/Calcite parser and planner errors to DataSQRL errors.
@@ -22,20 +23,21 @@ public class ParsePosUtil {
   }
 
   public static Optional<MessageLocation> convertFlinkParserException(Exception e) {
-    if (e instanceof StatementParserException) return Optional.empty();
+    if (e instanceof StatementParserException) {
+		return Optional.empty();
+	}
     if (e.getCause() instanceof SqlParseException || e.getCause() instanceof SqlValidateException
       || e.getCause() instanceof CalciteContextException) {
       e = (Exception) e.getCause();
     }
     if (e instanceof SqlParseException || e instanceof SqlValidateException) {
-      FileLocation location = ParsePosUtil.convertPosition((e instanceof SqlParseException)?((SqlParseException) e).getPos():
+      var location = ParsePosUtil.convertPosition((e instanceof SqlParseException spe)?spe.getPos():
           ((SqlValidateException)e).getErrorPosition());
-      String message = removeLineNumbersFromMessage(e.getMessage());
+      var message = removeLineNumbersFromMessage(e.getMessage());
       return Optional.of(new MessageLocation(location, message));
-    } else if (e instanceof CalciteContextException) {
-      CalciteContextException calciteException = (CalciteContextException) e;
-      FileLocation location = new FileLocation(calciteException.getPosLine(), calciteException.getPosColumn());
-      String message = removeLineNumbersFromMessage(calciteException.getMessage());
+    } else if (e instanceof CalciteContextException calciteException) {
+      var location = new FileLocation(calciteException.getPosLine(), calciteException.getPosColumn());
+      var message = removeLineNumbersFromMessage(calciteException.getMessage());
       return Optional.of(new MessageLocation(location, message));
     }
     return Optional.empty();
@@ -48,7 +50,7 @@ public class ParsePosUtil {
       Pattern.CASE_INSENSITIVE);
 
   public static String removeLineNumbersFromMessage(String message) {
-    Matcher matcher = LINE_NUM_AT.matcher(message);
+    var matcher = LINE_NUM_AT.matcher(message);
     message = matcher.replaceAll("");
     matcher = LINE_NUM_FROMTO.matcher(message);
     message = matcher.replaceAll("");

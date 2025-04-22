@@ -44,15 +44,12 @@ public class GraphqlSchemaUtil2 {
   }
 
   public static GraphQLType wrapMultiplicity(GraphQLType type, Multiplicity multiplicity) {
-    switch (multiplicity) {
-      case ZERO_ONE:
-        return type;
-      case ONE:
-        return GraphQLNonNull.nonNull(type);
-      case MANY:
-      default:
-        return GraphQLList.list(GraphQLNonNull.nonNull(type));
-    }
+    return switch (multiplicity) {
+	case ZERO_ONE -> type;
+	case ONE -> GraphQLNonNull.nonNull(type);
+	case MANY -> GraphQLList.list(GraphQLNonNull.nonNull(type));
+	default -> GraphQLList.list(GraphQLNonNull.nonNull(type));
+	};
   }
 
   public static boolean isValidGraphQLName(String name) {
@@ -76,8 +73,7 @@ public class GraphqlSchemaUtil2 {
 
     switch (type.getSqlTypeName()) {
       case OTHER:
-        if (type instanceof RawRelDataType) {
-          RawRelDataType rawRelDataType = (RawRelDataType) type;
+        if (type instanceof RawRelDataType rawRelDataType) {
           Class<?> originatingClass = rawRelDataType.getRawType().getOriginatingClass();
           if (originatingClass.isAssignableFrom(FlinkJsonType.class)) {
             return Optional.of(CustomScalars.JSON);
@@ -152,11 +148,11 @@ public class GraphqlSchemaUtil2 {
 
   private static Optional<GraphQLType> createGraphQLStructuredType(GraphQLMetaType metaType, RelDataType rowType,
       NamePath namePath, boolean extendedScalarTypes) {
-    String typeName = uniquifyNameForPath(namePath, metaType.suffix);
+    var typeName = uniquifyNameForPath(namePath, metaType.suffix);
     final BiConsumer<String, GraphQLType> fieldConsumer;
     final Supplier<GraphQLType> buildResult;
     if (metaType==GraphQLMetaType.OUTPUT) {
-      final GraphQLObjectType.Builder builder = GraphQLObjectType.newObject();
+      final var builder = GraphQLObjectType.newObject();
       builder.name(typeName);
       fieldConsumer = (fieldName, fieldType) -> builder.field(
           GraphQLFieldDefinition.newFieldDefinition()
@@ -166,7 +162,7 @@ public class GraphqlSchemaUtil2 {
       );
       buildResult = builder::build;
     } else {
-      final GraphQLInputObjectType.Builder builder = GraphQLInputObjectType.newInputObject();
+      final var builder = GraphQLInputObjectType.newInputObject();
       builder.name(typeName);
       fieldConsumer = (fieldName, fieldType) -> builder.field(
           GraphQLInputObjectField.newInputObjectField()
@@ -177,9 +173,11 @@ public class GraphqlSchemaUtil2 {
       buildResult = builder::build;
     }
     for (RelDataTypeField field : rowType.getFieldList()) {
-      final NamePath fieldPath = namePath.concat(Name.system(field.getName()));
-      if (fieldPath.getLast().isHidden()) continue;
-      RelDataType columnType = field.getType();
+      final var fieldPath = namePath.concat(Name.system(field.getName()));
+      if (fieldPath.getLast().isHidden()) {
+		continue;
+	}
+      var columnType = field.getType();
       getGraphQLType(metaType, columnType, fieldPath, extendedScalarTypes)
           .map(fieldType -> (GraphQLInputType) wrapNullable(fieldType, columnType))// recursively traverse
           .ifPresent(fieldType -> fieldConsumer.accept(field.getName(), fieldType));

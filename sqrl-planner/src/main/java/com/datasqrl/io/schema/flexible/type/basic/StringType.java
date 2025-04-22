@@ -3,11 +3,12 @@
  */
 package com.datasqrl.io.schema.flexible.type.basic;
 
-import com.datasqrl.io.schema.flexible.type.SqrlTypeVisitor;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+
+import com.datasqrl.io.schema.flexible.type.SqrlTypeVisitor;
 
 public class StringType extends AbstractBasicType<String> {
 
@@ -33,7 +34,8 @@ public class StringType extends AbstractBasicType<String> {
       return Collections.singleton(String.class);
     }
 
-    public String convert(Object o) {
+    @Override
+	public String convert(Object o) {
       return o.toString();
     }
 
@@ -43,7 +45,8 @@ public class StringType extends AbstractBasicType<String> {
     }
   }
 
-  public <R, C> R accept(SqrlTypeVisitor<R, C> visitor, C context) {
+  @Override
+public <R, C> R accept(SqrlTypeVisitor<R, C> visitor, C context) {
     return visitor.visitStringType(this, context);
   }
 }

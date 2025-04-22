@@ -1,14 +1,10 @@
 package com.datasqrl.v2;
 
-import com.datasqrl.engine.EnginePhysicalPlan;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import lombok.Builder;
-import lombok.Value;
+
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.flink.sql.parser.ddl.SqlCreateFunction;
@@ -20,6 +16,13 @@ import org.apache.flink.sql.parser.dml.SqlStatementSet;
 import org.apache.flink.table.api.CompiledPlan;
 import org.apache.flink.table.api.ExplainDetail;
 import org.apache.flink.table.api.ExplainFormat;
+
+import com.datasqrl.engine.EnginePhysicalPlan;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.google.common.base.Preconditions;
+
+import lombok.Builder;
+import lombok.Value;
 
 /**
  * Represents the physical plan for Flink as both FlinkSQL and as a compiled plan.
@@ -81,9 +84,9 @@ public class FlinkPhysicalPlan implements EnginePhysicalPlan {
     public void add(SqlNode node, String nodeSql) {
       flinkSql.add(nodeSql);
       nodes.add(node);
-      if (node instanceof SqlCreateTable) {
-        for (SqlNode option : ((SqlCreateTable)node).getPropertyList().getList()){
-          SqlTableOption sqlTableOption = (SqlTableOption)option;
+      if (node instanceof SqlCreateTable table) {
+        for (SqlNode option : table.getPropertyList().getList()){
+          var sqlTableOption = (SqlTableOption)option;
           if (sqlTableOption.getKeyString().equalsIgnoreCase("connector")) {
             connectors.add(sqlTableOption.getValueString());
           }
@@ -102,12 +105,12 @@ public class FlinkPhysicalPlan implements EnginePhysicalPlan {
 
     public SqlExecute getExecuteStatement() {
       Preconditions.checkArgument(!statementSet.isEmpty(),"SQRL script does not contain any sink definitions");
-      SqlStatementSet sqlStatementSet = new SqlStatementSet(statementSet, SqlParserPos.ZERO);
+      var sqlStatementSet = new SqlStatementSet(statementSet, SqlParserPos.ZERO);
       return new SqlExecute(sqlStatementSet, SqlParserPos.ZERO);
     }
 
     public FlinkPhysicalPlan build(CompiledPlan compiledPlan) {
-      String explainedPlan = compiledPlan.explain(ExplainFormat.TEXT, ExplainDetail.CHANGELOG_MODE, ExplainDetail.PLAN_ADVICE);
+      var explainedPlan = compiledPlan.explain(ExplainFormat.TEXT, ExplainDetail.CHANGELOG_MODE, ExplainDetail.PLAN_ADVICE);
       return new FlinkPhysicalPlan(flinkSql, connectors, formats, fullyResolvedFunctions,
           compiledPlan.asJsonString(), explainedPlan, flinkSqlNoFunctions);
     }
