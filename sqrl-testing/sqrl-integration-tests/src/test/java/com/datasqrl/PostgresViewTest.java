@@ -2,24 +2,22 @@ package com.datasqrl;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
-import com.datasqrl.cmd.AssertStatusHook;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.File;
 import java.nio.file.Path;
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.ResultSet;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
+
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.utility.DockerImageName;
+
+import com.datasqrl.cmd.AssertStatusHook;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Compiles the use cases in the test/resources/usecases folder and snapshots the
@@ -38,7 +36,8 @@ public class PostgresViewTest extends AbstractUseCaseTest {
 
   public static final Path USECASE_DIR = getResourcesDirectory("usecases");
 
-  @SneakyThrows
+  @Override
+@SneakyThrows
   @ParameterizedTest
   @ArgumentsSource(UseCaseFiles.class)
   void testUsecase(Path script, Path graphQlFile, Path packageFile) {
@@ -57,14 +56,14 @@ public class PostgresViewTest extends AbstractUseCaseTest {
   }
 
   private void verifyPostgresSchema(Path script) throws Exception {
-    File file = script.getParent().resolve("build/plan/postgres.json").toFile();
+    var file = script.getParent().resolve("build/plan/postgres.json").toFile();
     if (file.exists()) {
       testDatabase.start();
-      Map plan = new ObjectMapper().readValue(file, Map.class);
+      var plan = new ObjectMapper().readValue(file, Map.class);
       for (Map statement : (List<Map>) plan.get("statements")) {
         log.info("Executing statement {} of type {}", statement.get("name"), statement.get("type"));
-        try (Connection connection = testDatabase.createConnection("")) {
-          try (Statement stmt = connection.createStatement()) {
+        try (var connection = testDatabase.createConnection("")) {
+          try (var stmt = connection.createStatement()) {
             stmt.executeUpdate((String) statement.get("sql"));
           }
         }
@@ -74,9 +73,9 @@ public class PostgresViewTest extends AbstractUseCaseTest {
 
   private static List<String> getTables(PostgreSQLContainer testDatabase) throws Exception {
     List<String> result = new ArrayList<>();
-    try (Connection connection = testDatabase.createConnection("")) {
-      DatabaseMetaData metaData = connection.getMetaData();
-      ResultSet tables = metaData.getTables(null, null, "%", new String[] {"TABLE"});
+    try (var connection = testDatabase.createConnection("")) {
+      var metaData = connection.getMetaData();
+      var tables = metaData.getTables(null, null, "%", new String[] {"TABLE"});
 
       while (tables.next()) {
         result.add(tables.getString("TABLE_NAME"));

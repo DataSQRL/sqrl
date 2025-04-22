@@ -3,9 +3,11 @@
  */
 package com.datasqrl.engine.database;
 
-import com.datasqrl.graphql.jdbc.DatabaseType;
-import lombok.Value;
 import org.apache.calcite.rel.RelNode;
+
+import com.datasqrl.graphql.jdbc.DatabaseType;
+
+import lombok.Value;
 
 @Value
 public class QueryTemplate {

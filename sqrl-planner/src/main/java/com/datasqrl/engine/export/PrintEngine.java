@@ -1,5 +1,10 @@
 package com.datasqrl.engine.export;
 
+import java.util.List;
+import java.util.Optional;
+
+import org.apache.calcite.rel.type.RelDataType;
+
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.config.ConnectorConf;
 import com.datasqrl.config.ConnectorConf.Context;
@@ -13,16 +18,11 @@ import com.datasqrl.engine.database.EngineCreateTable;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.v2.analyzer.TableAnalysis;
-import com.datasqrl.v2.dag.plan.MaterializationStagePlan;
-import com.datasqrl.v2.tables.FlinkTableBuilder;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
 import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
+import com.datasqrl.v2.analyzer.TableAnalysis;
+import com.datasqrl.v2.tables.FlinkTableBuilder;
 import com.google.inject.Inject;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import org.apache.calcite.rel.type.RelDataType;
 
 public class PrintEngine implements ExportEngine {
 

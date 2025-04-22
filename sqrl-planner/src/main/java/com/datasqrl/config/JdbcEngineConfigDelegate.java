@@ -1,7 +1,6 @@
 package com.datasqrl.config;
 
 import java.util.Map;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -21,9 +20,9 @@ public class JdbcEngineConfigDelegate {
   public JdbcEngineConfigDelegate(ConnectorConf connectorConf) {
     this.map = connectorConf.toMap();
     this.url = (String)map.get("url");
-    Matcher matcher = JDBC_URL_REGEX.matcher(url);
+    var matcher = JDBC_URL_REGEX.matcher(url);
     if (matcher.find()) {
-      String dialect = matcher.group(1);
+      var dialect = matcher.group(1);
 //      connectorConfig.getErrorCollector().checkFatal(JdbcDialect.find(dialect).isPresent(), "Invalid database dialect: %s", dialect);
       this.dialect = dialect;
       this.host = matcher.group(2);
@@ -33,7 +32,7 @@ public class JdbcEngineConfigDelegate {
       //Only extract the dialect
       matcher = JDBC_DIALECT_REGEX.matcher(url);
       if (matcher.find()) {
-        String dialect = matcher.group(1);
+        var dialect = matcher.group(1);
         this.dialect = dialect;
       } else {
         throw new RuntimeException("Invalid database URL: %s".formatted(url));

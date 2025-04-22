@@ -4,6 +4,7 @@
 package com.datasqrl.engine.database.relational.ddl.statements;
 
 import com.datasqrl.sql.SqlDDLStatement;
+
 import lombok.AllArgsConstructor;
 
 @AllArgsConstructor

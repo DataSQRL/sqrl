@@ -1,12 +1,5 @@
 package com.datasqrl;
 
-import com.datasqrl.DatasqrlTest.GraphqlQuery;
-import com.datasqrl.DatasqrlTest.SubscriptionQuery.SubscriptionPayload;
-import com.datasqrl.util.FlinkOperatorStatusChecker;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -14,28 +7,30 @@ import java.net.http.HttpResponse;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
-
-import io.vertx.core.http.WebSocketClient;
-import io.vertx.core.http.WebSocketClientOptions;
-import io.vertx.core.http.WebSocketConnectOptions;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.SneakyThrows;
-import lombok.Value;
 
 import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.common.JobStatus;
 import org.apache.flink.core.execution.JobClient;
 import org.apache.flink.table.api.TableResult;
+
+import com.datasqrl.DatasqrlTest.SubscriptionQuery.SubscriptionPayload;
+import com.datasqrl.util.FlinkOperatorStatusChecker;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.SneakyThrows;
+import lombok.Value;
 
 /**
  * The test runner executes the test against the running DataSQRL pipeline and snapshots the results.
@@ -62,8 +57,8 @@ public class DatasqrlTest {
   private final ObjectMapper objectMapper = new ObjectMapper();
 
   public static void main(String[] args) {
-    DatasqrlTest test = new DatasqrlTest();
-    int returnCode = test.run();
+    var test = new DatasqrlTest();
+    var returnCode = test.run();
     System.exit(returnCode);
   }
 
@@ -111,7 +106,7 @@ public class DatasqrlTest {
       List<SubscriptionClient> subscriptionClients = List.of();
   //2. Execute subscription & mutation queries against the API and snapshot results
       if (testPlanOpt.isPresent()) {
-        TestPlan testPlan = testPlanOpt.get();        
+        TestPlan testPlan = testPlanOpt.get();
               //TODO: Etienne run all subscription queries async and collect the results.
 
         // 1. add the graphql subscriptions to the test plan
@@ -365,16 +360,16 @@ public class DatasqrlTest {
     String name;
     String query;
   }
-  
+
   @Value
   public static class SubscriptionQuery{
-    
+
     @JsonIgnore
     String name;
     Long id;
     String type;
     SubscriptionPayload  payload;
-    
+
     @Value
     public static class SubscriptionPayload {
       String query;

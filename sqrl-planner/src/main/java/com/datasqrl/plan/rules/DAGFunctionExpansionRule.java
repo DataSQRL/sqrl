@@ -3,21 +3,16 @@
  */
 package com.datasqrl.plan.rules;
 
-import com.datasqrl.config.EngineType;
-import com.datasqrl.engine.pipeline.ExecutionStage;
-import com.datasqrl.plan.local.generate.QueryTableFunction;
-import com.datasqrl.plan.table.QueryRelationalTable;
-import com.datasqrl.util.CalciteUtil;
-import com.datasqrl.calcite.SqrlRexUtil;
-import com.google.common.base.Preconditions;
 import org.apache.calcite.plan.RelOptRule;
 import org.apache.calcite.plan.RelOptRuleCall;
-import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.TableFunctionScan;
 import org.apache.calcite.rex.RexCall;
-import org.apache.calcite.rex.RexNode;
 
-import java.util.List;
+import com.datasqrl.calcite.SqrlRexUtil;
+import com.datasqrl.config.EngineType;
+import com.datasqrl.plan.local.generate.QueryTableFunction;
+import com.datasqrl.util.CalciteUtil;
+import com.google.common.base.Preconditions;
 
 /**
  * Expands table function calls for {@link QueryTableFunction} by substituting the
@@ -36,17 +31,19 @@ public class DAGFunctionExpansionRule extends RelOptRule {
   @Override
   public void onMatch(RelOptRuleCall call) {
     TableFunctionScan scan = call.rel(0);
-    QueryTableFunction tblFct = SqrlRexUtil.getCustomTableFunction(scan)
+    var tblFct = SqrlRexUtil.getCustomTableFunction(scan)
         .filter(fct -> (fct instanceof QueryTableFunction)) //We want to preserve NestedRelationships and other types of table functions
         .map(QueryTableFunction.class::cast).orElse(null);
-    if (tblFct==null) return;
-    List<RexNode> operands = ((RexCall)scan.getCall()).getOperands();
-    QueryRelationalTable queryTable = tblFct.getQueryTable();
-    ExecutionStage stage = queryTable.getAssignedStage().get();
+    if (tblFct==null) {
+		return;
+	}
+    var operands = ((RexCall)scan.getCall()).getOperands();
+    var queryTable = tblFct.getQueryTable();
+    var stage = queryTable.getAssignedStage().get();
     Preconditions.checkArgument(stage.isRead());
     if (stage.getEngine().getType()==engineType) {
-      RelNode fctNode = queryTable.getPlannedRelNode();
-      RelNode rewrittenNode = CalciteUtil.replaceParameters(fctNode, operands);
+      var fctNode = queryTable.getPlannedRelNode();
+      var rewrittenNode = CalciteUtil.replaceParameters(fctNode, operands);
       call.transformTo(rewrittenNode);
     }
   }

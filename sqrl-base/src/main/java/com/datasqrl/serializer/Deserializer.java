@@ -3,18 +3,17 @@
  */
 package com.datasqrl.serializer;
 
+import java.io.IOException;
+import java.net.URI;
+import java.nio.file.Path;
+
 import com.datasqrl.module.resolver.ResourceResolver;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-
-import java.io.IOException;
-import java.net.URI;
-import java.nio.file.Path;
 
 import lombok.Getter;
 
@@ -91,8 +90,10 @@ public class Deserializer {
   }
 
   public <O> void writeJson(Path file, O object, boolean pretty) throws IOException {
-    ObjectWriter writer = jsonMapper.writer();
-    if (pretty) writer = writer.withDefaultPrettyPrinter();
+    var writer = jsonMapper.writer();
+    if (pretty) {
+		writer = writer.withDefaultPrettyPrinter();
+	}
     writer.writeValue(file.toFile(),object);
   }
 
@@ -105,7 +106,7 @@ public class Deserializer {
   }
 
   public<O> void writeYML(Path file, O object) throws IOException {
-    ObjectWriter writer = yamlMapper.writer().withDefaultPrettyPrinter();
+    var writer = yamlMapper.writer().withDefaultPrettyPrinter();
     writer.writeValue(file.toFile(),object);
   }
 }

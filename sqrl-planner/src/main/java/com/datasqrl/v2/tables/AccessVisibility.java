@@ -1,6 +1,7 @@
 package com.datasqrl.v2.tables;
 
 import com.datasqrl.v2.parser.AccessModifier;
+
 import lombok.Value;
 
 /**

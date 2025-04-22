@@ -31,7 +31,7 @@ import lombok.SneakyThrows;
     }
 
     public CompletableFuture<Void> start() {
-      Future<WebSocket> connect = vertx.createWebSocketClient()
+      var connect = vertx.createWebSocketClient()
           .connect(8888, "localhost", "/graphql");
 
       connect.onSuccess(ws -> {
@@ -79,7 +79,7 @@ import lombok.SneakyThrows;
     }
 
   private void handleTextMessage(Buffer buffer) {
-    String data = buffer.toString();
+    var data = buffer.toString();
     // Handle the incoming messages
     System.out.println("Data: " + data);
     Map<String, Object> message;
@@ -88,7 +88,7 @@ import lombok.SneakyThrows;
     } catch (JsonProcessingException e) {
       throw new RuntimeException("Unable to serialize message", e);
     }
-  
+
     if(message.containsKey("payload")) {
       try {
         messages.add(objectMapper.writeValueAsString(message.get("payload")));
@@ -97,8 +97,8 @@ import lombok.SneakyThrows;
       }
       return;
     }
-  
-    String type = (String) message.get("type");
+
+    var type = (String) message.get("type");
 
     if ("connection_ack".equals(type)) {
       // Connection acknowledged, send the subscribe message
@@ -129,7 +129,7 @@ import lombok.SneakyThrows;
       }
       waitCompletion(vertx.close());
     }
-    
+
 
     @SneakyThrows
     private <E> E waitCompletion(Future<E> future) {

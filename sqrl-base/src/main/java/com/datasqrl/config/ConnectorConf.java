@@ -3,6 +3,7 @@ package com.datasqrl.config;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Predicate;
+
 import lombok.Builder;
 import lombok.Singular;
 import lombok.Value;
@@ -35,10 +36,18 @@ public interface ConnectorConf {
 
     public Map<String,String> toVariables() {
       Map<String,String> vars = new HashMap<>(variables);
-      if (tableName!=null) vars.put("table-name", tableName);
-      if (origTableName!=null) vars.put("original-table-name", origTableName);
-      if (filename!=null) vars.put("filename", filename);
-      if (format!=null) vars.put("format", format);
+      if (tableName!=null) {
+		vars.put("table-name", tableName);
+	}
+      if (origTableName!=null) {
+		vars.put("original-table-name", origTableName);
+	}
+      if (filename!=null) {
+		vars.put("filename", filename);
+	}
+      if (format!=null) {
+		vars.put("format", format);
+	}
       return vars;
     }
   }

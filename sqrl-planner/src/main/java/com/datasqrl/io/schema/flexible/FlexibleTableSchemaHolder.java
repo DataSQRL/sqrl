@@ -1,13 +1,15 @@
 package com.datasqrl.io.schema.flexible;
 
-import com.datasqrl.io.schema.flexible.external.SchemaExport;
-import com.datasqrl.io.tables.TableSchema;
-import com.datasqrl.io.schema.flexible.input.FlexibleTableSchema;
-import com.datasqrl.io.schema.flexible.input.external.TableDefinition;
-import com.datasqrl.serializer.Deserializer;
-import com.google.common.base.Strings;
 import java.nio.file.Path;
 import java.util.Optional;
+
+import com.datasqrl.io.schema.flexible.external.SchemaExport;
+import com.datasqrl.io.schema.flexible.input.FlexibleTableSchema;
+import com.datasqrl.io.schema.flexible.input.external.TableDefinition;
+import com.datasqrl.io.tables.TableSchema;
+import com.datasqrl.serializer.Deserializer;
+import com.google.common.base.Strings;
+
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.SneakyThrows;

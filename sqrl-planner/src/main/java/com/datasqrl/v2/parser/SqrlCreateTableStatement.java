@@ -1,6 +1,7 @@
 package com.datasqrl.v2.parser;
 
 import com.datasqrl.error.ErrorLocation.FileLocation;
+
 import lombok.Value;
 
 /**

@@ -1,12 +1,19 @@
 package com.datasqrl.io.schema.flexible.input;
 
+import java.io.Serializable;
+import java.util.List;
+
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.io.schema.flexible.constraint.Constraint;
 import com.datasqrl.io.schema.flexible.type.Type;
-import lombok.*;
 
-import java.io.Serializable;
-import java.util.List;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
+import lombok.Setter;
+import lombok.ToString;
 
 @Getter
 @ToString

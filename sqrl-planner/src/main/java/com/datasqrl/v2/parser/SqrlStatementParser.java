@@ -2,6 +2,15 @@ package com.datasqrl.v2.parser;
 
 import static com.datasqrl.v2.parser.StatementParserException.checkFatal;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.flink.table.catalog.ObjectIdentifier;
+
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.error.ErrorCode;
@@ -10,15 +19,8 @@ import com.datasqrl.error.ErrorLocation.FileLocation;
 import com.datasqrl.v2.hint.PlannerHints;
 import com.datasqrl.v2.parser.SqrlTableFunctionStatement.ParsedArgument;
 import com.google.inject.Inject;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
 import lombok.AllArgsConstructor;
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.flink.table.catalog.ObjectIdentifier;
 
 /**
  * A lightweight REGEX based parser to identify and parse SQRL specific SQL statements.
@@ -82,9 +84,9 @@ public class SqrlStatementParser {
    */
   public List<ParsedObject<SQLStatement>> parseScript(String script, ErrorCollector scriptErrors) {
     List<ParsedObject<SQLStatement>> sqlStatements = new ArrayList<>();
-    ErrorCollector localErrors = scriptErrors;
+    var localErrors = scriptErrors;
     try {
-      List<ParsedObject<String>> statements = sqlSplitter.splitStatements(script);
+      var statements = sqlSplitter.splitStatements(script);
       for (ParsedObject<String> statement : statements) {
         localErrors = scriptErrors.atFile(statement.getFileLocation());
         sqlStatements.add(new ParsedObject<>(parseStatement(statement.getObject()), statement.getFileLocation()));
@@ -102,27 +104,27 @@ public class SqrlStatementParser {
    * @return
    */
   public SQLStatement parseStatement(String statement) {
-    Matcher importExportMatcher = IMPORT_EXPORT.matcher(statement);
+    var importExportMatcher = IMPORT_EXPORT.matcher(statement);
 
     //#1: Imports and Exports
     if (importExportMatcher.find()) { //it's an import or export statement
-      String directive = importExportMatcher.group("fullmatch");
-      int commentEnd = importExportMatcher.end()-directive.length();
-      SqrlComments comment = SqrlComments.parse(parse(statement.substring(0,commentEnd), statement, 0));
-      String body = statement.substring(importExportMatcher.end()).trim();
+      var directive = importExportMatcher.group("fullmatch");
+      var commentEnd = importExportMatcher.end()-directive.length();
+      var comment = SqrlComments.parse(parse(statement.substring(0,commentEnd), statement, 0));
+      var body = statement.substring(importExportMatcher.end()).trim();
 
       if (directive.equalsIgnoreCase("import")) {
-        Matcher subMatcher = IMPORT_PARSER.matcher(body);
+        var subMatcher = IMPORT_PARSER.matcher(body);
         checkFatal(subMatcher.find(), ErrorCode.INVALID_IMPORT, "Could not parse IMPORT statement");
-        ParsedObject<NamePath> packageIdentifier = parseNamePath(subMatcher, "package", statement);
-        ParsedObject<NamePath> alias = parseNamePath(subMatcher, "identifier", statement);
+        var packageIdentifier = parseNamePath(subMatcher, "package", statement);
+        var alias = parseNamePath(subMatcher, "identifier", statement);
         checkFatal(packageIdentifier.isPresent(), ErrorCode.INVALID_IMPORT, "Missing package path");
         return new SqrlImportStatement(packageIdentifier, alias, comment);
       } else if (directive.equalsIgnoreCase("export")) {
-        Matcher subMatcher = EXPORT_PARSER.matcher(body);
+        var subMatcher = EXPORT_PARSER.matcher(body);
         checkFatal(subMatcher.find(), ErrorCode.INVALID_IMPORT, "Could not parse IMPORT statement");
-        ParsedObject<NamePath> packageIdentifier = parseNamePath(subMatcher, "package", statement);
-        ParsedObject<NamePath> tableName = parseNamePath(subMatcher, "identifier", statement);
+        var packageIdentifier = parseNamePath(subMatcher, "package", statement);
+        var tableName = parseNamePath(subMatcher, "identifier", statement);
         checkFatal(packageIdentifier.isPresent(), ErrorCode.INVALID_EXPORT, "Missing package path");
         checkFatal(packageIdentifier.isPresent(), ErrorCode.INVALID_EXPORT, "Missing table");
         return new SqrlExportStatement(tableName, packageIdentifier, comment);
@@ -134,27 +136,27 @@ public class SqrlStatementParser {
     }
 
     //#2: SQRL Table Definitions
-    Matcher sqrlDefinition = SQRL_DEFINITION.matcher(statement);
+    var sqrlDefinition = SQRL_DEFINITION.matcher(statement);
     if (sqrlDefinition.find()) { //it's a SQRL definition
-      ParsedObject<NamePath> tableName = parseNamePath(sqrlDefinition.group("tablename"),
+      var tableName = parseNamePath(sqrlDefinition.group("tablename"),
           statement, sqrlDefinition.start("tablename"));
       checkFatal(tableName.isPresent(), tableName.getFileLocation(), ErrorCode.INVALID_SQRL_DEFINITION, "Invalid name for definition");
       checkFatal(tableName.get().size()<=2, tableName.getFileLocation(), ErrorCode.INVALID_SQRL_DEFINITION, "Invalid name for definition: %s", tableName.get());
-      boolean isRelationship = tableName.get().size()>1;
-      int commentEnd = sqrlDefinition.start("fullmatch");
-      SqrlComments comment = SqrlComments.parse(parse(statement.substring(0,commentEnd), statement, 0));
-      ParsedObject<String> definitionBody = parse(statement.substring(sqrlDefinition.end()), statement,
+      var isRelationship = tableName.get().size()>1;
+      var commentEnd = sqrlDefinition.start("fullmatch");
+      var comment = SqrlComments.parse(parse(statement.substring(0,commentEnd), statement, 0));
+      var definitionBody = parse(statement.substring(sqrlDefinition.end()), statement,
           sqrlDefinition.end());
 
-      AccessModifier access = AccessModifier.QUERY;
+      var access = AccessModifier.QUERY;
 
       ParsedObject<String> arguments = parse(sqrlDefinition, "arguments", statement)
           .map(str -> str.isBlank()?null:str);
       //Identify SQL keyword
-      Pattern sqlKeywordPattern = Pattern.compile("^\\s*(\\w+)");
-      Matcher keywordMatcher = sqlKeywordPattern.matcher(definitionBody.get());
-      String keyword = "";
-      int keywordEnd = 0;
+      var sqlKeywordPattern = Pattern.compile("^\\s*(\\w+)");
+      var keywordMatcher = sqlKeywordPattern.matcher(definitionBody.get());
+      var keyword = "";
+      var keywordEnd = 0;
       if (keywordMatcher.find()) {
         keyword = keywordMatcher.group(1).trim();
         keywordEnd = keywordMatcher.end(1);
@@ -165,21 +167,21 @@ public class SqrlStatementParser {
         if (keyword.equalsIgnoreCase(SUBSCRIBE_KEYWORD)) { //Remove the keyword from definition body
           checkFatal(!isRelationship, tableName.getFileLocation(), ErrorCode.INVALID_SQRL_DEFINITION, "Cannot subscribe for a relationship");
           access = AccessModifier.SUBSCRIPTION;
-          int newDefinitionStart = sqrlDefinition.end() + keywordEnd;
+          var newDefinitionStart = sqrlDefinition.end() + keywordEnd;
           definitionBody = parse(statement.substring(newDefinitionStart), statement, newDefinitionStart);
         }
         if (arguments.isEmpty() && !isRelationship) {
             definition = new SqrlTableDefinition(tableName, definitionBody, access, comment);
         } else {
           //Extract and replace argument and this references
-          Pair<String, List<ParsedArgument>> processedBody = replaceTableFunctionVariables(definitionBody, isRelationship);
+          var processedBody = replaceTableFunctionVariables(definitionBody, isRelationship);
           definitionBody = definitionBody.map(x -> processedBody.getKey());
           definition = new SqrlTableFunctionStatement(tableName, definitionBody, access, comment,
               arguments, processedBody.getRight());
         }
       } else if (keyword.equalsIgnoreCase(DISTINCT_KEYWORD)) { //SQRL's special DISTINCT statement
         checkFatal(arguments.isEmpty(), ErrorCode.INVALID_SQRL_DEFINITION, "Table function not supported for operation");
-        Matcher distinctMatcher = DISTINCT_PARSER.matcher(definitionBody.get());
+        var distinctMatcher = DISTINCT_PARSER.matcher(definitionBody.get());
         checkFatal(distinctMatcher.find(), ErrorCode.INVALID_SQRL_DEFINITION, "Could not parse [DISTINCT] statement.");
         ParsedObject<NamePath> from = definitionBody.fromOffset(parseNamePath(distinctMatcher, "from", definitionBody.get()));
         ParsedObject<String> columns = definitionBody.fromOffset(parse(distinctMatcher, "columns", definitionBody.get()));
@@ -195,12 +197,12 @@ public class SqrlStatementParser {
     }
 
     //#3: Create Table
-    Matcher createTable = CREATE_TABLE.matcher(statement);
+    var createTable = CREATE_TABLE.matcher(statement);
     if (createTable.find()) {
-      ParsedObject<String> createTableStmt = parse(statement.substring(createTable.start("fullmatch")), statement,
+      var createTableStmt = parse(statement.substring(createTable.start("fullmatch")), statement,
           createTable.start("fullmatch"));
-      int commentEnd = createTable.start("fullmatch");
-      SqrlComments comment = SqrlComments.parse(parse(statement.substring(0,commentEnd), statement, 0));
+      var commentEnd = createTable.start("fullmatch");
+      var comment = SqrlComments.parse(parse(statement.substring(0,commentEnd), statement, 0));
       return new SqrlCreateTableStatement(createTableStmt, comment);
     }
 
@@ -223,12 +225,12 @@ public class SqrlStatementParser {
    */
   public static Pair<String, List<ParsedArgument>> replaceTableFunctionVariables(ParsedObject<String> body, boolean isRelationship) {
     List<ParsedArgument> argumentIndexes = new ArrayList<>();
-    Matcher matcher = VARIABLE_PARSER.matcher(body.get());
-    StringBuilder processedQuery = new StringBuilder();
+    var matcher = VARIABLE_PARSER.matcher(body.get());
+    var processedQuery = new StringBuilder();
 
     while (matcher.find()) {
-      String variableType = matcher.group("type");
-      boolean isParentField = false;
+      var variableType = matcher.group("type");
+      var isParentField = false;
       if (variableType.toLowerCase().startsWith(SELF_REFERENCE_KEYWORD)) {
         checkFatal(isRelationship, body.getFileLocation().add(computeFileLocation(body.get(), matcher.start("type"))), ErrorCode.INVALID_SQRL_DEFINITION,
               "Reserved reference `this` can only be used in relationship definitions");
@@ -243,10 +245,10 @@ public class SqrlStatementParser {
         matchedVariable = matcher.group("name2");
         startPos = matcher.start("name2");
       }
-      ParsedObject<String> variable = new ParsedObject<>(matchedVariable, body.getFileLocation().add(computeFileLocation(body.get(), startPos)));
-      String replacement = matcher.group("prefix") + "?" + " ".repeat(matcher.end()-matcher.start()-2);
+      var variable = new ParsedObject<String>(matchedVariable, body.getFileLocation().add(computeFileLocation(body.get(), startPos)));
+      var replacement = matcher.group("prefix") + "?" + " ".repeat(matcher.end()-matcher.start()-2);
       matcher.appendReplacement(processedQuery, replacement);
-      ParsedArgument arg = new ParsedArgument(variable, isParentField, argumentIndexes.size());
+      var arg = new ParsedArgument(variable, isParentField, argumentIndexes.size());
       argumentIndexes.add(arg);
     }
     matcher.appendTail(processedQuery);
@@ -262,14 +264,16 @@ public class SqrlStatementParser {
   }
 
   static ParsedObject<String> parse(Matcher matcher, String groupName, String statement) {
-    String content = matcher.group(groupName);
+    var content = matcher.group(groupName);
     return parse(content, statement, content!=null?matcher.start(groupName):0);
   }
 
   static ParsedObject<String> parse(String content, String statement, int charOffset) {
-    if (content==null) return new ParsedObject<>(null, FileLocation.START);
+    if (content==null) {
+		return new ParsedObject<>(null, FileLocation.START);
+	}
 
-    FileLocation fileLocation = computeFileLocation(statement, charOffset);
+    var fileLocation = computeFileLocation(statement, charOffset);
     return new ParsedObject<>(content, fileLocation);
   }
 

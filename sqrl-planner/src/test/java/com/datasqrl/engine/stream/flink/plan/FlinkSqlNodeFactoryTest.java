@@ -2,16 +2,12 @@ package com.datasqrl.engine.stream.flink.plan;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import com.datasqrl.calcite.Dialect;
-import com.datasqrl.calcite.QueryPlanner;
-import com.datasqrl.config.TableConfig.MetadataEntry;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import lombok.Value;
-import org.apache.calcite.rel.type.RelDataType;
+
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeSystem;
 import org.apache.calcite.sql.SqlIdentifier;
@@ -21,13 +17,13 @@ import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeFactoryImpl;
 import org.apache.calcite.sql.type.SqlTypeName;
-import org.apache.flink.sql.parser.ddl.SqlCreateFunction;
-import org.apache.flink.sql.parser.ddl.SqlCreateTable;
-import org.apache.flink.sql.parser.ddl.SqlCreateView;
-import org.apache.flink.sql.parser.ddl.SqlWatermark;
-import org.apache.flink.sql.parser.ddl.constraint.SqlTableConstraint;
-import org.apache.flink.sql.parser.dml.RichSqlInsert;
 import org.junit.jupiter.api.Test;
+
+import com.datasqrl.calcite.Dialect;
+import com.datasqrl.calcite.QueryPlanner;
+import com.datasqrl.config.TableConfig.MetadataEntry;
+
+import lombok.Value;
 
 public class FlinkSqlNodeFactoryTest {
 
@@ -44,15 +40,15 @@ public class FlinkSqlNodeFactoryTest {
   }
   @Test
   void testCreateView() {
-    String tableName = "my_view";
+    var tableName = "my_view";
     SqlNode fromTable = FlinkSqlNodeFactory.identifier("source_table");
-    SqlNodeList selectList = new SqlNodeList(SqlParserPos.ZERO);
+    var selectList = new SqlNodeList(SqlParserPos.ZERO);
     selectList.add(new SqlIdentifier("*", SqlParserPos.ZERO));
-    SqlSelect select = new SqlSelect(SqlParserPos.ZERO, null, selectList, fromTable, null, null, null, null, null, null, null, null);
+    var select = new SqlSelect(SqlParserPos.ZERO, null, selectList, fromTable, null, null, null, null, null, null, null, null);
 
-    SqlCreateView createView = FlinkSqlNodeFactory.createView(tableName, select);
-    String sql = unparse(createView);
-    String expectedSql = """
+    var createView = FlinkSqlNodeFactory.createView(tableName, select);
+    var sql = unparse(createView);
+    var expectedSql = """
         CREATE VIEW `my_view`
         AS
         SELECT `*`
@@ -62,15 +58,15 @@ public class FlinkSqlNodeFactoryTest {
 
   @Test
   void testCreateInsert() {
-    String targetTable = "target_table";
+    var targetTable = "target_table";
     SqlNode fromTable = FlinkSqlNodeFactory.identifier("source_table");
-    SqlNodeList selectList = new SqlNodeList(SqlParserPos.ZERO);
+    var selectList = new SqlNodeList(SqlParserPos.ZERO);
     selectList.add(new SqlIdentifier("*", SqlParserPos.ZERO));
-    SqlSelect select = new SqlSelect(SqlParserPos.ZERO, null, selectList, fromTable, null, null, null, null, null, null, null, null);
+    var select = new SqlSelect(SqlParserPos.ZERO, null, selectList, fromTable, null, null, null, null, null, null, null, null);
 
-    RichSqlInsert insert = FlinkSqlNodeFactory.createInsert(select, targetTable);
-    String sql = unparse(insert);
-    String expectedSql = """
+    var insert = FlinkSqlNodeFactory.createInsert(select, targetTable);
+    var sql = unparse(insert);
+    var expectedSql = """
         INSERT INTO `target_table`
         (SELECT `*`
          FROM `source_table`)""";
@@ -79,45 +75,45 @@ public class FlinkSqlNodeFactoryTest {
 
   @Test
   void testCreateFunction() {
-    String functionName = "my_udf";
-    String className = "com.example.MyUDF";
-    SqlCreateFunction createFunction = FlinkSqlNodeFactory.createFunction(functionName, className, false);
+    var functionName = "my_udf";
+    var className = "com.example.MyUDF";
+    var createFunction = FlinkSqlNodeFactory.createFunction(functionName, className, false);
 
-    String sql = unparse(createFunction);
-    String expectedSql = "CREATE FUNCTION IF NOT EXISTS `my_udf` AS 'com.example.MyUDF' LANGUAGE JAVA";
+    var sql = unparse(createFunction);
+    var expectedSql = "CREATE FUNCTION IF NOT EXISTS `my_udf` AS 'com.example.MyUDF' LANGUAGE JAVA";
     assertEquals(expectedSql, sql.trim());
   }
 
   @Test
   void testCreateWatermark() {
-    String eventTimeColumn = "timestamp_col";
-    SqlIdentifier eventTimeIdentifier = FlinkSqlNodeFactory.identifier(eventTimeColumn);
-    String delay = "5";
-    SqlNode watermarkStrategy = FlinkSqlNodeFactory.boundedStrategy(eventTimeIdentifier, delay);
+    var eventTimeColumn = "timestamp_col";
+    var eventTimeIdentifier = FlinkSqlNodeFactory.identifier(eventTimeColumn);
+    var delay = "5";
+    var watermarkStrategy = FlinkSqlNodeFactory.boundedStrategy(eventTimeIdentifier, delay);
 
-    SqlWatermark watermark = FlinkSqlNodeFactory.createWatermark(eventTimeIdentifier, watermarkStrategy);
-    String sql = unparse(watermark);
-    String expectedSql = "WATERMARK FOR `timestamp_col` AS `timestamp_col` - INTERVAL '5' SECOND";
+    var watermark = FlinkSqlNodeFactory.createWatermark(eventTimeIdentifier, watermarkStrategy);
+    var sql = unparse(watermark);
+    var expectedSql = "WATERMARK FOR `timestamp_col` AS `timestamp_col` - INTERVAL '5' SECOND";
     assertEquals(expectedSql, sql.trim());
   }
 
   @Test
   void testBoundedStrategy() {
-    SqlIdentifier watermark = FlinkSqlNodeFactory.identifier("timestamp_col");
-    String delay = "5";
+    var watermark = FlinkSqlNodeFactory.identifier("timestamp_col");
+    var delay = "5";
 
-    SqlNode boundedStrategy = FlinkSqlNodeFactory.boundedStrategy(watermark, delay);
-    String sql = unparse(boundedStrategy);
-    String expectedSql = "`timestamp_col` - INTERVAL '5' SECOND";
+    var boundedStrategy = FlinkSqlNodeFactory.boundedStrategy(watermark, delay);
+    var sql = unparse(boundedStrategy);
+    var expectedSql = "`timestamp_col` - INTERVAL '5' SECOND";
     assertEquals(expectedSql, sql.trim());
   }
 
   @Test
   void testCreatePrimaryKeyConstraint() {
     List<String> primaryKeyColumns = Arrays.asList("id", "timestamp_col");
-    SqlTableConstraint pkConstraint = FlinkSqlNodeFactory.createPrimaryKeyConstraint(primaryKeyColumns);
-    String sql = unparse(pkConstraint);
-    String expectedSql = "PRIMARY KEY (`id`, `timestamp_col`) NOT ENFORCED";
+    var pkConstraint = FlinkSqlNodeFactory.createPrimaryKeyConstraint(primaryKeyColumns);
+    var sql = unparse(pkConstraint);
+    var expectedSql = "PRIMARY KEY (`id`, `timestamp_col`) NOT ENFORCED";
     assertEquals(expectedSql, sql.trim());
   }
 
@@ -128,32 +124,32 @@ public class FlinkSqlNodeFactoryTest {
     options.put("topic", "my_topic");
     options.put("format", "json");
 
-    SqlNodeList properties = FlinkSqlNodeFactory.createProperties(options);
-    String sql = unparse(properties);
-    String expectedSql = "'connector' = 'kafka', 'format' = 'json', 'topic' = 'my_topic'";
+    var properties = FlinkSqlNodeFactory.createProperties(options);
+    var sql = unparse(properties);
+    var expectedSql = "'connector' = 'kafka', 'format' = 'json', 'topic' = 'my_topic'";
     assertEquals(expectedSql, sql.trim());
   }
 
   @Test
   void testCreatePartitionKeys() {
     List<String> partitionKeys = Arrays.asList("year", "month", "day");
-    SqlNodeList partitionKeysNode = FlinkSqlNodeFactory.createPartitionKeys(partitionKeys);
-    String sql = unparse(partitionKeysNode);
-    String expectedSql = "`year`, `month`, `day`";
+    var partitionKeysNode = FlinkSqlNodeFactory.createPartitionKeys(partitionKeys);
+    var sql = unparse(partitionKeysNode);
+    var expectedSql = "`year`, `month`, `day`";
     assertEquals(expectedSql, sql.trim());
   }
 
   @Test
   void testCreateTable() {
-    String tableName = "my_table";
+    var tableName = "my_table";
     RelDataTypeFactory typeFactory = new SqlTypeFactoryImpl(RelDataTypeSystem.DEFAULT);
 
     // Define the schema
-    RelDataType intType = typeFactory.createSqlType(SqlTypeName.INTEGER);
-    RelDataType varcharType = typeFactory.createSqlType(SqlTypeName.VARCHAR, 255);
-    RelDataType timestampType = typeFactory.createSqlType(SqlTypeName.TIMESTAMP);
+    var intType = typeFactory.createSqlType(SqlTypeName.INTEGER);
+    var varcharType = typeFactory.createSqlType(SqlTypeName.VARCHAR, 255);
+    var timestampType = typeFactory.createSqlType(SqlTypeName.TIMESTAMP);
 
-    RelDataType rowType = typeFactory.builder()
+    var rowType = typeFactory.builder()
         .add("id", intType)
         .add("name", varcharType)
         .add("timestamp_col", timestampType)
@@ -162,7 +158,7 @@ public class FlinkSqlNodeFactoryTest {
         .build();
 
     Optional<List<String>> partitionKeys = Optional.of(Arrays.asList("name"));
-    long watermarkMillis = 5000;
+    var watermarkMillis = 5000L;
     Optional<String> timestampColumn = Optional.of("timestamp_col");
     Map<String, MetadataEntry> metadataConfig = new HashMap<>();
 
@@ -186,7 +182,7 @@ public class FlinkSqlNodeFactoryTest {
       return FlinkSqlNodeFactory.identifier(expression);
     };
 
-    SqlCreateTable createTable = FlinkSqlNodeFactory.createTable(
+    var createTable = FlinkSqlNodeFactory.createTable(
         tableName,
         rowType,
         partitionKeys,
@@ -198,8 +194,8 @@ public class FlinkSqlNodeFactoryTest {
         expressionParser
     );
     // Unparse and compare SQL strings
-    String sql = unparse(createTable);
-    String expectedSql = """
+    var sql = unparse(createTable);
+    var expectedSql = """
         CREATE TABLE `my_table` (
           `id` INTEGER NOT NULL,
           `name` VARCHAR(255) CHARACTER SET `UTF-16LE` NOT NULL,

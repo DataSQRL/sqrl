@@ -1,9 +1,10 @@
 package com.datasqrl.v2.hint;
 
+import java.util.List;
+
 import com.datasqrl.v2.hint.PlannerHint.Type;
 import com.datasqrl.v2.parser.ParsedObject;
 import com.datasqrl.v2.parser.SqrlHint;
-import java.util.List;
 
 public interface Hint {
 

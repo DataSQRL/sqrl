@@ -8,45 +8,6 @@ import static com.datasqrl.io.tables.TableType.STREAM;
 import static com.datasqrl.util.CalciteUtil.CAST_TRANSFORM;
 import static com.datasqrl.util.CalciteUtil.COALESCE_TRANSFORM;
 
-import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.error.ErrorCode;
-import com.datasqrl.error.ErrorLabel;
-import com.datasqrl.v2.TableAnalysisLookup;
-import com.datasqrl.v2.analyzer.cost.CostAnalysis;
-import com.datasqrl.v2.analyzer.cost.JoinCostAnalysis;
-import com.datasqrl.plan.rules.SqrlRelShuttle;
-import com.datasqrl.v2.hint.ColumnNamesHint;
-import com.google.common.collect.Iterables;
-import lombok.Value;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.calcite.prepare.CalciteCatalogReader;
-import org.apache.calcite.rel.RelFieldCollation;
-import org.apache.calcite.rel.RelShuttleImpl;
-import org.apache.calcite.rel.SingleRel;
-import org.apache.calcite.rel.core.Uncollect;
-import org.apache.calcite.rel.hint.Hintable;
-import org.apache.calcite.rel.logical.LogicalCalc;
-import org.apache.calcite.rel.logical.LogicalExchange;
-import org.apache.calcite.rel.logical.LogicalIntersect;
-import org.apache.calcite.rel.logical.LogicalMatch;
-import org.apache.calcite.rel.logical.LogicalMinus;
-import com.datasqrl.calcite.SqrlRexUtil;
-import com.datasqrl.calcite.SqrlRexUtil.JoinConditionDecomposition;
-import com.datasqrl.calcite.SqrlRexUtil.JoinConditionDecomposition.EqualityCondition;
-import com.datasqrl.engine.EngineFeature;
-import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.v2.hint.PlannerHints;
-import com.datasqrl.v2.hint.PrimaryKeyHint;
-import com.datasqrl.v2.parser.StatementParserException;
-import com.datasqrl.v2.tables.SqrlTableFunction;
-import com.datasqrl.io.tables.TableType;
-import com.datasqrl.plan.rules.JoinAnalysis.Side;
-import com.datasqrl.plan.util.IndexMap;
-import com.datasqrl.plan.util.PrimaryKeyMap;
-import com.datasqrl.plan.util.PrimaryKeyMap.ColumnSet;
-import com.datasqrl.util.CalciteUtil;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.LinkedHashMultimap;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.HashSet;
@@ -57,17 +18,26 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import lombok.NonNull;
+
 import org.apache.calcite.linq4j.Ord;
 import org.apache.calcite.plan.RelOptTable;
+import org.apache.calcite.prepare.CalciteCatalogReader;
 import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.rel.core.JoinRelType;
+import org.apache.calcite.rel.RelShuttleImpl;
+import org.apache.calcite.rel.SingleRel;
 import org.apache.calcite.rel.core.TableFunctionScan;
 import org.apache.calcite.rel.core.TableScan;
+import org.apache.calcite.rel.core.Uncollect;
+import org.apache.calcite.rel.hint.Hintable;
 import org.apache.calcite.rel.logical.LogicalAggregate;
+import org.apache.calcite.rel.logical.LogicalCalc;
 import org.apache.calcite.rel.logical.LogicalCorrelate;
+import org.apache.calcite.rel.logical.LogicalExchange;
 import org.apache.calcite.rel.logical.LogicalFilter;
+import org.apache.calcite.rel.logical.LogicalIntersect;
 import org.apache.calcite.rel.logical.LogicalJoin;
+import org.apache.calcite.rel.logical.LogicalMatch;
+import org.apache.calcite.rel.logical.LogicalMinus;
 import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rel.logical.LogicalSnapshot;
 import org.apache.calcite.rel.logical.LogicalSort;
@@ -77,22 +47,42 @@ import org.apache.calcite.rel.logical.LogicalValues;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexCall;
-import org.apache.calcite.rex.RexFieldCollation;
-import org.apache.calcite.rex.RexLiteral;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexOver;
 import org.apache.calcite.rex.RexShuttle;
 import org.apache.calcite.rex.RexSubQuery;
-import org.apache.calcite.rex.RexWindow;
-import org.apache.calcite.schema.TableFunction;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
 import org.apache.calcite.tools.RelBuilder;
-import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
-import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.apache.flink.table.planner.calcite.FlinkRelBuilder;
 import org.apache.flink.table.planner.functions.sql.SqlWindowTableFunction;
 import org.apache.flink.table.planner.plan.schema.TableSourceTable;
+
+import com.datasqrl.calcite.SqrlRexUtil;
+import com.datasqrl.calcite.SqrlRexUtil.JoinConditionDecomposition.EqualityCondition;
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.engine.EngineFeature;
+import com.datasqrl.error.ErrorCode;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.io.tables.TableType;
+import com.datasqrl.plan.rules.JoinAnalysis.Side;
+import com.datasqrl.plan.rules.SqrlRelShuttle;
+import com.datasqrl.plan.util.IndexMap;
+import com.datasqrl.plan.util.PrimaryKeyMap;
+import com.datasqrl.util.CalciteUtil;
+import com.datasqrl.v2.TableAnalysisLookup;
+import com.datasqrl.v2.analyzer.cost.CostAnalysis;
+import com.datasqrl.v2.analyzer.cost.JoinCostAnalysis;
+import com.datasqrl.v2.hint.PlannerHints;
+import com.datasqrl.v2.hint.PrimaryKeyHint;
+import com.datasqrl.v2.tables.SqrlTableFunction;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.LinkedHashMultimap;
+
+import lombok.NonNull;
+import lombok.Value;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Analyses a view to produce a {@link ViewAnalysis} which includes the {@link TableAnalysis}
@@ -163,7 +153,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
 
   public ViewAnalysis analyze(PlannerHints hints) {
     originalRelnode.accept(this);
-    RelNodeAnalysis analysis = this.intermediateAnalysis;
+    var analysis = this.intermediateAnalysis;
 
     if (analysis.type.isStream() && analysis.getRowTime().isEmpty()) {
       //If we don't have a rowtime, let's check if we lost it when all inputs had a rowtime
@@ -188,7 +178,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
           PrimaryKeyMap.of(pkHint.get().getColumnIndexes())).build();
     }
     //To "be" a most recent distinct is must have one and not change the selected columns on a stream.
-    boolean isMostRecentDistinct = hasMostRecentDistinct && sourceTables.size()==1
+    var isMostRecentDistinct = hasMostRecentDistinct && sourceTables.size()==1
         && sourceTables.get(0).getRowType().equals(originalRelnode.getRowType())
         && sourceTables.get(0).getType().isStream();
     //The base table is the right-most table in the relational tree that has the same type as the result
@@ -201,7 +191,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
           .filter(tbl -> !Name.isHiddenString(tbl.getName()));
     }
 
-    TableAnalysis.TableAnalysisBuilder tableAnalysis = TableAnalysis.builder()
+    var tableAnalysis = TableAnalysis.builder()
         .collapsedRelnode(analysis.relNode)
         .originalRelnode(tableLookup.normalizeRelnode(originalRelnode))
         .type(analysis.getType())
@@ -227,12 +217,12 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
    * @return
    */
   protected RelNodeAnalysis analyzeRelNode(RelNode input) {
-    Optional<TableAnalysis> tableAnalysis = tableLookup.lookupTable(input);
+    var tableAnalysis = tableLookup.lookupTable(input);
     if (tableAnalysis.isPresent()) {
       return fromSource(tableAnalysis.get(), input);
     } else {
       input.accept(this);
-      RelNodeAnalysis analysis = this.intermediateAnalysis;
+      var analysis = this.intermediateAnalysis;
       this.intermediateAnalysis = null;
       return analysis;
     }
@@ -241,7 +231,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
   private RelNodeAnalysis fromSource(TableAnalysis tableAnalysis, RelNode input) {
     sourceTables.add(tableAnalysis);
     RelOptTable table = catalog.getTable(tableAnalysis.getIdentifier().toList());
-    LogicalTableScan scan = new LogicalTableScan(input.getCluster(), input.getTraitSet(), (input instanceof Hintable h)?h.getHints():List.of(), table);
+    var scan = new LogicalTableScan(input.getCluster(), input.getTraitSet(), (input instanceof Hintable h)?h.getHints():List.of(), table);
     return tableAnalysis.toRelNode(scan);
   }
 
@@ -249,7 +239,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
     @Override
     protected RelNode visitChild(RelNode parent, int i, RelNode child) {
       if (i==0) {
-        Optional<TableAnalysis> tableAnalysis = tableLookup.lookupTable(parent);
+        var tableAnalysis = tableLookup.lookupTable(parent);
         if (tableAnalysis.isPresent()) {
           parent = fromSource(tableAnalysis.get(), parent).relNode;
         } else {
@@ -267,7 +257,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
 
     @Override
     public RexNode visitSubQuery(RexSubQuery subQuery) {
-      RelNode rewritten = subQuery.rel.accept(subQueryRelShuttle);
+      var rewritten = subQuery.rel.accept(subQueryRelShuttle);
       return subQuery.clone(rewritten);
     }
   };
@@ -301,9 +291,9 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
     }
 
     //Default handling: if it has a single child, pass through, else use defaults
-    List<RelNodeAnalysis> children = getInputAnalyses(relNode);
+    var children = getInputAnalyses(relNode);
     if (relNode.getInputs().size()==1) {
-      RelNodeAnalysis child = children.get(0);
+      var child = children.get(0);
       return setProcessResult(child.toBuilder().relNode(updateRelnode(relNode, List.of(child.relNode))).build());
     } else {
       return setProcessResult(RelNodeAnalysis.builder().relNode(
@@ -319,10 +309,10 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
 
   @Override
   public RelNode visit(TableScan tableScan) {
-    RelOptTable table = tableScan.getTable();
+    var table = tableScan.getTable();
     Preconditions.checkArgument(table instanceof TableSourceTable);
-    ObjectIdentifier tablePath = ((TableSourceTable)table).contextResolvedTable().getIdentifier();
-    TableAnalysis tableAnalysis = tableLookup.lookupSourceTable(tablePath);
+    var tablePath = ((TableSourceTable)table).contextResolvedTable().getIdentifier();
+    var tableAnalysis = tableLookup.lookupSourceTable(tablePath);
     errors.checkFatal(tableAnalysis!=null, "Could not find table: %s", tablePath);
     sourceTables.add(tableAnalysis);
     return sourceTable(tableAnalysis.toRelNode(tableScan));
@@ -338,9 +328,9 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
 
   @Override
   public RelNode visit(TableFunctionScan functionScan) {
-    RexCall call = (RexCall) functionScan.getCall();
+    var call = (RexCall) functionScan.getCall();
     if (call.getOperator() instanceof SqlUserDefinedTableFunction) {
-      TableFunction tableFunction = ((SqlUserDefinedTableFunction)call.getOperator()).getFunction();
+      var tableFunction = ((SqlUserDefinedTableFunction)call.getOperator()).getFunction();
       if (tableFunction instanceof SqrlTableFunction sqrlFct) {
         capabilityAnalysis.add(EngineFeature.TABLE_FUNCTION_SCAN);
         sourceTables.add(sqrlFct);
@@ -348,11 +338,13 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
       }
     } else if (call.getOperator() instanceof SqlWindowTableFunction) {
       //It's a flink time window function
-      SqlWindowTableFunction windowFunction = (SqlWindowTableFunction) call.getOperator();
+      var windowFunction = (SqlWindowTableFunction) call.getOperator();
       capabilityAnalysis.add(EngineFeature.STREAM_WINDOW_AGGREGATION);
       if (functionScan.getInputs().size()==1) {
-        RelNodeAnalysis input = getInputAnalyses(functionScan).get(0);
-        if (input.hasNowFilter) errors.notice("Rewrite now-filter followed by a window aggregation to a sliding time window");
+        var input = getInputAnalyses(functionScan).get(0);
+        if (input.hasNowFilter) {
+			errors.notice("Rewrite now-filter followed by a window aggregation to a sliding time window");
+		}
         return setProcessResult(input.toBuilder().relNode(updateRelnode(functionScan, List.of(input.relNode))).hasNowFilter(false).build());
       }
     }
@@ -362,7 +354,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
 
   @Override
   public RelNode visit(LogicalValues logicalValues) {
-    PrimaryKeyMap pk = determinePK(logicalValues);
+    var pk = determinePK(logicalValues);
     return setProcessResult(RelNodeAnalysis.builder().relNode(logicalValues).type(TableType.STATIC)
         .primaryKey(pk).build());
   }
@@ -376,13 +368,17 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
    */
 
   private PrimaryKeyMap determinePK(LogicalValues logicalValues) {
-    ImmutableList<ImmutableList<RexLiteral>> tuples = logicalValues.getTuples();
-    if (tuples.size()<=1) return PrimaryKeyMap.none();
-    RelDataType rowType = logicalValues.getRowType();
-    List<RelDataTypeField> fields = rowType.getFieldList();
-    for (int i = 0; i < fields.size(); i++) {
-      RelDataType type = fields.get(i).getType();
-      if (!CalciteUtil.isPotentialPrimaryKeyType(type)) continue;
+    var tuples = logicalValues.getTuples();
+    if (tuples.size()<=1) {
+		return PrimaryKeyMap.none();
+	}
+    var rowType = logicalValues.getRowType();
+    var fields = rowType.getFieldList();
+    for (var i = 0; i < fields.size(); i++) {
+      var type = fields.get(i).getType();
+      if (!CalciteUtil.isPotentialPrimaryKeyType(type)) {
+		continue;
+	}
       //TODO: add check for unique column values
       return PrimaryKeyMap.of(List.of(i));
     }
@@ -395,30 +391,30 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
 
   @Override
   public RelNode visit(LogicalFilter logicalFilter) {
-    RelNodeAnalysis input = getInputAnalysis(logicalFilter);
+    var input = getInputAnalysis(logicalFilter);
     logicalFilter = (LogicalFilter)logicalFilter.accept(subQueryRexShuttle);
-    RexNode condition = logicalFilter.getCondition();
-    List<RexNode> conjunctions = rexUtil.getConjunctions(condition);
+    var condition = logicalFilter.getCondition();
+    var conjunctions = rexUtil.getConjunctions(condition);
     capabilityAnalysis.analyzeRexNode(conjunctions);
 
     //Identify any columns that are constrained to a constant value and a) remove as pk if they are or b) update pk if filter is on row_number
     Set<PrimaryKeyMap.ColumnSet> pksToRemove = new HashSet<>();
     List<Integer> newPk = null;
-    boolean isMostRecentDistinct = false;
+    var isMostRecentDistinct = false;
     for (RexNode node : conjunctions) {
-      Optional<Integer> idxOpt = CalciteUtil.isEqualToConstant(node);
+      var idxOpt = CalciteUtil.isEqualToConstant(node);
       //It's a constrained primary key, remove it from the list
       idxOpt.flatMap(input.primaryKey::getForIndex).ifPresent(pksToRemove::add);
       //Check if this is the row_number of a partitioned window-over
       if (idxOpt.isPresent() && input.relNode instanceof LogicalProject project) {
-        RexNode column = project.getProjects().get(idxOpt.orElseThrow());
+        var column = project.getProjects().get(idxOpt.orElseThrow());
         //to be most recent distinct: a) only single filter on row_number, b) all other projects are RexInputRef,
         // c) over is ordered by timestamp DESC
         isMostRecentDistinct = conjunctions.size()==1 //a
             && IntStream.range(0, project.getProjects().size()).filter(i -> i!= idxOpt.get())
             .mapToObj(project.getProjects()::get).map(CalciteUtil::getInputRef).allMatch(Optional::isPresent); //b
         if (column instanceof RexOver over && column.isA(SqlKind.ROW_NUMBER)) {
-          RexWindow window = over.getWindow();
+          var window = over.getWindow();
           newPk = window.partitionKeys.stream().map(n ->
                   CalciteUtil.getInputRefThroughTransform(n, List.of(CAST_TRANSFORM, COALESCE_TRANSFORM)))
               .map(opt -> opt.orElse(-1)).collect(Collectors.toUnmodifiableList());
@@ -426,9 +422,10 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
             newPk = null; // Not all partition RexNodes are input refs
             isMostRecentDistinct = false;
           }
-          if (window.orderKeys.isEmpty()) isMostRecentDistinct = false;
-          else {
-            RexFieldCollation collation = window.orderKeys.get(0);
+          if (window.orderKeys.isEmpty()) {
+			isMostRecentDistinct = false;
+		} else {
+            var collation = window.orderKeys.get(0);
             if (!collation.getDirection().isDescending()
                 || !CalciteUtil.isRowTime(collation.getKey().getType())) {
               isMostRecentDistinct = false;
@@ -437,7 +434,9 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
         }
       }
     }
-    if (isMostRecentDistinct) hasMostRecentDistinct = true;
+    if (isMostRecentDistinct) {
+		hasMostRecentDistinct = true;
+	}
     PrimaryKeyMap pk = input.primaryKey;
     TableType type = input.getType();
     if (newPk != null) {
@@ -450,7 +449,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
           Collectors.toList()));
     }
 
-    boolean hasNowFilter = FIND_NOW.foundIn(condition);
+    var hasNowFilter = FIND_NOW.foundIn(condition);
     return setProcessResult(input.toBuilder()
         .relNode(updateRelnode(logicalFilter, List.of(input.relNode)))
         .type(type).primaryKey(pk)
@@ -465,41 +464,45 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
 
   @Override
   public RelNode visit(LogicalProject logicalProject) {
-    RelNodeAnalysis input = getInputAnalysis(logicalProject);
-    RelDataType inputType = input.relNode.getRowType();
-    RelDataType resultType = logicalProject.getRowType();
+    var input = getInputAnalysis(logicalProject);
+    var inputType = input.relNode.getRowType();
+    var resultType = logicalProject.getRowType();
     logicalProject = (LogicalProject) logicalProject.accept(subQueryRexShuttle);
     //Keep track of mappings
     LinkedHashMultimap<Integer, Integer> mappedProjects = LinkedHashMultimap.create();
 
-    boolean isTrivialProject = true;
+    var isTrivialProject = true;
     for (Ord<RexNode> exp : Ord.<RexNode>zip(logicalProject.getProjects())) {
       CalciteUtil.getNonAlteredInputRef(exp.e)
           .ifPresent(originalIndex -> mappedProjects.put(originalIndex, exp.i));
       //if this isn't mapping to the same underlying column, it's not trivial
       if (CalciteUtil.getInputRef(exp.e).filter(
           idx -> resultType.getFieldNames().get(exp.i)
-              .equalsIgnoreCase(inputType.getFieldNames().get(idx))).isEmpty()) isTrivialProject = false;
+              .equalsIgnoreCase(inputType.getFieldNames().get(idx))).isEmpty()) {
+		isTrivialProject = false;
+	}
     }
     //Map the primary key columns
-    PrimaryKeyMap pk = PrimaryKeyMap.UNDEFINED;
-    boolean lostPrimaryKeyMapping = false;
+    var pk = PrimaryKeyMap.UNDEFINED;
+    var lostPrimaryKeyMapping = false;
     if (input.primaryKey.isDefined()) {
-      PrimaryKeyMap.Builder pkBuilder = PrimaryKeyMap.build();
+      var pkBuilder = PrimaryKeyMap.build();
       for (PrimaryKeyMap.ColumnSet colSet : input.primaryKey.asList()) {
         Set<Integer> mappedTo = colSet.getIndexes().stream()
             .flatMap(idx -> mappedProjects.get(idx).stream())
             .collect(Collectors.toUnmodifiableSet());
         if (mappedTo.isEmpty()) {
           lostPrimaryKeyMapping = true;
-          int pkIdx = colSet.pickBest(inputType);
+          var pkIdx = colSet.pickBest(inputType);
 //          errors.notice("Primary key column [%s] is not selected",
 //              inputType.getFieldList().get(pkIdx).getName());
         } else {
           pkBuilder.add(mappedTo);
         }
       }
-      if (!lostPrimaryKeyMapping) pk = pkBuilder.build();
+      if (!lostPrimaryKeyMapping) {
+		pk = pkBuilder.build();
+	}
     }
     if (logicalProject.getProjects().stream().anyMatch(RexOver.class::isInstance)) {
       preservesBaseTable = false;
@@ -512,23 +515,23 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
   @Override
   public RelNode visit(LogicalJoin logicalJoin) {
 
-    RelNodeAnalysis leftIn = analyzeRelNode(logicalJoin.getLeft());
-    RelNodeAnalysis rightIn = analyzeRelNode(logicalJoin.getRight());
-    JoinRelType joinType = logicalJoin.getJoinType();
+    var leftIn = analyzeRelNode(logicalJoin.getLeft());
+    var rightIn = analyzeRelNode(logicalJoin.getRight());
+    var joinType = logicalJoin.getJoinType();
 
     Optional<TableAnalysis> rootTable = Optional.empty();
 
-    final int leftSideMaxIdx = leftIn.getFieldLength();
+    final var leftSideMaxIdx = leftIn.getFieldLength();
     final IndexMap remapRightSide = idx -> idx + leftSideMaxIdx;
-    RexNode condition = logicalJoin.getCondition();
+    var condition = logicalJoin.getCondition();
     capabilityAnalysis.analyzeRexNode(condition);
-    JoinConditionDecomposition eqDecomp = rexUtil.decomposeJoinCondition(
+    var eqDecomp = rexUtil.decomposeJoinCondition(
         condition, leftSideMaxIdx);
 
     /*We are going to detect if all the pk columns on the left or right hand side of the join
       are covered by equality constraints since that determines the resulting pk and is used
       in temporal join detection */
-    EnumMap<Side,Boolean> isPKConstrained = new EnumMap<>(Side.class);
+    var isPKConstrained = new EnumMap<Side,Boolean>(Side.class);
     for (Side side : new Side[]{Side.LEFT, Side.RIGHT}) {
       RelNodeAnalysis constrainedInput;
       Function<EqualityCondition,Integer> getEqualityIdx;
@@ -545,13 +548,13 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
       }
       Set<Integer> pkEqualities = eqDecomp.getEqualities().stream().map(getEqualityIdx)
           .collect(Collectors.toSet());
-      boolean allCovered = constrainedInput.primaryKey.isDefined() && constrainedInput.primaryKey.asList().stream()
+      var allCovered = constrainedInput.primaryKey.isDefined() && constrainedInput.primaryKey.asList().stream()
               .map(col -> col.remap(remapPk)).allMatch(col -> col.containsAny(pkEqualities));
       isPKConstrained.put(side,allCovered);
     }
 
     //Determine the joined primary key by removing pk columns that are constrained by the join condition
-    PrimaryKeyMap joinedPk = PrimaryKeyMap.UNDEFINED;
+    var joinedPk = PrimaryKeyMap.UNDEFINED;
     if (leftIn.primaryKey.isDefined() && rightIn.primaryKey.isDefined()) {
       Set<Integer> joinedPKIdx = new HashSet<>();
       List<PrimaryKeyMap.ColumnSet> combinedPkColumns = new ArrayList<>();
@@ -564,27 +567,29 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
     }
 
     //What is this for??
-    Side singletonSide = Side.NONE;
+    var singletonSide = Side.NONE;
     for (Side side : new Side[]{Side.LEFT, Side.RIGHT}) {
-      if (isPKConstrained.get(side)) singletonSide = side;
+      if (isPKConstrained.get(side)) {
+		singletonSide = side;
+	}
     }
 
 
 
     //See if this join could be written as a temporal join and detect temporal join
-    boolean isTemporalJoin = false;
+    var isTemporalJoin = false;
     if ((leftIn.type.isStream() && rightIn.type.supportsTemporalJoin() && isPKConstrained.get(Side.RIGHT))
        || (rightIn.type.isStream() && leftIn.type.supportsTemporalJoin() && isPKConstrained.get(Side.LEFT))) {
       //This could be a temporal join, check for snapshot
-      RelNodeAnalysis temporalSide = leftIn.type.isStream()?rightIn:leftIn;
-      RelNodeAnalysis streamSide = leftIn.type.isStream()?leftIn:rightIn;
+      var temporalSide = leftIn.type.isStream()?rightIn:leftIn;
+      var streamSide = leftIn.type.isStream()?leftIn:rightIn;
       if (temporalSide.getRelNode() instanceof LogicalSnapshot) {
         //TODO: do we need to check that the right rowtime was chosen?
         isTemporalJoin = true;
         rootTable = streamSide.streamRoot;
       } else {
-        RelDataType streamType = streamSide.getRowType();
-        Optional<Integer> rowTimeIdx = CalciteUtil.findBestRowTimeIndex(streamType);
+        var streamType = streamSide.getRowType();
+        var rowTimeIdx = CalciteUtil.findBestRowTimeIndex(streamType);
         rowTimeIdx.ifPresent(integer -> errors.notice(
             "You can rewrite the join as a temporal join for greater efficiency by adding: FOR SYSTEM_TIME AS OF `%s`",
             streamType.getFieldList().get(integer).getName()));
@@ -592,12 +597,12 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
     }
 
     //Detect interval join
-    boolean isIntervalJoin = false;
+    var isIntervalJoin = false;
     if (leftIn.type.isStream() && rightIn.type.isStream()) {
       //Check if the join condition contains time bounds - we use an approximation and see if
       //the condition references any rowtime columns
-      boolean hasRowTimeConstraint = FIND_ROWTIME_REF.foundIn(condition);
-      boolean sharesRootWithPkConstraint = false;
+      var hasRowTimeConstraint = FIND_ROWTIME_REF.foundIn(condition);
+      var sharesRootWithPkConstraint = false;
       /*
       Detect a special case where we are joining two child tables of the same root table (i.e. we
       have equality constraints on the root pk columns for both sides). In that case, we are guaranteed
@@ -605,16 +610,16 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
       an interval join.
        */
       if (identicalStreamRoots(leftIn.streamRoot, rightIn.streamRoot)) {
-        int numRootPks = leftIn.streamRoot.get().getPrimaryKey().getLength();
+        var numRootPks = leftIn.streamRoot.get().getPrimaryKey().getLength();
         if (leftIn.primaryKey.isDefined() && rightIn.primaryKey.isDefined()
             && leftIn.primaryKey.getLength()>=numRootPks
             && rightIn.primaryKey.getLength()>=numRootPks) {
-          List<PrimaryKeyMap.ColumnSet> leftRootPks = leftIn.primaryKey.asSubList(numRootPks);
+          var leftRootPks = leftIn.primaryKey.asSubList(numRootPks);
           List<PrimaryKeyMap.ColumnSet> rightRootPks = rightIn.primaryKey.asSubList(numRootPks)
               .stream().map(col -> col.remap(idx -> idx + leftSideMaxIdx))
               .collect(Collectors.toUnmodifiableList());
           sharesRootWithPkConstraint = true;
-          for (int i = 0; i < numRootPks; i++) {
+          for (var i = 0; i < numRootPks; i++) {
             PrimaryKeyMap.ColumnSet left = leftRootPks.get(i), right = rightRootPks.get(i);
             if (eqDecomp.getEqualities().stream().noneMatch(
                 eq -> left.contains(eq.getLeftIndex()) && right.contains(eq.getRightIndex()))) {
@@ -635,9 +640,10 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
                   .map(RelDataTypeField::getName);
           Optional<String> leftName = findRowTimeCol.apply(leftIn.relNode.getRowType()),
               rightName = findRowTimeCol.apply(rightIn.relNode.getRowType());
-          if (leftName.isPresent() && rightName.isPresent())
-            errors.notice("Add `%s = %s` JOIN condition to significantly improve performance",
+          if (leftName.isPresent() && rightName.isPresent()) {
+			errors.notice("Add `%s = %s` JOIN condition to significantly improve performance",
                 leftName.get(), rightName.get());
+		}
         } else {
           //TODO: add notice for inefficiency?
         }
@@ -684,13 +690,13 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
 
   @Override
   public RelNode visit(LogicalCorrelate logicalCorrelate) {
-    RelNodeAnalysis leftIn = analyzeRelNode(logicalCorrelate.getLeft());
-    RelNodeAnalysis rightIn = analyzeRelNode(logicalCorrelate.getRight());
+    var leftIn = analyzeRelNode(logicalCorrelate.getLeft());
+    var rightIn = analyzeRelNode(logicalCorrelate.getRight());
 
-    final int leftSideMaxIdx = leftIn.getFieldLength();
-    PrimaryKeyMap pk = PrimaryKeyMap.UNDEFINED;
+    final var leftSideMaxIdx = leftIn.getFieldLength();
+    var pk = PrimaryKeyMap.UNDEFINED;
     if (leftIn.primaryKey.isDefined() && rightIn.primaryKey.isDefined()) {
-      PrimaryKeyMap.Builder pkBuilder = leftIn.getPrimaryKey().toBuilder();
+      var pkBuilder = leftIn.getPrimaryKey().toBuilder();
       pkBuilder.addAll(rightIn.getPrimaryKey().remap(idx -> idx + leftSideMaxIdx).asList());
       pk = pkBuilder.build();
     }
@@ -703,16 +709,20 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
   }
 
   private PrimaryKeyMap intersectPrimaryKeys(List<RelNodeAnalysis> inputs) {
-    if (inputs.get(0).primaryKey.isUndefined()) return PrimaryKeyMap.UNDEFINED;
-    int pkLength = inputs.get(0).primaryKey.getLength();
+    if (inputs.get(0).primaryKey.isUndefined()) {
+		return PrimaryKeyMap.UNDEFINED;
+	}
+    var pkLength = inputs.get(0).primaryKey.getLength();
     if (inputs.stream().allMatch(in -> in.primaryKey.getLength()==pkLength)) {
-      PrimaryKeyMap.Builder pkBuilder = PrimaryKeyMap.build();
+      var pkBuilder = PrimaryKeyMap.build();
       //Compute the intersection of all column sets
-      for (int i = 0; i < pkLength; i++) {
-        ColumnSet colset = inputs.get(0).primaryKey.get(i);
-        for (int j = 1; j < inputs.size(); j++) {
+      for (var i = 0; i < pkLength; i++) {
+        var colset = inputs.get(0).primaryKey.get(i);
+        for (var j = 1; j < inputs.size(); j++) {
           colset = colset.intersect(inputs.get(j).primaryKey.get(i));
-          if (colset.isEmpty()) return PrimaryKeyMap.UNDEFINED;
+          if (colset.isEmpty()) {
+			return PrimaryKeyMap.UNDEFINED;
+		}
         }
         pkBuilder.add(colset);
       }
@@ -722,8 +732,8 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
   }
 
   public RelNode visitSetOperation(RelNode setOperation, boolean preservesStream) {
-    List<RelNodeAnalysis> inputs = getInputAnalyses(setOperation);
-    TableType resultType = TableType.STATE;
+    var inputs = getInputAnalyses(setOperation);
+    var resultType = TableType.STATE;
     if (inputs.stream().allMatch(in -> in.type == TableType.STATIC)) {
       resultType = TableType.STATIC;
     } else if (inputs.stream().anyMatch(in -> in.type == TableType.RELATION)) {
@@ -732,12 +742,12 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
       resultType = STREAM;
     }
     //Check if we have an intersection of primary keys
-    PrimaryKeyMap pk = intersectPrimaryKeys(inputs);
+    var pk = intersectPrimaryKeys(inputs);
 
-    boolean nowFilter = inputs.stream().anyMatch(in -> in.hasNowFilter);
+    var nowFilter = inputs.stream().anyMatch(in -> in.hasNowFilter);
     //Check if all stream roots are identical
-    Optional<TableAnalysis> streamRoot = inputs.get(0).streamRoot;
-    for (int i = 1; i < inputs.size(); i++) {
+    var streamRoot = inputs.get(0).streamRoot;
+    for (var i = 1; i < inputs.size(); i++) {
       if (!identicalStreamRoots(streamRoot, inputs.get(i).streamRoot)) {
         streamRoot = Optional.empty();
       }
@@ -765,9 +775,9 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
 
   @Override
   public RelNode visit(LogicalAggregate aggregate) {
-    RelNodeAnalysis input = getInputAnalysis(aggregate);
+    var input = getInputAnalysis(aggregate);
     capabilityAnalysis.analyzeAggregates(aggregate.getAggCallList());
-    final List<Integer> groupByIdx = aggregate.getGroupSet().asList();
+    final var groupByIdx = aggregate.getGroupSet().asList();
     preservesBaseTable = false;
 
     /*
@@ -777,13 +787,13 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
      List<Integer> finalGroupByIdx = groupByIdx.stream().sorted().collect(Collectors.toList());
     Preconditions.checkArgument(groupByIdx.stream().map(finalGroupByIdx::indexOf).allMatch(idx ->idx >= 0),
         "Invalid groupByIdx [%s] to [%s]", groupByIdx, finalGroupByIdx);
-    PrimaryKeyMap pk = PrimaryKeyMap.of(groupByIdx.stream().map(finalGroupByIdx::indexOf).collect(
+    var pk = PrimaryKeyMap.of(groupByIdx.stream().map(finalGroupByIdx::indexOf).collect(
         Collectors.toList()));
 
     Optional<TableAnalysis> streamRoot = Optional.empty();
     if (input.type == STREAM && input.streamRoot.isPresent()) {
-      TableAnalysis rootTable = input.streamRoot.get();
-      int numRootPks = rootTable.getPrimaryKey().getLength();
+      var rootTable = input.streamRoot.get();
+      var numRootPks = rootTable.getPrimaryKey().getLength();
       //Check that all root primary keys are part of the groupBy
       if (IntStream.range(0, numRootPks).allMatch(i -> rootTable.getPrimaryKey().get(i).containsAny(groupByIdx))) {
         streamRoot = Optional.of(rootTable);
@@ -793,7 +803,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
     }
 
     List<String> groupByFieldNames = groupByIdx.stream().map(input::getFieldName).map(String::toLowerCase).collect(Collectors.toList());
-    TableType resultType = TableType.STATE;
+    var resultType = TableType.STATE;
     //make stream if aggregation is on TVF with window start, end
     if (input.type==STREAM && groupByFieldNames.contains("window_start") && groupByFieldNames.contains("window_end")) {
       resultType = STREAM;
@@ -806,9 +816,9 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
   @Override
   public RelNode visit(LogicalMatch logicalMatch) {
     //Check if this is an event time
-    RelNodeAnalysis input = getInputAnalysis(logicalMatch);
+    var input = getInputAnalysis(logicalMatch);
     if (input.type.isStream()) {
-      Optional<RelFieldCollation> firstOrder = logicalMatch.getOrderKeys().getFieldCollations().stream().findFirst();
+      var firstOrder = logicalMatch.getOrderKeys().getFieldCollations().stream().findFirst();
       if (firstOrder.isPresent() && CalciteUtil.isRowTime(input.getField(firstOrder.get().getFieldIndex()).getType())) {
         return setProcessResult(RelNodeAnalysis.builder().type(STREAM).relNode(logicalMatch).build());
       } else {

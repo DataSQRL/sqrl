@@ -1,15 +1,11 @@
 package com.datasqrl.v2;
 
-import com.datasqrl.v2.analyzer.TableAnalysis;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.ListMultimap;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import lombok.Value;
+
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.core.AggregateCall;
@@ -23,12 +19,17 @@ import org.apache.calcite.rex.RexCorrelVariable;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
 import org.apache.calcite.rex.RexSubQuery;
-import org.apache.calcite.sql.SqlAggFunction;
 import org.apache.flink.table.catalog.ContextResolvedFunction;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.apache.flink.table.functions.FunctionIdentifier;
 import org.apache.flink.table.planner.functions.bridging.BridgingSqlAggFunction;
 import org.apache.flink.table.planner.functions.bridging.BridgingSqlFunction;
+
+import com.datasqrl.v2.analyzer.TableAnalysis;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ListMultimap;
+
+import lombok.Value;
 
 /**
  * This class primarily exists to collapse views that were expanded by Flink
@@ -53,19 +54,25 @@ public class TableAnalysisLookup {
   }
 
   public Optional<TableAnalysis> lookupTable(RelNode originalRelnode) {
-    int hashCode = originalRelnode.getRowType().hashCode();
+    var hashCode = originalRelnode.getRowType().hashCode();
     if (tableMap.containsKey(hashCode)) {
-      RelNode normalizeRelnode = normalizeRelnode(originalRelnode);
+      var normalizeRelnode = normalizeRelnode(originalRelnode);
       List<TableAnalysis> allMatches = tableMap.get(hashCode).stream().filter(tbl -> matches(tbl, normalizeRelnode)).collect(
           Collectors.toList());
       //return last one in case there are multiple matches
-      if (allMatches.isEmpty()) return Optional.empty();
+      if (allMatches.isEmpty()) {
+		return Optional.empty();
+	}
       return Optional.of(allMatches.get(allMatches.size()-1));
-    } else return Optional.empty();
+    } else {
+		return Optional.empty();
+	}
   }
 
   private static boolean matches(TableAnalysis tbl, RelNode otherRelNode) {
-    if (tbl.getOriginalRelnode()==null) return false;
+    if (tbl.getOriginalRelnode()==null) {
+		return false;
+	}
     return tbl.getOriginalRelnode().deepEquals(otherRelNode);
   }
 
@@ -74,7 +81,7 @@ public class TableAnalysisLookup {
   }
 
   public void removeTable(ObjectIdentifier tableIdentifier) {
-    TableAnalysis priorTable = id2Table.remove(tableIdentifier);
+    var priorTable = id2Table.remove(tableIdentifier);
     if (priorTable != null && !priorTable.isSourceOrSink()) {
       tableMap.remove(priorTable.getRowType().hashCode(), priorTable);
     }
@@ -97,7 +104,7 @@ public class TableAnalysisLookup {
    * @return
    */
   public RelNode normalizeRelnode(RelNode relNode) {
-    RelnodeNormalizer correlIdNormalizer = new RelnodeNormalizer(relNode.getCluster().getRexBuilder());
+    var correlIdNormalizer = new RelnodeNormalizer(relNode.getCluster().getRexBuilder());
     relNode = relNode.accept(correlIdNormalizer);
     return relNode;
   }
@@ -125,27 +132,31 @@ public class TableAnalysisLookup {
         if (correlationIdAdjustment < 0) {
           correlationIdAdjustment = correlationId.getId()-1;
         }
-        if (correlationIdAdjustment == 0) return Optional.empty();
+        if (correlationIdAdjustment == 0) {
+			return Optional.empty();
+		}
         return Optional.of(new CorrelationId(correlationId.getId()-correlationIdAdjustment));
-      } else return Optional.empty();
+      } else {
+		return Optional.empty();
+	}
     }
 
     private Optional<ContextResolvedFunction> normalizeFunction(ContextResolvedFunction resolvedFunc) {
       if (resolvedFunc.getIdentifier().isPresent()) {
-        FunctionIdentifier funcId = resolvedFunc.getIdentifier().get();
+        var funcId = resolvedFunc.getIdentifier().get();
         if (!funcId.getFunctionName().equals(funcId.getFunctionName().toUpperCase())) {
           FunctionIdentifier normalizedFuncId;
           if (funcId.getSimpleName().isPresent()) {
             normalizedFuncId = FunctionIdentifier.of(
                 funcId.getSimpleName().get().toUpperCase());
           } else {
-            ObjectIdentifier identifier = funcId.getIdentifier().get();
-            ObjectIdentifier normalizedIdentifier = ObjectIdentifier.of(
+            var identifier = funcId.getIdentifier().get();
+            var normalizedIdentifier = ObjectIdentifier.of(
                 identifier.getCatalogName(), identifier.getDatabaseName(),
                 identifier.getObjectName().toUpperCase());
             normalizedFuncId = FunctionIdentifier.of(normalizedIdentifier);
           }
-          ContextResolvedFunction normalizedResolvedFunc = ContextResolvedFunction.temporary(
+          var normalizedResolvedFunc = ContextResolvedFunction.temporary(
               normalizedFuncId,
               resolvedFunc.getDefinition());
           return Optional.of(normalizedResolvedFunc);
@@ -157,11 +168,11 @@ public class TableAnalysisLookup {
     @Override
     public RelNode visit(LogicalAggregate aggregate) {
       List<AggregateCall> updatedCalls = aggregate.getAggCallList().stream().map(aggCall -> {
-        SqlAggFunction aggFct = aggCall.getAggregation();
+        var aggFct = aggCall.getAggregation();
         if (aggFct instanceof BridgingSqlAggFunction func) {
-          Optional<ContextResolvedFunction> normalizedFct = normalizeFunction(func.getResolvedFunction());
+          var normalizedFct = normalizeFunction(func.getResolvedFunction());
           if (normalizedFct.isPresent()) {
-            BridgingSqlAggFunction normalizedFunc = BridgingSqlAggFunction.of(func.getDataTypeFactory(),
+            var normalizedFunc = BridgingSqlAggFunction.of(func.getDataTypeFactory(),
                 func.getTypeFactory(), func.getKind(), normalizedFct.get(), func.getTypeInference());
             return AggregateCall.create(normalizedFunc, aggCall.isDistinct(), aggCall.isApproximate(),
                 aggCall.ignoreNulls(), aggCall.getArgList(), aggCall.filterArg, aggCall.distinctKeys,
@@ -177,10 +188,10 @@ public class TableAnalysisLookup {
 
     @Override
     public RelNode visit(LogicalCorrelate correlate) {
-      Optional<CorrelationId> adjustedId = adjustCorrelationId(correlate.getCorrelationId());
+      var adjustedId = adjustCorrelationId(correlate.getCorrelationId());
       if (adjustedId.isPresent()) {
-        RelNode left = correlate.getLeft().accept(this);
-        RelNode right = correlate.getRight().accept(this);
+        var left = correlate.getLeft().accept(this);
+        var right = correlate.getRight().accept(this);
         return correlate.copy(correlate.getTraitSet(), left, right, adjustedId.get(), correlate.getRequiredColumns(), correlate.getJoinType());
       } else {
         return super.visit(correlate);
@@ -201,7 +212,9 @@ public class TableAnalysisLookup {
 
     @Override
     protected RelNode visitChild(RelNode parent, int i, RelNode child) {
-      if (i==0) parent = parent.accept(rexNormalizer);
+      if (i==0) {
+		parent = parent.accept(rexNormalizer);
+	}
       return super.visitChild(parent, i, child);
     }
 
@@ -211,7 +224,7 @@ public class TableAnalysisLookup {
 
       @Override
       public RexNode visitCorrelVariable(RexCorrelVariable variable) {
-        Optional<CorrelationId> adjustedId = adjustCorrelationId(variable.id);
+        var adjustedId = adjustCorrelationId(variable.id);
         if (adjustedId.isPresent()) {
           return rexBuilder.makeCorrel(variable.getType(), adjustedId.get());
         } else {
@@ -221,7 +234,7 @@ public class TableAnalysisLookup {
 
       @Override
       public RexNode visitSubQuery(RexSubQuery subQuery) {
-        RelNode rewritten = subQuery.rel.accept(RelnodeNormalizer.this);
+        var rewritten = subQuery.rel.accept(RelnodeNormalizer.this);
         return subQuery.clone(rewritten);
       }
 
@@ -229,10 +242,10 @@ public class TableAnalysisLookup {
       public RexNode visitCall(RexCall call) {
         call = (RexCall) super.visitCall(call);
         if (call.getOperator() instanceof BridgingSqlFunction) {
-          BridgingSqlFunction func = (BridgingSqlFunction) call.getOperator();
-          Optional<ContextResolvedFunction> normalizedFct = normalizeFunction(func.getResolvedFunction());
+          var func = (BridgingSqlFunction) call.getOperator();
+          var normalizedFct = normalizeFunction(func.getResolvedFunction());
           if (normalizedFct.isPresent()) {
-            BridgingSqlFunction normalizedFunc = BridgingSqlFunction.of(func.getDataTypeFactory(),
+            var normalizedFunc = BridgingSqlFunction.of(func.getDataTypeFactory(),
                 func.getTypeFactory(),
                 func.getRexFactory(), func.kind, normalizedFct.get(), func.getTypeInference());
             return rexBuilder.makeCall(normalizedFunc, call.getOperands());

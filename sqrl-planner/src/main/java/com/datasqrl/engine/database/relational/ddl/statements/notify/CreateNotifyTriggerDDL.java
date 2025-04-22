@@ -1,9 +1,11 @@
 package com.datasqrl.engine.database.relational.ddl.statements.notify;
 
-import com.datasqrl.sql.SqlDDLStatement;
-import com.google.common.base.Preconditions;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import com.datasqrl.sql.SqlDDLStatement;
+import com.google.common.base.Preconditions;
+
 import lombok.NonNull;
 
 public class CreateNotifyTriggerDDL implements SqlDDLStatement {
@@ -27,7 +29,7 @@ public class CreateNotifyTriggerDDL implements SqlDDLStatement {
            RETURN NEW;
         END;
         $$ LANGUAGE plpgsql;
-        
+
         CREATE TRIGGER insert_notify_trigger
         AFTER INSERT ON "%1$s"
         FOR EACH ROW EXECUTE PROCEDURE notify_on_%1$s_insert();\
@@ -35,7 +37,7 @@ public class CreateNotifyTriggerDDL implements SqlDDLStatement {
   }
 
   private String createPayload() {
-    String argumentList = primaryKeys.stream()
+    var argumentList = primaryKeys.stream()
         .map(pk ->
             "'%s', NEW.\"%s\"".formatted(pk, pk))
         .collect(Collectors.joining(", "));

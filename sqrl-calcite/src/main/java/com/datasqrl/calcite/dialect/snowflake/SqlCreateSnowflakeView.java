@@ -1,12 +1,21 @@
 package com.datasqrl.calcite.dialect.snowflake;
 
-import org.apache.calcite.sql.*;
-import org.apache.calcite.sql.parser.SqlParserPos;
-import org.apache.calcite.util.ImmutableNullableList;
-
-import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.Objects;
+
+import javax.annotation.Nonnull;
+
+import org.apache.calcite.sql.SqlCall;
+import org.apache.calcite.sql.SqlCharStringLiteral;
+import org.apache.calcite.sql.SqlIdentifier;
+import org.apache.calcite.sql.SqlKind;
+import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqlNodeList;
+import org.apache.calcite.sql.SqlOperator;
+import org.apache.calcite.sql.SqlSpecialOperator;
+import org.apache.calcite.sql.SqlWriter;
+import org.apache.calcite.sql.parser.SqlParserPos;
+import org.apache.calcite.util.ImmutableNullableList;
 
 /**
  * CREATE [ OR REPLACE ] [ SECURE ] [ { [ { LOCAL | GLOBAL } ] TEMP | TEMPORARY | VOLATILE } ] [ RECURSIVE ] VIEW [ IF NOT EXISTS ] <name>
@@ -90,7 +99,7 @@ public class SqlCreateSnowflakeView extends SqlCall {
     viewName.unparse(writer, leftPrec, rightPrec);
 
     if (columnList != null && columnList.size() > 0) {
-      SqlWriter.Frame frame = writer.startList(SqlWriter.FrameTypeEnum.FUN_CALL, "(", ")");
+      var frame = writer.startList(SqlWriter.FrameTypeEnum.FUN_CALL, "(", ")");
       columnList.unparse(writer, 0, 0);
       writer.endList(frame);
     }

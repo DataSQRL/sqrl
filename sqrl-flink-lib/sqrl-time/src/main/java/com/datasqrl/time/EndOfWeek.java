@@ -31,8 +31,8 @@ public class EndOfWeek extends TimeTumbleWindowFunction {
     }
 //    Preconditions.checkArgument(offset >= 0 && offset <= 6, "Invalid offset in days: %s", offset);
 
-    ZonedDateTime time = ZonedDateTime.ofInstant(instant, ZoneOffset.UTC);
-    int daysToSubtract = time.getDayOfWeek().getValue() - 1 - offset.intValue();
+    var time = ZonedDateTime.ofInstant(instant, ZoneOffset.UTC);
+    var daysToSubtract = time.getDayOfWeek().getValue() - 1 - offset.intValue();
     if (daysToSubtract < 0) {
       daysToSubtract = 7 + daysToSubtract;
     }

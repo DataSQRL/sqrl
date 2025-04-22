@@ -5,7 +5,8 @@ import com.datasqrl.config.EngineType;
 
 public interface DatabaseEngineFactory extends EngineFactory {
 
-  default EngineType getEngineType() {
+  @Override
+default EngineType getEngineType() {
     return EngineType.DATABASE;
   }
 }

@@ -1,12 +1,14 @@
 package com.datasqrl.v2.analyzer;
 
-import com.datasqrl.io.tables.TableType;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import org.apache.flink.table.catalog.ObjectIdentifier;
+
+import com.datasqrl.io.tables.TableType;
+
 import lombok.AllArgsConstructor;
 import lombok.Value;
-import org.apache.flink.table.catalog.ObjectIdentifier;
 
 public interface TableOrFunctionAnalysis extends AbstractAnalysis {
 

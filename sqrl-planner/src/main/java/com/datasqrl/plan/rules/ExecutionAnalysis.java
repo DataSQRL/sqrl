@@ -3,29 +3,30 @@
  */
 package com.datasqrl.plan.rules;
 
-import com.datasqrl.engine.EngineFeature;
-import com.datasqrl.engine.pipeline.ExecutionStage;
-import com.datasqrl.plan.table.PhysicalRelationalTable;
-import com.datasqrl.util.FunctionUtil;
-import com.datasqrl.calcite.SqrlRexUtil;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
-
-import java.util.*;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.Value;
 import org.apache.calcite.rel.core.AggregateCall;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexVisitorImpl;
 import org.apache.calcite.sql.SqlOperator;
-import org.apache.flink.table.functions.FunctionDefinition;
+
+import com.datasqrl.calcite.SqrlRexUtil;
+import com.datasqrl.engine.EngineFeature;
+import com.datasqrl.engine.pipeline.ExecutionStage;
+import com.datasqrl.plan.table.PhysicalRelationalTable;
+
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.Value;
 
 @Value
 public class ExecutionAnalysis {
@@ -74,7 +75,7 @@ public class ExecutionAnalysis {
 
 
   public void requireRex(Iterable<RexNode> nodes) {
-    RexCapabilityAnalysis rexAnalysis = new RexCapabilityAnalysis();
+    var rexAnalysis = new RexCapabilityAnalysis();
     nodes.forEach(rex -> rex.accept(rexAnalysis));
     List<EngineCapability> missingCapabilities = new ArrayList<>();
     rexAnalysis.capabilities.stream().filter(Predicate.not(this::supportsFeature))

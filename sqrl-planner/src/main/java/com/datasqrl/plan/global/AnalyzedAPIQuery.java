@@ -1,13 +1,15 @@
 package com.datasqrl.plan.global;
 
+import org.apache.calcite.rel.RelNode;
+
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.queries.IdentifiedQuery;
 import com.datasqrl.plan.rules.SQRLConverter;
-import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.rules.SqrlConverterConfig;
+
 import lombok.Value;
-import org.apache.calcite.rel.RelNode;
 
 @Value
 public class AnalyzedAPIQuery implements DatabaseQuery {

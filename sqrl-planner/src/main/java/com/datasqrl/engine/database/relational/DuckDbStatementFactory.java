@@ -2,19 +2,10 @@ package com.datasqrl.engine.database.relational;
 
 import static com.datasqrl.function.CalciteFunctionUtil.lightweightOp;
 
-import com.datasqrl.calcite.Dialect;
-import com.datasqrl.calcite.DialectCallConverter;
-import com.datasqrl.calcite.OperatorRuleTransformer;
-import com.datasqrl.calcite.convert.PostgresRelToSqlNode;
-import com.datasqrl.calcite.convert.PostgresSqlNodeToString;
-import com.datasqrl.calcite.dialect.ExtendedPostgresSqlDialect;
-import com.datasqrl.calcite.type.TypeFactory;
-import com.datasqrl.config.PackageJson.EngineConfig;
-import com.datasqrl.plan.global.IndexDefinition;
-import com.datasqrl.v2.dag.plan.MaterializationStagePlan.Query;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.core.TableScan;
@@ -24,6 +15,16 @@ import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.SqlDataTypeSpec;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
+
+import com.datasqrl.calcite.Dialect;
+import com.datasqrl.calcite.OperatorRuleTransformer;
+import com.datasqrl.calcite.convert.PostgresRelToSqlNode;
+import com.datasqrl.calcite.convert.PostgresSqlNodeToString;
+import com.datasqrl.calcite.dialect.ExtendedPostgresSqlDialect;
+import com.datasqrl.calcite.type.TypeFactory;
+import com.datasqrl.config.PackageJson.EngineConfig;
+import com.datasqrl.plan.global.IndexDefinition;
+import com.datasqrl.v2.dag.plan.MaterializationStagePlan.Query;
 
 public class DuckDbStatementFactory extends AbstractJdbcStatementFactory {
 
@@ -53,8 +54,8 @@ public class DuckDbStatementFactory extends AbstractJdbcStatementFactory {
 
   @Override
   public QueryResult createQuery(Query query, boolean withView) {
-    RelNode relNode = query.getRelNode();
-    RelNode replaced = relNode.accept(new RelShuttleImpl() {
+    var relNode = query.getRelNode();
+    var replaced = relNode.accept(new RelShuttleImpl() {
       @Override
       public RelNode visit(TableScan scan) {
         Map<String, String> map = connectorOptions;

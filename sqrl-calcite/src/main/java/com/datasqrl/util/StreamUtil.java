@@ -4,11 +4,10 @@
 package com.datasqrl.util;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
 import java.util.stream.Stream;
+
 import lombok.experimental.UtilityClass;
 
 @UtilityClass
@@ -23,10 +22,14 @@ public class StreamUtil {
   }
 
   public static <T> Optional<T> getOnlyElement(Stream<T> stream) {
-    AtomicReference<T> elements = new AtomicReference<>(null);
-    long count = stream.map(e -> { elements.set(e); return e;}).count();
-    if (count==0) return Optional.empty();
-    else if (count==1) return Optional.of(elements.get());
-    else throw new IllegalArgumentException("Stream contains ["+count+"] elements");
+    var elements = new AtomicReference<T>(null);
+    var count = stream.map(e -> { elements.set(e); return e;}).count();
+    if (count==0) {
+		return Optional.empty();
+	} else if (count==1) {
+		return Optional.of(elements.get());
+	} else {
+		throw new IllegalArgumentException("Stream contains ["+count+"] elements");
+	}
   }
 }

@@ -1,6 +1,7 @@
 package com.datasqrl.engine.database.relational.ddl.statements.notify;
 
 import com.datasqrl.sql.SqlDDLStatement;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 

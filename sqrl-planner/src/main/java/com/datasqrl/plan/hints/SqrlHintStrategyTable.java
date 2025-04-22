@@ -3,9 +3,10 @@
  */
 package com.datasqrl.plan.hints;
 
-import lombok.Getter;
 import org.apache.calcite.rel.hint.HintPredicates;
 import org.apache.calcite.rel.hint.HintStrategyTable;
+
+import lombok.Getter;
 
 public class SqrlHintStrategyTable {
 

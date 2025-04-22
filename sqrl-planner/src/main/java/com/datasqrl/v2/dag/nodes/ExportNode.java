@@ -1,12 +1,15 @@
 package com.datasqrl.v2.dag.nodes;
 
+import java.util.Map;
+import java.util.Optional;
+
+import org.apache.flink.table.catalog.ObjectIdentifier;
+
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.plan.global.StageAnalysis;
-import java.util.Map;
-import java.util.Optional;
+
 import lombok.Getter;
-import org.apache.flink.table.catalog.ObjectIdentifier;
 
 /**
  * Represents an EXPORT statement in the DAG

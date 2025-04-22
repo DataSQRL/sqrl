@@ -3,17 +3,20 @@
  */
 package com.datasqrl.schema;
 
-import com.datasqrl.calcite.function.SqrlTableMacro;
-import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.canonicalizer.NamePath;
 import java.util.List;
 import java.util.function.Supplier;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
+
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.schema.FunctionParameter;
+
+import com.datasqrl.calcite.function.SqrlTableMacro;
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.canonicalizer.NamePath;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
@@ -39,7 +42,8 @@ public class Relationship implements SqrlTableMacro {
     return viewTransform.get().getRowType();
   }
 
-  public String getDisplayName() {
+  @Override
+public String getDisplayName() {
     return getFullPath().getDisplay();
   }
 

@@ -1,16 +1,18 @@
 package com.datasqrl.v2.hint;
 
-import com.datasqrl.error.ErrorLabel;
-import com.datasqrl.v2.parser.SqrlComments;
-import com.datasqrl.v2.parser.StatementParserException;
-import com.google.common.base.Preconditions;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import lombok.Value;
+
 import org.apache.calcite.rel.type.RelDataTypeField;
+
+import com.datasqrl.error.ErrorLabel;
+import com.datasqrl.v2.parser.SqrlComments;
+import com.datasqrl.v2.parser.StatementParserException;
+
+import lombok.Value;
 
 @Value
 public class PlannerHints {

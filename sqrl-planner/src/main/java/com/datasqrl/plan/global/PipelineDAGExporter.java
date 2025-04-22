@@ -1,5 +1,15 @@
 package com.datasqrl.plan.global;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.type.RelDataTypeField;
+import org.apache.calcite.schema.FunctionParameter;
+import org.apache.commons.lang3.StringUtils;
+
 import com.datasqrl.io.tables.TableType;
 import com.datasqrl.plan.rules.EngineCapability;
 import com.datasqrl.plan.util.RelWriterWithHints;
@@ -11,26 +21,14 @@ import com.datasqrl.v2.dag.nodes.ExportNode;
 import com.datasqrl.v2.dag.nodes.PipelineNode;
 import com.datasqrl.v2.dag.nodes.TableFunctionNode;
 import com.datasqrl.v2.dag.nodes.TableNode;
-import com.datasqrl.v2.tables.SourceSinkTableAnalysis;
 import com.datasqrl.v2.tables.SqrlTableFunction;
 import com.google.common.base.Strings;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Value;
 import lombok.experimental.SuperBuilder;
-import org.apache.calcite.rel.RelCollation;
-import org.apache.calcite.rel.RelFieldCollation;
-import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.rel.core.Sort;
-import org.apache.calcite.rel.type.RelDataTypeField;
-import org.apache.calcite.schema.FunctionParameter;
-import org.apache.commons.lang3.StringUtils;
 
 @Value
 @Builder
@@ -64,13 +62,14 @@ public class PipelineDAGExporter {
         List<Node> result = new ArrayList<>();
         for (PipelineNode node : dag) {
             List<String> inputs = dag.getInputs(node).stream().map(PipelineNode::getId).sorted().collect(Collectors.toUnmodifiableList());
-            String stage = node.getChosenStage().getEngine().getName().toLowerCase();
-            if (node instanceof TableNode) {
-                TableNode tableNode = (TableNode)node;
-                TableAnalysis table = tableNode.getTableAnalysis();
+            var stage = node.getChosenStage().getEngine().getName().toLowerCase();
+            if (node instanceof TableNode tableNode) {
+                var table = tableNode.getTableAnalysis();
                 if (table.getSourceSinkTable().isPresent()) {
-                    if (!includeImports) continue;
-                    SourceSinkTableAnalysis source = table.getSourceSinkTable().get();
+                    if (!includeImports) {
+						continue;
+					}
+                    var source = table.getSourceSinkTable().get();
                     result.add(Source.builder()
                             .id(table.getIdentifier().asSummaryString())
                             .name(table.getName())
@@ -79,8 +78,8 @@ public class PipelineDAGExporter {
                             .stage(stage)
                             .build());
                 } else {
-                    List<RelDataTypeField> fields = table.getRowType().getFieldList();
-                    Optional<Integer> timestampIdx = table.getRowTime();
+                    var fields = table.getRowType().getFieldList();
+                    var timestampIdx = table.getRowTime();
                     result.add(Table.builder()
                         .id(table.getIdentifier().asSummaryString())
                         .name(table.getName())
@@ -101,8 +100,7 @@ public class PipelineDAGExporter {
                         .annotations(getAnnotations(table))
                         .build());
                 }
-            } else if (node instanceof ExportNode) {
-                ExportNode export = (ExportNode)node;
+            } else if (node instanceof ExportNode export) {
                 result.add(Node.builder()
                         .id(node.getId())
                         .name(export.getSinkPath().getLast().getDisplay())
@@ -111,8 +109,10 @@ public class PipelineDAGExporter {
                         .inputs(inputs)
                         .build());
             } else if (node instanceof TableFunctionNode) {
-                SqrlTableFunction fct = ((TableFunctionNode) node).getFunction();
-                if (fct.getVisibility().isAccessOnly() && !includeQueries) continue;
+                var fct = ((TableFunctionNode) node).getFunction();
+                if (fct.getVisibility().isAccessOnly() && !includeQueries) {
+					continue;
+				}
                 result.add(Query.builder()
                         .id(node.getId())
                         .name(fct.getFullPath().toString())
@@ -131,7 +131,9 @@ public class PipelineDAGExporter {
     }
 
     private String explain(RelNode relNode) {
-        if (!includeLogicalPlan) return null;
+        if (!includeLogicalPlan) {
+			return null;
+		}
         CalciteHacks.resetToSqrlMetadataProvider();
         if (withHints) {
             return RelWriterWithHints.explain(relNode);
@@ -165,7 +167,7 @@ public class PipelineDAGExporter {
             result.add(new Annotation("stream-root", tableAnalysis.getStreamRoot().get().getName()));
         }
         if (tableAnalysis.getTopLevelSort().isPresent()) {
-            Sort sort = tableAnalysis.getTopLevelSort().get();
+            var sort = tableAnalysis.getTopLevelSort().get();
             result.add(new Annotation("sort", sort.getCollation().toString()));
         }
         return result;
@@ -183,16 +185,12 @@ public class PipelineDAGExporter {
             return name;
         }
         public static NodeType from(TableType tableType) {
-            switch (tableType) {
-                case RELATION: return RELATION;
-                case STREAM: return STREAM;
-                case STATE:
-                case STATIC:
-                case LOOKUP:
-                case VERSIONED_STATE:
-                    return STATE;
-                default: throw new UnsupportedOperationException("Unexpected type: " + tableType);
-            }
+            return switch (tableType) {
+			case RELATION -> RELATION;
+			case STREAM -> STREAM;
+			case STATE, STATIC, LOOKUP, VERSIONED_STATE -> STATE;
+			default -> throw new UnsupportedOperationException("Unexpected type: " + tableType);
+			};
         }
     }
 
@@ -219,7 +217,7 @@ public class PipelineDAGExporter {
         }
 
         String baseToString() {
-            StringBuilder s = new StringBuilder();
+            var s = new StringBuilder();
             s.append("=== ").append(name).append(LINEBREAK);
             s.append("ID:     ").append(id).append(LINEBREAK);
             s.append("Type:   ").append(type).append(LINEBREAK);
@@ -267,7 +265,7 @@ public class PipelineDAGExporter {
         String sql;
 
         String planToString() {
-            StringBuilder s = new StringBuilder();
+            var s = new StringBuilder();
             if (!Strings.isNullOrEmpty(plan)) {
                 s.append("Plan:").append(LINEBREAK);
                 s.append(plan);
@@ -294,7 +292,7 @@ public class PipelineDAGExporter {
 
         @Override
         public String toString() {
-            StringBuilder s = new StringBuilder();
+            var s = new StringBuilder();
             s.append(baseToString());
             s.append("Primary Key: ").append(primary_key==null?"-":StringUtils.join(primary_key,", ")).append(LINEBREAK);
             s.append("Timestamp  : ").append(timestamp).append(LINEBREAK);

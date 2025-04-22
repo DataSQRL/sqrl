@@ -3,6 +3,15 @@
  */
 package com.datasqrl.graphql;
 
+import java.io.File;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import org.duckdb.DuckDBDriver;
+
 import com.datasqrl.graphql.config.CorsHandlerOptions;
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.jdbc.DatabaseType;
@@ -13,8 +22,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.google.common.base.Strings;
 import com.symbaloo.graphqlmicrometer.MicrometerInstrumentation;
+
 import graphql.GraphQL;
-import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.prometheusmetrics.PrometheusConfig;
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
 import io.vertx.core.AbstractVerticle;
@@ -27,7 +36,6 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.jwt.JWTAuth;
 import io.vertx.ext.healthchecks.HealthCheckHandler;
-import io.vertx.ext.web.Route;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.CorsHandler;
@@ -35,7 +43,6 @@ import io.vertx.ext.web.handler.JWTAuthHandler;
 import io.vertx.ext.web.handler.LoggerHandler;
 import io.vertx.ext.web.handler.graphql.GraphQLHandler;
 import io.vertx.ext.web.handler.graphql.GraphiQLHandler;
-import io.vertx.ext.web.handler.graphql.GraphiQLHandlerBuilder;
 import io.vertx.ext.web.handler.graphql.ws.GraphQLWSHandler;
 import io.vertx.jdbcclient.JDBCPool;
 import io.vertx.micrometer.MicrometerMetricsOptions;
@@ -43,15 +50,8 @@ import io.vertx.micrometer.backends.BackendRegistries;
 import io.vertx.pgclient.PgPool;
 import io.vertx.pgclient.impl.PgPoolOptions;
 import io.vertx.sqlclient.SqlClient;
-import java.io.File;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.duckdb.DuckDBDriver;
 
 /**
  * This Verticle is responsible for configuring the GraphQL server, setting up routes, metrics etc that will be deployed inside vert.x.
@@ -64,12 +64,12 @@ public class GraphQLServer extends AbstractVerticle {
   private ServerConfig config;
 
   public static void main(String[] args) {
-    PrometheusMeterRegistry prometheusMeterRegistry = new PrometheusMeterRegistry(
+    var prometheusMeterRegistry = new PrometheusMeterRegistry(
         PrometheusConfig.DEFAULT);
-    MicrometerMetricsOptions metricsOptions = new MicrometerMetricsOptions()
+    var metricsOptions = new MicrometerMetricsOptions()
         .setMicrometerRegistry(prometheusMeterRegistry)
         .setEnabled(true);
-    Vertx vertx = Vertx.vertx(new VertxOptions().setMetricsOptions(metricsOptions));
+    var vertx = Vertx.vertx(new VertxOptions().setMetricsOptions(metricsOptions));
 
     vertx.deployVerticle(new GraphQLServer(), res -> {
       if (res.succeeded()) {
@@ -118,10 +118,10 @@ public class GraphQLServer extends AbstractVerticle {
   }
 
   public static ObjectMapper getObjectMapper() {
-    ObjectMapper objectMapper = new ObjectMapper();
+    var objectMapper = new ObjectMapper();
 
     // Register the custom deserializer module
-    SimpleModule module = new SimpleModule();
+    var module = new SimpleModule();
     module.addDeserializer(String.class, new JsonEnvVarDeserializer());
     objectMapper.registerModule(module);
     return objectMapper;
@@ -132,12 +132,12 @@ public class GraphQLServer extends AbstractVerticle {
     vertx.fileSystem().readFile("server-config.json", result -> {
       if (result.succeeded()) {
         try {
-          ObjectMapper objectMapper = new ObjectMapper();
-          SimpleModule module = new SimpleModule();
+          var objectMapper = new ObjectMapper();
+          var module = new SimpleModule();
           module.addDeserializer(String.class, new JsonEnvVarDeserializer());
           objectMapper.registerModule(module);
-          Map configMap = objectMapper.readValue(result.result().toString(), Map.class);
-          JsonObject config = new JsonObject(configMap);
+          var configMap = objectMapper.readValue(result.result().toString(), Map.class);
+          var config = new JsonObject(configMap);
           promise.complete(config);
         } catch (Exception e) {
           e.printStackTrace();
@@ -181,10 +181,10 @@ public class GraphQLServer extends AbstractVerticle {
   }
 
   protected void setupServer(Promise<Void> startPromise) {
-    Router router = Router.router(vertx);
+    var router = Router.router(vertx);
     router.route().handler(LoggerHandler.create());
 
-    MeterRegistry registry = BackendRegistries.getDefaultNow();
+    var registry = BackendRegistries.getDefaultNow();
     if (registry instanceof PrometheusMeterRegistry meterRegistry) {
       router.route("/metrics").handler(ctx -> {
         ctx.response().putHeader("content-type", "text/plain");
@@ -193,7 +193,7 @@ public class GraphQLServer extends AbstractVerticle {
     }
 
     if (this.config.getGraphiQLHandlerOptions() != null) {
-      GraphiQLHandlerBuilder handlerBuilder = GraphiQLHandler.builder(vertx)
+      var handlerBuilder = GraphiQLHandler.builder(vertx)
           .with(this.config.getGraphiQLHandlerOptions());
       if (this.config.getAuthOptions() != null) {
         handlerBuilder.addingHeaders(rc -> {
@@ -202,7 +202,7 @@ public class GraphQLServer extends AbstractVerticle {
         });
       }
 
-      GraphiQLHandler handler = handlerBuilder.build();
+      var handler = handlerBuilder.build();
       router.route(this.config.getServletConfig().getGraphiQLEndpoint())
           .subRouter(handler.router());
     }
@@ -212,22 +212,22 @@ public class GraphQLServer extends AbstractVerticle {
       ctx.response().setStatusCode(500).end();
     });
 
-    SqlClient client = getPostgresSqlClient();
+    var client = getPostgresSqlClient();
     Map<DatabaseType, SqlClient> clients = new HashMap<>();
     clients.put(DatabaseType.POSTGRES, client);
     clients.put(DatabaseType.DUCKDB, getDuckdbSqlClient());
     snowflakeUrl.map(s-> clients.put(DatabaseType.SNOWFLAKE, getSnowflakeClient(s)));
 
-    GraphQL graphQL = createGraphQL(clients, startPromise);
+    var graphQL = createGraphQL(clients, startPromise);
 
-    CorsHandler corsHandler = toCorsHandler(this.config.getCorsHandlerOptions());
+    var corsHandler = toCorsHandler(this.config.getCorsHandlerOptions());
     router.route().handler(corsHandler);
     router.route().handler(BodyHandler.create());
 
-    HealthCheckHandler healthCheckHandler = HealthCheckHandler.create(vertx);
+    var healthCheckHandler = HealthCheckHandler.create(vertx);
     router.get("/health*").handler(healthCheckHandler);
 
-    Route handler = router.route(this.config.getServletConfig().getGraphQLEndpoint());
+    var handler = router.route(this.config.getServletConfig().getGraphQLEndpoint());
     Optional<JWTAuth> authProvider = this.config.getAuthOptions() != null ?
         Optional.of(JWTAuth.create(vertx, this.config.getAuthOptions())) : Optional.empty();
     authProvider.ifPresent((auth)-> {
@@ -295,7 +295,7 @@ public class GraphQLServer extends AbstractVerticle {
   }
 
   private CorsHandler toCorsHandler(CorsHandlerOptions corsHandlerOptions) {
-    CorsHandler corsHandler = corsHandlerOptions.getAllowedOrigin() != null
+    var corsHandler = corsHandlerOptions.getAllowedOrigin() != null
         ? CorsHandler.create(corsHandlerOptions.getAllowedOrigin())
         : CorsHandler.create();
 
@@ -325,8 +325,8 @@ public class GraphQLServer extends AbstractVerticle {
 
   public GraphQL createGraphQL(Map<DatabaseType, SqlClient> client, Promise<Void> startPromise) {
     try {
-      VertxJdbcClient vertxJdbcClient = new VertxJdbcClient(client);
-      GraphQL.Builder graphQL = model.accept(
+      var vertxJdbcClient = new VertxJdbcClient(client);
+      var graphQL = model.accept(
           new GraphQLEngineBuilder.Builder()
               .withMutationConfiguration(
                   new MutationConfigurationImpl(model, vertx, config))
@@ -335,7 +335,7 @@ public class GraphQLServer extends AbstractVerticle {
               .withExtendedScalarTypes(List.of(CustomScalars.GRAPHQL_BIGINTEGER))
               .build(),
           new VertxContext(vertxJdbcClient));
-      MeterRegistry meterRegistry = BackendRegistries.getDefaultNow();
+      var meterRegistry = BackendRegistries.getDefaultNow();
       if (meterRegistry != null) {
         graphQL.instrumentation(new MicrometerInstrumentation(meterRegistry));
       }

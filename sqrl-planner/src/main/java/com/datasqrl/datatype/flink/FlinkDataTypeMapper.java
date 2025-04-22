@@ -1,11 +1,11 @@
 package com.datasqrl.datatype.flink;
 
-import static com.datasqrl.function.CalciteFunctionUtil.lightweightOp;
+import org.apache.flink.table.functions.UserDefinedFunction;
 
 import com.datasqrl.config.TableConfig;
 import com.datasqrl.datatype.DataTypeMapper;
+
 import lombok.Getter;
-import org.apache.flink.table.functions.UserDefinedFunction;
 
 @Getter
 public abstract class FlinkDataTypeMapper implements DataTypeMapper {

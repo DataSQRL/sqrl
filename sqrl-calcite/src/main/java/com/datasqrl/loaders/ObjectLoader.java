@@ -1,11 +1,9 @@
 package com.datasqrl.loaders;
 
-import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.module.NamespaceObject;
-
-import com.datasqrl.module.SqrlModule;
-import java.util.List;
 import java.util.Optional;
+
+import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.module.SqrlModule;
 
 public interface ObjectLoader {
 

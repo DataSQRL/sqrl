@@ -3,8 +3,9 @@
  */
 package com.datasqrl.engine.stream;
 
-import com.datasqrl.engine.ExecutionEngine;
 import java.io.Closeable;
+
+import com.datasqrl.engine.ExecutionEngine;
 
 public interface StreamEngine extends Closeable, ExecutionEngine {
 

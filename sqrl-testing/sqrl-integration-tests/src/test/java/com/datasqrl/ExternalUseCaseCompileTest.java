@@ -1,6 +1,7 @@
 package com.datasqrl;
 
 import java.nio.file.Path;
+
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -13,12 +14,13 @@ public class ExternalUseCaseCompileTest extends AbstractUseCaseTest {
 
   @BeforeAll
   public static void readEnvironment() {
-    String dirName = System.getenv("DATASQRL_EXTERNAL_TEST_DIR");
+    var dirName = System.getenv("DATASQRL_EXTERNAL_TEST_DIR");
     USECASE_DIR = Path.of(dirName);
     System.out.println(USECASE_DIR);
   }
 
-  @ParameterizedTest
+  @Override
+@ParameterizedTest
   @ArgumentsSource(UseCaseFiles.class)
   void testUsecase(Path script, Path graphQlFile, Path packageFile) {
     super.testUsecase(script, graphQlFile, packageFile);

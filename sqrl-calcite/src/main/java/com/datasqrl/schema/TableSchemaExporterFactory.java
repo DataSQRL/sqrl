@@ -1,8 +1,9 @@
 package com.datasqrl.schema;
 
+import org.apache.calcite.rel.type.RelDataTypeField;
+
 import com.datasqrl.io.tables.TableSchema;
 import com.datasqrl.util.ServiceLoaderDiscovery;
-import org.apache.calcite.rel.type.RelDataTypeField;
 
 
 public interface TableSchemaExporterFactory {

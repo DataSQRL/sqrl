@@ -1,8 +1,10 @@
 package com.datasqrl.engines;
 
+import java.util.List;
+
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.engines.TestEngine.TestEngineVisitor;
-import java.util.List;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 

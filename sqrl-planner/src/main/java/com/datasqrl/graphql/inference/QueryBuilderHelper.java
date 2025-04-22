@@ -3,6 +3,20 @@ package com.datasqrl.graphql.inference;
 import static com.datasqrl.graphql.jdbc.SchemaConstants.LIMIT;
 import static com.datasqrl.graphql.jdbc.SchemaConstants.OFFSET;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rex.RexBuilder;
+import org.apache.calcite.rex.RexDynamicParam;
+import org.apache.calcite.rex.RexInputRef;
+import org.apache.calcite.rex.RexNode;
+import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
+import org.apache.calcite.tools.RelBuilder;
+import org.apache.commons.lang3.tuple.Pair;
+
 import com.datasqrl.calcite.QueryPlanner;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.graphql.inference.GraphqlQueryGenerator.ArgCombination;
@@ -14,20 +28,6 @@ import com.datasqrl.graphql.server.RootGraphqlModel.SourceParameter;
 import com.datasqrl.graphql.server.RootGraphqlModel.VariableArgument;
 import com.datasqrl.plan.queries.APIQuery;
 import com.google.common.base.Preconditions;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rel.type.RelDataTypeField;
-import org.apache.calcite.rex.RexBuilder;
-import org.apache.calcite.rex.RexDynamicParam;
-import org.apache.calcite.rex.RexInputRef;
-import org.apache.calcite.rex.RexNode;
-import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
-import org.apache.calcite.tools.RelBuilder;
-import org.apache.commons.lang3.tuple.Pair;
 
 public class QueryBuilderHelper {
 
@@ -50,24 +50,24 @@ public class QueryBuilderHelper {
   }
 
   public void filter(String name, RelDataType type) {
-    RexDynamicParam rexDynamicParam = makeArgumentDynamicParam(name, type);
+    var rexDynamicParam = makeArgumentDynamicParam(name, type);
 
-    VariableArgument variableArgument = new VariableArgument(name, null);
+    var variableArgument = new VariableArgument(name, null);
     graphqlArguments.add(variableArgument);
 
-    RexInputRef inputRef = getColumnRef(name, type);
+    var inputRef = getColumnRef(name, type);
     extraFilters.add(relBuilder.equals(inputRef, rexDynamicParam));
   }
 
   private RexInputRef getColumnRef(String name, RelDataType type) {
-    RelDataType rowType = relBuilder.peek().getRowType();
-    int index = queryPlanner.getCatalogReader().nameMatcher()
+    var rowType = relBuilder.peek().getRowType();
+    var index = queryPlanner.getCatalogReader().nameMatcher()
         .indexOf(rowType.getFieldNames(), name);
     if (index == -1) {
       throw new RuntimeException("Could not find filter for graphql column: " + name);
     }
 
-    RelDataTypeField field = rowType.getFieldList().get(index);
+    var field = rowType.getFieldList().get(index);
 
     // Todo: check for casting between type and field.getType
     return relBuilder.getRexBuilder()
@@ -77,9 +77,9 @@ public class QueryBuilderHelper {
   }
 
   private RexDynamicParam makeArgumentDynamicParam(String name, RelDataType type) {
-    ArgumentParameter argumentParameter = new ArgumentParameter(name);
+    var argumentParameter = new ArgumentParameter(name);
 
-    RexDynamicParam rexDynamicParam = rexBuilder.makeDynamicParam(type, parameterHandler.size());
+    var rexDynamicParam = rexBuilder.makeDynamicParam(type, parameterHandler.size());
     parameterHandler.add(Pair.of(rexDynamicParam, argumentParameter));
     return rexDynamicParam;
   }
@@ -99,16 +99,16 @@ public class QueryBuilderHelper {
   }
 
   private RexDynamicParam makeSourceDynamicParam(String name, RelDataType type) {
-    RexDynamicParam rexDynamicParam = rexBuilder.makeDynamicParam(type,
+    var rexDynamicParam = rexBuilder.makeDynamicParam(type,
         parameterHandler.size());//todo check casting rules
     parameterHandler.add(Pair.of(rexDynamicParam, new SourceParameter(name)));
     return rexDynamicParam;
   }
 
   public RexDynamicParam addVariableOperand(String name, RelDataType type) {
-    RexDynamicParam rexDynamicParam = makeArgumentDynamicParam(name, type);
+    var rexDynamicParam = makeArgumentDynamicParam(name, type);
 
-    VariableArgument variableArgument = new VariableArgument(name, null);
+    var variableArgument = new VariableArgument(name, null);
     graphqlArguments.add(variableArgument);
     return rexDynamicParam;
   }
@@ -136,11 +136,11 @@ public class QueryBuilderHelper {
 
   // Standalone variable without dynamic params since server will rewrite it
   private void createVariableForLimitOffset(String name) {
-    VariableArgument argument = new VariableArgument(name, null);
+    var argument = new VariableArgument(name, null);
     graphqlArguments.add(argument);
   }
   private void createLiteralForLimitOffset(String name) {
-    FixedArgument argument = new FixedArgument(name, null);
+    var argument = new FixedArgument(name, null);
     graphqlArguments.add(argument);
   }
 
@@ -152,9 +152,9 @@ public class QueryBuilderHelper {
   }
 
   public APIQuery build(NamePath path) {
-    RelNode rel = relBuilder.build();
+    var rel = relBuilder.build();
 
-    RelNode expanded = queryPlanner.expandMacros(rel);
+    var expanded = queryPlanner.expandMacros(rel);
     List<QueryParameterHandler> parameters = this.parameterHandler.stream()
         .map(Pair::getRight)
         .collect(Collectors.toList());

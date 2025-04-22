@@ -5,27 +5,6 @@ import static org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG;
 import static org.apache.kafka.clients.producer.ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG;
 import static org.apache.kafka.clients.producer.ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG;
 
-import com.datasqrl.graphql.config.ServerConfig;
-import com.datasqrl.graphql.io.SinkProducer;
-import com.datasqrl.graphql.kafka.KafkaSinkProducer;
-import com.datasqrl.graphql.server.Context;
-import com.datasqrl.graphql.server.MutationComputedColumnType;
-import com.datasqrl.graphql.server.MutationConfiguration;
-import com.datasqrl.graphql.server.RootGraphqlModel;
-import com.datasqrl.graphql.server.RootGraphqlModel.KafkaMutationCoords;
-import com.datasqrl.graphql.server.RootGraphqlModel.MutationCoords;
-import com.datasqrl.graphql.server.RootGraphqlModel.MutationCoordsVisitor;
-import com.datasqrl.graphql.server.RootGraphqlModel.PostgresLogMutationCoords;
-import com.google.common.base.Preconditions;
-import graphql.schema.DataFetcher;
-import graphql.schema.DataFetchingEnvironment;
-import io.vertx.core.Vertx;
-import io.vertx.ext.web.handler.graphql.schema.VertxDataFetcher;
-import io.vertx.kafka.client.producer.KafkaProducer;
-import io.vertx.sqlclient.PreparedQuery;
-import io.vertx.sqlclient.Row;
-import io.vertx.sqlclient.RowSet;
-import io.vertx.sqlclient.Tuple;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -36,6 +15,25 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import com.datasqrl.graphql.config.ServerConfig;
+import com.datasqrl.graphql.io.SinkProducer;
+import com.datasqrl.graphql.kafka.KafkaSinkProducer;
+import com.datasqrl.graphql.server.Context;
+import com.datasqrl.graphql.server.MutationComputedColumnType;
+import com.datasqrl.graphql.server.MutationConfiguration;
+import com.datasqrl.graphql.server.RootGraphqlModel;
+import com.datasqrl.graphql.server.RootGraphqlModel.KafkaMutationCoords;
+import com.datasqrl.graphql.server.RootGraphqlModel.MutationCoordsVisitor;
+import com.datasqrl.graphql.server.RootGraphqlModel.PostgresLogMutationCoords;
+import com.google.common.base.Preconditions;
+
+import graphql.schema.DataFetcher;
+import graphql.schema.DataFetchingEnvironment;
+import io.vertx.core.Vertx;
+import io.vertx.ext.web.handler.graphql.schema.VertxDataFetcher;
+import io.vertx.kafka.client.producer.KafkaProducer;
+import io.vertx.sqlclient.Tuple;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -66,12 +64,12 @@ public class MutationConfigurationImpl implements MutationConfiguration<DataFetc
         Preconditions.checkNotNull(emitter, "Could not find sink for field: %s", coords.getFieldName());
         return VertxDataFetcher.create((env, fut) -> {
 
-          Map entry = getEntry(env, uuidColumns);
+          var entry = getEntry(env, uuidColumns);
 
           emitter.send(entry)
               .onSuccess(sinkResult->{
                 //Add timestamp from sink to result
-                ZonedDateTime dateTime = ZonedDateTime.ofInstant(sinkResult.getSourceTime(), ZoneOffset.UTC);
+                var dateTime = ZonedDateTime.ofInstant(sinkResult.getSourceTime(), ZoneOffset.UTC);
                 timestampColumns.forEach(colName -> entry.put(colName, dateTime.toOffsetDateTime()));
 
                 fut.complete(entry);
@@ -85,13 +83,13 @@ public class MutationConfigurationImpl implements MutationConfiguration<DataFetc
       @Override
       public DataFetcher<?> visit(PostgresLogMutationCoords coords, Context context) {
         return VertxDataFetcher.create((env, fut) -> {
-          Map entry = getEntry(env, List.of());
+          var entry = getEntry(env, List.of());
           entry.put("event_time", Timestamp.from(Instant.now())); // TODO: better to do it in the db
 
-          Object[] paramObj = new Object[coords.getParameters().size()];
-          for (int i = 0; i < coords.getParameters().size(); i++) {
-            String param = coords.getParameters().get(i);
-            Object o = entry.get(param);
+          var paramObj = new Object[coords.getParameters().size()];
+          for (var i = 0; i < coords.getParameters().size(); i++) {
+            var param = coords.getParameters().get(i);
+            var o = entry.get(param);
             if (o instanceof UUID iD) {
               o = iD.toString();
             } else if (o instanceof Timestamp timestamp) {
@@ -100,9 +98,9 @@ public class MutationConfigurationImpl implements MutationConfiguration<DataFetc
             paramObj[i] = o;
           }
 
-          String insertStatement = coords.getInsertStatement();
+          var insertStatement = coords.getInsertStatement();
 
-          PreparedQuery<RowSet<Row>> preparedQuery = ((VertxJdbcClient) context.getClient())
+          var preparedQuery = ((VertxJdbcClient) context.getClient())
               .getClients().get("postgres")
               .preparedQuery(insertStatement);
           preparedQuery.execute(Tuple.from(paramObj))
@@ -117,14 +115,14 @@ public class MutationConfigurationImpl implements MutationConfiguration<DataFetc
     //Rules:
     //- Only one argument is allowed, it doesn't matter the name
     //- input argument cannot be null.
-    Map<String, Object> args = env.getArguments();
+    var args = env.getArguments();
 
-    Map entry = (Map)args.entrySet().stream()
+    var entry = (Map)args.entrySet().stream()
         .findFirst().map(Entry::getValue).get();
 
     if (!uuidColumns.isEmpty()) {
       //Add UUID for event for the computed uuid columns
-      UUID uuid = UUID.randomUUID();
+      var uuid = UUID.randomUUID();
       uuidColumns.forEach(colName -> entry.put(colName, uuid));
     }
     return entry;

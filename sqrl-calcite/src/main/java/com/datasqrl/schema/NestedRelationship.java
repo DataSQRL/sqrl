@@ -1,14 +1,17 @@
 package com.datasqrl.schema;
 
-import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.canonicalizer.NamePath;
 import java.util.List;
 import java.util.function.Supplier;
-import lombok.Getter;
+
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.schema.FunctionParameter;
+
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.canonicalizer.NamePath;
+
+import lombok.Getter;
 
 /**
  * This can go entirely, we don't have nested relationships anymore

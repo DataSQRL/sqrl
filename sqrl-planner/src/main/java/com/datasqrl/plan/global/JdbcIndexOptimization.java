@@ -1,15 +1,16 @@
 package com.datasqrl.plan.global;
 
-import com.datasqrl.engine.EnginePhysicalPlan;
-import com.datasqrl.engine.database.relational.AbstractJDBCDatabaseEngine;
-import com.datasqrl.engine.database.relational.JdbcPhysicalPlan;
-import com.datasqrl.engine.database.relational.JdbcStatementFactory;
-import com.datasqrl.v2.Sqrl2FlinkSQLTranslator;
-import com.google.auto.service.AutoService;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import com.datasqrl.engine.EnginePhysicalPlan;
+import com.datasqrl.engine.database.relational.AbstractJDBCDatabaseEngine;
+import com.datasqrl.engine.database.relational.JdbcPhysicalPlan;
+import com.datasqrl.v2.Sqrl2FlinkSQLTranslator;
+import com.google.auto.service.AutoService;
+
 import lombok.Value;
 
 @Value
@@ -25,10 +26,10 @@ public class JdbcIndexOptimization implements PhysicalPlanRewriter {
 
   @Override
   public JdbcPhysicalPlan rewrite(EnginePhysicalPlan plan, Sqrl2FlinkSQLTranslator sqrlEnv) {
-    JdbcPhysicalPlan jdbcPlan = (JdbcPhysicalPlan) plan;
-    AbstractJDBCDatabaseEngine engine = (AbstractJDBCDatabaseEngine) jdbcPlan.getStage().getEngine();
-    IndexSelectorConfig indexSelectorConfig = engine.getIndexSelectorConfig();
-    IndexSelector indexSelector = new IndexSelector(sqrlEnv, indexSelectorConfig, jdbcPlan.getTableMap());
+    var jdbcPlan = (JdbcPhysicalPlan) plan;
+    var engine = (AbstractJDBCDatabaseEngine) jdbcPlan.getStage().getEngine();
+    var indexSelectorConfig = engine.getIndexSelectorConfig();
+    var indexSelector = new IndexSelector(sqrlEnv, indexSelectorConfig, jdbcPlan.getTableMap());
 
     Collection<QueryIndexSummary> queryIndexSummaries = jdbcPlan.getQueries().stream().map(indexSelector::getIndexSelection)
         .flatMap(List::stream).collect(Collectors.toList());
@@ -40,8 +41,8 @@ public class JdbcIndexOptimization implements PhysicalPlanRewriter {
       //and overwrite with the specified ones
       indexDefinitions.addAll(indexHints);
     }));
-    JdbcPhysicalPlan.JdbcPhysicalPlanBuilder builder = jdbcPlan.toBuilder();
-    JdbcStatementFactory stmtFactory = engine.getStatementFactory();
+    var builder = jdbcPlan.toBuilder();
+    var stmtFactory = engine.getStatementFactory();
     indexDefinitions.stream().sorted()
         .map(stmtFactory::addIndex)
         .forEach(builder::statement);

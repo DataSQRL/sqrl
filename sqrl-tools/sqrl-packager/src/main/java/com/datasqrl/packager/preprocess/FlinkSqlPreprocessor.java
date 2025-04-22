@@ -1,10 +1,11 @@
 package com.datasqrl.packager.preprocess;
 
-import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.util.FileUtil;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.regex.Pattern;
+
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.util.FileUtil;
+
 import lombok.SneakyThrows;
 
 /**

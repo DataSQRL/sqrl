@@ -6,21 +6,27 @@ package com.datasqrl.graphql.server;
 import static com.datasqrl.graphql.server.TypeDefinitionRegistryUtil.getMutationTypeName;
 import static com.datasqrl.graphql.server.TypeDefinitionRegistryUtil.getSubscriptionTypeName;
 
-import com.datasqrl.graphql.jdbc.JdbcExecutionContext;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+
+import com.datasqrl.graphql.jdbc.AbstractQueryExecutionContext;
 import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentLookupQueryCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.FieldLookupQueryCoords;
-import com.datasqrl.graphql.server.RootGraphqlModel.SqlQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.MutationCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.QueryBaseVisitor;
 import com.datasqrl.graphql.server.RootGraphqlModel.QueryCoordVisitor;
 import com.datasqrl.graphql.server.RootGraphqlModel.QueryCoords;
-import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedSqlQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedQueryVisitor;
+import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedSqlQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.RootVisitor;
 import com.datasqrl.graphql.server.RootGraphqlModel.SchemaVisitor;
+import com.datasqrl.graphql.server.RootGraphqlModel.SqlQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.StringSchema;
 import com.datasqrl.graphql.server.RootGraphqlModel.SubscriptionCoords;
+
 import graphql.GraphQL;
 import graphql.language.FieldDefinition;
 import graphql.language.InterfaceTypeDefinition;
@@ -34,15 +40,10 @@ import graphql.schema.GraphQLList;
 import graphql.schema.GraphQLNonNull;
 import graphql.schema.GraphQLOutputType;
 import graphql.schema.GraphQLScalarType;
-import graphql.schema.GraphQLSchema;
 import graphql.schema.idl.RuntimeWiring;
 import graphql.schema.idl.SchemaGenerator;
 import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.TypeDefinitionRegistry;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Purpose: Builds the GraphQL engine by wiring together the schema, resolvers, and custom scalars.
@@ -108,7 +109,7 @@ public class GraphQLEngineBuilder
 
   @Override
   public TypeDefinitionRegistry visitStringDefinition(StringSchema stringSchema, Object context) {
-    TypeDefinitionRegistry registry = (new SchemaParser()).parse(stringSchema.getSchema());
+    var registry = (new SchemaParser()).parse(stringSchema.getSchema());
     if (!registry.hasType(new TypeName("Query"))) {
       registry.add(DUMMY_QUERY);
     }
@@ -117,10 +118,10 @@ public class GraphQLEngineBuilder
 
   @Override
   public GraphQL.Builder visitRoot(RootGraphqlModel root, Context context) {
-    TypeDefinitionRegistry registry = root.schema.accept(this, null);
+    var registry = root.schema.accept(this, null);
 
     // GraphQL registry holding the code that processes graphQL fields (graphQL DataFetchers) and types (graphQL TypeResolvers)
-    GraphQLCodeRegistry.Builder codeRegistry = GraphQLCodeRegistry.newCodeRegistry();
+    var codeRegistry = GraphQLCodeRegistry.newCodeRegistry();
     codeRegistry.defaultDataFetcher(env ->
         context.createPropertyFetcher(env.getFieldDefinition().getName()));
     for (QueryCoords qc : root.queries) {
@@ -145,15 +146,15 @@ public class GraphQLEngineBuilder
       }
     }
 
-    RuntimeWiring wiring = createWiring(registry, codeRegistry);
-    GraphQLSchema graphQLSchema = new SchemaGenerator()
+    var wiring = createWiring(registry, codeRegistry);
+    var graphQLSchema = new SchemaGenerator()
         .makeExecutableSchema(registry, wiring);
 
     return GraphQL.newGraphQL(graphQLSchema);
   }
 
   private RuntimeWiring createWiring(TypeDefinitionRegistry registry, GraphQLCodeRegistry.Builder codeRegistry) {
-    RuntimeWiring.Builder wiring = RuntimeWiring.newRuntimeWiring()
+    var wiring = RuntimeWiring.newRuntimeWiring()
         .codeRegistry(codeRegistry)
         .scalar(CustomScalars.Double)
         .scalar(CustomScalars.DATETIME)
@@ -187,13 +188,13 @@ public class GraphQLEngineBuilder
               .unpreparedQuery(query, context);
         }
         if (query.getDatabase().supportsPositionalParameters) {
-          int nextOffset = query.getParameters().size()+1; //positional arguments are 1-based
+          var nextOffset = query.getParameters().size()+1; //positional arguments are 1-based
           query = query.updateSQL(
-              JdbcExecutionContext.addLimitOffsetToQuery(query.getSql(), "$" + nextOffset,
+              AbstractQueryExecutionContext.addLimitOffsetToQuery(query.getSql(), "$" + nextOffset,
                   "$" + (nextOffset + 1)));
         } else {
           query = query.updateSQL(
-              JdbcExecutionContext.addLimitOffsetToQuery(query.getSql(), "?",
+              AbstractQueryExecutionContext.addLimitOffsetToQuery(query.getSql(), "?",
                   "?"));
         }
         break;
@@ -204,7 +205,7 @@ public class GraphQLEngineBuilder
 
   @Override
   public DataFetcher<?> visitArgumentLookup(ArgumentLookupQueryCoords coords, Context ctx) {
-    ResolvedQuery query = coords.getExec().getQuery().accept(this, ctx);
+    var query = coords.getExec().getQuery().accept(this, ctx);
     return ctx.createArgumentLookupFetcher(this, coords.getExec().getArguments(), query);
   }
 

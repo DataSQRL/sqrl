@@ -1,10 +1,11 @@
 package com.datasqrl.loaders;
 
-import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.module.SqrlModule;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+
+import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.module.SqrlModule;
+
 import lombok.AllArgsConstructor;
 
 @AllArgsConstructor

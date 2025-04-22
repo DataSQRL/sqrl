@@ -4,7 +4,6 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import lombok.AllArgsConstructor;
 
 public class PackageJsonImpl implements PackageJson {
   public static final String ENGINES_PROPERTY = "engines";

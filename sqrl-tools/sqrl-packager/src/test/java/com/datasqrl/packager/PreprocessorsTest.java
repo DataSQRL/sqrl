@@ -1,17 +1,14 @@
 package com.datasqrl.packager;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.datasqrl.config.PackageJsonImpl;
-import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.packager.preprocess.Preprocessor;
 import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -20,7 +17,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import lombok.SneakyThrows;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,6 +25,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import com.datasqrl.config.PackageJsonImpl;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.packager.preprocess.Preprocessor;
+
+import lombok.SneakyThrows;
 
 @ExtendWith(MockitoExtension.class)
 public class PreprocessorsTest {
@@ -63,7 +66,7 @@ public class PreprocessorsTest {
 
   @Test
   public void testMultiplePreprocessorsForSingleFile() {
-    Path fileToProcess = Path.of("/test/src/File.java");
+    var fileToProcess = Path.of("/test/src/File.java");
     when(firstPreprocessor.getPattern()).thenReturn(Pattern.compile(".*\\.java"));
     when(secondPreprocessor.getPattern()).thenReturn(Pattern.compile("File.*"));
 

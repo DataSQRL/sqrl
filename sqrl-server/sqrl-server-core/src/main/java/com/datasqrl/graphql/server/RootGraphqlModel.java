@@ -3,17 +3,18 @@
  */
 package com.datasqrl.graphql.server;
 
-import com.datasqrl.graphql.jdbc.DatabaseType;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+
+import com.datasqrl.graphql.jdbc.DatabaseType;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -88,7 +89,8 @@ public class RootGraphqlModel {
 
     String schema;
 
-    public <R, C> R accept(SchemaVisitor<R, C> visitor, C context) {
+    @Override
+	public <R, C> R accept(SchemaVisitor<R, C> visitor, C context) {
       return visitor.visitStringDefinition(this, context);
     }
   }
@@ -267,7 +269,8 @@ public class RootGraphqlModel {
       this.columnName = columnName;
     }
 
-    public <R, C> R accept(QueryCoordVisitor<R, C> visitor, C context) {
+    @Override
+	public <R, C> R accept(QueryCoordVisitor<R, C> visitor, C context) {
       return visitor.visitFieldLookup(this, context);
     }
   }
@@ -288,7 +291,8 @@ public class RootGraphqlModel {
       this.exec = exec;
     }
 
-    public <R, C> R accept(QueryCoordVisitor<R, C> visitor, C context) {
+    @Override
+	public <R, C> R accept(QueryCoordVisitor<R, C> visitor, C context) {
       return visitor.visitArgumentLookup(this, context);
     }
   }
@@ -386,8 +390,8 @@ public class RootGraphqlModel {
       if (o == null || getClass() != o.getClass()) {
         return false;
       }
-      VariableArgument that = (VariableArgument) o;
-      return Objects.equals(type, that.type) && Objects.equals(path, that.path);
+      var that = (VariableArgument) o;
+      return Objects.equals(type, VariableArgument.type) && Objects.equals(path, that.path);
     }
 
     @Override
@@ -451,7 +455,8 @@ public class RootGraphqlModel {
     final static String type = "source";
     String key;
 
-    public <R, C> R accept(ParameterHandlerVisitor<R, C> visitor, C context) {
+    @Override
+	public <R, C> R accept(ParameterHandlerVisitor<R, C> visitor, C context) {
       return visitor.visitSourceParameter(this, context);
     }
   }
@@ -466,7 +471,8 @@ public class RootGraphqlModel {
     final static String type = "arg";
     String path;
 
-    public <R, C> R accept(ParameterHandlerVisitor<R, C> visitor, C context) {
+    @Override
+	public <R, C> R accept(ParameterHandlerVisitor<R, C> visitor, C context) {
       return visitor.visitArgumentParameter(this, context);
     }
   }

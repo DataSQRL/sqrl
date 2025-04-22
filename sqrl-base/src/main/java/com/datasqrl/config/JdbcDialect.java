@@ -1,6 +1,5 @@
 package com.datasqrl.config;
 
-import com.datasqrl.graphql.jdbc.DatabaseType;
 import java.util.Arrays;
 import java.util.Optional;
 
@@ -15,9 +14,13 @@ public enum JdbcDialect {
   }
 
   private boolean matches(String dialect) {
-    if (name().equalsIgnoreCase(dialect)) return true;
+    if (name().equalsIgnoreCase(dialect)) {
+		return true;
+	}
     for (String synonym : synonyms) {
-      if (synonym.equalsIgnoreCase(dialect)) return true;
+      if (synonym.equalsIgnoreCase(dialect)) {
+		return true;
+	}
     }
     return false;
   }

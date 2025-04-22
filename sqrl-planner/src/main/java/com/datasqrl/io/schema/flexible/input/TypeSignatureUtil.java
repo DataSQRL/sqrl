@@ -1,38 +1,42 @@
 package com.datasqrl.io.schema.flexible.input;
 
-import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.io.schema.flexible.input.TypeSignature.Simple;
-import com.datasqrl.io.schema.flexible.type.Type;
-import com.datasqrl.io.schema.flexible.type.basic.BasicType;
-import com.datasqrl.io.schema.flexible.type.basic.BasicTypeManager;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Stream;
-import lombok.NonNull;
+
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.io.schema.flexible.input.TypeSignature.Simple;
+import com.datasqrl.io.schema.flexible.type.Type;
+import com.datasqrl.io.schema.flexible.type.basic.BasicType;
+import com.datasqrl.io.schema.flexible.type.basic.BasicTypeManager;
+
+import lombok.NonNull;
 
 public class TypeSignatureUtil {
 
   public static Optional<Simple> detectSimpleTypeSignature(Object o,
       Function<String, BasicType> detectFromString,
       Function<Map<String, Object>, BasicType> detectFromComposite) {
-    if (o == null) return Optional.empty();
+    if (o == null) {
+		return Optional.empty();
+	}
     Type rawType = null;
     BasicType detectedType = null;
-    int arrayDepth = 0;
+    var arrayDepth = 0;
     if (isArray(o)) {
-      Pair<Stream<Object>, Integer> array = flatMapArray(o);
+      var array = flatMapArray(o);
       arrayDepth = array.getRight();
-      Iterator<Object> arrIter = array.getLeft().iterator();
-      int numElements = 0;
+      var arrIter = array.getLeft().iterator();
+      var numElements = 0;
       while (arrIter.hasNext()) {
-        Object next = arrIter.next();
+        var next = arrIter.next();
         if (next == null) {
           continue;
         }
@@ -42,7 +46,7 @@ public class TypeSignatureUtil {
             //Try to detect type
             detectedType = detectFromComposite.apply(map);
           } else if (detectedType != null) {
-            BasicType detect2 = detectFromComposite.apply(map);
+            var detect2 = detectFromComposite.apply(map);
             if (detect2 == null || !detect2.equals(detectedType)) {
               detectedType = null;
             }
@@ -57,7 +61,7 @@ public class TypeSignatureUtil {
             }
           } else if (detectedType != null) {
             rawType = BasicTypeManager.combineForced((BasicType) rawType, getBasicType(next));
-            BasicType detect2 = detectFromString.apply((String) next);
+            var detect2 = detectFromString.apply((String) next);
             if (detect2 == null || !detect2.equals(detectedType)) {
               detectedType = null;
             }
@@ -107,7 +111,7 @@ public class TypeSignatureUtil {
   }
 
   public static BasicType getBasicType(@NonNull Object o, ErrorCollector errors) {
-    BasicType elementType = BasicTypeManager.getTypeByJavaClass(o.getClass());
+    var elementType = BasicTypeManager.getTypeByJavaClass(o.getClass());
     if (elementType == null) {
       if (errors != null) {
         errors.fatal("Unsupported data type for value: %s [%s]", o, o.getClass());
@@ -124,7 +128,7 @@ public class TypeSignatureUtil {
       if (col.stream().noneMatch(TypeSignatureUtil::isArray)) {
         return new ImmutablePair<>(col.stream(), 1);
       } else {
-        AtomicInteger depth = new AtomicInteger(0);
+        var depth = new AtomicInteger(0);
         Stream<Pair<Stream<Object>, Integer>> sub = col.stream()
             .map(TypeSignatureUtil::flatMapArray);
         Stream<Object> res = sub.flatMap(p -> {

@@ -1,19 +1,22 @@
 package com.datasqrl.engine.database.relational;
 
-import com.datasqrl.engine.database.DatabasePhysicalPlan;
-import com.datasqrl.engine.database.relational.JdbcStatement.Type;
-import com.datasqrl.engine.pipeline.ExecutionStage;
-import com.datasqrl.v2.analyzer.TableAnalysis;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import org.apache.calcite.rel.RelNode;
+
+import com.datasqrl.engine.database.DatabasePhysicalPlan;
+import com.datasqrl.engine.database.relational.JdbcStatement.Type;
+import com.datasqrl.engine.pipeline.ExecutionStage;
+import com.datasqrl.v2.analyzer.TableAnalysis;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import lombok.Builder;
 import lombok.Singular;
 import lombok.Value;
-import org.apache.calcite.rel.RelNode;
 
 @Value
 @Builder(toBuilder = true)

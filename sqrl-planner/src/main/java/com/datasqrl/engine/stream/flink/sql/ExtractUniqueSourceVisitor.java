@@ -1,14 +1,17 @@
 package com.datasqrl.engine.stream.flink.sql;
 
-import com.datasqrl.plan.global.PhysicalDAGPlan.WriteQuery;
-import com.datasqrl.plan.table.ImportedRelationalTable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import lombok.Getter;
+
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelVisitor;
 import org.apache.calcite.rel.core.TableScan;
+
+import com.datasqrl.plan.global.PhysicalDAGPlan.WriteQuery;
+import com.datasqrl.plan.table.ImportedRelationalTable;
+
+import lombok.Getter;
 
 public class ExtractUniqueSourceVisitor extends RelVisitor {
 

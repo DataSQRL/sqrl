@@ -1,18 +1,16 @@
 package com.datasqrl.loaders;
 
-import com.datasqrl.calcite.SqrlFramework;
-import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.canonicalizer.NameCanonicalizer;
-import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.io.tables.TableSchema;
-import com.datasqrl.io.tables.TableSource;
-import com.datasqrl.loaders.FlinkTableNamespaceObject.FlinkTable;
-import com.datasqrl.module.TableNamespaceObject;
-import com.datasqrl.plan.local.generate.AbstractTableNamespaceObject;
-import com.datasqrl.plan.table.CalciteTableFactory;
-import com.datasqrl.plan.validate.ScriptPlanner;
 import java.nio.file.Path;
 import java.util.Optional;
+
+import com.datasqrl.calcite.SqrlFramework;
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.io.tables.TableSchema;
+import com.datasqrl.loaders.FlinkTableNamespaceObject.FlinkTable;
+import com.datasqrl.module.TableNamespaceObject;
+import com.datasqrl.plan.validate.ScriptPlanner;
+
 import lombok.Getter;
 import lombok.Value;
 

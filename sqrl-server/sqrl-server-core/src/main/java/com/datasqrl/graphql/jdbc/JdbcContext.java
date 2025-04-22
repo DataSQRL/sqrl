@@ -1,25 +1,17 @@
 package com.datasqrl.graphql.jdbc;
 
-import com.datasqrl.graphql.server.GraphQLEngineBuilder;
-import com.datasqrl.graphql.server.Context;
-import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
-import com.datasqrl.graphql.server.RootGraphqlModel.KafkaMutationCoords;
-import com.datasqrl.graphql.server.RootGraphqlModel.KafkaSubscriptionCoords;
-import com.datasqrl.graphql.server.RootGraphqlModel.MutationCoordsVisitor;
-import com.datasqrl.graphql.server.RootGraphqlModel.PostgresLogMutationCoords;
-import com.datasqrl.graphql.server.RootGraphqlModel.PostgresSubscriptionCoords;
-import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedQuery;
-import com.datasqrl.graphql.server.RootGraphqlModel.SubscriptionCoordsVisitor;
-import com.datasqrl.graphql.server.RootGraphqlModel.VariableArgument;
-import com.datasqrl.graphql.server.QueryExecutionContext;
-import graphql.schema.DataFetcher;
-import graphql.schema.GraphQLArgument;
-import graphql.schema.PropertyDataFetcher;
-import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
+
+import com.datasqrl.graphql.server.Context;
+import com.datasqrl.graphql.server.GraphQLEngineBuilder;
+import com.datasqrl.graphql.server.QueryExecutionContext;
+import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
+import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedQuery;
+import com.datasqrl.graphql.server.RootGraphqlModel.VariableArgument;
+
+import graphql.schema.DataFetcher;
+import graphql.schema.PropertyDataFetcher;
 import lombok.Value;
 
 @Value

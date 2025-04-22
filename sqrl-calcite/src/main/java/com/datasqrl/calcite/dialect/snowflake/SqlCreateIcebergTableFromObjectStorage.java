@@ -1,11 +1,19 @@
 package com.datasqrl.calcite.dialect.snowflake;
 
 import java.util.List;
-import org.apache.calcite.sql.*;
+import java.util.Objects;
+
+import org.apache.calcite.sql.SqlCall;
+import org.apache.calcite.sql.SqlIdentifier;
+import org.apache.calcite.sql.SqlKind;
+import org.apache.calcite.sql.SqlLiteral;
+import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqlNodeList;
+import org.apache.calcite.sql.SqlOperator;
+import org.apache.calcite.sql.SqlSpecialOperator;
+import org.apache.calcite.sql.SqlWriter;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.util.ImmutableNullableList;
-
-import java.util.Objects;
 
 /**
  * Iceberg files in object storage
@@ -100,7 +108,7 @@ public class SqlCreateIcebergTableFromObjectStorage extends SqlCall {
     }
     if (tags != null && !tags.getList().isEmpty()) {
       writer.keyword("WITH TAG");
-      SqlWriter.Frame frame = writer.startList(SqlWriter.FrameTypeEnum.FUN_CALL, "(", ")");
+      var frame = writer.startList(SqlWriter.FrameTypeEnum.FUN_CALL, "(", ")");
       tags.unparse(writer, 0, 0);
       writer.endList(frame);
     }

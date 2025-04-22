@@ -2,6 +2,12 @@ package com.datasqrl.discovery;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ArgumentsSource;
+
 import com.datasqrl.AbstractAssetSnapshotTest;
 import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.discovery.FlexibleSchemaInferencePreprocessorTest.DataFiles;
@@ -10,11 +16,8 @@ import com.datasqrl.packager.preprocess.CopyStaticDataPreprocessor;
 import com.datasqrl.packager.preprocess.Preprocessor.ProcessorContext;
 import com.datasqrl.packager.util.FileHash;
 import com.datasqrl.util.SnapshotTest.Snapshot;
-import java.nio.file.Files;
-import java.nio.file.Path;
+
 import lombok.SneakyThrows;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ArgumentsSource;
 
 public class CopyStaticDataPreprocessorIT extends AbstractAssetSnapshotTest {
 

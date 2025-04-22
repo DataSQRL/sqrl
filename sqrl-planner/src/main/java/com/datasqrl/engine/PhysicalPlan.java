@@ -3,6 +3,12 @@
  */
 package com.datasqrl.engine;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import com.datasqrl.engine.database.DatabasePhysicalPlanOld;
 import com.datasqrl.engine.database.QueryTemplate;
 import com.datasqrl.engine.pipeline.ExecutionStage;
@@ -10,12 +16,7 @@ import com.datasqrl.plan.global.PhysicalPlanRewriter;
 import com.datasqrl.plan.queries.IdentifiedQuery;
 import com.datasqrl.util.StreamUtil;
 import com.datasqrl.v2.Sqrl2FlinkSQLTranslator;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+
 import lombok.Builder;
 import lombok.Singular;
 import lombok.Value;
@@ -38,10 +39,12 @@ public class PhysicalPlan {
   }
 
   public PhysicalPlan applyRewriting(Collection<PhysicalPlanRewriter> rewriters, Sqrl2FlinkSQLTranslator sqrlEnv) {
-    if (rewriters.isEmpty()) return this;
-    PhysicalPlan.PhysicalPlanBuilder builder = PhysicalPlan.builder();
+    if (rewriters.isEmpty()) {
+		return this;
+	}
+    var builder = PhysicalPlan.builder();
     for (PhysicalStagePlan stagePlan : stagePlans) {
-      EnginePhysicalPlan enginePlan = stagePlan.plan;
+      var enginePlan = stagePlan.plan;
       for (PhysicalPlanRewriter rewriter : rewriters) {
         if (rewriter.appliesTo(enginePlan)) {
           enginePlan = rewriter.rewrite(enginePlan, sqrlEnv);

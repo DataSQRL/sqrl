@@ -1,7 +1,9 @@
 package com.datasqrl.v2.parser;
 
-import com.datasqrl.error.ErrorLocation.FileLocation;
 import java.util.function.Function;
+
+import com.datasqrl.error.ErrorLocation.FileLocation;
+
 import lombok.EqualsAndHashCode;
 import lombok.EqualsAndHashCode.Include;
 import lombok.Value;
@@ -24,7 +26,9 @@ public class ParsedObject<O> {
   }
 
   public<T> ParsedObject<T> map(Function<O,T> mapper) {
-    if (object == null) return new ParsedObject<>(null, fileLocation);
+    if (object == null) {
+		return new ParsedObject<>(null, fileLocation);
+	}
     try {
       return new ParsedObject<>(mapper.apply(object), fileLocation);
     } catch (Exception e) {

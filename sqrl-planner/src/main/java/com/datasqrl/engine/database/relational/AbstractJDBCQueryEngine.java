@@ -6,7 +6,7 @@ import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.EngineType;
 import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.engine.database.QueryEngine;
-import lombok.Getter;
+
 import lombok.NonNull;
 
 /**

@@ -3,13 +3,13 @@
  */
 package com.datasqrl.io.tables;
 
+import java.util.Optional;
+
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
-
 import com.datasqrl.config.TableConfig;
-import lombok.Getter;
 
-import java.util.Optional;
+import lombok.Getter;
 
 @Getter
 public class TableInput extends AbstractExternalTable {

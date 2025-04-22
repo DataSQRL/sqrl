@@ -1,6 +1,18 @@
 package com.datasqrl.loaders;
 
 
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Optional;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
+import org.apache.flink.table.functions.UserDefinedFunction;
+
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.PackageJson;
@@ -22,17 +34,8 @@ import com.datasqrl.util.FileUtil;
 import com.datasqrl.util.StringUtil;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Preconditions;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.List;
-import java.util.Optional;
-import java.util.function.Predicate;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
+
 import lombok.SneakyThrows;
-import org.apache.flink.table.functions.UserDefinedFunction;
 
 public class ObjectLoaderImpl implements ObjectLoader {
 
@@ -68,11 +71,11 @@ public class ObjectLoaderImpl implements ObjectLoader {
   @Override
   public Optional<SqrlModule> load(NamePath directory) {
     //Folders take precedence
-    List<Path> allItems = resourceResolver.loadPath(directory);
+    var allItems = resourceResolver.loadPath(directory);
 
     //Check for sqrl scripts
     if (allItems.isEmpty()) {
-      Optional<Path> sqrlFile = getFile(directory.popLast(), Name.system(directory.getLast().toString() + ".sqrl"));
+      var sqrlFile = getFile(directory.popLast(), Name.system(directory.getLast().toString() + ".sqrl"));
       if (sqrlFile.isPresent()) {
         return Optional.of(loadScript(directory, sqrlFile.get()));
       }

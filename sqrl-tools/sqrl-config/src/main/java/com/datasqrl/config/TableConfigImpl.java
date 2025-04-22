@@ -3,16 +3,14 @@
  */
 package com.datasqrl.config;
 
-import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.module.resolver.ResourceResolver;
-import java.util.Optional;
-import lombok.NonNull;
-import lombok.Value;
-
-import java.net.URI;
 import java.nio.file.Path;
 import java.util.List;
+
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.error.ErrorCollector;
+
+import lombok.NonNull;
+import lombok.Value;
 
 @Value
 public class TableConfigImpl implements TableConfig {
@@ -37,7 +35,8 @@ public class TableConfigImpl implements TableConfig {
     return new TableConfigBuilderImpl(name, SqrlConfig.createCurrentVersion());
   }
 
-  public void toFile(Path file, boolean pretty) {
+  @Override
+public void toFile(Path file, boolean pretty) {
     config.toFile(file, pretty);
   }
 
@@ -63,12 +62,12 @@ public class TableConfigImpl implements TableConfig {
 
   @Override
   public List<String> getPrimaryKeyConstraint() {
-    List<String> primaryKey = getBase().getPrimaryKey().get();
+    var primaryKey = getBase().getPrimaryKey().get();
 
     // Some sinks disallow primary key (kafka) for sinks. Generally we should pass through when specified.
     // When creating the log engine, we should pass in if the connector needs pks. However, this is difficult
     // right now so we'll add a hack to check for this specific case.
-    Optional<String> connectorName = getConnectorConfig().getConnectorName();
+    var connectorName = getConnectorConfig().getConnectorName();
     if (connectorName.isPresent() && connectorName.get().equalsIgnoreCase("kafka")) {
       return List.of();
     }
@@ -91,7 +90,8 @@ public class TableConfigImpl implements TableConfig {
 //    return new TableSinkImpl(this, basePath.concat(tableName), tableName, schema);
 //  }
 
-  public TableConfigBuilderImpl toBuilder() {
+  @Override
+public TableConfigBuilderImpl toBuilder() {
     return new TableConfigBuilderImpl(this.getName(), SqrlConfig.create(config)).copyFrom(this);
   }
 }

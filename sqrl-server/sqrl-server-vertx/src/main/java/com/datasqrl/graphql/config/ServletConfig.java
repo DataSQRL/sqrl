@@ -1,11 +1,9 @@
 package com.datasqrl.graphql.config;
 
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.handler.graphql.ApolloWSOptionsConverter;
 import lombok.AllArgsConstructor;
 import lombok.Builder.Default;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter

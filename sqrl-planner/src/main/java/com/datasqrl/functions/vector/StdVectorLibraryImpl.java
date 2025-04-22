@@ -1,11 +1,5 @@
 package com.datasqrl.functions.vector;
 
-import com.datasqrl.NamespaceObjectUtil;
-import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.function.AbstractFunctionModule;
-import com.datasqrl.function.StdLibrary;
-import com.google.auto.service.AutoService;
-
 import static com.datasqrl.types.vector.functions.VectorFunctions.ASCII_TEXT_TEST_EMBED;
 import static com.datasqrl.types.vector.functions.VectorFunctions.CENTER;
 import static com.datasqrl.types.vector.functions.VectorFunctions.COSINE_DISTANCE;
@@ -16,7 +10,14 @@ import static com.datasqrl.types.vector.functions.VectorFunctions.VEC_TO_DOUBLE;
 
 import java.util.List;
 import java.util.stream.Collectors;
+
 import org.apache.flink.table.functions.FunctionDefinition;
+
+import com.datasqrl.NamespaceObjectUtil;
+import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.function.AbstractFunctionModule;
+import com.datasqrl.function.StdLibrary;
+import com.google.auto.service.AutoService;
 
 @AutoService(StdLibrary.class)
 public class StdVectorLibraryImpl extends AbstractFunctionModule implements StdLibrary {

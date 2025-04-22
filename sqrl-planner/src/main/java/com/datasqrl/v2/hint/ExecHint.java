@@ -1,9 +1,10 @@
 package com.datasqrl.v2.hint;
 
+import java.util.List;
+
 import com.datasqrl.v2.parser.ParsedObject;
 import com.datasqrl.v2.parser.SqrlHint;
 import com.google.auto.service.AutoService;
-import java.util.List;
 
 /**
  * Execution hints allow the user to assign a stage to a table/function definition and the

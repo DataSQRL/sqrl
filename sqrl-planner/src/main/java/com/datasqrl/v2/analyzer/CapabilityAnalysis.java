@@ -1,18 +1,21 @@
 package com.datasqrl.v2.analyzer;
 
-import com.datasqrl.calcite.SqrlRexUtil;
-import com.datasqrl.engine.EngineFeature;
-import com.datasqrl.plan.rules.EngineCapability;
-import com.datasqrl.plan.rules.EngineCapability.Feature;
-import com.datasqrl.plan.rules.EngineCapability.Function;
 import java.util.HashSet;
 import java.util.Set;
-import lombok.Getter;
+
 import org.apache.calcite.rel.core.AggregateCall;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexVisitorImpl;
 import org.apache.calcite.sql.SqlOperator;
+
+import com.datasqrl.calcite.SqrlRexUtil;
+import com.datasqrl.engine.EngineFeature;
+import com.datasqrl.plan.rules.EngineCapability;
+import com.datasqrl.plan.rules.EngineCapability.Feature;
+import com.datasqrl.plan.rules.EngineCapability.Function;
+
+import lombok.Getter;
 
 /**
  * Analyzes the engine capabilities needed to execute a particular query

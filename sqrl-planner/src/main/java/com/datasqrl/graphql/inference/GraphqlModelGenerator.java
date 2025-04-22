@@ -2,19 +2,30 @@ package com.datasqrl.graphql.inference;
 
 import static com.datasqrl.graphql.generate.GraphqlSchemaUtil.hasVaryingCase;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import org.apache.calcite.jdbc.SqrlSchema;
+import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeField;
+import org.apache.calcite.sql.validate.SqlNameMatcher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.QueryPlanner;
 import com.datasqrl.calcite.function.SqrlTableMacro;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.config.TableConfig;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.PhysicalPlan.PhysicalStagePlan;
 import com.datasqrl.engine.database.QueryTemplate;
-import com.datasqrl.engine.database.relational.ddl.statements.InsertStatement;
-import com.datasqrl.engine.database.relational.ddl.statements.notify.ListenNotifyAssets;
-import com.datasqrl.engine.log.Log;
 import com.datasqrl.engine.log.kafka.KafkaPhysicalPlan;
 import com.datasqrl.engine.log.postgres.PostgresLogPhysicalPlan;
 import com.datasqrl.graphql.APIConnectorManager;
@@ -30,30 +41,17 @@ import com.datasqrl.graphql.server.RootGraphqlModel.QueryCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.QueryWithArguments;
 import com.datasqrl.graphql.server.RootGraphqlModel.SqlQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.SubscriptionCoords;
-import com.datasqrl.io.tables.TableSource;
 import com.datasqrl.plan.queries.APIQuery;
 import com.datasqrl.plan.queries.APISource;
 import com.datasqrl.plan.queries.APISubscription;
 import com.datasqrl.plan.queries.IdentifiedQuery;
 import com.google.common.base.Preconditions;
+
 import graphql.language.FieldDefinition;
 import graphql.language.InputValueDefinition;
 import graphql.language.ObjectTypeDefinition;
 import graphql.schema.idl.TypeDefinitionRegistry;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.stream.Collectors;
 import lombok.Getter;
-import org.apache.calcite.jdbc.SqrlSchema;
-import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rel.type.RelDataTypeField;
-import org.apache.calcite.sql.validate.SqlNameMatcher;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Returns a set of table functions that satisfy a graphql schema
@@ -79,13 +77,13 @@ public class GraphqlModelGenerator extends SchemaWalker {
   @Override
   protected void walkSubscription(ObjectTypeDefinition m, FieldDefinition fieldDefinition,
       TypeDefinitionRegistry registry, APISource source) {
-    APISubscription apiSubscription = new APISubscription(Name.system(fieldDefinition.getName()),
+    var apiSubscription = new APISubscription(Name.system(fieldDefinition.getName()),
         source);
-    SqrlTableMacro tableFunction = schema.getTableFunction(fieldDefinition.getName());
+    var tableFunction = schema.getTableFunction(fieldDefinition.getName());
     if (tableFunction == null) {
       throw new RuntimeException("Table '" + fieldDefinition.getName() + "' does not exist in the schema.");
     }
-    Log log = apiManager.addSubscription(apiSubscription, tableFunction);
+    var log = apiManager.addSubscription(apiSubscription, tableFunction);
 
     Map<String, String> filters = new HashMap<>();
     for (InputValueDefinition input : fieldDefinition.getInputValueDefinitions()) {
@@ -96,19 +94,19 @@ public class GraphqlModelGenerator extends SchemaWalker {
       filters.put(input.getName(), field.getName());
     }
 
-    Optional<EnginePhysicalPlan> logPlan = getLogPlan();
+    var logPlan = getLogPlan();
 
-    String fieldName = fieldDefinition.getName();
+    var fieldName = fieldDefinition.getName();
 
     SubscriptionCoords subscriptionCoords;
 
     if (logPlan.isPresent() && logPlan.get() instanceof KafkaPhysicalPlan) {
-      String topic = (String) log.getConnectorContext().getMap().get("topic");
+      var topic = (String) log.getConnectorContext().getMap().get("topic");
       subscriptionCoords = new KafkaSubscriptionCoords(fieldName, topic, Map.of(), filters);
     } else if (logPlan.isPresent() && logPlan.get() instanceof PostgresLogPhysicalPlan) {
-      String tableName = (String) log.getConnectorContext().getMap().get("table-name");
+      var tableName = (String) log.getConnectorContext().getMap().get("table-name");
 
-      ListenNotifyAssets listenNotifyAssets = ((PostgresLogPhysicalPlan) logPlan.get())
+      var listenNotifyAssets = ((PostgresLogPhysicalPlan) logPlan.get())
           .getQueries().stream()
           .filter(query -> query.getListen().getTableName().equals(tableName))
           .findFirst()
@@ -134,25 +132,25 @@ public class GraphqlModelGenerator extends SchemaWalker {
   @Override
   protected void walkMutation(APISource source, TypeDefinitionRegistry registry,
       ObjectTypeDefinition m, FieldDefinition fieldDefinition) {
-    TableSource tableSource = apiManager.getMutationSource(source,
+    var tableSource = apiManager.getMutationSource(source,
         Name.system(fieldDefinition.getName()));
 
-    Optional<TableConfig> src = schema.getImports().stream()
+    var src = schema.getImports().stream()
         .filter(t -> t.getName().equalsIgnoreCase(fieldDefinition.getName()))
         .map(t -> t.getTableConfig())
         .findFirst();
 
-    Optional<EnginePhysicalPlan> logPlan = getLogPlan();
+    var logPlan = getLogPlan();
 
     MutationCoords mutationCoords;
 
     if (logPlan.isPresent() && logPlan.get() instanceof KafkaPhysicalPlan) {
       String topicName;
       if (tableSource != null) {
-        Map<String, Object> map = tableSource.getConfiguration().getConnectorConfig().toMap();
+        var map = tableSource.getConfiguration().getConnectorConfig().toMap();
         topicName = (String) map.get("topic");
       } else if (src.isPresent()) {
-        Map<String, Object> map = src.get().getConnectorConfig().toMap();
+        var map = src.get().getConnectorConfig().toMap();
         topicName = (String) map.get("topic");
       } else {
         throw new RuntimeException("Could not find mutation: " + fieldDefinition.getName());
@@ -165,17 +163,17 @@ public class GraphqlModelGenerator extends SchemaWalker {
     } else if (logPlan.isPresent() && logPlan.get() instanceof PostgresLogPhysicalPlan) {
       String tableName;
       if (tableSource != null) {
-        Map<String, Object> map = tableSource.getConfiguration().getConnectorConfig().toMap();
+        var map = tableSource.getConfiguration().getConnectorConfig().toMap();
         tableName = (String) map.get("table-name");
       } else if (src.isPresent()) {
         // TODO: not sure if this is correct and needed
-        Map<String, Object> map = src.get().getConnectorConfig().toMap();
+        var map = src.get().getConnectorConfig().toMap();
         tableName = (String) map.get("table-name");
       } else {
         throw new RuntimeException("Could not find mutation: " + fieldDefinition.getName());
       }
 
-      InsertStatement insertStatement = ((PostgresLogPhysicalPlan) logPlan.get())
+      var insertStatement = ((PostgresLogPhysicalPlan) logPlan.get())
           .getInserts().stream()
           .filter(insert -> insert.getTableName().equals(tableName))
           .findFirst()
@@ -194,7 +192,7 @@ public class GraphqlModelGenerator extends SchemaWalker {
 
   private Optional<EnginePhysicalPlan> getLogPlan() {
     //Todo: Bad instance checking, Fix to bring multiple log engines (?)
-    Optional<EnginePhysicalPlan> logPlan = physicalPlan.getStagePlans().stream()
+    var logPlan = physicalPlan.getStagePlans().stream()
         .map(PhysicalStagePlan::getPlan)
         .filter(plan -> plan instanceof KafkaPhysicalPlan || plan instanceof PostgresLogPhysicalPlan)
         .findFirst();
@@ -212,7 +210,7 @@ public class GraphqlModelGenerator extends SchemaWalker {
     //todo: walk into structured type to check all prop fetchers
 
     if (hasVaryingCase(field, relDataTypeField)) {
-      FieldLookupQueryCoords build = FieldLookupQueryCoords.builder().parentType(type.getName())
+      var build = FieldLookupQueryCoords.builder().parentType(type.getName())
           .fieldName(field.getName()).columnName(relDataTypeField.getName()).build();
       coords.add(build);
     }
@@ -235,31 +233,31 @@ public class GraphqlModelGenerator extends SchemaWalker {
     }
     Preconditions.checkArgument(queries.size()==1, "Path %s should map to a single query but found: %s", path, queries);
 
-    ArgumentLookupQueryCoords.ArgumentLookupQueryCoordsBuilder coordsBuilder = ArgumentLookupQueryCoords.builder()
+    var coordsBuilder = ArgumentLookupQueryCoords.builder()
         .parentType(parentType.getName()).fieldName(field.getName());
 
     for (Entry<IdentifiedQuery, QueryTemplate> entry : queries) {
       SqlQuery queryBase = null;
-      APIQuery query = (APIQuery) entry.getKey();
+      var query = (APIQuery) entry.getKey();
 
       String queryStr;
       if (entry.getValue().getDatabase()== DatabaseType.SNOWFLAKE) {
-        queryStr = queryPlanner.relToString(Dialect.SNOWFLAKE,
+        queryStr = QueryPlanner.relToString(Dialect.SNOWFLAKE,
                 queryPlanner.convertRelToDialect(Dialect.SNOWFLAKE, entry.getValue().getRelNode()))
             .getSql();
       } else {
-        queryStr = queryPlanner.relToString(Dialect.POSTGRES,
+        queryStr = QueryPlanner.relToString(Dialect.POSTGRES,
                 queryPlanner.convertRelToDialect(Dialect.POSTGRES, entry.getValue().getRelNode()))
             .getSql();
       }
 
-      QueryWithArguments set = QueryWithArguments.builder().arguments(query.getGraphqlArguments())
+      var set = QueryWithArguments.builder().arguments(query.getGraphqlArguments())
           .query(queryBase).build();
 
       coordsBuilder.exec(set);
     }
 
-    ArgumentLookupQueryCoords coord = coordsBuilder.build();
+    var coord = coordsBuilder.build();
     coords.add(coord);
   }
 }

@@ -1,14 +1,15 @@
 package com.datasqrl;
 
-import static com.datasqrl.UseCasesIT.getProjectRoot;
 import static org.junit.jupiter.api.Assertions.fail;
 
-import com.datasqrl.cmd.RootCommand;
-import com.datasqrl.cmd.StatusHook;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import com.datasqrl.cmd.RootCommand;
+import com.datasqrl.cmd.StatusHook;
+
 import lombok.Builder;
 import lombok.Getter;
 
@@ -47,8 +48,8 @@ public class SqrlScriptExecutor {
       argsList.addAll(Arrays.asList("-c", getPackageJsonPath()));
     }
     // Execute the command
-    RootCommand rootCommand = new RootCommand(rootDir, hook);
-    int exitCode =
+    var rootCommand = new RootCommand(rootDir, hook);
+    var exitCode =
         rootCommand.getCmd().execute(argsList.toArray(new String[0])) + (hook.isSuccess() ? 0 : 1);
     if (exitCode != 0) {
       fail();

@@ -1,12 +1,14 @@
 package com.datasqrl.plan.table;
 
-import com.datasqrl.io.tables.TableSchema;
-import java.net.URI;
 import java.nio.file.Path;
 import java.util.Optional;
+
+import org.apache.calcite.rel.type.RelDataType;
+
+import com.datasqrl.io.tables.TableSchema;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import org.apache.calcite.rel.type.RelDataType;
 
 @AllArgsConstructor
 @Getter

@@ -3,34 +3,40 @@
  */
 package com.datasqrl.io.schema.flexible.external;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.canonicalizer.NameCanonicalizer;
+import com.datasqrl.canonicalizer.SpecialName;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.io.schema.flexible.constraint.Cardinality;
+import com.datasqrl.io.schema.flexible.constraint.Constraint;
+import com.datasqrl.io.schema.flexible.constraint.Constraint.Lookup;
+import com.datasqrl.io.schema.flexible.constraint.ConstraintHelper;
 import com.datasqrl.io.schema.flexible.input.FlexibleFieldSchema;
+import com.datasqrl.io.schema.flexible.input.FlexibleTableSchema;
+import com.datasqrl.io.schema.flexible.input.RelationType;
+import com.datasqrl.io.schema.flexible.input.SchemaElementDescription;
 import com.datasqrl.io.schema.flexible.input.external.AbstractElementDefinition;
 import com.datasqrl.io.schema.flexible.input.external.FieldDefinition;
 import com.datasqrl.io.schema.flexible.input.external.FieldTypeDefinition;
 import com.datasqrl.io.schema.flexible.input.external.FieldTypeDefinitionImpl;
 import com.datasqrl.io.schema.flexible.input.external.TableDefinition;
-import com.datasqrl.util.NamedIdentifier;
-import com.datasqrl.util.StringNamedId;
-import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.canonicalizer.NameCanonicalizer;
-import com.datasqrl.canonicalizer.SpecialName;
-import com.datasqrl.io.schema.flexible.constraint.Cardinality;
-import com.datasqrl.io.schema.flexible.constraint.Constraint;
-import com.datasqrl.io.schema.flexible.constraint.Constraint.Lookup;
-import com.datasqrl.io.schema.flexible.constraint.ConstraintHelper;
-import com.datasqrl.io.schema.flexible.input.FlexibleTableSchema;
-import com.datasqrl.io.schema.flexible.input.RelationType;
-import com.datasqrl.io.schema.flexible.input.SchemaElementDescription;
 import com.datasqrl.io.schema.flexible.type.Type;
 import com.datasqrl.io.schema.flexible.type.basic.BasicType;
 import com.datasqrl.io.schema.flexible.type.basic.BasicTypeManager;
+import com.datasqrl.util.NamedIdentifier;
+import com.datasqrl.util.StringNamedId;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+
 import lombok.NonNull;
 import lombok.Value;
-
-import java.util.*;
 
 /**
  * Converts a {@link SchemaDefinition} that is parsed out of a YAML file into a
@@ -63,8 +69,8 @@ public class SchemaImport {
       errors.fatal("Unrecognized schema version: %s. Supported versions are: %s", version, VERSION);
       return Optional.empty();
     }
-    FlexibleTableSchema.Builder builder = new FlexibleTableSchema.Builder();
-    Optional<Name> nameOpt = convert(table, builder, errors);
+    var builder = new FlexibleTableSchema.Builder();
+    var nameOpt = convert(table, builder, errors);
     if (nameOpt.isEmpty()) {
       return Optional.empty();
     } else {
@@ -85,7 +91,7 @@ public class SchemaImport {
                                                           @NonNull ErrorCollector errors) {
     RelationType.Builder<FlexibleFieldSchema.Field> rbuilder = new RelationType.Builder();
     for (FieldDefinition fd : columns) {
-      Optional<FlexibleFieldSchema.Field> fieldConvert = convert(fd, errors);
+      var fieldConvert = convert(fd, errors);
       if (fieldConvert.isPresent()) {
         rbuilder.add(fieldConvert.get());
       }
@@ -95,8 +101,8 @@ public class SchemaImport {
 
   private Optional<FlexibleFieldSchema.Field> convert(FieldDefinition field,
                                                       @NonNull ErrorCollector errors) {
-    FlexibleFieldSchema.Field.Builder builder = new FlexibleFieldSchema.Field.Builder();
-    Optional<Name> nameOpt = convert(field, builder, errors);
+    var builder = new FlexibleFieldSchema.Field.Builder();
+    var nameOpt = convert(field, builder, errors);
     if (nameOpt.isEmpty()) {
       return Optional.empty();
     } else {
@@ -114,7 +120,7 @@ public class SchemaImport {
       }
       ftds = new HashMap<>(field.mixed.size());
       for (Map.Entry<String, FieldTypeDefinitionImpl> entry : field.mixed.entrySet()) {
-        Optional<Name> name = convert(entry.getKey(), errors);
+        var name = convert(entry.getKey(), errors);
         if (name.isPresent()) {
           ftds.put(name.get(), entry.getValue());
         }
@@ -126,7 +132,7 @@ public class SchemaImport {
     }
     final List<FlexibleFieldSchema.FieldType> types = new ArrayList<>();
     for (Map.Entry<Name, FieldTypeDefinition> entry : ftds.entrySet()) {
-      Optional<FlexibleFieldSchema.FieldType> ft = convert(entry.getKey(), entry.getValue(),
+      var ft = convert(entry.getKey(), entry.getValue(),
               errors);
       if (ft.isPresent()) {
         types.add(ft.get());
@@ -141,11 +147,11 @@ public class SchemaImport {
     errors = errors.resolve(variant.getDisplay());
     final Type type;
     final int arrayDepth;
-    List<Constraint> constraints = convertConstraints(ftd.getTests(), errors);
+    var constraints = convertConstraints(ftd.getTests(), errors);
     if (ftd.getCardinality() != null) {
-      Constraint.Factory cf = constraintLookup.get("cardinality");
+      var cf = constraintLookup.get("cardinality");
 
-      Optional<Constraint> r = cf.create(ftd.getCardinality(), errors);
+      var r = cf.create(ftd.getCardinality(), errors);
       if (r.isPresent()) {
         constraints.add(r.get());
       }
@@ -158,7 +164,7 @@ public class SchemaImport {
               .map(c -> c.isSingleton() ? 0 : 1).orElse(1);
       type = convert(ftd.getColumns(), errors);
     } else if (!Strings.isNullOrEmpty(ftd.getType())) {
-      BasicTypeParse btp = BasicTypeParse.parse(ftd.getType());
+      var btp = BasicTypeParse.parse(ftd.getType());
       if (btp == null) {
         errors.fatal("Type unrecognized: %s", ftd.getType());
         return Optional.empty();
@@ -180,7 +186,7 @@ public class SchemaImport {
     }
     List<Constraint> constraints = new ArrayList<>(tests.size());
     for (String testString : tests) {
-      Constraint.Factory cf = constraintLookup.get(testString);
+      var cf = constraintLookup.get(testString);
       if (cf == null) {
         errors.warn("Unknown test [%s] - this constraint is ignored", testString);
         continue;
@@ -199,7 +205,7 @@ public class SchemaImport {
       errors.fatal("Missing or invalid field name: %s", sname);
       return Optional.empty();
     } else {
-      Name name = canonicalizer.name(sname);
+      var name = canonicalizer.name(sname);
       return Optional.of(name);
     }
   }
@@ -207,7 +213,7 @@ public class SchemaImport {
   private Optional<Name> convert(AbstractElementDefinition element,
                                  FlexibleFieldSchema.Builder builder,
                                  @NonNull ErrorCollector errors) {
-    final Optional<Name> name = convert(element.name, errors);
+    final var name = convert(element.name, errors);
     if (name.isPresent()) {
       builder.setName(name.get());
       errors = errors.resolve(name.get().getDisplay());
@@ -226,7 +232,7 @@ public class SchemaImport {
 
     public static BasicTypeParse parse(String basicType) {
       basicType = basicType.trim();
-      int depth = 0;
+      var depth = 0;
       while (basicType.startsWith("[") && basicType.endsWith("]")) {
         depth++;
         basicType = basicType.substring(1, basicType.length() - 1);
@@ -244,8 +250,8 @@ public class SchemaImport {
     }
 
     public static String export(int arrayDepth, BasicType<?> type) {
-      String r = type.getName();
-      for (int i = 0; i < arrayDepth; i++) {
+      var r = type.getName();
+      for (var i = 0; i < arrayDepth; i++) {
         r = "[" + r + "]";
       }
       return r;

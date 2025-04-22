@@ -1,17 +1,20 @@
 package com.datasqrl.v2.dag.plan;
 
+import java.util.List;
+import java.util.Optional;
+
+import org.apache.calcite.rel.type.RelDataType;
+
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.engine.ExecutableQuery;
 import com.datasqrl.engine.database.EngineCreateTable;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.v2.util.Documented;
-import java.util.List;
-import java.util.Optional;
+
 import lombok.Builder;
 import lombok.Builder.Default;
 import lombok.Singular;
 import lombok.Value;
-import org.apache.calcite.rel.type.RelDataType;
 
 /**
  * Represents a CREATE TABLE statement without a connector that is managed by DataSQRL

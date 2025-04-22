@@ -28,7 +28,7 @@ public interface ErrorMessage {
   }
 
   default String toStringNoSeverity() {
-    String loc = getLocation().toString();
+    var loc = getLocation().toString();
     if (loc == null || loc.trim().isEmpty()) {
       loc += ": ";
     }

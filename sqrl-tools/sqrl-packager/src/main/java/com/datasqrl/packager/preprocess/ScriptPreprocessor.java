@@ -1,9 +1,10 @@
 package com.datasqrl.packager.preprocess;
 
-import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.util.FileUtil;
 import java.nio.file.Path;
 import java.util.regex.Pattern;
+
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.util.FileUtil;
 
 public class ScriptPreprocessor implements Preprocessor {
   protected static final Pattern SCRIPT_REGEX = Pattern.compile(".*"+ FileUtil.toRegex(".sqrl"));

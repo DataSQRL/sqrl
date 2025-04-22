@@ -47,7 +47,9 @@ public class IcebergDataTypeMapper extends FlinkDataTypeMapper implements DataTy
       case ROW:
         return Optional.empty();
       case ARRAY:
-        if (getMapper(type.getComponentType()).isEmpty()) return Optional.empty();
+        if (getMapper(type.getComponentType()).isEmpty()) {
+			return Optional.empty();
+		}
     }
     if (type instanceof RawRelDataType rawRelDataType) {
       if (rawRelDataType.getRawType().getDefaultConversion() == FlinkJsonType.class) {
@@ -61,59 +63,60 @@ public class IcebergDataTypeMapper extends FlinkDataTypeMapper implements DataTy
     return Optional.of(DataTypeMappings.TO_BYTES_ONLY);
   }
 
-  public boolean nativeTypeSupport(RelDataType type) {
-    switch (type.getSqlTypeName()) {
-      case REAL:
-      case INTERVAL_YEAR:
-      case INTERVAL_YEAR_MONTH:
-      case INTERVAL_MONTH:
-      case INTERVAL_DAY:
-      case INTERVAL_DAY_HOUR:
-      case INTERVAL_DAY_MINUTE:
-      case INTERVAL_DAY_SECOND:
-      case INTERVAL_HOUR:
-      case INTERVAL_HOUR_MINUTE:
-      case INTERVAL_HOUR_SECOND:
-      case INTERVAL_MINUTE:
-      case INTERVAL_MINUTE_SECOND:
-      case INTERVAL_SECOND:
-      case NULL:
-      case SYMBOL:
-      case DISTINCT:
-      case STRUCTURED:
-      case OTHER:
-      case CURSOR:
-      case COLUMN_LIST:
-      case DYNAMIC_STAR:
-      case GEOMETRY:
-      case SARG:
-      case ANY:
-      default:
-        return false;
-      case TINYINT:
-      case BOOLEAN:
-      case SMALLINT:
-      case INTEGER:
-      case BIGINT:
-      case DECIMAL:
-      case FLOAT:
-      case DOUBLE:
-      case DATE:
-      case TIME:
-      case TIME_WITH_LOCAL_TIME_ZONE:
-      case TIMESTAMP:
-      case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
-      case CHAR:
-      case VARCHAR:
-      case BINARY:
-      case VARBINARY:
-      case MULTISET:
-      case MAP:
-      case ROW: //todo iterate over the row
-        return true;
-      case ARRAY:
-        return nativeTypeSupport(type.getComponentType());
-    }
+  @Override
+public boolean nativeTypeSupport(RelDataType type) {
+    return switch (type.getSqlTypeName()) {
+	case REAL:
+	case INTERVAL_YEAR:
+	case INTERVAL_YEAR_MONTH:
+	case INTERVAL_MONTH:
+	case INTERVAL_DAY:
+	case INTERVAL_DAY_HOUR:
+	case INTERVAL_DAY_MINUTE:
+	case INTERVAL_DAY_SECOND:
+	case INTERVAL_HOUR:
+	case INTERVAL_HOUR_MINUTE:
+	case INTERVAL_HOUR_SECOND:
+	case INTERVAL_MINUTE:
+	case INTERVAL_MINUTE_SECOND:
+	case INTERVAL_SECOND:
+	case NULL:
+	case SYMBOL:
+	case DISTINCT:
+	case STRUCTURED:
+	case OTHER:
+	case CURSOR:
+	case COLUMN_LIST:
+	case DYNAMIC_STAR:
+	case GEOMETRY:
+	case SARG:
+	case ANY:
+	default:
+		yield false;
+	case TINYINT:
+	case BOOLEAN:
+	case SMALLINT:
+	case INTEGER:
+	case BIGINT:
+	case DECIMAL:
+	case FLOAT:
+	case DOUBLE:
+	case DATE:
+	case TIME:
+	case TIME_WITH_LOCAL_TIME_ZONE:
+	case TIMESTAMP:
+	case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
+	case CHAR:
+	case VARCHAR:
+	case BINARY:
+	case VARBINARY:
+	case MULTISET:
+	case MAP:
+	case ROW: //todo iterate over the row
+		yield true;
+	case ARRAY:
+		yield nativeTypeSupport(type.getComponentType());
+	};
   }
 
   @Override
@@ -143,12 +146,12 @@ public class IcebergDataTypeMapper extends FlinkDataTypeMapper implements DataTy
 
   @Override
   public boolean isTypeOf(TableConfig tableConfig) {
-    Optional<String> connectorNameOpt = tableConfig.getConnectorConfig().getConnectorName();
+    var connectorNameOpt = tableConfig.getConnectorConfig().getConnectorName();
     if (connectorNameOpt.isEmpty()) {
       return false;
     }
 
-    String connectorName = connectorNameOpt.get();
+    var connectorName = connectorNameOpt.get();
     return connectorName.equalsIgnoreCase("iceberg");
   }
 }

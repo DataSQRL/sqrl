@@ -1,6 +1,7 @@
 package com.datasqrl.plan.queries;
 
 import com.datasqrl.canonicalizer.Name;
+
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 

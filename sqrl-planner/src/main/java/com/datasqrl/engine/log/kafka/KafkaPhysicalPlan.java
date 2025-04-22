@@ -1,7 +1,9 @@
 package com.datasqrl.engine.log.kafka;
 
-import com.datasqrl.engine.EnginePhysicalPlan;
 import java.util.List;
+
+import com.datasqrl.engine.EnginePhysicalPlan;
+
 import lombok.Value;
 
 @Value

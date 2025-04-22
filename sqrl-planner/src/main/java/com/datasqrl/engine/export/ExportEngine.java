@@ -1,16 +1,15 @@
 package com.datasqrl.engine.export;
 
+import java.util.Optional;
+
+import org.apache.calcite.rel.type.RelDataType;
+
 import com.datasqrl.datatype.DataTypeMapping;
-import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.database.EngineCreateTable;
 import com.datasqrl.engine.pipeline.ExecutionStage;
-import com.datasqrl.io.tables.TableType;
 import com.datasqrl.v2.analyzer.TableAnalysis;
-import com.datasqrl.v2.dag.plan.MaterializationStagePlan;
 import com.datasqrl.v2.tables.FlinkTableBuilder;
-import java.util.Optional;
-import org.apache.calcite.rel.type.RelDataType;
 
 public interface ExportEngine extends ExecutionEngine {
 

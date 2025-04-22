@@ -3,17 +3,6 @@
  */
 package com.datasqrl.plan.global;
 
-import com.datasqrl.calcite.SqrlRexUtil;
-import com.datasqrl.function.IndexType;
-import com.datasqrl.plan.global.QueryIndexSummary.IndexableFunctionCall;
-import com.datasqrl.util.ArrayUtil;
-import com.datasqrl.v2.Sqrl2FlinkSQLTranslator;
-import com.datasqrl.v2.analyzer.TableAnalysis;
-import com.datasqrl.v2.hint.IndexHint;
-import com.datasqrl.v2.hint.PlannerHints;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.LinkedHashMultimap;
-import com.google.common.primitives.Ints;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -25,12 +14,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.EqualsAndHashCode.Include;
-import lombok.Value;
+
 import org.apache.calcite.plan.RelOptRule;
-import org.apache.calcite.rel.RelFieldCollation;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelVisitor;
 import org.apache.calcite.rel.core.Filter;
@@ -44,10 +29,25 @@ import org.apache.calcite.rex.RexDynamicParam;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
-import org.apache.calcite.tools.Program;
 import org.apache.calcite.tools.Programs;
 import org.apache.commons.math3.util.Precision;
 import org.apache.flink.table.planner.plan.metadata.FlinkDefaultRelMetadataProvider;
+
+import com.datasqrl.calcite.SqrlRexUtil;
+import com.datasqrl.function.IndexType;
+import com.datasqrl.plan.global.QueryIndexSummary.IndexableFunctionCall;
+import com.datasqrl.util.ArrayUtil;
+import com.datasqrl.v2.Sqrl2FlinkSQLTranslator;
+import com.datasqrl.v2.analyzer.TableAnalysis;
+import com.datasqrl.v2.hint.IndexHint;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.LinkedHashMultimap;
+import com.google.common.primitives.Ints;
+
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.EqualsAndHashCode.Include;
+import lombok.Value;
 
 @AllArgsConstructor
 public class IndexSelector {
@@ -61,8 +61,8 @@ public class IndexSelector {
   private final Map<String, TableAnalysis> tableMap;
 
   public List<QueryIndexSummary> getIndexSelection(RelNode queryRelnode) {
-    RelNode pushedDownFilters = applyPushDownFilters(queryRelnode);
-    IndexFinder indexFinder = new IndexFinder();
+    var pushedDownFilters = applyPushDownFilters(queryRelnode);
+    var indexFinder = new IndexFinder();
     return indexFinder.find(pushedDownFilters);
   }
 
@@ -77,7 +77,7 @@ public class IndexSelector {
       );
 
   private RelNode applyPushDownFilters(RelNode queryRelnode) {
-    Program program = Programs.hep(PUSH_DOWN_FILTERS_RULES, false,
+    var program = Programs.hep(PUSH_DOWN_FILTERS_RULES, false,
         FlinkDefaultRelMetadataProvider.INSTANCE());
 
     return program.run(null, queryRelnode, queryRelnode.getTraitSet(), List.of(), List.of());
@@ -100,7 +100,7 @@ public class IndexSelector {
 
 
   public Optional<List<IndexDefinition>> getIndexHints(String tableName, TableAnalysis tableAnalysis) {
-    PlannerHints hints = tableAnalysis.getHints();
+    var hints = tableAnalysis.getHints();
     List<IndexHint> indexHints = hints.getHints(IndexHint.class)
         .collect(Collectors.toUnmodifiableList());
     if (!indexHints.isEmpty()) {
@@ -132,7 +132,7 @@ public class IndexSelector {
       //Remove first primary key column
       indexedColumns.remove(0);
       //Pick generic index type
-      IndexType genericType = config.getPreferredGenericIndexType();
+      var genericType = config.getPreferredGenericIndexType();
       Map<IndexDefinition, Double> indexes = new HashMap<>();
       for (int colIndex : indexedColumns) {
         indexes.put(new IndexDefinition(table.getNameId(), List.of(colIndex),
@@ -147,7 +147,7 @@ public class IndexSelector {
   }
 
   private Optional<IndexDefinition> getIndexDefinition(IndexableFunctionCall fcall, NamedTable table) {
-    Optional<IndexType> specialType = config.getPreferredSpecialIndexType(fcall.getFunction()
+    var specialType = config.getPreferredSpecialIndexType(fcall.getFunction()
         .getSupportedIndexes());
     return specialType.map(idxType -> new IndexDefinition(table.getNameId(), fcall.getColumnIndexes(),
         table.getAnalysis().getRowType().getFieldNames(), -1, idxType));
@@ -163,7 +163,7 @@ public class IndexSelector {
     Function<QueryIndexSummary, Double> initialCost = idx -> idx.getBaseCost();
     if (config.hasPrimaryKeyIndex() && table.getAnalysis().getPrimaryKey().isDefined()) {
       //The baseline cost is the cost of doing the lookup with the primary key index
-      IndexDefinition pkIdx = IndexDefinition.getPrimaryKeyIndex(table.getNameId(),
+      var pkIdx = IndexDefinition.getPrimaryKeyIndex(table.getNameId(),
           table.getAnalysis().getPrimaryKey().asSimpleList(), table.getAnalysis().getRowType().getFieldNames());
       initialCost = idx -> idx.getCost(pkIdx);
       candidates.remove(pkIdx);
@@ -174,24 +174,24 @@ public class IndexSelector {
       currentCost.put(idx, initialCost.apply(idx));
     }
     //Determine which index candidates reduce the cost the most
-    double beforeTotal = total(currentCost);
+    var beforeTotal = total(currentCost);
     for (; ; ) {
       if (optIndexes.size() >= config.maxIndexes()) {
         break;
       }
       IndexDefinition bestCandidate = null;
       Map<QueryIndexSummary, Double> bestCosts = null;
-      double bestTotal = Double.POSITIVE_INFINITY;
+      var bestTotal = Double.POSITIVE_INFINITY;
       for (IndexDefinition candidate : candidates) {
         Map<QueryIndexSummary, Double> costs = new HashMap<>();
         currentCost.forEach((call, cost) -> {
-          double newcost = call.getCost(candidate);
+          var newcost = call.getCost(candidate);
             if (newcost > cost) {
                 newcost = cost;
             }
           costs.put(call, newcost);
         });
-        double total = total(costs);
+        var total = total(costs);
         if (total < beforeTotal && (total + EPSILON < bestTotal ||
             (Precision.equals(total,bestTotal, 2*EPSILON) && costLess(candidate,bestCandidate)))) {
           bestCandidate = candidate;
@@ -213,17 +213,20 @@ public class IndexSelector {
   }
 
   private boolean costLess(IndexDefinition candidate, IndexDefinition bestCandidate) {
-    double cost = config.relativeIndexCost(candidate);
-    double bestcost = config.relativeIndexCost(bestCandidate);
-    if (cost + EPSILON < bestcost) return true;
-    else if (Precision.equals(cost,bestcost,2*EPSILON)) {
+    var cost = config.relativeIndexCost(candidate);
+    var bestcost = config.relativeIndexCost(bestCandidate);
+    if (cost + EPSILON < bestcost) {
+		return true;
+	} else if (Precision.equals(cost,bestcost,2*EPSILON)) {
       //Make index selection deterministic by prefering smaller columns
       return orderingScore(candidate) < orderingScore(bestCandidate);
-    } else return false;
+    } else {
+		return false;
+	}
   }
 
   private int orderingScore(IndexDefinition candidate) {
-    int score = 0;
+    var score = 0;
     for (Integer column : candidate.getColumns()) {
       score = score*2 + column;
     }
@@ -246,7 +249,7 @@ public class IndexSelector {
 
     for (IndexType indexType : config.supportedIndexTypes()) {
       List<List<Integer>> colPermutations = new ArrayList<>();
-      int maxIndexCols = eqCols.size();
+      var maxIndexCols = eqCols.size();
       switch (indexType) {
         case HASH:
           maxIndexCols = Math.min(maxIndexCols, config.maxIndexColumns(indexType));
@@ -275,7 +278,7 @@ public class IndexSelector {
       }
       if (indexType.isPartitioned()) {
         colPermutations.forEach( cols -> {
-          for (int i = 0; i <= cols.size(); i++) {
+          for (var i = 0; i <= cols.size(); i++) {
             result.add(new IndexDefinition(queryIndexSummary.getTable().getNameId(), cols,
                 queryIndexSummary.getTable().getAnalysis().getRowType().getFieldNames(), i, indexType));
           }
@@ -313,7 +316,7 @@ public class IndexSelector {
   }
 
   static final double epsilon(List<Integer> columns) {
-    long eps = 0;
+    var eps = 0L;
     for (int col : columns) {
       eps = eps * 2 + col;
     }
@@ -337,26 +340,26 @@ public class IndexSelector {
     public void visit(RelNode node, int ordinal, RelNode parent) {
       if (node instanceof Join join) {
         visit(join.getLeft(), 0, node);
-        RelNode right = join.getRight();
+        var right = join.getRight();
         //Push join filter into right
-        RexNode nestedCondition = pushJoinConditionIntoRight(join);
+        var nestedCondition = pushJoinConditionIntoRight(join);
         right = LogicalFilter.create(right, nestedCondition);
         right = applyPushDownFilters(right);
         visit(right, 1, node);
       } else if (node instanceof TableScan scan && parent instanceof Filter filter) {
-        NamedTable table = getNamedTable(scan);
+        var table = getNamedTable(scan);
         queryIndexSummaries.addAll(QueryIndexSummary.ofFilter(table, filter.getCondition(), rexUtil));
       } else if (node instanceof TableScan scan && parent instanceof Sort sort) {
-        NamedTable table = getNamedTable(scan);
-        Optional<Integer> firstCollationIdx = getFirstCollation(sort);
+        var table = getNamedTable(scan);
+        var firstCollationIdx = getFirstCollation(sort);
         if (firstCollationIdx.isPresent() && hasLimit(sort)) {
           QueryIndexSummary.ofSort(table, firstCollationIdx.get()).map(queryIndexSummaries::add);
         }
       } else if (node instanceof Project project && parent instanceof Sort sort && node.getInput(0) instanceof TableScan) {
-        NamedTable table = getNamedTable((TableScan) node.getInput(0));
-        Optional<Integer> firstCollationIdx = getFirstCollation(sort);
+        var table = getNamedTable((TableScan) node.getInput(0));
+        var firstCollationIdx = getFirstCollation(sort);
         if (firstCollationIdx.isPresent() && hasLimit(sort)) {
-          RexNode sortRex = project.getProjects().get(firstCollationIdx.get());
+          var sortRex = project.getProjects().get(firstCollationIdx.get());
           QueryIndexSummary.ofSort(table, sortRex).map(queryIndexSummaries::add);
         }
       } else {
@@ -370,9 +373,11 @@ public class IndexSelector {
     }
 
     private Optional<Integer> getFirstCollation(Sort sort) {
-      List<RelFieldCollation> fieldCollations = sort.collation.getFieldCollations();
-      if (fieldCollations.isEmpty()) return Optional.empty();
-      RelFieldCollation firstCollation = fieldCollations.get(0);
+      var fieldCollations = sort.collation.getFieldCollations();
+      if (fieldCollations.isEmpty()) {
+		return Optional.empty();
+	}
+      var firstCollation = fieldCollations.get(0);
       return Optional.of(firstCollation.getFieldIndex());
     }
 
@@ -416,8 +421,8 @@ public class IndexSelector {
    * @return
    */
   private NamedTable getNamedTable(TableScan scan) {
-    List<String> names = scan.getTable().getQualifiedName();
-    String nameId = names.get(names.size()-1);
+    var names = scan.getTable().getQualifiedName();
+    var nameId = names.get(names.size()-1);
     return new NamedTable(nameId, tableMap.get(nameId));
   }
 

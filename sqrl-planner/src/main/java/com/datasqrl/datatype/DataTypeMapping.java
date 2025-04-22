@@ -1,11 +1,14 @@
 package com.datasqrl.datatype;
 
-import com.datasqrl.engine.stream.flink.connector.CastFunction;
 import java.util.Optional;
-import lombok.AllArgsConstructor;
-import lombok.Value;
+
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.flink.table.functions.FunctionDefinition;
+
+import com.datasqrl.engine.stream.flink.connector.CastFunction;
+
+import lombok.AllArgsConstructor;
+import lombok.Value;
 
 /**
  * For mapping Flink types to and from database engine types
@@ -27,11 +30,11 @@ public interface DataTypeMapping {
   interface Mapper {
 
     default Optional<FunctionDefinition> getEngineMapping(Direction direction) {
-      switch (direction) {
-        case TO_DATABASE: return Optional.of(toEngineMapping());
-        case FROM_DATABASE: return fromEngineMapping();
-        default: throw new UnsupportedOperationException("Unrecognized direction: " + direction);
-      }
+      return switch (direction) {
+	case TO_DATABASE -> Optional.of(toEngineMapping());
+	case FROM_DATABASE -> fromEngineMapping();
+	default -> throw new UnsupportedOperationException("Unrecognized direction: " + direction);
+	};
     }
 
     /**

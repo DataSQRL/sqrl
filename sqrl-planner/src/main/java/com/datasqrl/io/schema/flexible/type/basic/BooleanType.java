@@ -3,25 +3,22 @@
  */
 package com.datasqrl.io.schema.flexible.type.basic;
 
-import com.datasqrl.io.schema.flexible.type.SqrlTypeVisitor;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
+import com.datasqrl.io.schema.flexible.type.SqrlTypeVisitor;
+
 public class BooleanType extends AbstractBasicType<Boolean> {
 
-  private static final Function<String, Boolean> parseBoolean = new Function<String, Boolean>() {
-    @Override
-    public Boolean apply(String s) {
-      if (s.equalsIgnoreCase("true")) {
-        return true;
-      } else if (s.equalsIgnoreCase("false")) {
-        return false;
-      }
-      throw new IllegalArgumentException("Not a boolean");
-    }
-  };
+  private static final Function<String, Boolean> parseBoolean = s -> {
+  if (s.equalsIgnoreCase("true")) {
+    return true;
+  } else if (s.equalsIgnoreCase("false")) {
+    return false;
+  }
+  throw new IllegalArgumentException("Not a boolean");
+};
 
   public static final BooleanType INSTANCE = new BooleanType();
 
@@ -64,7 +61,8 @@ public class BooleanType extends AbstractBasicType<Boolean> {
 
   }
 
-  public <R, C> R accept(SqrlTypeVisitor<R, C> visitor, C context) {
+  @Override
+public <R, C> R accept(SqrlTypeVisitor<R, C> visitor, C context) {
     return visitor.visitBooleanType(this, context);
   }
 }

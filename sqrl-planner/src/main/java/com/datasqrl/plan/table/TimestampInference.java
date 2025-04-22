@@ -3,16 +3,25 @@
  */
 package com.datasqrl.plan.table;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+
 import com.datasqrl.plan.util.IndexMap;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
+
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-
-import java.util.*;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 /**
  * {@link TimestampInference} contains all the candidate timestamp columns for a relation, i.e. either an
@@ -96,7 +105,7 @@ public class TimestampInference {
 
   public void selectTimestamp() {
     if (candidates.size()>1) {
-      Candidate best = getBestCandidate();
+      var best = getBestCandidate();
       if (best.parents.isEmpty()) {
         best.fixAsTimestamp();
       } else {
@@ -114,43 +123,43 @@ public class TimestampInference {
   }
 
   private Candidate addCandidate(int index, int score) {
-    Candidate candidate = new Candidate(index, score, List.of(), new ArrayList<>());
+    var candidate = new Candidate(index, score, List.of(), new ArrayList<>());
     addCandidateInternal(candidate);
     return candidate;
   }
 
   private Candidate addCandidate(int index, Candidate... basedOn) {
     Preconditions.checkArgument(basedOn.length>0);
-    boolean isDerived = Arrays.stream(basedOn).allMatch(Candidate::isDerived);
-    boolean isBase = Arrays.stream(basedOn).noneMatch(Candidate::isDerived);
+    var isDerived = Arrays.stream(basedOn).allMatch(Candidate::isDerived);
+    var isBase = Arrays.stream(basedOn).noneMatch(Candidate::isDerived);
     Preconditions.checkArgument(isDerived ^ isBase, "Invalid input timestamps");
     //Reference parents if derived, else base becomes parent
 
-    List<Candidate> parents = isDerived?Arrays.stream(basedOn).flatMap(c -> c.children.stream()).collect(Collectors.toUnmodifiableList()):
+    var parents = isDerived?Arrays.stream(basedOn).flatMap(c -> c.children.stream()).collect(Collectors.toUnmodifiableList()):
             Arrays.stream(basedOn).collect(Collectors.toUnmodifiableList());
     int maxScore = Arrays.stream(basedOn).map(Candidate::getScore).max(Integer::compareTo).get();
-    Candidate candidate = new Candidate(index, maxScore, parents, new ArrayList<>());
+    var candidate = new Candidate(index, maxScore, parents, new ArrayList<>());
     addCandidateInternal(candidate);
     return candidate;
   }
 
   public TimestampInference asDerived() {
     Preconditions.checkArgument(!isDerived());
-    TimestampInference timestamp = new TimestampInference(true);
+    var timestamp = new TimestampInference(true);
     this.candidates.values().forEach(c -> timestamp.addCandidate(c.index, c));
     return timestamp;
   }
 
   public TimestampInference remapIndexes(IndexMap map) {
     Preconditions.checkArgument(isDerived());
-    TimestampInference timestamp = new TimestampInference(true);
+    var timestamp = new TimestampInference(true);
     this.candidates.values().forEach(c -> timestamp.addCandidate(map.map(c.index), c));
     return timestamp;
   }
 
   public TimestampInference finalizeAsBase() {
     Preconditions.checkArgument(isDerived());
-    TimestampInference timestamp = new TimestampInference(false);
+    var timestamp = new TimestampInference(false);
     this.candidates.values().forEach(c -> timestamp.addCandidate(c.index, c));
     timestamp.candidates.values().forEach(Candidate::registerOnParents);
     if (timestamp.hasFixedTimestamp()) { //Fix the timestamp
@@ -254,7 +263,7 @@ public class TimestampInference {
 
     private void eliminate() {
       children.forEach(Candidate::eliminate);
-      boolean removed = candidates.remove(this.index)!=null;
+      var removed = candidates.remove(this.index)!=null;
       Preconditions.checkArgument(removed);
     }
 
@@ -266,15 +275,20 @@ public class TimestampInference {
       return TimestampInference.this;
     }
 
-    public String toString() {
+    @Override
+	public String toString() {
       return "TS#" + index;
     }
 
     @Override
     public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      Candidate candidate = (Candidate) o;
+      if (this == o) {
+		return true;
+	}
+      if (o == null || getClass() != o.getClass()) {
+		return false;
+	}
+      var candidate = (Candidate) o;
       return getTimestamps() == candidate.getTimestamps() && index == candidate.index;
     }
 

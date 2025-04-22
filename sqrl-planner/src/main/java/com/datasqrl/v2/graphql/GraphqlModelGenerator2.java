@@ -3,7 +3,18 @@ package com.datasqrl.v2.graphql;
 import static com.datasqrl.graphql.generate.GraphqlSchemaUtil.hasVaryingCase;
 import static com.datasqrl.graphql.util.GraphqlCheckUtil.checkState;
 
-import com.datasqrl.engine.ExecutableQuery;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeField;
+import org.apache.calcite.schema.FunctionParameter;
+
 import com.datasqrl.engine.database.relational.ExecutableJdbcReadQuery;
 import com.datasqrl.engine.log.kafka.KafkaQuery;
 import com.datasqrl.engine.log.kafka.NewTopic;
@@ -29,21 +40,12 @@ import com.datasqrl.v2.parser.AccessModifier;
 import com.datasqrl.v2.tables.SqrlFunctionParameter;
 import com.datasqrl.v2.tables.SqrlTableFunction;
 import com.google.common.base.Preconditions;
+
 import graphql.language.FieldDefinition;
 import graphql.language.InputValueDefinition;
 import graphql.language.ObjectTypeDefinition;
 import graphql.schema.idl.TypeDefinitionRegistry;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 import lombok.Getter;
-import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rel.type.RelDataTypeField;
-import org.apache.calcite.schema.FunctionParameter;
 
 /**
  * Returns a set of table functions that satisfy a graphql schema
@@ -65,10 +67,10 @@ public class GraphqlModelGenerator2 extends GraphqlSchemaWalker2 {
   @Override
   protected void visitSubscription(FieldDefinition atField, SqrlTableFunction tableFunction, TypeDefinitionRegistry registry) {
     Preconditions.checkArgument(tableFunction.getVisibility().getAccess()== AccessModifier.SUBSCRIPTION);
-    final ExecutableQuery executableQuery = tableFunction.getExecutableQuery();
+    final var executableQuery = tableFunction.getExecutableQuery();
 
-    String fieldName = atField.getName();
-    List<InputValueDefinition> inputArguments = atField.getInputValueDefinitions();
+    var fieldName = atField.getName();
+    var inputArguments = atField.getInputValueDefinitions();
     SubscriptionCoords subscriptionCoords;
     if (executableQuery instanceof KafkaQuery kafkaQuery) {
       Map<String, String> filters = kafkaQuery.getFilterColumnNames().entrySet().stream().collect(
@@ -101,7 +103,7 @@ public class GraphqlModelGenerator2 extends GraphqlSchemaWalker2 {
     Map<String, MutationComputedColumnType> computedColumns = mutation.getComputedColumns().stream()
         .collect(Collectors.toMap(MutationComputedColumn::getColumnName, MutationComputedColumn::getType));
     if (mutation.getCreateTopic() instanceof NewTopic) {
-      NewTopic newTopic = (NewTopic) mutation.getCreateTopic();
+      var newTopic = (NewTopic) mutation.getCreateTopic();
       mutationCoords = new KafkaMutationCoords(atField.getName(), newTopic.getTopicName(), computedColumns, Map.of());
 //    } else if (logPlan.isPresent() && logPlan.get() instanceof PostgresLogPhysicalPlan) {
 //      String tableName;
@@ -144,7 +146,7 @@ public class GraphqlModelGenerator2 extends GraphqlSchemaWalker2 {
 
     // we create PropertyDataFetchers for fields only when graphql field name is different from calcite field name
     if (hasVaryingCase(atField, relDataTypeField)) {
-      FieldLookupQueryCoords fieldLookupCoords = FieldLookupQueryCoords.builder().parentType(objectType.getName())
+      var fieldLookupCoords = FieldLookupQueryCoords.builder().parentType(objectType.getName())
           .fieldName(atField.getName()).columnName(relDataTypeField.getName()).build();
       queryCoords.add(fieldLookupCoords);
     }
@@ -154,16 +156,16 @@ public class GraphqlModelGenerator2 extends GraphqlSchemaWalker2 {
   protected void visitQuery(ObjectTypeDefinition parentType, FieldDefinition atField, SqrlTableFunction tableFunction, TypeDefinitionRegistry registry) {
     // As we no more merge user provided graphQL schema with the inferred schema, we no more need to generate as many queries as the permutations of its arguments.
     // We now have a single executable query linked to the table function and already fully defined
-    final ExecutableQuery executableQuery = tableFunction.getExecutableQuery();
+    final var executableQuery = tableFunction.getExecutableQuery();
     checkState(
         executableQuery instanceof ExecutableJdbcReadQuery,
         atField.getSourceLocation(),
         "This table function should be planned as an ExecutableJdbcReadQuery");
-    final ExecutableJdbcReadQuery executableJdbcReadQuery = (ExecutableJdbcReadQuery) executableQuery;
+    final var executableJdbcReadQuery = (ExecutableJdbcReadQuery) executableQuery;
 
     List<QueryParameterHandler> parameters = new ArrayList<>();
     for (FunctionParameter functionParameter : tableFunction.getParameters()) {
-      final SqrlFunctionParameter parameter = (SqrlFunctionParameter) functionParameter;
+      final var parameter = (SqrlFunctionParameter) functionParameter;
       parameters.add(
           parameter.isParentField()
               ? new RootGraphqlModel.SourceParameter(parameter.getName())
@@ -171,14 +173,14 @@ public class GraphqlModelGenerator2 extends GraphqlSchemaWalker2 {
     }
     RootGraphqlModel.QueryBase queryBase;
 
-    boolean hasLimitOrOffset = atField.getInputValueDefinitions().stream().map(InputValueDefinition::getName)
+    var hasLimitOrOffset = atField.getInputValueDefinitions().stream().map(InputValueDefinition::getName)
         .anyMatch(name -> name.equals(SchemaConstants.LIMIT) || name.equals(SchemaConstants.OFFSET));
     queryBase = new SqlQuery(executableJdbcReadQuery.getSql(), parameters,
         hasLimitOrOffset? PaginationType.LIMIT_AND_OFFSET: PaginationType.NONE,
         executableJdbcReadQuery.getDatabase());
-    ArgumentLookupQueryCoords.ArgumentLookupQueryCoordsBuilder coordsBuilder = ArgumentLookupQueryCoords.builder()
+    var coordsBuilder = ArgumentLookupQueryCoords.builder()
         .parentType(parentType.getName()).fieldName(atField.getName());
-    QueryWithArguments set = QueryWithArguments.builder().arguments(createArguments(atField))
+    var set = QueryWithArguments.builder().arguments(createArguments(atField))
             .query(queryBase).build();
 
     coordsBuilder.exec(set);

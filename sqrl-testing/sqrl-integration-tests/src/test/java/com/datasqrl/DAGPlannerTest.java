@@ -3,13 +3,14 @@ package com.datasqrl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.datasqrl.cmd.AssertStatusHook;
-import com.datasqrl.util.SnapshotTest.Snapshot;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.function.Predicate;
+
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
+
+import com.datasqrl.util.SnapshotTest.Snapshot;
 
 public class DAGPlannerTest extends AbstractAssetSnapshotTest {
 
@@ -23,11 +24,11 @@ public class DAGPlannerTest extends AbstractAssetSnapshotTest {
   @ArgumentsSource(DagPlannerSQRLFiles.class)
   void testScripts(Path script) {
     assertTrue(Files.exists(script));
-    TestNameModifier testModifier = TestNameModifier.of(script);
-    boolean expectFailure = testModifier==TestNameModifier.fail;
-    boolean printMessages = testModifier==TestNameModifier.fail || testModifier==TestNameModifier.warn;
+    var testModifier = TestNameModifier.of(script);
+    var expectFailure = testModifier==TestNameModifier.fail;
+    var printMessages = testModifier==TestNameModifier.fail || testModifier==TestNameModifier.warn;
     this.snapshot = Snapshot.of(getDisplayName(script), getClass());
-    AssertStatusHook hook = execute(SCRIPT_DIR, "compile", script.getFileName().toString(), "-t", outputDir.getFileName().toString());
+    var hook = execute(SCRIPT_DIR, "compile", script.getFileName().toString(), "-t", outputDir.getFileName().toString());
     assertEquals(expectFailure, hook.isFailed(), hook.getMessages());
     if (printMessages) {
       createMessageSnapshot(hook.getMessages());
@@ -46,11 +47,15 @@ public class DAGPlannerTest extends AbstractAssetSnapshotTest {
     };
   }
 
-  public Predicate<Path> getOutputDirFilter() {
+  @Override
+public Predicate<Path> getOutputDirFilter() {
     return path -> {
-      if (path.getFileName().toString().equals("flink-sql-no-functions.sql")) return true;
-      if (path.getFileName().toString().contains("flink")) return false;
-      if (path.getFileName().toString().contains("schema") || path.getFileName().toString().contains("views")) return false;
+      if (path.getFileName().toString().equals("flink-sql-no-functions.sql")) {
+		return true;
+	}
+      if (path.getFileName().toString().contains("flink") || path.getFileName().toString().contains("schema") || path.getFileName().toString().contains("views")) {
+		return false;
+	}
       return true;
     };
   }

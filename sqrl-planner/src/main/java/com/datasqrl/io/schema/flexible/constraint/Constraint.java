@@ -3,15 +3,16 @@
  */
 package com.datasqrl.io.schema.flexible.constraint;
 
-import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.io.schema.flexible.type.Type;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.io.schema.flexible.type.Type;
 
 public interface Constraint extends Serializable {
 

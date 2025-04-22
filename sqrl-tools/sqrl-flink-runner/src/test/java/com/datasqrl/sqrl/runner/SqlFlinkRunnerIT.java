@@ -17,8 +17,6 @@ package com.datasqrl.sqrl.runner;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.nio.file.Path;
-
 import org.junit.jupiter.api.Test;
 
 import com.nextbreakpoint.flink.client.model.JobStatus;
@@ -27,13 +25,13 @@ class SqlFlinkRunnerIT extends AbstractITSupport {
 
   @Test
   void givenPlan_whenInvokingFormatFunction_thenSuccess() throws Exception {
-    String testCase = "flink-functions";
+    var testCase = "flink-functions";
     super.compilePlan(testCase);
 
     var client = createClient(flinkContainer.getMappedPort(8081));
 
     // Step 1: Submit the job inside the running container
-    String output = flinkContainer.execInContainer("flink", "run",
+    var output = flinkContainer.execInContainer("flink", "run",
         "./plugins/flink-sql-runner/flink-sql-runner.uber.jar", "--planfile", "/flink/sql/"+testCase+"/build/deploy/plan/flink-compiled-plan.json")
         .getStdout();
 
@@ -47,7 +45,7 @@ class SqlFlinkRunnerIT extends AbstractITSupport {
     System.out.println(flinkContainer.execInContainer("cat", "/opt/flink/log/" + clientLog).getStdout());
 
     // Extract Job ID from stdout
-    String jobId = output.lines().filter(line -> line.contains("Job has been submitted with JobID"))
+    var jobId = output.lines().filter(line -> line.contains("Job has been submitted with JobID"))
         .map(line -> line.substring(line.lastIndexOf(" ") + 1).trim()).findFirst()
         .orElseThrow(() -> new RuntimeException("Job ID not found in output"));
 
@@ -62,7 +60,7 @@ class SqlFlinkRunnerIT extends AbstractITSupport {
         .filter(name -> name.startsWith("flink--taskexecutor") && name.endsWith(".out")).findFirst()
         .orElseThrow(() -> new RuntimeException("TaskExecutor log not found"));
 
-      String taskExecutorLogs = flinkContainer.execInContainer("cat", "/opt/flink/log/" + logFile).getStdout();
+      var taskExecutorLogs = flinkContainer.execInContainer("cat", "/opt/flink/log/" + logFile).getStdout();
 
       // check log printed, means sqrl concat function was executed correctly
       assertThat(taskExecutorLogs).as("Expected output not found in TaskManager logs")

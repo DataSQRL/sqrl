@@ -1,16 +1,18 @@
 package com.datasqrl.v2.dag;
 
-import com.datasqrl.engine.pipeline.ExecutionPipeline;
-import com.datasqrl.engine.pipeline.ExecutionStage;
-import com.datasqrl.v2.dag.nodes.PipelineNode;
-import com.datasqrl.plan.global.StageAnalysis;
-import com.datasqrl.plan.global.StageAnalysis.MissingDependent;
-import com.datasqrl.util.AbstractDAG;
-import com.google.common.collect.Multimap;
 import java.util.LinkedHashMap;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
+
+import com.datasqrl.engine.pipeline.ExecutionPipeline;
+import com.datasqrl.engine.pipeline.ExecutionStage;
+import com.datasqrl.plan.global.StageAnalysis;
+import com.datasqrl.plan.global.StageAnalysis.MissingDependent;
+import com.datasqrl.util.AbstractDAG;
+import com.datasqrl.v2.dag.nodes.PipelineNode;
+import com.google.common.collect.Multimap;
+
 import lombok.Value;
 
 /**
@@ -49,8 +51,8 @@ public class PipelineDAG extends AbstractDAG<PipelineNode, PipelineDAG> {
    */
   public void eliminateInviableStages(ExecutionPipeline pipeline) {
     messagePassing(node -> {
-      final LinkedHashMap<ExecutionStage, StageAnalysis> updatedStages = new LinkedHashMap<>();
-      boolean hasChange = node.getStageAnalysis().values().stream().filter(s -> s.isSupported())
+      final var updatedStages = new LinkedHashMap<ExecutionStage, StageAnalysis>();
+      var hasChange = node.getStageAnalysis().values().stream().filter(s -> s.isSupported())
           .map( stageAnalysis -> {
             ExecutionStage stage = stageAnalysis.getStage();
             //Each input/output node must have a viable upstream/downstream stage, otherwise this stage isn't viable

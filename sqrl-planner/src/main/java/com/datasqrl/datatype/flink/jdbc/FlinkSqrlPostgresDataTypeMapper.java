@@ -59,7 +59,8 @@ public class FlinkSqrlPostgresDataTypeMapper extends FlinkDataTypeMapper impleme
     return Optional.of(DataTypeMappings.TO_BYTES_ONLY);
   }
 
-  public boolean nativeTypeSupport(RelDataType type) {
+  @Override
+public boolean nativeTypeSupport(RelDataType type) {
     switch (type.getSqlTypeName()) {
       case TINYINT:
       case REAL:
@@ -139,17 +140,17 @@ public class FlinkSqrlPostgresDataTypeMapper extends FlinkDataTypeMapper impleme
 
   @Override
   public boolean isTypeOf(TableConfig tableConfig) {
-    Optional<String> connectorNameOpt = tableConfig.getConnectorConfig().getConnectorName();
+    var connectorNameOpt = tableConfig.getConnectorConfig().getConnectorName();
     if (connectorNameOpt.isEmpty()) {
       return false;
     }
 
-    String connectorName = connectorNameOpt.get();
+    var connectorName = connectorNameOpt.get();
     if (!connectorName.equalsIgnoreCase("jdbc-sqrl")) {
       return false;
     }
 
-    String driver = (String)tableConfig.getConnectorConfig().toMap().get("driver");
+    var driver = (String)tableConfig.getConnectorConfig().toMap().get("driver");
     if (driver == null) {
       return false;
     }

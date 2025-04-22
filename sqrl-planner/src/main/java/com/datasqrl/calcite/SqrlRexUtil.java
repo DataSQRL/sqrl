@@ -5,13 +5,6 @@ package com.datasqrl.calcite;
 
 import static com.datasqrl.function.CalciteFunctionUtil.lightweightOp;
 
-import com.datasqrl.plan.hints.DedupHint;
-import com.datasqrl.plan.hints.SqrlHint;
-import com.datasqrl.plan.util.SelectIndexMap;
-import com.datasqrl.calcite.SqrlRexUtil.JoinConditionDecomposition.EqualityCondition;
-import com.datasqrl.util.CalciteUtil;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Iterables;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -22,8 +15,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import lombok.NonNull;
-import lombok.Value;
+
 import org.apache.calcite.plan.RelOptUtil;
 import org.apache.calcite.rel.RelCollation;
 import org.apache.calcite.rel.RelCollations;
@@ -50,7 +42,6 @@ import org.apache.calcite.rex.RexVisitorImpl;
 import org.apache.calcite.rex.RexWindowBounds;
 import org.apache.calcite.schema.TableFunction;
 import org.apache.calcite.sql.SqlAggFunction;
-import org.apache.calcite.sql.SqlBinaryOperator;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
@@ -59,10 +50,19 @@ import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.util.Util;
-import org.apache.commons.collections4.ListUtils;
 import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 import org.apache.flink.table.planner.calcite.FlinkRexBuilder;
-import org.apache.flink.table.planner.plan.utils.FlinkRexUtil;
+
+import com.datasqrl.calcite.SqrlRexUtil.JoinConditionDecomposition.EqualityCondition;
+import com.datasqrl.plan.hints.DedupHint;
+import com.datasqrl.plan.hints.SqrlHint;
+import com.datasqrl.plan.util.SelectIndexMap;
+import com.datasqrl.util.CalciteUtil;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Iterables;
+
+import lombok.NonNull;
+import lombok.Value;
 
 public class SqrlRexUtil {
 
@@ -115,11 +115,11 @@ public class SqrlRexUtil {
   }
 
   public JoinConditionDecomposition decomposeJoinCondition(RexNode condition, int leftSideMaxIdx) {
-    List<RexNode> conjunctions = getConjunctions(condition);
+    var conjunctions = getConjunctions(condition);
     List<EqualityCondition> equalities = new ArrayList<>();
     List<RexNode> remaining = new ArrayList<>();
     for (RexNode rex : conjunctions) {
-      Optional<EqualityCondition> eq = decomposeEqualityCondition(rex, leftSideMaxIdx);
+      var eq = decomposeEqualityCondition(rex, leftSideMaxIdx);
         if (eq.isPresent()) {
             equalities.add(eq.get());
         } else {
@@ -131,12 +131,12 @@ public class SqrlRexUtil {
 
   private Optional<EqualityCondition> decomposeEqualityCondition(RexNode predicate, int leftSideMaxIdx) {
     if (predicate.isA(SqlKind.EQUALS)) {
-      RexCall equality = (RexCall) predicate;
-      Optional<Integer> leftIndex = CalciteUtil.getNonAlteredInputRef(equality.getOperands().get(0));
-      Optional<Integer> rightIndex = CalciteUtil.getNonAlteredInputRef(equality.getOperands().get(1));
+      var equality = (RexCall) predicate;
+      var leftIndex = CalciteUtil.getNonAlteredInputRef(equality.getOperands().get(0));
+      var rightIndex = CalciteUtil.getNonAlteredInputRef(equality.getOperands().get(1));
       if (leftIndex.isPresent() && rightIndex.isPresent()) {
-        int leftIdx = Math.min(leftIndex.get(), rightIndex.get());
-        int rightIdx = Math.max(leftIndex.get(), rightIndex.get());
+        var leftIdx = Math.min(leftIndex.get(), rightIndex.get());
+        var rightIdx = Math.max(leftIndex.get(), rightIndex.get());
         if (leftIdx < leftSideMaxIdx && rightIdx >= leftSideMaxIdx) {
           return Optional.of(new EqualityCondition(leftIdx, rightIdx));
         } else {
@@ -156,7 +156,7 @@ public class SqrlRexUtil {
       } else {
         return Optional.empty();
       }
-      Set<Integer> refs = findAllInputRefs(List.of(otherSide));
+      var refs = findAllInputRefs(List.of(otherSide));
       if (constrainedIdx<leftSideMaxIdx && refs.stream().allMatch(idx -> idx >= leftSideMaxIdx)) {
         return Optional.of(new EqualityCondition(constrainedIdx, EqualityCondition.NO_INDEX));
       } else if (constrainedIdx>=leftSideMaxIdx && refs.stream().allMatch(idx -> idx<leftSideMaxIdx)) {
@@ -180,7 +180,7 @@ public class SqrlRexUtil {
     List<RexNode> remainingPredicates;
 
     public List<EqualityCondition> getTwoSidedEqualities() {
-      ArrayList<EqualityCondition> result = new ArrayList<>();
+      var result = new ArrayList<EqualityCondition>();
       equalities.stream().filter(EqualityCondition::isTwoSided).forEach(result::add);
       return result;
     }
@@ -243,7 +243,7 @@ public class SqrlRexUtil {
   }
 
   public static RexFinder<RexInputRef> findRexInputRefByIndex(final int index) {
-    return new RexFinder<RexInputRef>() {
+    return new RexFinder<>() {
       @Override
       public Void visitInputRef(RexInputRef ref) {
         if (ref.getIndex() == index) {
@@ -255,7 +255,7 @@ public class SqrlRexUtil {
   }
 
   public static Optional<Integer> findSingleReferenceColumnIndex(RexCall call) {
-    Set<Integer> inputRefs = findAllInputRefs(call.getOperands());
+    var inputRefs = findAllInputRefs(call.getOperands());
     if (inputRefs.size() == 1) {
       return Optional.of(Iterables.getOnlyElement(inputRefs));
     }
@@ -265,7 +265,7 @@ public class SqrlRexUtil {
 
 
   public static Set<Integer> findAllInputRefs(@NonNull Iterable<RexNode> nodes) {
-    RexInputRefFinder refFinder = new RexInputRefFinder();
+    var refFinder = new RexInputRefFinder();
       for (RexNode node : nodes) {
           node.accept(refFinder);
       }
@@ -304,7 +304,7 @@ public class SqrlRexUtil {
   }
 
   public RelBuilder appendColumn(RelBuilder relBuilder, RexNode rexNode, String fieldName) {
-    RelNode relNode = relBuilder.peek();
+    var relNode = relBuilder.peek();
     List<RexNode> rexes = new ArrayList<>(getIdentityProject(relNode));
     List<String> fieldNames = new ArrayList<>(relNode.getRowType().getFieldNames());
     rexes.add(rexNode);
@@ -371,9 +371,9 @@ public class SqrlRexUtil {
 
   public RexNode createRowFunction(SqlAggFunction rowFunction, List<RexNode> partition,
       List<RexFieldCollation> fieldCollations) {
-    final RelDataType intType =
+    final var intType =
         rexBuilder.getTypeFactory().createSqlType(SqlTypeName.BIGINT);
-    RexNode row_function = rexBuilder.makeOver(intType, rowFunction,
+    var row_function = rexBuilder.makeOver(intType, rowFunction,
         List.of(), partition, ImmutableList.copyOf(fieldCollations),
         RexWindowBounds.UNBOUNDED_PRECEDING,
         RexWindowBounds.CURRENT_ROW, true, true, false,
@@ -391,7 +391,7 @@ public class SqrlRexUtil {
 
   public static RexNode makeWindowLimitFilter(RexBuilder rexBuilder, int limit, int fieldIdx,
       RelDataType windowType) {
-    SqlBinaryOperator comparison = SqlStdOperatorTable.LESS_THAN_OR_EQUAL;
+    var comparison = SqlStdOperatorTable.LESS_THAN_OR_EQUAL;
       if (limit == 1) {
           comparison = SqlStdOperatorTable.EQUALS;
       }
@@ -400,7 +400,7 @@ public class SqrlRexUtil {
   }
 
   public static boolean isSimpleProject(LogicalProject project) {
-    RexFinder<Void> findComplex = new RexFinder<Void>() {
+    RexFinder<Void> findComplex = new RexFinder<>() {
       @Override
       public Void visitOver(RexOver over) {
         throw Util.FoundOne.NULL;
@@ -437,7 +437,7 @@ public class SqrlRexUtil {
     if (colIndexes.size()==1) {
       return rexBuilder.makeInputRef(input, colIndexes.get(0));
     } else { //size >=2
-      RexNode[] args = colIndexes.stream().map(idx -> rexBuilder.makeInputRef(input, idx)).toArray(RexNode[]::new);
+      var args = colIndexes.stream().map(idx -> rexBuilder.makeInputRef(input, idx)).toArray(RexNode[]::new);
       return rexBuilder.makeCall(lightweightOp("GREATEST", ReturnTypes.ARG0), args);
     }
   }
@@ -452,7 +452,7 @@ public class SqrlRexUtil {
   }
 
   public String getFieldName(int idx, RelNode relNode) {
-    RelDataType rowType = relNode.getRowType();
+    var rowType = relNode.getRowType();
     return rowType.getFieldList().get(idx).getName();
   }
 
@@ -463,7 +463,7 @@ public class SqrlRexUtil {
   }
 
   public static Optional<TableFunction> getCustomTableFunction(TableFunctionScan fctScan) {
-    RexCall call = (RexCall) fctScan.getCall();
+    var call = (RexCall) fctScan.getCall();
     if (call.getOperator() instanceof SqlUserDefinedTableFunction) {
       return Optional.of(((SqlUserDefinedTableFunction)call.getOperator()).getFunction());
     }

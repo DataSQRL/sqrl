@@ -1,17 +1,15 @@
 package com.datasqrl.v2;
 
-import org.apache.calcite.plan.hep.HepMatchOrder;
 import org.apache.calcite.rel.rules.CoreRules;
 import org.apache.calcite.tools.RuleSet;
 import org.apache.calcite.tools.RuleSets;
 import org.apache.flink.table.api.TableConfig;
 import org.apache.flink.table.planner.calcite.CalciteConfigBuilder;
 import org.apache.flink.table.planner.plan.optimize.program.FlinkChainedProgram;
-import org.apache.flink.table.planner.plan.optimize.program.FlinkHepRuleSetProgramBuilder;
 import org.apache.flink.table.planner.plan.optimize.program.FlinkStreamProgram;
-import org.apache.flink.table.planner.plan.optimize.program.HEP_RULES_EXECUTION_TYPE;
 import org.apache.flink.table.planner.plan.optimize.program.StreamOptimizeContext;
-import org.apache.flink.table.planner.plan.rules.logical.*;
+import org.apache.flink.table.planner.plan.rules.logical.FlinkProjectMergeRule;
+import org.apache.flink.table.planner.plan.rules.logical.ProjectWindowTableFunctionTransposeRule;
 
 public class FlinkRulesets {
 
@@ -35,8 +33,8 @@ public class FlinkRulesets {
 
   private static void setOptimizerRules(
       CalciteConfigBuilder calciteConfigBuilder, TableConfig tableConfig) {
-    FlinkChainedProgram<StreamOptimizeContext> originalProgram = FlinkStreamProgram.buildProgram(tableConfig);
-    FlinkChainedProgram<StreamOptimizeContext> modifiedProgram = new FlinkChainedProgram<>();
+    var originalProgram = FlinkStreamProgram.buildProgram(tableConfig);
+    var modifiedProgram = new FlinkChainedProgram<StreamOptimizeContext>();
 
     // Iterate over program names and replace PROJECT_REWRITE
 //    for (String programName : originalProgram.getProgramNames()) {

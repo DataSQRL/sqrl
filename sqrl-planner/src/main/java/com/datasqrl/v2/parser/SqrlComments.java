@@ -1,12 +1,13 @@
 package com.datasqrl.v2.parser;
 
-import com.google.common.base.Strings;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import com.google.common.base.Strings;
+
 import lombok.Value;
 
 /**
@@ -38,14 +39,18 @@ public class SqrlComments {
   }
 
   public static SqrlComments parse(ParsedObject<String> comments) {
-    if (comments.isEmpty() || Strings.isNullOrEmpty(comments.get())) return new SqrlComments(List.of(),List.of());
-    Matcher commentMatcher = COMMENT_PATTERN.matcher(comments.get());
+    if (comments.isEmpty() || Strings.isNullOrEmpty(comments.get())) {
+		return new SqrlComments(List.of(),List.of());
+	}
+    var commentMatcher = COMMENT_PATTERN.matcher(comments.get());
     List<ParsedObject<String>> docComments = new ArrayList<>();
     List<ParsedObject<SqrlHint>> hintComments = new ArrayList<>();
     while (commentMatcher.find()) {
-      String comment = commentMatcher.group();
-      String commentContent = comment.substring(3, Math.max(comment.length()-2,3));
-      if (Strings.isNullOrEmpty(commentContent)) continue;
+      var comment = commentMatcher.group();
+      var commentContent = comment.substring(3, Math.max(comment.length()-2,3));
+      if (Strings.isNullOrEmpty(commentContent)) {
+		continue;
+	}
       ParsedObject<String> parsedComment = comments.fromOffset(SqrlStatementParser.parse(commentContent,
           comments.get(), commentMatcher.start()+3));
       if (comment.startsWith(HINT_PREFIX)) {

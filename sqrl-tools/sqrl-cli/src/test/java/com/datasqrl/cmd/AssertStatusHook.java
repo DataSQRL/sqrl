@@ -2,6 +2,7 @@ package com.datasqrl.cmd;
 
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrinter;
+
 import lombok.Getter;
 
 public class AssertStatusHook implements StatusHook {

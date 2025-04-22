@@ -2,20 +2,22 @@ package datasqrl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import com.datasqrl.io.schema.flexible.input.external.TableDefinition;
-import com.datasqrl.serializer.Deserializer;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import lombok.SneakyThrows;
+
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.table.api.TableResult;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.test.junit5.MiniClusterExtension;
 import org.apache.flink.types.Row;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+
+import com.datasqrl.io.schema.flexible.input.external.TableDefinition;
+import com.datasqrl.serializer.Deserializer;
+
+import lombok.SneakyThrows;
 
 @ExtendWith(MiniClusterExtension.class)
 class FlexibleSchemaTest {
@@ -87,13 +89,13 @@ CREATE TABLE MyUserTable (
   }
 
   public List<Row> test(String tableSql, String sql) {
-    StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+    var env = StreamExecutionEnvironment.getExecutionEnvironment();
     env.setParallelism(1);
 
-    StreamTableEnvironment tableEnv = StreamTableEnvironment.create(env);
+    var tableEnv = StreamTableEnvironment.create(env);
     tableEnv.executeSql(tableSql);
 
-    TableResult tableResult = tableEnv.executeSql(sql);
+    var tableResult = tableEnv.executeSql(sql);
 
     List<Row> rows = new ArrayList<>();
     tableResult.collect().forEachRemaining(rows::add);

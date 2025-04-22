@@ -1,18 +1,15 @@
 package com.datasqrl.v2.graphql;
 
-import com.datasqrl.calcite.SqrlFramework;
-import com.datasqrl.engine.pipeline.ExecutionPipeline;
+import java.util.Optional;
+
 import com.datasqrl.engine.server.ServerPhysicalPlan;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.graphql.APIConnectorManager;
-import com.datasqrl.graphql.GraphqlSchemaParser;
 import com.datasqrl.plan.queries.APISource;
 import com.google.inject.Inject;
+
 import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphqlTypeComparatorRegistry;
 import graphql.schema.idl.SchemaPrinter;
-
-import java.util.*;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 
@@ -43,7 +40,7 @@ public class InferGraphqlSchema2 {
 
   // Validates the schema
   public void validateSchema(APISource apiSource, ServerPhysicalPlan serverPlan) {
-    GraphqlSchemaValidator2 schemaValidator = new GraphqlSchemaValidator2(serverPlan.getFunctions(), serverPlan.getMutations(),
+    var schemaValidator = new GraphqlSchemaValidator2(serverPlan.getFunctions(), serverPlan.getMutations(),
         createErrorCollectorWithSchema(apiSource));
     schemaValidator.validate(apiSource);
   }

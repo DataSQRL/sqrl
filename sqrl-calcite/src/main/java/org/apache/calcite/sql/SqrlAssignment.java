@@ -1,9 +1,11 @@
 package org.apache.calcite.sql;
 
 import java.util.Optional;
+
+import org.apache.calcite.sql.parser.SqlParserPos;
+
 import lombok.Getter;
 import lombok.Setter;
-import org.apache.calcite.sql.parser.SqlParserPos;
 
 @Getter
 @Setter

@@ -1,7 +1,6 @@
 package com.datasqrl.v2.parser;
 
 import com.datasqrl.error.ErrorLabel;
-import com.datasqrl.error.ErrorLocation;
 import com.datasqrl.error.ErrorLocation.FileLocation;
 
 /**

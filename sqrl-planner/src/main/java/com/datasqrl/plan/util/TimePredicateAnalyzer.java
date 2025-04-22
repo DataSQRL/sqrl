@@ -3,14 +3,13 @@
  */
 package com.datasqrl.plan.util;
 
-import com.datasqrl.calcite.SqrlRexUtil;
-import com.google.common.collect.Iterables;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+
 import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexInputRef;
@@ -18,17 +17,19 @@ import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.commons.lang3.tuple.Pair;
 
+import com.datasqrl.calcite.SqrlRexUtil;
+import com.google.common.collect.Iterables;
+
 public class TimePredicateAnalyzer {
 
   public static final TimePredicateAnalyzer INSTANCE = new TimePredicateAnalyzer();
 
   public Optional<TimePredicate> extractTimePredicate(RexNode rexNode, RexBuilder rexBuilder,
       Predicate<Integer> isTimestampColumn) {
-    if (!(rexNode instanceof RexCall)) {
+    if (!(rexNode instanceof RexCall call)) {
       return Optional.empty();
     }
-    RexCall call = (RexCall) rexNode;
-    SqlKind opKind = call.getOperator().getKind();
+    var opKind = call.getOperator().getKind();
     switch (opKind) {
       case GREATER_THAN:
       case LESS_THAN:
@@ -39,13 +40,13 @@ public class TimePredicateAnalyzer {
       default:
         return Optional.empty();
     }
-    boolean strictlySmaller = opKind == SqlKind.LESS_THAN || opKind == SqlKind.GREATER_THAN;
-    boolean flip = opKind == SqlKind.GREATER_THAN || opKind == SqlKind.GREATER_THAN_OR_EQUAL;
-    boolean smaller = opKind != SqlKind.EQUALS;
+    var strictlySmaller = opKind == SqlKind.LESS_THAN || opKind == SqlKind.GREATER_THAN;
+    var flip = opKind == SqlKind.GREATER_THAN || opKind == SqlKind.GREATER_THAN_OR_EQUAL;
+    var smaller = opKind != SqlKind.EQUALS;
 
-    Pair<Set<Integer>, RexNode> processLeft = extractReferencesAndReplaceWithZero(
+    var processLeft = extractReferencesAndReplaceWithZero(
         call.getOperands().get(0), rexBuilder);
-    Pair<Set<Integer>, RexNode> processRight = extractReferencesAndReplaceWithZero(
+    var processRight = extractReferencesAndReplaceWithZero(
         call.getOperands().get(1), rexBuilder);
 
     //Can only reference a single column or timestamp function on each side
@@ -60,7 +61,7 @@ public class TimePredicateAnalyzer {
         return Optional.empty();
       }
     }
-    ExpressionReducer reducer = new ExpressionReducer();
+    var reducer = new ExpressionReducer();
     long[] reduced;
     try {
       reduced = reducer.reduce2Long(rexBuilder,
@@ -69,15 +70,15 @@ public class TimePredicateAnalyzer {
       return Optional.empty();
     }
     assert reduced.length == 2;
-    long interval_ms = reduced[1] - reduced[0];
+    var interval_ms = reduced[1] - reduced[0];
 
-    int smallerIndex = flip ? rightRef : leftRef;
-    int largerIndex = flip ? leftRef : rightRef;
+    var smallerIndex = flip ? rightRef : leftRef;
+    var largerIndex = flip ? leftRef : rightRef;
     if (flip) {
       interval_ms *= -1;
     }
 
-    TimePredicate tp = new TimePredicate(smallerIndex, largerIndex,
+    var tp = new TimePredicate(smallerIndex, largerIndex,
         smaller ? (strictlySmaller ? SqlKind.LESS_THAN : SqlKind.LESS_THAN_OR_EQUAL)
             : SqlKind.EQUALS,
         interval_ms);
@@ -98,7 +99,7 @@ public class TimePredicateAnalyzer {
         //Map recursively
         final Set<Integer> allRefs = new HashSet<>();
         List<RexNode> newOps = call.getOperands().stream().map(op -> {
-          Pair<Set<Integer>, RexNode> result = extractReferencesAndReplaceWithZero(op, rexBuilder);
+          var result = extractReferencesAndReplaceWithZero(op, rexBuilder);
           allRefs.addAll(result.getKey());
           return result.getValue();
         }).collect(Collectors.toList());

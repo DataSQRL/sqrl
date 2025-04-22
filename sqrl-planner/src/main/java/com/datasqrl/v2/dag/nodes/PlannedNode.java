@@ -1,12 +1,14 @@
 package com.datasqrl.v2.dag.nodes;
 
-import com.datasqrl.engine.pipeline.ExecutionStage;
-import com.datasqrl.v2.analyzer.TableAnalysis;
-import com.datasqrl.plan.global.StageAnalysis;
-import com.datasqrl.v2.analyzer.TableOrFunctionAnalysis.FullIdentifier;
 import java.util.Map;
-import lombok.NonNull;
+
 import org.apache.flink.table.catalog.ObjectIdentifier;
+
+import com.datasqrl.engine.pipeline.ExecutionStage;
+import com.datasqrl.plan.global.StageAnalysis;
+import com.datasqrl.v2.analyzer.TableAnalysis;
+
+import lombok.NonNull;
 
 public abstract class PlannedNode extends PipelineNode {
 

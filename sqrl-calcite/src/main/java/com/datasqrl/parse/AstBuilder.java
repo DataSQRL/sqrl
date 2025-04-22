@@ -16,13 +16,18 @@
  */
 package com.datasqrl.parse;
 
-import com.datasqrl.calcite.SqrlConformance;
-import com.datasqrl.parse.SqlBaseParser.*;
-import com.datasqrl.sql.parser.impl.SqrlSqlParserImpl;
-import com.google.common.base.Preconditions;
+import static java.lang.String.format;
+import static java.util.Objects.requireNonNull;
+import static java.util.stream.Collectors.toList;
+
 import java.math.BigDecimal;
-import lombok.SneakyThrows;
-import lombok.Value;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Optional;
+import java.util.Set;
+import java.util.StringJoiner;
+
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.misc.Interval;
@@ -30,20 +35,84 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.apache.calcite.config.CharLiteralStyle;
 import org.apache.calcite.config.Lex;
-import org.apache.calcite.sql.*;
+import org.apache.calcite.sql.CalciteFixes;
+import org.apache.calcite.sql.ScriptNode;
+import org.apache.calcite.sql.SqlBasicTypeNameSpec;
+import org.apache.calcite.sql.SqlCollectionTypeNameSpec;
+import org.apache.calcite.sql.SqlDataTypeSpec;
+import org.apache.calcite.sql.SqlHint;
 import org.apache.calcite.sql.SqlHint.HintOptionFormat;
+import org.apache.calcite.sql.SqlIdentifier;
+import org.apache.calcite.sql.SqlKind;
+import org.apache.calcite.sql.SqlLiteral;
+import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqlNodeList;
+import org.apache.calcite.sql.SqlOrderBy;
+import org.apache.calcite.sql.SqlRowTypeNameSpec;
+import org.apache.calcite.sql.SqlSelect;
+import org.apache.calcite.sql.SqlTypeNameSpec;
+import org.apache.calcite.sql.SqlUserDefinedTypeNameSpec;
+import org.apache.calcite.sql.SqrlColumnDefinition;
+import org.apache.calcite.sql.SqrlCreateDefinition;
+import org.apache.calcite.sql.SqrlDistinctQuery;
+import org.apache.calcite.sql.SqrlExportDefinition;
+import org.apache.calcite.sql.SqrlExpressionQuery;
+import org.apache.calcite.sql.SqrlFromQuery;
+import org.apache.calcite.sql.SqrlImportDefinition;
+import org.apache.calcite.sql.SqrlJoinQuery;
+import org.apache.calcite.sql.SqrlSqlQuery;
+import org.apache.calcite.sql.SqrlTableFunctionDef;
+import org.apache.calcite.sql.SqrlTableParamDef;
 import org.apache.calcite.sql.parser.SqlParseException;
 import org.apache.calcite.sql.parser.SqlParser;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.util.Util;
-
-import java.util.*;
 import org.apache.flink.sql.parser.type.ExtendedSqlCollectionTypeNameSpec;
 
-import static java.lang.String.format;
-import static java.util.Objects.requireNonNull;
-import static java.util.stream.Collectors.toList;
+import com.datasqrl.calcite.SqrlConformance;
+import com.datasqrl.parse.SqlBaseParser.ArrayTypeContext;
+import com.datasqrl.parse.SqlBaseParser.AssignmentPathContext;
+import com.datasqrl.parse.SqlBaseParser.BackQuotedIdentifierContext;
+import com.datasqrl.parse.SqlBaseParser.BaseTypeContext;
+import com.datasqrl.parse.SqlBaseParser.ColumnDefinitionContext;
+import com.datasqrl.parse.SqlBaseParser.CreateDefinitionContext;
+import com.datasqrl.parse.SqlBaseParser.CreateStatementContext;
+import com.datasqrl.parse.SqlBaseParser.DecimalLiteralContext;
+import com.datasqrl.parse.SqlBaseParser.DistinctQueryContext;
+import com.datasqrl.parse.SqlBaseParser.DoubleLiteralContext;
+import com.datasqrl.parse.SqlBaseParser.ExportDefinitionContext;
+import com.datasqrl.parse.SqlBaseParser.ExportStatementContext;
+import com.datasqrl.parse.SqlBaseParser.ExpressionContext;
+import com.datasqrl.parse.SqlBaseParser.ExpressionQueryContext;
+import com.datasqrl.parse.SqlBaseParser.FromQueryContext;
+import com.datasqrl.parse.SqlBaseParser.FunctionArgumentDefContext;
+import com.datasqrl.parse.SqlBaseParser.HintContext;
+import com.datasqrl.parse.SqlBaseParser.HintItemContext;
+import com.datasqrl.parse.SqlBaseParser.ImportDefinitionContext;
+import com.datasqrl.parse.SqlBaseParser.ImportStatementContext;
+import com.datasqrl.parse.SqlBaseParser.IntegerLiteralContext;
+import com.datasqrl.parse.SqlBaseParser.JoinQueryContext;
+import com.datasqrl.parse.SqlBaseParser.KeyValueContext;
+import com.datasqrl.parse.SqlBaseParser.QualifiedNameContext;
+import com.datasqrl.parse.SqlBaseParser.QuotedIdentifierContext;
+import com.datasqrl.parse.SqlBaseParser.RowFieldContext;
+import com.datasqrl.parse.SqlBaseParser.RowTypeContext;
+import com.datasqrl.parse.SqlBaseParser.ScriptContext;
+import com.datasqrl.parse.SqlBaseParser.SelectAllContext;
+import com.datasqrl.parse.SqlBaseParser.SelectItemContext;
+import com.datasqrl.parse.SqlBaseParser.SelectSingleContext;
+import com.datasqrl.parse.SqlBaseParser.SingleStatementContext;
+import com.datasqrl.parse.SqlBaseParser.SqlQueryContext;
+import com.datasqrl.parse.SqlBaseParser.TableFunctionDefContext;
+import com.datasqrl.parse.SqlBaseParser.TypeContext;
+import com.datasqrl.parse.SqlBaseParser.TypeParameterContext;
+import com.datasqrl.parse.SqlBaseParser.UnquotedIdentifierContext;
+import com.datasqrl.sql.parser.impl.SqrlSqlParserImpl;
+import com.google.common.base.Preconditions;
+
+import lombok.SneakyThrows;
+import lombok.Value;
 
 /**
  * Builds the abstract syntax tree for an SQRL script
@@ -75,20 +144,20 @@ public class AstBuilder
   }
 
   private SqlNode parseQuery(ParserRuleContext query, SqlParserPos offset) {
-    int startIndex = query.start.getStartIndex();
-    int stopIndex = query.stop.getStopIndex();
-    Interval interval = new Interval(startIndex, stopIndex);
-    String queryString = query.start.getInputStream().getText(interval);
+    var startIndex = query.start.getStartIndex();
+    var stopIndex = query.stop.getStopIndex();
+    var interval = new Interval(startIndex, stopIndex);
+    var queryString = query.start.getInputStream().getText(interval);
     return parse(offset, queryString);
   }
 
   private SqlNode parseExpression(ParserRuleContext expression) {
-    int startIndex = expression.start.getStartIndex();
-    int stopIndex = expression.stop.getStopIndex();
-    Interval interval = new Interval(startIndex, stopIndex);
-    String queryString = expression.start.getInputStream().getText(interval);
+    var startIndex = expression.start.getStartIndex();
+    var stopIndex = expression.stop.getStopIndex();
+    var interval = new Interval(startIndex, stopIndex);
+    var queryString = expression.start.getInputStream().getText(interval);
 
-    SqlParserPos offsetPos = getLocation(expression);
+    var offsetPos = getLocation(expression);
 
     return parseExpression(offsetPos, queryString);
   }
@@ -100,7 +169,7 @@ public class AstBuilder
 
   private SqlNode parseSql(String sql, SqlParserPos offset,
       SqlParserFunction parseFunction) throws Exception {
-    SqlParser parser = SqlParser.create(sql, createParserConfig());
+    var parser = SqlParser.create(sql, createParserConfig());
 
     SqlNode node;
 
@@ -129,7 +198,7 @@ public class AstBuilder
   }
 
   private Exception adjustSqlParseException(SqlParseException e, SqlParserPos offset) {
-    SqlParserPos pos = PositionAdjustingSqlShuttle.adjustSinglePosition(offset, e.getPos());
+    var pos = PositionAdjustingSqlShuttle.adjustSinglePosition(offset, e.getPos());
     return new SqlParseException(e.getMessage(), pos, e.getExpectedTokenSequences(),
         e.getTokenImages(), e.getCause());
   }
@@ -207,8 +276,8 @@ public class AstBuilder
     Optional<SqlIdentifier> alias = Optional.ofNullable(
         ctx.alias == null ? null : (SqlIdentifier) visit(ctx.alias));
 
-    SqlIdentifier identifier = getNamePath(ctx.qualifiedName());
-    SqrlImportDefinition importDef = new SqrlImportDefinition(getLocation(ctx), identifier, alias);
+    var identifier = getNamePath(ctx.qualifiedName());
+    var importDef = new SqrlImportDefinition(getLocation(ctx), identifier, alias);
 
     return importDef;
   }
@@ -227,15 +296,15 @@ public class AstBuilder
 
   @Override
   public SqlNode visitFromQuery(FromQueryContext ctx) {
-    AssignPathResult assign = visitAssign(ctx.assignmentPath());
+    var assign = visitAssign(ctx.assignmentPath());
 
-    String prefix = "SELECT * ";
-    String sql = format("%s%s", prefix, extractString(ctx.fromDeclaration()));
-    SqlParserPos location = getLocation(ctx.fromDeclaration());
-    SqlParserPos pos = new SqlParserPos(location.getLineNum(),
+    var prefix = "SELECT * ";
+    var sql = format("%s%s", prefix, extractString(ctx.fromDeclaration()));
+    var location = getLocation(ctx.fromDeclaration());
+    var pos = new SqlParserPos(location.getLineNum(),
         location.getColumnNum() - prefix.length());
 
-    SqlNode sqlNode = parse(pos, sql);
+    var sqlNode = parse(pos, sql);
     return new SqrlFromQuery(
         getLocation(ctx),
         assign.getHints(),
@@ -246,19 +315,19 @@ public class AstBuilder
 
   @Override
   public SqlNode visitJoinQuery(JoinQueryContext ctx) {
-    AssignPathResult assign = visitAssign(ctx.assignmentPath());
+    var assign = visitAssign(ctx.assignmentPath());
 
-    int startIndex = ctx.joinDeclaration().start.getStartIndex();
-    int stopIndex = ctx.joinDeclaration().stop.getStopIndex();
-    Interval interval = new Interval(startIndex, stopIndex);
-    String queryString = ctx.start.getInputStream().getText(interval);
+    var startIndex = ctx.joinDeclaration().start.getStartIndex();
+    var stopIndex = ctx.joinDeclaration().stop.getStopIndex();
+    var interval = new Interval(startIndex, stopIndex);
+    var queryString = ctx.start.getInputStream().getText(interval);
     queryString = String.format("SELECT * FROM @ AS @ %s", queryString);
 
-    int colOffset = ctx.joinDeclaration().getStart().getCharPositionInLine() + 20;
-    int rowOffset = ctx.joinDeclaration().getStart().getLine();
-    SqlParserPos pos = getLocation(ctx.joinDeclaration());
+    var colOffset = ctx.joinDeclaration().getStart().getCharPositionInLine() + 20;
+    var rowOffset = ctx.joinDeclaration().getStart().getLine();
+    var pos = getLocation(ctx.joinDeclaration());
 
-    SqlNode query = parse(pos, queryString);
+    var query = parse(pos, queryString);
 
 
     return new SqrlJoinQuery(
@@ -271,47 +340,47 @@ public class AstBuilder
 
   @Override
   public SqlNode visitDistinctQuery(DistinctQueryContext ctx) {
-    AssignPathResult assign = visitAssign(ctx.assignmentPath());
+    var assign = visitAssign(ctx.assignmentPath());
 
-    String table = extractString(ctx.distinctQuerySpec().identifier());
-    StringJoiner stringJoiner = new StringJoiner(",");
-    for (int i = 0; i < ctx.distinctQuerySpec().onExpr().selectItem().size(); i++) {
-      SelectItemContext context = ctx.distinctQuerySpec().onExpr().selectItem(i);
-      String value = extractString(context);
+    var table = extractString(ctx.distinctQuerySpec().identifier());
+    var stringJoiner = new StringJoiner(",");
+    for (var i = 0; i < ctx.distinctQuerySpec().onExpr().selectItem().size(); i++) {
+      var context = ctx.distinctQuerySpec().onExpr().selectItem(i);
+      var value = extractString(context);
       stringJoiner.add(value);
     }
 
-    Optional<String> orderExpr = (ctx.distinctQuerySpec().orderExpr != null)
+    var orderExpr = (ctx.distinctQuerySpec().orderExpr != null)
         ? Optional.of(extractString(ctx.distinctQuerySpec().orderExpr))
         : Optional.empty();
 
-    String sql = format("SELECT /*+ DISTINCT_ON */ %s FROM %s %s",
+    var sql = format("SELECT /*+ DISTINCT_ON */ %s FROM %s %s",
         stringJoiner,
         table,
         orderExpr.map(o->"ORDER BY " + o).orElse("")
     );
 
-    SqlSelect select = (SqlSelect)parse(new SqlParserPos(1, 1), sql);
+    var select = (SqlSelect)parse(new SqlParserPos(1, 1), sql);
 
     //Update the parsing position
-    SqlNodeList selectList = select.getSelectList();
+    var selectList = select.getSelectList();
     SqlNodeList orderList = select.getOrderList();
     SqlNode tableItem = select.getFrom();
 
 
-    SqlParserPos tableStart = tableItem.getParserPosition();
-    SqlParserPos tableOffset = getLocation(ctx.distinctQuerySpec().identifier());
+    var tableStart = tableItem.getParserPosition();
+    var tableOffset = getLocation(ctx.distinctQuerySpec().identifier());
     tableItem = tableItem.accept(new PositionAdjustingSqlShuttle(tableOffset, tableStart));
     select.setFrom(tableItem);
 
-    SqlParserPos selectOffset = getLocation(ctx.distinctQuerySpec().onExpr().selectItem(0));
-    SqlParserPos selectStart = selectList.getParserPosition();
+    var selectOffset = getLocation(ctx.distinctQuerySpec().onExpr().selectItem(0));
+    var selectStart = selectList.getParserPosition();
     selectList = (SqlNodeList) selectList.accept(new PositionAdjustingSqlShuttle(selectOffset, selectStart));
     select.setSelectList(selectList);
 
     if (ctx.distinctQuerySpec().orderExpr != null) {
-      SqlParserPos orderOffset = getLocation(ctx.distinctQuerySpec().ORDER());
-      SqlParserPos orderStart = orderList.getParserPosition();
+      var orderOffset = getLocation(ctx.distinctQuerySpec().ORDER());
+      var orderStart = orderList.getParserPosition();
       orderList = (SqlNodeList) orderList.accept(new PositionAdjustingSqlShuttle(orderOffset, orderStart));
       select.setOrderBy(orderList);
     }
@@ -325,19 +394,19 @@ public class AstBuilder
   }
 
   private String extractString(ParserRuleContext context) {
-    int startIndex = context.start.getStartIndex();
-    int stopIndex = context.stop.getStopIndex();
-    Interval interval = new Interval(startIndex, stopIndex);
-    String queryString = context.start.getInputStream().getText(interval);
+    var startIndex = context.start.getStartIndex();
+    var stopIndex = context.stop.getStopIndex();
+    var interval = new Interval(startIndex, stopIndex);
+    var queryString = context.start.getInputStream().getText(interval);
     return queryString;
   }
 
   @Override
   public SqlNode visitSqlQuery(SqlQueryContext ctx) {
-    AssignPathResult assign = visitAssign(ctx.assignmentPath());
+    var assign = visitAssign(ctx.assignmentPath());
 
-    SqlParserPos startOffset = getLocation(ctx.query());
-    SqlNode query = parseQuery(ctx.query(), startOffset);
+    var startOffset = getLocation(ctx.query());
+    var query = parseQuery(ctx.query(), startOffset);
 
     return new SqrlSqlQuery(
         getLocation(ctx),
@@ -349,9 +418,9 @@ public class AstBuilder
 
   @Override
   public SqlNode visitExpressionQuery(ExpressionQueryContext ctx) {
-    AssignPathResult assign = visitAssign(ctx.assignmentPath());
+    var assign = visitAssign(ctx.assignmentPath());
 
-    SqlNode expression = parseExpression(ctx.expression());
+    var expression = parseExpression(ctx.expression());
 
     return new SqrlExpressionQuery(
         getLocation(ctx),
@@ -364,9 +433,9 @@ public class AstBuilder
   @Override
   public SqlNode visitTableFunctionDef(TableFunctionDefContext ctx) {
     List<SqrlTableParamDef> defs = new ArrayList<>();
-    for (int i = 0; i < ctx.functionArgumentDef().size(); i++) {
-      FunctionArgumentDefContext fCtx = ctx.functionArgumentDef(i);
-      SqrlTableParamDef param = new SqrlTableParamDef(
+    for (var i = 0; i < ctx.functionArgumentDef().size(); i++) {
+      var fCtx = ctx.functionArgumentDef(i);
+      var param = new SqrlTableParamDef(
           getLocation(fCtx),
           (SqlIdentifier)visit(fCtx.identifier()),
           getType(fCtx.type()),
@@ -423,8 +492,8 @@ public class AstBuilder
 
   @Override
   public SqlNode visitQuotedIdentifier(QuotedIdentifierContext context) {
-    String token = context.getText();
-    String identifier = token.substring(1, token.length() - 1)
+    var token = context.getText();
+    var identifier = token.substring(1, token.length() - 1)
         .replace("\"\"", "\"");
 
     return new SqlIdentifier(List.of(identifier),
@@ -471,7 +540,7 @@ public class AstBuilder
 
   private SqlIdentifier getNamePath(QualifiedNameContext context) {
     List<SqlIdentifier> ids = visit(context.identifier(), SqlIdentifier.class);
-    SqlIdentifier id = flatten(ids);
+    var id = flatten(ids);
     Preconditions.checkState(
         id.names.size() == CalciteFixes.getComponentPositions(id).size());
 
@@ -518,7 +587,7 @@ public class AstBuilder
   }
 
   private SqlDataTypeSpec getType(TypeContext ctx) {
-    boolean nullable = ctx.NOT() == null;
+    var nullable = ctx.NOT() == null;
     SqlTypeNameSpec typeNameSpec;
     if (ctx.rowType() != null) {
       typeNameSpec = getRowType(ctx.rowType(), getLocation(ctx));
@@ -527,7 +596,7 @@ public class AstBuilder
     } else {
       typeNameSpec = getTypeName(ctx, ctx.baseType());
     }
-    SqlDataTypeSpec sqlDataTypeSpec = new SqlDataTypeSpec(typeNameSpec, null, nullable,
+    var sqlDataTypeSpec = new SqlDataTypeSpec(typeNameSpec, null, nullable,
         SqlParserPos.ZERO);
     return sqlDataTypeSpec;
   }
@@ -538,22 +607,22 @@ public class AstBuilder
     for (RowFieldContext fieldCtx : ctx.rowFieldList().rowField()) {
       fieldNames.add(new SqlIdentifier(fieldCtx.identifier().getText(), pos));
 
-      SqlDataTypeSpec type = getType(fieldCtx.type());
+      var type = getType(fieldCtx.type());
       fieldTypes.add(type);
     }
     return new SqlRowTypeNameSpec(pos, fieldNames, fieldTypes);
   }
 
   private SqlTypeNameSpec getArrayType(ArrayTypeContext ctx, SqlParserPos pos) {
-    SqlDataTypeSpec elementType = getType(ctx.type());
+    var elementType = getType(ctx.type());
     SqlCollectionTypeNameSpec typeNameSpec = new ExtendedSqlCollectionTypeNameSpec(
         elementType.getTypeNameSpec(), elementType.getNullable(), SqlTypeName.ARRAY, true, pos);
     return typeNameSpec;
   }
 
   private SqlTypeNameSpec getTypeName(TypeContext ctx, BaseTypeContext baseType) {
-    SqlIdentifier id = (SqlIdentifier) visit(baseType.identifier());
-    String typeName = Util.last(id.names);
+    var id = (SqlIdentifier) visit(baseType.identifier());
+    var typeName = Util.last(id.names);
     if (typeName.equalsIgnoreCase("int")) {
       typeName = "INTEGER"; // Already exists in Calcite for standard type conversion
     }
@@ -571,7 +640,7 @@ public class AstBuilder
     if (!ctx.typeParameter().isEmpty()) {
       //todo: we assume precision, need to fill out the rest
       List<SqlNode> params = visit(ctx.typeParameter(), SqlNode.class);
-      SqlLiteral literal = (SqlLiteral) params.get(0);
+      var literal = (SqlLiteral) params.get(0);
       return new SqlBasicTypeNameSpec(sqlTypeName,
           ((BigDecimal)literal.getValue()).intValue(), getLocation(baseType));
     }
@@ -582,7 +651,7 @@ public class AstBuilder
   @Override
   public SqlNode visitTypeParameter(TypeParameterContext ctx) {
     if (ctx.INTEGER_VALUE() != null) {
-      return SqlNumericLiteral.createExactNumeric(ctx.getText(), getLocation(ctx));
+      return SqlLiteral.createExactNumeric(ctx.getText(), getLocation(ctx));
     }
 
     return ctx.type().accept(this);

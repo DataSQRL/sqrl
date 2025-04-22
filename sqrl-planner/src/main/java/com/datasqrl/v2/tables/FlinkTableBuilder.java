@@ -1,9 +1,5 @@
 package com.datasqrl.v2.tables;
 
-import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.engine.stream.flink.plan.FlinkSqlNodeFactory;
-import com.datasqrl.util.StreamUtil;
-import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -11,12 +7,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.sql.SqlIdentifier;
-import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.parser.SqlParserPos;
@@ -25,6 +18,15 @@ import org.apache.flink.sql.parser.ddl.SqlTableColumn;
 import org.apache.flink.sql.parser.ddl.SqlTableColumn.SqlRegularColumn;
 import org.apache.flink.sql.parser.ddl.SqlWatermark;
 import org.apache.flink.sql.parser.ddl.constraint.SqlTableConstraint;
+
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.engine.stream.flink.plan.FlinkSqlNodeFactory;
+import com.datasqrl.util.StreamUtil;
+import com.google.common.base.Preconditions;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * A builder for tables in Flink that is used as the central table builder in
@@ -77,13 +79,13 @@ public class FlinkTableBuilder {
   public List<String> extractMetadataColumns(String metadataAlias, boolean convertToRegular) {
     Preconditions.checkArgument(columnList!=null, "Need to initialize columns first");
     List<String> convertedColumns = new ArrayList<>();
-    for (int i = 0; i < columnList.size(); i++) {
-      SqlNode column = columnList.get(i);
+    for (var i = 0; i < columnList.size(); i++) {
+      var column = columnList.get(i);
       if (column instanceof SqlTableColumn.SqlMetadataColumn columnMetadata) {
         if (columnMetadata.getMetadataAlias().filter(alias -> alias.equalsIgnoreCase(metadataAlias)).isPresent()) {
           convertedColumns.add(columnMetadata.getName().getSimple());
           if (convertToRegular) {
-            SqlTableColumn.SqlRegularColumn regularColumn = new SqlRegularColumn(columnMetadata.getParserPosition(),
+            var regularColumn = new SqlRegularColumn(columnMetadata.getParserPosition(),
                 columnMetadata.getName(), columnMetadata.getComment().orElse(null), columnMetadata.getType(), null);
             columnList.set(i, regularColumn);
           }
@@ -112,7 +114,9 @@ public class FlinkTableBuilder {
   }
 
   public FlinkTableBuilder setPartition(List<String> partitionColumns) {
-    if (partitionColumns.isEmpty()) setPartitionKeyList(SqlNodeList.EMPTY);
+    if (partitionColumns.isEmpty()) {
+		setPartitionKeyList(SqlNodeList.EMPTY);
+	}
     setPartitionKeyList(FlinkSqlNodeFactory.createPartitionKeys(partitionColumns));
     return this;
   }
@@ -130,7 +134,7 @@ public class FlinkTableBuilder {
     if (pkColumns.isEmpty()) {
       setTableConstraints(List.of());
     }
-    SqlTableConstraint pkConstraint = FlinkSqlNodeFactory.createPrimaryKeyConstraint(pkColumns);
+    var pkConstraint = FlinkSqlNodeFactory.createPrimaryKeyConstraint(pkColumns);
     setTableConstraints(Collections.singletonList(pkConstraint));
     return this;
   }
@@ -141,9 +145,11 @@ public class FlinkTableBuilder {
   }
 
   public Optional<List<String>> getPrimaryKey() {
-    if (tableConstraints.isEmpty()) return Optional.empty();
+    if (tableConstraints.isEmpty()) {
+		return Optional.empty();
+	}
     Preconditions.checkArgument(tableConstraints.size()==1, "Expected a single table constraint");
-    SqlTableConstraint pkConstraint = tableConstraints.get(0);
+    var pkConstraint = tableConstraints.get(0);
     Preconditions.checkArgument(pkConstraint.isPrimaryKey(), "Expected a primary key constraint");
     return Optional.of(Arrays.asList(pkConstraint.getColumnNames()));
   }

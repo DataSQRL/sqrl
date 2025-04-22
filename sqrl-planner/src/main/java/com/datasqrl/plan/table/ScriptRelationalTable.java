@@ -1,16 +1,10 @@
 package com.datasqrl.plan.table;
 
-import com.datasqrl.calcite.ModifiableTable;
-import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.util.CalciteUtil;
-import com.google.common.collect.ContiguousSet;
 import java.lang.reflect.Type;
-import java.util.Collection;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NonNull;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.calcite.linq4j.Enumerator;
-import org.apache.calcite.linq4j.Linq4j;
 import org.apache.calcite.linq4j.QueryProvider;
 import org.apache.calcite.linq4j.Queryable;
 import org.apache.calcite.rel.type.RelDataType;
@@ -18,13 +12,14 @@ import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.schema.QueryableTable;
 import org.apache.calcite.schema.SchemaPlus;
-import org.apache.calcite.schema.Statistic;
-import org.apache.calcite.schema.Statistics;
 import org.apache.calcite.schema.impl.AbstractTableQueryable;
-import org.apache.calcite.util.ImmutableBitSet;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.datasqrl.calcite.ModifiableTable;
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.util.CalciteUtil;
+
+import lombok.Getter;
+import lombok.NonNull;
 
 public abstract class ScriptRelationalTable extends AbstractRelationalTable
     implements ModifiableTable, QueryableTable {
@@ -74,8 +69,10 @@ public abstract class ScriptRelationalTable extends AbstractRelationalTable
 
 
     public int addColumn(@NonNull AddedColumn column, @NonNull RelDataTypeFactory typeFactory) {
-        if (isLocked()) throw new UnsupportedOperationException("Table is locked: " + getNameId());
-        int index = numSelects;
+        if (isLocked()) {
+			throw new UnsupportedOperationException("Table is locked: " + getNameId());
+		}
+        var index = numSelects;
         numSelects++;
         addedColumns.add(column);
         rowType = CalciteUtil.addField(rowType, index, column.getNameId(), column.getDataType(), typeFactory);

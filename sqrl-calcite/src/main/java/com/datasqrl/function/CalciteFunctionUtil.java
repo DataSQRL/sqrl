@@ -1,6 +1,5 @@
 package com.datasqrl.function;
 
-import lombok.experimental.UtilityClass;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.sql.SqlBinaryOperator;
 import org.apache.calcite.sql.SqlFunctionCategory;
@@ -14,8 +13,9 @@ import org.apache.calcite.sql.type.SqlReturnTypeInference;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.validate.SqlUserDefinedAggFunction;
 import org.apache.calcite.util.Optionality;
-import org.apache.flink.calcite.shaded.org.checkerframework.checker.nullness.qual.Nullable;
 import org.apache.flink.table.functions.FunctionDefinition;
+
+import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class CalciteFunctionUtil {

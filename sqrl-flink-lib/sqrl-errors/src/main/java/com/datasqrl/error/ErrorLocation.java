@@ -4,6 +4,7 @@
 package com.datasqrl.error;
 
 import java.io.Serializable;
+
 import lombok.NonNull;
 import lombok.Value;
 
@@ -49,7 +50,7 @@ public interface ErrorLocation extends Serializable {
 //  default ErrorLocation resolve(@NonNull Name location) {
 //    return resolve(location.getDisplay());
 //  }
-  
+
   default ErrorLocation atFile(@NonNull ErrorLocation.FileLocation file) {
     return atFile(new FileRange(file));
   }
@@ -105,7 +106,7 @@ public interface ErrorLocation extends Serializable {
 
     @Override
     public String toString() {
-      String result = fromLine+":"+fromOffset;
+      var result = fromLine+":"+fromOffset;
       if (!isLocation()) {
         result += "-" + toLine+":"+toOffset;
       }

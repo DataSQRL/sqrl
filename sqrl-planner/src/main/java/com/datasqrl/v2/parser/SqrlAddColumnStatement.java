@@ -3,14 +3,15 @@ package com.datasqrl.v2.parser;
 import static com.datasqrl.v2.parser.SqlScriptStatementSplitter.addStatementDelimiter;
 import static com.datasqrl.v2.parser.SqlScriptStatementSplitter.removeStatementDelimiter;
 
+import java.util.List;
+
+import org.apache.commons.collections4.ListUtils;
+
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.error.ErrorLocation.FileLocation;
 import com.datasqrl.v2.Sqrl2FlinkSQLTranslator;
 import com.google.common.base.Preconditions;
-import java.util.List;
-import org.apache.commons.collections4.ListUtils;
 
 /**
  * Represents a column definition that extends a previous table definition
@@ -27,23 +28,25 @@ public class SqrlAddColumnStatement extends SqrlDefinition implements StackableS
     super(tableName, definitionBody, AccessModifier.INHERIT, comments);
   }
 
-  public String toSql(Sqrl2FlinkSQLTranslator sqrlEnv, List<StackableStatement> stack) {
+  @Override
+public String toSql(Sqrl2FlinkSQLTranslator sqrlEnv, List<StackableStatement> stack) {
     StatementParserException.checkFatal(tableName.get().size()>1, tableName.getFileLocation(), ErrorLabel.GENERIC,
         "Column expression requires column name: %s", tableName.get());
-    NamePath table = this.tableName.get().popLast();
+    var table = this.tableName.get().popLast();
 
     //It's guaranteed that all other entries in the stack must be add-column statements on the same table
-    String innerSql = removeStatementDelimiter(((SqrlTableDefinition)stack.get(0)).definitionBody.get());
+    var innerSql = removeStatementDelimiter(((SqrlTableDefinition)stack.get(0)).definitionBody.get());
     for (StackableStatement col : ListUtils.union(stack.subList(1, stack.size()), List.of(this))) {
       Preconditions.checkArgument(col instanceof SqrlAddColumnStatement);
-      SqrlAddColumnStatement column = (SqrlAddColumnStatement) col;
-      String columName = column.tableName.get().getLast().getDisplay();
+      var column = (SqrlAddColumnStatement) col;
+      var columName = column.tableName.get().getLast().getDisplay();
       innerSql = addColumn(columName, removeStatementDelimiter(column.definitionBody.get()), innerSql);
     }
-    String sql = String.format(ALTER_VIEW_PREFIX + "%s", table.toString(), addStatementDelimiter(innerSql));
+    var sql = String.format(ALTER_VIEW_PREFIX + "%s", table.toString(), addStatementDelimiter(innerSql));
     return sql;
   }
 
+  @Override
   String getPrefix() {
     return String.format(ALTER_VIEW_PREFIX + ADD_COLUMN_PREFIX, this.tableName.get().popLast());
   }

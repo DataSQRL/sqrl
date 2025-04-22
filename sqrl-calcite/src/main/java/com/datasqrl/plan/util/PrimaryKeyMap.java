@@ -1,20 +1,30 @@
 package com.datasqrl.plan.util;
 
-import com.datasqrl.util.CalciteUtil;
-import com.datasqrl.util.StreamUtil;
-import com.google.common.base.Preconditions;
 import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import com.google.common.collect.Iterables;
-import lombok.*;
 import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rel.type.RelDataTypeField;
-import org.apache.flink.table.api.Schema.UnresolvedPrimaryKey;
-import org.checkerframework.checker.units.qual.C;
+
+import com.datasqrl.util.StreamUtil;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Iterables;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Singular;
+import lombok.ToString;
+import lombok.Value;
 
 /**
  * This class keeps track of the column indexes that are part of the primary key.
@@ -73,7 +83,7 @@ public class PrimaryKeyMap implements Serializable {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    PrimaryKeyMap that = (PrimaryKeyMap) o;
+    var that = (PrimaryKeyMap) o;
     return undefined == that.undefined && Objects.equals(columns, that.columns);
   }
 
@@ -93,7 +103,9 @@ public class PrimaryKeyMap implements Serializable {
   }
 
   public int getLength() {
-    if (undefined) return -1;
+    if (undefined) {
+		return -1;
+	}
     return columns.size();
   }
 
@@ -117,7 +129,9 @@ public class PrimaryKeyMap implements Serializable {
   }
 
   public PrimaryKeyMap makeSimple(RelDataType rowType) {
-    if (undefined) return this;
+    if (undefined) {
+		return this;
+	}
     return PrimaryKeyMap.of(columns.stream().map(colSet -> colSet.pickBest(rowType))
         .collect(Collectors.toUnmodifiableList()));
   }
@@ -138,7 +152,7 @@ public class PrimaryKeyMap implements Serializable {
 
   public Builder toBuilder() {
     Preconditions.checkArgument(!isUndefined(), "Cannot build on undefined primary key");
-    Builder builder = build();
+    var builder = build();
     columns.forEach(builder::add);
     return builder;
   }
@@ -189,9 +203,9 @@ public class PrimaryKeyMap implements Serializable {
     }
 
     public int pickBest(RelDataType rowType) {
-      List<RelDataTypeField> fields = rowType.getFieldList();
+      var fields = rowType.getFieldList();
       //Try to pick the first not-null
-      Optional<Integer> nonNullPk = indexes.stream()
+      var nonNullPk = indexes.stream()
           .filter(idx -> !fields.get(idx).getType().isNullable()).sorted().findFirst();
       //Otherwise, pick the first
       return nonNullPk.orElseGet(() -> indexes.stream().sorted().findFirst().get());

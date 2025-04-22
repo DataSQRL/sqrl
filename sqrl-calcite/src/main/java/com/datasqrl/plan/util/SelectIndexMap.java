@@ -3,20 +3,17 @@
  */
 package com.datasqrl.plan.util;
 
+import java.io.Serializable;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.IntStream;
+
 import com.google.common.base.Preconditions;
 import com.google.common.primitives.Ints;
-import java.io.Serializable;
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
+
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-import org.apache.calcite.rel.logical.LogicalProject;
-import org.apache.calcite.rex.RexInputRef;
-import org.apache.calcite.rex.RexNode;
-import org.apache.calcite.util.ImmutableBitSet;
-import org.apache.commons.lang3.ArrayUtils;
 
 @AllArgsConstructor
 @EqualsAndHashCode
@@ -29,7 +26,9 @@ public class SelectIndexMap implements IndexMap, Serializable {
 
   @Override
   public int mapUnsafe(int index) {
-    if (index<0 || index>=targets.length) return -1;
+    if (index<0 || index>=targets.length) {
+		return -1;
+	}
     return targets[index];
   }
 
@@ -46,12 +45,12 @@ public class SelectIndexMap implements IndexMap, Serializable {
   }
 
   public SelectIndexMap join(SelectIndexMap right, int leftSideWidth, boolean isFlipped) {
-    int[] combined = new int[targets.length + right.targets.length];
+    var combined = new int[targets.length + right.targets.length];
     //Left map doesn't change
-    int offset=0;
-    int[][] arrsToCopy = isFlipped?new int[][]{right.targets,targets}:new int[][]{targets, right.targets};
-    for (int i = 0; i < 2; i++) {
-      for (int j = 0; j < arrsToCopy[i].length; j++) {
+    var offset=0;
+    var arrsToCopy = isFlipped?new int[][]{right.targets,targets}:new int[][]{targets, right.targets};
+    for (var i = 0; i < 2; i++) {
+      for (var j = 0; j < arrsToCopy[i].length; j++) {
         combined[offset + j] = ((isFlipped ^ i==1)?leftSideWidth:0) + arrsToCopy[i][j];
       }
       offset += arrsToCopy[i].length;
@@ -65,21 +64,21 @@ public class SelectIndexMap implements IndexMap, Serializable {
   }
 
   public SelectIndexMap append(SelectIndexMap add) {
-    int[] combined = new int[targets.length + add.targets.length];
+    var combined = new int[targets.length + add.targets.length];
     System.arraycopy(targets, 0, combined, 0, targets.length);
     System.arraycopy(add.targets, 0, combined, targets.length, add.targets.length);
     return new SelectIndexMap(combined);
   }
 
   public SelectIndexMap add(int index) {
-    int[] newTargets = Arrays.copyOf(targets, targets.length+1);
+    var newTargets = Arrays.copyOf(targets, targets.length+1);
     newTargets[targets.length] = index;
     return new SelectIndexMap(newTargets);
   }
 
   public SelectIndexMap remap(IndexMap remap) {
-    Builder b = new Builder(targets.length);
-    for (int i = 0; i < targets.length; i++) {
+    var b = new Builder(targets.length);
+    for (var i = 0; i < targets.length; i++) {
       b.add(remap.map(map(i)));
     }
     return b.build();
@@ -90,13 +89,13 @@ public class SelectIndexMap implements IndexMap, Serializable {
   }
 
   public static Builder builder(SelectIndexMap base, int addedLength) {
-    Builder b = new Builder(base.getSourceLength() + addedLength);
+    var b = new Builder(base.getSourceLength() + addedLength);
     return b.addAll(base);
   }
 
   public static SelectIndexMap identity(int sourceLength, int targetLength) {
-    Builder b = builder(sourceLength);
-    for (int i = 0; i < sourceLength; i++) {
+    var b = builder(sourceLength);
+    for (var i = 0; i < sourceLength; i++) {
       b.add(i);
     }
     return b.build(targetLength);
@@ -116,8 +115,8 @@ public class SelectIndexMap implements IndexMap, Serializable {
     }
 
     public Builder addAll(SelectIndexMap indexMap) {
-      for (int i = 0; i < indexMap.targets.length; i++) {
-        add(indexMap.targets[i]);
+      for (int target : indexMap.targets) {
+        add(target);
       }
       return this;
     }

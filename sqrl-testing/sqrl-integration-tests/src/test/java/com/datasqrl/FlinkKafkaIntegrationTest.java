@@ -10,27 +10,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
-import org.apache.flink.api.common.JobStatus;
-import org.apache.flink.configuration.Configuration;
-import org.apache.flink.table.api.*;
-import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
-import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
-import org.apache.flink.test.junit5.MiniClusterExtension;
+import org.apache.flink.configuration.Configuration;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.table.api.ResultKind;
+import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.testcontainers.containers.KafkaContainer;
-import org.testcontainers.utility.DockerImageName;
-
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.testcontainers.containers.KafkaContainer;
+import org.testcontainers.utility.DockerImageName;
 
 //@ExtendWith(MiniClusterExtension.class)
 public class FlinkKafkaIntegrationTest {
@@ -56,10 +51,10 @@ public class FlinkKafkaIntegrationTest {
     public void testFlinkKafkaLargeMessage() throws Exception {
 
         // Get Kafka bootstrap servers from the test container
-        String kafkaBootstrapServers = kafkaContainer.getBootstrapServers();
+        var kafkaBootstrapServers = kafkaContainer.getBootstrapServers();
 
         // Now, read from Kafka directly using KafkaConsumer
-        Properties consumerProps = new Properties();
+        var consumerProps = new Properties();
         consumerProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaBootstrapServers);
         consumerProps.put(ConsumerConfig.GROUP_ID_CONFIG, "test-group");
         consumerProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer");
@@ -72,12 +67,12 @@ public class FlinkKafkaIntegrationTest {
         AdminClient.create(consumerProps).createTopics(List.of(new NewTopic("test-topic", 1, (short)1)));
 
         // Set up Flink execution environments
-        StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironmentWithWebUI(
+        var env = StreamExecutionEnvironment.createLocalEnvironmentWithWebUI(
             Configuration.fromMap(Map.of()));
-        StreamTableEnvironment tableEnv = StreamTableEnvironment.create(env);
+        var tableEnv = StreamTableEnvironment.create(env);
 
         // Define the DataGen source table with a large message field
-        String dataGenSourceDDL = """
+        var dataGenSourceDDL = """
                 CREATE TABLE source_table (
                   id INT,
                   large_message STRING
@@ -91,7 +86,7 @@ public class FlinkKafkaIntegrationTest {
                 )""";
 
         // Define the Kafka sink table with appropriate properties
-        String kafkaSinkDDL = """
+        var kafkaSinkDDL = """
                 CREATE TABLE sink_table (
                   id INT,
                   large_message STRING
@@ -110,26 +105,26 @@ public class FlinkKafkaIntegrationTest {
         tableEnv.executeSql(kafkaSinkDDL);
 
         // Insert data from the DataGen source to the Kafka sink
-        TableResult result = tableEnv.executeSql("INSERT INTO sink_table SELECT id, large_message FROM source_table");
+        var result = tableEnv.executeSql("INSERT INTO sink_table SELECT id, large_message FROM source_table");
 
         // Wait for the job to finish
         result.await(10, TimeUnit.SECONDS);
-        ResultKind resultKind = result.getResultKind();
+        var resultKind = result.getResultKind();
         assertEquals(ResultKind.SUCCESS_WITH_CONTENT, resultKind);
 
         result.print();
 
 
-        KafkaConsumer<String, String> consumer = new KafkaConsumer<>(consumerProps);
+        var consumer = new KafkaConsumer<String, String>(consumerProps);
         consumer.subscribe(Collections.singletonList("test-topic"));
 
         // Poll for messages
         List<ConsumerRecord<String, String>> recordsList = new ArrayList<>();
-        boolean messageReceived = false;
-        long timeout = System.currentTimeMillis() + 10000; // 10 seconds timeout
+        var messageReceived = false;
+        var timeout = System.currentTimeMillis() + 10000; // 10 seconds timeout
 
         while (!messageReceived && System.currentTimeMillis() < timeout) {
-            ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(1000));
+            var records = consumer.poll(Duration.ofMillis(1000));
             for (ConsumerRecord<String, String> record : records) {
                 recordsList.add(record);
                 messageReceived = true;
@@ -139,10 +134,10 @@ public class FlinkKafkaIntegrationTest {
 
         // Verify that the message was written
         Assertions.assertEquals(1, recordsList.size());
-        ConsumerRecord<String, String> record = recordsList.get(0);
+        var record = recordsList.get(0);
 
-        String key = record.key();
-        String value = record.value();
+        var key = record.key();
+        var value = record.value();
 
         // Parse the key and value from JSON strings to objects if necessary
         // Assuming the key and value are JSON strings

@@ -1,9 +1,10 @@
 package com.datasqrl.config;
 
-import com.datasqrl.util.StringUtil;
-import com.google.common.base.Preconditions;
 import java.util.Optional;
 import java.util.regex.Pattern;
+
+import com.datasqrl.util.StringUtil;
+import com.google.common.base.Preconditions;
 
 
 public class TablePattern {
@@ -16,16 +17,22 @@ public class TablePattern {
   }
 
   public Pattern get(boolean withBoundary) {
-    String updatedPattern = pattern;
-    if (withBoundary) updatedPattern = addRegexBoundary(pattern);
+    var updatedPattern = pattern;
+    if (withBoundary) {
+		updatedPattern = addRegexBoundary(pattern);
+	}
     return Pattern.compile(updatedPattern);
   }
 
   public String substitute(String name, Optional<String> prefix, Optional<String> suffix) {
-    int[] nameOffsets = getNameMatchOffsets(pattern);
-    String updatedPattern = StringUtil.replaceSubstring(pattern, nameOffsets[0], nameOffsets[1], Pattern.quote(name));
-    if (prefix.isPresent()) updatedPattern = Pattern.quote(prefix.get()) + updatedPattern;
-    if (suffix.isPresent()) updatedPattern = updatedPattern + Pattern.quote(suffix.get());
+    var nameOffsets = getNameMatchOffsets(pattern);
+    var updatedPattern = StringUtil.replaceSubstring(pattern, nameOffsets[0], nameOffsets[1], Pattern.quote(name));
+    if (prefix.isPresent()) {
+		updatedPattern = Pattern.quote(prefix.get()) + updatedPattern;
+	}
+    if (suffix.isPresent()) {
+		updatedPattern = updatedPattern + Pattern.quote(suffix.get());
+	}
     return updatedPattern;
   }
 
@@ -47,9 +54,9 @@ public class TablePattern {
   }
 
   public static int[] getNameMatchOffsets(String pattern) {
-    int startPos = -1;
-    int endPos = -1;
-    for (int i = 0; i < pattern.length() - 1; i++) {
+    var startPos = -1;
+    var endPos = -1;
+    for (var i = 0; i < pattern.length() - 1; i++) {
       if (pattern.charAt(i) == '(' && pattern.charAt(i + 1) != '?') {
         startPos = i;
         break;
@@ -57,7 +64,7 @@ public class TablePattern {
     }
 
     if (startPos != -1) {
-      for (int i = startPos + 1; i < pattern.length(); i++) {
+      for (var i = startPos + 1; i < pattern.length(); i++) {
         if (pattern.charAt(i) == ')') {
           endPos = i;
           break;
@@ -65,7 +72,9 @@ public class TablePattern {
       }
     }
 
-    if (startPos<0 || endPos<0) return null;
+    if (startPos<0 || endPos<0) {
+		return null;
+	}
     return new int[]{startPos,endPos};
   }
 

@@ -3,6 +3,7 @@ package com.datasqrl.packager.repository;
 import com.datasqrl.config.PackageConfiguration;
 import com.datasqrl.config.PackageConfigurationImpl;
 import com.google.common.base.Strings;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -34,8 +35,11 @@ public class Publication extends PackageConfigurationImpl {
     }
 
     private static String orEmpty(String input) {
-        if (Strings.isNullOrEmpty(input)) return "";
-        else return input;
+        if (Strings.isNullOrEmpty(input)) {
+			return "";
+		} else {
+			return input;
+		}
     }
 
 }

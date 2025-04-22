@@ -3,18 +3,17 @@
  */
 package com.datasqrl.engine.stream.flink.plan;
 
-import com.datasqrl.engine.stream.StreamPhysicalPlan;
-import com.datasqrl.plan.global.PhysicalDAGPlan.StreamStagePlan;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import lombok.Getter;
-import lombok.Value;
+
 import org.apache.calcite.sql.SqlNode;
 import org.apache.flink.sql.parser.ddl.SqlCreateTable;
 import org.apache.flink.sql.parser.ddl.SqlTableOption;
-import org.apache.flink.table.api.CompiledPlan;
+
+import com.datasqrl.engine.stream.StreamPhysicalPlan;
+
+import lombok.Getter;
 
 @Getter
 public class FlinkStreamPhysicalPlan implements StreamPhysicalPlan {
@@ -37,7 +36,7 @@ public class FlinkStreamPhysicalPlan implements StreamPhysicalPlan {
     for (SqlNode node : sqlNodes) {
       if (node instanceof SqlCreateTable table) {
         for (SqlNode option : table.getPropertyList().getList()){
-          SqlTableOption sqlTableOption = (SqlTableOption)option;
+          var sqlTableOption = (SqlTableOption)option;
           if (sqlTableOption.getKeyString().equalsIgnoreCase("connector")) {
             connectors.add( sqlTableOption.getValueString());
           }
@@ -52,7 +51,7 @@ public class FlinkStreamPhysicalPlan implements StreamPhysicalPlan {
     for (SqlNode node : sqlNodes) {
       if (node instanceof SqlCreateTable table) {
         for (SqlNode option : table.getPropertyList().getList()){
-          SqlTableOption sqlTableOption = (SqlTableOption)option;
+          var sqlTableOption = (SqlTableOption)option;
           switch (sqlTableOption.getKeyString()) {
             case "format":
             case "key.format":

@@ -3,18 +3,17 @@
  */
 package com.datasqrl.util;
 
-import com.datasqrl.graphql.server.CustomScalars;
-import com.google.common.base.Predicates;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import lombok.SneakyThrows;
-
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.util.function.Predicate;
+
+import com.datasqrl.graphql.server.CustomScalars;
+import com.google.common.base.Predicates;
+
+import lombok.SneakyThrows;
 
 public class ResultSetPrinter {
 
@@ -63,8 +62,8 @@ public class ResultSetPrinter {
 
   public static String toString(ResultSet resultSet, Predicate<String> filterColumnsByName,
       Predicate<Integer> filterColumnsByType) {
-    ByteArrayOutputStream os = new ByteArrayOutputStream();
-    PrintStream ps = new PrintStream(os);
+    var os = new ByteArrayOutputStream();
+    var ps = new PrintStream(os);
     print(resultSet, ps, filterColumnsByName, filterColumnsByType);
     return os.toString(StandardCharsets.UTF_8);
   }

@@ -1,6 +1,7 @@
 package com.datasqrl.v2.parser;
 
 import com.datasqrl.canonicalizer.NamePath;
+
 import lombok.Value;
 
 /**

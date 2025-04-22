@@ -1,13 +1,15 @@
 package com.datasqrl.util;
 
-import com.datasqrl.error.ErrorLabel;
-import com.datasqrl.parse.SqrlAstException;
 import java.util.Optional;
-import lombok.experimental.UtilityClass;
+import java.util.function.Supplier;
+
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.parser.SqlParserPos;
 
-import java.util.function.Supplier;
+import com.datasqrl.error.ErrorLabel;
+import com.datasqrl.parse.SqrlAstException;
+
+import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class CheckUtil {

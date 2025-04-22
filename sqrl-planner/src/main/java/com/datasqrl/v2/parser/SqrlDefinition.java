@@ -1,9 +1,11 @@
 package com.datasqrl.v2.parser;
 
+import java.util.List;
+
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.error.ErrorLocation.FileLocation;
 import com.datasqrl.v2.Sqrl2FlinkSQLTranslator;
-import java.util.List;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -30,7 +32,7 @@ public abstract class SqrlDefinition implements SqrlStatement {
    * @return
    */
   public String toSql(Sqrl2FlinkSQLTranslator sqrlEnv, List<StackableStatement> stack) {
-    String prefix = getPrefix();
+    var prefix = getPrefix();
     return prefix + definitionBody.get();
   }
 

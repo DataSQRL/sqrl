@@ -1,14 +1,16 @@
 package com.datasqrl.graphql.jdbc;
 
-import com.datasqrl.graphql.server.QueryExecutionContext;
-import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
-import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentParameter;
-import com.datasqrl.graphql.server.RootGraphqlModel.QueryParameterHandler;
-import com.datasqrl.graphql.server.RootGraphqlModel.ParameterHandlerVisitor;
-import com.datasqrl.graphql.server.RootGraphqlModel.SourceParameter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import com.datasqrl.graphql.server.QueryExecutionContext;
+import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
+import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentParameter;
+import com.datasqrl.graphql.server.RootGraphqlModel.ParameterHandlerVisitor;
+import com.datasqrl.graphql.server.RootGraphqlModel.QueryParameterHandler;
+import com.datasqrl.graphql.server.RootGraphqlModel.SourceParameter;
+
 import lombok.SneakyThrows;
 
 public abstract class AbstractQueryExecutionContext implements QueryExecutionContext,

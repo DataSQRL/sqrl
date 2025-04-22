@@ -1,14 +1,15 @@
 package com.datasqrl.io.schema.avro;
 
+import java.nio.file.Path;
+import java.util.Optional;
+
+import org.apache.avro.Schema;
+
 import com.datasqrl.config.TableConfig;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableSchemaFactory;
 import com.google.auto.service.AutoService;
-import java.net.URI;
-import java.nio.file.Path;
-import java.util.Optional;
-import org.apache.avro.Schema;
 
 @AutoService(TableSchemaFactory.class)
 public class AvroTableSchemaFactory implements TableSchemaFactory {
@@ -19,7 +20,9 @@ public class AvroTableSchemaFactory implements TableSchemaFactory {
 
   @Override
   public AvroSchemaHolder create(String schemaDefinition, Optional<Path> location, ErrorCollector errors) {
-    if (location.isPresent()) errors = errors.withConfig(location.get());
+    if (location.isPresent()) {
+		errors = errors.withConfig(location.get());
+	}
     Schema schema;
     try {
        schema = new Schema.Parser().parse(schemaDefinition);

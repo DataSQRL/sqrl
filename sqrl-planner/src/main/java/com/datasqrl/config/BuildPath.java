@@ -1,10 +1,11 @@
 package com.datasqrl.config;
 
+import java.nio.file.Path;
+
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import java.nio.file.Path;
+
 import lombok.Getter;
-import lombok.experimental.Delegate;
 
 @Getter
 public class BuildPath {

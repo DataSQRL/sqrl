@@ -4,7 +4,6 @@
 package com.datasqrl.util;
 
 
-import com.google.common.base.Strings;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -13,8 +12,12 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import lombok.SneakyThrows;
+
 import org.apache.commons.lang3.tuple.Pair;
+
+import com.google.common.base.Strings;
+
+import lombok.SneakyThrows;
 
 public class BaseFileUtil {
 
@@ -25,7 +28,7 @@ public class BaseFileUtil {
     if (Strings.isNullOrEmpty(fileName)) {
       return null;
     }
-    int offset = fileName.lastIndexOf(DELIMITER_CHAR);
+    var offset = fileName.lastIndexOf(DELIMITER_CHAR);
     if (offset == -1) {
       return Pair.of(fileName, "");
     } else {

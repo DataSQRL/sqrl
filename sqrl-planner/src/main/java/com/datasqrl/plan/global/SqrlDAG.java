@@ -1,16 +1,5 @@
 package com.datasqrl.plan.global;
 
-import com.datasqrl.engine.pipeline.ExecutionPipeline;
-import com.datasqrl.engine.pipeline.ExecutionStage;
-import com.datasqrl.plan.global.SqrlDAG.SqrlNode;
-import com.datasqrl.plan.global.StageAnalysis.MissingDependent;
-import com.datasqrl.plan.local.generate.ResolvedExport;
-import com.datasqrl.plan.table.PhysicalTable;
-import com.datasqrl.util.AbstractDAG;
-import com.datasqrl.util.StreamUtil;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Multimap;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -18,6 +7,18 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import com.datasqrl.engine.pipeline.ExecutionPipeline;
+import com.datasqrl.engine.pipeline.ExecutionStage;
+import com.datasqrl.plan.global.SqrlDAG.SqrlNode;
+import com.datasqrl.plan.global.StageAnalysis.MissingDependent;
+import com.datasqrl.plan.table.PhysicalTable;
+import com.datasqrl.util.AbstractDAG;
+import com.datasqrl.util.StreamUtil;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Multimap;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Value;
@@ -41,8 +42,8 @@ public class SqrlDAG extends AbstractDAG<SqrlNode, SqrlDAG> {
 
   public void eliminateInviableStages(ExecutionPipeline pipeline) {
     messagePassing(node -> {
-      final LinkedHashMap<ExecutionStage, StageAnalysis> updatedStages = new LinkedHashMap<>();
-      boolean hasChange = node.stageAnalysis.values().stream().filter(s -> s.isSupported())
+      final var updatedStages = new LinkedHashMap<ExecutionStage, StageAnalysis>();
+      var hasChange = node.stageAnalysis.values().stream().filter(s -> s.isSupported())
           .map( stageAnalysis -> {
             ExecutionStage stage = stageAnalysis.getStage();
             //Each input/output node must have a viable upstream/downstream stage, otherwise this stage isn't viable
@@ -82,7 +83,8 @@ public class SqrlDAG extends AbstractDAG<SqrlNode, SqrlDAG> {
 
     private final Map<ExecutionStage, StageAnalysis> stageAnalysis;
 
-    public abstract String getName();
+    @Override
+	public abstract String getName();
 
     public abstract String getId();
 
@@ -96,7 +98,7 @@ public class SqrlDAG extends AbstractDAG<SqrlNode, SqrlDAG> {
      * @return true, if other stages were eliminated, else false
      */
     public boolean setCheapestStage() {
-      StageAnalysis.Cost cheapest = findCheapestStage(stageAnalysis);
+      var cheapest = findCheapestStage(stageAnalysis);
       return StreamUtil.filterByClass(stageAnalysis.values(),
           StageAnalysis.Cost.class).filter(other -> !cheapest.equals(other))
           .map(other ->
@@ -104,7 +106,7 @@ public class SqrlDAG extends AbstractDAG<SqrlNode, SqrlDAG> {
     }
 
     public static StageAnalysis.Cost findCheapestStage(Map<ExecutionStage, StageAnalysis> stageAnalysis) {
-      Optional<StageAnalysis.Cost> stage = StreamUtil.filterByClass(stageAnalysis.values(),
+      var stage = StreamUtil.filterByClass(stageAnalysis.values(),
               StageAnalysis.Cost.class)
           .sorted(Comparator.comparing(StageAnalysis.Cost::getCost)).findFirst();
       Preconditions.checkArgument(stage.isPresent());

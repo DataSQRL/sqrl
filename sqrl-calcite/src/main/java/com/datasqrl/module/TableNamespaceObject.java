@@ -1,7 +1,8 @@
 package com.datasqrl.module;
 
-import com.datasqrl.canonicalizer.Name;
 import org.apache.calcite.schema.Table;
+
+import com.datasqrl.canonicalizer.Name;
 
 /**
  * Represents a {@link NamespaceObject} for a table.
@@ -13,6 +14,7 @@ public interface TableNamespaceObject<T> extends NamespaceObject {
    *
    * @return the name of the table
    */
+  @Override
   Name getName();
 
   /**

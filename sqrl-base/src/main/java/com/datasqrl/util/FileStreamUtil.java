@@ -3,16 +3,16 @@
  */
 package com.datasqrl.util;
 
-import com.google.common.base.Preconditions;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.stream.Stream;
+
+import com.google.common.base.Preconditions;
 
 public class FileStreamUtil {
 
@@ -32,7 +32,7 @@ public class FileStreamUtil {
   }
 
   public static Stream<String> readByLine(InputStream is, String charset) throws IOException {
-    BufferedReader reader = new BufferedReader(new InputStreamReader(is, charset));
+    var reader = new BufferedReader(new InputStreamReader(is, charset));
     return reader.lines();
   }
 }

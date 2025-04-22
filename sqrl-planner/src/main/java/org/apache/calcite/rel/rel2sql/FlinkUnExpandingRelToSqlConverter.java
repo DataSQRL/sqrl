@@ -1,11 +1,12 @@
 package org.apache.calcite.rel.rel2sql;
 
-import com.datasqrl.v2.TableAnalysisLookup;
 import org.apache.calcite.sql.SqlDialect;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlSelect;
 import org.apache.flink.table.planner.plan.nodes.calcite.LogicalWatermarkAssigner;
+
+import com.datasqrl.v2.TableAnalysisLookup;
 
 public class FlinkUnExpandingRelToSqlConverter extends RelToSqlConverter {
 
@@ -29,7 +30,7 @@ public class FlinkUnExpandingRelToSqlConverter extends RelToSqlConverter {
 //  }
 
   public Result visit(LogicalWatermarkAssigner e) {
-    Result rIn = dispatch(e.getInput());
+    var rIn = dispatch(e.getInput());
     if (rIn.node instanceof SqlSelect select) {
       select.setSelectList(SqlNodeList.of(SqlIdentifier.STAR));
     }

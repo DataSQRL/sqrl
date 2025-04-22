@@ -1,15 +1,15 @@
 package com.datasqrl.v2.parser;
 
+import java.util.List;
+
+import org.apache.calcite.rel.type.RelDataType;
+
 import com.datasqrl.canonicalizer.NamePath;
 import com.google.common.base.Preconditions;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Value;
-import org.apache.calcite.rel.type.RelDataType;
 
 /**
  * Represents a table function definition with arguments
@@ -30,7 +30,8 @@ public class SqrlTableFunctionStatement extends SqrlDefinition {
     this.argumentsByIndex = argumentsByIndex;
   }
 
-  public boolean isRelationship() {
+  @Override
+public boolean isRelationship() {
     return getPath().size()==2;
   }
 

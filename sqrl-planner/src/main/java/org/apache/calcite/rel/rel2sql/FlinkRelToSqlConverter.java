@@ -1,13 +1,11 @@
 package org.apache.calcite.rel.rel2sql;
 
-import com.datasqrl.engine.stream.flink.sql.calcite.FlinkDialect;
-import com.datasqrl.engine.stream.flink.sql.model.QueryPipelineItem;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-import lombok.Getter;
+
 import org.apache.calcite.rel.core.CorrelationId;
 import org.apache.calcite.rel.core.Filter;
 import org.apache.calcite.rel.core.Project;
@@ -25,14 +23,10 @@ import org.apache.calcite.rex.RexProgram;
 import org.apache.calcite.sql.JoinConditionType;
 import org.apache.calcite.sql.JoinType;
 import org.apache.calcite.sql.SqlBasicCall;
-import org.apache.calcite.sql.SqlCall;
-import org.apache.calcite.sql.SqlDialect;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlJoin;
-import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.SqlSnapshot;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
@@ -41,6 +35,11 @@ import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.apache.flink.table.planner.calcite.FlinkTypeSystem;
 import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable;
 import org.apache.flink.table.planner.plan.nodes.calcite.LogicalWatermarkAssigner;
+
+import com.datasqrl.engine.stream.flink.sql.calcite.FlinkDialect;
+import com.datasqrl.engine.stream.flink.sql.model.QueryPipelineItem;
+
+import lombok.Getter;
 
 /**
  * The original RelToSqlConverter
@@ -58,13 +57,13 @@ public class FlinkRelToSqlConverter extends RelToSqlConverter {
   }
 
   public QueryPipelineItem create(SqlNode node) {
-    QueryPipelineItem q = new QueryPipelineItem(node, "table$"+ (uniqueTableId.incrementAndGet()));
+    var q = new QueryPipelineItem(node, "table$"+ (uniqueTableId.incrementAndGet()));
     queries.add(q);
     return q;
   }
 
   public Result visit(LogicalFilter e) {
-    return super.visit((Filter) e);
+    return super.visit(e);
   }
 
   //Snapshot field name is a field from the lhs
@@ -112,19 +111,19 @@ public class FlinkRelToSqlConverter extends RelToSqlConverter {
    *
    */
   private Result rewriteSnapshot(LogicalCorrelate coor, LogicalFilter filter) {
-    Snapshot snapshot = (Snapshot) filter.getInput();
+    var snapshot = (Snapshot) filter.getInput();
 
     //1 visit snapshot input and put in subquery
-    Result snapshotInput = visitInput(snapshot, 0);
+    var snapshotInput = visitInput(snapshot, 0);
 
-    SqlNode stmt = snapshotInput.asStatement();
+    var stmt = snapshotInput.asStatement();
 
-    QueryPipelineItem q = create(stmt);
+    var q = create(stmt);
 
     SqlNode tableRef = new SqlIdentifier(q.getTableName(), SqlParserPos.ZERO);
 
     //2 create snapshot node, walk left first
-    final Result leftResult =
+    final var leftResult =
         visitInput(coor, 0)
             .resetAlias(coor.getCorrelVariable(), coor.getRowType());
     for (CorrelationId id : coor.getVariablesSet()) {
@@ -133,7 +132,7 @@ public class FlinkRelToSqlConverter extends RelToSqlConverter {
 
     SqlNode period = new SqlIdentifier(List.of(leftResult.neededAlias,
         ((RexFieldAccess) snapshot.getPeriod()).getField().getName()), SqlParserPos.ZERO);
-    SqlSnapshot snapshotNode = new SqlSnapshot(SqlParserPos.ZERO,
+    var snapshotNode = new SqlSnapshot(SqlParserPos.ZERO,
         tableRef, period);
     final SqlNode rightAs =
         SqlStdOperatorTable.AS.createCall(POS, snapshotNode,
@@ -141,7 +140,7 @@ public class FlinkRelToSqlConverter extends RelToSqlConverter {
 
     //last create join
 
-    JoinType joinType = joinType(coor.getJoinType());
+    var joinType = joinType(coor.getJoinType());
 
     for (CorrelationId id : filter.getVariablesSet()) {
       correlTableMap.put(id, snapshotInput.qualifiedContext());
@@ -162,19 +161,19 @@ public class FlinkRelToSqlConverter extends RelToSqlConverter {
   }
 
   private Result rewriteUncollect(LogicalCorrelate e, Uncollect uncollect) {
-    final Result leftResult =
+    final var leftResult =
         visitInput(e, 0)
             .resetAlias(e.getCorrelVariable(), e.getRowType());
     for (CorrelationId id : e.getVariablesSet()) {
       correlTableMap.put(id, leftResult.qualifiedContext());
     }
-    final Result rightResult = visitInput(e, 1);
+    final var rightResult = visitInput(e, 1);
 
-    final Result leftResult2 = leftResult.resetAlias();
+    final var leftResult2 = leftResult.resetAlias();
 
-    RexFieldAccess fieldAccess = (RexFieldAccess) ((LogicalProject) uncollect.getInput()).getProjects()
+    var fieldAccess = (RexFieldAccess) ((LogicalProject) uncollect.getInput()).getProjects()
         .get(0);
-    SqlCall call = SqlStdOperatorTable.UNNEST.createCall(SqlParserPos.ZERO,
+    var call = SqlStdOperatorTable.UNNEST.createCall(SqlParserPos.ZERO,
         new SqlIdentifier(List.of(leftResult2.neededAlias, fieldAccess.getField().getName()),
             SqlParserPos.ZERO));
     List<SqlNode> ops = new ArrayList<>();
@@ -217,23 +216,23 @@ public class FlinkRelToSqlConverter extends RelToSqlConverter {
 
   @Override
   public Result visit(Project project) {
-    Result result = super.visit(project);
+    var result = super.visit(project);
 
     //Don't remove the project as it may have other expressions
     return result;
   }
 
   public Result visit(Snapshot e) {
-    LogicalProject tbl = (LogicalProject) e.getInput();
-    Result x = dispatch(tbl);
+    var tbl = (LogicalProject) e.getInput();
+    var x = dispatch(tbl);
 
     SqlNode period = new SqlIdentifier(List.of(x.neededAlias,
         ((RexFieldAccess) e.getPeriod()).getField().getName()), SqlParserPos.ZERO);
 
-    SqlNode stmt = x.asStatement();
-    QueryPipelineItem q = create(stmt);
+    var stmt = x.asStatement();
+    var q = create(stmt);
     SqlNode tableRef = new SqlIdentifier(q.getTableName(), SqlParserPos.ZERO);
-    SqlSnapshot snapshot = new SqlSnapshot(SqlParserPos.ZERO,
+    var snapshot = new SqlSnapshot(SqlParserPos.ZERO,
         tableRef, period);
 
     final SqlNode rightLateralAs =
@@ -249,24 +248,24 @@ public class FlinkRelToSqlConverter extends RelToSqlConverter {
       return super.visit(e).resetAlias();
     }
 
-    Result x = super.visitInput(e, 0)
+    var x = super.visitInput(e, 0)
         .resetAlias();
 
-    SqlSelect select = x.asSelect();
-    QueryPipelineItem queries1 = create(select);
+    var select = x.asSelect();
+    var queries1 = create(select);
 
-    RexBuilder rex = new RexBuilder(new FlinkTypeFactory(this.getClass().getClassLoader(),
+    var rex = new RexBuilder(new FlinkTypeFactory(this.getClass().getClassLoader(),
         FlinkTypeSystem.INSTANCE));
     //The first flink operand is referencing something else
     // replace it with a placeholder then replace it with the sql node
-    RexCall call = (RexCall) e.getCall();
+    var call = (RexCall) e.getCall();
     List<RexNode> rexOperands = new ArrayList<>(call.getOperands());
     RexNode placeholder = rex.makeLiteral(true);
     rexOperands.set(0, placeholder);
 
-    RexCall cloned = call.clone(call.getType(), rexOperands);
+    var cloned = call.clone(call.getType(), rexOperands);
 
-    SqlBasicCall tableCall = (SqlBasicCall) x.qualifiedContext().toSql((RexProgram) null, cloned);
+    var tableCall = (SqlBasicCall) x.qualifiedContext().toSql((RexProgram) null, cloned);
     rewriteDescriptor(tableCall);
 
     SqlNode tableRef = SqlStdOperatorTable.EXPLICIT_TABLE.createCall(SqlParserPos.ZERO,
@@ -284,7 +283,7 @@ public class FlinkRelToSqlConverter extends RelToSqlConverter {
             call.getOperator().equals(FlinkSqlOperatorTable.HOP) ||
             call.getOperator().equals(FlinkSqlOperatorTable.CUMULATE)
     ) {
-      SqlBasicCall descriptorCall = (SqlBasicCall) call.getOperandList().get(1);
+      var descriptorCall = (SqlBasicCall) call.getOperandList().get(1);
       descriptorCall.setOperand(0,
           simplifyName((SqlIdentifier) descriptorCall.getOperandList().get(0)));
     }
