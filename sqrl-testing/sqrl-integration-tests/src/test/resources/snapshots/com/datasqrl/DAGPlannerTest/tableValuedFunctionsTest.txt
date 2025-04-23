@@ -53,21 +53,22 @@ Stage:  flink
 Inputs: default_catalog.default_database.Customer
 Annotations:
  - features: STREAM_WINDOW_AGGREGATION (feature)
-Primary Key: window_start, window_end
-Timestamp  : -
+Primary Key: window_start, window_end, window_time
+Timestamp  : window_time
 Schema:
  - window_start: TIMESTAMP(3) NOT NULL
  - window_end: TIMESTAMP(3) NOT NULL
+ - window_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - total: BIGINT NOT NULL
 Plan:
-LogicalAggregate(group=[{0, 1}], total=[COUNT()])
-  LogicalProject(window_start=[$5], window_end=[$6])
+LogicalAggregate(group=[{0, 1, 2}], total=[COUNT()])
+  LogicalProject(window_start=[$5], window_end=[$6], window_time=[$7])
     LogicalTableFunctionScan(invocation=[HOP(DESCRIPTOR($4), 300000:INTERVAL MINUTE, 600000:INTERVAL MINUTE)], rowType=[RecordType(BIGINT customerid, VARCHAR(2147483647) email, VARCHAR(2147483647) name, BIGINT lastUpdated, TIMESTAMP_LTZ(3) *ROWTIME* timestamp, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end, TIMESTAMP_LTZ(3) *ROWTIME* window_time)])
       LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
         LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW CustomerHop AS  SELECT window_start, window_end, COUNT(customerid) AS total
+SQL: CREATE VIEW CustomerHop AS  SELECT window_start, window_end, window_time, COUNT(customerid) AS total
                   FROM TABLE(HOP(TABLE Customer, DESCRIPTOR(`timestamp`), INTERVAL '5' MINUTES, INTERVAL '10' MINUTES))
-                  GROUP BY window_start, window_end;
+                  GROUP BY window_start, window_end, window_time;
 
 === CustomerSession
 ID:     default_catalog.default_database.CustomerSession
@@ -76,23 +77,25 @@ Stage:  flink
 Inputs: default_catalog.default_database.Customer
 Annotations:
  - features: STREAM_WINDOW_AGGREGATION (feature)
-Primary Key: window_start, window_end, customerid
-Timestamp  : -
+ - stream-root: Customer__def
+Primary Key: window_start, window_end, window_time, customerid
+Timestamp  : window_time
 Schema:
  - customerid: BIGINT NOT NULL
  - window_start: TIMESTAMP(3) NOT NULL
  - window_end: TIMESTAMP(3) NOT NULL
+ - window_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - total: BIGINT NOT NULL
 Plan:
-LogicalProject(customerid=[$2], window_start=[$0], window_end=[$1], total=[$3])
-  LogicalAggregate(group=[{0, 1, 2}], total=[COUNT()])
-    LogicalProject(window_start=[$5], window_end=[$6], customerid=[$0])
+LogicalProject(customerid=[$3], window_start=[$0], window_end=[$1], window_time=[$2], total=[$4])
+  LogicalAggregate(group=[{0, 1, 2, 3}], total=[COUNT()])
+    LogicalProject(window_start=[$5], window_end=[$6], window_time=[$7], customerid=[$0])
       LogicalTableFunctionScan(invocation=[SESSION(PARTITION BY($0), DESCRIPTOR($4), 600000:INTERVAL MINUTE)], rowType=[RecordType(BIGINT customerid, VARCHAR(2147483647) email, VARCHAR(2147483647) name, BIGINT lastUpdated, TIMESTAMP_LTZ(3) *ROWTIME* timestamp, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end, TIMESTAMP_LTZ(3) *ROWTIME* window_time)])
         LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
           LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW CustomerSession AS  SELECT customerid, window_start, window_end, COUNT(customerid) AS total
+SQL: CREATE VIEW CustomerSession AS  SELECT customerid, window_start, window_end, window_time, COUNT(customerid) AS total
                   FROM TABLE(SESSION(TABLE Customer PARTITION BY customerid, DESCRIPTOR(`timestamp`), INTERVAL '10' MINUTES))
-                  GROUP BY window_start, window_end, customerid;
+                  GROUP BY window_start, window_end, window_time, customerid;
 
 === CustomerTumble
 ID:     default_catalog.default_database.CustomerTumble
@@ -116,6 +119,30 @@ LogicalAggregate(group=[{0, 1}], total=[COUNT()])
 SQL: CREATE VIEW CustomerTumble AS  SELECT window_start, window_end, COUNT(customerid) AS total
                 FROM TABLE(TUMBLE(TABLE Customer, DESCRIPTOR(`timestamp`), INTERVAL '10' MINUTES))
                 GROUP BY window_start, window_end;
+
+=== StreamJoin
+ID:     default_catalog.default_database.StreamJoin
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database.CustomerHop, default_catalog.default_database.CustomerSession
+Primary Key: window_start, window_end, window_time, window_start0, window_end0, customerid
+Timestamp  : window_time
+Schema:
+ - window_start: TIMESTAMP(3) NOT NULL
+ - window_end: TIMESTAMP(3) NOT NULL
+ - window_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+ - total: BIGINT NOT NULL
+ - customerid: BIGINT NOT NULL
+ - window_start0: TIMESTAMP(3) NOT NULL
+ - window_end0: TIMESTAMP(3) NOT NULL
+ - window_time0: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+ - total0: BIGINT NOT NULL
+Plan:
+LogicalProject(window_start=[$0], window_end=[$1], window_time=[$2], total=[$3], customerid=[$4], window_start0=[$5], window_end0=[$6], window_time0=[$7], total0=[$8])
+  LogicalJoin(condition=[=($7, $2)], joinType=[inner])
+    LogicalTableScan(table=[[default_catalog, default_database, CustomerHop]])
+    LogicalTableScan(table=[[default_catalog, default_database, CustomerSession]])
+SQL: CREATE VIEW StreamJoin AS  SELECT * FROM CustomerHop h INNER JOIN CustomerSession s ON s.window_time = h.window_time;
 
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `Customer__schema` (
@@ -148,9 +175,9 @@ FROM TABLE(TUMBLE(TABLE `Customer`, DESCRIPTOR(`timestamp`), INTERVAL '10' MINUT
 GROUP BY `window_start`, `window_end`;
 CREATE VIEW `CustomerHop`
 AS
-SELECT `window_start`, `window_end`, COUNT(`customerid`) AS `total`
+SELECT `window_start`, `window_end`, `window_time`, COUNT(`customerid`) AS `total`
 FROM TABLE(HOP(TABLE `Customer`, DESCRIPTOR(`timestamp`), INTERVAL '5' MINUTE, INTERVAL '10' MINUTE))
-GROUP BY `window_start`, `window_end`;
+GROUP BY `window_start`, `window_end`, `window_time`;
 CREATE VIEW `CustomerCumulate`
 AS
 SELECT `window_start`, `window_end`, COUNT(`customerid`) AS `total`
@@ -158,9 +185,14 @@ FROM TABLE(CUMULATE(TABLE `Customer`, DESCRIPTOR(`timestamp`), INTERVAL '5' MINU
 GROUP BY `window_start`, `window_end`;
 CREATE VIEW `CustomerSession`
 AS
-SELECT `customerid`, `window_start`, `window_end`, COUNT(`customerid`) AS `total`
+SELECT `customerid`, `window_start`, `window_end`, `window_time`, COUNT(`customerid`) AS `total`
 FROM TABLE(SESSION(TABLE `Customer` PARTITION BY `customerid`, DESCRIPTOR(`timestamp`), INTERVAL '10' MINUTE))
-GROUP BY `window_start`, `window_end`, `customerid`;
+GROUP BY `window_start`, `window_end`, `window_time`, `customerid`;
+CREATE VIEW `StreamJoin`
+AS
+SELECT *
+FROM `CustomerHop` AS `h`
+ INNER JOIN `CustomerSession` AS `s` ON `s`.`window_time` = `h`.`window_time`;
 CREATE TABLE `Customer_1` (
   `customerid` BIGINT NOT NULL,
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -192,8 +224,9 @@ CREATE TABLE `CustomerCumulate_2` (
 CREATE TABLE `CustomerHop_3` (
   `window_start` TIMESTAMP(3) NOT NULL,
   `window_end` TIMESTAMP(3) NOT NULL,
+  `window_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `total` BIGINT NOT NULL,
-  PRIMARY KEY (`window_start`, `window_end`) NOT ENFORCED
+  PRIMARY KEY (`window_start`, `window_end`, `window_time`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
   'password' = '${JDBC_PASSWORD}',
@@ -206,8 +239,9 @@ CREATE TABLE `CustomerSession_4` (
   `customerid` BIGINT NOT NULL,
   `window_start` TIMESTAMP(3) NOT NULL,
   `window_end` TIMESTAMP(3) NOT NULL,
+  `window_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `total` BIGINT NOT NULL,
-  PRIMARY KEY (`window_start`, `window_end`, `customerid`) NOT ENFORCED
+  PRIMARY KEY (`window_start`, `window_end`, `window_time`, `customerid`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
   'password' = '${JDBC_PASSWORD}',
@@ -228,6 +262,25 @@ CREATE TABLE `CustomerTumble_5` (
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'table-name' = 'CustomerTumble_5'
+);
+CREATE TABLE `StreamJoin_6` (
+  `window_start` TIMESTAMP(3) NOT NULL,
+  `window_end` TIMESTAMP(3) NOT NULL,
+  `window_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `total` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `window_start0` TIMESTAMP(3) NOT NULL,
+  `window_end0` TIMESTAMP(3) NOT NULL,
+  `window_time0` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `total0` BIGINT NOT NULL,
+  PRIMARY KEY (`window_start`, `window_end`, `window_time`, `window_start0`, `window_end0`, `customerid`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'table-name' = 'StreamJoin_6'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Customer_1`
@@ -250,7 +303,11 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerCumulate_2`
     (SELECT *
      FROM `default_catalog`.`default_database`.`CustomerTumble`)
     ;
-    END
+    INSERT INTO `default_catalog`.`default_database`.`StreamJoin_6`
+     (SELECT `window_start`, `window_end`, `window_time`, `total`, `customerid`, `window_start0`, `window_end0`, CAST(`window_time0` AS TIMESTAMP(3) WITH LOCAL TIME ZONE) AS `window_time0`, `total0`
+      FROM `default_catalog`.`default_database`.`StreamJoin`)
+     ;
+     END
 >>>kafka.json
 {
   "topics" : [ ]
@@ -315,7 +372,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerCumulate_2`
     {
       "name" : "CustomerHop_3",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerHop_3\" (\"window_start\" TIMESTAMP WITHOUT TIME ZONE NOT NULL, \"window_end\" TIMESTAMP WITHOUT TIME ZONE NOT NULL, \"total\" BIGINT NOT NULL , PRIMARY KEY (\"window_start\",\"window_end\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerHop_3\" (\"window_start\" TIMESTAMP WITHOUT TIME ZONE NOT NULL, \"window_end\" TIMESTAMP WITHOUT TIME ZONE NOT NULL, \"window_time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"total\" BIGINT NOT NULL , PRIMARY KEY (\"window_start\",\"window_end\",\"window_time\"))",
       "fields" : [
         {
           "name" : "window_start",
@@ -328,6 +385,11 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerCumulate_2`
           "nullable" : false
         },
         {
+          "name" : "window_time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
           "name" : "total",
           "type" : "BIGINT",
           "nullable" : false
@@ -337,7 +399,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerCumulate_2`
     {
       "name" : "CustomerSession_4",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerSession_4\" (\"customerid\" BIGINT NOT NULL, \"window_start\" TIMESTAMP WITHOUT TIME ZONE NOT NULL, \"window_end\" TIMESTAMP WITHOUT TIME ZONE NOT NULL, \"total\" BIGINT NOT NULL , PRIMARY KEY (\"window_start\",\"window_end\",\"customerid\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerSession_4\" (\"customerid\" BIGINT NOT NULL, \"window_start\" TIMESTAMP WITHOUT TIME ZONE NOT NULL, \"window_end\" TIMESTAMP WITHOUT TIME ZONE NOT NULL, \"window_time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"total\" BIGINT NOT NULL , PRIMARY KEY (\"window_start\",\"window_end\",\"window_time\",\"customerid\"))",
       "fields" : [
         {
           "name" : "customerid",
@@ -352,6 +414,11 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerCumulate_2`
         {
           "name" : "window_end",
           "type" : "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "window_time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         },
         {
@@ -378,6 +445,58 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerCumulate_2`
         },
         {
           "name" : "total",
+          "type" : "BIGINT",
+          "nullable" : false
+        }
+      ]
+    },
+    {
+      "name" : "StreamJoin_6",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"StreamJoin_6\" (\"window_start\" TIMESTAMP WITHOUT TIME ZONE NOT NULL, \"window_end\" TIMESTAMP WITHOUT TIME ZONE NOT NULL, \"window_time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"total\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"window_start0\" TIMESTAMP WITHOUT TIME ZONE NOT NULL, \"window_end0\" TIMESTAMP WITHOUT TIME ZONE NOT NULL, \"window_time0\" TIMESTAMP WITH TIME ZONE NOT NULL, \"total0\" BIGINT NOT NULL , PRIMARY KEY (\"window_start\",\"window_end\",\"window_time\",\"window_start0\",\"window_end0\",\"customerid\"))",
+      "fields" : [
+        {
+          "name" : "window_start",
+          "type" : "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "window_end",
+          "type" : "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "window_time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "total",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "window_start0",
+          "type" : "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "window_end0",
+          "type" : "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "window_time0",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "total0",
           "type" : "BIGINT",
           "nullable" : false
         }
@@ -440,7 +559,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerCumulate_2`
     {
       "name" : "CustomerHop",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"CustomerHop\"(\"window_start\", \"window_end\", \"total\") AS SELECT *\nFROM \"CustomerHop_3\"",
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerHop\"(\"window_start\", \"window_end\", \"window_time\", \"total\") AS SELECT *\nFROM \"CustomerHop_3\"",
       "fields" : [
         {
           "name" : "window_start",
@@ -453,6 +572,11 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerCumulate_2`
           "nullable" : false
         },
         {
+          "name" : "window_time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
           "name" : "total",
           "type" : "BIGINT",
           "nullable" : false
@@ -462,7 +586,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerCumulate_2`
     {
       "name" : "CustomerSession",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"CustomerSession\"(\"customerid\", \"window_start\", \"window_end\", \"total\") AS SELECT *\nFROM \"CustomerSession_4\"",
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerSession\"(\"customerid\", \"window_start\", \"window_end\", \"window_time\", \"total\") AS SELECT *\nFROM \"CustomerSession_4\"",
       "fields" : [
         {
           "name" : "customerid",
@@ -477,6 +601,11 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerCumulate_2`
         {
           "name" : "window_end",
           "type" : "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "window_time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         },
         {
@@ -503,6 +632,58 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerCumulate_2`
         },
         {
           "name" : "total",
+          "type" : "BIGINT",
+          "nullable" : false
+        }
+      ]
+    },
+    {
+      "name" : "StreamJoin",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"StreamJoin\"(\"window_start\", \"window_end\", \"window_time\", \"total\", \"customerid\", \"window_start0\", \"window_end0\", \"window_time0\", \"total0\") AS SELECT *\nFROM \"StreamJoin_6\"",
+      "fields" : [
+        {
+          "name" : "window_start",
+          "type" : "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "window_end",
+          "type" : "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "window_time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "total",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "window_start0",
+          "type" : "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "window_end0",
+          "type" : "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "window_time0",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "total0",
           "type" : "BIGINT",
           "nullable" : false
         }
@@ -633,13 +814,37 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerCumulate_2`
             "database" : "POSTGRES"
           }
         }
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "StreamJoin",
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
+            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM \"StreamJoin_6\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
+          }
+        }
       }
     ],
     "mutations" : [ ],
     "subscriptions" : [ ],
     "schema" : {
       "type" : "string",
-      "schema" : "type Customer {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n}\n\ntype CustomerCumulate {\n  window_start: DateTime!\n  window_end: DateTime!\n  total: GraphQLBigInteger!\n}\n\ntype CustomerHop {\n  window_start: DateTime!\n  window_end: DateTime!\n  total: GraphQLBigInteger!\n}\n\ntype CustomerSession {\n  customerid: GraphQLBigInteger!\n  window_start: DateTime!\n  window_end: DateTime!\n  total: GraphQLBigInteger!\n}\n\ntype CustomerTumble {\n  window_start: DateTime!\n  window_end: DateTime!\n  total: GraphQLBigInteger!\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerCumulate(limit: Int = 10, offset: Int = 0): [CustomerCumulate!]\n  CustomerHop(limit: Int = 10, offset: Int = 0): [CustomerHop!]\n  CustomerSession(limit: Int = 10, offset: Int = 0): [CustomerSession!]\n  CustomerTumble(limit: Int = 10, offset: Int = 0): [CustomerTumble!]\n}\n"
+      "schema" : "type Customer {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n}\n\ntype CustomerCumulate {\n  window_start: DateTime!\n  window_end: DateTime!\n  total: GraphQLBigInteger!\n}\n\ntype CustomerHop {\n  window_start: DateTime!\n  window_end: DateTime!\n  window_time: DateTime!\n  total: GraphQLBigInteger!\n}\n\ntype CustomerSession {\n  customerid: GraphQLBigInteger!\n  window_start: DateTime!\n  window_end: DateTime!\n  window_time: DateTime!\n  total: GraphQLBigInteger!\n}\n\ntype CustomerTumble {\n  window_start: DateTime!\n  window_end: DateTime!\n  total: GraphQLBigInteger!\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerCumulate(limit: Int = 10, offset: Int = 0): [CustomerCumulate!]\n  CustomerHop(limit: Int = 10, offset: Int = 0): [CustomerHop!]\n  CustomerSession(limit: Int = 10, offset: Int = 0): [CustomerSession!]\n  CustomerTumble(limit: Int = 10, offset: Int = 0): [CustomerTumble!]\n  StreamJoin(limit: Int = 10, offset: Int = 0): [StreamJoin!]\n}\n\ntype StreamJoin {\n  window_start: DateTime!\n  window_end: DateTime!\n  window_time: DateTime!\n  total: GraphQLBigInteger!\n  customerid: GraphQLBigInteger!\n  window_start0: DateTime!\n  window_end0: DateTime!\n  window_time0: DateTime!\n  total0: GraphQLBigInteger!\n}\n"
     }
   }
 }
