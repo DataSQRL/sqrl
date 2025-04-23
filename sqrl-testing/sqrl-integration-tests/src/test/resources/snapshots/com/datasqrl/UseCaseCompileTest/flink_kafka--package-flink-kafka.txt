@@ -263,7 +263,7 @@ FROM `_ApplicationUpdates` AS `u`
  INNER JOIN `_LoanTypes` FOR SYSTEM_TIME AS OF `u`.`event_time` AS `t` ON `t`.`id` = `a`.`loan_type_id`;
 CREATE VIEW `ApplicationStatusTest`
 AS
-SELECT COUNT(*) AS `total_count`, SUM(`amount`) AS `total_amount`
+SELECT COUNT(*) AS `total_count`, CAST(SUM(`amount`) AS INTEGER) AS `total_amount`
 FROM `ApplicationStatus`;
 CREATE TABLE `ApplicationStatus_1` (
   `status` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,

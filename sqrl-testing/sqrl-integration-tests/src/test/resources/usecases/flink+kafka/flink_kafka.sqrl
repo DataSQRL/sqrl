@@ -11,4 +11,4 @@ ApplicationStatus := SUBSCRIBE SELECT u.status, u.message, u.event_time, a.id, a
                                                JOIN _LoanTypes FOR SYSTEM_TIME AS OF u.`event_time` t ON t.id = a.loan_type_id;
 
 /*+test */
-ApplicationStatusTest := SELECT COUNT(*) as total_count, SUM(amount) as total_amount FROM ApplicationStatus;
+ApplicationStatusTest := SELECT COUNT(*) as total_count, CAST(SUM(amount) AS INT) as total_amount FROM ApplicationStatus;
