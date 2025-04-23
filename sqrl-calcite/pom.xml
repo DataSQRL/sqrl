@@ -64,7 +64,6 @@
     <dependency>
       <groupId>com.datasqrl.flinkrunner</groupId>
       <artifactId>postgresql-connector</artifactId>
-      <version>${flinkrunner.version}</version>
     </dependency>
 
     <dependency>
