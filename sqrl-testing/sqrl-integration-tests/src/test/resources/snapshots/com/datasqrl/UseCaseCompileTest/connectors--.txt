@@ -135,7 +135,7 @@ CREATE TABLE `kafka_safe_csv_table__def` (
   `name` STRING
 ) WITH (
   'connector' = 'kafka-safe',
-  'topic' = 'users-json-avro',
+  'topic' = 'users-csv-avro',
   'properties.bootstrap.servers' = 'localhost:9092',
   'properties.group.id' = 'test',
   'format' = 'flexible-csv'
