@@ -1,2 +1,2 @@
 >>>DocSimilarity.graphql
-{"data":{"DocumentSimilarity":[{"doc_id":2,"score":0.99682606},{"doc_id":4,"score":0.26734358},{"doc_id":3,"score":0.22629988}]}}
+{"data":{"DocumentSimilarity":[{"doc_id":2},{"doc_id":4},{"doc_id":3}]}}
