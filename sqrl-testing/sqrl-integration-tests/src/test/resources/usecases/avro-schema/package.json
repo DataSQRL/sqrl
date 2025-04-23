@@ -1,6 +1,6 @@
 {
   "version": "1",
   "test-runner": {
-    "delay-sec": 2
+    "delay-sec": -1
   }
 }
