@@ -1,5 +1,6 @@
 package com.datasqrl;
 
+import static org.junit.Assume.assumeFalse;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.nio.file.Files;
@@ -80,8 +81,7 @@ public class FullUsecasesIT {
       new ScriptCriteria("postgres-log-disabled.sqrl", "run"),
       new ScriptCriteria("seedshop-extended.sqrl", "test"), // CustomerPromotionTest issue TODO
       new ScriptCriteria("seedshop-extended.sqrl", "run"), // CustomerPromotionTest issue TODO
-      new ScriptCriteria("connectors.sqrl", "test"), // should not be executed
-      new ScriptCriteria("connectors.sqrl", "run") // should not be executed
+      new ScriptCriteria("connectors.sqrl", "test") // should not be executed
   );
 
   static final Path PROJECT_ROOT = Path.of(System.getProperty("user.dir"));
@@ -266,6 +266,8 @@ public class FullUsecasesIT {
     System.out.println(testNo + ":" + param);
     if (i == testNo) {
       testUseCase(param, testInfo);
+    } else {
+      assumeFalse(true);
     }
   }
 
@@ -275,6 +277,17 @@ public class FullUsecasesIT {
   public void printUseCaseNumbers(UseCaseTestParameter param) {
     testNo++;
     System.out.println(testNo + ":" + param);
+  }
+
+  @ParameterizedTest
+  @MethodSource("useCaseProvider")
+  @Disabled
+  public void runTestCaseByName(UseCaseTestParameter param, TestInfo testInfo) {
+	  if(param.sqrlFileName.equals("connectors.sqrl") && param.goal.equals("run")) {
+		  testUseCase(param, testInfo);
+	  } else {
+		  assumeFalse(true);
+	  }
   }
 
   static List<UseCaseTestParameter> useCaseProvider() throws Exception {

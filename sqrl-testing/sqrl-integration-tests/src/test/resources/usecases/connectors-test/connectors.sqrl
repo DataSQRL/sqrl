@@ -13,6 +13,30 @@ CREATE TABLE kafka_avro_table (
     'format' = 'avro'
       );
 
+-- ========== KAFKA-safe (with json) ==========
+CREATE TABLE kafka_safe_json_table (
+                                  user_id INT,
+                                  name STRING
+) WITH (
+    'connector' = 'kafka-safe',
+    'topic' = 'users-json-avro',
+    'properties.bootstrap.servers' = 'localhost:9092',
+    'properties.group.id' = 'test',
+    'format' = 'flexible-json'
+      );
+
+-- ========== KAFKA-safe (with csv) ==========
+CREATE TABLE kafka_safe_csv_table (
+                                  user_id INT,
+                                  name STRING
+) WITH (
+    'connector' = 'kafka-safe',
+    'topic' = 'users-csv-avro',
+    'properties.bootstrap.servers' = 'localhost:9092',
+    'properties.group.id' = 'test',
+    'format' = 'flexible-csv'
+      );
+
 -- ========== UPSERT KAFKA (with Confluent Avro) ==========
 CREATE TABLE upsert_kafka_confluent_avro (
                                              user_id INT,
