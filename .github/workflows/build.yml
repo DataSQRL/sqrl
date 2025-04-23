@@ -78,7 +78,7 @@ jobs:
     - name: Test connectors
       working-directory: ./sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/connectors-test
       run: |
-        docker run -i --rm -v $PWD:/build sqrl-test tcompile connectors.sqrl
+        docker run -i --rm -v $PWD:/build sqrl-test test connectors.sqrl
       continue-on-error: false
 
     - name: Test UDF
