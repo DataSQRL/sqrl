@@ -75,6 +75,12 @@ jobs:
         docker run -i --rm -v $PWD:/build sqrl-test test loan.sqrl loan.graphqls --snapshot snapshots-loan --tests tests-loan
       continue-on-error: false
 
+    - name: Test connectors
+      working-directory: ./sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/connectors-test
+      run: |
+        docker run -i --rm -v $PWD:/build sqrl-test tcompile connectors.sqrl
+      continue-on-error: false
+
     - name: Test UDF
       working-directory: ./sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/udf
       run: |
