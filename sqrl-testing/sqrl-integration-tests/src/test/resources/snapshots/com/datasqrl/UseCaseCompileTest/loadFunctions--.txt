@@ -1,0 +1,92 @@
+>>>pipeline_explain.txt
+=== FunctionApplied
+ID:     default_catalog.default_database.FunctionApplied
+Type:   state
+Stage:  flink
+Primary Key: id
+Timestamp  : -
+Schema:
+ - id: INTEGER NOT NULL
+ - fct_result: BOOLEAN
+Plan:
+LogicalProject(id=[$0], fct_result=[TestFunction($0)])
+  LogicalValues(tuples=[[{ 1 }, { 2 }]])
+SQL: CREATE VIEW FunctionApplied AS  SELECT id, TestFunction(id) AS fct_result FROM (VALUES
+    (1),
+    (2)
+) AS data_table(id);
+
+>>>flink-sql-no-functions.sql
+CREATE VIEW `FunctionApplied`
+AS
+SELECT `id`, TESTFUNCTION(`id`) AS `fct_result`
+FROM (VALUES ROW(1),
+   ROW(2)) AS `data_table` (`id`);
+CREATE VIEW `FunctionTest`
+AS
+SELECT *
+FROM `FunctionApplied`;
+CREATE TABLE `FunctionApplied_1` (
+  `id` INTEGER NOT NULL,
+  `fct_result` BOOLEAN,
+  PRIMARY KEY (`id`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'table-name' = 'FunctionApplied_1'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`FunctionApplied_1`
+(SELECT *
+ FROM `default_catalog`.`default_database`.`FunctionApplied`)
+;
+END
+>>>kafka.json
+{
+  "topics" : [ ]
+}
+>>>postgres-schema.sql
+CREATE TABLE IF NOT EXISTS "FunctionApplied_1" ("id" INTEGER NOT NULL, "fct_result" BOOLEAN  , PRIMARY KEY ("id"))
+>>>postgres-views.sql
+CREATE OR REPLACE VIEW "FunctionApplied"("id", "fct_result") AS SELECT *
+FROM "FunctionApplied_1"
+>>>vertx.json
+{
+  "model" : {
+    "queries" : [
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "FunctionApplied",
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
+            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM \"FunctionApplied_1\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
+          }
+        }
+      }
+    ],
+    "mutations" : [ ],
+    "subscriptions" : [ ],
+    "schema" : {
+      "type" : "string",
+      "schema" : "type FunctionApplied {\n  id: Int!\n  fct_result: Boolean\n}\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Query {\n  FunctionApplied(limit: Int = 10, offset: Int = 0): [FunctionApplied!]\n}\n"
+    }
+  }
+}

@@ -1,0 +1,9 @@
+IMPORT functions.TestFunction;
+
+FunctionApplied := SELECT id, TestFunction(id) AS fct_result FROM (VALUES
+    (1),
+    (2)
+) AS data_table(id);
+
+/*+ test */
+FunctionTest := SELECT * FROM FunctionApplied ORDER BY id ASC;
