@@ -59,6 +59,7 @@
     <avro.version>1.11.3</avro.version>
     <freemarker.version>2.3.32</freemarker.version>
     <jsonschema.version>1.5.2</jsonschema.version>
+    <flinkrunner.version>1.0.0-SNAPSHOT</flinkrunner.version>
 
     <!-- params -->
     <snapshots.update>false</snapshots.update>
@@ -907,7 +908,7 @@
       <dependency>
         <groupId>com.datasqrl.flinkrunner</groupId>
         <artifactId>flinkrunner-bom</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>${flinkrunner.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
