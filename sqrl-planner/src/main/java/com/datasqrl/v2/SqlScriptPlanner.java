@@ -176,7 +176,7 @@ public class SqlScriptPlanner {
         planStatement(sqlStatement, statementStack, sqrlEnv, lineErrors);
       } catch (CollectedException e) {
         throw e;
-      } catch (Exception e) {
+      } catch (Throwable e) {
         //Map errors from the Flink parser/planner by adjusting the line numbers
         var converted = ParsePosUtil.convertFlinkParserException(e);
         if (converted.isPresent()) {
@@ -187,9 +187,9 @@ public class SqlScriptPlanner {
               .fatal(msgLocation.getMessage());
         }
         if (e instanceof ValidationException) {
-          if (e.getCause()!=e) {
-            e = (Exception)e.getCause();
-        }
+          if (e.getCause() != e) {
+            e = e.getCause();
+          }
         }
 
         //Print stack trace for unknown exceptions
