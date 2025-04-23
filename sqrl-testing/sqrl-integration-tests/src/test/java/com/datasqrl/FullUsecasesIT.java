@@ -83,7 +83,8 @@ public class FullUsecasesIT {
       new ScriptCriteria("seedshop-extended.sqrl", "run"), // CustomerPromotionTest issue TODO
       new ScriptCriteria("avro-schema.sqrl", "test"), // FIXME github runners are too slow, remove once we move to circle CI
       new ScriptCriteria("avro-schema.sqrl", "run"), // FIXME github runners are too slow, remove once we move to circle CI
-      new ScriptCriteria("connectors.sqrl", "test") // should not be executed
+      new ScriptCriteria("connectors.sqrl", "test"), // should not be executed
+      new ScriptCriteria("flink_kafka.sqrl", "run") // does not expose an API
   );
 
   static final Path PROJECT_ROOT = Path.of(System.getProperty("user.dir"));

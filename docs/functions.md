@@ -32,38 +32,26 @@ SQRL supports all [FlinkSQL built-in functions](https://nightlies.apache.org/fli
 
 These functions should be used instead of the ones provided by Flink since they use the native JsonType that SQRL adds to the type system.
 
-| Function Name                        | Description                                                                                                                         |
-|--------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------|
-| `JsonExtract(json, String, Any)` | Extracts a value from a JSON object based on a JSON path specification. Returns the value at the specified path, or a default value if the path is not found or in case of an error. Useful for navigating complex JSON structures. |
-| `ToJson(Any)`                        | Converts a given input into a `json` object. This conversion is useful for facilitating JSON manipulations within Flink data flows. Can handle inputs like strings representing JSON, other JSON objects, or various scalar values to create JSON structures. |
-| `JsonToString(json)`        | Converts a `json` JSON object back to a string representation. Useful for outputting or exporting JSON data after transformations within Flink. |
-| `JsonConcat(json, json)` | Merges two JSON objects, combining all key-value pairs from both. Useful for aggregating data from different JSON sources into a single JSON structure. |
-| `JsonObject(Any...)`                 | Creates a JSON object from provided key-value pairs. Each pair consists of a string key and a value which can be any type, forming a JSON object dynamically. |
-| `JsonArray(Any...)`                  | Constructs a JSON array from given elements of any type. This function allows for dynamic JSON array creation, accommodating a variety of data types. |
-| `JsonQuery(json, String)`   | Executes a JSON path query on a JSON object and returns the query result as a JSON string. Ideal for extracting specific data from nested JSON structures. |
-| `JsonExists(json, String)`  | Evaluates whether a specified JSON path exists within a JSON object, returning a boolean indicating presence or absence of the path. |
-| `JsonArrayAgg(Any...)`               | Aggregates multiple values into a JSON array during a group by operation. Can handle various types of input to dynamically build a JSON array. |
-| `JsonObjectAgg(String, Any...)`      | Similar to `JsonArrayAgg` but for JSON objects, aggregating key-value pairs into a JSON object during group operations, handling complex aggregation logic with JSON structures. |
-| `JsonConcat(json...)`       | An extended function to concatenate multiple JSON objects into one, merging them by adding all key-value pairs from each JSON into a single object. |
+| Function Name       | Description                                                                                          | Example Usage                                                                                     |
+|---------------------|------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------|
+| `toJson`            | Parses a JSON string or Flink object (e.g., `Row`, `Row[]`) into a JSON object.                      | `toJson('{"name":"Alice"}')` → JSON object                                                        |
+| `jsonToString`      | Serializes a JSON object into a JSON string.                                                         | `jsonToString(toJson('{"a":1}'))` → `'{"a":1}'`                                                    |
+| `jsonObject`        | Constructs a JSON object from key-value pairs. Keys must be strings.                                 | `jsonObject('a', 1, 'b', 2)` → `{"a":1,"b":2}`                                                     |
+| `jsonArray`         | Constructs a JSON array from multiple values or JSON objects.                                        | `jsonArray(1, 'a', toJson('{"b":2}'))` → `[1,"a",{"b":2}]`                                         |
+| `jsonExtract`       | Extracts a value from a JSON object using a JSONPath expression. Optionally specify default value.   | `jsonExtract(toJson('{"a":1}'), '$.a')` → `1`                                                      |
+| `jsonQuery`         | Executes a JSONPath query on a JSON object and returns the result as a JSON string.                  | `jsonQuery(toJson('{"a":[1,2]}'), '$.a')` → `'[1,2]'`                                              |
+| `jsonExists`        | Returns `TRUE` if a JSONPath exists within a JSON object.                                            | `jsonExists(toJson('{"a":1}'), '$.a')` → `TRUE`                                                    |
+| `jsonConcat`        | Merges two JSON objects. If keys overlap, the second object's values are used.                       | `jsonConcat(toJson('{"a":1}'), toJson('{"b":2}'))` → `{"a":1,"b":2}`                               |
+| `jsonArrayAgg`      | Aggregate function: accumulates values into a JSON array.                                            | `SELECT jsonArrayAgg(col) FROM tbl`                                                               |
+| `jsonObjectAgg`     | Aggregate function: accumulates key-value pairs into a JSON object.                                  | `SELECT jsonObjectAgg(key_col, val_col) FROM tbl`                                                 |
 
 ### Text Functions
 
-| Function Name           | Description                                                                                                                                                                                                                                                                                        |
-|-------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `Format(String, String...)` | A function that formats text based on a format string and variable number of arguments. It uses Java's `String.format` method internally. If the input text is `null`, it returns `null`. For example, `Format("Hello %s!", "World")` returns "Hello World!".                                        |
-| `TextSearch(String, String...)` | Evaluates a query against multiple text fields and returns a score based on the frequency of query words in the texts. It tokenizes both the query and the texts, and scores based on the proportion of query words found in the text. For example, `TextSearch("hello", "hello world")` returns `1.0`. |
+| Function Name                    | Description                                                                                                                                                                                                                                                                                              |
+|----------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `format(String, String...)`      | A function that formats text based on a format string and variable number of arguments. It uses Java's `String.format` method internally. If the input text is `null`, it returns `null`. For example, `format("Hello %s!", "World")` returns "Hello World!".                                            |
+| `text_search(String, String...)` | Evaluates a query against multiple text fields and returns a score based on the frequency of query words in the texts. It tokenizes both the query and the texts, and scores based on the proportion of query words found in the text. For example, `text_search("hello", "hello world")` returns `1.0`. |
 
-### Time Functions
-
-| Function Name                        | Description                                                                                                                                                                                           | 
-|--------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `AtZone(timestamp, zone)`            | Converts a timestamp to a different time zone specified by `zone`. For example, `AtZone(NOW(), 'America/New_York')` converts the current timestamp to Eastern Standard Time.                          |
-| `EpochMilliToTimestamp(epochMillis)` | Converts milliseconds since the Unix epoch (January 1, 1970, 00:00:00 GMT) to a TIMESTAMP. For example, `EpochMilliToTimestamp(1609459200000L)` converts the given epoch milliseconds to a timestamp. |
-| `EpochToTimestamp(epoch)`            | Converts seconds since the Unix epoch (January 1, 1970, 00:00:00 GMT) to a TIMESTAMP. For example, `EpochMilliToTimestamp(1609459200L)` converts the given epoch seconds to a timestamp.              |
-| `ParseTimestamp(s, format)`          | Parses a timestamp from a given string using the specified format. For example, `ParseTimestamp('2021-01-01T12:00:00Z', 'yyyy-MM-dd\'T\'HH:mm:ssX')` returns the corresponding timestamp.             |
-| `TimestampToEpoch(timestamp)`        | Converts a TIMESTAMP to epoch seconds. For example, `TimestampToEpoch(TO_TIMESTAMP('1970-01-01 00:00:00'))` returns 0.                                                                                |
-| `TimestampToEpochMilli(timestamp)`   | Converts a TIMESTAMP to epoch milliseconds. For example, `TimestampToEpochMilli(TO_TIMESTAMP('1970-01-01 00:00:00'))` returns 0.                                                                      |
-| `TimestampToString(timestamp)`       | Returns an ISO-8601 representation of the timestamp argument                                                                                                                                          |
 ### Vector Functions
 
 | Function Name                                                         | Description                                                                                                                                                                                                                                                                                        |
