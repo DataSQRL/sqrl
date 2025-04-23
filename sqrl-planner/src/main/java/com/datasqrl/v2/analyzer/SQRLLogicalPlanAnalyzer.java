@@ -709,7 +709,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
   }
 
   private PrimaryKeyMap intersectPrimaryKeys(List<RelNodeAnalysis> inputs) {
-    if (inputs.get(0).primaryKey.isUndefined()) {
+    if (inputs.get(0).primaryKey.isUndefined() || inputs.get(0).primaryKey.getLength()==0) {
         return PrimaryKeyMap.UNDEFINED;
     }
     var pkLength = inputs.get(0).primaryKey.getLength();

@@ -259,10 +259,10 @@ public class FullUsecasesIT {
   @MethodSource("useCaseProvider")
   @Disabled
   public void runTestNumber(UseCaseTestParameter param, TestInfo testInfo) {
-    var i = 39;
+    var testToExecute = 29;
     testNo++;
     System.out.println(testNo + ":" + param);
-    if (i == testNo) {
+    if (testToExecute == testNo) {
       testUseCase(param, testInfo);
     }
   }
