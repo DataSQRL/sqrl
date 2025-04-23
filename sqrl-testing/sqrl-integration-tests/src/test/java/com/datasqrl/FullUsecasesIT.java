@@ -283,7 +283,9 @@ public class FullUsecasesIT {
   @MethodSource("useCaseProvider")
   @Disabled
   public void runTestCaseByName(UseCaseTestParameter param, TestInfo testInfo) {
-	  if(param.sqrlFileName.equals("connectors.sqrl") && param.goal.equals("run")) {
+	  if(param.sqrlFileName.equals("avro-schema.sqrl") 
+//			  && param.goal.equals("run")
+			  ) {
 		  testUseCase(param, testInfo);
 	  } else {
 		  assumeFalse(true);
