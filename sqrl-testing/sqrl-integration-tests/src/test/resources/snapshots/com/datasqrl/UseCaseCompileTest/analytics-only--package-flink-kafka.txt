@@ -1,0 +1,2 @@
+[FATAL] SQRL script does not contain any sink definitions
+
