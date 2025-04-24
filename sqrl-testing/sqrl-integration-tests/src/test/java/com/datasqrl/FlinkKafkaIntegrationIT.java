@@ -28,7 +28,7 @@ import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.utility.DockerImageName;
 
 //@ExtendWith(MiniClusterExtension.class)
-public class FlinkKafkaIntegrationTest {
+public class FlinkKafkaIntegrationIT {
 
     private static KafkaContainer kafkaContainer;
 

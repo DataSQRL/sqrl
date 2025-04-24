@@ -24,7 +24,7 @@ import lombok.extern.slf4j.Slf4j;
  * deployment assets
  */
 @Slf4j
-public class PostgresViewTest extends AbstractUseCaseTest {
+public class PostgresViewIT extends AbstractUseCaseTest {
   @Container
   private PostgreSQLContainer testDatabase =
       new PostgreSQLContainer(DockerImageName.parse("ankane/pgvector:v0.5.0")
