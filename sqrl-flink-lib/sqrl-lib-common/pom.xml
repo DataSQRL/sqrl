@@ -6,15 +6,7 @@
     <version>0.6.0-SNAPSHOT</version>
   </parent>
 
-  <groupId>com.datasqrl</groupId>
   <artifactId>sqrl-lib-common</artifactId>
-  <version>0.6.0-SNAPSHOT</version>
-
-  <properties>
-    <maven.compiler.source>11</maven.compiler.source>
-    <maven.compiler.target>11</maven.compiler.target>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-  </properties>
 
   <description>Common classes for sqrl flink libs</description>
 
@@ -56,7 +48,7 @@
     <dependency>
       <groupId>com.datasqrl.flinkrunner</groupId>
       <artifactId>functions-common</artifactId>
-      <version>0.1</version>
+      <version>${flinkrunner.version}</version>
     </dependency>
   </dependencies>
   <build>

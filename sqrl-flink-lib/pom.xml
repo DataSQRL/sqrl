@@ -1,19 +1,14 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <artifactId>sqrl-flink-lib</artifactId>
-  <groupId>com.datasqrl</groupId>
-  <version>0.6.0-SNAPSHOT</version>
-  <packaging>pom</packaging>
+  <parent>
+    <groupId>com.datasqrl</groupId>
+    <artifactId>sqrl-root</artifactId>
+    <version>0.6.0-SNAPSHOT</version>
+  </parent>
 
-  <properties>
-    <maven.compiler.source>17</maven.compiler.source>
-    <maven.compiler.target>17</maven.compiler.target>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <flink.version>1.19.0</flink.version>
-    <postgres.version>42.5.0</postgres.version>
-    <testcontainers.version>1.18.0</testcontainers.version>
-  </properties>
+  <artifactId>sqrl-flink-lib</artifactId>
+  <packaging>pom</packaging>
 
   <modules>
     <module>sqrl-lib-common</module>
