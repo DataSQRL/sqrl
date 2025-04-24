@@ -43,25 +43,35 @@ commands:
                    java -version
 
   determine-version:
-    description: "Determine TAG_SUFFIX and REGISTRY based on context"
+    description: "Derive TAG_SUFFIX and REGISTRY"
     steps:
       - run:
-          name: Determine Docker version & registry
+          name: Determine Docker tag & registry
           command: |
-            env | sort
-            if [ -n "$CIRCLE_PR_NUMBER" ]; then
-              echo "export TAG_SUFFIX=pr-$CIRCLE_PR_NUMBER" >> $BASH_ENV
-              echo "export REGISTRY=ghcr.io/datasqrl" >> $BASH_ENV
+            # helper to extract the first PR number, if any
+            get_pr_number() {
+              if [ -n "$CIRCLE_PULL_REQUEST" ]; then
+                basename "$CIRCLE_PULL_REQUEST"
+              elif [ -n "$CIRCLE_PULL_REQUESTS" ]; then
+                echo "$CIRCLE_PULL_REQUESTS" | cut -d',' -f1 | xargs basename
+              fi
+            }
+
+            PR_NUM=$(get_pr_number)
+
+            if [ -n "$PR_NUM" ]; then
+              echo "export TAG_SUFFIX=pr-$PR_NUM" >> "$BASH_ENV"
+              echo "export REGISTRY=ghcr.io/datasqrl" >> "$BASH_ENV"
             elif [ -n "$CIRCLE_TAG" ]; then
-              echo "export TAG_SUFFIX=$CIRCLE_TAG" >> $BASH_ENV
-              echo "export REGISTRY=datasqrl" >> $BASH_ENV
-              echo "export LATEST_TAG=true" >> $BASH_ENV
+              echo "export TAG_SUFFIX=$CIRCLE_TAG"    >> "$BASH_ENV"
+              echo "export REGISTRY=datasqrl"        >> "$BASH_ENV"
+              echo "export LATEST_TAG=true"          >> "$BASH_ENV"
             elif [ "$CIRCLE_BRANCH" = "main" ]; then
-              echo "export TAG_SUFFIX=dev" >> $BASH_ENV
-              echo "export REGISTRY=datasqrl" >> $BASH_ENV
+              echo "export TAG_SUFFIX=dev"           >> "$BASH_ENV"
+              echo "export REGISTRY=datasqrl"        >> "$BASH_ENV"
             else
-              echo "export TAG_SUFFIX=$CIRCLE_BRANCH" >> $BASH_ENV
-              echo "export REGISTRY=datasqrl" >> $BASH_ENV
+              echo "export TAG_SUFFIX=$CIRCLE_BRANCH" >> "$BASH_ENV"
+              echo "export REGISTRY=datasqrl"         >> "$BASH_ENV"
             fi
 
   download-dependencies:
@@ -274,75 +284,69 @@ jobs:
             - sqrl-tools/sqrl-run/target/sqrl-run.jar
             - sqrl-tools/sqrl-test/target/sqrl-test.jar
             - sqrl-server/sqrl-server-vertx/target/vertx-server.jar
+            - sqrl-tools/sqrl-flink-runner/target/*
 
-  docker-build-and-push-cmd:
+  docker-build-and-push:
     parameters:
-      resource:
-        type: string
+      image_repo:  { type: string }
+      context_dir: { type: string }
     machine:
       image: ubuntu-2004:202111-02
-      resource_class: << parameters.resource >>
     steps:
       - checkout
       - attach_workspace:
           at: .
       - determine-version
+
+      # --- enable cross-compilation ---------------------------------
       - run:
-          name: Conditional Docker Login (GHCR for PRs, Docker Hub otherwise)
+          name: Enable QEMU for ARM build
           command: |
-            if [ -n "$CIRCLE_PR_NUMBER" ]; then
+            sudo apt-get update
+            sudo apt-get install -y qemu-user-static binfmt-support
+            docker run --privileged --rm tonistiigi/binfmt --install all
+
+      # --- install Buildx (x86 binary is fine) ----------------------
+      - run:
+          name: Install docker buildx
+          command: |
+            sudo mkdir -p /usr/local/lib/docker/cli-plugins
+            curl -sSL https://github.com/docker/buildx/releases/download/v0.12.0/buildx-v0.12.0.linux-amd64 \
+                 -o buildx
+            chmod +x buildx
+            sudo mv buildx /usr/local/lib/docker/cli-plugins/docker-buildx
+            docker buildx create --use --name sqrl-builder
+            docker buildx inspect --bootstrap
+
+      # --- login to the correct registry ---------------------------
+      - run:
+          name: Registry login
+          command: |
+            if [ -n "$CIRCLE_PULL_REQUEST" ]; then
               echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
-              echo "Logged in to GHCR"
+              echo "Logged on ghcr.io"
             else
               echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-              echo "Logged in to Docker Hub"
+              echo "Logged on docker"
             fi
-      - run:
-          name: Build and push Docker image for << parameters.resource >>
-          command: |
-            docker build \
-              -t $REGISTRY/cmd:$TAG_SUFFIX \
-              -f sqrl-tools/Dockerfile \
-              sqrl-tools
-            docker push $REGISTRY/cmd:$TAG_SUFFIX
 
-  docker-build-and-push-server:
-    docker:
-      - image: cimg/openjdk:17.0
-    steps:
-      - checkout
-      - attach_workspace:
-          at: .
-      - determine-version
-      - setup_remote_docker:
-          docker_layer_caching: true
+      # --- build and push both platforms in one go -----------------
       - run:
-          name: Build server image
-          command: docker build -t $REGISTRY/sqrl-server:$TAG_SUFFIX -f sqrl-server/sqrl-server-vertx/Dockerfile sqrl-server/sqrl-server-vertx --platform=linux/amd64,linux/arm64
-      - run:
-          name: Push server image
+          name: Build & push $REGISTRY/<< parameters.image_repo >>:$TAG_SUFFIX
           command: |
-            docker push $REGISTRY/sqrl-server:$TAG_SUFFIX
-            if [ "$LATEST_TAG" = "true" ]; then docker push $REGISTRY/sqrl-server:latest; fi
+            docker buildx build \
+              --platform linux/amd64,linux/arm64 \
+              --push \
+              -t $REGISTRY/<< parameters.image_repo >>:$TAG_SUFFIX \
+              -f << parameters.context_dir >>/Dockerfile \
+              << parameters.context_dir >>
 
-  docker-build-and-push-flink:
-    docker:
-      - image: cimg/openjdk:17.0
-    steps:
-      - checkout
-      - attach_workspace:
-          at: .
-      - determine-version
-      - setup_remote_docker:
-          docker_layer_caching: true
-      - run:
-          name: Build flink image
-          command: docker build -t $REGISTRY/sqrl-flink-runner:$TAG_SUFFIX -f sqrl-tools/sqrl-flink-runner/Dockerfile sqrl-tools/sqrl-flink-runner --platform=linux/amd64,linux/arm64
-      - run:
-          name: Push flink image
-          command: |
-            docker push $REGISTRY/sqrl-flink-runner:$TAG_SUFFIX
-            if [ "$LATEST_TAG" = "true" ]; then docker push $REGISTRY/sqrl-flink-runner:latest; fi
+            # push "latest" if this is a tag build
+            if [ "$LATEST_TAG" = "true" ]; then
+              docker buildx imagetools create \
+                -t $REGISTRY/<< parameters.image_repo >>:latest \
+                $REGISTRY/<< parameters.image_repo >>:$TAG_SUFFIX
+            fi
 
 workflows:
   pull-request-workflow:
@@ -365,21 +369,31 @@ workflows:
           context: datasqrl
           requires:
             - build-base
-      - docker-build-and-push-cmd:
-          matrix:
-            parameters:
-              resource: [large, arm.large]
+
+      - docker-build-and-push:
+          name: build-push-cmd
+          image_repo: cmd
+          context_dir: sqrl-tools
           context: datasqrl
           requires:
             - build-jars
-      - docker-build-and-push-server:
+
+      - docker-build-and-push:
+          name: build-push-server
+          image_repo: sqrl-server
+          context_dir: sqrl-server/sqrl-server-vertx
           context: datasqrl
           requires:
             - build-jars
-      - docker-build-and-push-flink:
+
+      - docker-build-and-push:
+          name: build-push-flink
+          image_repo: sqrl-flink-runner
+          context_dir: sqrl-tools/sqrl-flink-runner/target
           context: datasqrl
           requires:
             - build-jars
+
       # Temporarily disabled for maintenance:
       # - run-conference-tests:
       #     context: datasqrl
