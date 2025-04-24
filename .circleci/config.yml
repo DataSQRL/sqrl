@@ -129,8 +129,6 @@ jobs:
       - run:
           name: Run Unit Tests
           command: mvn -T1 -B install -DskipITs -Pskip-shade-plugin
-          environment:
-            DATASQRL_TOKEN: $DATASQRL_TOKEN
       - save-test-results
 
   integration-tests:
@@ -145,8 +143,6 @@ jobs:
       - run:
           name: Run Integration Tests
           command: mvn -T1 -B install -Dtest=skip -Dsurefire.failIfNoSpecifiedTests=false -Pskip-shade-plugin
-          environment:
-            DATASQRL_TOKEN: $DATASQRL_TOKEN
       - save-test-results
 
   build-test-image:
@@ -160,9 +156,7 @@ jobs:
       - generate-settings
       - run:
           name: Build shaded JAR
-          command: mvn clean -T1 -B install -DskipTests -DskipITs
-          environment:
-            DATASQRL_TOKEN: $DATASQRL_TOKEN
+          command: mvn clean -T1 -B install -DskipTests -DskipITs -Pinstrument
       - setup_remote_docker:
           docker_layer_caching: true
       - run:
@@ -178,6 +172,25 @@ jobs:
           root: .
           paths:
             - sqrl-test.tar
+
+  deploy:
+    docker:
+      - image: cimg/openjdk:17.0
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - m2-{{ checksum "pom.xml" }}
+      - generate-settings
+      - run:
+          name: Import GPG Key
+          command: |
+            echo "$GPG_PRIVATE_KEY" | base64 --decode | gpg --batch --import
+            echo "default-key $(gpg --list-keys --with-colons | grep pub | cut -d':' -f5)" >> ~/.gnupg/gpg.conf
+            echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf
+      - run:
+          name: Build shaded JAR
+          command: mvn clean -T1 -B deploy -DskipTests -DskipITs
 
   run-conference-tests: &disabled
     executor: default-machine
@@ -243,8 +256,6 @@ jobs:
             else
               mvn -T1 -B -U -e clean package
             fi
-          environment:
-            DATASQRL_TOKEN: $DATASQRL_TOKEN
       - docker/install-docker-tools
       - run:
           name: Set Docker Tags

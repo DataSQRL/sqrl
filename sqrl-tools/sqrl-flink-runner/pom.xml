@@ -35,7 +35,7 @@
             <configuration>
               <workingDirectory>${project.basedir}/target/</workingDirectory>
               <executable>docker</executable>
-              <skip>${skipTests}</skip>
+              <skip>${skipTests}${skipITs}</skip>
               <arguments>
                 <argument>build</argument>
                 <argument>--tag</argument>
