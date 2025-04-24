@@ -102,7 +102,7 @@
     </dependency>
     <dependency>
       <groupId>com.datasqrl.flinkrunner</groupId>
-      <artifactId>system-functions-discovery</artifactId>
+      <artifactId>functions-common</artifactId>
     </dependency>
     <dependency>
       <groupId>com.datasqrl.flinkrunner</groupId>

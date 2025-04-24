@@ -55,7 +55,7 @@
     
     <dependency>
       <groupId>com.datasqrl.flinkrunner</groupId>
-      <artifactId>system-functions-discovery</artifactId>
+      <artifactId>functions-common</artifactId>
       <version>0.1</version>
     </dependency>
   </dependencies>
