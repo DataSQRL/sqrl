@@ -42,6 +42,27 @@ commands:
                    sudo update-alternatives --set javac /usr/lib/jvm/java-17-openjdk-amd64/bin/javac
                    java -version
 
+  determine-version:
+    description: "Determine TAG_SUFFIX and REGISTRY based on context"
+    steps:
+      - run:
+          name: Determine Docker version & registry
+          command: |
+            if [ -n "$CIRCLE_PR_NUMBER" ]; then
+              echo "export TAG_SUFFIX=pr-$CIRCLE_PR_NUMBER" >> $BASH_ENV
+              echo "export REGISTRY=ghcr.io/datasqrl" >> $BASH_ENV
+            elif [ -n "$CIRCLE_TAG" ]; then
+              echo "export TAG_SUFFIX=$CIRCLE_TAG" >> $BASH_ENV
+              echo "export REGISTRY=datasqrl" >> $BASH_ENV
+              echo "export LATEST_TAG=true" >> $BASH_ENV
+            elif [ "$CIRCLE_BRANCH" = "main" ]; then
+              echo "export TAG_SUFFIX=dev" >> $BASH_ENV
+              echo "export REGISTRY=datasqrl" >> $BASH_ENV
+            else
+              echo "export TAG_SUFFIX=$CIRCLE_BRANCH" >> $BASH_ENV
+              echo "export REGISTRY=datasqrl" >> $BASH_ENV
+            fi
+
   download-dependencies:
     description: "Download Maven dependencies"
     steps:
@@ -81,7 +102,6 @@ commands:
           name: Codecov
           command: |
             set -x
-
             curl -Os https://cli.codecov.io/latest/linux/codecov
             chmod +x codecov
 
@@ -244,7 +264,7 @@ jobs:
             - m2-{{ checksum "pom.xml" }}
       - generate-settings
       - run:
-          name: Build shaded JAR
+          name: Build shaded JARs
           command: mvn clean -T1 -B install -DskipTests -DskipITs
       - persist_to_workspace:
           root: .
@@ -254,68 +274,74 @@ jobs:
             - sqrl-tools/sqrl-test/target/sqrl-test.jar
             - sqrl-server/sqrl-server-vertx/target/vertx-server.jar
 
-  docker-build-and-push:
+  docker-build-and-push-cmd:
     parameters:
-      build_type:
-        type: enum
-        enum: ["latest", "tag"]
-        default: "latest"
-    docker:
-      - image: cimg/openjdk:17.0
-    environment:
-      TZ: America/Los_Angeles
+      resource:
+        type: string
+    machine:
+      image: ubuntu-2004:202111-02
+      resource_class: << parameters.resource >>
     steps:
       - checkout
       - attach_workspace:
           at: .
-      - docker/install-docker-tools
+      - determine-version
       - run:
-          name: Set Docker Tags
+          name: Conditional Docker Login (GHCR for PRs, Docker Hub otherwise)
           command: |
-            if [ "<< parameters.build_type >>" = "tag" ]; then
-              echo "export CMD_TAGS='$CIRCLE_TAG,latest'" >> $BASH_ENV
-              echo "export SERVER_TAGS='$CIRCLE_TAG,latest'" >> $BASH_ENV
-              echo "export FLINK_TAGS='$CIRCLE_TAG,latest'" >> $BASH_ENV
+            if [ -n "$CIRCLE_PR_NUMBER" ]; then
+              echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
+              echo "Logged in to GHCR"
             else
-              echo "export CMD_TAGS='dev'" >> $BASH_ENV
-              echo "export SERVER_TAGS='dev'" >> $BASH_ENV
-              echo "export FLINK_TAGS='dev'" >> $BASH_ENV
+              echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+              echo "Logged in to Docker Hub"
             fi
-      - docker/build:
-          image: datasqrl/cmd
-          tag: "$CMD_TAGS"
-          dockerfile: sqrl-tools/Dockerfile
-          path: sqrl-tools
-          extra_build_args: --platform=linux/amd64,linux/arm64
-      - docker/build:
-          image: datasqrl/sqrl-server
-          tag: "$SERVER_TAGS"
-          dockerfile: sqrl-server/sqrl-server-vertx/Dockerfile
-          path: sqrl-server/sqrl-server-vertx
-          extra_build_args: --platform=linux/amd64,linux/arm64
-      - docker/build:
-          image: datasqrl/sqrl-flink-runner
-          tag: "$FLINK_TAGS"
-          dockerfile: sqrl-tools/sqrl-flink-runner/Dockerfile
-          path: sqrl-tools/sqrl-flink-runner
-          extra_build_args: --platform=linux/amd64,linux/arm64
-      - when:
-          condition:
-            equal: ["tag", << parameters.build_type >>]
-          steps:
-            - docker/push: { image: datasqrl/cmd, tag: "$CIRCLE_TAG" }
-            - docker/push: { image: datasqrl/cmd, tag: latest }
-            - docker/push: { image: datasqrl/sqrl-server, tag: "$CIRCLE_TAG" }
-            - docker/push: { image: datasqrl/sqrl-server, tag: latest }
-            - docker/push: { image: datasqrl/sqrl-flink-runner, tag: "$CIRCLE_TAG" }
-            - docker/push: { image: datasqrl/sqrl-flink-runner, tag: latest }
-      - when:
-          condition:
-            equal: ["latest", << parameters.build_type >>]
-          steps:
-            - docker/push: { image: datasqrl/cmd, tag: dev }
-            - docker/push: { image: datasqrl/sqrl-server, tag: dev }
-            - docker/push: { image: datasqrl/sqrl-flink-runner, tag: dev }
+      - run:
+          name: Build and push Docker image for << parameters.resource >>
+          command: |
+            docker build \
+              -t $REGISTRY/cmd:$TAG_SUFFIX \
+              -f sqrl-tools/Dockerfile \
+              sqrl-tools
+            docker push $REGISTRY/cmd:$TAG_SUFFIX
+
+  docker-build-and-push-server:
+    docker:
+      - image: cimg/openjdk:17.0
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - determine-version
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - run:
+          name: Build server image
+          command: docker build -t $REGISTRY/sqrl-server:$TAG_SUFFIX -f sqrl-server/sqrl-server-vertx/Dockerfile sqrl-server/sqrl-server-vertx --platform=linux/amd64,linux/arm64
+      - run:
+          name: Push server image
+          command: |
+            docker push $REGISTRY/sqrl-server:$TAG_SUFFIX
+            if [ "$LATEST_TAG" = "true" ]; then docker push $REGISTRY/sqrl-server:latest; fi
+
+  docker-build-and-push-flink:
+    docker:
+      - image: cimg/openjdk:17.0
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - determine-version
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - run:
+          name: Build flink image
+          command: docker build -t $REGISTRY/sqrl-flink-runner:$TAG_SUFFIX -f sqrl-tools/sqrl-flink-runner/Dockerfile sqrl-tools/sqrl-flink-runner --platform=linux/amd64,linux/arm64
+      - run:
+          name: Push flink image
+          command: |
+            docker push $REGISTRY/sqrl-flink-runner:$TAG_SUFFIX
+            if [ "$LATEST_TAG" = "true" ]; then docker push $REGISTRY/sqrl-flink-runner:latest; fi
 
 workflows:
   pull-request-workflow:
@@ -334,6 +360,25 @@ workflows:
           context: datasqrl
           requires:
             - build-base
+      - build-jars:
+          context: datasqrl
+          requires:
+            - build-base
+      - docker-build-and-push-cmd:
+          matrix:
+            parameters:
+              resource: [large, arm.large]
+          context: datasqrl
+          requires:
+            - build-jars
+      - docker-build-and-push-server:
+          context: datasqrl
+          requires:
+            - build-jars
+      - docker-build-and-push-flink:
+          context: datasqrl
+          requires:
+            - build-jars
       # Temporarily disabled for maintenance:
       # - run-conference-tests:
       #     context: datasqrl
@@ -347,27 +392,3 @@ workflows:
           context: datasqrl
           requires:
             - build-test-image
-
-  main-branch-workflow:
-    jobs:
-      - docker-build-and-push:
-          build_type: "latest"
-          context:
-            - datasqrl
-          filters:
-            branches:
-              only:
-                - main
-                - v0.5.9-release
-
-  tag-workflow:
-    jobs:
-      - docker-build-and-push:
-          build_type: "tag"
-          context:
-            - datasqrl
-          filters:
-            tags:
-              only: /v[0-9]+(\.[0-9]+)*/
-            branches:
-              ignore: /.*/
