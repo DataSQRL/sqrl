@@ -4,14 +4,16 @@ CustomerTumble := SELECT window_start, window_end, COUNT(customerid) AS total
                 FROM TABLE(TUMBLE(TABLE Customer, DESCRIPTOR(`timestamp`), INTERVAL '10' MINUTES))
                 GROUP BY window_start, window_end;
 
-CustomerHop := SELECT window_start, window_end, COUNT(customerid) AS total
+CustomerHop := SELECT window_start, window_end, window_time, COUNT(customerid) AS total
                   FROM TABLE(HOP(TABLE Customer, DESCRIPTOR(`timestamp`), INTERVAL '5' MINUTES, INTERVAL '10' MINUTES))
-                  GROUP BY window_start, window_end;
+                  GROUP BY window_start, window_end, window_time;
 
 CustomerCumulate := SELECT window_start, window_end, COUNT(customerid) AS total
                   FROM TABLE(CUMULATE(TABLE Customer, DESCRIPTOR(`timestamp`), INTERVAL '5' MINUTES, INTERVAL '10' MINUTES))
                   GROUP BY window_start, window_end;
 
-CustomerSession := SELECT customerid, window_start, window_end, COUNT(customerid) AS total
+CustomerSession := SELECT customerid, window_start, window_end, window_time, COUNT(customerid) AS total
                   FROM TABLE(SESSION(TABLE Customer PARTITION BY customerid, DESCRIPTOR(`timestamp`), INTERVAL '10' MINUTES))
-                  GROUP BY window_start, window_end, customerid;
+                  GROUP BY window_start, window_end, window_time, customerid;
+
+StreamJoin := SELECT * FROM CustomerHop h INNER JOIN CustomerSession s ON s.window_time = h.window_time;
