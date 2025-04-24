@@ -48,6 +48,7 @@ commands:
       - run:
           name: Determine Docker version & registry
           command: |
+            env | sort
             if [ -n "$CIRCLE_PR_NUMBER" ]; then
               echo "export TAG_SUFFIX=pr-$CIRCLE_PR_NUMBER" >> $BASH_ENV
               echo "export REGISTRY=ghcr.io/datasqrl" >> $BASH_ENV
