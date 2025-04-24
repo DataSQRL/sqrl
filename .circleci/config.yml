@@ -234,6 +234,26 @@ jobs:
               --snapshot snapshots-myudf --tests tests-myudf
           working_directory: ./sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/udf
 
+  build-jars:
+    docker:
+      - image: cimg/openjdk:17.0
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - m2-{{ checksum "pom.xml" }}
+      - generate-settings
+      - run:
+          name: Build shaded JAR
+          command: mvn clean -T1 -B install -DskipTests -DskipITs
+      - persist_to_workspace:
+          root: .
+          paths:
+            - sqrl-tools/sqrl-cli/target/sqrl-cli.jar
+            - sqrl-tools/sqrl-run/target/sqrl-run.jar
+            - sqrl-tools/sqrl-test/target/sqrl-test.jar
+            - sqrl-server/sqrl-server-vertx/target/vertx-server.jar
+
   docker-build-and-push:
     parameters:
       build_type:
@@ -246,16 +266,8 @@ jobs:
       TZ: America/Los_Angeles
     steps:
       - checkout
-      - generate-settings
-      - download-dependencies
-      - run:
-          name: Build SQRL
-          command: |
-            if [ "<< parameters.build_type >>" = "tag" ]; then
-              mvn -T1 -B -U -e clean package -DskipTests
-            else
-              mvn -T1 -B -U -e clean package
-            fi
+      - attach_workspace:
+          at: .
       - docker/install-docker-tools
       - run:
           name: Set Docker Tags
