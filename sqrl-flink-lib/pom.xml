@@ -11,10 +11,7 @@
   <packaging>pom</packaging>
 
   <modules>
-    <module>sqrl-lib-common</module>
-    <module>sqrl-secure</module>
     <module>sqrl-text</module>
-    <module>sqrl-time</module>
     <module>sqrl-name</module>
     <module>sqrl-errors</module>
   </modules>

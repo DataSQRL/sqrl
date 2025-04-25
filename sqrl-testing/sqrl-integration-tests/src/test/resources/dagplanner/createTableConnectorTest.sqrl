@@ -3,7 +3,7 @@ CREATE TABLE SensorReading (
   `sensorid` BIGINT NOT NULL,
   `epoch_timestamp` BIGINT NOT NULL,
   temperature DOUBLE NOT NULL,
-  `timestamp` AS epochMilliToTimestamp(`epoch_timestamp`),
+  `timestamp` AS TO_TIMESTAMP_LTZ(`epoch_timestamp`, 3),
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
 ) WITH (
       'connector' = 'datagen',

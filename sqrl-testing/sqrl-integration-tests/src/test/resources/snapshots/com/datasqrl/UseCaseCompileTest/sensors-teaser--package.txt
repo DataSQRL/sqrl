@@ -66,11 +66,11 @@ Schema:
  - time: BIGINT NOT NULL
  - temperature: DOUBLE NOT NULL
  - humidity: DOUBLE NOT NULL
- - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME*
 Plan:
 LogicalProject(sensorid=[$0], time=[$1], temperature=[$2], humidity=[$3], timestamp=[$4])
   LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
-    LogicalProject(sensorid=[$0], time=[$1], temperature=[$2], humidity=[$3], timestamp=[EPOCHMILLITOTIMESTAMP($1)])
+    LogicalProject(sensorid=[$0], time=[$1], temperature=[$2], humidity=[$3], timestamp=[TO_TIMESTAMP_LTZ($1, 3)])
       LogicalTableScan(table=[[default_catalog, default_database, SensorReading__def]])
 SQL: CREATE VIEW `SensorReading`
 AS
@@ -111,7 +111,7 @@ CREATE TEMPORARY TABLE `SensorReading__schema` (
   'connector' = 'datagen'
 );
 CREATE TABLE `SensorReading__def` (
-  `timestamp` AS EPOCHMILLITOTIMESTAMP(`time`),
+  `timestamp` AS TO_TIMESTAMP_LTZ(`time`, 3),
   PRIMARY KEY (`sensorid`, `time`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
 ) WITH (
@@ -181,7 +181,7 @@ CREATE TABLE `SensorReading_3` (
   `time` BIGINT NOT NULL,
   `temperature` DOUBLE NOT NULL,
   `humidity` DOUBLE NOT NULL,
-  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE,
   PRIMARY KEY (`sensorid`, `time`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
@@ -212,7 +212,7 @@ INSERT INTO `default_catalog`.`default_database`.`SensorMaxTemp_2`
 >>>postgres-schema.sql
 CREATE TABLE IF NOT EXISTS "SecReading_1" ("sensorid" BIGINT NOT NULL, "timeSec" TIMESTAMP WITH TIME ZONE NOT NULL, "temp" DOUBLE PRECISION NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
 CREATE TABLE IF NOT EXISTS "SensorMaxTemp_2" ("sensorid" BIGINT NOT NULL, "window_time" TIMESTAMP WITH TIME ZONE NOT NULL, "maxTemp" DOUBLE PRECISION NOT NULL , PRIMARY KEY ("sensorid"));
-CREATE TABLE IF NOT EXISTS "SensorReading_3" ("sensorid" BIGINT NOT NULL, "time" BIGINT NOT NULL, "temperature" DOUBLE PRECISION NOT NULL, "humidity" DOUBLE PRECISION NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("sensorid","time"))
+CREATE TABLE IF NOT EXISTS "SensorReading_3" ("sensorid" BIGINT NOT NULL, "time" BIGINT NOT NULL, "temperature" DOUBLE PRECISION NOT NULL, "humidity" DOUBLE PRECISION NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE  , PRIMARY KEY ("sensorid","time"))
 >>>postgres-views.sql
 CREATE OR REPLACE VIEW "SensorReading"("sensorid", "time", "temperature", "humidity", "timestamp") AS SELECT *
 FROM "SensorReading_3"
@@ -315,7 +315,7 @@ FROM "SensorReading_3"
     "subscriptions" : [ ],
     "schema" : {
       "type" : "string",
-      "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Query {\n  \"\"\"\n  Returns the sensor temperature for a sensor by id from most recent.\n      Sensor temperature readings are averaged per second.\n  \"\"\"\n  SecReading(sensorid: GraphQLBigInteger!, limit: Int = 10, offset: Int = 0): [SecReading!]\n  \"Returns the maximum temperature recorded for a given sensor\"\n  SensorMaxTemp(sensorid: GraphQLBigInteger, limit: Int = 10, offset: Int = 0): [SensorMaxTemp!]\n  SensorReading(limit: Int = 10, offset: Int = 0): [SensorReading!]\n}\n\ntype SecReading {\n  sensorid: GraphQLBigInteger!\n  timeSec: DateTime!\n  temp: Float!\n}\n\ntype SensorMaxTemp {\n  sensorid: GraphQLBigInteger!\n  window_time: DateTime!\n  maxTemp: Float!\n}\n\ntype SensorReading {\n  sensorid: GraphQLBigInteger!\n  time: GraphQLBigInteger!\n  temperature: Float!\n  humidity: Float!\n  timestamp: DateTime!\n}\n"
+      "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Query {\n  \"\"\"\n  Returns the sensor temperature for a sensor by id from most recent.\n      Sensor temperature readings are averaged per second.\n  \"\"\"\n  SecReading(sensorid: GraphQLBigInteger!, limit: Int = 10, offset: Int = 0): [SecReading!]\n  \"Returns the maximum temperature recorded for a given sensor\"\n  SensorMaxTemp(sensorid: GraphQLBigInteger, limit: Int = 10, offset: Int = 0): [SensorMaxTemp!]\n  SensorReading(limit: Int = 10, offset: Int = 0): [SensorReading!]\n}\n\ntype SecReading {\n  sensorid: GraphQLBigInteger!\n  timeSec: DateTime!\n  temp: Float!\n}\n\ntype SensorMaxTemp {\n  sensorid: GraphQLBigInteger!\n  window_time: DateTime!\n  maxTemp: Float!\n}\n\ntype SensorReading {\n  sensorid: GraphQLBigInteger!\n  time: GraphQLBigInteger!\n  temperature: Float!\n  humidity: Float!\n  timestamp: DateTime\n}\n"
     }
   }
 }

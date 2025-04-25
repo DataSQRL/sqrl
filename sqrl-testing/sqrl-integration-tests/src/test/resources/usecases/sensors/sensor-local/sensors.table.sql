@@ -1,5 +1,5 @@
 CREATE TABLE Sensors (
-     `timestamp` AS EpochMilliToTimestamp(`placed`),
+     `timestamp` AS TO_TIMESTAMP_LTZ(`placed`, 3),
      PRIMARY KEY (id, placed) NOT ENFORCED,
      WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
 ) WITH (

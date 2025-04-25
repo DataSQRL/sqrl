@@ -9,9 +9,9 @@ Schema:
  - val: INTEGER NOT NULL
  - myTimestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)
 Plan:
-LogicalProject(val=[$0], myTimestamp=[EpochToTimestamp(CAST($0):BIGINT)])
+LogicalProject(val=[$0], myTimestamp=[TO_TIMESTAMP_LTZ($0, 3)])
   LogicalValues(tuples=[[{ 1 }, { 2 }]])
-SQL: CREATE VIEW MyTable AS  SELECT val, EpochToTimestamp(val) AS myTimestamp
+SQL: CREATE VIEW MyTable AS  SELECT val, TO_TIMESTAMP_LTZ(val,3) AS myTimestamp
            FROM (VALUES ((1)), ((2))) AS t(val);
 
 === MyTable2
@@ -24,20 +24,20 @@ Schema:
  - val: INTEGER NOT NULL
  - myTimestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)
 Plan:
-LogicalProject(val=[$0], myTimestamp=[EPOCHTOTIMESTAMP(CAST($0):BIGINT)])
+LogicalProject(val=[$0], myTimestamp=[TO_TIMESTAMP_LTZ($0, 3)])
   LogicalValues(tuples=[[{ 3 }, { 4 }]])
-SQL: CREATE VIEW MyTable2 AS  SELECT val, EPOCHTOTIMESTAMP(val) AS myTimestamp
+SQL: CREATE VIEW MyTable2 AS  SELECT val, TO_TIMESTAMP_LTZ(val,3) AS myTimestamp
            FROM (VALUES ((3)), ((4))) AS t(val);
 
 >>>flink-sql-no-functions.sql
 CREATE VIEW `MyTable`
 AS
-SELECT `val`, EPOCHTOTIMESTAMP(`val`) AS `myTimestamp`
+SELECT `val`, TO_TIMESTAMP_LTZ(`val`, 3) AS `myTimestamp`
 FROM (VALUES ROW(1),
    ROW(2)) AS `t` (`val`);
 CREATE VIEW `MyTable2`
 AS
-SELECT `val`, EPOCHTOTIMESTAMP(`val`) AS `myTimestamp`
+SELECT `val`, TO_TIMESTAMP_LTZ(`val`, 3) AS `myTimestamp`
 FROM (VALUES ROW(3),
    ROW(4)) AS `t` (`val`);
 CREATE TABLE `MyTable_1` (
