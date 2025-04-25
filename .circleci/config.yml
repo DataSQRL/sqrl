@@ -135,6 +135,16 @@ commands:
             # Upload the test reports.
             ./codecov do-upload --report-type test_results $COMMON_ARGS
 
+  compute-base-tag:
+    description: "Compute deterministic BASE_TAG from Dockerfile.base"
+    steps:
+      - run:
+          name: Compute BASE_TAG
+          command: |
+            BASE_TAG=$(sha1sum sqrl-tools/Dockerfile.base | cut -c1-12)
+            echo "Computed BASE_TAG=${BASE_TAG}"
+            echo "export BASE_TAG=${BASE_TAG}" >> "$BASH_ENV"
+
 jobs:
   build-base:
     docker:
@@ -193,9 +203,13 @@ jobs:
       - run:
           name: Pull base image
           command: docker pull eclipse-temurin:17-jdk-noble
+      - compute-base-tag
+      - run:
+          name: Pull base image
+          command: docker pull datasqrl/base-sqrl:$BASE_TAG
       - run:
           name: Build Docker image
-          command: docker build -t sqrl-test ./sqrl-tools
+          command: docker build --build-arg BASE_TAG=$BASE_TAG -t sqrl-test ./sqrl-tools
       - run:
           name: Save Docker image
           command: docker save -o sqrl-test.tar sqrl-test
@@ -286,6 +300,59 @@ jobs:
             - sqrl-server/sqrl-server-vertx/target/vertx-server.jar
             - sqrl-tools/sqrl-flink-runner/target/*
 
+  docker-build-base-image:
+    machine:
+      image: ubuntu-2004:202111-02
+    steps:
+      - checkout
+      - compute-base-tag
+
+      - run:
+          name: Enable QEMU for ARM build
+          command: |
+            sudo apt-get update && sudo apt-get install -y qemu-user-static binfmt-support
+            docker run --privileged --rm tonistiigi/binfmt --install all
+      - run:
+          name: Install docker buildx
+          command: |
+            sudo mkdir -p /usr/local/lib/docker/cli-plugins
+            curl -sSL https://github.com/docker/buildx/releases/download/v0.12.0/buildx-v0.12.0.linux-amd64 \
+                 -o buildx
+            chmod +x buildx
+            sudo mv buildx /usr/local/lib/docker/cli-plugins/docker-buildx
+            docker buildx create --use --name base-builder
+            docker buildx inspect --bootstrap
+      - run:
+          name: Login to Docker Hub
+          command: |
+            echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+
+      - run:
+          name: Skip build if base already exists
+          command: |
+            set +e
+
+            if docker buildx imagetools inspect datasqrl/base-sqrl:${BASE_TAG} \
+                --format '{{json .}}' > /tmp/manifest.json 2>/dev/null; then
+              echo "── Manifest for datasqrl/base-sqrl:${BASE_TAG} ────────────────"
+              cat /tmp/manifest.json | jq .
+              echo "───────────────────────────────────────────────────────────────"
+              echo "Tag already exists – skipping base-image build."
+              circleci step halt
+            else
+              echo "Tag does not exist yet – will build base image."
+            fi
+
+      - run:
+          name: Build & push datasqrl/base-sqrl:$BASE_TAG
+          command: |
+            docker buildx build \
+              --push \
+              --platform linux/amd64,linux/arm64 \
+              -t datasqrl/base-sqrl:$BASE_TAG \
+              -f sqrl-tools/Dockerfile.base \
+              sqrl-tools
+
   docker-build-and-push:
     parameters:
       image_repo:  { type: string }
@@ -330,6 +397,13 @@ jobs:
               echo "Logged on docker"
             fi
 
+      - compute-base-tag
+
+      # --- pull base image so the subsequent build reuses layers --------
+      - run:
+          name: Pull base image
+          command: docker pull datasqrl/base-sqrl:$BASE_TAG
+
       # --- build and push both platforms in one go -----------------
       - run:
           name: Build & push $REGISTRY/<< parameters.image_repo >>:$TAG_SUFFIX
@@ -337,6 +411,7 @@ jobs:
             docker buildx build \
               --platform linux/amd64,linux/arm64 \
               --push \
+              --build-arg BASE_TAG=$BASE_TAG \
               -t $REGISTRY/<< parameters.image_repo >>:$TAG_SUFFIX \
               -f << parameters.context_dir >>/Dockerfile \
               << parameters.context_dir >>
@@ -351,9 +426,11 @@ jobs:
 workflows:
   pull-request-workflow:
     jobs:
+      - docker-build-base-image:
+          context: datasqrl
       - build-base:
           context: datasqrl
-      - unit-tests:
+      - build-test-image:
           context: datasqrl
           requires:
             - build-base
@@ -361,11 +438,11 @@ workflows:
           context: datasqrl
           requires:
             - build-base
-      - build-test-image:
+      - build-jars:
           context: datasqrl
           requires:
             - build-base
-      - build-jars:
+      - unit-tests:
           context: datasqrl
           requires:
             - build-base
@@ -377,6 +454,7 @@ workflows:
           context: datasqrl
           requires:
             - build-jars
+            - docker-build-base-image
 
       - docker-build-and-push:
           name: build-push-server
