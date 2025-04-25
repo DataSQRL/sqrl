@@ -195,12 +195,12 @@ Annotations:
  - base-table: ProductSearch
 Plan:
 LogicalSort(sort0=[$8], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC-nulls-first])
-  LogicalProject(id=[$0], name=[$1], sizing=[$2], weight_in_gram=[$3], type=[$4], category=[$5], usda_id=[$6], updated=[$7], score=[textSearch(?0, $1)])
-    LogicalFilter(condition=[>(textSearch(CAST(?0):VARCHAR(2147483647) CHARACTER SET "UTF-16LE", $1), 0)])
+  LogicalProject(id=[$0], name=[$1], sizing=[$2], weight_in_gram=[$3], type=[$4], category=[$5], usda_id=[$6], updated=[$7], score=[text_search(?0, $1)])
+    LogicalFilter(condition=[>(text_search(CAST(?0):VARCHAR(2147483647) CHARACTER SET "UTF-16LE", $1), 0)])
       LogicalTableScan(table=[[default_catalog, default_database, Products]])
-SQL: CREATE VIEW ProductSearch AS  SELECT p.*, textSearch(?     , name) as score
+SQL: CREATE VIEW ProductSearch AS  SELECT p.*, text_search(?     , name) as score
                                  FROM Products p
-                                 WHERE textSearch(?     , name) > 0
+                                 WHERE text_search(?     , name) > 0
                                  ORDER BY score DESC, id ASC;
 
 === ProductSearchWithId
@@ -215,9 +215,9 @@ Annotations:
 Plan:
 LogicalSort(sort0=[$0], dir0=[ASC-nulls-first])
   LogicalProject(id=[$0], name=[$1], sizing=[$2], weight_in_gram=[$3], type=[$4], category=[$5], usda_id=[$6], updated=[$7])
-    LogicalFilter(condition=[AND(>(textSearch(CAST(?0):VARCHAR(2147483647) CHARACTER SET "UTF-16LE", $1, $5), 0), >($0, ?1))])
+    LogicalFilter(condition=[AND(>(text_search(CAST(?0):VARCHAR(2147483647) CHARACTER SET "UTF-16LE", $1, $5), 0), >($0, ?1))])
       LogicalTableScan(table=[[default_catalog, default_database, Products]])
-SQL: CREATE VIEW ProductSearchWithId AS  SELECT * FROM Products WHERE textSearch(?     , name, category) > 0
+SQL: CREATE VIEW ProductSearchWithId AS  SELECT * FROM Products WHERE text_search(?     , name, category) > 0
                                                                           AND id > ?   ORDER BY id ASC;
 
 === Products
@@ -1060,7 +1060,7 @@ FROM "Orders_6"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT \"id\", \"name\", \"sizing\", \"weight_in_gram\", \"type\", \"category\", \"usda_id\", \"updated\", TS_RANK_CD(TO_TSVECTOR('english', COALESCE(\"name\", ' ')), WEBSEARCH_TO_TSQUERY('english', $1)) AS \"score\"\nFROM \"Products_8\"\nWHERE (TO_TSVECTOR('english', COALESCE(\"name\", ' ')) @@ WEBSEARCH_TO_TSQUERY('english', CAST($1 AS TEXT)))\nORDER BY TS_RANK_CD(TO_TSVECTOR('english', COALESCE(\"name\", ' ')), WEBSEARCH_TO_TSQUERY('english', $1)) DESC NULLS LAST, \"id\" NULLS FIRST",
+            "sql" : "SELECT \"id\", \"name\", \"sizing\", \"weight_in_gram\", \"type\", \"category\", \"usda_id\", \"updated\", TEXT_SEARCH($1, \"name\") AS \"score\"\nFROM \"Products_8\"\nWHERE TEXT_SEARCH(CAST($1 AS TEXT), \"name\") > 0\nORDER BY TEXT_SEARCH($1, \"name\") DESC NULLS LAST, \"id\" NULLS FIRST",
             "parameters" : [
               {
                 "type" : "arg",
@@ -1097,7 +1097,7 @@ FROM "Orders_6"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Products_8\"\nWHERE (TO_TSVECTOR('english', COALESCE(\"name\", ' ') || ' ' || COALESCE(\"category\", ' ')) @@ WEBSEARCH_TO_TSQUERY('english', CAST($1 AS TEXT))) AND \"id\" > $2\nORDER BY \"id\" NULLS FIRST",
+            "sql" : "SELECT *\nFROM \"Products_8\"\nWHERE TEXT_SEARCH(CAST($1 AS TEXT), \"name\", \"category\") > 0 AND \"id\" > $2\nORDER BY \"id\" NULLS FIRST",
             "parameters" : [
               {
                 "type" : "arg",

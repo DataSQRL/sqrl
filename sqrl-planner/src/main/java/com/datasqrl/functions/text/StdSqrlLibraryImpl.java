@@ -21,9 +21,9 @@ import com.google.auto.service.AutoService;
 public class StdSqrlLibraryImpl extends AbstractFunctionModule implements StdLibrary {
   public static final NamePath LIB_NAME = NamePath.of("text");
   public static final List<FunctionDefinition> SQRL_FUNCTIONS = List.of(
-      new Split(), //TODO: remove for Flink 1.20, since it's part of the standard library
-      new TextSearch(),
-      new Format(),
+      new split(), //TODO: remove for Flink 1.20, since it's part of the standard library
+      new text_search(),
+      new format(),
       CommonFunctions.SERIALIZE_TO_BYTES,
       CommonFunctions.NOOP,
       CommonFunctions.HASH_COLUMNS);
