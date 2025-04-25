@@ -5,7 +5,6 @@ import java.util.EnumSet;
 import com.datasqrl.function.FunctionMetadata;
 import com.datasqrl.function.IndexType;
 import com.datasqrl.function.IndexableFunction;
-import com.datasqrl.text.TextSearch;
 import com.google.auto.service.AutoService;
 
 @AutoService(FunctionMetadata.class)
@@ -38,6 +37,6 @@ public class TextSearchMetadata implements IndexableFunction {
 
   @Override
   public Class getMetadataClass() {
-    return TextSearch.class;
+    return TextSearchMetadata.class;
   }
 }

@@ -110,10 +110,9 @@
       <scope>test</scope>
     </dependency>
 
-
     <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-text</artifactId>
+      <groupId>com.datasqrl.flinkrunner</groupId>
+      <artifactId>text-functions</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.commons</groupId>

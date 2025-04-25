@@ -726,8 +726,7 @@ CREATE TABLE IF NOT EXISTS "ProductsByCountry_9" ("productid" BIGINT NOT NULL, "
 
 CREATE INDEX IF NOT EXISTS "Customers_2_hash_c3" ON "Customers_2" USING hash ("email");
 CREATE INDEX IF NOT EXISTS "OrdersTotals_7_hash_c0" ON "OrdersTotals_7" USING hash ("id");
-CREATE INDEX IF NOT EXISTS "Orders_6_hash_c1" ON "Orders_6" USING hash ("customerid");
-CREATE INDEX IF NOT EXISTS "Products_8_text_c1c5" ON "Products_8" USING GIN (to_tsvector('english', coalesce("name", '') || ' ' || coalesce("category", '') ))
+CREATE INDEX IF NOT EXISTS "Orders_6_hash_c1" ON "Orders_6" USING hash ("customerid")
 >>>postgres-views.sql
 CREATE OR REPLACE VIEW "Orders"("id", "customerid", "time", "items") AS SELECT *
 FROM "Orders_6"

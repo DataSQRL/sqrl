@@ -122,6 +122,10 @@
     </dependency>
     <dependency>
       <groupId>com.datasqrl.flinkrunner</groupId>
+      <artifactId>text-functions</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl.flinkrunner</groupId>
       <artifactId>postgresql-connector</artifactId>
     </dependency>
     <dependency>

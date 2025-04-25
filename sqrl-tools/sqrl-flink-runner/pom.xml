@@ -136,7 +136,7 @@
     <!-- list of libraries that need to be embedded into docker image-->
     <dependency>
       <groupId>${project.groupId}</groupId>
-      <artifactId>sqrl-text</artifactId>
+      <artifactId>sqrl-functions</artifactId>
       <scope>runtime</scope>
     </dependency>
   </dependencies>
