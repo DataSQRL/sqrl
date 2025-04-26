@@ -57,7 +57,7 @@ import lombok.SneakyThrows;
 
 @ExtendWith(VertxExtension.class)
 @Testcontainers
-class WriteTest {
+class WriteIT {
 
   // will be started before and stopped after each test method
   @Container

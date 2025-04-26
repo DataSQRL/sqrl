@@ -1,0 +1,487 @@
+version: 2.1
+
+orbs:
+  docker: circleci/docker@2.2.0
+
+executors:
+  default-machine:
+    machine:
+      image: ubuntu-2004:202111-02
+      resource_class: large
+    environment:
+      TZ: America/Los_Angeles
+
+commands:
+  generate-settings:
+    description: "Generate Maven settings.xml with GitHub credentials"
+    steps:
+      - run:
+          name: Generate settings.xml
+          command: |
+            mkdir -p ~/.m2
+            cat \<<EOF > ~/.m2/settings.xml
+            <settings>
+              <servers>
+                <server>
+                  <id>github</id>
+                  <username>${GITHUB_USER}</username>
+                  <password>${GITHUB_TOKEN}</password>
+                </server>
+              </servers>
+            </settings>
+            EOF
+
+  install-jdk:
+    description: "Install OpenJDK 17"
+    steps:
+      - run:
+          name: Install OpenJDK 17
+          command: |
+                   sudo apt-get update && sudo apt-get install -y openjdk-17-jdk
+                   sudo update-alternatives --set java /usr/lib/jvm/java-17-openjdk-amd64/bin/java
+                   sudo update-alternatives --set javac /usr/lib/jvm/java-17-openjdk-amd64/bin/javac
+                   java -version
+
+  determine-version:
+    description: "Derive TAG_SUFFIX and REGISTRY"
+    steps:
+      - run:
+          name: Determine Docker tag & registry
+          command: |
+            # helper to extract the first PR number, if any
+            get_pr_number() {
+              if [ -n "$CIRCLE_PULL_REQUEST" ]; then
+                basename "$CIRCLE_PULL_REQUEST"
+              elif [ -n "$CIRCLE_PULL_REQUESTS" ]; then
+                echo "$CIRCLE_PULL_REQUESTS" | cut -d',' -f1 | xargs basename
+              fi
+            }
+
+            PR_NUM=$(get_pr_number)
+
+            if [ -n "$PR_NUM" ]; then
+              echo "export TAG_SUFFIX=pr-$PR_NUM" >> "$BASH_ENV"
+              echo "export REGISTRY=ghcr.io/datasqrl" >> "$BASH_ENV"
+            elif [ -n "$CIRCLE_TAG" ]; then
+              echo "export TAG_SUFFIX=$CIRCLE_TAG"    >> "$BASH_ENV"
+              echo "export REGISTRY=datasqrl"        >> "$BASH_ENV"
+              echo "export LATEST_TAG=true"          >> "$BASH_ENV"
+            elif [ "$CIRCLE_BRANCH" = "main" ]; then
+              echo "export TAG_SUFFIX=dev"           >> "$BASH_ENV"
+              echo "export REGISTRY=datasqrl"        >> "$BASH_ENV"
+            else
+              echo "export TAG_SUFFIX=$CIRCLE_BRANCH" >> "$BASH_ENV"
+              echo "export REGISTRY=datasqrl"         >> "$BASH_ENV"
+            fi
+
+  download-dependencies:
+    description: "Download Maven dependencies"
+    steps:
+      - restore_cache:
+          keys:
+            - m2-{{ checksum "pom.xml" }}
+      - run:
+          name: Check if cache was restored
+          command: |
+            if [ -d ~/.m2/repository ]; then
+              echo "Cache hit detected, skipping resolve job."
+              circleci step halt
+            else
+              echo "No cache hit, proceeding with resolve."
+            fi
+      - run:
+          name: Download dependencies
+          command: |
+            mvn -B \
+              org.apache.maven.plugins:maven-dependency-plugin:3.8.1:go-offline \
+              de.qaware.maven:go-offline-maven-plugin:1.2.8:resolve-dependencies \
+              -T3
+
+  save-test-results:
+    description: "Save test results and upload to Codecov"
+    steps:
+      - run:
+          name: Save package results
+          command: |
+            mkdir -p ~/test-results/junit/
+            find . -type f -regex ".*/target/surefire-reports/.*xml" \
+              -exec cp {} ~/test-results/junit/ \;
+          when: always
+      - store_test_results:
+          path: ~/test-results
+      - run:
+          name: Codecov
+          command: |
+            set -x
+            curl -Os https://cli.codecov.io/latest/linux/codecov
+            chmod +x codecov
+
+            # Prepare extra arguments: include pull request number if set
+            EXTRA=""
+            if [ -n "$CIRCLE_PR_NUMBER" ]; then
+              EXTRA="--pull-request-number $CIRCLE_PR_NUMBER"
+            fi
+
+            # Build the set of common arguments.
+            COMMON_ARGS="--token $CODECOV_TOKEN --branch $CIRCLE_BRANCH --commit-sha $CIRCLE_SHA1 $EXTRA --recurse-submodules --git-service github"
+
+            ls -lha
+
+            ./codecov --version
+
+            # Upload the coverage report.
+            ./codecov upload-coverage $COMMON_ARGS
+
+            # Upload the test reports.
+            ./codecov do-upload --report-type test_results $COMMON_ARGS
+
+  compute-base-tag:
+    description: "Compute deterministic BASE_TAG from Dockerfile.base"
+    steps:
+      - run:
+          name: Compute BASE_TAG
+          command: |
+            BASE_TAG=$(sha1sum sqrl-tools/Dockerfile.base | cut -c1-12)
+            echo "Computed BASE_TAG=${BASE_TAG}"
+            echo "export BASE_TAG=${BASE_TAG}" >> "$BASH_ENV"
+
+jobs:
+  build-base:
+    docker:
+      - image: cimg/openjdk:17.0
+    steps:
+      - checkout
+      - generate-settings
+      - download-dependencies
+      - save_cache:
+          key: m2-{{ checksum "pom.xml" }}
+          paths:
+            - ~/.m2
+
+  unit-tests:
+    docker:
+      - image: cimg/openjdk:17.0
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - m2-{{ checksum "pom.xml" }}
+      - generate-settings
+      - run:
+          name: Run Unit Tests
+          command: mvn -T1 -B install -DskipITs -Pskip-shade-plugin
+      - save-test-results
+
+  integration-tests:
+    executor: default-machine
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - m2-{{ checksum "pom.xml" }}
+      - generate-settings
+      - install-jdk
+      - run:
+          name: Run Integration Tests
+          command: mvn -T1 -B install -Dtest=skip -Dsurefire.failIfNoSpecifiedTests=false -Pskip-shade-plugin
+      - save-test-results
+
+  build-test-image:
+    docker:
+      - image: cimg/openjdk:17.0
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - m2-{{ checksum "pom.xml" }}
+      - generate-settings
+      - run:
+          name: Build shaded JAR
+          command: mvn clean -T1 -B install -DskipTests -DskipITs -Pinstrument
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - run:
+          name: Pull base image
+          command: docker pull eclipse-temurin:17-jdk-noble
+      - compute-base-tag
+      - run:
+          name: Pull base image
+          command: docker pull datasqrl/base-sqrl:$BASE_TAG
+      - run:
+          name: Build Docker image
+          command: docker build --build-arg BASE_TAG=$BASE_TAG -t sqrl-test ./sqrl-tools
+      - run:
+          name: Save Docker image
+          command: docker save -o sqrl-test.tar sqrl-test
+      - persist_to_workspace:
+          root: .
+          paths:
+            - sqrl-test.tar
+
+  deploy:
+    docker:
+      - image: cimg/openjdk:17.0
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - m2-{{ checksum "pom.xml" }}
+      - generate-settings
+      - run:
+          name: Import GPG Key
+          command: |
+            echo "$GPG_PRIVATE_KEY" | base64 --decode | gpg --batch --import
+            echo "default-key $(gpg --list-keys --with-colons | grep pub | cut -d':' -f5)" >> ~/.gnupg/gpg.conf
+            echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf
+      - run:
+          name: Build shaded JAR
+          command: mvn clean -T1 -B deploy -DskipTests -DskipITs
+
+  run-conference-tests: &disabled
+    executor: default-machine
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run: docker load -i sqrl-test.tar
+      - run:
+          name: Conference Tests
+          command: |
+            docker run -i --rm -v $PWD:/build sqrl-test test conference.sqrl conference.graphqls --snapshot snapshots-conference --tests tests-conference
+          working_directory: ./sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/conference
+
+  run-connectors-tests:
+    executor: default-machine
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run: docker load -i sqrl-test.tar
+      - run:
+          name: Connectors Tests
+          command: |
+            docker run -i --rm -v $PWD:/build sqrl-test \
+              test connectors.sqrl
+          working_directory: ./sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/connectors-test
+
+  run-udf-tests:
+    executor: default-machine
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run: docker load -i sqrl-test.tar
+      - run:
+          name: UDF Tests
+          command: |
+            docker run -i --rm -v $PWD:/build sqrl-test \
+              test myudf.sqrl \
+              --snapshot snapshots-myudf --tests tests-myudf
+          working_directory: ./sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/udf
+
+  build-jars:
+    docker:
+      - image: cimg/openjdk:17.0
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - m2-{{ checksum "pom.xml" }}
+      - generate-settings
+      - run:
+          name: Build shaded JARs
+          command: mvn clean -T1 -B install -DskipTests -DskipITs
+      - persist_to_workspace:
+          root: .
+          paths:
+            - sqrl-tools/sqrl-cli/target/sqrl-cli.jar
+            - sqrl-tools/sqrl-run/target/sqrl-run.jar
+            - sqrl-tools/sqrl-test/target/sqrl-test.jar
+            - sqrl-server/sqrl-server-vertx/target/vertx-server.jar
+            - sqrl-tools/sqrl-flink-runner/target/*
+
+  docker-build-base-image:
+    machine:
+      image: ubuntu-2004:202111-02
+    steps:
+      - checkout
+      - compute-base-tag
+
+      - run:
+          name: Enable QEMU for ARM build
+          command: |
+            sudo apt-get update && sudo apt-get install -y qemu-user-static binfmt-support
+            docker run --privileged --rm tonistiigi/binfmt --install all
+      - run:
+          name: Install docker buildx
+          command: |
+            sudo mkdir -p /usr/local/lib/docker/cli-plugins
+            curl -sSL https://github.com/docker/buildx/releases/download/v0.12.0/buildx-v0.12.0.linux-amd64 \
+                 -o buildx
+            chmod +x buildx
+            sudo mv buildx /usr/local/lib/docker/cli-plugins/docker-buildx
+            docker buildx create --use --name base-builder
+            docker buildx inspect --bootstrap
+      - run:
+          name: Login to Docker Hub
+          command: |
+            echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+
+      - run:
+          name: Skip build if base already exists
+          command: |
+            set +e
+
+            if docker buildx imagetools inspect datasqrl/base-sqrl:${BASE_TAG} \
+                --format '{{json .}}' > /tmp/manifest.json 2>/dev/null; then
+              echo "── Manifest for datasqrl/base-sqrl:${BASE_TAG} ────────────────"
+              cat /tmp/manifest.json | jq .
+              echo "───────────────────────────────────────────────────────────────"
+              echo "Tag already exists – skipping base-image build."
+              circleci step halt
+            else
+              echo "Tag does not exist yet – will build base image."
+            fi
+
+      - run:
+          name: Build & push datasqrl/base-sqrl:$BASE_TAG
+          command: |
+            docker buildx build \
+              --push \
+              --platform linux/amd64,linux/arm64 \
+              -t datasqrl/base-sqrl:$BASE_TAG \
+              -f sqrl-tools/Dockerfile.base \
+              sqrl-tools
+
+  docker-build-and-push:
+    parameters:
+      image_repo:  { type: string }
+      context_dir: { type: string }
+    machine:
+      image: ubuntu-2004:202111-02
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - determine-version
+
+      # --- enable cross-compilation ---------------------------------
+      - run:
+          name: Enable QEMU for ARM build
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y qemu-user-static binfmt-support
+            docker run --privileged --rm tonistiigi/binfmt --install all
+
+      # --- install Buildx (x86 binary is fine) ----------------------
+      - run:
+          name: Install docker buildx
+          command: |
+            sudo mkdir -p /usr/local/lib/docker/cli-plugins
+            curl -sSL https://github.com/docker/buildx/releases/download/v0.12.0/buildx-v0.12.0.linux-amd64 \
+                 -o buildx
+            chmod +x buildx
+            sudo mv buildx /usr/local/lib/docker/cli-plugins/docker-buildx
+            docker buildx create --use --name sqrl-builder
+            docker buildx inspect --bootstrap
+
+      # --- login to the correct registry ---------------------------
+      - run:
+          name: Registry login
+          command: |
+            if [ -n "$CIRCLE_PULL_REQUEST" ]; then
+              echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
+              echo "Logged on ghcr.io"
+            else
+              echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+              echo "Logged on docker"
+            fi
+
+      - compute-base-tag
+
+      # --- pull base image so the subsequent build reuses layers --------
+      - run:
+          name: Pull base image
+          command: docker pull datasqrl/base-sqrl:$BASE_TAG
+
+      # --- build and push both platforms in one go -----------------
+      - run:
+          name: Build & push $REGISTRY/<< parameters.image_repo >>:$TAG_SUFFIX
+          command: |
+            docker buildx build \
+              --platform linux/amd64,linux/arm64 \
+              --push \
+              --build-arg BASE_TAG=$BASE_TAG \
+              -t $REGISTRY/<< parameters.image_repo >>:$TAG_SUFFIX \
+              -f << parameters.context_dir >>/Dockerfile \
+              << parameters.context_dir >>
+
+            # push "latest" if this is a tag build
+            if [ "$LATEST_TAG" = "true" ]; then
+              docker buildx imagetools create \
+                -t $REGISTRY/<< parameters.image_repo >>:latest \
+                $REGISTRY/<< parameters.image_repo >>:$TAG_SUFFIX
+            fi
+
+workflows:
+  pull-request-workflow:
+    jobs:
+      - docker-build-base-image:
+          context: datasqrl
+      - build-base:
+          context: datasqrl
+      - build-test-image:
+          context: datasqrl
+          requires:
+            - build-base
+      - integration-tests:
+          context: datasqrl
+          requires:
+            - build-base
+      - build-jars:
+          context: datasqrl
+          requires:
+            - build-base
+      - unit-tests:
+          context: datasqrl
+          requires:
+            - build-base
+
+      - docker-build-and-push:
+          name: build-push-cmd
+          image_repo: cmd
+          context_dir: sqrl-tools
+          context: datasqrl
+          requires:
+            - build-jars
+            - docker-build-base-image
+
+      - docker-build-and-push:
+          name: build-push-server
+          image_repo: sqrl-server
+          context_dir: sqrl-server/sqrl-server-vertx
+          context: datasqrl
+          requires:
+            - build-jars
+
+      - docker-build-and-push:
+          name: build-push-flink
+          image_repo: sqrl-flink-runner
+          context_dir: sqrl-tools/sqrl-flink-runner/target
+          context: datasqrl
+          requires:
+            - build-jars
+
+      # Temporarily disabled for maintenance:
+      # - run-conference-tests:
+      #     context: datasqrl
+      #     requires:
+      #       - build-test-image
+      - run-connectors-tests:
+          context: datasqrl
+          requires:
+            - build-test-image
+      - run-udf-tests:
+          context: datasqrl
+          requires:
+            - build-test-image
