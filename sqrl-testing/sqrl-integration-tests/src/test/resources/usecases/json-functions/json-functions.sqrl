@@ -58,7 +58,7 @@ JsonArrayAggTest := SELECT val,
 
 /*+test */
 JsonObjectAggTest := SELECT val,
-                            json_object_agg('key', json_col) AS json_object_agg_function
+                            jsonb_object_agg('key', json_col) AS json_object_agg_function
                     FROM UnmodifiedJsonData
                     GROUP BY val
                     ORDER BY val;

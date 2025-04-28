@@ -2,7 +2,7 @@ IMPORT ecommerceTs.Customer AS CustomerStream;
 Customer := DISTINCT CustomerStream ON customerid ORDER BY `timestamp` DESC;
 /*+ EXEC(database) */ toJsonTable := SELECT to_jsonb('{"a": 1}') AS obj FROM Customer;
 /*+ EXEC(database) */ jsonArrayTable := SELECT jsonb_array(customerid) AS obj FROM Customer;
-/*+ EXEC(database) */ jsonObjectAggTable := SELECT json_object_agg('key', name) AS agg FROM Customer GROUP BY name;
+/*+ EXEC(database) */ jsonObjectAggTable := SELECT jsonb_object_agg('key', name) AS agg FROM Customer GROUP BY name;
 /*+ EXEC(database) */ jsonToStringTable := SELECT jsonb_to_string(to_jsonb('{"a": 1}')) AS obj FROM Customer;
 /*+ EXEC(database) */ jsonExtractTable := SELECT jsonb_extract(to_jsonb('{"a": "hello"}'), CAST('$.a' AS varchar), CAST('default' AS varchar)) AS obj FROM Customer;
 /*+ EXEC(database) */ jsonQueryTable := SELECT jsonb_query(to_jsonb('{"a": {"b": 1}}'), '$.a') AS obj FROM Customer;

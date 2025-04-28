@@ -162,10 +162,10 @@ Schema:
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - agg: RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw==')
 Plan:
-LogicalAggregate(group=[{0}], agg=[json_object_agg($1, $0)])
+LogicalAggregate(group=[{0}], agg=[jsonb_object_agg($1, $0)])
   LogicalProject(name=[$2], $f1=['key'])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW jsonObjectAggTable AS  SELECT name, json_object_agg('key', name) AS agg FROM Customer GROUP BY name;
+SQL: CREATE VIEW jsonObjectAggTable AS  SELECT name, jsonb_object_agg('key', name) AS agg FROM Customer GROUP BY name;
 
 === jsonQueryTable
 ID:     default_catalog.default_database.jsonQueryTable
@@ -258,7 +258,7 @@ SELECT `customerid`, JSONB_ARRAY(`customerid`) AS `obj`
 FROM `Customer`;
 CREATE VIEW `jsonObjectAggTable`
 AS
-SELECT `name`, JSON_OBJECT_AGG('key', `name`) AS `agg`
+SELECT `name`, JSONB_OBJECT_AGG('key', `name`) AS `agg`
 FROM `Customer`
 GROUP BY `name`;
 CREATE VIEW `jsonToStringTable`

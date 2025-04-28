@@ -97,7 +97,7 @@ FROM `UnmodifiedJsonData`
 GROUP BY `val`;
 CREATE VIEW `JsonObjectAggTest`
 AS
-SELECT `val`, JSON_OBJECT_AGG('key', `json_col`) AS `json_object_agg_function`
+SELECT `val`, JSONB_OBJECT_AGG('key', `json_col`) AS `json_object_agg_function`
 FROM `UnmodifiedJsonData`
 GROUP BY `val`;
 CREATE VIEW `ToJsonTest`
