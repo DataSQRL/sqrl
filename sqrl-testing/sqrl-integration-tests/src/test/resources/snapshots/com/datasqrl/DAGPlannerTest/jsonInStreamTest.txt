@@ -61,11 +61,11 @@ Primary Key: customerid
 Timestamp  : -
 Schema:
  - customerid: BIGINT NOT NULL
- - obj: RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw==')
+ - obj: RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw==')
 Plan:
-LogicalProject(customerid=[$0], obj=[jsonObject(CONCAT('application#', $2), $0)])
+LogicalProject(customerid=[$0], obj=[jsonb_object(CONCAT('application#', $2), $0)])
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW ObjComplex AS  SELECT customerid, jsonObject(concat('application#',CAST(name AS VARCHAR)), customerid) AS obj FROM Customer;
+SQL: CREATE VIEW ObjComplex AS  SELECT customerid, jsonb_object(concat('application#',CAST(name AS VARCHAR)), customerid) AS obj FROM Customer;
 
 === jsonArrayAggTable
 ID:     default_catalog.default_database.jsonArrayAggTable
@@ -76,12 +76,12 @@ Primary Key: name
 Timestamp  : -
 Schema:
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - agg: RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw==')
+ - agg: RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw==')
 Plan:
-LogicalAggregate(group=[{0}], agg=[jsonArrayAgg($0)])
+LogicalAggregate(group=[{0}], agg=[jsonb_array_agg($0)])
   LogicalProject(name=[$2])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW jsonArrayAggTable AS  SELECT name, jsonArrayAgg(name) AS agg FROM Customer GROUP BY name;
+SQL: CREATE VIEW jsonArrayAggTable AS  SELECT name, jsonb_array_agg(name) AS agg FROM Customer GROUP BY name;
 
 === jsonArrayTable
 ID:     default_catalog.default_database.jsonArrayTable
@@ -94,11 +94,11 @@ Primary Key: customerid
 Timestamp  : -
 Schema:
  - customerid: BIGINT NOT NULL
- - obj: RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw==')
+ - obj: RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw==')
 Plan:
-LogicalProject(customerid=[$0], obj=[jsonArray($0)])
+LogicalProject(customerid=[$0], obj=[jsonb_array($0)])
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW jsonArrayTable AS  SELECT customerid, jsonArray(customerid) AS obj FROM Customer;
+SQL: CREATE VIEW jsonArrayTable AS  SELECT customerid, jsonb_array(customerid) AS obj FROM Customer;
 
 === jsonConcatTable
 ID:     default_catalog.default_database.jsonConcatTable
@@ -111,11 +111,11 @@ Primary Key: customerid
 Timestamp  : -
 Schema:
  - customerid: BIGINT NOT NULL
- - obj: RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw==')
+ - obj: RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw==')
 Plan:
-LogicalProject(customerid=[$0], obj=[jsonConcat(toJson('{"a": true}'), toJson('{"a": false}'))])
+LogicalProject(customerid=[$0], obj=[jsonb_concat(to_jsonb('{"a": true}'), to_jsonb('{"a": false}'))])
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW jsonConcatTable AS  SELECT customerid, jsonConcat(toJson('{"a": true}'), toJson('{"a": false}')) AS obj FROM Customer;
+SQL: CREATE VIEW jsonConcatTable AS  SELECT customerid, jsonb_concat(to_jsonb('{"a": true}'), to_jsonb('{"a": false}')) AS obj FROM Customer;
 
 === jsonExistsTable
 ID:     default_catalog.default_database.jsonExistsTable
@@ -130,9 +130,9 @@ Schema:
  - customerid: BIGINT NOT NULL
  - obj: BOOLEAN
 Plan:
-LogicalProject(customerid=[$0], obj=[jsonExists(toJson('{"a": true}'), '$.a')])
+LogicalProject(customerid=[$0], obj=[jsonb_exists(to_jsonb('{"a": true}'), '$.a')])
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW jsonExistsTable AS  SELECT customerid, jsonExists(toJson('{"a": true}'), '$.a') AS obj FROM Customer;
+SQL: CREATE VIEW jsonExistsTable AS  SELECT customerid, jsonb_exists(to_jsonb('{"a": true}'), '$.a') AS obj FROM Customer;
 
 === jsonExtractTable
 ID:     default_catalog.default_database.jsonExtractTable
@@ -147,9 +147,9 @@ Schema:
  - customerid: BIGINT NOT NULL
  - obj: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
 Plan:
-LogicalProject(customerid=[$0], obj=[jsonExtract(toJson('{"a": "hello"}'), '$.a':VARCHAR(2147483647) CHARACTER SET "UTF-16LE", 'default':VARCHAR(2147483647) CHARACTER SET "UTF-16LE")])
+LogicalProject(customerid=[$0], obj=[jsonb_extract(to_jsonb('{"a": "hello"}'), '$.a':VARCHAR(2147483647) CHARACTER SET "UTF-16LE", 'default':VARCHAR(2147483647) CHARACTER SET "UTF-16LE")])
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW jsonExtractTable AS  SELECT customerid, jsonExtract(toJson('{"a": "hello"}'), CAST('$.a' AS varchar), CAST('default' AS varchar)) AS obj FROM Customer;
+SQL: CREATE VIEW jsonExtractTable AS  SELECT customerid, jsonb_extract(to_jsonb('{"a": "hello"}'), CAST('$.a' AS varchar), CAST('default' AS varchar)) AS obj FROM Customer;
 
 === jsonObjectAggTable
 ID:     default_catalog.default_database.jsonObjectAggTable
@@ -160,12 +160,12 @@ Primary Key: name
 Timestamp  : -
 Schema:
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - agg: RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw==')
+ - agg: RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw==')
 Plan:
-LogicalAggregate(group=[{0}], agg=[jsonObjectAgg($1, $0)])
+LogicalAggregate(group=[{0}], agg=[json_object_agg($1, $0)])
   LogicalProject(name=[$2], $f1=['key'])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW jsonObjectAggTable AS  SELECT name, jsonObjectAgg('key', name) AS agg FROM Customer GROUP BY name;
+SQL: CREATE VIEW jsonObjectAggTable AS  SELECT name, json_object_agg('key', name) AS agg FROM Customer GROUP BY name;
 
 === jsonQueryTable
 ID:     default_catalog.default_database.jsonQueryTable
@@ -180,9 +180,9 @@ Schema:
  - customerid: BIGINT NOT NULL
  - obj: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
 Plan:
-LogicalProject(customerid=[$0], obj=[jsonQuery(toJson('{"a": {"b": 1}}'), '$.a')])
+LogicalProject(customerid=[$0], obj=[jsonb_query(to_jsonb('{"a": {"b": 1}}'), '$.a')])
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW jsonQueryTable AS  SELECT customerid, jsonQuery(toJson('{"a": {"b": 1}}'), '$.a') AS obj FROM Customer;
+SQL: CREATE VIEW jsonQueryTable AS  SELECT customerid, jsonb_query(to_jsonb('{"a": {"b": 1}}'), '$.a') AS obj FROM Customer;
 
 === jsonToStringTable
 ID:     default_catalog.default_database.jsonToStringTable
@@ -197,9 +197,9 @@ Schema:
  - customerid: BIGINT NOT NULL
  - obj: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
 Plan:
-LogicalProject(customerid=[$0], obj=[jsonToString(toJson('{"a": 1}'))])
+LogicalProject(customerid=[$0], obj=[jsonb_to_string(to_jsonb('{"a": 1}'))])
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW jsonToStringTable AS  SELECT customerid, jsonToString(toJson('{"a": 1}')) AS obj FROM Customer;
+SQL: CREATE VIEW jsonToStringTable AS  SELECT customerid, jsonb_to_string(to_jsonb('{"a": 1}')) AS obj FROM Customer;
 
 === toJsonTable
 ID:     default_catalog.default_database.toJsonTable
@@ -212,11 +212,11 @@ Primary Key: customerid
 Timestamp  : -
 Schema:
  - customerid: BIGINT NOT NULL
- - obj: RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw==')
+ - obj: RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw==')
 Plan:
-LogicalProject(customerid=[$0], obj=[toJson('{"a": 1}')])
+LogicalProject(customerid=[$0], obj=[to_jsonb('{"a": 1}')])
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW toJsonTable AS  SELECT customerid, toJson('{"a": 1}') AS obj FROM Customer;
+SQL: CREATE VIEW toJsonTable AS  SELECT customerid, to_jsonb('{"a": 1}') AS obj FROM Customer;
 
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `CustomerStream__schema` (
@@ -250,45 +250,45 @@ FROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMB
 WHERE `__sqrlinternal_rownum` = 1;
 CREATE VIEW `toJsonTable`
 AS
-SELECT `customerid`, TOJSON('{"a": 1}') AS `obj`
+SELECT `customerid`, TO_JSONB('{"a": 1}') AS `obj`
 FROM `Customer`;
 CREATE VIEW `jsonArrayTable`
 AS
-SELECT `customerid`, JSONARRAY(`customerid`) AS `obj`
+SELECT `customerid`, JSONB_ARRAY(`customerid`) AS `obj`
 FROM `Customer`;
 CREATE VIEW `jsonObjectAggTable`
 AS
-SELECT `name`, JSONOBJECTAGG('key', `name`) AS `agg`
+SELECT `name`, JSON_OBJECT_AGG('key', `name`) AS `agg`
 FROM `Customer`
 GROUP BY `name`;
 CREATE VIEW `jsonToStringTable`
 AS
-SELECT `customerid`, JSONTOSTRING(TOJSON('{"a": 1}')) AS `obj`
+SELECT `customerid`, JSONB_TO_STRING(TO_JSONB('{"a": 1}')) AS `obj`
 FROM `Customer`;
 CREATE VIEW `jsonExtractTable`
 AS
-SELECT `customerid`, JSONEXTRACT(TOJSON('{"a": "hello"}'), CAST('$.a' AS VARCHAR), CAST('default' AS VARCHAR)) AS `obj`
+SELECT `customerid`, JSONB_EXTRACT(TO_JSONB('{"a": "hello"}'), CAST('$.a' AS VARCHAR), CAST('default' AS VARCHAR)) AS `obj`
 FROM `Customer`;
 CREATE VIEW `jsonQueryTable`
 AS
-SELECT `customerid`, JSONQUERY(TOJSON('{"a": {"b": 1}}'), '$.a') AS `obj`
+SELECT `customerid`, JSONB_QUERY(TO_JSONB('{"a": {"b": 1}}'), '$.a') AS `obj`
 FROM `Customer`;
 CREATE VIEW `jsonExistsTable`
 AS
-SELECT `customerid`, JSONEXISTS(TOJSON('{"a": true}'), '$.a') AS `obj`
+SELECT `customerid`, JSONB_EXISTS(TO_JSONB('{"a": true}'), '$.a') AS `obj`
 FROM `Customer`;
 CREATE VIEW `jsonConcatTable`
 AS
-SELECT `customerid`, JSONCONCAT(TOJSON('{"a": true}'), TOJSON('{"a": false}')) AS `obj`
+SELECT `customerid`, JSONB_CONCAT(TO_JSONB('{"a": true}'), TO_JSONB('{"a": false}')) AS `obj`
 FROM `Customer`;
 CREATE VIEW `jsonArrayAggTable`
 AS
-SELECT `name`, JSONARRAYAGG(`name`) AS `agg`
+SELECT `name`, JSONB_ARRAY_AGG(`name`) AS `agg`
 FROM `Customer`
 GROUP BY `name`;
 CREATE VIEW `ObjComplex`
 AS
-SELECT `customerid`, JSONOBJECT(CONCAT('application#', CAST(`name` AS VARCHAR)), `customerid`) AS `obj`
+SELECT `customerid`, JSONB_OBJECT(CONCAT('application#', CAST(`name` AS VARCHAR)), `customerid`) AS `obj`
 FROM `Customer`;
 CREATE TABLE `Customer_1` (
   `customerid` BIGINT NOT NULL,
@@ -322,7 +322,7 @@ CREATE TABLE `CustomerStream_2` (
 );
 CREATE TABLE `ObjComplex_3` (
   `customerid` BIGINT NOT NULL,
-  `obj` RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
+  `obj` RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
   PRIMARY KEY (`customerid`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
@@ -334,7 +334,7 @@ CREATE TABLE `ObjComplex_3` (
 );
 CREATE TABLE `jsonArrayAggTable_4` (
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `agg` RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
+  `agg` RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
   PRIMARY KEY (`name`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
@@ -346,7 +346,7 @@ CREATE TABLE `jsonArrayAggTable_4` (
 );
 CREATE TABLE `jsonArrayTable_5` (
   `customerid` BIGINT NOT NULL,
-  `obj` RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
+  `obj` RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
   PRIMARY KEY (`customerid`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
@@ -358,7 +358,7 @@ CREATE TABLE `jsonArrayTable_5` (
 );
 CREATE TABLE `jsonConcatTable_6` (
   `customerid` BIGINT NOT NULL,
-  `obj` RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
+  `obj` RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
   PRIMARY KEY (`customerid`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
@@ -394,7 +394,7 @@ CREATE TABLE `jsonExtractTable_8` (
 );
 CREATE TABLE `jsonObjectAggTable_9` (
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `agg` RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
+  `agg` RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
   PRIMARY KEY (`name`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
@@ -430,7 +430,7 @@ CREATE TABLE `jsonToStringTable_11` (
 );
 CREATE TABLE `toJsonTable_12` (
   `customerid` BIGINT NOT NULL,
-  `obj` RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
+  `obj` RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
   PRIMARY KEY (`customerid`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',

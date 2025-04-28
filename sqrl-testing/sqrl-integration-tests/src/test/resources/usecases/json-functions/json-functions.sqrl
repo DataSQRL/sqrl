@@ -4,10 +4,10 @@ IMPORT data-local.Json; -- Import JSON data source
 /* Create JSON data source */
 UnmodifiedJsonData := SELECT id,
                              val,
-                             TOJSON('{"a": 1}') AS json_col,
-                             TOJSON('{"a": 2}') AS json_col_2,
-                             TOJSON('{"b": 1}') AS json_col_3,
-                             TOJSON('{"b": 2}') AS json_col_4
+                             TO_JSONB('{"a": 1}') AS json_col,
+                             TO_JSONB('{"a": 2}') AS json_col_2,
+                             TO_JSONB('{"b": 1}') AS json_col_3,
+                             TO_JSONB('{"b": 2}') AS json_col_4
                      FROM Json
                      ORDER BY id;
 
@@ -16,24 +16,24 @@ UnmodifiedJsonData := SELECT id,
 
 /*+test */
 JsonArrayTest := SELECT id,
-                        JSONARRAY(id, json_col) AS json_array_string_function,
-                        JSONARRAY(json_col, json_col_2) AS json_array_json_function
+                        JSONB_ARRAY(id, json_col) AS json_array_string_function,
+                        JSONB_ARRAY(json_col, json_col_2) AS json_array_json_function
                  FROM UnmodifiedJsonData
                  ORDER BY id
                  LIMIT 1;
 
 /*+test */
 JsonConcatTest := SELECT id,
-                        JSONCONCAT(json_col, json_col_2) AS json_concat_same_key_function,
-                        JSONCONCAT(json_col, json_col_3) AS json_concat_diff_key_function
+                        JSONB_CONCAT(json_col, json_col_2) AS json_concat_same_key_function,
+                        JSONB_CONCAT(json_col, json_col_3) AS json_concat_diff_key_function
                  FROM UnmodifiedJsonData
                  ORDER BY id
                  LIMIT 1;
 
 /*+test */
 JsonExistsTest := SELECT id,
-                        JSONEXISTS(json_col, '$.a') AS json_exists_function,
-                        JSONEXISTS(json_col, '$.nonExistentPath') AS json_not_exists_function
+                        JSONB_EXISTS(json_col, '$.a') AS json_exists_function,
+                        JSONB_EXISTS(json_col, '$.nonExistentPath') AS json_not_exists_function
                  FROM UnmodifiedJsonData
                  ORDER BY id
                  LIMIT 1;
@@ -41,31 +41,31 @@ JsonExistsTest := SELECT id,
 /*+test */
 JsonExtractTest := SELECT id,
                         /* Note: returns a string by default unless the type can be derived from the default value */
-                        JSONEXTRACT(json_col, '$.a') AS json_extract_function,
-                        JSONEXTRACT(json_col, '$.nonExistentPath') AS json_extract_not_exists_function,
-                        JSONEXTRACT(json_col, '$.nonExistentPath', 'default') AS json_extract_with_default_function,
-                        JSONEXTRACT(json_col, '$.a', 100) AS json_extract_with_default_int_function
+                        JSONB_EXTRACT(json_col, '$.a') AS json_extract_function,
+                        JSONB_EXTRACT(json_col, '$.nonExistentPath') AS json_extract_not_exists_function,
+                        JSONB_EXTRACT(json_col, '$.nonExistentPath', 'default') AS json_extract_with_default_function,
+                        JSONB_EXTRACT(json_col, '$.a', 100) AS json_extract_with_default_int_function
                  FROM UnmodifiedJsonData
                  ORDER BY id
                  LIMIT 1;
 
 /*+test */
 JsonArrayAggTest := SELECT val,
-                           JSONARRAYAGG(json_col) AS json_array_agg_function
+                           JSONB_ARRAY_AGG(json_col) AS json_array_agg_function
                    FROM UnmodifiedJsonData
                    GROUP BY val
                    ORDER BY val;
 
 /*+test */
 JsonObjectAggTest := SELECT val,
-                            JSONOBJECTAGG('key', json_col) AS json_object_agg_function
+                            json_object_agg('key', json_col) AS json_object_agg_function
                     FROM UnmodifiedJsonData
                     GROUP BY val
                     ORDER BY val;
 
 /*+test */
 ToJsonTest := SELECT id,
-                     TOJSON(json_col) AS to_json_function
+                     TO_JSONB(json_col) AS to_json_function
               FROM UnmodifiedJsonData
               ORDER BY id
               LIMIT 1;

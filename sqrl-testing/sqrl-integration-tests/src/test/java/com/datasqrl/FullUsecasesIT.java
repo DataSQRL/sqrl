@@ -307,7 +307,7 @@ public class FullUsecasesIT {
   @MethodSource("useCaseProvider")
   @Disabled
   public void runTestCaseByName(UseCaseTestParameter param, TestInfo testInfo) {
-    if (param.sqrlFileName.equals("avro-schema.sqrl")
+    if (param.sqrlFileName.equals("json-functions.sqrl")
     //			  && param.goal.equals("run")
     ) {
       testUseCase(param, testInfo);

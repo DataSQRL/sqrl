@@ -840,7 +840,7 @@ CREATE TABLE `ExternalOrders_11` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `entries` RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
+  `entries` RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
@@ -894,7 +894,7 @@ CREATE TABLE `TemporalJoin_15` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `entries` RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
+  `entries` RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
   `customerid0` BIGINT NOT NULL,
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -967,7 +967,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
           FROM `default_catalog`.`default_database`.`ExplicitDistinct`)
          ;
          INSERT INTO `default_catalog`.`default_database`.`ExternalOrders_11`
-          (SELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`
+          (SELECT `id`, `customerid`, `time`, TO_JSONB(`entries`) AS `entries`
            FROM `default_catalog`.`default_database`.`ExternalOrders`)
           ;
           INSERT INTO `default_catalog`.`default_database`.`InvalidDistinct_12`
@@ -987,7 +987,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
                FROM `default_catalog`.`default_database`.`TemporalJoin`)
               ;
               INSERT INTO `default_catalog`.`default_database`.`TemporalJoin_15`
-               (SELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`, `customerid0`, CAST(`timestamp` AS TIMESTAMP(3) WITH LOCAL TIME ZONE) AS `timestamp`, `name`
+               (SELECT `id`, `customerid`, `time`, TO_JSONB(`entries`) AS `entries`, `customerid0`, CAST(`timestamp` AS TIMESTAMP(3) WITH LOCAL TIME ZONE) AS `timestamp`, `name`
                 FROM `default_catalog`.`default_database`.`TemporalJoin`)
                ;
                INSERT INTO `default_catalog`.`default_database`.`UnnestOrders_16`

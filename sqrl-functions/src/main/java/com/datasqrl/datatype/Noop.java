@@ -7,7 +7,7 @@ import org.apache.flink.table.types.inference.InputTypeStrategies;
 import org.apache.flink.table.types.inference.TypeInference;
 import org.apache.flink.table.types.inference.TypeStrategies;
 
-import com.datasqrl.function.AutoRegisterSystemFunction;
+import com.datasqrl.flinkrunner.functions.AutoRegisterSystemFunction;
 import com.google.auto.service.AutoService;
 
 @AutoService(AutoRegisterSystemFunction.class)

@@ -6,7 +6,7 @@ import org.apache.flink.table.annotation.DataTypeHint;
 import org.apache.flink.table.annotation.InputGroup;
 import org.apache.flink.table.functions.ScalarFunction;
 
-import com.datasqrl.function.AutoRegisterSystemFunction;
+import com.datasqrl.flinkrunner.functions.AutoRegisterSystemFunction;
 import com.google.auto.service.AutoService;
 
 import lombok.SneakyThrows;

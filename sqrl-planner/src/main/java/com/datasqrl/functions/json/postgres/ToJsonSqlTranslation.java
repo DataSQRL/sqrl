@@ -8,9 +8,9 @@ import org.apache.calcite.sql.SqlWriter;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 
+import com.datasqrl.flinkrunner.functions.json.JsonFunctions;
 import com.datasqrl.function.translations.PostgresSqlTranslation;
 import com.datasqrl.function.translations.SqlTranslation;
-import com.datasqrl.types.json.functions.JsonFunctions;
 import com.google.auto.service.AutoService;
 
 @AutoService(SqlTranslation.class)

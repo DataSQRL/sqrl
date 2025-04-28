@@ -7,9 +7,9 @@ import org.apache.flink.table.functions.FunctionDefinition;
 
 import com.datasqrl.NamespaceObjectUtil;
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.flinkrunner.functions.json.JsonFunctions;
 import com.datasqrl.function.AbstractFunctionModule;
 import com.datasqrl.function.StdLibrary;
-import com.datasqrl.types.json.functions.JsonFunctions;
 import com.google.auto.service.AutoService;
 
 @AutoService(StdLibrary.class)

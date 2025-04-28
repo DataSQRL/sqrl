@@ -599,7 +599,7 @@ CREATE TABLE `Orders_6` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `items` RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
+  `items` RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
@@ -685,7 +685,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerPromotion_1`
       FROM `default_catalog`.`default_database`.`CustomersSpending`)
      ;
      INSERT INTO `default_catalog`.`default_database`.`Orders_6`
-      (SELECT `id`, `customerid`, `time`, TOJSON(`items`) AS `items`
+      (SELECT `id`, `customerid`, `time`, TO_JSONB(`items`) AS `items`
        FROM `default_catalog`.`default_database`.`Orders`)
       ;
       INSERT INTO `default_catalog`.`default_database`.`OrdersTotals_7`

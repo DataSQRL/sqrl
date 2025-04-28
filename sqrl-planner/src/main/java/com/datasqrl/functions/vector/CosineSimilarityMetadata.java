@@ -2,10 +2,10 @@ package com.datasqrl.functions.vector;
 
 import java.util.EnumSet;
 
+import com.datasqrl.flinkrunner.functions.vector.cosine_similarity;
 import com.datasqrl.function.FunctionMetadata;
 import com.datasqrl.function.IndexType;
 import com.datasqrl.function.IndexableFunction;
-import com.datasqrl.types.vector.functions.CosineSimilarity;
 import com.google.auto.service.AutoService;
 
 @AutoService(FunctionMetadata.class)
@@ -38,6 +38,6 @@ public class CosineSimilarityMetadata implements IndexableFunction {
 
   @Override
   public Class getMetadataClass() {
-    return CosineSimilarity.class;
+    return cosine_similarity.class;
   }
 }

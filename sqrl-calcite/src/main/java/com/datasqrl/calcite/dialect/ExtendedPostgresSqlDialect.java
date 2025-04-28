@@ -139,6 +139,7 @@ public class ExtendedPostgresSqlDialect extends PostgresqlSqlDialect {
     }
 
     if (translationMap.containsKey(call.getOperator().getName().toLowerCase())) {
+    	System.out.println(call.getOperator().getName().toLowerCase());
       translationMap.get(call.getOperator().getName().toLowerCase())
           .unparse(call, writer, leftPrec, rightPrec);
       return;

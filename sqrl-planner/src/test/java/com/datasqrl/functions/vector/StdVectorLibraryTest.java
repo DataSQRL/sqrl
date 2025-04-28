@@ -8,9 +8,9 @@ import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
 
-import com.datasqrl.types.vector.FlinkVectorType;
-import com.datasqrl.types.vector.functions.CenterAccumulator;
-import com.datasqrl.types.vector.functions.VectorFunctions;
+import com.datasqrl.flinkrunner.functions.vector.CenterAccumulator;
+import com.datasqrl.flinkrunner.functions.vector.VectorFunctions;
+import com.datasqrl.flinkrunner.types.vector.FlinkVectorType;
 
 public class StdVectorLibraryTest {
 

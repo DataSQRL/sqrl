@@ -125,7 +125,7 @@ CREATE TABLE `Orders_1` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `entries` RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
+  `entries` RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
@@ -139,7 +139,7 @@ CREATE TABLE `SelectOrders1_2` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `entries` RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
+  `entries` RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
@@ -153,7 +153,7 @@ CREATE TABLE `SelectOrders2_3` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `entries` RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
+  `entries` RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
@@ -165,15 +165,15 @@ CREATE TABLE `SelectOrders2_3` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Orders_1`
-(SELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`
+(SELECT `id`, `customerid`, `time`, TO_JSONB(`entries`) AS `entries`
  FROM `default_catalog`.`default_database`.`Orders`)
 ;
 INSERT INTO `default_catalog`.`default_database`.`SelectOrders1_2`
- (SELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`
+ (SELECT `id`, `customerid`, `time`, TO_JSONB(`entries`) AS `entries`
   FROM `default_catalog`.`default_database`.`SelectOrders1`)
  ;
  INSERT INTO `default_catalog`.`default_database`.`SelectOrders2_3`
-  (SELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`
+  (SELECT `id`, `customerid`, `time`, TO_JSONB(`entries`) AS `entries`
    FROM `default_catalog`.`default_database`.`SelectOrders2`)
   ;
   END
