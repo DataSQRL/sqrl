@@ -1,0 +1,19 @@
+.features {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.feature {
+  padding: 2rem 0;
+}
+
+.featureSvg {
+  height: 100px;
+  width: 200px;
+}
+
+.featureProfile {
+  height: 200px;
+  width: 200px;
+}

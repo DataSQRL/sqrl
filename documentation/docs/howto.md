@@ -1,6 +1,20 @@
-# Advanced DataSQRL Documentation
+# How-To Guides
+
+:::warning
+This page is work-in-progress and will be extended soon.
+:::
 
 This page documents the advanced features of DataSQRL and extends the other documentation pages.
+
+## Connecting External Data Systems
+
+## Managing Source & Sink Connectors
+
+
+
+## Testing
+
+
 
 ## Script Imports
 

@@ -12,9 +12,12 @@ This repository contains the entire build tool implementation and parts of the r
 Refer to the README.md file in each module for information on what this module contains and what its purpose is.
 
 The following repositories contain additional runtime components:
-* [Flink SQL Runner](https://github.com/DataSQRL/flink-sql-runner): Runs the Flink compiled plan
-* [SQRL Functions](https://github.com/DataSQRL/sqrl-functions/): Contains additional function packages
+* [Flink SQL Runner](https://github.com/DataSQRL/flink-sql-runner): Runs the Flink compiled plan and provides additional utilities for Flink.
 * [SQRL K8s](https://github.com/DataSQRL/sqrl-k8s): A template for running DataSQRL pipelines in Kubernetes
+
+:::warning
+This page is slightly out of date and will be updated for 0.6 soon.
+:::
 
 The following diagram shows how the modules and repositories fit together:
 
@@ -75,7 +78,7 @@ data pipeline that ingests, processes, stores, and serves the data as defined.
 DataSQRL has its own variant of SQL called SQRL. SQRL extends SQL to allow
 explicit imports and nested tables to represent hierarchical data natively. It
 also provides some syntactic sugar to make it more convenient to develop with SQL.
-Read the [SQRL specification](sqrl-spec.md) for more details.
+Read the [SQRL specification](sqrl-language) for more details.
 
 DataSQRL supports a pluggable engine architecture. A data pipeline or microservice
 consists of multiple stages and each stage is executed by an engine.
@@ -135,7 +138,7 @@ compiler. DataSQRL has a generic pre-processor framework.
 The DataSQRL build tool is accessed through a command line interface.
 It defines all of the commands that DataSQRL supports and provides
 usability features to help the user and produce useful error messages.
-See the [CLI documentation](cli.md) for more information.
+See the [CLI documentation](compiler) for more information.
 
 [Link to cli module](sqrl-tools/sqrl-cli)
 
@@ -252,4 +255,19 @@ existing formats and connectors to support functionality needed by DataSQRL.
 It may be reasonable to contribute those improvements and extensions back to
 the Apache Flink project.
 
+# Functions
 
+SQRL adds additional functions to the standard SQL function catalog.
+
+Functions in SQRL are designed to be engine-agnostic, ensuring that their implementation is consistent across different platforms and execution environments. This uniformity is crucial for maintaining the semantic integrity of functions when executed under various systems.
+
+**Characteristics of Functions**
+- **Engine Agnosticism**: Functions are defined in a way that does not depend on the specifics of the underlying engine.
+- **Semantic Consistency**: Regardless of the engine used, function should preserve their semantic meaning.
+- **Mixed Engine Support**: While functions are designed to be widely supported, some may have mixed support depending on the engine's capabilities.
+- **Nullability Awareness**: Functions in SQRL retain nullability information. This feature is vital for correct schema generation downstream, ensuring that data integrity is maintained through the potential propagation of null values.
+
+
+:::warn
+This documentation is work-in-progress. SQRL does not yet support function mappings for all engines. Stay tuned.
+:::

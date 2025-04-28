@@ -1,114 +1,98 @@
 # DataSQRL
 
-DataSQRL is a flexible data development framework for building various types of streaming data architectures, like data pipelines, event-driven microservices, and Kappa. It provides the basic structure, common patterns, and a set of tools for streamlining the development process. 
+DataSQRL is a data streaming framework for incremental and real-time data processing applications. Ingest, transform, store, and serve data as iceberg views, data APIs, or LLM tooling with the simplicity of SQL.
 
-DataSQRL integrates any combination of the following technologies:
-* **Apache Flink:** a distributed and stateful stream processing engine.
-* **Apache Kafka:** a distributed streaming platform.
-* **PostgreSQL:** a reliable open-source relational database system.
-* **Apache Iceberg:** an open table format for large analytic datasets.
-* **Snowflake:** a scalable cloud data warehousing platform.
-* **RedPanda:** a Kafka-compatible streaming data platform.
-* **Yugabyte:** a distributed open-source relational database.
-* **Vert.x:** a reactive server framework for building data APIs.
+Data Engineers use DataSQRL to quickly build production-ready data pipelines that:
+* Continuously transform and materialize data into Iceberg tables and catalog views for querying in Snowflake, DuckDB, AWS Athena, etc.
+* Create realtime data APIs for enriched data extracted from operational data systems.
+* Semantically contextualize data combined from multiple source systems and serve it as LLM tooling for RAG.
 
-You define the data processing in SQL (with support for custom functions in Java, Scala and soon Python) and DataSQRL generates the glue code, schemas, and mappings to automatically connect and configure these components into a coherent data architecture. DataSQRL also generates Docker Compose templates for local execution or deployment to Kubernetes or cloud-managed services.
+Architecture image
 
-[<img src="whitepaper/img/datasqrl_use_cases.png">](docs/img/datasqrl_use_cases.png)
+<!-- Simple architecture image from ingest to serving -->
 
-Some of the data architectures you can build with DataSQRL. Click to enlarge.
+
+You define the data processing in SQL and DataSQRL compiles the deployment artifacts for Apache Kafka, Flink, Postgres, Iceberg, GraphQL API, and LLM tooling. It generates the glue code, schemas, and mappings to automatically integrate and configure these components into a coherent data pipeline that is highly available, consistent, scalable, observable, and fast. DataSQRL supports quick local iteration, end-to-end pipeline testing, and deployment to Kubernetes or cloud-managed services.
 
 ## DataSQRL Features
 
-* 🔗 **System Integration:** Combine various data technologies into streamlined data architectures.
-* ☯️ **Declarative + Imperative:** Define the data flow in SQL and specific data transformations in Java, Scala, or soon Python.
-* 🧪 **Testing Framework:** Automated snapshot testing.
-* 🔄 **Data Flow Optimization:** Optimize data flow between systems through data mapping, partitioning, and indexing for scalability and performance.
-* ✔️ **Consistent:** Ensure at-least or exactly-once data processing for consistent results across the entire system.
-* 📦 **Dependency management:** Manage data sources and sinks with versioning and repository.
-* 📊 **GraphQL Schema Generator:** Expose processed data through a GraphQL API with subscription support for headless data services. (REST coming soon)
-* 🤖 **Integrated AI:** Support for vector data type, vector embeddings, LLM invocation, and ML model inference.
-* { } **JSON Support:** Native JSON data type and JSON schema discovery.
-* 🔍 **Visualization Tools:** Inspect and debug data architectures visually.
-* 🪵 **Logging framework:** for observability and debugging.
-* 🚀 **Deployment Profiles:** Automate the deployment of data architectures through configuration.
-
-## Why DataSQRL?
-
-Data engineers spend considerable time integrating various tools and technologies, ensuring performance, scalability, robustness, and observability. DataSQRL automates these tasks, making it easier to implement, test, debug, observe, deploy, and maintain data products. Like a web development framework, but for data. 
-
-Our goal is to eliminate the data engineering busywork, so you can focus on building and iterating on data products.
+* 🔗 **Eliminate glue code:** DataSQRL generates connectors, schemas, data mappings, SQL dialect translation, and configurations. Do more with less. 
+* 🚀 **Develop faster:** Local development, CI/CD support, logging framework, reusable components, and composable architecture for quick iteration cycles. 
+* 🛡️ **Reliable Data:** Consistent data processing with exactly or at-least once guarantees, testing framework, and data lineage.
+* 🔒 **Production-grade:** Robust, highly available, scalable, observable, and executed by trusted OSS technologies (Kafka, Flink, Postgres, DuckDB).
+* 🤖 **AI-native:**  Support for vector embeddings, LLM invocation, and ML model inference, and LLM tooling interfaces.
 
 ## Getting Started
 
-Let's create a data architecture that ingests, aggregates, stores temperature readings, and queries them through an API.
+This example builds a data pipeline that captures user token consumption via API, exposes consumption alerts via subscription, and aggregates the data for query access.
 
-1. Create a file `metrics.sqrl` and add the following content:
+<!-- Add video tutorial -->
 
-```sql title=metrics.sqrl
-IMPORT datasqrl.example.sensors.SensorReading; -- Import data source from repository
-IMPORT time.endOfSecond;  -- Import time aggregation function
--- Aggregate sensor readings to second
-SecReading := SELECT sensorid, endOfSecond(time) as timeSec,
-                     avg(temperature) as temp
-              FROM SensorReading GROUP BY sensorid, timeSec;
--- Get max temperature in last minute per sensor
-SensorMaxTemp := SELECT sensorid, max(temp) as maxTemp
-                 FROM SecReading
-                 WHERE timeSec >= now() - INTERVAL 1 MINUTE
-                 GROUP BY sensorid;
--- Log the SecReading table (stdout by default)
-EXPORT SecReading TO logger.SecReadingDebug;
-/*+test */
-SensorMaxTempTest := SELECT * FROM SensorMaxTemp ORDER BY sensorid DESC;
+```sql title=usertokens.sqrl
+/*+no_query */
+CREATE TABLE UserTokens (
+   userid INT NOT NULL,
+   tokens BIGINT NOT NULL,
+   request_time TIMESTAMP_LTZ(3) METADATA FROM 'timestamp'
+);
+
+/*+query_by_all(userid) */
+TotalUserTokens := SELECT userid, sum(tokens) as total_tokens,
+                          count(tokens) as total_requests
+                   FROM UserTokens GROUP BY userid;
+
+UsageAlert := SUBSCRIBE SELECT * FROM UserTokens WHERE tokens > 100000;
 ```
-2. Compile the SQRL file
+
+Create a file `usertokens.sqrl` with the content above and run it with:
+
 ```bash
-docker run -it --rm -v $PWD:/build datasqrl/cmd compile metrics.sqrl
+docker run -it --rm -p 8888:8888 -p 8081:8081 -p 9092:9092 -v $PWD:/build datasqrl/cmd:dev run usertokens.sqrl
 ``` 
 (Use `${PWD}` in Powershell on Windows).
 
-3. Stand up the data architecture with Docker Compose:
+The pipeline is exposed through a GraphQL API that you can access at  [http://localhost:8888/graphiql/](http://localhost:8888/graphiql/) in your browser.
+
+* `UserTokens` is exposed as a mutation for adding data.
+* `TotalUserTokens` is exposed as a query for retrieving the aggregated data.
+* `UsageAlert` is exposed as a subscription for real-time alerts.
+
+Once you are done, terminate the pipeline with `CTRL-C`.
+
+To build the deployment assets in the for the data pipeline, execute
 ```bash
-(cd build/deploy; docker compose up --build)
+docker run --rm -v $PWD:/build datasqrl/cmd:dev compile usertokens.sqrl
 ``` 
-4. Query results through the exposed GraphQL API:
-   * Open [http://localhost:8888/graphiql/](http://localhost:8888/graphiql/) in your browser.
-   * Run GraphQL queries against the API.
+The `build/deploy` directory contains the Flink compiled plan, Kafka topic definitions, PostgreSQL schema and view definitions, server queries, and GraphQL data model.
 
-Once you are done, terminate the system with `CTRL-C` and take it down with `(cd build/deploy; docker compose down -v)`.
+Read the [full Getting Started tutorial](/) or check out the [DataSQRL Examples repository](https://github.com/DataSQRL/datasqrl-examples/) for more examples creating Iceberg views, Chatbots, data APIs and more.
 
-5. Test the data architecture (currently requires a homebrew install of DataSQRL via `brew tap datasqrl/sqrl; brew install sqrl-cli`):
-```bash
-sqrl test metrics.sqrl
-```
+## Why DataSQRL?
 
-This example uses the default engines, default configuration, and generated GraphQL schema. You can configure and change all of those to fit your needs. 
+As data engineers, we got frustrated by all the data plumbing we had to implement, the lack of developer tooling, and the limited automation.
 
-Check out the [DataSQRL Examples repository](https://github.com/DataSQRL/datasqrl-examples/) for more extensive examples. 
-
-Dive into the [documentation](https://www.datasqrl.com/docs/intro/) or follow one of [the tutorials](https://www.datasqrl.com/docs/getting-started/quickstart/).
+Web developers have frameworks to eliminate the busywork. We are building the DataSQRL framework to do the same for data engineers.
 
 ## How DataSQRL Works
 
-DataSQRL extends ANSI SQL with additional features designed for data development:
+![Example Data Processing DAG](documentation/docs/img/dag_example.png)
 
-* **IMPORT/EXPORT statements**: Integrate data sources and export data to sinks.
-* **Assignment Operator (:=)**: Define incremental table structures.
-* **Stream Processing SQL**: Enhanced SQL statements for stream processing.
-* **Nested Structures**: Natively support nested data structures like JSON.
+DataSQRL compiles the SQRL scripts and data source/sink definitions into a data processing DAG (Directed Acyclic Graph) according to the configuration. The cost-based optimizer cuts the DAG into segments executed by different engines (e.g. Flink, Kafka, Postgres, Vert.x), generating the necessary physical plans, schemas, and connectors for a fully integrated and streamlined data pipeline. These deployment assets are then executed in Docker, Kubernetes, or by a managed cloud service.
 
-![Example Data Processing DAG](whitepaper/img/dag_example.png)
+DataSQRL gives you full visibility and control over the generated data pipeline and uses proven open-source technologies to execute the generated deployment assets. 
 
-DataSQRL translates these SQL scripts into a data processing DAG (Directed Acyclic Graph) as visualized above, linking source and sink definitions. The cost-based optimizer cuts the DAG into segments executed by different engines (e.g. Flink, Kafka, Postgres, Vert.x), generating the necessary physical plans, schemas, and connectors for a fully integrated and streamlined data architecture. This "plan" can be instantiated by deployment profiles, such as Docker Compose templates for local execution. 
+<!--
+[DataSQRL Cloud](https://www.datasqrl.com) is a managed service that runs DataSQRL pipelines with no operational overhead and integrates directly with GitHub for simple deployments.
+-->
 
-Check out the [documentation](https://www.datasqrl.com/docs/intro/) for more information.
+Learn more about DataSQRL in [the documentation](/).
+
 
 ## Contributing
 
-![Contribute to DataSQRL](whitepaper/img/undraw_code.svg)
+![Contribute to DataSQRL](documentation/docs/img/sqrl_code.svg)
 
-We aim to enable data engineers to build data products quickly, removing the barriers posed by complex data plumbing. Your feedback is invaluable in achieving this goal. Let us know what works and what doesn't by filing GitHub issues or in the [DataSQRL Slack community]((https://join.slack.com/t/datasqrlcommunity/shared_invite/zt-2l3rl1g6o-im6YXYCqU7t55CNaHqz_Kg)).
+We aim to enable data engineers to build data pipelines quickly and eliminate the data plumbing busy work. Your feedback is invaluable in achieving this goal. Let us know what works and what doesn't by filing GitHub issues or in the [DataSQRL Slack community]((https://join.slack.com/t/datasqrlcommunity/shared_invite/zt-2l3rl1g6o-im6YXYCqU7t55CNaHqz_Kg)).
 
 We welcome code contributions. For more details, check out [`CONTRIBUTING.md`](CONTRIBUTING.md).
 

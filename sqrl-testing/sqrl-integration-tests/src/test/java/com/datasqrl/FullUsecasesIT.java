@@ -285,7 +285,7 @@ public class FullUsecasesIT {
   @MethodSource("useCaseProvider")
   @Disabled
   public void runTestNumber(UseCaseTestParameter param, TestInfo testInfo) {
-    var testToExecute = 29;
+    var testToExecute = 43;
     testNo++;
     System.out.println(testNo + ":" + param);
     if (testToExecute == testNo) {

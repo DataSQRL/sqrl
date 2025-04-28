@@ -1,0 +1,16 @@
+/*+no_query */
+CREATE TABLE UserTokens (
+   userid INT NOT NULL,
+   tokens BIGINT NOT NULL,
+   request_time TIMESTAMP_LTZ(3) METADATA FROM 'timestamp'
+);
+
+/*+query_by_all(userid) */
+TotalUserTokens := SELECT userid, sum(tokens) as total_tokens,
+                          count(tokens) as total_requests
+                   FROM UserTokens GROUP BY userid;
+
+UsageAlert := SUBSCRIBE SELECT * FROM UserTokens WHERE tokens > 100000;
+
+/*+test */
+UserTokensTest := SELECT * FROM TotalUserTokens ORDER BY userid ASC;

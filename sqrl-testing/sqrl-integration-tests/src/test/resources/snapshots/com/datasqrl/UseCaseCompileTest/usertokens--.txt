@@ -1,0 +1,215 @@
+>>>pipeline_explain.txt
+=== TotalUserTokens
+ID:     default_catalog.default_database.TotalUserTokens
+Type:   state
+Stage:  flink
+Inputs: default_catalog.default_database.UserTokens
+Primary Key: userid
+Timestamp  : -
+Schema:
+ - userid: INTEGER NOT NULL
+ - total_tokens: BIGINT NOT NULL
+ - total_requests: BIGINT NOT NULL
+Plan:
+LogicalAggregate(group=[{0}], total_tokens=[SUM($1)], total_requests=[COUNT()])
+  LogicalProject(userid=[$0], tokens=[$1])
+    LogicalTableScan(table=[[default_catalog, default_database, UserTokens]])
+SQL: CREATE VIEW TotalUserTokens AS  SELECT userid, sum(tokens) as total_tokens,
+                          count(tokens) as total_requests
+                   FROM UserTokens GROUP BY userid;
+
+=== UsageAlert
+ID:     default_catalog.default_database.UsageAlert
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database.UserTokens
+Primary Key: -
+Timestamp  : request_time
+Schema:
+ - userid: INTEGER NOT NULL
+ - tokens: BIGINT NOT NULL
+ - request_time: TIMESTAMP_LTZ(3) *ROWTIME*
+Plan:
+LogicalProject(userid=[$0], tokens=[$1], request_time=[$2])
+  LogicalFilter(condition=[>($1, 100000)])
+    LogicalTableScan(table=[[default_catalog, default_database, UserTokens]])
+SQL: CREATE VIEW UsageAlert AS  SELECT * FROM UserTokens WHERE tokens > 100000;
+
+=== UserTokens
+ID:     default_catalog.default_database.UserTokens
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database.UserTokens__def
+Primary Key: -
+Timestamp  : request_time
+Schema:
+ - userid: INTEGER NOT NULL
+ - tokens: BIGINT NOT NULL
+ - request_time: TIMESTAMP_LTZ(3) *ROWTIME*
+Plan:
+LogicalProject(userid=[$0], tokens=[$1], request_time=[$2])
+  LogicalWatermarkAssigner(rowtime=[request_time], watermark=[-($2, 0:INTERVAL SECOND)])
+    LogicalProject(userid=[$0], tokens=[$1], request_time=[CAST($2):TIMESTAMP_LTZ(3) *ROWTIME*])
+      LogicalTableScan(table=[[default_catalog, default_database, UserTokens__def, metadata=[timestamp]]])
+SQL: CREATE VIEW `UserTokens`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`UserTokens__def`
+>>>flink-sql-no-functions.sql
+CREATE TABLE `UserTokens__def` (
+  `userid` INTEGER NOT NULL,
+  `tokens` BIGINT NOT NULL,
+  `request_time` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
+  WATERMARK FOR `request_time` AS `request_time` - INTERVAL '0.0' SECOND
+) WITH (
+  'connector' = 'kafka',
+  'format' = 'flexible-json',
+  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
+  'properties.group.id' = '${PROPERTIES_GROUP_ID}',
+  'scan.startup.mode' = 'group-offsets',
+  'properties.auto.offset.reset' = 'earliest',
+  'topic' = 'UserTokens'
+);
+CREATE VIEW `UserTokens`
+AS
+SELECT *
+FROM `default_catalog`.`default_database`.`UserTokens__def`;
+CREATE VIEW `TotalUserTokens`
+AS
+SELECT `userid`, SUM(`tokens`) AS `total_tokens`, COUNT(`tokens`) AS `total_requests`
+FROM `UserTokens`
+GROUP BY `userid`;
+CREATE VIEW `UsageAlert`
+AS
+SELECT *
+FROM `UserTokens`
+WHERE `tokens` > 100000;
+CREATE VIEW `UserTokensTest`
+AS
+SELECT *
+FROM `TotalUserTokens`;
+CREATE TABLE `TotalUserTokens_1` (
+  `userid` INTEGER NOT NULL,
+  `total_tokens` BIGINT NOT NULL,
+  `total_requests` BIGINT NOT NULL,
+  PRIMARY KEY (`userid`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'table-name' = 'TotalUserTokens_1'
+);
+CREATE TABLE `UsageAlert_2` (
+  `userid` INTEGER NOT NULL,
+  `tokens` BIGINT NOT NULL,
+  `request_time` TIMESTAMP(3) WITH LOCAL TIME ZONE
+) WITH (
+  'connector' = 'kafka',
+  'format' = 'flexible-json',
+  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
+  'properties.group.id' = '${PROPERTIES_GROUP_ID}',
+  'scan.startup.mode' = 'group-offsets',
+  'properties.auto.offset.reset' = 'earliest',
+  'topic' = 'UsageAlert'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`TotalUserTokens_1`
+(SELECT *
+ FROM `default_catalog`.`default_database`.`TotalUserTokens`)
+;
+INSERT INTO `default_catalog`.`default_database`.`UsageAlert_2`
+ (SELECT *
+  FROM `default_catalog`.`default_database`.`UsageAlert`)
+ ;
+ END
+>>>kafka.json
+{
+  "topics" : [
+    {
+      "topicName" : "UsageAlert",
+      "tableName" : "UsageAlert_2",
+      "numPartitions" : 1,
+      "replicationFactor" : 1,
+      "replicasAssignments" : { },
+      "config" : { }
+    },
+    {
+      "topicName" : "UserTokens",
+      "tableName" : "UserTokens__def",
+      "numPartitions" : 1,
+      "replicationFactor" : 1,
+      "replicasAssignments" : { },
+      "config" : { }
+    }
+  ]
+}
+>>>postgres-schema.sql
+CREATE TABLE IF NOT EXISTS "TotalUserTokens_1" ("userid" INTEGER NOT NULL, "total_tokens" BIGINT NOT NULL, "total_requests" BIGINT NOT NULL , PRIMARY KEY ("userid"))
+>>>postgres-views.sql
+
+>>>vertx.json
+{
+  "model" : {
+    "queries" : [
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "TotalUserTokens",
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
+            },
+            {
+              "type" : "variable",
+              "path" : "userid"
+            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM \"TotalUserTokens_1\"\nWHERE \"userid\" = $1",
+            "parameters" : [
+              {
+                "type" : "arg",
+                "path" : "userid"
+              }
+            ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
+          }
+        }
+      }
+    ],
+    "mutations" : [
+      {
+        "type" : "kafka",
+        "fieldName" : "UserTokens",
+        "topic" : "UserTokens",
+        "computedColumns" : {
+          "request_time" : "TIMESTAMP"
+        },
+        "sinkConfig" : { }
+      }
+    ],
+    "subscriptions" : [
+      {
+        "type" : "kafka",
+        "fieldName" : "UsageAlert",
+        "topic" : "UsageAlert",
+        "sinkConfig" : { },
+        "filters" : { }
+      }
+    ],
+    "schema" : {
+      "type" : "string",
+      "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Mutation {\n  UserTokens(event: UserTokensInput!): UserTokensResultOutput!\n}\n\ntype Query {\n  TotalUserTokens(userid: Int!, limit: Int = 10, offset: Int = 0): [TotalUserTokens!]\n}\n\ntype Subscription {\n  UsageAlert: UserTokens\n}\n\ntype TotalUserTokens {\n  userid: Int!\n  total_tokens: GraphQLBigInteger!\n  total_requests: GraphQLBigInteger!\n}\n\ntype UserTokens {\n  userid: Int!\n  tokens: GraphQLBigInteger!\n  request_time: DateTime\n}\n\ninput UserTokensInput {\n  userid: Int!\n  tokens: GraphQLBigInteger!\n}\n\ntype UserTokensResultOutput {\n  userid: Int!\n  tokens: GraphQLBigInteger!\n  request_time: DateTime\n}\n"
+    }
+  }
+}
