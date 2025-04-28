@@ -520,7 +520,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
     {
       "name" : "jsonExtractTable",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"jsonExtractTable\"(\"obj\") AS SELECT JSONB_EXTRACT(CAST('{\"a\": \"hello\"}' AS JSONB), '$.a', 'default') AS \"obj\"\nFROM \"Customer_1\"",
+      "sql" : "CREATE OR REPLACE VIEW \"jsonExtractTable\"(\"obj\") AS SELECT COALESCE(JSONB_PATH_QUERY_FIRST(CAST('{\"a\": \"hello\"}' AS JSONB), '$.a') #>> '{}', 'default') AS \"obj\"\nFROM \"Customer_1\"",
       "fields" : [
         {
           "name" : "obj",
@@ -768,7 +768,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT JSONB_EXTRACT(CAST('{\"a\": \"hello\"}' AS JSONB), '$.a', 'default') AS \"obj\"\nFROM \"Customer_1\"",
+            "sql" : "SELECT COALESCE(JSONB_PATH_QUERY_FIRST(CAST('{\"a\": \"hello\"}' AS JSONB), '$.a') #>> '{}', 'default') AS \"obj\"\nFROM \"Customer_1\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
