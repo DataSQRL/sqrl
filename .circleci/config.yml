@@ -434,6 +434,7 @@ workflows:
           context: datasqrl
           requires:
             - build-base
+            - docker-build-base-image
       - integration-tests:
           context: datasqrl
           requires:
