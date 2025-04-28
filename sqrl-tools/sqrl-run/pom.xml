@@ -314,6 +314,11 @@
       <artifactId>flink-s3-fs-hadoop</artifactId>
       <version>${flink.version}</version>
     </dependency>
+
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>sqrl-functions</artifactId>
+    </dependency>
   </dependencies>
   <dependencyManagement>
     <dependencies>
