@@ -169,7 +169,7 @@ jobs:
       - generate-settings
       - run:
           name: Run Unit Tests
-          command: mvn -T1 -B install -DskipITs -Pskip-shade-plugin
+          command: mvn -U -T1 -B install -DskipITs -Pskip-shade-plugin
       - save-test-results
 
   integration-tests:
@@ -183,7 +183,7 @@ jobs:
       - install-jdk
       - run:
           name: Run Integration Tests
-          command: mvn -T1 -B install -Dtest=skip -Dsurefire.failIfNoSpecifiedTests=false -Pskip-shade-plugin
+          command: mvn -U -T1 -B install -Dtest=skip -Dsurefire.failIfNoSpecifiedTests=false -Pskip-shade-plugin
       - save-test-results
 
   build-test-image:
@@ -197,7 +197,7 @@ jobs:
       - generate-settings
       - run:
           name: Build shaded JAR
-          command: mvn clean -T1 -B install -DskipTests -DskipITs -Pinstrument
+          command: mvn -U clean -T1 -B install -DskipTests -DskipITs -Pinstrument
       - setup_remote_docker:
           docker_layer_caching: true
       - run:
@@ -235,7 +235,7 @@ jobs:
             echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf
       - run:
           name: Build shaded JAR
-          command: mvn clean -T1 -B deploy -DskipTests -DskipITs
+          command: mvn -U clean -T1 -B deploy -DskipTests -DskipITs
 
   run-conference-tests: &disabled
     executor: default-machine
@@ -290,7 +290,7 @@ jobs:
       - generate-settings
       - run:
           name: Build shaded JARs
-          command: mvn -T1 -B install -DskipTests -DskipITs
+          command: mvn -U -T1 -B install -DskipTests -DskipITs
       - persist_to_workspace:
           root: .
           paths:
