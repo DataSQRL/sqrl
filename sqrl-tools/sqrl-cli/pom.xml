@@ -126,6 +126,14 @@
     </dependency>
     <dependency>
       <groupId>com.datasqrl.flinkrunner</groupId>
+      <artifactId>math-functions</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl.flinkrunner</groupId>
+      <artifactId>openai-functions</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl.flinkrunner</groupId>
       <artifactId>postgresql-connector</artifactId>
     </dependency>
     <dependency>

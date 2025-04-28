@@ -113,10 +113,17 @@ public class FullUsecasesIT {
 
   @AllArgsConstructor
   @Getter
-  @ToString
   public static class UseCaseTestParameter {
 
-    String parentDirectory;
+    @Override
+	public String toString() {
+		return "UseCaseTestParameter [useCaseName=" + useCaseName + ", sqrlFileName=" + sqrlFileName
+				+ ", parentDirectory=" + parentDirectory + ", goal=" + goal + ", graphqlFileName=" + graphqlFileName
+				+ ", testName=" + testName + ", testPath=" + testPath + ", optionalParam=" + optionalParam
+				+ ", packageJsonPath=" + packageJsonPath + "]";
+	}
+
+	String parentDirectory;
     String goal;
     String useCaseName;
     String sqrlFileName;
@@ -305,9 +312,8 @@ public class FullUsecasesIT {
 
   @ParameterizedTest
   @MethodSource("useCaseProvider")
-  @Disabled
   public void runTestCaseByName(UseCaseTestParameter param, TestInfo testInfo) {
-    if (param.sqrlFileName.equals("json-functions.sqrl")
+    if (param.sqrlFileName.equals("math-functions.sqrl")
     			  && param.goal.equals("test")
     ) {
       testUseCase(param, testInfo);
