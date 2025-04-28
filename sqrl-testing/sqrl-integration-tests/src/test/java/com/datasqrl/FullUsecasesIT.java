@@ -308,7 +308,7 @@ public class FullUsecasesIT {
   @Disabled
   public void runTestCaseByName(UseCaseTestParameter param, TestInfo testInfo) {
     if (param.sqrlFileName.equals("json-functions.sqrl")
-    //			  && param.goal.equals("run")
+    			  && param.goal.equals("test")
     ) {
       testUseCase(param, testInfo);
     } else {

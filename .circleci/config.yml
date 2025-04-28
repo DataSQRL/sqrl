@@ -290,7 +290,7 @@ jobs:
       - generate-settings
       - run:
           name: Build shaded JARs
-          command: mvn clean -T1 -B install -DskipTests -DskipITs
+          command: mvn -T1 -B install -DskipTests -DskipITs
       - persist_to_workspace:
           root: .
           paths:

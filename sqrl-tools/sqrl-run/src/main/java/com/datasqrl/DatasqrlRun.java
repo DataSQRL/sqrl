@@ -328,6 +328,7 @@ public class DatasqrlRun {
       }
     } catch (Exception e) {
       e.printStackTrace();
+      assert false : e.getMessage();
     }
   }
 
