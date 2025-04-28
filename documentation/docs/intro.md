@@ -34,7 +34,6 @@ The [DataSQRL Kubernetes repository](https://github.com/DataSQRL/sqrl-k8s) conta
   * Automated Testing
   * Managing source & sink connectors
   * Debugging
-  * and a lot more
 * Read the [Developer Documentation](developer) to learn more about the internals.
 
 ## Community & Support

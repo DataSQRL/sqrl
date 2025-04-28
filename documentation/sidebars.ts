@@ -51,11 +51,6 @@ const sidebars: SidebarsConfig = {
       label: '🧩 How To Guides',
     },
     {
-      type: 'doc',
-      id: 'connectors',
-      label: '🔌 Source & Sink Connectors',
-    },
-    {
       type: 'category',
       label: '🔢 Functions',
       link: {
@@ -74,11 +69,6 @@ const sidebars: SidebarsConfig = {
           label: 'Library Functions',
         },
       ],
-    },
-    {
-      type: 'doc',
-      id: 'concepts',
-      label: '🧠 Streaming Concepts',
     },
     {
       type: 'doc',

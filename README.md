@@ -31,9 +31,9 @@ This example builds a data pipeline that captures user token consumption via API
 ```sql title=usertokens.sqrl
 /*+no_query */
 CREATE TABLE UserTokens (
-    userid BIGINT NOT NULL,
-    tokens BIGINT NOT NULL,
-    request_time TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp'
+   userid INT NOT NULL,
+   tokens BIGINT NOT NULL,
+   request_time TIMESTAMP_LTZ(3) METADATA FROM 'timestamp'
 );
 
 /*+query_by_all(userid) */
