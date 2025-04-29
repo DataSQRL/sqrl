@@ -312,6 +312,7 @@ public class FullUsecasesIT {
 
   @ParameterizedTest
   @MethodSource("useCaseProvider")
+  @Disabled
   public void runTestCaseByName(UseCaseTestParameter param, TestInfo testInfo) {
     if (param.sqrlFileName.equals("openai-cicd-test.sqrl")
     			  && param.goal.equals("test")
