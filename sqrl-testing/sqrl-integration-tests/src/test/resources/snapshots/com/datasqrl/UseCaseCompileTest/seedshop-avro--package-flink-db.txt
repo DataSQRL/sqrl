@@ -94,7 +94,7 @@ CREATE TABLE `Orders_2` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `items` RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
+  `items` RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
   `_source_time` TIMESTAMP(3) WITH LOCAL TIME ZONE,
   `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
   PRIMARY KEY (`__pk_hash`) NOT ENFORCED
@@ -112,7 +112,7 @@ INSERT INTO `default_catalog`.`default_database`.`OrderCount_1`
  FROM `default_catalog`.`default_database`.`OrderCount`)
 ;
 INSERT INTO `default_catalog`.`default_database`.`Orders_2`
- (SELECT `id`, `customerid`, `time`, TOJSON(`items`) AS `items`, `_source_time`, HASHCOLUMNS(`id`, `customerid`, `time`, `items`, `_source_time`) AS `__pk_hash`
+ (SELECT `id`, `customerid`, `time`, TO_JSONB(`items`) AS `items`, `_source_time`, HASHCOLUMNS(`id`, `customerid`, `time`, `items`, `_source_time`) AS `__pk_hash`
   FROM `default_catalog`.`default_database`.`Orders`)
  ;
  END

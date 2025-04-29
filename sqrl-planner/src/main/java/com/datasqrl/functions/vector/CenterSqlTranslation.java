@@ -7,10 +7,10 @@ import org.apache.calcite.sql.SqlWriter;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 
+import com.datasqrl.flinkrunner.functions.vector.center;
 import com.datasqrl.function.CalciteFunctionUtil;
 import com.datasqrl.function.translations.PostgresSqlTranslation;
 import com.datasqrl.function.translations.SqlTranslation;
-import com.datasqrl.types.vector.functions.Center;
 import com.google.auto.service.AutoService;
 
 @AutoService(SqlTranslation.class)
@@ -18,7 +18,7 @@ public class CenterSqlTranslation extends PostgresSqlTranslation {
 
   public CenterSqlTranslation() {
     super(CalciteFunctionUtil.lightweightOp(
-        getFunctionNameFromClass(Center.class).getDisplay()));
+        getFunctionNameFromClass(center.class).getDisplay()));
   }
 
   @Override

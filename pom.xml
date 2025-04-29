@@ -12,6 +12,7 @@
     <module>sqrl-testing</module>
     <module>sqrl-tools</module>
     <module>sqrl-flink-lib</module>
+    <module>sqrl-functions</module>
     <module>sqrl-server</module>
   </modules>
 
@@ -59,7 +60,7 @@
     <avro.version>1.11.3</avro.version>
     <freemarker.version>2.3.32</freemarker.version>
     <jsonschema.version>1.5.2</jsonschema.version>
-    <flinkrunner.version>1.0.0-SNAPSHOT</flinkrunner.version>
+    <flinkrunner.version>1.0.1-SNAPSHOT</flinkrunner.version>
 
     <!-- params -->
     <snapshots.update>false</snapshots.update>
@@ -302,6 +303,11 @@
       <dependency>
         <groupId>com.datasqrl</groupId>
         <artifactId>sqrl-flexible-csv</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.datasqrl</groupId>
+        <artifactId>sqrl-functions</artifactId>
         <version>${project.version}</version>
       </dependency>
       <!-- tests -->
@@ -984,6 +990,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
+        <version>3.4.2</version>
         <executions>
           <execution>
             <goals>

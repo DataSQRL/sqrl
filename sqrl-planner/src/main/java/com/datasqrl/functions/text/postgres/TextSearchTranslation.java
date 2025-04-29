@@ -86,7 +86,7 @@ public class TextSearchTranslation implements OperatorRuleTransform {
 
   @Override
   public String getRuleOperatorName() {
-    return "textsearch";
+    return "text_search";
   }
 
   private String getFunctionName() {

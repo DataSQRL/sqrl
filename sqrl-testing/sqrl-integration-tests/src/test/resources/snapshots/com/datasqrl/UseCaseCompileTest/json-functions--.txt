@@ -33,19 +33,19 @@ Timestamp  : -
 Schema:
  - id: BIGINT NOT NULL
  - val: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - json_col: RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw==')
- - json_col_2: RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw==')
- - json_col_3: RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw==')
- - json_col_4: RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw==')
+ - json_col: RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw==')
+ - json_col_2: RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw==')
+ - json_col_3: RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw==')
+ - json_col_4: RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw==')
 Plan:
-LogicalProject(id=[$0], val=[$1], json_col=[TOJSON('{"a": 1}')], json_col_2=[TOJSON('{"a": 2}')], json_col_3=[TOJSON('{"b": 1}')], json_col_4=[TOJSON('{"b": 2}')])
+LogicalProject(id=[$0], val=[$1], json_col=[TO_JSONB('{"a": 1}')], json_col_2=[TO_JSONB('{"a": 2}')], json_col_3=[TO_JSONB('{"b": 1}')], json_col_4=[TO_JSONB('{"b": 2}')])
   LogicalTableScan(table=[[default_catalog, default_database, Json]])
 SQL: CREATE VIEW UnmodifiedJsonData AS  SELECT id,
                              val,
-                             TOJSON('{"a": 1}') AS json_col,
-                             TOJSON('{"a": 2}') AS json_col_2,
-                             TOJSON('{"b": 1}') AS json_col_3,
-                             TOJSON('{"b": 2}') AS json_col_4
+                             TO_JSONB('{"a": 1}') AS json_col,
+                             TO_JSONB('{"a": 2}') AS json_col_2,
+                             TO_JSONB('{"b": 1}') AS json_col_3,
+                             TO_JSONB('{"b": 2}') AS json_col_4
                      FROM Json
                      ORDER BY id;
 
@@ -72,37 +72,37 @@ SELECT *
 FROM `default_catalog`.`default_database`.`Json__def`;
 CREATE VIEW `UnmodifiedJsonData`
 AS
-SELECT `id`, `val`, TOJSON('{"a": 1}') AS `json_col`, TOJSON('{"a": 2}') AS `json_col_2`, TOJSON('{"b": 1}') AS `json_col_3`, TOJSON('{"b": 2}') AS `json_col_4`
+SELECT `id`, `val`, TO_JSONB('{"a": 1}') AS `json_col`, TO_JSONB('{"a": 2}') AS `json_col_2`, TO_JSONB('{"b": 1}') AS `json_col_3`, TO_JSONB('{"b": 2}') AS `json_col_4`
 FROM `Json`;
 CREATE VIEW `JsonArrayTest`
 AS
-SELECT `id`, JSONARRAY(`id`, `json_col`) AS `json_array_string_function`, JSONARRAY(`json_col`, `json_col_2`) AS `json_array_json_function`
+SELECT `id`, JSONB_ARRAY(`id`, `json_col`) AS `json_array_string_function`, JSONB_ARRAY(`json_col`, `json_col_2`) AS `json_array_json_function`
 FROM `UnmodifiedJsonData`;
 CREATE VIEW `JsonConcatTest`
 AS
-SELECT `id`, JSONCONCAT(`json_col`, `json_col_2`) AS `json_concat_same_key_function`, JSONCONCAT(`json_col`, `json_col_3`) AS `json_concat_diff_key_function`
+SELECT `id`, JSONB_CONCAT(`json_col`, `json_col_2`) AS `json_concat_same_key_function`, JSONB_CONCAT(`json_col`, `json_col_3`) AS `json_concat_diff_key_function`
 FROM `UnmodifiedJsonData`;
 CREATE VIEW `JsonExistsTest`
 AS
-SELECT `id`, JSONEXISTS(`json_col`, '$.a') AS `json_exists_function`, JSONEXISTS(`json_col`, '$.nonExistentPath') AS `json_not_exists_function`
+SELECT `id`, JSONB_EXISTS(`json_col`, '$.a') AS `json_exists_function`, JSONB_EXISTS(`json_col`, '$.nonExistentPath') AS `json_not_exists_function`
 FROM `UnmodifiedJsonData`;
 CREATE VIEW `JsonExtractTest`
 AS
-SELECT `id`, JSONEXTRACT(`json_col`, '$.a') AS `json_extract_function`, JSONEXTRACT(`json_col`, '$.nonExistentPath') AS `json_extract_not_exists_function`, JSONEXTRACT(`json_col`, '$.nonExistentPath', 'default') AS `json_extract_with_default_function`, JSONEXTRACT(`json_col`, '$.a', 100) AS `json_extract_with_default_int_function`
+SELECT `id`, JSONB_EXTRACT(`json_col`, '$.a') AS `json_extract_function`, JSONB_EXTRACT(`json_col`, '$.nonExistentPath') AS `json_extract_not_exists_function`, JSONB_EXTRACT(`json_col`, '$.nonExistentPath', 'default') AS `json_extract_with_default_function`, JSONB_EXTRACT(`json_col`, '$.a', 100) AS `json_extract_with_default_int_function`
 FROM `UnmodifiedJsonData`;
 CREATE VIEW `JsonArrayAggTest`
 AS
-SELECT `val`, JSONARRAYAGG(`json_col`) AS `json_array_agg_function`
+SELECT `val`, JSONB_ARRAY_AGG(`json_col`) AS `json_array_agg_function`
 FROM `UnmodifiedJsonData`
 GROUP BY `val`;
 CREATE VIEW `JsonObjectAggTest`
 AS
-SELECT `val`, JSONOBJECTAGG('key', `json_col`) AS `json_object_agg_function`
+SELECT `val`, JSONB_OBJECT_AGG('key', `json_col`) AS `json_object_agg_function`
 FROM `UnmodifiedJsonData`
 GROUP BY `val`;
 CREATE VIEW `ToJsonTest`
 AS
-SELECT `id`, TOJSON(`json_col`) AS `to_json_function`
+SELECT `id`, TO_JSONB(`json_col`) AS `to_json_function`
 FROM `UnmodifiedJsonData`;
 CREATE TABLE `Json_1` (
   `id` BIGINT NOT NULL,
@@ -120,10 +120,10 @@ CREATE TABLE `Json_1` (
 CREATE TABLE `UnmodifiedJsonData_2` (
   `id` BIGINT NOT NULL,
   `val` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `json_col` RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
-  `json_col_2` RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
-  `json_col_3` RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
-  `json_col_4` RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
+  `json_col` RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
+  `json_col_2` RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
+  `json_col_3` RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
+  `json_col_4` RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
   PRIMARY KEY (`id`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',

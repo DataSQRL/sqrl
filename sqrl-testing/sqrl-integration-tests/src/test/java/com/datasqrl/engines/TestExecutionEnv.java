@@ -150,7 +150,7 @@ public class TestExecutionEnv implements TestEngineVisitor<Void, TestEnvContext>
     HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
     if (response.statusCode() != 200) {
-      throw new RuntimeException("Failed to post GraphQL query: " + response.body());
+      throw new RuntimeException("Failed to post GraphQL query: " + response.body() + " test case: "+ goal);
     }
 
     return response.body();
@@ -216,10 +216,10 @@ public class TestExecutionEnv implements TestEngineVisitor<Void, TestEnvContext>
     try {
       var run = test.run();
       if (run != 0) {
-        fail("Test runner returned error code. Check above for failed snapshot tests (in red) or exceptions");
+        fail("Test runner returned error code while running test case '%s'. Check above for failed snapshot tests (in red) or exceptions".formatted(goal));
       }
     } catch (Exception e) {
-      fail(e);
+      fail("Test runner threw exception while running test case '%s'".formatted(goal),e);
     }
     return null;
   }

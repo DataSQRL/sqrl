@@ -1,0 +1,31 @@
+import stdlib.math.*;
+
+MathFunctions := SELECT d, b,
+            cbrt(d) AS cbrt,
+            copy_sign(d, d) AS copy_sign,
+            expm1(d) AS expm1,
+            hypot(d, d) AS hypot,
+            log1p(d) AS log1p,
+            next_after(d, d) AS next_after,
+            scalb(d, b) AS scalb,
+            ulp(d) AS ulp,
+            binomial_distribution(b, 1, b) AS binomial_distribution,
+            exponential_distribution(d, d) AS exponential_distribution,
+            normal_distribution(d, d, d) AS normal_distribution,
+            poisson_distribution(d, b) AS poisson_distribution
+           FROM (
+    VALUES 
+    ( 1.0, 11), 
+    ( 2.0, 12), 
+    ( 3.0, 13), 
+    ( 4.0, 14), 
+    ( 5.0, 15), 
+    ( 6.0, 16), 
+    ( 7.0, 17), 
+    ( 8.0, 18), 
+    ( 9.0, 19), 
+    ( 10.0, 20)
+    ) AS names(d, b);
+
+/*+test */
+MathFunctionsTest := SELECT * FROM MathFunctions order by b;

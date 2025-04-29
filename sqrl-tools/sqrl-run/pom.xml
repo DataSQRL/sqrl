@@ -75,22 +75,6 @@
       <version>1.19.1</version>
     </dependency>
     <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-secure</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-time</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-text</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-vector</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>testcontainers</artifactId>
       <scope>compile</scope>
@@ -299,7 +283,7 @@
     </dependency>
     <dependency>
       <groupId>com.datasqrl.flinkrunner</groupId>
-      <artifactId>system-functions-discovery</artifactId>
+      <artifactId>functions-common</artifactId>
     </dependency>
     <dependency>
       <groupId>com.datasqrl.flinkrunner</groupId>
@@ -322,9 +306,26 @@
       <artifactId>postgresql-connector</artifactId>
     </dependency>
     <dependency>
+      <groupId>com.datasqrl.flinkrunner</groupId>
+      <artifactId>text-functions</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl.flinkrunner</groupId>
+      <artifactId>math-functions</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl.flinkrunner</groupId>
+      <artifactId>openai-functions</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-s3-fs-hadoop</artifactId>
       <version>${flink.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>sqrl-functions</artifactId>
     </dependency>
   </dependencies>
   <dependencyManagement>

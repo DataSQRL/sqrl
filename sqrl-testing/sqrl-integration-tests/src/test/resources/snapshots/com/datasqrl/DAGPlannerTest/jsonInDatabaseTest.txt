@@ -60,11 +60,11 @@ Annotations:
 Primary Key: -
 Timestamp  : -
 Schema:
- - obj: RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw==')
+ - obj: RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw==')
 Plan:
-LogicalProject(obj=[jsonObject(CONCAT('application#', $2), $0)])
+LogicalProject(obj=[jsonb_object(CONCAT('application#', $2), $0)])
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW ObjComplex AS  SELECT jsonObject(concat('application#',CAST(name AS VARCHAR)), customerid) AS obj FROM Customer;
+SQL: CREATE VIEW ObjComplex AS  SELECT jsonb_object(concat('application#',CAST(name AS VARCHAR)), customerid) AS obj FROM Customer;
 
 === jsonArrayAggTable
 ID:     default_catalog.default_database.jsonArrayAggTable
@@ -74,13 +74,13 @@ Inputs: default_catalog.default_database.Customer
 Primary Key: -
 Timestamp  : -
 Schema:
- - agg: RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw==')
+ - agg: RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw==')
 Plan:
 LogicalProject(agg=[$1])
-  LogicalAggregate(group=[{0}], agg=[jsonArrayAgg($0)])
+  LogicalAggregate(group=[{0}], agg=[jsonb_array_agg($0)])
     LogicalProject(name=[$2])
       LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW jsonArrayAggTable AS  SELECT jsonArrayAgg(name) AS agg FROM Customer GROUP BY name;
+SQL: CREATE VIEW jsonArrayAggTable AS  SELECT jsonb_array_agg(name) AS agg FROM Customer GROUP BY name;
 
 === jsonArrayTable
 ID:     default_catalog.default_database.jsonArrayTable
@@ -92,11 +92,11 @@ Annotations:
 Primary Key: -
 Timestamp  : -
 Schema:
- - obj: RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw==')
+ - obj: RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw==')
 Plan:
-LogicalProject(obj=[jsonArray($0)])
+LogicalProject(obj=[jsonb_array($0)])
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW jsonArrayTable AS  SELECT jsonArray(customerid) AS obj FROM Customer;
+SQL: CREATE VIEW jsonArrayTable AS  SELECT jsonb_array(customerid) AS obj FROM Customer;
 
 === jsonConcatTable
 ID:     default_catalog.default_database.jsonConcatTable
@@ -108,11 +108,11 @@ Annotations:
 Primary Key: -
 Timestamp  : -
 Schema:
- - obj: RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw==')
+ - obj: RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw==')
 Plan:
-LogicalProject(obj=[jsonConcat(toJson('{"a": true}'), toJson('{"a": false}'))])
+LogicalProject(obj=[jsonb_concat(to_jsonb('{"a": true}'), to_jsonb('{"a": false}'))])
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW jsonConcatTable AS  SELECT jsonConcat(toJson('{"a": true}'), toJson('{"a": false}')) AS obj FROM Customer;
+SQL: CREATE VIEW jsonConcatTable AS  SELECT jsonb_concat(to_jsonb('{"a": true}'), to_jsonb('{"a": false}')) AS obj FROM Customer;
 
 === jsonExistsTable
 ID:     default_catalog.default_database.jsonExistsTable
@@ -126,9 +126,9 @@ Timestamp  : -
 Schema:
  - obj: BOOLEAN
 Plan:
-LogicalProject(obj=[jsonExists(toJson('{"a": true}'), '$.a')])
+LogicalProject(obj=[jsonb_exists(to_jsonb('{"a": true}'), '$.a')])
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW jsonExistsTable AS  SELECT jsonExists(toJson('{"a": true}'), '$.a') AS obj FROM Customer;
+SQL: CREATE VIEW jsonExistsTable AS  SELECT jsonb_exists(to_jsonb('{"a": true}'), '$.a') AS obj FROM Customer;
 
 === jsonExtractTable
 ID:     default_catalog.default_database.jsonExtractTable
@@ -142,9 +142,9 @@ Timestamp  : -
 Schema:
  - obj: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
 Plan:
-LogicalProject(obj=[jsonExtract(toJson('{"a": "hello"}'), '$.a':VARCHAR(2147483647) CHARACTER SET "UTF-16LE", 'default':VARCHAR(2147483647) CHARACTER SET "UTF-16LE")])
+LogicalProject(obj=[jsonb_extract(to_jsonb('{"a": "hello"}'), '$.a':VARCHAR(2147483647) CHARACTER SET "UTF-16LE", 'default':VARCHAR(2147483647) CHARACTER SET "UTF-16LE")])
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW jsonExtractTable AS  SELECT jsonExtract(toJson('{"a": "hello"}'), CAST('$.a' AS varchar), CAST('default' AS varchar)) AS obj FROM Customer;
+SQL: CREATE VIEW jsonExtractTable AS  SELECT jsonb_extract(to_jsonb('{"a": "hello"}'), CAST('$.a' AS varchar), CAST('default' AS varchar)) AS obj FROM Customer;
 
 === jsonObjectAggTable
 ID:     default_catalog.default_database.jsonObjectAggTable
@@ -154,13 +154,13 @@ Inputs: default_catalog.default_database.Customer
 Primary Key: -
 Timestamp  : -
 Schema:
- - agg: RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw==')
+ - agg: RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw==')
 Plan:
 LogicalProject(agg=[$1])
-  LogicalAggregate(group=[{0}], agg=[jsonObjectAgg($1, $0)])
+  LogicalAggregate(group=[{0}], agg=[jsonb_object_agg($1, $0)])
     LogicalProject(name=[$2], $f1=['key'])
       LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW jsonObjectAggTable AS  SELECT jsonObjectAgg('key', name) AS agg FROM Customer GROUP BY name;
+SQL: CREATE VIEW jsonObjectAggTable AS  SELECT jsonb_object_agg('key', name) AS agg FROM Customer GROUP BY name;
 
 === jsonQueryTable
 ID:     default_catalog.default_database.jsonQueryTable
@@ -174,9 +174,9 @@ Timestamp  : -
 Schema:
  - obj: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
 Plan:
-LogicalProject(obj=[jsonQuery(toJson('{"a": {"b": 1}}'), '$.a')])
+LogicalProject(obj=[jsonb_query(to_jsonb('{"a": {"b": 1}}'), '$.a')])
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW jsonQueryTable AS  SELECT jsonQuery(toJson('{"a": {"b": 1}}'), '$.a') AS obj FROM Customer;
+SQL: CREATE VIEW jsonQueryTable AS  SELECT jsonb_query(to_jsonb('{"a": {"b": 1}}'), '$.a') AS obj FROM Customer;
 
 === jsonToStringTable
 ID:     default_catalog.default_database.jsonToStringTable
@@ -190,9 +190,9 @@ Timestamp  : -
 Schema:
  - obj: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
 Plan:
-LogicalProject(obj=[jsonToString(toJson('{"a": 1}'))])
+LogicalProject(obj=[jsonb_to_string(to_jsonb('{"a": 1}'))])
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW jsonToStringTable AS  SELECT jsonToString(toJson('{"a": 1}')) AS obj FROM Customer;
+SQL: CREATE VIEW jsonToStringTable AS  SELECT jsonb_to_string(to_jsonb('{"a": 1}')) AS obj FROM Customer;
 
 === toJsonTable
 ID:     default_catalog.default_database.toJsonTable
@@ -204,11 +204,11 @@ Annotations:
 Primary Key: -
 Timestamp  : -
 Schema:
- - obj: RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw==')
+ - obj: RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw==')
 Plan:
-LogicalProject(obj=[toJson('{"a": 1}')])
+LogicalProject(obj=[to_jsonb('{"a": 1}')])
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW toJsonTable AS  SELECT toJson('{"a": 1}') AS obj FROM Customer;
+SQL: CREATE VIEW toJsonTable AS  SELECT to_jsonb('{"a": 1}') AS obj FROM Customer;
 
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `CustomerStream__schema` (
@@ -242,45 +242,45 @@ FROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMB
 WHERE `__sqrlinternal_rownum` = 1;
 CREATE VIEW `toJsonTable`
 AS
-SELECT TOJSON('{"a": 1}') AS `obj`
+SELECT TO_JSONB('{"a": 1}') AS `obj`
 FROM `Customer`;
 CREATE VIEW `jsonArrayTable`
 AS
-SELECT JSONARRAY(`customerid`) AS `obj`
+SELECT JSONB_ARRAY(`customerid`) AS `obj`
 FROM `Customer`;
 CREATE VIEW `jsonObjectAggTable`
 AS
-SELECT JSONOBJECTAGG('key', `name`) AS `agg`
+SELECT JSONB_OBJECT_AGG('key', `name`) AS `agg`
 FROM `Customer`
 GROUP BY `name`;
 CREATE VIEW `jsonToStringTable`
 AS
-SELECT JSONTOSTRING(TOJSON('{"a": 1}')) AS `obj`
+SELECT JSONB_TO_STRING(TO_JSONB('{"a": 1}')) AS `obj`
 FROM `Customer`;
 CREATE VIEW `jsonExtractTable`
 AS
-SELECT JSONEXTRACT(TOJSON('{"a": "hello"}'), CAST('$.a' AS VARCHAR), CAST('default' AS VARCHAR)) AS `obj`
+SELECT JSONB_EXTRACT(TO_JSONB('{"a": "hello"}'), CAST('$.a' AS VARCHAR), CAST('default' AS VARCHAR)) AS `obj`
 FROM `Customer`;
 CREATE VIEW `jsonQueryTable`
 AS
-SELECT JSONQUERY(TOJSON('{"a": {"b": 1}}'), '$.a') AS `obj`
+SELECT JSONB_QUERY(TO_JSONB('{"a": {"b": 1}}'), '$.a') AS `obj`
 FROM `Customer`;
 CREATE VIEW `jsonExistsTable`
 AS
-SELECT JSONEXISTS(TOJSON('{"a": true}'), '$.a') AS `obj`
+SELECT JSONB_EXISTS(TO_JSONB('{"a": true}'), '$.a') AS `obj`
 FROM `Customer`;
 CREATE VIEW `jsonConcatTable`
 AS
-SELECT JSONCONCAT(TOJSON('{"a": true}'), TOJSON('{"a": false}')) AS `obj`
+SELECT JSONB_CONCAT(TO_JSONB('{"a": true}'), TO_JSONB('{"a": false}')) AS `obj`
 FROM `Customer`;
 CREATE VIEW `jsonArrayAggTable`
 AS
-SELECT JSONARRAYAGG(`name`) AS `agg`
+SELECT JSONB_ARRAY_AGG(`name`) AS `agg`
 FROM `Customer`
 GROUP BY `name`;
 CREATE VIEW `ObjComplex`
 AS
-SELECT JSONOBJECT(CONCAT('application#', CAST(`name` AS VARCHAR)), `customerid`) AS `obj`
+SELECT JSONB_OBJECT(CONCAT('application#', CAST(`name` AS VARCHAR)), `customerid`) AS `obj`
 FROM `Customer`;
 CREATE TABLE `Customer_1` (
   `customerid` BIGINT NOT NULL,

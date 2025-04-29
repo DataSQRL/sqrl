@@ -10,10 +10,10 @@ import com.datasqrl.datatype.DataTypeMapper;
 import com.datasqrl.datatype.SerializeToBytes;
 import com.datasqrl.datatype.flink.FlinkDataTypeMapper;
 import com.datasqrl.engine.stream.flink.connector.CastFunction;
-import com.datasqrl.types.json.FlinkJsonType;
-import com.datasqrl.types.json.functions.JsonToString;
-import com.datasqrl.types.vector.FlinkVectorType;
-import com.datasqrl.types.vector.functions.VectorToDouble;
+import com.datasqrl.flinkrunner.functions.json.jsonb_to_string;
+import com.datasqrl.flinkrunner.functions.vector.vector_to_double;
+import com.datasqrl.flinkrunner.types.json.FlinkJsonType;
+import com.datasqrl.flinkrunner.types.vector.FlinkVectorType;
 import com.google.auto.service.AutoService;
 
 @AutoService(DataTypeMapper.class)
@@ -42,12 +42,12 @@ public boolean nativeTypeSupport(RelDataType type) {
     if (type instanceof RawRelDataType rawRelDataType) {
       if (rawRelDataType.getRawType().getDefaultConversion() == FlinkJsonType.class) {
         return Optional.of(
-            new CastFunction(JsonToString.class.getName(),
-                convert(new JsonToString())));
+            new CastFunction(jsonb_to_string.class.getName(),
+                convert(new jsonb_to_string())));
       } else if (rawRelDataType.getRawType().getDefaultConversion() == FlinkVectorType.class) {
         return Optional.of(
-            new CastFunction(VectorToDouble.class.getName(),
-                convert(new VectorToDouble())));
+            new CastFunction(vector_to_double.class.getName(),
+                convert(new vector_to_double())));
       }
     }
 

@@ -1,6 +1,6 @@
 package com.datasqrl.functions;
 
-import com.datasqrl.function.AutoRegisterSystemFunction;
+import com.datasqrl.flinkrunner.functions.AutoRegisterSystemFunction;
 import com.google.auto.service.AutoService;
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.catalog.DataTypeFactory;

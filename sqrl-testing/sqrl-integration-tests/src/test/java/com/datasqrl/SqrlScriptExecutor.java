@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import com.datasqrl.cmd.AssertStatusHook;
 import com.datasqrl.cmd.RootCommand;
 import com.datasqrl.cmd.StatusHook;
 
@@ -26,7 +27,7 @@ public class SqrlScriptExecutor {
   private String packageJsonPath;
   private List<String> additionalArgs;
 
-  public void execute(StatusHook hook) {
+  public void execute(AssertStatusHook hook) {
     List<String> argsList = new ArrayList<>();
     argsList.add(goal);
     argsList.add(script);
@@ -52,6 +53,9 @@ public class SqrlScriptExecutor {
     var exitCode =
         rootCommand.getCmd().execute(argsList.toArray(new String[0])) + (hook.isSuccess() ? 0 : 1);
     if (exitCode != 0) {
+      if(hook.failure() != null) {
+        fail(hook.failure());
+      }
       fail();
     }
   }
