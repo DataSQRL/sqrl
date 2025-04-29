@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - docsUpdate
 
 jobs:
   deploy:
@@ -21,7 +22,7 @@ jobs:
           cd documentation/docs/functions-docs
           git sparse-checkout init --cone
           git sparse-checkout set function-docs
-          git pull origin main
+          git pull --ff-only origin main
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
