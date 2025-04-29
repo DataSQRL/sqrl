@@ -23,7 +23,7 @@ jobs:
           git submodule update --init --depth 1
           cd documentation/docs/functions-docs
           git sparse-checkout init --cone
-          git sparse-checkout set docs
+          git sparse-checkout set function-docs
           git checkout main
           git pull --ff-only origin main
 
