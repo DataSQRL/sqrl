@@ -35,9 +35,9 @@
             <configuration>
               <workingDirectory>${project.basedir}/target/</workingDirectory>
               <executable>docker</executable>
-              <skip>${skipTests}</skip>
               <arguments>
                 <argument>build</argument>
+                <argument>--pull</argument>
                 <argument>--tag</argument>
                 <argument>sqrl-flink-runner</argument>
                 <argument>.</argument>
@@ -127,6 +127,11 @@
       <artifactId>sqrl-cli</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>com.datasqrl.flinkrunner</groupId>
+      <artifactId>flink-sql-runner</artifactId>
+      <scope>test</scope>
+    </dependency>
 
     <!-- list of libraries that need to be embedded into docker image-->
     <dependency>
@@ -150,4 +155,47 @@
       <scope>runtime</scope>
     </dependency>
   </dependencies>
+
+  <profiles>
+    <profile>
+      <id>skip-tests</id>
+      <activation>
+        <property>
+          <name>skipTests</name>
+          <value>true</value>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <configuration>
+              <skip>true</skip>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>skip-its</id>
+      <activation>
+        <property>
+          <name>skipITs</name>
+          <value>true</value>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <configuration>
+              <skip>true</skip>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>

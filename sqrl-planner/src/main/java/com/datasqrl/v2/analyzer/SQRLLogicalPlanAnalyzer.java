@@ -277,8 +277,6 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
   protected RelNode setProcessResult(RelNodeAnalysis analysis) {
     this.intermediateAnalysis = analysis;
     RelNode result = analysis.relNode;
-    //Some sanity checks
-    errors.checkFatal(analysis.type!=TableType.LOOKUP || result instanceof LogicalTableScan, "Lookup tables can only be used in temporal joins");
     return result;
   }
 
@@ -709,7 +707,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
   }
 
   private PrimaryKeyMap intersectPrimaryKeys(List<RelNodeAnalysis> inputs) {
-    if (inputs.get(0).primaryKey.isUndefined()) {
+    if (inputs.get(0).primaryKey.isUndefined() || inputs.get(0).primaryKey.getLength()==0) {
         return PrimaryKeyMap.UNDEFINED;
     }
     var pkLength = inputs.get(0).primaryKey.getLength();

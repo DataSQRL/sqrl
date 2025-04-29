@@ -904,6 +904,20 @@
         <version>${flink.version}</version>
         <scope>test</scope>
       </dependency>
+
+      <dependency>
+        <groupId>com.datasqrl.flinkrunner</groupId>
+        <artifactId>flinkrunner-bom</artifactId>
+        <version>${flinkrunner.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <!-- FIXME remove this dependency -->
+        <groupId>com.datasqrl.flinkrunner</groupId>
+        <artifactId>system-functions-discovery</artifactId>
+        <version>${flinkrunner.version}</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
   <!--    <scm>-->

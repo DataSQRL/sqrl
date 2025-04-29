@@ -21,7 +21,7 @@ import picocli.CommandLine;
 @Slf4j
 @CommandLine.Command(name = "test", description = "Tests a SQRL script")
 public class TestCommand extends AbstractCompilerCommand {
-  @CommandLine.Option(names = {"-s", "--snapshot"},
+  @CommandLine.Option(names = {"-s", "--snapshots"},
       description = "Path to snapshots")
   protected Path snapshotPath = null;
   @CommandLine.Option(names = {"--tests"},

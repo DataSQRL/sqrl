@@ -2,6 +2,7 @@ package com.datasqrl.io.schema.avro;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Set;
@@ -19,12 +20,12 @@ import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 
 import lombok.AllArgsConstructor;
+import org.apache.flink.table.types.DataType;
 
 @AllArgsConstructor
 public class AvroToRelDataTypeConverter {
-
   private final ErrorCollector errors;
-  private final Set<Schema> processedSchemas;
+  private final Set<Schema> visitedSchemas;
   private final boolean legacyTimestampMapping;
 
   public AvroToRelDataTypeConverter(ErrorCollector errors, boolean legacyTimestampMapping) {
@@ -32,56 +33,67 @@ public class AvroToRelDataTypeConverter {
   }
 
   public RelDataType convert(Schema schema) {
-    validateSchema(schema, NamePath.ROOT);
+    validateSchema(schema, NamePath.ROOT, new HashSet<>()); // recursion stack
 
-    var dataType = AvroSchemaConverter.convertToDataType(schema.toString(false),
+    DataType dataType = AvroSchemaConverter.convertToDataType(schema.toString(false),
         legacyTimestampMapping);
 
-    var typeFactory = TypeFactory.getTypeFactory();
+    TypeFactory typeFactory = TypeFactory.getTypeFactory();
 
     return typeFactory.createFieldTypeFromLogicalType(
         dataType.getLogicalType());
   }
 
-  private void validateSchema(Schema schema, NamePath path) {
-    // Check if the schema has already been processed
-    if (!processedSchemas.add(schema)) {
-      throw errors.exception(ErrorCode.SCHEMA_ERROR, "Recursive schemas are not supported: %s", path);
+  private void validateSchema(Schema schema, NamePath path, Set<Schema> recursionStack) {
+    if (visitedSchemas.contains(schema)) {
+      return; // already validated
     }
 
-    switch (schema.getType()) {
-      case UNION:
-        List<Schema> nonNullTypes = new ArrayList<>();
-        for (Schema memberSchema : schema.getTypes()) {
-          if (memberSchema.getType() != Type.NULL) {
-            nonNullTypes.add(memberSchema);
+    if (!recursionStack.add(schema)) {
+      throw errors.exception(ErrorCode.SCHEMA_ERROR, "Cyclic-recursive schema reference detected at: %s.", path);
+    }
+
+    try {
+      switch (schema.getType()) {
+        case UNION:
+          List<Schema> nonNullTypes = new ArrayList<>();
+          for (Schema memberSchema : schema.getTypes()) {
+            if (memberSchema.getType() != Type.NULL) {
+              nonNullTypes.add(memberSchema);
+            }
           }
-        }
 
-        if (nonNullTypes.size() != 1) {
-          throw errors.exception(ErrorCode.SCHEMA_ERROR,
-              "Only AVRO unions with a single non-null type are supported, but found %d non-null types at: %s",
-              nonNullTypes.size(), path);
-        }
+          if (nonNullTypes.size() != 1) {
+            throw errors.exception(ErrorCode.SCHEMA_ERROR,
+                "Only AVRO unions with a single non-null type are supported, but found %d non-null types at: %s",
+                nonNullTypes.size(), path);
+          }
 
-        var innerSchema = nonNullTypes.get(0);
-        validateSchema(innerSchema, path);
-        break;
-      case RECORD:
-        for (Field field : schema.getFields()) {
-          validateSchema(field.schema(),
-              path.concat(Name.system(field.name())));
-        }
-        break;
-      case ARRAY:
-        validateSchema(schema.getElementType(), path);
-        break;
-      case MAP:
-        validateSchema(schema.getValueType(), path);
-        break;
-      default: // primitives
-        validatePrimitive(schema, path);
-        break;
+          Schema innerSchema = nonNullTypes.get(0);
+          validateSchema(innerSchema, path, recursionStack);
+          break;
+
+        case RECORD:
+          for (Field field : schema.getFields()) {
+            validateSchema(field.schema(), path.concat(Name.system(field.name())), recursionStack);
+          }
+          break;
+
+        case ARRAY:
+          validateSchema(schema.getElementType(), path, recursionStack);
+          break;
+
+        case MAP:
+          validateSchema(schema.getValueType(), path, recursionStack);
+          break;
+
+        default:
+          validatePrimitive(schema, path);
+          break;
+      }
+    } finally {
+      recursionStack.remove(schema);
+      visitedSchemas.add(schema); // mark as validated
     }
   }
 

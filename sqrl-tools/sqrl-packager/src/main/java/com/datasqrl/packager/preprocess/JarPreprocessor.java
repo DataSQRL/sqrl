@@ -2,6 +2,7 @@ package com.datasqrl.packager.preprocess;
 
 import static com.datasqrl.packager.LambdaUtil.rethrowCall;
 
+import com.datasqrl.loaders.ClasspathFunctionLoader;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -13,6 +14,7 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.regex.Pattern;
 
+import java.util.stream.Collectors;
 import org.apache.commons.io.IOUtils;
 import org.apache.flink.table.functions.AggregateFunction;
 import org.apache.flink.table.functions.AsyncScalarFunction;
@@ -38,14 +40,8 @@ public class JarPreprocessor implements Preprocessor {
   public static final ObjectMapper mapper = SqrlObjectMapper.INSTANCE;
 
   public static final String SERVICES_PATH = "META-INF/services/";
-  public static final Set<String> flinkUdfs = Set.of(
-      ScalarFunction.class.getCanonicalName(),
-      AggregateFunction.class.getCanonicalName(),
-      UserDefinedFunction.class.getCanonicalName(),
-      TableFunction.class.getCanonicalName(),
-      TableAggregateFunction.class.getCanonicalName(),
-      AsyncScalarFunction.class.getCanonicalName()
-    );
+  public static final Set<String> flinkUdfs = ClasspathFunctionLoader.flinkUdfClasses
+          .stream().map(Class::getCanonicalName).collect(Collectors.toSet());
 
   @Override
   public Pattern getPattern() {

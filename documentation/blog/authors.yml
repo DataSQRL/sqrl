@@ -1,0 +1,28 @@
+matthias:
+  name: Matthias Broecheler
+  title: CEO of DataSQRL
+  url: https://github.com/mbroecheler
+  image_url: /img/headshots/matthias1.png
+  page: true
+  socials:
+    linkedin: matthiasbroecheler
+    github: mbroecheler
+    newsletter: https://www.matthiasb.com
+
+daniel:
+  name: Daniel Henneberger
+  title: Former CTO of DataSQRL
+  url: https://github.com/henneberger
+  image_url: /img/headshots/daniel1.png
+
+canz:
+  name: Michael Canzoneri
+  title: Head of GTM at DataSQRL
+  url: https://www.linkedin.com/in/canz
+  image_url: /img/headshots/canz1.png
+
+stefan_anca:
+  name: Stefan Anca
+  title: AI Consultant
+  url: https://www.linkedin.com/in/stefananca/
+  image_url: /img/headshots/stefan1.png

@@ -1,0 +1,14 @@
+release:
+  label: Release
+  permalink: /release
+  description: DataSQRL release announcements
+
+technical:
+  label: technical
+  permalink: /technical
+  description: Technical discussions
+
+feature:
+  label: feature
+  permalink: /feature
+  description: Feature descriptions
