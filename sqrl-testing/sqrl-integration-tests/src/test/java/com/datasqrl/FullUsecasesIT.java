@@ -77,8 +77,6 @@ public class FullUsecasesIT {
           new ScriptCriteria("analytics-only.sqrl", "run"),
           new ScriptCriteria("postgres-log-disabled.sqrl", "test"),
           new ScriptCriteria("postgres-log-disabled.sqrl", "run"),
-          new ScriptCriteria("seedshop-extended.sqrl", "test"), // CustomerPromotionTest issue TODO
-          new ScriptCriteria("seedshop-extended.sqrl", "run"), // CustomerPromotionTest issue TODO
           new ScriptCriteria("connectors.sqrl", "test"), // should not be executed
           new ScriptCriteria("flink_kafka.sqrl", "run") // does not expose an API
           );
@@ -119,14 +117,14 @@ public class FullUsecasesIT {
   public static class UseCaseTestParameter {
 
     @Override
-	public String toString() {
-		return "UseCaseTestParameter [useCaseName=" + useCaseName + ", sqrlFileName=" + sqrlFileName
-				+ ", parentDirectory=" + parentDirectory + ", goal=" + goal + ", graphqlFileName=" + graphqlFileName
-				+ ", testName=" + testName + ", testPath=" + testPath + ", optionalParam=" + optionalParam
-				+ ", packageJsonPath=" + packageJsonPath + "]";
-	}
+  public String toString() {
+    return "UseCaseTestParameter [useCaseName=" + useCaseName + ", sqrlFileName=" + sqrlFileName
+        + ", parentDirectory=" + parentDirectory + ", goal=" + goal + ", graphqlFileName=" + graphqlFileName
+        + ", testName=" + testName + ", testPath=" + testPath + ", optionalParam=" + optionalParam
+        + ", packageJsonPath=" + packageJsonPath + "]";
+  }
 
-	String parentDirectory;
+  String parentDirectory;
     String goal;
     String useCaseName;
     String sqrlFileName;
@@ -318,10 +316,9 @@ public class FullUsecasesIT {
 
   @ParameterizedTest
   @MethodSource("useCaseProvider")
-  @Disabled
   public void runTestCaseByName(UseCaseTestParameter param, TestInfo testInfo) {
-    if (param.sqrlFileName.equals("sensors-teaser.sqrl")
-    			  && param.goal.equals("test")
+    if (param.sqrlFileName.equals("seedshop-extended.sqrl")
+            && param.goal.equals("run")
     ) {
       testUseCase(param, testInfo);
     } else {

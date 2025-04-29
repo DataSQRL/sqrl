@@ -45,7 +45,7 @@ Schema:
  - ip_address: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
  - country: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
  - changed_on: BIGINT NOT NULL
- - timestamp: TIMESTAMP_LTZ(3) *ROWTIME*
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Plan:
 LogicalProject(id=[$0], first_name=[$1], last_name=[$2], email=[$3], ip_address=[$4], country=[$5], changed_on=[$6], timestamp=[$7])
   LogicalFilter(condition=[=($8, 1)])
@@ -299,11 +299,11 @@ Schema:
  - ip_address: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
  - country: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
  - changed_on: BIGINT NOT NULL
- - timestamp: TIMESTAMP_LTZ(3) *ROWTIME*
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Plan:
 LogicalProject(id=[$0], first_name=[$1], last_name=[$2], email=[$3], ip_address=[$4], country=[$5], changed_on=[$6], timestamp=[$7])
   LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($7, 1:INTERVAL SECOND)])
-    LogicalProject(id=[$0], first_name=[$1], last_name=[$2], email=[$3], ip_address=[$4], country=[$5], changed_on=[$6], timestamp=[TO_TIMESTAMP_LTZ($6, 3)])
+    LogicalProject(id=[$0], first_name=[$1], last_name=[$2], email=[$3], ip_address=[$4], country=[$5], changed_on=[$6], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($6, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
       LogicalTableScan(table=[[default_catalog, default_database, _CustomersStream__def]])
 SQL: CREATE VIEW `_CustomersStream`
 AS
@@ -426,7 +426,7 @@ CREATE TEMPORARY TABLE `_CustomersStream__schema` (
   'connector' = 'datagen'
 );
 CREATE TABLE `_CustomersStream__def` (
-  `timestamp` AS TO_TIMESTAMP_LTZ(`changed_on`, 3),
+  `timestamp` AS COALESCE(TO_TIMESTAMP_LTZ(`changed_on`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
   PRIMARY KEY (`id`, `changed_on`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
 ) WITH (
@@ -541,7 +541,7 @@ CREATE TABLE `Customers_2` (
   `ip_address` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
   `country` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
   `changed_on` BIGINT NOT NULL,
-  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`id`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
@@ -715,7 +715,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerPromotion_1`
   ]
 }
 >>>postgres-schema.sql
-CREATE TABLE IF NOT EXISTS "Customers_2" ("id" BIGINT NOT NULL, "first_name" TEXT NOT NULL, "last_name" TEXT NOT NULL, "email" TEXT NOT NULL, "ip_address" TEXT , "country" TEXT , "changed_on" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE  , PRIMARY KEY ("id"));
+CREATE TABLE IF NOT EXISTS "Customers_2" ("id" BIGINT NOT NULL, "first_name" TEXT NOT NULL, "last_name" TEXT NOT NULL, "email" TEXT NOT NULL, "ip_address" TEXT , "country" TEXT , "changed_on" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));
 CREATE TABLE IF NOT EXISTS "CustomersOrderStats_3" ("customerid" BIGINT NOT NULL, "first_order" TIMESTAMP WITH TIME ZONE NOT NULL, "total_spend" DOUBLE PRECISION NOT NULL, "total_saved" DOUBLE PRECISION NOT NULL, "num_orders" BIGINT NOT NULL , PRIMARY KEY ("customerid"));
 CREATE TABLE IF NOT EXISTS "CustomersPastPurchases_4" ("customerid" BIGINT NOT NULL, "productid" BIGINT NOT NULL, "num_orders" BIGINT NOT NULL, "total_quantity" BIGINT NOT NULL , PRIMARY KEY ("customerid","productid"));
 CREATE TABLE IF NOT EXISTS "CustomersSpending_5" ("customerid" BIGINT NOT NULL, "week" TIMESTAMP WITH TIME ZONE NOT NULL, "spend" DOUBLE PRECISION NOT NULL, "saved" DOUBLE PRECISION NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
@@ -1060,7 +1060,7 @@ FROM "Orders_6"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT \"id\", \"name\", \"sizing\", \"weight_in_gram\", \"type\", \"category\", \"usda_id\", \"updated\", TEXT_SEARCH($1, \"name\") AS \"score\"\nFROM \"Products_8\"\nWHERE TEXT_SEARCH(CAST($1 AS TEXT), \"name\") > 0\nORDER BY TEXT_SEARCH($1, \"name\") DESC NULLS LAST, \"id\" NULLS FIRST",
+            "sql" : "SELECT \"id\", \"name\", \"sizing\", \"weight_in_gram\", \"type\", \"category\", \"usda_id\", \"updated\", TS_RANK_CD(TO_TSVECTOR('english', COALESCE(\"name\", ' ')), WEBSEARCH_TO_TSQUERY('english', $1)) AS \"score\"\nFROM \"Products_8\"\nWHERE (TO_TSVECTOR('english', COALESCE(\"name\", ' ')) @@ WEBSEARCH_TO_TSQUERY('english', CAST($1 AS TEXT)))\nORDER BY TS_RANK_CD(TO_TSVECTOR('english', COALESCE(\"name\", ' ')), WEBSEARCH_TO_TSQUERY('english', $1)) DESC NULLS LAST, \"id\" NULLS FIRST",
             "parameters" : [
               {
                 "type" : "arg",
@@ -1097,7 +1097,7 @@ FROM "Orders_6"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Products_8\"\nWHERE TEXT_SEARCH(CAST($1 AS TEXT), \"name\", \"category\") > 0 AND \"id\" > $2\nORDER BY \"id\" NULLS FIRST",
+            "sql" : "SELECT *\nFROM \"Products_8\"\nWHERE (TO_TSVECTOR('english', COALESCE(\"name\", ' ') || ' ' || COALESCE(\"category\", ' ')) @@ WEBSEARCH_TO_TSQUERY('english', CAST($1 AS TEXT))) AND \"id\" > $2\nORDER BY \"id\" NULLS FIRST",
             "parameters" : [
               {
                 "type" : "arg",
@@ -1126,7 +1126,7 @@ FROM "Orders_6"
     ],
     "schema" : {
       "type" : "string",
-      "schema" : "type CustomerPromotion {\n  customerid: GraphQLBigInteger!\n  first_name: String!\n  last_name: String!\n  email: String!\n  spend: Float!\n  saved: Float!\n}\n\ntype Customers {\n  id: GraphQLBigInteger!\n  first_name: String!\n  last_name: String!\n  email: String!\n  ip_address: String\n  country: String\n  changed_on: GraphQLBigInteger!\n  timestamp: DateTime\n  order_stats(limit: Int = 10, offset: Int = 0): [CustomersOrderStats!]\n  past_purchases(limit: Int = 10, offset: Int = 0): [CustomersPastPurchases!]\n  purchases(limit: Int = 10, offset: Int = 0): [Orders!]\n  spending(limit: Int = 10, offset: Int = 0): [CustomersSpending!]\n}\n\ntype CustomersOrderStats {\n  customerid: GraphQLBigInteger!\n  first_order: DateTime!\n  total_spend: Float!\n  total_saved: Float!\n  num_orders: GraphQLBigInteger!\n}\n\ntype CustomersPastPurchases {\n  customerid: GraphQLBigInteger!\n  productid: GraphQLBigInteger!\n  num_orders: GraphQLBigInteger!\n  total_quantity: GraphQLBigInteger!\n}\n\ntype CustomersSpending {\n  customerid: GraphQLBigInteger!\n  week: DateTime!\n  spend: Float!\n  saved: Float!\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Orders {\n  id: GraphQLBigInteger!\n  customerid: GraphQLBigInteger!\n  time: DateTime!\n  items: [Orders_itemsOutput]!\n  customer(limit: Int = 10, offset: Int = 0): [Customers!]\n  totals(limit: Int = 10, offset: Int = 0): [OrdersTotals!]\n}\n\ntype OrdersTotals {\n  id: GraphQLBigInteger!\n  time: DateTime!\n  customerid: GraphQLBigInteger!\n  price: Float!\n  saving: Float!\n}\n\ntype Orders_itemsOutput {\n  productid: GraphQLBigInteger!\n  quantity: GraphQLBigInteger!\n  unit_price: Float!\n  discount: Float\n}\n\ntype ProductSearch {\n  id: GraphQLBigInteger!\n  name: String!\n  sizing: String!\n  weight_in_gram: GraphQLBigInteger!\n  type: String!\n  category: String!\n  usda_id: GraphQLBigInteger!\n  updated: DateTime!\n  score: Float\n}\n\ntype Products {\n  id: GraphQLBigInteger!\n  name: String!\n  sizing: String!\n  weight_in_gram: GraphQLBigInteger!\n  type: String!\n  category: String!\n  usda_id: GraphQLBigInteger!\n  updated: DateTime!\n}\n\ntype ProductsByCountry {\n  productid: GraphQLBigInteger!\n  country: String\n  quantity: GraphQLBigInteger!\n  spend: Float!\n  weight: GraphQLBigInteger!\n}\n\ntype Query {\n  Customers(id: GraphQLBigInteger, email: String, limit: Int = 10, offset: Int = 0): [Customers!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n  Products(id: GraphQLBigInteger!, limit: Int = 10, offset: Int = 0): [Products!]\n  ProductsByCountry(productid: GraphQLBigInteger!, limit: Int = 10, offset: Int = 0): [ProductsByCountry!]\n  ProductSearch(query: String!, limit: Int = 10, offset: Int = 0): [ProductSearch!]\n  ProductSearchWithId(query: String!, id: Int!, limit: Int = 10, offset: Int = 0): [Products!]\n}\n\ntype Subscription {\n  CustomerPromotion: CustomerPromotion\n}\n"
+      "schema" : "type CustomerPromotion {\n  customerid: GraphQLBigInteger!\n  first_name: String!\n  last_name: String!\n  email: String!\n  spend: Float!\n  saved: Float!\n}\n\ntype Customers {\n  id: GraphQLBigInteger!\n  first_name: String!\n  last_name: String!\n  email: String!\n  ip_address: String\n  country: String\n  changed_on: GraphQLBigInteger!\n  timestamp: DateTime!\n  order_stats(limit: Int = 10, offset: Int = 0): [CustomersOrderStats!]\n  past_purchases(limit: Int = 10, offset: Int = 0): [CustomersPastPurchases!]\n  purchases(limit: Int = 10, offset: Int = 0): [Orders!]\n  spending(limit: Int = 10, offset: Int = 0): [CustomersSpending!]\n}\n\ntype CustomersOrderStats {\n  customerid: GraphQLBigInteger!\n  first_order: DateTime!\n  total_spend: Float!\n  total_saved: Float!\n  num_orders: GraphQLBigInteger!\n}\n\ntype CustomersPastPurchases {\n  customerid: GraphQLBigInteger!\n  productid: GraphQLBigInteger!\n  num_orders: GraphQLBigInteger!\n  total_quantity: GraphQLBigInteger!\n}\n\ntype CustomersSpending {\n  customerid: GraphQLBigInteger!\n  week: DateTime!\n  spend: Float!\n  saved: Float!\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Orders {\n  id: GraphQLBigInteger!\n  customerid: GraphQLBigInteger!\n  time: DateTime!\n  items: [Orders_itemsOutput]!\n  customer(limit: Int = 10, offset: Int = 0): [Customers!]\n  totals(limit: Int = 10, offset: Int = 0): [OrdersTotals!]\n}\n\ntype OrdersTotals {\n  id: GraphQLBigInteger!\n  time: DateTime!\n  customerid: GraphQLBigInteger!\n  price: Float!\n  saving: Float!\n}\n\ntype Orders_itemsOutput {\n  productid: GraphQLBigInteger!\n  quantity: GraphQLBigInteger!\n  unit_price: Float!\n  discount: Float\n}\n\ntype ProductSearch {\n  id: GraphQLBigInteger!\n  name: String!\n  sizing: String!\n  weight_in_gram: GraphQLBigInteger!\n  type: String!\n  category: String!\n  usda_id: GraphQLBigInteger!\n  updated: DateTime!\n  score: Float\n}\n\ntype Products {\n  id: GraphQLBigInteger!\n  name: String!\n  sizing: String!\n  weight_in_gram: GraphQLBigInteger!\n  type: String!\n  category: String!\n  usda_id: GraphQLBigInteger!\n  updated: DateTime!\n}\n\ntype ProductsByCountry {\n  productid: GraphQLBigInteger!\n  country: String\n  quantity: GraphQLBigInteger!\n  spend: Float!\n  weight: GraphQLBigInteger!\n}\n\ntype Query {\n  Customers(id: GraphQLBigInteger, email: String, limit: Int = 10, offset: Int = 0): [Customers!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n  Products(id: GraphQLBigInteger!, limit: Int = 10, offset: Int = 0): [Products!]\n  ProductsByCountry(productid: GraphQLBigInteger!, limit: Int = 10, offset: Int = 0): [ProductsByCountry!]\n  ProductSearch(query: String!, limit: Int = 10, offset: Int = 0): [ProductSearch!]\n  ProductSearchWithId(query: String!, id: Int!, limit: Int = 10, offset: Int = 0): [Products!]\n}\n\ntype Subscription {\n  CustomerPromotion: CustomerPromotion\n}\n"
     }
   }
 }
