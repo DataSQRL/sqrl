@@ -1,5 +1,0 @@
-[FATAL] Could not find module [target.*] at path: [target/*]
-in script:openai-cicd-test.sqrl [1:1]:
-IMPORT target.*;
-^
-
