@@ -324,11 +324,11 @@ public class DatasqrlRun {
         log.info("Executing statement {} of type {}", statement.get("name"), statement.get("type"));
         try (Statement stmt = connection.createStatement()) {
           stmt.execute((String) statement.get("sql"));
+        } catch (Exception e) {
+        	e.printStackTrace();
+        	assert false : e.getMessage();
         }
       }
-    } catch (Exception e) {
-      e.printStackTrace();
-      assert false : e.getMessage();
     }
   }
 

@@ -313,7 +313,7 @@ public class FullUsecasesIT {
   @ParameterizedTest
   @MethodSource("useCaseProvider")
   public void runTestCaseByName(UseCaseTestParameter param, TestInfo testInfo) {
-    if (param.sqrlFileName.equals("math-functions.sqrl")
+    if (param.sqrlFileName.equals("openai-cicd-test.sqrl")
     			  && param.goal.equals("test")
     ) {
       testUseCase(param, testInfo);
