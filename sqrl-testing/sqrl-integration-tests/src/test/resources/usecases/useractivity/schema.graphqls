@@ -1,0 +1,48 @@
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+
+"An arbitrary precision signed integer"
+scalar GraphQLBigInteger
+
+type Mutation {
+  UserTokens(event: UserTokensInput!): UserTokensResultOutput!
+}
+
+type Query {
+  TotalOrgTokens(limit: Int = 10, offset: Int = 0): [TotalOrgTokens!]
+  TotalUserTokens(userid: GraphQLBigInteger!, limit: Int = 10, offset: Int = 0): [TotalUserTokens!]
+  TotalOrgTokensByRange(minTokens: GraphQLBigInteger!, maxTokens: GraphQLBigInteger!, limit: Int = 10, offset: Int = 0): [TotalOrgTokens!]
+}
+
+type Subscription {
+  UsageAlert: UserTokens
+}
+
+type TotalOrgTokens {
+  orgid: GraphQLBigInteger!
+  total_tokens: GraphQLBigInteger!
+  total_requests: GraphQLBigInteger!
+}
+
+type TotalUserTokens {
+  userid: GraphQLBigInteger!
+  total_tokens: GraphQLBigInteger!
+  total_requests: GraphQLBigInteger!
+}
+
+type UserTokens {
+  userid: GraphQLBigInteger!
+  tokens: GraphQLBigInteger!
+  request_time: DateTime!
+}
+
+input UserTokensInput {
+  userid: GraphQLBigInteger!
+  tokens: GraphQLBigInteger!
+}
+
+type UserTokensResultOutput {
+  userid: GraphQLBigInteger!
+  tokens: GraphQLBigInteger!
+  request_time: DateTime!
+}

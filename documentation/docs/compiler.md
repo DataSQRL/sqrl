@@ -160,10 +160,10 @@ docker run --rm -v $PWD:/build datasqrl/cmd test
 
 Options for the Test Command:
 
-|Option/Flag Name| 	Description                                         |
-|--------------|------------------------------------------------------|
-|-s or --snapshot| 	Path to the snapshot files. Defaults to `snapshot`. |
-|--tests| 	Path to test graphql query files. Defaults to `tests`.      |
+| Option/Flag Name  | 	Description                                            |
+|-------------------|---------------------------------------------------------|
+| -s or --snapshots | 	Path to the snapshot files. Defaults to `snapshots`.   |
+| --tests           | 	Path to test graphql query files. Defaults to `tests`. |
 
 The `tests` directory contains GraphQL queries that are executed against the API of the generated data pipeline. 
 
