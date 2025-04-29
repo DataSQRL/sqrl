@@ -3,6 +3,8 @@
  */
 package com.datasqrl.util;
 
+import com.datasqrl.function.InputPreservingFunction;
+import com.google.common.base.Preconditions;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -16,12 +18,13 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
+import lombok.AllArgsConstructor;
+import lombok.NonNull;
+import lombok.Value;
 import org.apache.calcite.avatica.util.TimeUnit;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.core.AggregateCall;
-import org.apache.calcite.rel.logical.LogicalFilter;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeField;
@@ -47,17 +50,9 @@ import org.apache.calcite.sql.type.BasicSqlType;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
-import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableSet;
 import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable;
 import org.apache.flink.table.planner.plan.schema.TimeIndicatorRelDataType;
-
-import com.datasqrl.function.InputPreservingFunction;
-import com.google.common.base.Preconditions;
-
-import lombok.AllArgsConstructor;
-import lombok.NonNull;
-import lombok.Value;
 
 public class CalciteUtil {
 
@@ -72,29 +67,31 @@ public class CalciteUtil {
   public static Optional<Integer> findBestRowTimeIndex(RelDataType type) {
     return type.getFieldList().stream()
         .filter(field -> isRowTime(field.getType()))
-        //Prioritize not null fields, then sort by index increasing
-        .sorted(Comparator
-            .comparing((RelDataTypeField field) -> field.getType().isNullable())
-            .thenComparing(RelDataTypeField::getIndex))
+        // Prioritize not null fields, then sort by index increasing
+        .sorted(
+            Comparator.comparing((RelDataTypeField field) -> field.getType().isNullable())
+                .thenComparing(RelDataTypeField::getIndex))
         .map(RelDataTypeField::getIndex)
         .findFirst();
   }
 
   public static Optional<RelDataType> getNestedTableType(RelDataType type) {
     if (type.isStruct()) {
-        return Optional.of(type);
+      return Optional.of(type);
     }
     return getArrayElementType(type).filter(RelDataType::isStruct);
   }
 
   public static boolean hasNestedTable(RelDataType type) {
     if (!type.isStruct()) {
-        return false;
+      return false;
     }
-    return type.getFieldList().stream().map(RelDataTypeField::getType).anyMatch(CalciteUtil::isNestedTable);
+    return type.getFieldList().stream()
+        .map(RelDataTypeField::getType)
+        .anyMatch(CalciteUtil::isNestedTable);
   }
 
-  public static Function<Integer,String> getFieldName(RelDataType rowType) {
+  public static Function<Integer, String> getFieldName(RelDataType rowType) {
     final var names = rowType.getFieldNames();
     return i -> names.get(i);
   }
@@ -133,29 +130,31 @@ public class CalciteUtil {
         && !datatype.isNullable();
   }
 
-
   public static RelDataTypeBuilder getRelTypeBuilder(@NonNull RelDataTypeFactory factory) {
     return new RelDataTypeFieldBuilder(factory.builder().kind(StructKind.FULLY_QUALIFIED));
   }
 
-  public static RelDataType addField(@NonNull RelDataType relation, int atIndex,
-                                        @NonNull String fieldId,
+  public static RelDataType addField(
+      @NonNull RelDataType relation,
+      int atIndex,
+      @NonNull String fieldId,
       @NonNull RelDataType fieldType,
       @NonNull RelDataTypeFactory factory) {
     Preconditions.checkArgument(relation.isStruct());
     var builder = getRelTypeBuilder(factory);
     var index = 0;
-    if (index==atIndex) {
-        builder.add(fieldId, fieldType);
+    if (index == atIndex) {
+      builder.add(fieldId, fieldType);
     }
     for (RelDataTypeField field : relation.getFieldList()) {
       builder.add(field);
       index++;
-      if (index==atIndex) {
+      if (index == atIndex) {
         builder.add(fieldId, fieldType);
+      }
     }
-    }
-    Preconditions.checkArgument(index>=atIndex, "Provided index [%s] larger than length [%s]", atIndex, index);
+    Preconditions.checkArgument(
+        index >= atIndex, "Provided index [%s] larger than length [%s]", atIndex, index);
     return builder.build();
   }
 
@@ -172,7 +171,7 @@ public class CalciteUtil {
   }
 
   public static Optional<Integer> getInputRef(RexNode rexNode) {
-    if (rexNode instanceof RexInputRef) { //Direct mapping
+    if (rexNode instanceof RexInputRef) { // Direct mapping
       return Optional.of(((RexInputRef) rexNode).getIndex());
     }
     return Optional.empty();
@@ -180,22 +179,27 @@ public class CalciteUtil {
 
   /**
    * Determines the original index of the column with non-altering transformations.
+   *
    * @param rexNode
    * @return
    */
   public static Optional<Integer> getNonAlteredInputRef(RexNode rexNode) {
-    return getInputRefThroughTransform(rexNode, List.of(CAST_TRANSFORM, COALESCE_TRANSFORM, INPUT_PRESERVING_TRANSFORM));
+    return getInputRefThroughTransform(
+        rexNode, List.of(CAST_TRANSFORM, COALESCE_TRANSFORM, INPUT_PRESERVING_TRANSFORM));
   }
 
-  public static Optional<Integer> getInputRefThroughTransform(RexNode rexNode, List<InputRefTransformation> transformations) {
-    if (rexNode instanceof RexInputRef) { //Direct mapping
+  public static Optional<Integer> getInputRefThroughTransform(
+      RexNode rexNode, List<InputRefTransformation> transformations) {
+    if (rexNode instanceof RexInputRef) { // Direct mapping
       return Optional.of(((RexInputRef) rexNode).getIndex());
     } else if (rexNode instanceof RexCall call) {
       var operator = call.getOperator();
       var operands = call.getOperands();
-      Optional<InputRefTransformation> transform = StreamUtil.getOnlyElement(transformations.stream()
-              .filter(t -> t.appliesTo(operator)));
-      return transform.filter(t -> t.validate(operator, operands)).flatMap(t -> getNonAlteredInputRef(t.getOperand(operator, operands)));
+      Optional<InputRefTransformation> transform =
+          StreamUtil.getOnlyElement(transformations.stream().filter(t -> t.appliesTo(operator)));
+      return transform
+          .filter(t -> t.validate(operator, operands))
+          .flatMap(t -> getNonAlteredInputRef(t.getOperand(operator, operands)));
     }
     return Optional.empty();
   }
@@ -203,44 +207,47 @@ public class CalciteUtil {
   public interface InputRefTransformation {
 
     boolean appliesTo(SqlOperator operator);
+
     boolean validate(SqlOperator operator, List<RexNode> operands);
 
     RexNode getOperand(SqlOperator operator, List<RexNode> operands);
-
   }
 
-  public static final InputRefTransformation INPUT_PRESERVING_TRANSFORM = new InputRefTransformation() {
-    @Override
-    public boolean appliesTo(SqlOperator operator) {
-      return FunctionUtil.getBridgedFunction(operator)
+  public static final InputRefTransformation INPUT_PRESERVING_TRANSFORM =
+      new InputRefTransformation() {
+        @Override
+        public boolean appliesTo(SqlOperator operator) {
+          return FunctionUtil.getBridgedFunction(operator)
               .flatMap(CalciteUtil::getInputPreservingFunction)
               .isPresent();
-    }
+        }
 
-    @Override
-    public boolean validate(SqlOperator operator, List<RexNode> operands) {
-      return true;
-    }
+        @Override
+        public boolean validate(SqlOperator operator, List<RexNode> operands) {
+          return true;
+        }
 
-    @Override
-    public RexNode getOperand(SqlOperator operator, List<RexNode> operands) {
-      var index = FunctionUtil.getBridgedFunction(operator)
-              .flatMap(CalciteUtil::getInputPreservingFunction)
-              .get()
-              .preservedOperandIndex();
-      return operands.get(index);
-    }
-  };
+        @Override
+        public RexNode getOperand(SqlOperator operator, List<RexNode> operands) {
+          var index =
+              FunctionUtil.getBridgedFunction(operator)
+                  .flatMap(CalciteUtil::getInputPreservingFunction)
+                  .get()
+                  .preservedOperandIndex();
+          return operands.get(index);
+        }
+      };
 
-  private static Optional<InputPreservingFunction> getInputPreservingFunction(FunctionDefinition functionDefinition) {
+  private static Optional<InputPreservingFunction> getInputPreservingFunction(
+      FunctionDefinition functionDefinition) {
     return FunctionUtil.getFunctionMetaData(functionDefinition, InputPreservingFunction.class);
   }
 
-
-  public static final InputRefTransformation COALESCE_TRANSFORM = new BasicInputRefTransformation("coalesce",
-          ops -> ops.size()==2 && (ops.get(1) instanceof RexLiteral), 0);
-  public static final InputRefTransformation CAST_TRANSFORM = new BasicInputRefTransformation("cast",
-          ops -> ops.size()==1, 0);
+  public static final InputRefTransformation COALESCE_TRANSFORM =
+      new BasicInputRefTransformation(
+          "coalesce", ops -> ops.size() == 2 && (ops.get(1) instanceof RexLiteral), 0);
+  public static final InputRefTransformation CAST_TRANSFORM =
+      new BasicInputRefTransformation("cast", ops -> ops.size() == 1, 0);
 
   @Value
   public static class BasicInputRefTransformation implements InputRefTransformation {
@@ -269,22 +276,21 @@ public class CalciteUtil {
     return operator.isName(operatorName, false);
   }
 
-
   public static Optional<Integer> isEqualToConstant(RexNode rexNode) {
     int arity;
     if (rexNode.isA(SqlKind.EQUALS)) {
-        arity = 2;
+      arity = 2;
     } else if (rexNode.isA(SqlKind.IS_NULL)) {
-        arity = 1;
+      arity = 1;
     } else {
-        return Optional.empty();
+      return Optional.empty();
     }
 
     var operands = ((RexCall) rexNode).getOperands();
-    assert arity==1 || arity==2;
-    if (arity==1 || isConstant(operands.get(1))) {
+    assert arity == 1 || arity == 2;
+    if (arity == 1 || isConstant(operands.get(1))) {
       return getInputRefThroughTransform(operands.get(0), List.of(CAST_TRANSFORM));
-    } else if (arity==2 && isConstant(operands.get(0))) {
+    } else if (arity == 2 && isConstant(operands.get(0))) {
       return getInputRefThroughTransform(operands.get(1), List.of(CAST_TRANSFORM));
     }
     return Optional.empty();
@@ -293,34 +299,36 @@ public class CalciteUtil {
   public static int indexOf(String columnName, RelDataType type) {
     RelDataTypeField field = type.getField(columnName, false, false);
     if (field == null) {
-        return -1;
+      return -1;
     } else {
-        return field.getIndex();
+      return field.getIndex();
     }
   }
 
   public static boolean isConstant(RexNode rexNode) {
     if (rexNode instanceof RexLiteral || rexNode instanceof RexDynamicParam) {
-        return true;
+      return true;
     }
     if (rexNode instanceof RexFieldAccess) {
       if (((RexFieldAccess) rexNode).getReferenceExpr() instanceof RexCorrelVariable) {
         return true;
-    }
+      }
     }
     return false;
   }
 
-  public static void addProjection(@NonNull RelBuilder relBuilder, @NonNull List<Integer> selectIdx,
-      List<String> fieldNames) {
+  public static void addProjection(
+      @NonNull RelBuilder relBuilder, @NonNull List<Integer> selectIdx, List<String> fieldNames) {
     addProjection(relBuilder, selectIdx, fieldNames, false);
   }
 
   public static List<RexNode> getIdentityRex(@NonNull RelBuilder relBuilder, @NonNull int firstN) {
-    return getSelectRex(relBuilder, IntStream.range(0,firstN).boxed().collect(Collectors.toUnmodifiableList()));
+    return getSelectRex(
+        relBuilder, IntStream.range(0, firstN).boxed().collect(Collectors.toUnmodifiableList()));
   }
 
-  public static List<RexNode> getSelectRex(@NonNull RelBuilder relBuilder, @NonNull List<Integer> selectIdx) {
+  public static List<RexNode> getSelectRex(
+      @NonNull RelBuilder relBuilder, @NonNull List<Integer> selectIdx) {
     Preconditions.checkArgument(!selectIdx.isEmpty());
     List<RexNode> rexList = new ArrayList<>(selectIdx.size());
     var inputType = relBuilder.peek().getRowType();
@@ -328,24 +336,32 @@ public class CalciteUtil {
     return rexList;
   }
 
-  public static void addColumn(@NonNull RelBuilder relBuilder, @NonNull RexNode rexNode, @NonNull String columnName) {
+  public static void addColumn(
+      @NonNull RelBuilder relBuilder, @NonNull RexNode rexNode, @NonNull String columnName) {
     var cols = relBuilder.peek().getRowType().getFieldCount();
     var selects = CalciteUtil.getIdentityRex(relBuilder, cols);
     selects.add(rexNode);
-    List<String> fieldNames = IntStream.range(0,cols+1).mapToObj(i -> i<cols?null:columnName).collect(
-        Collectors.toList());
+    List<String> fieldNames =
+        IntStream.range(0, cols + 1)
+            .mapToObj(i -> i < cols ? null : columnName)
+            .collect(Collectors.toList());
     assert selects.size() == fieldNames.size();
     relBuilder.project(selects, fieldNames);
   }
 
-  public static void addProjection(@NonNull RelBuilder relBuilder, @NonNull List<Integer> selectIdx,
-      List<String> fieldNames, boolean force) {
+  public static void addProjection(
+      @NonNull RelBuilder relBuilder,
+      @NonNull List<Integer> selectIdx,
+      List<String> fieldNames,
+      boolean force) {
     if (fieldNames == null || fieldNames.isEmpty()) {
       fieldNames = Collections.nCopies(selectIdx.size(), null);
     }
     Preconditions.checkArgument(selectIdx.size() == fieldNames.size());
-    relBuilder.project(getSelectRex(relBuilder, selectIdx), fieldNames,
-        force); //Need to force otherwise Calcite eliminates the project
+    relBuilder.project(
+        getSelectRex(relBuilder, selectIdx),
+        fieldNames,
+        force); // Need to force otherwise Calcite eliminates the project
   }
 
   @Value
@@ -380,8 +396,8 @@ public class CalciteUtil {
     }
   }
 
-  public static RelNode applyRexShuttleRecursively(@NonNull RelNode node,
-      @NonNull final RexShuttle rexShuttle) {
+  public static RelNode applyRexShuttleRecursively(
+      @NonNull RelNode node, @NonNull final RexShuttle rexShuttle) {
     return node.accept(new RexShuttleApplier(rexShuttle));
   }
 
@@ -392,14 +408,15 @@ public class CalciteUtil {
 
     @Override
     protected RelNode visitChild(RelNode parent, int i, RelNode child) {
-      if (i==0) {
+      if (i == 0) {
         parent = parent.accept(rexShuttle);
-    }
+      }
       return super.visitChild(parent, i, child);
     }
   }
 
-  public static RelNode replaceParameters(@NonNull RelNode node, @NonNull List<RexNode> parameters) {
+  public static RelNode replaceParameters(
+      @NonNull RelNode node, @NonNull List<RexNode> parameters) {
     return applyRexShuttleRecursively(node, new RexParameterReplacer(parameters, node));
   }
 
@@ -412,17 +429,21 @@ public class CalciteUtil {
     @Override
     public RexNode visitDynamicParam(RexDynamicParam dynamicParam) {
       var index = dynamicParam.getIndex();
-      Preconditions.checkArgument(index>=0 && index<parameters.size(),
-          "Query parameter index [%s] is out of bounds [%s] in: %s", relNode);
+      Preconditions.checkArgument(
+          index >= 0 && index < parameters.size(),
+          "Query parameter index [%s] is out of bounds [%s] in: %s",
+          relNode);
       return parameters.get(index);
     }
-
   }
 
   public static RexNode makeTimeInterval(long interval_ms, RexBuilder rexBuilder) {
     var intervalStr = Long.toString(interval_ms);
     var sqlIntervalQualifier =
-        new SqlIntervalQualifier(TimeUnit.SECOND, getPrecision(intervalStr), TimeUnit.SECOND,
+        new SqlIntervalQualifier(
+            TimeUnit.SECOND,
+            getPrecision(intervalStr),
+            TimeUnit.SECOND,
             getFracPrecision(intervalStr),
             SqlParserPos.ZERO);
     return rexBuilder.makeIntervalLiteral(new BigDecimal(interval_ms), sqlIntervalQualifier);
@@ -444,16 +465,24 @@ public class CalciteUtil {
   public static AggregateCall makeNotNull(AggregateCall call, RelDataTypeFactory typeFactory) {
     if (call.getType().isNullable()) {
       var type = typeFactory.createTypeWithNullability(call.getType(), false);
-      return AggregateCall.create(call.getAggregation(), call.isDistinct(), call.isApproximate(), call.ignoreNulls(), call.getArgList(),
-          call.filterArg, call.collation, type, call.name);
+      return AggregateCall.create(
+          call.getAggregation(),
+          call.isDistinct(),
+          call.isApproximate(),
+          call.ignoreNulls(),
+          call.getArgList(),
+          call.filterArg,
+          call.collation,
+          type,
+          call.name);
     } else {
       return call;
     }
   }
 
   /**
-   * If the given RexNode is a comparison with the literal '0', this method returns
-   * the RexNode on the other side of the comparison and an integer that
+   * If the given RexNode is a comparison with the literal '0', this method returns the RexNode on
+   * the other side of the comparison and an integer that
    *
    * @param rexNode
    * @return
@@ -461,8 +490,8 @@ public class CalciteUtil {
   public static Optional<RexNode> isGreaterZero(RexNode rexNode) {
     if (rexNode.isA(SqlKind.BINARY_COMPARISON)) {
       Preconditions.checkArgument(rexNode instanceof RexCall);
-      var operands = ((RexCall)rexNode).getOperands();
-      Preconditions.checkArgument(operands.size()==2);
+      var operands = ((RexCall) rexNode).getOperands();
+      Preconditions.checkArgument(operands.size() == 2);
       if (isZero(operands.get(0))) {
         if (rexNode.isA(SqlKind.NOT_EQUALS) || rexNode.isA(SqlKind.LESS_THAN)) {
           return Optional.of(operands.get(1));
@@ -483,116 +512,140 @@ public class CalciteUtil {
     return false;
   }
 
-  public static void addFilteredDeduplication(RelBuilder relB, int timestampIdx, List<Integer> partition, int orderColIdx) {
-    Preconditions.checkArgument(!partition.contains(timestampIdx), "Timestamp column cannot be part of the partition");
-    Preconditions.checkArgument(!partition.contains(orderColIdx), "Order column cannot be part of the partition");
+  public static void addFilteredDeduplication(
+      RelBuilder relB, int timestampIdx, List<Integer> partition, int orderColIdx) {
+    Preconditions.checkArgument(
+        !partition.contains(timestampIdx), "Timestamp column cannot be part of the partition");
+    Preconditions.checkArgument(
+        !partition.contains(orderColIdx), "Order column cannot be part of the partition");
     var rexBuilder = relB.getCluster().getRexBuilder();
 
     var partitionKeys = getSelectRex(relB, partition);
     var fieldNames = relB.peek().getRowType().getFieldNames();
     var numFields = fieldNames.size();
-    List<Integer> originalFieldIdx = IntStream.range(0,numFields).boxed().collect(Collectors.toUnmodifiableList());
+    List<Integer> originalFieldIdx =
+        IntStream.range(0, numFields).boxed().collect(Collectors.toUnmodifiableList());
 
     // MAX function over the window
-    var rexOver = rexBuilder.makeOver(
-        relB.field(orderColIdx).getType(),
-        SqlStdOperatorTable.MAX,
-        ImmutableList.of(relB.field(orderColIdx)),
-        partitionKeys,
-        ImmutableList.of(new RexFieldCollation(relB.field(timestampIdx), Set.of())),
-        RexWindowBounds.UNBOUNDED_PRECEDING,
-        RexWindowBounds.CURRENT_ROW,
-        false,
-        true,
-        false,
-        false,
-        true
-    );
+    var rexOver =
+        rexBuilder.makeOver(
+            relB.field(orderColIdx).getType(),
+            SqlStdOperatorTable.MAX,
+            ImmutableList.of(relB.field(orderColIdx)),
+            partitionKeys,
+            ImmutableList.of(new RexFieldCollation(relB.field(timestampIdx), Set.of())),
+            RexWindowBounds.UNBOUNDED_PRECEDING,
+            RexWindowBounds.CURRENT_ROW,
+            false,
+            true,
+            false,
+            false,
+            true);
 
     // Adding projection that computes a running max for the order col
     List<RexNode> projects = new ArrayList<>(relB.fields());
     projects.add(rexOver);
     relB.project(projects);
 
-    // Filter out rows that aren't bigger or equal to the running max for order col (i.e. out of order data)
-    var condition = relB.call(SqlStdOperatorTable.GREATER_THAN_OR_EQUAL, relB.field(orderColIdx), relB.field(numFields));
+    // Filter out rows that aren't bigger or equal to the running max for order col (i.e. out of
+    // order data)
+    var condition =
+        relB.call(
+            SqlStdOperatorTable.GREATER_THAN_OR_EQUAL,
+            relB.field(orderColIdx),
+            relB.field(numFields));
     relB.filter(condition);
 
-    //Compute the lag for all columns other than the order and timestamp column, ordered by timestamp
-    Function<Integer, RexNode> lagFunction = idx -> rexBuilder.makeOver(
-        relB.field(idx).getType(),
-        FlinkSqlOperatorTable.LAG,
-        ImmutableList.of(relB.field(idx), rexBuilder.makeExactLiteral(BigDecimal.ONE)),
-        partitionKeys,
-        ImmutableList.of(new RexFieldCollation(relB.field(timestampIdx), Set.of())),
-        RexWindowBounds.UNBOUNDED_PRECEDING,
-        RexWindowBounds.CURRENT_ROW,
-        false,
-        true,
-        false,
-        false,
-        false
-    );
+    // Compute the lag for all columns other than the order and timestamp column, ordered by
+    // timestamp
+    Function<Integer, RexNode> lagFunction =
+        idx ->
+            rexBuilder.makeOver(
+                rexBuilder
+                    .getTypeFactory()
+                    .createTypeWithNullability(relB.field(idx).getType(), true),
+                FlinkSqlOperatorTable.LAG,
+                ImmutableList.of(relB.field(idx), rexBuilder.makeExactLiteral(BigDecimal.ONE)),
+                partitionKeys,
+                ImmutableList.of(new RexFieldCollation(relB.field(timestampIdx), Set.of())),
+                RexWindowBounds.UNBOUNDED_PRECEDING,
+                RexWindowBounds.CURRENT_ROW,
+                false,
+                true,
+                false,
+                false,
+                false);
 
     projects = new ArrayList<>(relB.fields(originalFieldIdx));
     Map<Integer, Integer> lagPairs = new HashMap<>();
     var offset = numFields;
     for (var i = 0; i < numFields; i++) {
-      if (i==orderColIdx || i==timestampIdx || partition.contains(i)) {
+      if (i == orderColIdx || i == timestampIdx || partition.contains(i)) {
         continue;
-    }
+      }
       projects.add(lagFunction.apply(i));
       lagPairs.put(i, offset++);
     }
     relB.project(projects);
-    Preconditions.checkArgument(!lagPairs.isEmpty(), "Expected at least column that's not a partition key or timestamp");
+    Preconditions.checkArgument(
+        !lagPairs.isEmpty(), "Expected at least column that's not a partition key or timestamp");
 
-    //Filter out records where all column values other than timestamps, order column, and partition columns are identical
-    //NOTE: We have to compose some logical formula manually to avoid reduction
+    // Filter out records where all column values other than timestamps, order column, and partition
+    // columns are identical
     List<RexNode> anyColumnDifferent = new ArrayList<>();
-    //unless it's the first record which we check by looking if all lag columns are null
-    List<RexNode> allColsNull = lagPairs.values().stream()
-        .map(idx -> relB.isNull(relB.field(idx)))
-        .collect(Collectors.toList());
-    var isFirstRow = allColsNull.size()==1?allColsNull.get(0):
-        rexBuilder.makeCall(SqlStdOperatorTable.AND, allColsNull);
+    // unless it's the first record which we check by looking if all lag columns are null
+    var isFirstRow =
+        relB.and(
+            lagPairs.values().stream()
+                .map(idx -> relB.isNull(relB.field(idx)))
+                .collect(Collectors.toList()));
     anyColumnDifferent.add(isFirstRow);
     for (var i = 0; i < numFields; i++) {
-      if (i==orderColIdx || i==timestampIdx || partition.contains(i)) {
+      if (i == orderColIdx || i == timestampIdx || partition.contains(i)) {
         continue;
-    }
+      }
       RexNode col = relB.field(i);
-      Preconditions.checkArgument(!CalciteUtil.isNestedTable(col.getType()),
-          "Filtered distinct not supported on nested data [column %s]", fieldNames.get(i));
+      Preconditions.checkArgument(
+          !CalciteUtil.isNestedTable(col.getType()),
+          "Filtered distinct not supported on nested data [column %s]",
+          fieldNames.get(i));
       RexNode colLag = relB.field(lagPairs.get(i));
 
       var notEqualCondition = relB.call(SqlStdOperatorTable.NOT_EQUALS, col, colLag);
       anyColumnDifferent.add(notEqualCondition);
       if (col.getType().isNullable()) {
-        anyColumnDifferent.add(rexBuilder.makeCall(SqlStdOperatorTable.AND,
-            List.of(relB.isNull(col), relB.isNotNull(colLag))));
-        anyColumnDifferent.add(rexBuilder.makeCall(SqlStdOperatorTable.AND,
-            List.of(relB.isNotNull(col), relB.isNull(colLag))));
+        anyColumnDifferent.add(relB.and(List.of(relB.isNull(col), relB.isNotNull(colLag))));
+        anyColumnDifferent.add(relB.and(List.of(relB.isNotNull(col), relB.isNull(colLag))));
       }
     }
-    relB.push(LogicalFilter.create(relB.peek(), rexBuilder.makeCall(SqlStdOperatorTable.OR,anyColumnDifferent), ImmutableSet.of()));
-//    relB.filter();
-
-    //Project to original fields
+    relB.filter(relB.or(anyColumnDifferent));
+    // Project to original fields
     relB.project(relB.fields(originalFieldIdx));
   }
 
   public static boolean isPotentialPrimaryKeyType(RelDataType type) {
     if (type.isNullable() || !(type instanceof BasicSqlType)) {
-        return false;
+      return false;
     }
     var sqlType = type.getSqlTypeName();
     return switch (sqlType) {
-    case CHAR, VARCHAR, BOOLEAN, TINYINT, SMALLINT, INTEGER, BIGINT, FLOAT, REAL, DOUBLE, DATE, TIME,
-            TIMESTAMP, TIMESTAMP_WITH_LOCAL_TIME_ZONE, TIME_WITH_LOCAL_TIME_ZONE, DECIMAL ->
-        true;
-    default -> false;
+      case CHAR,
+          VARCHAR,
+          BOOLEAN,
+          TINYINT,
+          SMALLINT,
+          INTEGER,
+          BIGINT,
+          FLOAT,
+          REAL,
+          DOUBLE,
+          DATE,
+          TIME,
+          TIMESTAMP,
+          TIMESTAMP_WITH_LOCAL_TIME_ZONE,
+          TIME_WITH_LOCAL_TIME_ZONE,
+          DECIMAL -> true;
+      default -> false;
     };
   }
-
 }

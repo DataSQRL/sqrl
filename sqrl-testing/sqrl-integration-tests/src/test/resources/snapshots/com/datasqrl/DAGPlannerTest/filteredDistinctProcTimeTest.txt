@@ -42,7 +42,7 @@ LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], _ingest
   LogicalFilter(condition=[=($5, 1)])
     LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], _ingest_time=[$4], $f5=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $3 DESC NULLS LAST)])
       LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], _ingest_time=[$4])
-        LogicalFilter(condition=[OR(AND(IS NULL($5), IS NULL($6)), <>($1, $5), AND(IS NULL($1), IS NOT NULL($5)), AND(IS NOT NULL($1), IS NULL($5)), <>($2, $6))])
+        LogicalFilter(condition=[OR(AND(IS NULL($5), IS NULL($6)), <>($1, $5), AND(IS NULL($1), IS NOT NULL($5)), AND(IS NULL($5), IS NOT NULL($1)), <>($2, $6))])
           LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], _ingest_time=[$4], $f5=[LAG($1, 1) OVER (PARTITION BY $0 ORDER BY $4 NULLS FIRST)], $f6=[LAG($2, 1) OVER (PARTITION BY $0 ORDER BY $4 NULLS FIRST)])
             LogicalFilter(condition=[>=($3, $5)])
               LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], _ingest_time=[$4], $f5=[MAX($3) OVER (PARTITION BY $0 ORDER BY $4 NULLS FIRST)])
@@ -56,7 +56,7 @@ FROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `_ingest_time`, ROW_N
       FROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `_ingest_time`, MAX(`lastUpdated`) OVER (PARTITION BY `customerid` ORDER BY `_ingest_time` RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS `$f5`
         FROM `default_catalog`.`default_database`.`Customer`) AS `t`
       WHERE `lastUpdated` >= `$f5`) AS `t1`
-    WHERE `$f5` IS NULL AND `$f6` IS NULL OR `email` <> `$f5` OR `email` IS NULL AND `$f5` IS NOT NULL OR `email` IS NOT NULL AND `$f5` IS NULL OR `name` <> `$f6`) AS `t3`) AS `t4`
+    WHERE `$f5` IS NULL AND `$f6` IS NULL OR `email` <> `$f5` OR `email` IS NULL AND `$f5` IS NOT NULL OR `$f5` IS NULL AND `email` IS NOT NULL OR `name` <> `$f6`) AS `t3`) AS `t4`
 WHERE `$f5` = 1
 === DistinctOrderFieldsWoutTs
 ID:     default_catalog.default_database.DistinctOrderFieldsWoutTs
@@ -238,7 +238,7 @@ FROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `_ingest_time`, ROW_N
       FROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `_ingest_time`, MAX(`lastUpdated`) OVER (PARTITION BY `customerid` ORDER BY `_ingest_time` RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS `$f5`
         FROM `default_catalog`.`default_database`.`Customer`) AS `t`
       WHERE `lastUpdated` >= `$f5`) AS `t1`
-    WHERE `$f5` IS NULL AND `$f6` IS NULL OR `email` <> `$f5` OR `email` IS NULL AND `$f5` IS NOT NULL OR `email` IS NOT NULL AND `$f5` IS NULL OR `name` <> `$f6`) AS `t3`) AS `t4`
+    WHERE `$f5` IS NULL AND `$f6` IS NULL OR `email` <> `$f5` OR `email` IS NULL AND `$f5` IS NOT NULL OR `$f5` IS NULL AND `email` IS NOT NULL OR `name` <> `$f6`) AS `t3`) AS `t4`
 WHERE `$f5` = 1;
 CREATE TABLE `Customer_1` (
   `customerid` BIGINT NOT NULL,
