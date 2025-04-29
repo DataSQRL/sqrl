@@ -1,25 +1,16 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
+  <parent>
+    <groupId>com.datasqrl</groupId>
+    <artifactId>sqrl-root</artifactId>
+    <version>0.6.0-SNAPSHOT</version>
+  </parent>
+
   <artifactId>sqrl-flink-lib</artifactId>
-  <groupId>com.datasqrl</groupId>
-  <version>0.6.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
-  <properties>
-    <maven.compiler.source>17</maven.compiler.source>
-    <maven.compiler.target>17</maven.compiler.target>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <flink.version>1.19.0</flink.version>
-    <postgres.version>42.5.0</postgres.version>
-    <testcontainers.version>1.18.0</testcontainers.version>
-  </properties>
-
   <modules>
-    <module>sqrl-lib-common</module>
-    <module>sqrl-secure</module>
-    <module>sqrl-text</module>
-    <module>sqrl-time</module>
     <module>sqrl-name</module>
     <module>sqrl-errors</module>
   </modules>
@@ -59,12 +50,6 @@
       <dependency>
         <groupId>com.datasqrl</groupId>
         <artifactId>sqrl-secure</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.datasqrl</groupId>
-        <artifactId>sqrl-text</artifactId>
         <version>${project.version}</version>
       </dependency>
 

@@ -39,7 +39,7 @@ public class JsonExtractTranslation implements OperatorRuleTransform {
 
   @Override
   public String getRuleOperatorName() {
-    return "jsonextract";
+    return "jsonb_extract";
   }
 
   private List<RelRule> postgresTransform(SqlOperator operator) {

@@ -1,12 +1,12 @@
 package com.datasqrl.functions.vector;
 
-import static com.datasqrl.types.vector.functions.VectorFunctions.ASCII_TEXT_TEST_EMBED;
-import static com.datasqrl.types.vector.functions.VectorFunctions.CENTER;
-import static com.datasqrl.types.vector.functions.VectorFunctions.COSINE_DISTANCE;
-import static com.datasqrl.types.vector.functions.VectorFunctions.COSINE_SIMILARITY;
-import static com.datasqrl.types.vector.functions.VectorFunctions.DOUBLE_TO_VECTOR;
-import static com.datasqrl.types.vector.functions.VectorFunctions.EUCLIDEAN_DISTANCE;
-import static com.datasqrl.types.vector.functions.VectorFunctions.VEC_TO_DOUBLE;
+import static com.datasqrl.flinkrunner.functions.vector.VectorFunctions.ASCII_TEXT_TEST_EMBED;
+import static com.datasqrl.flinkrunner.functions.vector.VectorFunctions.CENTER;
+import static com.datasqrl.flinkrunner.functions.vector.VectorFunctions.COSINE_DISTANCE;
+import static com.datasqrl.flinkrunner.functions.vector.VectorFunctions.COSINE_SIMILARITY;
+import static com.datasqrl.flinkrunner.functions.vector.VectorFunctions.DOUBLE_TO_VECTOR;
+import static com.datasqrl.flinkrunner.functions.vector.VectorFunctions.EUCLIDEAN_DISTANCE;
+import static com.datasqrl.flinkrunner.functions.vector.VectorFunctions.VEC_TO_DOUBLE;
 
 import java.util.List;
 import java.util.stream.Collectors;

@@ -4,12 +4,9 @@ import static org.junit.Assume.assumeFalse;
 
 import java.nio.file.Path;
 
-import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
-import org.junit.jupiter.params.provider.MethodSource;
-
-import com.datasqrl.FullUsecasesIT.UseCaseTestParameter;
 
 import lombok.SneakyThrows;
 
@@ -22,7 +19,7 @@ public class UseCaseCompileTest extends AbstractUseCaseTest {
   public static final Path USECASE_DIR = getResourcesDirectory("usecases");
 
   @Override
-@SneakyThrows
+  @SneakyThrows
   @ParameterizedTest
   @ArgumentsSource(UseCaseFiles.class)
   void testUsecase(Path script, Path graphQlFile, Path packageFile) {
@@ -34,4 +31,18 @@ public class UseCaseCompileTest extends AbstractUseCaseTest {
       super(USECASE_DIR, true);
     }
   }
+  
+
+  @Disabled
+  @ParameterizedTest
+  @ArgumentsSource(UseCaseFiles.class)
+  public void runTestCaseByName(Path script, Path graphQlFile, Path packageFile) {
+    if (script.toString().endsWith("math-functions.sqrl")
+    ) {
+    	  super.testUsecase(script, graphQlFile, packageFile);
+    } else {
+      assumeFalse(true);
+    }
+  }
+
 }

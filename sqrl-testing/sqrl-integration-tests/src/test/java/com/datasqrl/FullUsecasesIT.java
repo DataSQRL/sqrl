@@ -77,8 +77,6 @@ public class FullUsecasesIT {
           new ScriptCriteria("analytics-only.sqrl", "run"),
           new ScriptCriteria("postgres-log-disabled.sqrl", "test"),
           new ScriptCriteria("postgres-log-disabled.sqrl", "run"),
-          new ScriptCriteria("seedshop-extended.sqrl", "test"), // CustomerPromotionTest issue TODO
-          new ScriptCriteria("seedshop-extended.sqrl", "run"), // CustomerPromotionTest issue TODO
           new ScriptCriteria("connectors.sqrl", "test"), // should not be executed
           new ScriptCriteria("flink_kafka.sqrl", "run") // does not expose an API
           );
@@ -89,10 +87,13 @@ public class FullUsecasesIT {
 
   UseCaseTestExtensions testExtensions = new UseCaseTestExtensions();
 
+  boolean executed = false;
+
   @AfterEach
   public void tearDown() throws Exception {
-    if (containerHook != null) {
+    if (containerHook != null && executed) {
       containerHook.clear();
+      executed = false;
     }
   }
 
@@ -113,10 +114,17 @@ public class FullUsecasesIT {
 
   @AllArgsConstructor
   @Getter
-  @ToString
   public static class UseCaseTestParameter {
 
-    String parentDirectory;
+    @Override
+  public String toString() {
+    return "UseCaseTestParameter [useCaseName=" + useCaseName + ", sqrlFileName=" + sqrlFileName
+        + ", parentDirectory=" + parentDirectory + ", goal=" + goal + ", graphqlFileName=" + graphqlFileName
+        + ", testName=" + testName + ", testPath=" + testPath + ", optionalParam=" + optionalParam
+        + ", packageJsonPath=" + packageJsonPath + "]";
+  }
+
+  String parentDirectory;
     String goal;
     String useCaseName;
     String sqrlFileName;
@@ -151,6 +159,9 @@ public class FullUsecasesIT {
           .isTrue();
       return;
     }
+
+    executed = true;
+
     this.snapshot =
         Snapshot.of(
             FullUsecasesIT.class,
@@ -264,7 +275,7 @@ public class FullUsecasesIT {
       }
 
       engines.accept(
-          new TestExecutionEnv(param.getUseCaseName(), packageJson, rootDir, snapshot), context);
+          new TestExecutionEnv(param.getSqrlFileName() + ":" + param.goal, packageJson, rootDir, snapshot), context);
       if (run != null) {
         run.stop();
       }
@@ -305,10 +316,9 @@ public class FullUsecasesIT {
 
   @ParameterizedTest
   @MethodSource("useCaseProvider")
-  @Disabled
   public void runTestCaseByName(UseCaseTestParameter param, TestInfo testInfo) {
-    if (param.sqrlFileName.equals("avro-schema.sqrl")
-    //			  && param.goal.equals("run")
+    if (param.sqrlFileName.equals("seedshop-extended.sqrl")
+            && param.goal.equals("run")
     ) {
       testUseCase(param, testInfo);
     } else {

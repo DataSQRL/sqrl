@@ -102,7 +102,7 @@
     </dependency>
     <dependency>
       <groupId>com.datasqrl.flinkrunner</groupId>
-      <artifactId>system-functions-discovery</artifactId>
+      <artifactId>functions-common</artifactId>
     </dependency>
     <dependency>
       <groupId>com.datasqrl.flinkrunner</groupId>
@@ -119,6 +119,18 @@
     <dependency>
       <groupId>com.datasqrl.flinkrunner</groupId>
       <artifactId>kafka-safe-connector</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl.flinkrunner</groupId>
+      <artifactId>text-functions</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl.flinkrunner</groupId>
+      <artifactId>math-functions</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl.flinkrunner</groupId>
+      <artifactId>openai-functions</artifactId>
     </dependency>
     <dependency>
       <groupId>com.datasqrl.flinkrunner</groupId>
@@ -196,6 +208,11 @@
           <artifactId>netty</artifactId>
         </exclusion>
       </exclusions>
+    </dependency>
+
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>sqrl-functions</artifactId>
     </dependency>
   </dependencies>
 
