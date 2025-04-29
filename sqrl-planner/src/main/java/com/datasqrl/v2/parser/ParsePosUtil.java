@@ -22,13 +22,13 @@ public class ParsePosUtil {
     return new FileLocation(parsePos.getLineNum(), parsePos.getColumnNum());
   }
 
-  public static Optional<MessageLocation> convertFlinkParserException(Exception e) {
+  public static Optional<MessageLocation> convertFlinkParserException(Throwable e) {
     if (e instanceof StatementParserException) {
         return Optional.empty();
     }
     if (e.getCause() instanceof SqlParseException || e.getCause() instanceof SqlValidateException
       || e.getCause() instanceof CalciteContextException) {
-      e = (Exception) e.getCause();
+      e = e.getCause();
     }
     if (e instanceof SqlParseException || e instanceof SqlValidateException) {
       var location = ParsePosUtil.convertPosition((e instanceof SqlParseException spe)?spe.getPos():

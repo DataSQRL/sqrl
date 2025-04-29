@@ -1,0 +1,14 @@
+mutation {
+    Token1: UserTokens(event: {userid: 1, tokens: 500}) {
+        userid
+    }
+    Token2: UserTokens(event: {userid: 2, tokens: 100}) {
+        userid
+    }
+    Token3: UserTokens(event: {userid: 2, tokens: 200}) {
+        userid
+    }
+    Token4: UserTokens(event: {userid: 1, tokens: 700}) {
+        userid
+    }
+}

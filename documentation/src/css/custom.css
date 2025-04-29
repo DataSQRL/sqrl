@@ -1,0 +1,198 @@
+/**
+ * Any CSS included here will be global. The classic template
+ * bundles Infima by default. Infima is a CSS framework designed to
+ * work well for content-centric websites.
+ */
+
+/* You can override the default Infima variables here. */
+:root {
+  --ifm-color-primary: #2FA4DA;
+  --ifm-color-primary-dark: #1F80AD;
+  --ifm-color-primary-darker: #155A79;
+  --ifm-color-primary-darkest: #0C3345;
+  --ifm-color-primary-light: #63BBE3;
+  --ifm-color-primary-lighter: #97D2ED;
+  --ifm-color-primary-lightest: #CBE8F6;
+
+  --ifm-color-secondary: #D77732;
+  --ifm-color-secondary-dark: #A55B27;
+  --ifm-color-secondary-darker: #74401B;
+  --ifm-color-secondary-darkest: #422510;
+  --ifm-color-secondary-light: #DC9A6A;
+  --ifm-color-secondary-lighter: #E8BB9C;
+  --ifm-color-secondary-lightest: #F3DDCD;
+  --ifm-code-font-size: 95%;
+  --hover-bg-color: var(--ifm-color-primary-lightest); /* Light blue background on hover */
+  --active-link-color: var(--ifm-color-primary); /* Orange color for the active link */
+  --active-link-bg-color: var(--ifm-color-secondary-lightest); /* Lightest orange background for active link */
+}
+
+.docusaurus-highlight-code-line {
+  background-color: rgba(0, 0, 0, 0.1);
+  display: block;
+  margin: 0 calc(-1 * var(--ifm-pre-padding));
+  padding: 0 var(--ifm-pre-padding);
+}
+
+html[data-theme='dark'] .docusaurus-highlight-code-line {
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+html[data-theme='dark'] .tooltip {
+  background-color: var(--rt-color-white);
+  color: var(--rt-color-dark);
+}
+
+.button {
+    margin-left: 1rem;
+    margin-right: 1rem;
+}
+
+img[alt$=">"] {
+  float: right;
+  margin: 1rem;
+}
+
+img[alt$="<"] {
+  float: left;
+  margin: 1rem;
+}
+
+img[alt$="|"] {
+  border-style: solid;
+  border-width: 2px;
+  border-color: var(--ifm-text-color);
+}
+
+img[alt$=">|"] {
+  float: right;
+  margin: 1rem;
+  border-style: solid;
+  border-width: 2px;
+  border-color: var(--ifm-text-color);
+}
+
+img[alt$="<|"] {
+  float: left;
+  margin: 1rem;
+  border-style: solid;
+  border-width: 2px;
+  border-color: var(--ifm-text-color);
+}
+
+
+
+html[data-theme='dark'] .bg_warning {
+  background: var(--ifm-color-secondary-dark);
+}
+
+html[data-theme='dark'] .bg_alert {
+  background: #A52727;
+}
+
+html[data-theme='dark'] .bg_success {
+  background: #2B981A;
+}
+
+
+html[data-theme='light'] .bg_warning {
+  background: var(--ifm-color-secondary-light);
+}
+
+html[data-theme='light'] .bg_alert {
+  background: #DC6A6A;
+}
+
+html[data-theme='light'] .bg_success {
+  background: #7ADC6A;
+}
+
+
+@media screen and (max-width: 996px) {
+  .hide-small-screens {
+    display: none;
+  }
+}
+
+.tabs--hero .tabs__item {
+    border-bottom-width: 0px;
+}
+
+.tabs--hero .tabs__item--active {
+    color: var(--ifm-color-secondary);
+    border-bottom-color: var(--ifm-color-secondary);
+    background: var(--ifm-color-secondary-lightest);
+}
+
+html[data-theme='dark'] .tabs--hero .tabs__item--active {
+    background: var(--ifm-color-secondary-darker);
+}
+
+/* Sidebar link styles */
+.menu__link {
+    transition: color 0.3s ease; /* Transition only affects color now */
+    padding: 10px 15px; /* Slightly larger horizontal padding for better touch */
+    font-size: 16px; /* Ensures consistent font size */
+    text-decoration: none; /* Removes underline from links */
+}
+
+.menu__link:hover {
+    color: var(--ifm-color-primary-darkest); /* Slightly darker shade for better visibility */
+}
+
+html[data-theme='dark'] .menu__link:hover {
+    color: var(--ifm-color-primary-lightest); /* Slightly darker shade for better visibility */
+}
+
+/* Active link styling */
+.menu__link--active {
+    font-weight: bold;
+    color: var(--active-link-color); /* More vibrant color for active state */
+    background-color: transparent; /* Maintains a clean look without background color change */
+}
+
+/* Margin for sidebar items */
+.menu__list {
+    margin-top: 20px; /* Adds space at the top of the sidebar for better visual separation */
+}
+
+/* Hover effect for the entire sidebar */
+.menu__list-item:hover {
+    border-radius: 5px; /* Soft rounded corners for a modern look */
+}
+
+/* Subtle shadows for elevated effect */
+.menu__list-item {
+}
+
+.menu__list-item:hover {
+}
+
+/* Adjusting visual hierarchy and readability */
+h1, h2, h3, h4 {
+    font-family: 'Roboto', sans-serif; /* Slightly different font for headings to create visual interest */
+    margin-top: 20px; /* Ensures adequate spacing above headers */
+    margin-bottom: 10px; /* Space below headers to segment sections cleanly */
+    color: var(--ifm-color-primary); /* Primary color for headers to draw attention */
+}
+
+.menu__list-item:not(:first-child) {
+    margin-top: 0rem;
+}
+
+.theme-doc-sidebar-item-link-level-2 {
+  padding: 0 0 0 13px;
+}
+.theme-doc-sidebar-item-category-level-2 {
+  padding: 0 0 0 13px;
+}
+
+
+.theme-doc-sidebar-item-link-level-3 {
+  padding: 0 0 0 20px;
+}
+
+.theme-doc-sidebar-item-category-level-3 {
+  padding: 0 0 0 20px;
+}
+

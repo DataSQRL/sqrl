@@ -75,21 +75,6 @@
       <version>1.19.1</version>
     </dependency>
     <dependency>
-      <groupId>com.datasqrl.flinkrunner</groupId>
-      <artifactId>postgresql-connector</artifactId>
-      <version>${flinkrunner.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl.flinkrunner</groupId>
-      <artifactId>flexible-json-format</artifactId>
-      <version>${flinkrunner.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl.flinkrunner</groupId>
-      <artifactId>flexible-csv-format</artifactId>
-      <version>${flinkrunner.version}</version>
-    </dependency>
-    <dependency>
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-secure</artifactId>
     </dependency>
@@ -306,6 +291,40 @@
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-statebackend-rocksdb</artifactId>
       <version>1.19.1</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.datasqrl.flinkrunner</groupId>
+      <artifactId>flexible-csv-format</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl.flinkrunner</groupId>
+      <artifactId>system-functions-discovery</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl.flinkrunner</groupId>
+      <artifactId>json-type</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl.flinkrunner</groupId>
+      <artifactId>flexible-json-format</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl.flinkrunner</groupId>
+      <artifactId>vector-type</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl.flinkrunner</groupId>
+      <artifactId>kafka-safe-connector</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl.flinkrunner</groupId>
+      <artifactId>postgresql-connector</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-s3-fs-hadoop</artifactId>
+      <version>${flink.version}</version>
     </dependency>
   </dependencies>
   <dependencyManagement>

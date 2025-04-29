@@ -390,4 +390,36 @@ public class AvroToRelDataTypeConverterTest {
     assertEquals("OriginalName", aliasedSchema.getName());
     assertEquals(1, type.getFieldCount());
   }
+
+  @Test
+  public void testTypeReuseVsRecursiveSchema() {
+    // Named reusable schema (non-recursive)
+    var sharedRecord = SchemaBuilder.record("Shared").fields()
+        .requiredString("label")
+        .endRecord();
+
+    // Schema that reuses 'Shared' twice (no recursion)
+    var reusableSchema = SchemaBuilder.record("Container").fields()
+        .name("first").type(sharedRecord).noDefault()
+        .name("second").type(sharedRecord).noDefault()
+        .endRecord();
+
+    var reusableType = converter.convert(reusableSchema);
+    assertNotNull(reusableType);
+    assertEquals(2, reusableType.getFieldCount());
+    assertEquals(SqlTypeName.ROW, reusableType.getFieldList().get(0).getType().getSqlTypeName());
+    assertEquals(SqlTypeName.ROW, reusableType.getFieldList().get(1).getType().getSqlTypeName());
+
+    // Recursive schema: a 'Node' record that refers to itself
+    var recursiveSchema = SchemaBuilder.record("Node").fields()
+        .requiredInt("value")
+        .name("next").type().optional().type("Node")
+        .endRecord();
+
+    var recursiveErrors = ErrorCollector.root();
+    var recursiveConverter = new AvroToRelDataTypeConverter(recursiveErrors, false);
+
+    assertThrows(RuntimeException.class, () -> recursiveConverter.convert(recursiveSchema));
+    assertTrue(recursiveErrors.hasErrors());
+  }
 }

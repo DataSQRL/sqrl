@@ -24,4 +24,5 @@
     <module>sqrl-test</module>
     <module>sqrl-flink-runner</module>
   </modules>
+
 </project>
