@@ -195,12 +195,12 @@ Annotations:
  - base-table: ProductSearch
 Plan:
 LogicalSort(sort0=[$8], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC-nulls-first])
-  LogicalProject(id=[$0], name=[$1], sizing=[$2], weight_in_gram=[$3], type=[$4], category=[$5], usda_id=[$6], updated=[$7], score=[textSearch(?0, $1)])
-    LogicalFilter(condition=[>(textSearch(CAST(?0):VARCHAR(2147483647) CHARACTER SET "UTF-16LE", $1), 0)])
+  LogicalProject(id=[$0], name=[$1], sizing=[$2], weight_in_gram=[$3], type=[$4], category=[$5], usda_id=[$6], updated=[$7], score=[text_search(?0, $1)])
+    LogicalFilter(condition=[>(text_search(CAST(?0):VARCHAR(2147483647) CHARACTER SET "UTF-16LE", $1), 0)])
       LogicalTableScan(table=[[default_catalog, default_database, Products]])
-SQL: CREATE VIEW ProductSearch AS  SELECT p.*, textSearch(?     , name) as score
+SQL: CREATE VIEW ProductSearch AS  SELECT p.*, text_search(?     , name) as score
                                  FROM Products p
-                                 WHERE textSearch(?     , name) > 0
+                                 WHERE text_search(?     , name) > 0
                                  ORDER BY score DESC, id ASC;
 
 === ProductSearchWithId
@@ -215,9 +215,9 @@ Annotations:
 Plan:
 LogicalSort(sort0=[$0], dir0=[ASC-nulls-first])
   LogicalProject(id=[$0], name=[$1], sizing=[$2], weight_in_gram=[$3], type=[$4], category=[$5], usda_id=[$6], updated=[$7])
-    LogicalFilter(condition=[AND(>(textSearch(CAST(?0):VARCHAR(2147483647) CHARACTER SET "UTF-16LE", $1, $5), 0), >($0, ?1))])
+    LogicalFilter(condition=[AND(>(text_search(CAST(?0):VARCHAR(2147483647) CHARACTER SET "UTF-16LE", $1, $5), 0), >($0, ?1))])
       LogicalTableScan(table=[[default_catalog, default_database, Products]])
-SQL: CREATE VIEW ProductSearchWithId AS  SELECT * FROM Products WHERE textSearch(?     , name, category) > 0
+SQL: CREATE VIEW ProductSearchWithId AS  SELECT * FROM Products WHERE text_search(?     , name, category) > 0
                                                                           AND id > ?   ORDER BY id ASC;
 
 === Products
@@ -303,7 +303,7 @@ Schema:
 Plan:
 LogicalProject(id=[$0], first_name=[$1], last_name=[$2], email=[$3], ip_address=[$4], country=[$5], changed_on=[$6], timestamp=[$7])
   LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($7, 1:INTERVAL SECOND)])
-    LogicalProject(id=[$0], first_name=[$1], last_name=[$2], email=[$3], ip_address=[$4], country=[$5], changed_on=[$6], timestamp=[EPOCHMILLITOTIMESTAMP($6)])
+    LogicalProject(id=[$0], first_name=[$1], last_name=[$2], email=[$3], ip_address=[$4], country=[$5], changed_on=[$6], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($6, 3), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
       LogicalTableScan(table=[[default_catalog, default_database, _CustomersStream__def]])
 SQL: CREATE VIEW `_CustomersStream`
 AS
@@ -426,7 +426,7 @@ CREATE TEMPORARY TABLE `_CustomersStream__schema` (
   'connector' = 'datagen'
 );
 CREATE TABLE `_CustomersStream__def` (
-  `timestamp` AS EPOCHMILLITOTIMESTAMP(`changed_on`),
+  `timestamp` AS COALESCE(TO_TIMESTAMP_LTZ(`changed_on`, 3), TIMESTAMP '1970-01-01 00:00:00.000'),
   PRIMARY KEY (`id`, `changed_on`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
 ) WITH (
@@ -599,7 +599,7 @@ CREATE TABLE `Orders_6` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `items` RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
+  `items` RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
@@ -685,7 +685,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerPromotion_1`
       FROM `default_catalog`.`default_database`.`CustomersSpending`)
      ;
      INSERT INTO `default_catalog`.`default_database`.`Orders_6`
-      (SELECT `id`, `customerid`, `time`, TOJSON(`items`) AS `items`
+      (SELECT `id`, `customerid`, `time`, TO_JSONB(`items`) AS `items`
        FROM `default_catalog`.`default_database`.`Orders`)
       ;
       INSERT INTO `default_catalog`.`default_database`.`OrdersTotals_7`
@@ -726,8 +726,7 @@ CREATE TABLE IF NOT EXISTS "ProductsByCountry_9" ("productid" BIGINT NOT NULL, "
 
 CREATE INDEX IF NOT EXISTS "Customers_2_hash_c3" ON "Customers_2" USING hash ("email");
 CREATE INDEX IF NOT EXISTS "OrdersTotals_7_hash_c0" ON "OrdersTotals_7" USING hash ("id");
-CREATE INDEX IF NOT EXISTS "Orders_6_hash_c1" ON "Orders_6" USING hash ("customerid");
-CREATE INDEX IF NOT EXISTS "Products_8_text_c1c5" ON "Products_8" USING GIN (to_tsvector('english', coalesce("name", '') || ' ' || coalesce("category", '') ))
+CREATE INDEX IF NOT EXISTS "Orders_6_hash_c1" ON "Orders_6" USING hash ("customerid")
 >>>postgres-views.sql
 CREATE OR REPLACE VIEW "Orders"("id", "customerid", "time", "items") AS SELECT *
 FROM "Orders_6"

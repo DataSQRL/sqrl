@@ -178,9 +178,9 @@ CREATE TABLE `Schema_1` (
   `nullableTimeMillisField` TIME(0),
   `timeMicrosField` TIME(0) NOT NULL,
   `nullableTimeMicrosField` TIME(0),
-  `complexArrayField` RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
-  `nullableComplexArrayField` RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
-  `multiNestedRecord` RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
+  `complexArrayField` RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
+  `nullableComplexArrayField` RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
+  `multiNestedRecord` RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
   `stringField` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `nullableStringField` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
   `intField` INTEGER NOT NULL,
@@ -195,13 +195,13 @@ CREATE TABLE `Schema_1` (
   `nullableBooleanField` BOOLEAN,
   `enumField` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `nullableEnumField` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
-  `arrayField` RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
-  `nullableArrayField` RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
-  `nestedRecord` RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
-  `nullableNestedRecord` RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
+  `arrayField` RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
+  `nullableArrayField` RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
+  `nestedRecord` RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
+  `nullableNestedRecord` RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
   `decimalField` DECIMAL(10, 2) NOT NULL,
-  `mapField` RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
-  `nullableMapField` RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
+  `mapField` RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
+  `nullableMapField` RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
   PRIMARY KEY (`uuidField`, `timestampMillisField`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
@@ -213,7 +213,7 @@ CREATE TABLE `Schema_1` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Schema_1`
-(SELECT `uuidField`, `timestampMillisField`, `nullableTimestampMillisField`, `timestampMicrosField`, `nullableTimestampMicrosField`, `dateField`, `nullableDateField`, `timeMillisField`, `nullableTimeMillisField`, `timeMicrosField`, `nullableTimeMicrosField`, TOJSON(`complexArrayField`) AS `complexArrayField`, TOJSON(`nullableComplexArrayField`) AS `nullableComplexArrayField`, TOJSON(`multiNestedRecord`) AS `multiNestedRecord`, `stringField`, `nullableStringField`, `intField`, `nullableIntField`, `longField`, `nullableLongField`, `floatField`, `nullableFloatField`, `doubleField`, `nullableDoubleField`, `booleanField`, `nullableBooleanField`, `enumField`, `nullableEnumField`, TOJSON(`arrayField`) AS `arrayField`, TOJSON(`nullableArrayField`) AS `nullableArrayField`, TOJSON(`nestedRecord`) AS `nestedRecord`, TOJSON(`nullableNestedRecord`) AS `nullableNestedRecord`, `decimalField`, TOJSON(`mapField`) AS `mapField`, TOJSON(`nullableMapField`) AS `nullableMapField`
+(SELECT `uuidField`, `timestampMillisField`, `nullableTimestampMillisField`, `timestampMicrosField`, `nullableTimestampMicrosField`, `dateField`, `nullableDateField`, `timeMillisField`, `nullableTimeMillisField`, `timeMicrosField`, `nullableTimeMicrosField`, TO_JSONB(`complexArrayField`) AS `complexArrayField`, TO_JSONB(`nullableComplexArrayField`) AS `nullableComplexArrayField`, TO_JSONB(`multiNestedRecord`) AS `multiNestedRecord`, `stringField`, `nullableStringField`, `intField`, `nullableIntField`, `longField`, `nullableLongField`, `floatField`, `nullableFloatField`, `doubleField`, `nullableDoubleField`, `booleanField`, `nullableBooleanField`, `enumField`, `nullableEnumField`, TO_JSONB(`arrayField`) AS `arrayField`, TO_JSONB(`nullableArrayField`) AS `nullableArrayField`, TO_JSONB(`nestedRecord`) AS `nestedRecord`, TO_JSONB(`nullableNestedRecord`) AS `nullableNestedRecord`, `decimalField`, TO_JSONB(`mapField`) AS `mapField`, TO_JSONB(`nullableMapField`) AS `nullableMapField`
  FROM `default_catalog`.`default_database`.`Schema`)
 ;
 END

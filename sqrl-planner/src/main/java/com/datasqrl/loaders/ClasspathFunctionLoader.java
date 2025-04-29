@@ -4,6 +4,8 @@ import com.datasqrl.NamespaceObjectUtil;
 import com.datasqrl.function.AbstractFunctionModule;
 import com.datasqrl.function.FlinkUdfNsObject;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +17,9 @@ import com.datasqrl.function.StdLibrary;
 import com.datasqrl.module.NamespaceObject;
 
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+
 import lombok.AllArgsConstructor;
 import org.apache.flink.table.functions.AggregateFunction;
 import org.apache.flink.table.functions.AsyncScalarFunction;
@@ -55,10 +60,16 @@ public class ClasspathFunctionLoader {
   }
 
   public ClasspathFunctionLoader() {
-    functionsByPackage = HashMultimap.create();
-    flinkUdfClasses.stream().map(ServiceLoader::load)
-        .forEach(serviceloader -> serviceloader.forEach(
-            fct -> functionsByPackage.put(getNamePathFromFunction(fct), fct)));
+    functionsByPackage = flinkUdfClasses.stream()
+        .flatMap(this::loadClasses)
+        .collect(
+            HashMultimap::create,
+            (multimap, function) -> multimap.put(getNamePathFromFunction(function), function), 
+            Multimap::putAll);
+  }
+
+  private Stream<? extends FunctionDefinition> loadClasses(Class<? extends FunctionDefinition> serviceInterface) {
+    return StreamSupport.stream(ServiceLoader.load(serviceInterface).spliterator(), false);
   }
 
   public Set<NamePath> loadedLibraries() {

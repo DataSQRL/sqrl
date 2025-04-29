@@ -146,7 +146,7 @@ CREATE TABLE `CustomerOrdersJoin_2` (
   `id` BIGINT NOT NULL,
   `customerid0` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `entries` RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
+  `entries` RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
   `_ingest_time0` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`customerid`, `lastUpdated`, `id`, `time`) NOT ENFORCED
 ) WITH (
@@ -161,7 +161,7 @@ CREATE TABLE `Orders_3` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `entries` RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
+  `entries` RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
   `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
 ) WITH (
@@ -178,11 +178,11 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_1`
  FROM `default_catalog`.`default_database`.`Customer`)
 ;
 INSERT INTO `default_catalog`.`default_database`.`CustomerOrdersJoin_2`
- (SELECT `customerid`, `email`, `name`, `lastUpdated`, `_ingest_time`, `id`, `customerid0`, `time`, TOJSON(`entries`) AS `entries`, CAST(`_ingest_time0` AS TIMESTAMP(3) WITH LOCAL TIME ZONE) AS `_ingest_time0`
+ (SELECT `customerid`, `email`, `name`, `lastUpdated`, `_ingest_time`, `id`, `customerid0`, `time`, TO_JSONB(`entries`) AS `entries`, CAST(`_ingest_time0` AS TIMESTAMP(3) WITH LOCAL TIME ZONE) AS `_ingest_time0`
   FROM `default_catalog`.`default_database`.`CustomerOrdersJoin`)
  ;
  INSERT INTO `default_catalog`.`default_database`.`Orders_3`
-  (SELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`, `_ingest_time`
+  (SELECT `id`, `customerid`, `time`, TO_JSONB(`entries`) AS `entries`, `_ingest_time`
    FROM `default_catalog`.`default_database`.`Orders`)
   ;
   END

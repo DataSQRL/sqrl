@@ -6,7 +6,7 @@ FlinkFunctions := SELECT
   UUID() AS generated_uuid,
   MD5(name) AS name_md5,
   FORMAT('Hello %s!', name) AS formatted_name,
-  TOJSON(CONCAT('{"a": "',name,'"}')) AS name_json
+  TO_JSONB(CONCAT('{"a": "',name,'"}')) AS name_json
 FROM (
     VALUES ('Alice'), ('Bob'), ('Charlie')) AS names(name);
 

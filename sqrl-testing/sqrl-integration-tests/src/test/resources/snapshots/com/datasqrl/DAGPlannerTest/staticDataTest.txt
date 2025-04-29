@@ -1255,7 +1255,7 @@ CREATE TABLE `Orders_4` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `entries` RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
+  `entries` RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
@@ -1279,7 +1279,7 @@ INSERT INTO `default_catalog`.`default_database`.`Numbers2_2`
    FROM `default_catalog`.`default_database`.`NumbersLarge`)
   ;
   INSERT INTO `default_catalog`.`default_database`.`Orders_4`
-   (SELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`
+   (SELECT `id`, `customerid`, `time`, TO_JSONB(`entries`) AS `entries`
     FROM `default_catalog`.`default_database`.`Orders`)
    ;
    END

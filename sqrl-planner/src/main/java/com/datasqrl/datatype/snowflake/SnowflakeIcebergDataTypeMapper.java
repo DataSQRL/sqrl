@@ -7,7 +7,7 @@ import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 
 import com.datasqrl.datatype.DataTypeMapper;
 import com.datasqrl.engine.stream.flink.connector.CastFunction;
-import com.datasqrl.types.json.FlinkJsonType;
+import com.datasqrl.flinkrunner.types.json.FlinkJsonType;
 import com.google.auto.service.AutoService;
 
 /** We should only map at the table format engine level, the rest should be function translations */
