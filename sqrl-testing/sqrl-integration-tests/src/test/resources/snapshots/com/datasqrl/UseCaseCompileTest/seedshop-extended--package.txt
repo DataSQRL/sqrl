@@ -1060,7 +1060,7 @@ FROM "Orders_6"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT \"id\", \"name\", \"sizing\", \"weight_in_gram\", \"type\", \"category\", \"usda_id\", \"updated\", TEXT_SEARCH($1, \"name\") AS \"score\"\nFROM \"Products_8\"\nWHERE TEXT_SEARCH(CAST($1 AS TEXT), \"name\") > 0\nORDER BY TEXT_SEARCH($1, \"name\") DESC NULLS LAST, \"id\" NULLS FIRST",
+            "sql" : "SELECT \"id\", \"name\", \"sizing\", \"weight_in_gram\", \"type\", \"category\", \"usda_id\", \"updated\", TS_RANK_CD(TO_TSVECTOR('english', COALESCE(\"name\", ' ')), WEBSEARCH_TO_TSQUERY('english', $1)) AS \"score\"\nFROM \"Products_8\"\nWHERE (TO_TSVECTOR('english', COALESCE(\"name\", ' ')) @@ WEBSEARCH_TO_TSQUERY('english', CAST($1 AS TEXT)))\nORDER BY TS_RANK_CD(TO_TSVECTOR('english', COALESCE(\"name\", ' ')), WEBSEARCH_TO_TSQUERY('english', $1)) DESC NULLS LAST, \"id\" NULLS FIRST",
             "parameters" : [
               {
                 "type" : "arg",
@@ -1097,7 +1097,7 @@ FROM "Orders_6"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Products_8\"\nWHERE TEXT_SEARCH(CAST($1 AS TEXT), \"name\", \"category\") > 0 AND \"id\" > $2\nORDER BY \"id\" NULLS FIRST",
+            "sql" : "SELECT *\nFROM \"Products_8\"\nWHERE (TO_TSVECTOR('english', COALESCE(\"name\", ' ') || ' ' || COALESCE(\"category\", ' ')) @@ WEBSEARCH_TO_TSQUERY('english', CAST($1 AS TEXT))) AND \"id\" > $2\nORDER BY \"id\" NULLS FIRST",
             "parameters" : [
               {
                 "type" : "arg",
