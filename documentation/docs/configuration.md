@@ -262,7 +262,7 @@ Testing related configuration is found in the `test-runner` section.
 
 ## Values
 
-The `values` section of the [DataSQRL configuration](../datasqrl-spec) allows you to specify configuration values that are passed through to engines they pertain to.
+The `values` section of the configuration allows you to specify configuration values that are passed through to engines they pertain to.
 
 The default deployment profiles supports a `flink-config` section to allow injecting additional flink runtime configuration. You can use this section of the configuration to specify any [Flink configuration option](https://nightlies.apache.org/flink/flink-docs-stable/docs/dev/table/config/).
 

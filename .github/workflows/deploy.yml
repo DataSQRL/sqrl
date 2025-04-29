@@ -3,7 +3,7 @@ name: Deploy Docusaurus to GitHub Pages
 on:
   push:
     branches:
-      - main # or whatever branch you want to trigger deploys from
+      - main
 
 jobs:
   deploy:
@@ -13,11 +13,13 @@ jobs:
         uses: actions/checkout@v4
         with:
           persist-credentials: false # we will use a deploy token instead
+          submodules: true           # fetch sub-modules
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20 # or whatever version you use
+          node-version: 22
 
       - name: Install dependencies
         working-directory: documentation
