@@ -130,8 +130,6 @@ The packager also runs all registered pre-processors on the local directory
 to pre-process input files and place them into the build directory for the
 compiler. DataSQRL has a generic pre-processor framework.
 
-[Link to packager module](sqrl-tools/sqrl-packager)
-
 
 #### Command Line Interface
 
@@ -140,7 +138,6 @@ It defines all of the commands that DataSQRL supports and provides
 usability features to help the user and produce useful error messages.
 See the [CLI documentation](compiler) for more information.
 
-[Link to cli module](sqrl-tools/sqrl-cli)
 
 #### Discovery
 
@@ -152,7 +149,6 @@ This is implemented as a pre-processor that automatically extracts a schema
 from `jsonl` and `csv` files and generates a table definition with connector
 information for such files.
 
-[Link to discovery module](sqrl-tools/sqrl-discovery)
 
 
 ### Planner
@@ -161,7 +157,6 @@ The planner parses a SQRL script, i.e. a sequence of SQL(ish) statements, analyz
 the statements, constructs a data processing DAG, optimizes the DAG, and finally
 produces deployment assets for the engines executing the data processing steps.
 
-[Link to planner module](sqrl-planner)
 
 The planner consists of the following components.
 
