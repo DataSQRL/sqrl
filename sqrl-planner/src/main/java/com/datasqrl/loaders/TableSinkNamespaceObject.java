@@ -7,7 +7,6 @@ import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableSink;
 import com.datasqrl.module.TableNamespaceObject;
-import com.datasqrl.plan.validate.ScriptPlanner;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -21,11 +20,6 @@ public class TableSinkNamespaceObject implements TableNamespaceObject<TableSink>
   @Override
   public Name getName() {
     return table.getName();
-  }
-
-  @Override
-  public boolean apply(ScriptPlanner planner, Optional<String> name, SqrlFramework framework, ErrorCollector errors) {
-    throw new RuntimeException("Cannot import table sink");
   }
 
   @Override

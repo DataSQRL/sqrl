@@ -1,7 +1,5 @@
 package com.datasqrl.calcite;
 
-import static com.datasqrl.parse.AstBuilder.createParserConfig;
-
 import java.io.File;
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
@@ -72,10 +70,8 @@ import com.datasqrl.calcite.convert.SqlConverterFactory;
 import com.datasqrl.calcite.convert.SqlNodeToString.SqlStrings;
 import com.datasqrl.calcite.convert.SqlToStringFactory;
 import com.datasqrl.calcite.schema.ExpandTableMacroRule.ExpandTableMacroConfig;
-import com.datasqrl.calcite.schema.sql.SqlBuilders.SqlSelectBuilder;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.graphql.server.CustomScalars;
-import com.datasqrl.parse.SqrlParserImpl;
 import com.datasqrl.util.DataContextImpl;
 
 import lombok.Getter;
@@ -130,7 +126,6 @@ public class QueryPlanner {
     this.flinkParser = new CalciteParser(config);
   }
 
-  /* Parse */
 
   @SneakyThrows
   public SqlNode parse(Dialect dialect, String sql) {
@@ -140,59 +135,13 @@ public class QueryPlanner {
         return org.apache.calcite.sql.parser.SqlParser.create(sql,
                 SqrlConfigurations.calciteParserConfig)
             .parseQuery();
-      case SQRL:
-        return new SqrlParserImpl()
-            .parse(sql);
       case FLINK:
         return flinkParser.parse(sql);
       default:
         throw new RuntimeException("Unknown dialect");
     }
   }
-
-  /* Plan */
-  public RelNode plan(Dialect dialect, SqlNode query) {
-    switch (dialect) {
-      case SQRL:
-        break;
-      case CALCITE:
-        return planCalcite(query);
-      case FLINK:
-        break;
-      case POSTGRES:
-        break;
-    }
-    throw new RuntimeException("Unknown dialect for planning");
-  }
-
-  public RelNode planCalcite(SqlNode sqlNode) {
-    sqlNode = CalciteFixes.pushDownOrder(sqlNode);
-
-    var validator = createSqlValidator();
-    return planCalcite(validator, sqlNode);
-  }
-
-  public RelNode planCalcite(SqlValidator validator, SqlNode sqlNode) {
-    sqlNode = CalciteFixes.pushDownOrder(sqlNode);
-
-    return planRoot(validator, sqlNode).project();
-  }
-
-  protected RelRoot planRoot(SqlValidator validator, SqlNode sqlNode) {
-    sqlNode = validator.validate(sqlNode);
-
-    var sqlToRelConverter = createSqlToRelConverter(validator);
-    CalciteFixes.pushDownOrder(sqlNode);
-
-    RelRoot root;
-    root = sqlToRelConverter.convertQuery(sqlNode, false, true);
-    final var relBuilder = getRelBuilder();
-    root = root.withRel(
-        SqrlRelDecorrelator.decorrelateQuery(root.rel, relBuilder));
-
-    return root;
-  }
-
+  
   /**
    * Helper function to parse a data type from a string using calcite's full
    * type definition syntax.
@@ -222,45 +171,6 @@ public class QueryPlanner {
     return typeSpec.deriveType(createSqlValidator());
   }
 
-  /**
-   * Plans a sql statement against a relnode
-   */
-  public RexNode planExpression(SqlNode node, RelDataType type) {
-    return planExpression(node, type, ReservedName.SELF_IDENTIFIER.getCanonical());
-  }
-
-  public RexNode planExpression(SqlNode node, RelDataType type, String name) {
-    return planExpression(node, new TemporaryViewTable(type), name);
-  }
-
-  public RexNode planExpression(SqlNode node, Table table, String name) {
-    try {
-      schema.add(name, table);
-      var sqlValidator = createSqlValidator();
-
-      var select = new SqlSelectBuilder(node.getParserPosition())
-          .setSelectList(List.of(node))
-          .setFrom(new SqlIdentifier(name, SqlParserPos.ZERO))
-          .build();
-      var validated = sqlValidator.validate(select);
-
-      var sqlToRelConverter = createSqlToRelConverter(sqlValidator);
-      RelRoot root;
-      root = sqlToRelConverter.convertQuery(validated, false, true);
-      if (!(root.rel instanceof LogicalProject)) {
-        throw new RuntimeException("Could not plan expression");
-      }
-
-      if (!(root.rel.getInput(0) instanceof TableScan || root.rel.getInput(0) instanceof TableFunctionScan)) {
-        throw new RuntimeException("Expression is not simple");
-      }
-
-      return ((LogicalProject) root.rel).getProjects().get(0);
-    } finally {
-      schema.removeTable(name);
-    }
-  }
-
   public RelNode planQueryOnTempTable(RelDataType tempSchema, String name, Consumer<RelBuilder> buildQuery) {
     try {
       schema.add(name, new TemporaryViewTable(tempSchema));
@@ -274,106 +184,10 @@ public class QueryPlanner {
       schema.removeTable(name);
     }
   }
-
-  /* Optimize */
-
-  public RelNode runStage(OptimizationStage stage, RelNode relNode) {
-    return RelStageRunner.runStage(stage, relNode, this.planner);
-  }
-
-  /* Convert */
-
-  public RelNode convertRelToDialect(Dialect dialect, RelNode relNode) {
-    return new DialectCallConverter(planner)
-        .convert(dialect, relNode);
-  }
-
+  
   public static SqlNodes relToSql(Dialect dialect, RelNode relNode) {
     var relToSql = SqlConverterFactory.get(dialect);
     return relToSql.convert(relNode);
-  }
-
-  /* Compile */
-
-  public EnumerableRel convertToEnumerableRel(RelNode relNode) {
-    return (EnumerableRel) runStage(OptimizationStage.CALCITE_ENGINE, relNode);
-  }
-
-  @SneakyThrows
-  protected String generateSource(String className, EnumerableRel enumerableRel,
-      Map<String, Object> contextVariables) {
-    EnumerableRelImplementor implementor = new EnumerableRelImplementor(getRexBuilder(),
-        contextVariables/*note: must be mutable*/);
-    ClassDeclaration classDeclaration = implementor.implementRoot(enumerableRel,
-        EnumerableRel.Prefer.ARRAY);
-
-    String s = Expressions.toString(classDeclaration.memberDeclarations, "\n", false);
-
-    String source = "public class " + className + "\n"
-        + "    implements " + ArrayBindable.class.getName()
-        + ", " + Serializable.class.getName()
-        + " {\n"
-        + s + "\n"
-        + "}\n";
-    return source;
-  }
-
-  public ClassLoader compile(String className, EnumerableRel enumerableRel,
-      Map<String, Object> carryover) {
-    return compile(className, generateSource(className, enumerableRel, carryover),
-        defaultClassDir.toPath());
-  }
-
-  @SneakyThrows
-  protected ClassLoader compile(String className, String source, Path path) {
-    final String classFileName = className + ".java";
-
-    Files.createDirectories(path);
-    JaninoCompiler compiler = new JaninoCompiler();
-    compiler.getArgs().setDestdir(path.toAbsolutePath().toString());
-    compiler.getArgs().setSource(source, classFileName);
-    compiler.getArgs().setFullClassName(className);
-    compiler.compile();
-
-    return compiler.getClassLoader();
-  }
-
-  /* Execute */
-
-  public ArrayBindable bindable(ClassLoader classLoader, String className) {
-    try {
-      @SuppressWarnings("unchecked") final var clazz =
-          (Class<ArrayBindable>) classLoader.loadClass(className);
-      final var constructor = clazz.getConstructor();
-      return constructor.newInstance();
-    } catch (ClassNotFoundException | InstantiationException
-             | IllegalAccessException | NoSuchMethodException
-             | InvocationTargetException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  public Enumerator execute(String uniqueFnName, RelNode relNode, DataContextImpl context) {
-    var defaultName = uniqueFnName;
-    var enumerableRel = convertToEnumerableRel(relNode);
-    Map<String, Object> variables = new HashMap<>();
-    var classLoader = compile(defaultName, enumerableRel, variables);
-    context.setContextVariables(variables);
-    return bindable(classLoader, defaultName)
-        .bind(context).enumerator();
-  }
-
-  /**
-   * Alternative to compiling
-   */
-  public Enumerator<Object[]> interpertable(EnumerableRel enumerableRel,
-      DataContextImpl dataContext) {
-    Map<String, Object> map = new HashMap<>();
-    var bindable = EnumerableInterpretable.toBindable(map,
-        CalcitePrepare.Dummy.getSparkHandler(false), enumerableRel, EnumerableRel.Prefer.ARRAY);
-    Enumerator<Object[]> enumerator = bindable.bind(dataContext)
-        .enumerator();
-    return enumerator;
   }
 
   /* Factories */
@@ -385,28 +199,8 @@ public class QueryPlanner {
         SqrlConfigurations.sqlValidatorConfig);
   }
 
-  public SqlToRelConverter createSqlToRelConverter(SqlValidator validator) {
-
-    return new SqrlSqlToRelConverter((relDataType, sql, c, d) -> {
-      var validator1 = createSqlValidator();
-      var node = parse(Dialect.CALCITE, sql);
-      validator1.validate(node);
-
-      return planRoot(validator1, node);
-    },
-        validator,
-        catalogReader, getCluster(),
-        convertletTable,
-        SqrlConfigurations.sqlToRelConverterConfig
-            .withHintStrategyTable(this.hintStrategyTable).withTrimUnusedFields(false));
-  }
-
   public RelBuilder getRelBuilder() {
     return new RelBuilder(null, this.cluster, this.catalogReader){};
-  }
-
-  public RexBuilder getRexBuilder() {
-    return new RexBuilder(catalogReader.getTypeFactory());
   }
 
   public static SqlStrings sqlToString(Dialect dialect, SqlNodes node) {
@@ -414,35 +208,9 @@ public class QueryPlanner {
     return sqlToString.convert(node);
   }
 
-  public RelNode run(RelNode relNode, RelRule... rules) {
-    return Programs.hep(Arrays.asList(rules),false, getMetadataProvider())
-        .run(getPlanner(), relNode, relNode.getTraitSet(),
-            List.of(), List.of());
-  }
-
+  
   public static SqlStrings relToString(Dialect dialect, RelNode relNode) {
     return sqlToString(dialect, relToSql(dialect, relNode));
   }
 
-  public RelNode expandMacros(RelNode relNode) {
-    //Before macro expansion, clean up the rel
-    var expandTableMacroConfig = ExpandTableMacroConfig.DEFAULT;
-    relNode = run(relNode,
-        SubQueryRemoveRule.Config.PROJECT.toRule(),
-        SubQueryRemoveRule.Config.FILTER.toRule(),
-        SubQueryRemoveRule.Config.JOIN.toRule(),
-        (RelRule) expandTableMacroConfig.toRule());
-
-    //Convert lateral joins
-    relNode = SqrlRelDecorrelator.decorrelateQuery(relNode, getRelBuilder());
-    relNode = run(relNode, CoreRules.FILTER_INTO_JOIN);
-    return relNode;
-  }
-
-  @SneakyThrows
-  public SqlNode parseCall(String expression) {
-    SqlNode sqlNode = SqlParser.create(expression, createParserConfig())
-        .parseExpression();
-    return sqlNode;
-  }
 }

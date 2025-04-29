@@ -22,17 +22,4 @@ public interface QueryEngine extends ExecutionEngine {
 
   EnginePhysicalPlan plan(MaterializationStagePlan stagePlan);
 
-
-  @Override
-  @Deprecated
-  default DatabasePhysicalPlanOld plan(StagePlan plan, List<StageSink> inputs,
-      ExecutionPipeline pipeline, List<StagePlan> stagePlans, SqrlFramework framework, ErrorCollector errorCollector) {
-    throw new UnsupportedOperationException("Query Engine planning should be invoked through TableFormatEngine via the other plan method");
-  }
-
-  @Deprecated
-  DatabasePhysicalPlanOld plan(ConnectorFactoryFactory tableConnectorFactory, EngineConfig tableConnectorConfig,
-      StagePlan plan, List<StageSink> inputs,
-      ExecutionPipeline pipeline, List<StagePlan> stagePlans, SqrlFramework framework, ErrorCollector errorCollector);
-
 }

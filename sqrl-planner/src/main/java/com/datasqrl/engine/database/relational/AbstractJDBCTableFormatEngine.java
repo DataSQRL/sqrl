@@ -81,21 +81,6 @@ public abstract class AbstractJDBCTableFormatEngine extends AbstractJDBCEngine i
     return planBuilder.build();
   }
 
-  //  @Override
-//  public boolean supports(FunctionDefinition function) {
-//    return queryEngines.values().stream().allMatch(queryEngine -> queryEngine.supports(function));
-//  }
-
-  @Override
-  @Deprecated
-  public TableConfig getSinkConfig(String tableName) {
-    return connectorFactory
-        .create(EngineType.DATABASE, getDialect().getId())
-        .orElseThrow(()-> new RuntimeException("Could not obtain sink for dialect: " + getDialect()))
-        .createSourceAndSink(
-            new ConnectorFactoryContext(tableName, Map.of("table-name", tableName)));
-  }
-
   @Override
   @Deprecated
   public IndexSelectorConfig getIndexSelectorConfig() {

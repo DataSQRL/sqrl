@@ -51,16 +51,6 @@ public abstract class AbstractJDBCDatabaseEngine extends AbstractJDBCEngine impl
   private final ConnectorFactoryFactory connectorFactory;
 
   @Override
-  @Deprecated
-  public TableConfig getSinkConfig(String tableName) {
-    return connectorFactory
-        .create(EngineType.DATABASE, getDialect().getId())
-        .orElseThrow(()-> new RuntimeException("Could not obtain sink for dialect: " + getDialect()))
-        .createSourceAndSink(
-            new ConnectorFactoryContext(tableName, Map.of("table-name", tableName)));
-  }
-
-  @Override
   public IndexSelectorConfig getIndexSelectorConfig() {
     return IndexSelectorConfigByDialect.of(getDialect());
   }

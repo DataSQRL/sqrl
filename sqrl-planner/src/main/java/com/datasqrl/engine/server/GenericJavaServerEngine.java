@@ -38,16 +38,4 @@ public abstract class GenericJavaServerEngine extends ExecutionEngine.Base imple
     return new ServerPhysicalPlan(serverPlan.getFunctions(), serverPlan.getMutations(), null);
   }
 
-  @Override
-  public EnginePhysicalPlan plan(StagePlan plan, List<StageSink> inputs,
-      ExecutionPipeline pipeline, List<StagePlan> stagePlans, SqrlFramework framework, ErrorCollector errorCollector) {
-
-    Preconditions.checkArgument(plan instanceof ServerStagePlan);
-    Set<ExecutionStage> dbStages = pipeline.getStages().stream().filter(s -> s.getEngine().getType()== EngineType.DATABASE).collect(
-        Collectors.toSet());
-//    Preconditions.checkArgument(dbStages.size()==1, "Currently only support a single database stage in server");
-//    ExecutionEngine engine = Iterables.getOnlyElement(dbStages).getEngine();
-//    Preconditions.checkArgument(engine instanceof AbstractJDBCEngine, "Currently the server only supports JDBC databases");
-    return new ServerPhysicalPlan(List.of(), List.of(), /*Will set later after queries are generated*/null);
-  }
 }

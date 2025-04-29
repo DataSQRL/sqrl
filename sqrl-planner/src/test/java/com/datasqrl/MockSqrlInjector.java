@@ -9,7 +9,6 @@ import org.apache.calcite.tools.RelBuilder;
 
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.calcite.SqrlFrameworkImpl;
-import com.datasqrl.calcite.SqrlTableFactory;
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.NamePath;
@@ -21,15 +20,12 @@ import com.datasqrl.config.SqrlRelBuilder;
 import com.datasqrl.config.TableConfigLoader;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.graphql.APIConnectorManager;
-import com.datasqrl.graphql.APIConnectorManagerImpl;
 import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.loaders.ModuleLoaderImpl;
 import com.datasqrl.module.SqrlModule;
 import com.datasqrl.module.resolver.FileResourceResolver;
 import com.datasqrl.module.resolver.ResourceResolver;
 import com.datasqrl.plan.MainScript;
-import com.datasqrl.plan.SqrlPlanningTableFactory;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.name.Named;
@@ -58,10 +54,8 @@ public class MockSqrlInjector extends AbstractModule {
     bind(SqrlFramework.class).to(SqrlFrameworkImpl.class);
     bind(RelDataTypeFactory.class).to(TypeFactory.class);
     bind(MainScript.class).to(MainScriptImpl.class);
-    bind(APIConnectorManager.class).to(APIConnectorManagerImpl.class);
     bind(ExecutionPipeline.class).to(SqrlConfigPipeline.class);
     bind(CompilerConfig.class).to(SqrlCompilerConfiguration.class);
-    bind(SqrlTableFactory.class).to(SqrlPlanningTableFactory.class);
     bind(RelBuilder.class).to(SqrlRelBuilder.class);
     bind(ModuleLoader.class).to(ModuleLoaderImpl.class);
   }

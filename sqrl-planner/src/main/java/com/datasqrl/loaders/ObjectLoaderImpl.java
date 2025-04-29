@@ -27,7 +27,6 @@ import com.datasqrl.module.NamespaceObject;
 import com.datasqrl.module.SqrlModule;
 import com.datasqrl.module.TableNamespaceObject;
 import com.datasqrl.module.resolver.ResourceResolver;
-import com.datasqrl.plan.table.CalciteTableFactory;
 import com.datasqrl.serializer.Deserializer;
 import com.datasqrl.util.BaseFileUtil;
 import com.datasqrl.util.FileUtil;
@@ -43,18 +42,16 @@ public class ObjectLoaderImpl implements ObjectLoader {
   private static final Predicate<String> SCRIPT_IMPORT = Pattern.compile(".*" + FileUtil.toRegex(".sqrl")).asMatchPredicate();
   private final ResourceResolver resourceResolver;
   private final ErrorCollector errors;
-  private final CalciteTableFactory tableFactory;
   private final ModuleLoader moduleLoader;
   private final TableConfigLoader tableConfigFactory;
   private final PackageJson sqrlConfig;
   private final LogManager logManager;
 
   public ObjectLoaderImpl(ResourceResolver resourceResolver, ErrorCollector errors,
-      CalciteTableFactory tableFactory, ModuleLoader moduleLoader,
+      ModuleLoader moduleLoader,
       TableConfigLoader tableConfigFactory, PackageJson sqrlConfig, LogManager logManager) {
     this.resourceResolver = resourceResolver;
     this.errors = errors;
-    this.tableFactory = tableFactory;
     this.moduleLoader = moduleLoader;
     this.tableConfigFactory = tableConfigFactory;
     this.sqrlConfig = sqrlConfig;

@@ -9,7 +9,6 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableSchema;
 import com.datasqrl.loaders.FlinkTableNamespaceObject.FlinkTable;
 import com.datasqrl.module.TableNamespaceObject;
-import com.datasqrl.plan.validate.ScriptPlanner;
 
 import lombok.Getter;
 import lombok.Value;
@@ -27,13 +26,6 @@ public class FlinkTableNamespaceObject implements TableNamespaceObject<FlinkTabl
   public Name getName() {
     return table.getName();
   }
-
-  @Override
-  public boolean apply(ScriptPlanner planner, Optional<String> alias, SqrlFramework framework,
-      ErrorCollector errors) {
-    throw new UnsupportedOperationException();
-  }
-
 
   @Value
   public static class FlinkTable {

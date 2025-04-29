@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.util.EnumSet;
 import java.util.List;
 
-import com.datasqrl.actions.FlinkSqlGenerator;
 import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.config.EngineType;
 import com.datasqrl.config.PackageJson.EngineConfig;
@@ -36,28 +35,9 @@ public abstract class AbstractFlinkStreamEngine extends ExecutionEngine.Base imp
   @Getter
   private final EngineConfig config;
 
-  FlinkSqlGenerator generator;
-
-  public AbstractFlinkStreamEngine(EngineConfig config, FlinkSqlGenerator generator) {
+  public AbstractFlinkStreamEngine(EngineConfig config) {
     super(FlinkEngineFactory.ENGINE_NAME, EngineType.STREAMS, FLINK_CAPABILITIES);
     this.config = config;
-    this.generator = generator;
-  }
-
-//  @Override
-//  public boolean supports(FunctionDefinition function) {
-//    return true;
-//  }
-
-  @Override
-  public FlinkStreamPhysicalPlan plan(StagePlan stagePlan, List<StageSink> inputs,
-      ExecutionPipeline pipeline, List<StagePlan> stagePlans, SqrlFramework framework, ErrorCollector errorCollector) {
-
-    Preconditions.checkArgument(inputs.isEmpty());
-    Preconditions.checkArgument(stagePlan instanceof StreamStagePlan);
-    var plan = (StreamStagePlan) stagePlan;
-    var flinkSql = generator.run(plan, stagePlans);
-    return new FlinkStreamPhysicalPlan(flinkSql.getPlan(), flinkSql.getFlinkSql());
   }
 
   @Override

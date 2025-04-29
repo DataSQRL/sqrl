@@ -3,7 +3,6 @@
  */
 package com.datasqrl.packager;
 
-import static com.datasqrl.actions.FlinkSqlGenerator.COMPILED_PLAN_JSON;
 import static com.datasqrl.config.ScriptConfigImpl.GRAPHQL_KEY;
 import static com.datasqrl.config.ScriptConfigImpl.MAIN_KEY;
 import static com.datasqrl.util.NameUtil.namepath2Path;
@@ -357,18 +356,6 @@ public class Packager {
     try (Writer writer =
         new OutputStreamWriter(Files.newOutputStream(postgresSchemaFile), StandardCharsets.UTF_8)) {
       template.process(config, writer);
-    }
-  }
-
-  @SneakyThrows
-  private void copyCompiledPlan(Path buildDir, Path targetDir) {
-    if (Files.exists(buildDir.resolve(COMPILED_PLAN_JSON))) {
-      Path destFolder = targetDir.resolve("flink");
-      Files.createDirectories(destFolder);
-      Files.copy(
-          buildDir.resolve(COMPILED_PLAN_JSON),
-          targetDir.resolve("flink").resolve(COMPILED_PLAN_JSON),
-          StandardCopyOption.REPLACE_EXISTING);
     }
   }
 

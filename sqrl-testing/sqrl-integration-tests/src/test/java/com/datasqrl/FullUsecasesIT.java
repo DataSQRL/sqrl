@@ -22,16 +22,19 @@ import com.datasqrl.util.SnapshotTest.Snapshot;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.ToString;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.flink.table.api.TableResult;
 import org.apache.flink.test.junit5.MiniClusterExtension;
 import org.assertj.core.api.Assumptions;
@@ -39,7 +42,6 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -114,20 +116,18 @@ public class FullUsecasesIT {
 
   @AllArgsConstructor
   @Getter
-  public static class UseCaseTestParameter {
+  @ToString
+  public static class UseCaseTestParameter implements Comparable<UseCaseTestParameter> {
 
-    @Override
-  public String toString() {
-    return "UseCaseTestParameter [useCaseName=" + useCaseName + ", sqrlFileName=" + sqrlFileName
-        + ", parentDirectory=" + parentDirectory + ", goal=" + goal + ", graphqlFileName=" + graphqlFileName
-        + ", testName=" + testName + ", testPath=" + testPath + ", optionalParam=" + optionalParam
-        + ", packageJsonPath=" + packageJsonPath + "]";
-  }
-
-  String parentDirectory;
+    String parentDirectory;
     String goal;
+
+    @ToString.Include(rank = 0)
     String useCaseName;
+
+    @ToString.Include(rank = 1)
     String sqrlFileName;
+
     String graphqlFileName;
     String testName;
     String testPath;
@@ -146,18 +146,68 @@ public class FullUsecasesIT {
           optionalParam,
           packageJsonPath);
     }
+
+    private static final Comparator<UseCaseTestParameter> ORDER =
+        Comparator.comparing(UseCaseTestParameter::getSqrlFileName)
+            .thenComparing(UseCaseTestParameter::getGoal)
+            .thenComparing(UseCaseTestParameter::toString);
+
+    @Override
+    public int compareTo(UseCaseTestParameter o) {
+      return ORDER.compare(this, o);
+    }
+  }
+
+  static int shard;
+  static Integer testShardingTotal;
+  static int testShardingIndex;
+
+  @BeforeAll
+  public static void initTestShading() throws Exception {
+    var total = System.getenv("TEST_SHARDING_TOTAL");
+    if (ObjectUtils.isEmpty(total)) {
+      log.warn("No test sharding");
+      return;
+    }
+
+    testShardingTotal = Integer.parseInt(total);
+    testShardingIndex = Integer.parseInt(System.getenv("TEST_SHARDING_INDEX"));
+
+    log.warn("Enabled test sharding: total: {} index: {}", testShardingTotal, testShardingIndex);
   }
 
   @SneakyThrows
   @ParameterizedTest
   @MethodSource("useCaseProvider")
-  public void testUseCase(UseCaseTestParameter param, TestInfo testInfo) {
+  public void testUseCase(UseCaseTestParameter param) {
     if (disabledScripts.contains(new ScriptCriteria(param.getSqrlFileName(), param.getGoal()))) {
       log.warn("Skipping disabled test:" + param.getSqrlFileName());
       Assumptions.assumeThat(false)
           .as("Skipping disabled test: %s", param.getSqrlFileName())
           .isTrue();
-      return;
+    }
+
+    shard++;
+    if (testShardingTotal != null && shard % testShardingTotal != testShardingIndex) {
+      log.warn(
+          "Skipping due to test sharding {} shard: {} testShardingTotal: {} testShardingIndex: {}",
+          param.sqrlFileName,
+          shard,
+          testShardingTotal,
+          testShardingIndex);
+      Assumptions.assumeThat(false)
+          .as(
+              "Skipping due to test sharding %s.\n"
+                  + "shard: %s testShardingTotal: %s testShardingIndex: %s",
+              param, shard, testShardingTotal, testShardingIndex)
+          .isTrue();
+    } else {
+      log.warn(
+          "Testing sharding {} shard: {} testShardingTotal: {} testShardingIndex: {}",
+          param.sqrlFileName,
+          shard,
+          testShardingTotal,
+          testShardingIndex);
     }
 
     executed = true;
@@ -275,7 +325,9 @@ public class FullUsecasesIT {
       }
 
       engines.accept(
-          new TestExecutionEnv(param.getSqrlFileName() + ":" + param.goal, packageJson, rootDir, snapshot), context);
+          new TestExecutionEnv(
+              param.getSqrlFileName() + ":" + param.goal, packageJson, rootDir, snapshot),
+          context);
       if (run != null) {
         run.stop();
       }
@@ -295,12 +347,12 @@ public class FullUsecasesIT {
   @ParameterizedTest
   @MethodSource("useCaseProvider")
   @Disabled
-  public void runTestNumber(UseCaseTestParameter param, TestInfo testInfo) {
+  public void runTestNumber(UseCaseTestParameter param) {
     var testToExecute = 45;
     testNo++;
     System.out.println(testNo + ":" + param);
     if (testToExecute == testNo) {
-      testUseCase(param, testInfo);
+      testUseCase(param);
     } else {
       assumeFalse(true);
     }
@@ -316,19 +368,18 @@ public class FullUsecasesIT {
 
   @ParameterizedTest
   @MethodSource("useCaseProvider")
-  public void runTestCaseByName(UseCaseTestParameter param, TestInfo testInfo) {
-    if (param.sqrlFileName.equals("seedshop-extended.sqrl")
-            && param.goal.equals("run")
-    ) {
-      testUseCase(param, testInfo);
+  @Disabled
+  public void runTestCaseByName(UseCaseTestParameter param) {
+    if (param.sqrlFileName.equals("openai-cicd-test.sqrl") && param.goal.equals("test")) {
+      testUseCase(param);
     } else {
       assumeFalse(true);
     }
   }
 
-  static List<UseCaseTestParameter> useCaseProvider() throws Exception {
+  static Set<UseCaseTestParameter> useCaseProvider() throws Exception {
     var useCasesDir = USE_CASES;
-    List<UseCaseTestParameter> params = new ArrayList<>();
+    Set<UseCaseTestParameter> params = new TreeSet<>();
 
     Files.list(useCasesDir)
         .filter(Files::isDirectory)

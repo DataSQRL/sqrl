@@ -30,31 +30,6 @@ public interface ExecutionEngine extends IExecutionEngine {
    */
   boolean supports(EngineFeature capability);
 
-  /**
-   *
-   * @param function
-   * @return whether the engine can execute the given function
-   */
-//  boolean supports(FunctionDefinition function);
-
-  /**
-   * TODO: remove in favor of ConnectorFactory for sink creation
-   *
-   * Returns the {@link TableConfig} for this engine so it can
-   * be used as a sink by a previous stage in the pipeline.
-   * @return
-   */
-  @Deprecated
-  TableConfig getSinkConfig(String sinkName);
-
-  /**
-   * Create the physical plan from the {@link StagePlan} produced by the {@link com.datasqrl.plan.global.DAGPlanner}
-   * for this engine.
-   */
-  @Deprecated
-  EnginePhysicalPlan plan(StagePlan plan, List<StageSink> inputs,
-      ExecutionPipeline pipeline, List<StagePlan> stagePlans, SqrlFramework framework, ErrorCollector errorCollector);
-
   @AllArgsConstructor
   @Getter
   abstract class Base implements ExecutionEngine {
@@ -68,10 +43,6 @@ public interface ExecutionEngine extends IExecutionEngine {
       return capabilities.contains(capability);
     }
 
-    @Override
-    public TableConfig getSinkConfig(String sinkName) {
-      throw new UnsupportedOperationException("Not a sink");
-    }
   }
 
 

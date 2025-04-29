@@ -190,21 +190,6 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
   }
 
   @Override
-  @Deprecated
-  public EnginePhysicalPlan plan(StagePlan plan, List<StageSink> inputs, ExecutionPipeline pipeline,
-      List<StagePlan> stagePlans, SqrlFramework framework, ErrorCollector errorCollector) {
-    Preconditions.checkArgument(plan instanceof LogStagePlan);
-
-    List<NewTopic> logTopics = ((LogStagePlan) plan).getLogs().stream()
-        .map(log -> (KafkaTopic) log)
-        .map(KafkaTopic::getTopicName)
-        .map(name -> new NewTopic(name,name))
-        .collect(Collectors.toList());
-
-    return new KafkaPhysicalPlan(logTopics);
-  }
-
-  @Override
   public LogFactory getLogFactory() {
     return new KafkaLogFactory(connectorFactory);
   }

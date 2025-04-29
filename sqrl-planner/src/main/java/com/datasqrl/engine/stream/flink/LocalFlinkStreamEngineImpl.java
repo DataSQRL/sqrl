@@ -3,7 +3,6 @@
  */
 package com.datasqrl.engine.stream.flink;
 
-import com.datasqrl.actions.FlinkSqlGenerator;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.PackageJson.EmptyEngineConfig;
 import com.google.inject.Inject;
@@ -14,9 +13,8 @@ import lombok.extern.slf4j.Slf4j;
 public class LocalFlinkStreamEngineImpl extends AbstractFlinkStreamEngine {
 
   @Inject
-  public LocalFlinkStreamEngineImpl(PackageJson json, FlinkSqlGenerator generator) {
+  public LocalFlinkStreamEngineImpl(PackageJson json) {
     super(json.getEngines().getEngineConfig(FlinkEngineFactory.ENGINE_NAME)
-        .orElseGet(()->new EmptyEngineConfig(FlinkEngineFactory.ENGINE_NAME)),
-        generator);
+        .orElseGet(()->new EmptyEngineConfig(FlinkEngineFactory.ENGINE_NAME)));
   }
 }

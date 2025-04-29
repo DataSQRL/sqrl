@@ -12,31 +12,11 @@ import org.apache.flink.table.functions.BuiltInFunctionDefinitions;
 import org.apache.flink.table.functions.FunctionDefinition;
 
 import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.function.CalciteFunctionNsObject;
 import com.datasqrl.function.FlinkUdfNsObject;
 import com.datasqrl.module.NamespaceObject;
 import com.google.common.base.Preconditions;
 
 public class NamespaceObjectUtil {
-
-  public static NamespaceObject createFunctionFromFlink(String name) {
-    return createFunctionFromFlink(name, name);
-  }
-
-  public static NamespaceObject createFunctionFromFlink(String name, String originalName) {
-    Optional<BuiltInFunctionDefinition> function = getFunctionByNameFromClass(BuiltInFunctionDefinitions.class,
-        BuiltInFunctionDefinition.class,
-        originalName.toUpperCase(Locale.ROOT));
-    Preconditions.checkArgument(function.isPresent(), "Could not find function %s", name);
-    var fnc = function.get();
-    return new FlinkUdfNsObject(name, fnc, originalName, Optional.empty());
-  }
-
-  public static NamespaceObject createFunctionFromStdOpTable(String name) {
-    return new CalciteFunctionNsObject(Name.system(name),
-        getFunctionByNameFromClass(SqlStdOperatorTable.class,
-            SqlOperator.class, name).get(), name);
-  }
 
   public static FlinkUdfNsObject createNsObject(FunctionDefinition function) {
     Preconditions.checkArgument(function instanceof FunctionDefinition,
