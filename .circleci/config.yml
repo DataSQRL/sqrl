@@ -195,19 +195,17 @@ jobs:
       - save-test-results
 
   build-test-image:
-    docker:
-      - image: cimg/openjdk:17.0
+    executor: default-machine
     steps:
       - checkout
       - restore_cache:
           keys:
             - m2-{{ checksum "pom.xml" }}
       - generate-settings
+      - install-jdk
       - run:
           name: Build shaded JAR
           command: mvn -U clean -T1 -B install -DskipTests -DskipITs -Pinstrument
-      - setup_remote_docker:
-          docker_layer_caching: true
       - run:
           name: Pull base image
           command: docker pull eclipse-temurin:17-jdk-noble
