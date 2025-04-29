@@ -19,23 +19,6 @@ docker pull datasqrl/cmd:latest
 ```
 
 </TabItem>
-<TabItem value="Mac">
-
-```bash
-brew tap datasqrl/sqrl
-brew install sqrl-cli
-```
-
-:::note
-Check that you're on the current version of DataSQRL by running `sqrl --version`
-To update an existing installation:
-
-```bash
-brew upgrade sqrl-cli
-```
-:::
-
-</TabItem>
 </Tabs>
 
 ### Global Options
@@ -67,16 +50,6 @@ docker run --rm -v $PWD:/build datasqrl/cmd compile -c package.json
 Note, that you need to mount the current directory (`$PWD` or `${PWD}` on windows with Powershell) to the `/build`
 directory for file access in docker.
 
-</TabItem>
-<TabItem value="Mac">
-
-```bash
-sqrl compile myscript.sqrl
-```
-or
-```bash
-sqrl compile -c package.json
-```
 </TabItem>
 </Tabs>
 
@@ -143,13 +116,6 @@ The test command compiles and runs the data pipeline, then executes the provided
 When you first run the test command or add additional test cases, it will create the snapshots and fail. All subsequent runs of the test command compare the results to the previously snapshotted results and succeed if the results are identical, else fail.
 
 <Tabs groupId="cli">
-<TabItem value="Mac" default>
-
-```bash
-sqrl test myscript.sqrl myapischema.graphqls
-```
-
-</TabItem>
 <TabItem value="Docker">
 
 ```bash
@@ -177,32 +143,6 @@ Queries are executed after all mutations have been applied. This step retrieves 
 
 Once all queries complete, the subscriptions are terminated and the data collected during their active phase is assembled into snapshots.
 
----
-**NOTE**
+:::warning
 Subscriptions can only be tested in conjunction with mutations at this time.
-
----
-
-<!--
-
-## Login Command
-
-Authenticates a user against the repository. A user needs to be authenticated to access private packages in the repository or to publish a package.
-
-<Tabs groupId="cli">
-<TabItem value="Mac" default>
-
-```bash
-sqrl login
-```
-
-</TabItem>
-<TabItem value="Docker">
-
-```bash
-docker run --rm -v $PWD:/build datasqrl/cmd login
-```
-</TabItem>
-</Tabs>
-
--->
+:::
