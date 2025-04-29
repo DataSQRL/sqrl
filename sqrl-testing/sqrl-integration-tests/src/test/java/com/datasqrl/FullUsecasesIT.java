@@ -1,5 +1,6 @@
 package com.datasqrl;
 
+import static org.junit.Assume.assumeFalse;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import com.datasqrl.cmd.AssertStatusHook;
@@ -78,8 +79,8 @@ public class FullUsecasesIT {
           new ScriptCriteria("analytics-only.sqrl", "run"),
           new ScriptCriteria("postgres-log-disabled.sqrl", "test"),
           new ScriptCriteria("postgres-log-disabled.sqrl", "run"),
-          new ScriptCriteria("seedshop-extended.sqrl", "test"), // CustomerPromotionTest issue TODO
-          new ScriptCriteria("seedshop-extended.sqrl", "run") // CustomerPromotionTest issue TODO
+          new ScriptCriteria("connectors.sqrl", "test"), // should not be executed
+          new ScriptCriteria("flink_kafka.sqrl", "run") // does not expose an API
           );
 
   static final Path PROJECT_ROOT = Path.of(System.getProperty("user.dir"));
@@ -88,13 +89,13 @@ public class FullUsecasesIT {
 
   UseCaseTestExtensions testExtensions = new UseCaseTestExtensions();
 
-  private boolean testExecuted;
+  boolean executed = false;
 
   @AfterEach
   public void tearDown() throws Exception {
-    if (containerHook != null && testExecuted) {
+    if (containerHook != null && executed) {
       containerHook.clear();
-      testExecuted = false;
+      executed = false;
     }
   }
 
@@ -209,7 +210,8 @@ public class FullUsecasesIT {
           testShardingIndex);
     }
 
-    testExecuted = true;
+    executed = true;
+
     this.snapshot =
         Snapshot.of(
             FullUsecasesIT.class,
@@ -323,7 +325,9 @@ public class FullUsecasesIT {
       }
 
       engines.accept(
-          new TestExecutionEnv(param.getUseCaseName(), packageJson, rootDir, snapshot), context);
+          new TestExecutionEnv(
+              param.getSqrlFileName() + ":" + param.goal, packageJson, rootDir, snapshot),
+          context);
       if (run != null) {
         run.stop();
       }

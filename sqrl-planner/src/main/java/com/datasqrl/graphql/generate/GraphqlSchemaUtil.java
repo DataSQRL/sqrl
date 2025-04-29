@@ -18,9 +18,9 @@ import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.flinkrunner.types.json.FlinkJsonType;
 import com.datasqrl.graphql.server.CustomScalars;
 import com.datasqrl.schema.Multiplicity;
-import com.datasqrl.types.json.FlinkJsonType;
 
 import graphql.Scalars;
 import graphql.language.FieldDefinition;

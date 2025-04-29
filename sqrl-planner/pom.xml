@@ -110,27 +110,14 @@
       <scope>test</scope>
     </dependency>
 
-
     <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-text</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-time</artifactId>
+      <groupId>com.datasqrl.flinkrunner</groupId>
+      <artifactId>text-functions</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-collections4</artifactId>
       <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-secure</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-vector</artifactId>
     </dependency>
     <dependency>
       <groupId>com.h2database</groupId>
@@ -140,6 +127,10 @@
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-server-vertx</artifactId>
       <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-functions</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>

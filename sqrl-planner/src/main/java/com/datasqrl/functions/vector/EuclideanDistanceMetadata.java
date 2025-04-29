@@ -2,10 +2,10 @@ package com.datasqrl.functions.vector;
 
 import java.util.EnumSet;
 
+import com.datasqrl.flinkrunner.functions.vector.euclidean_distance;
 import com.datasqrl.function.FunctionMetadata;
 import com.datasqrl.function.IndexType;
 import com.datasqrl.function.IndexableFunction;
-import com.datasqrl.types.vector.functions.EuclideanDistance;
 import com.google.auto.service.AutoService;
 
 @AutoService(FunctionMetadata.class)
@@ -39,6 +39,6 @@ public class EuclideanDistanceMetadata implements IndexableFunction {
 
   @Override
   public Class getMetadataClass() {
-    return EuclideanDistance.class;
+    return euclidean_distance.class;
   }
 }

@@ -18,7 +18,7 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor(onConstructor_=@Inject)
 public class ModuleLoaderImpl implements ModuleLoader {
 
-  final StandardLibraryLoader standardLibraryLoader = new StandardLibraryLoader();
+  final ClasspathFunctionLoader classpathFunctionLoader = new ClasspathFunctionLoader();
   private final ResourceResolver resourceResolver;
   private final ErrorCollector errors;
   private final TableConfigLoader tableConfigFactory;
@@ -40,18 +40,16 @@ public class ModuleLoaderImpl implements ModuleLoader {
   }
 
   public Optional<SqrlModule> getModuleOpt(NamePath namePath) {
-    // Load modules from standard library
-    var module = loadFromStandardLibrary(namePath);
-    if (module.isPresent()) {
-      return module;
+    // Load modules from file system first
+    var module = loadFromFileSystem(namePath);
+    if (module.isEmpty()) { //if it's not local, try to load it from classpath
+      module = loadFunctionsFromClasspath(namePath);
     }
-
-    // Load modules from file system
-    return loadFromFileSystem(namePath);
+    return module;
   }
 
-  private Optional<SqrlModule> loadFromStandardLibrary(NamePath namePath) {
-    var lib = standardLibraryLoader.load(namePath);
+  private Optional<SqrlModule> loadFunctionsFromClasspath(NamePath namePath) {
+    var lib = classpathFunctionLoader.load(namePath);
     if (lib.isEmpty()) {
       return Optional.empty();
     }

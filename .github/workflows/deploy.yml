@@ -1,0 +1,47 @@
+name: Deploy Docusaurus to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+      - docsUpdate
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false # we will use a deploy token instead
+          submodules: false
+
+      - name: Init Function Docs submodule
+        run: |
+      - name: Init submodules and sparse checkout
+        run: |
+          git submodule update --init --depth 1
+          cd documentation/docs/functions-docs
+          git sparse-checkout init --cone
+          git sparse-checkout set function-docs
+          git checkout main
+          git pull --ff-only origin main
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        working-directory: documentation
+        run: npm install
+
+      - name: Build Docusaurus site
+        working-directory: documentation
+        run: npm run build
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: documentation/build

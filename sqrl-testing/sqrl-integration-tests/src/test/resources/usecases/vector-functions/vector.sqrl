@@ -1,0 +1,22 @@
+/*+primary_key(doc_id) */
+VectorData := SELECT doc_id, category_id, double_to_vector(vector) AS vector FROM (VALUES
+             (1, 10, ARRAY[0.9, 0.8, 0.01, 0.1, 0.15]),
+             (2, 10, ARRAY[0.85, 0.85, 0.03, 0.12, 0.09]),
+             (3, 5, ARRAY[0.05, 0.1, 0.0, 0.9, 0.85]),
+             (4, 5, ARRAY[0.1, 0.12, 0.05, 0.85, 0.9])
+     ) AS data_table(doc_id, category_id, vector);
+
+/*+query_by_all(category_id)*/
+CategoryCentroids := SELECT category_id, vector_to_double(CENTER(vector)) as center_vector FROM VectorData GROUP BY category_id;
+
+/*+test */
+CentroidTest := SELECT category_id, center_vector FROM CategoryCentroids ORDER BY category_id ASC;
+
+/*+test */
+DataTest := SELECT doc_id, category_id FROM VectorData ORDER BY doc_id ASC;
+
+DocumentSimilarity(doc_id INT NOT NULL) := SELECT v2.doc_id, cosine_similarity(v1.vector, v2.vector) as score
+                                           FROM VectorData v1 JOIN VectorData v2 ON v1.doc_id <> v2.doc_id
+                                           WHERE v1.doc_id = :doc_id
+                                           ORDER BY score DESC, doc_id ASC;
+

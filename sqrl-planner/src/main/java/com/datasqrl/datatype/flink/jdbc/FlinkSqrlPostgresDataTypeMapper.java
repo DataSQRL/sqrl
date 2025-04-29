@@ -13,9 +13,9 @@ import com.datasqrl.datatype.DataTypeMappings;
 import com.datasqrl.datatype.SerializeToBytes;
 import com.datasqrl.datatype.flink.FlinkDataTypeMapper;
 import com.datasqrl.engine.stream.flink.connector.CastFunction;
-import com.datasqrl.types.json.FlinkJsonType;
-import com.datasqrl.types.json.functions.ToJson;
-import com.datasqrl.types.vector.FlinkVectorType;
+import com.datasqrl.flinkrunner.functions.json.to_jsonb;
+import com.datasqrl.flinkrunner.types.json.FlinkJsonType;
+import com.datasqrl.flinkrunner.types.vector.FlinkVectorType;
 import com.google.auto.service.AutoService;
 
 @AutoService(DataTypeMapper.class)
@@ -129,7 +129,7 @@ public boolean nativeTypeSupport(RelDataType type) {
 
     if (type.getSqlTypeName() == SqlTypeName.MAP ||
         type.getSqlTypeName() == SqlTypeName.ROW || type.getSqlTypeName() == SqlTypeName.ARRAY) {
-      return Optional.of(new CastFunction(ToJson.class.getName(), convert(new ToJson())));
+      return Optional.of(new CastFunction(to_jsonb.class.getName(), convert(new to_jsonb())));
     }
 
     // Cast needed, convert to bytes

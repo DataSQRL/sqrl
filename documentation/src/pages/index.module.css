@@ -1,0 +1,134 @@
+/**
+ * CSS files with the .module.css suffix will be treated as CSS modules
+ * and scoped locally.
+ */
+
+.pipelineSvg {
+  width: 100%;
+}
+
+.usecase {
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+  font-size: 1.3rem;
+}
+
+.usecase select {
+  font-size: 1.3rem;
+}
+
+.verticalForm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 100%;
+}
+
+.verticalForm input {
+  font-size: 1rem;
+}
+
+.verticalForm textarea {
+  font-size: 1rem;
+  height: 10rem;
+}
+
+.verticalForm button {
+  font-size: 1rem;
+  font-weight: bold;
+  height: 2.5rem;
+}
+
+.verticalForm p {
+  color: var(--ifm-color-secondary);
+  font-weight: bold;
+}
+
+
+.emailForm input {
+  font-size: 1rem;
+  height: 1.5rem;
+  margin-left: 0.5rem;
+}
+
+.emailForm button {
+  font-size: 1rem;
+  font-weight: bold;
+  height: 1.5rem;
+  margin: 0 0.5rem;
+}
+
+.closer {
+  border-top: 3px solid;
+  padding: 1rem 0;
+}
+
+@media screen and (max-width: 966px) {
+  .heroBanner {
+    padding: 2rem;
+  }
+}
+
+.buttons {
+  display: flex;
+  align-items: left;
+  justify-content: left;
+  margin-bottom: 1rem;
+}
+
+.code {
+  margin-left: 0rem;
+  margin-right: 0rem;
+  margin-top: 1rem;
+}
+
+.codeContent {
+  padding: 1rem;
+  border-radius: var(--ifm-global-radius);
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  background: var(--ifm-color-secondary-lightest);
+}
+
+html[data-theme='dark'] .codeContent {
+  background: var(--ifm-color-secondary-darker);
+}
+
+.codeContent p {
+  padding-left: 1rem;
+  padding-right: 1rem;
+  margin-bottom: 0;
+  font-weight: bold;
+}
+
+.headerButton {
+  margin-left: 1rem;
+  margin-right: 0;
+}
+
+.notVisible {
+  display: none;
+}
+
+.content {
+  display: flex;
+  align-items: center;
+  padding: 2rem 0;
+  width: 100%;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  border: 1px;
+  padding: 8px;
+  text-align: left;
+}
+
+th {
+  background-color: var(--ifm-color-secondary);
+}

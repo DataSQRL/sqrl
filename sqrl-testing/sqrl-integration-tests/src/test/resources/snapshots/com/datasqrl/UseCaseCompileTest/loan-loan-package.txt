@@ -471,7 +471,7 @@ CREATE TABLE `AddChatMessage_1` (
   `role` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `content` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
-  `context` RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
+  `context` RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
   `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE,
   PRIMARY KEY (`_uuid`) NOT ENFORCED
 ) WITH (
@@ -661,7 +661,7 @@ CREATE TABLE `LoanTypesStream_11` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`AddChatMessage_1`
-(SELECT `_uuid`, `role`, `content`, `name`, TOJSON(`context`) AS `context`, `event_time`
+(SELECT `_uuid`, `role`, `content`, `name`, TO_JSONB(`context`) AS `context`, `event_time`
  FROM `default_catalog`.`default_database`.`AddChatMessage`)
 ;
 INSERT INTO `default_catalog`.`default_database`.`ApplicationAlert_2`

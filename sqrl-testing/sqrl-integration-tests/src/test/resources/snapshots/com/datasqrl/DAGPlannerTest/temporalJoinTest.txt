@@ -192,7 +192,7 @@ CREATE TABLE `Orders_3` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `entries` RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
+  `entries` RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
@@ -206,7 +206,7 @@ CREATE TABLE `TemporalJoin_4` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `entries` RAW('com.datasqrl.types.json.FlinkJsonType', 'ADdjb20uZGF0YXNxcmwudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
+  `entries` RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
   `customerid0` BIGINT NOT NULL,
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -231,11 +231,11 @@ INSERT INTO `default_catalog`.`default_database`.`DistinctCustomer_2`
   FROM `default_catalog`.`default_database`.`Customer`)
  ;
  INSERT INTO `default_catalog`.`default_database`.`Orders_3`
-  (SELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`
+  (SELECT `id`, `customerid`, `time`, TO_JSONB(`entries`) AS `entries`
    FROM `default_catalog`.`default_database`.`Orders`)
   ;
   INSERT INTO `default_catalog`.`default_database`.`TemporalJoin_4`
-   (SELECT `id`, `customerid`, `time`, TOJSON(`entries`) AS `entries`, `customerid0`, `email`, `name`, `lastUpdated`, CAST(`timestamp` AS TIMESTAMP(3) WITH LOCAL TIME ZONE) AS `timestamp`
+   (SELECT `id`, `customerid`, `time`, TO_JSONB(`entries`) AS `entries`, `customerid0`, `email`, `name`, `lastUpdated`, CAST(`timestamp` AS TIMESTAMP(3) WITH LOCAL TIME ZONE) AS `timestamp`
     FROM `default_catalog`.`default_database`.`TemporalJoin`)
    ;
    END

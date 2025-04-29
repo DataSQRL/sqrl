@@ -1,0 +1,21 @@
+.heroBanner {
+  padding: 4rem 0 1rem 0;
+  text-align: left;
+  position: relative;
+  overflow: hidden;
+  border-bottom: 3px solid;
+}
+
+.col {
+  padding-bottom: 1rem;
+}
+
+.pictureCol {
+  text-align: center;
+}
+
+
+.bannerSvg {
+  height: 200px;
+  width: 300px;
+}
