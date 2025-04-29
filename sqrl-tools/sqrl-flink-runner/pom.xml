@@ -37,6 +37,7 @@
               <executable>docker</executable>
               <arguments>
                 <argument>build</argument>
+                <argument>--pull</argument>
                 <argument>--tag</argument>
                 <argument>sqrl-flink-runner</argument>
                 <argument>.</argument>
@@ -124,6 +125,11 @@
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>sqrl-cli</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl.flinkrunner</groupId>
+      <artifactId>flink-sql-runner</artifactId>
       <scope>test</scope>
     </dependency>
 

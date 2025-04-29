@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 package com.datasqrl.sqrl.runner;
+import com.datasqrl.text.Format;
+import com.datasqrl.types.json.functions.ToJson;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -21,7 +23,7 @@ import org.junit.jupiter.api.Test;
 
 import com.nextbreakpoint.flink.client.model.JobStatus;
 
-class SqlFlinkRunnerIT extends AbstractITSupport {
+class SqrlFlinkRunnerIT extends AbstractITSupport {
 
   @Test
   void givenPlan_whenInvokingFormatFunction_thenSuccess() throws Exception {
@@ -35,7 +37,7 @@ class SqlFlinkRunnerIT extends AbstractITSupport {
         "./plugins/flink-sql-runner/flink-sql-runner.uber.jar", "--planfile", "/flink/sql/"+testCase+"/build/deploy/plan/flink-compiled-plan.json")
         .getStdout();
 
-    assertThat(output).contains("com.datasqrl.text.Format").contains("com.datasqrl.types.json.functions.ToJson");
+    assertThat(output).contains(Format.class.getName()).contains(ToJson.class.getName());
 
     System.out.println(output);
 
