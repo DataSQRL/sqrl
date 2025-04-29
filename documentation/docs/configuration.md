@@ -1,11 +1,14 @@
+
 # DataSQRL Configuration
 
 The data pipeline topology, compiler options, dependencies, connector templates and more are configured through
 the DataSQRL package.json configuration file.
 
-You pass a configuration file to the [compiler command](cli.md) via the `-c` or `--config` flag. You can specify a single configuration file or multiple files. If multiple files are specified, they are merged in the order they are specified (i.e. fields - including arrays - are replaced and objects are merged). If now configuration file is explicitly specified, the compiler will use the `package.json` file in the local directory if it exists or use the default configuration.
+You pass a configuration file to the [compiler command](compiler) via the `-c` or `--config` flag. You can specify a single configuration file or multiple files. If multiple files are specified, they are merged in the order they are specified (i.e. fields - including arrays - are replaced and objects are merged). If now configuration file is explicitly specified, the compiler will use the `package.json` file in the local directory if it exists or use the default configuration.
 
 ## Engines
+
+DataSQRL compiles SQL scripts to the engines that execute the resulting data pipeline. DataSQRL supports different types of engines like stream processing (Apache Flink), stream platform (Apache Kafka, RedPanda, etc), databases (Postgres, DuckDB), table formats (Apache Iceberg), and servers (Vert.x). 
 
 `engines` is a map of engine configurations by engine name that the compiler uses to instantiate the engines in the data pipeline. The DataSQRL compiler produces an integrated data pipeline against those engines. At a minimum, DataSQRL expects that a stream processing engine is configured.
 
@@ -71,7 +74,7 @@ Flink runtime configuration can be specified in the [`values` configuration](#va
   }
 }
 ```
-The configuration options are set on the Flink runtime when running or testing via the [DataSQRL command](cli.md).
+The configuration options are set on the Flink runtime when running or testing via the [DataSQRL command](compiler).
 
 ### Postgres
 
@@ -153,10 +156,6 @@ The `compiler` section of the configuration controls elements of the core compil
 
 ## Dependencies
 
-:::warn
-This is changing and will be updated soon.
-:::
-
 `dependencies` map import and export paths to local folders or remote repositories
 
 **Dependency Aliasing**:
@@ -177,6 +176,7 @@ When we import `IMPORT datasqrl.seedshop.Orders` the `datasqrl.seedshop` path is
 
 This is useful for swapping out connectors between different environments or for testing without making changes to the SQRL script.
 
+<!--
 **Repository Imports**:
 
 Dependencies can be used to import tables or functions from a remote repository:
@@ -201,7 +201,7 @@ IMPORT sqrl-functions.openai.vector_embedding;
 ```
 
 If the tag is omitted, it clones the current main branch.
-
+-->
 ## Script
 
 The main SQRL script and (optional) GraphQL schema for the project can be configured in the project configuration under the `script` section:

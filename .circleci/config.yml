@@ -247,7 +247,7 @@ jobs:
       - run:
           name: Conference Tests
           command: |
-            docker run -i --rm -v $PWD:/build sqrl-test test conference.sqrl conference.graphqls --snapshot snapshots-conference --tests tests-conference
+            docker run -i --rm -v $PWD:/build sqrl-test test conference.sqrl conference.graphqls --snapshots snapshots-conference --tests tests-conference
           working_directory: ./sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/conference
 
   run-connectors-tests:
@@ -276,7 +276,7 @@ jobs:
           command: |
             docker run -i --rm -v $PWD:/build sqrl-test \
               test myudf.sqrl \
-              --snapshot snapshots-myudf --tests tests-myudf
+              --snapshots snapshots-myudf --tests tests-myudf
           working_directory: ./sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/udf
 
   build-jars:

@@ -1,4 +1,3 @@
-<!--- TODO: update -->
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
@@ -51,7 +50,7 @@ Note, that most commands require that you either specify the SQRL script (and, o
 ## Compile Command
 
 The compile command processes a SQRL script and, optionally, an API specification, into a deployable data pipeline.
-The compile command stages all files needed by the compiler in the `build` directory and output the created deployment artifacts in the `build/plan` folder.
+The compile command stages all files needed by the compiler in the `build` directory and output the created deployment artifacts for all engines in the `build/deploy` folder.
 
 
 <Tabs groupId="cli">
@@ -85,7 +84,6 @@ sqrl compile -c package.json
 |--------------|-------------------------------------------------------------------------------------------------------------------------------|
 |-a or --api	| Generates an API specification (GraphQL schema) in the file schema.graphqls. Overwrites any existing file with the same name. |
 |-t or --target	| Directory to write deployment artifacts, defaults to build/plan.                                                              |
-
 
 Upon successful compilation, the compiler writes the data processing DAG that is planned from the SQRL script into the file `build/pipeline_explain.txt` and a visual representation to `build/pipeline_visual.html`. Open the latter file in your browser to inspect the data processing DAG.
 
@@ -162,14 +160,14 @@ docker run --rm -v $PWD:/build datasqrl/cmd test
 
 Options for the Test Command:
 
-|Option/Flag Name| 	Description                                         |
-|--------------|------------------------------------------------------|
-|-s or --snapshot| 	Path to the snapshot files. Defaults to `snapshot`. |
-|--tests| 	Path to test graphql query files. Defaults to `tests`.      |
+| Option/Flag Name  | 	Description                                            |
+|-------------------|---------------------------------------------------------|
+| -s or --snapshots | 	Path to the snapshot files. Defaults to `snapshots`.   |
+| --tests           | 	Path to test graphql query files. Defaults to `tests`. |
 
 The `tests` directory contains GraphQL queries that are executed against the API of the generated data pipeline. 
 
-### Testing Order Overview
+### Test Execution Overview
 
 Subscriptions are registered first. This ensures that any incoming data events are captured as soon as they occur.
 

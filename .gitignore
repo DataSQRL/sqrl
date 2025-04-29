@@ -109,3 +109,24 @@ deploy
 
 ## Other
 package-engines*
+
+##############################
+## Docusaurus
+##############################
+
+# Dependencies
+node_modules/
+
+# Generated files
+.docusaurus
+.cache-loader
+
+# Misc
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

@@ -1,4 +1,4 @@
-# SQRL Specification
+# SQRL Language Specification
 
 SQRL is an extension of ANSI SQL, specifically FLinkSQL, which adds support for table, function, and relationship definitions as well as source and sink management. 
 The motivation behind SQRL is to extend FlinkSQL into a development language for reactive data processing.
@@ -53,7 +53,7 @@ An import in SQRL describes a **table**, **function**, or other **sqrl script** 
 IMPORT datasqrl.seedshop.Orders;
 ```
 
-The last element of the import path is the table or function identifier. The prior elements define the filesystem paths relative to the build directory where the table or function definition can be found. The example above maps to the relative path `datasqrl/seedshop/` for the identifier `Orders` which resolves to the filename `Orders.table.sql` that contains the table definition. Take a look at [the advanced configuration](advanced.md) for more information on importing functions and other scripts.
+The last element of the import path is the table or function identifier. The prior elements define the filesystem paths relative to the build directory where the table or function definition can be found. The example above maps to the relative path `datasqrl/seedshop/` for the identifier `Orders` which resolves to the filename `Orders.table.sql` that contains the table definition. Take a look at [the advanced configuration](howto) for more information on importing functions and other scripts.
 
 Paths are case insensitive. Import paths can end with a `*` to import all items on that level of the qualified path.
 ```sql
@@ -80,7 +80,7 @@ CREATE TABLE statements define a data source in SQRL. SQRL supports the full Fli
 
 A table created without a connector is an "internal" data source that is managed by compiled data pipeline. A table with a connector is managed by an external data system that the compiled data pipeline connects to and are therefore "external" data sources. External data sources with connectors are treated exactly as they are in Flink.
 
-### Internal CREATE TABLE
+### CREATE TABLE Interfaces
 
 Tables created in SQRL without a connector are exposed through an [interface](#interface) that data can be inserted into. The following special conventions apply to these tables:
 
@@ -177,7 +177,7 @@ The tables and functions defined in a SQRL script are exposed through an interfa
 
 How a table or function is exposed in the interface depends on the access type. The access type is one of the following:
 
-* **Query**: The data is returned on request, e.g. by querying the database, accessing a GraphQL query endpoint on the server, GET request for the REST API in the server, etc.  
+* **Query**: The data is returned on request, e.g. by querying the database, accessing a GraphQL query endpoint on the server, or accessing a view.
 * **Subscription**: The data is pushed to the client, e.g. by publishing it to a topic in the log, a GraphQL subscription on the server, etc.
 * **None**: The data is not exposed in the interface.
 
@@ -199,9 +199,9 @@ Using the `SUBSCRIBE` keyword in front of the SELECT query in the definition bod
 HighOrderAlert := SUBSCRIBE SELECT * FROM Orders WHERE total > 1000;
 ```
 
-### Internal CREATE TABLE
+### CREATE TABLE
 
-CREATE TABLE statements that define an [internal data source](#internal-create-table) are exposed as topics in the log, GraphQL mutations in the server, or REST POST requests in the server.
+CREATE TABLE statements that define an [internal data source](#create-table-interfaces) are exposed as topics in the log, or GraphQL mutations in the server.
 The input type is defined by mapping all column types to native data types of the interface schema. Computed and metadata columns are not included in the input type since those are computed on insert.
 
 ### API Types
@@ -267,6 +267,14 @@ Only single-line comments are supported at the end of statements on the same lin
 IMPORT data.StockAdjustments;
 ```
 
+**Documentation**
+```sql
+/**
+ This is a doc-string that describes the table or function.
+ */
+CustomerByEmail(email STRING) := SELECT * FROM Customer WHERE email = :email;
+```
+
 Multi-line comments that start with `/**` are documentations strings. Documentation strings are added to the API documentation (if a server engine is configured) and generated metadata for a table or function.
 
 ## SQRL Hints
@@ -321,7 +329,7 @@ This hint only applies to table definitions.
 
 *+test*
 
-Marks a table as a test case. Test tables are only exposed when executing tests, otherwise their access type is "None". See [the test runner documentation](cli.md#test-command) for more details on testing SQRL scripts.
+Marks a table as a test case. Test tables are only exposed when executing tests, otherwise their access type is "None". See [the test runner documentation](compiler#test-command) for more details on testing SQRL scripts.
 
 ```sql
 /*+test */
