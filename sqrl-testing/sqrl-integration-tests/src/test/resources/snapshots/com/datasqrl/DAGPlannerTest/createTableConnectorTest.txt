@@ -11,11 +11,11 @@ Schema:
  - sensorid: BIGINT NOT NULL
  - epoch_timestamp: BIGINT NOT NULL
  - temperature: DOUBLE NOT NULL
- - timestamp: TIMESTAMP_LTZ(3) *ROWTIME*
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Plan:
 LogicalProject(uuid=[$0], sensorid=[$1], epoch_timestamp=[$2], temperature=[$3], timestamp=[$4])
   LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
-    LogicalProject(uuid=[$0], sensorid=[$1], epoch_timestamp=[$2], temperature=[$3], timestamp=[TO_TIMESTAMP_LTZ($2, 3)])
+    LogicalProject(uuid=[$0], sensorid=[$1], epoch_timestamp=[$2], temperature=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($2, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
       LogicalTableScan(table=[[default_catalog, default_database, SensorReading__def]])
 SQL: CREATE VIEW `SensorReading`
 AS
@@ -51,7 +51,7 @@ CREATE TABLE `SensorReading__def` (
   `sensorid` BIGINT NOT NULL,
   `epoch_timestamp` BIGINT NOT NULL,
   `temperature` DOUBLE NOT NULL,
-  `timestamp` AS TO_TIMESTAMP_LTZ(`epoch_timestamp`, 3),
+  `timestamp` AS COALESCE(TO_TIMESTAMP_LTZ(`epoch_timestamp`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
 ) WITH (
   'connector' = 'datagen',
@@ -79,7 +79,7 @@ CREATE TABLE `SensorReading_1` (
   `sensorid` BIGINT NOT NULL,
   `epoch_timestamp` BIGINT NOT NULL,
   `temperature` DOUBLE NOT NULL,
-  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
   PRIMARY KEY (`__pk_hash`) NOT ENFORCED
 ) WITH (
@@ -123,7 +123,7 @@ INSERT INTO `default_catalog`.`default_database`.`SensorTempByHour_2`
     {
       "name" : "SensorReading_1",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"SensorReading_1\" (\"uuid\" TEXT NOT NULL, \"sensorid\" BIGINT NOT NULL, \"epoch_timestamp\" BIGINT NOT NULL, \"temperature\" DOUBLE PRECISION NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE , \"__pk_hash\" TEXT  , PRIMARY KEY (\"__pk_hash\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"SensorReading_1\" (\"uuid\" TEXT NOT NULL, \"sensorid\" BIGINT NOT NULL, \"epoch_timestamp\" BIGINT NOT NULL, \"temperature\" DOUBLE PRECISION NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL, \"__pk_hash\" TEXT  , PRIMARY KEY (\"__pk_hash\"))",
       "fields" : [
         {
           "name" : "uuid",
@@ -148,7 +148,7 @@ INSERT INTO `default_catalog`.`default_database`.`SensorTempByHour_2`
         {
           "name" : "timestamp",
           "type" : "TIMESTAMP WITH TIME ZONE",
-          "nullable" : true
+          "nullable" : false
         },
         {
           "name" : "__pk_hash",
@@ -207,7 +207,7 @@ INSERT INTO `default_catalog`.`default_database`.`SensorTempByHour_2`
         {
           "name" : "timestamp",
           "type" : "TIMESTAMP WITH TIME ZONE",
-          "nullable" : true
+          "nullable" : false
         }
       ]
     },
@@ -292,7 +292,7 @@ INSERT INTO `default_catalog`.`default_database`.`SensorTempByHour_2`
     "subscriptions" : [ ],
     "schema" : {
       "type" : "string",
-      "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Query {\n  SensorReading(limit: Int = 10, offset: Int = 0): [SensorReading!]\n  SensorTempByHour(limit: Int = 10, offset: Int = 0): [SensorTempByHour!]\n}\n\ntype SensorReading {\n  uuid: String!\n  sensorid: GraphQLBigInteger!\n  epoch_timestamp: GraphQLBigInteger!\n  temperature: Float!\n  timestamp: DateTime\n}\n\ntype SensorTempByHour {\n  sensorid: GraphQLBigInteger!\n  time_hour: DateTime!\n  avg_temperature: Float!\n}\n"
+      "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Query {\n  SensorReading(limit: Int = 10, offset: Int = 0): [SensorReading!]\n  SensorTempByHour(limit: Int = 10, offset: Int = 0): [SensorTempByHour!]\n}\n\ntype SensorReading {\n  uuid: String!\n  sensorid: GraphQLBigInteger!\n  epoch_timestamp: GraphQLBigInteger!\n  temperature: Float!\n  timestamp: DateTime!\n}\n\ntype SensorTempByHour {\n  sensorid: GraphQLBigInteger!\n  time_hour: DateTime!\n  avg_temperature: Float!\n}\n"
     }
   }
 }

@@ -1,5 +1,5 @@
 CREATE TABLE Sensors (
-     `timestamp` AS TO_TIMESTAMP_LTZ(`placed`, 3),
+     `timestamp` AS COALESCE(TO_TIMESTAMP_LTZ(`placed`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
      PRIMARY KEY (id, placed) NOT ENFORCED,
      WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
 ) WITH (

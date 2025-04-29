@@ -89,10 +89,13 @@ public class FullUsecasesIT {
 
   UseCaseTestExtensions testExtensions = new UseCaseTestExtensions();
 
+  boolean executed = false;
+
   @AfterEach
   public void tearDown() throws Exception {
-    if (containerHook != null) {
+    if (containerHook != null && executed) {
       containerHook.clear();
+      executed = false;
     }
   }
 
@@ -158,6 +161,9 @@ public class FullUsecasesIT {
           .isTrue();
       return;
     }
+
+    executed = true;
+
     this.snapshot =
         Snapshot.of(
             FullUsecasesIT.class,
@@ -271,7 +277,7 @@ public class FullUsecasesIT {
       }
 
       engines.accept(
-          new TestExecutionEnv(param.getUseCaseName(), packageJson, rootDir, snapshot), context);
+          new TestExecutionEnv(param.getSqrlFileName() + ":" + param.goal, packageJson, rootDir, snapshot), context);
       if (run != null) {
         run.stop();
       }
@@ -314,7 +320,7 @@ public class FullUsecasesIT {
   @MethodSource("useCaseProvider")
   @Disabled
   public void runTestCaseByName(UseCaseTestParameter param, TestInfo testInfo) {
-    if (param.sqrlFileName.equals("openai-cicd-test.sqrl")
+    if (param.sqrlFileName.equals("sensors-teaser.sqrl")
     			  && param.goal.equals("test")
     ) {
       testUseCase(param, testInfo);
