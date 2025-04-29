@@ -303,7 +303,7 @@ Schema:
 Plan:
 LogicalProject(id=[$0], first_name=[$1], last_name=[$2], email=[$3], ip_address=[$4], country=[$5], changed_on=[$6], timestamp=[$7])
   LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($7, 1:INTERVAL SECOND)])
-    LogicalProject(id=[$0], first_name=[$1], last_name=[$2], email=[$3], ip_address=[$4], country=[$5], changed_on=[$6], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($6, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
+    LogicalProject(id=[$0], first_name=[$1], last_name=[$2], email=[$3], ip_address=[$4], country=[$5], changed_on=[$6], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($6, 3), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
       LogicalTableScan(table=[[default_catalog, default_database, _CustomersStream__def]])
 SQL: CREATE VIEW `_CustomersStream`
 AS
@@ -426,7 +426,7 @@ CREATE TEMPORARY TABLE `_CustomersStream__schema` (
   'connector' = 'datagen'
 );
 CREATE TABLE `_CustomersStream__def` (
-  `timestamp` AS COALESCE(TO_TIMESTAMP_LTZ(`changed_on`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
+  `timestamp` AS COALESCE(TO_TIMESTAMP_LTZ(`changed_on`, 3), TIMESTAMP '1970-01-01 00:00:00.000'),
   PRIMARY KEY (`id`, `changed_on`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
 ) WITH (
@@ -1060,7 +1060,7 @@ FROM "Orders_6"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT \"id\", \"name\", \"sizing\", \"weight_in_gram\", \"type\", \"category\", \"usda_id\", \"updated\", TS_RANK_CD(TO_TSVECTOR('english', COALESCE(\"name\", ' ')), WEBSEARCH_TO_TSQUERY('english', $1)) AS \"score\"\nFROM \"Products_8\"\nWHERE (TO_TSVECTOR('english', COALESCE(\"name\", ' ')) @@ WEBSEARCH_TO_TSQUERY('english', CAST($1 AS TEXT)))\nORDER BY TS_RANK_CD(TO_TSVECTOR('english', COALESCE(\"name\", ' ')), WEBSEARCH_TO_TSQUERY('english', $1)) DESC NULLS LAST, \"id\" NULLS FIRST",
+            "sql" : "SELECT \"id\", \"name\", \"sizing\", \"weight_in_gram\", \"type\", \"category\", \"usda_id\", \"updated\", TEXT_SEARCH($1, \"name\") AS \"score\"\nFROM \"Products_8\"\nWHERE TEXT_SEARCH(CAST($1 AS TEXT), \"name\") > 0\nORDER BY TEXT_SEARCH($1, \"name\") DESC NULLS LAST, \"id\" NULLS FIRST",
             "parameters" : [
               {
                 "type" : "arg",
@@ -1097,7 +1097,7 @@ FROM "Orders_6"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Products_8\"\nWHERE (TO_TSVECTOR('english', COALESCE(\"name\", ' ') || ' ' || COALESCE(\"category\", ' ')) @@ WEBSEARCH_TO_TSQUERY('english', CAST($1 AS TEXT))) AND \"id\" > $2\nORDER BY \"id\" NULLS FIRST",
+            "sql" : "SELECT *\nFROM \"Products_8\"\nWHERE TEXT_SEARCH(CAST($1 AS TEXT), \"name\", \"category\") > 0 AND \"id\" > $2\nORDER BY \"id\" NULLS FIRST",
             "parameters" : [
               {
                 "type" : "arg",

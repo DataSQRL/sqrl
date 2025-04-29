@@ -160,7 +160,7 @@ Schema:
 Plan:
 LogicalProject(id=[$0], machineId=[$1], placed=[$2], timestamp=[$3])
   LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($3, 1:INTERVAL SECOND)])
-    LogicalProject(id=[$0], machineId=[$1], placed=[$2], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($2, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
+    LogicalProject(id=[$0], machineId=[$1], placed=[$2], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($2, 3), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
       LogicalTableScan(table=[[default_catalog, default_database, SensorUpdates__def]])
 SQL: CREATE VIEW `SensorUpdates`
 AS
@@ -250,7 +250,7 @@ CREATE TEMPORARY TABLE `SensorUpdates__schema` (
   'connector' = 'datagen'
 );
 CREATE TABLE `SensorUpdates__def` (
-  `timestamp` AS COALESCE(TO_TIMESTAMP_LTZ(`placed`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
+  `timestamp` AS COALESCE(TO_TIMESTAMP_LTZ(`placed`, 3), TIMESTAMP '1970-01-01 00:00:00.000'),
   PRIMARY KEY (`id`, `placed`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
 ) WITH (
