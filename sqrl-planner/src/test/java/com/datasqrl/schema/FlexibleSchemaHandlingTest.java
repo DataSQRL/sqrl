@@ -22,7 +22,6 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
-import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.error.ErrorCollector;
@@ -118,7 +117,6 @@ public class FlexibleSchemaHandlingTest {
   }
 
   static class SchemaConverterProvider implements ArgumentsProvider {
-    SqrlFramework framework = new SqrlFramework();
 
     @Override
     public Stream<? extends Arguments> provideArguments(ExtensionContext extensionContext)

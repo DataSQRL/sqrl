@@ -5,7 +5,6 @@ import java.util.Collection;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.plan.rules.ComputeCost;
 import com.datasqrl.plan.rules.EngineCapability;
-import com.datasqrl.plan.rules.ExecutionAnalysis.CapabilityException;
 
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
@@ -27,11 +26,6 @@ public abstract class StageAnalysis {
   public String getName() {
     return stage.getName();
   }
-
-  public static StageAnalysis.MissingCapability of(CapabilityException exception) {
-    return new MissingCapability(exception.getStage(), exception.getCapabilities());
-  }
-
 
   @Value
   @EqualsAndHashCode(callSuper = true)

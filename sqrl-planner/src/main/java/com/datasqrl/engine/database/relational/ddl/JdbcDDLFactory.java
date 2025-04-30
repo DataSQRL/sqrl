@@ -5,13 +5,10 @@ package com.datasqrl.engine.database.relational.ddl;
 
 import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.plan.global.IndexDefinition;
-import com.datasqrl.plan.global.PhysicalDAGPlan.EngineSink;
 import com.datasqrl.sql.SqlDDLStatement;
 
 public interface JdbcDDLFactory {
   JdbcDialect getDialect();
-
-  SqlDDLStatement createTable(EngineSink table);
 
   SqlDDLStatement createIndex(IndexDefinition indexDefinitions);
 }

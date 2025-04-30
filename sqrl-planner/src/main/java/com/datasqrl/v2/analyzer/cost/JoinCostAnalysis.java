@@ -4,7 +4,7 @@
 package com.datasqrl.v2.analyzer.cost;
 
 import com.datasqrl.io.tables.TableType;
-import com.datasqrl.plan.rules.JoinAnalysis.Side;
+import com.datasqrl.plan.rules.Side;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
