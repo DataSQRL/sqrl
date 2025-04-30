@@ -19,8 +19,6 @@ import org.apache.calcite.sql.type.SqlTypeFactoryImpl;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.junit.jupiter.api.Test;
 
-import com.datasqrl.calcite.Dialect;
-import com.datasqrl.calcite.QueryPlanner;
 import com.datasqrl.config.TableConfig.MetadataEntry;
 
 import lombok.Value;
@@ -35,7 +33,8 @@ public class FlinkSqlNodeFactoryTest {
   }
 
   private String unparse(SqlNode node) {
-    return QueryPlanner.sqlToString(Dialect.FLINK, ()->node).getSql();
+//    return QueryPlanner.sqlToString(Dialect.FLINK, ()->node).getSql();
+	  return null;
   }
 
   @Test

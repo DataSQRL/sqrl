@@ -9,12 +9,6 @@
   <artifactId>sqrl-planner</artifactId>
 
   <dependencies>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-calcite</artifactId>
-    </dependency>
-
-
     <!-- Utils -->
     <dependency>
       <groupId>org.reflections</groupId>
@@ -67,13 +61,6 @@
     <dependency>
       <groupId>org.apache.avro</groupId>
       <artifactId>avro</artifactId>
-    </dependency>
-
-    <dependency>
-      <artifactId>sqrl-calcite</artifactId>
-      <groupId>com.datasqrl</groupId>
-      <type>test-jar</type>
-      <scope>test</scope>
     </dependency>
 
     <dependency>
@@ -143,8 +130,35 @@
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
+      <artifactId>flink-table-common</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-table-planner_2.12</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flink</groupId>
       <artifactId>flink-avro</artifactId>
     </dependency>
+    
+    <dependency>
+      <groupId>com.datasqrl.flinkrunner</groupId>
+      <artifactId>postgresql-connector</artifactId>
+    </dependency>
 
+    <dependency>
+      <groupId>com.google.inject</groupId>
+      <artifactId>guice</artifactId>
+      <version>7.0.0</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.inject.extensions</groupId>
+      <artifactId>guice-multibindings</artifactId>
+      <version>4.2.3</version>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.datatype</groupId>
+      <artifactId>jackson-datatype-jdk8</artifactId>
+    </dependency>
   </dependencies>
 </project>

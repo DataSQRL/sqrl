@@ -6,13 +6,9 @@ package com.datasqrl.engine;
 import java.util.EnumSet;
 import java.util.List;
 
-import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.config.EngineType;
-import com.datasqrl.config.TableConfig;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
-import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

@@ -31,12 +31,6 @@
 
     <!-- Test jars -->
     <dependency>
-      <artifactId>sqrl-calcite</artifactId>
-      <groupId>com.datasqrl</groupId>
-      <type>test-jar</type>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-planner</artifactId>
       <type>test-jar</type>
