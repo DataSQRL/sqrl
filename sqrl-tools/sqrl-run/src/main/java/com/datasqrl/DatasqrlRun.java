@@ -284,7 +284,7 @@ public class DatasqrlRun {
       if (o1 instanceof List topicList) {
         for (Object t : topicList) {
           if (t instanceof String string) {
-            mutableTopics.add(Map.of("name", string));
+            mutableTopics.add(Map.of("topicName", string));
           }
         }
       }
