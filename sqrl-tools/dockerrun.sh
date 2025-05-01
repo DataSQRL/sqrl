@@ -27,7 +27,6 @@ if [ "$1" == "run" ] || [ "$1" == "test" ]; then
         export KAFKA_HOST=localhost
         export KAFKA_PORT=9092
         export PROPERTIES_BOOTSTRAP_SERVERS=localhost:9092
-        ls -la /data/redpanda/
     fi
 
     # Start Postgres if POSTGRES_HOST is not set
