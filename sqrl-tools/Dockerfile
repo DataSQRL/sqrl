@@ -44,4 +44,5 @@ EXPOSE 8080 8081 8888 9092 9644
 
 WORKDIR /build
 
+VOLUME /data/redpanda
 ENTRYPOINT ["/opt/sqrl/dockerrun.sh"]
