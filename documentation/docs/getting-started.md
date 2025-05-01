@@ -103,11 +103,11 @@ We are going to add information about the user so we can associate token consump
 To demonstrate how to integrate external data sources, we assume that the user information is stored in another system and that we consume a CDC stream of that data. We are going to simulate that CDC stream in the following JSON file:
 
 ```json lines
-{userid:  1, orgid:  1, last_updated:  "2025-04-20T18:12:00.000Z"}
-{userid:  2, orgid:  2, last_updated:  "2025-04-21T11:23:00.000Z"}
-{userid:  3, orgid:  1, last_updated:  "2025-04-24T07:15:00.000Z"}
-{userid:  1, orgid:  2, last_updated:  "2025-04-25T19:34:00.000Z"}
-{userid:  2, orgid:  2, last_updated:  "2025-04-25T21:47:00.000Z"}
+{"userid":  1, "orgid":  2, "last_updated": "2025-04-20T18:12:00.000Z"}
+{"userid":  2, "orgid":  2, "last_updated": "2025-04-21T11:23:00.000Z"}
+{"userid":  3, "orgid":  1, "last_updated": "2025-04-24T07:15:00.000Z"}
+{"userid":  1, "orgid":  2, "last_updated": "2025-04-25T19:34:00.000Z"}
+{"userid":  2, "orgid":  1, "last_updated": "2025-04-25T21:47:00.000Z"}
 ```
 Create the file `local-data/userinfo.jsonl` in a new sub-directory `local-data`.
 
@@ -195,7 +195,7 @@ The `build` directory contains two files that are useful to visualize, inspect, 
 * `pipeline_visual.html` is a visual representation of the entire data pipeline. Open this file in your browser.
 * `pipeline_explain.txt` contains a textual representation of the pipeline DAG that DataSQRL generates.
 
-## Adjust GraphQL Schema
+## Customize GraphQL Schema
 
 To inspect the GraphQL API that DataSQRL generates from the SQRL script, execute:
 ```bash

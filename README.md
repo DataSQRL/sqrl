@@ -75,7 +75,7 @@ Web developers have frameworks to eliminate the busywork. We are building the Da
 
 ## How DataSQRL Works
 
-![Example Data Processing DAG](documentation/docs/img/dag_example.png)
+![Example Data Processing DAG](documentation/static/img/screenshots/dag_example.png)
 
 DataSQRL compiles the SQRL scripts and data source/sink definitions into a data processing DAG (Directed Acyclic Graph) according to the configuration. The cost-based optimizer cuts the DAG into segments executed by different engines (e.g. Flink, Kafka, Postgres, Vert.x), generating the necessary physical plans, schemas, and connectors for a fully integrated and streamlined data pipeline. These deployment assets are then executed in Docker, Kubernetes, or by a managed cloud service.
 
