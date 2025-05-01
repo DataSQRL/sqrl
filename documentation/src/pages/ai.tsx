@@ -140,9 +140,9 @@ TokenAnalysis := SELECT orgid, userid, sum(tokens) as total_tokens,
                     introspection, debugging - DataSQRL brings developer convenience and automation.
                   </p>
                   <Link className="button button--primary button--lg"
-                      to="docs/getting-started">Get Started</Link>
+                      to="/docs/getting-started">Get Started</Link>
                   <Link className="button button--primary button--lg"
-                        to="docs/intro">Learn More</Link>
+                        to="/docs/intro">Learn More</Link>
                 </div>
               </div>
             </div>

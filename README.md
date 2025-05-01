@@ -1,5 +1,7 @@
 # DataSQRL
 
+<img src="/documentation/static/img/diagrams/streaming_summary.png" align="right" width="300" />
+
 DataSQRL is a data streaming framework for incremental and real-time data processing applications. Ingest, transform, store, and serve data as iceberg views, data APIs, or LLM tooling with the simplicity of SQL.
 
 Data Engineers use DataSQRL to quickly build production-ready data pipelines that:
@@ -7,10 +9,7 @@ Data Engineers use DataSQRL to quickly build production-ready data pipelines tha
 * Create realtime data APIs for enriched data extracted from operational data systems.
 * Semantically contextualize data combined from multiple source systems and serve it as LLM tooling for RAG.
 
-Architecture image
-
-<!-- Simple architecture image from ingest to serving -->
-
+![DataSQRL Pipeline Architecture](/documentation/static/img/diagrams/streaming_architecture.png)
 
 You define the data processing in SQL and DataSQRL compiles the deployment artifacts for Apache Kafka, Flink, Postgres, Iceberg, GraphQL API, and LLM tooling. It generates the glue code, schemas, and mappings to automatically integrate and configure these components into a coherent data pipeline that is highly available, consistent, scalable, observable, and fast. DataSQRL supports quick local iteration, end-to-end pipeline testing, and deployment to Kubernetes or cloud-managed services.
 
