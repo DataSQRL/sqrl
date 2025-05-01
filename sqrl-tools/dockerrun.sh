@@ -20,7 +20,10 @@ if [ "$1" == "run" ] || [ "$1" == "test" ]; then
     # Start Redpanda if KAFKA_HOST is not set
     if [ -z "$KAFKA_HOST" ]; then
         echo "Starting Redpanda..."
-        rpk redpanda start --schema-registry-addr 0.0.0.0:8086 --overprovisioned --smp 1 --memory 1G --reserve-memory 0M --node-id 0 --check=false &
+        # corresponds to value in /etc/redpanda/redpanda.yaml redpanda.data_directory
+        mkdir -p /data/redpanda/
+        rpk redpanda start --schema-registry-addr 0.0.0.0:8086 --overprovisioned --config /etc/redpanda/redpanda.yaml --smp 1 --memory 1G --reserve-memory 0M --node-id 0 --check=false &
+
         export KAFKA_HOST=localhost
         export KAFKA_PORT=9092
         export PROPERTIES_BOOTSTRAP_SERVERS=localhost:9092
