@@ -1,8 +1,11 @@
 package com.datasqrl.engine.database.relational;
 
+import com.datasqrl.v2.hint.DataTypeHint;
+import com.datasqrl.v2.hint.PlannerHints;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -62,7 +65,7 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
           .collect(Collectors.toList()), SqlParserPos.ZERO);
       var viewSql = createView(viewNameIdentifier, columnList, sqlNode.getSqlNode());
       var datatype = relNode.getRowType();
-      view = new JdbcStatement(viewName, Type.VIEW, viewSql, datatype, getColumns(datatype.getFieldList()));
+      view = new JdbcStatement(viewName, Type.VIEW, viewSql, datatype, getColumns(datatype.getFieldList(), PlannerHints.EMPTY));
     }
     return new JdbcStatementFactory.QueryResult(qBuilder, view);
   }
@@ -71,27 +74,29 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
   public JdbcStatement createTable(JdbcEngineCreateTable createTable) {
     var tableName = createTable.getTable().getTableName();
     var ddl = createTable(tableName, createTable.getDatatype().getFieldList(),
-        createTable.getTable().getPrimaryKey().get());
+        createTable.getTable().getPrimaryKey().get(), createTable.getTableAnalysis().getHints());
     return new JdbcStatement(tableName, Type.TABLE, ddl.getSql(), createTable.getDatatype(),
         ddl.getColumns());
   }
 
-  public CreateTableDDL createTable(String name, List<RelDataTypeField> fields, List<String> primaryKeys) {
+  public CreateTableDDL createTable(String name, List<RelDataTypeField> fields, List<String> primaryKeys,
+      PlannerHints hints) {
     //TODO: Move to SqlNode
     var tableName = quoteIdentifier(name);
-    var columns = getColumns(fields);
+    var columns = getColumns(fields, hints);
     var pks = quoteValues(primaryKeys);
     return new CreateTableDDL(tableName, columns, pks);
   }
 
-  protected List<Field> getColumns(List<RelDataTypeField> fields) {
+  protected List<Field> getColumns(List<RelDataTypeField> fields, PlannerHints hints) {
     return fields.stream()
-        .map(this::toField)
+        .map(field -> toField(field, hints))
         .collect(Collectors.toList());
   }
 
-  protected JdbcStatement.Field toField(RelDataTypeField field) {
-    var castSpec = getSqlType(field.getType());
+  protected JdbcStatement.Field toField(RelDataTypeField field, PlannerHints hints) {
+    var castSpec = getSqlType(field.getType(), hints.getHints(DataTypeHint.class)
+        .filter(hint -> hint.getColumnIndex()==field.getIndex()).findFirst());
     var sqlPrettyWriter = new SqlPrettyWriter();
     castSpec.unparse(sqlPrettyWriter, 0, 0);
     var typeName = sqlPrettyWriter.toSqlString().getSql();
@@ -101,7 +106,7 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
     return new Field(field.getName(), typeName, datatype.isNullable());
   }
 
-  protected abstract SqlDataTypeSpec getSqlType(RelDataType type);
+  protected abstract SqlDataTypeSpec getSqlType(RelDataType type, Optional<DataTypeHint> hint);
 
   protected String createView(SqlIdentifier viewNameIdentifier,
       SqlNodeList columnList, SqlNode viewSqlNode) {

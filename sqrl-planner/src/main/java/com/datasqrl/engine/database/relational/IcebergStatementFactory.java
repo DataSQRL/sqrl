@@ -1,5 +1,7 @@
 package com.datasqrl.engine.database.relational;
 
+import com.datasqrl.v2.hint.DataTypeHint;
+import java.util.Optional;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.sql.SqlDataTypeSpec;
 
@@ -15,7 +17,7 @@ public class IcebergStatementFactory extends AbstractJdbcStatementFactory {
   }
 
   @Override
-  protected SqlDataTypeSpec getSqlType(RelDataType type) {
+  protected SqlDataTypeSpec getSqlType(RelDataType type, Optional<DataTypeHint> hint) {
     //TODO: Need to create Iceberg cast spec
     return ExtendedPostgresSqlDialect.DEFAULT.getCastSpec(type);
   }

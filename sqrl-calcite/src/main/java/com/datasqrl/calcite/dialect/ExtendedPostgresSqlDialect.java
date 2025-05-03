@@ -3,6 +3,8 @@ package com.datasqrl.calcite.dialect;
 
 import static org.apache.calcite.sql.SqlKind.COLLECTION_TABLE;
 
+import com.datasqrl.flinkrunner.types.json.FlinkJsonType;
+import com.datasqrl.flinkrunner.types.vector.FlinkVectorType;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -42,20 +44,11 @@ public class ExtendedPostgresSqlDialect extends PostgresqlSqlDialect {
     DEFAULT = new ExtendedPostgresSqlDialect(DEFAULT_CONTEXT);
   }
 
-  private static final Map<Class, String> foreignTypesCastSpecMap = getForeignTypesCastSpecs();
 
   public ExtendedPostgresSqlDialect(Context context) {
     super(context);
   }
 
-  private static Map<Class, String> getForeignTypesCastSpecs() {
-    Map<Class, String> jdbcTypeSerializer = ServiceLoaderDiscovery.getAll(JdbcTypeSerializer.class)
-        .stream()
-        .filter(f->f.getDialectId().equalsIgnoreCase(Dialect.POSTGRES.name()))
-        .collect(Collectors.toMap(JdbcTypeSerializer::getConversionClass,
-            JdbcTypeSerializer::dialectTypeName));
-    return jdbcTypeSerializer;
-  }
 
   @Override
   public SqlConformance getConformance() {
@@ -69,8 +62,10 @@ public class ExtendedPostgresSqlDialect extends PostgresqlSqlDialect {
       castSpec = "jsonb";
     } else if (type instanceof RawRelDataType rawRelDataType) {
       Class<?> originatingClass = rawRelDataType.getRawType().getOriginatingClass();
-      if (foreignTypesCastSpecMap.containsKey(originatingClass)) {
-        castSpec = foreignTypesCastSpecMap.get(originatingClass);
+      if (originatingClass.equals(FlinkVectorType.class)) {
+        castSpec = "VECTOR";
+      } else if (originatingClass.equals(FlinkJsonType.class)) {
+        castSpec = "jsonb";
       } else {
         throw new RuntimeException("Could not find type name for: %s" + type);
       }

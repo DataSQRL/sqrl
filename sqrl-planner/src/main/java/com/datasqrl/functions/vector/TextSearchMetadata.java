@@ -1,5 +1,6 @@
 package com.datasqrl.functions.vector;
 
+import com.datasqrl.function.text.text_search;
 import java.util.EnumSet;
 
 import com.datasqrl.function.FunctionMetadata;
@@ -37,6 +38,6 @@ public class TextSearchMetadata implements IndexableFunction {
 
   @Override
   public Class getMetadataClass() {
-    return TextSearchMetadata.class;
+    return text_search.class;
   }
 }
