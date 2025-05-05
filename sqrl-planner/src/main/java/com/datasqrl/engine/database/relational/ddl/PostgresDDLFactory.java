@@ -3,13 +3,21 @@
  */
 package com.datasqrl.engine.database.relational.ddl;
 
+import com.datasqrl.v2.hint.DataTypeHint;
+import com.datasqrl.v2.hint.PlannerHint;
+import com.datasqrl.v2.hint.PlannerHints;
+import com.datasqrl.v2.hint.VectorDimensionHint;
+import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
+import org.apache.calcite.sql.SqlAlienSystemTypeNameSpec;
 import org.apache.calcite.sql.SqlDataTypeSpec;
+import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.validate.SqlNameMatchers;
 
 import com.datasqrl.calcite.Dialect;
@@ -55,8 +63,13 @@ public class PostgresDDLFactory extends AbstractJdbcStatementFactory implements 
   }
 
   @Override
-  protected SqlDataTypeSpec getSqlType(RelDataType type) {
-    return ExtendedPostgresSqlDialect.DEFAULT.getCastSpec(type);
+  protected SqlDataTypeSpec getSqlType(RelDataType type, Optional<DataTypeHint> hint) {
+    SqlDataTypeSpec spec = ExtendedPostgresSqlDialect.DEFAULT.getCastSpec(type);
+    Optional<VectorDimensionHint> vecDimOpt = hint.filter(VectorDimensionHint.class::isInstance).map(VectorDimensionHint.class::cast);
+    if (vecDimOpt.isPresent()) {
+      spec = new SqlDataTypeSpec(new SqlAlienSystemTypeNameSpec("VECTOR("+vecDimOpt.get().getDimensions()+")", type.getSqlTypeName(), SqlParserPos.ZERO), SqlParserPos.ZERO);
+    }
+    return spec;
   }
 
   @Override
@@ -92,7 +105,7 @@ public class PostgresDDLFactory extends AbstractJdbcStatementFactory implements 
     var fields = table.getRowType().getFieldList();
     for (var i = 0; i < fields.size(); i++) {
       var field = fields.get(i);
-      columns.add(toField(field));
+      columns.add(toField(field, null));
     }
     for (int pkIdx : table.getPrimaryKeys()) {
       var field = fields.get(pkIdx);

@@ -1,0 +1,5 @@
+query DocumentSimilarityIndex {
+    DocumentSimilarityIndex(doc_id: 1) {
+        doc_id
+    }
+}

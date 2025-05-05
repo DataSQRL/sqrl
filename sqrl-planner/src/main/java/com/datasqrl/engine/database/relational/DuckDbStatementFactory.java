@@ -2,8 +2,10 @@ package com.datasqrl.engine.database.relational;
 
 import static com.datasqrl.function.CalciteFunctionUtil.lightweightOp;
 
+import com.datasqrl.v2.hint.DataTypeHint;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import org.apache.calcite.rel.RelNode;
@@ -48,7 +50,7 @@ public class DuckDbStatementFactory extends AbstractJdbcStatementFactory {
   }
 
   @Override
-  protected SqlDataTypeSpec getSqlType(RelDataType type) {
+  protected SqlDataTypeSpec getSqlType(RelDataType type, Optional<DataTypeHint> hint) {
     return ExtendedPostgresSqlDialect.DEFAULT.getCastSpec(type);
   }
 
