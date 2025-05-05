@@ -60,7 +60,7 @@
     <avro.version>1.11.3</avro.version>
     <freemarker.version>2.3.32</freemarker.version>
     <jsonschema.version>1.5.2</jsonschema.version>
-    <flinkrunner.version>1.0.1-SNAPSHOT</flinkrunner.version>
+    <flinkrunner.version>0.2</flinkrunner.version>
 
     <!-- params -->
     <snapshots.update>false</snapshots.update>
@@ -911,19 +911,61 @@
         <scope>test</scope>
       </dependency>
 
-      <dependency>
-        <groupId>com.datasqrl.flinkrunner</groupId>
-        <artifactId>flinkrunner-bom</artifactId>
-        <version>${flinkrunner.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
-      <dependency>
-        <!-- FIXME remove this dependency -->
-        <groupId>com.datasqrl.flinkrunner</groupId>
-        <artifactId>system-functions-discovery</artifactId>
-        <version>${flinkrunner.version}</version>
-      </dependency>
+        <dependency>
+            <groupId>com.datasqrl.flinkrunner</groupId>
+            <artifactId>flexible-csv-format</artifactId>
+            <version>${flinkrunner.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.datasqrl.flinkrunner</groupId>
+            <artifactId>functions-common</artifactId>
+            <version>${flinkrunner.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.datasqrl.flinkrunner</groupId>
+            <artifactId>json-type</artifactId>
+            <version>${flinkrunner.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.datasqrl.flinkrunner</groupId>
+            <artifactId>flexible-json-format</artifactId>
+            <version>${flinkrunner.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.datasqrl.flinkrunner</groupId>
+            <artifactId>text-functions</artifactId>
+            <version>${flinkrunner.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.datasqrl.flinkrunner</groupId>
+            <artifactId>math-functions</artifactId>
+            <version>${flinkrunner.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.datasqrl.flinkrunner</groupId>
+            <artifactId>openai-functions</artifactId>
+            <version>${flinkrunner.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.datasqrl.flinkrunner</groupId>
+            <artifactId>vector-type</artifactId>
+            <version>${flinkrunner.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.datasqrl.flinkrunner</groupId>
+            <artifactId>kafka-safe-connector</artifactId>
+            <version>${flinkrunner.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.datasqrl.flinkrunner</groupId>
+            <artifactId>postgresql-connector</artifactId>
+            <version>${flinkrunner.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.datasqrl.flinkrunner</groupId>
+            <artifactId>flink-sql-runner</artifactId>
+            <version>${flinkrunner.version}</version>
+        </dependency>
     </dependencies>
   </dependencyManagement>
   <!--    <scm>-->
