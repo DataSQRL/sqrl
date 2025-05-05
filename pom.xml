@@ -60,7 +60,7 @@
     <avro.version>1.11.3</avro.version>
     <freemarker.version>2.3.32</freemarker.version>
     <jsonschema.version>1.5.2</jsonschema.version>
-    <flinkrunner.version>1.0.1-SNAPSHOT</flinkrunner.version>
+    <flinkrunner.version>0.2</flinkrunner.version>
 
     <!-- params -->
     <snapshots.update>false</snapshots.update>
