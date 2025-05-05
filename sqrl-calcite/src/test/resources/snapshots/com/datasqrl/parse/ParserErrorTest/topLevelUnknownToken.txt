@@ -1,4 +1,0 @@
-[FATAL] mismatched input at 'package'. Expecting: '/*+', 'CREATE', 'EXPORT', 'IMPORT', <identifier>
-UNKNOWNTOKEN package;
--------------^
-
