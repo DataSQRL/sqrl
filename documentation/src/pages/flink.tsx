@@ -128,9 +128,9 @@ UsageAlert := SUBSCRIBE SELECT * FROM UserTokens
                     introspection, debugging - DataSQRL brings developer convenience and happiness.
                   </p>
                   <Link className="button button--primary button--lg"
-                      to="docs/getting-started">Get Started</Link>
+                      to="/docs/getting-started">Get Started</Link>
                   <Link className="button button--primary button--lg"
-                        to="docs/intro">Learn More</Link>
+                        to="/docs/intro">Learn More</Link>
                 </div>
               </div>
             </div>
