@@ -21,6 +21,8 @@ You define the data processing in SQL and DataSQRL compiles the deployment artif
 * 🔒 **Production-grade:** Robust, highly available, scalable, observable, and executed by trusted OSS technologies (Kafka, Flink, Postgres, DuckDB).
 * 🤖 **AI-native:**  Support for vector embeddings, LLM invocation, and ML model inference, and LLM tooling interfaces.
 
+To learn more about DataSQRL, check out [the documentation](https://datasqrl.github.io/sqrl).
+
 ## Getting Started
 
 This example builds a data pipeline that captures user token consumption via API, exposes consumption alerts via subscription, and aggregates the data for query access.
@@ -64,7 +66,7 @@ docker run --rm -v $PWD:/build datasqrl/cmd:latest compile usertokens.sqrl
 ``` 
 The `build/deploy` directory contains the Flink compiled plan, Kafka topic definitions, PostgreSQL schema and view definitions, server queries, and GraphQL data model.
 
-Read the [full Getting Started tutorial](/) or check out the [DataSQRL Examples repository](https://github.com/DataSQRL/datasqrl-examples/) for more examples creating Iceberg views, Chatbots, data APIs and more.
+Read the [full Getting Started tutorial](https://datasqrl.github.io/sqrl/docs/getting-started) or check out the [DataSQRL Examples repository](https://github.com/DataSQRL/datasqrl-examples/) for more examples creating Iceberg views, Chatbots, data APIs and more.
 
 ## Why DataSQRL?
 
@@ -84,12 +86,12 @@ DataSQRL gives you full visibility and control over the generated data pipeline 
 [DataSQRL Cloud](https://www.datasqrl.com) is a managed service that runs DataSQRL pipelines with no operational overhead and integrates directly with GitHub for simple deployments.
 -->
 
-Learn more about DataSQRL in [the documentation](/).
+Learn more about DataSQRL in [the documentation](https://datasqrl.github.io/sqrl).
 
 
 ## Contributing
 
-![Contribute to DataSQRL](documentation/docs/img/sqrl_code.svg)
+![Contribute to DataSQRL](documentation/static/img/undraw/code.svg)
 
 We aim to enable data engineers to build data pipelines quickly and eliminate the data plumbing busy work. Your feedback is invaluable in achieving this goal. Let us know what works and what doesn't by filing GitHub issues or in the [DataSQRL Slack community]((https://join.slack.com/t/datasqrlcommunity/shared_invite/zt-2l3rl1g6o-im6YXYCqU7t55CNaHqz_Kg)).
 
