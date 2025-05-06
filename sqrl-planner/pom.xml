@@ -125,7 +125,7 @@
     </dependency>
     <dependency>
       <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-server-vertx</artifactId>
+      <artifactId>sqrl-server-vertx-base</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>
