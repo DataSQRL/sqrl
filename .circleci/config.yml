@@ -1,5 +1,13 @@
 version: 2.1
 
+job-defaults: &job-defaults
+  context: datasqrl
+  filters:
+    branches:
+      only: /.*/
+    tags:
+      only: /.*/
+
 orbs:
   docker: circleci/docker@2.2.0
 
@@ -26,6 +34,11 @@ commands:
                   <id>github</id>
                   <username>${GITHUB_USER}</username>
                   <password>${GITHUB_TOKEN}</password>
+                </server>
+                <server>
+                  <id>central</id>
+                  <username>${CENTRAL_USER}</username>
+                  <password>${CENTRAL_PASSWORD}</password>
                 </server>
               </servers>
             </settings>
@@ -83,7 +96,7 @@ commands:
       - run:
           name: Check if cache was restored
           command: |
-            if [ -d ~/.m2/repository ]; then
+            if [ -d ~/.m2/repository/de/qaware ]; then
               echo "Cache hit detected, skipping resolve job."
               circleci step halt
             else
@@ -145,12 +158,24 @@ commands:
             echo "Computed BASE_TAG=${BASE_TAG}"
             echo "export BASE_TAG=${BASE_TAG}" >> "$BASH_ENV"
 
+  checkout-and-version:
+    steps:
+      - checkout
+      - run:
+          name: Set version if tagged release
+          command: |
+            env
+            if [ -n "$CIRCLE_TAG" ]; then
+              echo "Setting Maven version to $CIRCLE_TAG"
+              mvn -B versions:set -DnewVersion=$CIRCLE_TAG
+            fi
+
 jobs:
   build-base:
     docker:
       - image: cimg/openjdk:17.0
     steps:
-      - checkout
+      - checkout-and-version
       - generate-settings
       - download-dependencies
       - save_cache:
@@ -162,7 +187,7 @@ jobs:
     docker:
       - image: cimg/openjdk:17.0
     steps:
-      - checkout
+      - checkout-and-version
       - restore_cache:
           keys:
             - m2-{{ checksum "pom.xml" }}
@@ -183,7 +208,7 @@ jobs:
       TEST_SHARDING_TOTAL: << parameters.test_sharding_total >>
       TEST_SHARDING_INDEX:  << parameters.test_sharding_index >>
     steps:
-      - checkout
+      - checkout-and-version
       - restore_cache:
           keys:
             - m2-{{ checksum "pom.xml" }}
@@ -197,7 +222,7 @@ jobs:
   build-test-image:
     executor: default-machine
     steps:
-      - checkout
+      - checkout-and-version
       - restore_cache:
           keys:
             - m2-{{ checksum "pom.xml" }}
@@ -228,7 +253,7 @@ jobs:
     docker:
       - image: cimg/openjdk:17.0
     steps:
-      - checkout
+      - checkout-and-version
       - restore_cache:
           keys:
             - m2-{{ checksum "pom.xml" }}
@@ -241,7 +266,7 @@ jobs:
             echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf
       - run:
           name: Build shaded JAR
-          command: mvn -U clean -T1 -B deploy -DskipTests -DskipITs
+          command: mvn -U clean -T1 -B deploy -DskipTests -DskipITs ${CIRCLE_TAG:+-Prelease}
 
   run-conference-tests: &disabled
     executor: default-machine
@@ -289,7 +314,7 @@ jobs:
     docker:
       - image: cimg/openjdk:17.0
     steps:
-      - checkout
+      - checkout-and-version
       - restore_cache:
           keys:
             - m2-{{ checksum "pom.xml" }}
@@ -429,70 +454,91 @@ jobs:
                 $REGISTRY/<< parameters.image_repo >>:$TAG_SUFFIX
             fi
 
+
 workflows:
-  pull-request-workflow:
+  ci:
     jobs:
       - docker-build-base-image:
-          context: datasqrl
+          <<: *job-defaults
       - build-base:
-          context: datasqrl
+          <<: *job-defaults
       - build-test-image:
-          context: datasqrl
+          <<: *job-defaults
+          filters:
+            branches:
+              only: /.*/
+            tags:
+              ignore: /.*/
           requires:
             - build-base
             - docker-build-base-image
       - integration-tests:
+          <<: *job-defaults
+          filters:
+            branches:
+              only: /.*/
+            tags:
+              ignore: /.*/
           matrix:
             parameters:
-              test_sharding_total:  [2]   # ← total shards
-              test_sharding_index: [0, 1] # ← this runner’s index (0-based)
-          context: datasqrl
+              test_sharding_total:  [2]
+              test_sharding_index: [0, 1]
           requires:
             - build-base
       - build-jars:
-          context: datasqrl
+          <<: *job-defaults
+          requires:
+            - build-base
+      - deploy:
+          <<: *job-defaults
           requires:
             - build-base
       - unit-tests:
-          context: datasqrl
+          <<: *job-defaults
+          filters:
+            branches:
+              only: /.*/
+            tags:
+              ignore: /.*/
           requires:
             - build-base
-
       - docker-build-and-push:
+          <<: *job-defaults
           name: build-push-cmd
           image_repo: cmd
           context_dir: sqrl-tools
-          context: datasqrl
           requires:
             - build-jars
             - docker-build-base-image
-
       - docker-build-and-push:
+          <<: *job-defaults
           name: build-push-server
           image_repo: sqrl-server
           context_dir: sqrl-server/sqrl-server-vertx
-          context: datasqrl
           requires:
             - build-jars
-
       - docker-build-and-push:
+          <<: *job-defaults
           name: build-push-flink
           image_repo: sqrl-flink-runner
           context_dir: sqrl-tools/sqrl-flink-runner/target
-          context: datasqrl
           requires:
             - build-jars
-
-      # Temporarily disabled for maintenance:
-      # - run-conference-tests:
-      #     context: datasqrl
-      #     requires:
-      #       - build-test-image
       - run-connectors-tests:
-          context: datasqrl
+          <<: *job-defaults
+          filters:
+            branches:
+              only: /.*/
+            tags:
+              ignore: /.*/
           requires:
             - build-test-image
       - run-udf-tests:
-          context: datasqrl
+          <<: *job-defaults
+          filters:
+            branches:
+              only: /.*/
+            tags:
+              ignore: /.*/
           requires:
             - build-test-image

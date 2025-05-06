@@ -5,6 +5,18 @@
   <artifactId>sqrl-root</artifactId>
   <packaging>pom</packaging>
   <version>0.6.0-SNAPSHOT</version>
+  
+  <url>https://www.datasqrl.com/docs/intro/</url>
+  <description>DataSQRL is a data streaming framework for incremental and real-time data processing applications. Ingest, transform, store, and serve data as iceberg views, data APIs, or LLM tooling with the simplicity of SQL.</description>
+  
+  <licenses>
+    <license>
+      <name>Apache License, Version 2.0</name>
+      <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+
   <modules>
     <module>sqrl-base</module>
     <module>sqrl-calcite</module>
@@ -61,6 +73,9 @@
     <freemarker.version>2.3.32</freemarker.version>
     <jsonschema.version>1.5.2</jsonschema.version>
     <flinkrunner.version>0.6.0</flinkrunner.version>
+    <maven-javadoc-plugin.version>3.11.2</maven-javadoc-plugin.version>
+    <maven-source-plugin.version>3.3.1</maven-source-plugin.version>
+    <maven-gpg-plugin.version>3.2.7</maven-gpg-plugin.version>
 
     <!-- params -->
     <snapshots.update>false</snapshots.update>
@@ -172,25 +187,84 @@
         </build>
     </profile>
     <profile>
-        <id>skip-publishing</id>
+      <id>release</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.sonatype.central</groupId>
+            <artifactId>central-publishing-maven-plugin</artifactId>
+            <version>0.7.0</version>
+            <extensions>true</extensions>
+            <configuration>
+              <publishingServerId>central</publishingServerId>
 
-        <activation>
-          <property>
-            <name>skipPublishing</name>
-          </property>
-        </activation>
+              <excludeArtifacts>
+                <!-- client jars are too large, skipping uploading for now -->
+                <excludeArtifact>sqrl-server-vertx</excludeArtifact>
+                <excludeArtifact>sqrl-cli</excludeArtifact>
+                <excludeArtifact>sqrl-test</excludeArtifact>
+                <excludeArtifact>sqrl-run</excludeArtifact>
+              </excludeArtifacts>
 
-        <build>
-            <plugins>
-                <plugin>
-                    <groupId>org.sonatype.central</groupId>
-                    <artifactId>central-publishing-maven-plugin</artifactId>
-                    <configuration>
-                        <skipPublishing>true</skipPublishing>
-                    </configuration>
-                </plugin>
-            </plugins>
-        </build>
+              <autoPublish>true</autoPublish>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <version>${maven-gpg-plugin.version}</version>
+            <executions>
+              <execution>
+                <id>sign-artifacts</id>
+                <goals>
+                  <goal>sign</goal>
+                </goals>
+                <phase>verify</phase>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-source-plugin</artifactId>
+            <version>${maven-source-plugin.version}</version>
+            <executions>
+              <execution>
+                <id>attach-sources</id>
+                <goals>
+                  <goal>jar-no-fork</goal>
+                </goals>
+                <phase>package</phase>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <version>${maven-javadoc-plugin.version}</version>
+            <configuration>
+              <failOnError>false</failOnError>
+            </configuration>
+            <executions>
+              <execution>
+                <id>attach-javadocs</id>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+                <phase>package</phase>
+                <configuration>
+                  <show>public</show>
+                  <failOnError>false</failOnError>
+                  <detectOfflineLinks>false</detectOfflineLinks>
+                  <doclint>all,-missing</doclint>
+                  <nohelp>true</nohelp>
+                  <excludePackageNames>*.internal.*,testutil,demo</excludePackageNames>
+                  <quiet>true</quiet>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
     </profile>
   </profiles>
 
