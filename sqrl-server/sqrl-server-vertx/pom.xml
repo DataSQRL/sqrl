@@ -258,7 +258,6 @@
       <plugin>
         <groupId>io.reactiverse</groupId>
         <artifactId>vertx-maven-plugin</artifactId>
-        <version>1.0.28</version>
         <executions>
           <execution>
             <id>vmp</id>
