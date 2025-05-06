@@ -8,24 +8,7 @@
 
   <artifactId>sqrl-server-vertx-base</artifactId>
 
-  <properties>
-    <maven.compiler.source>11</maven.compiler.source>
-    <maven.compiler.target>11</maven.compiler.target>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <vertx.verticle>com.datasqrl.graphql.GraphQLServer</vertx.verticle>
-  </properties>
-
   <dependencies>
-    <!--    <dependency>-->
-    <!--      <groupId>com.datasqrl</groupId>-->
-    <!--      <artifactId>sqrl-base</artifactId>-->
-    <!--    </dependency>-->
-    <!--    <dependency>-->
-    <!--      <groupId>com.datasqrl</groupId>-->
-    <!--      <artifactId>sqrl-execute-http-core</artifactId>-->
-    <!--    </dependency>-->
-
-
     <!-- Vertx -->
     <dependency>
       <groupId>io.vertx</groupId>
@@ -244,7 +227,6 @@
     <dependency>
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-server-core</artifactId>
-      <version>0.7.0-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>org.mockito</groupId>
