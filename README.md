@@ -46,7 +46,7 @@ UsageAlert := SUBSCRIBE SELECT * FROM UserTokens WHERE tokens > 100000;
 Create a file `usertokens.sqrl` with the content above and run it with:
 
 ```bash
-docker run -it --rm -p 8888:8888 -p 8081:8081 -p 9092:9092 -v $PWD:/build datasqrl/cmd:dev run usertokens.sqrl
+docker run -it --rm -p 8888:8888 -p 8081:8081 -p 9092:9092 -v $PWD:/build datasqrl/cmd:latest run usertokens.sqrl
 ``` 
 (Use `${PWD}` in Powershell on Windows).
 
@@ -60,7 +60,7 @@ Once you are done, terminate the pipeline with `CTRL-C`.
 
 To build the deployment assets in the for the data pipeline, execute
 ```bash
-docker run --rm -v $PWD:/build datasqrl/cmd:dev compile usertokens.sqrl
+docker run --rm -v $PWD:/build datasqrl/cmd:latest compile usertokens.sqrl
 ``` 
 The `build/deploy` directory contains the Flink compiled plan, Kafka topic definitions, PostgreSQL schema and view definitions, server queries, and GraphQL data model.
 
