@@ -1,0 +1,70 @@
+IMPORT flink.*; -- Import flink functions
+IMPORT data-local.Sales; -- Import sales data
+
+
+/* Create sales data source */
+UnmodifiedSalesData := SELECT id,
+                              region,
+                              country,
+                              product,
+                              amount,
+                              timestamp
+                       FROM Sales;
+
+/* =======TEST CASES======== */
+
+/*+test */
+GroupingIDTest := SELECT
+                      COALESCE(product_category, 'All Products') as category,
+                      COALESCE(region, 'All Regions') as region,
+                      SUM(amount) as total_sales,
+                      GROUP_ID() as group_id,
+                      GROUPING(product_category) as cat_group,
+                      GROUPING(region) as reg_group
+                  FROM sales
+                  GROUP BY
+                      GROUPING SETS (
+                          (product_category, region),  -- group_id = 0
+                          (product_category),          -- group_id = 1
+                          (region),                    -- group_id = 2
+                          ()                          -- group_id = 3
+                      );
+
+/*+test */
+CubeTest := SELECT
+                CASE
+                    WHEN GROUPING(region) = 1 THEN 'All Regions' ELSE region
+                END as region,
+                CASE
+                    WHEN GROUPING(country) = 1 THEN 'All Countries' ELSE country
+                END as country,
+                CASE
+                    WHEN GROUPING(product) = 1 THEN 'All Products' ELSE product
+                END as product,
+                SUM(amount) as total_sales,
+                GROUPING(region) as reg_group,
+                GROUPING(country) as ctry_group,
+                GROUPING(product) as prod_group
+            FROM UnmodifiedSalesData
+            GROUP BY CUBE(region, country, product)
+            ORDER BY GROUPING(region), GROUPING(country), GROUPING(product), region, country, product;
+
+/*+test */
+RollupTest := SELECT
+                  COALESCE(product_category, 'Total') as category,
+                  COALESCE(region, 'All Regions') as region,
+                  SUM(amount) as total_sales,
+                  -- GROUPING helps identify the rollup level
+                  GROUPING(product_category) as cat_group,
+                  GROUPING(region) as reg_group
+              FROM UnmodifiedSalesData
+              GROUP BY ROLLUP(product_category, region);
+
+/*+test */
+TestSalesData := SELECT id,
+                        region,
+                        country,
+                        product,
+                        amount,
+                        timestamp
+                 FROM UnmodifiedSalesData;
