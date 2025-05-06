@@ -33,7 +33,7 @@
     <maven.compiler.target>17</maven.compiler.target>
     <mockito.version>4.8.0</mockito.version>
     <jackson.version>2.14.0</jackson.version>
-    <vertx.version>4.5.8</vertx.version>
+    <vertx.version>4.5.14</vertx.version>
     <agroal.version>1.11</agroal.version>
     <kafka.version>3.4.0</kafka.version>
     <flink.version>1.19.2</flink.version>
