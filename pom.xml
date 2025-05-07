@@ -43,7 +43,7 @@
     <scala.version>2.12</scala.version>
     <guava.version>31.1-jre</guava.version>
     <commonsio.version>2.11.0</commonsio.version>
-    <commons-lang3.version>3.12.0</commons-lang3.version>
+    <commons-lang3.version>3.17.0</commons-lang3.version>
     <commons-config.version>2.9.0</commons-config.version>
     <commons-collections.version>4.4</commons-collections.version>
     <httpcomponents.version>4.5.14</httpcomponents.version>
