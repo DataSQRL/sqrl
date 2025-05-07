@@ -328,6 +328,11 @@
       </dependency>
       <dependency>
         <groupId>com.datasqrl</groupId>
+        <artifactId>sqrl-server-vertx-base</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.datasqrl</groupId>
         <artifactId>sqrl-server-vertx</artifactId>
         <version>${project.version}</version>
       </dependency>
@@ -959,7 +964,6 @@
   <!--  </scm>-->
   <build>
     <plugins>
-
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
@@ -1077,6 +1081,11 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-shade-plugin</artifactId>
           <version>3.6.0</version>
+        </plugin>
+        <plugin>
+          <groupId>io.reactiverse</groupId>
+          <artifactId>vertx-maven-plugin</artifactId>
+          <version>2.0.1</version>
         </plugin>
       </plugins>    
     </pluginManagement>
