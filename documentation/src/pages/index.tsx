@@ -114,9 +114,21 @@ UsageAlert := SUBSCRIBE SELECT * FROM UserTokens
                 </div>
               </div>
               <div className="row margin-bottom--xl">
-                <div className="col col--6 text--center">
-                  <img src={useBaseUrl("/img/screenshots/dag_example.png")}
-                       alt="DataSQRL compiled data pipeline"/>
+                <div className="col col--6">
+                  <CodeBlock language="sh">
+                    {`# Run the entire pipeline locally for quick iteration
+docker run -it --rm -p 8888:8888 -v $PWD:/build \\
+             datasqrl/cmd run usertokens.sqrl;
+# Run test cases locally or in CI/CD             
+docker run --rm -v $PWD:/build \\
+             datasqrl/cmd test usertokens.sqrl;
+# Compile deployment assets to deploy in K8s or cloud
+docker run --rm -v $PWD:/build \\
+             datasqrl/cmd compile usertokens.sqrl;
+# See compiled plan, schemas, indexes, etc
+(cd build/deploy/plan; ls)`}
+                  </CodeBlock>
+
                 </div>
                 <div className="col col--5 text--left">
                   <h2>Developer Tooling</h2>
