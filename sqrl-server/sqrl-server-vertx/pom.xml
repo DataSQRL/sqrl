@@ -10,6 +10,7 @@
 
   <properties>
     <vertx.verticle>com.datasqrl.graphql.GraphQLServer</vertx.verticle>
+    <skipVertexFatJar>false</skipVertexFatJar>
   </properties>
 
   <dependencies>
@@ -28,9 +29,8 @@
         <artifactId>vertx-maven-plugin</artifactId>
         <executions>
           <execution>
-            <id>vmp</id>
+            <id>package</id>
             <goals>
-              <goal>initialize</goal>
               <goal>package</goal>
             </goals>
           </execution>
@@ -39,8 +39,27 @@
           <redeploy>true</redeploy>
           <attach>true</attach>
           <launcher>com.datasqrl.graphql.SqrlLauncher</launcher>
+          <skip>${skipVertexFatJar}</skip>
         </configuration>
       </plugin>
     </plugins>
   </build>
+
+  <profiles>
+      <profile>
+      <id>skip-shade-plugin</id>
+
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>io.reactiverse</groupId>
+        <artifactId>vertx-maven-plugin</artifactId>
+            <configuration>
+              <skip>true</skip>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    </profiles>
 </project>
