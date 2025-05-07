@@ -33,13 +33,12 @@ public class UseCaseCompileTest extends AbstractUseCaseTest {
   }
   
 
-  @Disabled
   @ParameterizedTest
   @ArgumentsSource(UseCaseFiles.class)
   public void runTestCaseByName(Path script, Path graphQlFile, Path packageFile) {
-    if (script.toString().endsWith("math-functions.sqrl")
+    if (script.toString().endsWith("analytics-only.sqrl")
     ) {
-    	  super.testUsecase(script, graphQlFile, packageFile);
+      super.testUsecase(script, graphQlFile, packageFile);
     } else {
       assumeFalse(true);
     }

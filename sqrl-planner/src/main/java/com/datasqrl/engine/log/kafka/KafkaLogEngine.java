@@ -20,7 +20,6 @@ import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.flink.sql.parser.ddl.SqlTableColumn;
 
-import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.config.ConnectorConf;
 import com.datasqrl.config.ConnectorConf.Context;
 import com.datasqrl.config.ConnectorFactory;
@@ -30,7 +29,6 @@ import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.PackageJson.EmptyEngineConfig;
 import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.datatype.DataTypeMapping;
-import com.datasqrl.datatype.flink.avro.AvroFlinkFormatTypeMapper;
 import com.datasqrl.datatype.flink.json.FlexibleJsonFlinkFormatTypeMapper;
 import com.datasqrl.engine.EngineFeature;
 import com.datasqrl.engine.EnginePhysicalPlan;
@@ -38,15 +36,9 @@ import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.database.EngineCreateTable;
 import com.datasqrl.engine.log.LogEngine;
 import com.datasqrl.engine.log.LogFactory;
-import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
-import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.flinkrunner.format.json.FlexibleJsonFormat;
-import com.datasqrl.io.schema.avro.AvroTableSchemaFactory;
 import com.datasqrl.io.tables.TableType;
-import com.datasqrl.plan.global.PhysicalDAGPlan.LogStagePlan;
-import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
-import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.StreamUtil;
 import com.datasqrl.v2.analyzer.TableAnalysis;
@@ -131,8 +123,6 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
     var format = String.valueOf(streamConnectorConf.toMap().get(FlinkConnectorConfig.FORMAT_KEY));
     if (FlexibleJsonFormat.FORMAT_NAME.equalsIgnoreCase(format)) {
       return new FlexibleJsonFlinkFormatTypeMapper();
-    } else if (AvroTableSchemaFactory.SCHEMA_TYPE.equalsIgnoreCase(format)) {
-      return new AvroFlinkFormatTypeMapper();
     } else {
       log.error("Unexpected format for Kafka log engine: {}", format);
       return DataTypeMapping.NONE;

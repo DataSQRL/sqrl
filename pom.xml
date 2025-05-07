@@ -18,12 +18,9 @@
   </licenses>
 
   <modules>
-    <module>sqrl-base</module>
-    <module>sqrl-calcite</module>
     <module>sqrl-planner</module>
     <module>sqrl-testing</module>
     <module>sqrl-tools</module>
-    <module>sqrl-flink-lib</module>
     <module>sqrl-functions</module>
     <module>sqrl-server</module>
   </modules>

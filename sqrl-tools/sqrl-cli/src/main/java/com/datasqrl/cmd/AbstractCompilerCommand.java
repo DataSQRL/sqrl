@@ -14,11 +14,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.apache.calcite.jdbc.SqrlSchema;
 import org.apache.commons.lang3.tuple.Pair;
 
-import com.datasqrl.calcite.type.TypeFactory;
-import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.compile.CompilationProcessV2;
 import com.datasqrl.compile.DirectoryManager;
 import com.datasqrl.compile.TestPlan;
@@ -31,7 +28,6 @@ import com.datasqrl.error.ErrorPrefix;
 import com.datasqrl.graphql.APIType;
 import com.datasqrl.graphql.server.RootGraphqlModel.StringSchema;
 import com.datasqrl.inject.SqrlInjector;
-import com.datasqrl.inject.StatefulModule;
 import com.datasqrl.packager.Packager;
 import com.datasqrl.plan.validate.ExecutionGoal;
 import com.google.inject.Guice;
@@ -98,8 +94,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
 
     var injector =
         Guice.createInjector(
-            new SqrlInjector(errors, root.rootDir, getTargetDir(), sqrlConfig, getGoal()),
-            new StatefulModule(new SqrlSchema(new TypeFactory(), NameCanonicalizer.SYSTEM)));
+            new SqrlInjector(errors, root.rootDir, getTargetDir(), sqrlConfig, getGoal()));
 
     var packager = injector.getInstance(Packager.class);
     packager.preprocess(errors.withLocation(ErrorPrefix.CONFIG.resolve(PACKAGE_JSON)));

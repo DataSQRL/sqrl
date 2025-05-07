@@ -5,10 +5,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.apache.calcite.rel.type.RelDataTypeFactory;
-import org.apache.calcite.tools.RelBuilder;
 
-import com.datasqrl.calcite.SqrlFramework;
-import com.datasqrl.calcite.SqrlFrameworkImpl;
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.NamePath;
@@ -16,7 +13,6 @@ import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.PackageJson.CompilerConfig;
 import com.datasqrl.config.SqrlCompilerConfiguration;
 import com.datasqrl.config.SqrlConfigPipeline;
-import com.datasqrl.config.SqrlRelBuilder;
 import com.datasqrl.config.TableConfigLoader;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
@@ -51,12 +47,10 @@ public class MockSqrlInjector extends AbstractModule {
 
   @Override
   public void configure() {
-    bind(SqrlFramework.class).to(SqrlFrameworkImpl.class);
     bind(RelDataTypeFactory.class).to(TypeFactory.class);
     bind(MainScript.class).to(MainScriptImpl.class);
     bind(ExecutionPipeline.class).to(SqrlConfigPipeline.class);
     bind(CompilerConfig.class).to(SqrlCompilerConfiguration.class);
-    bind(RelBuilder.class).to(SqrlRelBuilder.class);
     bind(ModuleLoader.class).to(ModuleLoaderImpl.class);
   }
 

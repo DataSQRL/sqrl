@@ -9,6 +9,5 @@ import lombok.Getter;
 @AllArgsConstructor
 public class ListenNotifyAssets {
   ListenQuery listen;
-  OnNotifyQuery onNotify;
   List<String> parameters;
 }

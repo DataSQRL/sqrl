@@ -1,25 +1,17 @@
 package com.datasqrl.engine.export;
 
-import java.util.List;
 import java.util.Optional;
 
 import org.apache.calcite.rel.type.RelDataType;
 
-import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.config.ConnectorConf;
 import com.datasqrl.config.ConnectorConf.Context;
 import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.EngineType;
-import com.datasqrl.config.TableConfig;
 import com.datasqrl.datatype.DataTypeMapping;
 import com.datasqrl.engine.EngineFeature;
-import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.database.EngineCreateTable;
-import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
-import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
-import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
 import com.datasqrl.v2.analyzer.TableAnalysis;
 import com.datasqrl.v2.tables.FlinkTableBuilder;
 import com.google.inject.Inject;

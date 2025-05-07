@@ -3,11 +3,8 @@ package com.datasqrl.inject;
 import java.nio.file.Path;
 
 import org.apache.calcite.rel.type.RelDataTypeFactory;
-import org.apache.calcite.tools.RelBuilder;
 
 import com.datasqrl.MainScriptImpl;
-import com.datasqrl.calcite.SqrlFramework;
-import com.datasqrl.calcite.SqrlFrameworkImpl;
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.config.ConnectorFactoryFactory;
@@ -18,7 +15,6 @@ import com.datasqrl.config.PackageJson.CompilerConfig;
 import com.datasqrl.config.SqrlCompilerConfiguration;
 import com.datasqrl.config.SqrlConfigPipeline;
 import com.datasqrl.config.SqrlConstants;
-import com.datasqrl.config.SqrlRelBuilder;
 import com.datasqrl.config.TableConfigLoader;
 import com.datasqrl.config.TableConfigLoaderImpl;
 import com.datasqrl.discovery.preprocessor.FlexibleSchemaInferencePreprocessor;
@@ -67,13 +63,11 @@ public class SqrlInjector extends AbstractModule {
 
   @Override
   public void configure() {
-    bind(SqrlFramework.class).to(SqrlFrameworkImpl.class);
     bind(RelDataTypeFactory.class).to(TypeFactory.class);
     bind(MainScript.class).to(MainScriptImpl.class);
     bind(ExecutionPipeline.class).to(SqrlConfigPipeline.class);
     bind(ModuleLoader.class).to(ModuleLoaderImpl.class);
     bind(CompilerConfig.class).to(SqrlCompilerConfiguration.class);
-    bind(RelBuilder.class).to(SqrlRelBuilder.class);
     bind(TableConfigLoader.class).to(TableConfigLoaderImpl.class);
     bind(ConnectorFactoryFactory.class).to(ConnectorFactoryFactoryImpl.class);
     bind(LogManager.class).to(LogManagerImpl.class).in(Singleton.class);
