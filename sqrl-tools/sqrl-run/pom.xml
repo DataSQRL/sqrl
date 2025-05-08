@@ -87,7 +87,7 @@
     <dependency>
       <groupId>org.apache.iceberg</groupId>
       <artifactId>iceberg-flink-runtime-1.19</artifactId>
-      <version>1.6.0</version>
+      <version>${iceberg.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.hadoop</groupId>
@@ -128,7 +128,7 @@
     <dependency>
       <groupId>org.apache.iceberg</groupId>
       <artifactId>iceberg-hive-metastore</artifactId>
-      <version>1.6.0</version>
+      <version>${iceberg.version}</version>
     </dependency>
     <!-- https://mvnrepository.com/artifact/org.apache.hive/hive-metastore -->
 
@@ -233,7 +233,7 @@
     <dependency>
       <groupId>org.apache.iceberg</groupId>
       <artifactId>iceberg-flink</artifactId>
-      <version>1.6.0</version>
+      <version>${iceberg.version}</version>
     </dependency>
     <dependency>
       <groupId>software.amazon.awssdk</groupId>

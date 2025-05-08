@@ -73,6 +73,8 @@
     <freemarker.version>2.3.34</freemarker.version>
     <jsonschema.version>1.5.2</jsonschema.version>
     <flinkrunner.version>0.6.0</flinkrunner.version>
+    <iceberg.version>1.9.0</iceberg.version>
+    
     <maven-javadoc-plugin.version>3.11.2</maven-javadoc-plugin.version>
     <maven-source-plugin.version>3.3.1</maven-source-plugin.version>
     <maven-gpg-plugin.version>3.2.7</maven-gpg-plugin.version>
