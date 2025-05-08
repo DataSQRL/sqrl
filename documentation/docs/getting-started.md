@@ -195,6 +195,10 @@ The `build` directory contains two files that are useful to visualize, inspect, 
 * `pipeline_visual.html` is a visual representation of the entire data pipeline. Open this file in your browser.
 * `pipeline_explain.txt` contains a textual representation of the pipeline DAG that DataSQRL generates.
 
+![DataSQRL Pipeline Visualization](/img/screenshots/dag_example.png)
+
+The picture above is the visualization of the pipeline we have build thus far. You can click on the individual nodes in the graph to inspect the schema, logical, and physical plan.
+
 ## Customize GraphQL Schema
 
 To inspect the GraphQL API that DataSQRL generates from the SQRL script, execute:
