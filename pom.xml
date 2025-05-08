@@ -1187,6 +1187,10 @@
   </repositories>
 
   <distributionManagement>
+    <repository>
+      <id>github</id>
+      <url>https://maven.pkg.github.com/DataSQRL/sqrl</url>
+    </repository>
     <snapshotRepository>
       <id>github</id>
       <url>https://maven.pkg.github.com/DataSQRL/sqrl</url>
