@@ -1,2 +1,18 @@
 redpanda:
   data_directory: /data/redpanda
+  node_id: 0
+  seed_servers: []
+  kafka_api:
+    - address: 0.0.0.0
+      port: 9092
+      name: PLAINTEXT
+  advertised_kafka_api:
+    - address: 127.0.0.1
+      port: 9092
+      name: PLAINTEXT
+rpk:
+  overprovisioned: true
+schema_registry:
+  schema_registry_api:
+    - address: 0.0.0.0
+      port: 8086

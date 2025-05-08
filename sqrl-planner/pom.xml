@@ -2,7 +2,7 @@
   <parent>
     <groupId>com.datasqrl</groupId>
     <artifactId>sqrl-root</artifactId>
-    <version>0.6.0-SNAPSHOT</version>
+    <version>0.7.0-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
@@ -33,7 +33,7 @@
     <dependency>
       <groupId>jakarta.annotation</groupId>
       <artifactId>jakarta.annotation-api</artifactId>
-      <version>1.3.5</version>
+      <version>3.0.0</version>
     </dependency>
     <dependency>
       <groupId>org.glassfish</groupId>
@@ -125,7 +125,7 @@
     </dependency>
     <dependency>
       <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-server-vertx</artifactId>
+      <artifactId>sqrl-server-vertx-base</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>

@@ -4,7 +4,7 @@
   <groupId>com.datasqrl</groupId>
   <artifactId>sqrl-root</artifactId>
   <packaging>pom</packaging>
-  <version>0.6.0-SNAPSHOT</version>
+  <version>0.7.0-SNAPSHOT</version>
   
   <url>https://www.datasqrl.com/docs/intro/</url>
   <description>DataSQRL is a data streaming framework for incremental and real-time data processing applications. Ingest, transform, store, and serve data as iceberg views, data APIs, or LLM tooling with the simplicity of SQL.</description>
@@ -32,31 +32,31 @@
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
     <mockito.version>4.8.0</mockito.version>
-    <jackson.version>2.14.0</jackson.version>
-    <vertx.version>4.5.8</vertx.version>
-    <agroal.version>1.11</agroal.version>
+    <jackson.version>2.16.2</jackson.version>
+    <vertx.version>4.5.14</vertx.version>
+    <agroal.version>2.6</agroal.version>
     <kafka.version>3.4.0</kafka.version>
     <flink.version>1.19.2</flink.version>
     <slf4j.version>1.7.36</slf4j.version>
     <postgres.version>42.5.0</postgres.version>
-    <log4j.version>2.23.1</log4j.version>
+    <log4j.version>2.24.3</log4j.version>
     <scala.version>2.12</scala.version>
-    <guava.version>31.1-jre</guava.version>
-    <commonsio.version>2.11.0</commonsio.version>
-    <commons-lang3.version>3.12.0</commons-lang3.version>
+    <guava.version>33.4.8-jre</guava.version>
+    <commonsio.version>2.19.0</commonsio.version>
+    <commons-lang3.version>3.17.0</commons-lang3.version>
     <commons-config.version>2.9.0</commons-config.version>
     <commons-collections.version>4.4</commons-collections.version>
     <httpcomponents.version>4.5.14</httpcomponents.version>
-    <commons-bean.version>1.9.4</commons-bean.version>
-    <h2.version>2.1.214</h2.version>
-    <opencsv.version>5.7.1</opencsv.version>
+    <commons-bean.version>1.10.1</commons-bean.version>
+    <h2.version>2.3.232</h2.version>
+    <opencsv.version>5.11</opencsv.version>
     <javax.validation.version>2.0.1.Final</javax.validation.version>
     <glassfish.version>3.0.0</glassfish.version>
     <reactive-streams.version>1.0.4</reactive-streams.version>
-    <testcontainers.version>1.18.0</testcontainers.version>
+    <testcontainers.version>1.21.0</testcontainers.version>
     <scram.version>2.1</scram.version>
     <protobuf.version>3.21.1</protobuf.version>
-    <picocli.version>4.7.6</picocli.version>
+    <picocli.version>4.7.7</picocli.version>
     <commonscodec.version>1.17.2</commonscodec.version>
     <zip4j.version>2.11.2</zip4j.version>
     <guice.version>5.1.0</guice.version>
@@ -64,15 +64,17 @@
     <antlr.version>4.9.2</antlr.version>
     <guava.version>31.1-jre</guava.version>
     <lombok.version>1.18.38</lombok.version>
-    <junit.jupiter.version>5.8.2</junit.jupiter.version>
+    <junit.jupiter.version>5.12.2</junit.jupiter.version>
     <calcite.version>1.27.0</calcite.version>
     <graphql-java.version>19.2</graphql-java.version>
     <graphql-java-extended-scalars.version>19.1</graphql-java-extended-scalars.version>
     <projectreactor.version>3.5.6</projectreactor.version>
     <avro.version>1.11.3</avro.version>
-    <freemarker.version>2.3.32</freemarker.version>
+    <freemarker.version>2.3.34</freemarker.version>
     <jsonschema.version>1.5.2</jsonschema.version>
     <flinkrunner.version>0.6.0</flinkrunner.version>
+    <iceberg.version>1.9.0</iceberg.version>
+    
     <maven-javadoc-plugin.version>3.11.2</maven-javadoc-plugin.version>
     <maven-source-plugin.version>3.3.1</maven-source-plugin.version>
     <maven-gpg-plugin.version>3.2.7</maven-gpg-plugin.version>
@@ -137,7 +139,7 @@
               <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>build-helper-maven-plugin</artifactId>
-                <version>3.4.0</version>
+                <version>3.6.0</version>
                 <executions>
                   <execution>
                     <id>add-source</id>
@@ -286,9 +288,20 @@
       <artifactId>junit-jupiter-params</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-api</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
   <dependencyManagement>
     <dependencies>
+      <dependency>
+        <groupId>org.yaml</groupId>
+        <artifactId>snakeyaml</artifactId>
+        <version>2.2</version>
+      </dependency>
+
       <!-- SQRL deps, please keep this in order -->
       <dependency>
         <groupId>com.datasqrl</groupId>
@@ -317,6 +330,11 @@
       </dependency>
       <dependency>
         <groupId>com.datasqrl</groupId>
+        <artifactId>sqrl-server-vertx-base</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.datasqrl</groupId>
         <artifactId>sqrl-server-vertx</artifactId>
         <version>${project.version}</version>
       </dependency>
@@ -326,7 +344,6 @@
         <artifactId>sqrl-examples</artifactId>
         <version>${project.version}</version>
       </dependency>
-
 
       <!-- planner -->
       <dependency>
@@ -538,77 +555,14 @@
         <version>${graphql-java-extended-scalars.version}</version>
       </dependency>
 
+      <dependency>
+        <groupId>io.vertx</groupId>
+        <artifactId>vertx-dependencies</artifactId>
+        <version>${vertx.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
 
-      <!-- Vertx -->
-      <dependency>
-        <groupId>io.vertx</groupId>
-        <artifactId>vertx-kafka-client</artifactId>
-        <version>${vertx.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>io.vertx</groupId>
-        <artifactId>vertx-auth-jwt</artifactId>
-        <version>${vertx.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>io.vertx</groupId>
-        <artifactId>vertx-web-graphql</artifactId>
-        <version>${vertx.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>io.vertx</groupId>
-        <artifactId>vertx-health-check</artifactId>
-        <version>${vertx.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>io.vertx</groupId>
-        <artifactId>vertx-sql-client</artifactId>
-        <version>${vertx.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>io.vertx</groupId>
-        <artifactId>vertx-pg-client</artifactId>
-        <version>${vertx.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>io.vertx</groupId>
-        <artifactId>vertx-config</artifactId>
-        <version>${vertx.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>io.vertx</groupId>
-        <artifactId>vertx-web-openapi</artifactId>
-        <version>${vertx.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>io.vertx</groupId>
-        <artifactId>vertx-junit5</artifactId>
-        <version>${vertx.version}</version>
-        <scope>test</scope>
-        <!-- JUnit 4 is no longer necessary, so we exclude it -->
-        <exclusions>
-          <exclusion>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>io.vertx</groupId>
-        <artifactId>vertx-web-client</artifactId>
-        <version>${vertx.version}</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>io.vertx</groupId>
-        <artifactId>vertx-jdbc-client</artifactId>
-        <version>${vertx.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>io.vertx</groupId>
-        <artifactId>vertx-web</artifactId>
-        <version>${vertx.version}</version>
-      </dependency>
       <!-- required for vertx subscriptions -->
       <dependency>
         <groupId>io.projectreactor</groupId>
@@ -617,14 +571,9 @@
       </dependency>
       <!-- vertx metrics -->
       <dependency>
-        <groupId>io.vertx</groupId>
-        <artifactId>vertx-micrometer-metrics</artifactId>
-        <version>${vertx.version}</version>
-      </dependency>
-      <dependency>
         <groupId>io.micrometer</groupId>
         <artifactId>micrometer-registry-prometheus</artifactId>
-        <version>1.13.3</version>
+        <version>1.14.6</version>
       </dependency>
       <!-- required for vertx jdbc -->
       <dependency>
@@ -743,7 +692,7 @@
       <dependency>
         <groupId>org.immutables</groupId>
         <artifactId>value</artifactId>
-        <version>2.8.8</version>
+        <version>2.10.1</version>
         <scope>compile</scope>
       </dependency>
 
@@ -811,7 +760,7 @@
       <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty-codec</artifactId>
-        <version>4.1.92.Final</version>
+        <version>4.2.1.Final</version>
       </dependency>
       <dependency>
         <groupId>org.postgresql</groupId>
@@ -837,42 +786,14 @@
         <version>${h2.version}</version>
       </dependency>
 
-      <!-- jackson -->
       <dependency>
-        <groupId>com.fasterxml.jackson.core</groupId>
-        <artifactId>jackson-core</artifactId>
+        <groupId>com.fasterxml.jackson</groupId>
+        <artifactId>jackson-bom</artifactId>
         <version>${jackson.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
       </dependency>
-      <dependency>
-        <groupId>com.fasterxml.jackson.core</groupId>
-        <artifactId>jackson-databind</artifactId>
-        <version>${jackson.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.fasterxml.jackson.core</groupId>
-        <artifactId>jackson-annotations</artifactId>
-        <version>${jackson.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.fasterxml.jackson.module</groupId>
-        <artifactId>jackson-module-blackbird</artifactId>
-        <version>${jackson.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.fasterxml.jackson.datatype</groupId>
-        <artifactId>jackson-datatype-jsr310</artifactId>
-        <version>${jackson.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.fasterxml.jackson.datatype</groupId>
-        <artifactId>jackson-datatype-jdk8</artifactId>
-        <version>${jackson.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.fasterxml.jackson.dataformat</groupId>
-        <artifactId>jackson-dataformat-yaml</artifactId>
-        <version>${jackson.version}</version>
-      </dependency>
+
       <!-- JSON SChema -->
       <dependency>
         <groupId>com.networknt</groupId>
@@ -937,16 +858,11 @@
         <scope>test</scope>
       </dependency>
       <dependency>
-        <groupId>org.junit.jupiter</groupId>
-        <artifactId>junit-jupiter-engine</artifactId>
+        <groupId>org.junit</groupId>
+        <artifactId>junit-bom</artifactId>
         <version>${junit.jupiter.version}</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.junit.jupiter</groupId>
-        <artifactId>junit-jupiter-params</artifactId>
-        <version>${junit.jupiter.version}</version>
-        <scope>test</scope>
+        <type>pom</type>
+        <scope>import</scope>
       </dependency>
 
       <!-- logging -->
@@ -1050,7 +966,6 @@
   <!--  </scm>-->
   <build>
     <plugins>
-
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
@@ -1087,7 +1002,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-release-plugin</artifactId>
-        <version>3.0.0</version>
+        <version>3.1.1</version>
         <configuration>
           <tagNameFormat>v@{project.version}</tagNameFormat>
           <autoVersionSubmodules>true</autoVersionSubmodules>
@@ -1130,7 +1045,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>3.3.1</version>
+        <version>3.5.3</version>
         <configuration>
           <includes>
             <include>**/*Test.java</include>
@@ -1168,6 +1083,11 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-shade-plugin</artifactId>
           <version>3.6.0</version>
+        </plugin>
+        <plugin>
+          <groupId>io.reactiverse</groupId>
+          <artifactId>vertx-maven-plugin</artifactId>
+          <version>2.0.1</version>
         </plugin>
       </plugins>    
     </pluginManagement>

@@ -230,7 +230,7 @@ jobs:
       - install-jdk
       - run:
           name: Build shaded JAR
-          command: mvn -U clean -T1 -B install -DskipTests -DskipITs -Pinstrument
+          command: mvn -U clean -T1 -B install -DskipTests -DskipITs -DskipVertexFatJar -Pinstrument
       - run:
           name: Pull base image
           command: docker pull eclipse-temurin:17-jdk-noble

@@ -4,7 +4,7 @@
   <parent>
     <groupId>com.datasqrl</groupId>
     <artifactId>sqrl-tools</artifactId>
-    <version>0.6.0-SNAPSHOT</version>
+    <version>0.7.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>sqrl-config</artifactId>
@@ -42,7 +42,7 @@
     <dependency>
       <groupId>org.assertj</groupId>
       <artifactId>assertj-core</artifactId>
-      <version>3.26.3</version>
+      <version>3.27.3</version>
       <scope>test</scope>
     </dependency>
   </dependencies>

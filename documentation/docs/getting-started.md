@@ -43,7 +43,7 @@ vi usertokens.sqrl;
 We can now execute the SQRL script with the compiler:
 
 ```bash
-docker run -it --rm -p 8888:8888 -p 8081:8081 -p 9092:9092 -v $PWD:/build datasqrl/cmd:dev run usertokens.sqrl
+docker run -it --rm -p 8888:8888 -p 8081:8081 -p 9092:9092 -v $PWD:/build datasqrl/cmd:latest run usertokens.sqrl
 ``` 
 (Use `${PWD}` in Powershell on Windows).
 
@@ -178,7 +178,7 @@ mutation {
 
 Now you can run the test cases with the command:
 ```bash
-docker run -it --rm -v $PWD:/build datasqrl/cmd:dev test usertokens.sqrl 
+docker run -it --rm -v $PWD:/build datasqrl/cmd:latest test usertokens.sqrl 
 ```
 
 When you first run new tests, the test runner creates snapshots for each test case. When you run the test again, it will succeed if the snapshots match or fail if they don't.
@@ -187,7 +187,7 @@ When you first run new tests, the test runner creates snapshots for each test ca
 
 To build the deployment assets in the for the data pipeline, execute
 ```bash
-docker run --rm -v $PWD:/build datasqrl/cmd:dev compile usertokens.sqrl
+docker run --rm -v $PWD:/build datasqrl/cmd:latest compile usertokens.sqrl
 ``` 
 The `build/deploy` directory contains the Flink compiled plan, Kafka topic definitions, PostgreSQL schema and view definitions, server queries, and GraphQL data model.
 
@@ -199,14 +199,14 @@ The `build` directory contains two files that are useful to visualize, inspect, 
 
 To inspect the GraphQL API that DataSQRL generates from the SQRL script, execute:
 ```bash
-docker run --rm -v $PWD:/build datasqrl/cmd:dev compile usertokens.sqrl --api graphql
+docker run --rm -v $PWD:/build datasqrl/cmd:latest compile usertokens.sqrl --api graphql
 ``` 
 This creates a file called `schema.graphqls` in the project root directory.
 
 To make adjustments to the GraphQL schema, rename the file to `usertokens.graphqls` before making modifications: removing fields, changing default values, renaming types, etc. To build the project with the adjusted schema, execute:
 
 ```bash
-docker run --rm -v $PWD:/build datasqrl/cmd:dev compile usertokens.sqrl usertokens.graphqls
+docker run --rm -v $PWD:/build datasqrl/cmd:latest compile usertokens.sqrl usertokens.graphqls
 ```
 
 ## Next Steps
