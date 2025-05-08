@@ -9,10 +9,8 @@ import static com.datasqrl.util.NameUtil.namepath2Path;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -46,6 +44,7 @@ import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.EnginePhysicalPlan.DeploymentArtifact;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.PhysicalPlan.PhysicalStagePlan;
+import com.datasqrl.engine.server.ServerPhysicalPlan;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.packager.Preprocessors.PreprocessorsContext;
 import com.datasqrl.plan.MainScript;
@@ -58,12 +57,6 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 
-import freemarker.template.Configuration;
-import freemarker.template.DefaultMapAdapter;
-import freemarker.template.Template;
-import freemarker.template.TemplateExceptionHandler;
-import freemarker.template.TemplateMethodModelEx;
-import freemarker.template.TemplateModelException;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -287,6 +280,10 @@ public class Packager {
     // artifacts that the plan has
     for (PhysicalStagePlan stagePlan : plan.getStagePlans()) {
       writePlan(stagePlan.getStage().getName(), stagePlan.getPlan(), planDir);
+      
+      if(stagePlan.getPlan() instanceof ServerPhysicalPlan) {
+    	  copyVertxConfig(planDir.resolve("vertx-config.json"));
+      }
     }
 
     if (testPlan != null) {
@@ -300,63 +297,13 @@ public class Packager {
     moveFolder(targetDir, SqrlConstants.DATA_DIR);
     copyJarFiles(buildDir.getBuildDir());
     moveFolder(targetDir, SqrlConstants.LIB_DIR);
-
-    // copy deployment files
-    Map<String, Object> config = collectConfiguration(sqrlConfig);
-    writePostgresSchema(targetDir, config);
-  }
-
-  private void writePostgresSchema(Path targetDir, Map<String, Object> config) {
-    if (config.containsKey("postgres") || config.containsKey("postgres_log")) {
-      // postgres
-      copyTemplate(
-          targetDir, config, "templates/database-schema.sql.ftl", "postgres/database-schema.sql");
-      copyTemplate(
-          targetDir, config, "templates/database-schema.sql.ftl", "files/postgres-schema.sql");
-    }
-
-    if (config.containsKey("flink")) {
-      // flink
-      copyTemplate(
-          targetDir, config, "templates/flink.sql.ftl", "flink/src/main/resources/flink.sql");
-      copyTemplate(targetDir, config, "templates/flink.sql.ftl", "files/flink.sql");
-    }
-
-    if (config.containsKey("vertx")) {
-      // vertx server-config
-      copyTemplate(
-          targetDir, config, "templates/server-config.json.ftl", "vertx/server-config.json");
-      copyTemplate(
-          targetDir, config, "templates/server-config.json.ftl", "files/vertx-config.json");
-
-      // vertx server-config
-      copyTemplate(targetDir, config, "templates/server-model.json.ftl", "vertx/server-model.json");
-      copyTemplate(targetDir, config, "templates/server-model.json.ftl", "files/vertx-model.json");
-    }
   }
 
   @SneakyThrows
-  private void copyTemplate(
-      Path targetDir, Map<String, Object> config, String source, String destination) {
-    // Set up the FreeMarker configuration to load templates from the classpath.
-    Configuration cfg = new Configuration(Configuration.VERSION_2_3_32);
-    cfg.setDefaultEncoding("UTF-8");
-    cfg.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
-    cfg.setNumberFormat("computer");
-    cfg.setSharedVariable(
-        "jsonEncode",
-        new JsonEncoderMethod()); // Set the base directory for templates to the root of the
-    // classpath.
-    cfg.setClassLoaderForTemplateLoading(getClass().getClassLoader(), "/");
-
-    Template template = cfg.getTemplate(source);
-
-    Path postgresSchemaFile = targetDir.resolve(destination);
-    Files.createDirectories(postgresSchemaFile.getParent());
-    try (Writer writer =
-        new OutputStreamWriter(Files.newOutputStream(postgresSchemaFile), StandardCharsets.UTF_8)) {
-      template.process(config, writer);
-    }
+  private void copyVertxConfig(Path configFile) {
+	  try(var input = getClass().getResourceAsStream("/templates/server-config.json")) {
+		  Files.copy(input, configFile, StandardCopyOption.REPLACE_EXISTING);
+	  }
   }
 
   private void copyDataFiles(Path buildDir) throws IOException {
@@ -447,84 +394,6 @@ public class Packager {
             StandardOpenOption.WRITE);
       } else { // serialize as json
         jsonWriter.writeValue(filePath.toFile(), plan);
-      }
-    }
-  }
-
-  private Map<String, Object> collectConfiguration(
-      PackageJson sqrlConfig) {
-    Map<String, Object> templateConfig = new HashMap<>();
-    templateConfig.put("config", sqrlConfig.toMap()); // Add SQRL config
-    templateConfig.put("environment", System.getenv()); // Add environmental variables
-    return templateConfig;
-  }
-
-  @SneakyThrows
-  private void copy(
-      Path profile, Path targetDir, Path sourcePath, Map<String, Object> templateConfig) {
-    try (Stream<Path> stream = Files.walk(sourcePath)) {
-      List<Path> engineFiles = stream.collect(Collectors.toList());
-      for (Path path : engineFiles) {
-        Path destinationPath = targetDir.resolve(profile.relativize(path)).toAbsolutePath();
-        if (Files.isDirectory(path)) {
-          try {
-            Files.createDirectories(destinationPath);
-          } catch (IOException e) {
-            throw new RuntimeException(e);
-          }
-        } else {
-          if (path.toString().endsWith(".ftl")) {
-            processTemplate(path, destinationPath, templateConfig);
-          } else {
-            Files.copy(path, destinationPath, StandardCopyOption.REPLACE_EXISTING);
-          }
-        }
-      }
-    }
-  }
-
-  public void processTemplate(Path path, Path destination, Map config) throws Exception {
-    if (!path.toString().endsWith(".ftl")) {
-      return;
-    }
-
-    // extract the template filename
-    var templateName = path.getFileName().toString();
-
-    // configure Freemarker
-    var cfg = new Configuration(Configuration.VERSION_2_3_32);
-    cfg.setDirectoryForTemplateLoading(path.getParent().toFile());
-    cfg.setDefaultEncoding("UTF-8");
-    cfg.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
-    cfg.setNumberFormat("computer");
-    cfg.setSharedVariable("jsonEncode", new JsonEncoderMethod());
-
-    // load and process the template
-    var template = cfg.getTemplate(templateName);
-    Writer out = new StringWriter();
-    template.process(config, out);
-
-    // remove .ftl extension
-    var outputFileName = templateName.substring(0, templateName.length() - 4);
-
-    // write
-    var outputPath = destination.getParent().resolve(outputFileName);
-    Files.write(outputPath, out.toString().getBytes());
-  }
-
-  public class JsonEncoderMethod implements TemplateMethodModelEx {
-
-    @Override
-    public Object exec(List arguments) throws TemplateModelException {
-      if (arguments.isEmpty()) {
-        throw new TemplateModelException("JsonEncoderMethod expects one argument.");
-      }
-      try {
-        var obj = arguments.get(0);
-        var wrappedObject = ((DefaultMapAdapter) obj).getWrappedObject();
-        return SqrlObjectMapper.INSTANCE.writeValueAsString(wrappedObject);
-      } catch (Exception e) {
-        throw new TemplateModelException("Error processing JSON encoding", e);
       }
     }
   }

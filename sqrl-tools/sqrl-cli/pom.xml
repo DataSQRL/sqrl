@@ -221,9 +221,6 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
-        <configuration>
-          <createDependencyReducedPom>false</createDependencyReducedPom>
-        </configuration>
         <executions>
           <execution>
             <phase>package</phase>
@@ -247,9 +244,36 @@
                     <exclude>META-INF/*.SF</exclude>
                     <exclude>META-INF/*.DSA</exclude>
                     <exclude>META-INF/*.RSA</exclude>
+                    <exclude>META-INF/versions/19/**/*</exclude>
                   </excludes>
                 </filter>
               </filters>
+              <relocations>
+                <relocation>
+                  <pattern>org.objectweb.asm.</pattern>
+                  <shadedPattern>sqrl.asm.</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>jakarta.</pattern>
+                  <shadedPattern>sqrl.jakarta.</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>io.vertx.</pattern>
+                  <shadedPattern>sqrl.vertx.</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>com.sun.el.</pattern>
+                  <shadedPattern>sqrl.el.</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>com.fasterxml.jackson.</pattern>
+                  <shadedPattern>sqrl.jackson.</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>org.yaml.snakeyaml.</pattern>
+                  <shadedPattern>sqrl.snakeyaml.</shadedPattern>
+                </relocation>
+              </relocations>
             </configuration>
           </execution>
         </executions>
