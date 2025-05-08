@@ -42,7 +42,7 @@
     <log4j.version>2.24.3</log4j.version>
     <scala.version>2.12</scala.version>
     <guava.version>33.4.8-jre</guava.version>
-    <commonsio.version>2.11.0</commonsio.version>
+    <commonsio.version>2.19.0</commonsio.version>
     <commons-lang3.version>3.17.0</commons-lang3.version>
     <commons-config.version>2.9.0</commons-config.version>
     <commons-collections.version>4.4</commons-collections.version>
