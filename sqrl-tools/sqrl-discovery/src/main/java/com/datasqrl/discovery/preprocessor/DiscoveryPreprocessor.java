@@ -28,7 +28,7 @@ public interface DiscoveryPreprocessor extends Preprocessor {
    */
   private static boolean runDiscovery(Path directory) {
     // Safety check: check if the directory exists and is a directory
-    if (!Files.exists(directory) || !Files.isDirectory(directory)) {
+    if (directory==null || !Files.exists(directory) || !Files.isDirectory(directory)) {
       return false;
     }
 
