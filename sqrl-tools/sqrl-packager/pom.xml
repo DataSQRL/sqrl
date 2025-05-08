@@ -92,11 +92,6 @@
       <artifactId>zip4j</artifactId>
     </dependency>
 
-    <dependency>
-      <groupId>org.freemarker</groupId>
-      <artifactId>freemarker</artifactId>
-    </dependency>
-
     <!-- Test -->
     <dependency>
       <groupId>org.mockito</groupId>

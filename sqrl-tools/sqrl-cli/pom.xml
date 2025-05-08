@@ -281,6 +281,10 @@
                   <pattern>com.fasterxml.jackson.</pattern>
                   <shadedPattern>sqrl.jackson.</shadedPattern>
                 </relocation>
+                <relocation>
+                  <pattern>org.yaml.snakeyaml.</pattern>
+                  <shadedPattern>sqrl.snakeyaml.</shadedPattern>
+                </relocation>
               </relocations>
             </configuration>
           </execution>
