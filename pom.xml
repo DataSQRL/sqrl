@@ -38,7 +38,7 @@
     <kafka.version>3.4.0</kafka.version>
     <flink.version>1.19.2</flink.version>
     <slf4j.version>1.7.36</slf4j.version>
-    <postgres.version>42.5.0</postgres.version>
+    <postgres.version>42.7.5</postgres.version>
     <log4j.version>2.24.3</log4j.version>
     <scala.version>2.12</scala.version>
     <guava.version>33.4.8-jre</guava.version>
