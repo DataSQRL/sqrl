@@ -35,7 +35,7 @@
     <jackson.version>2.16.2</jackson.version>
     <vertx.version>4.5.14</vertx.version>
     <agroal.version>2.6</agroal.version>
-    <kafka.version>3.4.0</kafka.version>
+    <kafka.version>3.9.0</kafka.version>
     <flink.version>1.19.2</flink.version>
     <slf4j.version>1.7.36</slf4j.version>
     <postgres.version>42.5.0</postgres.version>
