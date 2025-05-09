@@ -1,6 +1,5 @@
 package com.datasqrl.graphql.config;
 
-import javax.annotation.Nullable;
 
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonObject;
@@ -27,14 +26,11 @@ public class ServerConfig {
 
   ServletConfig servletConfig;
   GraphQLHandlerOptions graphQLHandlerOptions;
-  @Nullable
   GraphiQLHandlerOptions graphiQLHandlerOptions;
   HttpServerOptions httpServerOptions;
-  @Nullable
   PgConnectOptions pgConnectOptions;
   PoolOptions poolOptions;
   CorsHandlerOptions corsHandlerOptions;
-  @Nullable
   JWTAuthOptions authOptions;
 
   // I moved it here as I believe it belongs to the server configuration.

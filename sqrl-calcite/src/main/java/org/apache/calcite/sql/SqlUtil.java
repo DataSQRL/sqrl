@@ -64,8 +64,6 @@ import org.apache.calcite.util.Glossary;
 import org.apache.calcite.util.NlsString;
 import org.apache.calcite.util.Pair;
 import org.apache.calcite.util.Util;
-import org.checkerframework.checker.nullness.qual.Nullable;
-import org.checkerframework.checker.nullness.qual.PolyNull;
 
 import com.google.common.base.Predicates;
 import com.google.common.base.Utf8;
@@ -92,7 +90,7 @@ public abstract class SqlUtil {
    * <p>If {@code node1} is null, returns {@code node2}.
    * Flattens if either node is an AND. */
   public static SqlNode andExpressions(
-      @Nullable SqlNode node1,
+       SqlNode node1,
       SqlNode node2) {
     if (node1 == null) {
       return node2;
@@ -177,7 +175,7 @@ public abstract class SqlUtil {
    * </ul>
    */
   public static boolean isNullLiteral(
-      @Nullable SqlNode node,
+       SqlNode node,
       boolean allowCast) {
     if (node instanceof SqlLiteral literal) {
       if (literal.getTypeName() == SqlTypeName.NULL) {
@@ -468,10 +466,10 @@ public abstract class SqlUtil {
    *
    * @see Glossary#SQL99 SQL:1999 Part 2 Section 10.4
    */
-  public static @Nullable SqlOperator lookupRoutine(SqlOperatorTable opTab,
+  public static  SqlOperator lookupRoutine(SqlOperatorTable opTab,
       RelDataTypeFactory typeFactory,
       SqlIdentifier funcName, List<RelDataType> argTypes,
-      @Nullable List<String> argNames, @Nullable SqlFunctionCategory category,
+       List<String> argNames,  SqlFunctionCategory category,
       SqlSyntax syntax, SqlKind sqlKind, SqlNameMatcher nameMatcher,
       boolean coerce) {
     var list =
@@ -518,9 +516,9 @@ public abstract class SqlUtil {
    */
   public static Iterator<SqlOperator> lookupSubjectRoutines(
       SqlOperatorTable opTab, RelDataTypeFactory typeFactory,
-      SqlIdentifier funcName, List<RelDataType> argTypes, @Nullable List<String> argNames,
+      SqlIdentifier funcName, List<RelDataType> argTypes,  List<String> argNames,
       SqlSyntax sqlSyntax, SqlKind sqlKind,
-      @Nullable SqlFunctionCategory category, SqlNameMatcher nameMatcher,
+       SqlFunctionCategory category, SqlNameMatcher nameMatcher,
       boolean coerce) {
     // start with all routines matching by name
     var routines =
@@ -595,7 +593,7 @@ public abstract class SqlUtil {
       SqlOperatorTable opTab,
       SqlIdentifier funcName,
       final SqlSyntax syntax,
-      @Nullable SqlFunctionCategory category,
+       SqlFunctionCategory category,
       SqlNameMatcher nameMatcher) {
     final List<SqlOperator> sqlOperators = new ArrayList<>();
     opTab.lookupOperatorOverloads(funcName, category, syntax, sqlOperators,
@@ -625,7 +623,7 @@ public abstract class SqlUtil {
   private static Iterator<SqlOperator> filterRoutinesByParameterTypeAndName(
       RelDataTypeFactory typeFactory, SqlSyntax syntax,
       final Iterator<SqlOperator> routines, final List<RelDataType> argTypes,
-      final @Nullable List<String> argNames, final boolean coerce) {
+      final  List<String> argNames, final boolean coerce) {
     if (syntax != SqlSyntax.FUNCTION) {
       return routines;
     }
@@ -644,9 +642,9 @@ public abstract class SqlUtil {
           }
           final var operandMetadata = (SqlOperandMetadata) operandTypeChecker;
           @SuppressWarnings("assignment.type.incompatible")
-          final List<@Nullable RelDataType> paramTypes =
+          final List< RelDataType> paramTypes =
               operandMetadata.paramTypes(typeFactory);
-          final List<@Nullable RelDataType> permutedArgTypes;
+          final List< RelDataType> permutedArgTypes;
           if (argNames != null) {
             final var paramNames = operandMetadata.paramNames();
             permutedArgTypes = permuteArgTypes(paramNames, argNames, argTypes,
@@ -660,7 +658,7 @@ public abstract class SqlUtil {
               paramTypes.add(null);
             }
           }
-          for (Pair<@Nullable RelDataType, @Nullable RelDataType> p
+          for (Pair< RelDataType,  RelDataType> p
               : Pair.zip(paramTypes, permutedArgTypes)) {
             final RelDataType argType = p.right;
             final RelDataType paramType = p.left;
@@ -677,13 +675,13 @@ public abstract class SqlUtil {
   /**
    * Permutes argument types to correspond to the order of parameter names.
    */
-  private static @Nullable List<@Nullable RelDataType> permuteArgTypes(List<String> paramNames,
+  private static  List< RelDataType> permuteArgTypes(List<String> paramNames,
       List<String> argNames, List<RelDataType> argTypes) {
     return permuteArgTypes(paramNames, argNames, argTypes);
   }
 
   //SQRL: Add namematcher to find case-insensitive parameters
-  private static @Nullable List<@Nullable RelDataType> permuteArgTypes(List<String> paramNames,
+  private static  List< RelDataType> permuteArgTypes(List<String> paramNames,
       List<String> argNames, List<RelDataType> argTypes, SqlNameMatcher nameMatcher) {
     // Arguments passed by name. Make sure that the function has
     // parameters of all of these names.
@@ -695,7 +693,7 @@ public abstract class SqlUtil {
       }
       map.put(i, argName.i);
     }
-    return Functions.<@Nullable RelDataType>generate(paramNames.size(), index -> {
+    return Functions.< RelDataType>generate(paramNames.size(), index -> {
       var argIndex = map.get(index);
       return argIndex != null ? argTypes.get(argIndex) : null;
     });
@@ -712,7 +710,7 @@ public abstract class SqlUtil {
       RelDataTypeFactory typeFactory,
       Iterator<SqlOperator> routines,
       List<RelDataType> argTypes,
-      @Nullable List<String> argNames) {
+       List<String> argNames) {
     if (sqlSyntax != SqlSyntax.FUNCTION) {
       return routines;
     }
@@ -749,9 +747,9 @@ public abstract class SqlUtil {
     return (Iterator) sqlFunctions.iterator();
   }
 
-  private static @Nullable RelDataType bestMatch(RelDataTypeFactory typeFactory,
+  private static  RelDataType bestMatch(RelDataTypeFactory typeFactory,
       List<SqlFunction> sqlFunctions, int i,
-      @Nullable List<String> argNames, RelDataTypePrecedenceList precList) {
+       List<String> argNames, RelDataTypePrecedenceList precList) {
     RelDataType bestMatch = null;
     for (SqlFunction function : sqlFunctions) {
       SqlOperandTypeChecker operandTypeChecker = function.getOperandTypeChecker();
@@ -981,7 +979,7 @@ public abstract class SqlUtil {
    * @param name SQL-level name
    * @return Java-level name, or null if SQL-level name is unknown
    */
-  public static @Nullable String translateCharacterSetName(String name) {
+  public static  String translateCharacterSetName(String name) {
     return switch (name) {
     case "BIG5" -> "Big5";
     case "LATIN1" -> "ISO-8859-1";
@@ -1032,7 +1030,7 @@ public abstract class SqlUtil {
 
   /** If a node is "AS", returns the underlying expression; otherwise returns
    * the node. Returns null if and only if the node is null. */
-  public static @PolyNull SqlNode stripAs(@PolyNull SqlNode node) {
+  public static  SqlNode stripAs( SqlNode node) {
     if (node != null && node.getKind() == SqlKind.AS) {
       return ((SqlCall) node).operand(0);
     }
@@ -1083,7 +1081,7 @@ public abstract class SqlUtil {
    * @return the {@code RelHint} list
    */
   public static List<RelHint> getRelHint(HintStrategyTable hintStrategies,
-      @Nullable SqlNodeList sqlHints) {
+       SqlNodeList sqlHints) {
     if (sqlHints == null || sqlHints.size() == 0) {
       return ImmutableList.of();
     }
@@ -1258,7 +1256,7 @@ public abstract class SqlUtil {
       return null;
     }
 
-    private void visitChild(@Nullable SqlNode node) {
+    private void visitChild( SqlNode node) {
       if (node == null) {
         return;
       }
