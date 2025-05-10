@@ -13,13 +13,12 @@ import CodeBlock from "@theme/CodeBlock";
 
 
 const header: HomepageHeaderProps = {
-  title: 'DataSQRL - The Streaming Data Framework',
-  tagLine: 'Intelligent Data Framework',
+  title: 'DataSQRL - AI Data Platform',
+  tagLine: 'Accurate Data for AI',
   text: (
       <>
-        DataSQRL makes it fast and easy to build enriched data interfaces
+        DataSQRL makes it fast and easy to build accurate data interfaces
         for GenAI and ML applications from all your data sources.
-        Focus on data semantics and let DataSQRL handle the data plumbing.
       </>
   ),
   buttonLink: 'docs/getting-started',

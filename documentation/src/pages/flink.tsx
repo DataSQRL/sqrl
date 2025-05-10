@@ -13,7 +13,7 @@ import CodeBlock from "@theme/CodeBlock";
 
 
 const header: HomepageHeaderProps = {
-  title: 'DataSQRL - The Streaming Data Framework',
+  title: 'DataSQRL - Development Framework for Flink',
   tagLine: 'Flink on Rails',
   text: (
       <>
