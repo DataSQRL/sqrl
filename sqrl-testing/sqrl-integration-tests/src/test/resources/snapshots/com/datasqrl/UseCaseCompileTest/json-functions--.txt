@@ -214,7 +214,7 @@ FROM (SELECT "id", "val", "json_col", "json_col_2", "json_col_3", "json_col_4"
     "subscriptions" : [ ],
     "schema" : {
       "type" : "string",
-      "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\n\"A JSON scalar\"\nscalar JSON\n\ntype Json {\n  id: GraphQLBigInteger!\n  val: String!\n  timestamp: DateTime!\n}\n\ntype Query {\n  Json(limit: Int = 10, offset: Int = 0): [Json!]\n  UnmodifiedJsonData(limit: Int = 10, offset: Int = 0): [UnmodifiedJsonData!]\n}\n\ntype UnmodifiedJsonData {\n  id: GraphQLBigInteger!\n  val: String!\n  json_col: JSON\n  json_col_2: JSON\n  json_col_3: JSON\n  json_col_4: JSON\n}\n"
+      "schema" : "\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\n\"A JSON scalar\"\nscalar JSON\n\ntype Json {\n  id: GraphQLBigInteger!\n  val: String!\n  timestamp: DateTime!\n}\n\ntype Query {\n  Json(limit: Int = 10, offset: Int = 0): [Json!]\n  UnmodifiedJsonData(limit: Int = 10, offset: Int = 0): [UnmodifiedJsonData!]\n}\n\ntype UnmodifiedJsonData {\n  id: GraphQLBigInteger!\n  val: String!\n  json_col: JSON\n  json_col_2: JSON\n  json_col_3: JSON\n  json_col_4: JSON\n}\n"
     }
   }
 }

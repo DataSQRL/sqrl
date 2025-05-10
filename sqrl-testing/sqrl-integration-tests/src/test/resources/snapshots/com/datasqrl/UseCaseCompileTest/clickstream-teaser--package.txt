@@ -323,7 +323,7 @@ FROM "VisitAfter_4"
     "subscriptions" : [ ],
     "schema" : {
       "type" : "string",
-      "schema" : "type Click {\n  url: String!\n  timestamp: DateTime!\n  userid: String!\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Query {\n  Click(limit: Int = 10, offset: Int = 0): [Click!]\n  Recommendation(url: String!, limit: Int = 10, offset: Int = 0): [Recommendation!]\n  Trending(limit: Int = 10, offset: Int = 0): [Trending!]\n  VisitAfter(limit: Int = 10, offset: Int = 0): [VisitAfter!]\n}\n\ntype Recommendation {\n  url: String!\n  rec: String!\n  frequency: GraphQLBigInteger!\n}\n\ntype Trending {\n  url: String!\n  total: GraphQLBigInteger!\n}\n\ntype VisitAfter {\n  beforeURL: String!\n  afterURL: String!\n  timestamp: DateTime!\n}\n"
+      "schema" : "type Click {\n  url: String!\n  timestamp: DateTime!\n  userid: String!\n}\n\n\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Query {\n  Click(limit: Int = 10, offset: Int = 0): [Click!]\n  Recommendation(url: String!, limit: Int = 10, offset: Int = 0): [Recommendation!]\n  Trending(limit: Int = 10, offset: Int = 0): [Trending!]\n  VisitAfter(limit: Int = 10, offset: Int = 0): [VisitAfter!]\n}\n\ntype Recommendation {\n  url: String!\n  rec: String!\n  frequency: GraphQLBigInteger!\n}\n\ntype Trending {\n  url: String!\n  total: GraphQLBigInteger!\n}\n\ntype VisitAfter {\n  beforeURL: String!\n  afterURL: String!\n  timestamp: DateTime!\n}\n"
     }
   }
 }
