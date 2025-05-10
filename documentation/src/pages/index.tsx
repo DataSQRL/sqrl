@@ -13,8 +13,8 @@ import CodeBlock from "@theme/CodeBlock";
 
 
 const header: HomepageHeaderProps = {
-  title: 'DataSQRL - The Streaming Data Framework',
-  tagLine: 'Streaming Data Framework',
+  title: 'DataSQRL - The Data Streaming Framework',
+  tagLine: 'Data Streaming Framework',
   text: (
       <>
         Build data APIs, LLM tooling, and Iceberg views easily
