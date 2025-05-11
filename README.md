@@ -1,7 +1,5 @@
 # DataSQRL
 
-<img src="/documentation/static/img/diagrams/streaming_summary.png" align="right" width="300" />
-
 DataSQRL is a data streaming framework for incremental and real-time data processing applications. Ingest data from various sources, integrate, transform, store, and serve the result as  data APIs, LLM tooling, or iceberg views - with the simplicity of SQL.
 
 Data Engineers use DataSQRL to quickly build production-ready data pipelines that:
