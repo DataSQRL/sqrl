@@ -2,12 +2,12 @@
 
 <img src="/documentation/static/img/diagrams/streaming_summary.png" align="right" width="300" />
 
-DataSQRL is a data streaming framework for incremental and real-time data processing applications. Ingest data from various sources, integrate, transform, store, and serve the result as iceberg views, data APIs, or LLM tooling with the simplicity of SQL.
+DataSQRL is a data streaming framework for incremental and real-time data processing applications. Ingest data from various sources, integrate, transform, store, and serve the result as  data APIs, LLM tooling, or iceberg views - with the simplicity of SQL.
 
 Data Engineers use DataSQRL to quickly build production-ready data pipelines that:
-* Continuously transform and materialize data into Iceberg tables and catalog views for querying in Snowflake, DuckDB, AWS Athena, etc.
-* Create realtime data APIs for enriched data extracted from operational data systems.
-* Semantically contextualize data combined from multiple source systems and serve it as LLM tooling for accurate results.
+* Create realtime **data APIs**,
+* Expose enriched data for **LLM tooling**,
+* Materialize data into **Iceberg tables** and catalog views for querying in Snowflake, DuckDB, AWS Athena, etc.
 
 ![DataSQRL Pipeline Architecture](/documentation/static/img/diagrams/streaming_architecture.png)
 
