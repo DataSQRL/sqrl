@@ -1,10 +1,13 @@
 # DataSQRL
 
-TODO: Marvin please replace:
-[![CircleCI](https://dl.circleci.com/status-badge/img/gh/datasqrl/sqrl/tree/main.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/datasqrl/sqrl/tree/main)
+[![CircleCI](https://dl.circleci.com/status-badge/img/gh/DataSQRL/sqrl/tree/main.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/DataSQRL/sqrl/tree/main)
 [![Docs](https://img.shields.io/badge/docs-available-brightgreen.svg)](https://datasqrl.github.io/sqrl)
 [![codecov](https://codecov.io/gh/datasqrl/sqrl/branch/main/graph/badge.svg)](https://codecov.io/gh/datasqrl/sqrl)
 [![License](https://img.shields.io/github/license/datasqrl/sqrl.svg)](LICENSE)
+[![Docker Image Version](https://img.shields.io/docker/v/datasqrl/cmd?sort=semver)](https://hub.docker.com/r/datasqrl/cmd/tags)
+[![Maven Central](https://img.shields.io/maven-central/v/com.datasqrl/sqrl-root)](https://repo1.maven.org/maven2/com/datasqrl/sqrl-root/)
+
+
 
 DataSQRL is a data streaming framework for incremental and real-time data processing applications. Ingest data from various sources, integrate, transform, store, and serve the result as  data APIs, LLM tooling, or iceberg views - with the simplicity of SQL.
 
