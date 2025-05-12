@@ -1,5 +1,11 @@
 # DataSQRL
 
+TODO: Marvin please replace:
+[![CircleCI](https://dl.circleci.com/status-badge/img/gh/datasqrl/sqrl/tree/main.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/datasqrl/sqrl/tree/main)
+[![Docs](https://img.shields.io/badge/docs-available-brightgreen.svg)](https://datasqrl.github.io/sqrl)
+[![codecov](https://codecov.io/gh/datasqrl/sqrl/branch/main/graph/badge.svg)](https://codecov.io/gh/datasqrl/sqrl)
+[![License](https://img.shields.io/github/license/datasqrl/sqrl.svg)](LICENSE)
+
 DataSQRL is a data streaming framework for incremental and real-time data processing applications. Ingest data from various sources, integrate, transform, store, and serve the result as  data APIs, LLM tooling, or iceberg views - with the simplicity of SQL.
 
 Data Engineers use DataSQRL to quickly build production-ready data pipelines that:
