@@ -156,7 +156,6 @@ public class GraphQLEngineBuilder
   private RuntimeWiring createWiring(TypeDefinitionRegistry registry, GraphQLCodeRegistry.Builder codeRegistry) {
     var wiring = RuntimeWiring.newRuntimeWiring()
         .codeRegistry(codeRegistry)
-        .scalar(CustomScalars.Double)
         .scalar(CustomScalars.DATETIME)
         .scalar(CustomScalars.DATE)
         .scalar(CustomScalars.TIME)
