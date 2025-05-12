@@ -158,6 +158,8 @@ public class DatasqrlRun {
     config.putIfAbsent("rest.port", "8081");
     config.putIfAbsent("execution.target", "local"); //mini cluster
     config.putIfAbsent("execution.attached", "true"); //mini cluster
+    // required by IcebergStreamWriter
+    config.putIfAbsent("env.java.opts", "--add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED");
 
     String udfPath = getenv("UDF_PATH");
     List<URL> jarUrls = new ArrayList<>();
