@@ -358,6 +358,11 @@
               <transformers>
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                   <mainClass>com.datasqrl.DatasqrlRun</mainClass>
+                  <manifestEntries>
+                    <add-opens>java.base/java.util=ALL-UNNAMED</add-opens>
+                    <add-opens>java.base/java.lang=ALL-UNNAMED</add-opens>
+                    <add-opens>java.base/java.util.concurrent.atomic=ALL-UNNAMED</add-opens>
+                  </manifestEntries>
                 </transformer>
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
               </transformers>
