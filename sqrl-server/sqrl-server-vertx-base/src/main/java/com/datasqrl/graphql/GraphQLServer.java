@@ -19,6 +19,7 @@ import com.datasqrl.graphql.server.CustomScalars;
 import com.datasqrl.graphql.server.GraphQLEngineBuilder;
 import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.google.common.base.Strings;
 import com.symbaloo.graphqlmicrometer.MicrometerInstrumentation;
@@ -110,11 +111,15 @@ public class GraphQLServer extends AbstractVerticle {
     this.snowflakeUrl = snowflakeUrl;
   }
 
+  public static class ModelContainer {
+    public RootGraphqlModel model;
+  }
+
   @SneakyThrows
   private static RootGraphqlModel readModel() {
     return getObjectMapper().readValue(
         new File("server-model.json"),
-        RootGraphqlModel.class);
+        ModelContainer.class).model;
   }
 
   public static ObjectMapper getObjectMapper() {
