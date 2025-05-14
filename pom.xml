@@ -71,6 +71,7 @@
     <jsonschema.version>1.5.6</jsonschema.version>
     <flinkrunner.version>0.6.0</flinkrunner.version>
     <iceberg.version>1.9.0</iceberg.version>
+    <hadoop.version>3.4.1</hadoop.version>
     
     <maven-javadoc-plugin.version>3.11.2</maven-javadoc-plugin.version>
     <maven-source-plugin.version>3.3.1</maven-source-plugin.version>
