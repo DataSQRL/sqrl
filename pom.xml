@@ -41,7 +41,8 @@
     <guava.version>33.4.8-jre</guava.version>
     <commonsio.version>2.19.0</commonsio.version>
     <commons-lang3.version>3.17.0</commons-lang3.version>
-    <commons-config.version>2.12.0</commons-config.version>
+    <!-- hadoop shades in commons-config 2.1.1, so upgrade path here is very narrow -->
+    <commons-config.version>2.3</commons-config.version>
     <commons-collections.version>4.5.0</commons-collections.version>
     <httpcomponents.version>4.5.14</httpcomponents.version>
     <commons-bean.version>1.10.1</commons-bean.version>
@@ -71,6 +72,7 @@
     <jsonschema.version>1.5.6</jsonschema.version>
     <flinkrunner.version>0.6.0</flinkrunner.version>
     <iceberg.version>1.9.0</iceberg.version>
+    <hadoop.version>3.4.1</hadoop.version>
     
     <maven-javadoc-plugin.version>3.11.2</maven-javadoc-plugin.version>
     <maven-source-plugin.version>3.3.1</maven-source-plugin.version>
