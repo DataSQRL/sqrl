@@ -3,17 +3,13 @@ package com.datasqrl.engine.log.postgres;
 import static com.datasqrl.config.EngineType.LOG;
 import static com.datasqrl.engine.log.postgres.PostgresLogEngineFactory.ENGINE_NAME;
 
-import java.util.ArrayList;
 import java.util.EnumSet;
-import java.util.List;
 import java.util.Optional;
 
 import org.apache.calcite.rel.type.RelDataType;
 
-import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.config.ConnectorFactory;
 import com.datasqrl.config.ConnectorFactoryFactory;
-import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.PackageJson.EmptyEngineConfig;
 import com.datasqrl.config.PackageJson.EngineConfig;
@@ -23,24 +19,12 @@ import com.datasqrl.engine.EngineFeature;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.database.EngineCreateTable;
-import com.datasqrl.engine.database.relational.ddl.JdbcDDLServiceLoader;
-import com.datasqrl.engine.database.relational.ddl.PostgresDDLFactory;
-import com.datasqrl.engine.database.relational.ddl.statements.InsertStatement;
-import com.datasqrl.engine.database.relational.ddl.statements.notify.ListenNotifyAssets;
-import com.datasqrl.engine.log.Log;
 import com.datasqrl.engine.log.LogEngine;
 import com.datasqrl.engine.log.LogFactory;
-import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
-import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.plan.global.PhysicalDAGPlan.LogStagePlan;
-import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
-import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
-import com.datasqrl.sql.SqlDDLStatement;
 import com.datasqrl.v2.analyzer.TableAnalysis;
 import com.datasqrl.v2.dag.plan.MaterializationStagePlan;
 import com.datasqrl.v2.tables.FlinkTableBuilder;
-import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 
 import lombok.Getter;

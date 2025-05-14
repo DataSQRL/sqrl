@@ -189,7 +189,7 @@ CREATE TABLE `_UserInfo__def` (
   `userid` BIGINT NOT NULL,
   `orgid` BIGINT NOT NULL,
   `last_updated` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `event_time` AS NOW(),
+  `event_time` AS `NOW`(),
   WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.001' SECOND
 ) WITH (
   'connector' = 'filesystem',

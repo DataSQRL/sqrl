@@ -482,7 +482,7 @@ CREATE TEMPORARY TABLE `Customer__schema` (
   'connector' = 'datagen'
 );
 CREATE TABLE `Customer__def` (
-  `timestamp` AS COALESCE(TO_TIMESTAMP_LTZ(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
+  `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
 ) WITH (
@@ -527,7 +527,7 @@ CREATE TEMPORARY TABLE `_customer__schema` (
   'connector' = 'datagen'
 );
 CREATE TABLE `_customer__def` (
-  `timestamp` AS COALESCE(TO_TIMESTAMP_LTZ(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
+  `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
 ) WITH (
@@ -967,7 +967,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
           FROM `default_catalog`.`default_database`.`ExplicitDistinct`)
          ;
          INSERT INTO `default_catalog`.`default_database`.`ExternalOrders_11`
-          (SELECT `id`, `customerid`, `time`, TO_JSONB(`entries`) AS `entries`
+          (SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`
            FROM `default_catalog`.`default_database`.`ExternalOrders`)
           ;
           INSERT INTO `default_catalog`.`default_database`.`InvalidDistinct_12`
@@ -987,11 +987,11 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
                FROM `default_catalog`.`default_database`.`TemporalJoin`)
               ;
               INSERT INTO `default_catalog`.`default_database`.`TemporalJoin_15`
-               (SELECT `id`, `customerid`, `time`, TO_JSONB(`entries`) AS `entries`, `customerid0`, CAST(`timestamp` AS TIMESTAMP(3) WITH LOCAL TIME ZONE) AS `timestamp`, `name`
+               (SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`, `customerid0`, CAST(`timestamp` AS TIMESTAMP(3) WITH LOCAL TIME ZONE) AS `timestamp`, `name`
                 FROM `default_catalog`.`default_database`.`TemporalJoin`)
                ;
                INSERT INTO `default_catalog`.`default_database`.`UnnestOrders_16`
-                (SELECT `id`, `customerid`, `time`, `productid`, `quantity`, `discount`, `newId`, HASHCOLUMNS(`id`, `customerid`, `time`, `productid`, `quantity`, `discount`, `newId`) AS `__pk_hash`
+                (SELECT `id`, `customerid`, `time`, `productid`, `quantity`, `discount`, `newId`, `hashColumns`(`id`, `customerid`, `time`, `productid`, `quantity`, `discount`, `newId`) AS `__pk_hash`
                  FROM `default_catalog`.`default_database`.`UnnestOrders`)
                 ;
                 END

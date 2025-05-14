@@ -19,7 +19,7 @@ SQL: CREATE VIEW FunctionApplied AS  SELECT id, TestFunction(id) AS fct_result F
 >>>flink-sql-no-functions.sql
 CREATE VIEW `FunctionApplied`
 AS
-SELECT `id`, TESTFUNCTION(`id`) AS `fct_result`
+SELECT `id`, `TestFunction`(`id`) AS `fct_result`
 FROM (VALUES ROW(1),
    ROW(2)) AS `data_table` (`id`);
 CREATE VIEW `FunctionTest`

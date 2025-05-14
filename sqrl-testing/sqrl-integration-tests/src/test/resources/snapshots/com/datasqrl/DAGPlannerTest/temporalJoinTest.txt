@@ -111,7 +111,7 @@ CREATE TEMPORARY TABLE `Customer__schema` (
   'connector' = 'datagen'
 );
 CREATE TABLE `Customer__def` (
-  `timestamp` AS COALESCE(TO_TIMESTAMP_LTZ(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
+  `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
 ) WITH (
@@ -231,11 +231,11 @@ INSERT INTO `default_catalog`.`default_database`.`DistinctCustomer_2`
   FROM `default_catalog`.`default_database`.`Customer`)
  ;
  INSERT INTO `default_catalog`.`default_database`.`Orders_3`
-  (SELECT `id`, `customerid`, `time`, TO_JSONB(`entries`) AS `entries`
+  (SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`
    FROM `default_catalog`.`default_database`.`Orders`)
   ;
   INSERT INTO `default_catalog`.`default_database`.`TemporalJoin_4`
-   (SELECT `id`, `customerid`, `time`, TO_JSONB(`entries`) AS `entries`, `customerid0`, `email`, `name`, `lastUpdated`, CAST(`timestamp` AS TIMESTAMP(3) WITH LOCAL TIME ZONE) AS `timestamp`
+   (SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`, `customerid0`, `email`, `name`, `lastUpdated`, CAST(`timestamp` AS TIMESTAMP(3) WITH LOCAL TIME ZONE) AS `timestamp`
     FROM `default_catalog`.`default_database`.`TemporalJoin`)
    ;
    END

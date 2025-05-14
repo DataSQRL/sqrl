@@ -17,14 +17,6 @@
   <dependencies>
     <dependency>
       <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-base</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-calcite</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-packager</artifactId>
     </dependency>
     <dependency>
@@ -65,12 +57,6 @@
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-junit-jupiter</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <artifactId>sqrl-calcite</artifactId>
-      <groupId>com.datasqrl</groupId>
-      <type>test-jar</type>
       <scope>test</scope>
     </dependency>
     <dependency>

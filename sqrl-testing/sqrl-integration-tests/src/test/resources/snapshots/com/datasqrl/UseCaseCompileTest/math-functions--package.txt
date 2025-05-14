@@ -53,7 +53,7 @@ SQL: CREATE VIEW MathFunctions AS  SELECT d, b,
 >>>flink-sql-no-functions.sql
 CREATE VIEW `MathFunctions`
 AS
-SELECT `d`, `b`, CBRT(`d`) AS `cbrt`, COPY_SIGN(`d`, `d`) AS `copy_sign`, EXPM1(`d`) AS `expm1`, HYPOT(`d`, `d`) AS `hypot`, LOG1P(`d`) AS `log1p`, NEXT_AFTER(`d`, `d`) AS `next_after`, SCALB(`d`, `b`) AS `scalb`, ULP(`d`) AS `ulp`, BINOMIAL_DISTRIBUTION(`b`, 1, `b`) AS `binomial_distribution`, EXPONENTIAL_DISTRIBUTION(`d`, `d`) AS `exponential_distribution`, NORMAL_DISTRIBUTION(`d`, `d`, `d`) AS `normal_distribution`, POISSON_DISTRIBUTION(`d`, `b`) AS `poisson_distribution`
+SELECT `d`, `b`, CBRT(`d`) AS `cbrt`, `copy_sign`(`d`, `d`) AS `copy_sign`, `expm1`(`d`) AS `expm1`, `hypot`(`d`, `d`) AS `hypot`, `log1p`(`d`) AS `log1p`, `next_after`(`d`, `d`) AS `next_after`, `scalb`(`d`, `b`) AS `scalb`, `ulp`(`d`) AS `ulp`, `binomial_distribution`(`b`, 1, `b`) AS `binomial_distribution`, `exponential_distribution`(`d`, `d`) AS `exponential_distribution`, `normal_distribution`(`d`, `d`, `d`) AS `normal_distribution`, `poisson_distribution`(`d`, `b`) AS `poisson_distribution`
 FROM (VALUES ROW(1.0, 11),
    ROW(2.0, 12),
    ROW(3.0, 13),

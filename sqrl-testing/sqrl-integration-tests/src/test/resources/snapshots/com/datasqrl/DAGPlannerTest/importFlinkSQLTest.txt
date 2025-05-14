@@ -50,7 +50,7 @@ CREATE TABLE `Category__def` (
   `categoryid` INTEGER NOT NULL,
   `name` STRING NOT NULL,
   `description` STRING,
-  `updateTime` AS NOW(),
+  `updateTime` AS `NOW`(),
   WATERMARK FOR `updateTime` AS `updateTime` - INTERVAL '0.001' SECOND
 ) WITH (
   'format' = 'flexible-json',
@@ -99,7 +99,7 @@ CREATE TABLE `CategoryDistinct_2` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Category_1`
-(SELECT `categoryid`, `name`, `description`, `updateTime`, HASHCOLUMNS(`categoryid`, `name`, `description`, `updateTime`) AS `__pk_hash`
+(SELECT `categoryid`, `name`, `description`, `updateTime`, `hashColumns`(`categoryid`, `name`, `description`, `updateTime`) AS `__pk_hash`
  FROM `default_catalog`.`default_database`.`Category`)
 ;
 INSERT INTO `default_catalog`.`default_database`.`CategoryDistinct_2`

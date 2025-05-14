@@ -82,7 +82,7 @@ CREATE TEMPORARY TABLE `Orders__schema` (
   'connector' = 'datagen'
 );
 CREATE TABLE `Orders__def` (
-  `_ingest_time` AS PROCTIME(),
+  `_ingest_time` AS `PROCTIME`(),
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
 ) WITH (
   'format' = 'flexible-json',
@@ -104,7 +104,7 @@ CREATE TEMPORARY TABLE `Customer__schema` (
   'connector' = 'datagen'
 );
 CREATE TABLE `Customer__def` (
-  `_ingest_time` AS PROCTIME(),
+  `_ingest_time` AS `PROCTIME`(),
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED
 ) WITH (
   'format' = 'json',
@@ -178,11 +178,11 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_1`
  FROM `default_catalog`.`default_database`.`Customer`)
 ;
 INSERT INTO `default_catalog`.`default_database`.`CustomerOrdersJoin_2`
- (SELECT `customerid`, `email`, `name`, `lastUpdated`, `_ingest_time`, `id`, `customerid0`, `time`, TO_JSONB(`entries`) AS `entries`, CAST(`_ingest_time0` AS TIMESTAMP(3) WITH LOCAL TIME ZONE) AS `_ingest_time0`
+ (SELECT `customerid`, `email`, `name`, `lastUpdated`, `_ingest_time`, `id`, `customerid0`, `time`, `to_jsonb`(`entries`) AS `entries`, CAST(`_ingest_time0` AS TIMESTAMP(3) WITH LOCAL TIME ZONE) AS `_ingest_time0`
   FROM `default_catalog`.`default_database`.`CustomerOrdersJoin`)
  ;
  INSERT INTO `default_catalog`.`default_database`.`Orders_3`
-  (SELECT `id`, `customerid`, `time`, TO_JSONB(`entries`) AS `entries`, `_ingest_time`
+  (SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`, `_ingest_time`
    FROM `default_catalog`.`default_database`.`Orders`)
   ;
   END

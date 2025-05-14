@@ -111,7 +111,7 @@ CREATE TEMPORARY TABLE `SensorReading__schema` (
   'connector' = 'datagen'
 );
 CREATE TABLE `SensorReading__def` (
-  `timestamp` AS COALESCE(TO_TIMESTAMP_LTZ(`time`, 3), TIMESTAMP '1970-01-01 00:00:00.000'),
+  `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`time`, 3), TIMESTAMP '1970-01-01 00:00:00.000'),
   PRIMARY KEY (`sensorid`, `time`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
 ) WITH (
@@ -193,7 +193,7 @@ CREATE TABLE `SensorReading_3` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`SecReading_1`
-(SELECT `sensorid`, `timeSec`, `temp`, HASHCOLUMNS(`sensorid`, `timeSec`, `temp`) AS `__pk_hash`
+(SELECT `sensorid`, `timeSec`, `temp`, `hashColumns`(`sensorid`, `timeSec`, `temp`) AS `__pk_hash`
  FROM `default_catalog`.`default_database`.`SecReading`)
 ;
 INSERT INTO `default_catalog`.`default_database`.`SensorMaxTemp_2`

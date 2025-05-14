@@ -167,7 +167,7 @@ CREATE TABLE `_SubmissionRaw__def` (
   `hash` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `authorId` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `submissionTime` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `event_time` AS NOW(),
+  `event_time` AS `NOW`(),
   WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.001' SECOND
 ) WITH (
   'connector' = 'filesystem',
@@ -181,7 +181,7 @@ SELECT *
 FROM `default_catalog`.`default_database`.`_SubmissionRaw__def`;
 CREATE VIEW `Submission`
 AS
-SELECT *, COALESCE(`variant`, 'default') AS `variant0`, CONCAT('https://repository.datasqrl.com/', `file`) AS `repoURL`
+SELECT *, COALESCE(`variant`, 'default') AS `variant0`, `concat`('https://repository.datasqrl.com/', `file`) AS `repoURL`
 FROM `_SubmissionRaw`;
 CREATE VIEW `Package`
 AS
@@ -290,11 +290,11 @@ INSERT INTO `default_catalog`.`default_database`.`Package_1`
  FROM `default_catalog`.`default_database`.`Package`)
 ;
 INSERT INTO `default_catalog`.`default_database`.`Submission_2`
- (SELECT `name`, `version`, `variant`, `latest`, `type`, `license`, `repository`, `homepage`, `documentation`, `readme`, `description`, TO_JSONB(`keywords`) AS `keywords`, `uniqueId`, `file`, `hash`, `authorId`, `submissionTime`, `event_time`, `variant0`, `repoURL`, HASHCOLUMNS(`name`, `version`, `variant`, `latest`, `type`, `license`, `repository`, `homepage`, `documentation`, `readme`, `description`, `keywords`, `uniqueId`, `file`, `hash`, `authorId`, `submissionTime`, `event_time`, `variant0`, `repoURL`) AS `__pk_hash`
+ (SELECT `name`, `version`, `variant`, `latest`, `type`, `license`, `repository`, `homepage`, `documentation`, `readme`, `description`, `to_jsonb`(`keywords`) AS `keywords`, `uniqueId`, `file`, `hash`, `authorId`, `submissionTime`, `event_time`, `variant0`, `repoURL`, `hashColumns`(`name`, `version`, `variant`, `latest`, `type`, `license`, `repository`, `homepage`, `documentation`, `readme`, `description`, `keywords`, `uniqueId`, `file`, `hash`, `authorId`, `submissionTime`, `event_time`, `variant0`, `repoURL`) AS `__pk_hash`
   FROM `default_catalog`.`default_database`.`Submission`)
  ;
  INSERT INTO `default_catalog`.`default_database`.`SubmissionTopics_3`
-  (SELECT `pkgName`, `topicName`, `submissionTime`, HASHCOLUMNS(`pkgName`, `topicName`, `submissionTime`) AS `__pk_hash`
+  (SELECT `pkgName`, `topicName`, `submissionTime`, `hashColumns`(`pkgName`, `topicName`, `submissionTime`) AS `__pk_hash`
    FROM `default_catalog`.`default_database`.`SubmissionTopics`)
   ;
   INSERT INTO `default_catalog`.`default_database`.`TopicPackages_4`

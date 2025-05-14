@@ -51,7 +51,7 @@ CREATE TABLE `SensorReading__def` (
   `sensorid` BIGINT NOT NULL,
   `epoch_timestamp` BIGINT NOT NULL,
   `temperature` DOUBLE NOT NULL,
-  `timestamp` AS COALESCE(TO_TIMESTAMP_LTZ(`epoch_timestamp`, 3), TIMESTAMP '1970-01-01 00:00:00.000'),
+  `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`epoch_timestamp`, 3), TIMESTAMP '1970-01-01 00:00:00.000'),
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
 ) WITH (
   'connector' = 'datagen',
@@ -105,7 +105,7 @@ CREATE TABLE `SensorTempByHour_2` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`SensorReading_1`
-(SELECT `uuid`, `sensorid`, `epoch_timestamp`, `temperature`, `timestamp`, HASHCOLUMNS(`uuid`, `sensorid`, `epoch_timestamp`, `temperature`, `timestamp`) AS `__pk_hash`
+(SELECT `uuid`, `sensorid`, `epoch_timestamp`, `temperature`, `timestamp`, `hashColumns`(`uuid`, `sensorid`, `epoch_timestamp`, `temperature`, `timestamp`) AS `__pk_hash`
  FROM `default_catalog`.`default_database`.`SensorReading`)
 ;
 INSERT INTO `default_catalog`.`default_database`.`SensorTempByHour_2`

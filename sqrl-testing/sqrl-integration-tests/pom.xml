@@ -114,12 +114,6 @@
 
     <!-- Test jars -->
     <dependency>
-      <artifactId>sqrl-calcite</artifactId>
-      <groupId>com.datasqrl</groupId>
-      <type>test-jar</type>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <artifactId>sqrl-planner</artifactId>
       <groupId>com.datasqrl</groupId>
       <type>test-jar</type>
@@ -205,4 +199,13 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
+  <dependencyManagement>
+  	<dependencies>
+  		<dependency>
+  			<groupId>org.yaml</groupId>
+  			<artifactId>snakeyaml</artifactId>
+  			<version>1.33</version>
+  		</dependency>
+  	</dependencies>
+  </dependencyManagement>
 </project>

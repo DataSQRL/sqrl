@@ -65,7 +65,7 @@ import com.datasqrl.engine.EngineFeature;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableType;
-import com.datasqrl.plan.rules.JoinAnalysis.Side;
+import com.datasqrl.plan.rules.Side;
 import com.datasqrl.plan.rules.SqrlRelShuttle;
 import com.datasqrl.plan.util.IndexMap;
 import com.datasqrl.plan.util.PrimaryKeyMap;

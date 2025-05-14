@@ -38,7 +38,7 @@ CREATE TEMPORARY TABLE `Orders__schema` (
   'connector' = 'datagen'
 );
 CREATE TABLE `Orders__def` (
-  `_ingest_time` AS PROCTIME(),
+  `_ingest_time` AS `PROCTIME`(),
   PRIMARY KEY (`id`, `customerid`, `time`) NOT ENFORCED
 ) WITH (
   'format' = 'flexible-json',

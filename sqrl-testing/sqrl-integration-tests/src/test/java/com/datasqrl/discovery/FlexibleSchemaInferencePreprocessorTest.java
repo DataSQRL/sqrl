@@ -7,7 +7,6 @@ import java.nio.file.Path;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-import org.apache.calcite.jdbc.SqrlSchema;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -23,7 +22,6 @@ import com.datasqrl.discovery.preprocessor.FlexibleSchemaInferencePreprocessor;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrinter;
 import com.datasqrl.inject.SqrlInjector;
-import com.datasqrl.inject.StatefulModule;
 import com.datasqrl.packager.preprocess.Preprocessor.ProcessorContext;
 import com.datasqrl.plan.validate.ExecutionGoal;
 import com.datasqrl.util.SnapshotTest.Snapshot;
@@ -54,8 +52,7 @@ public class FlexibleSchemaInferencePreprocessorTest extends AbstractAssetSnapsh
                 FILES_DIR,
                 super.outputDir,
                 packageJson,
-                ExecutionGoal.COMPILE),
-            new StatefulModule(new SqrlSchema(new TypeFactory(), NameCanonicalizer.SYSTEM)));
+                ExecutionGoal.COMPILE));
     preprocessor = injector.getInstance(FlexibleSchemaInferencePreprocessor.class);
     super.buildDir = outputDir;
   }
