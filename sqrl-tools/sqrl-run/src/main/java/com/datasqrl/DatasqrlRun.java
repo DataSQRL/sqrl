@@ -149,10 +149,10 @@ public class DatasqrlRun {
     }
 
     config.putIfAbsent("table.exec.source.idle-timeout", "1 s");
-    config.putIfAbsent("taskmanager.network.memory.max", "800m");
+    config.putIfAbsent("taskmanager.memory.network.max", "800m");
     config.putIfAbsent("execution.checkpointing.interval", "30 s");
     config.putIfAbsent("execution.checkpointing.min-pause", "20 s");
-    config.putIfAbsent("state.backend", "rocksdb");
+    config.putIfAbsent("state.backend.type", "rocksdb");
     config.putIfAbsent("table.exec.resource.default-parallelism", "1");
     config.putIfAbsent("rest.address", "localhost");
     config.putIfAbsent("rest.port", "8081");
