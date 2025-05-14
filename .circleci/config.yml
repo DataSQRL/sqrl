@@ -172,30 +172,40 @@ commands:
 
   run-docker-test:
     description: >
-      Run a sqrl-test container and fail the build if no
-      "WARN  org.apache.flink." message is printed.
+      Run a sqrl-test container:
+        • fail if an expected pattern is **missing**
+        • fail if any SLF4J / log4j warnings **appear**
     parameters:
-      test_args:     { type: string }
-      working_dir:   { type: string }
+      test_args:        { type: string }
+      working_dir:      { type: string }
+      expected_pattern: { type: string }
     steps:
       - run:
-          name: Run tests and check Flink warning
+          name: Run tests and assertions
           working_directory: << parameters.working_dir >>
           environment:
             LOG_FILE: "/tmp/sqrl-test-logs-$$.txt"
           command: |
             set -o pipefail
-            # run the tests, capture *all* output, keep docker exit-code
+
+            # 1 ── run container and capture all output
             docker run -i --rm -v "$PWD:/build" sqrl-test \
               << parameters.test_args >> 2>&1 | tee "$LOG_FILE"
             DOCKER_EXIT=${PIPESTATUS[0]}
 
-            # look for the warning – two or more spaces after WARN tolerate formatter width
-            if ! grep -qE 'WARN[[:space:]]{2,}org\.apache\.flink\.' "$LOG_FILE"; then
-              echo "❌  Expected Flink WARN message not found; failing the job." >&2
+            # 2 ──  slf4j / log4j warnings must NOT appear
+            if grep -qE '(log4j:WARN|SLF4J\(W\)|SLF4J:WARN)' "$LOG_FILE"; then
+              echo "❌  SLF4J / log4j warnings detected – failing the job." >&2
               exit 1
             fi
 
+            # 3 ──  the job-specific pattern MUST appear
+            if ! grep -q "<< parameters.expected_pattern >>" "$LOG_FILE"; then
+              echo "❌  Expected log entry “<< parameters.expected_pattern >>” not found – failing the job." >&2
+              exit 1
+            fi
+
+            # 4 ──  still propagate the container’s exit status
             exit "$DOCKER_EXIT"
 
 jobs:
@@ -311,23 +321,23 @@ jobs:
     executor: default-machine
     steps:
       - checkout
-      - attach_workspace:
-          at: .
+      - attach_workspace: { at: . }
       - run: docker load -i sqrl-test.tar
       - run-docker-test:
           working_dir: ./sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/connectors-test
           test_args: test connectors.sqrl
+          expected_pattern: 'WARN  org.apache.flink.metrics'
 
   run-udf-tests:
     executor: default-machine
     steps:
       - checkout
-      - attach_workspace:
-          at: .
+      - attach_workspace: { at: . }
       - run: docker load -i sqrl-test.tar
       - run-docker-test:
           working_dir: ./sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/udf
           test_args: test myudf.sqrl --snapshots snapshots-myudf --tests tests-myudf
+          expected_pattern: 'WARN  org.apache.flink.runtime.security.token.DefaultDelegationTokenManager'
 
   build-jars:
     docker:
