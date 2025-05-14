@@ -112,7 +112,7 @@ CREATE TEMPORARY TABLE `Customer__schema` (
   'connector' = 'datagen'
 );
 CREATE TABLE `Customer__def` (
-  `timestamp` AS COALESCE(TO_TIMESTAMP_LTZ(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
+  `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
 ) WITH (
@@ -261,11 +261,11 @@ INSERT INTO `default_catalog`.`default_database`.`DistinctStream_2`
     FROM `default_catalog`.`default_database`.`JoinStream`)
    ;
    INSERT INTO `default_catalog`.`default_database`.`JoinStream_5`
-    (SELECT `id`, `name`, HASHCOLUMNS(`id`, `name`) AS `__pk_hash`
+    (SELECT `id`, `name`, `hashColumns`(`id`, `name`) AS `__pk_hash`
      FROM `default_catalog`.`default_database`.`JoinStream`)
     ;
     INSERT INTO `default_catalog`.`default_database`.`Orders_6`
-     (SELECT `id`, `customerid`, `time`, TO_JSONB(`entries`) AS `entries`
+     (SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`
       FROM `default_catalog`.`default_database`.`Orders`)
      ;
      END

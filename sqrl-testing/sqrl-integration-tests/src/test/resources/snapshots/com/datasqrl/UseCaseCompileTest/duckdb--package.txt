@@ -276,7 +276,7 @@ FROM "_MyApplications2_3"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT \"id\", 'hello world1' AS \"hello\"\nFROM ICEBERG_SCAN('/tmp/duckdb/default_database/_MyApplications1_1', ALLOW_MOVED_PATHS = TRUE)",
+            "sql" : "SELECT \"id\", 'hello world1' AS \"hello\"\nFROM \"iceberg_scan\"('/tmp/duckdb/default_database/_MyApplications1_1', ALLOW_MOVED_PATHS = TRUE)",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "DUCKDB"
@@ -300,7 +300,7 @@ FROM "_MyApplications2_3"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT \"id\", 'hello world2' AS \"hello\"\nFROM ICEBERG_SCAN('/tmp/duckdb/default_database/_MyApplications2_2', ALLOW_MOVED_PATHS = TRUE)",
+            "sql" : "SELECT \"id\", 'hello world2' AS \"hello\"\nFROM \"iceberg_scan\"('/tmp/duckdb/default_database/_MyApplications2_2', ALLOW_MOVED_PATHS = TRUE)",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "DUCKDB"

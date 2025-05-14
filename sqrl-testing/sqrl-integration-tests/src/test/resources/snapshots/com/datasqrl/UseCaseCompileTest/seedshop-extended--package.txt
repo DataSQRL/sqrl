@@ -426,7 +426,7 @@ CREATE TEMPORARY TABLE `_CustomersStream__schema` (
   'connector' = 'datagen'
 );
 CREATE TABLE `_CustomersStream__def` (
-  `timestamp` AS COALESCE(TO_TIMESTAMP_LTZ(`changed_on`, 3), TIMESTAMP '1970-01-01 00:00:00.000'),
+  `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`changed_on`, 3), TIMESTAMP '1970-01-01 00:00:00.000'),
   PRIMARY KEY (`id`, `changed_on`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
 ) WITH (
@@ -681,15 +681,15 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerPromotion_1`
      FROM `default_catalog`.`default_database`.`CustomersPastPurchases`)
     ;
     INSERT INTO `default_catalog`.`default_database`.`CustomersSpending_5`
-     (SELECT `customerid`, `week`, `spend`, `saved`, HASHCOLUMNS(`customerid`, `week`, `spend`, `saved`) AS `__pk_hash`
+     (SELECT `customerid`, `week`, `spend`, `saved`, `hashColumns`(`customerid`, `week`, `spend`, `saved`) AS `__pk_hash`
       FROM `default_catalog`.`default_database`.`CustomersSpending`)
      ;
      INSERT INTO `default_catalog`.`default_database`.`Orders_6`
-      (SELECT `id`, `customerid`, `time`, TO_JSONB(`items`) AS `items`
+      (SELECT `id`, `customerid`, `time`, `to_jsonb`(`items`) AS `items`
        FROM `default_catalog`.`default_database`.`Orders`)
       ;
       INSERT INTO `default_catalog`.`default_database`.`OrdersTotals_7`
-       (SELECT `id`, `time`, `customerid`, `price`, `saving`, HASHCOLUMNS(`id`, `time`, `customerid`, `price`, `saving`) AS `__pk_hash`
+       (SELECT `id`, `time`, `customerid`, `price`, `saving`, `hashColumns`(`id`, `time`, `customerid`, `price`, `saving`) AS `__pk_hash`
         FROM `default_catalog`.`default_database`.`OrdersTotals`)
        ;
        INSERT INTO `default_catalog`.`default_database`.`Products_8`
@@ -697,7 +697,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerPromotion_1`
          FROM `default_catalog`.`default_database`.`_ProductsStream`)
         ;
         INSERT INTO `default_catalog`.`default_database`.`ProductsByCountry_9`
-         (SELECT `productid`, `country`, `quantity`, `spend`, `weight`, HASHCOLUMNS(`productid`, `country`) AS `__pk_hash`
+         (SELECT `productid`, `country`, `quantity`, `spend`, `weight`, `hashColumns`(`productid`, `country`) AS `__pk_hash`
           FROM `default_catalog`.`default_database`.`ProductsByCountry`)
          ;
          END
@@ -1061,7 +1061,7 @@ FROM "Orders_6"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT \"id\", \"name\", \"sizing\", \"weight_in_gram\", \"type\", \"category\", \"usda_id\", \"updated\", TS_RANK_CD(TO_TSVECTOR('english', COALESCE(\"name\", ' ')), WEBSEARCH_TO_TSQUERY('english', $1)) AS \"score\"\nFROM \"Products_8\"\nWHERE (TO_TSVECTOR('english', COALESCE(\"name\", ' ')) @@ WEBSEARCH_TO_TSQUERY('english', CAST($1 AS TEXT)))\nORDER BY TS_RANK_CD(TO_TSVECTOR('english', COALESCE(\"name\", ' ')), WEBSEARCH_TO_TSQUERY('english', $1)) DESC NULLS LAST, \"id\" NULLS FIRST",
+            "sql" : "SELECT \"id\", \"name\", \"sizing\", \"weight_in_gram\", \"type\", \"category\", \"usda_id\", \"updated\", \"ts_rank_cd\"(\"to_tsvector\"('english', COALESCE(\"name\", ' ')), \"websearch_to_tsquery\"('english', $1)) AS \"score\"\nFROM \"Products_8\"\nWHERE (\"to_tsvector\"('english', COALESCE(\"name\", ' ')) @@ \"websearch_to_tsquery\"('english', CAST($1 AS TEXT)))\nORDER BY \"ts_rank_cd\"(\"to_tsvector\"('english', COALESCE(\"name\", ' ')), \"websearch_to_tsquery\"('english', $1)) DESC NULLS LAST, \"id\" NULLS FIRST",
             "parameters" : [
               {
                 "type" : "arg",
@@ -1098,7 +1098,7 @@ FROM "Orders_6"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Products_8\"\nWHERE (TO_TSVECTOR('english', COALESCE(\"name\", ' ') || ' ' || COALESCE(\"category\", ' ')) @@ WEBSEARCH_TO_TSQUERY('english', CAST($1 AS TEXT))) AND \"id\" > $2\nORDER BY \"id\" NULLS FIRST",
+            "sql" : "SELECT *\nFROM \"Products_8\"\nWHERE (\"to_tsvector\"('english', COALESCE(\"name\", ' ') || ' ' || COALESCE(\"category\", ' ')) @@ \"websearch_to_tsquery\"('english', CAST($1 AS TEXT))) AND \"id\" > $2\nORDER BY \"id\" NULLS FIRST",
             "parameters" : [
               {
                 "type" : "arg",

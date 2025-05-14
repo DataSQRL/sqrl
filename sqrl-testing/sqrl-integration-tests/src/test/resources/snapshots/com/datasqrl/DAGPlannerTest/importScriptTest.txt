@@ -185,11 +185,11 @@ CREATE TABLE `MachineTempByHour_2` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`MachineReading_1`
-(SELECT `sensorid`, `temperature`, `event_time`, `machineid`, HASHCOLUMNS(`sensorid`, `temperature`, `event_time`, `machineid`) AS `__pk_hash`
+(SELECT `sensorid`, `temperature`, `event_time`, `machineid`, `hashColumns`(`sensorid`, `temperature`, `event_time`, `machineid`) AS `__pk_hash`
  FROM `default_catalog`.`default_database`.`MachineReading`)
 ;
 INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
- (SELECT `machineid`, `time_hour`, `avg_temperature`, HASHCOLUMNS(`machineid`, `time_hour`, `avg_temperature`) AS `__pk_hash`
+ (SELECT `machineid`, `time_hour`, `avg_temperature`, `hashColumns`(`machineid`, `time_hour`, `avg_temperature`) AS `__pk_hash`
   FROM `default_catalog`.`default_database`.`MachineTempByHour`)
  ;
  END

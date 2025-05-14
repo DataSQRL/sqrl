@@ -54,7 +54,7 @@ SQL: CREATE VIEW MyTableAnother AS  SELECT val, AnotherFunction(val, val) AS myF
 >>>flink-sql-no-functions.sql
 CREATE VIEW `MyTable`
 AS
-SELECT `val`, MYSCALARFUNCTION(`val`, `val`) AS `myFnc`
+SELECT `val`, `MyScalarFunction`(`val`, `val`) AS `myFnc`
 FROM (VALUES ROW(1),
    ROW(2),
    ROW(3),
@@ -67,12 +67,12 @@ FROM (VALUES ROW(1),
    ROW(10)) AS `t` (`val`);
 CREATE VIEW `MyTableAnother`
 AS
-SELECT `val`, ANOTHERFUNCTION(`val`, `val`) AS `myFnc`
+SELECT `val`, `AnotherFunction`(`val`, `val`) AS `myFnc`
 FROM (VALUES ROW(1),
    ROW(2)) AS `t` (`val`);
 CREATE VIEW `MyAsyncTable`
 AS
-SELECT `val`, MYASYNCSCALARFUNCTION(`val`, `ival`) AS `myFnc`
+SELECT `val`, `MyAsyncScalarFunction`(`val`, `ival`) AS `myFnc`
 FROM (VALUES ROW('1', 1),
    ROW('2', 2),
    ROW('3', 3)) AS `t` (`val`, `ival`);

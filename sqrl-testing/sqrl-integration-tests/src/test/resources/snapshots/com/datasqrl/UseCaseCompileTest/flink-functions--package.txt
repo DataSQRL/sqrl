@@ -38,7 +38,7 @@ Inputs: default_catalog.default_database.FlinkFunctions
 >>>flink-sql-no-functions.sql
 CREATE VIEW `FlinkFunctions`
 AS
-SELECT UPPER(`name`) AS `name_upper`, CHAR_LENGTH(`name`) AS `name_length`, NOW() AS `time_now`, UNIX_TIMESTAMP() AS `current_unix_ts`, UUID() AS `generated_uuid`, MD5(`name`) AS `name_md5`, FORMAT('Hello, %s', `name`) AS `formatted_name`, TO_JSONB(CONCAT('{"a": "', `name`, '"}')) AS `name_json`
+SELECT UPPER(`name`) AS `name_upper`, CHAR_LENGTH(`name`) AS `name_length`, `NOW`() AS `time_now`, `UNIX_TIMESTAMP`() AS `current_unix_ts`, `UUID`() AS `generated_uuid`, `MD5`(`name`) AS `name_md5`, `FORMAT`('Hello, %s', `name`) AS `formatted_name`, `TO_JSONB`(`CONCAT`('{"a": "', `name`, '"}')) AS `name_json`
 FROM (VALUES ROW('Alice'),
    ROW('Bob'),
    ROW('Charlie')) AS `names` (`name`);

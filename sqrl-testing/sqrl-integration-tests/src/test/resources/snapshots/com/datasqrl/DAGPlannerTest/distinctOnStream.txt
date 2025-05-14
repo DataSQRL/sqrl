@@ -87,7 +87,7 @@ CREATE TEMPORARY TABLE `Customer__schema` (
   'connector' = 'datagen'
 );
 CREATE TABLE `Customer__def` (
-  `timestamp` AS COALESCE(TO_TIMESTAMP_LTZ(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
+  `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
 ) WITH (
@@ -160,7 +160,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_1`
  FROM `default_catalog`.`default_database`.`Customer`)
 ;
 INSERT INTO `default_catalog`.`default_database`.`CustomerUpdates_2`
- (SELECT `customerid`, `endOfMin`, `total`, HASHCOLUMNS(`customerid`, `endOfMin`, `total`) AS `__pk_hash`
+ (SELECT `customerid`, `endOfMin`, `total`, `hashColumns`(`customerid`, `endOfMin`, `total`) AS `__pk_hash`
   FROM `default_catalog`.`default_database`.`CustomerUpdates`)
  ;
  INSERT INTO `default_catalog`.`default_database`.`DistinctCustomerUpdates_3`

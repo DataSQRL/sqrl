@@ -116,7 +116,7 @@ CREATE TEMPORARY TABLE `Customer__schema` (
   'connector' = 'datagen'
 );
 CREATE TABLE `Customer__def` (
-  `timestamp` AS COALESCE(TO_TIMESTAMP_LTZ(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
+  `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
 ) WITH (
@@ -139,7 +139,7 @@ CREATE TEMPORARY TABLE `_HiddenCustomer__schema` (
   'connector' = 'datagen'
 );
 CREATE TABLE `_HiddenCustomer__def` (
-  `timestamp` AS COALESCE(TO_TIMESTAMP_LTZ(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
+  `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
 ) WITH (
@@ -162,7 +162,7 @@ CREATE TEMPORARY TABLE `_customer__schema` (
   'connector' = 'datagen'
 );
 CREATE TABLE `_customer__def` (
-  `timestamp` AS COALESCE(TO_TIMESTAMP_LTZ(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
+  `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
 ) WITH (

@@ -171,7 +171,7 @@ CREATE TEMPORARY TABLE `Customer__schema` (
   'connector' = 'datagen'
 );
 CREATE TABLE `Customer__def` (
-  `timestamp` AS COALESCE(TO_TIMESTAMP_LTZ(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
+  `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
 ) WITH (
@@ -225,7 +225,7 @@ FROM `Orders` AS `o`
 WHERE `c`.`customerid` IS NULL AND `c`.`lastUpdated` IS NULL;
 CREATE VIEW `OrderCustomerRight`
 AS
-SELECT COALESCE(`o`.`id`, 0) AS `ouuid`, COALESCE(`o`.`time`, PROCTIME()) AS `otime`, `o`.`id`, `c`.`name`, `o`.`customerid`
+SELECT COALESCE(`o`.`id`, 0) AS `ouuid`, COALESCE(`o`.`time`, `proctime`()) AS `otime`, `o`.`id`, `c`.`name`, `o`.`customerid`
 FROM `Orders` AS `o`
  RIGHT JOIN `Customer` AS `c` ON `o`.`customerid` = `c`.`customerid`;
 CREATE VIEW `OrderCustomerRightExcluded`
@@ -274,7 +274,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_1`
  FROM `default_catalog`.`default_database`.`Customer`)
 ;
 INSERT INTO `default_catalog`.`default_database`.`Orders_2`
- (SELECT `id`, `customerid`, `time`, TO_JSONB(`entries`) AS `entries`
+ (SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`
   FROM `default_catalog`.`default_database`.`Orders`)
  ;
  END
