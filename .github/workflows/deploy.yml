@@ -40,6 +40,9 @@ jobs:
         working-directory: documentation
         run: npm run build
 
+      - name: Create CNAME file
+        run: echo 'docs.datasqrl.com' > documentation/build/CNAME
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:

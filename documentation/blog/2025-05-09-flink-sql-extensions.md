@@ -5,10 +5,17 @@ authors: [matthias]
 tags: [Join, Flink, DataSQRL]
 ---
 
+<head>
+  <meta property="og:image" content="/img/blog/flinksql_extension_api.png" />
+  <meta name="twitter:image" content="/img/blog/flinksql_extension_api.png" />
+</head>
+
 # Defining Data Interfaces with FlinkSQL
 
-FLinkSQL is an amazing innovation in data processing: it packages the power of realtime stream processing within the simplicity of SQL.
+[FlinkSQL](https://nightlies.apache.org/flink/flink-docs-release-1.19/docs/dev/table/sql/overview/) is an amazing innovation in data processing: it packages the power of realtime stream processing within the simplicity of SQL.
 That means you can start with the SQL you know and introduce stream processing constructs as you need them.
+
+<img src="/img/blog/flinksql_extension_api.png" alt="FlinkSQL API Extension >" width="40%"/>
 
 FlinkSQL adds the ability to process data incrementally to the classic set-based semantics of SQL. In addition, FlinkSQL supports source and sink connectors making it easy to ingest data from and move data to other systems. That's a powerful combination which covers a lot of data processing use cases.
 
@@ -37,7 +44,7 @@ UsageAlert := SUBSCRIBE SELECT * FROM UserTokens WHERE tokens > 100000;
 
 This script defines a sequence of tables. We introduce `:=` as syntactic sugar for the verbose `CREATE TEMPORARY VIEW` syntax.
 
-The `UserTokens` table does not have a configured connector, so we expose it as a mutation endpoint in the API that connected to Flink via a Kafka topic. This makes it easy to build APIs that capture user activity, transactions, or other types of events.
+The `UserTokens` table does not have a configured connector, which mean we treat it as an API mutation endpoint connected to Flink via a Kafka topic that captures the events. This makes it easy to build APIs that capture user activity, transactions, or other types of events.
 
 Next, we sum up the data collected through the API for each user. This is a standard FlinkSQL aggregation query and we expose the result in our API through the `query_by_all` hint which defines the arguments for the query endpoint of that table.
 
@@ -84,6 +91,6 @@ In addition to breaking out the sink configuration from the main script, the `EX
 
 ## Learn More
 
-FlinkSQL is phenomenal extension of the SQL ecosystem to stream processing. With DataSQRL, we are trying to make it easier to build end-to-end data pipelines and complete data applications with FlinkSQL.
+[FlinkSQL](https://nightlies.apache.org/flink/flink-docs-release-1.19/docs/dev/table/sql/overview/) is phenomenal extension of the SQL ecosystem to stream processing. With DataSQRL, we are trying to make it easier to build end-to-end data pipelines and complete data applications with FlinkSQL.
 
-Check out the [complete example](/docs/getting-started) which also covers testing, customization, and deployment. Or read the [documentation](/docs/intro) to learn more.
+Check out the [complete example](/docs/getting-started) which also covers testing, customization, and deployment. Or read the [documentation](/docs/sqrl-language) to learn more.
