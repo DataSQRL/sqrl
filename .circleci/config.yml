@@ -170,6 +170,34 @@ commands:
               mvn -B versions:set -DnewVersion=$CIRCLE_TAG
             fi
 
+  run-docker-test:
+    description: >
+      Run a sqrl-test container and fail the build if no
+      "WARN  org.apache.flink." message is printed.
+    parameters:
+      test_args:     { type: string }
+      working_dir:   { type: string }
+    steps:
+      - run:
+          name: Run tests and check Flink warning
+          working_directory: << parameters.working_dir >>
+          environment:
+            LOG_FILE: "/tmp/sqrl-test-logs-$$.txt"
+          command: |
+            set -o pipefail
+            # run the tests, capture *all* output, keep docker exit-code
+            docker run -i --rm -v "$PWD:/build" sqrl-test \
+              << parameters.test_args >> 2>&1 | tee "$LOG_FILE"
+            DOCKER_EXIT=${PIPESTATUS[0]}
+
+            # look for the warning – two or more spaces after WARN tolerate formatter width
+            if ! grep -qE 'WARN[[:space:]]{2,}org\.apache\.flink\.' "$LOG_FILE"; then
+              echo "❌  Expected Flink WARN message not found; failing the job." >&2
+              exit 1
+            fi
+
+            exit "$DOCKER_EXIT"
+
 jobs:
   build-base:
     docker:
@@ -275,11 +303,9 @@ jobs:
       - attach_workspace:
           at: .
       - run: docker load -i sqrl-test.tar
-      - run:
-          name: Conference Tests
-          command: |
-            docker run -i --rm -v $PWD:/build sqrl-test test conference.sqrl conference.graphqls --snapshots snapshots-conference --tests tests-conference
-          working_directory: ./sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/conference
+      - run-docker-test:
+          working_dir: ./sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/conference
+          test_args: test conference.sqrl conference.graphqls --snapshots snapshots-conference --tests tests-conference
 
   run-connectors-tests:
     executor: default-machine
@@ -288,12 +314,9 @@ jobs:
       - attach_workspace:
           at: .
       - run: docker load -i sqrl-test.tar
-      - run:
-          name: Connectors Tests
-          command: |
-            docker run -i --rm -v $PWD:/build sqrl-test \
-              test connectors.sqrl
-          working_directory: ./sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/connectors-test
+      - run-docker-test:
+          working_dir: ./sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/connectors-test
+          test_args: test connectors.sqrl
 
   run-udf-tests:
     executor: default-machine
@@ -302,13 +325,9 @@ jobs:
       - attach_workspace:
           at: .
       - run: docker load -i sqrl-test.tar
-      - run:
-          name: UDF Tests
-          command: |
-            docker run -i --rm -v $PWD:/build sqrl-test \
-              test myudf.sqrl \
-              --snapshots snapshots-myudf --tests tests-myudf
-          working_directory: ./sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/udf
+      - run-docker-test:
+          working_dir: ./sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/udf
+          test_args: test myudf.sqrl --snapshots snapshots-myudf --tests tests-myudf
 
   build-jars:
     docker:
