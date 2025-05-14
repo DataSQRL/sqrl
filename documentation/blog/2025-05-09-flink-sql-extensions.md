@@ -12,7 +12,7 @@ tags: [Join, Flink, DataSQRL]
 
 # Defining Data Interfaces with FlinkSQL
 
-[FlinkSQL](https://nightlies.apache.org/flink/flink-docs-release-1.20/docs/dev/table/sql/overview/) is an amazing innovation in data processing: it packages the power of realtime stream processing within the simplicity of SQL.
+[FlinkSQL](https://nightlies.apache.org/flink/flink-docs-release-1.19/docs/dev/table/sql/overview/) is an amazing innovation in data processing: it packages the power of realtime stream processing within the simplicity of SQL.
 That means you can start with the SQL you know and introduce stream processing constructs as you need them.
 
 <img src="/img/blog/flinksql_extension_api.png" alt="FlinkSQL API Extension >" width="40%"/>
@@ -91,6 +91,6 @@ In addition to breaking out the sink configuration from the main script, the `EX
 
 ## Learn More
 
-[FlinkSQL](https://nightlies.apache.org/flink/flink-docs-release-1.20/docs/dev/table/sql/overview/) is phenomenal extension of the SQL ecosystem to stream processing. With DataSQRL, we are trying to make it easier to build end-to-end data pipelines and complete data applications with FlinkSQL.
+[FlinkSQL](https://nightlies.apache.org/flink/flink-docs-release-1.19/docs/dev/table/sql/overview/) is phenomenal extension of the SQL ecosystem to stream processing. With DataSQRL, we are trying to make it easier to build end-to-end data pipelines and complete data applications with FlinkSQL.
 
 Check out the [complete example](/docs/getting-started) which also covers testing, customization, and deployment. Or read the [documentation](/docs/sqrl-language) to learn more.

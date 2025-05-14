@@ -2,7 +2,7 @@
 
 ## System Functions
 
-SQRL supports all of [Flink's built-in system functions](https://nightlies.apache.org/flink/flink-docs-master/docs/dev/table/functions/systemfunctions/).
+SQRL supports all of [Flink's built-in system functions](https://nightlies.apache.org/flink/flink-docs-release-1.19/docs/dev/table/functions/systemfunctions/).
 
 SQRL adds [system functions](functions-docs/function-docs/system-functions) with support for:
 * a binary JSON type (JSONB) to represent semi-structured data efficiently.
