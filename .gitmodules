@@ -1,3 +1,3 @@
 [submodule "documentation/docs/functions-docs"]
 	path = documentation/docs/functions-docs
-	url = https://github.com/DataSQRL/flink-sql-runner.git
+	url = git@github.com:datasqrl/flink-sql-runner.git
