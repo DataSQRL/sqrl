@@ -12,6 +12,11 @@ import java.util.stream.Collectors;
 
 import org.duckdb.DuckDBDriver;
 
+import io.vertx.pgclient.PgBuilder;
+import io.vertx.pgclient.PgConnectOptions;
+import io.vertx.sqlclient.PoolOptions;
+import io.vertx.sqlclient.SqlClient;
+
 import com.datasqrl.graphql.config.CorsHandlerOptions;
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.jdbc.DatabaseType;
@@ -19,7 +24,6 @@ import com.datasqrl.graphql.server.CustomScalars;
 import com.datasqrl.graphql.server.GraphQLEngineBuilder;
 import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.google.common.base.Strings;
 import com.symbaloo.graphqlmicrometer.MicrometerInstrumentation;
@@ -35,8 +39,8 @@ import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.metrics.MetricsOptions;
 import io.vertx.ext.auth.jwt.JWTAuth;
-import io.vertx.ext.healthchecks.HealthCheckHandler;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.CorsHandler;
@@ -45,11 +49,14 @@ import io.vertx.ext.web.handler.LoggerHandler;
 import io.vertx.ext.web.handler.graphql.GraphQLHandler;
 import io.vertx.ext.web.handler.graphql.GraphiQLHandler;
 import io.vertx.ext.web.handler.graphql.ws.GraphQLWSHandler;
+import io.vertx.ext.web.healthchecks.HealthCheckHandler;
+import io.vertx.jdbcclient.JDBCConnectOptions;
 import io.vertx.jdbcclient.JDBCPool;
-import io.vertx.micrometer.MicrometerMetricsOptions;
+import io.vertx.micrometer.MicrometerMetricsFactory;
 import io.vertx.micrometer.backends.BackendRegistries;
-import io.vertx.pgclient.PgPool;
+import io.vertx.pgclient.impl.PgConnectionFactory;
 import io.vertx.pgclient.impl.PgPoolOptions;
+import io.vertx.sqlclient.PoolOptions;
 import io.vertx.sqlclient.SqlClient;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -67,12 +74,12 @@ public class GraphQLServer extends AbstractVerticle {
   public static void main(String[] args) {
     var prometheusMeterRegistry = new PrometheusMeterRegistry(
         PrometheusConfig.DEFAULT);
-    var metricsOptions = new MicrometerMetricsOptions()
-        .setMicrometerRegistry(prometheusMeterRegistry)
+    MetricsOptions metricsOptions = new MicrometerMetricsFactory(prometheusMeterRegistry)
+        .newOptions()
         .setEnabled(true);
     var vertx = Vertx.vertx(new VertxOptions().setMetricsOptions(metricsOptions));
 
-    vertx.deployVerticle(new GraphQLServer(), res -> {
+    vertx.deployVerticle(new GraphQLServer()).onComplete(res -> {
       if (res.succeeded()) {
         System.out.println("Deployment id is: " + res.result());
       } else {
@@ -134,7 +141,7 @@ public class GraphQLServer extends AbstractVerticle {
 
   private Future<JsonObject> loadConfig() {
     Promise<JsonObject> promise = Promise.promise();
-    vertx.fileSystem().readFile("server-config.json", result -> {
+    vertx.fileSystem().readFile("server-config.json").onComplete(result -> {
       if (result.succeeded()) {
         try {
           var objectMapper = new ObjectMapper();
@@ -272,7 +279,7 @@ public class GraphQLServer extends AbstractVerticle {
         .put("url", url)
         .put("CLIENT_SESSION_KEEP_ALIVE", "true");
 
-    JDBCPool pool = JDBCPool.pool(vertx, config);
+    var pool = JDBCPool.pool(vertx, new JDBCConnectOptions(config), new PoolOptions());
     return pool;
   }
 
@@ -294,14 +301,14 @@ public class GraphQLServer extends AbstractVerticle {
         .put(DuckDBDriver.JDBC_STREAM_RESULTS, String.valueOf(true))
     ;
 
-    JDBCPool pool = JDBCPool.pool(vertx, config);
+    var pool = JDBCPool.pool(vertx, new JDBCConnectOptions(config), new PoolOptions());
 
     return pool;
   }
 
   private CorsHandler toCorsHandler(CorsHandlerOptions corsHandlerOptions) {
     var corsHandler = corsHandlerOptions.getAllowedOrigin() != null
-        ? CorsHandler.create(corsHandlerOptions.getAllowedOrigin())
+        ? CorsHandler.create().addOrigin(corsHandlerOptions.getAllowedOrigin())
         : CorsHandler.create();
 
     // Empty allowed origin list means nothing is allowed vs null which is permissive
@@ -323,9 +330,10 @@ public class GraphQLServer extends AbstractVerticle {
   }
 
   private SqlClient getPostgresSqlClient() {
-    return PgPool.client(vertx, this.config.getPgConnectOptions(),
-        new PgPoolOptions(this.config.getPoolOptions())
-            .setPipelined(true));
+    return PgBuilder.client().connectingTo(this.config.getPgConnectOptions())
+    		.using(vertx)
+    		.with(this.config.getPoolOptions())
+    		.build();
   }
 
   public GraphQL createGraphQL(Map<DatabaseType, SqlClient> client, Promise<Void> startPromise) {

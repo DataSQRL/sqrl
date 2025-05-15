@@ -27,7 +27,8 @@ public class OAuthCallbackVerticle extends AbstractVerticle {
 
     router.route(CALLBACK_ENDPOINT).handler(this::handleAuthCallback);
 
-    vertx.createHttpServer().requestHandler(router).listen(CALLBACK_SERVER_PORT, http -> {
+    vertx.createHttpServer().requestHandler(router).listen(CALLBACK_SERVER_PORT)
+        .onComplete(http -> {
       if (http.succeeded()) {
         startPromise.complete();
       } else {

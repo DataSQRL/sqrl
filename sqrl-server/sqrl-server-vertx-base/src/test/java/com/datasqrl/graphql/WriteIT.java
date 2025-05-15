@@ -50,9 +50,10 @@ import graphql.GraphQL;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxExtension;
+import io.vertx.pgclient.PgBuilder;
 import io.vertx.pgclient.PgConnectOptions;
-import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
+import io.vertx.sqlclient.SqlClient;
 import lombok.SneakyThrows;
 
 @ExtendWith(VertxExtension.class)
@@ -73,7 +74,7 @@ class WriteIT {
 
   //Todo Add Kafka
 
-  private PgPool client;
+  private SqlClient client;
 
   Vertx vertx;
   RootGraphqlModel model;
@@ -101,7 +102,12 @@ class WriteIT {
     when(config.getPgConnectOptions()).thenReturn(options);
     when(config.getEnvironmentVariable(any())).thenReturn(CLUSTER.bootstrapServers());
 
-    PgPool client = PgPool.pool(vertx, options, new PoolOptions());
+    var client = PgBuilder
+    		  .client()
+    		  .with(new PoolOptions())
+    		  .connectingTo(options)
+    		  .using(vertx)
+    		  .build();
     this.client = client;
     this.vertx = vertx;
     this.model = getCustomerModel();

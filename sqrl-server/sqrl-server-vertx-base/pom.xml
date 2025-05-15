@@ -19,10 +19,6 @@
       <artifactId>vertx-auth-jwt</artifactId>
     </dependency>
     <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-web-openapi</artifactId>
-    </dependency>
-    <dependency>
       <groupId>jakarta.annotation</groupId>
       <artifactId>jakarta.annotation-api</artifactId>
       <version>3.0.0</version>
