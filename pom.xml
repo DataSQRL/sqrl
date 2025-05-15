@@ -53,7 +53,7 @@
     <reactive-streams.version>1.0.4</reactive-streams.version>
     <testcontainers.version>1.21.0</testcontainers.version>
     <scram.version>2.1</scram.version>
-    <protobuf.version>4.30.2</protobuf.version>
+    <protobuf.version>4.31.0</protobuf.version>
     <picocli.version>4.7.7</picocli.version>
     <commonscodec.version>1.18.0</commonscodec.version>
     <zip4j.version>2.11.5</zip4j.version>
