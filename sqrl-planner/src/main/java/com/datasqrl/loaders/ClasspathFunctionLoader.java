@@ -1,3 +1,18 @@
+/*
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.datasqrl.loaders;
 
 import com.datasqrl.NamespaceObjectUtil;
@@ -23,25 +38,23 @@ import org.apache.flink.table.functions.UserDefinedFunction;
 @AllArgsConstructor
 public class ClasspathFunctionLoader {
 
-  public static final Set<Class<? extends FunctionDefinition>> flinkUdfClasses = Set.of(
-      ScalarFunction.class,
-      AggregateFunction.class,
-      UserDefinedFunction.class,
-      TableFunction.class,
-      TableAggregateFunction.class,
-      AsyncScalarFunction.class
-  );
+  public static final Set<Class<? extends FunctionDefinition>> flinkUdfClasses =
+      Set.of(
+          ScalarFunction.class,
+          AggregateFunction.class,
+          UserDefinedFunction.class,
+          TableFunction.class,
+          TableAggregateFunction.class,
+          AsyncScalarFunction.class);
 
-  public static final List<String> truncatedPackagePrefix = List.of(
-    "com.datasqrl.flinkrunner.",
-    "com.datasqrl."
-  );
+  public static final List<String> truncatedPackagePrefix =
+      List.of("com.datasqrl.flinkrunner.", "com.datasqrl.");
 
   private final HashMultimap<NamePath, FunctionDefinition> functionsByPackage;
 
   private static NamePath getNamePathFromFunction(FunctionDefinition function) {
     String packageName = function.getClass().getPackageName();
-    //Remove certain pre-defined prefixes for more concise names of system functions
+    // Remove certain pre-defined prefixes for more concise names of system functions
     for (String prefix : truncatedPackagePrefix) {
       if (packageName.startsWith(prefix)) {
         packageName = packageName.substring(prefix.length());
@@ -51,15 +64,17 @@ public class ClasspathFunctionLoader {
   }
 
   public ClasspathFunctionLoader() {
-    functionsByPackage = flinkUdfClasses.stream()
-        .flatMap(this::loadClasses)
-        .collect(
-            HashMultimap::create,
-            (multimap, function) -> multimap.put(getNamePathFromFunction(function), function), 
-            Multimap::putAll);
+    functionsByPackage =
+        flinkUdfClasses.stream()
+            .flatMap(this::loadClasses)
+            .collect(
+                HashMultimap::create,
+                (multimap, function) -> multimap.put(getNamePathFromFunction(function), function),
+                Multimap::putAll);
   }
 
-  private Stream<? extends FunctionDefinition> loadClasses(Class<? extends FunctionDefinition> serviceInterface) {
+  private Stream<? extends FunctionDefinition> loadClasses(
+      Class<? extends FunctionDefinition> serviceInterface) {
     return StreamSupport.stream(ServiceLoader.load(serviceInterface).spliterator(), false);
   }
 
@@ -69,8 +84,10 @@ public class ClasspathFunctionLoader {
 
   public List<NamespaceObject> load(NamePath namePath) {
     if (functionsByPackage.containsKey(namePath)) {
-      List<NamespaceObject> fctObjetcs = functionsByPackage.get(namePath).stream()
-          .map(NamespaceObjectUtil::createNsObject).collect(Collectors.toList());
+      List<NamespaceObject> fctObjetcs =
+          functionsByPackage.get(namePath).stream()
+              .map(NamespaceObjectUtil::createNsObject)
+              .collect(Collectors.toList());
       return fctObjetcs;
     }
     return List.of();

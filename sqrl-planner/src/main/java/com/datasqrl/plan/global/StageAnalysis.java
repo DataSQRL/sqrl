@@ -1,11 +1,24 @@
+/*
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.datasqrl.plan.global;
-
-import java.util.Collection;
 
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.plan.rules.ComputeCost;
 import com.datasqrl.plan.rules.EngineCapability;
-
+import java.util.Collection;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -57,10 +70,7 @@ public abstract class StageAnalysis {
     public Cost tooExpensive() {
       return new Cost(super.getStage(), cost, false);
     }
-
   }
-
-
 
   @Value
   @EqualsAndHashCode(callSuper = true)
@@ -83,7 +93,7 @@ public abstract class StageAnalysis {
   @EqualsAndHashCode(callSuper = true)
   public static class MissingDependent extends StageAnalysis {
 
-    boolean upstream; //else it's downstream
+    boolean upstream; // else it's downstream
     String tableName;
 
     public MissingDependent(ExecutionStage stage, boolean upstream, String tableName) {
@@ -94,11 +104,12 @@ public abstract class StageAnalysis {
 
     @Override
     public String getMessage() {
-      return "%s [%s] does not support stage [%s] or any %s stages".formatted(
-          upstream ? "Upstream input" : "Downstream consumer",
-          tableName, getName(),
-          upstream ? "prior" : "subsequent");
+      return "%s [%s] does not support stage [%s] or any %s stages"
+          .formatted(
+              upstream ? "Upstream input" : "Downstream consumer",
+              tableName,
+              getName(),
+              upstream ? "prior" : "subsequent");
     }
   }
-
 }

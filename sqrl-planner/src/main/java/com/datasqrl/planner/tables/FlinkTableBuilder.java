@@ -1,5 +1,24 @@
+/*
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.datasqrl.planner.tables;
 
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.engine.stream.flink.plan.FlinkSqlNodeFactory;
+import com.datasqrl.util.StreamUtil;
+import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -7,7 +26,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNodeList;
@@ -19,28 +40,18 @@ import org.apache.flink.sql.parser.ddl.SqlTableColumn.SqlRegularColumn;
 import org.apache.flink.sql.parser.ddl.SqlWatermark;
 import org.apache.flink.sql.parser.ddl.constraint.SqlTableConstraint;
 
-import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.engine.stream.flink.plan.FlinkSqlNodeFactory;
-import com.datasqrl.util.StreamUtil;
-import com.google.common.base.Preconditions;
-
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 /**
- * A builder for tables in Flink that is used as the central table builder in
- * DataSQRL. It's a light wrapper around the SqlNode relying heavily on {@link FlinkSqlNodeFactory}
- * for translation.
+ * A builder for tables in Flink that is used as the central table builder in DataSQRL. It's a light
+ * wrapper around the SqlNode relying heavily on {@link FlinkSqlNodeFactory} for translation.
  */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class FlinkTableBuilder {
 
-  private SqlIdentifier tableName = null; //required, no default
+  private SqlIdentifier tableName = null; // required, no default
 
-  private SqlNodeList columnList = null; //required, no default
+  private SqlNodeList columnList = null; // required, no default
 
   private SqlNodeList propertyList = SqlNodeList.EMPTY;
 
@@ -70,23 +81,32 @@ public class FlinkTableBuilder {
   }
 
   public FlinkTableBuilder addComputedColumn(String columnName, SqlOperator operator) {
-    Preconditions.checkArgument(columnList!=null, "Need to initialize columns first");
-    columnList.add(FlinkSqlNodeFactory.getComputedColumn(columnName,
-        FlinkSqlNodeFactory.getCallWithNoArgs(operator)));
+    Preconditions.checkArgument(columnList != null, "Need to initialize columns first");
+    columnList.add(
+        FlinkSqlNodeFactory.getComputedColumn(
+            columnName, FlinkSqlNodeFactory.getCallWithNoArgs(operator)));
     return this;
   }
 
   public List<String> extractMetadataColumns(String metadataAlias, boolean convertToRegular) {
-    Preconditions.checkArgument(columnList!=null, "Need to initialize columns first");
+    Preconditions.checkArgument(columnList != null, "Need to initialize columns first");
     List<String> convertedColumns = new ArrayList<>();
     for (var i = 0; i < columnList.size(); i++) {
       var column = columnList.get(i);
       if (column instanceof SqlTableColumn.SqlMetadataColumn columnMetadata) {
-        if (columnMetadata.getMetadataAlias().filter(alias -> alias.equalsIgnoreCase(metadataAlias)).isPresent()) {
+        if (columnMetadata
+            .getMetadataAlias()
+            .filter(alias -> alias.equalsIgnoreCase(metadataAlias))
+            .isPresent()) {
           convertedColumns.add(columnMetadata.getName().getSimple());
           if (convertToRegular) {
-            var regularColumn = new SqlRegularColumn(columnMetadata.getParserPosition(),
-                columnMetadata.getName(), columnMetadata.getComment().orElse(null), columnMetadata.getType(), null);
+            var regularColumn =
+                new SqlRegularColumn(
+                    columnMetadata.getParserPosition(),
+                    columnMetadata.getName(),
+                    columnMetadata.getComment().orElse(null),
+                    columnMetadata.getType(),
+                    null);
             columnList.set(i, regularColumn);
           }
         }
@@ -105,7 +125,7 @@ public class FlinkTableBuilder {
   }
 
   public FlinkTableBuilder setDummyConnector() {
-    return setConnectorOptions(Map.of("connector","datagen"));
+    return setConnectorOptions(Map.of("connector", "datagen"));
   }
 
   public FlinkTableBuilder setWatermarkMillis(String timestampColumnName, long watermarkMillis) {
@@ -115,7 +135,7 @@ public class FlinkTableBuilder {
 
   public FlinkTableBuilder setPartition(List<String> partitionColumns) {
     if (partitionColumns.isEmpty()) {
-        setPartitionKeyList(SqlNodeList.EMPTY);
+      setPartitionKeyList(SqlNodeList.EMPTY);
     }
     setPartitionKeyList(FlinkSqlNodeFactory.createPartitionKeys(partitionColumns));
     return this;
@@ -126,8 +146,9 @@ public class FlinkTableBuilder {
   }
 
   public List<String> getPartition() {
-    return StreamUtil.filterByClass(getPartitionKeyList().getList(), SqlIdentifier.class).map(SqlIdentifier::getSimple)
-            .collect(Collectors.toList());
+    return StreamUtil.filterByClass(getPartitionKeyList().getList(), SqlIdentifier.class)
+        .map(SqlIdentifier::getSimple)
+        .collect(Collectors.toList());
   }
 
   public FlinkTableBuilder setPrimaryKey(List<String> pkColumns) {
@@ -146,9 +167,9 @@ public class FlinkTableBuilder {
 
   public Optional<List<String>> getPrimaryKey() {
     if (tableConstraints.isEmpty()) {
-        return Optional.empty();
+      return Optional.empty();
     }
-    Preconditions.checkArgument(tableConstraints.size()==1, "Expected a single table constraint");
+    Preconditions.checkArgument(tableConstraints.size() == 1, "Expected a single table constraint");
     var pkConstraint = tableConstraints.get(0);
     Preconditions.checkArgument(pkConstraint.isPrimaryKey(), "Expected a primary key constraint");
     return Optional.of(Arrays.asList(pkConstraint.getColumnNames()));
@@ -158,29 +179,28 @@ public class FlinkTableBuilder {
     return getPrimaryKey().isPresent();
   }
 
-
   public SqlCreateTable buildSql(boolean isTemporary) {
-    return new SqlCreateTable(SqlParserPos.ZERO,
+    return new SqlCreateTable(
+        SqlParserPos.ZERO,
         tableName,
         columnList,
         tableConstraints,
         propertyList,
-//        FlinkSqlNodeFactory.NO_DISTRIBUTION,
+        //        FlinkSqlNodeFactory.NO_DISTRIBUTION,
         partitionKeyList,
         watermark,
         null,
         isTemporary,
-        false
-        );
+        false);
   }
 
   public static FlinkTableBuilder toBuilder(SqlCreateTable table) {
-    return new FlinkTableBuilder(table.getTableName(),
+    return new FlinkTableBuilder(
+        table.getTableName(),
         table.getColumnList(),
         table.getPropertyList(),
         table.getTableConstraints(),
         table.getPartitionKeyList(),
         table.getWatermark().orElse(null));
   }
-
 }

@@ -1,13 +1,26 @@
+/*
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.datasqrl.engines;
 
+import com.datasqrl.config.PackageJson;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
-
-import com.datasqrl.config.PackageJson;
-
 import lombok.Getter;
 
 public interface TestEngine {
@@ -24,17 +37,13 @@ public interface TestEngine {
     return ENGINE_REGISTRY.get(name.toLowerCase());
   }
 
-  abstract class AbstractTestEngine implements TestEngine {
-
-  }
+  abstract class AbstractTestEngine implements TestEngine {}
 
   @Getter
   class PostgresTestEngine extends AbstractTestEngine {
     private static final String name = "postgres";
 
-    public PostgresTestEngine(PackageJson packageJson) {
-
-    }
+    public PostgresTestEngine(PackageJson packageJson) {}
 
     @Override
     public <R, C> R accept(TestEngineVisitor<R, C> visitor, C context) {
@@ -46,9 +55,7 @@ public interface TestEngine {
   class PostgresLogTestEngine extends AbstractTestEngine {
     private static final String name = "postgres_log";
 
-    public PostgresLogTestEngine(PackageJson packageJson) {
-
-    }
+    public PostgresLogTestEngine(PackageJson packageJson) {}
 
     @Override
     public <R, C> R accept(TestEngineVisitor<R, C> visitor, C context) {
@@ -61,8 +68,7 @@ public interface TestEngine {
 
     static final String name = "kafka";
 
-    public KafkaTestEngine(PackageJson packageJson) {
-    }
+    public KafkaTestEngine(PackageJson packageJson) {}
 
     @Override
     public <R, C> R accept(TestEngineVisitor<R, C> visitor, C context) {
@@ -75,9 +81,7 @@ public interface TestEngine {
 
     static final String name = "iceberg";
 
-    public IcebergTestEngine(PackageJson packageJson) {
-
-    }
+    public IcebergTestEngine(PackageJson packageJson) {}
 
     @Override
     public <R, C> R accept(TestEngineVisitor<R, C> visitor, C context) {
@@ -90,9 +94,8 @@ public interface TestEngine {
 
     static final String name = "vertx";
 
-    public VertxTestEngine(PackageJson packageJson) {
+    public VertxTestEngine(PackageJson packageJson) {}
 
-    }
     @Override
     public <R, C> R accept(TestEngineVisitor<R, C> visitor, C context) {
       return visitor.visit(this, context);
@@ -104,9 +107,7 @@ public interface TestEngine {
 
     static final String name = "snowflake";
 
-    public SnowflakeTestEngine(PackageJson packageJson) {
-
-    }
+    public SnowflakeTestEngine(PackageJson packageJson) {}
 
     @Override
     public <R, C> R accept(TestEngineVisitor<R, C> visitor, C context) {
@@ -119,9 +120,7 @@ public interface TestEngine {
 
     static final String name = "flink";
 
-    public FlinkTestEngine(PackageJson packageJson) {
-
-    }
+    public FlinkTestEngine(PackageJson packageJson) {}
 
     @Override
     public <R, C> R accept(TestEngineVisitor<R, C> visitor, C context) {
@@ -134,9 +133,7 @@ public interface TestEngine {
 
     static final String name = "duckdb";
 
-    public DuckdbTestEngine(PackageJson packageJson) {
-
-    }
+    public DuckdbTestEngine(PackageJson packageJson) {}
 
     @Override
     public <R, C> R accept(TestEngineVisitor<R, C> visitor, C context) {
@@ -149,9 +146,7 @@ public interface TestEngine {
 
     static final String name = "test";
 
-    public TestTestEngine(PackageJson packageJson) {
-
-    }
+    public TestTestEngine(PackageJson packageJson) {}
 
     @Override
     public <R, C> R accept(TestEngineVisitor<R, C> visitor, C context) {
@@ -206,12 +201,12 @@ public interface TestEngine {
 
   interface TestEngineVisitor<R, C> {
     default R accept(TestEngines testEngines, C context) {
-      testEngines.getTestEngines()
-          .forEach(t->t.accept(this, context));
+      testEngines.getTestEngines().forEach(t -> t.accept(this, context));
       return null;
     }
 
     R visit(PostgresTestEngine engine, C context);
+
     R visit(PostgresLogTestEngine engine, C context);
 
     R visit(KafkaTestEngine engine, C context);
@@ -227,6 +222,5 @@ public interface TestEngine {
     R visit(FlinkTestEngine engine, C context);
 
     R visit(TestTestEngine engine, C context);
-
   }
 }

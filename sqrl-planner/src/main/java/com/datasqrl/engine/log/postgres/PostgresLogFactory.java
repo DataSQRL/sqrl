@@ -1,26 +1,41 @@
-//package com.datasqrl.engine.log.postgres;
+/*
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+// package com.datasqrl.engine.log.postgres;
 //
-//import java.util.HashMap;
-//import java.util.List;
-//import java.util.Map;
+// import java.util.HashMap;
+// import java.util.List;
+// import java.util.Map;
 //
-//import org.apache.calcite.rel.type.RelDataType;
-//import org.apache.calcite.sql.type.SqlTypeName;
+// import org.apache.calcite.rel.type.RelDataType;
+// import org.apache.calcite.sql.type.SqlTypeName;
 //
-//import com.datasqrl.calcite.type.TypeFactory;
-//import com.datasqrl.canonicalizer.Name;
-//import com.datasqrl.config.ConnectorFactory;
-//import com.datasqrl.config.ConnectorFactory.IConnectorFactoryContext;
-//import com.datasqrl.config.ConnectorFactoryContext;
-//import com.datasqrl.engine.log.Log;
-//import com.datasqrl.engine.log.LogFactory;
-//import com.datasqrl.plan.table.RelDataTypeTableSchema;
-//import com.datasqrl.util.CalciteUtil;
+// import com.datasqrl.calcite.type.TypeFactory;
+// import com.datasqrl.canonicalizer.Name;
+// import com.datasqrl.config.ConnectorFactory;
+// import com.datasqrl.config.ConnectorFactory.IConnectorFactoryContext;
+// import com.datasqrl.config.ConnectorFactoryContext;
+// import com.datasqrl.engine.log.Log;
+// import com.datasqrl.engine.log.LogFactory;
+// import com.datasqrl.plan.table.RelDataTypeTableSchema;
+// import com.datasqrl.util.CalciteUtil;
 //
-//import lombok.AllArgsConstructor;
+// import lombok.AllArgsConstructor;
 //
-//@AllArgsConstructor
-//public class PostgresLogFactory implements LogFactory {
+// @AllArgsConstructor
+// public class PostgresLogFactory implements LogFactory {
 //
 //  ConnectorFactory sourceConnectorFactory;
 //  ConnectorFactory sinkConnectorFactory;
@@ -36,7 +51,8 @@
 //    var typeFactory = TypeFactory.getTypeFactory();
 //
 //    RelDataType patchedSchema;
-//    if (timestamp != Timestamp.NONE && schema.getField(timestamp.getName(), false, false) == null) {
+//    if (timestamp != Timestamp.NONE && schema.getField(timestamp.getName(), false, false) == null)
+// {
 //      patchedSchema = CalciteUtil.addField(
 //          schema,
 //          schema.getFieldCount(),
@@ -50,7 +66,8 @@
 //    var sourceConfig = sourceConnectorFactory.createSourceAndSink(connectorContext);
 //    var sinkConfig = sinkConnectorFactory.createSourceAndSink(connectorContext);
 //    var tblSchema = new RelDataTypeTableSchema(patchedSchema);
-//    return new PostgresTable(tableName, logName, sourceConfig, sinkConfig, tblSchema, primaryKey, connectorContext);
+//    return new PostgresTable(tableName, logName, sourceConfig, sinkConfig, tblSchema, primaryKey,
+// connectorContext);
 //  }
 //
 //  @Override
@@ -79,4 +96,4 @@
 //    return sanitized.toString();
 //  }
 //
-//}
+// }

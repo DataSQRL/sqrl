@@ -1,18 +1,19 @@
+/*
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.datasqrl.engines;
-
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.stream.Collectors;
-
-import org.apache.kafka.clients.admin.AdminClient;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.redpanda.RedpandaContainer;
-import org.testcontainers.utility.DockerImageName;
 
 import com.datasqrl.engines.TestContainersForTestGoal.TestContainerHook;
 import com.datasqrl.engines.TestEngine.DuckdbTestEngine;
@@ -25,8 +26,19 @@ import com.datasqrl.engines.TestEngine.SnowflakeTestEngine;
 import com.datasqrl.engines.TestEngine.TestEngineVisitor;
 import com.datasqrl.engines.TestEngine.TestTestEngine;
 import com.datasqrl.engines.TestEngine.VertxTestEngine;
-
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
+import org.apache.kafka.clients.admin.AdminClient;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.redpanda.RedpandaContainer;
+import org.testcontainers.utility.DockerImageName;
 
 public class TestContainersForTestGoal implements TestEngineVisitor<TestContainerHook, Void> {
 
@@ -43,12 +55,13 @@ public class TestContainersForTestGoal implements TestEngineVisitor<TestContaine
   @Override
   public TestContainerHook visit(PostgresTestEngine engine, Void context) {
     return new TestContainerHook() {
-        PostgreSQLContainer<?> testDatabase = new PostgreSQLContainer<>(
-          DockerImageName.parse("ankane/pgvector:v0.5.0")
-              .asCompatibleSubstituteFor("postgres"))
-          .withDatabaseName("datasqrl")
-          .withUsername("foo")
-          .withPassword("secret");
+      PostgreSQLContainer<?> testDatabase =
+          new PostgreSQLContainer<>(
+                  DockerImageName.parse("ankane/pgvector:v0.5.0")
+                      .asCompatibleSubstituteFor("postgres"))
+              .withDatabaseName("datasqrl")
+              .withUsername("foo")
+              .withPassword("secret");
 
       @Override
       public void start() {
@@ -57,9 +70,14 @@ public class TestContainersForTestGoal implements TestEngineVisitor<TestContaine
 
       @Override
       public void clear() {
-        try (var conn = DriverManager.getConnection(testDatabase.getJdbcUrl(), testDatabase.getUsername(), testDatabase.getPassword());
+        try (var conn =
+                DriverManager.getConnection(
+                    testDatabase.getJdbcUrl(),
+                    testDatabase.getUsername(),
+                    testDatabase.getPassword());
             var stmt = conn.createStatement()) {
-          stmt.execute("DO $$ DECLARE r RECORD; BEGIN FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public') LOOP EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(r.tablename) || ' CASCADE'; END LOOP; END $$;");
+          stmt.execute(
+              "DO $$ DECLARE r RECORD; BEGIN FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public') LOOP EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(r.tablename) || ' CASCADE'; END LOOP; END $$;");
         } catch (SQLException e) {
           throw new RuntimeException("Failed to drop tables", e);
         }
@@ -79,7 +97,8 @@ public class TestContainersForTestGoal implements TestEngineVisitor<TestContaine
         env.put("PGUSER", testDatabase.getUsername());
         env.put("JDBC_USERNAME", testDatabase.getUsername());
         env.put("JDBC_PASSWORD", testDatabase.getPassword());
-        env.put("PGPORT", testDatabase.getMappedPort(PostgreSQLContainer.POSTGRESQL_PORT).toString());
+        env.put(
+            "PGPORT", testDatabase.getMappedPort(PostgreSQLContainer.POSTGRESQL_PORT).toString());
         env.put("PGPASSWORD", testDatabase.getPassword());
         env.put("PGDATABASE", testDatabase.getDatabaseName());
         return env;
@@ -95,8 +114,8 @@ public class TestContainersForTestGoal implements TestEngineVisitor<TestContaine
   @Override
   public TestContainerHook visit(KafkaTestEngine engine, Void context) {
     return new TestContainerHook() {
-      RedpandaContainer testKafka = new RedpandaContainer(
-          "docker.redpanda.com/redpandadata/redpanda:v23.1.2");
+      RedpandaContainer testKafka =
+          new RedpandaContainer("docker.redpanda.com/redpandadata/redpanda:v23.1.2");
 
       @Override
       public void start() {
@@ -109,7 +128,8 @@ public class TestContainersForTestGoal implements TestEngineVisitor<TestContaine
         props.put("bootstrap.servers", testKafka.getBootstrapServers());
         try (var admin = AdminClient.create(props)) {
           // List all topics
-          List<String> topics = admin.listTopics().names().get().stream().collect(Collectors.toList());
+          List<String> topics =
+              admin.listTopics().names().get().stream().collect(Collectors.toList());
           // Delete all topics
           admin.deleteTopics(topics).all().get();
         } catch (Exception e) {
@@ -149,25 +169,17 @@ public class TestContainersForTestGoal implements TestEngineVisitor<TestContaine
     return new TestContainerHook() {
 
       @Override
-      public void start() {
-
-      }
+      public void start() {}
 
       @Override
-      public void clear() {
-
-      }
+      public void clear() {}
 
       @Override
-      public void teardown() {
-
-      }
+      public void teardown() {}
 
       @Override
       public Map<String, String> getEnv() {
-        return Map.of("SNOWFLAKE_USER", "daniel",
-            "SNOWFLAKE_ID","ngb00233"
-            );
+        return Map.of("SNOWFLAKE_USER", "daniel", "SNOWFLAKE_ID", "ngb00233");
       }
     };
   }
@@ -176,19 +188,13 @@ public class TestContainersForTestGoal implements TestEngineVisitor<TestContaine
   public TestContainerHook visit(FlinkTestEngine engine, Void context) {
     return new TestContainerHook() {
       @Override
-      public void start() {
-
-      }
+      public void start() {}
 
       @Override
-      public void clear() {
-
-      }
+      public void clear() {}
 
       @Override
-      public void teardown() {
-
-      }
+      public void teardown() {}
 
       @Override
       public Map<String, String> getEnv() {
@@ -201,19 +207,13 @@ public class TestContainersForTestGoal implements TestEngineVisitor<TestContaine
   public TestContainerHook visit(TestTestEngine engine, Void context) {
     return new TestContainerHook() {
       @Override
-      public void start() {
-
-      }
+      public void start() {}
 
       @Override
-      public void clear() {
-
-      }
+      public void clear() {}
 
       @Override
-      public void teardown() {
-
-      }
+      public void teardown() {}
 
       @Override
       public Map<String, String> getEnv() {
@@ -226,6 +226,7 @@ public class TestContainersForTestGoal implements TestEngineVisitor<TestContaine
     void start();
 
     void clear();
+
     void teardown();
 
     Map<String, String> getEnv();
@@ -233,20 +234,15 @@ public class TestContainersForTestGoal implements TestEngineVisitor<TestContaine
 
   public static class NoopTestContainerHook implements TestContainerHook {
     public static final NoopTestContainerHook INSTANCE = new NoopTestContainerHook();
-    @Override
-    public void start() {
-
-    }
 
     @Override
-    public void clear() {
-
-    }
+    public void start() {}
 
     @Override
-    public void teardown() {
+    public void clear() {}
 
-    }
+    @Override
+    public void teardown() {}
 
     @Override
     public Map<String, String> getEnv() {
@@ -257,6 +253,7 @@ public class TestContainersForTestGoal implements TestEngineVisitor<TestContaine
   @AllArgsConstructor
   public static class ListTestContainerHook implements TestContainerHook {
     List<TestContainerHook> hooks;
+
     @Override
     public void start() {
       for (TestContainerHook hook : hooks) {

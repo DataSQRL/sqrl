@@ -1,11 +1,28 @@
+/*
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package datasqrl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import com.datasqrl.io.schema.flexible.input.external.TableDefinition;
+import com.datasqrl.serializer.Deserializer;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-
+import lombok.SneakyThrows;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.test.junit5.MiniClusterExtension;
@@ -14,11 +31,6 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import com.datasqrl.io.schema.flexible.input.external.TableDefinition;
-import com.datasqrl.serializer.Deserializer;
-
-import lombok.SneakyThrows;
-
 @ExtendWith(MiniClusterExtension.class)
 class FlexibleSchemaTest {
 
@@ -26,10 +38,11 @@ class FlexibleSchemaTest {
   @Test
   @Disabled
   public void testFlink() {
-    String schema = getSchema(Path.of(
-        "../sqrl-examples/conference/mysourcepackage/authtokens.schema.yml"));
+    String schema =
+        getSchema(Path.of("../sqrl-examples/conference/mysourcepackage/authtokens.schema.yml"));
 
-    String tableSql = """
+    String tableSql =
+        """
 CREATE TABLE MyUserTable (
   `id` STRING NOT NULL,
   `value` STRING NOT NULL,
@@ -40,20 +53,19 @@ CREATE TABLE MyUserTable (
   'format' = 'flexible-json'
 )""";
 
-    List<Row> rows = test(tableSql,
-        "SELECT * FROM MyUserTable");
+    List<Row> rows = test(tableSql, "SELECT * FROM MyUserTable");
     assertEquals(1, rows.size());
   }
 
   @SneakyThrows
   @Test
   @Disabled
-  public void
-  testFlinkCsv() {
-    String schema = getSchema(Path.of(
-        "../../sqrl-examples/quickstart/mysourcepackage/products.schema.yml"));
+  public void testFlinkCsv() {
+    String schema =
+        getSchema(Path.of("../../sqrl-examples/quickstart/mysourcepackage/products.schema.yml"));
 
-    String tableSql = """
+    String tableSql =
+        """
         CREATE TABLE MyUserTable (
           `id` STRING NOT NULL,
           `name` STRING NOT NULL,
@@ -73,16 +85,14 @@ CREATE TABLE MyUserTable (
           'flexible-csv.field-delimiter' = ';'
         )""";
 
-    List<Row> rows = test(tableSql,
-        "SELECT * FROM MyUserTable");
+    List<Row> rows = test(tableSql, "SELECT * FROM MyUserTable");
     assertEquals(25, rows.size());
   }
 
   @SneakyThrows
   public String getSchema(Path path) {
     Deserializer deserializer = Deserializer.INSTANCE;
-    TableDefinition tableDefinition = deserializer.mapYAMLFile(path,
-        TableDefinition.class);
+    TableDefinition tableDefinition = deserializer.mapYAMLFile(path, TableDefinition.class);
     String json = deserializer.getJsonMapper().writeValueAsString(tableDefinition);
 
     return json;
@@ -101,5 +111,4 @@ CREATE TABLE MyUserTable (
     tableResult.collect().forEachRemaining(rows::add);
     return rows;
   }
-
 }

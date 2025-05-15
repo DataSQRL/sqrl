@@ -1,29 +1,37 @@
 /*
- * Copyright (c) 2021, DataSQRL. All rights reserved. Use is subject to license terms.
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.datasqrl.util;
 
-
+import com.google.common.base.Strings;
+import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
-
+import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
-import com.google.common.base.Strings;
-import com.google.common.io.Resources;
-
-import lombok.SneakyThrows;
-
 /**
  * Contains a set of static methods for handling with files and folders.
  *
- * A lot of the methods are proxies around 3rd party libraries and don't have dedicated tests
+ * <p>A lot of the methods are proxies around 3rd party libraries and don't have dedicated tests
  */
 public class FileUtil {
 
@@ -41,7 +49,7 @@ public class FileUtil {
    */
   public static Path makeHiddenFolder(Path basePath, String folderName) throws IOException {
     if (!folderName.startsWith(".")) {
-        folderName = "." + folderName;
+      folderName = "." + folderName;
     }
     var result = basePath.resolve(folderName);
     if (!Files.isDirectory(result)) {
@@ -65,7 +73,7 @@ public class FileUtil {
 
   public static String addExtension(String filename, String extension) {
     if (!extension.startsWith(".")) {
-        extension = "." + extension;
+      extension = "." + extension;
     }
     return filename + extension;
   }
@@ -77,7 +85,7 @@ public class FileUtil {
 
   public static boolean isEmptyDirectory(Path dir) throws IOException {
     if (!Files.isDirectory(dir)) {
-        return true;
+      return true;
     }
     try (var entries = Files.list(dir)) {
       return !entries.findFirst().isPresent();
@@ -121,6 +129,6 @@ public class FileUtil {
   }
 
   public static String toRegex(String filename) {
-    return filename.replace(".","\\.");
+    return filename.replace(".", "\\.");
   }
 }

@@ -1,10 +1,28 @@
+/*
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.datasqrl.engine.database.relational.ddl.statements;
 
+import com.datasqrl.calcite.convert.PostgresSqlNodeToString;
+import com.datasqrl.sql.SqlDDLStatement;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
-
+import lombok.AllArgsConstructor;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.sql.SqlDynamicParam;
@@ -13,12 +31,6 @@ import org.apache.calcite.sql.SqlInsert;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.parser.SqlParserPos;
-
-import com.datasqrl.calcite.convert.PostgresSqlNodeToString;
-import com.datasqrl.sql.SqlDDLStatement;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
-import lombok.AllArgsConstructor;
 
 @JsonPropertyOrder({"tableName", "sql", "params"})
 @AllArgsConstructor
@@ -55,13 +67,17 @@ public class InsertStatement implements SqlDDLStatement {
     for (var i = 0; i < tableSchema.getFieldList().size(); i++) {
       valueNodes.add(new SqlDynamicParam(i, SqlParserPos.ZERO));
     }
-    var values = new SqlNodeList(Collections.singletonList(new SqlNodeList(valueNodes, SqlParserPos.ZERO)), SqlParserPos.ZERO);
+    var values =
+        new SqlNodeList(
+            Collections.singletonList(new SqlNodeList(valueNodes, SqlParserPos.ZERO)),
+            SqlParserPos.ZERO);
 
     // Create the INSERT statement
-    var sqlInsert = new SqlInsert(SqlParserPos.ZERO, SqlNodeList.EMPTY, targetTable, values, columns);
+    var sqlInsert =
+        new SqlInsert(SqlParserPos.ZERO, SqlNodeList.EMPTY, targetTable, values, columns);
 
     // Convert the INSERT statement to a SQL string
-    var sql = addValuesKeyword(new PostgresSqlNodeToString().convert(()->sqlInsert).getSql());
+    var sql = addValuesKeyword(new PostgresSqlNodeToString().convert(() -> sqlInsert).getSql());
     return sql;
   }
 

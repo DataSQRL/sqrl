@@ -1,8 +1,23 @@
 /*
- * Copyright (c) 2021, DataSQRL. All rights reserved. Use is subject to license terms.
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.datasqrl.io.file;
 
+import com.datasqrl.util.BaseFileUtil;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -15,36 +30,30 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
+import lombok.AllArgsConstructor;
+import lombok.NonNull;
+import lombok.Value;
 import org.apache.flink.connector.file.src.compression.StandardDeCompressors;
 import org.apache.flink.core.fs.FileStatus;
 import org.apache.flink.core.fs.FileSystem;
 import org.apache.flink.core.fs.Path;
 
-import com.datasqrl.util.BaseFileUtil;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
-
-import lombok.AllArgsConstructor;
-import lombok.NonNull;
-import lombok.Value;
-
 /**
  * Represents a file that is identified by a URI.
- * <p>
- * Depending on the URI scheme, this abstracts across multiple file systems including cloud object
- * storage.
- * <p>
- * This is implemented as a wrapper around Flink's {@link org.apache.flink.core.fs.FileSystem}.
+ *
+ * <p>Depending on the URI scheme, this abstracts across multiple file systems including cloud
+ * object storage.
+ *
+ * <p>This is implemented as a wrapper around Flink's {@link org.apache.flink.core.fs.FileSystem}.
  */
-public class FilePath implements Serializable { //todo: move to io-core
+public class FilePath implements Serializable { // todo: move to io-core
 
-  public static final Set<String> COMPRESSION_EXTENSIONS = StandardDeCompressors.getCommonSuffixes()
-      .stream()
-      .map(String::toLowerCase).collect(Collectors.toSet());
+  public static final Set<String> COMPRESSION_EXTENSIONS =
+      StandardDeCompressors.getCommonSuffixes().stream()
+          .map(String::toLowerCase)
+          .collect(Collectors.toSet());
 
   private static final Set<String> URL_SCHEMES = Set.of("http", "https");
-
 
   private final Path flinkPath;
 
@@ -119,14 +128,14 @@ public class FilePath implements Serializable { //todo: move to io-core
       format = extension;
       fullName = extPair.getLeft();
     }
-    //Match pattern
+    // Match pattern
     var identifier = fullName;
     if (filenamePattern != null) {
       var matcher = filenamePattern.matcher(fullName);
       if (matcher.find()) {
         if (matcher.groupCount() > 0) {
           identifier = matcher.group(1);
-          //If we expect an identifier, it cannot be empty
+          // If we expect an identifier, it cannot be empty
           if (Strings.isNullOrEmpty(identifier)) {
             return Optional.empty();
           }
@@ -151,8 +160,8 @@ public class FilePath implements Serializable { //todo: move to io-core
     }
     var components = getComponents(null).get();
     if (components.hasCompression()) {
-      is = StandardDeCompressors.getDecompressorForExtension(components.getCompression())
-          .create(is);
+      is =
+          StandardDeCompressors.getDecompressorForExtension(components.getCompression()).create(is);
     }
     return is;
   }
@@ -203,7 +212,6 @@ public class FilePath implements Serializable { //todo: move to io-core
     return java.nio.file.Path.of(path.flinkPath.toString());
   }
 
-
   @Value
   public static class NameComponents {
 
@@ -224,16 +232,13 @@ public class FilePath implements Serializable { //todo: move to io-core
       var suffix = "";
       if (hasFormat()) {
         suffix += "." + format;
-    }
+      }
       if (hasCompression()) {
         suffix += "." + compression;
-    }
+      }
       return suffix;
     }
-
-
   }
-
 
   @Value
   @AllArgsConstructor
@@ -247,7 +252,9 @@ public class FilePath implements Serializable { //todo: move to io-core
     private final FilePath path;
 
     Status(FileStatus status) {
-      this(status.isDir(), status.getLen(),
+      this(
+          status.isDir(),
+          status.getLen(),
           Instant.ofEpochMilli(status.getModificationTime()),
           new FilePath(status.getPath()));
     }
@@ -255,7 +262,5 @@ public class FilePath implements Serializable { //todo: move to io-core
     public boolean exists() {
       return path != null;
     }
-
   }
-
 }

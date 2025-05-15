@@ -1,16 +1,26 @@
 /*
- * Copyright (c) 2021, DataSQRL. All rights reserved. Use is subject to license terms.
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.datasqrl.plan.util;
 
+import com.google.common.base.Preconditions;
+import com.google.common.primitives.Ints;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.IntStream;
-
-import com.google.common.base.Preconditions;
-import com.google.common.primitives.Ints;
-
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -26,8 +36,8 @@ public class SelectIndexMap implements IndexMap, Serializable {
 
   @Override
   public int mapUnsafe(int index) {
-    if (index<0 || index>=targets.length) {
-        return -1;
+    if (index < 0 || index >= targets.length) {
+      return -1;
     }
     return targets[index];
   }
@@ -46,12 +56,13 @@ public class SelectIndexMap implements IndexMap, Serializable {
 
   public SelectIndexMap join(SelectIndexMap right, int leftSideWidth, boolean isFlipped) {
     var combined = new int[targets.length + right.targets.length];
-    //Left map doesn't change
-    var offset=0;
-    var arrsToCopy = isFlipped?new int[][]{right.targets,targets}:new int[][]{targets, right.targets};
+    // Left map doesn't change
+    var offset = 0;
+    var arrsToCopy =
+        isFlipped ? new int[][] {right.targets, targets} : new int[][] {targets, right.targets};
     for (var i = 0; i < 2; i++) {
       for (var j = 0; j < arrsToCopy[i].length; j++) {
-        combined[offset + j] = ((isFlipped ^ i==1)?leftSideWidth:0) + arrsToCopy[i][j];
+        combined[offset + j] = ((isFlipped ^ i == 1) ? leftSideWidth : 0) + arrsToCopy[i][j];
       }
       offset += arrsToCopy[i].length;
     }
@@ -59,8 +70,8 @@ public class SelectIndexMap implements IndexMap, Serializable {
   }
 
   public boolean isIdentity() {
-    Preconditions.checkArgument(targets.length>0);
-    return IntStream.range(0,targets.length).allMatch(i -> targets[i]==i);
+    Preconditions.checkArgument(targets.length > 0);
+    return IntStream.range(0, targets.length).allMatch(i -> targets[i] == i);
   }
 
   public SelectIndexMap append(SelectIndexMap add) {
@@ -71,7 +82,7 @@ public class SelectIndexMap implements IndexMap, Serializable {
   }
 
   public SelectIndexMap add(int index) {
-    var newTargets = Arrays.copyOf(targets, targets.length+1);
+    var newTargets = Arrays.copyOf(targets, targets.length + 1);
     newTargets[targets.length] = index;
     return new SelectIndexMap(newTargets);
   }
@@ -111,7 +122,7 @@ public class SelectIndexMap implements IndexMap, Serializable {
     }
 
     public int remaining() {
-      return map.length-offset;
+      return map.length - offset;
     }
 
     public Builder addAll(SelectIndexMap indexMap) {
@@ -142,7 +153,5 @@ public class SelectIndexMap implements IndexMap, Serializable {
       Preconditions.checkArgument(offset == map.length);
       return new SelectIndexMap(map);
     }
-
-
   }
 }

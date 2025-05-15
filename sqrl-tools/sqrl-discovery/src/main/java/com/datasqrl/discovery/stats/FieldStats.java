@@ -1,12 +1,19 @@
 /*
- * Copyright (c) 2021, DataSQRL. All rights reserved. Use is subject to license terms.
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.datasqrl.discovery.stats;
-
-import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicLong;
 
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.error.ErrorCollector;
@@ -15,7 +22,10 @@ import com.datasqrl.io.schema.flexible.input.TypeSignatureUtil;
 import com.datasqrl.io.schema.flexible.type.Type;
 import com.datasqrl.io.schema.flexible.type.basic.BasicType;
 import com.datasqrl.io.schema.flexible.type.basic.BasicTypeManager;
-
+import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 import lombok.NonNull;
 
 public class FieldStats implements Serializable {
@@ -25,11 +35,9 @@ public class FieldStats implements Serializable {
   Map<FieldTypeStats, FieldTypeStats> types = new HashMap<>(4);
   Map<String, AtomicLong> nameCounts = new HashMap<>(2);
 
-  public FieldStats() {
-  }
+  public FieldStats() {}
 
-  public static void validate(Object o, ErrorCollector errors,
-      NameCanonicalizer canonicalizer) {
+  public static void validate(Object o, ErrorCollector errors, NameCanonicalizer canonicalizer) {
     if (TypeSignatureUtil.isArray(o)) {
       Type type = null;
       var array = TypeSignatureUtil.flatMapArray(o);
@@ -47,7 +55,7 @@ public class FieldStats implements Serializable {
           }
           RelationStats.validate(map, errors, canonicalizer);
         } else {
-          //since we flatmapped, this must be a scalar
+          // since we flatmapped, this must be a scalar
           elementType = TypeSignatureUtil.getBasicType(next, errors);
           if (elementType == null) {
             return;
@@ -61,17 +69,16 @@ public class FieldStats implements Serializable {
           } else {
             errors.fatal(
                 "Array contains elements with incompatible types: [%s]. Found [%s] and [%s]",
-                o,
-                type, elementType);
+                o, type, elementType);
           }
         }
       }
     } else if (o != null) {
-      //Single element
+      // Single element
       if (o instanceof Map map) {
         RelationStats.validate(map, errors, canonicalizer);
       } else {
-        //not an array or map => must be scalar
+        // not an array or map => must be scalar
         TypeSignatureUtil.getBasicType(o, errors);
       }
     }
@@ -80,14 +87,15 @@ public class FieldStats implements Serializable {
   public void add(Object o, @NonNull String displayName, NameCanonicalizer canonicalizer) {
     count++;
     addNameCount(displayName, 1);
-    var typeSignatureOpt = TypeSignatureUtil.detectSimpleTypeSignature(o, BasicTypeManager::detectType,
-        BasicTypeManager::detectType);
+    var typeSignatureOpt =
+        TypeSignatureUtil.detectSimpleTypeSignature(
+            o, BasicTypeManager::detectType, BasicTypeManager::detectType);
     if (typeSignatureOpt.isEmpty()) {
       numNulls++;
     } else {
       var typeSignature = typeSignatureOpt.get();
       var fieldStats = setOrGet(FieldTypeStats.of(typeSignature));
-      if (TypeSignatureUtil.isArray(o)) { //Processes nested maps if any
+      if (TypeSignatureUtil.isArray(o)) { // Processes nested maps if any
         var arrIter = TypeSignatureUtil.flatMapArray(o).getLeft().iterator();
         var numElements = 0;
         while (arrIter.hasNext()) {
@@ -144,7 +152,9 @@ public class FieldStats implements Serializable {
   }
 
   String getDisplayName() {
-    return nameCounts.entrySet().stream().max((o1, o2) -> Long.compare(o1.getValue().get(), o2.getValue().get())).get().getKey();
+    return nameCounts.entrySet().stream()
+        .max((o1, o2) -> Long.compare(o1.getValue().get(), o2.getValue().get()))
+        .get()
+        .getKey();
   }
-
 }

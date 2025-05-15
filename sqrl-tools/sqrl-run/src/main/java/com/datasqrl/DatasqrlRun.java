@@ -1,9 +1,34 @@
 /*
- * Copyright (c) 2021, DataSQRL. All rights reserved. Use is subject to license terms.
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.datasqrl;
 
-
+import com.datasqrl.graphql.GraphQLServer;
+import com.datasqrl.graphql.JsonEnvVarDeserializer;
+import com.datasqrl.graphql.config.ServerConfig;
+import com.datasqrl.graphql.server.RootGraphqlModel;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.io.Resources;
+import io.micrometer.prometheusmetrics.PrometheusConfig;
+import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
+import io.vertx.core.Vertx;
+import io.vertx.core.VertxOptions;
+import io.vertx.core.json.JsonObject;
+import io.vertx.micrometer.MicrometerMetricsOptions;
 import java.io.File;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -22,7 +47,8 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.api.common.JobStatus;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -35,24 +61,6 @@ import org.apache.flink.table.operations.StatementSetOperation;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.admin.NewTopic;
-
-import com.datasqrl.graphql.GraphQLServer;
-import com.datasqrl.graphql.JsonEnvVarDeserializer;
-import com.datasqrl.graphql.config.ServerConfig;
-import com.datasqrl.graphql.server.RootGraphqlModel;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.io.Resources;
-
-import io.micrometer.prometheusmetrics.PrometheusConfig;
-import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
-import io.vertx.core.Vertx;
-import io.vertx.core.VertxOptions;
-import io.vertx.core.json.JsonObject;
-import io.vertx.micrometer.MicrometerMetricsOptions;
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class DatasqrlRun {
@@ -117,8 +125,8 @@ public class DatasqrlRun {
           execute.getJobClient().get().cancel();
         }
       } catch (Exception e) {
-        //allow failure if job already ended
-//        e.printStackTrace();
+        // allow failure if job already ended
+        //        e.printStackTrace();
       }
     }
     if (vertx != null) {
@@ -134,7 +142,7 @@ public class DatasqrlRun {
 
   @SneakyThrows
   public CompiledPlan compileFlink() {
-    //Read conf if present
+    // Read conf if present
     Path packageJson = build.resolve("package.json");
     Map<String, String> config = new HashMap<>();
     if (packageJson.toFile().exists()) {
@@ -156,8 +164,8 @@ public class DatasqrlRun {
     config.putIfAbsent("table.exec.resource.default-parallelism", "1");
     config.putIfAbsent("rest.address", "localhost");
     config.putIfAbsent("rest.port", "8081");
-    config.putIfAbsent("execution.target", "local"); //mini cluster
-    config.putIfAbsent("execution.attached", "true"); //mini cluster
+    config.putIfAbsent("execution.target", "local"); // mini cluster
+    config.putIfAbsent("execution.attached", "true"); // mini cluster
 
     String udfPath = getenv("UDF_PATH");
     List<URL> jarUrls = new ArrayList<>();
@@ -166,17 +174,19 @@ public class DatasqrlRun {
       if (udfDir.toFile().exists() && udfDir.toFile().isDirectory()) {
         // Iterate over all files in the directory and add JARs to the list
         try (var stream = java.nio.file.Files.list(udfDir)) {
-          stream.filter(file -> file.toString().endsWith(".jar"))
-              .forEach(file -> {
-                try {
-                  jarUrls.add(file.toUri().toURL());
-                } catch (Exception e) {
-                  log.error("Error adding JAR to classpath: " + file, e);
-                }
-              });
+          stream
+              .filter(file -> file.toString().endsWith(".jar"))
+              .forEach(
+                  file -> {
+                    try {
+                      jarUrls.add(file.toUri().toURL());
+                    } catch (Exception e) {
+                      log.error("Error adding JAR to classpath: " + file, e);
+                    }
+                  });
         }
       } else {
-//        throw new RuntimeException("UDF_PATH is not a valid directory: " + udfPath);
+        //        throw new RuntimeException("UDF_PATH is not a valid directory: " + udfPath);
       }
     }
 
@@ -184,10 +194,11 @@ public class DatasqrlRun {
     URL[] urlArray = jarUrls.toArray(new URL[0]);
     ClassLoader udfClassLoader = new URLClassLoader(urlArray, getClass().getClassLoader());
 
-    config.putIfAbsent("pipeline.classpaths", jarUrls.stream().map(URL::toString)
-        .collect(Collectors.joining(",")));
+    config.putIfAbsent(
+        "pipeline.classpaths",
+        jarUrls.stream().map(URL::toString).collect(Collectors.joining(",")));
 
-    //Exposed for tests
+    // Exposed for tests
     if (env.get("FLINK_RESTART_STRATEGY") != null) {
       config.putIfAbsent("restart-strategy.type", "fixed-delay");
       config.putIfAbsent("restart-strategy.fixed-delay.attempts", "0");
@@ -204,10 +215,11 @@ public class DatasqrlRun {
       throw e;
     }
 
-    EnvironmentSettings tEnvConfig = EnvironmentSettings.newInstance()
-        .withConfiguration(configuration)
-        .withClassLoader(udfClassLoader)
-        .build();
+    EnvironmentSettings tEnvConfig =
+        EnvironmentSettings.newInstance()
+            .withConfiguration(configuration)
+            .withClassLoader(udfClassLoader)
+            .build();
 
     StreamTableEnvironment tEnv = StreamTableEnvironment.create(sEnv, tEnvConfig);
     TableResult tableResult = null;
@@ -220,7 +232,7 @@ public class DatasqrlRun {
     Map map = objectMapper.readValue(planPath.resolve("flink.json").toFile(), Map.class);
     List<String> statements = (List<String>) map.get("flinkSql");
 
-    for (int i = 0; i < statements.size()-1; i++) {
+    for (int i = 0; i < statements.size() - 1; i++) {
       String statement = statements.get(i);
       if (statement.trim().isEmpty()) {
         continue;
@@ -236,7 +248,7 @@ public class DatasqrlRun {
 
     TableEnvironmentImpl tEnv1 = (TableEnvironmentImpl) tEnv;
 
-    StatementSetOperation parse = (StatementSetOperation)tEnv1.getParser().parse(insert).get(0);
+    StatementSetOperation parse = (StatementSetOperation) tEnv1.getParser().parse(insert).get(0);
 
     return tEnv1.compilePlan(parse.getOperations());
   }
@@ -269,7 +281,8 @@ public class DatasqrlRun {
     if (!planPath.resolve("kafka.json").toFile().exists()) {
       return;
     }
-    Map<String, Object> map = objectMapper.readValue(planPath.resolve("kafka.json").toFile(), Map.class);
+    Map<String, Object> map =
+        objectMapper.readValue(planPath.resolve("kafka.json").toFile(), Map.class);
     List<Map<String, Object>> topics = (List<Map<String, Object>>) map.get("topics");
 
     if (topics == null) {
@@ -298,9 +311,12 @@ public class DatasqrlRun {
     try (AdminClient adminClient = AdminClient.create(props)) {
       Set<String> existingTopics = adminClient.listTopics().names().get();
 
-      Set<String> requiredTopics = mutableTopics.stream().map(topic -> (String) topic.get("topicName")).collect(Collectors.toSet());
+      Set<String> requiredTopics =
+          mutableTopics.stream()
+              .map(topic -> (String) topic.get("topicName"))
+              .collect(Collectors.toSet());
       for (String topicName : requiredTopics) {
-        if(existingTopics.contains(topicName)) {
+        if (existingTopics.contains(topicName)) {
           continue;
         }
         NewTopic newTopic = new NewTopic(topicName, 1, (short) 1);
@@ -317,16 +333,18 @@ public class DatasqrlRun {
     }
     Map plan = objectMapper.readValue(file, Map.class);
 
-    String fullPostgresJDBCUrl = "jdbc:postgresql://%s:%s/%s".formatted(
-        getenv("PGHOST"), getenv("PGPORT"), getenv("PGDATABASE"));
-    try (Connection connection = DriverManager.getConnection(fullPostgresJDBCUrl, getenv("PGUSER"), getenv("PGPASSWORD"))) {
+    String fullPostgresJDBCUrl =
+        "jdbc:postgresql://%s:%s/%s"
+            .formatted(getenv("PGHOST"), getenv("PGPORT"), getenv("PGDATABASE"));
+    try (Connection connection =
+        DriverManager.getConnection(fullPostgresJDBCUrl, getenv("PGUSER"), getenv("PGPASSWORD"))) {
       for (Map statement : (List<Map>) plan.get("statements")) {
         log.info("Executing statement {} of type {}", statement.get("name"), statement.get("type"));
         try (Statement stmt = connection.createStatement()) {
           stmt.execute((String) statement.get("sql"));
         } catch (Exception e) {
-        	e.printStackTrace();
-        	assert false : e.getMessage();
+          e.printStackTrace();
+          assert false : e.getMessage();
         }
       }
     }
@@ -341,28 +359,28 @@ public class DatasqrlRun {
     if (!planPath.resolve("vertx.json").toFile().exists()) {
       return;
     }
-    RootGraphqlModel rootGraphqlModel = objectMapper.readValue(
-        planPath.resolve("vertx.json").toFile(),
-        ModelContainer.class).model;
+    RootGraphqlModel rootGraphqlModel =
+        objectMapper.readValue(planPath.resolve("vertx.json").toFile(), ModelContainer.class).model;
     if (rootGraphqlModel == null) {
-      return; //no graphql server queries
+      return; // no graphql server queries
     }
-
 
     URL resource = Resources.getResource("server-config.json");
     Map<String, Object> json = objectMapper.readValue(resource, Map.class);
     JsonObject config = new JsonObject(json);
 
-    ServerConfig serverConfig = new ServerConfig(config) {
-      @Override
-      public String getEnvironmentVariable(String envVar) {
-        return getenv(envVar);
-      }
-    };
+    ServerConfig serverConfig =
+        new ServerConfig(config) {
+          @Override
+          public String getEnvironmentVariable(String envVar) {
+            return getenv(envVar);
+          }
+        };
 
     // Set Postgres connection options from environment variables
     if (planPath.resolve("postgres.json").toFile().exists()) {
-      serverConfig.getPgConnectOptions()
+      serverConfig
+          .getPgConnectOptions()
           .setHost(getenv("PGHOST"))
           .setPort(Integer.parseInt(getenv("PGPORT")))
           .setUser(getenv("PGUSER"))
@@ -372,26 +390,29 @@ public class DatasqrlRun {
 
     GraphQLServer server = new GraphQLServer(rootGraphqlModel, serverConfig, getSnowflakeUrl());
 
-    PrometheusMeterRegistry prometheusMeterRegistry = new PrometheusMeterRegistry(
-        PrometheusConfig.DEFAULT);
-    MicrometerMetricsOptions metricsOptions = new MicrometerMetricsOptions()
-        .setMicrometerRegistry(prometheusMeterRegistry)
-        .setEnabled(true);
+    PrometheusMeterRegistry prometheusMeterRegistry =
+        new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
+    MicrometerMetricsOptions metricsOptions =
+        new MicrometerMetricsOptions()
+            .setMicrometerRegistry(prometheusMeterRegistry)
+            .setEnabled(true);
 
     vertx = Vertx.vertx(new VertxOptions().setMetricsOptions(metricsOptions));
 
-    vertx.deployVerticle(server, res -> {
-      if (res.succeeded()) {
-        System.out.println("Deployment id is: " + res.result());
-      } else {
-        System.out.println("Deployment failed!");
-      }
-    });
+    vertx.deployVerticle(
+        server,
+        res -> {
+          if (res.succeeded()) {
+            System.out.println("Deployment id is: " + res.result());
+          } else {
+            System.out.println("Deployment failed!");
+          }
+        });
   }
 
   public Optional<String> getSnowflakeUrl() {
-    var engines = (Map)getPackageJson().get("engines");
-    var snowflake = (Map)engines.get("snowflake");
+    var engines = (Map) getPackageJson().get("engines");
+    var snowflake = (Map) engines.get("snowflake");
     if (snowflake != null) {
       var url = snowflake.get("url");
       if (url instanceof String string) {

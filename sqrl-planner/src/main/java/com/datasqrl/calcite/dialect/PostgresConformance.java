@@ -1,3 +1,18 @@
+/*
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.datasqrl.calcite.dialect;
 
 import org.apache.calcite.sql.fun.SqlLibrary;
@@ -7,7 +22,8 @@ public class PostgresConformance implements SqlConformance {
 
   @Override
   public boolean isLiberal() {
-    return false; // PostgreSQL adheres to standard SQL rules and is not considered 'liberal' in SQL conformance.
+    return false; // PostgreSQL adheres to standard SQL rules and is not considered 'liberal' in SQL
+    // conformance.
   }
 
   @Override
@@ -32,7 +48,8 @@ public class PostgresConformance implements SqlConformance {
 
   @Override
   public boolean isSortByOrdinal() {
-    return false; // SQRL: issue when converting order by ordinals, SqlImplementor will convert it to a char string.
+    return false; // SQRL: issue when converting order by ordinals, SqlImplementor will convert it
+    // to a char string.
     // PostgreSQL allows using ordinals in ORDER BY clauses.
   }
 
@@ -88,7 +105,8 @@ public class PostgresConformance implements SqlConformance {
 
   @Override
   public boolean allowAliasUnnestItems() {
-    return true; // PostgreSQL allows aliasing items in UNNEST (e.g., SELECT * FROM UNNEST(...) AS alias).
+    return true; // PostgreSQL allows aliasing items in UNNEST (e.g., SELECT * FROM UNNEST(...) AS
+    // alias).
   }
 
   @Override
@@ -118,7 +136,8 @@ public class PostgresConformance implements SqlConformance {
 
   @Override
   public boolean allowGeometry() {
-    return false; // PostgreSQL does not support geometry types by default (requires PostGIS extension).
+    return false; // PostgreSQL does not support geometry types by default (requires PostGIS
+    // extension).
   }
 
   @Override

@@ -1,10 +1,29 @@
+/*
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.datasqrl.planner;
 
+import com.datasqrl.engine.EnginePhysicalPlan;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
+import lombok.Builder;
+import lombok.Value;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.flink.sql.parser.ddl.SqlCreateFunction;
@@ -17,19 +36,12 @@ import org.apache.flink.table.api.CompiledPlan;
 import org.apache.flink.table.api.ExplainDetail;
 import org.apache.flink.table.api.ExplainFormat;
 
-import com.datasqrl.engine.EnginePhysicalPlan;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.google.common.base.Preconditions;
-
-import lombok.Builder;
-import lombok.Value;
-
 /**
- * Represents the physical plan for Flink as both FlinkSQL and as a compiled plan.
- * For the FlinkSQL representation we also keep track of a version without functions.
+ * Represents the physical plan for Flink as both FlinkSQL and as a compiled plan. For the FlinkSQL
+ * representation we also keep track of a version without functions.
  *
- * In addition, we extract all the functions, connectors, and formats for additional post-compilation
- * analysis (e.g. to determine what dependencies are needed).
+ * <p>In addition, we extract all the functions, connectors, and formats for additional
+ * post-compilation analysis (e.g. to determine what dependencies are needed).
  */
 @Value
 @Builder
@@ -39,25 +51,20 @@ public class FlinkPhysicalPlan implements EnginePhysicalPlan {
   Set<String> connectors;
   Set<String> formats;
   Set<String> functions;
-  @JsonIgnore
-  String compiledPlan;
-  @JsonIgnore
-  String explainedPlan;
-  @JsonIgnore
-  List<String> flinkSqlNoFunctions;
+  @JsonIgnore String compiledPlan;
+  @JsonIgnore String explainedPlan;
+  @JsonIgnore List<String> flinkSqlNoFunctions;
 
   @Override
   public List<DeploymentArtifact> getDeploymentArtifacts() {
     return List.of(
-      new DeploymentArtifact("-sql.sql", DeploymentArtifact.toSqlString(flinkSql)),
-        new DeploymentArtifact("-sql-no-functions.sql", DeploymentArtifact.toSqlString(flinkSqlNoFunctions)),
+        new DeploymentArtifact("-sql.sql", DeploymentArtifact.toSqlString(flinkSql)),
+        new DeploymentArtifact(
+            "-sql-no-functions.sql", DeploymentArtifact.toSqlString(flinkSqlNoFunctions)),
         new DeploymentArtifact("-functions.sql", DeploymentArtifact.toSqlString(functions)),
         new DeploymentArtifact("-compiled-plan.json", compiledPlan),
-        new DeploymentArtifact("-explained-plan.txt", explainedPlan)
-        );
+        new DeploymentArtifact("-explained-plan.txt", explainedPlan));
   }
-
-
 
   @Value
   public static class Builder {
@@ -85,8 +92,8 @@ public class FlinkPhysicalPlan implements EnginePhysicalPlan {
       flinkSql.add(nodeSql);
       nodes.add(node);
       if (node instanceof SqlCreateTable table) {
-        for (SqlNode option : table.getPropertyList().getList()){
-          var sqlTableOption = (SqlTableOption)option;
+        for (SqlNode option : table.getPropertyList().getList()) {
+          var sqlTableOption = (SqlTableOption) option;
           if (sqlTableOption.getKeyString().equalsIgnoreCase("connector")) {
             connectors.add(sqlTableOption.getValueString());
           }
@@ -104,19 +111,24 @@ public class FlinkPhysicalPlan implements EnginePhysicalPlan {
     }
 
     public SqlExecute getExecuteStatement() {
-      Preconditions.checkArgument(!statementSet.isEmpty(),"SQRL script does not contain any sink definitions");
+      Preconditions.checkArgument(
+          !statementSet.isEmpty(), "SQRL script does not contain any sink definitions");
       var sqlStatementSet = new SqlStatementSet(statementSet, SqlParserPos.ZERO);
       return new SqlExecute(sqlStatementSet, SqlParserPos.ZERO);
     }
 
     public FlinkPhysicalPlan build(CompiledPlan compiledPlan) {
-      var explainedPlan = compiledPlan.explain(ExplainFormat.TEXT, ExplainDetail.CHANGELOG_MODE, ExplainDetail.PLAN_ADVICE);
-      return new FlinkPhysicalPlan(flinkSql, connectors, formats, fullyResolvedFunctions,
-          compiledPlan.asJsonString(), explainedPlan, flinkSqlNoFunctions);
+      var explainedPlan =
+          compiledPlan.explain(
+              ExplainFormat.TEXT, ExplainDetail.CHANGELOG_MODE, ExplainDetail.PLAN_ADVICE);
+      return new FlinkPhysicalPlan(
+          flinkSql,
+          connectors,
+          formats,
+          fullyResolvedFunctions,
+          compiledPlan.asJsonString(),
+          explainedPlan,
+          flinkSqlNoFunctions);
     }
-
-
   }
-
-
 }

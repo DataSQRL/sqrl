@@ -1,13 +1,31 @@
+/*
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.datasqrl.engine.stream.flink.plan;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import com.datasqrl.calcite.Dialect;
+import com.datasqrl.calcite.convert.SqlToStringFactory;
+import com.datasqrl.engine.stream.flink.plan.FlinkSqlNodeFactory.MetadataEntry;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-
+import lombok.Value;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeSystem;
 import org.apache.calcite.sql.SqlIdentifier;
@@ -19,12 +37,6 @@ import org.apache.calcite.sql.type.SqlTypeFactoryImpl;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.junit.jupiter.api.Test;
 
-import com.datasqrl.calcite.Dialect;
-import com.datasqrl.calcite.convert.SqlToStringFactory;
-import com.datasqrl.engine.stream.flink.plan.FlinkSqlNodeFactory.MetadataEntry;
-
-import lombok.Value;
-
 public class FlinkSqlNodeFactoryTest {
 
   @Value
@@ -35,8 +47,8 @@ public class FlinkSqlNodeFactoryTest {
   }
 
   private String unparse(SqlNode node) {
-	    var sqlToString = SqlToStringFactory.get(Dialect.FLINK);
-	    return sqlToString.convert(() ->node).getSql();
+    var sqlToString = SqlToStringFactory.get(Dialect.FLINK);
+    return sqlToString.convert(() -> node).getSql();
   }
 
   @Test
@@ -45,11 +57,25 @@ public class FlinkSqlNodeFactoryTest {
     SqlNode fromTable = FlinkSqlNodeFactory.identifier("source_table");
     var selectList = new SqlNodeList(SqlParserPos.ZERO);
     selectList.add(new SqlIdentifier("*", SqlParserPos.ZERO));
-    var select = new SqlSelect(SqlParserPos.ZERO, null, selectList, fromTable, null, null, null, null, null, null, null, null);
+    var select =
+        new SqlSelect(
+            SqlParserPos.ZERO,
+            null,
+            selectList,
+            fromTable,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null);
 
     var createView = FlinkSqlNodeFactory.createView(tableName, select);
     var sql = unparse(createView);
-    var expectedSql = """
+    var expectedSql =
+        """
         CREATE VIEW `my_view`
         AS
         SELECT `*`
@@ -63,11 +89,25 @@ public class FlinkSqlNodeFactoryTest {
     SqlNode fromTable = FlinkSqlNodeFactory.identifier("source_table");
     var selectList = new SqlNodeList(SqlParserPos.ZERO);
     selectList.add(new SqlIdentifier("*", SqlParserPos.ZERO));
-    var select = new SqlSelect(SqlParserPos.ZERO, null, selectList, fromTable, null, null, null, null, null, null, null, null);
+    var select =
+        new SqlSelect(
+            SqlParserPos.ZERO,
+            null,
+            selectList,
+            fromTable,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null);
 
     var insert = FlinkSqlNodeFactory.createInsert(select, targetTable);
     var sql = unparse(insert);
-    var expectedSql = """
+    var expectedSql =
+        """
         INSERT INTO `target_table`
         (SELECT `*`
          FROM `source_table`)""";
@@ -150,13 +190,15 @@ public class FlinkSqlNodeFactoryTest {
     var varcharType = typeFactory.createSqlType(SqlTypeName.VARCHAR, 255);
     var timestampType = typeFactory.createSqlType(SqlTypeName.TIMESTAMP);
 
-    var rowType = typeFactory.builder()
-        .add("id", intType)
-        .add("name", varcharType)
-        .add("timestamp_col", timestampType)
-        .add("metadata_col1", varcharType)
-        .add("metadata_col2", varcharType)
-        .build();
+    var rowType =
+        typeFactory
+            .builder()
+            .add("id", intType)
+            .add("name", varcharType)
+            .add("timestamp_col", timestampType)
+            .add("metadata_col1", varcharType)
+            .add("metadata_col2", varcharType)
+            .build();
 
     Optional<List<String>> partitionKeys = Optional.of(Arrays.asList("name"));
     var watermarkMillis = 5000L;
@@ -164,11 +206,14 @@ public class FlinkSqlNodeFactoryTest {
     Map<String, MetadataEntry> metadataConfig = new HashMap<>();
 
     // MetadataEntry with type only
-    MetadataEntry metadataEntry1 = new MockMetadataEntry(Optional.of("timestamp_col"), Optional.empty(), Optional.empty());
+    MetadataEntry metadataEntry1 =
+        new MockMetadataEntry(Optional.of("timestamp_col"), Optional.empty(), Optional.empty());
     metadataConfig.put("metadata_col1", metadataEntry1);
 
     // MetadataEntry with attribute
-    MetadataEntry metadataEntry2 = new MockMetadataEntry(Optional.of("timestamp_col"), Optional.of("timestamp"), Optional.of(true));
+    MetadataEntry metadataEntry2 =
+        new MockMetadataEntry(
+            Optional.of("timestamp_col"), Optional.of("timestamp"), Optional.of(true));
     metadataConfig.put("metadata_col2", metadataEntry2);
 
     List<String> primaryKeyConstraint = Arrays.asList("id");
@@ -178,25 +223,27 @@ public class FlinkSqlNodeFactoryTest {
     connectorProperties.put("format", "csv");
 
     // Simple MetadataExpressionParser implementation
-    FlinkSqlNodeFactory.MetadataExpressionParser expressionParser = expression -> {
-      // Return an identifier for simplicity
-      return FlinkSqlNodeFactory.identifier(expression);
-    };
+    FlinkSqlNodeFactory.MetadataExpressionParser expressionParser =
+        expression -> {
+          // Return an identifier for simplicity
+          return FlinkSqlNodeFactory.identifier(expression);
+        };
 
-    var createTable = FlinkSqlNodeFactory.createTable(
-        tableName,
-        rowType,
-        partitionKeys,
-        watermarkMillis,
-        timestampColumn,
-        metadataConfig,
-        primaryKeyConstraint,
-        connectorProperties,
-        expressionParser
-    );
+    var createTable =
+        FlinkSqlNodeFactory.createTable(
+            tableName,
+            rowType,
+            partitionKeys,
+            watermarkMillis,
+            timestampColumn,
+            metadataConfig,
+            primaryKeyConstraint,
+            connectorProperties,
+            expressionParser);
     // Unparse and compare SQL strings
     var sql = unparse(createTable);
-    var expectedSql = """
+    var expectedSql =
+        """
         CREATE TABLE `my_table` (
           `id` INTEGER NOT NULL,
           `name` VARCHAR(255) CHARACTER SET `UTF-16LE` NOT NULL,

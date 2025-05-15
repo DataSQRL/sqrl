@@ -1,3 +1,18 @@
+/*
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.datasqrl.graphql.config;
 
 import io.vertx.core.http.HttpServerOptions;
@@ -12,31 +27,41 @@ public class ServerConfigOptionsConverter {
 
   public static void fromJson(JsonObject json, ServerConfig serverConfig) {
     serverConfig.setServletConfig(
-        new ServletConfig(json.getJsonObject("servletConfig") == null
-            ? new JsonObject() : json.getJsonObject("servletConfig")));
+        new ServletConfig(
+            json.getJsonObject("servletConfig") == null
+                ? new JsonObject()
+                : json.getJsonObject("servletConfig")));
     serverConfig.setGraphQLHandlerOptions(
-        new GraphQLHandlerOptions(json.getJsonObject("graphQLHandlerOptions") == null
-            ? new JsonObject() : json.getJsonObject("graphQLHandlerOptions")));
+        new GraphQLHandlerOptions(
+            json.getJsonObject("graphQLHandlerOptions") == null
+                ? new JsonObject()
+                : json.getJsonObject("graphQLHandlerOptions")));
     if (json.containsKey("graphiQLHandlerOptions")) {
       serverConfig.setGraphiQLHandlerOptions(
           new GraphiQLHandlerOptions(json.getJsonObject("graphiQLHandlerOptions")));
     }
     serverConfig.setHttpServerOptions(
-        new HttpServerOptions(json.getJsonObject("httpServerOptions") == null
-            ? new JsonObject() : json.getJsonObject("httpServerOptions")));
-    var pgConnectOptions =  json.getJsonObject("pgConnectOptions") == null
-        ? PgConnectOptions.fromEnv()
-        : new PgConnectOptions(json.getJsonObject("pgConnectOptions"));
+        new HttpServerOptions(
+            json.getJsonObject("httpServerOptions") == null
+                ? new JsonObject()
+                : json.getJsonObject("httpServerOptions")));
+    var pgConnectOptions =
+        json.getJsonObject("pgConnectOptions") == null
+            ? PgConnectOptions.fromEnv()
+            : new PgConnectOptions(json.getJsonObject("pgConnectOptions"));
     serverConfig.setPgConnectOptions(pgConnectOptions);
     serverConfig.setPoolOptions(
-        new PoolOptions(json.getJsonObject("poolOptions") == null
-            ? new JsonObject() : json.getJsonObject("poolOptions")));
+        new PoolOptions(
+            json.getJsonObject("poolOptions") == null
+                ? new JsonObject()
+                : json.getJsonObject("poolOptions")));
     serverConfig.setCorsHandlerOptions(
-        new CorsHandlerOptions(json.getJsonObject("corsHandlerOptions") == null
-            ? new JsonObject() : json.getJsonObject("corsHandlerOptions")));
+        new CorsHandlerOptions(
+            json.getJsonObject("corsHandlerOptions") == null
+                ? new JsonObject()
+                : json.getJsonObject("corsHandlerOptions")));
     if (json.getJsonObject("authOptions") != null) {
-      serverConfig.setAuthOptions(
-          new JWTAuthOptions(json.getJsonObject("authOptions")));
+      serverConfig.setAuthOptions(new JWTAuthOptions(json.getJsonObject("authOptions")));
     }
   }
 }

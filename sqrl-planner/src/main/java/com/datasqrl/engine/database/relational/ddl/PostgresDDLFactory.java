@@ -1,5 +1,17 @@
 /*
- * Copyright (c) 2021, DataSQRL. All rights reserved. Use is subject to license terms.
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.datasqrl.engine.database.relational.ddl;
 
@@ -18,10 +30,10 @@ import com.datasqrl.engine.database.relational.ddl.statements.InsertStatement;
 import com.datasqrl.engine.database.relational.ddl.statements.notify.CreateNotifyTriggerDDL;
 import com.datasqrl.function.vector.VectorPgExtension;
 import com.datasqrl.plan.global.IndexDefinition;
-import com.datasqrl.sql.DatabaseExtension;
 import com.datasqrl.planner.dag.plan.MaterializationStagePlan.Query;
 import com.datasqrl.planner.hint.DataTypeHint;
 import com.datasqrl.planner.hint.VectorDimensionHint;
+import com.datasqrl.sql.DatabaseExtension;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -76,7 +88,9 @@ public class PostgresDDLFactory extends AbstractJdbcStatementFactory
 
   @Override
   public JdbcStatement addIndex(IndexDefinition index) {
-    var ddl = new CreateIndexDDL(index.getName(), index.getTableId(), index.getColumnNames(), index.getType());
+    var ddl =
+        new CreateIndexDDL(
+            index.getName(), index.getTableId(), index.getColumnNames(), index.getType());
     return new JdbcStatement(ddl.getIndexName(), Type.INDEX, ddl.getSql());
   }
 

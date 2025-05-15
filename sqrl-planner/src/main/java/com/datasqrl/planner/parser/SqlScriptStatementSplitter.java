@@ -1,24 +1,38 @@
+/*
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.datasqrl.planner.parser;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import com.datasqrl.error.ErrorLocation.FileLocation;
 import com.google.common.base.Preconditions;
-
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Value;
 
 /**
- * Takes a script and splits it into individual statements delimited by `;`.
- * Also filters out `--` comments
+ * Takes a script and splits it into individual statements delimited by `;`. Also filters out `--`
+ * comments
  *
- * Contains some additional utility methods for statement delimiter handling.
+ * <p>Contains some additional utility methods for statement delimiter handling.
  *
- * TODO: Should we re-use this in the Flink runner?
+ * <p>TODO: Should we re-use this in the Flink runner?
  *
- * @see <a href="https://github.com/apache/flink-kubernetes-operator/blob/main/examples/flink-sql-runner-example/src/main/java/org/apache/flink/examples/SqlRunner.java">Flink's SqlRunner</a>
- *
+ * @see <a
+ *     href="https://github.com/apache/flink-kubernetes-operator/blob/main/examples/flink-sql-runner-example/src/main/java/org/apache/flink/examples/SqlRunner.java">Flink's
+ *     SqlRunner</a>
  */
 @Value
 @AllArgsConstructor
@@ -44,11 +58,9 @@ public class SqlScriptStatementSplitter {
    */
   public List<ParsedObject<String>> splitStatements(String script) {
     if (script.isBlank()) {
-        throw new StatementParserException("Script is empty");
+      throw new StatementParserException("Script is empty");
     }
-    var formatted =
-        formatEndOfSqlFile(script)
-            .replaceAll(LINE_COMMENT_PATTERN, "");
+    var formatted = formatEndOfSqlFile(script).replaceAll(LINE_COMMENT_PATTERN, "");
     if (removeBlockComments) {
       formatted = formatted.replaceAll(BLOCK_COMMENT_PATTERN, "");
     }
@@ -62,15 +74,16 @@ public class SqlScriptStatementSplitter {
       lineNo++;
       if (line.isBlank()) {
         continue;
-    }
-      if (current==null) {
+      }
+      if (current == null) {
         statementLineNo = lineNo;
         current = new StringBuilder();
       }
       current.append(line);
       current.append(LINE_DELIMITER);
       if (line.trim().endsWith(STATEMENT_DELIMITER)) {
-        statements.add(new ParsedObject<>(current.toString(), new FileLocation(statementLineNo, 1)));
+        statements.add(
+            new ParsedObject<>(current.toString(), new FileLocation(statementLineNo, 1)));
         current = null;
       }
     }
@@ -78,7 +91,7 @@ public class SqlScriptStatementSplitter {
   }
 
   public static FileLocation computeOffset(String statement, int position) {
-    Preconditions.checkArgument(position>=0 && position<=statement.length());
+    Preconditions.checkArgument(position >= 0 && position <= statement.length());
     int lineNo = 1, columnNo = 1;
     for (var i = 0; i < position; i++) {
       columnNo++;
@@ -117,9 +130,8 @@ public class SqlScriptStatementSplitter {
 
   public static String addStatementDelimiter(String statement) {
     if (statement.trim().endsWith(STATEMENT_DELIMITER)) {
-        return statement;
+      return statement;
     }
     return statement + STATEMENT_DELIMITER;
   }
-
 }

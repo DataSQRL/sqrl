@@ -1,11 +1,19 @@
 /*
- * Copyright (c) 2021, DataSQRL. All rights reserved. Use is subject to license terms.
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.datasqrl.serializer;
-
-import java.io.IOException;
-import java.net.URI;
-import java.nio.file.Path;
 
 import com.datasqrl.module.resolver.ResourceResolver;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -14,7 +22,9 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-
+import java.io.IOException;
+import java.net.URI;
+import java.nio.file.Path;
 import lombok.Getter;
 
 @Getter
@@ -26,12 +36,12 @@ public class Deserializer {
 
   protected Deserializer() {
     SimpleModule module = new SqrlSerializerModule();
-    jsonMapper = new ObjectMapper()
-        .registerModule(new Jdk8Module())
-        .registerModule(new JavaTimeModule())
-        .registerModule(module)
-        .setSerializationInclusion(JsonInclude.Include.NON_NULL);
-
+    jsonMapper =
+        new ObjectMapper()
+            .registerModule(new Jdk8Module())
+            .registerModule(new JavaTimeModule())
+            .registerModule(module)
+            .setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
     yamlMapper = new YAMLMapper();
     yamlMapper
@@ -39,7 +49,6 @@ public class Deserializer {
         .registerModule(new JavaTimeModule())
         .registerModule(module)
         .setSerializationInclusion(JsonInclude.Include.NON_NULL);
-
   }
 
   public <T> T mapJsonFile(URI path, Class<T> clazz) {
@@ -77,6 +86,7 @@ public class Deserializer {
       throw new RuntimeException(e);
     }
   }
+
   public static <T> T mapFile(ObjectMapper mapper, Path path, Class<T> clazz) {
     try {
       return mapper.readValue(path.toFile(), clazz);
@@ -92,21 +102,21 @@ public class Deserializer {
   public <O> void writeJson(Path file, O object, boolean pretty) throws IOException {
     var writer = jsonMapper.writer();
     if (pretty) {
-        writer = writer.withDefaultPrettyPrinter();
+      writer = writer.withDefaultPrettyPrinter();
     }
-    writer.writeValue(file.toFile(),object);
+    writer.writeValue(file.toFile(), object);
   }
 
   public <O> String toJson(O object) throws IOException {
     return jsonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(object);
   }
 
-  public<O> String writeYML(O object) throws IOException {
+  public <O> String writeYML(O object) throws IOException {
     return yamlMapper.writeValueAsString(object);
   }
 
-  public<O> void writeYML(Path file, O object) throws IOException {
+  public <O> void writeYML(Path file, O object) throws IOException {
     var writer = yamlMapper.writer().withDefaultPrettyPrinter();
-    writer.writeValue(file.toFile(),object);
+    writer.writeValue(file.toFile(), object);
   }
 }
