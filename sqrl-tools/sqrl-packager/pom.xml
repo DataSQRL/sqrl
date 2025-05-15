@@ -10,7 +10,7 @@
 
   <properties>
     <lombok.version>1.18.24</lombok.version>
-    <vertx.version>4.5.14</vertx.version>
+    <vertx.version>5.0.0</vertx.version>
   </properties>
 
   <dependencies>
