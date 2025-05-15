@@ -268,20 +268,38 @@ jobs:
       - install-jdk
       - run:
           name: Build shaded JAR
-          command: mvn -U clean -T1 -B install -DskipTests -DskipITs -DskipVertexFatJar -Pinstrument
+          command: mvn -U clean -T1 -B install -DskipTests -DskipITs -Pinstrument
       - compute-base-tag
       - run:
           name: Pull base image
           command: docker pull datasqrl/base-sqrl:$BASE_TAG
       - run:
-          name: Build **and push** datasqrl/cmd-test-image:${CIRCLE_SHA1}
+          name: Build and push test images
           command: |
+            set -e
+            echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+
+            # ── cmd test image ────────────────────────────────────────────────
             docker build \
               --build-arg BASE_TAG=$BASE_TAG \
               -t datasqrl/cmd-test-image:${CIRCLE_SHA1} \
               ./sqrl-tools
-            echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
             docker push datasqrl/cmd-test-image:${CIRCLE_SHA1}
+
+            # ── sqrl-server test image ───────────────────────────────────────
+            docker build \
+              --build-arg BASE_TAG=$BASE_TAG \
+              -t datasqrl/sqrl-server-test-image:${CIRCLE_SHA1} \
+              sqrl-server/sqrl-server-vertx
+            docker push datasqrl/sqrl-server-test-image:${CIRCLE_SHA1}
+
+            # ── flink-runner test image ──────────────────────────────────────
+            docker build \
+              --build-arg BASE_TAG=$BASE_TAG \
+              -t datasqrl/sqrl-flink-runner-test-image:${CIRCLE_SHA1} \
+              sqrl-tools/sqrl-flink-runner/target
+            docker push datasqrl/sqrl-flink-runner-test-image:${CIRCLE_SHA1}
+
   deploy:
     docker:
       - image: cimg/openjdk:17.0
