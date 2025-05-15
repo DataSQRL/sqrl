@@ -4,7 +4,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.packager.preprocess.Preprocessor;
+import com.datasqrl.packager.preprocessor.Preprocessor;
 
 public interface DiscoveryPreprocessor extends Preprocessor {
 

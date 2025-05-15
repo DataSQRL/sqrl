@@ -4,8 +4,8 @@ import java.util.List;
 
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.graphql.server.RootGraphqlModel;
-import com.datasqrl.v2.dag.plan.MutationQuery;
-import com.datasqrl.v2.tables.SqrlTableFunction;
+import com.datasqrl.planner.dag.plan.MutationQuery;
+import com.datasqrl.planner.tables.SqrlTableFunction;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import lombok.AllArgsConstructor;

@@ -13,7 +13,7 @@ import lombok.Value;
 /**
  * Represents a read query that can be executed via JDBC against a database.
  * It has a SQL string for the query which contains parameter references to the
- * parameters of the associated {@link com.datasqrl.v2.tables.SqrlTableFunction}.
+ * parameters of the associated {@link com.datasqrl.planner.tables.SqrlTableFunction}.
  *
  * Some JDBC engines don't support parameter references, i.e. the parameters are just a list
  * in the order that '?' occurs in the SQL string. In that case, we need to map those parameter occurences

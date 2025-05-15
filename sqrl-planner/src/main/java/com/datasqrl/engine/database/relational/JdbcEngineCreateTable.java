@@ -3,8 +3,8 @@ package com.datasqrl.engine.database.relational;
 import org.apache.calcite.rel.type.RelDataType;
 
 import com.datasqrl.engine.database.EngineCreateTable;
-import com.datasqrl.v2.analyzer.TableAnalysis;
-import com.datasqrl.v2.tables.FlinkTableBuilder;
+import com.datasqrl.planner.analyzer.TableAnalysis;
+import com.datasqrl.planner.tables.FlinkTableBuilder;
 
 import lombok.Value;
 

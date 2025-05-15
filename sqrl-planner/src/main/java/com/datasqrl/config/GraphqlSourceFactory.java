@@ -5,8 +5,8 @@ import java.util.Optional;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.graphql.ScriptFiles;
 import com.datasqrl.module.resolver.ResourceResolver;
-import com.datasqrl.plan.queries.APISource;
-import com.datasqrl.plan.queries.APISourceImpl;
+import com.datasqrl.graphql.APISource;
+import com.datasqrl.graphql.APISourceImpl;
 import com.google.inject.Inject;
 
 public class GraphqlSourceFactory {

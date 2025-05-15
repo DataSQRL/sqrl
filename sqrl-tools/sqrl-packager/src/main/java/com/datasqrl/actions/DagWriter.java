@@ -12,7 +12,7 @@ import com.datasqrl.config.PackageJson.CompilerConfig;
 import com.datasqrl.config.PackageJson.ExplainConfig;
 import com.datasqrl.plan.global.PipelineDAGExporter;
 import com.datasqrl.serializer.Deserializer;
-import com.datasqrl.v2.dag.PipelineDAG;
+import com.datasqrl.planner.dag.PipelineDAG;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import com.google.inject.Inject;

@@ -12,8 +12,8 @@ import com.datasqrl.datatype.DataTypeMapping;
 import com.datasqrl.engine.EngineFeature;
 import com.datasqrl.engine.database.EngineCreateTable;
 import com.datasqrl.engine.pipeline.ExecutionStage;
-import com.datasqrl.v2.analyzer.TableAnalysis;
-import com.datasqrl.v2.tables.FlinkTableBuilder;
+import com.datasqrl.planner.analyzer.TableAnalysis;
+import com.datasqrl.planner.tables.FlinkTableBuilder;
 import com.google.inject.Inject;
 
 public class PrintEngine implements ExportEngine {

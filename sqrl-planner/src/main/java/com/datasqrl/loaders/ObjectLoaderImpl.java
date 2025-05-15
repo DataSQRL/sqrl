@@ -1,23 +1,8 @@
 package com.datasqrl.loaders;
 
 
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.List;
-import java.util.Optional;
-import java.util.function.Predicate;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-
-import org.apache.flink.table.functions.UserDefinedFunction;
-
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.config.PackageJson;
-import com.datasqrl.config.TableConfigLoader;
-import com.datasqrl.engine.log.LogManager;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.function.FlinkUdfNsObject;
 import com.datasqrl.io.tables.TableSchema;
@@ -33,8 +18,17 @@ import com.datasqrl.util.FileUtil;
 import com.datasqrl.util.StringUtil;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Preconditions;
-
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Optional;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import lombok.SneakyThrows;
+import org.apache.flink.table.functions.UserDefinedFunction;
 
 public class ObjectLoaderImpl implements ObjectLoader {
 
@@ -42,20 +36,10 @@ public class ObjectLoaderImpl implements ObjectLoader {
   private static final Predicate<String> SCRIPT_IMPORT = Pattern.compile(".*" + FileUtil.toRegex(".sqrl")).asMatchPredicate();
   private final ResourceResolver resourceResolver;
   private final ErrorCollector errors;
-  private final ModuleLoader moduleLoader;
-  private final TableConfigLoader tableConfigFactory;
-  private final PackageJson sqrlConfig;
-  private final LogManager logManager;
 
-  public ObjectLoaderImpl(ResourceResolver resourceResolver, ErrorCollector errors,
-      ModuleLoader moduleLoader,
-      TableConfigLoader tableConfigFactory, PackageJson sqrlConfig, LogManager logManager) {
+  public ObjectLoaderImpl(ResourceResolver resourceResolver, ErrorCollector errors) {
     this.resourceResolver = resourceResolver;
     this.errors = errors;
-    this.moduleLoader = moduleLoader;
-    this.tableConfigFactory = tableConfigFactory;
-    this.sqrlConfig = sqrlConfig;
-    this.logManager = logManager;
   }
 
   final static Deserializer SERIALIZER = Deserializer.INSTANCE;

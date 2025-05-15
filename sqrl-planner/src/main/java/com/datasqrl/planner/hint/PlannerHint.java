@@ -1,0 +1,62 @@
+package com.datasqrl.planner.hint;
+
+import java.util.List;
+
+import com.datasqrl.error.ErrorLabel;
+import com.datasqrl.util.ServiceLoaderDiscovery;
+import com.datasqrl.util.ServiceLoaderException;
+import com.datasqrl.planner.parser.ParsedObject;
+import com.datasqrl.planner.parser.SqrlHint;
+import com.datasqrl.planner.parser.StatementParserException;
+import com.google.common.base.Preconditions;
+
+import lombok.Getter;
+
+/**
+ * Abstract hint class that provides basic methods for interacting with hints
+ */
+@Getter
+public abstract class PlannerHint implements Hint {
+
+  protected final ParsedObject<SqrlHint> source;
+  protected final Type type;
+
+
+  protected PlannerHint(ParsedObject<SqrlHint> source, Type type) {
+    Preconditions.checkArgument(source.isPresent());
+    this.source = source;
+    this.type = type;
+  }
+
+  @Override
+public List<String> getOptions() {
+    return source.get().getOptions();
+  }
+
+  @Override
+public String getName() {
+    return source.get().getName().toLowerCase();
+  }
+
+
+  public enum Type {
+    ANALYZER, DAG
+  }
+
+  public static PlannerHint from(ParsedObject<SqrlHint> sqrlHint) {
+    Preconditions.checkArgument(sqrlHint.isPresent());
+    try {
+      var factory = ServiceLoaderDiscovery.get(Factory.class, Factory::getName,
+          sqrlHint.get().getName());
+      return factory.create(sqrlHint);
+    } catch (ServiceLoaderException e) {
+      throw new StatementParserException(ErrorLabel.GENERIC, sqrlHint.getFileLocation(), "Unrecognized hint [%s]", sqrlHint.get().getName());
+    }
+  }
+
+  public interface Factory {
+    PlannerHint create(ParsedObject<SqrlHint> source);
+    String getName();
+  }
+
+}

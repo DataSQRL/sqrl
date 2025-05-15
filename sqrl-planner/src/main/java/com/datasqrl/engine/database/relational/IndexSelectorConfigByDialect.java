@@ -3,17 +3,17 @@
  */
 package com.datasqrl.engine.database.relational;
 
-import static com.datasqrl.function.IndexType.BTREE;
-import static com.datasqrl.function.IndexType.HASH;
-import static com.datasqrl.function.IndexType.PBTREE;
-import static com.datasqrl.function.IndexType.TEXT;
-import static com.datasqrl.function.IndexType.VECTOR_COSINE;
-import static com.datasqrl.function.IndexType.VECTOR_EUCLID;
+import static com.datasqrl.plan.global.IndexType.BTREE;
+import static com.datasqrl.plan.global.IndexType.HASH;
+import static com.datasqrl.plan.global.IndexType.PBTREE;
+import static com.datasqrl.plan.global.IndexType.TEXT;
+import static com.datasqrl.plan.global.IndexType.VECTOR_COSINE;
+import static com.datasqrl.plan.global.IndexType.VECTOR_EUCLID;
 
 import java.util.EnumSet;
 
 import com.datasqrl.config.JdbcDialect;
-import com.datasqrl.function.IndexType;
+import com.datasqrl.plan.global.IndexType;
 import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.plan.global.IndexSelectorConfig;
 import com.google.common.base.Preconditions;

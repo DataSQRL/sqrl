@@ -7,8 +7,6 @@ import java.util.EnumSet;
 import java.util.Optional;
 import java.util.Set;
 
-import com.datasqrl.function.IndexType;
-
 public interface IndexSelectorConfig {
 
   /**

@@ -8,7 +8,7 @@ import static com.datasqrl.engine.database.relational.AbstractJdbcStatementFacto
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.datasqrl.function.IndexType;
+import com.datasqrl.plan.global.IndexType;
 import com.datasqrl.sql.SqlDDLStatement;
 import com.google.common.base.Preconditions;
 

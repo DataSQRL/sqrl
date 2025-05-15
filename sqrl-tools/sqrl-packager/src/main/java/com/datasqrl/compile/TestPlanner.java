@@ -1,6 +1,6 @@
 package com.datasqrl.compile;
 
-import static com.datasqrl.v2.util.SqrTableFunctionUtil.getTableFunctionFromPath;
+import static com.datasqrl.planner.util.SqrTableFunctionUtil.getTableFunctionFromPath;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -17,8 +17,8 @@ import org.apache.calcite.sql.type.SqlTypeName;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.compile.TestPlan.GraphqlQuery;
 import com.datasqrl.graphql.visitor.GraphqlSchemaVisitor;
-import com.datasqrl.plan.queries.APISource;
-import com.datasqrl.v2.tables.SqrlTableFunction;
+import com.datasqrl.graphql.APISource;
+import com.datasqrl.planner.tables.SqrlTableFunction;
 
 import graphql.language.Argument;
 import graphql.language.AstPrinter;

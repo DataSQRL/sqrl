@@ -15,10 +15,10 @@ import com.datasqrl.config.SystemBuiltInConnectors;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.util.SqlNameUtil;
-import com.datasqrl.v2.parser.ParsedObject;
-import com.datasqrl.v2.parser.SqrlExportStatement;
-import com.datasqrl.v2.parser.SqrlImportStatement;
-import com.datasqrl.v2.parser.SqrlStatementParser;
+import com.datasqrl.planner.parser.ParsedObject;
+import com.datasqrl.planner.parser.SqrlExportStatement;
+import com.datasqrl.planner.parser.SqrlImportStatement;
+import com.datasqrl.planner.parser.SqrlStatementParser;
 import com.google.inject.Inject;
 
 import lombok.AllArgsConstructor;

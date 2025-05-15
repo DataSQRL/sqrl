@@ -6,6 +6,7 @@ package com.datasqrl.schema;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import com.datasqrl.plan.table.SchemaConverter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;

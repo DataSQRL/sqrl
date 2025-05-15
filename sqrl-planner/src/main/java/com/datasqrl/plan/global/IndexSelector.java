@@ -34,12 +34,11 @@ import org.apache.commons.math3.util.Precision;
 import org.apache.flink.table.planner.plan.metadata.FlinkDefaultRelMetadataProvider;
 
 import com.datasqrl.calcite.SqrlRexUtil;
-import com.datasqrl.function.IndexType;
 import com.datasqrl.plan.global.QueryIndexSummary.IndexableFunctionCall;
 import com.datasqrl.util.ArrayUtil;
-import com.datasqrl.v2.Sqrl2FlinkSQLTranslator;
-import com.datasqrl.v2.analyzer.TableAnalysis;
-import com.datasqrl.v2.hint.IndexHint;
+import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
+import com.datasqrl.planner.analyzer.TableAnalysis;
+import com.datasqrl.planner.hint.IndexHint;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.primitives.Ints;

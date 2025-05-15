@@ -31,7 +31,7 @@ import com.datasqrl.io.schema.flexible.input.FlexibleTableSchema;
 import com.datasqrl.io.schema.flexible.input.SchemaAdjustmentSettings;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.ServiceLoaderDiscovery;
-import com.datasqrl.v2.tables.FlinkTableBuilder;
+import com.datasqrl.planner.tables.FlinkTableBuilder;
 import com.google.inject.Inject;
 
 import lombok.SneakyThrows;

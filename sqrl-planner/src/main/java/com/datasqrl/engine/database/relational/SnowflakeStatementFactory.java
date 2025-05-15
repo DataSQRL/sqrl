@@ -1,6 +1,7 @@
 package com.datasqrl.engine.database.relational;
 
-import com.datasqrl.v2.hint.DataTypeHint;
+import com.datasqrl.config.JdbcDialect;
+import com.datasqrl.planner.hint.DataTypeHint;
 import java.util.Optional;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.sql.SqlDataTypeSpec;
@@ -25,6 +26,11 @@ public class SnowflakeStatementFactory extends AbstractJdbcStatementFactory {
   public SnowflakeStatementFactory(EngineConfig engineConfig) {
     super(new OperatorRuleTransformer(Dialect.SNOWFLAKE), new SnowflakeRelToSqlNode(), new SnowflakeSqlNodeToString()); //Iceberg does not support queries
     this.engineConfig = engineConfig;
+  }
+
+  @Override
+  public JdbcDialect getDialect() {
+    return JdbcDialect.Snowflake;
   }
 
   @Override

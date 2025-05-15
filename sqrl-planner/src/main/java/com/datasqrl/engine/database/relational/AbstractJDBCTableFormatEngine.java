@@ -5,11 +5,9 @@ import static com.datasqrl.engine.EngineFeature.STANDARD_TABLE_FORMAT;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import com.datasqrl.config.ConnectorFactoryContext;
 import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.EngineType;
 import com.datasqrl.config.PackageJson.EngineConfig;
-import com.datasqrl.config.TableConfig;
 import com.datasqrl.engine.EngineFeature;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.database.AnalyticDatabaseEngine;
@@ -18,8 +16,7 @@ import com.datasqrl.engine.database.DatabaseEngine;
 import com.datasqrl.engine.database.QueryEngine;
 import com.datasqrl.engine.export.ExportEngine;
 import com.datasqrl.graphql.jdbc.DatabaseType;
-import com.datasqrl.plan.global.IndexSelectorConfig;
-import com.datasqrl.v2.dag.plan.MaterializationStagePlan;
+import com.datasqrl.planner.dag.plan.MaterializationStagePlan;
 import com.google.common.base.Preconditions;
 
 import lombok.NonNull;
@@ -79,12 +76,6 @@ public abstract class AbstractJDBCTableFormatEngine extends AbstractJDBCEngine i
     });
 
     return planBuilder.build();
-  }
-
-  @Override
-  @Deprecated
-  public IndexSelectorConfig getIndexSelectorConfig() {
-    return IndexSelectorConfigByDialect.of(getDialect());
   }
 
 }

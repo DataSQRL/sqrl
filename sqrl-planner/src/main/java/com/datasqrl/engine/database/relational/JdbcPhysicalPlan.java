@@ -11,7 +11,7 @@ import org.apache.calcite.rel.RelNode;
 import com.datasqrl.engine.database.DatabasePhysicalPlan;
 import com.datasqrl.engine.database.relational.JdbcStatement.Type;
 import com.datasqrl.engine.pipeline.ExecutionStage;
-import com.datasqrl.v2.analyzer.TableAnalysis;
+import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import lombok.Builder;

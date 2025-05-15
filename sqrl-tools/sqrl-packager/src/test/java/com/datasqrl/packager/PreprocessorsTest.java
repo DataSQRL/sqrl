@@ -28,7 +28,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.datasqrl.config.PackageJsonImpl;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.packager.preprocess.Preprocessor;
+import com.datasqrl.packager.preprocessor.Preprocessor;
 
 import lombok.SneakyThrows;
 

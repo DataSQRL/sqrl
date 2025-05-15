@@ -8,8 +8,8 @@ import com.datasqrl.datatype.DataTypeMapping;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.database.EngineCreateTable;
 import com.datasqrl.engine.pipeline.ExecutionStage;
-import com.datasqrl.v2.analyzer.TableAnalysis;
-import com.datasqrl.v2.tables.FlinkTableBuilder;
+import com.datasqrl.planner.analyzer.TableAnalysis;
+import com.datasqrl.planner.tables.FlinkTableBuilder;
 
 public interface ExportEngine extends ExecutionEngine {
 

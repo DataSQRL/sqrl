@@ -2,6 +2,7 @@ package com.datasqrl.packager.preprocess;
 
 import static com.datasqrl.config.SqrlConstants.DATA_DIR;
 
+import com.datasqrl.packager.preprocessor.Preprocessor;
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;

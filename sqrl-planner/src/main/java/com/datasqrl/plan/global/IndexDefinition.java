@@ -6,7 +6,6 @@ package com.datasqrl.plan.global;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.datasqrl.function.IndexType;
 import com.google.common.base.Preconditions;
 
 import lombok.Value;

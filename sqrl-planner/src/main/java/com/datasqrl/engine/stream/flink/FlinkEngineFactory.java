@@ -21,6 +21,6 @@ public class FlinkEngineFactory implements EngineFactory {
 
   @Override
   public Class getFactoryClass() {
-    return LocalFlinkStreamEngineImpl.class;
+    return FlinkStreamEngineImpl.class;
   }
 }

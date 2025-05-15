@@ -1,0 +1,34 @@
+package com.datasqrl.function.vector;
+
+import static com.datasqrl.function.FlinkUdfNsObject.getFunctionNameFromClass;
+
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.flinkrunner.functions.vector.VectorFunctions;
+import com.datasqrl.flinkrunner.types.vector.FlinkVectorType;
+import com.datasqrl.sql.DatabaseExtension;
+import com.google.auto.service.AutoService;
+
+@AutoService(DatabaseExtension.class)
+public class VectorPgExtension implements DatabaseExtension {
+  public static final String ddlStatement = "CREATE EXTENSION IF NOT EXISTS vector";
+
+  @Override
+  public Class typeClass() {
+    return FlinkVectorType.class;
+  }
+
+  @Override
+  public Set<Name> operators() {
+    return VectorFunctions.functions.stream()
+        .map(f->getFunctionNameFromClass(f.getClass()))
+        .collect(Collectors.toSet());
+  }
+
+  @Override
+  public String getExtensionDdl() {
+    return ddlStatement;
+  }
+}

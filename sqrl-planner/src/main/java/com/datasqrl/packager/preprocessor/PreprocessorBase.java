@@ -6,7 +6,6 @@ import java.util.stream.Stream;
 
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.loaders.DataSource;
-import com.datasqrl.packager.preprocess.Preprocessor;
 import com.datasqrl.util.NameUtil;
 
 import lombok.SneakyThrows;
