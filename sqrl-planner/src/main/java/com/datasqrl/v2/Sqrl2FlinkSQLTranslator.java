@@ -3,6 +3,8 @@ package com.datasqrl.v2;
 import static com.datasqrl.function.FlinkUdfNsObject.getFunctionNameFromClass;
 import static org.apache.flink.table.planner.utils.ShortcutUtils.unwrapContext;
 
+import com.datasqrl.flinkrunner.functions.AutoRegisterSystemFunction;
+import com.datasqrl.function.FlinkUdfNsObject;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -14,6 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.ServiceLoader;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -197,9 +200,11 @@ public class Sqrl2FlinkSQLTranslator {
     this.catalogManager = tEnv.getCatalogManager();
 
     //Register SQRL standard library functions
-    StreamUtil.filterByClass(ServiceLoaderDiscovery.getAll(StdLibrary.class), AbstractFunctionModule.class)
-        .flatMap(fctModule -> fctModule.getFunctions().stream())
-        .forEach(fct -> this.addUserDefinedFunction(fct.getSqlName(), fct.getFunction().getClass().getName(), true));
+    ServiceLoader<AutoRegisterSystemFunction> standardLibraryFunctions =
+        ServiceLoader.load(AutoRegisterSystemFunction.class);
+    standardLibraryFunctions.forEach(fct ->
+        this.addUserDefinedFunction(FlinkUdfNsObject.getFunctionNameFromClass(fct.getClass()).getDisplay(),
+            fct.getClass().getName(), true));
   }
 
   public SqrlRexUtil getRexUtil() {

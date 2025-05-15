@@ -39,9 +39,9 @@ public class FlinkUdfNsObject implements FunctionNamespaceObject<FunctionDefinit
     if (function instanceof BuiltInFunctionDefinition) {
       return ((BuiltInFunctionDefinition) function).getName();
     }
-
     return getFunctionNameFromClass(function.getClass()).getDisplay();
   }
+
   public static Name getFunctionNameFromClass(Class clazz) {
     var fctName = clazz.getSimpleName();
     fctName = Character.toLowerCase(fctName.charAt(0)) + fctName.substring(1);
