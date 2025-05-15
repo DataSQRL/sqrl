@@ -36,7 +36,7 @@ public class PostgresListenNotifyConsumer {
   @SneakyThrows
   public void subscribe(Consumer<Object> listener) {
     // Establish a direct PgConnection
-    PgConnection.connect(vertx, pgConnectOptions).onComplete( res -> {
+    PgConnection.connect(vertx, pgConnectOptions, res -> {
       if (res.succeeded()) {
         PgConnection pgConnection = res.result();
 
@@ -49,7 +49,7 @@ public class PostgresListenNotifyConsumer {
         });
 
         // Execute the LISTEN command to listen for notifications on a specific channel
-        pgConnection.query(listenQuery).execute().onComplete(queryResult -> {
+        pgConnection.query(listenQuery).execute(queryResult -> {
           if (queryResult.succeeded()) {
             log.info("LISTEN command executed successfully: {}", listenQuery);
           } else {

@@ -35,7 +35,7 @@ public class VertxQueryExecutionContext extends AbstractQueryExecutionContext {
   VertxContext context;
   DataFetchingEnvironment environment;
   Set<Argument> arguments;
-  CompletableFuture<Object> cf  ;
+  Promise<Object> future; // basically Vert.x completableFuture
 
   @Override
   public CompletableFuture runQuery(ResolvedSqlQuery resolvedQuery,
@@ -75,16 +75,15 @@ public class VertxQueryExecutionContext extends AbstractQueryExecutionContext {
       future = this.context.getSqlClient().execute(resolvedQuery.getQuery().getDatabase(),
           preparedQuery, parameters);
     }
-    
     // map the resultSet to json for GraphQL response
     future
         .map(r -> resultMapper(r, isList))
-        .onSuccess(result -> cf.complete(result))
+        .onSuccess(result -> this.future.complete(result))
         .onFailure(f -> {
           f.printStackTrace();
-          cf.failedFuture(f);
+          this.future.fail(f);
         });
-    return cf;
+    return new CompletableFuture();
   }
 
   private Object resultMapper(RowSet<Row> r, boolean isList) {
