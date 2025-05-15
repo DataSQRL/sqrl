@@ -1,14 +1,24 @@
 /*
- * Copyright (c) 2021, DataSQRL. All rights reserved. Use is subject to license terms.
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.datasqrl.io.schema.flexible.input;
 
-import java.util.Collections;
-import java.util.List;
-
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.io.schema.flexible.constraint.Constraint;
-
+import java.util.Collections;
+import java.util.List;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -23,19 +33,21 @@ import lombok.ToString;
 public class FlexibleTableSchema extends FlexibleFieldSchema {
 
   private boolean isPartialSchema;
-  @NonNull
-  private RelationType<Field> fields;
-  @NonNull
-  private List<Constraint> constraints;
+  @NonNull private RelationType<Field> fields;
+  @NonNull private List<Constraint> constraints;
 
-  public FlexibleTableSchema(Name name, SchemaElementDescription description, Object default_value,
-                             boolean isPartialSchema, RelationType<Field> fields, List<Constraint> constraints) {
+  public FlexibleTableSchema(
+      Name name,
+      SchemaElementDescription description,
+      Object default_value,
+      boolean isPartialSchema,
+      RelationType<Field> fields,
+      List<Constraint> constraints) {
     super(name, description, default_value);
     this.isPartialSchema = isPartialSchema;
     this.fields = fields;
     this.constraints = constraints;
   }
-
 
   @Setter
   public static class Builder extends FlexibleFieldSchema.Builder {
@@ -52,8 +64,8 @@ public class FlexibleTableSchema extends FlexibleFieldSchema {
     }
 
     public FlexibleTableSchema build() {
-      return new FlexibleTableSchema(name, description, default_value, isPartialSchema, fields,
-              constraints);
+      return new FlexibleTableSchema(
+          name, description, default_value, isPartialSchema, fields, constraints);
     }
   }
 

@@ -1,25 +1,27 @@
 /*
- * Copyright (c) 2021, DataSQRL. All rights reserved. Use is subject to license terms.
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.datasqrl.planner.graphql;
 
 import static com.datasqrl.canonicalizer.Name.isSystemHidden;
-
-import java.util.Optional;
-import java.util.function.BiConsumer;
-import java.util.function.Supplier;
-import java.util.regex.Pattern;
-
-import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rel.type.RelDataTypeField;
-import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.flinkrunner.types.json.FlinkJsonType;
 import com.datasqrl.graphql.server.CustomScalars;
 import com.datasqrl.plan.table.Multiplicity;
-
 import graphql.Scalars;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLInputObjectField;
@@ -30,8 +32,15 @@ import graphql.schema.GraphQLNonNull;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLOutputType;
 import graphql.schema.GraphQLType;
+import java.util.Optional;
+import java.util.function.BiConsumer;
+import java.util.function.Supplier;
+import java.util.regex.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeField;
+import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 
 @Slf4j
 public class GraphqlSchemaUtil2 {
@@ -45,10 +54,10 @@ public class GraphqlSchemaUtil2 {
 
   public static GraphQLType wrapMultiplicity(GraphQLType type, Multiplicity multiplicity) {
     return switch (multiplicity) {
-    case ZERO_ONE -> type;
-    case ONE -> GraphQLNonNull.nonNull(type);
-    case MANY -> GraphQLList.list(GraphQLNonNull.nonNull(type));
-    default -> GraphQLList.list(GraphQLNonNull.nonNull(type));
+      case ZERO_ONE -> type;
+      case ONE -> GraphQLNonNull.nonNull(type);
+      case MANY -> GraphQLList.list(GraphQLNonNull.nonNull(type));
+      default -> GraphQLList.list(GraphQLNonNull.nonNull(type));
     };
   }
 
@@ -56,17 +65,21 @@ public class GraphqlSchemaUtil2 {
     return !isSystemHidden(name) && Pattern.matches("[_A-Za-z][_0-9A-Za-z]*", name);
   }
 
-  public static Optional<GraphQLInputType> getGraphQLInputType(RelDataType type, NamePath namePath, boolean extendedScalarTypes) {
+  public static Optional<GraphQLInputType> getGraphQLInputType(
+      RelDataType type, NamePath namePath, boolean extendedScalarTypes) {
     return getGraphQLType(GraphQLMetaType.INPUT, type, namePath, extendedScalarTypes)
-        .map(f->(GraphQLInputType)f).map(inputType -> (GraphQLInputType) wrapNullable(inputType, type));
+        .map(f -> (GraphQLInputType) f)
+        .map(inputType -> (GraphQLInputType) wrapNullable(inputType, type));
   }
 
-  public static Optional<GraphQLOutputType> getGraphQLOutputType(RelDataType type, NamePath namePath, boolean extendedScalarTypes) {
+  public static Optional<GraphQLOutputType> getGraphQLOutputType(
+      RelDataType type, NamePath namePath, boolean extendedScalarTypes) {
     return getGraphQLType(GraphQLMetaType.OUTPUT, type, namePath, extendedScalarTypes)
         .map(t -> (GraphQLOutputType) wrapNullable(t, type));
   }
 
-  public static Optional<GraphQLType> getGraphQLType(GraphQLMetaType metaType, RelDataType type, NamePath namePath, boolean extendedScalarTypes) {
+  public static Optional<GraphQLType> getGraphQLType(
+      GraphQLMetaType metaType, RelDataType type, NamePath namePath, boolean extendedScalarTypes) {
     if (type.getSqlTypeName() == null) {
       return Optional.empty();
     }
@@ -120,11 +133,12 @@ public class GraphqlSchemaUtil2 {
       case CHAR:
       case VARCHAR:
         return Optional.of(Scalars.GraphQLString);
-      // arity many, create a GraphQLList of the component type
+        // arity many, create a GraphQLList of the component type
       case ARRAY:
       case MULTISET:
-        return getGraphQLType(metaType, type.getComponentType(), namePath, extendedScalarTypes).map(GraphQLList::list);
-     // nested type, arity 1
+        return getGraphQLType(metaType, type.getComponentType(), namePath, extendedScalarTypes)
+            .map(GraphQLList::list);
+        // nested type, arity 1
       case STRUCTURED:
       case ROW:
         return createGraphQLStructuredType(metaType, type, namePath, extendedScalarTypes);
@@ -146,40 +160,47 @@ public class GraphqlSchemaUtil2 {
     }
   }
 
-  private static Optional<GraphQLType> createGraphQLStructuredType(GraphQLMetaType metaType, RelDataType rowType,
-      NamePath namePath, boolean extendedScalarTypes) {
+  private static Optional<GraphQLType> createGraphQLStructuredType(
+      GraphQLMetaType metaType,
+      RelDataType rowType,
+      NamePath namePath,
+      boolean extendedScalarTypes) {
     var typeName = uniquifyNameForPath(namePath, metaType.suffix);
     final BiConsumer<String, GraphQLType> fieldConsumer;
     final Supplier<GraphQLType> buildResult;
-    if (metaType==GraphQLMetaType.OUTPUT) {
+    if (metaType == GraphQLMetaType.OUTPUT) {
       final var builder = GraphQLObjectType.newObject();
       builder.name(typeName);
-      fieldConsumer = (fieldName, fieldType) -> builder.field(
-          GraphQLFieldDefinition.newFieldDefinition()
-              .name(fieldName)
-              .type((GraphQLOutputType) fieldType)
-              .build()
-      );
+      fieldConsumer =
+          (fieldName, fieldType) ->
+              builder.field(
+                  GraphQLFieldDefinition.newFieldDefinition()
+                      .name(fieldName)
+                      .type((GraphQLOutputType) fieldType)
+                      .build());
       buildResult = builder::build;
     } else {
       final var builder = GraphQLInputObjectType.newInputObject();
       builder.name(typeName);
-      fieldConsumer = (fieldName, fieldType) -> builder.field(
-          GraphQLInputObjectField.newInputObjectField()
-              .name(fieldName)
-              .type((GraphQLInputType) fieldType)
-              .build()
-      );
+      fieldConsumer =
+          (fieldName, fieldType) ->
+              builder.field(
+                  GraphQLInputObjectField.newInputObjectField()
+                      .name(fieldName)
+                      .type((GraphQLInputType) fieldType)
+                      .build());
       buildResult = builder::build;
     }
     for (RelDataTypeField field : rowType.getFieldList()) {
       final var fieldPath = namePath.concat(Name.system(field.getName()));
       if (fieldPath.getLast().isHidden()) {
         continue;
-    }
+      }
       var columnType = field.getType();
       getGraphQLType(metaType, columnType, fieldPath, extendedScalarTypes)
-          .map(fieldType -> (GraphQLInputType) wrapNullable(fieldType, columnType))// recursively traverse
+          .map(
+              fieldType ->
+                  (GraphQLInputType) wrapNullable(fieldType, columnType)) // recursively traverse
           .ifPresent(fieldType -> fieldConsumer.accept(field.getName(), fieldType));
     }
     return Optional.of(buildResult.get());
@@ -187,13 +208,16 @@ public class GraphqlSchemaUtil2 {
 
   @AllArgsConstructor
   public enum GraphQLMetaType {
-    INPUT("Input"), OUTPUT("Output");
+    INPUT("Input"),
+    OUTPUT("Output");
 
     private String suffix;
   }
 
   /**
-   * Create a unique type name from a NamePath by concatenating the display names separated by underscore (_)
+   * Create a unique type name from a NamePath by concatenating the display names separated by
+   * underscore (_)
+   *
    * @param fullPath
    * @return
    */

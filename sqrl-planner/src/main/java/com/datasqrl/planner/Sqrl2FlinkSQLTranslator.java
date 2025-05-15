@@ -1,3 +1,18 @@
+/*
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.datasqrl.planner;
 
 import static com.datasqrl.function.FlinkUdfNsObject.getFunctionNameFromClass;
@@ -14,7 +29,6 @@ import com.datasqrl.flinkrunner.functions.AutoRegisterSystemFunction;
 import com.datasqrl.function.FlinkUdfNsObject;
 import com.datasqrl.graphql.server.MutationComputedColumnType;
 import com.datasqrl.plan.util.PrimaryKeyMap;
-import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.planner.FlinkPhysicalPlan.Builder;
 import com.datasqrl.planner.analyzer.SQRLLogicalPlanAnalyzer;
 import com.datasqrl.planner.analyzer.SQRLLogicalPlanAnalyzer.ViewAnalysis;
@@ -32,6 +46,7 @@ import com.datasqrl.planner.tables.FlinkTableBuilder;
 import com.datasqrl.planner.tables.SourceSinkTableAnalysis;
 import com.datasqrl.planner.tables.SqrlFunctionParameter;
 import com.datasqrl.planner.tables.SqrlTableFunction;
+import com.datasqrl.util.CalciteUtil;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -120,28 +135,22 @@ import org.apache.flink.table.types.AbstractDataType;
 import org.apache.flink.table.types.DataType;
 
 /**
- * This class acts as the "translator" between the {@link SqlScriptPlanner} and the Flink
- * parser and planner (and, by extension, Calcite).
+ * This class acts as the "translator" between the {@link SqlScriptPlanner} and the Flink parser and
+ * planner (and, by extension, Calcite).
  *
- * In its role as the translator, this class does a number of things:
+ * <p>In its role as the translator, this class does a number of things:
+ *
  * <ul>
- *   <li>
- *     Provide access to the Flink planner and it's components like the FlinkRelBuilder and other planner classes
- *   that we need access to. In some cases, we need to use hacky reflection to get access because they are private
- *   </li>
- *   <li>
- *     Parse strings to SqlNodes, and convert SqlNodes to RelNodes. And also the inverse:
- *     Convert RelNodes to SqlNodes and unparse SqlNodes to strings.
- *   </li>
- *   <li>
- *     Handle the additional parsing logic that SQRL introduces for function argument signatures, as well
- *     as creating views, parsing CREATE TABLE statements and such.
- *     For created views and tables, it invokes the {@link SQRLLogicalPlanAnalyzer} to extract the
- *     information needed for the DAG construction.
- *   </li>
- *   <li>
- *     Keeps track of everything we add to Flink the builder for the {@link FlinkPhysicalPlan}.
- *   </li>
+ *   <li>Provide access to the Flink planner and it's components like the FlinkRelBuilder and other
+ *       planner classes that we need access to. In some cases, we need to use hacky reflection to
+ *       get access because they are private
+ *   <li>Parse strings to SqlNodes, and convert SqlNodes to RelNodes. And also the inverse: Convert
+ *       RelNodes to SqlNodes and unparse SqlNodes to strings.
+ *   <li>Handle the additional parsing logic that SQRL introduces for function argument signatures,
+ *       as well as creating views, parsing CREATE TABLE statements and such. For created views and
+ *       tables, it invokes the {@link SQRLLogicalPlanAnalyzer} to extract the information needed
+ *       for the DAG construction.
+ *   <li>Keeps track of everything we add to Flink the builder for the {@link FlinkPhysicalPlan}.
  * </ul>
  */
 public class Sqrl2FlinkSQLTranslator {
@@ -153,50 +162,54 @@ public class Sqrl2FlinkSQLTranslator {
   private final Supplier<FlinkPlannerImpl> validatorSupplier;
   private final SqrlFunctionCatalog sqrlFunctionCatalog;
   private final CatalogManager catalogManager;
-  @Getter
-  private final FlinkTypeFactory typeFactory;
+  @Getter private final FlinkTypeFactory typeFactory;
 
-  @Getter
-  private final TableAnalysisLookup tableLookup = new TableAnalysisLookup();
+  @Getter private final TableAnalysisLookup tableLookup = new TableAnalysisLookup();
   private final FlinkPhysicalPlan.Builder planBuilder = new Builder();
 
   public Sqrl2FlinkSQLTranslator(BuildPath buildPath) {
-    //Set up a StreamExecution Environment in Flink with configuration and access to jars
+    // Set up a StreamExecution Environment in Flink with configuration and access to jars
     var jarUrls = getUdfUrls(buildPath);
     // Create a UDF class loader and configure
-    ClassLoader udfClassLoader = new URLClassLoader(jarUrls.toArray(new URL[0]), getClass().getClassLoader());
+    ClassLoader udfClassLoader =
+        new URLClassLoader(jarUrls.toArray(new URL[0]), getClass().getClassLoader());
     Map<String, String> config = new HashMap<>();
-    config.put("pipeline.classpaths", jarUrls.stream().map(URL::toString)
-        .collect(Collectors.joining(",")));
+    config.put(
+        "pipeline.classpaths",
+        jarUrls.stream().map(URL::toString).collect(Collectors.joining(",")));
     // Set up execution environment
-    var sEnv = StreamExecutionEnvironment.getExecutionEnvironment(
-        Configuration.fromMap(config));
+    var sEnv = StreamExecutionEnvironment.getExecutionEnvironment(Configuration.fromMap(config));
     // Create environment settings with class loader
-    var tEnvConfig = EnvironmentSettings.newInstance()
-        .withConfiguration(Configuration.fromMap(config))
-        .withClassLoader(udfClassLoader)
-        .build();
+    var tEnvConfig =
+        EnvironmentSettings.newInstance()
+            .withConfiguration(Configuration.fromMap(config))
+            .withClassLoader(udfClassLoader)
+            .build();
     this.tEnv = (StreamTableEnvironmentImpl) StreamTableEnvironment.create(sEnv, tEnvConfig);
 
-    //Extract a number of classes we need access to for planning
-    this.validatorSupplier = ((PlannerBase)tEnv.getPlanner())::createFlinkPlanner;
+    // Extract a number of classes we need access to for planning
+    this.validatorSupplier = ((PlannerBase) tEnv.getPlanner())::createFlinkPlanner;
     var planner = this.validatorSupplier.get();
     typeFactory = (FlinkTypeFactory) planner.getOrCreateSqlValidator().getTypeFactory();
     // Initialize function catalog (custom)
     sqrlFunctionCatalog = new SqrlFunctionCatalog(typeFactory);
     var calciteConfigBuilder = new CalciteConfigBuilder();
     calciteConfigBuilder.addSqlOperatorTable(sqrlFunctionCatalog.getOperatorTable());
-//    setOptimizerRules(calciteConfigBuilder,tEnv.getConfig()); TODO: fix, so we have more effective subgraph identification
+    //    setOptimizerRules(calciteConfigBuilder,tEnv.getConfig()); TODO: fix, so we have more
+    // effective subgraph identification
 
     this.tEnv.getConfig().setPlannerConfig(calciteConfigBuilder.build());
     this.catalogManager = tEnv.getCatalogManager();
 
-    //Register SQRL standard library functions
+    // Register SQRL standard library functions
     ServiceLoader<AutoRegisterSystemFunction> standardLibraryFunctions =
         ServiceLoader.load(AutoRegisterSystemFunction.class);
-    standardLibraryFunctions.forEach(fct ->
-        this.addUserDefinedFunction(FlinkUdfNsObject.getFunctionNameFromClass(fct.getClass()).getDisplay(),
-            fct.getClass().getName(), true));
+    standardLibraryFunctions.forEach(
+        fct ->
+            this.addUserDefinedFunction(
+                FlinkUdfNsObject.getFunctionNameFromClass(fct.getClass()).getDisplay(),
+                fct.getClass().getName(),
+                true));
   }
 
   public SqrlRexUtil getRexUtil() {
@@ -206,7 +219,7 @@ public class Sqrl2FlinkSQLTranslator {
   public SqlNode parseSQL(String sqlStatement) {
     CalciteParser parser;
     try {
-      //TODO: This is a hack - is there a better way to get the calcite parser?
+      // TODO: This is a hack - is there a better way to get the calcite parser?
       var calciteSupplierField = ParserImpl.class.getDeclaredField("calciteParserSupplier");
       calciteSupplierField.setAccessible(true);
       parser = ((Supplier<CalciteParser>) calciteSupplierField.get(tEnv.getParser())).get();
@@ -228,25 +241,26 @@ public class Sqrl2FlinkSQLTranslator {
   }
 
   /**
-   * Builds the statement set and compiles the plan for Flink which
-   * is the final component needed for the {@link FlinkPhysicalPlan}.
+   * Builds the statement set and compiles the plan for Flink which is the final component needed
+   * for the {@link FlinkPhysicalPlan}.
+   *
    * @return
    */
   public FlinkPhysicalPlan compilePlan() {
     var execute = planBuilder.getExecuteStatement();
-    //StatementSetOperation statmentSetOp = (StatementSetOperation) getOperation(execute);
+    // StatementSetOperation statmentSetOp = (StatementSetOperation) getOperation(execute);
     var insert = toSqlString(execute);
     planBuilder.add(execute, insert);
-    var parse = (StatementSetOperation)tEnv.getParser().parse(insert + ";").get(0);
+    var parse = (StatementSetOperation) tEnv.getParser().parse(insert + ";").get(0);
     var compiledPlan = tEnv.compilePlan(parse.getOperations());
     return planBuilder.build(compiledPlan);
   }
 
   /**
-   * Analyzes a view definition with the {@link SQRLLogicalPlanAnalyzer} to produce a {@link ViewAnalysis}.
-   * There is some additional complexity around extracting the query from the view definition
-   * and removing the top level sort (if present) since we don't want to execute that in Flink
-   * but instead pull it up to the database to execute at query time.
+   * Analyzes a view definition with the {@link SQRLLogicalPlanAnalyzer} to produce a {@link
+   * ViewAnalysis}. There is some additional complexity around extracting the query from the view
+   * definition and removing the top level sort (if present) since we don't want to execute that in
+   * Flink but instead pull it up to the database to execute at query time.
    *
    * @param viewDef
    * @param removeTopLevelSort
@@ -254,8 +268,8 @@ public class Sqrl2FlinkSQLTranslator {
    * @param errors
    * @return
    */
-  public ViewAnalysis analyzeView(SqlNode viewDef, boolean removeTopLevelSort,
-      PlannerHints hints, ErrorCollector errors) {
+  public ViewAnalysis analyzeView(
+      SqlNode viewDef, boolean removeTopLevelSort, PlannerHints hints, ErrorCollector errors) {
     var flinkPlanner = this.validatorSupplier.get();
 
     var validated = flinkPlanner.validate(viewDef);
@@ -266,7 +280,7 @@ public class Sqrl2FlinkSQLTranslator {
     } else if (validated instanceof SqlAlterViewAs as) {
       query = as.getNewQuery();
     } else {
-        throw new UnsupportedOperationException("Unexpected SQLnode: " + validated);
+      throw new UnsupportedOperationException("Unexpected SQLnode: " + validated);
     }
     var relRoot = toRelRoot(query, flinkPlanner);
     var relBuilder = getRelBuilder(flinkPlanner);
@@ -274,17 +288,23 @@ public class Sqrl2FlinkSQLTranslator {
     Optional<Sort> topLevelSort = Optional.empty();
     if (removeTopLevelSort) {
       if (relNode instanceof Sort sort) {
-        //Remove top-level sort and attach it to TableAnalysis later
+        // Remove top-level sort and attach it to TableAnalysis later
         topLevelSort = Optional.of(sort);
         relNode = topLevelSort.get().getInput();
       } else {
-        errors.warn("Expected top-level sort on relnode: %s",relNode.explain());
+        errors.warn("Expected top-level sort on relnode: %s", relNode.explain());
       }
     }
-    var analyzer = new SQRLLogicalPlanAnalyzer(relNode, tableLookup,
-        flinkPlanner.getOrCreateSqlValidator().getCatalogReader().unwrap(CalciteCatalogReader.class),
-        relBuilder,
-        errors);
+    var analyzer =
+        new SQRLLogicalPlanAnalyzer(
+            relNode,
+            tableLookup,
+            flinkPlanner
+                .getOrCreateSqlValidator()
+                .getCatalogReader()
+                .unwrap(CalciteCatalogReader.class),
+            relBuilder,
+            errors);
     var viewAnalysis = analyzer.analyze(hints);
     viewAnalysis.getTableAnalysis().topLevelSort(topLevelSort);
     return viewAnalysis;
@@ -292,7 +312,7 @@ public class Sqrl2FlinkSQLTranslator {
 
   public RelRoot toRelRoot(SqlNode query, @Nullable FlinkPlannerImpl flinkPlanner) {
     if (flinkPlanner == null) {
-        flinkPlanner = this.validatorSupplier.get();
+      flinkPlanner = this.validatorSupplier.get();
     }
     var context = new SqlNodeConvertContext(flinkPlanner, catalogManager);
     var validatedQuery = context.getSqlValidator().validate(query);
@@ -301,13 +321,16 @@ public class Sqrl2FlinkSQLTranslator {
 
   public FlinkRelBuilder getRelBuilder(@Nullable FlinkPlannerImpl flinkPlanner) {
     if (flinkPlanner == null) {
-        flinkPlanner = this.validatorSupplier.get();
+      flinkPlanner = this.validatorSupplier.get();
     }
-    var config = flinkPlanner.config().getSqlToRelConverterConfig().withAddJsonTypeOperatorEnabled(false);
-    //We are using a null schema because using the scan method on FlinkRelBuilder tries to expand views.
-    //Need to construct LogicalTableScan manually.
-    return
-        (FlinkRelBuilder) config.getRelBuilderFactory()
+    var config =
+        flinkPlanner.config().getSqlToRelConverterConfig().withAddJsonTypeOperatorEnabled(false);
+    // We are using a null schema because using the scan method on FlinkRelBuilder tries to expand
+    // views.
+    // Need to construct LogicalTableScan manually.
+    return (FlinkRelBuilder)
+        config
+            .getRelBuilderFactory()
             .create(flinkPlanner.cluster(), null)
             .transform(config.getRelBuilderConfigTransform());
   }
@@ -317,53 +340,70 @@ public class Sqrl2FlinkSQLTranslator {
     final var relBuilder = getRelBuilder(flinkPlanner);
     final var context = unwrapContext(relBuilder);
     final var parser = tEnv.getParser();
-    final var expressionResolver = ExpressionResolver.resolverFor(
-        context.getTableConfig(),
-        context.getClassLoader(),
-        name -> Optional.empty(),
-        context.getFunctionCatalog().asLookup(parser::parseIdentifier),
-        context.getCatalogManager().getDataTypeFactory(),
-        parser::parseSqlExpression).build();
+    final var expressionResolver =
+        ExpressionResolver.resolverFor(
+                context.getTableConfig(),
+                context.getClassLoader(),
+                name -> Optional.empty(),
+                context.getFunctionCatalog().asLookup(parser::parseIdentifier),
+                context.getCatalogManager().getDataTypeFactory(),
+                parser::parseSqlExpression)
+            .build();
     return exp -> {
       return expressionResolver.resolve(Collections.singletonList(exp)).get(0);
     };
   }
 
   private CalciteCatalogReader getCalciteCatalog(@Nullable FlinkPlannerImpl flinkPlanner) {
-    return flinkPlanner.getOrCreateSqlValidator().getCatalogReader().unwrap(CalciteCatalogReader.class);
+    return flinkPlanner
+        .getOrCreateSqlValidator()
+        .getCatalogReader()
+        .unwrap(CalciteCatalogReader.class);
   }
 
   public FlinkRelBuilder getTableScan(ObjectIdentifier identifier) {
     var flinkPlanner = this.validatorSupplier.get();
     var relBuilder = getRelBuilder(flinkPlanner);
     var catalog = getCalciteCatalog(flinkPlanner);
-    relBuilder.push(LogicalTableScan.create(flinkPlanner.cluster(), catalog.getTableForMember(identifier.toList()), List.of()));
+    relBuilder.push(
+        LogicalTableScan.create(
+            flinkPlanner.cluster(), catalog.getTableForMember(identifier.toList()), List.of()));
     return relBuilder;
   }
 
   public SqlNode getQueryFromView(SqlNode viewDef) {
-    return viewDef instanceof SqlCreateView scv?
-        scv.getQuery():
-        ((SqlAlterViewAs)viewDef).getNewQuery();
+    return viewDef instanceof SqlCreateView scv
+        ? scv.getQuery()
+        : ((SqlAlterViewAs) viewDef).getNewQuery();
   }
 
   /**
    * Creates a new view with the updated query
+   *
    * @param updatedQuery
    * @param viewDef
    * @return
    */
   public SqlNode updateViewQuery(SqlNode updatedQuery, SqlNode viewDef) {
     if (viewDef instanceof SqlCreateView createView) {
-      return updatedQuery==createView.getQuery()?createView:
-          new SqlCreateView(createView.getParserPosition(),
-              createView.getViewName(), createView.getFieldList(), updatedQuery, createView.getReplace(),
-              createView.isTemporary(), createView.isIfNotExists(),
-              createView.getComment().orElse(null), createView.getProperties().orElse(null));
+      return updatedQuery == createView.getQuery()
+          ? createView
+          : new SqlCreateView(
+              createView.getParserPosition(),
+              createView.getViewName(),
+              createView.getFieldList(),
+              updatedQuery,
+              createView.getReplace(),
+              createView.isTemporary(),
+              createView.isIfNotExists(),
+              createView.getComment().orElse(null),
+              createView.getProperties().orElse(null));
     } else {
       var alterView = (SqlAlterViewAs) viewDef;
-      return updatedQuery==alterView.getNewQuery()?alterView:
-          new SqlAlterViewAs(alterView.getParserPosition(), alterView.getViewIdentifier(), updatedQuery);
+      return updatedQuery == alterView.getNewQuery()
+          ? alterView
+          : new SqlAlterViewAs(
+              alterView.getParserPosition(), alterView.getViewIdentifier(), updatedQuery);
     }
   }
 
@@ -377,18 +417,19 @@ public class Sqrl2FlinkSQLTranslator {
    */
   public TableAnalysis addView(String originalSql, PlannerHints hints, ErrorCollector errors) {
     var viewDef = parseSQL(originalSql);
-    Preconditions.checkArgument(viewDef instanceof SqlCreateView || viewDef instanceof SqlAlterViewAs,
+    Preconditions.checkArgument(
+        viewDef instanceof SqlCreateView || viewDef instanceof SqlAlterViewAs,
         "Unexpected view definition: " + viewDef);
     /* Stage 1: Query rewriting
-      In this stage, we try to pull up/out any operators that we want to rewrite as we plan the DAG.
-      We attach those to the TableAnalysis so they can be re-attached during DAG planning.
-      Note, that the actual "pulling out" happens during RelNode analysis
-      in stage 2. In stage 1, we just finalize the SqlNode that gets passed to Flink.
-      Step 1.1: If query has a top level order, we pull it out, so we can later add it to the query if necessary.
-     */
+     In this stage, we try to pull up/out any operators that we want to rewrite as we plan the DAG.
+     We attach those to the TableAnalysis so they can be re-attached during DAG planning.
+     Note, that the actual "pulling out" happens during RelNode analysis
+     in stage 2. In stage 1, we just finalize the SqlNode that gets passed to Flink.
+     Step 1.1: If query has a top level order, we pull it out, so we can later add it to the query if necessary.
+    */
     final var originalQuery = getQueryFromView(viewDef);
     final var query = removeSort(originalQuery);
-    var removedSort = originalQuery!=query;
+    var removedSort = originalQuery != query;
     final var rewrittenViewDef = updateViewQuery(query, viewDef);
     // Add the view to Flink using the rewritten SqlNode from stage 1.
     var op = executeSqlNode(rewrittenViewDef);
@@ -397,24 +438,22 @@ public class Sqrl2FlinkSQLTranslator {
     if (op instanceof AlterViewAsOperation operation) {
       identifier = operation.getViewIdentifier();
       schema = operation.getNewView().getUnresolvedSchema();
-      tableLookup.removeTable(identifier); //remove previously planned view
+      tableLookup.removeTable(identifier); // remove previously planned view
     } else if (op instanceof CreateViewOperation operation) {
       identifier = operation.getViewIdentifier();
       schema = operation.getCatalogView().getUnresolvedSchema();
     } else {
-        throw new UnsupportedOperationException(op.getClass().toString());
+      throw new UnsupportedOperationException(op.getClass().toString());
     }
 
     /* Stage 2: Analyze the RelNode/RelRoot
-        - pull out top-level sort
-      NOTE: Flink modifies the SqlSelect node during validation, so we have to re-create it from the original SQL
-     */
+       - pull out top-level sort
+     NOTE: Flink modifies the SqlSelect node during validation, so we have to re-create it from the original SQL
+    */
     var viewDef2 = parseSQL(originalSql);
     var viewAnalysis = analyzeView(viewDef2, removedSort, hints, errors);
-    var tableAnalysis = viewAnalysis.getTableAnalysis()
-        .identifier(identifier)
-        .originalSql(originalSql)
-        .build();
+    var tableAnalysis =
+        viewAnalysis.getTableAnalysis().identifier(identifier).originalSql(originalSql).build();
     tableLookup.registerTable(tableAnalysis);
 
     return tableAnalysis;
@@ -427,11 +466,10 @@ public class Sqrl2FlinkSQLTranslator {
     return sqlNode;
   }
 
-
   /**
-   * Parses a {@link SqrlTableFunction} definition and analyzes the result.
-   * It invokes {@link #analyzeView(SqlNode, boolean, PlannerHints, ErrorCollector)} and in addition
-   * contains the logic for resolving the function arguments and their types.
+   * Parses a {@link SqrlTableFunction} definition and analyzes the result. It invokes {@link
+   * #analyzeView(SqlNode, boolean, PlannerHints, ErrorCollector)} and in addition contains the
+   * logic for resolving the function arguments and their types.
    *
    * @param identifier
    * @param originalSql
@@ -441,36 +479,45 @@ public class Sqrl2FlinkSQLTranslator {
    * @param errors
    * @return
    */
-  public SqrlTableFunction.SqrlTableFunctionBuilder resolveSqrlTableFunction(ObjectIdentifier identifier,
-      String originalSql, List<ParsedArgument> arguments,
-      Map<Integer, Integer> argumentIndexMap, PlannerHints hints, ErrorCollector errors) {
-    List<FunctionParameter> parameters=new ArrayList<>();
+  public SqrlTableFunction.SqrlTableFunctionBuilder resolveSqrlTableFunction(
+      ObjectIdentifier identifier,
+      String originalSql,
+      List<ParsedArgument> arguments,
+      Map<Integer, Integer> argumentIndexMap,
+      PlannerHints hints,
+      ErrorCollector errors) {
+    List<FunctionParameter> parameters = new ArrayList<>();
     for (var i = 0; i < arguments.size(); i++) {
       var parsedArg = arguments.get(i);
       var type = parsedArg.getResolvedRelDataType();
-      parameters.add(new SqrlFunctionParameter(parsedArg.getName().get(),
-          parsedArg.getIndex(), type, parsedArg.isParentField()));
+      parameters.add(
+          new SqrlFunctionParameter(
+              parsedArg.getName().get(), parsedArg.getIndex(), type, parsedArg.isParentField()));
     }
-    //Analyze Query
+    // Analyze Query
     var funcDef2 = parseSQL(originalSql);
     var viewAnalysis = analyzeView(funcDef2, false, hints, errors);
-    //Remap parameters in query so the RexDynamicParam point directly at the function parameter by index
-    var updateParameters = viewAnalysis.getRelNode().accept(new DynamicParameterReplacer(argumentIndexMap));
+    // Remap parameters in query so the RexDynamicParam point directly at the function parameter by
+    // index
+    var updateParameters =
+        viewAnalysis.getRelNode().accept(new DynamicParameterReplacer(argumentIndexMap));
     var tblBuilder = viewAnalysis.getTableAnalysis();
     tblBuilder.collapsedRelnode(updateParameters);
     tblBuilder.identifier(identifier);
     tblBuilder.originalSql(originalSql);
     var tableAnalysis = tblBuilder.build();
-    //Build table function
-    var fctBuilder = SqrlTableFunction.builder()
-        .functionAnalysis(tableAnalysis)
-        .parameters(parameters)
-        .multiplicity(SqrlTableFunction.getMultiplicity(updateParameters));
+    // Build table function
+    var fctBuilder =
+        SqrlTableFunction.builder()
+            .functionAnalysis(tableAnalysis)
+            .parameters(parameters)
+            .multiplicity(SqrlTableFunction.getMultiplicity(updateParameters));
     return fctBuilder;
   }
 
   /**
-   * Adds {@link SqrlTableFunction} for internally defined table access functions in the {@link SqlScriptPlanner}.
+   * Adds {@link SqrlTableFunction} for internally defined table access functions in the {@link
+   * SqlScriptPlanner}.
    *
    * @param identifier
    * @param relNode
@@ -478,50 +525,55 @@ public class Sqrl2FlinkSQLTranslator {
    * @param baseTable
    * @return
    */
-  public SqrlTableFunction.SqrlTableFunctionBuilder addSqrlTableFunction(ObjectIdentifier identifier,
-      RelNode relNode, List<FunctionParameter> parameters, TableAnalysis baseTable) {
+  public SqrlTableFunction.SqrlTableFunctionBuilder addSqrlTableFunction(
+      ObjectIdentifier identifier,
+      RelNode relNode,
+      List<FunctionParameter> parameters,
+      TableAnalysis baseTable) {
     var sql = toSqlString(toSqlNode(relNode));
-    var tableAnalysis = TableAnalysis.builder()
-        .originalRelnode(relNode)
-        .originalSql(sql)
-        .type(baseTable.getType())
-        .primaryKey(baseTable.getPrimaryKey())
-        .optionalBaseTable(Optional.of(baseTable.getBaseTable()))
-        .streamRoot(baseTable.getStreamRoot())
-        .fromTables(List.of(baseTable))
-        .hints(baseTable.getHints())
-        .errors(baseTable.getErrors())
-        .collapsedRelnode(relNode)
-        .identifier(identifier)
-        .build();
-    var fctBuilder = SqrlTableFunction.builder()
-        .functionAnalysis(tableAnalysis)
-        .parameters(parameters)
-        .multiplicity(SqrlTableFunction.getMultiplicity(relNode));
+    var tableAnalysis =
+        TableAnalysis.builder()
+            .originalRelnode(relNode)
+            .originalSql(sql)
+            .type(baseTable.getType())
+            .primaryKey(baseTable.getPrimaryKey())
+            .optionalBaseTable(Optional.of(baseTable.getBaseTable()))
+            .streamRoot(baseTable.getStreamRoot())
+            .fromTables(List.of(baseTable))
+            .hints(baseTable.getHints())
+            .errors(baseTable.getErrors())
+            .collapsedRelnode(relNode)
+            .identifier(identifier)
+            .build();
+    var fctBuilder =
+        SqrlTableFunction.builder()
+            .functionAnalysis(tableAnalysis)
+            .parameters(parameters)
+            .multiplicity(SqrlTableFunction.getMultiplicity(relNode));
     return fctBuilder;
   }
 
   /**
-   * Replaces Dynamic Parameters to use their argument index from the function
-   * signature. Apache Calcite does not support dynamic parameter indexes in the parser, so
-   * all parameters are `?`. We iterate through them and map them back to the index of the
-   * parameter from the signature.
+   * Replaces Dynamic Parameters to use their argument index from the function signature. Apache
+   * Calcite does not support dynamic parameter indexes in the parser, so all parameters are `?`. We
+   * iterate through them and map them back to the index of the parameter from the signature.
    */
   @AllArgsConstructor
   private static class DynamicParameterReplacer extends RelShuttleImpl {
 
     final Map<Integer, Integer> argumentIndexMap;
-    final RexShuttle rexShuttle = new RexShuttle() {
-      @Override
-      public RexNode visitDynamicParam(RexDynamicParam dynamicParam) {
-        int newIndex = argumentIndexMap.get(dynamicParam.getIndex());
-        if (newIndex!=dynamicParam.getIndex()) {
-          return new RexDynamicParam(dynamicParam.getType(), newIndex);
-        } else {
-            return dynamicParam;
-        }
-      }
-    };
+    final RexShuttle rexShuttle =
+        new RexShuttle() {
+          @Override
+          public RexNode visitDynamicParam(RexDynamicParam dynamicParam) {
+            int newIndex = argumentIndexMap.get(dynamicParam.getIndex());
+            if (newIndex != dynamicParam.getIndex()) {
+              return new RexDynamicParam(dynamicParam.getType(), newIndex);
+            } else {
+              return dynamicParam;
+            }
+          }
+        };
 
     @Override
     public RelNode visit(RelNode other) {
@@ -534,15 +586,20 @@ public class Sqrl2FlinkSQLTranslator {
     @Override
     public RelNode visit(TableFunctionScan scan) {
       var call = (RexCall) scan.getCall().accept(rexShuttle);
-      return scan.copy(scan.getTraitSet(), scan.getInputs(), call, scan.getElementType(),
-          scan.getRowType(), scan.getColumnMappings());
+      return scan.copy(
+          scan.getTraitSet(),
+          scan.getInputs(),
+          call,
+          scan.getElementType(),
+          scan.getRowType(),
+          scan.getColumnMappings());
     }
 
     @Override
     protected RelNode visitChild(RelNode parent, int i, RelNode child) {
-      if (i==0) {
+      if (i == 0) {
         parent = parent.accept(rexShuttle);
-    }
+      }
       return super.visitChild(parent, i, child);
     }
   }
@@ -553,31 +610,41 @@ public class Sqrl2FlinkSQLTranslator {
 
   @FunctionalInterface
   public interface MutationBuilder {
-    MutationQueryBuilder createMutation(FlinkTableBuilder flinkTableBuilder, RelDataType relDataType);
+    MutationQueryBuilder createMutation(
+        FlinkTableBuilder flinkTableBuilder, RelDataType relDataType);
   }
 
-  public TableAnalysis createTableWithSchema(String tableName, String tableDefinition,
+  public TableAnalysis createTableWithSchema(
+      String tableName,
+      String tableDefinition,
       Optional<RelDataType> schema,
       MutationBuilder logEngineBuilder) {
-    return addSourceTable(addTable(Optional.of(tableName), tableDefinition, schema, logEngineBuilder));
+    return addSourceTable(
+        addTable(Optional.of(tableName), tableDefinition, schema, logEngineBuilder));
   }
 
-  public ObjectIdentifier addExternalExport(String tableName, String tableDefinition, Optional<RelDataType> schema) {
-    var result = addTable(Optional.of(tableName), tableDefinition, schema, (x,y) -> {
-      throw new UnsupportedOperationException("Export tables require connector configuration");
-    });
+  public ObjectIdentifier addExternalExport(
+      String tableName, String tableDefinition, Optional<RelDataType> schema) {
+    var result =
+        addTable(
+            Optional.of(tableName),
+            tableDefinition,
+            schema,
+            (x, y) -> {
+              throw new UnsupportedOperationException(
+                  "Export tables require connector configuration");
+            });
     return result.baseTableIdentifier;
   }
 
-  public TableAnalysis createTable(String tableDefinition,
-      MutationBuilder logEngineBuilder) {
+  public TableAnalysis createTable(String tableDefinition, MutationBuilder logEngineBuilder) {
     var result = addTable(Optional.empty(), tableDefinition, Optional.empty(), logEngineBuilder);
     return addSourceTable(result);
   }
 
   public SqlCreateView createScanView(String viewName, ObjectIdentifier id) {
-    return  FlinkSqlNodeFactory.createView(viewName, FlinkSqlNodeFactory.selectAllFromTable(
-        FlinkSqlNodeFactory.identifier(id)));
+    return FlinkSqlNodeFactory.createView(
+        viewName, FlinkSqlNodeFactory.selectAllFromTable(FlinkSqlNodeFactory.identifier(id)));
   }
 
   private TableAnalysis addSourceTable(AddTableResult addResult) {
@@ -592,9 +659,9 @@ public class Sqrl2FlinkSQLTranslator {
   }
 
   /**
-   * Adds a table to Flink and analyzes the table for schema and primary key definition.
-   * If the table does not have a connector, it is a mutation and we generate the connector
-   * via the provided mutationBuilder.
+   * Adds a table to Flink and analyzes the table for schema and primary key definition. If the
+   * table does not have a connector, it is a mutation and we generate the connector via the
+   * provided mutationBuilder.
    *
    * @param tableName
    * @param createTableSql
@@ -602,52 +669,60 @@ public class Sqrl2FlinkSQLTranslator {
    * @param mutationBuilder
    * @return
    */
-  private AddTableResult addTable(Optional<String> tableName, String createTableSql,
-      Optional<RelDataType> schema, MutationBuilder mutationBuilder) {
+  private AddTableResult addTable(
+      Optional<String> tableName,
+      String createTableSql,
+      Optional<RelDataType> schema,
+      MutationBuilder mutationBuilder) {
     var tableSqlNode = parseSQL(createTableSql);
-    Preconditions.checkArgument(tableSqlNode instanceof SqlCreateTable, "Expected CREATE TABLE statement");
+    Preconditions.checkArgument(
+        tableSqlNode instanceof SqlCreateTable, "Expected CREATE TABLE statement");
     var tableDefinition = (SqlCreateTable) tableSqlNode;
     var fullTable = tableDefinition;
     final var finalTableName = tableName.orElse(tableDefinition.getTableName().getSimple());
-    final var baseTableName = finalTableName+TABLE_DEFINITION_SUFFIX;
+    final var baseTableName = finalTableName + TABLE_DEFINITION_SUFFIX;
     if (schema.isPresent()) {
-      //Use LIKE to merge schema with table definition
-      var schemaTableName = finalTableName+SCHEMA_SUFFIX;
-      //This should be a temporary table
+      // Use LIKE to merge schema with table definition
+      var schemaTableName = finalTableName + SCHEMA_SUFFIX;
+      // This should be a temporary table
       var schemaTable = FlinkSqlNodeFactory.createTable(schemaTableName, schema.get(), true);
       executeSqlNode(schemaTable);
 
-      var likeClause = new SqlTableLike(SqlParserPos.ZERO,
-          FlinkSqlNodeFactory.identifier(schemaTableName),
-          List.of());
-      fullTable = new SqlCreateTableLike(tableDefinition.getParserPosition(),
-          FlinkSqlNodeFactory.identifier(baseTableName),
-          tableDefinition.getColumnList(),
-          tableDefinition.getTableConstraints(),
-          tableDefinition.getPropertyList(),
-//          tableDefinition.getDistribution(),
-          tableDefinition.getPartitionKeyList(),
-          tableDefinition.getWatermark().orElse(null),
-          tableDefinition.getComment().orElse(null),
-          likeClause,
-          tableDefinition.isTemporary(),
-          tableDefinition.ifNotExists);
+      var likeClause =
+          new SqlTableLike(
+              SqlParserPos.ZERO, FlinkSqlNodeFactory.identifier(schemaTableName), List.of());
+      fullTable =
+          new SqlCreateTableLike(
+              tableDefinition.getParserPosition(),
+              FlinkSqlNodeFactory.identifier(baseTableName),
+              tableDefinition.getColumnList(),
+              tableDefinition.getTableConstraints(),
+              tableDefinition.getPropertyList(),
+              //          tableDefinition.getDistribution(),
+              tableDefinition.getPartitionKeyList(),
+              tableDefinition.getWatermark().orElse(null),
+              tableDefinition.getComment().orElse(null),
+              likeClause,
+              tableDefinition.isTemporary(),
+              tableDefinition.ifNotExists);
     } else {
-      //Replace name but leave everything else
-      fullTable = new SqlCreateTable(tableDefinition.getParserPosition(),
-          FlinkSqlNodeFactory.identifier(baseTableName),
-          tableDefinition.getColumnList(),
-          tableDefinition.getTableConstraints(),
-          tableDefinition.getPropertyList(),
-//          tableDefinition.getDistribution(),
-          tableDefinition.getPartitionKeyList(),
-          tableDefinition.getWatermark().orElse(null),
-          tableDefinition.getComment().orElse(null),
-          tableDefinition.isTemporary(),
-          tableDefinition.ifNotExists);
+      // Replace name but leave everything else
+      fullTable =
+          new SqlCreateTable(
+              tableDefinition.getParserPosition(),
+              FlinkSqlNodeFactory.identifier(baseTableName),
+              tableDefinition.getColumnList(),
+              tableDefinition.getTableConstraints(),
+              tableDefinition.getPropertyList(),
+              //          tableDefinition.getDistribution(),
+              tableDefinition.getPartitionKeyList(),
+              tableDefinition.getWatermark().orElse(null),
+              tableDefinition.getComment().orElse(null),
+              tableDefinition.isTemporary(),
+              tableDefinition.ifNotExists);
     }
     MutationQueryBuilder mutationBld = null;
-    if (fullTable.getPropertyList().isEmpty()) { //it's an internal CREATE TABLE for a mutation
+    if (fullTable.getPropertyList().isEmpty()) { // it's an internal CREATE TABLE for a mutation
       var tableBuilder = FlinkTableBuilder.toBuilder(fullTable);
       tableBuilder.setName(baseTableName);
       /* TODO: We want to create the table with a datagen connector so we can fully plan it
@@ -660,34 +735,50 @@ public class Sqrl2FlinkSQLTranslator {
       mutationBld = mutationBuilder.createMutation(tableBuilder, null);
       fullTable = tableBuilder.buildSql(false);
     }
-    var tableOp = (CreateTableOperation)executeSqlNode(fullTable);
-    //Create table analysis
+    var tableOp = (CreateTableOperation) executeSqlNode(fullTable);
+    // Create table analysis
     var flinkSchema = tableOp.getCatalogTable().getUnresolvedSchema();
-    //Map primary key
-    var pk = flinkSchema.getPrimaryKey()
-        .map(flinkPk -> PrimaryKeyMap.of(
-            flinkPk.getColumnNames().stream().map(name ->
-                IntStream.range(0,flinkSchema.getColumns().size())
-                    .filter(i -> flinkSchema.getColumns().get(i).getName().equalsIgnoreCase(name)).findFirst().getAsInt()
-            ).collect(Collectors.toList())
-        ))
-        .orElse(PrimaryKeyMap.UNDEFINED);
-    //Finish building mutation query by building input and output types from table schema
-    if (mutationBld!=null) {
+    // Map primary key
+    var pk =
+        flinkSchema
+            .getPrimaryKey()
+            .map(
+                flinkPk ->
+                    PrimaryKeyMap.of(
+                        flinkPk.getColumnNames().stream()
+                            .map(
+                                name ->
+                                    IntStream.range(0, flinkSchema.getColumns().size())
+                                        .filter(
+                                            i ->
+                                                flinkSchema
+                                                    .getColumns()
+                                                    .get(i)
+                                                    .getName()
+                                                    .equalsIgnoreCase(name))
+                                        .findFirst()
+                                        .getAsInt())
+                            .collect(Collectors.toList())))
+            .orElse(PrimaryKeyMap.UNDEFINED);
+    // Finish building mutation query by building input and output types from table schema
+    if (mutationBld != null) {
       var fields = convertSchema2RelDataType(flinkSchema);
       var inputType = CalciteUtil.getRelTypeBuilder(typeFactory);
       var outputType = CalciteUtil.getRelTypeBuilder(typeFactory);
       var computedColumns = mutationBld.build().getComputedColumns();
-      for (var i=0; i<flinkSchema.getColumns().size(); i++) {
+      for (var i = 0; i < flinkSchema.getColumns().size(); i++) {
         var field = fields.get(i);
         var column = flinkSchema.getColumns().get(i);
         outputType.add(field);
-        //Check if field is a computed column, if so it should not be part of input type
-        var computedColumn = computedColumns.stream()
-            .filter(col -> col.getColumnName().equals(column.getName())).findFirst();
+        // Check if field is a computed column, if so it should not be part of input type
+        var computedColumn =
+            computedColumns.stream()
+                .filter(col -> col.getColumnName().equals(column.getName()))
+                .findFirst();
         if (computedColumn.isPresent()) {
-          //if computed column is UUID and we don't have a pk, select it as pk
-          if (pk.isUndefined() && computedColumn.get().getType()== MutationComputedColumnType.UUID) {
+          // if computed column is UUID and we don't have a pk, select it as pk
+          if (pk.isUndefined()
+              && computedColumn.get().getType() == MutationComputedColumnType.UUID) {
             pk = PrimaryKeyMap.of(List.of(i));
           }
         } else {
@@ -698,16 +789,21 @@ public class Sqrl2FlinkSQLTranslator {
       mutationBld.outputDataType(outputType.build());
     }
     var connector = new FlinkConnectorConfig(tableOp.getCatalogTable().getOptions());
-    var tableAnalysis = TableAnalysis.of(tableOp.getTableIdentifier(),
-        new SourceSinkTableAnalysis(connector, flinkSchema, mutationBld!=null?mutationBld.build():null),
-        connector.getTableType(), pk);
+    var tableAnalysis =
+        TableAnalysis.of(
+            tableOp.getTableIdentifier(),
+            new SourceSinkTableAnalysis(
+                connector, flinkSchema, mutationBld != null ? mutationBld.build() : null),
+            connector.getTableType(),
+            pk);
     tableLookup.registerTable(tableAnalysis);
 
     return new AddTableResult(finalTableName, tableOp.getTableIdentifier());
   }
 
   public ObjectIdentifier createSinkTable(FlinkTableBuilder tableBuilder) {
-    return ((CreateTableOperation)executeSqlNode(tableBuilder.buildSql(false))).getTableIdentifier();
+    return ((CreateTableOperation) executeSqlNode(tableBuilder.buildSql(false)))
+        .getTableIdentifier();
   }
 
   public void insertInto(RelNode relNode, ObjectIdentifier sinkTableId) {
@@ -719,10 +815,15 @@ public class Sqrl2FlinkSQLTranslator {
     var name = getFunctionNameFromClass(fct.getClass()).getDisplay();
     List<SqlOperator> list = new ArrayList<>();
     var flinkPlanner = this.validatorSupplier.get();
-    flinkPlanner.getOrCreateSqlValidator().getOperatorTable()
-        .lookupOperatorOverloads(new SqlIdentifier(name, SqlParserPos.ZERO),
+    flinkPlanner
+        .getOrCreateSqlValidator()
+        .getOperatorTable()
+        .lookupOperatorOverloads(
+            new SqlIdentifier(name, SqlParserPos.ZERO),
             SqlFunctionCategory.USER_DEFINED_FUNCTION,
-            SqlSyntax.FUNCTION, list, SqlNameMatchers.liberal());
+            SqlSyntax.FUNCTION,
+            list,
+            SqlNameMatchers.liberal());
     Preconditions.checkArgument(!list.isEmpty(), "Could not find function: " + name);
     return list.get(0);
   }
@@ -730,16 +831,19 @@ public class Sqrl2FlinkSQLTranslator {
   public void addUserDefinedFunction(String name, String clazz, boolean isSystem) {
     var functionSql = FlinkSqlNodeFactory.createFunction(name, clazz, isSystem);
     var addFctOp = executeSqlNode(functionSql);
-    //Function definitions are not in the compiled plan, have to add them explicitly but with fully resolved identifier
+    // Function definitions are not in the compiled plan, have to add them explicitly but with fully
+    // resolved identifier
     if (addFctOp instanceof CreateCatalogFunctionOperation operation) {
-      functionSql = FlinkSqlNodeFactory.createFunction(FlinkSqlNodeFactory.identifier(
-          operation.getFunctionIdentifier()), clazz, isSystem);
+      functionSql =
+          FlinkSqlNodeFactory.createFunction(
+              FlinkSqlNodeFactory.identifier(operation.getFunctionIdentifier()), clazz, isSystem);
     }
     planBuilder.addFullyResolvedFunction(toSqlString(functionSql));
   }
 
   private static void checkResultOk(TableResultInternal result) {
-    Preconditions.checkArgument(result == TableResultInternal.TABLE_RESULT_OK, "Result is not OK: %s", result);
+    Preconditions.checkArgument(
+        result == TableResultInternal.TABLE_RESULT_OK, "Result is not OK: %s", result);
   }
 
   private List<RelDataTypeField> convertSchema2RelDataType(Schema schema) {
@@ -753,19 +857,22 @@ public class Sqrl2FlinkSQLTranslator {
       } else if (column instanceof UnresolvedMetadataColumn metadataColumn) {
         type = metadataColumn.getDataType();
       } else if (column instanceof UnresolvedComputedColumn computedColumn) {
-        if (expressionResolver==null) {
-            expressionResolver=getExpressionResolver(); //lazy initialization
+        if (expressionResolver == null) {
+          expressionResolver = getExpressionResolver(); // lazy initialization
         }
         // Resolve the expression's data type
         var resolvedExpression = expressionResolver.apply(computedColumn.getExpression());
         type = resolvedExpression.getOutputDataType();
       }
       if (type instanceof DataType dataType) {
-        fields.add(new RelDataTypeFieldImpl(column.getName(),i,
-            typeFactory.createFieldTypeFromLogicalType(dataType.getLogicalType())));
+        fields.add(
+            new RelDataTypeFieldImpl(
+                column.getName(),
+                i,
+                typeFactory.createFieldTypeFromLogicalType(dataType.getLogicalType())));
       } else {
-        throw new StatementParserException(ErrorLabel.GENERIC, new FileLocation(i, 1),
-            "Invalid type: " + column);
+        throw new StatementParserException(
+            ErrorLabel.GENERIC, new FileLocation(i, 1), "Invalid type: " + column);
       }
     }
     return fields;
@@ -777,7 +884,8 @@ public class Sqrl2FlinkSQLTranslator {
     DataType dataType;
   }
 
-  private static final String DATATYPE_PARSING_PREFIX = "CREATE TEMPORARY TABLE __sqrlinternal_types(";
+  private static final String DATATYPE_PARSING_PREFIX =
+      "CREATE TEMPORARY TABLE __sqrlinternal_types(";
 
   /**
    * Uses a CREATE TABLE statement to parse the data types from a string
@@ -787,7 +895,7 @@ public class Sqrl2FlinkSQLTranslator {
    */
   public List<RelDataTypeField> parse2RelDataType(ParsedObject<String> dataTypeDefinition) {
     if (dataTypeDefinition.isEmpty()) {
-        return List.of();
+      return List.of();
     }
     var createTableStatement = DATATYPE_PARSING_PREFIX + dataTypeDefinition.get() + ");";
     try {
@@ -798,10 +906,13 @@ public class Sqrl2FlinkSQLTranslator {
       var location = dataTypeDefinition.getFileLocation();
       var converted = ParsePosUtil.convertFlinkParserException(e);
       if (converted.isPresent()) {
-        location = location.add(
-            SQLStatement.removeFirstRowOffset(converted.get().getLocation(), DATATYPE_PARSING_PREFIX.length()));
+        location =
+            location.add(
+                SQLStatement.removeFirstRowOffset(
+                    converted.get().getLocation(), DATATYPE_PARSING_PREFIX.length()));
       }
-      throw new StatementParserException(location, e, converted.map(MessageLocation::getMessage).orElse(e.getMessage()));
+      throw new StatementParserException(
+          location, e, converted.map(MessageLocation::getMessage).orElse(e.getMessage()));
     }
   }
 
@@ -815,7 +926,6 @@ public class Sqrl2FlinkSQLTranslator {
     var operation = getOperation(sqlNode);
     checkResultOk(tEnv.executeInternal(operation));
     return operation;
-
   }
 
   private Operation getOperation(SqlNode sqlNode) {
@@ -826,17 +936,17 @@ public class Sqrl2FlinkSQLTranslator {
   private static List<URL> getUdfUrls(BuildPath buildPath) {
     List<URL> urls = new ArrayList<>();
     try (var stream = Files.newDirectoryStream(buildPath.getUdfPath(), "*.jar")) {
-      stream.forEach(p -> {
-        try {
-          urls.add(p.toUri().toURL());
-        } catch (MalformedURLException e) {
-          throw new RuntimeException(e);
-        }
-      });
+      stream.forEach(
+          p -> {
+            try {
+              urls.add(p.toUri().toURL());
+            } catch (MalformedURLException e) {
+              throw new RuntimeException(e);
+            }
+          });
     } catch (IOException e) {
-      //Means there is no lib directory
+      // Means there is no lib directory
     }
     return urls;
   }
-
 }

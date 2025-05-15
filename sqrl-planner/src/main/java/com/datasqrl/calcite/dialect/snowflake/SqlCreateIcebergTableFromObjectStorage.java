@@ -1,8 +1,22 @@
+/*
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.datasqrl.calcite.dialect.snowflake;
 
 import java.util.List;
 import java.util.Objects;
-
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlKind;
@@ -18,18 +32,16 @@ import org.apache.calcite.util.ImmutableNullableList;
 /**
  * Iceberg files in object storage
  *
- * CREATE [ OR REPLACE ] ICEBERG TABLE [ IF NOT EXISTS ] <table_name>
- *   [ EXTERNAL_VOLUME = '<external_volume_name>' ]
- *   [ CATALOG = '<catalog_integration_name>' ]
- *   [ METADATA_FILE_PATH = '<metadata_file_path>' ]
- *   [ REPLACE_INVALID_CHARACTERS = { TRUE | FALSE } ]
- *   [ COMMENT = '<string_literal>' ]
- *   [ [ WITH ] TAG ( <tag_name> = '<tag_value>' [ , <tag_name> = '<tag_value>' , ... ] ) ]
+ * <p>CREATE [ OR REPLACE ] ICEBERG TABLE [ IF NOT EXISTS ] <table_name> [ EXTERNAL_VOLUME =
+ * '<external_volume_name>' ] [ CATALOG = '<catalog_integration_name>' ] [ METADATA_FILE_PATH =
+ * '<metadata_file_path>' ] [ REPLACE_INVALID_CHARACTERS = { TRUE | FALSE } ] [ COMMENT =
+ * '<string_literal>' ] [ [ WITH ] TAG ( <tag_name> = '<tag_value>' [ , <tag_name> = '<tag_value>' ,
+ * ... ] ) ]
  */
 public class SqlCreateIcebergTableFromObjectStorage extends SqlCall {
 
-  private static final SqlSpecialOperator OPERATOR = new SqlSpecialOperator("CREATE ICEBERG TABLE",
-      SqlKind.OTHER_DDL);
+  private static final SqlSpecialOperator OPERATOR =
+      new SqlSpecialOperator("CREATE ICEBERG TABLE", SqlKind.OTHER_DDL);
 
   private final SqlIdentifier tableName;
   private final SqlLiteral externalVolume;
@@ -42,10 +54,18 @@ public class SqlCreateIcebergTableFromObjectStorage extends SqlCall {
   private final boolean replace;
   private final boolean ifNotExists;
 
-  public SqlCreateIcebergTableFromObjectStorage(SqlParserPos pos, boolean replace, boolean ifNotExists,
+  public SqlCreateIcebergTableFromObjectStorage(
+      SqlParserPos pos,
+      boolean replace,
+      boolean ifNotExists,
       SqlIdentifier tableName,
-      SqlLiteral externalVolume, SqlLiteral catalog, SqlLiteral catalogTableName, SqlLiteral metadataFilePath,
-      SqlLiteral replaceInvalidCharacters, SqlLiteral comment, SqlNodeList tags) {
+      SqlLiteral externalVolume,
+      SqlLiteral catalog,
+      SqlLiteral catalogTableName,
+      SqlLiteral metadataFilePath,
+      SqlLiteral replaceInvalidCharacters,
+      SqlLiteral comment,
+      SqlNodeList tags) {
     super(pos);
     this.replace = replace;
     this.ifNotExists = ifNotExists;
@@ -66,8 +86,14 @@ public class SqlCreateIcebergTableFromObjectStorage extends SqlCall {
 
   @Override
   public List<SqlNode> getOperandList() {
-    return ImmutableNullableList.of(tableName, externalVolume, catalog, metadataFilePath,
-        replaceInvalidCharacters, comment, tags);
+    return ImmutableNullableList.of(
+        tableName,
+        externalVolume,
+        catalog,
+        metadataFilePath,
+        replaceInvalidCharacters,
+        comment,
+        tags);
   }
 
   @Override

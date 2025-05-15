@@ -1,20 +1,29 @@
+/*
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.datasqrl.planner.dag.nodes;
-
-
-import java.util.Map;
-import java.util.Optional;
 
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.plan.global.StageAnalysis;
 import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.dag.plan.MutationQuery;
-
+import java.util.Map;
+import java.util.Optional;
 import lombok.Getter;
 
-/**
- * Represents a table in the DAG
- */
-
+/** Represents a table in the DAG */
 @Getter
 public class TableNode extends PlannedNode {
 
@@ -26,7 +35,7 @@ public class TableNode extends PlannedNode {
   }
 
   public boolean isSource() {
-    //Table nodes cannot be sinks
+    // Table nodes cannot be sinks
     return tableAnalysis.isSourceOrSink();
   }
 
@@ -36,7 +45,7 @@ public class TableNode extends PlannedNode {
 
   public Optional<MutationQuery> getMutation() {
     if (!isSource()) {
-        return Optional.empty();
+      return Optional.empty();
     }
     return Optional.ofNullable(tableAnalysis.getSourceSinkTable().get().getMutationDefinition());
   }
@@ -50,5 +59,4 @@ public class TableNode extends PlannedNode {
   public String getId() {
     return getIdentifier().asSummaryString();
   }
-
 }

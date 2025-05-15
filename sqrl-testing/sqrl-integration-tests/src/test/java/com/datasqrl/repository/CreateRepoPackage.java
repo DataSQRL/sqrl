@@ -1,37 +1,52 @@
-//package com.datasqrl.repository;
+/*
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+// package com.datasqrl.repository;
 //
-//import static org.junit.jupiter.api.Assertions.assertFalse;
-//import static org.junit.jupiter.api.Assertions.assertNotNull;
-//import static org.junit.jupiter.api.Assertions.assertTrue;
+// import static org.junit.jupiter.api.Assertions.assertFalse;
+// import static org.junit.jupiter.api.Assertions.assertNotNull;
+// import static org.junit.jupiter.api.Assertions.assertTrue;
 //
-//import com.datasqrl.AbstractPhysicalSQRLIT;
-//import com.datasqrl.IntegrationTestSettings;
-//import com.datasqrl.packager.Publisher;
-//import com.datasqrl.packager.repository.ValidatePublication;
-//import com.datasqrl.util.ScriptBuilder;
-//import com.datasqrl.util.SnapshotTest;
-//import com.datasqrl.util.data.Clickstream;
-//import com.datasqrl.util.data.Quickstart;
-//import com.datasqrl.util.data.Sensors;
-//import com.datasqrl.util.data.UseCaseExample;
-//import java.io.IOException;
-//import java.nio.file.Path;
-//import java.util.List;
-//import java.util.Optional;
-//import java.util.Set;
-//import java.util.stream.Collectors;
-//import org.junit.jupiter.api.BeforeEach;
-//import org.junit.jupiter.api.Disabled;
-//import org.junit.jupiter.api.Test;
-//import org.junit.jupiter.api.TestInfo;
+// import com.datasqrl.AbstractPhysicalSQRLIT;
+// import com.datasqrl.IntegrationTestSettings;
+// import com.datasqrl.packager.Publisher;
+// import com.datasqrl.packager.repository.ValidatePublication;
+// import com.datasqrl.util.ScriptBuilder;
+// import com.datasqrl.util.SnapshotTest;
+// import com.datasqrl.util.data.Clickstream;
+// import com.datasqrl.util.data.Quickstart;
+// import com.datasqrl.util.data.Sensors;
+// import com.datasqrl.util.data.UseCaseExample;
+// import java.io.IOException;
+// import java.nio.file.Path;
+// import java.util.List;
+// import java.util.Optional;
+// import java.util.Set;
+// import java.util.stream.Collectors;
+// import org.junit.jupiter.api.BeforeEach;
+// import org.junit.jupiter.api.Disabled;
+// import org.junit.jupiter.api.Test;
+// import org.junit.jupiter.api.TestInfo;
 //
-///**
+/// **
 // * Used to create a new publication in the DataSQRL repository.
 // * Set packagePath to the package to publish and output path to the repository data directory.
 // *
 // * Then commit the files to the repository and upload the zip file to the S3 bucket.
 // */
-//public class CreateRepoPackage extends AbstractPhysicalSQRLIT {
+// public class CreateRepoPackage extends AbstractPhysicalSQRLIT {
 //
 //  private final Path output = Path.of("../../../sqrl-repository/repodata");
 //
@@ -48,7 +63,8 @@
 //  @Disabled
 //  public void createPublication() {
 //    UseCaseExample example = Sensors.INSTANCE;
-//    createPublication(example.getRootPackageDirectory().resolve(UseCaseExample.DATA_PACKAGE+"-repo"),
+//
+// createPublication(example.getRootPackageDirectory().resolve(UseCaseExample.DATA_PACKAGE+"-repo"),
 //        example.getTables());
 //  }
 //
@@ -81,4 +97,4 @@
 //    System.out.println(content);
 //  }
 //
-//}
+// }

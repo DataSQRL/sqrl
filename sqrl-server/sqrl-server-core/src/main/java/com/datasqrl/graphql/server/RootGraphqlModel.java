@@ -1,12 +1,19 @@
 /*
- * Copyright (c) 2021, DataSQRL. All rights reserved. Use is subject to license terms.
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.datasqrl.graphql.server;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
 
 import com.datasqrl.graphql.jdbc.DatabaseType;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -14,7 +21,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -279,14 +289,11 @@ public class RootGraphqlModel {
   @NoArgsConstructor
   public static class ArgumentLookupQueryCoords extends QueryCoords {
 
-    /**
-     * The executable query with the query base and GraphQL Arguments
-     */
+    /** The executable query with the query base and GraphQL Arguments */
     QueryWithArguments exec;
 
     @Builder
-    public ArgumentLookupQueryCoords(
-        String parentType, String fieldName, QueryWithArguments exec) {
+    public ArgumentLookupQueryCoords(String parentType, String fieldName, QueryWithArguments exec) {
       super(parentType, fieldName);
       this.exec = exec;
     }
@@ -316,9 +323,7 @@ public class RootGraphqlModel {
   }
 
   @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
-  @JsonSubTypes({
-    @Type(value = SqlQuery.class, name = "SqlQuery")
-  })
+  @JsonSubTypes({@Type(value = SqlQuery.class, name = "SqlQuery")})
   public interface QueryBase {
 
     <R, C> R accept(QueryBaseVisitor<R, C> visitor, C context);
@@ -335,7 +340,7 @@ public class RootGraphqlModel {
     DatabaseType database;
 
     public boolean requiresDynamicLimitOffset() {
-      return pagination==PaginationType.LIMIT_AND_OFFSET && !database.supportsLimitOffsetBinding;
+      return pagination == PaginationType.LIMIT_AND_OFFSET && !database.supportsLimitOffsetBinding;
     }
 
     @Override
@@ -346,7 +351,6 @@ public class RootGraphqlModel {
     public SqlQuery updateSQL(String newSQL) {
       return new SqlQuery(newSQL, parameters, pagination, database);
     }
-
   }
 
   @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
@@ -418,7 +422,7 @@ public class RootGraphqlModel {
   @ToString
   public static class FixedArgument implements Argument {
 
-    final static String type = "fixed";
+    static final String type = "fixed";
 
     String path;
     Object value;
@@ -452,7 +456,7 @@ public class RootGraphqlModel {
   @ToString
   public static class SourceParameter implements QueryParameterHandler {
 
-    final static String type = "source";
+    static final String type = "source";
     String key;
 
     @Override
@@ -468,7 +472,7 @@ public class RootGraphqlModel {
   @ToString
   public static class ArgumentParameter implements QueryParameterHandler {
 
-    final static String type = "arg";
+    static final String type = "arg";
     String path;
 
     @Override
@@ -507,5 +511,4 @@ public class RootGraphqlModel {
 
     T getPreparedQuery();
   }
-
 }

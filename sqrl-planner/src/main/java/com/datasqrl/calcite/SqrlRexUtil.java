@@ -1,10 +1,25 @@
 /*
- * Copyright (c) 2021, DataSQRL. All rights reserved. Use is subject to license terms.
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.datasqrl.calcite;
 
-import static com.datasqrl.function.CalciteFunctionUtil.lightweightOp;
-
+import com.datasqrl.calcite.SqrlRexUtil.JoinConditionDecomposition.EqualityCondition;
+import com.datasqrl.plan.util.SelectIndexMap;
+import com.datasqrl.util.CalciteUtil;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Iterables;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -15,7 +30,8 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
+import lombok.NonNull;
+import lombok.Value;
 import org.apache.calcite.plan.RelOptUtil;
 import org.apache.calcite.rel.RelCollation;
 import org.apache.calcite.rel.RelCollations;
@@ -43,22 +59,12 @@ import org.apache.calcite.sql.SqlAggFunction;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
-import org.apache.calcite.sql.type.ReturnTypes;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.util.Util;
 import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 import org.apache.flink.table.planner.calcite.FlinkRexBuilder;
-
-import com.datasqrl.calcite.SqrlRexUtil.JoinConditionDecomposition.EqualityCondition;
-import com.datasqrl.plan.util.SelectIndexMap;
-import com.datasqrl.util.CalciteUtil;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Iterables;
-
-import lombok.NonNull;
-import lombok.Value;
 
 public class SqrlRexUtil {
 
@@ -95,14 +101,14 @@ public class SqrlRexUtil {
   }
 
   public List<RexNode> getConjunctions(RexNode condition) {
-//    RexNode cnfCondition = FlinkRexUtil.toCnf(rexBuilder, Short.MAX_VALUE,
-//        condition); //TODO: make configurable
-//    List<RexNode> conditions = new ArrayList<>();
-//    if (cnfCondition instanceof RexCall && cnfCondition.isA(SqlKind.AND)) {
-//      conditions.addAll(((RexCall) cnfCondition).getOperands());
-//    } else { //Single condition
-//      conditions.add(cnfCondition);
-//    }
+    //    RexNode cnfCondition = FlinkRexUtil.toCnf(rexBuilder, Short.MAX_VALUE,
+    //        condition); //TODO: make configurable
+    //    List<RexNode> conditions = new ArrayList<>();
+    //    if (cnfCondition instanceof RexCall && cnfCondition.isA(SqlKind.AND)) {
+    //      conditions.addAll(((RexCall) cnfCondition).getOperands());
+    //    } else { //Single condition
+    //      conditions.add(cnfCondition);
+    //    }
     return RelOptUtil.conjunctions(condition);
   }
 
@@ -116,16 +122,17 @@ public class SqrlRexUtil {
     List<RexNode> remaining = new ArrayList<>();
     for (RexNode rex : conjunctions) {
       var eq = decomposeEqualityCondition(rex, leftSideMaxIdx);
-        if (eq.isPresent()) {
-            equalities.add(eq.get());
-        } else {
-            remaining.add(rex);
-        }
+      if (eq.isPresent()) {
+        equalities.add(eq.get());
+      } else {
+        remaining.add(rex);
+      }
     }
     return new JoinConditionDecomposition(equalities, remaining);
   }
 
-  private Optional<EqualityCondition> decomposeEqualityCondition(RexNode predicate, int leftSideMaxIdx) {
+  private Optional<EqualityCondition> decomposeEqualityCondition(
+      RexNode predicate, int leftSideMaxIdx) {
     if (predicate.isA(SqlKind.EQUALS)) {
       var equality = (RexCall) predicate;
       var leftIndex = CalciteUtil.getNonAlteredInputRef(equality.getOperands().get(0));
@@ -139,8 +146,9 @@ public class SqrlRexUtil {
           return Optional.empty();
         }
       }
-      //Check if the constrained side is constrained by an expression that contains entirely of constants of
-      //input references from the other side.
+      // Check if the constrained side is constrained by an expression that contains entirely of
+      // constants of
+      // input references from the other side.
       RexNode otherSide;
       int constrainedIdx;
       if (leftIndex.isPresent()) {
@@ -153,9 +161,10 @@ public class SqrlRexUtil {
         return Optional.empty();
       }
       var refs = findAllInputRefs(List.of(otherSide));
-      if (constrainedIdx<leftSideMaxIdx && refs.stream().allMatch(idx -> idx >= leftSideMaxIdx)) {
+      if (constrainedIdx < leftSideMaxIdx && refs.stream().allMatch(idx -> idx >= leftSideMaxIdx)) {
         return Optional.of(new EqualityCondition(constrainedIdx, EqualityCondition.NO_INDEX));
-      } else if (constrainedIdx>=leftSideMaxIdx && refs.stream().allMatch(idx -> idx<leftSideMaxIdx)) {
+      } else if (constrainedIdx >= leftSideMaxIdx
+          && refs.stream().allMatch(idx -> idx < leftSideMaxIdx)) {
         return Optional.of(new EqualityCondition(EqualityCondition.NO_INDEX, constrainedIdx));
       }
     }
@@ -181,7 +190,6 @@ public class SqrlRexUtil {
       return result;
     }
 
-
     @Value
     public static final class EqualityCondition {
 
@@ -191,23 +199,21 @@ public class SqrlRexUtil {
       public int rightIndex;
 
       public EqualityCondition(int leftIndex, int rightIndex) {
-        Preconditions.checkArgument(leftIndex<rightIndex || rightIndex==NO_INDEX);
-        Preconditions.checkArgument(leftIndex>=0 || rightIndex>=0);
+        Preconditions.checkArgument(leftIndex < rightIndex || rightIndex == NO_INDEX);
+        Preconditions.checkArgument(leftIndex >= 0 || rightIndex >= 0);
         this.leftIndex = leftIndex;
         this.rightIndex = rightIndex;
       }
 
       public boolean isTwoSided() {
-        return leftIndex>=0 && rightIndex>=0;
+        return leftIndex >= 0 && rightIndex >= 0;
       }
 
       public int getOneSidedIndex() {
         Preconditions.checkArgument(!isTwoSided());
-        return (leftIndex>=0)?leftIndex:rightIndex;
+        return (leftIndex >= 0) ? leftIndex : rightIndex;
       }
-
     }
-
   }
 
   public static boolean isNOW(SqlOperator operator) {
@@ -258,13 +264,11 @@ public class SqrlRexUtil {
     return Optional.empty();
   }
 
-
-
   public static Set<Integer> findAllInputRefs(@NonNull Iterable<RexNode> nodes) {
     var refFinder = new RexInputRefFinder();
-      for (RexNode node : nodes) {
-          node.accept(refFinder);
-      }
+    for (RexNode node : nodes) {
+      node.accept(refFinder);
+    }
     return refFinder.refs;
   }
 
@@ -280,23 +284,20 @@ public class SqrlRexUtil {
     }
   }
 
-
-
-
-
-
   public List<RexNode> getIdentityProject(RelNode input) {
     return getIdentityProject(input, input.getRowType().getFieldCount());
   }
 
   public List<RexNode> getIdentityProject(RelNode input, int size) {
-    return IntStream.range(0, size).mapToObj(i -> rexBuilder.makeInputRef(input, i))
+    return IntStream.range(0, size)
+        .mapToObj(i -> rexBuilder.makeInputRef(input, i))
         .collect(Collectors.toList());
   }
 
   public List<RexNode> getProjection(SelectIndexMap select, RelNode input) {
-    return select.targetsAsList().stream().map(idx -> rexBuilder.makeInputRef(input, idx))
-            .collect(Collectors.toUnmodifiableList());
+    return select.targetsAsList().stream()
+        .map(idx -> rexBuilder.makeInputRef(input, idx))
+        .collect(Collectors.toUnmodifiableList());
   }
 
   public RelBuilder appendColumn(RelBuilder relBuilder, RexNode rexNode, String fieldName) {
@@ -326,9 +327,9 @@ public class SqrlRexUtil {
 
     public boolean foundIn(Iterable<RexNode> nodes) {
       for (RexNode node : nodes) {
-          if (foundIn(node)) {
-              return true;
-          }
+        if (foundIn(node)) {
+          return true;
+        }
       }
       return false;
     }
@@ -343,37 +344,50 @@ public class SqrlRexUtil {
     }
   }
 
-  public static List<RexFieldCollation> translateCollation(RelCollation collation,
-      RelDataType inputType) {
-    return collation.getFieldCollations().stream().map(col -> new RexFieldCollation(
-        RexInputRef.of(col.getFieldIndex(), inputType),
-        translateOrder(col))).collect(Collectors.toList());
+  public static List<RexFieldCollation> translateCollation(
+      RelCollation collation, RelDataType inputType) {
+    return collation.getFieldCollations().stream()
+        .map(
+            col ->
+                new RexFieldCollation(
+                    RexInputRef.of(col.getFieldIndex(), inputType), translateOrder(col)))
+        .collect(Collectors.toList());
   }
 
   private static Set<SqlKind> translateOrder(RelFieldCollation collation) {
     Set<SqlKind> result = new HashSet<>();
-      if (collation.direction.isDescending()) {
-          result.add(SqlKind.DESCENDING);
-      }
-      if (collation.nullDirection == RelFieldCollation.NullDirection.FIRST) {
-          result.add(SqlKind.NULLS_FIRST);
-      } else if (collation.nullDirection == RelFieldCollation.NullDirection.LAST) {
-          result.add(SqlKind.NULLS_LAST);
-      } else {
-          result.add(SqlKind.NULLS_LAST);
-      }
+    if (collation.direction.isDescending()) {
+      result.add(SqlKind.DESCENDING);
+    }
+    if (collation.nullDirection == RelFieldCollation.NullDirection.FIRST) {
+      result.add(SqlKind.NULLS_FIRST);
+    } else if (collation.nullDirection == RelFieldCollation.NullDirection.LAST) {
+      result.add(SqlKind.NULLS_LAST);
+    } else {
+      result.add(SqlKind.NULLS_LAST);
+    }
     return result;
   }
 
-  public RexNode createRowFunction(SqlAggFunction rowFunction, List<RexNode> partition,
+  public RexNode createRowFunction(
+      SqlAggFunction rowFunction,
+      List<RexNode> partition,
       List<RexFieldCollation> fieldCollations) {
-    final var intType =
-        rexBuilder.getTypeFactory().createSqlType(SqlTypeName.BIGINT);
-    var row_function = rexBuilder.makeOver(intType, rowFunction,
-        List.of(), partition, ImmutableList.copyOf(fieldCollations),
-        RexWindowBounds.UNBOUNDED_PRECEDING,
-        RexWindowBounds.CURRENT_ROW, true, true, false,
-        false, false);
+    final var intType = rexBuilder.getTypeFactory().createSqlType(SqlTypeName.BIGINT);
+    var row_function =
+        rexBuilder.makeOver(
+            intType,
+            rowFunction,
+            List.of(),
+            partition,
+            ImmutableList.copyOf(fieldCollations),
+            RexWindowBounds.UNBOUNDED_PRECEDING,
+            RexWindowBounds.CURRENT_ROW,
+            true,
+            true,
+            false,
+            false,
+            false);
     return row_function;
   }
 
@@ -385,28 +399,31 @@ public class SqrlRexUtil {
     return result;
   }
 
-  public static RexNode makeWindowLimitFilter(RexBuilder rexBuilder, int limit, int fieldIdx,
-      RelDataType windowType) {
+  public static RexNode makeWindowLimitFilter(
+      RexBuilder rexBuilder, int limit, int fieldIdx, RelDataType windowType) {
     var comparison = SqlStdOperatorTable.LESS_THAN_OR_EQUAL;
-      if (limit == 1) {
-          comparison = SqlStdOperatorTable.EQUALS;
-      }
-    return rexBuilder.makeCall(comparison, RexInputRef.of(fieldIdx, windowType),
+    if (limit == 1) {
+      comparison = SqlStdOperatorTable.EQUALS;
+    }
+    return rexBuilder.makeCall(
+        comparison,
+        RexInputRef.of(fieldIdx, windowType),
         rexBuilder.makeExactLiteral(BigDecimal.valueOf(limit)));
   }
 
   public static boolean isSimpleProject(LogicalProject project) {
-    RexFinder<Void> findComplex = new RexFinder<>() {
-      @Override
-      public Void visitOver(RexOver over) {
-        throw Util.FoundOne.NULL;
-      }
+    RexFinder<Void> findComplex =
+        new RexFinder<>() {
+          @Override
+          public Void visitOver(RexOver over) {
+            throw Util.FoundOne.NULL;
+          }
 
-      @Override
-      public Void visitSubQuery(RexSubQuery subQuery) {
-        throw Util.FoundOne.NULL;
-      }
-    };
+          @Override
+          public Void visitSubQuery(RexSubQuery subQuery) {
+            throw Util.FoundOne.NULL;
+          }
+        };
     return !findComplex.foundIn(project.getProjects());
   }
 
@@ -415,8 +432,17 @@ public class SqrlRexUtil {
   }
 
   public AggregateCall makeMaxAggCall(int colIdx, String name, int groupCount, RelNode input) {
-    return AggregateCall.create(SqlStdOperatorTable.MAX, false, false,
-        List.of(colIdx) , -1, RelCollations.EMPTY, groupCount, input, null, name);
+    return AggregateCall.create(
+        SqlStdOperatorTable.MAX,
+        false,
+        false,
+        List.of(colIdx),
+        -1,
+        RelCollations.EMPTY,
+        groupCount,
+        input,
+        null,
+        name);
   }
 
   public String getFieldName(int idx, RelNode relNode) {
@@ -426,18 +452,15 @@ public class SqrlRexUtil {
 
   public String getCollationName(RelCollation collation, RelNode relNode) {
     return collation.getFieldCollations().stream()
-        .map(col -> getFieldName(col.getFieldIndex(),relNode) + " " + col.direction.name())
+        .map(col -> getFieldName(col.getFieldIndex(), relNode) + " " + col.direction.name())
         .collect(Collectors.joining(","));
   }
 
   public static Optional<TableFunction> getCustomTableFunction(TableFunctionScan fctScan) {
     var call = (RexCall) fctScan.getCall();
     if (call.getOperator() instanceof SqlUserDefinedTableFunction) {
-      return Optional.of(((SqlUserDefinedTableFunction)call.getOperator()).getFunction());
+      return Optional.of(((SqlUserDefinedTableFunction) call.getOperator()).getFunction());
     }
     return Optional.empty();
   }
-
-
-
 }

@@ -1,16 +1,19 @@
 /*
- * Copyright (c) 2021, DataSQRL. All rights reserved. Use is subject to license terms.
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.datasqrl.io.schema.flexible.converters;
-
-import org.apache.calcite.avatica.util.TimeUnit;
-import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rel.type.RelDataTypeFactory;
-import org.apache.calcite.sql.SqlIntervalQualifier;
-import org.apache.calcite.sql.parser.SqlParserPos;
-import org.apache.calcite.sql.type.BasicSqlType;
-import org.apache.calcite.sql.type.IntervalSqlType;
-import org.apache.calcite.sql.type.SqlTypeName;
 
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.io.schema.flexible.type.ArrayType;
@@ -23,8 +26,15 @@ import com.datasqrl.io.schema.flexible.type.basic.IntervalType;
 import com.datasqrl.io.schema.flexible.type.basic.StringType;
 import com.datasqrl.io.schema.flexible.type.basic.TimestampType;
 import com.datasqrl.util.CalciteUtil;
-
 import lombok.Value;
+import org.apache.calcite.avatica.util.TimeUnit;
+import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeFactory;
+import org.apache.calcite.sql.SqlIntervalQualifier;
+import org.apache.calcite.sql.parser.SqlParserPos;
+import org.apache.calcite.sql.type.BasicSqlType;
+import org.apache.calcite.sql.type.IntervalSqlType;
+import org.apache.calcite.sql.type.SqlTypeName;
 
 @Value
 public class SqrlTypeRelDataTypeConverter implements SqrlTypeConverter<RelDataType> {
@@ -54,7 +64,7 @@ public class SqrlTypeRelDataTypeConverter implements SqrlTypeConverter<RelDataTy
   @Override
   public RelDataType visitDoubleType(DoubleType type, Void context) {
     return typeFactory.createSqlType(SqlTypeName.DOUBLE);
-//    return typeFactory.createSqlType(SqlTypeName.DECIMAL, 30, 9);
+    //    return typeFactory.createSqlType(SqlTypeName.DECIMAL, 30, 9);
   }
 
   @Override
@@ -113,7 +123,7 @@ public class SqrlTypeRelDataTypeConverter implements SqrlTypeConverter<RelDataTy
         case INTERVAL_YEAR_MONTH:
         case INTERVAL_MONTH:
           return IntervalType.INSTANCE;
-        //TODO: support those 3
+          // TODO: support those 3
         case DATE:
         case TIME:
         case TIME_WITH_LOCAL_TIME_ZONE:
@@ -134,6 +144,4 @@ public class SqrlTypeRelDataTypeConverter implements SqrlTypeConverter<RelDataTy
     throw new UnsupportedOperationException(
         "Not a supported data type: " + datatype.getSqlTypeName());
   }
-
-
 }

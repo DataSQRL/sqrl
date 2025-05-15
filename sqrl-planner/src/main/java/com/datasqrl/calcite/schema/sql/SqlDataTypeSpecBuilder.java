@@ -1,3 +1,18 @@
+/*
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.datasqrl.calcite.schema.sql;
 
 import static org.apache.calcite.sql.type.SqlTypeUtil.inCharFamily;
@@ -7,7 +22,7 @@ import static org.apache.calcite.sql.type.SqlTypeUtil.isRow;
 
 import java.util.List;
 import java.util.stream.Collectors;
-
+import lombok.experimental.UtilityClass;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelRecordType;
@@ -29,8 +44,6 @@ import org.apache.flink.sql.parser.type.SqlRawTypeNameSpec;
 import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 import org.apache.flink.table.types.logical.RawType;
 
-import lombok.experimental.UtilityClass;
-
 @UtilityClass
 public class SqlDataTypeSpecBuilder {
 
@@ -42,7 +55,7 @@ public class SqlDataTypeSpecBuilder {
       var typeName = udf.getTypeName();
       SqlTypeName sqlTypeName = SqlTypeName.get(typeName.getSimple());
       if (sqlTypeName == null) {
-        throw new RuntimeException("Could not find type: "+ typeName.getSimple());
+        throw new RuntimeException("Could not find type: " + typeName.getSimple());
       }
 
       return typeFactory.createTypeWithNullability(
@@ -55,10 +68,11 @@ public class SqlDataTypeSpecBuilder {
       SqlTypeName sqlTypeName = SqlTypeName.get(typeName.getSimple());
       RelDataType sqlType;
       if (basicTypeNameSpec.getPrecision() != -1 && basicTypeNameSpec.getScale() != -1) {
-        sqlType =typeFactory.createSqlType(sqlTypeName, basicTypeNameSpec.getPrecision(),
-            basicTypeNameSpec.getScale());
+        sqlType =
+            typeFactory.createSqlType(
+                sqlTypeName, basicTypeNameSpec.getPrecision(), basicTypeNameSpec.getScale());
       } else if (basicTypeNameSpec.getPrecision() != -1) {
-        sqlType =typeFactory.createSqlType(sqlTypeName, basicTypeNameSpec.getPrecision());
+        sqlType = typeFactory.createSqlType(sqlTypeName, basicTypeNameSpec.getPrecision());
       } else {
         sqlType = typeFactory.createSqlType(sqlTypeName);
       }
@@ -87,17 +101,18 @@ public class SqlDataTypeSpecBuilder {
       return typeFactory.createTypeWithNullability(
           typeFactory.createStructType(fieldInfoBuilder), nullable);
     }
-//
-//    if (typeSpec.getTypeNameSpec() instanceof SqlRawTypeNameSpec) {
-//      SqlRawTypeNameSpec rawTypeNameSpec = (SqlRawTypeNameSpec) typeSpec.getTypeNameSpec();
-//      RawType<?> rawType = new RawType<>(
-//          (Class<?>) rawTypeNameSpec.getClass().getName(),
-//          rawTypeNameSpec.getSerializerString().toString());
-//
-//      return new RawRelDataType(rawType, typeSpec.getNullable());
-//    }
+    //
+    //    if (typeSpec.getTypeNameSpec() instanceof SqlRawTypeNameSpec) {
+    //      SqlRawTypeNameSpec rawTypeNameSpec = (SqlRawTypeNameSpec) typeSpec.getTypeNameSpec();
+    //      RawType<?> rawType = new RawType<>(
+    //          (Class<?>) rawTypeNameSpec.getClass().getName(),
+    //          rawTypeNameSpec.getSerializerString().toString());
+    //
+    //      return new RawRelDataType(rawType, typeSpec.getNullable());
+    //    }
 
-    throw new UnsupportedOperationException("Unsupported type when create RelDataType: " + typeSpec.getTypeNameSpec());
+    throw new UnsupportedOperationException(
+        "Unsupported type when create RelDataType: " + typeSpec.getTypeNameSpec());
   }
 
   private static RelDataType create(SqlTypeNameSpec typeNameSpec, RelDataTypeFactory typeFactory) {
@@ -107,7 +122,8 @@ public class SqlDataTypeSpecBuilder {
 
   public static SqlDataTypeSpec create(RelDataType type) {
     if (type.getSqlTypeName() == SqlTypeName.ANY) {
-      return new SqlDataTypeSpec(new SqlBasicTypeNameSpec(SqlTypeName.ANY, SqlParserPos.ZERO), SqlParserPos.ZERO);
+      return new SqlDataTypeSpec(
+          new SqlBasicTypeNameSpec(SqlTypeName.ANY, SqlParserPos.ZERO), SqlParserPos.ZERO);
     }
 
     return SqlDataTypeSpecBuilder.convertTypeToSpec(type);
@@ -119,7 +135,8 @@ public class SqlDataTypeSpecBuilder {
     return convertTypeToFlinkSpec(type, charSetName, -1);
   }
 
-  public static SqlDataTypeSpec convertTypeToFlinkSpec(RelDataType type, String charSetName, int maxPrecision) {
+  public static SqlDataTypeSpec convertTypeToFlinkSpec(
+      RelDataType type, String charSetName, int maxPrecision) {
     var typeName = type.getSqlTypeName();
 
     assert typeName != null;
@@ -127,37 +144,52 @@ public class SqlDataTypeSpecBuilder {
     Object typeNameSpec;
     if (!isAtomic(type)) {
       if (isCollection(type)) {
-        typeNameSpec = new ExtendedSqlCollectionTypeNameSpec(
-            convertTypeToSpec(type.getComponentType()).getTypeNameSpec(), type.isNullable(),
-            typeName, true, SqlParserPos.ZERO);
+        typeNameSpec =
+            new ExtendedSqlCollectionTypeNameSpec(
+                convertTypeToSpec(type.getComponentType()).getTypeNameSpec(),
+                type.isNullable(),
+                typeName,
+                true,
+                SqlParserPos.ZERO);
       } else {
         if (type instanceof RawRelDataType) {
           RawType<?> rawType = ((RawRelDataType) type).getRawType();
-          typeNameSpec = new SqlRawTypeNameSpec(
-              SqlLiteral.createCharString(rawType.getOriginatingClass().getName(),
-                  SqlParserPos.ZERO),
-              SqlLiteral.createCharString(rawType.getSerializerString(), SqlParserPos.ZERO),
-              SqlParserPos.ZERO);
+          typeNameSpec =
+              new SqlRawTypeNameSpec(
+                  SqlLiteral.createCharString(
+                      rawType.getOriginatingClass().getName(), SqlParserPos.ZERO),
+                  SqlLiteral.createCharString(rawType.getSerializerString(), SqlParserPos.ZERO),
+                  SqlParserPos.ZERO);
         } else if (!isRow(type)) {
           RelDataType keyType = type.getKeyType();
           RelDataType valueType = type.getValueType();
           var keyTypeSpec = convertTypeToSpec(keyType);
           var valueTypeSpec = convertTypeToSpec(valueType);
-          typeNameSpec = new SqlMapTypeNameSpec(
-              new SqlDataTypeSpec(keyTypeSpec.getTypeNameSpec(), SqlParserPos.ZERO),
-              new SqlDataTypeSpec(valueTypeSpec.getTypeNameSpec(), SqlParserPos.ZERO),
-              SqlParserPos.ZERO);
+          typeNameSpec =
+              new SqlMapTypeNameSpec(
+                  new SqlDataTypeSpec(keyTypeSpec.getTypeNameSpec(), SqlParserPos.ZERO),
+                  new SqlDataTypeSpec(valueTypeSpec.getTypeNameSpec(), SqlParserPos.ZERO),
+                  SqlParserPos.ZERO);
         } else {
           var recordType = (RelRecordType) type;
           var fields = recordType.getFieldList();
-          List<SqlIdentifier> fieldNames = fields.stream()
-              .map((f) -> new SqlIdentifier(f.getName(), SqlParserPos.ZERO))
-              .collect(Collectors.toList());
-          List fieldTypes = fields.stream().map((f) -> convertTypeToSpec(f.getType()))
-              .collect(Collectors.toList());
-          typeNameSpec = new ExtendedSqlRowTypeNameSpec(SqlParserPos.ZERO, fieldNames, fieldTypes,
-              fieldNames.stream().map(e -> (SqlCharStringLiteral) null)
-                  .collect(Collectors.toList()), true);
+          List<SqlIdentifier> fieldNames =
+              fields.stream()
+                  .map((f) -> new SqlIdentifier(f.getName(), SqlParserPos.ZERO))
+                  .collect(Collectors.toList());
+          List fieldTypes =
+              fields.stream()
+                  .map((f) -> convertTypeToSpec(f.getType()))
+                  .collect(Collectors.toList());
+          typeNameSpec =
+              new ExtendedSqlRowTypeNameSpec(
+                  SqlParserPos.ZERO,
+                  fieldNames,
+                  fieldTypes,
+                  fieldNames.stream()
+                      .map(e -> (SqlCharStringLiteral) null)
+                      .collect(Collectors.toList()),
+                  true);
         }
       }
     } else {
@@ -167,10 +199,11 @@ public class SqlDataTypeSpecBuilder {
       }
 
       var scale = typeName.allowsScale() ? type.getScale() : -1;
-      typeNameSpec = new SqlBasicTypeNameSpec(typeName, precision, scale, charSetName, SqlParserPos.ZERO);
+      typeNameSpec =
+          new SqlBasicTypeNameSpec(typeName, precision, scale, charSetName, SqlParserPos.ZERO);
     }
 
-    return new SqlDataTypeSpecNotNull((SqlTypeNameSpec)typeNameSpec, SqlParserPos.ZERO)
+    return new SqlDataTypeSpecNotNull((SqlTypeNameSpec) typeNameSpec, SqlParserPos.ZERO)
         .withNullable(type.isNullable());
   }
 
@@ -180,7 +213,6 @@ public class SqlDataTypeSpecBuilder {
   }
 
   public class SqlDataTypeSpecNotNull extends SqlDataTypeSpec {
-
 
     public SqlDataTypeSpecNotNull(SqlTypeNameSpec typeNameSpec, SqlParserPos pos) {
       super(typeNameSpec, pos);

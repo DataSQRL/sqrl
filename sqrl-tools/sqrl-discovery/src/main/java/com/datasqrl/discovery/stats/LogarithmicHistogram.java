@@ -1,13 +1,23 @@
 /*
- * Copyright (c) 2021, DataSQRL. All rights reserved. Use is subject to license terms.
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.datasqrl.discovery.stats;
 
+import com.google.common.base.Preconditions;
 import java.io.Serializable;
 import java.util.Arrays;
-
-import com.google.common.base.Preconditions;
-
 import lombok.ToString;
 import lombok.Value;
 
@@ -37,8 +47,8 @@ public class LogarithmicHistogram implements Serializable {
   }
 
   @ToString
-  public static class Accumulator implements
-      com.datasqrl.discovery.stats.Accumulator<Long, Accumulator, Void> {
+  public static class Accumulator
+      implements com.datasqrl.discovery.stats.Accumulator<Long, Accumulator, Void> {
 
     private float base;
     private double baseConversion;
@@ -46,13 +56,13 @@ public class LogarithmicHistogram implements Serializable {
     private long count;
 
     private Accumulator() {
-      //For Kryo
+      // For Kryo
     }
 
     public Accumulator(float base, int maxBuckets) {
       Preconditions.checkArgument(base > 1 && base < 100, "Invalid base provided: %s", base);
-      Preconditions.checkArgument(maxBuckets > 0 && maxBuckets < 1000,
-          "Invalid number of buckets: %s", maxBuckets);
+      Preconditions.checkArgument(
+          maxBuckets > 0 && maxBuckets < 1000, "Invalid number of buckets: %s", maxBuckets);
       this.buckets = new long[maxBuckets];
       this.count = 0;
       this.base = (byte) base;
@@ -92,8 +102,8 @@ public class LogarithmicHistogram implements Serializable {
     public void merge(LogarithmicHistogram.Accumulator accumulator) {
       var acc = accumulator;
       Preconditions.checkArgument(base == acc.base, "Incompatible bases: %s vs %s", base, acc.base);
-      Preconditions.checkArgument(buckets.length == acc.buckets.length,
-          "Incompatible histogram widths");
+      Preconditions.checkArgument(
+          buckets.length == acc.buckets.length, "Incompatible histogram widths");
       count += acc.count;
       for (var i = 0; i < buckets.length; i++) {
         buckets[i] += acc.buckets[i];
@@ -110,5 +120,4 @@ public class LogarithmicHistogram implements Serializable {
       return newAcc;
     }
   }
-
 }

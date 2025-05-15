@@ -1,16 +1,26 @@
 /*
- * Copyright (c) 2021, DataSQRL. All rights reserved. Use is subject to license terms.
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.datasqrl.io.schema.flexible.constraint;
-
-import java.util.Map;
-import java.util.Optional;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.schema.flexible.type.ArrayType;
 import com.datasqrl.io.schema.flexible.type.Type;
-
+import java.util.Map;
+import java.util.Optional;
 import lombok.Getter;
 
 @Getter
@@ -23,12 +33,11 @@ public class Cardinality implements Constraint {
   private long min;
   private long max;
 
-  private Cardinality() {
-  } //For Kryo
+  private Cardinality() {} // For Kryo
 
   public Cardinality(long min, long max) {
-//    Preconditions.checkArgument(min >= 0);
-//    Preconditions.checkArgument(max >= min && max > 0);
+    //    Preconditions.checkArgument(min >= 0);
+    //    Preconditions.checkArgument(max >= min && max > 0);
     this.min = min;
     this.max = max;
   }
@@ -43,7 +52,7 @@ public class Cardinality implements Constraint {
 
   @Override
   public boolean satisfies(Object value) {
-//    Preconditions.checkArgument(value.getClass().isArray());
+    //    Preconditions.checkArgument(value.getClass().isArray());
     long length = ((Object[]) value).length;
     return length >= min && length <= max;
   }
@@ -103,6 +112,5 @@ public class Cardinality implements Constraint {
       }
       return Optional.of(((Number) value).longValue());
     }
-
   }
 }

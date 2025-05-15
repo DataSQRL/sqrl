@@ -1,3 +1,18 @@
+/*
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.datasqrl.datatype.flink.iceberg;
 
 import com.datasqrl.datatype.DataTypeMapping;
@@ -9,7 +24,6 @@ import org.apache.calcite.rel.type.RelDataType;
 import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 
 public class IcebergDataTypeMapper implements DataTypeMapping {
-
 
   @Override
   public Optional<Mapper> getMapper(RelDataType type) {
@@ -37,7 +51,7 @@ public class IcebergDataTypeMapper implements DataTypeMapping {
         return Optional.empty();
       case ARRAY:
         if (getMapper(type.getComponentType()).isEmpty()) {
-            return Optional.empty();
+          return Optional.empty();
         }
     }
     if (type instanceof RawRelDataType rawRelDataType) {
@@ -51,5 +65,4 @@ public class IcebergDataTypeMapper implements DataTypeMapping {
     // Cast needed, convert to bytes
     return Optional.of(DataTypeMappings.TO_BYTES_ONLY);
   }
-
 }

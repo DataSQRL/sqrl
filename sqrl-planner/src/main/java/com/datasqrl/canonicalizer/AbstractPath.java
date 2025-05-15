@@ -1,5 +1,17 @@
 /*
- * Copyright (c) 2021, DataSQRL. All rights reserved. Use is subject to license terms.
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.datasqrl.canonicalizer;
 
@@ -11,11 +23,10 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import lombok.NonNull;
 
-public abstract class AbstractPath<E extends Comparable, P extends AbstractPath<E, P>> implements
-     Serializable, Comparable<P> {
+public abstract class AbstractPath<E extends Comparable, P extends AbstractPath<E, P>>
+    implements Serializable, Comparable<P> {
 
   protected final E[] elements;
 
@@ -50,7 +61,7 @@ public abstract class AbstractPath<E extends Comparable, P extends AbstractPath<
   }
 
   public E get(int index) {
-//    Preconditions.checkArgument(index >= 0 && index < size());
+    //    Preconditions.checkArgument(index >= 0 && index < size());
     return elements[index];
   }
 
@@ -63,7 +74,7 @@ public abstract class AbstractPath<E extends Comparable, P extends AbstractPath<
   }
 
   public E getLast() {
-//    Preconditions.checkArgument(elements.length > 0);
+    //    Preconditions.checkArgument(elements.length > 0);
     return elements[elements.length - 1];
   }
 
@@ -100,11 +111,10 @@ public abstract class AbstractPath<E extends Comparable, P extends AbstractPath<
     return Arrays.equals(elements, o.elements);
   }
 
-
-//  @Override
-//  public Iterator<E> iterator() {
-//    return Iterators.forArray(elements);
-//  }
+  //  @Override
+  //  public Iterator<E> iterator() {
+  //    return Iterators.forArray(elements);
+  //  }
 
   @Override
   public int compareTo(P o) {
@@ -121,13 +131,13 @@ public abstract class AbstractPath<E extends Comparable, P extends AbstractPath<
   }
 
   public P popFirst() {
-//    Preconditions.checkArgument(size() > 0);
+    //    Preconditions.checkArgument(size() > 0);
     var newNames = Arrays.copyOfRange(elements, 1, elements.length);
     return constructor().create(newNames);
   }
 
   public P popLast() {
-//    Preconditions.checkArgument(size() > 0);
+    //    Preconditions.checkArgument(size() > 0);
     var newNames = Arrays.copyOfRange(elements, 0, elements.length - 1);
     return constructor().create(newNames);
   }
@@ -158,7 +168,7 @@ public abstract class AbstractPath<E extends Comparable, P extends AbstractPath<
     return Arrays.stream(elements);
   }
 
-  protected static abstract class Constructor<E extends Comparable, P extends AbstractPath<E, P>> {
+  protected abstract static class Constructor<E extends Comparable, P extends AbstractPath<E, P>> {
 
     protected abstract P create(@NonNull E... elements);
 
@@ -181,12 +191,8 @@ public abstract class AbstractPath<E extends Comparable, P extends AbstractPath<
     }
 
     public <E2> P of(Function<E2, E> converter, @NonNull E2[] elements) {
-      var arr = Arrays.stream(elements)
-          .map(converter)
-          .toArray(this::createArray);
+      var arr = Arrays.stream(elements).map(converter).toArray(this::createArray);
       return create(arr);
     }
-
   }
-
 }

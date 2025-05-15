@@ -1,14 +1,19 @@
 /*
- * Copyright (c) 2021, DataSQRL. All rights reserved. Use is subject to license terms.
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.datasqrl.io.schema.flexible.external;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
@@ -34,16 +39,21 @@ import com.datasqrl.util.NamedIdentifier;
 import com.datasqrl.util.StringNamedId;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import lombok.NonNull;
 import lombok.Value;
 
 /**
- * Converts a {@link SchemaDefinition} that is parsed out of a YAML file into a
- * {@link FlexibleTableSchema} to be used internally.
- * <p>
- * A {@link SchemaDefinition} is provided by a user in connection with a table configuration to specify the
- * expected schema of the source datasets consumed by the script.
+ * Converts a {@link SchemaDefinition} that is parsed out of a YAML file into a {@link
+ * FlexibleTableSchema} to be used internally.
+ *
+ * <p>A {@link SchemaDefinition} is provided by a user in connection with a table configuration to
+ * specify the expected schema of the source datasets consumed by the script.
  */
 public class SchemaImport {
 
@@ -57,8 +67,8 @@ public class SchemaImport {
     this.canonicalizer = defaultCanonicalizer;
   }
 
-  public Optional<FlexibleTableSchema> convert(TableDefinition table,
-                                               @NonNull ErrorCollector errors) {
+  public Optional<FlexibleTableSchema> convert(
+      TableDefinition table, @NonNull ErrorCollector errors) {
     NamedIdentifier version;
     if (Strings.isNullOrEmpty(table.schema_version)) {
       version = VERSION;
@@ -76,7 +86,9 @@ public class SchemaImport {
     } else {
       errors = errors.resolve(nameOpt.get().getDisplay());
     }
-    builder.setPartialSchema(table.partial_schema == null ? TableDefinition.PARTIAL_SCHEMA_DEFAULT
+    builder.setPartialSchema(
+        table.partial_schema == null
+            ? TableDefinition.PARTIAL_SCHEMA_DEFAULT
             : table.partial_schema);
     builder.setConstraints(convertConstraints(table.tests, errors));
     if (table.columns == null || table.columns.isEmpty()) {
@@ -87,8 +99,8 @@ public class SchemaImport {
     return Optional.of(builder.build());
   }
 
-  private RelationType<FlexibleFieldSchema.Field> convert(List<FieldDefinition> columns,
-                                                          @NonNull ErrorCollector errors) {
+  private RelationType<FlexibleFieldSchema.Field> convert(
+      List<FieldDefinition> columns, @NonNull ErrorCollector errors) {
     RelationType.Builder<FlexibleFieldSchema.Field> rbuilder = new RelationType.Builder();
     for (FieldDefinition fd : columns) {
       var fieldConvert = convert(fd, errors);
@@ -99,8 +111,8 @@ public class SchemaImport {
     return rbuilder.build();
   }
 
-  private Optional<FlexibleFieldSchema.Field> convert(FieldDefinition field,
-                                                      @NonNull ErrorCollector errors) {
+  private Optional<FlexibleFieldSchema.Field> convert(
+      FieldDefinition field, @NonNull ErrorCollector errors) {
     var builder = new FlexibleFieldSchema.Field.Builder();
     var nameOpt = convert(field, builder, errors);
     if (nameOpt.isEmpty()) {
@@ -108,12 +120,12 @@ public class SchemaImport {
     } else {
       errors = errors.resolve(nameOpt.get().getDisplay());
     }
-    //Add types
+    // Add types
     final Map<Name, FieldTypeDefinition> ftds;
     if (field.mixed != null) {
       if (field.type != null || field.columns != null || field.tests != null) {
         errors.warn(
-                "When [mixed] types are defined, field level type, column, and test definitions are ignored");
+            "When [mixed] types are defined, field level type, column, and test definitions are ignored");
       }
       if (field.mixed.isEmpty()) {
         errors.fatal("[mixed] type are empty");
@@ -132,8 +144,7 @@ public class SchemaImport {
     }
     final List<FlexibleFieldSchema.FieldType> types = new ArrayList<>();
     for (Map.Entry<Name, FieldTypeDefinition> entry : ftds.entrySet()) {
-      var ft = convert(entry.getKey(), entry.getValue(),
-              errors);
+      var ft = convert(entry.getKey(), entry.getValue(), errors);
       if (ft.isPresent()) {
         types.add(ft.get());
       }
@@ -142,8 +153,8 @@ public class SchemaImport {
     return Optional.of(builder.build());
   }
 
-  private Optional<FlexibleFieldSchema.FieldType> convert(Name variant, FieldTypeDefinition ftd,
-                                                          @NonNull ErrorCollector errors) {
+  private Optional<FlexibleFieldSchema.FieldType> convert(
+      Name variant, FieldTypeDefinition ftd, @NonNull ErrorCollector errors) {
     errors = errors.resolve(variant.getDisplay());
     final Type type;
     final int arrayDepth;
@@ -160,8 +171,10 @@ public class SchemaImport {
       if (ftd.getType() != null) {
         errors.warn("Cannot define columns and type. Type is ignored");
       }
-      arrayDepth = ConstraintHelper.getConstraint(constraints, Cardinality.class)
-              .map(c -> c.isSingleton() ? 0 : 1).orElse(1);
+      arrayDepth =
+          ConstraintHelper.getConstraint(constraints, Cardinality.class)
+              .map(c -> c.isSingleton() ? 0 : 1)
+              .orElse(1);
       type = convert(ftd.getColumns(), errors);
     } else if (!Strings.isNullOrEmpty(ftd.getType())) {
       var btp = BasicTypeParse.parse(ftd.getType());
@@ -175,12 +188,10 @@ public class SchemaImport {
       errors.fatal("Type definition missing (specify either [type] or [columns])");
       return Optional.empty();
     }
-    return Optional.of(
-            new FlexibleFieldSchema.FieldType(variant, type, arrayDepth, constraints));
+    return Optional.of(new FlexibleFieldSchema.FieldType(variant, type, arrayDepth, constraints));
   }
 
-  private List<Constraint> convertConstraints(List<String> tests,
-                                              @NonNull ErrorCollector errors) {
+  private List<Constraint> convertConstraints(List<String> tests, @NonNull ErrorCollector errors) {
     if (tests == null) {
       return Collections.EMPTY_LIST;
     }
@@ -191,7 +202,7 @@ public class SchemaImport {
         errors.warn("Unknown test [%s] - this constraint is ignored", testString);
         continue;
       }
-      //TODO: extract parameters from yaml
+      // TODO: extract parameters from yaml
       Optional<Constraint> r = cf.create(Collections.EMPTY_MAP, errors);
       if (r.isPresent()) {
         constraints.add(r.get());
@@ -210,9 +221,10 @@ public class SchemaImport {
     }
   }
 
-  private Optional<Name> convert(AbstractElementDefinition element,
-                                 FlexibleFieldSchema.Builder builder,
-                                 @NonNull ErrorCollector errors) {
+  private Optional<Name> convert(
+      AbstractElementDefinition element,
+      FlexibleFieldSchema.Builder builder,
+      @NonNull ErrorCollector errors) {
     final var name = convert(element.name, errors);
     if (name.isPresent()) {
       builder.setName(name.get());
@@ -220,7 +232,7 @@ public class SchemaImport {
     }
     builder.setDescription(SchemaElementDescription.of(element.description));
     builder.setDefault_value(
-            element.default_value); //TODO: Validate that default value has right type
+        element.default_value); // TODO: Validate that default value has right type
     return name;
   }
 
@@ -256,7 +268,5 @@ public class SchemaImport {
       }
       return r;
     }
-
   }
-
 }

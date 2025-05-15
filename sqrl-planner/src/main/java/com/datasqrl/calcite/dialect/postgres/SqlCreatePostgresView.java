@@ -1,10 +1,23 @@
+/*
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.datasqrl.calcite.dialect.postgres;
 
 import java.util.List;
 import java.util.Objects;
-
 import javax.annotation.Nonnull;
-
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlKind;
@@ -17,23 +30,25 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.util.ImmutableNullableList;
 
 /**
- * CREATE [ OR REPLACE ] [ TEMP | TEMPORARY ] [ RECURSIVE ] VIEW name
- * [ ( column_name [, ...] ) ]
- * [ WITH ( view_option_name [= view_option_value] [, ... ] ) ]
- * AS query
- * [ WITH [ CASCADED | LOCAL ] CHECK OPTION ]
+ * CREATE [ OR REPLACE ] [ TEMP | TEMPORARY ] [ RECURSIVE ] VIEW name [ ( column_name [, ...] ) ] [
+ * WITH ( view_option_name [= view_option_value] [, ... ] ) ] AS query [ WITH [ CASCADED | LOCAL ]
+ * CHECK OPTION ]
  */
 public class SqlCreatePostgresView extends SqlCall {
 
-  private static final SqlSpecialOperator OPERATOR = new SqlSpecialOperator("CREATE VIEW", SqlKind.CREATE_VIEW);
+  private static final SqlSpecialOperator OPERATOR =
+      new SqlSpecialOperator("CREATE VIEW", SqlKind.CREATE_VIEW);
 
   private final boolean replace;
   private final SqlIdentifier viewName;
   private final SqlNodeList columnList;
   private final SqlNode select;
 
-  public SqlCreatePostgresView(SqlParserPos pos, boolean replace,
-      SqlIdentifier viewName, SqlNodeList columnList,
+  public SqlCreatePostgresView(
+      SqlParserPos pos,
+      boolean replace,
+      SqlIdentifier viewName,
+      SqlNodeList columnList,
       SqlNode select) {
     super(pos);
     this.replace = replace;
