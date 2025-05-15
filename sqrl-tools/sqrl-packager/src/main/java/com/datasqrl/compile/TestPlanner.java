@@ -44,7 +44,7 @@ import graphql.parser.Parser;
 import lombok.AllArgsConstructor;
 
 @AllArgsConstructor()
-public class TestPlanner2 {
+public class TestPlanner {
   private List<SqrlTableFunction> tableFunctions;
 
   public TestPlan generateTestPlan(APISource source, Optional<Path> testsPath) {

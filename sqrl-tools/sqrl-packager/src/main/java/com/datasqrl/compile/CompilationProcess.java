@@ -1,20 +1,11 @@
 package com.datasqrl.compile;
 
-import java.nio.file.Path;
-import java.util.List;
-import java.util.Optional;
-
-import org.apache.commons.lang3.tuple.Pair;
-
 import com.datasqrl.actions.DagWriter;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.config.BuildPath;
 import com.datasqrl.config.GraphqlSourceFactory;
 import com.datasqrl.engine.PhysicalPlan;
-import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.server.ServerPhysicalPlan;
-import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.plan.MainScript;
 import com.datasqrl.plan.global.PhysicalPlanRewriter;
 import com.datasqrl.plan.queries.APISourceImpl;
@@ -26,25 +17,24 @@ import com.datasqrl.v2.dag.DAGPlanner;
 import com.datasqrl.v2.graphql.GenerateCoords;
 import com.datasqrl.v2.graphql.InferGraphqlSchema2;
 import com.google.inject.Inject;
-
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Optional;
 import lombok.AllArgsConstructor;
+import org.apache.commons.lang3.tuple.Pair;
 
 @AllArgsConstructor(onConstructor_=@Inject)
-public class CompilationProcessV2 {
+public class CompilationProcess {
 
   private final SqlScriptPlanner planner;
-  private final ModuleLoader moduleLoader;
   private final DAGPlanner dagPlanner;
   private final BuildPath buildPath;
   private final MainScript mainScript;
   private final GenerateCoords generateCoords;
   private final InferGraphqlSchema2 inferGraphqlSchema;
   private final DagWriter writeDeploymentArtifactsHook;
-  //  private final FlinkSqlGenerator flinkSqlGenerator;
   private final GraphqlSourceFactory graphqlSourceFactory;
   private final ExecutionGoal executionGoal;
-  private final ExecutionPipeline pipeline;
-  private final ErrorCollector errors;
 
   public Pair<PhysicalPlan, TestPlan> executeCompilation(Optional<Path> testsPath) {
 
@@ -74,7 +64,7 @@ public class CompilationProcessV2 {
 
       //create test artifact
       if (executionGoal == ExecutionGoal.TEST) {
-        var testPlanner = new TestPlanner2(serverPlan.get().getFunctions());
+        var testPlanner = new TestPlanner(serverPlan.get().getFunctions());
         testPlan = testPlanner.generateTestPlan(apiSource.get(), testsPath);
       }
     }

@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-import com.datasqrl.compile.CompilationProcessV2;
+import com.datasqrl.compile.CompilationProcess;
 import com.datasqrl.compile.DirectoryManager;
 import com.datasqrl.compile.TestPlan;
 import com.datasqrl.config.PackageJson;
@@ -102,7 +102,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
       return;
     }
 
-    var compilationProcess = injector.getInstance(CompilationProcessV2.class);
+    var compilationProcess = injector.getInstance(CompilationProcess.class);
     testsPath.ifPresent(this::validateTestPath);
 
     Pair<PhysicalPlan, ? extends TestPlan> plan = compilationProcess.executeCompilation(testsPath);
