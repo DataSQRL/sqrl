@@ -2,7 +2,8 @@ package com.datasqrl.engine.database.relational;
 
 import static com.datasqrl.function.CalciteFunctionUtil.lightweightOp;
 
-import com.datasqrl.v2.hint.DataTypeHint;
+import com.datasqrl.config.JdbcDialect;
+import com.datasqrl.planner.hint.DataTypeHint;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -26,7 +27,7 @@ import com.datasqrl.calcite.dialect.ExtendedPostgresSqlDialect;
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.plan.global.IndexDefinition;
-import com.datasqrl.v2.dag.plan.MaterializationStagePlan.Query;
+import com.datasqrl.planner.dag.plan.MaterializationStagePlan.Query;
 
 public class DuckDbStatementFactory extends AbstractJdbcStatementFactory {
 
@@ -36,6 +37,11 @@ public class DuckDbStatementFactory extends AbstractJdbcStatementFactory {
   public DuckDbStatementFactory(EngineConfig engineConfig) {
     super(new OperatorRuleTransformer(Dialect.POSTGRES), new PostgresRelToSqlNode(), new PostgresSqlNodeToString()); //Iceberg does not support queries
     this.engineConfig = engineConfig;
+  }
+
+  @Override
+  public JdbcDialect getDialect() {
+    return JdbcDialect.Postgres;
   }
 
   @Override

@@ -31,7 +31,7 @@ import com.datasqrl.io.schema.flexible.input.FlexibleTableSchema;
 import com.datasqrl.io.schema.flexible.input.SchemaAdjustmentSettings;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.ServiceLoaderDiscovery;
-import com.datasqrl.v2.tables.FlinkTableBuilder;
+import com.datasqrl.planner.tables.FlinkTableBuilder;
 import com.google.inject.Inject;
 
 import lombok.SneakyThrows;
@@ -131,7 +131,7 @@ public class FlexibleSchemaInferencePreprocessor implements DiscoveryPreprocesso
       var schemaHolder = new FlexibleTableSchemaHolder(schema);
       //4. Infer primary key
       var rowType = SchemaToRelDataTypeFactory.load(schemaHolder)
-          .map(schemaHolder, null, tableName, errors);
+          .map(schemaHolder, tableName, errors);
       //We use a conservative method where each simple column is a primary key column
       var primaryKey = rowType.getFieldList().stream().filter(f -> !f.getType().isNullable() && CalciteUtil.isPotentialPrimaryKeyType(f.getType()))
           .map(RelDataTypeField::getName).toArray(String[]::new);

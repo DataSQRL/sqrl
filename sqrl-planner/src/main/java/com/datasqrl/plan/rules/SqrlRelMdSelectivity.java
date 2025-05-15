@@ -14,7 +14,7 @@ import org.apache.calcite.util.BuiltInMethod;
 
 import com.datasqrl.plan.global.QueryIndexSummary;
 import com.datasqrl.plan.global.QueryIndexSummary.IndexableFunctionCall;
-import com.datasqrl.v2.analyzer.TableAnalysis;
+import com.datasqrl.planner.analyzer.TableAnalysis;
 
 public class SqrlRelMdSelectivity extends RelMdSelectivity
     implements BuiltInMetadata.Selectivity.Handler {

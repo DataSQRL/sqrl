@@ -6,7 +6,7 @@ import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlSelect;
 import org.apache.flink.table.planner.plan.nodes.calcite.LogicalWatermarkAssigner;
 
-import com.datasqrl.v2.TableAnalysisLookup;
+import com.datasqrl.planner.TableAnalysisLookup;
 
 public class FlinkUnExpandingRelToSqlConverter extends RelToSqlConverter {
 

@@ -1,7 +1,7 @@
 package com.datasqrl.engine.database.relational;
 
-import com.datasqrl.v2.hint.DataTypeHint;
-import com.datasqrl.v2.hint.PlannerHints;
+import com.datasqrl.planner.hint.DataTypeHint;
+import com.datasqrl.planner.hint.PlannerHints;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -34,7 +34,7 @@ import com.datasqrl.engine.database.relational.JdbcStatement.Type;
 import com.datasqrl.engine.database.relational.ddl.statements.CreateTableDDL;
 import com.datasqrl.sql.DatabaseExtension;
 import com.datasqrl.util.CalciteUtil;
-import com.datasqrl.v2.dag.plan.MaterializationStagePlan.Query;
+import com.datasqrl.planner.dag.plan.MaterializationStagePlan.Query;
 
 import lombok.AllArgsConstructor;
 

@@ -1,16 +1,13 @@
 package com.datasqrl.util;
 
+import com.datasqrl.function.FunctionMetadata;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.Optional;
-
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.planner.functions.bridging.BridgingSqlAggFunction;
 import org.apache.flink.table.planner.functions.bridging.BridgingSqlFunction;
-
-import com.datasqrl.function.FunctionMetadata;
-import com.datasqrl.function.SqrlTimeTumbleFunction;
 
 public class FunctionUtil {
 
@@ -49,8 +46,4 @@ public class FunctionUtil {
             .findFirst();
   }
 
-  public static Optional<SqrlTimeTumbleFunction> getSqrlTimeTumbleFunction(
-      FunctionDefinition functionDefinition) {
-    return getFunctionMetaData(functionDefinition, SqrlTimeTumbleFunction.class);
-  }
 }

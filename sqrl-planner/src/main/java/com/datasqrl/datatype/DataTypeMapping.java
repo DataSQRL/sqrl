@@ -5,8 +5,6 @@ import java.util.Optional;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.flink.table.functions.FunctionDefinition;
 
-import com.datasqrl.engine.stream.flink.connector.CastFunction;
-
 import lombok.AllArgsConstructor;
 import lombok.Value;
 
@@ -38,12 +36,12 @@ public interface DataTypeMapping {
     }
 
     /**
-     * @return The {@link CastFunction} that maps the {@link RelDataType} to a supported engine type
+     * @return The {@link FunctionDefinition} that maps the {@link RelDataType} to a supported engine type
      */
     FunctionDefinition toEngineMapping();
 
     /**
-     * @return The {@link CastFunction} that maps back to a type an database engine internal type
+     * @return The {@link FunctionDefinition} that maps back to a type an database engine internal type
      * that is identical or similar to the original {@link RelDataType}. Returns empty when no such mapping
      * is possible or needed.
      */

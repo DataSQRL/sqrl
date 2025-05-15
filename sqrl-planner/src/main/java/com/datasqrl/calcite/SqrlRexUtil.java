@@ -23,8 +23,6 @@ import org.apache.calcite.rel.RelFieldCollation;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.AggregateCall;
 import org.apache.calcite.rel.core.TableFunctionScan;
-import org.apache.calcite.rel.logical.LogicalAggregate;
-import org.apache.calcite.rel.logical.LogicalFilter;
 import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
@@ -54,8 +52,6 @@ import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 import org.apache.flink.table.planner.calcite.FlinkRexBuilder;
 
 import com.datasqrl.calcite.SqrlRexUtil.JoinConditionDecomposition.EqualityCondition;
-import com.datasqrl.plan.hints.DedupHint;
-import com.datasqrl.plan.hints.SqrlHint;
 import com.datasqrl.plan.util.SelectIndexMap;
 import com.datasqrl.util.CalciteUtil;
 import com.google.common.base.Preconditions;
@@ -412,34 +408,6 @@ public class SqrlRexUtil {
       }
     };
     return !findComplex.foundIn(project.getProjects());
-  }
-
-  public static boolean isDedupedRelNode(RelNode relNode, boolean includeAggregation, boolean allowFilter) {
-    if (relNode instanceof LogicalProject project) {
-      if (SqrlRexUtil.isSimpleProject(project)) {
-        return isDedupedRelNode(relNode.getInput(0), includeAggregation, allowFilter);
-      }
-    }
-    Optional<DedupHint> dedupHint = SqrlHint.fromRel(relNode, DedupHint.CONSTRUCTOR);
-    if (dedupHint.isPresent()) {
-      return true;
-    } else if (includeAggregation && (relNode instanceof LogicalAggregate)) {
-      return true;
-    } else if (allowFilter && (relNode instanceof LogicalFilter)) {
-      return isDedupedRelNode(relNode.getInput(0), includeAggregation, allowFilter);
-    } else {
-      return false;
-    }
-  }
-
-  public RexNode greatestNotNull(List<Integer> colIndexes, RelNode input) {
-    Preconditions.checkArgument(!colIndexes.isEmpty());
-    if (colIndexes.size()==1) {
-      return rexBuilder.makeInputRef(input, colIndexes.get(0));
-    } else { //size >=2
-      var args = colIndexes.stream().map(idx -> rexBuilder.makeInputRef(input, idx)).toArray(RexNode[]::new);
-      return rexBuilder.makeCall(lightweightOp("GREATEST", ReturnTypes.ARG0), args);
-    }
   }
 
   public RexNode makeInputRef(int colIdx, RelBuilder builder) {

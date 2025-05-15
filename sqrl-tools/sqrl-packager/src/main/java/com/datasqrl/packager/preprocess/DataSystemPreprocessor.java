@@ -1,5 +1,6 @@
 package com.datasqrl.packager.preprocess;
 
+import com.datasqrl.packager.preprocessor.Preprocessor;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.regex.Pattern;

@@ -1,13 +1,16 @@
 package com.datasqrl.engine.database.relational;
 
+import com.datasqrl.config.JdbcDialect;
 import java.util.List;
 
 import com.datasqrl.plan.global.IndexDefinition;
-import com.datasqrl.v2.dag.plan.MaterializationStagePlan.Query;
+import com.datasqrl.planner.dag.plan.MaterializationStagePlan.Query;
 
 import lombok.Value;
 
 public interface JdbcStatementFactory {
+
+  JdbcDialect getDialect();
 
   JdbcStatement createTable(JdbcEngineCreateTable createTable);
 

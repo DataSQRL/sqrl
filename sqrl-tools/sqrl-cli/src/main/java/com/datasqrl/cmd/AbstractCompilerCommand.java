@@ -6,6 +6,7 @@ package com.datasqrl.cmd;
 import static com.datasqrl.config.ScriptConfigImpl.GRAPHQL_NORMALIZED_FILE_NAME;
 import static com.datasqrl.config.SqrlConstants.PACKAGE_JSON;
 
+import com.datasqrl.packager.PackageBootstrap;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -16,7 +17,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-import com.datasqrl.compile.CompilationProcessV2;
+import com.datasqrl.compile.CompilationProcess;
 import com.datasqrl.compile.DirectoryManager;
 import com.datasqrl.compile.TestPlan;
 import com.datasqrl.config.PackageJson;
@@ -102,7 +103,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
       return;
     }
 
-    var compilationProcess = injector.getInstance(CompilationProcessV2.class);
+    var compilationProcess = injector.getInstance(CompilationProcess.class);
     testsPath.ifPresent(this::validateTestPath);
 
     Pair<PhysicalPlan, ? extends TestPlan> plan = compilationProcess.executeCompilation(testsPath);

@@ -36,7 +36,6 @@ import org.apache.flink.sql.parser.dml.RichSqlInsert;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 
 import com.datasqrl.calcite.schema.sql.SqlDataTypeSpecBuilder;
-import com.datasqrl.config.TableConfig.MetadataEntry;
 import com.datasqrl.sql.SqlCallRewriter;
 
 public class FlinkSqlNodeFactory {
@@ -341,5 +340,14 @@ public class FlinkSqlNodeFactory {
   // Interface for parsing expressions
   public interface MetadataExpressionParser {
     SqlNode parseExpression(String expression);
+  }
+
+  public interface MetadataEntry {
+
+    Optional<String> getType();
+
+    Optional<String> getAttribute();
+
+    Optional<Boolean> getVirtual();
   }
 }

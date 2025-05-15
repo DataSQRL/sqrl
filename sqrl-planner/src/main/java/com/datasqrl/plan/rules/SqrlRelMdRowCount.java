@@ -16,7 +16,7 @@ import org.apache.calcite.rel.metadata.RelMetadataQuery;
 import org.apache.calcite.util.BuiltInMethod;
 
 import com.datasqrl.plan.global.QueryIndexSummary;
-import com.datasqrl.v2.analyzer.TableAnalysis;
+import com.datasqrl.planner.analyzer.TableAnalysis;
 
 public class SqrlRelMdRowCount extends RelMdRowCount
     implements BuiltInMetadata.RowCount.Handler {

@@ -23,7 +23,6 @@ public abstract class AbstractJDBCDatabaseEngine extends AbstractJDBCEngine impl
 
   public AbstractJDBCDatabaseEngine(String name, @NonNull EngineConfig engineConfig, ConnectorFactoryFactory connectorFactory) {
     super(name, EngineType.DATABASE, STANDARD_DATABASE, engineConfig, connectorFactory);
-    this.connectorFactory = connectorFactory;
   }
 
   @Override
@@ -43,10 +42,6 @@ public abstract class AbstractJDBCDatabaseEngine extends AbstractJDBCEngine impl
 //    return FunctionUtil.getSqrlTimeTumbleFunction(function).isEmpty();
 //  }
 
-  @Deprecated
-  private final ConnectorFactoryFactory connectorFactory;
-
-  @Override
   public IndexSelectorConfig getIndexSelectorConfig() {
     return IndexSelectorConfigByDialect.of(getDialect());
   }

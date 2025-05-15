@@ -16,13 +16,12 @@ import com.datasqrl.engine.database.relational.JdbcStatementFactory;
 import com.datasqrl.engine.database.relational.ddl.statements.CreateIndexDDL;
 import com.datasqrl.engine.database.relational.ddl.statements.InsertStatement;
 import com.datasqrl.engine.database.relational.ddl.statements.notify.CreateNotifyTriggerDDL;
-import com.datasqrl.functions.vector.VectorPgExtension;
+import com.datasqrl.function.vector.VectorPgExtension;
 import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.sql.DatabaseExtension;
-import com.datasqrl.v2.dag.plan.MaterializationStagePlan.Query;
-import com.datasqrl.v2.hint.DataTypeHint;
-import com.datasqrl.v2.hint.VectorDimensionHint;
-import com.google.auto.service.AutoService;
+import com.datasqrl.planner.dag.plan.MaterializationStagePlan.Query;
+import com.datasqrl.planner.hint.DataTypeHint;
+import com.datasqrl.planner.hint.VectorDimensionHint;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -31,9 +30,8 @@ import org.apache.calcite.sql.SqlAlienSystemTypeNameSpec;
 import org.apache.calcite.sql.SqlDataTypeSpec;
 import org.apache.calcite.sql.parser.SqlParserPos;
 
-@AutoService(JdbcDDLFactory.class)
 public class PostgresDDLFactory extends AbstractJdbcStatementFactory
-    implements JdbcDDLFactory, JdbcStatementFactory {
+    implements JdbcStatementFactory {
 
   public static final List<DatabaseExtension> EXTENSIONS = List.of(new VectorPgExtension());
 
@@ -77,24 +75,13 @@ public class PostgresDDLFactory extends AbstractJdbcStatementFactory
   }
 
   @Override
-  public JdbcStatement addIndex(IndexDefinition indexDefinition) {
-    var ddl = createIndex(indexDefinition);
+  public JdbcStatement addIndex(IndexDefinition index) {
+    var ddl = new CreateIndexDDL(index.getName(), index.getTableId(), index.getColumnNames(), index.getType());
     return new JdbcStatement(ddl.getIndexName(), Type.INDEX, ddl.getSql());
   }
 
   /*
-   Old methods
-  */
-
-  @Override
-  @Deprecated
-  public CreateIndexDDL createIndex(IndexDefinition index) {
-    var columns = index.getColumnNames();
-    return new CreateIndexDDL(index.getName(), index.getTableId(), columns, index.getType());
-  }
-
-  /*
-  The following methods are for the Postgres Log engine
+  The following methods are for the Postgres Log engine - we'll keep those around for now
   */
 
   public CreateNotifyTriggerDDL createNotify(String name, List<String> primaryKeys) {

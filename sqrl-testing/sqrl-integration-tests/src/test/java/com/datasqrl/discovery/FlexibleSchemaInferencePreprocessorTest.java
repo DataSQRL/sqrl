@@ -14,15 +14,13 @@ import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
 import com.datasqrl.AbstractAssetSnapshotTest;
-import com.datasqrl.calcite.type.TypeFactory;
-import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.SqrlConfigCommons;
 import com.datasqrl.discovery.preprocessor.FlexibleSchemaInferencePreprocessor;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrinter;
 import com.datasqrl.inject.SqrlInjector;
-import com.datasqrl.packager.preprocess.Preprocessor.ProcessorContext;
+import com.datasqrl.packager.preprocessor.Preprocessor.ProcessorContext;
 import com.datasqrl.plan.validate.ExecutionGoal;
 import com.datasqrl.util.SnapshotTest.Snapshot;
 import com.google.inject.Guice;

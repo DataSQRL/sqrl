@@ -6,6 +6,7 @@ package com.datasqrl.schema;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import com.datasqrl.plan.table.SchemaConverter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -62,7 +63,7 @@ public class FlexibleSchemaHandlingTest {
           var errors = ErrorCollector.root();
           var tableSchema = new FlexibleTableSchemaHolder(table);
           var dataType = SchemaToRelDataTypeFactory.load(tableSchema)
-              .map(tableSchema, null, tableName, errors);
+              .map(tableSchema, tableName, errors);
           assertFalse(errors.hasErrors(), errors.toString());
           if (alias.isPresent()) {
             continue;

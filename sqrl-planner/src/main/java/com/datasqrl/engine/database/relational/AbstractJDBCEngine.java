@@ -22,9 +22,9 @@ import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.database.EngineCreateTable;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.graphql.jdbc.DatabaseType;
-import com.datasqrl.v2.analyzer.TableAnalysis;
-import com.datasqrl.v2.dag.plan.MaterializationStagePlan;
-import com.datasqrl.v2.tables.FlinkTableBuilder;
+import com.datasqrl.planner.analyzer.TableAnalysis;
+import com.datasqrl.planner.dag.plan.MaterializationStagePlan;
+import com.datasqrl.planner.tables.FlinkTableBuilder;
 
 import lombok.Getter;
 import lombok.NonNull;

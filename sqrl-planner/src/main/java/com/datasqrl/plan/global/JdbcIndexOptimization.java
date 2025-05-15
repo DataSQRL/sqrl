@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.database.relational.AbstractJDBCDatabaseEngine;
 import com.datasqrl.engine.database.relational.JdbcPhysicalPlan;
-import com.datasqrl.v2.Sqrl2FlinkSQLTranslator;
+import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
 import com.google.auto.service.AutoService;
 
 import lombok.Value;

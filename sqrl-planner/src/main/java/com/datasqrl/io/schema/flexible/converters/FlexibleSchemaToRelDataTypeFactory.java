@@ -3,10 +3,7 @@
  */
 package com.datasqrl.io.schema.flexible.converters;
 
-import org.apache.calcite.rel.type.RelDataType;
-
 import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.config.TableConfig;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.schema.flexible.FlexibleTableConverter;
 import com.datasqrl.io.schema.flexible.FlexibleTableSchemaFactory;
@@ -14,6 +11,7 @@ import com.datasqrl.io.schema.flexible.FlexibleTableSchemaHolder;
 import com.datasqrl.io.tables.TableSchema;
 import com.google.auto.service.AutoService;
 import com.google.common.base.Preconditions;
+import org.apache.calcite.rel.type.RelDataType;
 
 @AutoService(SchemaToRelDataTypeFactory.class)
 public class FlexibleSchemaToRelDataTypeFactory implements SchemaToRelDataTypeFactory {
@@ -24,7 +22,7 @@ public class FlexibleSchemaToRelDataTypeFactory implements SchemaToRelDataTypeFa
   }
 
   @Override
-  public RelDataType map(TableSchema schema, TableConfig tableConfig, Name tableName, ErrorCollector errors) {
+  public RelDataType map(TableSchema schema, Name tableName, ErrorCollector errors) {
     Preconditions.checkArgument(schema instanceof FlexibleTableSchemaHolder);
     var holder = (FlexibleTableSchemaHolder)schema;
     var converter = new FlexibleTableConverter(holder.getSchema(), tableName);

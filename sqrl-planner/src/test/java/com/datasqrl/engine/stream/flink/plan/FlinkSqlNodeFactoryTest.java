@@ -21,7 +21,7 @@ import org.junit.jupiter.api.Test;
 
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.convert.SqlToStringFactory;
-import com.datasqrl.config.TableConfig.MetadataEntry;
+import com.datasqrl.engine.stream.flink.plan.FlinkSqlNodeFactory.MetadataEntry;
 
 import lombok.Value;
 

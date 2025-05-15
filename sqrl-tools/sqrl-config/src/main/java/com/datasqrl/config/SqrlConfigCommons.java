@@ -359,11 +359,6 @@ public <T> Value<T> allAs(Class<T> clazz) {
     return newconfig;
   }
 
-  public static TableConfigImpl fromFilesTableConfig(@NonNull Name name, ErrorCollector errors,
-      @NonNull List<Path> files) {
-    return new TableConfigImpl(name, getPackageConfig(errors, "/jsonSchema/tableConfig.json", files));
-  }
-
   public static PackageJson getDefaultPackageJson(ErrorCollector errors) {
     return fromFilesPackageJson(errors, List.of());
   }

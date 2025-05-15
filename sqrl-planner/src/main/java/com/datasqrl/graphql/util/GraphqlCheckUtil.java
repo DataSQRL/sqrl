@@ -1,10 +1,8 @@
 package com.datasqrl.graphql.util;
 
-import org.apache.calcite.sql.parser.SqlParserPos;
-
 import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.error.ErrorLocation.FileLocation;
-import com.datasqrl.v2.parser.StatementParserException;
+import com.datasqrl.planner.parser.StatementParserException;
 
 import graphql.language.SourceLocation;
 

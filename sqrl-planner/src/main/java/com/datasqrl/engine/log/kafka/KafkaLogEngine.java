@@ -1,28 +1,8 @@
 package com.datasqrl.engine.log.kafka;
 
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
-
-import org.apache.calcite.plan.RelOptTable;
-import org.apache.calcite.rel.core.Filter;
-import org.apache.calcite.rel.core.Project;
-import org.apache.calcite.rel.core.TableScan;
-import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.rex.RexCall;
-import org.apache.calcite.rex.RexDynamicParam;
-import org.apache.calcite.rex.RexNode;
-import org.apache.calcite.sql.SqlKind;
-import org.apache.calcite.sql.SqlNode;
-import org.apache.flink.sql.parser.ddl.SqlTableColumn;
-
 import com.datasqrl.config.ConnectorConf;
 import com.datasqrl.config.ConnectorConf.Context;
-import com.datasqrl.config.ConnectorFactory;
 import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.EngineType;
 import com.datasqrl.config.PackageJson;
@@ -35,32 +15,44 @@ import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.database.EngineCreateTable;
 import com.datasqrl.engine.log.LogEngine;
-import com.datasqrl.engine.log.LogFactory;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.flinkrunner.format.json.FlexibleJsonFormat;
 import com.datasqrl.io.tables.TableType;
+import com.datasqrl.planner.analyzer.TableAnalysis;
+import com.datasqrl.planner.dag.plan.MaterializationStagePlan;
+import com.datasqrl.planner.dag.plan.MaterializationStagePlan.Query;
+import com.datasqrl.planner.tables.FlinkConnectorConfig;
+import com.datasqrl.planner.tables.FlinkTableBuilder;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.StreamUtil;
-import com.datasqrl.v2.analyzer.TableAnalysis;
-import com.datasqrl.v2.dag.plan.MaterializationStagePlan;
-import com.datasqrl.v2.dag.plan.MaterializationStagePlan.Query;
-import com.datasqrl.v2.tables.FlinkConnectorConfig;
-import com.datasqrl.v2.tables.FlinkTableBuilder;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Streams;
 import com.google.inject.Inject;
-
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.calcite.plan.RelOptTable;
+import org.apache.calcite.rel.core.Filter;
+import org.apache.calcite.rel.core.Project;
+import org.apache.calcite.rel.core.TableScan;
+import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rex.RexCall;
+import org.apache.calcite.rex.RexDynamicParam;
+import org.apache.calcite.rex.RexNode;
+import org.apache.calcite.sql.SqlKind;
+import org.apache.calcite.sql.SqlNode;
+import org.apache.flink.sql.parser.ddl.SqlTableColumn;
 
 @Slf4j
 public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
 
   @Getter
   private final EngineConfig engineConfig;
-  @Deprecated
-  private final ConnectorFactory connectorFactory;
-
   private final ConnectorConf streamConnectorConf;
   private final ConnectorConf upsertConnectorConf;
   private final ConnectorConf keyedStreamConnectorConf;
@@ -71,8 +63,6 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
     super(KafkaLogEngineFactory.ENGINE_NAME, EngineType.LOG, EngineFeature.STANDARD_LOG);
     this.engineConfig = json.getEngines().getEngineConfig(KafkaLogEngineFactory.ENGINE_NAME)
         .orElseGet(() -> new EmptyEngineConfig(KafkaLogEngineFactory.ENGINE_NAME));
-    this.connectorFactory = connectorFactory.create(EngineType.LOG, "kafka")
-        .orElseThrow(()->new RuntimeException("Could not find kafka connector"));
     this.streamConnectorConf = connectorFactory.getConfig(KafkaLogEngineFactory.ENGINE_NAME);
     this.upsertConnectorConf = connectorFactory.getConfig(KafkaLogEngineFactory.ENGINE_NAME+"-upsert");
     this.keyedStreamConnectorConf = connectorFactory.getConfig(KafkaLogEngineFactory.ENGINE_NAME+"-keyed");
@@ -179,8 +169,4 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
             .map(NewTopic.class::cast).collect(Collectors.toList()));
   }
 
-  @Override
-  public LogFactory getLogFactory() {
-    return new KafkaLogFactory(connectorFactory);
-  }
 }

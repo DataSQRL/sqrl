@@ -17,8 +17,8 @@ import com.datasqrl.config.BuildPath;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.packager.preprocess.Preprocessor;
-import com.datasqrl.packager.preprocess.Preprocessor.ProcessorContext;
+import com.datasqrl.packager.preprocessor.Preprocessor;
+import com.datasqrl.packager.preprocessor.Preprocessor.ProcessorContext;
 import com.google.inject.Inject;
 
 import lombok.AllArgsConstructor;
