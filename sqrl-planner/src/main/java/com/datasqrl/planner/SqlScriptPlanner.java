@@ -734,7 +734,7 @@ public class SqlScriptPlanner {
           return typeTableSchema.getRelDataType();
         } else {
           return SchemaToRelDataTypeFactory.load(tableSchema)
-              .map(tableSchema, null, tableName, errorCollector);
+              .map(tableSchema, tableName, errorCollector);
         }
       });
 

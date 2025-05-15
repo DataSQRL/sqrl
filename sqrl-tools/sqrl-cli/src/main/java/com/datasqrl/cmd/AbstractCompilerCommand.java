@@ -6,6 +6,7 @@ package com.datasqrl.cmd;
 import static com.datasqrl.config.ScriptConfigImpl.GRAPHQL_NORMALIZED_FILE_NAME;
 import static com.datasqrl.config.SqrlConstants.PACKAGE_JSON;
 
+import com.datasqrl.packager.PackageBootstrap;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;

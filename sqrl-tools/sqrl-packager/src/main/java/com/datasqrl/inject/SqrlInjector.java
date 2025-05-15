@@ -10,8 +10,6 @@ import com.datasqrl.config.PackageJson.CompilerConfig;
 import com.datasqrl.config.SqrlCompilerConfiguration;
 import com.datasqrl.config.SqrlConfigPipeline;
 import com.datasqrl.config.SqrlConstants;
-import com.datasqrl.config.TableConfigLoader;
-import com.datasqrl.config.TableConfigLoaderImpl;
 import com.datasqrl.discovery.preprocessor.FlexibleSchemaInferencePreprocessor;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
@@ -25,9 +23,9 @@ import com.datasqrl.packager.preprocess.CopyStaticDataPreprocessor;
 import com.datasqrl.packager.preprocess.DataSystemPreprocessor;
 import com.datasqrl.packager.preprocess.FlinkSqlPreprocessor;
 import com.datasqrl.packager.preprocess.JarPreprocessor;
-import com.datasqrl.packager.preprocessor.Preprocessor;
 import com.datasqrl.packager.preprocess.ScriptPreprocessor;
 import com.datasqrl.packager.preprocess.TablePreprocessor;
+import com.datasqrl.packager.preprocessor.Preprocessor;
 import com.datasqrl.plan.MainScript;
 import com.datasqrl.plan.validate.ExecutionGoal;
 import com.google.inject.AbstractModule;
@@ -63,7 +61,6 @@ public class SqrlInjector extends AbstractModule {
     bind(ExecutionPipeline.class).to(SqrlConfigPipeline.class);
     bind(ModuleLoader.class).to(ModuleLoaderImpl.class);
     bind(CompilerConfig.class).to(SqrlCompilerConfiguration.class);
-    bind(TableConfigLoader.class).to(TableConfigLoaderImpl.class);
     bind(ConnectorFactoryFactory.class).to(ConnectorFactoryFactoryImpl.class);
 
     Multibinder<Preprocessor> binder = Multibinder.newSetBinder(binder(), Preprocessor.class);

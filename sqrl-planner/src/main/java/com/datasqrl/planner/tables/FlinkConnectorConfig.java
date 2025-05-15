@@ -1,9 +1,9 @@
 package com.datasqrl.planner.tables;
 
+import com.datasqrl.config.ConnectorConfig;
 import java.util.Map;
 import java.util.Optional;
 
-import com.datasqrl.config.TableConfig;
 import com.datasqrl.io.tables.TableType;
 import com.google.common.collect.ImmutableMap;
 
@@ -18,7 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 @AllArgsConstructor
 @Getter
 @Slf4j
-public class FlinkConnectorConfig implements TableConfig.ConnectorConfig {
+public class FlinkConnectorConfig implements ConnectorConfig {
 
   public static final String CONNECTOR_KEY = "connector";
 

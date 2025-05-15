@@ -3,7 +3,6 @@ package com.datasqrl.engine.log.postgres;
 import static com.datasqrl.config.EngineType.LOG;
 import static com.datasqrl.engine.log.postgres.PostgresLogEngineFactory.ENGINE_NAME;
 
-import com.datasqrl.config.ConnectorFactory;
 import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.PackageJson.EmptyEngineConfig;
@@ -30,19 +29,12 @@ public class PostgresLogEngine extends ExecutionEngine.Base implements LogEngine
   @Getter
   private final EngineConfig engineConfig;
 
-  private final ConnectorFactory sourceConnectorFactory;
-  private final ConnectorFactory sinkConnectorFactory;
-
   @Inject
   public PostgresLogEngine(PackageJson json, ConnectorFactoryFactory connectorFactory) {
     super(ENGINE_NAME, LOG, EnumSet.noneOf(EngineFeature.class));
 
     this.engineConfig = json.getEngines().getEngineConfig(ENGINE_NAME)
         .orElseGet(() -> new EmptyEngineConfig(ENGINE_NAME));
-    this.sourceConnectorFactory = connectorFactory.create(LOG, "postgres_log-source")
-        .orElseThrow(()->new RuntimeException("Could not find postgres_log source connector"));
-    this.sinkConnectorFactory = connectorFactory.create(LOG, "postgres_log-sink")
-        .orElseThrow(()->new RuntimeException("Could not find postgres_log sink connector"));
   }
 
   @Override

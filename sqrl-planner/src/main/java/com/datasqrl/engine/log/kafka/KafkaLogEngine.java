@@ -3,7 +3,6 @@ package com.datasqrl.engine.log.kafka;
 
 import com.datasqrl.config.ConnectorConf;
 import com.datasqrl.config.ConnectorConf.Context;
-import com.datasqrl.config.ConnectorFactory;
 import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.EngineType;
 import com.datasqrl.config.PackageJson;
@@ -19,13 +18,13 @@ import com.datasqrl.engine.log.LogEngine;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.flinkrunner.format.json.FlexibleJsonFormat;
 import com.datasqrl.io.tables.TableType;
-import com.datasqrl.util.CalciteUtil;
-import com.datasqrl.util.StreamUtil;
 import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.dag.plan.MaterializationStagePlan;
 import com.datasqrl.planner.dag.plan.MaterializationStagePlan.Query;
 import com.datasqrl.planner.tables.FlinkConnectorConfig;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
+import com.datasqrl.util.CalciteUtil;
+import com.datasqrl.util.StreamUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Streams;
 import com.google.inject.Inject;
@@ -54,9 +53,6 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
 
   @Getter
   private final EngineConfig engineConfig;
-  @Deprecated
-  private final ConnectorFactory connectorFactory;
-
   private final ConnectorConf streamConnectorConf;
   private final ConnectorConf upsertConnectorConf;
   private final ConnectorConf keyedStreamConnectorConf;
@@ -67,8 +63,6 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
     super(KafkaLogEngineFactory.ENGINE_NAME, EngineType.LOG, EngineFeature.STANDARD_LOG);
     this.engineConfig = json.getEngines().getEngineConfig(KafkaLogEngineFactory.ENGINE_NAME)
         .orElseGet(() -> new EmptyEngineConfig(KafkaLogEngineFactory.ENGINE_NAME));
-    this.connectorFactory = connectorFactory.create(EngineType.LOG, "kafka")
-        .orElseThrow(()->new RuntimeException("Could not find kafka connector"));
     this.streamConnectorConf = connectorFactory.getConfig(KafkaLogEngineFactory.ENGINE_NAME);
     this.upsertConnectorConf = connectorFactory.getConfig(KafkaLogEngineFactory.ENGINE_NAME+"-upsert");
     this.keyedStreamConnectorConf = connectorFactory.getConfig(KafkaLogEngineFactory.ENGINE_NAME+"-keyed");

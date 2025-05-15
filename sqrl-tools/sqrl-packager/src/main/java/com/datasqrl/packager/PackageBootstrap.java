@@ -1,4 +1,4 @@
-package com.datasqrl.cmd;
+package com.datasqrl.packager;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -17,7 +17,6 @@ import com.datasqrl.config.SqrlConfigCommons;
 import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrefix;
-import com.datasqrl.packager.Packager;
 
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;

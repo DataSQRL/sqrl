@@ -1,11 +1,5 @@
 package com.datasqrl;
 
-import java.nio.file.Path;
-import java.util.Map;
-import java.util.Optional;
-
-import org.apache.calcite.rel.type.RelDataTypeFactory;
-
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.NamePath;
@@ -13,7 +7,6 @@ import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.PackageJson.CompilerConfig;
 import com.datasqrl.config.SqrlCompilerConfiguration;
 import com.datasqrl.config.SqrlConfigPipeline;
-import com.datasqrl.config.TableConfigLoader;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.loaders.ModuleLoader;
@@ -25,6 +18,10 @@ import com.datasqrl.plan.MainScript;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.name.Named;
+import java.nio.file.Path;
+import java.util.Map;
+import java.util.Optional;
+import org.apache.calcite.rel.type.RelDataTypeFactory;
 
 public class MockSqrlInjector extends AbstractModule {
 
@@ -32,17 +29,15 @@ public class MockSqrlInjector extends AbstractModule {
   private final PackageJson config;
   private final Path rootDir;
   private final Map<NamePath, SqrlModule> addlModules;
-  private final TableConfigLoader tableConfigFactory;
   private final Optional<Path> errorDir;
 
   public MockSqrlInjector(ErrorCollector errors, PackageJson config, Optional<Path> errorDir,
-      Path rootDir, Map<NamePath, SqrlModule> addlModules, TableConfigLoader tableConfigFactory) {
+      Path rootDir, Map<NamePath, SqrlModule> addlModules) {
     this.errors = errors;
     this.config = config;
     this.rootDir = rootDir;
     this.errorDir = errorDir;
     this.addlModules = addlModules;
-    this.tableConfigFactory = tableConfigFactory;
   }
 
   @Override
@@ -57,11 +52,6 @@ public class MockSqrlInjector extends AbstractModule {
   @Provides
   public ErrorCollector provideErrorCollector() {
     return errors;
-  }
-
-  @Provides
-  public TableConfigLoader provideTableConfigFactory() {
-    return tableConfigFactory;
   }
 
   @Provides
