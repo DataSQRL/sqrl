@@ -269,24 +269,19 @@ jobs:
       - run:
           name: Build shaded JAR
           command: mvn -U clean -T1 -B install -DskipTests -DskipITs -DskipVertexFatJar -Pinstrument
-      - run:
-          name: Pull base image
-          command: docker pull eclipse-temurin:17-jdk-noble
       - compute-base-tag
       - run:
           name: Pull base image
           command: docker pull datasqrl/base-sqrl:$BASE_TAG
       - run:
-          name: Build Docker image
-          command: docker build --build-arg BASE_TAG=$BASE_TAG -t sqrl-test ./sqrl-tools
-      - run:
-          name: Save Docker image
-          command: docker save -o sqrl-test.tar sqrl-test
-      - persist_to_workspace:
-          root: .
-          paths:
-            - sqrl-test.tar
-
+          name: Build **and push** datasqrl/cmd-test-image:${CIRCLE_SHA1}
+          command: |
+            docker build \
+              --build-arg BASE_TAG=$BASE_TAG \
+              -t datasqrl/cmd-test-image:${CIRCLE_SHA1} \
+              ./sqrl-tools
+            echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+            docker push datasqrl/cmd-test-image:${CIRCLE_SHA1}
   deploy:
     docker:
       - image: cimg/openjdk:17.0
@@ -310,9 +305,11 @@ jobs:
     executor: default-machine
     steps:
       - checkout
-      - attach_workspace:
-          at: .
-      - run: docker load -i sqrl-test.tar
+      - run:
+          name: Pull test image
+          command: |
+            docker pull datasqrl/cmd-test-image:${CIRCLE_SHA1}
+            docker tag  datasqrl/cmd-test-image:${CIRCLE_SHA1} sqrl-test
       - run-docker-test:
           working_dir: ./sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/conference
           test_args: test conference.sqrl conference.graphqls --snapshots snapshots-conference --tests tests-conference
@@ -321,8 +318,11 @@ jobs:
     executor: default-machine
     steps:
       - checkout
-      - attach_workspace: { at: . }
-      - run: docker load -i sqrl-test.tar
+      - run:
+          name: Pull test image
+          command: |
+            docker pull datasqrl/cmd-test-image:${CIRCLE_SHA1}
+            docker tag  datasqrl/cmd-test-image:${CIRCLE_SHA1} sqrl-test
       - run-docker-test:
           working_dir: ./sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/connectors-test
           test_args: test connectors.sqrl
@@ -332,8 +332,11 @@ jobs:
     executor: default-machine
     steps:
       - checkout
-      - attach_workspace: { at: . }
-      - run: docker load -i sqrl-test.tar
+      - run:
+          name: Pull test image
+          command: |
+            docker pull datasqrl/cmd-test-image:${CIRCLE_SHA1}
+            docker tag  datasqrl/cmd-test-image:${CIRCLE_SHA1} sqrl-test
       - run-docker-test:
           working_dir: ./sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/udf
           test_args: test myudf.sqrl --snapshots snapshots-myudf --tests tests-myudf
