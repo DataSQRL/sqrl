@@ -1,6 +1,8 @@
 package com.datasqrl.graphql;
 
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -18,7 +20,6 @@ import graphql.schema.DataFetcher;
 import graphql.schema.DataFetchingEnvironment;
 import graphql.schema.PropertyDataFetcher;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.handler.graphql.schema.VertxDataFetcher;
 import lombok.Value;
 
 /**
@@ -69,18 +70,22 @@ public class VertxContext implements Context {
   }
 
   @Override
-  public DataFetcher<?> createArgumentLookupFetcher(
-      GraphQLEngineBuilder server, Set<Argument> arguments, ResolvedQuery resolvedQuery) {
-    return VertxDataFetcher.create(
-        (env, future) -> {
-          Set<Argument> argumentSet =
-              env.getArguments().entrySet().stream()
-                  .map(argument -> new VariableArgument(argument.getKey(), argument.getValue()))
-                  .collect(Collectors.toSet());
-          // Execute
-          QueryExecutionContext context =
-              new VertxQueryExecutionContext(this, env, argumentSet, future);
-          resolvedQuery.accept(server, context);
-        });
+  public DataFetcher<?> createArgumentLookupFetcher(GraphQLEngineBuilder server, Set<Argument> arguments,
+      ResolvedQuery resolvedQuery) {
+
+    DataFetcher<?> dataFetcher = env -> {
+      Set<Argument> argumentSet = env.getArguments().entrySet().stream()
+          .map(argument -> new VariableArgument(argument.getKey(), argument.getValue()))
+          .collect(Collectors.toSet());
+
+      var cf = new CompletableFuture<Object>();
+
+      // Execute
+      QueryExecutionContext context = new VertxQueryExecutionContext(this, env, argumentSet, cf);
+      resolvedQuery.accept(server, context);
+      return cf;
+    };
+
+    return dataFetcher;
   }
 }
