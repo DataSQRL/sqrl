@@ -77,6 +77,9 @@
     <maven-javadoc-plugin.version>3.11.2</maven-javadoc-plugin.version>
     <maven-source-plugin.version>3.3.1</maven-source-plugin.version>
     <maven-gpg-plugin.version>3.2.7</maven-gpg-plugin.version>
+    <license-maven-plugin.version>5.0.0</license-maven-plugin.version>
+    <git-code-format-maven-plugin.version>5.3</git-code-format-maven-plugin.version>
+    <sortpom.plugin.version>4.0.0</sortpom.plugin.version>
 
     <!-- params -->
     <snapshots.update>false</snapshots.update>
@@ -266,6 +269,67 @@
           </plugin>
         </plugins>
       </build>
+    </profile>
+    
+     <profile>
+      <id>dev</id>
+      <properties>
+        <gcf.skipInstallHooks>false</gcf.skipInstallHooks>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>com.cosium.code</groupId>
+            <artifactId>git-code-format-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>format-code</id>
+                <goals>
+                  <goal>format-code</goal>
+                </goals>
+                <phase>initialize</phase>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>com.github.ekryd.sortpom</groupId>
+            <artifactId>sortpom-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>format</id>
+                <goals>
+                  <goal>sort</goal>
+                </goals>
+                <phase>initialize</phase>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>com.mycila</groupId>
+            <artifactId>license-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>format</id>
+                <goals>
+                  <goal>format</goal>
+                </goals>
+                <phase>initialize</phase>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <!-- just compile, skip all other checks -->
+      <id>quickbuild</id>
+      <properties>
+        <skipTests>true</skipTests>
+        <enforcer.skip>true</enforcer.skip>
+        <maven.javadoc.skip>true</maven.javadoc.skip>
+        <gcf.skip>true</gcf.skip>
+        <license.skip>true</license.skip>
+      </properties>
     </profile>
   </profiles>
 
@@ -1074,6 +1138,87 @@
             <TZ>America/Los_Angeles</TZ>
           </environmentVariables>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>com.cosium.code</groupId>
+        <artifactId>git-code-format-maven-plugin</artifactId>
+        <version>${git-code-format-maven-plugin.version}</version>
+        <dependencies>
+          <dependency>
+            <groupId>com.cosium.code</groupId>
+            <artifactId>google-java-format</artifactId>
+            <version>${git-code-format-maven-plugin.version}</version>
+          </dependency>
+        </dependencies>
+        <executions>
+          <!-- On commit, format the modified files -->
+          <execution>
+            <id>install-formatter-hook</id>
+            <goals>
+              <goal>install-hooks</goal>
+            </goals>
+            <!-- inherited = false means it won't re-run in submodules if not desired -->
+            <inherited>false</inherited>
+          </execution>
+          <!-- On Maven verify, fail if code is not formatted -->
+          <execution>
+            <id>validate-code-format</id>
+            <goals>
+              <goal>validate-code-format</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>com.github.ekryd.sortpom</groupId>
+        <artifactId>sortpom-maven-plugin</artifactId>
+        <version>${sortpom.plugin.version}</version>
+        <configuration>
+          <keepBlankLines>true</keepBlankLines>
+          <lineSeparator>\n</lineSeparator>
+          <predefinedSortOrder>recommended_2008_06</predefinedSortOrder>
+          <createBackupFile>false</createBackupFile>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>com.mycila</groupId>
+        <artifactId>license-maven-plugin</artifactId>
+        <version>${license-maven-plugin.version}</version>
+        <configuration>
+          <properties>
+            <owner>DataSQRL</owner>
+            <email>contact@datasqrl.com</email>
+          </properties>
+          <licenseSets>
+            <licenseSet>
+              <header>com/mycila/maven/plugin/license/templates/APACHE-2.txt</header>
+              <excludes>
+                <exclude>src/test/resources/**</exclude>
+                <exclude>m2e-target/**</exclude>
+                <exclude>bin/**</exclude>
+              </excludes>
+            </licenseSet>
+          </licenseSets>
+          <strictCheck>true</strictCheck>
+        </configuration>
+        <dependencies>
+          <dependency>
+            <groupId>com.mycila</groupId>
+            <artifactId>license-maven-plugin-git</artifactId>
+            <version>${license-maven-plugin.version}</version>
+          </dependency>
+        </dependencies>
+        <executions>
+          <execution>
+            <id>check</id>
+            <goals>
+              <goal>check</goal>
+            </goals>
+            <phase>compile</phase>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
     <pluginManagement>
