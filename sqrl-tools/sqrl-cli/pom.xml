@@ -294,36 +294,35 @@
           </execution>
         </executions>
       </plugin>
-          
+
     </plugins>
   </build>
-  
-  
+
   <profiles>
-  <profile>
-  <id>instrument</id>
-  
-  <build>
-  <plugins>
-    <plugin>
-        <groupId>com.marvinformatics.jacoco</groupId>
-        <artifactId>easy-jacoco-maven-plugin</artifactId>
-        <version>0.0.1-SNAPSHOT</version>
-        <executions>
-          <execution>
-            <id>instrument-uber-jar</id>
-            <goals>
-              <goal>instrument-jar</goal>
-            </goals>
-            <configuration>
-              <source>${project.build.directory}/sqrl-cli.jar</source>
-              <destination>${project.build.directory}/sqrl-cli.jar</destination>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      </plugins>
-  </build>
-  </profile>
+    <profile>
+      <id>instrument</id>
+
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>com.marvinformatics.jacoco</groupId>
+            <artifactId>easy-jacoco-maven-plugin</artifactId>
+            <version>0.1.4</version>
+            <executions>
+              <execution>
+                <id>instrument-uber-jar</id>
+                <goals>
+                  <goal>instrument-jar</goal>
+                </goals>
+                <configuration>
+                  <source>${project.build.directory}/sqrl-cli.jar</source>
+                  <destination>${project.build.directory}/sqrl-cli.jar</destination>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
   </profiles>
 </project>
