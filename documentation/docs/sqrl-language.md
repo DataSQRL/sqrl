@@ -253,7 +253,7 @@ SQRL supports two types of comments:
 **Single-line Comments**: These are initiated with double dashes `--`. Everything following the `--` on the same line is considered part of the comment.
 ```sql
 -- This is a single-line comment explaining the next SQL command
-IMPORT data.SalesRecords;
+NewTable := SELECT * FROM OtherTable;
 ```
 Only single-line comments are supported at the end of statements on the same line.
 
@@ -264,7 +264,7 @@ Only single-line comments are supported at the end of statements on the same lin
  * It can span multiple lines and is often used to comment out
  * chunks of code or to provide detailed documentation.
  */
-IMPORT data.StockAdjustments;
+NewTable := SELECT * FROM OtherTable;
 ```
 
 **Documentation**
