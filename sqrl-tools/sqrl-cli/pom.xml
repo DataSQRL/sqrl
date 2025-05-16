@@ -290,7 +290,7 @@
     <plugin>
         <groupId>com.marvinformatics.jacoco</groupId>
         <artifactId>easy-jacoco-maven-plugin</artifactId>
-        <version>0.0.1-SNAPSHOT</version>
+        <version>0.1.4</version>
         <executions>
           <execution>
             <id>instrument-uber-jar</id>
