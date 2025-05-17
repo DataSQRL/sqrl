@@ -1,0 +1,8 @@
+{
+  "version": "1",
+  "mode": "batch",
+  "enabled-engines": ["vertx", "postgres", "flink"],
+  "test-runner": {
+    "delay-sec": -1
+  }
+}

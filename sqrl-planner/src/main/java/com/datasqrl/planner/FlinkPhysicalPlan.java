@@ -21,6 +21,7 @@ import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import lombok.Builder;
 import lombok.Value;
@@ -51,19 +52,25 @@ public class FlinkPhysicalPlan implements EnginePhysicalPlan {
   Set<String> connectors;
   Set<String> formats;
   Set<String> functions;
-  @JsonIgnore String compiledPlan;
-  @JsonIgnore String explainedPlan;
+  @JsonIgnore Optional<String> compiledPlan;
+  @JsonIgnore Optional<String> explainedPlan;
   @JsonIgnore List<String> flinkSqlNoFunctions;
 
   @Override
   public List<DeploymentArtifact> getDeploymentArtifacts() {
-    return List.of(
-        new DeploymentArtifact("-sql.sql", DeploymentArtifact.toSqlString(flinkSql)),
+    List<DeploymentArtifact> deploymentArtifacts = new ArrayList<>();
+    deploymentArtifacts.add(
+        new DeploymentArtifact("-sql.sql", DeploymentArtifact.toSqlString(flinkSql)));
+    deploymentArtifacts.add(
         new DeploymentArtifact(
-            "-sql-no-functions.sql", DeploymentArtifact.toSqlString(flinkSqlNoFunctions)),
-        new DeploymentArtifact("-functions.sql", DeploymentArtifact.toSqlString(functions)),
-        new DeploymentArtifact("-compiled-plan.json", compiledPlan),
-        new DeploymentArtifact("-explained-plan.txt", explainedPlan));
+            "-sql-no-functions.sql", DeploymentArtifact.toSqlString(flinkSqlNoFunctions)));
+    deploymentArtifacts.add(
+        new DeploymentArtifact("-functions.sql", DeploymentArtifact.toSqlString(functions)));
+    compiledPlan.map(
+        plan -> deploymentArtifacts.add(new DeploymentArtifact("-compiled-plan.json", plan)));
+    explainedPlan.map(
+        plan -> deploymentArtifacts.add(new DeploymentArtifact("-explained-plan.txt", plan)));
+    return deploymentArtifacts;
   }
 
   @Value
@@ -117,16 +124,18 @@ public class FlinkPhysicalPlan implements EnginePhysicalPlan {
       return new SqlExecute(sqlStatementSet, SqlParserPos.ZERO);
     }
 
-    public FlinkPhysicalPlan build(CompiledPlan compiledPlan) {
+    public FlinkPhysicalPlan build(Optional<CompiledPlan> compiledPlan) {
       var explainedPlan =
-          compiledPlan.explain(
-              ExplainFormat.TEXT, ExplainDetail.CHANGELOG_MODE, ExplainDetail.PLAN_ADVICE);
+          compiledPlan.map(
+              plan ->
+                  plan.explain(
+                      ExplainFormat.TEXT, ExplainDetail.CHANGELOG_MODE, ExplainDetail.PLAN_ADVICE));
       return new FlinkPhysicalPlan(
           flinkSql,
           connectors,
           formats,
           fullyResolvedFunctions,
-          compiledPlan.asJsonString(),
+          compiledPlan.map(CompiledPlan::asJsonString),
           explainedPlan,
           flinkSqlNoFunctions);
     }

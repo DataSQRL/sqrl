@@ -19,6 +19,7 @@ import com.datasqrl.actions.DagWriter;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.config.BuildPath;
 import com.datasqrl.config.GraphqlSourceFactory;
+import com.datasqrl.config.PackageJson;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.server.ServerPhysicalPlan;
 import com.datasqrl.error.ErrorCode;
@@ -47,6 +48,7 @@ public class CompilationProcess {
   private final DAGPlanner dagPlanner;
   private final BuildPath buildPath;
   private final MainScript mainScript;
+  private final PackageJson config;
   private final GenerateCoords generateCoords;
   private final InferGraphqlSchema inferGraphqlSchema;
   private final DagWriter writeDeploymentArtifactsHook;
@@ -56,7 +58,7 @@ public class CompilationProcess {
 
   public Pair<PhysicalPlan, TestPlan> executeCompilation(Optional<Path> testsPath) {
 
-    var environment = new Sqrl2FlinkSQLTranslator(buildPath);
+    var environment = new Sqrl2FlinkSQLTranslator(buildPath, config);
     planner.planMain(mainScript, environment);
     var dagBuilder = planner.getDagBuilder();
     var dag = dagPlanner.optimize(dagBuilder.getDag());

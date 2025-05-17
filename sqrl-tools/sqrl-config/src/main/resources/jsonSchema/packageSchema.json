@@ -12,6 +12,9 @@
         }
       ]
     },
+    "mode": {
+      "type": "string"
+    },
     "enabled-engines": {
       "oneOf": [
         {
@@ -44,6 +47,9 @@
       "type": "object",
       "minProperties": 1,
       "properties": {
+        "compilePlan": {
+          "type": "boolean"
+        },
         "explain": {
           "type": "object",
           "minProperties": 1,

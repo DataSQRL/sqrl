@@ -386,7 +386,7 @@ public class FullUsecasesIT {
   @MethodSource("useCaseProvider")
   @Disabled
   public void runTestCaseByName(UseCaseTestParameter param) {
-    if (param.sqrlFileName.equals("flink-only.sqrl") && param.goal.equals("run")) {
+    if (param.sqrlFileName.equals("banking-batch.sqrl") && param.goal.equals("test")) {
       testUseCase(param);
     } else {
       assumeFalse(true);

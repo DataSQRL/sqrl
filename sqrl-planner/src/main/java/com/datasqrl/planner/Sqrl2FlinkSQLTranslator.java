@@ -20,6 +20,8 @@ import static org.apache.flink.table.planner.utils.ShortcutUtils.unwrapContext;
 
 import com.datasqrl.calcite.SqrlRexUtil;
 import com.datasqrl.config.BuildPath;
+import com.datasqrl.config.ExecutionMode;
+import com.datasqrl.config.PackageJson;
 import com.datasqrl.engine.stream.flink.plan.FlinkSqlNodeFactory;
 import com.datasqrl.engine.stream.flink.sql.RelToFlinkSql;
 import com.datasqrl.error.ErrorCollector;
@@ -101,6 +103,7 @@ import org.apache.flink.sql.parser.ddl.SqlCreateView;
 import org.apache.flink.sql.parser.ddl.SqlTableLike;
 import org.apache.flink.sql.parser.dml.RichSqlInsert;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.table.api.CompiledPlan;
 import org.apache.flink.table.api.EnvironmentSettings;
 import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.api.Schema.UnresolvedComputedColumn;
@@ -157,8 +160,9 @@ import org.apache.flink.table.types.DataType;
 public class Sqrl2FlinkSQLTranslator {
 
   public static final String SCHEMA_SUFFIX = "__schema";
-  public static final String TABLE_CONNECTOR_SUFFIX = "__base";
 
+  private final ExecutionMode executionMode;
+  private final boolean compilePlan;
   private final StreamTableEnvironmentImpl tEnv;
   private final Supplier<FlinkPlannerImpl> validatorSupplier;
   private final SqrlFunctionCatalog sqrlFunctionCatalog;
@@ -168,7 +172,9 @@ public class Sqrl2FlinkSQLTranslator {
   @Getter private final TableAnalysisLookup tableLookup = new TableAnalysisLookup();
   private final FlinkPhysicalPlan.Builder planBuilder = new Builder();
 
-  public Sqrl2FlinkSQLTranslator(BuildPath buildPath) {
+  public Sqrl2FlinkSQLTranslator(BuildPath buildPath, PackageJson packageConfig) {
+    this.executionMode = packageConfig.getExecutionMode();
+    this.compilePlan = packageConfig.getCompilerConfig().compilePlan();
     // Set up a StreamExecution Environment in Flink with configuration and access to jars
     var jarUrls = getUdfUrls(buildPath);
     // Create a UDF class loader and configure
@@ -181,11 +187,21 @@ public class Sqrl2FlinkSQLTranslator {
     // Set up execution environment
     var sEnv = StreamExecutionEnvironment.getExecutionEnvironment(Configuration.fromMap(config));
     // Create environment settings with class loader
-    var tEnvConfig =
+    // Configure batch or streaming environment
+    EnvironmentSettings.Builder settingsBuilder =
         EnvironmentSettings.newInstance()
             .withConfiguration(Configuration.fromMap(config))
-            .withClassLoader(udfClassLoader)
-            .build();
+            .withClassLoader(udfClassLoader);
+
+    if (executionMode == ExecutionMode.STREAMING) {
+      sEnv.setRuntimeMode(org.apache.flink.api.common.RuntimeExecutionMode.STREAMING);
+      settingsBuilder.inStreamingMode();
+    } else {
+      sEnv.setRuntimeMode(org.apache.flink.api.common.RuntimeExecutionMode.BATCH);
+      settingsBuilder.inBatchMode();
+    }
+    var tEnvConfig = settingsBuilder.build();
+
     this.tEnv = (StreamTableEnvironmentImpl) StreamTableEnvironment.create(sEnv, tEnvConfig);
 
     // Extract a number of classes we need access to for planning
@@ -252,8 +268,11 @@ public class Sqrl2FlinkSQLTranslator {
     // StatementSetOperation statmentSetOp = (StatementSetOperation) getOperation(execute);
     var insert = toSqlString(execute);
     planBuilder.add(execute, insert);
-    var parse = (StatementSetOperation) tEnv.getParser().parse(insert + ";").get(0);
-    var compiledPlan = tEnv.compilePlan(parse.getOperations());
+    Optional<CompiledPlan> compiledPlan = Optional.empty();
+    if (executionMode == ExecutionMode.STREAMING && compilePlan) {
+      var parse = (StatementSetOperation) tEnv.getParser().parse(insert + ";").get(0);
+      compiledPlan = Optional.of(tEnv.compilePlan(parse.getOperations()));
+    }
     return planBuilder.build(compiledPlan);
   }
 
