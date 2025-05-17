@@ -3,9 +3,9 @@
 ID:     default_catalog.default_database.Json
 Type:   stream
 Stage:  flink
-Inputs: default_catalog.default_database.Json__def
+Inputs: default_catalog.default_database.Json__base
 Annotations:
- - stream-root: Json__def
+ - stream-root: Json
 Primary Key: id
 Timestamp  : timestamp
 Schema:
@@ -13,20 +13,19 @@ Schema:
  - val: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Plan:
-LogicalProject(id=[$0], val=[$1], timestamp=[$2])
-  LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($2, 1:INTERVAL SECOND)])
-    LogicalTableScan(table=[[default_catalog, default_database, Json__def]])
-SQL: CREATE VIEW `Json`
+LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($2, 1:INTERVAL SECOND)])
+  LogicalTableScan(table=[[default_catalog, default_database, Json]])
+SQL: CREATE VIEW `Json__view`
 AS
-SELECT *
-FROM `default_catalog`.`default_database`.`Json__def`
+SELECT `Json`.`id`, `Json`.`val`, `Json`.`timestamp`
+FROM `default_catalog`.`default_database`.`Json` AS `Json`
 === UnmodifiedJsonData
 ID:     default_catalog.default_database.UnmodifiedJsonData
 Type:   stream
 Stage:  flink
 Inputs: default_catalog.default_database.Json
 Annotations:
- - stream-root: Json__def
+ - stream-root: Json
  - sort: [0 ASC-nulls-first]
 Primary Key: id
 Timestamp  : -
@@ -57,7 +56,7 @@ CREATE TEMPORARY TABLE `Json__schema` (
 ) WITH (
   'connector' = 'datagen'
 );
-CREATE TABLE `Json__def` (
+CREATE TABLE `Json` (
   PRIMARY KEY (`id`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
 ) WITH (
@@ -66,10 +65,6 @@ CREATE TABLE `Json__def` (
   'connector' = 'filesystem'
 )
 LIKE `Json__schema`;
-CREATE VIEW `Json`
-AS
-SELECT *
-FROM `default_catalog`.`default_database`.`Json__def`;
 CREATE VIEW `UnmodifiedJsonData`
 AS
 SELECT `id`, `val`, `TO_JSONB`('{"a": 1}') AS `json_col`, `TO_JSONB`('{"a": 2}') AS `json_col_2`, `TO_JSONB`('{"b": 1}') AS `json_col_3`, `TO_JSONB`('{"b": 2}') AS `json_col_4`

@@ -18,6 +18,7 @@ package com.datasqrl.planner.dag.nodes;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.plan.global.StageAnalysis;
 import com.datasqrl.planner.analyzer.TableAnalysis;
+import com.datasqrl.planner.analyzer.TableOrFunctionAnalysis.UniqueIdentifier;
 import java.util.Map;
 import lombok.NonNull;
 import org.apache.flink.table.catalog.ObjectIdentifier;
@@ -30,7 +31,7 @@ public abstract class PlannedNode extends PipelineNode {
 
   public abstract TableAnalysis getAnalysis();
 
-  public ObjectIdentifier getIdentifier() {
+  public UniqueIdentifier getIdentifier() {
     return getAnalysis().getIdentifier();
   }
 }

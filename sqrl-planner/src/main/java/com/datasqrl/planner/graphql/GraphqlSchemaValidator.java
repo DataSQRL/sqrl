@@ -26,7 +26,6 @@ import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.APISource;
-import com.datasqrl.graphql.generate.GraphqlSchemaUtil;
 import com.datasqrl.planner.dag.plan.MutationQuery;
 import com.datasqrl.planner.tables.SqrlFunctionParameter;
 import com.datasqrl.planner.tables.SqrlTableFunction;
@@ -57,12 +56,12 @@ import org.apache.calcite.schema.FunctionParameter;
  * Validate that a graphQL schema is valid (used only to validate the user provided a graphQl
  * schema)
  */
-public class GraphqlSchemaValidator2 extends GraphqlSchemaWalker2 {
+public class GraphqlSchemaValidator extends GraphqlSchemaWalker {
 
   private final ErrorCollector errorCollector;
 
   @Inject
-  public GraphqlSchemaValidator2(
+  public GraphqlSchemaValidator(
       List<SqrlTableFunction> tableFunctions,
       List<MutationQuery> mutations,
       ErrorCollector errorCollector) {
@@ -348,7 +347,7 @@ public class GraphqlSchemaValidator2 extends GraphqlSchemaWalker2 {
                     atField.getName()
                         + ". Possible scalars are ["
                         + r.getFieldNames().stream()
-                            .filter(GraphqlSchemaUtil::isValidGraphQLName)
+                            .filter(com.datasqrl.graphql.generate.GraphqlSchemaUtil::isValidGraphQLName)
                             .collect(Collectors.joining(", "))
                         + "]")
             .orElse(atField.getName()));
@@ -400,7 +399,7 @@ public class GraphqlSchemaValidator2 extends GraphqlSchemaWalker2 {
               // user provides a schema with id : Float and he disables extendedScalarTypes,
               // argument will type will be float and parameter type will be bigint
               final var inferedParameterType =
-                  GraphqlSchemaUtil2.getGraphQLInputType(
+                  GraphqlSchemaUtil.getGraphQLInputType(
                       foundParameter.get().getType(null),
                       NamePath.of(foundParameter.get().getName()),
                       true);

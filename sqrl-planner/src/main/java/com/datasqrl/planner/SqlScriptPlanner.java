@@ -80,7 +80,6 @@ import com.datasqrl.planner.parser.StatementParserException;
 import com.datasqrl.planner.tables.AccessVisibility;
 import com.datasqrl.planner.tables.SqrlTableFunction;
 import com.datasqrl.util.SqlNameUtil;
-import com.datasqrl.util.StringUtil;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import java.util.ArrayList;
@@ -105,6 +104,7 @@ import org.apache.flink.sql.parser.ddl.SqlCreateTable;
 import org.apache.flink.sql.parser.ddl.SqlCreateView;
 import org.apache.flink.sql.parser.ddl.SqlDropTable;
 import org.apache.flink.sql.parser.ddl.SqlDropView;
+import org.apache.flink.sql.parser.dml.RichSqlInsert;
 import org.apache.flink.table.api.ValidationException;
 import org.apache.flink.table.functions.UserDefinedFunction;
 
@@ -129,7 +129,8 @@ public class SqlScriptPlanner {
   private final ExecutionPipeline pipeline;
   private final ExecutionGoal executionGoal;
 
-  @Getter private final DAGBuilder dagBuilder;
+  @Getter
+  private final DAGBuilder dagBuilder;
   private final ExecutionStage streamStage;
   private final List<ExecutionStage> tableStages;
   private final List<ExecutionStage> queryStages;
@@ -274,10 +275,9 @@ public class SqlScriptPlanner {
     } else if (stmt instanceof SqrlExportStatement statement) {
       addExport(statement, sqrlEnv);
     } else if (stmt instanceof SqrlCreateTableStatement statement) {
-      addSourceToDag(
-          sqrlEnv.createTable(statement.toSql(), getLogEngineBuilder(hintsAndDocs)),
-          hintsAndDocs,
-          sqrlEnv);
+      sqrlEnv.createTable(statement.toSql(), getLogEngineBuilder(hintsAndDocs))
+          .ifPresent(tableAnalysis ->
+              addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv));
     } else if (stmt instanceof SqrlDefinition sqrlDef) {
       var access = sqrlDef.getAccess();
       var tablePath = sqrlDef.getPath();
@@ -423,10 +423,14 @@ public class SqlScriptPlanner {
             visibility,
             sqrlEnv);
       } else if (node instanceof SqlCreateTable) {
-        addSourceToDag(
-            sqrlEnv.createTable(flinkStmt.getSql().get(), getLogEngineBuilder(hintsAndDocs)),
-            hintsAndDocs,
-            sqrlEnv);
+        sqrlEnv.createTable(flinkStmt.getSql().get(), getLogEngineBuilder(hintsAndDocs))
+            .ifPresent(tableAnalysis ->
+                addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv));
+      } else if (node instanceof RichSqlInsert insert) {
+        /*TODO: We are not currently adding these to the DAG (and hence no analysis/visualization based on the DAG)
+        We would need to analyze the query and pull out the sources to make that happen. However, for now
+        we are only doing this for FlinkSQL compatibility, so this may be fine. */
+        sqrlEnv.insertInto(insert);
       } else if (node instanceof SqlAlterTable || node instanceof SqlAlterView) {
         errors.fatal(
             "Renaming or altering tables is not supported. Rename them directly in the script or IMPORT AS.");
@@ -442,6 +446,7 @@ public class SqlScriptPlanner {
 
   @Value
   private static class HintsAndDocs {
+
     PlannerHints hints;
     Optional<String> documentation;
 
@@ -587,7 +592,7 @@ public class SqlScriptPlanner {
     Preconditions.checkArgument(source.isSourceOrSink());
     var sourceNode = new TableNode(source, getSourceSinkStageAnalysis());
     dagBuilder.add(sourceNode);
-    var isHidden = Name.system(tableAnalysis.getIdentifier().getObjectName()).isHidden();
+    var isHidden = tableAnalysis.getIdentifier().isHidden();
     var visibility =
         new AccessVisibility(
             isHidden ? AccessModifier.NONE : adjustAccess(AccessModifier.QUERY),
@@ -618,7 +623,7 @@ public class SqlScriptPlanner {
     // Figure out if and what type of access function we should add for this table
     var queryByHint = hintsAndDocs.hints.getQueryByHint();
     if (visibility.isEndpoint()) { // only add function if this table is an endpoint
-      var relBuilder = sqrlEnv.getTableScan(tableAnalysis.getIdentifier());
+      var relBuilder = sqrlEnv.getTableScan(tableAnalysis.getObjectIdentifier());
       List<FunctionParameter> parameters = List.of();
       if (queryByHint.isPresent()) { // hint takes precendence for defining the access function
         var hint = queryByHint.get();
@@ -637,7 +642,7 @@ public class SqlScriptPlanner {
           true); // Identity projection
       // TODO: should we add a default sort if the user didn't specify one to have predictable
       // result sets for testing?
-      var tableName = tableAnalysis.getIdentifier().getObjectName();
+      var tableName = tableAnalysis.getObjectIdentifier().getObjectName();
       var fctName = tableName + ACCESS_FUNCTION_SUFFIX;
       var fctBuilder =
           sqrlEnv.addSqrlTableFunction(
@@ -792,9 +797,7 @@ public class SqlScriptPlanner {
     }
     var engine = (LogEngine) logStage.get().getEngine();
     return (tableBuilder, datatype) -> {
-      var originalTableName =
-          StringUtil.removeFromEnd(
-              tableBuilder.getTableName(), Sqrl2FlinkSQLTranslator.TABLE_DEFINITION_SUFFIX);
+      var originalTableName = tableBuilder.getTableName();
       var mutationBuilder = MutationQuery.builder();
       mutationBuilder.stage(logStage.get());
       mutationBuilder.createTopic(

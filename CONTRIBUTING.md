@@ -96,4 +96,4 @@ gpg --armor --export D2A162EAE1016F3G
 ```
 
 ## License
-By contributing to DataSQRL, you agree that your contributions will be licensed under the Elastic License 2.0.
+By contributing to DataSQRL, you agree that your contributions will be licensed under the Apache 2.0 License.

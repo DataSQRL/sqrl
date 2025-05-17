@@ -21,6 +21,8 @@ import com.datasqrl.config.BuildPath;
 import com.datasqrl.config.GraphqlSourceFactory;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.server.ServerPhysicalPlan;
+import com.datasqrl.error.ErrorCode;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.APISourceImpl;
 import com.datasqrl.plan.MainScript;
 import com.datasqrl.plan.global.PhysicalPlanRewriter;
@@ -29,7 +31,7 @@ import com.datasqrl.planner.SqlScriptPlanner;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
 import com.datasqrl.planner.dag.DAGPlanner;
 import com.datasqrl.planner.graphql.GenerateCoords;
-import com.datasqrl.planner.graphql.InferGraphqlSchema2;
+import com.datasqrl.planner.graphql.InferGraphqlSchema;
 import com.datasqrl.util.ServiceLoaderDiscovery;
 import com.google.inject.Inject;
 import java.nio.file.Path;
@@ -46,10 +48,11 @@ public class CompilationProcess {
   private final BuildPath buildPath;
   private final MainScript mainScript;
   private final GenerateCoords generateCoords;
-  private final InferGraphqlSchema2 inferGraphqlSchema;
+  private final InferGraphqlSchema inferGraphqlSchema;
   private final DagWriter writeDeploymentArtifactsHook;
   private final GraphqlSourceFactory graphqlSourceFactory;
   private final ExecutionGoal executionGoal;
+  private final ErrorCollector errors;
 
   public Pair<PhysicalPlan, TestPlan> executeCompilation(Optional<Path> testsPath) {
 
@@ -66,26 +69,30 @@ public class CompilationProcess {
 
     TestPlan testPlan = null;
     // There can only be a single server plan
-    var serverPlan = physicalPlan.getPlans(ServerPhysicalPlan.class).findFirst();
-    if (serverPlan.isPresent()) {
+    var serverPlanOpt = physicalPlan.getPlans(ServerPhysicalPlan.class).findFirst();
+    if (serverPlanOpt.isPresent()) {
+      var serverPlan = serverPlanOpt.get();
+      errors.checkFatal(!serverPlan.getFunctions().isEmpty(), ErrorCode.NO_API_ENDPOINTS,
+          "The SQRL script defines %s functions and %s mutations - cannot define an API",
+          serverPlan.getFunctions().size(), serverPlan.getMutations().size());
       var apiSource = graphqlSourceFactory.get();
       if (apiSource.isEmpty()
           || executionGoal == ExecutionGoal.TEST) { // Infer schema from functions
         apiSource =
             inferGraphqlSchema
-                .inferGraphQLSchema(serverPlan.get())
+                .inferGraphQLSchema(serverPlan)
                 .map(
                     schemaString ->
                         new APISourceImpl(Name.system("<generated-schema>"), schemaString));
       } else {
-        inferGraphqlSchema.validateSchema(apiSource.get(), serverPlan.get());
+        inferGraphqlSchema.validateSchema(apiSource.get(), serverPlan);
       }
       assert apiSource.isPresent();
-      generateCoords.generateCoordsAndUpdateServerPlan(apiSource, serverPlan.get());
+      generateCoords.generateCoordsAndUpdateServerPlan(apiSource, serverPlan);
 
       // create test artifact
       if (executionGoal == ExecutionGoal.TEST) {
-        var testPlanner = new TestPlanner(serverPlan.get().getFunctions());
+        var testPlanner = new TestPlanner(serverPlanOpt.get().getFunctions());
         testPlan = testPlanner.generateTestPlan(apiSource.get(), testsPath);
       }
     }

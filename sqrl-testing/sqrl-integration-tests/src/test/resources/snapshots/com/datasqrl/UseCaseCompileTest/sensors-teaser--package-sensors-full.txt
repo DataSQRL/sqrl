@@ -6,7 +6,7 @@ Stage:  flink
 Inputs: default_catalog.default_database.SensorReading
 Annotations:
  - features: STREAM_WINDOW_AGGREGATION (feature)
- - stream-root: SensorReading__def
+ - stream-root: SensorReading
  - sort: [1 DESC-nulls-last]
 Primary Key: -
 Timestamp  : timeSec
@@ -34,7 +34,7 @@ Stage:  flink
 Inputs: default_catalog.default_database._SensorMaxTempWindow
 Annotations:
  - mostRecentDistinct: true
- - stream-root: SensorReading__def
+ - stream-root: SensorReading
 Primary Key: sensorid
 Timestamp  : window_time
 Schema:
@@ -56,9 +56,9 @@ WHERE `__sqrlinternal_rownum` = 1
 ID:     default_catalog.default_database.SensorReading
 Type:   stream
 Stage:  flink
-Inputs: default_catalog.default_database.SensorReading__def
+Inputs: default_catalog.default_database.SensorReading__base
 Annotations:
- - stream-root: SensorReading__def
+ - stream-root: SensorReading
 Primary Key: sensorid, time
 Timestamp  : timestamp
 Schema:
@@ -68,14 +68,13 @@ Schema:
  - humidity: DOUBLE NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Plan:
-LogicalProject(sensorid=[$0], time=[$1], temperature=[$2], humidity=[$3], timestamp=[$4])
-  LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
-    LogicalProject(sensorid=[$0], time=[$1], temperature=[$2], humidity=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($1, 3), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
-      LogicalTableScan(table=[[default_catalog, default_database, SensorReading__def]])
-SQL: CREATE VIEW `SensorReading`
+LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
+  LogicalProject(sensorid=[$0], time=[$1], temperature=[$2], humidity=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($1, 3), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
+    LogicalTableScan(table=[[default_catalog, default_database, SensorReading]])
+SQL: CREATE VIEW `SensorReading__view`
 AS
-SELECT *
-FROM `default_catalog`.`default_database`.`SensorReading__def`
+SELECT `SensorReading`.`sensorid`, `SensorReading`.`time`, `SensorReading`.`temperature`, `SensorReading`.`humidity`, `SensorReading`.`timestamp`
+FROM `default_catalog`.`default_database`.`SensorReading` AS `SensorReading`
 === _SensorMaxTempWindow
 ID:     default_catalog.default_database._SensorMaxTempWindow
 Type:   stream
@@ -83,7 +82,7 @@ Stage:  flink
 Inputs: default_catalog.default_database.SecReading
 Annotations:
  - features: STREAM_WINDOW_AGGREGATION (feature)
- - stream-root: SensorReading__def
+ - stream-root: SensorReading
 Primary Key: -
 Timestamp  : window_time
 Schema:
@@ -110,7 +109,7 @@ CREATE TEMPORARY TABLE `SensorReading__schema` (
 ) WITH (
   'connector' = 'datagen'
 );
-CREATE TABLE `SensorReading__def` (
+CREATE TABLE `SensorReading` (
   `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`time`, 3), TIMESTAMP '1970-01-01 00:00:00.000'),
   PRIMARY KEY (`sensorid`, `time`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
@@ -121,10 +120,6 @@ CREATE TABLE `SensorReading__def` (
   'flexible-csv.skip-header' = 'true'
 )
 LIKE `SensorReading__schema`;
-CREATE VIEW `SensorReading`
-AS
-SELECT *
-FROM `default_catalog`.`default_database`.`SensorReading__def`;
 CREATE VIEW `SecReading`
 AS
 SELECT `sensorid`, `window_time` AS `timeSec`, AVG(`temperature`) AS `temp`

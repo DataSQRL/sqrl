@@ -37,6 +37,7 @@ import org.apache.calcite.avatica.util.TimeUnit;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.core.AggregateCall;
+import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeField;
@@ -74,6 +75,29 @@ public class CalciteUtil {
 
   public static boolean isRowTime(RelDataType type) {
     return type instanceof TimeIndicatorRelDataType;
+  }
+
+  /**
+   * Returns true if the LogicalProject does not alter the input — i.e., it is a trivial identity projection.
+   * This is the case when all project expressions are RexInputRef(i) in order.
+   */
+  public static boolean isTrivialProject(RelNode relNode) {
+    if (!(relNode instanceof LogicalProject project)) return false;
+    var projects = project.getProjects();
+    var inputFieldCount = project.getInput().getRowType().getFieldCount();
+
+    if (projects.size() != inputFieldCount) {
+      return false;
+    }
+
+    for (int i = 0; i < projects.size(); i++) {
+      RexNode expr = projects.get(i);
+      if (!(expr instanceof RexInputRef inputRef) || inputRef.getIndex() != i) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   public static Optional<Integer> findBestRowTimeIndex(RelDataType type) {

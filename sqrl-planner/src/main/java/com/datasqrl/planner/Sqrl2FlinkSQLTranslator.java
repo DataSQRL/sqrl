@@ -99,6 +99,7 @@ import org.apache.flink.sql.parser.ddl.SqlCreateTable;
 import org.apache.flink.sql.parser.ddl.SqlCreateTableLike;
 import org.apache.flink.sql.parser.ddl.SqlCreateView;
 import org.apache.flink.sql.parser.ddl.SqlTableLike;
+import org.apache.flink.sql.parser.dml.RichSqlInsert;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.EnvironmentSettings;
 import org.apache.flink.table.api.Schema;
@@ -156,7 +157,7 @@ import org.apache.flink.table.types.DataType;
 public class Sqrl2FlinkSQLTranslator {
 
   public static final String SCHEMA_SUFFIX = "__schema";
-  public static final String TABLE_DEFINITION_SUFFIX = "__def";
+  public static final String TABLE_CONNECTOR_SUFFIX = "__base";
 
   private final StreamTableEnvironmentImpl tEnv;
   private final Supplier<FlinkPlannerImpl> validatorSupplier;
@@ -438,7 +439,7 @@ public class Sqrl2FlinkSQLTranslator {
     if (op instanceof AlterViewAsOperation operation) {
       identifier = operation.getViewIdentifier();
       schema = operation.getNewView().getUnresolvedSchema();
-      tableLookup.removeTable(identifier); // remove previously planned view
+      tableLookup.removeView(identifier); // remove previously planned view
     } else if (op instanceof CreateViewOperation operation) {
       identifier = operation.getViewIdentifier();
       schema = operation.getCatalogView().getUnresolvedSchema();
@@ -453,7 +454,7 @@ public class Sqrl2FlinkSQLTranslator {
     var viewDef2 = parseSQL(originalSql);
     var viewAnalysis = analyzeView(viewDef2, removedSort, hints, errors);
     var tableAnalysis =
-        viewAnalysis.getTableAnalysis().identifier(identifier).originalSql(originalSql).build();
+        viewAnalysis.getTableAnalysis().objectIdentifier(identifier).originalSql(originalSql).build();
     tableLookup.registerTable(tableAnalysis);
 
     return tableAnalysis;
@@ -503,7 +504,7 @@ public class Sqrl2FlinkSQLTranslator {
         viewAnalysis.getRelNode().accept(new DynamicParameterReplacer(argumentIndexMap));
     var tblBuilder = viewAnalysis.getTableAnalysis();
     tblBuilder.collapsedRelnode(updateParameters);
-    tblBuilder.identifier(identifier);
+    tblBuilder.objectIdentifier(identifier);
     tblBuilder.originalSql(originalSql);
     var tableAnalysis = tblBuilder.build();
     // Build table function
@@ -543,7 +544,7 @@ public class Sqrl2FlinkSQLTranslator {
             .hints(baseTable.getHints())
             .errors(baseTable.getErrors())
             .collapsedRelnode(relNode)
-            .identifier(identifier)
+            .objectIdentifier(identifier)
             .build();
     var fctBuilder =
         SqrlTableFunction.builder()
@@ -637,9 +638,10 @@ public class Sqrl2FlinkSQLTranslator {
     return result.baseTableIdentifier;
   }
 
-  public TableAnalysis createTable(String tableDefinition, MutationBuilder logEngineBuilder) {
+  public Optional<TableAnalysis> createTable(String tableDefinition, MutationBuilder logEngineBuilder) {
     var result = addTable(Optional.empty(), tableDefinition, Optional.empty(), logEngineBuilder);
-    return addSourceTable(result);
+    if (result.isSourceTable()) return Optional.of(addSourceTable(result));
+    else return Optional.empty();
   }
 
   public SqlCreateView createScanView(String viewName, ObjectIdentifier id) {
@@ -647,15 +649,38 @@ public class Sqrl2FlinkSQLTranslator {
         viewName, FlinkSqlNodeFactory.selectAllFromTable(FlinkSqlNodeFactory.identifier(id)));
   }
 
+  private static final String TEMP_VIEW_SUFFIX = "__view";
+
+  /**
+   * We add a view on top of the created table with the name of the table.
+   * The reason we "cover" CREATE TABLE statements with a view is because Flink expands references
+   * to physical tables by adding computed columns and watermark, thus making it very difficult
+   * to reconcile the DAG because of that repetition.
+   * By adding a view on top, we get a stable reference to the expanded table that we
+   * can add to the tableLookup for resolution.
+   *
+   * @param addResult
+   * @return
+   */
   private TableAnalysis addSourceTable(AddTableResult addResult) {
-    var view = createScanView(addResult.tableName, addResult.baseTableIdentifier);
-    return addView(toSqlString(view), PlannerHints.EMPTY, ErrorCollector.root());
+    var view = createScanView(addResult.tableName + TEMP_VIEW_SUFFIX, addResult.baseTableIdentifier);
+    var viewAnalysis = analyzeView(view, false, PlannerHints.EMPTY, ErrorCollector.root());
+    TableAnalysis.TableAnalysisBuilder tbBuilder = viewAnalysis.getTableAnalysis();
+    tbBuilder.objectIdentifier(addResult.baseTableIdentifier)
+        .originalSql(toSqlString(view));
+    //Remove trivial LogicalProject so that subsequent references match
+    RelNode relNode = tbBuilder.build().getOriginalRelnode();
+    if (CalciteUtil.isTrivialProject(relNode)) relNode = relNode.getInput(0);
+    var tableAnalysis = tbBuilder.originalRelnode(relNode).collapsedRelnode(relNode).build();
+    tableLookup.registerTable(tableAnalysis);
+    return tableAnalysis;
   }
 
   @Value
   private static class AddTableResult {
     String tableName;
     ObjectIdentifier baseTableIdentifier;
+    boolean isSourceTable;
   }
 
   /**
@@ -680,7 +705,6 @@ public class Sqrl2FlinkSQLTranslator {
     var tableDefinition = (SqlCreateTable) tableSqlNode;
     var fullTable = tableDefinition;
     final var finalTableName = tableName.orElse(tableDefinition.getTableName().getSimple());
-    final var baseTableName = finalTableName + TABLE_DEFINITION_SUFFIX;
     if (schema.isPresent()) {
       // Use LIKE to merge schema with table definition
       var schemaTableName = finalTableName + SCHEMA_SUFFIX;
@@ -694,7 +718,7 @@ public class Sqrl2FlinkSQLTranslator {
       fullTable =
           new SqlCreateTableLike(
               tableDefinition.getParserPosition(),
-              FlinkSqlNodeFactory.identifier(baseTableName),
+              FlinkSqlNodeFactory.identifier(finalTableName),
               tableDefinition.getColumnList(),
               tableDefinition.getTableConstraints(),
               tableDefinition.getPropertyList(),
@@ -710,7 +734,7 @@ public class Sqrl2FlinkSQLTranslator {
       fullTable =
           new SqlCreateTable(
               tableDefinition.getParserPosition(),
-              FlinkSqlNodeFactory.identifier(baseTableName),
+              FlinkSqlNodeFactory.identifier(finalTableName),
               tableDefinition.getColumnList(),
               tableDefinition.getTableConstraints(),
               tableDefinition.getPropertyList(),
@@ -724,7 +748,7 @@ public class Sqrl2FlinkSQLTranslator {
     MutationQueryBuilder mutationBld = null;
     if (fullTable.getPropertyList().isEmpty()) { // it's an internal CREATE TABLE for a mutation
       var tableBuilder = FlinkTableBuilder.toBuilder(fullTable);
-      tableBuilder.setName(baseTableName);
+      tableBuilder.setName(finalTableName);
       /* TODO: We want to create the table with a datagen connector so we can fully plan it
       and get the relnode for a tablescan. That allows us to pull out any computed columns (and the RexCalls)
       from the projection. This will also give us the relDataType which we currently set to null as
@@ -788,17 +812,18 @@ public class Sqrl2FlinkSQLTranslator {
       mutationBld.inputDataType(inputType.build());
       mutationBld.outputDataType(outputType.build());
     }
+    ObjectIdentifier tableId = tableOp.getTableIdentifier();
     var connector = new FlinkConnectorConfig(tableOp.getCatalogTable().getOptions());
     var tableAnalysis =
         TableAnalysis.of(
-            tableOp.getTableIdentifier(),
+            tableId,
             new SourceSinkTableAnalysis(
                 connector, flinkSchema, mutationBld != null ? mutationBld.build() : null),
             connector.getTableType(),
             pk);
     tableLookup.registerTable(tableAnalysis);
 
-    return new AddTableResult(finalTableName, tableOp.getTableIdentifier());
+    return new AddTableResult(finalTableName, tableId, connector.isSourceConnector());
   }
 
   public ObjectIdentifier createSinkTable(FlinkTableBuilder tableBuilder) {
@@ -809,6 +834,10 @@ public class Sqrl2FlinkSQLTranslator {
   public void insertInto(RelNode relNode, ObjectIdentifier sinkTableId) {
     var selectQuery = toSqlNode(relNode);
     planBuilder.addInsert(FlinkSqlNodeFactory.createInsert(selectQuery, sinkTableId));
+  }
+
+  public void insertInto(RichSqlInsert insert) {
+    planBuilder.addInsert(insert);
   }
 
   public SqlOperator lookupUserDefinedFunction(FunctionDefinition fct) {

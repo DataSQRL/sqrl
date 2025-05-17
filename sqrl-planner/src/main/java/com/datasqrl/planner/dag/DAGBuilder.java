@@ -15,8 +15,10 @@
  */
 package com.datasqrl.planner.dag;
 
+import com.datasqrl.planner.analyzer.TableOrFunctionAnalysis.UniqueIdentifier;
 import com.datasqrl.planner.dag.nodes.ExportNode;
 import com.datasqrl.planner.dag.nodes.PipelineNode;
+import com.datasqrl.planner.dag.nodes.PlannedNode;
 import com.datasqrl.planner.dag.nodes.TableFunctionNode;
 import com.datasqrl.planner.dag.nodes.TableNode;
 import com.google.common.collect.HashMultimap;
@@ -33,8 +35,9 @@ import org.apache.flink.table.catalog.ObjectIdentifier;
  */
 public class DAGBuilder {
 
+
   Multimap<PipelineNode, PipelineNode> dagInputs = HashMultimap.create();
-  Map<ObjectIdentifier, PipelineNode> nodeLookup = new HashMap<>();
+  Map<UniqueIdentifier, PlannedNode> nodeLookup = new HashMap<>();
 
   public void add(TableNode node) {
     var priorNode = nodeLookup.put(node.getIdentifier(), node);
@@ -73,6 +76,10 @@ public class DAGBuilder {
   }
 
   public Optional<PipelineNode> getNode(ObjectIdentifier identifier) {
+    return getNode(new UniqueIdentifier(identifier, false));
+  }
+
+  public Optional<PipelineNode> getNode(UniqueIdentifier identifier) {
     return Optional.ofNullable(nodeLookup.get(identifier));
   }
 

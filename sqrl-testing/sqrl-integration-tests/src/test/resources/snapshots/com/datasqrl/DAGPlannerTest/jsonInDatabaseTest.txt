@@ -6,7 +6,7 @@ Stage:  flink
 Inputs: default_catalog.default_database.CustomerStream
 Annotations:
  - mostRecentDistinct: true
- - stream-root: CustomerStream__def
+ - stream-root: CustomerStream
 Primary Key: customerid
 Timestamp  : timestamp
 Schema:
@@ -30,9 +30,9 @@ WHERE `__sqrlinternal_rownum` = 1
 ID:     default_catalog.default_database.CustomerStream
 Type:   stream
 Stage:  flink
-Inputs: default_catalog.default_database.CustomerStream__def
+Inputs: default_catalog.default_database.CustomerStream__base
 Annotations:
- - stream-root: CustomerStream__def
+ - stream-root: CustomerStream
 Primary Key: customerid, lastUpdated
 Timestamp  : timestamp
 Schema:
@@ -42,21 +42,20 @@ Schema:
  - lastUpdated: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Plan:
-LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
-  LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
-    LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($3, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
-      LogicalTableScan(table=[[default_catalog, default_database, CustomerStream__def]])
-SQL: CREATE VIEW `CustomerStream`
+LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
+  LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($3, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
+    LogicalTableScan(table=[[default_catalog, default_database, CustomerStream]])
+SQL: CREATE VIEW `CustomerStream__view`
 AS
-SELECT *
-FROM `default_catalog`.`default_database`.`CustomerStream__def`
+SELECT `CustomerStream`.`customerid`, `CustomerStream`.`email`, `CustomerStream`.`name`, `CustomerStream`.`lastUpdated`, `CustomerStream`.`timestamp`
+FROM `default_catalog`.`default_database`.`CustomerStream` AS `CustomerStream`
 === ObjComplex
 ID:     default_catalog.default_database.ObjComplex
 Type:   state
 Stage:  postgres
 Inputs: default_catalog.default_database.Customer
 Annotations:
- - stream-root: CustomerStream__def
+ - stream-root: CustomerStream
 Primary Key: -
 Timestamp  : -
 Schema:
@@ -88,7 +87,7 @@ Type:   state
 Stage:  postgres
 Inputs: default_catalog.default_database.Customer
 Annotations:
- - stream-root: CustomerStream__def
+ - stream-root: CustomerStream
 Primary Key: -
 Timestamp  : -
 Schema:
@@ -104,7 +103,7 @@ Type:   state
 Stage:  postgres
 Inputs: default_catalog.default_database.Customer
 Annotations:
- - stream-root: CustomerStream__def
+ - stream-root: CustomerStream
 Primary Key: -
 Timestamp  : -
 Schema:
@@ -120,7 +119,7 @@ Type:   state
 Stage:  postgres
 Inputs: default_catalog.default_database.Customer
 Annotations:
- - stream-root: CustomerStream__def
+ - stream-root: CustomerStream
 Primary Key: -
 Timestamp  : -
 Schema:
@@ -136,7 +135,7 @@ Type:   state
 Stage:  postgres
 Inputs: default_catalog.default_database.Customer
 Annotations:
- - stream-root: CustomerStream__def
+ - stream-root: CustomerStream
 Primary Key: -
 Timestamp  : -
 Schema:
@@ -168,7 +167,7 @@ Type:   state
 Stage:  postgres
 Inputs: default_catalog.default_database.Customer
 Annotations:
- - stream-root: CustomerStream__def
+ - stream-root: CustomerStream
 Primary Key: -
 Timestamp  : -
 Schema:
@@ -184,7 +183,7 @@ Type:   state
 Stage:  postgres
 Inputs: default_catalog.default_database.Customer
 Annotations:
- - stream-root: CustomerStream__def
+ - stream-root: CustomerStream
 Primary Key: -
 Timestamp  : -
 Schema:
@@ -200,7 +199,7 @@ Type:   state
 Stage:  postgres
 Inputs: default_catalog.default_database.Customer
 Annotations:
- - stream-root: CustomerStream__def
+ - stream-root: CustomerStream
 Primary Key: -
 Timestamp  : -
 Schema:
@@ -219,7 +218,7 @@ CREATE TEMPORARY TABLE `CustomerStream__schema` (
 ) WITH (
   'connector' = 'datagen'
 );
-CREATE TABLE `CustomerStream__def` (
+CREATE TABLE `CustomerStream` (
   `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
@@ -230,10 +229,6 @@ CREATE TABLE `CustomerStream__def` (
   'connector' = 'filesystem'
 )
 LIKE `CustomerStream__schema`;
-CREATE VIEW `CustomerStream`
-AS
-SELECT *
-FROM `default_catalog`.`default_database`.`CustomerStream__def`;
 CREATE VIEW `Customer`
 AS
 SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`
