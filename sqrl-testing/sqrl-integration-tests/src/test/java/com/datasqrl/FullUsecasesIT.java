@@ -77,6 +77,7 @@ public class FullUsecasesIT {
 
   List<ScriptCriteria> disabledScripts =
       List.of(
+          new ScriptCriteria("flink-only.sqrl", "test"), // not a full test case
           new ScriptCriteria("flink-functions.sqrl", "test"), // not a full test case
           new ScriptCriteria("flink-functions.sqrl", "run"), // not a full test case
           new ScriptCriteria("conference-disabled.sqrl", "test"), // fails in build server
@@ -385,7 +386,7 @@ public class FullUsecasesIT {
   @MethodSource("useCaseProvider")
   @Disabled
   public void runTestCaseByName(UseCaseTestParameter param) {
-    if (param.sqrlFileName.equals("openai-cicd-test.sqrl") && param.goal.equals("test")) {
+    if (param.sqrlFileName.equals("flink-only.sqrl") && param.goal.equals("run")) {
       testUseCase(param);
     } else {
       assumeFalse(true);
