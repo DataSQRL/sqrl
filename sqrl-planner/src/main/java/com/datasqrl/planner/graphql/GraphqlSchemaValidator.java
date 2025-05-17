@@ -347,7 +347,8 @@ public class GraphqlSchemaValidator extends GraphqlSchemaWalker {
                     atField.getName()
                         + ". Possible scalars are ["
                         + r.getFieldNames().stream()
-                            .filter(com.datasqrl.graphql.generate.GraphqlSchemaUtil::isValidGraphQLName)
+                            .filter(
+                                com.datasqrl.graphql.generate.GraphqlSchemaUtil::isValidGraphQLName)
                             .collect(Collectors.joining(", "))
                         + "]")
             .orElse(atField.getName()));

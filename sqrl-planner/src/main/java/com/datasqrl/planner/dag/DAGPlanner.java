@@ -82,12 +82,9 @@ import org.apache.calcite.rex.RexShuttle;
 import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.util.Pair;
-import org.apache.flink.table.catalog.CatalogTable;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.planner.calcite.FlinkRelBuilder;
-import org.apache.flink.table.planner.plan.schema.CatalogSourceTable;
-import org.apache.flink.table.planner.plan.schema.ExpandingPreparingTable;
 import org.apache.flink.table.planner.plan.schema.FlinkPreparingTableBase;
 import org.apache.flink.table.planner.plan.schema.TableSourceTable;
 import org.apache.flink.table.planner.plan.schema.TimeIndicatorRelDataType;
@@ -235,7 +232,8 @@ public class DAGPlanner {
                       // Special case, we sink directly to table
                       targetTable = exportNode.getCreatedSinkTable().get();
                       sqrlEnv.insertInto(
-                          sqrlEnv.getTableScan(node.getIdentifier().objectIdentifier()).build(), targetTable);
+                          sqrlEnv.getTableScan(node.getIdentifier().objectIdentifier()).build(),
+                          targetTable);
                       continue;
                     }
                   } else { // We are sinking into another engine

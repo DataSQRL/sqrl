@@ -35,7 +35,6 @@ import org.apache.flink.table.catalog.ObjectIdentifier;
  */
 public class DAGBuilder {
 
-
   Multimap<PipelineNode, PipelineNode> dagInputs = HashMultimap.create();
   Map<UniqueIdentifier, PlannedNode> nodeLookup = new HashMap<>();
 

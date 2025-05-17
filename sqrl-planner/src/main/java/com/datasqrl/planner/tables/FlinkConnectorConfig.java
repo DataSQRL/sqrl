@@ -49,7 +49,8 @@ public class FlinkConnectorConfig implements ConnectorConfig {
           "jdbc-sqrl", TableType.LOOKUP,
           "postgres-cdc", TableType.VERSIONED_STATE);
 
-  public static final Set<String> SINK_ONLY_CONNECTORS = Set.of("blackhole", "print", "elasticsearch-7", "firehose");
+  public static final Set<String> SINK_ONLY_CONNECTORS =
+      Set.of("blackhole", "print", "elasticsearch-7", "firehose");
 
   Map<String, String> options;
 
@@ -71,7 +72,9 @@ public class FlinkConnectorConfig implements ConnectorConfig {
   }
 
   public boolean isSourceConnector() {
-    return getConnectorName().filter(name -> !SINK_ONLY_CONNECTORS.contains(name.toLowerCase())).isPresent();
+    return getConnectorName()
+        .filter(name -> !SINK_ONLY_CONNECTORS.contains(name.toLowerCase()))
+        .isPresent();
   }
 
   @Override

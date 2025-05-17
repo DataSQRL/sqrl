@@ -72,9 +72,12 @@ public class CompilationProcess {
     var serverPlanOpt = physicalPlan.getPlans(ServerPhysicalPlan.class).findFirst();
     if (serverPlanOpt.isPresent()) {
       var serverPlan = serverPlanOpt.get();
-      errors.checkFatal(!serverPlan.getFunctions().isEmpty(), ErrorCode.NO_API_ENDPOINTS,
+      errors.checkFatal(
+          !serverPlan.getFunctions().isEmpty(),
+          ErrorCode.NO_API_ENDPOINTS,
           "The SQRL script defines %s functions and %s mutations - cannot define an API",
-          serverPlan.getFunctions().size(), serverPlan.getMutations().size());
+          serverPlan.getFunctions().size(),
+          serverPlan.getMutations().size());
       var apiSource = graphqlSourceFactory.get();
       if (apiSource.isEmpty()
           || executionGoal == ExecutionGoal.TEST) { // Infer schema from functions

@@ -21,7 +21,6 @@ import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.analyzer.TableOrFunctionAnalysis.UniqueIdentifier;
 import java.util.Map;
 import lombok.NonNull;
-import org.apache.flink.table.catalog.ObjectIdentifier;
 
 public abstract class PlannedNode extends PipelineNode {
 

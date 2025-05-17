@@ -129,8 +129,7 @@ public class SqlScriptPlanner {
   private final ExecutionPipeline pipeline;
   private final ExecutionGoal executionGoal;
 
-  @Getter
-  private final DAGBuilder dagBuilder;
+  @Getter private final DAGBuilder dagBuilder;
   private final ExecutionStage streamStage;
   private final List<ExecutionStage> tableStages;
   private final List<ExecutionStage> queryStages;
@@ -275,9 +274,9 @@ public class SqlScriptPlanner {
     } else if (stmt instanceof SqrlExportStatement statement) {
       addExport(statement, sqrlEnv);
     } else if (stmt instanceof SqrlCreateTableStatement statement) {
-      sqrlEnv.createTable(statement.toSql(), getLogEngineBuilder(hintsAndDocs))
-          .ifPresent(tableAnalysis ->
-              addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv));
+      sqrlEnv
+          .createTable(statement.toSql(), getLogEngineBuilder(hintsAndDocs))
+          .ifPresent(tableAnalysis -> addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv));
     } else if (stmt instanceof SqrlDefinition sqrlDef) {
       var access = sqrlDef.getAccess();
       var tablePath = sqrlDef.getPath();
@@ -423,9 +422,9 @@ public class SqlScriptPlanner {
             visibility,
             sqrlEnv);
       } else if (node instanceof SqlCreateTable) {
-        sqrlEnv.createTable(flinkStmt.getSql().get(), getLogEngineBuilder(hintsAndDocs))
-            .ifPresent(tableAnalysis ->
-                addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv));
+        sqrlEnv
+            .createTable(flinkStmt.getSql().get(), getLogEngineBuilder(hintsAndDocs))
+            .ifPresent(tableAnalysis -> addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv));
       } else if (node instanceof RichSqlInsert insert) {
         /*TODO: We are not currently adding these to the DAG (and hence no analysis/visualization based on the DAG)
         We would need to analyze the query and pull out the sources to make that happen. However, for now

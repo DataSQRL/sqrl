@@ -454,7 +454,11 @@ public class Sqrl2FlinkSQLTranslator {
     var viewDef2 = parseSQL(originalSql);
     var viewAnalysis = analyzeView(viewDef2, removedSort, hints, errors);
     var tableAnalysis =
-        viewAnalysis.getTableAnalysis().objectIdentifier(identifier).originalSql(originalSql).build();
+        viewAnalysis
+            .getTableAnalysis()
+            .objectIdentifier(identifier)
+            .originalSql(originalSql)
+            .build();
     tableLookup.registerTable(tableAnalysis);
 
     return tableAnalysis;
@@ -638,7 +642,8 @@ public class Sqrl2FlinkSQLTranslator {
     return result.baseTableIdentifier;
   }
 
-  public Optional<TableAnalysis> createTable(String tableDefinition, MutationBuilder logEngineBuilder) {
+  public Optional<TableAnalysis> createTable(
+      String tableDefinition, MutationBuilder logEngineBuilder) {
     var result = addTable(Optional.empty(), tableDefinition, Optional.empty(), logEngineBuilder);
     if (result.isSourceTable()) return Optional.of(addSourceTable(result));
     else return Optional.empty();
@@ -652,23 +657,22 @@ public class Sqrl2FlinkSQLTranslator {
   private static final String TEMP_VIEW_SUFFIX = "__view";
 
   /**
-   * We add a view on top of the created table with the name of the table.
-   * The reason we "cover" CREATE TABLE statements with a view is because Flink expands references
-   * to physical tables by adding computed columns and watermark, thus making it very difficult
-   * to reconcile the DAG because of that repetition.
-   * By adding a view on top, we get a stable reference to the expanded table that we
-   * can add to the tableLookup for resolution.
+   * We add a view on top of the created table with the name of the table. The reason we "cover"
+   * CREATE TABLE statements with a view is because Flink expands references to physical tables by
+   * adding computed columns and watermark, thus making it very difficult to reconcile the DAG
+   * because of that repetition. By adding a view on top, we get a stable reference to the expanded
+   * table that we can add to the tableLookup for resolution.
    *
    * @param addResult
    * @return
    */
   private TableAnalysis addSourceTable(AddTableResult addResult) {
-    var view = createScanView(addResult.tableName + TEMP_VIEW_SUFFIX, addResult.baseTableIdentifier);
+    var view =
+        createScanView(addResult.tableName + TEMP_VIEW_SUFFIX, addResult.baseTableIdentifier);
     var viewAnalysis = analyzeView(view, false, PlannerHints.EMPTY, ErrorCollector.root());
     TableAnalysis.TableAnalysisBuilder tbBuilder = viewAnalysis.getTableAnalysis();
-    tbBuilder.objectIdentifier(addResult.baseTableIdentifier)
-        .originalSql(toSqlString(view));
-    //Remove trivial LogicalProject so that subsequent references match
+    tbBuilder.objectIdentifier(addResult.baseTableIdentifier).originalSql(toSqlString(view));
+    // Remove trivial LogicalProject so that subsequent references match
     RelNode relNode = tbBuilder.build().getOriginalRelnode();
     if (CalciteUtil.isTrivialProject(relNode)) relNode = relNode.getInput(0);
     var tableAnalysis = tbBuilder.originalRelnode(relNode).collapsedRelnode(relNode).build();
