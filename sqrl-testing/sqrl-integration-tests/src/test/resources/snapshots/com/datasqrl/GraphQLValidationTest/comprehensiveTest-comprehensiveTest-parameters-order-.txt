@@ -5,7 +5,7 @@ Type:   stream
 Stage:  flink
 Inputs: default_catalog.default_database._customer
 Annotations:
- - stream-root: _customer__def
+ - stream-root: _customer
 Primary Key: customerid, lastUpdated
 Timestamp  : -
 Schema:
@@ -22,9 +22,9 @@ SQL: CREATE VIEW AnotherCustomer AS  SELECT customerid, email, lastUpdated FROM 
 ID:     default_catalog.default_database.Customer
 Type:   stream
 Stage:  flink
-Inputs: default_catalog.default_database.Customer__def
+Inputs: default_catalog.default_database.Customer__base
 Annotations:
- - stream-root: Customer__def
+ - stream-root: Customer
 Primary Key: customerid, lastUpdated
 Timestamp  : timestamp
 Schema:
@@ -34,21 +34,20 @@ Schema:
  - lastUpdated: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Plan:
-LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
-  LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
-    LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($3, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
-      LogicalTableScan(table=[[default_catalog, default_database, Customer__def]])
-SQL: CREATE VIEW `Customer`
+LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
+  LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($3, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
+    LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW `Customer__view`
 AS
-SELECT *
-FROM `default_catalog`.`default_database`.`Customer__def`
+SELECT `Customer`.`customerid`, `Customer`.`email`, `Customer`.`name`, `Customer`.`lastUpdated`, `Customer`.`timestamp`
+FROM `default_catalog`.`default_database`.`Customer` AS `Customer`
 === CustomerById
 ID:     default_catalog.default_database.CustomerById
 Type:   query
 Stage:  postgres
 Inputs: default_catalog.default_database.Customer
 Annotations:
- - stream-root: Customer__def
+ - stream-root: Customer
  - parameters: minId
  - base-table: Customer
 Plan:
@@ -64,7 +63,7 @@ Stage:  flink
 Inputs: default_catalog.default_database.Customer
 Annotations:
  - mostRecentDistinct: true
- - stream-root: Customer__def
+ - stream-root: Customer
 Primary Key: customerid, email
 Timestamp  : timestamp
 Schema:
@@ -91,7 +90,7 @@ Stage:  flink
 Inputs: default_catalog.default_database.Customer
 Annotations:
  - mostRecentDistinct: true
- - stream-root: Customer__def
+ - stream-root: Customer
 Primary Key: customerid
 Timestamp  : timestamp
 Schema:
@@ -117,7 +116,7 @@ Type:   state
 Stage:  flink
 Inputs: default_catalog.default_database.Customer
 Annotations:
- - stream-root: Customer__def
+ - stream-root: Customer
 Primary Key: customerid
 Timestamp  : timestamp
 Schema:
@@ -153,7 +152,7 @@ Type:   query
 Stage:  postgres
 Inputs: default_catalog.default_database.AnotherCustomer
 Annotations:
- - stream-root: _customer__def
+ - stream-root: _customer
  - parameters: id
  - base-table: AnotherCustomer
 Plan:
@@ -168,7 +167,7 @@ Type:   stream
 Stage:  flink
 Inputs: default_catalog.default_database.Customer
 Annotations:
- - stream-root: Customer__def
+ - stream-root: Customer
 Primary Key: customerid, lastUpdated
 Timestamp  : timestamp
 Schema:
@@ -188,7 +187,7 @@ Type:   query
 Stage:  kafka
 Inputs: default_catalog.default_database.Customer
 Annotations:
- - stream-root: Customer__def
+ - stream-root: Customer
  - parameters: minId
  - base-table: Customer
 Plan:
@@ -249,7 +248,7 @@ Type:   state
 Stage:  flink
 Inputs: default_catalog.default_database.Customer
 Annotations:
- - stream-root: Customer__def
+ - stream-root: Customer
 Primary Key: customerid
 Timestamp  : timestamp
 Schema:
@@ -267,10 +266,10 @@ SQL: CREATE VIEW ExplicitDistinct AS  SELECT customerid, `timestamp`, name FROM 
 ID:     default_catalog.default_database.ExternalOrders
 Type:   stream
 Stage:  flink
-Inputs: default_catalog.default_database.ExternalOrders__def
+Inputs: default_catalog.default_database.ExternalOrders__base
 Annotations:
  - features: DENORMALIZE (feature)
- - stream-root: ExternalOrders__def
+ - stream-root: ExternalOrders
 Primary Key: id, time
 Timestamp  : time
 Schema:
@@ -279,20 +278,19 @@ Schema:
  - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - entries: RecordType:peek_no_expand(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
 Plan:
-LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3])
-  LogicalWatermarkAssigner(rowtime=[time], watermark=[-($2, 1:INTERVAL SECOND)])
-    LogicalTableScan(table=[[default_catalog, default_database, ExternalOrders__def]])
-SQL: CREATE VIEW `ExternalOrders`
+LogicalWatermarkAssigner(rowtime=[time], watermark=[-($2, 1:INTERVAL SECOND)])
+  LogicalTableScan(table=[[default_catalog, default_database, ExternalOrders]])
+SQL: CREATE VIEW `ExternalOrders__view`
 AS
-SELECT *
-FROM `default_catalog`.`default_database`.`ExternalOrders__def`
+SELECT `ExternalOrders`.`id`, `ExternalOrders`.`customerid`, `ExternalOrders`.`time`, `ExternalOrders`.`entries`
+FROM `default_catalog`.`default_database`.`ExternalOrders` AS `ExternalOrders`
 === InvalidDistinct
 ID:     default_catalog.default_database.InvalidDistinct
 Type:   state
 Stage:  flink
 Inputs: default_catalog.default_database.Customer
 Annotations:
- - stream-root: Customer__def
+ - stream-root: Customer
 Primary Key: customerid
 Timestamp  : timestamp
 Schema:
@@ -332,26 +330,25 @@ SQL: CREATE VIEW MissedTemporalJoin AS  SELECT * FROM ExternalOrders o JOIN Expl
 ID:     default_catalog.default_database.Orders
 Type:   state
 Stage:  flink
-Inputs: default_catalog.default_database.Orders__def
+Inputs: default_catalog.default_database.Orders__base
 Primary Key: orderid
 Timestamp  : -
 Schema:
  - orderid: INTEGER NOT NULL
  - amount: FLOAT
 Plan:
-LogicalProject(orderid=[$0], amount=[$1])
-  LogicalTableScan(table=[[default_catalog, default_database, Orders__def]])
-SQL: CREATE VIEW `Orders`
+LogicalTableScan(table=[[default_catalog, default_database, Orders]])
+SQL: CREATE VIEW `Orders__view`
 AS
-SELECT *
-FROM `default_catalog`.`default_database`.`Orders__def`
+SELECT `Orders`.`orderid`, `Orders`.`amount`
+FROM `default_catalog`.`default_database`.`Orders` AS `Orders`
 === SelectCustomers
 ID:     default_catalog.default_database.SelectCustomers
 Type:   stream
 Stage:  flink
 Inputs: default_catalog.default_database.Customer
 Annotations:
- - stream-root: Customer__def
+ - stream-root: Customer
  - sort: [4 DESC-nulls-last]
 Primary Key: customerid, name
 Timestamp  : timestamp
@@ -374,7 +371,7 @@ Stage:  postgres
 Inputs: default_catalog.default_database.CustomerById
 Annotations:
  - features: TABLE_FUNCTION_SCAN (feature)
- - stream-root: Customer__def
+ - stream-root: Customer
  - parameters: arg1, arg2
  - base-table: Customer
 Plan:
@@ -389,7 +386,7 @@ Type:   stream
 Stage:  flink
 Inputs: default_catalog.default_database.ExplicitDistinct, default_catalog.default_database.ExternalOrders
 Annotations:
- - stream-root: ExternalOrders__def
+ - stream-root: ExternalOrders
 Primary Key: id, time
 Timestamp  : time
 Schema:
@@ -415,7 +412,7 @@ Type:   stream
 Stage:  flink
 Inputs: default_catalog.default_database.ExternalOrders
 Annotations:
- - stream-root: ExternalOrders__def
+ - stream-root: ExternalOrders
 Primary Key: -
 Timestamp  : time
 Schema:
@@ -440,9 +437,9 @@ SQL: ALTER VIEW UnnestOrders AS SELECT *,  id + productid AS newId FROM
 ID:     default_catalog.default_database._customer
 Type:   stream
 Stage:  flink
-Inputs: default_catalog.default_database._customer__def
+Inputs: default_catalog.default_database._customer__base
 Annotations:
- - stream-root: _customer__def
+ - stream-root: _customer
 Primary Key: customerid, lastUpdated
 Timestamp  : timestamp
 Schema:
@@ -452,14 +449,13 @@ Schema:
  - lastUpdated: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Plan:
-LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
-  LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
-    LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($3, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
-      LogicalTableScan(table=[[default_catalog, default_database, _customer__def]])
-SQL: CREATE VIEW `_customer`
+LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
+  LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($3, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
+    LogicalTableScan(table=[[default_catalog, default_database, _customer]])
+SQL: CREATE VIEW `_customer__view`
 AS
-SELECT *
-FROM `default_catalog`.`default_database`.`_customer__def`
+SELECT `_customer`.`customerid`, `_customer`.`email`, `_customer`.`name`, `_customer`.`lastUpdated`, `_customer`.`timestamp`
+FROM `default_catalog`.`default_database`.`_customer` AS `_customer`
 === customersink
 ID:     mysink.customersink
 Type:   export
@@ -481,7 +477,7 @@ CREATE TEMPORARY TABLE `Customer__schema` (
 ) WITH (
   'connector' = 'datagen'
 );
-CREATE TABLE `Customer__def` (
+CREATE TABLE `Customer` (
   `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
@@ -492,10 +488,6 @@ CREATE TABLE `Customer__def` (
   'connector' = 'filesystem'
 )
 LIKE `Customer__schema`;
-CREATE VIEW `Customer`
-AS
-SELECT *
-FROM `default_catalog`.`default_database`.`Customer__def`;
 CREATE TEMPORARY TABLE `ExternalOrders__schema` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
@@ -504,7 +496,7 @@ CREATE TEMPORARY TABLE `ExternalOrders__schema` (
 ) WITH (
   'connector' = 'datagen'
 );
-CREATE TABLE `ExternalOrders__def` (
+CREATE TABLE `ExternalOrders` (
   PRIMARY KEY (`id`, `time`) NOT ENFORCED,
   WATERMARK FOR `time` AS `time` - INTERVAL '0.001' SECOND
 ) WITH (
@@ -514,10 +506,6 @@ CREATE TABLE `ExternalOrders__def` (
   'connector' = 'filesystem'
 )
 LIKE `ExternalOrders__schema`;
-CREATE VIEW `ExternalOrders`
-AS
-SELECT *
-FROM `default_catalog`.`default_database`.`ExternalOrders__def`;
 CREATE TEMPORARY TABLE `_customer__schema` (
   `customerid` BIGINT NOT NULL,
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -526,7 +514,7 @@ CREATE TEMPORARY TABLE `_customer__schema` (
 ) WITH (
   'connector' = 'datagen'
 );
-CREATE TABLE `_customer__def` (
+CREATE TABLE `_customer` (
   `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
@@ -537,10 +525,6 @@ CREATE TABLE `_customer__def` (
   'connector' = 'filesystem'
 )
 LIKE `_customer__schema`;
-CREATE VIEW `_customer`
-AS
-SELECT *
-FROM `default_catalog`.`default_database`.`_customer__def`;
 CREATE TEMPORARY TABLE `_orders__schema` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
@@ -549,7 +533,7 @@ CREATE TEMPORARY TABLE `_orders__schema` (
 ) WITH (
   'connector' = 'datagen'
 );
-CREATE TABLE `_orders__def` (
+CREATE TABLE `_orders` (
   PRIMARY KEY (`id`, `time`) NOT ENFORCED,
   WATERMARK FOR `time` AS `time` - INTERVAL '0.001' SECOND
 ) WITH (
@@ -559,10 +543,6 @@ CREATE TABLE `_orders__def` (
   'connector' = 'filesystem'
 )
 LIKE `_orders__schema`;
-CREATE VIEW `_orders`
-AS
-SELECT *
-FROM `default_catalog`.`default_database`.`_orders__def`;
 CREATE TEMPORARY TABLE `_product__schema` (
   `productid` BIGINT NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -572,7 +552,7 @@ CREATE TEMPORARY TABLE `_product__schema` (
 ) WITH (
   'connector' = 'datagen'
 );
-CREATE TABLE `_product__def` (
+CREATE TABLE `_product` (
   PRIMARY KEY (`productid`, `name`, `description`, `category`) NOT ENFORCED,
   WATERMARK FOR `_ingest_time` AS `_ingest_time` - INTERVAL '0.001' SECOND
 ) WITH (
@@ -582,10 +562,6 @@ CREATE TABLE `_product__def` (
   'connector' = 'filesystem'
 )
 LIKE `_product__schema`;
-CREATE VIEW `_product`
-AS
-SELECT *
-FROM `default_catalog`.`default_database`.`_product__def`;
 CREATE VIEW `CustomerByTime2`
 AS
 SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`
@@ -656,7 +632,7 @@ SELECT *, `id` + `productid` AS `newId`
 FROM (SELECT `o`.`id`, `o`.`customerid`, `o`.`time`, `e`.`productid`, `e`.`quantity`, `e`.`discount`
   FROM `ExternalOrders` AS `o`
    CROSS JOIN UNNEST(`entries`) AS `e`);
-CREATE TABLE `Orders__def` (
+CREATE TABLE `Orders` (
   `orderid` INTEGER,
   `amount` FLOAT,
   PRIMARY KEY (`orderid`) NOT ENFORCED
@@ -668,10 +644,6 @@ CREATE TABLE `Orders__def` (
   'properties.group.id' = '${PROPERTIES_GROUP_ID}',
   'topic' = 'Orders'
 );
-CREATE VIEW `Orders`
-AS
-SELECT *
-FROM `default_catalog`.`default_database`.`Orders__def`;
 CREATE VIEW `CustomerTimeWindow`
 AS
 SELECT `window_start`, `window_end`, COUNT(DISTINCT `email`) AS `unique_email_count`
@@ -692,7 +664,7 @@ CREATE TEMPORARY TABLE `customersink_ex2__schema` (
 ) WITH (
   'connector' = 'datagen'
 );
-CREATE TABLE `customersink_ex2__def` (
+CREATE TABLE `customersink_ex2` (
   PRIMARY KEY (`customerid`) NOT ENFORCED
 ) WITH (
   'connector' = 'print'
@@ -982,7 +954,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
              (SELECT *
               FROM `default_catalog`.`default_database`.`SelectCustomers`)
              ;
-             INSERT INTO `default_catalog`.`default_database`.`customersink_ex2__def`
+             INSERT INTO `default_catalog`.`default_database`.`customersink_ex2`
               (SELECT *
                FROM `default_catalog`.`default_database`.`TemporalJoin`)
               ;
@@ -1016,7 +988,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
     },
     {
       "topicName" : "Orders",
-      "tableName" : "Orders__def",
+      "tableName" : "Orders",
       "numPartitions" : 1,
       "replicationFactor" : 1,
       "replicasAssignments" : { },

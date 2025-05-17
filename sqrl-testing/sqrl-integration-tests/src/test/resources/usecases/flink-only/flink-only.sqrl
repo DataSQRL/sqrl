@@ -1,0 +1,39 @@
+CREATE TABLE Customer (
+  customerid BIGINT NOT NULL,
+  email STRING NOT NULL,
+  name STRING NOT NULL,
+  lastUpdated AS NOW(),
+  WATERMARK FOR `lastUpdated` AS `lastUpdated` - INTERVAL '0.001' SECOND
+) WITH (
+      'connector' = 'datagen',
+
+      -- Generate customerid sequentially
+      'fields.customerid.kind' = 'sequence',
+      'fields.customerid.start' = '1',
+      'fields.customerid.end' = '10',
+
+      -- Generate random email addresses
+      'fields.email.length' = '15',
+
+      -- Generate random names
+      'fields.name.length' = '10',
+
+      -- Control the rate of generation
+      'rows-per-second' = '5'
+      );
+
+CREATE TABLE IF NOT EXISTS `customer_id_count` (
+   customerid     BIGINT,
+   numEntries BIGINT,
+   PRIMARY KEY (customerid) NOT ENFORCED
+    )
+    WITH (
+        'connector' = 'blackhole'
+        );
+
+INSERT INTO `customer_id_count`
+    (SELECT
+         customerid,
+         COUNT(*) AS numEntries
+     FROM Customer GROUP BY customerid
+    );

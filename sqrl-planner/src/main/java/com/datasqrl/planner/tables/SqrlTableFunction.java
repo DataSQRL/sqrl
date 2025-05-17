@@ -45,7 +45,6 @@ import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.schema.TableFunction;
-import org.apache.flink.table.catalog.ObjectIdentifier;
 
 /**
  * Represents a function in DataSQRL. A function is either defined by the user and generated as a
@@ -140,7 +139,7 @@ public class SqrlTableFunction implements TableFunction, TableOrFunctionAnalysis
   }
 
   @Override
-  public ObjectIdentifier getIdentifier() {
+  public UniqueIdentifier getIdentifier() {
     return functionAnalysis.getIdentifier();
   }
 
@@ -152,5 +151,10 @@ public class SqrlTableFunction implements TableFunction, TableOrFunctionAnalysis
   @Override
   public TableType getType() {
     return functionAnalysis.getType();
+  }
+
+  @Override
+  public boolean isSourceOrSink() {
+    return false;
   }
 }

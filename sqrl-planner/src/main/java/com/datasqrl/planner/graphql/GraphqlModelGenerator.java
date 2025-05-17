@@ -61,14 +61,14 @@ import org.apache.calcite.schema.FunctionParameter;
 
 /** Returns a set of table functions that satisfy a graphql schema */
 @Getter
-public class GraphqlModelGenerator2 extends GraphqlSchemaWalker2 {
+public class GraphqlModelGenerator extends GraphqlSchemaWalker {
 
   List<QueryCoords> queryCoords = new ArrayList<>();
   List<MutationCoords> mutations = new ArrayList<>();
   List<SubscriptionCoords> subscriptions = new ArrayList<>();
   private final ErrorCollector errorCollector;
 
-  public GraphqlModelGenerator2(
+  public GraphqlModelGenerator(
       List<SqrlTableFunction> tableFunctions,
       List<MutationQuery> mutations,
       ErrorCollector errorCollector) {

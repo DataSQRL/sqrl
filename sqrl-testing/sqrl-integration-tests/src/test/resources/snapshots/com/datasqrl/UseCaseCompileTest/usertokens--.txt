@@ -74,7 +74,7 @@ SQL: CREATE VIEW UsageAlert AS  SELECT * FROM UserTokens WHERE tokens > 100000;
 ID:     default_catalog.default_database.UserTokens
 Type:   stream
 Stage:  flink
-Inputs: default_catalog.default_database.UserTokens__def
+Inputs: default_catalog.default_database.UserTokens__base
 Primary Key: -
 Timestamp  : request_time
 Schema:
@@ -82,14 +82,13 @@ Schema:
  - tokens: BIGINT NOT NULL
  - request_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Plan:
-LogicalProject(userid=[$0], tokens=[$1], request_time=[$2])
-  LogicalWatermarkAssigner(rowtime=[request_time], watermark=[-($2, 0:INTERVAL SECOND)])
-    LogicalProject(userid=[$0], tokens=[$1], request_time=[CAST($2):TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL])
-      LogicalTableScan(table=[[default_catalog, default_database, UserTokens__def, metadata=[timestamp]]])
-SQL: CREATE VIEW `UserTokens`
+LogicalWatermarkAssigner(rowtime=[request_time], watermark=[-($2, 0:INTERVAL SECOND)])
+  LogicalProject(userid=[$0], tokens=[$1], request_time=[CAST($2):TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL])
+    LogicalTableScan(table=[[default_catalog, default_database, UserTokens, metadata=[timestamp]]])
+SQL: CREATE VIEW `UserTokens__view`
 AS
-SELECT *
-FROM `default_catalog`.`default_database`.`UserTokens__def`
+SELECT `UserTokens`.`userid`, `UserTokens`.`tokens`, `UserTokens`.`request_time`
+FROM `default_catalog`.`default_database`.`UserTokens` AS `UserTokens`
 === _CurrentUserInfo
 ID:     default_catalog.default_database._CurrentUserInfo
 Type:   state
@@ -139,7 +138,7 @@ SQL: CREATE VIEW _EnrichedUserTokens AS  SELECT t.*, u.orgid FROM UserTokens t
 ID:     default_catalog.default_database._UserInfo
 Type:   stream
 Stage:  flink
-Inputs: default_catalog.default_database._UserInfo__def
+Inputs: default_catalog.default_database._UserInfo__base
 Primary Key: -
 Timestamp  : event_time
 Schema:
@@ -148,16 +147,15 @@ Schema:
  - last_updated: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Plan:
-LogicalProject(userid=[$0], orgid=[$1], last_updated=[$2], event_time=[$3])
-  LogicalWatermarkAssigner(rowtime=[event_time], watermark=[-($3, 1:INTERVAL SECOND)])
-    LogicalProject(userid=[$0], orgid=[$1], last_updated=[$2], event_time=[NOW()])
-      LogicalTableScan(table=[[default_catalog, default_database, _UserInfo__def]])
-SQL: CREATE VIEW `_UserInfo`
+LogicalWatermarkAssigner(rowtime=[event_time], watermark=[-($3, 1:INTERVAL SECOND)])
+  LogicalProject(userid=[$0], orgid=[$1], last_updated=[$2], event_time=[NOW()])
+    LogicalTableScan(table=[[default_catalog, default_database, _UserInfo]])
+SQL: CREATE VIEW `_UserInfo__view`
 AS
-SELECT *
-FROM `default_catalog`.`default_database`.`_UserInfo__def`
+SELECT `_UserInfo`.`userid`, `_UserInfo`.`orgid`, `_UserInfo`.`last_updated`, `_UserInfo`.`event_time`
+FROM `default_catalog`.`default_database`.`_UserInfo` AS `_UserInfo`
 >>>flink-sql-no-functions.sql
-CREATE TABLE `UserTokens__def` (
+CREATE TABLE `UserTokens` (
   `userid` BIGINT NOT NULL,
   `tokens` BIGINT NOT NULL,
   `request_time` TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
@@ -171,10 +169,6 @@ CREATE TABLE `UserTokens__def` (
   'properties.auto.offset.reset' = 'earliest',
   'topic' = 'UserTokens'
 );
-CREATE VIEW `UserTokens`
-AS
-SELECT *
-FROM `default_catalog`.`default_database`.`UserTokens__def`;
 CREATE VIEW `TotalUserTokens`
 AS
 SELECT `userid`, SUM(`tokens`) AS `total_tokens`, COUNT(`tokens`) AS `total_requests`
@@ -185,7 +179,7 @@ AS
 SELECT *
 FROM `UserTokens`
 WHERE `tokens` > 100000;
-CREATE TABLE `_UserInfo__def` (
+CREATE TABLE `_UserInfo` (
   `userid` BIGINT NOT NULL,
   `orgid` BIGINT NOT NULL,
   `last_updated` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
@@ -197,10 +191,6 @@ CREATE TABLE `_UserInfo__def` (
   'path' = '${DATA_PATH}/userinfo.jsonl',
   'source.monitor-interval' = '10 sec'
 );
-CREATE VIEW `_UserInfo`
-AS
-SELECT *
-FROM `default_catalog`.`default_database`.`_UserInfo__def`;
 CREATE VIEW `_CurrentUserInfo`
 AS
 SELECT `userid`, `orgid`, `last_updated`, `event_time`
@@ -291,7 +281,7 @@ INSERT INTO `default_catalog`.`default_database`.`TotalUserTokens_2`
     },
     {
       "topicName" : "UserTokens",
-      "tableName" : "UserTokens__def",
+      "tableName" : "UserTokens",
       "numPartitions" : 1,
       "replicationFactor" : 1,
       "replicasAssignments" : { },

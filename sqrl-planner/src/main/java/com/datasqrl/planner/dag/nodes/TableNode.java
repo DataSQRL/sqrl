@@ -30,7 +30,7 @@ public class TableNode extends PlannedNode {
   final TableAnalysis tableAnalysis;
 
   public TableNode(TableAnalysis tableAnalysis, Map<ExecutionStage, StageAnalysis> stageAnalysis) {
-    super("table", stageAnalysis);
+    super(tableAnalysis.isSourceOrSink() ? "source" : "table", stageAnalysis);
     this.tableAnalysis = tableAnalysis;
   }
 
@@ -57,6 +57,6 @@ public class TableNode extends PlannedNode {
 
   @Override
   public String getId() {
-    return getIdentifier().asSummaryString();
+    return getIdentifier().toString();
   }
 }

@@ -18,7 +18,7 @@ package com.datasqrl.planner.graphql;
 import static com.datasqrl.graphql.server.TypeDefinitionRegistryUtil.getQueryType;
 import static com.datasqrl.graphql.server.TypeDefinitionRegistryUtil.getSubscriptionType;
 import static com.datasqrl.graphql.util.GraphqlCheckUtil.checkState;
-import static com.datasqrl.planner.graphql.GraphqlSchemaUtil2.isValidGraphQLName;
+import static com.datasqrl.planner.graphql.GraphqlSchemaUtil.isValidGraphQLName;
 import static com.datasqrl.planner.util.SqrTableFunctionUtil.getTableFunctionFromPath;
 
 import com.datasqrl.canonicalizer.Name;
@@ -51,7 +51,7 @@ import org.apache.calcite.rel.type.RelRecordType;
  */
 @Slf4j
 @AllArgsConstructor
-public abstract class GraphqlSchemaWalker2 {
+public abstract class GraphqlSchemaWalker {
 
   //  protected final SqlNameMatcher nameMatcher;
   protected final List<SqrlTableFunction> tableFunctions;

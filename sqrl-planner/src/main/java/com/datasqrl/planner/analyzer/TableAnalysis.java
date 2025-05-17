@@ -49,7 +49,7 @@ import org.apache.flink.table.catalog.ObjectIdentifier;
 public class TableAnalysis implements TableOrFunctionAnalysis {
 
   /** The unique identifier of this table within Flink's catalog. */
-  @NonNull @Include ObjectIdentifier identifier;
+  @NonNull @Include ObjectIdentifier objectIdentifier;
 
   /**
    * The collapsed/deduplicated Relnode which undoes the view expansion that Flink does during
@@ -142,13 +142,14 @@ public class TableAnalysis implements TableOrFunctionAnalysis {
   }
 
   public String getName() {
-    return identifier.getObjectName();
+    return objectIdentifier.getObjectName();
   }
 
   public PrimaryKeyMap getSimplePrimaryKey() {
     return primaryKey.makeSimple(getRowType());
   }
 
+  @Override
   public boolean isSourceOrSink() {
     return sourceSinkTable.isPresent();
   }
@@ -174,7 +175,7 @@ public class TableAnalysis implements TableOrFunctionAnalysis {
       @NonNull TableType type,
       @NonNull PrimaryKeyMap primaryKey) {
     return TableAnalysis.builder()
-        .identifier(identifier)
+        .objectIdentifier(identifier)
         .collapsedRelnode(null)
         .originalRelnode(null)
         .type(type)
@@ -186,6 +187,11 @@ public class TableAnalysis implements TableOrFunctionAnalysis {
 
   public RelNodeAnalysis toRelNode(RelNode relNode) {
     return new RelNodeAnalysis(relNode, type, primaryKey, getStreamRoot(), false);
+  }
+
+  @Override
+  public UniqueIdentifier getIdentifier() {
+    return new UniqueIdentifier(objectIdentifier, isSourceOrSink());
   }
 
   @Override

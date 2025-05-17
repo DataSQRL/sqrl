@@ -19,10 +19,10 @@ import static com.datasqrl.canonicalizer.Name.HIDDEN_PREFIX;
 import static com.datasqrl.canonicalizer.Name.isHiddenString;
 import static com.datasqrl.graphql.jdbc.SchemaConstants.LIMIT;
 import static com.datasqrl.graphql.jdbc.SchemaConstants.OFFSET;
-import static com.datasqrl.planner.graphql.GraphqlSchemaUtil2.getGraphQLOutputType;
-import static com.datasqrl.planner.graphql.GraphqlSchemaUtil2.isValidGraphQLName;
-import static com.datasqrl.planner.graphql.GraphqlSchemaUtil2.uniquifyNameForPath;
-import static com.datasqrl.planner.graphql.GraphqlSchemaUtil2.wrapMultiplicity;
+import static com.datasqrl.planner.graphql.GraphqlSchemaUtil.getGraphQLOutputType;
+import static com.datasqrl.planner.graphql.GraphqlSchemaUtil.isValidGraphQLName;
+import static com.datasqrl.planner.graphql.GraphqlSchemaUtil.uniquifyNameForPath;
+import static com.datasqrl.planner.graphql.GraphqlSchemaUtil.wrapMultiplicity;
 
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.PackageJson.CompilerConfig;
@@ -59,14 +59,14 @@ import org.apache.commons.collections.ListUtils;
 
 /** Creates a default graphql schema based on the SQRL schema */
 @Slf4j
-public class GraphqlSchemaFactory2 {
+public class GraphqlSchemaFactory {
 
   private final List<GraphQLObjectType> objectTypes = new ArrayList<>();
   private final Set<String> definedTypeNames = new HashSet<>();
   private final boolean extendedScalarTypes;
 
   @Inject
-  public GraphqlSchemaFactory2(CompilerConfig config) {
+  public GraphqlSchemaFactory(CompilerConfig config) {
     this.extendedScalarTypes = config.isExtendedScalarTypes();
   }
 
@@ -207,7 +207,7 @@ public class GraphqlSchemaFactory2 {
     for (MutationQuery mutation : mutations) {
       var name = mutation.getName().getDisplay();
       var inputType =
-          GraphqlSchemaUtil2.getGraphQLInputType(
+          GraphqlSchemaUtil.getGraphQLInputType(
                   mutation.getInputDataType(), NamePath.of(name), extendedScalarTypes)
               .orElseThrow(
                   () ->
@@ -220,7 +220,7 @@ public class GraphqlSchemaFactory2 {
               .name(name)
               .argument(inputArgument)
               .type(
-                  GraphqlSchemaUtil2.getGraphQLOutputType(
+                  GraphqlSchemaUtil.getGraphQLOutputType(
                           mutation.getOutputDataType(),
                           NamePath.of(name.concat("Result")),
                           extendedScalarTypes)
@@ -332,7 +332,7 @@ public class GraphqlSchemaFactory2 {
         parameters.stream()
             .filter(
                 p ->
-                    GraphqlSchemaUtil2.getGraphQLInputType(
+                    GraphqlSchemaUtil.getGraphQLInputType(
                             p.getType(null), NamePath.of(p.getName()), extendedScalarTypes)
                         .isPresent())
             .map(
@@ -340,7 +340,7 @@ public class GraphqlSchemaFactory2 {
                     GraphQLArgument.newArgument()
                         .name(parameter.getName())
                         .type(
-                            GraphqlSchemaUtil2.getGraphQLInputType(
+                            GraphqlSchemaUtil.getGraphQLInputType(
                                     parameter.getType(null),
                                     NamePath.of(parameter.getName()),
                                     extendedScalarTypes)

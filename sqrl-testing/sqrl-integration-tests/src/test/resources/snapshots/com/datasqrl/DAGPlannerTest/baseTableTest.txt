@@ -3,9 +3,9 @@
 ID:     default_catalog.default_database.Customer
 Type:   stream
 Stage:  flink
-Inputs: default_catalog.default_database.Customer__def
+Inputs: default_catalog.default_database.Customer__base
 Annotations:
- - stream-root: Customer__def
+ - stream-root: Customer
 Primary Key: customerid, lastUpdated
 Timestamp  : timestamp
 Schema:
@@ -15,21 +15,20 @@ Schema:
  - lastUpdated: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Plan:
-LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
-  LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
-    LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($3, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
-      LogicalTableScan(table=[[default_catalog, default_database, Customer__def]])
-SQL: CREATE VIEW `Customer`
+LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
+  LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($3, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
+    LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW `Customer__view`
 AS
-SELECT *
-FROM `default_catalog`.`default_database`.`Customer__def`
+SELECT `Customer`.`customerid`, `Customer`.`email`, `Customer`.`name`, `Customer`.`lastUpdated`, `Customer`.`timestamp`
+FROM `default_catalog`.`default_database`.`Customer` AS `Customer`
 === CustomerById
 ID:     default_catalog.default_database.CustomerById
 Type:   query
 Stage:  postgres
 Inputs: default_catalog.default_database.CustomerWithEmail
 Annotations:
- - stream-root: Customer__def
+ - stream-root: Customer
  - parameters: id
  - base-table: Customer
 Plan:
@@ -44,7 +43,7 @@ Type:   stream
 Stage:  flink
 Inputs: default_catalog.default_database.Customer
 Annotations:
- - stream-root: Customer__def
+ - stream-root: Customer
 Primary Key: customerid, lastUpdated
 Timestamp  : timestamp
 Schema:
@@ -65,7 +64,7 @@ Stage:  flink
 Inputs: default_catalog.default_database.Customer
 Annotations:
  - mostRecentDistinct: true
- - stream-root: Customer__def
+ - stream-root: Customer
 Primary Key: customerid
 Timestamp  : timestamp
 Schema:
@@ -91,7 +90,7 @@ Type:   query
 Stage:  postgres
 Inputs: default_catalog.default_database.DistinctCustomer
 Annotations:
- - stream-root: Customer__def
+ - stream-root: Customer
  - parameters: id
  - base-table: DistinctCustomer
 Plan:
@@ -106,7 +105,7 @@ Type:   stream
 Stage:  flink
 Inputs: default_catalog.default_database._Product
 Annotations:
- - stream-root: _Product__def
+ - stream-root: _Product
 Primary Key: productid, name, description, category
 Timestamp  : _ingest_time
 Schema:
@@ -126,7 +125,7 @@ Type:   query
 Stage:  postgres
 Inputs: default_catalog.default_database.Product
 Annotations:
- - stream-root: _Product__def
+ - stream-root: _Product
  - parameters: category
  - base-table: Product
 Plan:
@@ -139,9 +138,9 @@ SQL: CREATE VIEW ProductByCategory AS  SELECT * FROM Product WHERE category = ? 
 ID:     default_catalog.default_database._Product
 Type:   stream
 Stage:  flink
-Inputs: default_catalog.default_database._Product__def
+Inputs: default_catalog.default_database._Product__base
 Annotations:
- - stream-root: _Product__def
+ - stream-root: _Product
 Primary Key: productid, name, description, category
 Timestamp  : _ingest_time
 Schema:
@@ -151,13 +150,12 @@ Schema:
  - category: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - _ingest_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Plan:
-LogicalProject(productid=[$0], name=[$1], description=[$2], category=[$3], _ingest_time=[$4])
-  LogicalWatermarkAssigner(rowtime=[_ingest_time], watermark=[-($4, 1:INTERVAL SECOND)])
-    LogicalTableScan(table=[[default_catalog, default_database, _Product__def]])
-SQL: CREATE VIEW `_Product`
+LogicalWatermarkAssigner(rowtime=[_ingest_time], watermark=[-($4, 1:INTERVAL SECOND)])
+  LogicalTableScan(table=[[default_catalog, default_database, _Product]])
+SQL: CREATE VIEW `_Product__view`
 AS
-SELECT *
-FROM `default_catalog`.`default_database`.`_Product__def`
+SELECT `_Product`.`productid`, `_Product`.`name`, `_Product`.`description`, `_Product`.`category`, `_Product`.`_ingest_time`
+FROM `default_catalog`.`default_database`.`_Product` AS `_Product`
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `Customer__schema` (
   `customerid` BIGINT NOT NULL,
@@ -167,7 +165,7 @@ CREATE TEMPORARY TABLE `Customer__schema` (
 ) WITH (
   'connector' = 'datagen'
 );
-CREATE TABLE `Customer__def` (
+CREATE TABLE `Customer` (
   `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
@@ -178,10 +176,6 @@ CREATE TABLE `Customer__def` (
   'connector' = 'filesystem'
 )
 LIKE `Customer__schema`;
-CREATE VIEW `Customer`
-AS
-SELECT *
-FROM `default_catalog`.`default_database`.`Customer__def`;
 CREATE TEMPORARY TABLE `_Product__schema` (
   `productid` BIGINT NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -191,7 +185,7 @@ CREATE TEMPORARY TABLE `_Product__schema` (
 ) WITH (
   'connector' = 'datagen'
 );
-CREATE TABLE `_Product__def` (
+CREATE TABLE `_Product` (
   PRIMARY KEY (`productid`, `name`, `description`, `category`) NOT ENFORCED,
   WATERMARK FOR `_ingest_time` AS `_ingest_time` - INTERVAL '0.001' SECOND
 ) WITH (
@@ -201,10 +195,6 @@ CREATE TABLE `_Product__def` (
   'connector' = 'filesystem'
 )
 LIKE `_Product__schema`;
-CREATE VIEW `_Product`
-AS
-SELECT *
-FROM `default_catalog`.`default_database`.`_Product__def`;
 CREATE VIEW `CustomerWithEmail`
 AS
 SELECT *

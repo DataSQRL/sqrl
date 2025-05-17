@@ -1,0 +1,15 @@
+IMPORT loan-batch.Customers AS _CustomersStream;
+IMPORT loan-batch.Applications AS _ApplicationsStream;
+IMPORT loan-batch.ApplicationUpdates;
+
+Customers := DISTINCT _CustomersStream ON id ORDER BY updated_at DESC;
+Applications := DISTINCT _ApplicationsStream ON id ORDER BY updated_at DESC;
+
+/*+exec(flink) */
+CustomerUpdates := SELECT c.id AS customer_id, COUNT(*) AS num_updates FROM Customers c
+    JOIN Applications a ON c.id = a.customer_id
+    JOIN ApplicationUpdates u ON a.id = u.loan_application_id
+    GROUP BY c.id;
+
+/*+test */
+CustomerUpdatesTest := SELECT * FROM CustomerUpdates ORDER BY customer_id ASC;

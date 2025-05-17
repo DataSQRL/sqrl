@@ -50,6 +50,11 @@ public class CompilerConfigImpl implements PackageJson.CompilerConfig {
   }
 
   @Override
+  public boolean compilePlan() {
+    return sqrlConfig.asBool("compilePlan").withDefault(true).get();
+  }
+
+  @Override
   public ExplainConfigImpl getExplain() {
     return new ExplainConfigImpl(sqrlConfig.getSubConfig("explain"));
   }

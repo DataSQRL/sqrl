@@ -3,9 +3,9 @@
 ID:     default_catalog.default_database.Customer
 Type:   stream
 Stage:  flink
-Inputs: default_catalog.default_database.Customer__def
+Inputs: default_catalog.default_database.Customer__base
 Annotations:
- - stream-root: Customer__def
+ - stream-root: Customer
 Primary Key: customerid, lastUpdated
 Timestamp  : _ingest_time
 Schema:
@@ -15,20 +15,19 @@ Schema:
  - lastUpdated: BIGINT NOT NULL
  - _ingest_time: TIMESTAMP_LTZ(3) *PROCTIME* NOT NULL
 Plan:
-LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], _ingest_time=[$4])
-  LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], _ingest_time=[PROCTIME()])
-    LogicalTableScan(table=[[default_catalog, default_database, Customer__def]])
-SQL: CREATE VIEW `Customer`
+LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], _ingest_time=[PROCTIME()])
+  LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW `Customer__view`
 AS
-SELECT *
-FROM `default_catalog`.`default_database`.`Customer__def`
+SELECT `Customer`.`customerid`, `Customer`.`email`, `Customer`.`name`, `Customer`.`lastUpdated`, `Customer`.`_ingest_time`
+FROM `default_catalog`.`default_database`.`Customer` AS `Customer`
 === DistinctCustomerWoutTs
 ID:     default_catalog.default_database.DistinctCustomerWoutTs
 Type:   state
 Stage:  flink
 Inputs: default_catalog.default_database.Customer
 Annotations:
- - stream-root: Customer__def
+ - stream-root: Customer
 Primary Key: customerid
 Timestamp  : _ingest_time
 Schema:
@@ -64,7 +63,7 @@ Type:   state
 Stage:  flink
 Inputs: default_catalog.default_database.OrderFields
 Annotations:
- - stream-root: Orders__def
+ - stream-root: Orders
 Primary Key: id
 Timestamp  : _ingest_time
 Schema:
@@ -100,7 +99,7 @@ Stage:  flink
 Inputs: default_catalog.default_database.Orders
 Annotations:
  - mostRecentDistinct: true
- - stream-root: Orders__def
+ - stream-root: Orders
 Primary Key: id
 Timestamp  : _ingest_time
 Schema:
@@ -126,7 +125,7 @@ Type:   stream
 Stage:  flink
 Inputs: default_catalog.default_database.Orders
 Annotations:
- - stream-root: Orders__def
+ - stream-root: Orders
 Primary Key: id, time
 Timestamp  : _ingest_time
 Schema:
@@ -143,10 +142,10 @@ SQL: CREATE VIEW OrderFields AS  SELECT id, `time`, customerid, _ingest_time FRO
 ID:     default_catalog.default_database.Orders
 Type:   stream
 Stage:  flink
-Inputs: default_catalog.default_database.Orders__def
+Inputs: default_catalog.default_database.Orders__base
 Annotations:
  - features: DENORMALIZE (feature)
- - stream-root: Orders__def
+ - stream-root: Orders
 Primary Key: id, time
 Timestamp  : _ingest_time
 Schema:
@@ -156,13 +155,12 @@ Schema:
  - entries: RecordType:peek_no_expand(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
  - _ingest_time: TIMESTAMP_LTZ(3) *PROCTIME* NOT NULL
 Plan:
-LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3], _ingest_time=[$4])
-  LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3], _ingest_time=[PROCTIME()])
-    LogicalTableScan(table=[[default_catalog, default_database, Orders__def]])
-SQL: CREATE VIEW `Orders`
+LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3], _ingest_time=[PROCTIME()])
+  LogicalTableScan(table=[[default_catalog, default_database, Orders]])
+SQL: CREATE VIEW `Orders__view`
 AS
-SELECT *
-FROM `default_catalog`.`default_database`.`Orders__def`
+SELECT `Orders`.`id`, `Orders`.`customerid`, `Orders`.`time`, `Orders`.`entries`, `Orders`.`_ingest_time`
+FROM `default_catalog`.`default_database`.`Orders` AS `Orders`
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `Orders__schema` (
   `id` BIGINT NOT NULL,
@@ -172,7 +170,7 @@ CREATE TEMPORARY TABLE `Orders__schema` (
 ) WITH (
   'connector' = 'datagen'
 );
-CREATE TABLE `Orders__def` (
+CREATE TABLE `Orders` (
   `_ingest_time` AS `PROCTIME`(),
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
 ) WITH (
@@ -182,10 +180,6 @@ CREATE TABLE `Orders__def` (
   'connector' = 'filesystem'
 )
 LIKE `Orders__schema`;
-CREATE VIEW `Orders`
-AS
-SELECT *
-FROM `default_catalog`.`default_database`.`Orders__def`;
 CREATE TEMPORARY TABLE `Customer__schema` (
   `customerid` BIGINT NOT NULL,
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
@@ -194,7 +188,7 @@ CREATE TEMPORARY TABLE `Customer__schema` (
 ) WITH (
   'connector' = 'datagen'
 );
-CREATE TABLE `Customer__def` (
+CREATE TABLE `Customer` (
   `_ingest_time` AS `PROCTIME`(),
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED
 ) WITH (
@@ -204,10 +198,6 @@ CREATE TABLE `Customer__def` (
   'connector' = 'filesystem'
 )
 LIKE `Customer__schema`;
-CREATE VIEW `Customer`
-AS
-SELECT *
-FROM `default_catalog`.`default_database`.`Customer__def`;
 CREATE VIEW `OrderFields`
 AS
 SELECT `id`, `time`, `customerid`, `_ingest_time`

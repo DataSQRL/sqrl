@@ -25,6 +25,8 @@ import lombok.Getter;
 
 public interface PackageJson {
 
+  ExecutionMode getExecutionMode();
+
   List<String> getEnabledEngines();
 
   void setPipeline(List<String> pipeline);
@@ -52,6 +54,8 @@ public interface PackageJson {
   Optional<TestRunnerConfiguration> getTestConfig();
 
   interface CompilerConfig {
+
+    boolean compilePlan();
 
     ExplainConfig getExplain();
 

@@ -244,7 +244,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
    * @return
    */
   protected RelNodeAnalysis analyzeRelNode(RelNode input) {
-    var tableAnalysis = tableLookup.lookupTable(input);
+    var tableAnalysis = tableLookup.lookupView(input);
     if (tableAnalysis.isPresent()) {
       return fromSource(tableAnalysis.get(), input);
     } else {
@@ -257,7 +257,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
 
   private RelNodeAnalysis fromSource(TableAnalysis tableAnalysis, RelNode input) {
     sourceTables.add(tableAnalysis);
-    RelOptTable table = catalog.getTable(tableAnalysis.getIdentifier().toList());
+    RelOptTable table = catalog.getTable(tableAnalysis.getObjectIdentifier().toList());
     var scan =
         new LogicalTableScan(
             input.getCluster(),
@@ -272,7 +272,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
         @Override
         protected RelNode visitChild(RelNode parent, int i, RelNode child) {
           if (i == 0) {
-            var tableAnalysis = tableLookup.lookupTable(parent);
+            var tableAnalysis = tableLookup.lookupView(parent);
             if (tableAnalysis.isPresent()) {
               parent = fromSource(tableAnalysis.get(), parent).relNode;
             } else {

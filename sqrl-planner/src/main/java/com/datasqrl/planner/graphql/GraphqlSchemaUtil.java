@@ -43,7 +43,7 @@ import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 
 @Slf4j
-public class GraphqlSchemaUtil2 {
+public class GraphqlSchemaUtil {
 
   public static GraphQLType wrapNullable(GraphQLType gqlType, RelDataType type) {
     if (!type.isNullable()) {

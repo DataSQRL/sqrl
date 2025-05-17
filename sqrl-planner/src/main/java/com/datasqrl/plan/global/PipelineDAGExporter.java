@@ -80,7 +80,7 @@ public class PipelineDAGExporter {
           var source = table.getSourceSinkTable().get();
           result.add(
               Source.builder()
-                  .id(table.getIdentifier().asSummaryString())
+                  .id(table.getIdentifier().toString())
                   .name(table.getName())
                   .type(NodeType.IMPORTS.getName())
                   .connector(source.getConnector().getOptions())
@@ -91,7 +91,7 @@ public class PipelineDAGExporter {
           var timestampIdx = table.getRowTime();
           result.add(
               Table.builder()
-                  .id(table.getIdentifier().asSummaryString())
+                  .id(table.getObjectIdentifier().asSummaryString())
                   .name(table.getName())
                   .type(NodeType.from(table.getType()).getName())
                   .stage(stage)

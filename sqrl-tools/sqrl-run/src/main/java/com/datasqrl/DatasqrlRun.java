@@ -145,8 +145,12 @@ public class DatasqrlRun {
     // Read conf if present
     Path packageJson = build.resolve("package.json");
     Map<String, String> config = new HashMap<>();
+    boolean isStreaming = true;
     if (packageJson.toFile().exists()) {
       Map packageJsonMap = getPackageJson();
+      if (String.valueOf(packageJsonMap.get("mode")).equalsIgnoreCase("batch")) {
+        isStreaming = false;
+      }
       Object o = packageJsonMap.get("values");
       if (o instanceof Map map) {
         Object c = map.get("flink-config");
@@ -156,16 +160,18 @@ public class DatasqrlRun {
       }
     }
 
-    config.putIfAbsent("table.exec.source.idle-timeout", "1 s");
     config.putIfAbsent("taskmanager.memory.network.max", "800m");
-    config.putIfAbsent("execution.checkpointing.interval", "30 s");
-    config.putIfAbsent("execution.checkpointing.min-pause", "20 s");
     config.putIfAbsent("state.backend.type", "rocksdb");
     config.putIfAbsent("table.exec.resource.default-parallelism", "1");
     config.putIfAbsent("rest.address", "localhost");
     config.putIfAbsent("rest.port", "8081");
     config.putIfAbsent("execution.target", "local"); // mini cluster
     config.putIfAbsent("execution.attached", "true"); // mini cluster
+    if (isStreaming) {
+      config.putIfAbsent("table.exec.source.idle-timeout", "1 s");
+      config.putIfAbsent("execution.checkpointing.interval", "30 s");
+      config.putIfAbsent("execution.checkpointing.min-pause", "20 s");
+    }
 
     String udfPath = getenv("UDF_PATH");
     List<URL> jarUrls = new ArrayList<>();
@@ -207,20 +213,21 @@ public class DatasqrlRun {
 
     Configuration configuration = Configuration.fromMap(config);
 
-    StreamExecutionEnvironment sEnv;
-
-    try {
-      sEnv = new StreamExecutionEnvironment(configuration, udfClassLoader);
-    } catch (Exception e) {
-      throw e;
-    }
-
-    EnvironmentSettings tEnvConfig =
+    StreamExecutionEnvironment sEnv = new StreamExecutionEnvironment(configuration, udfClassLoader);
+    EnvironmentSettings.Builder settingsBuilder =
         EnvironmentSettings.newInstance()
             .withConfiguration(configuration)
-            .withClassLoader(udfClassLoader)
-            .build();
+            .withClassLoader(udfClassLoader);
 
+    if (!isStreaming) {
+      sEnv.setRuntimeMode(org.apache.flink.api.common.RuntimeExecutionMode.BATCH);
+      settingsBuilder.inBatchMode();
+    } else {
+      sEnv.setRuntimeMode(org.apache.flink.api.common.RuntimeExecutionMode.STREAMING);
+      settingsBuilder.inStreamingMode();
+    }
+
+    EnvironmentSettings tEnvConfig = settingsBuilder.build();
     StreamTableEnvironment tEnv = StreamTableEnvironment.create(sEnv, tEnvConfig);
     TableResult tableResult = null;
 

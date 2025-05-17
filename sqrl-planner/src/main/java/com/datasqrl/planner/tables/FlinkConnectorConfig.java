@@ -20,6 +20,7 @@ import com.datasqrl.io.tables.TableType;
 import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -48,6 +49,9 @@ public class FlinkConnectorConfig implements ConnectorConfig {
           "jdbc-sqrl", TableType.LOOKUP,
           "postgres-cdc", TableType.VERSIONED_STATE);
 
+  public static final Set<String> SINK_ONLY_CONNECTORS =
+      Set.of("blackhole", "print", "elasticsearch-7", "firehose");
+
   Map<String, String> options;
 
   @Override
@@ -65,6 +69,12 @@ public class FlinkConnectorConfig implements ConnectorConfig {
       tableType = TableType.STREAM;
     }
     return tableType;
+  }
+
+  public boolean isSourceConnector() {
+    return getConnectorName()
+        .filter(name -> !SINK_ONLY_CONNECTORS.contains(name.toLowerCase()))
+        .isPresent();
   }
 
   @Override
