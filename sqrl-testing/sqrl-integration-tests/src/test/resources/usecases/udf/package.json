@@ -2,8 +2,5 @@
   "version": "1",
   "compiler": {
     "compilePlan": false
-  },
-  "test-runner": {
-    "delay-sec": -1
   }
 }

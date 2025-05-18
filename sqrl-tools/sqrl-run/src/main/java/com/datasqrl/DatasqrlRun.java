@@ -141,6 +141,7 @@ public class DatasqrlRun {
     Path packageJson = build.resolve("package.json");
     Map<String, String> config = new HashMap<>();
     boolean isStreaming = true;
+    boolean isCompilePlan = true;
     if (packageJson.toFile().exists()) {
       Map packageJsonMap = getPackageJson();
       Object engines = packageJsonMap.get("engines");
@@ -151,6 +152,13 @@ public class DatasqrlRun {
             isStreaming = false;
           }
         }
+      }
+      Object compiler = packageJsonMap.get("compiler");
+      if (compiler != null) {
+        isCompilePlan =
+            Optional.ofNullable(((Map) compiler).get("compilePlan"))
+                .map(Boolean.class::cast)
+                .orElse(true);
       }
       Object o = packageJsonMap.get("values");
       if (o instanceof Map map) {
@@ -232,7 +240,7 @@ public class DatasqrlRun {
     EnvironmentSettings tEnvConfig = settingsBuilder.build();
     StreamTableEnvironment tEnv = StreamTableEnvironment.create(sEnv, tEnvConfig);
 
-    if (isStreaming) {
+    if (isStreaming && isCompilePlan) {
       // Register system functions
       ServiceLoader<AutoRegisterSystemFunction> standardLibraryFunctions =
           ServiceLoader.load(AutoRegisterSystemFunction.class);
