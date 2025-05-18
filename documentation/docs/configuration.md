@@ -21,12 +21,14 @@ Engines can be enabled with the enabled-engines property. The default set of eng
 
 ### Flink
 
-Apache Flink is the default stream processing engine.
+Apache Flink is the default stream and batch processing engine. The execution mode is controlled by the `mode` configuration option and can either be `streaming` (the default) or `batch`.
 
 The physical plan that DataSQRL generates for the Flink engine includes:
 * FlinkSQL table descriptors for the sources and sinks
 * FlinkSQL view definitions for the data processing
 * A list of connector dependencies needed for the sources and sinks.
+* A compiled plan
+* An explained plan
 
 Flink reads data from and writes data to the engines in the generated data pipeline. DataSQRL uses connector configuration templates to instantiate those connections.
 These templates are configured under the `connectors` property.
@@ -39,6 +41,7 @@ Environment variables that start with the `sqrl` prefix are templated variables 
 {
   "engines" : {
     "flink" : {
+      "mode" : "streaming",
       "connectors": {
         "postgres": {
           "connector": "jdbc-sqrl",
@@ -145,7 +148,8 @@ The `compiler` section of the configuration controls elements of the core compil
     "output": {
       "add-uid": true,
       "table-suffix": "-blue"
-    }    
+    },
+    "compilePlan": true
   }
 }
 ```
@@ -153,6 +157,7 @@ The `compiler` section of the configuration controls elements of the core compil
 * `logger` configures the logging framework used for logging statements like `EXPORT MyTable TO logger.MyTable;`. It is `print` by default which logs to STDOUT. Set it to the configured log engine for logging output to be sent to that engine, e.g. `"logger": "kafka"`. Set it to `none` to suppress logging output.
 * `explain` configures how the DAG plan compiled by DataSQRL is presented in the `build` directory. If `visual` is true, a visual representation of the DAG is written to the `pipeline_visual.html` file which you can open in any browser. If `text` is true, a textual representation of the DAG is written to the `pipeline_explain.txt` file. If `extended` is true, the DAG outputs include more information like the relational plan which may be very verbose.
 * `output` configures how table sink names in FlinkSQL are generated. If `add-uid` is true, a unique identifier is appended to the name to ensure uniqueness. If you set this to false, you need to ensure that the table names are unique and the same table is not sinked to multiple engines. The `table-suffix` is appended to the sink table names (before the uid) and is empty by default. This can be used to distinguish tables from different deployments.
+* `compilePlan` configures whether the compiler attempts to compile the individual SQL plans for each engine into executable plans (i.e. physical plans) for deterministic execution. This only applies to engines and configurations that support plan compilation (currently, that's only Flink in streaming mode).
 
 ## Dependencies
 

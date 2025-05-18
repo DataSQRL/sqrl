@@ -17,9 +17,8 @@ package com.datasqrl.config;
 
 import static com.datasqrl.config.PackageJsonImpl.CONNECTORS_KEY;
 
-import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
+import com.datasqrl.config.SqrlConfig.Value;
+import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -36,8 +35,12 @@ public class EngineConfigImpl implements PackageJson.EngineConfig {
   }
 
   @Override
-  public Map<String, Object> toMap() {
-    return SqrlConfigUtil.toMap(sqrlConfig, Function.identity(), List.of());
+  public String getSetting(String key, Optional<String> defaultValue) {
+    Value<String> result = sqrlConfig.asString(key);
+    if (defaultValue.isPresent()) {
+      result = result.withDefault(defaultValue.get());
+    }
+    return result.get();
   }
 
   // Todo move out to engine specific config

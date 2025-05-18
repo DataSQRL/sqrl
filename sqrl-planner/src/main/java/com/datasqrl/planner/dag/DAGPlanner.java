@@ -66,6 +66,7 @@ import lombok.AllArgsConstructor;
 import lombok.Value;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
+import org.apache.calcite.rel.core.Sort;
 import org.apache.calcite.rel.core.TableFunctionScan;
 import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.logical.LogicalAggregate;
@@ -582,7 +583,8 @@ public class DAGPlanner {
         result = tableAnalysis.getCollapsedRelnode().accept(this);
       }
       if (addSort && tableAnalysis.getTopLevelSort().isPresent()) {
-        result = tableAnalysis.getTopLevelSort().get().copy(result.getTraitSet(), List.of(result));
+        Sort sort = tableAnalysis.getTopLevelSort().get();
+        result = sort.copy(sort.getTraitSet(), List.of(result));
       }
       return result;
     }

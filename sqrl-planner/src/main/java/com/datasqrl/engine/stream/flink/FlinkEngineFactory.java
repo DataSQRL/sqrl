@@ -36,6 +36,6 @@ public class FlinkEngineFactory implements EngineFactory {
 
   @Override
   public Class getFactoryClass() {
-    return FlinkStreamEngineImpl.class;
+    return FlinkStreamEngine.class;
   }
 }

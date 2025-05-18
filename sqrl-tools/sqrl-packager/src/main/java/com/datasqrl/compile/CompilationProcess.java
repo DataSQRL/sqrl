@@ -22,6 +22,7 @@ import com.datasqrl.config.GraphqlSourceFactory;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.server.ServerPhysicalPlan;
+import com.datasqrl.engine.stream.flink.FlinkStreamEngine;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.APISourceImpl;
@@ -58,7 +59,11 @@ public class CompilationProcess {
 
   public Pair<PhysicalPlan, TestPlan> executeCompilation(Optional<Path> testsPath) {
 
-    var environment = new Sqrl2FlinkSQLTranslator(buildPath, config);
+    var environment =
+        new Sqrl2FlinkSQLTranslator(
+            buildPath,
+            (FlinkStreamEngine) planner.getStreamStage().getEngine(),
+            config.getCompilerConfig());
     planner.planMain(mainScript, environment);
     var dagBuilder = planner.getDagBuilder();
     var dag = dagPlanner.optimize(dagBuilder.getDag());

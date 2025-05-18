@@ -130,7 +130,7 @@ public class SqlScriptPlanner {
   private final ExecutionGoal executionGoal;
 
   @Getter private final DAGBuilder dagBuilder;
-  private final ExecutionStage streamStage;
+  @Getter private final ExecutionStage streamStage;
   private final List<ExecutionStage> tableStages;
   private final List<ExecutionStage> queryStages;
   private final List<ExecutionStage> subscriptionStages;

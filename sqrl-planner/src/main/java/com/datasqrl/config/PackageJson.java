@@ -25,8 +25,6 @@ import lombok.Getter;
 
 public interface PackageJson {
 
-  ExecutionMode getExecutionMode();
-
   List<String> getEnabledEngines();
 
   void setPipeline(List<String> pipeline);
@@ -116,8 +114,7 @@ public interface PackageJson {
 
     String getEngineName();
 
-    @Deprecated(since = "Migrate to templates or static objects")
-    Map<String, Object> toMap();
+    String getSetting(String key, Optional<String> defaultValue);
 
     ConnectorsConfig getConnectors();
   }
@@ -128,8 +125,11 @@ public interface PackageJson {
     String engineName;
 
     @Override
-    public Map<String, Object> toMap() {
-      return Map.of();
+    public String getSetting(String key, Optional<String> defaultValue) {
+      return defaultValue.orElseThrow(
+          () ->
+              new IllegalArgumentException(
+                  "Engine " + engineName + " does not have configuration options"));
     }
 
     @Override

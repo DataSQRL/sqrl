@@ -12,9 +12,6 @@
         }
       ]
     },
-    "mode": {
-      "type": "string"
-    },
     "enabled-engines": {
       "oneOf": [
         {
@@ -121,6 +118,9 @@
           "type": "object",
           "minProperties": 1,
           "properties": {
+            "mode": {
+              "type": "string"
+            },
             "connectors": {
               "type": "object",
               "minProperties": 1

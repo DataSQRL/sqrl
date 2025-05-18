@@ -21,7 +21,8 @@ import static org.apache.flink.table.planner.utils.ShortcutUtils.unwrapContext;
 import com.datasqrl.calcite.SqrlRexUtil;
 import com.datasqrl.config.BuildPath;
 import com.datasqrl.config.ExecutionMode;
-import com.datasqrl.config.PackageJson;
+import com.datasqrl.config.PackageJson.CompilerConfig;
+import com.datasqrl.engine.stream.flink.FlinkStreamEngine;
 import com.datasqrl.engine.stream.flink.plan.FlinkSqlNodeFactory;
 import com.datasqrl.engine.stream.flink.sql.RelToFlinkSql;
 import com.datasqrl.error.ErrorCollector;
@@ -172,9 +173,10 @@ public class Sqrl2FlinkSQLTranslator {
   @Getter private final TableAnalysisLookup tableLookup = new TableAnalysisLookup();
   private final FlinkPhysicalPlan.Builder planBuilder = new Builder();
 
-  public Sqrl2FlinkSQLTranslator(BuildPath buildPath, PackageJson packageConfig) {
-    this.executionMode = packageConfig.getExecutionMode();
-    this.compilePlan = packageConfig.getCompilerConfig().compilePlan();
+  public Sqrl2FlinkSQLTranslator(
+      BuildPath buildPath, FlinkStreamEngine flink, CompilerConfig compilerConfig) {
+    this.executionMode = flink.getExecutionMode();
+    this.compilePlan = compilerConfig.compilePlan();
     // Set up a StreamExecution Environment in Flink with configuration and access to jars
     var jarUrls = getUdfUrls(buildPath);
     // Create a UDF class loader and configure

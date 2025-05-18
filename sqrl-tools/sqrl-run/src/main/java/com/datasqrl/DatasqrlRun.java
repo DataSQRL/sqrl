@@ -15,6 +15,7 @@
  */
 package com.datasqrl;
 
+import com.datasqrl.flinkrunner.functions.AutoRegisterSystemFunction;
 import com.datasqrl.graphql.GraphQLServer;
 import com.datasqrl.graphql.JsonEnvVarDeserializer;
 import com.datasqrl.graphql.config.ServerConfig;
@@ -32,6 +33,7 @@ import io.vertx.micrometer.MicrometerMetricsOptions;
 import java.io.File;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -43,6 +45,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -54,10 +57,9 @@ import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.CompiledPlan;
 import org.apache.flink.table.api.EnvironmentSettings;
+import org.apache.flink.table.api.PlanReference;
 import org.apache.flink.table.api.TableResult;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
-import org.apache.flink.table.api.internal.TableEnvironmentImpl;
-import org.apache.flink.table.operations.StatementSetOperation;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.admin.NewTopic;
@@ -109,8 +111,7 @@ public class DatasqrlRun {
     objectMapper.registerModule(module);
 
     startVertx();
-    var plan = startFlink();
-    execute = plan.execute();
+    execute = runFlinkJob();
     if (hold) {
       execute.print();
     }
@@ -135,21 +136,21 @@ public class DatasqrlRun {
   }
 
   @SneakyThrows
-  public CompiledPlan startFlink() {
-    CompiledPlan compileFlink = compileFlink();
-    return compileFlink;
-  }
-
-  @SneakyThrows
-  public CompiledPlan compileFlink() {
+  public TableResult runFlinkJob() {
     // Read conf if present
     Path packageJson = build.resolve("package.json");
     Map<String, String> config = new HashMap<>();
     boolean isStreaming = true;
     if (packageJson.toFile().exists()) {
       Map packageJsonMap = getPackageJson();
-      if (String.valueOf(packageJsonMap.get("mode")).equalsIgnoreCase("batch")) {
-        isStreaming = false;
+      Object engines = packageJsonMap.get("engines");
+      if (engines != null) {
+        Object flink = ((Map) engines).get("flink");
+        if (flink != null) {
+          if (String.valueOf(((Map) flink).get("mode")).equalsIgnoreCase("batch")) {
+            isStreaming = false;
+          }
+        }
       }
       Object o = packageJsonMap.get("values");
       if (o instanceof Map map) {
@@ -211,6 +212,7 @@ public class DatasqrlRun {
       config.putIfAbsent("restart-strategy.fixed-delay.delay", "5 s");
     }
 
+    /** TODO: This should use the FlinkSQL Runner instead of duplicating the code */
     Configuration configuration = Configuration.fromMap(config);
 
     StreamExecutionEnvironment sEnv = new StreamExecutionEnvironment(configuration, udfClassLoader);
@@ -229,35 +231,55 @@ public class DatasqrlRun {
 
     EnvironmentSettings tEnvConfig = settingsBuilder.build();
     StreamTableEnvironment tEnv = StreamTableEnvironment.create(sEnv, tEnvConfig);
-    TableResult tableResult = null;
 
-    Path flinkPath = planPath.resolve("flink.json");
-    if (!flinkPath.toFile().exists()) {
-      throw new RuntimeException("Could not find flink plan: " + flinkPath);
-    }
+    if (isStreaming) {
+      // Register system functions
+      ServiceLoader<AutoRegisterSystemFunction> standardLibraryFunctions =
+          ServiceLoader.load(AutoRegisterSystemFunction.class);
 
-    Map map = objectMapper.readValue(planPath.resolve("flink.json").toFile(), Map.class);
-    List<String> statements = (List<String>) map.get("flinkSql");
+      standardLibraryFunctions.forEach(
+          function -> {
+            var sql =
+                "CREATE TEMPORARY FUNCTION IF NOT EXISTS `%s` AS '%s' LANGUAGE JAVA;"
+                    .formatted(
+                        function.getClass().getSimpleName().toLowerCase(),
+                        function.getClass().getName());
+            tEnv.executeSql(sql);
+          });
 
-    for (int i = 0; i < statements.size() - 1; i++) {
-      String statement = statements.get(i);
-      if (statement.trim().isEmpty()) {
-        continue;
+      Path compiledPlanPath = planPath.resolve("flink-compiled-plan.json");
+      if (!compiledPlanPath.toFile().exists()) {
+        throw new IllegalStateException("Could not find compiled plan");
       }
-      try {
-        tableResult = tEnv.executeSql(replaceWithEnv(statement));
-      } catch (Exception e) {
-        System.out.println("Could not execute statement: " + statement);
-        throw e;
+      String compiledPlanJson = Files.readString(compiledPlanPath);
+      ;
+      CompiledPlan compiledPlan =
+          tEnv.loadPlan(PlanReference.fromJsonString(replaceWithEnv(compiledPlanJson)));
+      return compiledPlan.execute();
+    } else {
+      Path flinkPath = planPath.resolve("flink.json");
+      if (!flinkPath.toFile().exists()) {
+        throw new RuntimeException("Could not find flink plan: " + flinkPath);
       }
+
+      Map map = objectMapper.readValue(planPath.resolve("flink.json").toFile(), Map.class);
+      List<String> statements = (List<String>) map.get("flinkSql");
+
+      for (int i = 0; i < statements.size() - 1; i++) {
+        String statement = statements.get(i);
+        if (statement.trim().isEmpty()) {
+          continue;
+        }
+        try {
+          TableResult tableResult = tEnv.executeSql(replaceWithEnv(statement));
+        } catch (Exception e) {
+          System.out.println("Could not execute statement: " + statement);
+          throw e;
+        }
+      }
+      String insert = replaceWithEnv(statements.get(statements.size() - 1));
+      return tEnv.executeSql(insert);
     }
-    String insert = replaceWithEnv(statements.get(statements.size() - 1));
-
-    TableEnvironmentImpl tEnv1 = (TableEnvironmentImpl) tEnv;
-
-    StatementSetOperation parse = (StatementSetOperation) tEnv1.getParser().parse(insert).get(0);
-
-    return tEnv1.compilePlan(parse.getOperations());
   }
 
   @SneakyThrows
