@@ -1,4 +1,4 @@
-[NOTICE] This table does not propagate the source row time columns: `default_catalog`.`default_database`.`_customer`[timestamp]
+[NOTICE] This table does not propagate the source row time columns: default_catalog.default_database._customer[timestamp]
 in script:comprehensivetest.sqrl [10:1]:
 CustomerFilteredDistinct := DISTINCT Customer ON customerid ORDER BY lastUpdated DESC;
 
@@ -12,7 +12,7 @@ InvalidDistinct := SELECT customerid, `timestamp`, name AS namee FROM (SELECT *,
 MissedTemporalJoin := SELECT * FROM ExternalOrders o JOIN ExplicitDistinct c ON o.customerid = c.customerid;
 ^
 
-[NOTICE] This table does not propagate the source row time columns: `default_catalog`.`default_database`.`SelectCustomers`[timestamp]
+[NOTICE] This table does not propagate the source row time columns: default_catalog.default_database.SelectCustomers[timestamp]
 in script:comprehensivetest.sqrl [51:1]:
 );
 

@@ -57,20 +57,20 @@ import org.apache.flink.table.planner.functions.bridging.BridgingSqlFunction;
 @Value
 public class TableAnalysisLookup {
 
-  Map<ObjectIdentifier, TableAnalysis> sourceTableMap = new HashMap<>();
-  ListMultimap<Integer, TableAnalysis> tableMap = ArrayListMultimap.create();
-  Map<ObjectIdentifier, TableAnalysis> id2Table = new HashMap<>();
+  Map<ObjectIdentifier, TableAnalysis> id2SourceTable = new HashMap<>();
+  Map<ObjectIdentifier, TableAnalysis> id2View = new HashMap<>();
+  ListMultimap<Integer, TableAnalysis> viewMap = ArrayListMultimap.create();
 
   public TableAnalysis lookupSourceTable(ObjectIdentifier objectId) {
-    return sourceTableMap.get(objectId);
+    return id2SourceTable.get(objectId);
   }
 
-  public Optional<TableAnalysis> lookupTable(RelNode originalRelnode) {
+  public Optional<TableAnalysis> lookupView(RelNode originalRelnode) {
     var hashCode = originalRelnode.getRowType().hashCode();
-    if (tableMap.containsKey(hashCode)) {
+    if (viewMap.containsKey(hashCode)) {
       var normalizeRelnode = normalizeRelnode(originalRelnode);
       List<TableAnalysis> allMatches =
-          tableMap.get(hashCode).stream()
+          viewMap.get(hashCode).stream()
               .filter(tbl -> matches(tbl, normalizeRelnode))
               .collect(Collectors.toList());
       // return last one in case there are multiple matches
@@ -90,24 +90,24 @@ public class TableAnalysisLookup {
     return tbl.getOriginalRelnode().deepEquals(otherRelNode);
   }
 
-  public TableAnalysis lookupTable(ObjectIdentifier objectIdentifier) {
-    return id2Table.get(objectIdentifier);
+  public TableAnalysis lookupView(ObjectIdentifier objectIdentifier) {
+    return id2View.get(objectIdentifier);
   }
 
-  public void removeTable(ObjectIdentifier tableIdentifier) {
-    var priorTable = id2Table.remove(tableIdentifier);
-    if (priorTable != null && !priorTable.isSourceOrSink()) {
-      tableMap.remove(priorTable.getRowType().hashCode(), priorTable);
+  public void removeView(ObjectIdentifier tableIdentifier) {
+    var priorTable = id2View.remove(tableIdentifier);
+    if (priorTable != null) {
+      viewMap.remove(priorTable.getRowType().hashCode(), priorTable);
     }
   }
 
   public void registerTable(TableAnalysis tableAnalysis) {
     if (tableAnalysis.isSourceOrSink()) {
-      sourceTableMap.put(tableAnalysis.getIdentifier(), tableAnalysis);
+      id2SourceTable.put(tableAnalysis.getObjectIdentifier(), tableAnalysis);
     } else {
-      tableMap.put(tableAnalysis.getRowType().hashCode(), tableAnalysis);
+      viewMap.put(tableAnalysis.getRowType().hashCode(), tableAnalysis);
+      id2View.put(tableAnalysis.getObjectIdentifier(), tableAnalysis);
     }
-    id2Table.put(tableAnalysis.getIdentifier(), tableAnalysis);
   }
 
   /**

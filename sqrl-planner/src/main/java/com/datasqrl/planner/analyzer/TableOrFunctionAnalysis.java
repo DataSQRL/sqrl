@@ -15,46 +15,54 @@
  */
 package com.datasqrl.planner.analyzer;
 
+import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.io.tables.TableType;
-import java.util.Collections;
-import java.util.List;
-import lombok.AllArgsConstructor;
-import lombok.Value;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 
 public interface TableOrFunctionAnalysis extends AbstractAnalysis {
 
-  ObjectIdentifier getIdentifier();
+  /**
+   * A unique identifier for tables and functions defined in a SQRL script. This is used in the DAG
+   * to uniquely identify the nodes.
+   *
+   * <p>We need to distinguish between tables that define a connection to a source or sink (i.e.
+   * CREATE TABLE in Flink language) and those that defined intermediate tables (i.e. "views" in
+   * Flink language) by adding the sourceOrSink boolean flag to identify the former since we create
+   * views for sources with the same name implicitly.
+   *
+   * @param objectIdentifier
+   * @param sourceOrSink
+   */
+  record UniqueIdentifier(ObjectIdentifier objectIdentifier, boolean sourceOrSink) {
 
-  List<String> getParameterNames();
+    public boolean isHidden() {
+      return Name.isHiddenString(objectIdentifier.getObjectName());
+    }
+
+    /**
+     * Returns the name of this unique identifier. For sourceOrSink we append a suffix since those
+     * are connector tables.
+     *
+     * @return
+     */
+    @Override
+    public String toString() {
+      if (sourceOrSink) {
+        return objectIdentifier.asSummaryString() + "__base";
+      }
+      return objectIdentifier.asSummaryString();
+    }
+  }
+
+  UniqueIdentifier getIdentifier();
 
   public TableType getType();
 
-  default FullIdentifier getFullIdentifier() {
-    return new FullIdentifier(getIdentifier(), getParameterNames());
-  }
+  public boolean isSourceOrSink();
 
   /**
    * The base table on which this function is defined. This means, that this table or function
    * returns the same type as the base table.
    */
   TableAnalysis getBaseTable();
-
-  /**
-   * A full identifier combines the object identifier with the parameter list to unqiuely quality a
-   * table or function within the catalog.
-   *
-   * <p>Note, functions are not uniquely qualified by object identifier alone since overloaded
-   * functions have the same identifier but a different argument signature.
-   */
-  @Value
-  @AllArgsConstructor
-  class FullIdentifier {
-    ObjectIdentifier objectIdentifier;
-    List<String> arguments;
-
-    public FullIdentifier(ObjectIdentifier objectIdentifier) {
-      this(objectIdentifier, Collections.EMPTY_LIST);
-    }
-  }
 }

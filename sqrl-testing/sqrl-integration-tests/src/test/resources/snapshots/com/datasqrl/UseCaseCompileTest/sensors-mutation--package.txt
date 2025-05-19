@@ -43,7 +43,7 @@ SQL: CREATE VIEW SensorMaxTemp AS  SELECT sensorid, max(temperature) as maxTemp
 ID:     default_catalog.default_database.SensorReading
 Type:   stream
 Stage:  flink
-Inputs: default_catalog.default_database.SensorReading__def
+Inputs: default_catalog.default_database.SensorReading__base
 Primary Key: -
 Timestamp  : event_time
 Schema:
@@ -51,14 +51,13 @@ Schema:
  - temperature: DECIMAL(8, 2) NOT NULL
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME*
 Plan:
-LogicalProject(sensorid=[$0], temperature=[$1], event_time=[$2])
-  LogicalWatermarkAssigner(rowtime=[event_time], watermark=[-($2, 0:INTERVAL SECOND)])
-    LogicalProject(sensorid=[$0], temperature=[$1], event_time=[CAST($2):TIMESTAMP_LTZ(3) *ROWTIME*])
-      LogicalTableScan(table=[[default_catalog, default_database, SensorReading__def, metadata=[timestamp]]])
-SQL: CREATE VIEW `SensorReading`
+LogicalWatermarkAssigner(rowtime=[event_time], watermark=[-($2, 0:INTERVAL SECOND)])
+  LogicalProject(sensorid=[$0], temperature=[$1], event_time=[CAST($2):TIMESTAMP_LTZ(3) *ROWTIME*])
+    LogicalTableScan(table=[[default_catalog, default_database, SensorReading, metadata=[timestamp]]])
+SQL: CREATE VIEW `SensorReading__view`
 AS
-SELECT *
-FROM `default_catalog`.`default_database`.`SensorReading__def`
+SELECT `SensorReading`.`sensorid`, `SensorReading`.`temperature`, `SensorReading`.`event_time`
+FROM `default_catalog`.`default_database`.`SensorReading` AS `SensorReading`
 === SensorReadingSubscription
 ID:     default_catalog.default_database.SensorReadingSubscription
 Type:   stream
@@ -91,7 +90,7 @@ SQL: CREATE VIEW SensorSubscriptionById AS  SELECT * FROM SensorReadingSubscript
                                                                     WHERE sensorid = ?        ;
 
 >>>flink-sql-no-functions.sql
-CREATE TABLE `SensorReading__def` (
+CREATE TABLE `SensorReading` (
   `sensorid` INTEGER NOT NULL,
   `temperature` DECIMAL(8, 2) NOT NULL,
   `event_time` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
@@ -105,10 +104,6 @@ CREATE TABLE `SensorReading__def` (
   'properties.auto.offset.reset' = 'earliest',
   'topic' = 'SensorReading'
 );
-CREATE VIEW `SensorReading`
-AS
-SELECT *
-FROM `default_catalog`.`default_database`.`SensorReading__def`;
 CREATE VIEW `SensorMaxTemp`
 AS
 SELECT `sensorid`, MAX(`temperature`) AS `maxTemp`
@@ -215,7 +210,7 @@ INSERT INTO `default_catalog`.`default_database`.`SensorMaxTemp_2`
     },
     {
       "topicName" : "SensorReading",
-      "tableName" : "SensorReading__def",
+      "tableName" : "SensorReading",
       "numPartitions" : 1,
       "replicationFactor" : 1,
       "replicasAssignments" : { },

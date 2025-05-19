@@ -18,6 +18,7 @@ package com.datasqrl.engine.stream.flink;
 import static com.datasqrl.engine.EngineFeature.STANDARD_STREAM;
 
 import com.datasqrl.config.EngineType;
+import com.datasqrl.config.ExecutionMode;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.PackageJson.EmptyEngineConfig;
 import com.datasqrl.config.PackageJson.EngineConfig;
@@ -27,18 +28,22 @@ import com.datasqrl.engine.stream.StreamEngine;
 import com.google.inject.Inject;
 import java.io.IOException;
 import java.util.EnumSet;
+import java.util.Locale;
+import java.util.Optional;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class FlinkStreamEngineImpl extends ExecutionEngine.Base implements StreamEngine {
+public class FlinkStreamEngine extends ExecutionEngine.Base implements StreamEngine {
+
+  public static final String MODE_KEY = "mode";
 
   public static final EnumSet<EngineFeature> FLINK_CAPABILITIES = STANDARD_STREAM;
 
   @Getter private final EngineConfig config;
 
   @Inject
-  public FlinkStreamEngineImpl(PackageJson json) {
+  public FlinkStreamEngine(PackageJson json) {
     super(FlinkEngineFactory.ENGINE_NAME, EngineType.STREAMS, FLINK_CAPABILITIES);
     this.config =
         json.getEngines()
@@ -48,4 +53,12 @@ public class FlinkStreamEngineImpl extends ExecutionEngine.Base implements Strea
 
   @Override
   public void close() throws IOException {}
+
+  @Override
+  public ExecutionMode getExecutionMode() {
+    return ExecutionMode.valueOf(
+        config
+            .getSetting(MODE_KEY, Optional.of(ExecutionMode.STREAMING.name()))
+            .toUpperCase(Locale.ENGLISH));
+  }
 }

@@ -51,6 +51,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -192,19 +193,11 @@ public class TestExecutionEnv implements TestEngineVisitor<Void, TestEnvContext>
         (Map<String, List<Map<String, String>>>) ((Map) map.get("engines")).get("snowflake");
 
     String url =
-        (String)
-            mapper
-                .readValue(
-                    "{\"url\": \"%s\"}"
-                        .formatted(
-                            packageJson
-                                .getEngines()
-                                .getEngineConfig("snowflake")
-                                .get()
-                                .toMap()
-                                .get("url")),
-                    Map.class)
-                .get("url");
+        packageJson
+            .getEngines()
+            .getEngineConfig("snowflake")
+            .get()
+            .getSetting("url", Optional.empty());
 
     try (Connection connection = DriverManager.getConnection(url)) {
       for (Map<String, String> ddls : snowflake.get("ddl")) {

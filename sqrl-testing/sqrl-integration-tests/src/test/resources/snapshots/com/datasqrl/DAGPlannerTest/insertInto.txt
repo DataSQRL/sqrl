@@ -1,0 +1,367 @@
+>>>pipeline_explain.txt
+=== Customer
+ID:     default_catalog.default_database.Customer
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database.Customer__base
+Annotations:
+ - stream-root: Customer
+Primary Key: customerid, lastUpdated
+Timestamp  : timestamp
+Schema:
+ - customerid: BIGINT NOT NULL
+ - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - lastUpdated: BIGINT NOT NULL
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Plan:
+LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
+  LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($3, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
+    LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW `Customer__view`
+AS
+SELECT `Customer`.`customerid`, `Customer`.`email`, `Customer`.`name`, `Customer`.`lastUpdated`, `Customer`.`timestamp`
+FROM `default_catalog`.`default_database`.`Customer` AS `Customer`
+>>>flink-sql-no-functions.sql
+CREATE TEMPORARY TABLE `Customer__schema` (
+  `customerid` BIGINT NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `lastUpdated` BIGINT NOT NULL
+) WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `Customer` (
+  `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
+  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
+  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
+) WITH (
+  'format' = 'flexible-json',
+  'path' = 'file:/mock',
+  'source.monitor-interval' = '10 sec',
+  'connector' = 'filesystem'
+)
+LIKE `Customer__schema`;
+CREATE TABLE IF NOT EXISTS `customer_id_count` (
+  `customerid` BIGINT,
+  `numEntries` BIGINT,
+  PRIMARY KEY (`customerid`) NOT ENFORCED
+) WITH (
+  'connector' = 'blackhole'
+);
+CREATE TABLE `Customer_1` (
+  `customerid` BIGINT NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `lastUpdated` BIGINT NOT NULL,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'password' = '${JDBC_PASSWORD}',
+  'driver' = 'org.postgresql.Driver',
+  'username' = '${JDBC_USERNAME}',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'table-name' = 'Customer_1'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `customer_id_count`
+(SELECT `customerid`, COUNT(*) AS `numEntries`
+ FROM `Customer`
+ GROUP BY `customerid`)
+;
+INSERT INTO `default_catalog`.`default_database`.`Customer_1`
+ (SELECT *
+  FROM `default_catalog`.`default_database`.`Customer`)
+ ;
+ END
+>>>kafka.json
+{
+  "topics" : [ ]
+}
+>>>postgres.json
+{
+  "statements" : [
+    {
+      "name" : "Customer_1",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Customer_1\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\",\"lastUpdated\"))",
+      "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "email",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "lastUpdated",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "timestamp",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ]
+    },
+    {
+      "name" : "Customer",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"Customer_1\"",
+      "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "email",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "lastUpdated",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "timestamp",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ]
+    }
+  ]
+}
+>>>vertx-config.json
+{
+  "servletConfig": {
+    "graphiQLEndpoint": "/graphiql*",
+    "graphQLEndpoint": "/graphql",
+    "usePgPool": true,
+    "useApolloWs": false,
+    "graphQLWsEndpoint": "/graphql-ws"
+  },
+  "graphQLHandlerOptions": {
+    "requestBatchingEnabled": false,
+    "requestMultipartEnabled": false
+  },
+  "graphiQLHandlerOptions": {
+    "enabled": true
+  },
+  "httpServerOptions": {
+    "sendBufferSize": -1,
+    "receiveBufferSize": -1,
+    "trafficClass": -1,
+    "reuseAddress": true,
+    "logActivity": false,
+    "activityLogDataFormat": "HEX_DUMP",
+    "reusePort": false,
+    "tcpNoDelay": true,
+    "tcpKeepAlive": false,
+    "soLinger": -1,
+    "idleTimeout": 0,
+    "readIdleTimeout": 0,
+    "writeIdleTimeout": 0,
+    "idleTimeoutUnit": "SECONDS",
+    "ssl": false,
+    "sslHandshakeTimeout": 10,
+    "sslHandshakeTimeoutUnit": "SECONDS",
+    "enabledCipherSuites": [],
+    "crlPaths": [],
+    "crlValues": [],
+    "useAlpn": false,
+    "enabledSecureTransportProtocols": [
+      "TLSv1",
+      "TLSv1.1",
+      "TLSv1.2"
+    ],
+    "tcpFastOpen": false,
+    "tcpCork": false,
+    "tcpQuickAck": false,
+    "tcpUserTimeout": 0,
+    "port": 8888,
+    "host": "0.0.0.0",
+    "acceptBacklog": -1,
+    "clientAuth": "NONE",
+    "sni": false,
+    "useProxyProtocol": false,
+    "proxyProtocolTimeout": 10,
+    "proxyProtocolTimeoutUnit": "SECONDS",
+    "compressionSupported": false,
+    "compressionLevel": 6,
+    "maxWebSocketFrameSize": 65536,
+    "maxWebSocketMessageSize": 262144,
+    "webSocketSubProtocols": [
+      "graphql-transport-ws",
+      "graphql-ws"
+    ],
+    "handle100ContinueAutomatically": false,
+    "maxChunkSize": 8192,
+    "maxInitialLineLength": 4096,
+    "maxHeaderSize": 8192,
+    "maxFormAttributeSize": 8192,
+    "initialSettings": {
+      "headerTableSize": 4096,
+      "pushEnabled": true,
+      "maxConcurrentStreams": 100,
+      "initialWindowSize": 65535,
+      "maxFrameSize": 16384,
+      "maxHeaderListSize": 8192
+    },
+    "alpnVersions": [
+      "HTTP_2",
+      "HTTP_1_1"
+    ],
+    "http2ConnectionWindowSize": -1,
+    "decompressionSupported": false,
+    "acceptUnmaskedFrames": false,
+    "decoderInitialBufferSize": 128,
+    "perFrameWebSocketCompressionSupported": true,
+    "perMessageWebSocketCompressionSupported": true,
+    "webSocketCompressionLevel": 6,
+    "webSocketAllowServerNoContext": false,
+    "webSocketPreferredClientNoContext": false,
+    "webSocketClosingTimeout": 10,
+    "tracingPolicy": "ALWAYS"
+  },
+  "pgConnectOptions": {
+    "sendBufferSize": -1,
+    "receiveBufferSize": -1,
+    "trafficClass": -1,
+    "reuseAddress": true,
+    "logActivity": false,
+    "activityLogDataFormat": "HEX_DUMP",
+    "reusePort": false,
+    "tcpNoDelay": true,
+    "tcpKeepAlive": false,
+    "soLinger": -1,
+    "idleTimeout": 0,
+    "readIdleTimeout": 0,
+    "writeIdleTimeout": 0,
+    "idleTimeoutUnit": "SECONDS",
+    "ssl": false,
+    "sslHandshakeTimeout": 10,
+    "sslHandshakeTimeoutUnit": "SECONDS",
+    "enabledCipherSuites": [],
+    "crlPaths": [],
+    "crlValues": [],
+    "useAlpn": false,
+    "enabledSecureTransportProtocols": [
+      "TLSv1",
+      "TLSv1.1",
+      "TLSv1.2"
+    ],
+    "tcpFastOpen": false,
+    "tcpCork": false,
+    "tcpQuickAck": false,
+    "tcpUserTimeout": 0,
+    "connectTimeout": 60000,
+    "trustAll": false,
+    "metricsName": "",
+    "reconnectAttempts": 0,
+    "reconnectInterval": 1000,
+    "hostnameVerificationAlgorithm": "",
+    "host": "${PGHOST}",
+    "port": 5432,
+    "user": "${PGUSER}",
+    "password": "${PGPASSWORD}",
+    "database": "${PGDATABASE}",
+    "cachePreparedStatements": false,
+    "preparedStatementCacheMaxSize": 256,
+    "preparedStatementCacheSqlFilter": {},
+    "properties": {
+      "DateStyle": "ISO",
+      "client_encoding": "utf8",
+      "application_name": "vertx-pg-client",
+      "extra_float_digits": "2"
+    },
+    "pipeliningLimit": 256,
+    "sslMode": "DISABLE",
+    "socketAddress": {
+      "domainSocket": false,
+      "inetSocket": true
+    },
+    "usingDomainSocket": false
+  },
+  "poolOptions": {
+    "maxSize": 4,
+    "maxWaitQueueSize": -1,
+    "idleTimeout": 0,
+    "idleTimeoutUnit": "SECONDS",
+    "poolCleanerPeriod": 1000,
+    "connectionTimeout": 30,
+    "connectionTimeoutUnit": "SECONDS",
+    "shared": false,
+    "name": "__vertx.DEFAULT",
+    "eventLoopSize": 0
+  },
+  "corsHandlerOptions": {
+    "allowedOrigin": "*",
+    "allowCredentials": false,
+    "maxAgeSeconds": -1,
+    "allowPrivateNetwork": false,
+    "allowedMethods": [
+      "GET",
+      "POST"
+    ],
+    "allowedHeaders": [],
+    "exposedHeaders": []
+  },
+  "apolloWSOptions": {
+    "keepAlive": 30000
+  }
+}
+
+>>>vertx.json
+{
+  "model" : {
+    "queries" : [
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "Customer",
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
+            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM \"Customer_1\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
+          }
+        }
+      }
+    ],
+    "mutations" : [ ],
+    "subscriptions" : [ ],
+    "schema" : {
+      "type" : "string",
+      "schema" : "type Customer {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n}\n\n\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n}\n"
+    }
+  }
+}

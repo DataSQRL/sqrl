@@ -28,10 +28,10 @@ import lombok.SneakyThrows;
 
 /** Creates new table functions from the GraphQL schema. */
 @AllArgsConstructor(onConstructor_ = @Inject)
-public class InferGraphqlSchema2 {
+public class InferGraphqlSchema {
 
   private final ErrorCollector errorCollector;
-  private final GraphqlSchemaFactory2 graphqlSchemaFactory;
+  private final GraphqlSchemaFactory graphqlSchemaFactory;
 
   @SneakyThrows
   public Optional<String> inferGraphQLSchema(ServerPhysicalPlan serverPlan) {
@@ -53,7 +53,7 @@ public class InferGraphqlSchema2 {
   // Validates the schema
   public void validateSchema(APISource apiSource, ServerPhysicalPlan serverPlan) {
     var schemaValidator =
-        new GraphqlSchemaValidator2(
+        new GraphqlSchemaValidator(
             serverPlan.getFunctions(),
             serverPlan.getMutations(),
             createErrorCollectorWithSchema(apiSource));

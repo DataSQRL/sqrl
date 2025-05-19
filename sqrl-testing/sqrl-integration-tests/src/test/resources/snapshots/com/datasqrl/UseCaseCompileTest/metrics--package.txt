@@ -79,7 +79,7 @@ WHERE `__sqrlinternal_rownum` = 1
 ID:     default_catalog.default_database.SensorReading
 Type:   stream
 Stage:  flink
-Inputs: default_catalog.default_database.SensorReading__def
+Inputs: default_catalog.default_database.SensorReading__base
 Primary Key: -
 Timestamp  : event_time
 Schema:
@@ -87,14 +87,13 @@ Schema:
  - temperature: FLOAT NOT NULL
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME*
 Plan:
-LogicalProject(sensorid=[$0], temperature=[$1], event_time=[$2])
-  LogicalWatermarkAssigner(rowtime=[event_time], watermark=[-($2, 0:INTERVAL SECOND)])
-    LogicalProject(sensorid=[$0], temperature=[$1], event_time=[CAST($2):TIMESTAMP_LTZ(3) *ROWTIME*])
-      LogicalTableScan(table=[[default_catalog, default_database, SensorReading__def, metadata=[timestamp]]])
-SQL: CREATE VIEW `SensorReading`
+LogicalWatermarkAssigner(rowtime=[event_time], watermark=[-($2, 0:INTERVAL SECOND)])
+  LogicalProject(sensorid=[$0], temperature=[$1], event_time=[CAST($2):TIMESTAMP_LTZ(3) *ROWTIME*])
+    LogicalTableScan(table=[[default_catalog, default_database, SensorReading, metadata=[timestamp]]])
+SQL: CREATE VIEW `SensorReading__view`
 AS
-SELECT *
-FROM `default_catalog`.`default_database`.`SensorReading__def`
+SELECT `SensorReading`.`sensorid`, `SensorReading`.`temperature`, `SensorReading`.`event_time`
+FROM `default_catalog`.`default_database`.`SensorReading` AS `SensorReading`
 === _SensorMaxTempLastMinWindow
 ID:     default_catalog.default_database._SensorMaxTempLastMinWindow
 Type:   stream
@@ -121,7 +120,7 @@ SQL: CREATE VIEW _SensorMaxTempLastMinWindow AS  SELECT sensorid, window_time as
                      GROUP BY sensorid, window_start, window_end, window_time;
 
 >>>flink-sql-no-functions.sql
-CREATE TABLE `SensorReading__def` (
+CREATE TABLE `SensorReading` (
   `sensorid` INTEGER NOT NULL,
   `temperature` FLOAT NOT NULL,
   `event_time` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
@@ -135,10 +134,6 @@ CREATE TABLE `SensorReading__def` (
   'properties.auto.offset.reset' = 'earliest',
   'topic' = 'SensorReading'
 );
-CREATE VIEW `SensorReading`
-AS
-SELECT *
-FROM `default_catalog`.`default_database`.`SensorReading__def`;
 CREATE VIEW `HighTempAlert`
 AS
 SELECT *
@@ -244,7 +239,7 @@ INSERT INTO `default_catalog`.`default_database`.`SensorAnalysis_2`
     },
     {
       "topicName" : "SensorReading",
-      "tableName" : "SensorReading__def",
+      "tableName" : "SensorReading",
       "numPartitions" : 1,
       "replicationFactor" : 1,
       "replicasAssignments" : { },

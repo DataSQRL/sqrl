@@ -44,6 +44,9 @@
       "type": "object",
       "minProperties": 1,
       "properties": {
+        "compilePlan": {
+          "type": "boolean"
+        },
         "explain": {
           "type": "object",
           "minProperties": 1,
@@ -115,6 +118,9 @@
           "type": "object",
           "minProperties": 1,
           "properties": {
+            "mode": {
+              "type": "string"
+            },
             "connectors": {
               "type": "object",
               "minProperties": 1

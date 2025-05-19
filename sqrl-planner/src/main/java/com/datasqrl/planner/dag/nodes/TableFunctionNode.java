@@ -42,7 +42,7 @@ public class TableFunctionNode extends PlannedNode {
      */
     return function.getVisibility().isAccessOnly()
         ? "access:" + function.getFullPath()
-        : function.getIdentifier().asSummaryString();
+        : function.getIdentifier().toString();
     //        + "(" + function.getParameters().stream().map(
     //        FunctionParameter::getName).collect(Collectors.joining(",")) + ")";
   }

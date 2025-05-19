@@ -66,6 +66,7 @@ import lombok.AllArgsConstructor;
 import lombok.Value;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
+import org.apache.calcite.rel.core.Sort;
 import org.apache.calcite.rel.core.TableFunctionScan;
 import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.logical.LogicalAggregate;
@@ -85,7 +86,7 @@ import org.apache.calcite.util.Pair;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.planner.calcite.FlinkRelBuilder;
-import org.apache.flink.table.planner.plan.schema.ExpandingPreparingTable;
+import org.apache.flink.table.planner.plan.schema.FlinkPreparingTableBase;
 import org.apache.flink.table.planner.plan.schema.TableSourceTable;
 import org.apache.flink.table.planner.plan.schema.TimeIndicatorRelDataType;
 
@@ -232,7 +233,8 @@ public class DAGPlanner {
                       // Special case, we sink directly to table
                       targetTable = exportNode.getCreatedSinkTable().get();
                       sqrlEnv.insertInto(
-                          sqrlEnv.getTableScan(node.getIdentifier()).build(), targetTable);
+                          sqrlEnv.getTableScan(node.getIdentifier().objectIdentifier()).build(),
+                          targetTable);
                       continue;
                     }
                   } else { // We are sinking into another engine
@@ -265,7 +267,7 @@ public class DAGPlanner {
                         ((TableNode) Iterables.getOnlyElement(dag.getInputs(node)))
                             .getTableAnalysis();
                   }
-                  var relBuilder = sqrlEnv.getTableScan(sinkNodeTable.getIdentifier());
+                  var relBuilder = sqrlEnv.getTableScan(sinkNodeTable.getObjectIdentifier());
                   var tblBuilder = new FlinkTableBuilder();
                   tblBuilder.setName(externalNameFct.apply(originalTableName));
                   // #1st: determine primary key and partition key (if present)
@@ -309,7 +311,7 @@ public class DAGPlanner {
                   exportPlans.get(exportStage).table(createdTable);
                   targetTable = sqrlEnv.createSinkTable(tblBuilder);
                   streamTableMapping.put(
-                      new InputTableKey(exportStage, originalNodeTable.getIdentifier()),
+                      new InputTableKey(exportStage, originalNodeTable.getObjectIdentifier()),
                       targetTable);
                   // Finally: add insert statement to sink into table
                   sqrlEnv.insertInto(relBuilder.build(), targetTable);
@@ -342,7 +344,7 @@ public class DAGPlanner {
                           .anyMatch(
                               output -> output.getChosenStage().getType() == EngineType.SERVER);
                   if (isQueriedByServer) {
-                    var tableid = tableNode.getIdentifier();
+                    var tableid = tableNode.getIdentifier().objectIdentifier();
                     function =
                         SqrlTableFunction.builder()
                             .functionAnalysis(tableNode.getAnalysis())
@@ -431,7 +433,7 @@ public class DAGPlanner {
             .checkFatal(
                 table.getType().isStream(),
                 "Could not determine primary key for table [%s]. Please add a primary key with the /*+primary_key(...) */ hint.",
-                table.getIdentifier().asSummaryString());
+                table.getIdentifier().toString());
         // For stream tables, we hash all columns as primary key if none is explicitly defined or
         // inferred
         addHashColumn = IntStream.range(0, numCols).boxed().collect(Collectors.toList());
@@ -562,13 +564,13 @@ public class DAGPlanner {
       ObjectIdentifier tablePath;
       if (table instanceof TableSourceTable sourceTable) {
         tablePath = sourceTable.contextResolvedTable().getIdentifier();
-      } else if (table instanceof ExpandingPreparingTable preparingTable) {
+      } else if (table instanceof FlinkPreparingTableBase preparingTable) {
         var names = preparingTable.getNames();
         tablePath = ObjectIdentifier.of(names.get(0), names.get(1), names.get(2));
       } else {
         throw new UnsupportedOperationException("Unexpected table: " + table.getClass());
       }
-      var tableAnalysis = sqrlEnv.getTableLookup().lookupTable(tablePath);
+      var tableAnalysis = sqrlEnv.getTableLookup().lookupView(tablePath);
       errors.checkFatal(tableAnalysis != null, "Could not find table: %s", tablePath);
 
       var inputTableId = inputTableMapping.apply(tablePath);
@@ -581,7 +583,8 @@ public class DAGPlanner {
         result = tableAnalysis.getCollapsedRelnode().accept(this);
       }
       if (addSort && tableAnalysis.getTopLevelSort().isPresent()) {
-        result = tableAnalysis.getTopLevelSort().get().copy(result.getTraitSet(), List.of(result));
+        Sort sort = tableAnalysis.getTopLevelSort().get();
+        result = sort.copy(sort.getTraitSet(), List.of(result));
       }
       return result;
     }

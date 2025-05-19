@@ -32,7 +32,7 @@ public class GenerateCoords {
   public void generateCoordsAndUpdateServerPlan(
       Optional<APISource> source, ServerPhysicalPlan serverPlan) {
     var graphqlModelGenerator =
-        new GraphqlModelGenerator2(
+        new GraphqlModelGenerator(
             serverPlan.getFunctions(), serverPlan.getMutations(), errorCollector);
     graphqlModelGenerator.walkAPISource(source.get());
     var model =

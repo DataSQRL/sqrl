@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Optional;
 
 public class PackageJsonImpl implements PackageJson {
+
   public static final String ENGINES_PROPERTY = "engines";
   public static final String DISCOVERY_KEY = "discovery";
   public static final String DEPENDENCIES_KEY = "dependencies";

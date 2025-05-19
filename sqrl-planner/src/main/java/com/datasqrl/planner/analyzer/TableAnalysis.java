@@ -23,7 +23,6 @@ import com.datasqrl.plan.util.PrimaryKeyMap;
 import com.datasqrl.planner.analyzer.cost.CostAnalysis;
 import com.datasqrl.planner.hint.PlannerHints;
 import com.datasqrl.planner.tables.SourceSinkTableAnalysis;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -49,7 +48,7 @@ import org.apache.flink.table.catalog.ObjectIdentifier;
 public class TableAnalysis implements TableOrFunctionAnalysis {
 
   /** The unique identifier of this table within Flink's catalog. */
-  @NonNull @Include ObjectIdentifier identifier;
+  @NonNull @Include ObjectIdentifier objectIdentifier;
 
   /**
    * The collapsed/deduplicated Relnode which undoes the view expansion that Flink does during
@@ -142,13 +141,14 @@ public class TableAnalysis implements TableOrFunctionAnalysis {
   }
 
   public String getName() {
-    return identifier.getObjectName();
+    return objectIdentifier.getObjectName();
   }
 
   public PrimaryKeyMap getSimplePrimaryKey() {
     return primaryKey.makeSimple(getRowType());
   }
 
+  @Override
   public boolean isSourceOrSink() {
     return sourceSinkTable.isPresent();
   }
@@ -174,7 +174,7 @@ public class TableAnalysis implements TableOrFunctionAnalysis {
       @NonNull TableType type,
       @NonNull PrimaryKeyMap primaryKey) {
     return TableAnalysis.builder()
-        .identifier(identifier)
+        .objectIdentifier(identifier)
         .collapsedRelnode(null)
         .originalRelnode(null)
         .type(type)
@@ -189,7 +189,7 @@ public class TableAnalysis implements TableOrFunctionAnalysis {
   }
 
   @Override
-  public List<String> getParameterNames() {
-    return Collections.EMPTY_LIST;
+  public UniqueIdentifier getIdentifier() {
+    return new UniqueIdentifier(objectIdentifier, isSourceOrSink());
   }
 }

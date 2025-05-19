@@ -50,6 +50,7 @@ public enum ErrorCode implements ErrorLabel {
   TABLE_NOT_MATERIALIZE,
   FUNCTION_EXISTS,
   NOT_YET_IMPLEMENTED,
+  NO_API_ENDPOINTS,
   ROWTIME_IS_NULLABLE;
 
   @Override

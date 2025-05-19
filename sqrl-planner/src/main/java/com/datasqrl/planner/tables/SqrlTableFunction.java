@@ -28,7 +28,6 @@ import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -45,7 +44,6 @@ import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.schema.TableFunction;
-import org.apache.flink.table.catalog.ObjectIdentifier;
 
 /**
  * Represents a function in DataSQRL. A function is either defined by the user and generated as a
@@ -140,17 +138,17 @@ public class SqrlTableFunction implements TableFunction, TableOrFunctionAnalysis
   }
 
   @Override
-  public ObjectIdentifier getIdentifier() {
+  public UniqueIdentifier getIdentifier() {
     return functionAnalysis.getIdentifier();
-  }
-
-  @Override
-  public List<String> getParameterNames() {
-    return parameters.stream().map(FunctionParameter::getName).collect(Collectors.toList());
   }
 
   @Override
   public TableType getType() {
     return functionAnalysis.getType();
+  }
+
+  @Override
+  public boolean isSourceOrSink() {
+    return false;
   }
 }
