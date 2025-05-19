@@ -34,7 +34,6 @@ import com.google.common.base.Preconditions;
 import graphql.schema.DataFetcher;
 import graphql.schema.DataFetchingEnvironment;
 import io.vertx.core.Vertx;
-import io.vertx.ext.web.handler.graphql.schema.VertxDataFetcher;
 import io.vertx.kafka.client.producer.KafkaProducer;
 import io.vertx.sqlclient.Tuple;
 import java.sql.Timestamp;
@@ -46,6 +45,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -83,10 +83,11 @@ public class MutationConfigurationImpl implements MutationConfiguration<DataFetc
 
         Preconditions.checkNotNull(
             emitter, "Could not find sink for field: %s", coords.getFieldName());
-        return VertxDataFetcher.create(
-            (env, fut) -> {
+        DataFetcher<?> dataFetcher =
+            env -> {
               var entry = getEntry(env, uuidColumns);
 
+              var cf = new CompletableFuture<Object>();
               emitter
                   .send(entry)
                   .onSuccess(
@@ -97,16 +98,20 @@ public class MutationConfigurationImpl implements MutationConfiguration<DataFetc
                         timestampColumns.forEach(
                             colName -> entry.put(colName, dateTime.toOffsetDateTime()));
 
-                        fut.complete(entry);
+                        cf.complete(entry);
                       })
-                  .onFailure((m) -> fut.fail(m));
-            });
+                  .onFailure((m) -> cf.completeExceptionally(m));
+
+              return cf;
+            };
+
+        return dataFetcher;
       }
 
       @Override
       public DataFetcher<?> visit(PostgresLogMutationCoords coords, Context context) {
-        return VertxDataFetcher.create(
-            (env, fut) -> {
+        DataFetcher<?> dataFetcher =
+            env -> {
               var entry = getEntry(env, List.of());
               entry.put(
                   "event_time", Timestamp.from(Instant.now())); // TODO: better to do it in the db
@@ -130,15 +135,22 @@ public class MutationConfigurationImpl implements MutationConfiguration<DataFetc
                       .getClients()
                       .get("postgres")
                       .preparedQuery(insertStatement);
+
+              var cf = new CompletableFuture<Object>();
+
               preparedQuery
                   .execute(Tuple.from(paramObj))
-                  .onComplete(e -> fut.complete(entry))
+                  .onComplete(e -> cf.complete(entry))
                   .onFailure(
                       e ->
                           log.error(
                               "An error happened while executing the query: " + insertStatement,
                               e));
-            });
+
+              return cf;
+            };
+
+        return dataFetcher;
       }
     };
   }

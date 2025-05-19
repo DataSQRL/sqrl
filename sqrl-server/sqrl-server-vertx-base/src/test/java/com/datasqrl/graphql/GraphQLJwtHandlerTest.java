@@ -16,7 +16,6 @@
 package com.datasqrl.graphql;
 
 import static org.apache.kafka.clients.admin.AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG;
-import static org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import com.datasqrl.graphql.config.CorsHandlerOptions;
@@ -40,20 +39,13 @@ import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
-import io.vertx.kafka.client.producer.KafkaProducer;
-import io.vertx.kafka.client.producer.RecordMetadata;
-import io.vertx.kafka.client.producer.impl.KafkaProducerRecordImpl;
 import io.vertx.pgclient.impl.PgPoolOptions;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Properties;
-import java.util.UUID;
 import lombok.SneakyThrows;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.NewTopic;
-import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.streams.integration.utils.EmbeddedKafkaCluster;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -177,98 +169,88 @@ class GraphQLJwtHandlerTest {
             .setPort(serverConfig.getHttpServerOptions().getPort())
             .setHost("localhost")
             .setURI("/graphql")
-            .addHeader("Authorization", "Bearer badToken");
+            .putHeader("Authorization", "Bearer badToken");
 
-    vertx
-        .createHttpClient()
-        .webSocket(
-            options,
-            wsResult -> {
-              if (wsResult.succeeded()) {
-                testContext.failNow("Should fail");
-              } else {
-                testContext.completeNow();
-              }
+    var client = vertx.createWebSocketClient();
+
+    client
+        .connect(options)
+        .onSuccess(
+            ws -> {
+              // Should not succeed
+              testContext.failNow("Should fail");
+            })
+        .onFailure(
+            err -> {
+              // Failure is expected
+              testContext.completeNow();
             });
   }
 
   @Disabled
   @Test
   public void testWebsocket(VertxTestContext testContext) {
-    var provider = JWTAuth.create(vertx, this.serverConfig.getAuthOptions());
-    var token = provider.generateToken(new JsonObject(), new JWTOptions().setExpiresInSeconds(60));
-
-    var options =
-        new WebSocketConnectOptions()
-            .setPort(serverConfig.getHttpServerOptions().getPort())
-            .setHost("localhost")
-            .setURI("/graphql") // Your actual WebSocket endpoint URI
-            .addHeader(
-                "Authorization",
-                "Bearer " + token); // Send the JWT as part of the initial request headers
-
-    var initMessage =
-        "{\"type\":\"connection_init\",\"payload\":{}}"; // connection initialization message
-
-    var graphqlSubscription =
-        "{\"type\":\"subscribe\",\"id\":\"1\",\"payload\":{\"query\":\"subscription { mock { val } }\"}}";
-    // Connect using the WebSocket client
-    vertx
-        .createHttpClient()
-        .webSocket(
-            options,
-            wsResult -> {
-              if (wsResult.succeeded()) {
-                var ws = wsResult.result();
-                // Send a GraphQL query as a text message
-                ws.writeTextMessage(initMessage);
-                ws.handler(
-                    message -> {
-                      if (message.toString().contains("next")) {
-                        if (message
-                            .toString()
-                            .equals(
-                                "{\"id\":\"1\",\"type\":\"next\",\"payload\":{\"data\":{\"mock\":{\"val\":\"x\"}}}}")) {
-                          testContext.completeNow();
-                        } else {
-                          testContext.failNow("Unexpected message:" + message);
-                        }
-                      } else if (message.toString().contains("connection_ack")) {
-                        ws.writeTextMessage(graphqlSubscription);
-
-                        var props = new Properties();
-                        props.put(
-                            ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
-                        props.put(GROUP_ID_CONFIG, UUID.randomUUID().toString());
-                        props.put(
-                            ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
-                            StringSerializer.class.getName());
-                        props.put(
-                            ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
-                            StringSerializer.class.getName());
-
-                        try {
-                          Thread.sleep(1000);
-                        } catch (InterruptedException e) {
-                          throw new RuntimeException(e);
-                        }
-                        KafkaProducer producer = KafkaProducer.create(Vertx.vertx(), props);
-                        var jsonMessage = new JsonObject().put("val", "x");
-                        producer.send(
-                            new KafkaProducerRecordImpl("mytopic", jsonMessage.toString()),
-                            (Handler<AsyncResult<RecordMetadata>>)
-                                (metadata) -> {
-                                  System.out.println(metadata.result().getTopic());
-                                  System.out.println(metadata.result().getTimestamp());
-                                });
-                      }
-                    });
-              } else {
-                testContext.failNow(
-                    wsResult.cause()); // Fail the test if the WebSocket connection could not be
-                // established
-              }
-            });
+    //    var provider = JWTAuth.create(vertx, this.serverConfig.getAuthOptions());
+    //    var token = provider.generateToken(new JsonObject(),
+    //        new JWTOptions().setExpiresInSeconds(60));
+    //
+    //    var options = new WebSocketConnectOptions()
+    //        .setPort(serverConfig.getHttpServerOptions().getPort())
+    //        .setHost("localhost")
+    //        .setURI("/graphql") // Your actual WebSocket endpoint URI
+    //        .addHeader("Authorization", "Bearer " + token); // Send the JWT as part of the initial
+    // request headers
+    //
+    //    var initMessage = "{\"type\":\"connection_init\",\"payload\":{}}";  // connection
+    // initialization message
+    //
+    //    var graphqlSubscription =
+    // "{\"type\":\"subscribe\",\"id\":\"1\",\"payload\":{\"query\":\"subscription { mock { val }
+    // }\"}}";
+    //    // Connect using the WebSocket client
+    //    vertx.createHttpClient().webSocket(options, wsResult -> {
+    //      if (wsResult.succeeded()) {
+    //        var ws = wsResult.result();
+    //        // Send a GraphQL query as a text message
+    //        ws.writeTextMessage(initMessage);
+    //        ws.handler(message -> {
+    //          if (message.toString().contains("next")) {
+    //            if
+    // (message.toString().equals("{\"id\":\"1\",\"type\":\"next\",\"payload\":{\"data\":{\"mock\":{\"val\":\"x\"}}}}")) {
+    //              testContext.completeNow();
+    //            } else {
+    //              testContext.failNow("Unexpected message:" + message);
+    //            }
+    //          } else if (message.toString().contains("connection_ack")) {
+    //            ws.writeTextMessage(graphqlSubscription);
+    //
+    //            var props = new Properties();
+    //            props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers());
+    //            props.put(GROUP_ID_CONFIG, UUID.randomUUID().toString());
+    //            props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
+    // StringSerializer.class.getName());
+    //            props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
+    // StringSerializer.class.getName());
+    //
+    //            try {
+    //              Thread.sleep(1000);
+    //            } catch (InterruptedException e) {
+    //              throw new RuntimeException(e);
+    //            }
+    //            KafkaProducer producer =  KafkaProducer.create(Vertx.vertx(), props);
+    //            var jsonMessage = new JsonObject().put("val", "x");
+    //            producer.send(new KafkaProducerRecordImpl("mytopic",
+    // jsonMessage.toString()),(Handler<AsyncResult<RecordMetadata>>)(metadata)->{
+    //              System.out.println(metadata.result().getTopic());
+    //              System.out.println(metadata.result().getTimestamp());
+    //            });
+    //          }
+    //        });
+    //      } else {
+    //        testContext.failNow(wsResult.cause()); // Fail the test if the WebSocket connection
+    // could not be established
+    //      }
+    //    });
   }
 
   private void sendQuery(String token, Handler<AsyncResult<HttpResponse<Buffer>>> callback) {
@@ -278,6 +260,7 @@ class GraphQLJwtHandlerTest {
         .post(serverConfig.getHttpServerOptions().getPort(), "localhost", "/graphql")
         .putHeader("Authorization", "Bearer " + token)
         .putHeader("Content-Type", "application/json")
-        .sendJsonObject(query, callback);
+        .sendJson(query)
+        .onComplete(callback);
   }
 }

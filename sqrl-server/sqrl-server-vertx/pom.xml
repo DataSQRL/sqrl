@@ -37,6 +37,11 @@
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-server-vertx-base</artifactId>
     </dependency>
+
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-launcher-application</artifactId>
+    </dependency>
   </dependencies>
 
   <build>

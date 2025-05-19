@@ -24,7 +24,6 @@ import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedSqlQuery;
 import graphql.schema.DataFetchingEnvironment;
 import io.vertx.core.Future;
-import io.vertx.core.Promise;
 import io.vertx.core.json.JsonObject;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
@@ -48,7 +47,7 @@ public class VertxQueryExecutionContext extends AbstractQueryExecutionContext {
   VertxContext context;
   DataFetchingEnvironment environment;
   Set<Argument> arguments;
-  Promise<Object> future; // basically Vert.x completableFuture
+  CompletableFuture<Object> cf;
 
   @Override
   public CompletableFuture runQuery(ResolvedSqlQuery resolvedQuery, boolean isList) {
@@ -96,16 +95,17 @@ public class VertxQueryExecutionContext extends AbstractQueryExecutionContext {
               .getSqlClient()
               .execute(resolvedQuery.getQuery().getDatabase(), preparedQuery, parameters);
     }
+
     // map the resultSet to json for GraphQL response
     future
         .map(r -> resultMapper(r, isList))
-        .onSuccess(result -> this.future.complete(result))
+        .onSuccess(result -> cf.complete(result))
         .onFailure(
             f -> {
               f.printStackTrace();
-              this.future.fail(f);
+              cf.failedFuture(f);
             });
-    return new CompletableFuture();
+    return cf;
   }
 
   private Object resultMapper(RowSet<Row> r, boolean isList) {
