@@ -360,6 +360,26 @@ jobs:
           test_args: test myudf.sqrl --snapshots snapshots-myudf --tests tests-myudf
           expected_pattern: 'WARN  org.apache.flink.runtime.security.token.DefaultDelegationTokenManager'
 
+  run-vertx-tests:
+    executor: default-machine
+    steps:
+      - checkout
+      - run:
+          name: Pull test image
+          command: |
+            docker pull datasqrl/cmd-test-image:${CIRCLE_SHA1}
+            docker pull datasqrl/server-test-image:${CIRCLE_SHA1}
+      - run:
+          working_dir: ./sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/udf
+          name: Launch sqrl-server and test if API is running
+          command: |
+            docker run --rm -v "$PWD:/build" -e TZ="UTC" datasqrl/cmd-test-image:${CIRCLE_SHA1} compile myudf.sqrl
+            docker run -d --name sqrl-server --rm -v $(pwd)/build/deploy/plan/vertx.json:/opt/sqrl/server-model.json \
+                                                  -v $(pwd)/build/deploy/plan/vertx-config.json:/opt/sqrl/server-config.json \
+                                                  -p 8888:8888 datasqrl/sqrl-${CIRCLE_SHA1}
+            sleep 2s
+            curl -s -X POST http://localhost:8888/graphql   -H 'Content-Type: application/json'   --data '{"query":"query { __typename }"}'
+
   build-images:
     # use a full VM so we can run Docker / Buildx
     executor: default-machine
@@ -516,6 +536,7 @@ workflows:
           <<: *job-defaults
           requires:
             - build-base
+            - docker-build-base-image
       - deploy:
           <<: *job-defaults
           requires:
@@ -539,6 +560,15 @@ workflows:
           requires:
             - build-test-image
       - run-udf-tests:
+          <<: *job-defaults
+          filters:
+            branches:
+              only: /.*/
+            tags:
+              ignore: /.*/
+          requires:
+            - build-test-image
+      - run-vertx-tests:
           <<: *job-defaults
           filters:
             branches:
