@@ -360,26 +360,74 @@ jobs:
           test_args: test myudf.sqrl --snapshots snapshots-myudf --tests tests-myudf
           expected_pattern: 'WARN  org.apache.flink.runtime.security.token.DefaultDelegationTokenManager'
 
-  build-jars:
-    docker:
-      - image: cimg/openjdk:17.0
+  build-images:
+    # use a full VM so we can run Docker / Buildx
+    executor: default-machine
+
     steps:
       - checkout-and-version
       - restore_cache:
           keys:
             - m2-{{ checksum "pom.xml" }}
       - generate-settings
+      - install-jdk
+
       - run:
           name: Build shaded JARs
           command: mvn -U -T1 -B install -DskipTests -DskipITs
-      - persist_to_workspace:
-          root: .
-          paths:
-            - sqrl-tools/sqrl-cli/target/sqrl-cli.jar
-            - sqrl-tools/sqrl-run/target/sqrl-run.jar
-            - sqrl-tools/sqrl-test/target/sqrl-test.jar
-            - sqrl-server/sqrl-server-vertx/target/vertx-server.jar
-            - sqrl-tools/sqrl-flink-runner/target/*
+
+      - determine-version
+      - compute-base-tag
+
+      # enable QEMU for multi-arch, install Buildx, login
+      - run:
+          name: Prepare Docker build environment
+          command: |
+            sudo apt-get update && sudo apt-get install -y qemu-user-static binfmt-support
+            docker run --privileged --rm tonistiigi/binfmt --install all
+
+            sudo mkdir -p /usr/local/lib/docker/cli-plugins
+            curl -sSL https://github.com/docker/buildx/releases/download/v0.12.0/buildx-v0.12.0.linux-amd64 \
+                 -o buildx
+            chmod +x buildx
+            sudo mv buildx /usr/local/lib/docker/cli-plugins/docker-buildx
+            docker buildx create --use --name sqrl-builder
+            docker buildx inspect --bootstrap
+
+            if [ -n "$CIRCLE_PULL_REQUEST" ]; then
+              echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
+            else
+              echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+            fi
+
+            docker pull datasqrl/base-sqrl:$BASE_TAG
+
+      - run:
+          name: Build + push Docker images
+          command: |
+            build_and_push() {
+              local repo="$1" ; shift
+              local dir="$1"  ; shift
+
+              docker buildx build \
+                --platform linux/amd64,linux/arm64 \
+                --push \
+                --build-arg BASE_TAG=$BASE_TAG \
+                -t $REGISTRY/$repo:$TAG_SUFFIX \
+                -f $dir/Dockerfile \
+                $dir
+
+              # tag :latest on release builds
+              if [ "$LATEST_TAG" = "true" ]; then
+                docker buildx imagetools create \
+                  -t $REGISTRY/$repo:latest \
+                  $REGISTRY/$repo:$TAG_SUFFIX
+              fi
+            }
+
+            build_and_push cmd                 sqrl-tools
+            build_and_push sqrl-server         sqrl-server/sqrl-server-vertx
+            build_and_push sqrl-flink-runner   sqrl-tools/sqrl-flink-runner/target
 
   docker-build-base-image:
     machine:
@@ -434,77 +482,6 @@ jobs:
               -f sqrl-tools/Dockerfile.base \
               sqrl-tools
 
-  docker-build-and-push:
-    parameters:
-      image_repo:  { type: string }
-      context_dir: { type: string }
-    machine:
-      image: ubuntu-2004:202111-02
-    steps:
-      - checkout
-      - attach_workspace:
-          at: .
-      - determine-version
-
-      # --- enable cross-compilation ---------------------------------
-      - run:
-          name: Enable QEMU for ARM build
-          command: |
-            sudo apt-get update
-            sudo apt-get install -y qemu-user-static binfmt-support
-            docker run --privileged --rm tonistiigi/binfmt --install all
-
-      # --- install Buildx (x86 binary is fine) ----------------------
-      - run:
-          name: Install docker buildx
-          command: |
-            sudo mkdir -p /usr/local/lib/docker/cli-plugins
-            curl -sSL https://github.com/docker/buildx/releases/download/v0.12.0/buildx-v0.12.0.linux-amd64 \
-                 -o buildx
-            chmod +x buildx
-            sudo mv buildx /usr/local/lib/docker/cli-plugins/docker-buildx
-            docker buildx create --use --name sqrl-builder
-            docker buildx inspect --bootstrap
-
-      # --- login to the correct registry ---------------------------
-      - run:
-          name: Registry login
-          command: |
-            if [ -n "$CIRCLE_PULL_REQUEST" ]; then
-              echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
-              echo "Logged on ghcr.io"
-            else
-              echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-              echo "Logged on docker"
-            fi
-
-      - compute-base-tag
-
-      # --- pull base image so the subsequent build reuses layers --------
-      - run:
-          name: Pull base image
-          command: docker pull datasqrl/base-sqrl:$BASE_TAG
-
-      # --- build and push both platforms in one go -----------------
-      - run:
-          name: Build & push $REGISTRY/<< parameters.image_repo >>:$TAG_SUFFIX
-          command: |
-            docker buildx build \
-              --platform linux/amd64,linux/arm64 \
-              --push \
-              --build-arg BASE_TAG=$BASE_TAG \
-              -t $REGISTRY/<< parameters.image_repo >>:$TAG_SUFFIX \
-              -f << parameters.context_dir >>/Dockerfile \
-              << parameters.context_dir >>
-
-            # push "latest" if this is a tag build
-            if [ "$LATEST_TAG" = "true" ]; then
-              docker buildx imagetools create \
-                -t $REGISTRY/<< parameters.image_repo >>:latest \
-                $REGISTRY/<< parameters.image_repo >>:$TAG_SUFFIX
-            fi
-
-
 workflows:
   ci:
     jobs:
@@ -535,7 +512,7 @@ workflows:
               test_sharding_index: [0, 1]
           requires:
             - build-base
-      - build-jars:
+      - build-images:
           <<: *job-defaults
           requires:
             - build-base
@@ -552,28 +529,6 @@ workflows:
               ignore: /.*/
           requires:
             - build-base
-      - docker-build-and-push:
-          <<: *job-defaults
-          name: build-push-cmd
-          image_repo: cmd
-          context_dir: sqrl-tools
-          requires:
-            - build-jars
-            - docker-build-base-image
-      - docker-build-and-push:
-          <<: *job-defaults
-          name: build-push-server
-          image_repo: sqrl-server
-          context_dir: sqrl-server/sqrl-server-vertx
-          requires:
-            - build-jars
-      - docker-build-and-push:
-          <<: *job-defaults
-          name: build-push-flink
-          image_repo: sqrl-flink-runner
-          context_dir: sqrl-tools/sqrl-flink-runner/target
-          requires:
-            - build-jars
       - run-connectors-tests:
           <<: *job-defaults
           filters:
