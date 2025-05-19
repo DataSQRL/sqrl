@@ -387,6 +387,7 @@ jobs:
                                                   -p 8888:8888 \
                                                   datasqrl/sqrl-server-test-image:${CIRCLE_SHA1}
             sleep 2s
+            docker logs sqrl-server
             curl -s -X POST http://localhost:8888/graphql   -H 'Content-Type: application/json'   --data '{"query":"query { __typename }"}'
 
   build-images:
