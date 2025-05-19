@@ -49,44 +49,44 @@ public class PostgresListenNotifyConsumer {
   @SneakyThrows
   public void subscribe(Consumer<Object> listener) {
     // Establish a direct PgConnection
-    PgConnection.connect(
-        vertx,
-        pgConnectOptions,
-        res -> {
-          if (res.succeeded()) {
-            PgConnection pgConnection = res.result();
+    PgConnection.connect(vertx, pgConnectOptions)
+        .onComplete(
+            res -> {
+              if (res.succeeded()) {
+                PgConnection pgConnection = res.result();
 
-            // Set the notification handler
-            pgConnection.notificationHandler(
-                notification -> {
-                  log.trace(
-                      "Received notification on channel: {} Payload: {}",
-                      notification.getChannel(),
-                      notification.getPayload());
+                // Set the notification handler
+                pgConnection.notificationHandler(
+                    notification -> {
+                      log.trace(
+                          "Received notification on channel: {} Payload: {}",
+                          notification.getChannel(),
+                          notification.getPayload());
 
-                  handleNotification(notification, listener);
-                });
-
-            // Execute the LISTEN command to listen for notifications on a specific channel
-            pgConnection
-                .query(listenQuery)
-                .execute(
-                    queryResult -> {
-                      if (queryResult.succeeded()) {
-                        log.info("LISTEN command executed successfully: {}", listenQuery);
-                      } else {
-                        log.error(
-                            "Unable to execute LISTEN command: %s"
-                                .formatted(queryResult.cause().getMessage()),
-                            queryResult.cause());
-                      }
+                      handleNotification(notification, listener);
                     });
-          } else {
-            log.error(
-                "Unable to establish connection. %s".formatted(res.cause().getMessage()),
-                res.cause());
-          }
-        });
+
+                // Execute the LISTEN command to listen for notifications on a specific channel
+                pgConnection
+                    .query(listenQuery)
+                    .execute()
+                    .onComplete(
+                        queryResult -> {
+                          if (queryResult.succeeded()) {
+                            log.info("LISTEN command executed successfully: {}", listenQuery);
+                          } else {
+                            log.error(
+                                "Unable to execute LISTEN command: %s"
+                                    .formatted(queryResult.cause().getMessage()),
+                                queryResult.cause());
+                          }
+                        });
+              } else {
+                log.error(
+                    "Unable to establish connection. %s".formatted(res.cause().getMessage()),
+                    res.cause());
+              }
+            });
   }
 
   public void handleNotification(PgNotification notification, Consumer<Object> listener) {
