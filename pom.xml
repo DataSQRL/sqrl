@@ -87,7 +87,7 @@
     <commonsio.version>2.19.0</commonsio.version>
     <commons-lang3.version>3.17.0</commons-lang3.version>
     <!-- hadoop shades in commons-config 2.1.1, so upgrade path here is very narrow -->
-    <commons-config.version>2.3</commons-config.version>
+    <commons-config.version>2.11.0</commons-config.version>
     <commons-collections.version>4.5.0</commons-collections.version>
     <httpcomponents.version>4.5.14</httpcomponents.version>
     <commons-bean.version>1.10.1</commons-bean.version>
