@@ -26,13 +26,7 @@
 
   <artifactId>sqrl-packager</artifactId>
 
-  <properties>
-    <lombok.version>1.18.24</lombok.version>
-    <vertx.version>5.0.0</vertx.version>
-  </properties>
-
   <dependencies>
-
     <dependency>
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-config</artifactId>

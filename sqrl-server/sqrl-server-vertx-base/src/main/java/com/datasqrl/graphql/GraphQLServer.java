@@ -36,8 +36,8 @@ import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.metrics.MetricsOptions;
 import io.vertx.ext.auth.jwt.JWTAuth;
-import io.vertx.ext.healthchecks.HealthCheckHandler;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.CorsHandler;
@@ -46,11 +46,13 @@ import io.vertx.ext.web.handler.LoggerHandler;
 import io.vertx.ext.web.handler.graphql.GraphQLHandler;
 import io.vertx.ext.web.handler.graphql.GraphiQLHandler;
 import io.vertx.ext.web.handler.graphql.ws.GraphQLWSHandler;
+import io.vertx.ext.web.healthchecks.HealthCheckHandler;
+import io.vertx.jdbcclient.JDBCConnectOptions;
 import io.vertx.jdbcclient.JDBCPool;
-import io.vertx.micrometer.MicrometerMetricsOptions;
+import io.vertx.micrometer.MicrometerMetricsFactory;
 import io.vertx.micrometer.backends.BackendRegistries;
-import io.vertx.pgclient.PgPool;
-import io.vertx.pgclient.impl.PgPoolOptions;
+import io.vertx.pgclient.PgBuilder;
+import io.vertx.sqlclient.PoolOptions;
 import io.vertx.sqlclient.SqlClient;
 import java.io.File;
 import java.util.HashMap;
@@ -75,21 +77,20 @@ public class GraphQLServer extends AbstractVerticle {
 
   public static void main(String[] args) {
     var prometheusMeterRegistry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
-    var metricsOptions =
-        new MicrometerMetricsOptions()
-            .setMicrometerRegistry(prometheusMeterRegistry)
-            .setEnabled(true);
+    MetricsOptions metricsOptions =
+        new MicrometerMetricsFactory(prometheusMeterRegistry).newOptions().setEnabled(true);
     var vertx = Vertx.vertx(new VertxOptions().setMetricsOptions(metricsOptions));
 
-    vertx.deployVerticle(
-        new GraphQLServer(),
-        res -> {
-          if (res.succeeded()) {
-            System.out.println("Deployment id is: " + res.result());
-          } else {
-            System.out.println("Deployment failed!");
-          }
-        });
+    vertx
+        .deployVerticle(new GraphQLServer())
+        .onComplete(
+            res -> {
+              if (res.succeeded()) {
+                System.out.println("Deployment id is: " + res.result());
+              } else {
+                System.out.println("Deployment failed!");
+              }
+            });
   }
 
   public GraphQLServer() {
@@ -145,8 +146,8 @@ public class GraphQLServer extends AbstractVerticle {
     Promise<JsonObject> promise = Promise.promise();
     vertx
         .fileSystem()
-        .readFile(
-            "server-config.json",
+        .readFile("server-config.json")
+        .onComplete(
             result -> {
               if (result.succeeded()) {
                 try {
@@ -304,7 +305,7 @@ public class GraphQLServer extends AbstractVerticle {
             .put("url", url)
             .put("CLIENT_SESSION_KEEP_ALIVE", "true");
 
-    JDBCPool pool = JDBCPool.pool(vertx, config);
+    var pool = JDBCPool.pool(vertx, new JDBCConnectOptions(config), new PoolOptions());
     return pool;
   }
 
@@ -327,7 +328,7 @@ public class GraphQLServer extends AbstractVerticle {
             //        .put("max_pool_size", 1)
             .put(DuckDBDriver.JDBC_STREAM_RESULTS, String.valueOf(true));
 
-    JDBCPool pool = JDBCPool.pool(vertx, config);
+    var pool = JDBCPool.pool(vertx, new JDBCConnectOptions(config), new PoolOptions());
 
     return pool;
   }
@@ -335,7 +336,7 @@ public class GraphQLServer extends AbstractVerticle {
   private CorsHandler toCorsHandler(CorsHandlerOptions corsHandlerOptions) {
     var corsHandler =
         corsHandlerOptions.getAllowedOrigin() != null
-            ? CorsHandler.create(corsHandlerOptions.getAllowedOrigin())
+            ? CorsHandler.create().addOrigin(corsHandlerOptions.getAllowedOrigin())
             : CorsHandler.create();
 
     // Empty allowed origin list means nothing is allowed vs null which is permissive
@@ -356,10 +357,11 @@ public class GraphQLServer extends AbstractVerticle {
   }
 
   private SqlClient getPostgresSqlClient() {
-    return PgPool.client(
-        vertx,
-        this.config.getPgConnectOptions(),
-        new PgPoolOptions(this.config.getPoolOptions()).setPipelined(true));
+    return PgBuilder.client()
+        .connectingTo(this.config.getPgConnectOptions())
+        .using(vertx)
+        .with(this.config.getPoolOptions())
+        .build();
   }
 
   public GraphQL createGraphQL(Map<DatabaseType, SqlClient> client, Promise<Void> startPromise) {
