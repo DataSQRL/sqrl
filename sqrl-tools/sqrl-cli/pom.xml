@@ -26,12 +26,6 @@
 
   <artifactId>sqrl-cli</artifactId>
 
-  <properties>
-    <maven.compiler.source>11</maven.compiler.source>
-    <maven.compiler.target>11</maven.compiler.target>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-  </properties>
-
   <dependencies>
     <dependency>
       <groupId>com.datasqrl</groupId>
@@ -302,6 +296,15 @@
     <profile>
       <id>instrument</id>
 
+      <dependencies>
+        <dependency>
+          <groupId>org.jacoco</groupId>
+          <artifactId>org.jacoco.agent</artifactId>
+          <version>${jacoco.version}</version>
+          <classifier>runtime</classifier>
+        </dependency>
+      </dependencies>
+
       <build>
         <plugins>
           <plugin>
@@ -317,12 +320,16 @@
                 <configuration>
                   <source>${project.build.directory}/sqrl-cli.jar</source>
                   <destination>${project.build.directory}/sqrl-cli.jar</destination>
+                  <includes>
+                    <include>com/datasqrl/*</include>
+                  </includes>
                 </configuration>
               </execution>
             </executions>
           </plugin>
         </plugins>
       </build>
+
     </profile>
   </profiles>
 </project>

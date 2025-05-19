@@ -353,6 +353,15 @@
     <profile>
       <id>instrument</id>
 
+      <dependencies>
+        <dependency>
+          <groupId>org.jacoco</groupId>
+          <artifactId>org.jacoco.agent</artifactId>
+          <version>${jacoco.version}</version>
+          <classifier>runtime</classifier>
+        </dependency>
+      </dependencies>
+
       <build>
         <plugins>
           <plugin>
@@ -377,6 +386,7 @@
           </plugin>
         </plugins>
       </build>
+
     </profile>
   </profiles>
 
