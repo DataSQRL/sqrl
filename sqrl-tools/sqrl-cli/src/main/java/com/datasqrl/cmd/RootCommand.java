@@ -35,7 +35,7 @@ public class RootCommand implements Runnable {
       names = {"-c", "--config"},
       description = "Package configuration file(s)",
       scope = ScopeType.INHERIT)
-  protected List<Path> packageFiles = Collections.EMPTY_LIST;
+  protected List<Path> packageFiles = Collections.emptyList();
 
   @Override
   public void run() {

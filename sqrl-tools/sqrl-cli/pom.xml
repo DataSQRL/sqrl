@@ -26,12 +26,6 @@
 
   <artifactId>sqrl-cli</artifactId>
 
-  <properties>
-    <maven.compiler.source>11</maven.compiler.source>
-    <maven.compiler.target>11</maven.compiler.target>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-  </properties>
-
   <dependencies>
     <dependency>
       <groupId>com.datasqrl</groupId>
@@ -91,7 +85,6 @@
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-connector-kafka</artifactId>
-      <version>3.2.0-1.19</version>
       <scope>runtime</scope>
     </dependency>
     <dependency>
@@ -143,12 +136,10 @@
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-avro-confluent-registry</artifactId>
-      <version>1.19.1</version>
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-s3-fs-hadoop</artifactId>
-      <version>${flink.version}</version>
     </dependency>
 
     <dependency>
@@ -296,4 +287,44 @@
       </plugin>
     </plugins>
   </build>
+
+  <profiles>
+    <profile>
+      <id>instrument</id>
+
+      <dependencies>
+        <dependency>
+          <groupId>org.jacoco</groupId>
+          <artifactId>org.jacoco.agent</artifactId>
+          <version>${jacoco.version}</version>
+          <classifier>runtime</classifier>
+        </dependency>
+      </dependencies>
+
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>com.marvinformatics.jacoco</groupId>
+            <artifactId>easy-jacoco-maven-plugin</artifactId>
+            <version>0.1.4</version>
+            <executions>
+              <execution>
+                <id>instrument-uber-jar</id>
+                <goals>
+                  <goal>instrument-jar</goal>
+                </goals>
+                <configuration>
+                  <source>${project.build.directory}/sqrl-cli.jar</source>
+                  <destination>${project.build.directory}/sqrl-cli.jar</destination>
+                  <includes>
+                    <include>com/datasqrl/*</include>
+                  </includes>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>

@@ -50,7 +50,6 @@ public class TestCmd {
   private static final Path RESOURCES = Path.of("src/test/resources/");
   private static final Path SUBSCRIPTION_PATH = RESOURCES.resolve("subscriptions");
   private static final Path CC_PATH = RESOURCES.resolve("creditcard");
-  private static final Path PROFILES_PATH = RESOURCES.resolve("profiles");
   private static final Path AVRO_PATH = RESOURCES.resolve("avro");
   private static final Path JSON_PATH = RESOURCES.resolve("json");
 
