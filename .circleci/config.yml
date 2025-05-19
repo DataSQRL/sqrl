@@ -284,21 +284,24 @@ jobs:
               --build-arg BASE_TAG=$BASE_TAG \
               -t datasqrl/cmd-test-image:${CIRCLE_SHA1} \
               ./sqrl-tools
-            docker push datasqrl/cmd-test-image:${CIRCLE_SHA1}
+            docker push datasqrl/cmd-test-image:${CIRCLE_SHA1} &
 
             # ── sqrl-server test image ───────────────────────────────────────
             docker build \
               --build-arg BASE_TAG=$BASE_TAG \
               -t datasqrl/sqrl-server-test-image:${CIRCLE_SHA1} \
               sqrl-server/sqrl-server-vertx
-            docker push datasqrl/sqrl-server-test-image:${CIRCLE_SHA1}
+            docker push datasqrl/sqrl-server-test-image:${CIRCLE_SHA1} &
 
             # ── flink-runner test image ──────────────────────────────────────
             docker build \
               --build-arg BASE_TAG=$BASE_TAG \
               -t datasqrl/sqrl-flink-runner-test-image:${CIRCLE_SHA1} \
               sqrl-tools/sqrl-flink-runner/target
-            docker push datasqrl/sqrl-flink-runner-test-image:${CIRCLE_SHA1}
+            docker push datasqrl/sqrl-flink-runner-test-image:${CIRCLE_SHA1} &
+
+            # wait for all images to be pushed
+            wait
 
   deploy:
     docker:
@@ -370,7 +373,7 @@ jobs:
             docker pull datasqrl/cmd-test-image:${CIRCLE_SHA1}
             docker pull datasqrl/sqrl-server-test-image:${CIRCLE_SHA1}
       - run:
-          working_dir: ./sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/udf
+          working_directory: ./sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/udf
           name: Launch sqrl-server and test if API is running
           command: |
             docker run --rm -v "$PWD:/build" -e TZ="UTC" datasqrl/cmd-test-image:${CIRCLE_SHA1} compile myudf.sqrl
