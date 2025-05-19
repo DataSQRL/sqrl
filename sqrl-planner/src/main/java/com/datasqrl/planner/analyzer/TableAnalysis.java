@@ -23,7 +23,6 @@ import com.datasqrl.plan.util.PrimaryKeyMap;
 import com.datasqrl.planner.analyzer.cost.CostAnalysis;
 import com.datasqrl.planner.hint.PlannerHints;
 import com.datasqrl.planner.tables.SourceSinkTableAnalysis;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -192,10 +191,5 @@ public class TableAnalysis implements TableOrFunctionAnalysis {
   @Override
   public UniqueIdentifier getIdentifier() {
     return new UniqueIdentifier(objectIdentifier, isSourceOrSink());
-  }
-
-  @Override
-  public List<String> getParameterNames() {
-    return Collections.EMPTY_LIST;
   }
 }

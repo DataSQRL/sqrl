@@ -57,13 +57,12 @@ import org.apache.flink.table.planner.functions.bridging.BridgingSqlFunction;
 @Value
 public class TableAnalysisLookup {
 
-  Map<ObjectIdentifier, TableAnalysis> sourceTableMap = new HashMap<>();
   Map<ObjectIdentifier, TableAnalysis> id2SourceTable = new HashMap<>();
-  ListMultimap<Integer, TableAnalysis> viewMap = ArrayListMultimap.create();
   Map<ObjectIdentifier, TableAnalysis> id2View = new HashMap<>();
+  ListMultimap<Integer, TableAnalysis> viewMap = ArrayListMultimap.create();
 
   public TableAnalysis lookupSourceTable(ObjectIdentifier objectId) {
-    return sourceTableMap.get(objectId);
+    return id2SourceTable.get(objectId);
   }
 
   public Optional<TableAnalysis> lookupView(RelNode originalRelnode) {
@@ -104,7 +103,6 @@ public class TableAnalysisLookup {
 
   public void registerTable(TableAnalysis tableAnalysis) {
     if (tableAnalysis.isSourceOrSink()) {
-      sourceTableMap.put(tableAnalysis.getObjectIdentifier(), tableAnalysis);
       id2SourceTable.put(tableAnalysis.getObjectIdentifier(), tableAnalysis);
     } else {
       viewMap.put(tableAnalysis.getRowType().hashCode(), tableAnalysis);
