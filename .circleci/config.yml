@@ -232,7 +232,7 @@ jobs:
       - generate-settings
       - run:
           name: Run Unit Tests
-          command: mvn -U -T1 -B install -DskipITs -Pskip-shade-plugin
+          command: mvn -U -T2 -B install -DskipITs -Pskip-shade-plugin
       - save-test-results
 
   integration-tests:
@@ -254,7 +254,7 @@ jobs:
       - install-jdk
       - run:
           name: Run Integration Tests
-          command: mvn -U -T1 -B install -Dtest=skip -Dsurefire.failIfNoSpecifiedTests=false -Pskip-shade-plugin
+          command: mvn -U -T2 -B install -Dtest=skip -Dsurefire.failIfNoSpecifiedTests=false -Pskip-shade-plugin
       - save-test-results
 
   build-test-image:
@@ -268,7 +268,7 @@ jobs:
       - install-jdk
       - run:
           name: Build shaded JAR
-          command: mvn -U clean -T1 -B install -DskipTests -DskipITs
+          command: mvn -U clean -T1C -B install -DskipTests -DskipITs
       - compute-base-tag
       - run:
           name: Pull base image
@@ -317,7 +317,7 @@ jobs:
             echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf
       - run:
           name: Build shaded JAR
-          command: mvn -U clean -T1 -B deploy -DskipTests -DskipITs ${CIRCLE_TAG:+-Prelease}
+          command: mvn -U clean -T1C -B deploy -DskipTests -DskipITs ${CIRCLE_TAG:+-Prelease}
 
   run-conference-tests: &disabled
     executor: default-machine
@@ -395,7 +395,7 @@ jobs:
 
       - run:
           name: Build shaded JARs
-          command: mvn -U -T1 -B install -DskipTests -DskipITs
+          command: mvn -U -T1C -B install -DskipTests -DskipITs
 
       - determine-version
       - compute-base-tag
