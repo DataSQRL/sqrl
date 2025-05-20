@@ -82,7 +82,7 @@ To get started with the latest compiler, simply pull the latest Docker image:</p
 <p>To help you transition, we’ve provided updated examples and migration guidance in the <a href="https://github.com/DataSQRL/datasqrl-examples" target="_blank" rel="noopener noreferrer">DataSQRL examples repository</a>. We recommend starting with one of the updated use cases to get a feel for the new workflow.</p>
 <h2 class="anchor anchorWithStickyNavbar_LWe7" id="thanks-to-the-community">Thanks to the Community<a href="https://docs.datasqrl.com/blog/datasqrl-0.6-release#thanks-to-the-community" class="hash-link" aria-label="Direct link to Thanks to the Community" title="Direct link to Thanks to the Community">​</a></h2>
 <p>This release wouldn’t have been possible without the contributions, bug reports, and thoughtful feedback from our growing community. Whether you opened a pull request, filed an issue, or joined a discussion, thank you. Your support drives this project forward.</p>
-<p>We’re excited to see what you build with DataSQRL 0.6. If you haven’t joined the community yet, now’s a great time to get involved: star us on <a href="https://github.com/DataSQRL/sqrl" target="_blank" rel="noopener noreferrer">GitHub</a>, try out the latest release, and share your thoughts.</p>
+<p>We’re excited to see what you build with DataSQRL 0.6. If you haven’t joined the <a href="https://docs.datasqrl.com/community">community</a> yet, now’s a great time to get involved: star us on <a href="https://github.com/DataSQRL/sqrl" target="_blank" rel="noopener noreferrer">GitHub</a>, try out the latest release, and share your thoughts.</p>
 <p>Stay tuned for more updates, and happy building.</p>]]></content:encoded>
             <category>Release</category>
         </item>
