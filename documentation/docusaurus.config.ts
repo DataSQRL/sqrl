@@ -93,6 +93,7 @@ const config: Config = {
           label: 'Documentation',
         },
         {to: '/blog', label: 'Releases & Updates', position: 'left'},
+        {to: '/community', label: 'Community', position: 'left'},
         {
           href: 'https://github.com/DataSQRL/sqrl',
           label: 'GitHub',
