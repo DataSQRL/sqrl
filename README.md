@@ -7,24 +7,22 @@
 [![Docker Image Version](https://img.shields.io/docker/v/datasqrl/cmd?sort=semver)](https://hub.docker.com/r/datasqrl/cmd/tags)
 [![Maven Central](https://img.shields.io/maven-central/v/com.datasqrl/sqrl-root)](https://repo1.maven.org/maven2/com/datasqrl/sqrl-root/)
 
-
-
-DataSQRL is a data streaming framework for incremental and real-time data processing applications. Ingest data from various sources, integrate, transform, store, and serve the result as  data APIs, LLM tooling, or iceberg views - with the simplicity of SQL.
+DataSQRL is a development framework for incremental and real-time data processing applications. Ingest data from various sources, integrate, transform, store, and serve the result as data APIs, LLM tooling, or iceberg views - with the simplicity of SQL.
 
 Data Engineers use DataSQRL to quickly build production-ready data pipelines that:
 * Create realtime **data APIs**,
-* Expose enriched data for **LLM tooling**,
-* Materialize data into **Iceberg tables** and catalog views for querying in Snowflake, DuckDB, AWS Athena, etc.
+* Serve accurate data as **tooling** for LLMs and agents,
+* Populate **data lakehouses** with **Iceberg tables** and catalog views.
 
 ![DataSQRL Pipeline Architecture](/documentation/static/img/diagrams/streaming_architecture.png)
 
-You define the data processing in SQL and DataSQRL compiles the deployment artifacts for Apache Kafka, Flink, Postgres, Iceberg, GraphQL API, and LLM tooling. It generates the glue code, schemas, and mappings to automatically integrate and configure these components into a coherent data pipeline that is highly available, consistent, scalable, observable, and fast. DataSQRL supports quick local iteration, end-to-end pipeline testing, and deployment to Kubernetes or cloud-managed services.
+You define the data processing in SQL and DataSQRL compiles the entire data infrastructure with Apache Kafka, Flink, Postgres, Iceberg, GraphQL API, and LLM tooling. It generates the glue code, schemas, mappings, and deployment artifacts to automatically integrate and configure these components into a coherent data stack that is highly available, consistent, scalable, observable, and fast. DataSQRL supports quick local iteration, end-to-end pipeline testing, and deployment to Kubernetes or cloud-managed services.
 
 ## DataSQRL Features
 
-* 🔗 **Eliminate glue code:** DataSQRL generates connectors, schemas, data mappings, SQL dialect translation, and configurations. Do more with less. 
+* 🔗 **Eliminate Infrastructure Glue:** DataSQRL generates connectors, schemas, data mappings, SQL dialect translation, and configurations. Do more with less. 
 * 🚀 **Develop faster:** Local development, CI/CD support, logging framework, reusable components, and composable architecture for quick iteration cycles. 
-* 🛡️ **Reliable Data:** Consistent data processing with exactly or at-least once guarantees, testing framework, and data lineage.
+* 🛡️ **Accurate Data:** Consistent data processing with exactly or at-least once guarantees, testing framework, and data lineage.
 * 🔒 **Production-grade:** Robust, highly available, scalable, observable, and executed by trusted OSS technologies (Kafka, Flink, Postgres, DuckDB).
 * 🤖 **AI-native:**  Support for vector embeddings, LLM invocation, and ML model inference, and LLM tooling interfaces.
 
