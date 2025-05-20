@@ -72,6 +72,24 @@ LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timesta
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
 SQL: CREATE VIEW CustomerByNothing AS  SELECT * FROM Customer;
 
+=== CustomersByTime
+ID:     default_catalog.default_database.CustomersByTime
+Type:   query
+Stage:  postgres
+Inputs: default_catalog.default_database.Customer
+Annotations:
+ - stream-root: Customer
+ - parameters: customerid, fromTime
+ - base-table: Customer
+Plan:
+LogicalSort(sort0=[$4], dir0=[ASC-nulls-first])
+  LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
+    LogicalFilter(condition=[AND(=($0, ?0), >=(+($4, 14400000:INTERVAL HOUR), ?1))])
+      LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW CustomersByTime AS 
+    SELECT * FROM Customer WHERE customerid = ?           AND `timestamp` + INTERVAL '4' HOUR >= ?        
+    ORDER BY `timestamp` ASC;
+
 === SelectCustomer
 ID:     default_catalog.default_database.SelectCustomer
 Type:   query
@@ -230,6 +248,11 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByNothing_2`
           "nullable" : false
         }
       ]
+    },
+    {
+      "name" : "Customer_1_btree_c0c4",
+      "type" : "INDEX",
+      "sql" : "CREATE INDEX IF NOT EXISTS \"Customer_1_btree_c0c4\" ON \"Customer_1\" USING btree (\"customerid\",\"timestamp\")"
     },
     {
       "name" : "Customer_1_btree_c1c0",
@@ -523,6 +546,47 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByNothing_2`
       {
         "type" : "args",
         "parentType" : "Query",
+        "fieldName" : "CustomersByTime",
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "customerid"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
+            },
+            {
+              "type" : "variable",
+              "path" : "fromTime"
+            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM \"Customer_1\"\nWHERE \"customerid\" = $1 AND \"timestamp\" + INTERVAL '4' HOUR >= $2\nORDER BY \"timestamp\" NULLS FIRST",
+            "parameters" : [
+              {
+                "type" : "arg",
+                "path" : "customerid"
+              },
+              {
+                "type" : "arg",
+                "path" : "fromTime"
+              }
+            ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
+          }
+        }
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
         "fieldName" : "SelectCustomer",
         "exec" : {
           "arguments" : [
@@ -566,7 +630,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByNothing_2`
     ],
     "schema" : {
       "type" : "string",
-      "schema" : "type Customer {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n}\n\n\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerByEmail(email: String!, id: GraphQLBigInteger, limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerByIds(ids: [GraphQLBigInteger]!, limit: Int = 10, offset: Int = 0): [Customer!]\n  SelectCustomer(id: GraphQLBigInteger, limit: Int = 10, offset: Int = 0): [Customer!]\n}\n\ntype Subscription {\n  CustomerByNothing: Customer\n}\n"
+      "schema" : "type Customer {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n}\n\n\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerByEmail(email: String!, id: GraphQLBigInteger, limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerByIds(ids: [GraphQLBigInteger]!, limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomersByTime(customerid: GraphQLBigInteger!, fromTime: DateTime!, limit: Int = 10, offset: Int = 0): [Customer!]\n  SelectCustomer(id: GraphQLBigInteger, limit: Int = 10, offset: Int = 0): [Customer!]\n}\n\ntype Subscription {\n  CustomerByNothing: Customer\n}\n"
     }
   }
 }
