@@ -1,0 +1,59 @@
+mutation SensorUpdatesAndReading {
+    update1: SensorUpdates(event: {
+        sensorid: 101,
+        sensor_name: "Living Room Sensor"
+    }) {
+        sensorid
+    }
+    add1: SensorReading(event: {
+        sensorid: 101,
+        temperature: 23.5
+    }) {
+        sensorid
+        temperature
+    }
+    update2: SensorUpdates(event: {
+        sensorid: 111,
+        sensor_name: "Dining Room Sensor"
+    }) {
+        sensorid
+    }
+    add2: SensorReading(event: {
+        sensorid: 101,
+        temperature: 33.5
+    }) {
+        sensorid
+        temperature
+    }
+    update3: SensorUpdates(event: {
+        sensorid: 121,
+        sensor_name: "Bathroom Room Sensor"
+    }) {
+        sensorid
+    }
+    add3: SensorReading(event: {
+        sensorid: 111,
+        temperature: 13.5
+    }) {
+        sensorid
+        temperature
+    }
+    update4: SensorUpdates(event: {
+        sensorid: 121,
+        sensor_name: "Bathroom Room Sensor"
+    }) {
+        sensorid
+    }
+    update5: SensorUpdates(event: {
+        sensorid: 121,
+        sensor_name: "Bathroom Room Sensor"
+    }) {
+        sensorid
+    }
+    update6: SensorUpdates(event: {
+        sensorid: 121,
+        sensor_name: "Bathroom Room Sensor"
+    }) {
+        sensorid
+    }
+}

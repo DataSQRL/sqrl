@@ -96,7 +96,11 @@ public class FullUsecasesIT {
           new ScriptCriteria("postgres-log-disabled.sqrl", "test"),
           new ScriptCriteria("postgres-log-disabled.sqrl", "run"),
           new ScriptCriteria("connectors.sqrl", "test"), // should not be executed
-          new ScriptCriteria("flink_kafka.sqrl", "run") // does not expose an API
+          new ScriptCriteria("flink_kafka.sqrl", "run"), // does not expose an API
+          new ScriptCriteria(
+              "temporal-join.sqrl",
+              "run") // TODO: only 'run' when there are no tests (i.e. snapshot dir) - there is no
+                     // benefit to also running, it's wasteful
           );
 
   static final Path PROJECT_ROOT = Path.of(System.getProperty("user.dir"));
@@ -386,7 +390,7 @@ public class FullUsecasesIT {
   @MethodSource("useCaseProvider")
   @Disabled
   public void runTestCaseByName(UseCaseTestParameter param) {
-    if (param.sqrlFileName.equals("banking-batch.sqrl") && param.goal.equals("test")) {
+    if (param.sqrlFileName.equals("temporal-join.sqrl") && param.goal.equals("test")) {
       testUseCase(param);
     } else {
       assumeFalse(true);

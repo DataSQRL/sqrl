@@ -1,0 +1,1 @@
+{"data":{"update1":{"sensorid":101},"add1":{"sensorid":101,"temperature":23.5},"update2":{"sensorid":111},"add2":{"sensorid":101,"temperature":33.5},"update3":{"sensorid":121},"add3":{"sensorid":111,"temperature":13.5},"update4":{"sensorid":121},"update5":{"sensorid":121},"update6":{"sensorid":121}}}
