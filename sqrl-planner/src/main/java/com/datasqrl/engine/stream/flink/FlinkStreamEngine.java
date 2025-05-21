@@ -28,7 +28,9 @@ import com.datasqrl.engine.stream.StreamEngine;
 import com.google.inject.Inject;
 import java.io.IOException;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -40,12 +42,12 @@ public class FlinkStreamEngine extends ExecutionEngine.Base implements StreamEng
 
   public static final EnumSet<EngineFeature> FLINK_CAPABILITIES = STANDARD_STREAM;
 
-  @Getter private final EngineConfig config;
+  @Getter private final EngineConfig engineConfig;
 
   @Inject
   public FlinkStreamEngine(PackageJson json) {
     super(FlinkEngineFactory.ENGINE_NAME, EngineType.STREAMS, FLINK_CAPABILITIES);
-    this.config =
+    this.engineConfig =
         json.getEngines()
             .getEngineConfig(FlinkEngineFactory.ENGINE_NAME)
             .orElseGet(() -> new EmptyEngineConfig(FlinkEngineFactory.ENGINE_NAME));
@@ -57,8 +59,14 @@ public class FlinkStreamEngine extends ExecutionEngine.Base implements StreamEng
   @Override
   public ExecutionMode getExecutionMode() {
     return ExecutionMode.valueOf(
-        config
+        engineConfig
             .getSetting(MODE_KEY, Optional.of(ExecutionMode.STREAMING.name()))
             .toUpperCase(Locale.ENGLISH));
+  }
+
+  public Map<String, String> getBaseConfiguration() {
+    Map<String, String> configMap = new HashMap<>();
+    engineConfig.getConfig().forEach((key, value) -> configMap.put(key, String.valueOf(value)));
+    return configMap;
   }
 }

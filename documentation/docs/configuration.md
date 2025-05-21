@@ -37,6 +37,10 @@ Connectors that connect flink to other engines and external systems can be confi
 
 Environment variables that start with the `sqrl` prefix are templated variables that the DataSQRL compiler instantiates. For example: `${sqrl:table-name}` provides the table name for a connector that writes to a table.
 
+Flink configuration can be specified in the `config` section. See [Flink configuration](https://nightlies.apache.org/flink/flink-docs-release-1.19/docs/dev/table/config/) for details.
+These configuration options are applied when compiling the Flink plan and when executing Flink while running or testing via the [DataSQRL command](compiler). 
+
+
 ```json
 {
   "engines" : {
@@ -60,24 +64,14 @@ Environment variables that start with the `sqrl` prefix are templated variables 
           "properties.auto.offset.reset" : "earliest",
           "topic" : "${sqrl:original-table-name}"
         }
+      },
+      "config" : {
+        "table.exec.source.idle-timeout": "5000 ms"
       }
     }
   }
 }
 ```
-
-Flink runtime configuration can be specified in the [`values` configuration](#values) section:
-
-```json
-{
-  "values" : {
-    "flink-config": {
-      "table.exec.source.idle-timeout": "100 ms"
-    }
-  }
-}
-```
-The configuration options are set on the Flink runtime when running or testing via the [DataSQRL command](compiler).
 
 ### Postgres
 
@@ -256,35 +250,28 @@ Testing related configuration is found in the `test-runner` section.
 ```json
 {
   "test-runner": {
-    "delay-sec": 30
+    "delay-sec": 30,
+    "mutation-delay": 1
   }
 }
 ```
 
-* `delay-sec`: The number of seconds to wait between starting the processing of data and snapshotting the data.
-
+* `delay-sec`: The number of seconds to wait between starting the processing of data and snapshotting the data. Defaults to 30.
+* `required-checkpoints`: The number of checkpoints that need to be completed before the test queries are executed. Defaults to 0. If this is configured to a positive value, `delay-sec` must be set to -1.
+* `mutation-delay`: The number of seconds to wait between execution mutation queries. Defaults to 0.
 
 
 ## Values
 
-The `values` section of the configuration allows you to specify configuration values that are passed through to engines they pertain to.
-
-The default deployment profiles supports a `flink-config` section to allow injecting additional flink runtime configuration. You can use this section of the configuration to specify any [Flink configuration option](https://nightlies.apache.org/flink/flink-docs-release-1.19/docs/dev/table/config/).
+The `values` section of the configuration allows you to specify configuration values that is applied at runtime when running or testing SQRL scripts with the [DataSQRL command](compiler).
 
 ```json
 {
  "values" : {
-    "flink-config" : {
-      "taskmanager.memory.network.max": "800m",
-      "execution.checkpointing.mode" : "EXACTLY_ONCE",
-      "execution.checkpointing.interval" : "1000ms"
-    },
     "create-topics": ["mytopic"]
    }
 }
 ```
-
-For Flink, the `values` configuration settings take precedence over identical configuration settings in the compiled physical plans.
 
 For the log engine, the `create-topics` option allows you to specify topics to create in the cluster prior to starting the pipeline. This is useful for testing.
 

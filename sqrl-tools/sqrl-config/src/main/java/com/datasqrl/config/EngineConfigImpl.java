@@ -15,9 +15,11 @@
  */
 package com.datasqrl.config;
 
+import static com.datasqrl.config.PackageJsonImpl.CONFIG_KEY;
 import static com.datasqrl.config.PackageJsonImpl.CONNECTORS_KEY;
 
 import com.datasqrl.config.SqrlConfig.Value;
+import java.util.Map;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -47,5 +49,10 @@ public class EngineConfigImpl implements PackageJson.EngineConfig {
   @Override
   public ConnectorsConfig getConnectors() {
     return new ConnectorsConfigImpl(sqrlConfig.getSubConfig(CONNECTORS_KEY));
+  }
+
+  @Override
+  public Map<String, Object> getConfig() {
+    return sqrlConfig.getSubConfig(CONFIG_KEY).toMap();
   }
 }

@@ -124,6 +124,10 @@
             "connectors": {
               "type": "object",
               "minProperties": 1
+            },
+            "config": {
+              "type": "object",
+              "minProperties": 1
             }
           }
         },

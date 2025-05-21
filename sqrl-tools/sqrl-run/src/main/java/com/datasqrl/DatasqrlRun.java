@@ -151,6 +151,10 @@ public class DatasqrlRun {
           if (String.valueOf(((Map) flink).get("mode")).equalsIgnoreCase("batch")) {
             isStreaming = false;
           }
+          Object c = ((Map) flink).get("config");
+          if (c instanceof Map m) {
+            config.putAll(m);
+          }
         }
       }
       Object compiler = packageJsonMap.get("compiler");

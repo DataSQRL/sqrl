@@ -58,7 +58,6 @@ import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -182,7 +181,7 @@ public class Sqrl2FlinkSQLTranslator {
     // Create a UDF class loader and configure
     ClassLoader udfClassLoader =
         new URLClassLoader(jarUrls.toArray(new URL[0]), getClass().getClassLoader());
-    Map<String, String> config = new HashMap<>();
+    Map<String, String> config = flink.getBaseConfiguration();
     config.put(
         "pipeline.classpaths",
         jarUrls.stream().map(URL::toString).collect(Collectors.joining(",")));
@@ -215,7 +214,7 @@ public class Sqrl2FlinkSQLTranslator {
     var calciteConfigBuilder = new CalciteConfigBuilder();
     calciteConfigBuilder.addSqlOperatorTable(sqrlFunctionCatalog.getOperatorTable());
     //    setOptimizerRules(calciteConfigBuilder,tEnv.getConfig()); TODO: fix, so we have more
-    // effective subgraph identification
+    // effective subgraph identification by not pushing down projections
 
     this.tEnv.getConfig().setPlannerConfig(calciteConfigBuilder.build());
     this.catalogManager = tEnv.getCatalogManager();

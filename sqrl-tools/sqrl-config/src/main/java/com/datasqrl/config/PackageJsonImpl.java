@@ -17,7 +17,6 @@ package com.datasqrl.config;
 
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 public class PackageJsonImpl implements PackageJson {
@@ -30,6 +29,7 @@ public class PackageJsonImpl implements PackageJson {
   public static final String PACKAGE_KEY = "package";
   public static final String PIPELINE_KEY = "enabled-engines";
   public static final String CONNECTORS_KEY = "connectors";
+  public static final String CONFIG_KEY = "config";
   public static final String TEST_RUNNER_KEY = "test-runner";
 
   private SqrlConfig sqrlConfig;
@@ -78,11 +78,6 @@ public class PackageJsonImpl implements PackageJson {
   }
 
   @Override
-  public Map<String, Object> toMap() {
-    return sqrlConfig.toMap();
-  }
-
-  @Override
   public CompilerConfigImpl getCompilerConfig() {
     return new CompilerConfigImpl(sqrlConfig.getSubConfig(COMPILER_KEY));
   }
@@ -113,6 +108,6 @@ public class PackageJsonImpl implements PackageJson {
 
   @Override
   public String toString() {
-    return "PackageJsonImpl{" + "sqrlConfig=" + sqrlConfig.toMap() + '}';
+    return "PackageJsonImpl{" + sqrlConfig + '}';
   }
 }

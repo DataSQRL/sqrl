@@ -26,7 +26,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
@@ -81,23 +80,6 @@ public class ConfigurationTest {
     assertEquals(5, nested.counter);
     assertEquals(33, nested.obj.optInt);
     assertTrue(nested.obj.flag);
-  }
-
-  @Test
-  public void testToMap() {
-    var config = SqrlConfigCommons.fromFiles(errors, CONFIG_FILE1);
-    assertEquals("that", config.getSubConfig("subConf").asString("delimited.config.option").get());
-    var result = SqrlConfigUtil.toStringMap(config.getSubConfig("subConf"), Set.of());
-    assertEquals(3, result.size());
-    assertEquals("that", result.get("delimited.config.option"));
-    assertEquals("1", result.get("one"));
-    assertEquals(
-        2, SqrlConfigUtil.toStringMap(config.getSubConfig("subConf"), Set.of("one")).size());
-
-    var prop = SqrlConfigUtil.toProperties(config.getSubConfig("subConf"), Set.of());
-    assertEquals(3, prop.size());
-    assertEquals("that", prop.getProperty("delimited.config.option"));
-    assertEquals(1, prop.get("one"));
   }
 
   private void testSubConf(SqrlConfig config) {

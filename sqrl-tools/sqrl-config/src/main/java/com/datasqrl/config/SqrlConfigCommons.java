@@ -304,6 +304,11 @@ public class SqrlConfigCommons implements SqrlConfig {
   }
 
   @Override
+  public String toString() {
+    return "SqrlConfig{" + "configFilename='" + configFilename + '\'' + '}';
+  }
+
+  @Override
   public void toFile(Path file, boolean pretty) {
     try {
       if (!Files.exists(file) || Files.readString(file).isBlank()) {
@@ -340,11 +345,11 @@ public class SqrlConfigCommons implements SqrlConfig {
               var fullKey = getFullKey(localKey);
               if (config.containsKey(fullKey)) {
                 Object value;
-                // TODO: Generalize instead of hard-coding
-                if (localKey.equalsIgnoreCase("enabled-engines")) {
+                Object rawValue = config.getProperty(fullKey);
+                if (rawValue instanceof List) {
                   value = config.getList(fullKey);
                 } else {
-                  value = config.getProperty(fullKey);
+                  value = rawValue;
                 }
                 // TODO: this does not interpolate secrets. need to check type and then use type
                 // specific access method
