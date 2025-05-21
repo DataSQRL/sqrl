@@ -39,8 +39,6 @@ public interface PackageJson {
 
   ScriptConfig getScriptConfig();
 
-  Map<String, Object> toMap();
-
   CompilerConfig getCompilerConfig();
 
   PackageConfiguration getPackageConfig();
@@ -117,6 +115,8 @@ public interface PackageJson {
     String getSetting(String key, Optional<String> defaultValue);
 
     ConnectorsConfig getConnectors();
+
+    Map<String, Object> getConfig();
   }
 
   @AllArgsConstructor
@@ -135,6 +135,11 @@ public interface PackageJson {
     @Override
     public ConnectorsConfig getConnectors() {
       return null;
+    }
+
+    @Override
+    public Map<String, Object> getConfig() {
+      return Map.of();
     }
   }
 
