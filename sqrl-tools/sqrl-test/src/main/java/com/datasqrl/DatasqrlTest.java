@@ -59,6 +59,7 @@ public class DatasqrlTest {
 
   // Number of seconds we wait for Flink job to process all the data
   public static final int DEFAULT_DELAY_SEC = 30;
+  public static final int MUTATION_WAIT_SEC = 0;
 
   private final Path basePath;
   private final Path planPath;
@@ -101,6 +102,26 @@ public class DatasqrlTest {
     List<Exception> exceptions = new ArrayList<>();
     // Retrieve test plan
     Optional<TestPlan> testPlanOpt = Optional.empty();
+    // Read configuration
+    long delaySec = DEFAULT_DELAY_SEC;
+    long mutationWait = MUTATION_WAIT_SEC;
+    int requiredCheckpoints = 0;
+    // todo: fix inject PackageJson and retrieve through interface
+    Object testRunner = run.getPackageJson().get("test-runner");
+    if (testRunner instanceof Map testRunnerMap) {
+      Object o = testRunnerMap.get("delay-sec");
+      if (o instanceof Number number) {
+        delaySec = number.longValue();
+      }
+      Object c = testRunnerMap.get("required-checkpoints");
+      if (c instanceof Number number) {
+        requiredCheckpoints = number.intValue();
+      }
+      Object m = testRunnerMap.get("mutation-delay");
+      if (m instanceof Number number) {
+        mutationWait = number.intValue();
+      }
+    }
 
     // It is possible that no test plan exists, such as no test queries.
     // We still run it for exports or other explicit tests the user created outside the test
@@ -157,25 +178,12 @@ public class DatasqrlTest {
           // Snapshot result
           Path snapshotPath = snapshotDir.resolve(mutationQuery.getName() + ".snapshot");
           snapshot(snapshotPath, mutationQuery.getName(), data, exceptions);
+          // wait before next mutation
+          if (mutationWait > 0) Thread.sleep(mutationWait * 1000);
         }
       }
 
       // 3. Wait for the Flink job to finish or the configured delay
-      long delaySec = DEFAULT_DELAY_SEC;
-      int requiredCheckpoints = 0;
-      // todo: fix inject PackageJson and retrieve through interface
-      Object testRunner = run.getPackageJson().get("test-runner");
-      if (testRunner instanceof Map testRunnerMap) {
-        Object o = testRunnerMap.get("delay-sec");
-        if (o instanceof Number number) {
-          delaySec = number.longValue();
-        }
-        Object c = testRunnerMap.get("required-checkpoints");
-        if (c instanceof Number number) {
-          requiredCheckpoints = number.intValue();
-        }
-      }
-
       if (delaySec == -1) {
         FlinkOperatorStatusChecker flinkOperatorStatusChecker =
             new FlinkOperatorStatusChecker(

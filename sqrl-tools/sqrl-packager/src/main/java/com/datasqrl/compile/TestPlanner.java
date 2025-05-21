@@ -47,6 +47,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -71,6 +72,7 @@ public class TestPlanner {
             paths
                 .filter(Files::isRegularFile)
                 .filter(path -> path.toString().endsWith(".graphql"))
+                .sorted(Comparator.comparing(path -> path.getFileName().toString().toLowerCase()))
                 .forEach(
                     file -> {
                       String content = null;

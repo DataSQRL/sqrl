@@ -3,10 +3,14 @@
   "enabled-engines": ["vertx", "postgres", "kafka", "flink"],
   "values" : {
     "flink-config": {
-      "table.exec.source.idle-timeout": "10000 ms"
+      "table.exec.source.idle-timeout": "5000 ms"
     }
   },
+  "compiler" : {
+    "compilePlan" : false
+  },
   "test-runner": {
-    "delay-sec": 30
+    "delay-sec": 30,
+    "mutation-delay": 1
   }
 }
