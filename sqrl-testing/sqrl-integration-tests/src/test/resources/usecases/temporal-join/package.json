@@ -8,11 +8,6 @@
       }
     }
   },
-  "values" : {
-    "flink-config": {
-      "table.exec.source.idle-timeout": "5000 ms"
-    }
-  },
   "test-runner": {
     "delay-sec": 30,
     "mutation-delay": 1
