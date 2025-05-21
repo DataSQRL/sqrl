@@ -12,16 +12,16 @@ Schema:
  - sensorid: INTEGER NOT NULL
  - temperature: FLOAT NOT NULL
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
- - sensor_name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - sensor_name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
 Plan:
 LogicalProject(sensorid=[$0], temperature=[$1], event_time=[$2], sensor_name=[$4])
-  LogicalCorrelate(correlation=[$cor1], joinType=[inner], requiredColumns=[{0, 2}])
+  LogicalCorrelate(correlation=[$cor1], joinType=[left], requiredColumns=[{0, 2}])
     LogicalTableScan(table=[[default_catalog, default_database, SensorReading]])
     LogicalFilter(condition=[=($cor1.sensorid, $0)])
       LogicalSnapshot(period=[$cor1.event_time])
         LogicalTableScan(table=[[default_catalog, default_database, _SensorDistinct]])
 SQL: CREATE VIEW EnrichedSensorReading AS  SELECT r.sensorid, r.temperature, r.event_time, u.sensor_name
-                         FROM SensorReading r JOIN _SensorDistinct FOR SYSTEM_TIME AS OF r.event_time u on r.sensorid = u.sensorid
+                         FROM SensorReading r LEFT JOIN _SensorDistinct FOR SYSTEM_TIME AS OF r.event_time u on r.sensorid = u.sensorid
                          ORDER BY r.event_time ASC;
 
 === SensorReading
@@ -86,6 +86,12 @@ SELECT `sensorid`, `sensor_name`, `lastUpdated`
 FROM (SELECT `sensorid`, `sensor_name`, `lastUpdated`, ROW_NUMBER() OVER (PARTITION BY `sensorid` ORDER BY `lastUpdated` DESC NULLS LAST) AS `__sqrlinternal_rownum`
   FROM `default_catalog`.`default_database`.`SensorUpdates`) AS `t`
 WHERE `__sqrlinternal_rownum` = 1
+=== Result
+ID:     logger.Result
+Type:   export
+Stage:  flink
+Inputs: default_catalog.default_database.EnrichedSensorReading
+
 === SensorReading
 ID:     logger.SensorReading
 Type:   export
@@ -137,12 +143,21 @@ CREATE VIEW `EnrichedSensorReading`
 AS
 SELECT `r`.`sensorid`, `r`.`temperature`, `r`.`event_time`, `u`.`sensor_name`
 FROM `SensorReading` AS `r`
- INNER JOIN `_SensorDistinct` FOR SYSTEM_TIME AS OF `r`.`event_time` AS `u` ON `r`.`sensorid` = `u`.`sensorid`;
-CREATE TABLE `EnrichedSensorReading_1` (
+ LEFT JOIN `_SensorDistinct` FOR SYSTEM_TIME AS OF `r`.`event_time` AS `u` ON `r`.`sensorid` = `u`.`sensorid`;
+CREATE TABLE `Result_1` (
   `sensorid` INTEGER NOT NULL,
   `temperature` FLOAT NOT NULL,
   `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `sensor_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `sensor_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`
+) WITH (
+  'connector' = 'print',
+  'print-identifier' = 'Result'
+);
+CREATE TABLE `EnrichedSensorReading_2` (
+  `sensorid` INTEGER NOT NULL,
+  `temperature` FLOAT NOT NULL,
+  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `sensor_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
   `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
   PRIMARY KEY (`__pk_hash`) NOT ENFORCED
 ) WITH (
@@ -151,9 +166,9 @@ CREATE TABLE `EnrichedSensorReading_1` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'EnrichedSensorReading_1'
+  'table-name' = 'EnrichedSensorReading_2'
 );
-CREATE TABLE `SensorReading_2` (
+CREATE TABLE `SensorReading_3` (
   `sensorid` INTEGER NOT NULL,
   `temperature` FLOAT NOT NULL,
   `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
@@ -161,7 +176,7 @@ CREATE TABLE `SensorReading_2` (
   'connector' = 'print',
   'print-identifier' = 'SensorReading'
 );
-CREATE TABLE `SensorReading_3` (
+CREATE TABLE `SensorReading_4` (
   `sensorid` INTEGER NOT NULL,
   `temperature` FLOAT NOT NULL,
   `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
@@ -173,9 +188,9 @@ CREATE TABLE `SensorReading_3` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'SensorReading_3'
+  'table-name' = 'SensorReading_4'
 );
-CREATE TABLE `SensorUpdates_4` (
+CREATE TABLE `SensorUpdates_5` (
   `sensorid` INTEGER NOT NULL,
   `sensor_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `lastUpdated` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
@@ -183,7 +198,7 @@ CREATE TABLE `SensorUpdates_4` (
   'connector' = 'print',
   'print-identifier' = 'SensorUpdates'
 );
-CREATE TABLE `SensorUpdates_5` (
+CREATE TABLE `SensorUpdates_6` (
   `sensorid` INTEGER NOT NULL,
   `sensor_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `lastUpdated` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
@@ -195,30 +210,34 @@ CREATE TABLE `SensorUpdates_5` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'SensorUpdates_5'
+  'table-name' = 'SensorUpdates_6'
 );
 EXECUTE STATEMENT SET BEGIN
-INSERT INTO `default_catalog`.`default_database`.`EnrichedSensorReading_1`
-(SELECT `sensorid`, `temperature`, `event_time`, `sensor_name`, `hashColumns`(`sensorid`, `temperature`, `event_time`, `sensor_name`) AS `__pk_hash`
+INSERT INTO `default_catalog`.`default_database`.`Result_1`
+(SELECT *
  FROM `default_catalog`.`default_database`.`EnrichedSensorReading`)
 ;
-INSERT INTO `default_catalog`.`default_database`.`SensorReading_2`
- (SELECT *
-  FROM `default_catalog`.`default_database`.`SensorReading`)
+INSERT INTO `default_catalog`.`default_database`.`EnrichedSensorReading_2`
+ (SELECT `sensorid`, `temperature`, `event_time`, `sensor_name`, `hashColumns`(`sensorid`, `temperature`, `event_time`, `sensor_name`) AS `__pk_hash`
+  FROM `default_catalog`.`default_database`.`EnrichedSensorReading`)
  ;
  INSERT INTO `default_catalog`.`default_database`.`SensorReading_3`
-  (SELECT `sensorid`, `temperature`, `event_time`, `hashColumns`(`sensorid`, `temperature`, `event_time`) AS `__pk_hash`
+  (SELECT *
    FROM `default_catalog`.`default_database`.`SensorReading`)
   ;
-  INSERT INTO `default_catalog`.`default_database`.`SensorUpdates_4`
-   (SELECT *
-    FROM `default_catalog`.`default_database`.`SensorUpdates`)
+  INSERT INTO `default_catalog`.`default_database`.`SensorReading_4`
+   (SELECT `sensorid`, `temperature`, `event_time`, `hashColumns`(`sensorid`, `temperature`, `event_time`) AS `__pk_hash`
+    FROM `default_catalog`.`default_database`.`SensorReading`)
    ;
    INSERT INTO `default_catalog`.`default_database`.`SensorUpdates_5`
-    (SELECT `sensorid`, `sensor_name`, `lastUpdated`, `hashColumns`(`sensorid`, `sensor_name`, `lastUpdated`) AS `__pk_hash`
+    (SELECT *
      FROM `default_catalog`.`default_database`.`SensorUpdates`)
     ;
-    END
+    INSERT INTO `default_catalog`.`default_database`.`SensorUpdates_6`
+     (SELECT `sensorid`, `sensor_name`, `lastUpdated`, `hashColumns`(`sensorid`, `sensor_name`, `lastUpdated`) AS `__pk_hash`
+      FROM `default_catalog`.`default_database`.`SensorUpdates`)
+     ;
+     END
 >>>kafka.json
 {
   "topics" : [
@@ -241,18 +260,18 @@ INSERT INTO `default_catalog`.`default_database`.`SensorReading_2`
   ]
 }
 >>>postgres-schema.sql
-CREATE TABLE IF NOT EXISTS "EnrichedSensorReading_1" ("sensorid" INTEGER NOT NULL, "temperature" FLOAT NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE NOT NULL, "sensor_name" TEXT NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
-CREATE TABLE IF NOT EXISTS "SensorReading_3" ("sensorid" INTEGER NOT NULL, "temperature" FLOAT NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
-CREATE TABLE IF NOT EXISTS "SensorUpdates_5" ("sensorid" INTEGER NOT NULL, "sensor_name" TEXT NOT NULL, "lastUpdated" TIMESTAMP WITH TIME ZONE NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"))
+CREATE TABLE IF NOT EXISTS "EnrichedSensorReading_2" ("sensorid" INTEGER NOT NULL, "temperature" FLOAT NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE NOT NULL, "sensor_name" TEXT , "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "SensorReading_4" ("sensorid" INTEGER NOT NULL, "temperature" FLOAT NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "SensorUpdates_6" ("sensorid" INTEGER NOT NULL, "sensor_name" TEXT NOT NULL, "lastUpdated" TIMESTAMP WITH TIME ZONE NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"))
 >>>postgres-views.sql
 CREATE OR REPLACE VIEW "EnrichedSensorReading"("sensorid", "temperature", "event_time", "sensor_name") AS SELECT *
 FROM (SELECT "sensorid", "temperature", "event_time", "sensor_name"
-  FROM "EnrichedSensorReading_1"
+  FROM "EnrichedSensorReading_2"
   ORDER BY "event_time" NULLS FIRST) AS "t3";
 CREATE OR REPLACE VIEW "SensorReading"("sensorid", "temperature", "event_time") AS SELECT "sensorid", "temperature", "event_time"
-FROM "SensorReading_3";
+FROM "SensorReading_4";
 CREATE OR REPLACE VIEW "SensorUpdates"("sensorid", "sensor_name", "lastUpdated") AS SELECT "sensorid", "sensor_name", "lastUpdated"
-FROM "SensorUpdates_5"
+FROM "SensorUpdates_6"
 >>>vertx.json
 {
   "model" : {
@@ -274,7 +293,7 @@ FROM "SensorUpdates_5"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM (SELECT \"sensorid\", \"temperature\", \"event_time\", \"sensor_name\"\n  FROM \"EnrichedSensorReading_1\"\n  ORDER BY \"event_time\" NULLS FIRST) AS \"t0\"",
+            "sql" : "SELECT *\nFROM (SELECT \"sensorid\", \"temperature\", \"event_time\", \"sensor_name\"\n  FROM \"EnrichedSensorReading_2\"\n  ORDER BY \"event_time\" NULLS FIRST) AS \"t0\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
@@ -298,7 +317,7 @@ FROM "SensorUpdates_5"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT \"sensorid\", \"temperature\", \"event_time\"\nFROM \"SensorReading_3\"",
+            "sql" : "SELECT \"sensorid\", \"temperature\", \"event_time\"\nFROM \"SensorReading_4\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
@@ -322,7 +341,7 @@ FROM "SensorUpdates_5"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT \"sensorid\", \"sensor_name\", \"lastUpdated\"\nFROM \"SensorUpdates_5\"",
+            "sql" : "SELECT \"sensorid\", \"sensor_name\", \"lastUpdated\"\nFROM \"SensorUpdates_6\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
@@ -353,7 +372,7 @@ FROM "SensorUpdates_5"
     "subscriptions" : [ ],
     "schema" : {
       "type" : "string",
-      "schema" : "\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype EnrichedSensorReading {\n  sensorid: Int!\n  temperature: Float!\n  event_time: DateTime!\n  sensor_name: String!\n}\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Mutation {\n  SensorReading(event: SensorReadingInput!): SensorReadingResultOutput!\n  SensorUpdates(event: SensorUpdatesInput!): SensorUpdatesResultOutput!\n}\n\ntype Query {\n  EnrichedSensorReading(limit: Int = 10, offset: Int = 0): [EnrichedSensorReading!]\n  SensorReading(limit: Int = 10, offset: Int = 0): [SensorReading!]\n  SensorUpdates(limit: Int = 10, offset: Int = 0): [SensorUpdates!]\n}\n\ntype SensorReading {\n  sensorid: Int!\n  temperature: Float!\n  event_time: DateTime!\n}\n\ninput SensorReadingInput {\n  sensorid: Int!\n  temperature: Float!\n}\n\ntype SensorReadingResultOutput {\n  sensorid: Int!\n  temperature: Float!\n  event_time: DateTime!\n}\n\ntype SensorUpdates {\n  sensorid: Int!\n  sensor_name: String!\n  lastUpdated: DateTime!\n}\n\ninput SensorUpdatesInput {\n  sensorid: Int!\n  sensor_name: String!\n}\n\ntype SensorUpdatesResultOutput {\n  sensorid: Int!\n  sensor_name: String!\n  lastUpdated: DateTime!\n}\n"
+      "schema" : "\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype EnrichedSensorReading {\n  sensorid: Int!\n  temperature: Float!\n  event_time: DateTime!\n  sensor_name: String\n}\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Mutation {\n  SensorReading(event: SensorReadingInput!): SensorReadingResultOutput!\n  SensorUpdates(event: SensorUpdatesInput!): SensorUpdatesResultOutput!\n}\n\ntype Query {\n  EnrichedSensorReading(limit: Int = 10, offset: Int = 0): [EnrichedSensorReading!]\n  SensorReading(limit: Int = 10, offset: Int = 0): [SensorReading!]\n  SensorUpdates(limit: Int = 10, offset: Int = 0): [SensorUpdates!]\n}\n\ntype SensorReading {\n  sensorid: Int!\n  temperature: Float!\n  event_time: DateTime!\n}\n\ninput SensorReadingInput {\n  sensorid: Int!\n  temperature: Float!\n}\n\ntype SensorReadingResultOutput {\n  sensorid: Int!\n  temperature: Float!\n  event_time: DateTime!\n}\n\ntype SensorUpdates {\n  sensorid: Int!\n  sensor_name: String!\n  lastUpdated: DateTime!\n}\n\ninput SensorUpdatesInput {\n  sensorid: Int!\n  sensor_name: String!\n}\n\ntype SensorUpdatesResultOutput {\n  sensorid: Int!\n  sensor_name: String!\n  lastUpdated: DateTime!\n}\n"
     }
   }
 }
