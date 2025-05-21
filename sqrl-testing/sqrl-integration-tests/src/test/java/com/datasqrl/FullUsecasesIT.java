@@ -100,7 +100,7 @@ public class FullUsecasesIT {
           new ScriptCriteria(
               "temporal-join.sqrl",
               "run") // TODO: only 'run' when there are no tests (i.e. snapshot dir) - there is no
-                     // benefit to also running, it's wasteful
+          // benefit to also running, it's wasteful
           );
 
   static final Path PROJECT_ROOT = Path.of(System.getProperty("user.dir"));
