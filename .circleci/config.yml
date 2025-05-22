@@ -61,6 +61,7 @@ commands:
       - run:
           name: Determine Docker tag & registry
           command: |
+            set -x
             # helper to extract the first PR number, if any
             get_pr_number() {
               if [ -n "$CIRCLE_PULL_REQUEST" ]; then
@@ -429,6 +430,7 @@ jobs:
       - run:
           name: Build + push Docker images
           command: |
+            set -x
             build_and_push() {
               local repo="$1" ; shift
               local dir="$1"  ; shift
