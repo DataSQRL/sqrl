@@ -1,11 +1,6 @@
 {
   "version": "1",
   "enabled-engines": ["vertx", "postgres", "kafka", "flink"],
-  "compile" : {
-    "sqrl-version": "0.5.10",
-    "flink-build-image": "gradle:8.6-jdk11",
-    "sqrl-vertx-image": "datasqrl/sqrl-server:v0.5.10"
-  },
   "engines" : {
     "flink" : {
       "connectors": {
@@ -91,15 +86,5 @@
   },
   "test-runner": {
     "delay-sec": 30
-  },
-  "package": {
-    "name": "datasqrl.profile.default",
-    "version": "0.5.10",
-    "variant": "dev",
-    "latest": true,
-    "description": "A docker compose datasqrl profile",
-    "homepage": "https://dev.datasqrl.com/datasqrl/packages/datasqrl.profile.default",
-    "documentation": "https://dev.datasqrl.com/datasqrl/packages/datasqrl.profile.default",
-    "topics": [ "profile" ]
   }
 }
