@@ -83,11 +83,6 @@ public class PackageJsonImpl implements PackageJson {
   }
 
   @Override
-  public PackageConfigurationImpl getPackageConfig() {
-    return sqrlConfig.getSubConfig(PACKAGE_KEY).allAs(PackageConfigurationImpl.class).get();
-  }
-
-  @Override
   public int getVersion() {
     return sqrlConfig.getVersion();
   }

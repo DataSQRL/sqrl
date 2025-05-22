@@ -41,8 +41,6 @@ public interface PackageJson {
 
   CompilerConfig getCompilerConfig();
 
-  PackageConfiguration getPackageConfig();
-
   int getVersion();
 
   boolean hasScriptKey();

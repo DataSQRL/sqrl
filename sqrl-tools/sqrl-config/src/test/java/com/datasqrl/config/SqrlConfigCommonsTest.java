@@ -44,7 +44,6 @@ class SqrlConfigCommonsTest {
     assertThat(underTest.getEngines().getEngineConfig("flink")).isPresent();
     assertThat(underTest.getScriptConfig().getGraphql()).isEmpty();
     assertThat(underTest.getScriptConfig().getMainScript()).isEmpty();
-    assertThat(underTest.getPackageConfig().getName()).isEqualTo("datasqrl.profile.default");
   }
 
   @Test
@@ -63,6 +62,5 @@ class SqrlConfigCommonsTest {
     assertThat(underTest.getEngines().getEngineConfig("flink")).isPresent();
     assertThat(underTest.getScriptConfig().getGraphql()).isEmpty();
     assertThat(underTest.getScriptConfig().getMainScript()).isEmpty();
-    assertThat(underTest.getPackageConfig().getName()).isEqualTo("datasqrl.test");
   }
 }
