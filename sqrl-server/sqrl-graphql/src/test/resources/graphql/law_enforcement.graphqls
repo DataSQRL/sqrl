@@ -1,0 +1,234 @@
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+
+
+type Query {
+  """
+  Fetches Bolo details with specified vehicle characteristics.
+  """
+  BoloDetails(
+    """
+    The make of the vehicle (e.g., Ford, Toyota).
+    """
+    make: String!,
+
+    """
+    The model of the vehicle.
+    """
+    model: String,
+
+    """
+    The maximum number of results to return. Defaults to 10.
+    """
+    limit: Int = 10,
+
+    """
+    The number of results to skip before starting to return results. Defaults to 0.
+    """
+    offset: Int = 0
+  ): [BoloDetails!]
+
+  """
+  Retrieves driver information using their license number.
+  """
+  Driver(
+    """
+    The license number of the driver.
+    """
+    license_number: String!,
+
+    """
+    The maximum number of results to return. Defaults to 10.
+    """
+    limit: Int = 10,
+
+    """
+    The number of results to skip before starting to return results. Defaults to 0.
+    """
+    offset: Int = 0
+  ): [Driver!]
+
+  """
+  Retrieves vehicle details using the registration number.
+  """
+  Vehicle(
+    """
+    The registration number of the vehicle, i.e. the license plate number.
+    """
+    registration_number: String!,
+
+    """
+    The maximum number of results to return. Defaults to 10.
+    """
+    limit: Int = 10,
+
+    """
+    The number of results to skip before starting to return results. Defaults to 0.
+    """
+    offset: Int = 0
+  ): [Vehicle!]
+
+  """
+  Fetches statistics on warrants filtered by the type of crime.
+  """
+  WarrantsByCrime(
+    """
+    The type of crime.
+    """
+    crime: String,
+
+    limit: Int = 100,
+    offset: Int = 0
+  ): [WarrantsByCrime!]
+
+  """
+  Fetches statistics on warrants issued by state filtered by their status.
+  """
+  WarrantsByState(
+    """
+    The status of the warrant (one of: active, urgent, closed, suspended).
+    """
+    status: String,
+
+    limit: Int = 100,
+
+    offset: Int = 0
+  ): [WarrantsByState!]
+
+  """
+  Fetches Bolo (be on the lookout) statistics by week filtered by state. It returns the data ordered
+  by week starting from the most recent and going backwards from there.
+  """
+  BolosByWeekState(
+    """
+    The state for which Bolos are to be fetched abbreviated to two uppercase letters (e.g. WA, CA).
+    """
+    state: String,
+
+    """
+    The maximum number of results to return. Defaults to 100. Set to the number of past weeks to return
+    multiplied by the number of states.
+    """
+    limit: Int = 100,
+
+    """
+    The number of results to skip before starting to return results. Defaults to 0.
+    """
+    offset: Int = 0
+  ): [BolosByWeekState!]
+}
+
+type BoloDetails {
+  bolo_id: String!
+  vehicle_id: String!
+  issue_date: DateTime!
+  status: String!
+  last_updated: DateTime!
+  make: String!
+  model: String!
+  year: Float!
+  registration_state: String!
+  registration_number: String!
+  license_state: String!
+  driver_id: String!
+
+}
+
+type BolosByWeekState {
+  week: DateTime!
+  state: String!
+  num_bolos: Float!
+}
+
+type Driver {
+  driver_id: String!
+  first_name: String!
+  last_name: String!
+  license_number: String!
+  license_state: String!
+  date_of_birth: String!
+  license_status: String!
+  license_expiry_date: DateTime!
+  last_updated: DateTime!
+  bolos(limit: Int = 10, offset: Int = 0): [BoloDetails!]
+  vehicles(limit: Int = 10, offset: Int = 0): [Vehicle!]
+  warrants(limit: Int = 10, offset: Int = 0): [Warrant!]
+}
+
+type Vehicle {
+  vehicle_id: String!
+  registration_number: String!
+  registration_state: String!
+  registration_expiry: DateTime!
+  make: String!
+  model: String!
+  year: Float!
+  owner_driver_id: String!
+  last_updated: DateTime!
+  bolos(limit: Int = 10, offset: Int = 0): [BoloDetails!]
+  tracking(limit: Int = 10, offset: Int = 0): [Tracking!]
+}
+
+type Warrant {
+  warrant_id: String!
+  person_id: String!
+  warrant_status: String!
+  crime_description: String!
+  state_of_issuance: String!
+  issue_date: DateTime!
+  last_updated: DateTime!
+}
+
+type WarrantsByCrime {
+  crime: String!
+  num_warrants: Float!
+}
+
+type WarrantsByState {
+  state: String!
+  status: String!
+  num_warrants: Float!
+}
+
+
+type Tracking {
+  latitude: Float!
+  longitude: Float!
+  event_time: DateTime!
+}
+
+type Mutation {
+  Tracking(encounter: TrackingInput!): TrackingCreated
+}
+
+input TrackingInput {
+  plate: String!
+  latitude: Float!
+  longitude: Float!
+}
+
+type TrackingCreated {
+  _uuid: String!
+  plate: String!
+}
+
+type Subscription {
+  TrackingAlert: TrackingAlert
+}
+
+type TrackingAlert {
+  bolo_id: String!
+  vehicle_id: String!
+  issue_date: DateTime!
+  status: String!
+  last_updated: DateTime!
+  make: String!
+  model: String!
+  year: Float!
+  registration_state: String!
+  registration_number: String!
+  license_state: String!
+  driver_id: String!
+  latitude: Float!
+  longitude: Float!
+}

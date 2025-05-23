@@ -1,0 +1,19 @@
+# Returns all readings with a temperature higher than the provided value
+query HighTemps(
+    # The temperature
+    $temperature: Float!
+) {
+    ReadingsAboveTemp(temp: $temperature) {
+        sensorid
+        temperature
+    }
+}
+# high temperature readings
+query HighTemps2(
+    $temp: Float!
+) {
+    ReadingsAboveTemp(temp: $temp) {
+        sensorid
+        temperature
+    }
+}

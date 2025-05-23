@@ -1,0 +1,69 @@
+scalar DateTime
+
+type Query {
+    """
+    Returns the sensor temperature readings for each second by most recent for a given sensor id
+    """
+    SensorReading(
+        "The id of the sensor"
+        sensorid: Int!,
+        "The number of readings (one per second) to return"
+        limit: Int = 10,
+        offset: Int = 0
+    ): [SensorReading!]
+
+    """
+    Returns all sensor temperature readings above the given temperature
+    """
+    ReadingsAboveTemp(
+        temp: Float!,
+        limit: Int = 10
+    ): [SensorReading!]
+
+    """
+    Returns the maximum temperature recorded by each sensor in the last minute
+    """
+    SensorMaxTempLastMinute(
+        "The id of the sensor. If left empty, returns max temperature for all sensors."
+        sensorid: Int,
+        "The number sensors to return max temperature for"
+        limit: Int = 10,
+        offset: Int = 0
+    ): [SensorMaxTemp!]
+
+    """
+    Returns the maximum temperature recorded by each sensor
+    """
+    SensorMaxTemp(
+        "The id of the sensor. If left empty, returns max temperature for all sensors."
+        sensorid: Int,
+        "The number sensors to return max temperature for"
+        limit: Int = 10,
+        offset: Int = 0
+    ): [SensorMaxTemp!]
+}
+
+type SensorReading {
+  sensorid: Int!
+  temperature: Float!
+  event_time: DateTime!
+}
+
+type SensorMaxTemp {
+  sensorid: Int!
+  maxTemp: Float!
+  last_updated: DateTime!
+}
+
+type Subscription {
+  HighTemp(sensorid: Int!): SensorReading
+}
+
+type Mutation {
+  AddReading(metric: ReadingInput!): SensorReading
+}
+
+input ReadingInput {
+  sensorid: Int!
+  temperature: Float!
+}
