@@ -3,7 +3,7 @@
 This module contains the core implementation classes and interfaces of Acorn. This base module is used by framework specific modules and can be used as the basis for specific implementations for frameworks or LLMs.
 
 Specific implementation that utilize this module need to implement two things:
-1. An implementation of `APIExecutor` for executing GraphQL queries
+1. An implementation of `APIQueryExecutor` for executing GraphQL queries
 2. Passing the generated `APIFunction` to the LLM and validating/executing them when invoked by the LLM. This usually requires a thin wrapper based on the LLM framework or SDK used.
 
 This module consists of the following packages:

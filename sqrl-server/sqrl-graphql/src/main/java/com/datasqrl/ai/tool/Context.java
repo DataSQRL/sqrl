@@ -36,7 +36,7 @@ public interface Context {
       new Context() {
         @Override
         public Map<String, Object> asMap() {
-          return Collections.EMPTY_MAP;
+          return Collections.emptyMap();
         }
       };
 

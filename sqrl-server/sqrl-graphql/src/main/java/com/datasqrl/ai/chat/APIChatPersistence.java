@@ -66,7 +66,6 @@ public class APIChatPersistence implements ChatPersistence {
             payload.set(k, mapper.valueToTree(v));
           }
         });
-    ;
     try {
       return apiExecutor.executeQueryAsync(saveMessage, payload);
     } catch (IOException e) {

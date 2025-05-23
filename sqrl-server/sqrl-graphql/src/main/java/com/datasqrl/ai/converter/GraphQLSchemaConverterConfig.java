@@ -47,6 +47,6 @@ public class GraphQLSchemaConverterConfig {
         Arrays.stream(prefixes).map(String::trim).map(String::toLowerCase).toArray(String[]::new);
     return (op, name) ->
         Arrays.stream(prefixesLower)
-            .anyMatch(prefixLower -> !name.trim().toLowerCase().startsWith(prefixLower));
+            .noneMatch(prefixLower -> name.trim().toLowerCase().startsWith(prefixLower));
   }
 }
