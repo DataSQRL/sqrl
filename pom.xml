@@ -116,7 +116,7 @@
     <freemarker.version>2.3.34</freemarker.version>
     <jsonschema.version>1.5.6</jsonschema.version>
     <flinkrunner.version>1.0.0-SNAPSHOT</flinkrunner.version>
-    <iceberg.version>1.9.0</iceberg.version>
+    <iceberg.version>1.9.1</iceberg.version>
     <hadoop.version>3.4.1</hadoop.version>
     <jacoco.version>0.8.13</jacoco.version>
 
