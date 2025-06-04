@@ -1,9 +1,6 @@
 # Developer Documentation
 
-:::note
-The developer documentation assumes familiarity with DataSQRL and only explains the codebase and organization.
-Read the user [documentation](datasqrl.github.io/sqrl) first.
-:::
+> **Note:** The developer documentation assumes familiarity with DataSQRL and only explains the codebase and organization. Read the user [documentation](https://datasqrl.github.io/sqrl) first.
 
 The DataSQRL project consists of two parts:
 
