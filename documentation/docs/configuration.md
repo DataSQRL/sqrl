@@ -9,18 +9,18 @@ Multiple files can be provided; they are merged **in order** – later files ove
 
 ## Top-Level Keys
 
-| Key | Type | Default | Purpose |
-|-----|------|---------|---------|
-| `version` | **number** | **1** | Configuration schema version – must be `1`. |
-| `enabled-engines` | **string[]** | `["vertx","postgres","kafka","flink"]` | Ordered list of engines that form the runtime pipeline. |
-| `engines` | **object** | – | Per-engine configuration (see below). |
-| `compiler` | **object** | see defaults | Controls compilation, logging, and generated artefacts. |
-| `dependencies` | **object** | `{}` | Aliases or external repositories that can be `IMPORT`-ed from SQRL. |
-| `discovery` | **object** | `{}` | Rules for automatic table discovery when importing external data. |
-| `script` | **object** | – | Points to the main SQRL script and GraphQL schema. |
-| `package` | **object** | – | Optional metadata (name, description, etc.) for publishing. |
-| `values` | **object** | `{}` | Arbitrary runtime values (e.g. `create-topics`). |
-| `test-runner` | **object** | `{"delay-sec":30}` | Integration-test coordination settings. |
+| Key | Type | Default | Purpose                                                        |
+|-----|------|---------|----------------------------------------------------------------|
+| `version` | **number** | **1** | Configuration schema version – must be `1`.                    |
+| `enabled-engines` | **string[]** | `["vertx","postgres","kafka","flink"]` | Ordered list of engines that form the runtime pipeline.        |
+| `engines` | **object** | – | Per-engine configuration (see below).                          |
+| `compiler` | **object** | see defaults | Controls compilation, logging, and generated artefacts.        |
+| `dependencies` | **object** | `{}` | Aliases for packages that can be `IMPORT`-ed from SQRL.        |
+| `discovery` | **object** | `{}` | Rules for automatic table discovery when importing data files. |
+| `script` | **object** | – | Points to the main SQRL script and GraphQL schema.             |
+| `package` | **object** | – | Optional metadata (name, description, etc.) for publishing.    |
+| `values` | **object** | `{}` | Arbitrary runtime values (e.g. `create-topics`).               |
+| `test-runner` | **object** | `{"delay-sec":30}` | Integration-test execution settings.                           |
 
 ---
 
