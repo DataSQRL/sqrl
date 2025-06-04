@@ -25,6 +25,15 @@ import java.util.function.Predicate;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
+/**
+ * Parametrized Test for parsing and planning of SQRL scripts in resources/dagplanner. Add SQRL
+ * scripts to this folder to test the parser and planner. This test executes quickly.
+ *
+ * <p>This test snapshots the produced DAG plan and deployment assets. SQRL scripts with names
+ * ending in `-fail` are expected to produce errors which are snapshotted. SQRL scripts ending in
+ * `-warn` are expected to produce warnings which are snapshotted. SQRL scripts ending in -disabled`
+ * are ignored.
+ */
 public class DAGPlannerTest extends AbstractAssetSnapshotTest {
 
   public static final Path SCRIPT_DIR = getResourcesDirectory("dagplanner");
