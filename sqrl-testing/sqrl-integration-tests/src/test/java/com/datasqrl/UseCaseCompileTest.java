@@ -23,7 +23,13 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
 /**
- * Compiles the use cases in the test/resources/usecases folder and snapshots the deployment assets
+ * Parametrized Test for parsing and planning of SQRL scripts in resources/usecases. Add entire SQRL
+ * projects to this folder to test the parser and planner. This test executes quickly.
+ *
+ * <p>This test snapshots the produced DAG plan and deployment assets. SQRL scripts with names
+ * ending in `-fail` are expected to produce errors which are snapshotted. SQRL scripts ending in
+ * `-warn` are expected to produce warnings which are snapshotted. SQRL scripts ending in -disabled`
+ * are ignored.
  */
 public class UseCaseCompileTest extends AbstractUseCaseTest {
 
