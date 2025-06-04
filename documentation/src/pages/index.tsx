@@ -13,16 +13,16 @@ import CodeBlock from "@theme/CodeBlock";
 
 
 const header: HomepageHeaderProps = {
-  title: 'DataSQRL - The Data Streaming Framework',
-  tagLine: 'Data Streaming Framework',
+  title: 'DataSQRL - Build Data Pipelines with Integrity',
+  tagLine: 'Data Pipelines with Integrity',
   text: (
       <>
-        Build data APIs, LLM tooling, and Iceberg views easily
-        without the data plumbing.
+        Build data APIs, LLM tooling, and lakehouse views
+        with guaranteed consistency, reliability, and accuracy.
       </>
   ),
   buttonLink: 'docs/getting-started',
-  buttonText: 'Build Realtime Data Apps in 10 min',
+  buttonText: 'Build Robust Data Apps in 10 min',
   image: "/img/diagrams/streaming_summary.png"
 };
 
@@ -43,7 +43,7 @@ const WhyDataSQRLList = [
     image: '/img/undraw/programming.svg',
     description: (
         <>
-          Implement your data pipelines with the SQL you already know.
+          Implement your data applications with the SQL you already know.
           DataSQRL allows you to focus on the "what" and worry less about the "how".
           Develop locally, iterate quickly, and deploy with confidence.
         </>
@@ -54,7 +54,7 @@ const WhyDataSQRLList = [
     image: '/img/undraw/secure.svg',
     description: (
         <>
-          DataSQRL compiles efficient data pipelines that run on proven open-source
+          DataSQRL compiles efficient data architectures that run on proven open-source
           technologies. Out of the box data consistency, high availability, scalability,
           and observability.
         </>
@@ -86,11 +86,17 @@ TotalUserTokens := SELECT userid, sum(tokens) as tokens,
   count(tokens) as requests FROM UserTokens GROUP BY userid;
 
 UsageAlert := SUBSCRIBE SELECT * FROM UserTokens 
-                                 WHERE tokens > 100000;`}
+                                 WHERE tokens > 100000;
+
+/** Returns all requests for the given user since fromTime 
+  (inclusive) and until toTime (exclusive) */
+PotentialRewards(userid BIGINT, fromTime TIMESTAMP, toTime TIMESTAMP) :=
+   SELECT * FROM UserTokens WHERE userid = :userid
+    AND :fromTime <= request_time AND :toTime > request_time;`}
                   </CodeBlock>
                 </div>
                 <div className="col col--5 text--left">
-                  <h2>Integrated SQL</h2>
+                  <h2>Complete Pipeline in One SQL Script</h2>
                   <p className="hero__subtitle">
                     Implement the entire data pipeline in SQL to ingest, process, analyze,
                     store, and serve your data.
@@ -103,9 +109,9 @@ UsageAlert := SUBSCRIBE SELECT * FROM UserTokens
                        alt="DataSQRL unlocks the value of your data"/>
                 </div>
                 <div className="col col--5 text--left">
-                  <h2>DataSQRL Compiler</h2>
+                  <h2>Compiler Validation and Consistency</h2>
                   <p className="hero__subtitle">
-                    DataSQRL compiles SQL to an integrated data pipeline that runs on mature
+                    DataSQRL compiles SQL to an integrated data architecture that runs on mature
                     open-source technologies.
                   </p>
                   <p className="hero__subtitle">
