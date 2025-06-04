@@ -101,6 +101,11 @@ const sidebars: SidebarsConfig = {
       id: 'developer',
       label: '👩‍💻 Developer Guide',
     },
+    {
+      type: 'doc',
+      id: 'compatibility',
+      label: '🔄 Compatibility',
+    },
   ],
 };
 
