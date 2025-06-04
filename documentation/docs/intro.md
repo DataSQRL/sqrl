@@ -34,7 +34,7 @@ The [DataSQRL Kubernetes repository](https://github.com/DataSQRL/sqrl-k8s) conta
 * Read the [Tutorials](tutorials) for practical examples.
 * Check out the [How-To Guides](howto) for useful tips & tricks.
 * Learn about the [Concepts](concepts) underlying stream processing.
-* Read the [Developer Documentation](developer) to learn more about the internals.
+* Read the [Developer Documentation](deepdive) to learn more about the internals.
 
 ## Community & Support
 

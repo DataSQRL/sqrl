@@ -98,8 +98,8 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'doc',
-      id: 'developer',
-      label: '👩‍💻 Developer Guide',
+      id: 'deepdive',
+      label: '👩‍💻 How DataSQRL Works',
     },
     {
       type: 'doc',
