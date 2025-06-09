@@ -21,6 +21,11 @@ Check out the `.github/workflows/docker.yml` for build steps.
 
 ## TroubleShooting
 
+```bash
+docker: Cannot connect to the Docker daemon at unix:///Users/matthias/.docker/run/docker.sock. Is the docker daemon running?
+
+```
+
 If you are trying to run the build or individual tests on Mac and get the error that TestContainers could not find a docker environment even though you are running Docker, then execute the following command:
 ```bash
 sudo ln -s $HOME/.docker/run/docker.sock /var/run/docker.sock

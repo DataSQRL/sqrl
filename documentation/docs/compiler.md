@@ -1,7 +1,3 @@
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-
-
 # DataSQRL Command
 
 The DataSQRL command compiles, runs, and tests SQRL scripts.
@@ -10,16 +6,11 @@ You invoke the DataSQRL command in your terminal or command line. Choose your op
 
 ## Installation
 
-<Tabs groupId="cli">
-<TabItem value="Docker" default>
 Always pull the latest Docker image to ensure you have the most recent updates:
 
 ```bash
 docker pull datasqrl/cmd:latest
 ```
-
-</TabItem>
-</Tabs>
 
 ### Global Options
 All commands support the following global options:
@@ -36,8 +27,6 @@ The compile command processes a SQRL script and, optionally, an API specificatio
 The compile command stages all files needed by the compiler in the `build` directory and output the created deployment artifacts for all engines in the `build/deploy` folder.
 
 
-<Tabs groupId="cli">
-<TabItem value="Docker" default>
 
 ```bash
 docker run --rm -v $PWD:/build datasqrl/cmd compile myscript.sqrl
@@ -50,8 +39,6 @@ docker run --rm -v $PWD:/build datasqrl/cmd compile -c package.json
 Note, that you need to mount the current directory (`$PWD` or `${PWD}` on windows with Powershell) to the `/build`
 directory for file access in docker.
 
-</TabItem>
-</Tabs>
 
 |Option/Flag Name| 	Description                                                                                                                  |
 |--------------|-------------------------------------------------------------------------------------------------------------------------------|
@@ -65,18 +52,12 @@ Upon successful compilation, the compiler writes the data processing DAG that is
 
 The run command compiles and runs the generated data pipeline in docker.
 
-<Tabs groupId="cli">
-<TabItem value="Docker" default>
 
 ```bash
 docker run -it -p 8888:8888 -p 8081:8081 -p 9092:9092 --rm -v $PWD:/build datasqrl/cmd run myscript.sqrl
 ```
 
 Note, the additional port mappings to access the individual data systems that are running the pipeline.
-
-
-</TabItem>
-</Tabs>
 
 The run command uses the following engines:
 * Flink as the stream engine: The Flink cluster is accessible through the WebUI at [http://localhost:8081/](http://localhost:8081/).
@@ -97,8 +78,6 @@ This allows DataSQRL to map connectors correctly and also applies to [testing](#
 
 To preserve inserted data between runs, mount a directory for RedPanda to persist the data to:
 
-<Tabs groupId="cli">
-<TabItem value="Docker" default>
 
 ```bash
 docker run -it -p 8888:8888 -p 8081:8081 -p 9092:9092 --rm -v /mydata/project:/data/redpanda -v $PWD:/build datasqrl/cmd run myscript.sqrl
@@ -106,8 +85,6 @@ docker run -it -p 8888:8888 -p 8081:8081 -p 9092:9092 --rm -v /mydata/project:/d
 
 The volume mount contains the data written to the log engine and persists it to the local `/mydata/project` directory where you want to store the data (adjust as needed and make sure the directory exists).
 
-</TabItem>
-</Tabs>
 
 When you terminate (via `CTRL-C`) and re-run your SQRL project, it will replay prior data.
 
@@ -124,14 +101,9 @@ The test command compiles and runs the data pipeline, then executes the provided
 
 When you first run the test command or add additional test cases, it will create the snapshots and fail. All subsequent runs of the test command compare the results to the previously snapshotted results and succeed if the results are identical, else fail.
 
-<Tabs groupId="cli">
-<TabItem value="Docker">
-
 ```bash
 docker run --rm -v $PWD:/build datasqrl/cmd test
 ```
-</TabItem>
-</Tabs>
 
 Options for the Test Command:
 

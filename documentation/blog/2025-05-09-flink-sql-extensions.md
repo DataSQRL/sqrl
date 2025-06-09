@@ -46,6 +46,8 @@ This script defines a sequence of tables. We introduce `:=` as syntactic sugar f
 
 The `UserTokens` table does not have a configured connector, which mean we treat it as an API mutation endpoint connected to Flink via a Kafka topic that captures the events. This makes it easy to build APIs that capture user activity, transactions, or other types of events.
 
+<!--truncate-->
+
 Next, we sum up the data collected through the API for each user. This is a standard FlinkSQL aggregation query and we expose the result in our API through the `query_by_all` hint which defines the arguments for the query endpoint of that table.
 
 We can also explicitly define query endpoints with arguments through SQL table functions. FlinkSQL supports table functions natively. All we had to do is provide the syntax for defining the function signature.

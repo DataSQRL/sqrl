@@ -1,0 +1,1 @@
+cat sqrl-language.md configuration.md compiler.md concepts.md connectors.md howto.md functions.md functions-docs/function-docs/library-functions.md functions-docs/function-docs/system-functions.md getting-started.md > datasqrl_documentation.md
