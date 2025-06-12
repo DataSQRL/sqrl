@@ -29,84 +29,105 @@ import type {SidebarsConfig} from '@docusaurus/plugin-content-docs';
  Create as many sidebars as you want.
  */
 
-const sidebars: SidebarsConfig = {
+const sidebars = {
   tutorialSidebar: [
+    {
+      type: 'doc',
+      id: 'intro',
+      label: '📖 Overview',
+    },
     {
       type: 'doc',
       id: 'getting-started',
       label: '🚀 Getting Started',
     },
     {
-      type: 'doc',
-      id: 'intro',
-      label: '📖 Introduction',
-    },
-    {
-      type: 'doc',
-      id: 'sqrl-language',
-      label: '📚 SQRL Language',
-    },
-    {
-      type: 'doc',
-      id: 'compiler',
-      label: '🛠️ Compiler',
-    },
-    {
-      type: 'doc',
-      id: 'configuration',
-      label: '⚙️ Configuration',
-    },
-    {
-      type: 'doc',
-      id: 'tutorials',
-      label: '🎓 Tutorials',
-    },
-    {
-      type: 'doc',
-      id: 'howto',
-      label: '🧩 How To Guides',
-    },
-    {
-      type: 'doc',
-      id: 'connectors',
-      label: '🔌 Source & Sink Connectors',
-    },
-    {
       type: 'category',
-      label: '🔢 Functions',
-      link: {
-        type: 'doc',
-        id: 'functions',
-      },
+      label: '🧱 Core Concepts',
+      collapsed: false,
       items: [
         {
           type: 'doc',
-          id: 'stdlib-docs/stdlib-docs/system-functions',
-          label: 'System Functions',
+          id: 'sqrl-language',
+          label: '📚 SQRL Language',
         },
         {
           type: 'doc',
-          id: 'stdlib-docs/stdlib-docs/library-functions',
-          label: 'Library Functions',
+          id: 'compiler',
+          label: '🛠️ Compiler',
+        },
+        {
+          type: 'doc',
+          id: 'connectors',
+          label: '🔌 Source & Sink Connectors',
+        },
+        {
+          type: 'doc',
+          id: 'configuration',
+          label: '⚙️ Configuration',
+        },
+        {
+          type: 'category',
+          label: '🔢 Functions',
+          link: {
+            type: 'doc',
+            id: 'functions',
+          },
+          items: [
+            {
+              type: 'doc',
+              id: 'functions-docs/function-docs/system-functions',
+              label: 'System Functions',
+            },
+            {
+              type: 'doc',
+              id: 'functions-docs/function-docs/library-functions',
+              label: 'Library Functions',
+            },
+          ],
+        },
+        {
+          type: 'doc',
+          id: 'concepts',
+          label: '🧠 Streaming Concepts',
+        }
+      ],
+    },
+    {
+      type: 'category',
+      label: '📘 How To',
+      items: [
+        {
+          type: 'doc',
+          id: 'tutorials',
+          label: '🎓 Tutorials',
+        },
+        {
+          type: 'doc',
+          id: 'howto',
+          label: '🧩 How To Guides',
         },
       ],
     },
     {
-      type: 'doc',
-      id: 'concepts',
-      label: '🧠 Streaming Concepts',
-    },
-    {
-      type: 'doc',
-      id: 'deepdive',
-      label: '👩‍💻 How DataSQRL Works',
-    },
-    {
-      type: 'doc',
-      id: 'compatibility',
-      label: '🔄 Compatibility',
+      type: 'category',
+      label: '🧪 Advanced',
+      items: [
+        {
+          type: 'doc',
+          id: 'deepdive',
+          label: '👩‍💻 How DataSQRL Works',
+        },
+        {
+          type: 'doc',
+          id: 'compatibility',
+          label: '🔄 Compatibility',
+        },
+      ],
     },
   ],
 };
+
+module.exports = sidebars;
 
 export default sidebars;
