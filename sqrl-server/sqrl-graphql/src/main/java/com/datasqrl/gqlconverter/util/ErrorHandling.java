@@ -13,15 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.ai.converter;
+package com.datasqrl.gqlconverter.util;
 
-import com.datasqrl.ai.api.APIQuery;
-import com.datasqrl.ai.tool.APIFunction;
-import com.datasqrl.ai.tool.FunctionDefinition;
+/** Utility methods for error handling */
+public class ErrorHandling {
 
-/** Factory for {@link APIFunction} given a {@link FunctionDefinition} and {@link APIQuery} */
-@FunctionalInterface
-public interface APIFunctionFactory {
+  public static void checkArgument(boolean condition, String message, Object... args) {
+    if (!condition) {
+      throw new IllegalArgumentException(String.format(message, args));
+    }
+  }
 
-  APIFunction create(FunctionDefinition function, APIQuery query);
+  public static void checkArgument(boolean condition) {
+    checkArgument(condition, "Unexpected arguments in method invocation");
+  }
 }

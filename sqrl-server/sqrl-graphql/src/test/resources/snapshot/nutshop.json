@@ -21,10 +21,14 @@
       "required" : [ "customerid" ]
     }
   },
-  "contextKeys" : [ "customerid" ],
   "apiQuery" : {
-    "query" : "query SpendingByWeek($customerid: Int!$limit: Int = 10$offset: Int = 0) {\nSpendingByWeek(customerid: $customerid, limit: $limit, offset: $offset) {\nweek\ntotal_spend\ntotal_savings\n}\n\n}"
-  }
+    "query" : "query SpendingByWeek($customerid: Int!$limit: Int = 10$offset: Int = 0) {\nSpendingByWeek(customerid: $customerid, limit: $limit, offset: $offset) {\nweek\ntotal_spend\ntotal_savings\n}\n\n}",
+    "queryName" : "SpendingByWeek",
+    "operationType" : "QUERY"
+  },
+  "resource" : false,
+  "restEndpoint" : true,
+  "tool" : true
 }, {
   "function" : {
     "name" : "Products",
@@ -54,10 +58,14 @@
       "required" : [ ]
     }
   },
-  "contextKeys" : [ "customerid" ],
   "apiQuery" : {
-    "query" : "query Products($id: Int$limit: Int = 10$offset: Int = 0$orders_limit: Int = 10$orders_items_limit: Int = 10) {\nProducts(id: $id, limit: $limit, offset: $offset) {\nid\nname\nsizing\nweight_in_gram\ntype\ncategory\nusda_id\nupdated\norders(limit: $orders_limit) {\nid\ncustomerid\ntimestamp\nitems(limit: $orders_items_limit) {\nquantity\nunit_price\ndiscount0\ntotal\n}\ntotal {\nprice\ndiscount\n}\n}\n}\n\n}"
-  }
+    "query" : "query Products($id: Int$limit: Int = 10$offset: Int = 0$orders_limit: Int = 10$orders_items_limit: Int = 10) {\nProducts(id: $id, limit: $limit, offset: $offset) {\nid\nname\nsizing\nweight_in_gram\ntype\ncategory\nusda_id\nupdated\norders(limit: $orders_limit) {\nid\ncustomerid\ntimestamp\nitems(limit: $orders_items_limit) {\nquantity\nunit_price\ndiscount0\ntotal\n}\ntotal {\nprice\ndiscount\n}\n}\n}\n\n}",
+    "queryName" : "Products",
+    "operationType" : "QUERY"
+  },
+  "resource" : false,
+  "restEndpoint" : true,
+  "tool" : true
 }, {
   "function" : {
     "name" : "Orders",
@@ -84,10 +92,14 @@
       "required" : [ "customerid" ]
     }
   },
-  "contextKeys" : [ "customerid" ],
   "apiQuery" : {
-    "query" : "query Orders($customerid: Int!$limit: Int = 10$offset: Int = 0$items_limit: Int = 10) {\nOrders(customerid: $customerid, limit: $limit, offset: $offset) {\nid\ncustomerid\ntimestamp\nitems(limit: $items_limit) {\nquantity\nunit_price\ndiscount0\ntotal\nproduct {\nid\nname\nsizing\nweight_in_gram\ntype\ncategory\nusda_id\nupdated\n}\n}\ntotal {\nprice\ndiscount\n}\n}\n\n}"
-  }
+    "query" : "query Orders($customerid: Int!$limit: Int = 10$offset: Int = 0$items_limit: Int = 10) {\nOrders(customerid: $customerid, limit: $limit, offset: $offset) {\nid\ncustomerid\ntimestamp\nitems(limit: $items_limit) {\nquantity\nunit_price\ndiscount0\ntotal\nproduct {\nid\nname\nsizing\nweight_in_gram\ntype\ncategory\nusda_id\nupdated\n}\n}\ntotal {\nprice\ndiscount\n}\n}\n\n}",
+    "queryName" : "Orders",
+    "operationType" : "QUERY"
+  },
+  "resource" : false,
+  "restEndpoint" : true,
+  "tool" : true
 }, {
   "function" : {
     "name" : "OrdersByTimeRange",
@@ -114,10 +126,14 @@
       "required" : [ "customerid", "fromTime", "toTime" ]
     }
   },
-  "contextKeys" : [ "customerid" ],
   "apiQuery" : {
-    "query" : "query OrdersByTimeRange($customerid: Int!$fromTime: DateTime!$toTime: DateTime!$items_limit: Int = 10) {\nOrdersByTimeRange(customerid: $customerid, fromTime: $fromTime, toTime: $toTime) {\nid\ncustomerid\ntimestamp\nitems(limit: $items_limit) {\nquantity\nunit_price\ndiscount0\ntotal\nproduct {\nid\nname\nsizing\nweight_in_gram\ntype\ncategory\nusda_id\nupdated\n}\n}\ntotal {\nprice\ndiscount\n}\n}\n\n}"
-  }
+    "query" : "query OrdersByTimeRange($customerid: Int!$fromTime: DateTime!$toTime: DateTime!$items_limit: Int = 10) {\nOrdersByTimeRange(customerid: $customerid, fromTime: $fromTime, toTime: $toTime) {\nid\ncustomerid\ntimestamp\nitems(limit: $items_limit) {\nquantity\nunit_price\ndiscount0\ntotal\nproduct {\nid\nname\nsizing\nweight_in_gram\ntype\ncategory\nusda_id\nupdated\n}\n}\ntotal {\nprice\ndiscount\n}\n}\n\n}",
+    "queryName" : "OrdersByTimeRange",
+    "operationType" : "QUERY"
+  },
+  "resource" : false,
+  "restEndpoint" : true,
+  "tool" : true
 }, {
   "function" : {
     "name" : "OrderAgain",
@@ -144,8 +160,12 @@
       "required" : [ "customerid" ]
     }
   },
-  "contextKeys" : [ "customerid" ],
   "apiQuery" : {
-    "query" : "query OrderAgain($customerid: Int!$limit: Int = 10$offset: Int = 0$product_orders_limit: Int = 10) {\nOrderAgain(customerid: $customerid, limit: $limit, offset: $offset) {\nproduct {\nid\nname\nsizing\nweight_in_gram\ntype\ncategory\nusda_id\nupdated\norders(limit: $product_orders_limit) {\nid\ncustomerid\ntimestamp\n}\n}\nnum\nquantity\n}\n\n}"
-  }
+    "query" : "query OrderAgain($customerid: Int!$limit: Int = 10$offset: Int = 0$product_orders_limit: Int = 10) {\nOrderAgain(customerid: $customerid, limit: $limit, offset: $offset) {\nproduct {\nid\nname\nsizing\nweight_in_gram\ntype\ncategory\nusda_id\nupdated\norders(limit: $product_orders_limit) {\nid\ncustomerid\ntimestamp\n}\n}\nnum\nquantity\n}\n\n}",
+    "queryName" : "OrderAgain",
+    "operationType" : "QUERY"
+  },
+  "resource" : false,
+  "restEndpoint" : true,
+  "tool" : true
 } ]

@@ -1,6 +1,6 @@
 [ {
   "function" : {
-    "name" : "character",
+    "name" : "Getcharacter",
     "description" : "Get a specific character by ID",
     "parameters" : {
       "type" : "object",
@@ -12,13 +12,17 @@
       "required" : [ "id" ]
     }
   },
-  "contextKeys" : [ ],
   "apiQuery" : {
-    "query" : "query character($id: ID!) {\ncharacter(id: $id) {\nid\nname\nstatus\nspecies\ntype\ngender\norigin {\nid\nname\ntype\ndimension\ncreated\n}\nlocation {\nid\nname\ntype\ndimension\ncreated\n}\nimage\nepisode {\nid\nname\nair_date\nepisode\ncreated\n}\ncreated\n}\n\n}"
-  }
+    "query" : "query character($id: ID!) {\ncharacter(id: $id) {\nid\nname\nstatus\nspecies\ntype\ngender\norigin {\nid\nname\ntype\ndimension\ncreated\n}\nlocation {\nid\nname\ntype\ndimension\ncreated\n}\nimage\nepisode {\nid\nname\nair_date\nepisode\ncreated\n}\ncreated\n}\n\n}",
+    "queryName" : "character",
+    "operationType" : "QUERY"
+  },
+  "resource" : false,
+  "restEndpoint" : true,
+  "tool" : true
 }, {
   "function" : {
-    "name" : "characters",
+    "name" : "Getcharacters",
     "description" : "Get the list of all characters",
     "parameters" : {
       "type" : "object",
@@ -45,13 +49,17 @@
       "required" : [ ]
     }
   },
-  "contextKeys" : [ ],
   "apiQuery" : {
-    "query" : "query characters($page: Int$name: String$status: String$species: String$type: String$gender: String) {\ncharacters(page: $page, filter: { name: $name, status: $status, species: $species, type: $type, gender: $gender }) {\ninfo {\ncount\npages\nnext\nprev\n}\nresults {\nid\nname\nstatus\nspecies\ntype\ngender\norigin {\nid\nname\ntype\ndimension\ncreated\n}\nlocation {\nid\nname\ntype\ndimension\ncreated\n}\nimage\nepisode {\nid\nname\nair_date\nepisode\ncreated\n}\ncreated\n}\n}\n\n}"
-  }
+    "query" : "query characters($page: Int$name: String$status: String$species: String$type: String$gender: String) {\ncharacters(page: $page, filter: { name: $name, status: $status, species: $species, type: $type, gender: $gender }) {\ninfo {\ncount\npages\nnext\nprev\n}\nresults {\nid\nname\nstatus\nspecies\ntype\ngender\norigin {\nid\nname\ntype\ndimension\ncreated\n}\nlocation {\nid\nname\ntype\ndimension\ncreated\n}\nimage\nepisode {\nid\nname\nair_date\nepisode\ncreated\n}\ncreated\n}\n}\n\n}",
+    "queryName" : "characters",
+    "operationType" : "QUERY"
+  },
+  "resource" : false,
+  "restEndpoint" : true,
+  "tool" : true
 }, {
   "function" : {
-    "name" : "charactersByIds",
+    "name" : "GetcharactersByIds",
     "description" : "Get a list of characters selected by ids",
     "parameters" : {
       "type" : "object",
@@ -66,13 +74,17 @@
       "required" : [ "ids" ]
     }
   },
-  "contextKeys" : [ ],
   "apiQuery" : {
-    "query" : "query charactersByIds($ids: [ID!]!) {\ncharactersByIds(ids: $ids) {\nid\nname\nstatus\nspecies\ntype\ngender\norigin {\nid\nname\ntype\ndimension\ncreated\n}\nlocation {\nid\nname\ntype\ndimension\ncreated\n}\nimage\nepisode {\nid\nname\nair_date\nepisode\ncreated\n}\ncreated\n}\n\n}"
-  }
+    "query" : "query charactersByIds($ids: [ID!]!) {\ncharactersByIds(ids: $ids) {\nid\nname\nstatus\nspecies\ntype\ngender\norigin {\nid\nname\ntype\ndimension\ncreated\n}\nlocation {\nid\nname\ntype\ndimension\ncreated\n}\nimage\nepisode {\nid\nname\nair_date\nepisode\ncreated\n}\ncreated\n}\n\n}",
+    "queryName" : "charactersByIds",
+    "operationType" : "QUERY"
+  },
+  "resource" : false,
+  "restEndpoint" : true,
+  "tool" : true
 }, {
   "function" : {
-    "name" : "location",
+    "name" : "Getlocation",
     "description" : "Get a specific locations by ID",
     "parameters" : {
       "type" : "object",
@@ -84,13 +96,17 @@
       "required" : [ "id" ]
     }
   },
-  "contextKeys" : [ ],
   "apiQuery" : {
-    "query" : "query location($id: ID!) {\nlocation(id: $id) {\nid\nname\ntype\ndimension\nresidents {\nid\nname\nstatus\nspecies\ntype\ngender\nimage\nepisode {\nid\nname\nair_date\nepisode\ncreated\n}\ncreated\n}\ncreated\n}\n\n}"
-  }
+    "query" : "query location($id: ID!) {\nlocation(id: $id) {\nid\nname\ntype\ndimension\nresidents {\nid\nname\nstatus\nspecies\ntype\ngender\nimage\nepisode {\nid\nname\nair_date\nepisode\ncreated\n}\ncreated\n}\ncreated\n}\n\n}",
+    "queryName" : "location",
+    "operationType" : "QUERY"
+  },
+  "resource" : false,
+  "restEndpoint" : true,
+  "tool" : true
 }, {
   "function" : {
-    "name" : "locations",
+    "name" : "Getlocations",
     "description" : "Get the list of all locations",
     "parameters" : {
       "type" : "object",
@@ -111,13 +127,17 @@
       "required" : [ ]
     }
   },
-  "contextKeys" : [ ],
   "apiQuery" : {
-    "query" : "query locations($page: Int$name: String$type: String$dimension: String) {\nlocations(page: $page, filter: { name: $name, type: $type, dimension: $dimension }) {\ninfo {\ncount\npages\nnext\nprev\n}\nresults {\nid\nname\ntype\ndimension\nresidents {\nid\nname\nstatus\nspecies\ntype\ngender\nimage\ncreated\n}\ncreated\n}\n}\n\n}"
-  }
+    "query" : "query locations($page: Int$name: String$type: String$dimension: String) {\nlocations(page: $page, filter: { name: $name, type: $type, dimension: $dimension }) {\ninfo {\ncount\npages\nnext\nprev\n}\nresults {\nid\nname\ntype\ndimension\nresidents {\nid\nname\nstatus\nspecies\ntype\ngender\nimage\ncreated\n}\ncreated\n}\n}\n\n}",
+    "queryName" : "locations",
+    "operationType" : "QUERY"
+  },
+  "resource" : false,
+  "restEndpoint" : true,
+  "tool" : true
 }, {
   "function" : {
-    "name" : "locationsByIds",
+    "name" : "GetlocationsByIds",
     "description" : "Get a list of locations selected by ids",
     "parameters" : {
       "type" : "object",
@@ -132,13 +152,17 @@
       "required" : [ "ids" ]
     }
   },
-  "contextKeys" : [ ],
   "apiQuery" : {
-    "query" : "query locationsByIds($ids: [ID!]!) {\nlocationsByIds(ids: $ids) {\nid\nname\ntype\ndimension\nresidents {\nid\nname\nstatus\nspecies\ntype\ngender\nimage\nepisode {\nid\nname\nair_date\nepisode\ncreated\n}\ncreated\n}\ncreated\n}\n\n}"
-  }
+    "query" : "query locationsByIds($ids: [ID!]!) {\nlocationsByIds(ids: $ids) {\nid\nname\ntype\ndimension\nresidents {\nid\nname\nstatus\nspecies\ntype\ngender\nimage\nepisode {\nid\nname\nair_date\nepisode\ncreated\n}\ncreated\n}\ncreated\n}\n\n}",
+    "queryName" : "locationsByIds",
+    "operationType" : "QUERY"
+  },
+  "resource" : false,
+  "restEndpoint" : true,
+  "tool" : true
 }, {
   "function" : {
-    "name" : "episode",
+    "name" : "Getepisode",
     "description" : "Get a specific episode by ID",
     "parameters" : {
       "type" : "object",
@@ -150,13 +174,17 @@
       "required" : [ "id" ]
     }
   },
-  "contextKeys" : [ ],
   "apiQuery" : {
-    "query" : "query episode($id: ID!) {\nepisode(id: $id) {\nid\nname\nair_date\nepisode\ncharacters {\nid\nname\nstatus\nspecies\ntype\ngender\norigin {\nid\nname\ntype\ndimension\ncreated\n}\nlocation {\nid\nname\ntype\ndimension\ncreated\n}\nimage\ncreated\n}\ncreated\n}\n\n}"
-  }
+    "query" : "query episode($id: ID!) {\nepisode(id: $id) {\nid\nname\nair_date\nepisode\ncharacters {\nid\nname\nstatus\nspecies\ntype\ngender\norigin {\nid\nname\ntype\ndimension\ncreated\n}\nlocation {\nid\nname\ntype\ndimension\ncreated\n}\nimage\ncreated\n}\ncreated\n}\n\n}",
+    "queryName" : "episode",
+    "operationType" : "QUERY"
+  },
+  "resource" : false,
+  "restEndpoint" : true,
+  "tool" : true
 }, {
   "function" : {
-    "name" : "episodes",
+    "name" : "Getepisodes",
     "description" : "Get the list of all episodes",
     "parameters" : {
       "type" : "object",
@@ -174,13 +202,17 @@
       "required" : [ ]
     }
   },
-  "contextKeys" : [ ],
   "apiQuery" : {
-    "query" : "query episodes($page: Int$name: String$episode: String) {\nepisodes(page: $page, filter: { name: $name, episode: $episode }) {\ninfo {\ncount\npages\nnext\nprev\n}\nresults {\nid\nname\nair_date\nepisode\ncharacters {\nid\nname\nstatus\nspecies\ntype\ngender\nimage\ncreated\n}\ncreated\n}\n}\n\n}"
-  }
+    "query" : "query episodes($page: Int$name: String$episode: String) {\nepisodes(page: $page, filter: { name: $name, episode: $episode }) {\ninfo {\ncount\npages\nnext\nprev\n}\nresults {\nid\nname\nair_date\nepisode\ncharacters {\nid\nname\nstatus\nspecies\ntype\ngender\nimage\ncreated\n}\ncreated\n}\n}\n\n}",
+    "queryName" : "episodes",
+    "operationType" : "QUERY"
+  },
+  "resource" : false,
+  "restEndpoint" : true,
+  "tool" : true
 }, {
   "function" : {
-    "name" : "episodesByIds",
+    "name" : "GetepisodesByIds",
     "description" : "Get a list of episodes selected by ids",
     "parameters" : {
       "type" : "object",
@@ -195,8 +227,12 @@
       "required" : [ "ids" ]
     }
   },
-  "contextKeys" : [ ],
   "apiQuery" : {
-    "query" : "query episodesByIds($ids: [ID!]!) {\nepisodesByIds(ids: $ids) {\nid\nname\nair_date\nepisode\ncharacters {\nid\nname\nstatus\nspecies\ntype\ngender\norigin {\nid\nname\ntype\ndimension\ncreated\n}\nlocation {\nid\nname\ntype\ndimension\ncreated\n}\nimage\ncreated\n}\ncreated\n}\n\n}"
-  }
+    "query" : "query episodesByIds($ids: [ID!]!) {\nepisodesByIds(ids: $ids) {\nid\nname\nair_date\nepisode\ncharacters {\nid\nname\nstatus\nspecies\ntype\ngender\norigin {\nid\nname\ntype\ndimension\ncreated\n}\nlocation {\nid\nname\ntype\ndimension\ncreated\n}\nimage\ncreated\n}\ncreated\n}\n\n}",
+    "queryName" : "episodesByIds",
+    "operationType" : "QUERY"
+  },
+  "resource" : false,
+  "restEndpoint" : true,
+  "tool" : true
 } ]

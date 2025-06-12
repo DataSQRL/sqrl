@@ -8,9 +8,9 @@ Specific implementation that utilize this module need to implement two things:
 
 This module consists of the following packages:
 
-* [Tool](src/main/java/com/datasqrl/ai/tool): Defines the `APIFunction` class which represents and LLM tool and how it maps to GraphQL API queries. Also defines `Context` for sensitive information sandboxing.
-* [Converter](src/main/java/com/datasqrl/ai/converter): Converts a provided GraphQL schema or individual GraphQL operations to `APIFunction`.
-* [API](src/main/java/com/datasqrl/ai/api): Interfaces and methods for API invocation.
-* [Chat](src/main/java/com/datasqrl/ai/chat): Saving and retrieving messages from GraphQL API.
-* [Util](src/main/java/com/datasqrl/ai/util): Utility classes/methods used across packages.
+* [Tool](src/main/java/com/datasqrl/gqlconverter/operation): Defines the `APIFunction` class which represents and LLM tool and how it maps to GraphQL API queries. Also defines `Context` for sensitive information sandboxing.
+* [Converter](src/main/java/com/datasqrl/gqlconverter/converter): Converts a provided GraphQL schema or individual GraphQL operations to `APIFunction`.
+* [API](src/main/java/com/datasqrl/gqlconverter/api): Interfaces and methods for API invocation.
+* [Chat](src/main/java/com/datasqrl/gqlconverter/chat): Saving and retrieving messages from GraphQL API.
+* [Util](src/main/java/com/datasqrl/gqlconverter/util): Utility classes/methods used across packages.
 

@@ -26,14 +26,11 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.google.common.base.Strings;
 import com.symbaloo.graphqlmicrometer.MicrometerInstrumentation;
 import graphql.GraphQL;
-import io.micrometer.prometheusmetrics.PrometheusConfig;
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
 import io.vertx.core.Promise;
-import io.vertx.core.Vertx;
-import io.vertx.core.VertxOptions;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.jwt.JWTAuth;
@@ -47,7 +44,6 @@ import io.vertx.ext.web.handler.graphql.GraphQLHandler;
 import io.vertx.ext.web.handler.graphql.GraphiQLHandler;
 import io.vertx.ext.web.handler.graphql.ws.GraphQLWSHandler;
 import io.vertx.jdbcclient.JDBCPool;
-import io.vertx.micrometer.MicrometerMetricsOptions;
 import io.vertx.micrometer.backends.BackendRegistries;
 import io.vertx.pgclient.PgPool;
 import io.vertx.pgclient.impl.PgPoolOptions;
@@ -72,25 +68,6 @@ public class GraphQLServer extends AbstractVerticle {
   private final RootGraphqlModel model;
   private final Optional<String> snowflakeUrl;
   private ServerConfig config;
-
-  public static void main(String[] args) {
-    var prometheusMeterRegistry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
-    var metricsOptions =
-        new MicrometerMetricsOptions()
-            .setMicrometerRegistry(prometheusMeterRegistry)
-            .setEnabled(true);
-    var vertx = Vertx.vertx(new VertxOptions().setMetricsOptions(metricsOptions));
-
-    vertx.deployVerticle(
-        new GraphQLServer(),
-        res -> {
-          if (res.succeeded()) {
-            System.out.println("Deployment id is: " + res.result());
-          } else {
-            System.out.println("Deployment failed!");
-          }
-        });
-  }
 
   public GraphQLServer() {
     this(readModel(), null, readSnowflakeUrl());

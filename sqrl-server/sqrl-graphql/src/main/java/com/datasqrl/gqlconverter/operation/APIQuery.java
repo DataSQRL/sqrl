@@ -13,18 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.ai.util;
+package com.datasqrl.gqlconverter.operation;
 
-/** Utility methods for error handling */
-public class ErrorHandling {
+/** Defines the API query for a function */
+public interface APIQuery {
 
-  public static void checkArgument(boolean condition, String message, Object... args) {
-    if (!condition) {
-      throw new IllegalArgumentException(String.format(message, args));
-    }
-  }
-
-  public static void checkArgument(boolean condition) {
-    checkArgument(condition, "Unexpected arguments in method invocation");
-  }
+  String query();
 }

@@ -13,17 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.ai;
+package com.datasqrl.gqlconverter;
 
 import static java.nio.file.StandardOpenOption.CREATE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.fail;
 
-import com.datasqrl.ai.util.ErrorHandling;
+import com.datasqrl.gqlconverter.operation.ApiOperation;
+import com.datasqrl.gqlconverter.util.ErrorHandling;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import lombok.SneakyThrows;
 
 public class TestUtil {
@@ -48,5 +53,11 @@ public class TestUtil {
       Files.writeString(pathToExpected, result, StandardCharsets.UTF_8, CREATE);
       fail("Created snapshot: " + pathToExpected.toAbsolutePath());
     }
+  }
+
+  public static String toJsonString(List<ApiOperation> tools) throws IOException {
+    ObjectMapper mapper = new ObjectMapper();
+    mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+    return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(mapper.valueToTree(tools));
   }
 }

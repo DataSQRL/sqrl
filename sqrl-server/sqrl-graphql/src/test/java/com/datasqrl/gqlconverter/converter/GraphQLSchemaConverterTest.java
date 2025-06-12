@@ -13,36 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.ai.converter;
+package com.datasqrl.gqlconverter.converter;
 
-import static com.datasqrl.ai.converter.GraphQLSchemaConverterConfig.ignorePrefix;
+import static com.datasqrl.gqlconverter.converter.GraphQLSchemaConverterConfig.ignorePrefix;
 import static graphql.Assert.assertFalse;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.datasqrl.ai.TestUtil;
-import com.datasqrl.ai.api.APIQueryExecutor;
-import com.datasqrl.ai.api.MockAPIExecutor;
-import com.datasqrl.ai.tool.APIFunction;
-import com.datasqrl.ai.tool.FunctionUtil;
+import com.datasqrl.gqlconverter.TestUtil;
+import com.datasqrl.gqlconverter.operation.ApiOperation;
 import graphql.parser.Parser;
-import graphql.schema.*;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Set;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 public class GraphQLSchemaConverterTest {
-
-  public static APIQueryExecutor apiExecutor = MockAPIExecutor.of("none");
-  public static StandardAPIFunctionFactory fctFactory =
-      new StandardAPIFunctionFactory(apiExecutor, Set.of());
 
   @Test
   public void testNutshop() {
@@ -50,33 +41,31 @@ public class GraphQLSchemaConverterTest {
         new GraphQLSchemaConverter(
             TestUtil.getResourcesFileAsString("graphql/nutshop-schema.graphqls"),
             GraphQLSchemaConverterConfig.builder()
+                .addPrefix(false)
                 .operationFilter(ignorePrefix("internal"))
-                .build(),
-            new StandardAPIFunctionFactory(apiExecutor, Set.of("customerid")));
-    List<APIFunction> functions = converter.convertSchema();
+                .build());
+    List<ApiOperation> functions = converter.convertSchema();
     assertEquals(5, functions.size());
     // Test context key handling
-    APIFunction orders =
+    ApiOperation orders =
         functions.stream()
             .filter(f -> f.getFunction().getName().equalsIgnoreCase("orders"))
             .findFirst()
             .get();
     assertTrue(orders.getFunction().getParameters().getProperties().containsKey("customerid"));
-    assertFalse(
-        orders.getModelFunction().getParameters().getProperties().containsKey("customerid"));
     snapshot(functions, "nutshop");
   }
 
   @Test
   public void testCreditCard() {
-    List<APIFunction> functions = getFunctionsFromPath("graphql/creditcard-rewards.graphqls");
+    List<ApiOperation> functions = getFunctionsFromPath("graphql/creditcard-rewards.graphqls");
     assertEquals(6, functions.size());
     snapshot(functions, "creditcard-rewards");
   }
 
   @Test
   public void testLawEnforcement() {
-    List<APIFunction> functions = getFunctionsFromPath("graphql/law_enforcement.graphqls");
+    List<ApiOperation> functions = getFunctionsFromPath("graphql/law_enforcement.graphqls");
     assertEquals(7, functions.size());
     snapshot(functions, "law_enforcement");
   }
@@ -85,9 +74,9 @@ public class GraphQLSchemaConverterTest {
   public void testSensors() {
     GraphQLSchemaConverter converter =
         getConverter(TestUtil.getResourcesFileAsString("graphql/sensors.graphqls"));
-    List<APIFunction> functions = converter.convertSchema();
+    List<ApiOperation> functions = converter.convertSchema();
     assertEquals(5, functions.size());
-    List<APIFunction> queries =
+    List<ApiOperation> queries =
         converter.convertOperations(
             TestUtil.getResourcesFileAsString("graphql/sensors-aboveTemp.graphql"));
     assertEquals(2, queries.size());
@@ -96,16 +85,16 @@ public class GraphQLSchemaConverterTest {
     snapshot(functions, "sensors");
   }
 
-  public List<APIFunction> getFunctionsFromPath(String path) {
+  public List<ApiOperation> getFunctionsFromPath(String path) {
     return getFunctions(TestUtil.getResourcesFileAsString(path));
   }
 
-  public List<APIFunction> getFunctions(String schemaString) {
+  public List<ApiOperation> getFunctions(String schemaString) {
     return getConverter(schemaString).convertSchema();
   }
 
   public GraphQLSchemaConverter getConverter(String schemaString) {
-    return new GraphQLSchemaConverter(schemaString, fctFactory);
+    return new GraphQLSchemaConverter(schemaString);
   }
 
   @Test
@@ -120,14 +109,14 @@ public class GraphQLSchemaConverterTest {
   }
 
   @SneakyThrows
-  public static String convertToJsonDefault(List<APIFunction> functions) {
-    return FunctionUtil.toJsonString(functions);
+  public static String convertToJsonDefault(List<ApiOperation> functions) {
+    return TestUtil.toJsonString(functions);
   }
 
-  public static void snapshot(List<APIFunction> functions, String testName) {
-    for (APIFunction apiFunction : functions) {
+  public static void snapshot(List<ApiOperation> functions, String testName) {
+    for (ApiOperation apiOperation : functions) {
       // make sure ALL queries have a good syntax
-      var query = apiFunction.getApiQuery().query();
+      var query = apiOperation.getApiQuery().query();
       assertDoesNotThrow(
           () -> {
             Parser.parse(query);
@@ -145,15 +134,14 @@ public class GraphQLSchemaConverterTest {
             TestUtil.getResourcesFileAsString("graphql/rick_morty-schema.graphqls"),
             GraphQLSchemaConverterConfig.builder()
                 .operationFilter(ignorePrefix("internal"))
-                .build(),
-            new StandardAPIFunctionFactory(apiExecutor, Set.of()));
+                .build());
 
-    List<APIFunction> functions = converter.convertSchema();
+    List<ApiOperation> functions = converter.convertSchema();
     assertEquals(9, functions.size());
     // Test context key handling
-    APIFunction episodes =
+    ApiOperation episodes =
         functions.stream()
-            .filter(f -> f.getFunction().getName().equalsIgnoreCase("episodes"))
+            .filter(f -> f.getFunction().getName().equalsIgnoreCase("getepisodes"))
             .findFirst()
             .get();
     assertThat(episodes.getFunction().getParameters().getProperties())
@@ -164,8 +152,7 @@ public class GraphQLSchemaConverterTest {
         () -> {
           Parser.parse(query);
         });
-    assertFalse(
-        episodes.getModelFunction().getParameters().getProperties().containsKey("customerid"));
+    assertFalse(episodes.getFunction().getParameters().getProperties().containsKey("customerid"));
     snapshot(functions, "rick-morty");
   }
 }

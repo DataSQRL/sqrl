@@ -13,28 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.ai.tool;
+package com.datasqrl.gqlconverter.operation;
 
-import lombok.NonNull;
+import graphql.language.OperationDefinition.Operation;
 
 /**
- * The result of a function argument evaluation.
+ * Default GraphQL query implementation
  *
- * @param errorType
- * @param errorMessage
+ * @param query query string
  */
-public record ValidationResult(@NonNull ErrorType errorType, String errorMessage) {
-
-  public static final ValidationResult VALID = new ValidationResult(ErrorType.NONE, null);
-
-  public boolean isValid() {
-    return errorType == ErrorType.NONE;
-  }
-
-  public enum ErrorType {
-    NONE,
-    NOT_FOUND,
-    INVALID_JSON,
-    INVALID_ARGUMENT
-  }
-}
+public record GraphQLQuery(String query, String queryName, Operation operationType)
+    implements APIQuery {}

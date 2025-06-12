@@ -1,6 +1,6 @@
 [ {
   "function" : {
-    "name" : "SensorReading",
+    "name" : "GetSensorReading",
     "description" : "Returns the sensor temperature readings for each second by most recent for a given sensor id",
     "parameters" : {
       "type" : "object",
@@ -20,13 +20,17 @@
       "required" : [ "sensorid" ]
     }
   },
-  "contextKeys" : [ ],
   "apiQuery" : {
-    "query" : "query SensorReading($sensorid: Int!$limit: Int = 10$offset: Int = 0) {\nSensorReading(sensorid: $sensorid, limit: $limit, offset: $offset) {\nsensorid\ntemperature\nevent_time\n}\n\n}"
-  }
+    "query" : "query SensorReading($sensorid: Int!$limit: Int = 10$offset: Int = 0) {\nSensorReading(sensorid: $sensorid, limit: $limit, offset: $offset) {\nsensorid\ntemperature\nevent_time\n}\n\n}",
+    "queryName" : "SensorReading",
+    "operationType" : "QUERY"
+  },
+  "resource" : false,
+  "restEndpoint" : true,
+  "tool" : true
 }, {
   "function" : {
-    "name" : "ReadingsAboveTemp",
+    "name" : "GetReadingsAboveTemp",
     "description" : "Returns all sensor temperature readings above the given temperature",
     "parameters" : {
       "type" : "object",
@@ -41,13 +45,17 @@
       "required" : [ "temp" ]
     }
   },
-  "contextKeys" : [ ],
   "apiQuery" : {
-    "query" : "query ReadingsAboveTemp($temp: Float!$limit: Int = 10) {\nReadingsAboveTemp(temp: $temp, limit: $limit) {\nsensorid\ntemperature\nevent_time\n}\n\n}"
-  }
+    "query" : "query ReadingsAboveTemp($temp: Float!$limit: Int = 10) {\nReadingsAboveTemp(temp: $temp, limit: $limit) {\nsensorid\ntemperature\nevent_time\n}\n\n}",
+    "queryName" : "ReadingsAboveTemp",
+    "operationType" : "QUERY"
+  },
+  "resource" : false,
+  "restEndpoint" : true,
+  "tool" : true
 }, {
   "function" : {
-    "name" : "SensorMaxTempLastMinute",
+    "name" : "GetSensorMaxTempLastMinute",
     "description" : "Returns the maximum temperature recorded by each sensor in the last minute",
     "parameters" : {
       "type" : "object",
@@ -67,13 +75,17 @@
       "required" : [ ]
     }
   },
-  "contextKeys" : [ ],
   "apiQuery" : {
-    "query" : "query SensorMaxTempLastMinute($sensorid: Int$limit: Int = 10$offset: Int = 0) {\nSensorMaxTempLastMinute(sensorid: $sensorid, limit: $limit, offset: $offset) {\nsensorid\nmaxTemp\nlast_updated\n}\n\n}"
-  }
+    "query" : "query SensorMaxTempLastMinute($sensorid: Int$limit: Int = 10$offset: Int = 0) {\nSensorMaxTempLastMinute(sensorid: $sensorid, limit: $limit, offset: $offset) {\nsensorid\nmaxTemp\nlast_updated\n}\n\n}",
+    "queryName" : "SensorMaxTempLastMinute",
+    "operationType" : "QUERY"
+  },
+  "resource" : false,
+  "restEndpoint" : true,
+  "tool" : true
 }, {
   "function" : {
-    "name" : "SensorMaxTemp",
+    "name" : "GetSensorMaxTemp",
     "description" : "Returns the maximum temperature recorded by each sensor",
     "parameters" : {
       "type" : "object",
@@ -93,13 +105,17 @@
       "required" : [ ]
     }
   },
-  "contextKeys" : [ ],
   "apiQuery" : {
-    "query" : "query SensorMaxTemp($sensorid: Int$limit: Int = 10$offset: Int = 0) {\nSensorMaxTemp(sensorid: $sensorid, limit: $limit, offset: $offset) {\nsensorid\nmaxTemp\nlast_updated\n}\n\n}"
-  }
+    "query" : "query SensorMaxTemp($sensorid: Int$limit: Int = 10$offset: Int = 0) {\nSensorMaxTemp(sensorid: $sensorid, limit: $limit, offset: $offset) {\nsensorid\nmaxTemp\nlast_updated\n}\n\n}",
+    "queryName" : "SensorMaxTemp",
+    "operationType" : "QUERY"
+  },
+  "resource" : false,
+  "restEndpoint" : true,
+  "tool" : true
 }, {
   "function" : {
-    "name" : "AddReading",
+    "name" : "AddAddReading",
     "parameters" : {
       "type" : "object",
       "properties" : {
@@ -113,10 +129,14 @@
       "required" : [ "sensorid", "temperature" ]
     }
   },
-  "contextKeys" : [ ],
   "apiQuery" : {
-    "query" : "mutation AddReading($sensorid: Int!$temperature: Float!) {\nAddReading(metric: { sensorid: $sensorid, temperature: $temperature }) {\nsensorid\ntemperature\nevent_time\n}\n\n}"
-  }
+    "query" : "mutation AddReading($sensorid: Int!$temperature: Float!) {\nAddReading(metric: { sensorid: $sensorid, temperature: $temperature }) {\nsensorid\ntemperature\nevent_time\n}\n\n}",
+    "queryName" : "AddReading",
+    "operationType" : "MUTATION"
+  },
+  "resource" : false,
+  "restEndpoint" : true,
+  "tool" : true
 }, {
   "function" : {
     "name" : "HighTemps",
@@ -132,10 +152,14 @@
       "required" : [ "temperature" ]
     }
   },
-  "contextKeys" : [ ],
   "apiQuery" : {
-    "query" : "query HighTemps(\n    $temperature: Float!\n) {\n    ReadingsAboveTemp(temp: $temperature) {\n        sensorid\n        temperature\n    }\n}\n"
-  }
+    "query" : "query HighTemps(\n    $temperature: Float!\n) {\n    ReadingsAboveTemp(temp: $temperature) {\n        sensorid\n        temperature\n    }\n}\n",
+    "queryName" : "HighTemps",
+    "operationType" : "QUERY"
+  },
+  "resource" : false,
+  "restEndpoint" : true,
+  "tool" : true
 }, {
   "function" : {
     "name" : "HighTemps2",
@@ -151,8 +175,12 @@
       "required" : [ "temp" ]
     }
   },
-  "contextKeys" : [ ],
   "apiQuery" : {
-    "query" : "query HighTemps2(\n    $temp: Float!\n) {\n    ReadingsAboveTemp(temp: $temp) {\n        sensorid\n        temperature\n    }\n}\n"
-  }
+    "query" : "query HighTemps2(\n    $temp: Float!\n) {\n    ReadingsAboveTemp(temp: $temp) {\n        sensorid\n        temperature\n    }\n}\n",
+    "queryName" : "HighTemps2",
+    "operationType" : "QUERY"
+  },
+  "resource" : false,
+  "restEndpoint" : true,
+  "tool" : true
 } ]

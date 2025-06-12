@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.ai.converter;
+package com.datasqrl.gqlconverter.converter;
 
 import graphql.language.OperationDefinition.Operation;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.function.BiPredicate;
 import lombok.Builder;
 import lombok.Value;
@@ -29,11 +30,20 @@ public class GraphQLSchemaConverterConfig {
   public static final GraphQLSchemaConverterConfig DEFAULT =
       GraphQLSchemaConverterConfig.builder().build();
 
+  public static final Map<Operation, String> OPERATION_PREFIX_MAP =
+      Map.of(
+          Operation.QUERY, "Get",
+          Operation.MUTATION, "Add",
+          Operation.SUBSCRIPTION, "Listen");
+
   /** Filter for selecting which operations to convert */
   @Builder.Default BiPredicate<Operation, String> operationFilter = (op, name) -> true;
 
   /** The maximum depth of conversion for operations that have nested types */
   @Builder.Default int maxDepth = 3;
+
+  /** Whether to a prefix when generating operations to ensure uniqueness */
+  @Builder.Default boolean addPrefix = true;
 
   /**
    * Returns an operations filter that filters out all operations which start with the given list of
@@ -48,5 +58,12 @@ public class GraphQLSchemaConverterConfig {
     return (op, name) ->
         Arrays.stream(prefixesLower)
             .noneMatch(prefixLower -> name.trim().toLowerCase().startsWith(prefixLower));
+  }
+
+  public String getFunctionName(String name, Operation operationType) {
+    if (isAddPrefix()) {
+      name = OPERATION_PREFIX_MAP.get(operationType) + name;
+    }
+    return name;
   }
 }

@@ -13,17 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.ai.converter;
+package com.datasqrl.gqlconverter.converter;
 
 import static graphql.Scalars.GraphQLString;
 
-import com.datasqrl.ai.api.APIQuery;
-import com.datasqrl.ai.api.GraphQLQuery;
-import com.datasqrl.ai.tool.APIFunction;
-import com.datasqrl.ai.tool.FunctionDefinition;
-import com.datasqrl.ai.tool.FunctionDefinition.Argument;
-import com.datasqrl.ai.tool.FunctionDefinition.Parameters;
-import com.datasqrl.ai.util.ErrorHandling;
+import com.datasqrl.gqlconverter.operation.ApiOperation;
+import com.datasqrl.gqlconverter.operation.FunctionDefinition;
+import com.datasqrl.gqlconverter.operation.FunctionDefinition.Argument;
+import com.datasqrl.gqlconverter.operation.FunctionDefinition.Parameters;
+import com.datasqrl.gqlconverter.operation.GraphQLQuery;
+import com.datasqrl.gqlconverter.util.ErrorHandling;
 import graphql.language.Comment;
 import graphql.language.Definition;
 import graphql.language.Document;
@@ -73,25 +72,20 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Converts a given GraphQL Schema to a tools configuration for the function backend. It extracts
- * all queries and mutations and converts them into {@link com.datasqrl.ai.tool.APIFunction}.
+ * all queries and mutations and converts them into {@link ApiOperation}.
  */
 @Value
 @Slf4j
 public class GraphQLSchemaConverter {
 
-  APIFunctionFactory functionFactory;
   GraphQLSchemaConverterConfig config;
   GraphQLSchema schema;
 
-  public GraphQLSchemaConverter(String schemaString, APIFunctionFactory functionFactory) {
-    this(schemaString, GraphQLSchemaConverterConfig.DEFAULT, functionFactory);
+  public GraphQLSchemaConverter(String schemaString) {
+    this(schemaString, GraphQLSchemaConverterConfig.DEFAULT);
   }
 
-  public GraphQLSchemaConverter(
-      String schemaString,
-      GraphQLSchemaConverterConfig config,
-      APIFunctionFactory functionFactory) {
-    this.functionFactory = functionFactory;
+  public GraphQLSchemaConverter(String schemaString, GraphQLSchemaConverterConfig config) {
     this.config = config;
     this.schema = getSchema(schemaString);
   }
@@ -118,13 +112,13 @@ public class GraphQLSchemaConverter {
    * @throws IllegalArgumentException if operation definition contains no definitions or if an
    *     unexpected definition type is provided
    */
-  public List<APIFunction> convertOperations(String operationDefinition) {
+  public List<ApiOperation> convertOperations(String operationDefinition) {
     Parser parser = new Parser();
     Document document = parser.parseDocument(operationDefinition);
     ErrorHandling.checkArgument(
         !document.getDefinitions().isEmpty(), "Operation definition contains no definitions");
 
-    List<APIFunction> functions = new ArrayList<>();
+    List<ApiOperation> functions = new ArrayList<>();
     Iterator<Definition> defIter = document.getDefinitions().iterator();
     Definition definition = defIter.next();
     do {
@@ -132,7 +126,8 @@ public class GraphQLSchemaConverter {
           definition instanceof OperationDefinition,
           "Expected definition to be an operation, but got: %s",
           operationDefinition);
-      FunctionDefinition fctDef = convertOperationDefinition(((OperationDefinition) definition));
+      OperationDefinition opDef = (OperationDefinition) definition;
+      FunctionDefinition fctDef = convertOperationDefinition(opDef);
 
       SourceLocation startLocation = definition.getSourceLocation();
       SourceLocation endLocation = new SourceLocation(Integer.MAX_VALUE, Integer.MAX_VALUE);
@@ -149,8 +144,8 @@ public class GraphQLSchemaConverter {
               startLocation.getColumn(),
               endLocation.getLine(),
               endLocation.getColumn());
-      APIQuery query = new GraphQLQuery(queryString);
-      functions.add(functionFactory.create(fctDef, query));
+      GraphQLQuery query = new GraphQLQuery(queryString, fctDef.getName(), opDef.getOperation());
+      functions.add(new ApiOperation(fctDef, query));
     } while (definition != null);
     return functions;
   }
@@ -197,7 +192,7 @@ public class GraphQLSchemaConverter {
     Operation op = node.getOperation();
     ErrorHandling.checkArgument(
         op == Operation.QUERY || op == Operation.MUTATION,
-        "Do not support subscriptions: %s",
+        "Do not yet support subscriptions: %s",
         node.getName());
     String fctComment = comments2String(node.getComments());
     String fctName = node.getName();
@@ -228,18 +223,18 @@ public class GraphQLSchemaConverter {
   private record OperationField(Operation op, GraphQLFieldDefinition fieldDefinition) {}
 
   /**
-   * Converts the whole GraphQL schema into a list of {@link APIFunction} instances.
+   * Converts the whole GraphQL schema into a list of {@link ApiOperation} instances.
    *
    * <p>This method will take the schema associated with this converter instance and convert every
-   * query and mutation in the schema into an equivalent {@link APIFunction}. The {@link
-   * APIFunction} instances are the ones that can be used by other parts of the system, acting as an
-   * equivalent representation of the original GraphQL operations.
+   * query and mutation in the schema into an equivalent {@link ApiOperation}. The {@link
+   * ApiOperation} instances are the ones that can be used by other parts of the system, acting as
+   * an equivalent representation of the original GraphQL operations.
    *
-   * @return List of {@link APIFunction} instances corresponding to all the queries and mutations in
-   *     the GraphQL schema.
+   * @return List of {@link ApiOperation} instances corresponding to all the queries and mutations
+   *     in the GraphQL schema.
    */
-  public List<APIFunction> convertSchema() {
-    List<APIFunction> functions = new ArrayList<>();
+  public List<ApiOperation> convertSchema() {
+    List<ApiOperation> functions = new ArrayList<>();
 
     List<GraphQLFieldDefinition> queries =
         Optional.ofNullable(schema.getQueryType())
@@ -335,9 +330,10 @@ public class GraphQLSchemaConverter {
     return funcDef;
   }
 
-  private APIFunction convert(Operation operationType, GraphQLFieldDefinition fieldDef) {
+  private ApiOperation convert(Operation operationType, GraphQLFieldDefinition fieldDef) {
     FunctionDefinition funcDef =
-        initializeFunctionDefinition(fieldDef.getName(), fieldDef.getDescription());
+        initializeFunctionDefinition(
+            config.getFunctionName(fieldDef.getName(), operationType), fieldDef.getDescription());
     Parameters params = funcDef.getParameters();
     String opName = operationType.name().toLowerCase() + "." + fieldDef.getName();
     StringBuilder queryHeader =
@@ -350,8 +346,9 @@ public class GraphQLSchemaConverter {
     visit(fieldDef, queryBody, queryHeader, params, new Context(opName, "", 0, List.of()));
 
     queryHeader.append(") {\n").append(queryBody).append("\n}");
-    APIQuery apiQuery = new GraphQLQuery(queryHeader.toString());
-    return functionFactory.create(funcDef, apiQuery);
+    GraphQLQuery apiQuery =
+        new GraphQLQuery(queryHeader.toString(), fieldDef.getName(), operationType);
+    return new ApiOperation(funcDef, apiQuery);
   }
 
   private static String combineStrings(String prefix, String suffix) {

@@ -1,6 +1,6 @@
 [ {
   "function" : {
-    "name" : "Rewards",
+    "name" : "GetRewards",
     "description" : "Returns all the rewards that a customer has earned in the given time period",
     "parameters" : {
       "type" : "object",
@@ -21,13 +21,17 @@
       "required" : [ "customerid", "fromTime", "toTime" ]
     }
   },
-  "contextKeys" : [ ],
   "apiQuery" : {
-    "query" : "query Rewards($customerid: Int!$fromTime: DateTime!$toTime: DateTime!) {\nRewards(customerid: $customerid, fromTime: $fromTime, toTime: $toTime) {\ntransactionId\ncustomerid\ncardNo\ncardType\ntime\namount\nreward\nmerchantName\n}\n\n}"
-  }
+    "query" : "query Rewards($customerid: Int!$fromTime: DateTime!$toTime: DateTime!) {\nRewards(customerid: $customerid, fromTime: $fromTime, toTime: $toTime) {\ntransactionId\ncustomerid\ncardNo\ncardType\ntime\namount\nreward\nmerchantName\n}\n\n}",
+    "queryName" : "Rewards",
+    "operationType" : "QUERY"
+  },
+  "resource" : false,
+  "restEndpoint" : true,
+  "tool" : true
 }, {
   "function" : {
-    "name" : "RewardsByWeek",
+    "name" : "GetRewardsByWeek",
     "description" : "Returns the total awards a customer earned by week starting from the most recent week.",
     "parameters" : {
       "type" : "object",
@@ -48,13 +52,17 @@
       "required" : [ "customerid" ]
     }
   },
-  "contextKeys" : [ ],
   "apiQuery" : {
-    "query" : "query RewardsByWeek($customerid: Int!$limit: Int = 12$offset: Int = 0) {\nRewardsByWeek(customerid: $customerid, limit: $limit, offset: $offset) {\ncustomerid\ntimeWeek\ntotal_reward\n}\n\n}"
-  }
+    "query" : "query RewardsByWeek($customerid: Int!$limit: Int = 12$offset: Int = 0) {\nRewardsByWeek(customerid: $customerid, limit: $limit, offset: $offset) {\ncustomerid\ntimeWeek\ntotal_reward\n}\n\n}",
+    "queryName" : "RewardsByWeek",
+    "operationType" : "QUERY"
+  },
+  "resource" : false,
+  "restEndpoint" : true,
+  "tool" : true
 }, {
   "function" : {
-    "name" : "TotalReward",
+    "name" : "GetTotalReward",
     "description" : "Returns the total amount of rewards the customer has earned to date and the time since when they eared rewards",
     "parameters" : {
       "type" : "object",
@@ -67,13 +75,17 @@
       "required" : [ "customerid" ]
     }
   },
-  "contextKeys" : [ ],
   "apiQuery" : {
-    "query" : "query TotalReward($customerid: Int!) {\nTotalReward(customerid: $customerid) {\ncustomerid\ntotal_reward\nsince_time\n}\n\n}"
-  }
+    "query" : "query TotalReward($customerid: Int!) {\nTotalReward(customerid: $customerid) {\ncustomerid\ntotal_reward\nsince_time\n}\n\n}",
+    "queryName" : "TotalReward",
+    "operationType" : "QUERY"
+  },
+  "resource" : false,
+  "restEndpoint" : true,
+  "tool" : true
 }, {
   "function" : {
-    "name" : "PotentialRewards",
+    "name" : "GetPotentialRewards",
     "description" : "Returns all the potential rewards a customer could have earned in the given time period for the given card type. Use this function to show customers the rewards they would have earned if they had the given card.",
     "parameters" : {
       "type" : "object",
@@ -98,13 +110,17 @@
       "required" : [ "customerid", "cardType", "fromTime", "toTime" ]
     }
   },
-  "contextKeys" : [ ],
   "apiQuery" : {
-    "query" : "query PotentialRewards($customerid: Int!$cardType: String!$fromTime: DateTime!$toTime: DateTime!) {\nPotentialRewards(customerid: $customerid, cardType: $cardType, fromTime: $fromTime, toTime: $toTime) {\ntransactionId\ncustomerid\nrewardCardType\ntime\namount\nreward\nmerchantName\n}\n\n}"
-  }
+    "query" : "query PotentialRewards($customerid: Int!$cardType: String!$fromTime: DateTime!$toTime: DateTime!) {\nPotentialRewards(customerid: $customerid, cardType: $cardType, fromTime: $fromTime, toTime: $toTime) {\ntransactionId\ncustomerid\nrewardCardType\ntime\namount\nreward\nmerchantName\n}\n\n}",
+    "queryName" : "PotentialRewards",
+    "operationType" : "QUERY"
+  },
+  "resource" : false,
+  "restEndpoint" : true,
+  "tool" : true
 }, {
   "function" : {
-    "name" : "PotentialRewardsByWeek",
+    "name" : "GetPotentialRewardsByWeek",
     "description" : "Returns the total awards a customer could have earned for a given card type by week starting from the most recent week. Use this function to show the customer what their reward earnings would have looked like, if they had a given card.",
     "parameters" : {
       "type" : "object",
@@ -129,13 +145,17 @@
       "required" : [ "customerid", "cardType" ]
     }
   },
-  "contextKeys" : [ ],
   "apiQuery" : {
-    "query" : "query PotentialRewardsByWeek($customerid: Int!$cardType: String!$limit: Int = 12$offset: Int = 0) {\nPotentialRewardsByWeek(customerid: $customerid, cardType: $cardType, limit: $limit, offset: $offset) {\ncustomerid\ncardType\ntimeWeek\ntotal_reward\n}\n\n}"
-  }
+    "query" : "query PotentialRewardsByWeek($customerid: Int!$cardType: String!$limit: Int = 12$offset: Int = 0) {\nPotentialRewardsByWeek(customerid: $customerid, cardType: $cardType, limit: $limit, offset: $offset) {\ncustomerid\ncardType\ntimeWeek\ntotal_reward\n}\n\n}",
+    "queryName" : "PotentialRewardsByWeek",
+    "operationType" : "QUERY"
+  },
+  "resource" : false,
+  "restEndpoint" : true,
+  "tool" : true
 }, {
   "function" : {
-    "name" : "TotalPotentialReward",
+    "name" : "GetTotalPotentialReward",
     "description" : "Returns the total amount of rewards the customer could have earned for each type of credit card the customer does not yet have. Use this function to determine which credit card type to recommend to a customer.",
     "parameters" : {
       "type" : "object",
@@ -148,8 +168,12 @@
       "required" : [ "customerid" ]
     }
   },
-  "contextKeys" : [ ],
   "apiQuery" : {
-    "query" : "query TotalPotentialReward($customerid: Int!) {\nTotalPotentialReward(customerid: $customerid) {\ncustomerid\ncardType\ntotal_reward\nsince_time\n}\n\n}"
-  }
+    "query" : "query TotalPotentialReward($customerid: Int!) {\nTotalPotentialReward(customerid: $customerid) {\ncustomerid\ncardType\ntotal_reward\nsince_time\n}\n\n}",
+    "queryName" : "TotalPotentialReward",
+    "operationType" : "QUERY"
+  },
+  "resource" : false,
+  "restEndpoint" : true,
+  "tool" : true
 } ]
