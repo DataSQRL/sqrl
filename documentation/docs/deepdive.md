@@ -2,29 +2,29 @@
 
 The DataSQRL Compiler executes the following steps:
 
-1. Read and combine all package.json configuration files to initialize the configuration for the compiler
-2. The Packager populates the `build/` directory with scripts and folders based on the local folder structure and the dependency mapping defined in the configuration file. As part of this process, the packager executes all registered Preprocessors which prepare local data or copy elements into the build directory. For example, the Discovery preprocessor analyzes any `.csv` or `.jsonl` file in the local directory tree, determines the schema, and creates a table configuration.
-3. The [parser](#parser) reads the main SQRL script in the `build/` directory and resolves all `IMPORT` and `EXPORT` statements locally against the folder structure in the `build` directory.
-4. The [parser](#parser) converts all statements to logical plans. Most of the work is delegated to the FlinkSQL parser and Apache Calcite. The parser detects the language elements SQRL adds and converts them.
-5. The [logical plan analyzer](#logical-plan-analyzer) validates each statement and extract information needed for planning.
-6. The [DAG Planner](#dag-planner) combines all logical statement plans into a processing DAG that defines the flow of data from sources to sinks.
-7. The [DAG Planner](#dag-planner) optimizes the DAG and assigns each statement to an [engine](#architecture) for execution.
-8. The [Physical Planner](#physical-planner) generates deployment assets for each engine and connector configuration to move data between engines.
-
-The deployment artifacts are written to the `build/deploy` folder with the engine plans in `build/deploy/plan`.
+1. **Read Configuration**: Read and combine all package.json configuration files to initialize the configuration for the compiler
+2. **Build Project**: The [packager](#packager) builds the project structure in `build/` directory.
+3. **Parse Scripts**: The [parser](#parser) reads the main SQRL script in the `build/` directory and resolves all `IMPORT` and `EXPORT` statements locally against the folder structure in the `build` directory.
+4. **Create Logical Plans**: The [parser](#parser) converts all statements to logical plans. Most of the work is delegated to the FlinkSQL parser and Apache Calcite. The parser detects the language elements SQRL adds and converts them.
+5. **Analyze Logical Plans**: The [logical plan analyzer](#logical-plan-analyzer) validates each statement and extract information needed for planning.
+6. **Build DAG**: The [DAG Planner](#dag-planner) combines all logical statement plans into a processing DAG that defines the flow of data from sources to sinks.
+7. **Optimize DAG**: The [DAG Planner](#dag-planner) optimizes the DAG and assigns each statement to an [engine](#architecture) for execution.
+8. **Generate Physical Plans**: The [Physical Planner](#physical-planner) generates deployment assets for each engine and connector configuration to move data between engines.
+9. **Write Deployment Artifacts**: The deployment artifacts are written to the `build/deploy` folder with the engine plans in `build/deploy/plan`.
 
 The DataSQRL run command executes all compilation steps above and:
-1. Launches all engines in docker
-2. Deploys the deployment assets to the engines, e.g. installs the database schema, passes the GraphQL execution plan to Vert.x, creates topics in RedPanda, and executes the compiled plan in Flink.
+1. **Launch**: Launches all engines in docker
+2. **Deploy**: Deploys the deployment assets to the engines, e.g. installs the database schema, passes the GraphQL execution plan to Vert.x, creates topics in RedPanda, and executes the compiled plan in Flink.
+3. **Runs**: Runs and monitors the engines as they execute the pipeline.
 
 The running data pipeline and the individual engines running each component are accessible locally via the mapped ports.
 
 The DataSQRL test command executes all compilation and run steps above and:
-1. Installs subscription queries to listen for test results (if any)
-2. Runs the mutation queries against the API in order (if any) and snapshots the results.
-3. Waits for the configured interval, number of checkpoints, or Flink job completion based on configuration.
-4. Runs the queries against the API to snapshot the results.
-5. Snapshots all subscription results in string order.
+1. **Subscriptions**: Installs subscription queries to listen for test results (if any)
+2. **Mutations**: Runs the mutation queries against the API in order (if any) and snapshots the results.
+   * Waits for the configured interval, number of checkpoints, or Flink job completion based on configuration.
+4. **Queries**: Runs the queries against the API to snapshot the results.
+5. **Snapshots**: Snapshots all subscription results in string order.
 
 
 ## Architecture
@@ -37,9 +37,21 @@ serving stage which are executed by Apache Flink, PostgreSQL, and Vert.x, respec
 DataSQRL supports the following types of stages:
 
 * Stream Processing: For processing data as it is ingested
+  * [Apache Flink](https://flink.apache.org/)  
 * Log: For moving data between stages reliably
+  * [Apache Kafka](https://kafka.apache.org/)
+  * [RedPanda](https://redpanda.com/)
+  * Apache Kafka-compatible (e.g. [Azure EventHub](https://azure.microsoft.com/en-us/services/event-hubs/))
 * Database: For storage and querying data
+  * [PostgreSQL](https://www.postgresql.org/) 
+  * [Apache Iceberg](https://iceberg.apache.org/)
+  * [Yugabyte](https://www.yugabyte.com/)
+  * [DuckDB](https://duckdb.org/)
+  * [Snowflake](https://www.snowflake.com/)
+  * PostgreSQL wire compatible (e.g. [CockroachDB](https://www.cockroachlabs.com/))
 * Server: For returning data through an API upon request
+  * [Vert.x](https://vertx.io/)
+  * [GraphQL Java](https://www.graphql-java.com/)
 * Cache: For caching data on the server (coming soon)
 
 Currently, DataSQRL is closely tied to Flink as the stream processing engine. The other engines are modular, making it simple to add additional engines.
@@ -61,6 +73,22 @@ the statements, constructs a data processing DAG, optimizes the DAG, and finally
 produces deployment assets for the engines executing the data processing steps.
 
 The planner consists of the following components.
+
+### Packager
+
+The Packager populates the `build/` directory with scripts and folders based on the local folder structure and the dependency mapping defined in the configuration file. 
+
+As part of this process, the packager executes all registered Preprocessors which prepare local data or copy elements into the build directory.
+
+In addition, the packager executes the following special purpose preprocessors:
+
+* The Discovery preprocessor analyzes any `.csv` or `.jsonl` file in the local directory tree, determines the schema, and creates a table configuration.
+* The UDF preprocessor extracts UDF definitions from provided jar files.
+* The static data preprocessors copies `.csv` and `.jsonl` files into a consolidated data directory for Flink to read at runtime. This requires that filenames for static data files are unique.
+
+Preprocessors are internal to DataSQRL and can be extended within the framework.
+
+
 
 ### Parser
 
