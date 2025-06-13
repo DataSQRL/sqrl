@@ -151,13 +151,13 @@ CREATE TABLE `CustomerByNothing_2` (
   `lastUpdated` BIGINT NOT NULL,
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
 ) WITH (
+  'topic' = 'kafka-CustomerByNothing',
   'connector' = 'kafka',
   'format' = 'flexible-json',
   'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${PROPERTIES_GROUP_ID}',
   'scan.startup.mode' = 'group-offsets',
-  'properties.auto.offset.reset' = 'earliest',
-  'topic' = 'CustomerByNothing'
+  'properties.auto.offset.reset' = 'earliest'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Customer_1`
@@ -173,7 +173,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByNothing_2`
 {
   "topics" : [
     {
-      "topicName" : "CustomerByNothing",
+      "topicName" : "kafka-CustomerByNothing",
       "tableName" : "CustomerByNothing_2",
       "numPartitions" : 1,
       "replicationFactor" : 1,
@@ -623,7 +623,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByNothing_2`
       {
         "type" : "kafka",
         "fieldName" : "CustomerByNothing",
-        "topic" : "CustomerByNothing",
+        "topic" : "kafka-CustomerByNothing",
         "sinkConfig" : { },
         "filters" : { }
       }

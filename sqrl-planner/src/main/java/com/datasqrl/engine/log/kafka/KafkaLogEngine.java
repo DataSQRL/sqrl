@@ -127,7 +127,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
       }
     }
     tableBuilder.setConnectorOptions(conf.toMapWithSubstitution(ctxBuilder.build()));
-    return new NewTopic(originalTableName, tableBuilder.getTableName());
+    return new NewTopic(tableBuilder.getTopicName(), tableBuilder.getTableName());
   }
 
   @Override
