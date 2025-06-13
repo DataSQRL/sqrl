@@ -172,12 +172,12 @@ CREATE TABLE `DistinctStream_2` (
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`customerid`) NOT ENFORCED
 ) WITH (
+  'topic' = 'kafka-upsert-DistinctStream',
   'connector' = 'upsert-kafka',
   'value.format' = 'flexible-json',
   'key.format' = 'raw',
   'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
-  'properties.group.id' = '${PROPERTIES_GROUP_ID}',
-  'topic' = 'DistinctStream'
+  'properties.group.id' = '${PROPERTIES_GROUP_ID}'
 );
 CREATE TABLE `DistinctCustomer_3` (
   `customerid` BIGINT NOT NULL,
@@ -198,13 +198,13 @@ CREATE TABLE `JoinStream_4` (
   `id` BIGINT NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL
 ) WITH (
+  'topic' = 'kafka-JoinStream',
   'connector' = 'kafka',
   'format' = 'flexible-json',
   'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${PROPERTIES_GROUP_ID}',
   'scan.startup.mode' = 'group-offsets',
-  'properties.auto.offset.reset' = 'earliest',
-  'topic' = 'JoinStream'
+  'properties.auto.offset.reset' = 'earliest'
 );
 CREATE TABLE `JoinStream_5` (
   `id` BIGINT NOT NULL,
@@ -263,7 +263,7 @@ INSERT INTO `default_catalog`.`default_database`.`DistinctStream_2`
 {
   "topics" : [
     {
-      "topicName" : "DistinctStream",
+      "topicName" : "kafka-upsert-DistinctStream",
       "tableName" : "DistinctStream_2",
       "numPartitions" : 1,
       "replicationFactor" : 1,
@@ -271,7 +271,7 @@ INSERT INTO `default_catalog`.`default_database`.`DistinctStream_2`
       "config" : { }
     },
     {
-      "topicName" : "JoinStream",
+      "topicName" : "kafka-JoinStream",
       "tableName" : "JoinStream_4",
       "numPartitions" : 1,
       "replicationFactor" : 1,

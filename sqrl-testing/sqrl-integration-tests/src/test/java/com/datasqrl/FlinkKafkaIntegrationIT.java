@@ -46,10 +46,11 @@ public class FlinkKafkaIntegrationIT {
 
   private static KafkaContainer kafkaContainer;
 
+  @SuppressWarnings("resource")
   @BeforeClass
   public static void setup() {
     kafkaContainer =
-        new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:latest"))
+        new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:7.9.2"))
             .withEnv(
                 "KAFKA_MESSAGE_MAX_BYTES",
                 "50000000") // Increase broker's max message size to 50 MB

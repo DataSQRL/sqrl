@@ -15,7 +15,6 @@
  */
 package com.datasqrl.config;
 
-import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
@@ -25,13 +24,6 @@ import lombok.AllArgsConstructor;
 public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
 
   PackageJson packageJson;
-
-  private Optional<ConnectorConf> getConnectorConfig(String connectorName) {
-    var engineConfig = packageJson.getEngines().getEngineConfig("flink");
-    Preconditions.checkArgument(engineConfig.isPresent(), "Missing engine configuration for Flink");
-    var connectors = engineConfig.get().getConnectors();
-    return connectors.getConnectorConfig(connectorName);
-  }
 
   @Override
   public ConnectorConf getConfig(String name) {
