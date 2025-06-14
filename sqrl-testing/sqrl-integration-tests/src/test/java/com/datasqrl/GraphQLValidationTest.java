@@ -21,7 +21,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
 /**
- * validates the schemas based on comprehensiveTest.sqrl script and snapshots the deployment assets
+ * Validates the schemas based on comprehensiveTest.sqrl script and snapshots the deployment assets
  */
 public class GraphQLValidationTest extends AbstractUseCaseTest {
 
