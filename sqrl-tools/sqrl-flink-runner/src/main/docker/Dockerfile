@@ -14,6 +14,6 @@
 # limitations under the License.
 #
 
-FROM datasqrl/flink-sql-runner:${flinkrunner.version}-flink-1.19
+FROM ${flinkrunner.image.repo}/datasqrl/flink-sql-runner:${flinkrunner.version}-flink-1.19
 
 COPY sqrl-functions/*.jar /opt/flink/lib/
