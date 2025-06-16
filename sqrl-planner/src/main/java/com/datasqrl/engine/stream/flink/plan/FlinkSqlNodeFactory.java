@@ -20,6 +20,7 @@ import com.datasqrl.sql.SqlCallRewriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -323,7 +324,7 @@ public class FlinkSqlNodeFactory {
 
   private static SqlNodeList createPropertiesAndRemoveDefaults(
       Map<String, Object> connectorProperties) {
-    Map<String, Object> options = new HashMap<>(connectorProperties);
+    Map<String, Object> options = new LinkedHashMap<>(connectorProperties);
     options.remove("version");
     options.remove("type");
     if (options.isEmpty()) {

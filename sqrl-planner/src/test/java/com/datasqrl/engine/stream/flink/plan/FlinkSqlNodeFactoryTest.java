@@ -22,6 +22,7 @@ import com.datasqrl.calcite.convert.SqlToStringFactory;
 import com.datasqrl.engine.stream.flink.plan.FlinkSqlNodeFactory.MetadataEntry;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -217,7 +218,7 @@ public class FlinkSqlNodeFactoryTest {
     metadataConfig.put("metadata_col2", metadataEntry2);
 
     List<String> primaryKeyConstraint = Arrays.asList("id");
-    Map<String, Object> connectorProperties = new HashMap<>();
+    Map<String, Object> connectorProperties = new LinkedHashMap<>();
     connectorProperties.put("connector", "filesystem");
     connectorProperties.put("path", "/tmp/data");
     connectorProperties.put("format", "csv");
@@ -255,9 +256,9 @@ public class FlinkSqlNodeFactoryTest {
         )
         PARTITIONED BY (`name`)
         WITH (
-          'format' = 'csv',
+          'connector' = 'filesystem',
           'path' = '/tmp/data',
-          'connector' = 'filesystem'
+          'format' = 'csv'
         )""";
     assertEquals(expectedSql.trim(), sql.trim());
   }
