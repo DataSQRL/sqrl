@@ -26,8 +26,8 @@ import graphql.schema.DataFetcher;
 import graphql.schema.DataFetchingEnvironment;
 import graphql.schema.PropertyDataFetcher;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.handler.graphql.schema.VertxDataFetcher;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import lombok.Value;
 import org.slf4j.Logger;
@@ -83,16 +83,23 @@ public class VertxContext implements Context {
   @Override
   public DataFetcher<?> createArgumentLookupFetcher(
       GraphQLEngineBuilder server, Set<Argument> arguments, ResolvedQuery resolvedQuery) {
-    return VertxDataFetcher.create(
-        (env, future) -> {
+
+    DataFetcher<?> dataFetcher =
+        env -> {
           Set<Argument> argumentSet =
               env.getArguments().entrySet().stream()
                   .map(argument -> new VariableArgument(argument.getKey(), argument.getValue()))
                   .collect(Collectors.toSet());
+
+          var cf = new CompletableFuture<Object>();
+
           // Execute
           QueryExecutionContext context =
-              new VertxQueryExecutionContext(this, env, argumentSet, future);
+              new VertxQueryExecutionContext(this, env, argumentSet, cf);
           resolvedQuery.accept(server, context);
-        });
+          return cf;
+        };
+
+    return dataFetcher;
   }
 }
