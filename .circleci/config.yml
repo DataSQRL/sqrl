@@ -277,7 +277,7 @@ jobs:
       - run:
           name: Build and push test images
           command: |
-            set -e
+            set -ex
             echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
 
             # ── cmd test image ────────────────────────────────────────────────
@@ -285,21 +285,21 @@ jobs:
               --build-arg BASE_TAG=$BASE_TAG \
               -t datasqrl/cmd-test-image:${CIRCLE_SHA1} \
               ./sqrl-tools
-            docker push datasqrl/cmd-test-image:${CIRCLE_SHA1} &
+            docker push datasqrl/cmd-test-image:${CIRCLE_SHA1}
 
             # ── sqrl-server test image ───────────────────────────────────────
             docker build \
               --build-arg BASE_TAG=$BASE_TAG \
               -t datasqrl/sqrl-server-test-image:${CIRCLE_SHA1} \
               sqrl-server/sqrl-server-vertx
-            docker push datasqrl/sqrl-server-test-image:${CIRCLE_SHA1} &
+            docker push datasqrl/sqrl-server-test-image:${CIRCLE_SHA1}
 
             # ── flink-runner test image ──────────────────────────────────────
             docker build \
               --build-arg BASE_TAG=$BASE_TAG \
               -t datasqrl/sqrl-flink-runner-test-image:${CIRCLE_SHA1} \
               sqrl-tools/sqrl-flink-runner/target
-            docker push datasqrl/sqrl-flink-runner-test-image:${CIRCLE_SHA1} &
+            docker push datasqrl/sqrl-flink-runner-test-image:${CIRCLE_SHA1}
 
             # wait for all images to be pushed
             wait
