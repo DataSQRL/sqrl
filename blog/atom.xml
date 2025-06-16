@@ -2,63 +2,11 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://docs.datasqrl.com/blog</id>
     <title>DataSQRL Blog</title>
-    <updated>2025-06-09T00:00:00.000Z</updated>
+    <updated>2025-05-09T00:00:00.000Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://docs.datasqrl.com/blog"/>
     <subtitle>DataSQRL Blog</subtitle>
     <icon>https://docs.datasqrl.com/img/favicon.ico</icon>
-    <entry>
-        <title type="html"><![CDATA[Flink SQL Runner: Run Flink SQL Without JARs or Glue Code]]></title>
-        <id>https://docs.datasqrl.com/blog/flinkrunner-announcement</id>
-        <link href="https://docs.datasqrl.com/blog/flinkrunner-announcement"/>
-        <updated>2025-06-09T00:00:00.000Z</updated>
-        <summary type="html"><![CDATA[Apache Flink has long been a powerhouse for streaming and batch data processing. And with the rise of Flink SQL, developers can now build sophisticated pipelines using a declarative language they already know. But getting Flink SQL applications into production still comes with friction: packaging JARs, managing connectors, injecting secrets, and wiring up deployment infrastructure.]]></summary>
-        <content type="html"><![CDATA[
-<p>Apache Flink has long been a powerhouse for streaming and batch data processing. And with the rise of Flink SQL, developers can now build sophisticated pipelines using a declarative language they already know. But getting Flink SQL applications into production still comes with friction: packaging JARs, managing connectors, injecting secrets, and wiring up deployment infrastructure.</p>
-<img src="https://docs.datasqrl.com/img/blog/flinksqlrunner_logo.png" alt="FlinkSQL Runner >" width="40%">
-<p><a href="https://github.com/DataSQRL/flink-sql-runner/" target="_blank" rel="noopener noreferrer"><strong>Flink SQL Runner</strong></a> is here to change that. It's an open-source toolkit that simplifies development, deployment, and operation of Flink SQL applications—locally or in Kubernetes—without manual JAR assembly or scripting custom infrastructure pipelines.</p>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="from-sql-to-production-minus-the-plumbing">From SQL to Production, Minus the Plumbing<a href="https://docs.datasqrl.com/blog/flinkrunner-announcement#from-sql-to-production-minus-the-plumbing" class="hash-link" aria-label="Direct link to From SQL to Production, Minus the Plumbing" title="Direct link to From SQL to Production, Minus the Plumbing">​</a></h2>
-<p>Imagine you're writing a Flink SQL job that reads from Kafka, enriches the data, and sinks to Iceberg. In theory, it's just SQL. But in practice, production deployment requires:</p>
-<ul>
-<li>Assembling dependencies into a JAR</li>
-<li>Writing YAML to configure connectors</li>
-<li>Injecting secrets for different environments</li>
-</ul>
-<p>Flink SQL Runner eliminates those headaches. You get:</p>
-<ul>
-<li><strong>Declarative execution</strong> with SQL scripts or compiled plans</li>
-<li><strong>Simple deployments</strong> on Kubernetes via Flink Operator</li>
-<li><strong>Environment isolation</strong> with variable substitution and UDF packaging</li>
-</ul>
-<p>All without leaving the SQL layer.</p>
-<h3 class="anchor anchorWithStickyNavbar_LWe7" id="key-features">Key Features<a href="https://docs.datasqrl.com/blog/flinkrunner-announcement#key-features" class="hash-link" aria-label="Direct link to Key Features" title="Direct link to Key Features">​</a></h3>
-<ul>
-<li><strong>SQL and Plan Execution</strong>: Run raw SQL scripts or pre-compiled execution plans.</li>
-<li><strong>Kubernetes-Native</strong>: Built for the Flink Kubernetes Operator—deploy SQL jobs without writing infrastructure code.</li>
-<li><strong>Composable Toolkit</strong>: Use the pieces you need—Docker image, libraries, extensions—to suit your environment.</li>
-<li><strong>Environment Variable Substitution</strong>: Inject secrets and environment-specific config into SQL or plan files using <code>${ENV_VAR}</code> syntax.</li>
-<li><strong>UDF Infrastructure</strong>: Load custom JARs and register system functions easily.</li>
-<li><strong>Function Libraries</strong>: Drop-in UDFs for advanced math and OpenAI integration.</li>
-</ul>
-<h3 class="anchor anchorWithStickyNavbar_LWe7" id="flexible-and-extensible">Flexible and Extensible<a href="https://docs.datasqrl.com/blog/flinkrunner-announcement#flexible-and-extensible" class="hash-link" aria-label="Direct link to Flexible and Extensible" title="Direct link to Flexible and Extensible">​</a></h3>
-<p>Flink SQL Runner is not a monolith. You can:</p>
-<ul>
-<li>Run it standalone with Docker.</li>
-<li>Deploy it with the Flink Kubernetes Operator.</li>
-<li>Extend it via Maven or Gradle in your own Flink stack:</li>
-</ul>
-<div class="language-xml codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#F8F8F2;--prism-background-color:#282A36"><div class="codeBlockContent_biex"><pre tabindex="0" class="prism-code language-xml codeBlock_bY9V thin-scrollbar" style="color:#F8F8F2;background-color:#282A36"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#F8F8F2"><span class="token tag punctuation" style="color:rgb(248, 248, 242)">&lt;</span><span class="token tag" style="color:rgb(255, 121, 198)">dependency</span><span class="token tag punctuation" style="color:rgb(248, 248, 242)">&gt;</span><span class="token plain"></span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">  </span><span class="token tag punctuation" style="color:rgb(248, 248, 242)">&lt;</span><span class="token tag" style="color:rgb(255, 121, 198)">groupId</span><span class="token tag punctuation" style="color:rgb(248, 248, 242)">&gt;</span><span class="token plain">com.datasqrl.flinkrunner</span><span class="token tag punctuation" style="color:rgb(248, 248, 242)">&lt;/</span><span class="token tag" style="color:rgb(255, 121, 198)">groupId</span><span class="token tag punctuation" style="color:rgb(248, 248, 242)">&gt;</span><span class="token plain"></span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">  </span><span class="token tag punctuation" style="color:rgb(248, 248, 242)">&lt;</span><span class="token tag" style="color:rgb(255, 121, 198)">artifactId</span><span class="token tag punctuation" style="color:rgb(248, 248, 242)">&gt;</span><span class="token plain">flink-sql-runner</span><span class="token tag punctuation" style="color:rgb(248, 248, 242)">&lt;/</span><span class="token tag" style="color:rgb(255, 121, 198)">artifactId</span><span class="token tag punctuation" style="color:rgb(248, 248, 242)">&gt;</span><span class="token plain"></span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">  </span><span class="token tag punctuation" style="color:rgb(248, 248, 242)">&lt;</span><span class="token tag" style="color:rgb(255, 121, 198)">version</span><span class="token tag punctuation" style="color:rgb(248, 248, 242)">&gt;</span><span class="token plain">0.6.0</span><span class="token tag punctuation" style="color:rgb(248, 248, 242)">&lt;/</span><span class="token tag" style="color:rgb(255, 121, 198)">version</span><span class="token tag punctuation" style="color:rgb(248, 248, 242)">&gt;</span><span class="token plain"></span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain"></span><span class="token tag punctuation" style="color:rgb(248, 248, 242)">&lt;/</span><span class="token tag" style="color:rgb(255, 121, 198)">dependency</span><span class="token tag punctuation" style="color:rgb(248, 248, 242)">&gt;</span><br></span></code></pre><div class="buttonGroup__atx"><button type="button" aria-label="Copy code to clipboard" title="Copy" class="clean-btn"><span class="copyButtonIcons_eSgA" aria-hidden="true"><svg viewBox="0 0 24 24" class="copyButtonIcon_y97N"><path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"></path></svg><svg viewBox="0 0 24 24" class="copyButtonSuccessIcon_LjdS"><path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"></path></svg></span></button></div></div></div>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="get-started">Get Started<a href="https://docs.datasqrl.com/blog/flinkrunner-announcement#get-started" class="hash-link" aria-label="Direct link to Get Started" title="Direct link to Get Started">​</a></h2>
-<p>The Flink SQL Runner project is open source and <a href="https://github.com/datasqrl/flink-sql-runner" target="_blank" rel="noopener noreferrer">available on Github</a>.
-Check out the README for more information on how to use and deploy the Flink SQL Runner.</p>
-<p>Try it out, report issues, or contribute your own UDFs.</p>]]></content>
-        <author>
-            <name>Matthias Broecheler</name>
-            <uri>https://github.com/mbroecheler</uri>
-        </author>
-        <category label="Flink" term="Flink"/>
-        <category label="DataSQRL" term="DataSQRL"/>
-    </entry>
     <entry>
         <title type="html"><![CDATA[Defining Data Interfaces with FlinkSQL]]></title>
         <id>https://docs.datasqrl.com/blog/flinksql-extensions</id>
