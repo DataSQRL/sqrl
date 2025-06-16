@@ -254,6 +254,9 @@ jobs:
       - generate-settings
       - install-jdk
       - run:
+          name: Auth ghcr
+          command: echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
+      - run:
           name: Run Integration Tests
           command: mvn -U -T2 -B install -Dtest=skip -Dsurefire.failIfNoSpecifiedTests=false -Pskip-shade-plugin
       - save-test-results
@@ -279,6 +282,7 @@ jobs:
           command: |
             set -ex
             echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+            echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
 
             # ── cmd test image ────────────────────────────────────────────────
             docker build \
