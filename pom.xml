@@ -114,7 +114,7 @@
     <projectreactor.version>3.7.6</projectreactor.version>
     <avro.version>1.12.0</avro.version>
     <freemarker.version>2.3.34</freemarker.version>
-    <jsonschema.version>1.5.6</jsonschema.version>
+    <jsonschema.version>1.5.7</jsonschema.version>
     <iceberg.version>1.9.0</iceberg.version>
     <hadoop.version>3.4.1</hadoop.version>
     <jacoco.version>0.8.13</jacoco.version>
