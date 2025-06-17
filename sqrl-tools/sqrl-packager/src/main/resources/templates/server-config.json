@@ -2,9 +2,7 @@
   "servletConfig": {
     "graphiQLEndpoint": "/graphiql*",
     "graphQLEndpoint": "/graphql",
-    "usePgPool": true,
-    "useApolloWs": false,
-    "graphQLWsEndpoint": "/graphql-ws"
+    "usePgPool": true
   },
   "graphQLHandlerOptions": {
     "requestBatchingEnabled": false,
@@ -46,12 +44,6 @@
     "tcpUserTimeout": 0,
     "port": 8888,
     "host": "0.0.0.0",
-    "acceptBacklog": -1,
-    "clientAuth": "NONE",
-    "sni": false,
-    "useProxyProtocol": false,
-    "proxyProtocolTimeout": 10,
-    "proxyProtocolTimeoutUnit": "SECONDS",
     "compressionSupported": false,
     "compressionLevel": 6,
     "maxWebSocketFrameSize": 65536,
@@ -87,66 +79,16 @@
     "webSocketAllowServerNoContext": false,
     "webSocketPreferredClientNoContext": false,
     "webSocketClosingTimeout": 10,
-    "tracingPolicy": "ALWAYS"
+    "tracingPolicy": "ALWAYS",
+    "sslOptions": {
+		"clientAuth": "NONE",
+		"sni": false
+	}
   },
   "pgConnectOptions": {
-    "sendBufferSize": -1,
-    "receiveBufferSize": -1,
-    "trafficClass": -1,
-    "reuseAddress": true,
-    "logActivity": false,
-    "activityLogDataFormat": "HEX_DUMP",
-    "reusePort": false,
-    "tcpNoDelay": true,
-    "tcpKeepAlive": false,
-    "soLinger": -1,
-    "idleTimeout": 0,
-    "readIdleTimeout": 0,
-    "writeIdleTimeout": 0,
-    "idleTimeoutUnit": "SECONDS",
-    "ssl": false,
-    "sslHandshakeTimeout": 10,
-    "sslHandshakeTimeoutUnit": "SECONDS",
-    "enabledCipherSuites": [],
-    "crlPaths": [],
-    "crlValues": [],
-    "useAlpn": false,
-    "enabledSecureTransportProtocols": [
-      "TLSv1",
-      "TLSv1.1",
-      "TLSv1.2"
-    ],
-    "tcpFastOpen": false,
-    "tcpCork": false,
-    "tcpQuickAck": false,
-    "tcpUserTimeout": 0,
-    "connectTimeout": 60000,
-    "trustAll": false,
-    "metricsName": "",
-    "reconnectAttempts": 0,
-    "reconnectInterval": 1000,
-    "hostnameVerificationAlgorithm": "",
-    "host": "${PGHOST}",
-    "port": 5432,
-    "user": "${PGUSER}",
-    "password": "${PGPASSWORD}",
-    "database": "${PGDATABASE}",
-    "cachePreparedStatements": false,
-    "preparedStatementCacheMaxSize": 256,
-    "preparedStatementCacheSqlFilter": {},
-    "properties": {
-      "DateStyle": "ISO",
-      "client_encoding": "utf8",
-      "application_name": "vertx-pg-client",
-      "extra_float_digits": "2"
-    },
     "pipeliningLimit": 256,
     "sslMode": "DISABLE",
-    "socketAddress": {
-      "domainSocket": false,
-      "inetSocket": true
-    },
-    "usingDomainSocket": false
+    "useLayer7Proxy": false
   },
   "poolOptions": {
     "maxSize": 4,
@@ -172,7 +114,18 @@
     "allowedHeaders": [],
     "exposedHeaders": []
   },
-  "apolloWSOptions": {
-    "keepAlive": 30000
+  "jwtAuth": {
+    "pubSecKeys": [
+      {
+        "algorithm": "${JWT_ALGORITHM}",
+        "buffer": "${JWT_SECRET}"
+      }
+    ],
+    "jwtoptions": {
+      "issuer": "${JWT_ISSUER}",
+      "audience": ["${JWT_AUDIENCE}"],
+      "expiresInSeconds": 300,
+      "leeway": 60
+    }
   }
 }
