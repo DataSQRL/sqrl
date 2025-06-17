@@ -1,8 +1,25 @@
 /*
- * Copyright (c) 2021, DataSQRL. All rights reserved. Use is subject to license terms.
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.datasqrl.util;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -18,18 +35,10 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
+import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.DirectoryFileFilter;
 import org.apache.commons.io.filefilter.RegexFileFilter;
-
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
-
-import lombok.SneakyThrows;
 
 public class FileTestUtil {
 
@@ -49,8 +58,9 @@ public class FileTestUtil {
 
   @SneakyThrows
   public static void applyAllPartFileLines(Path path, Consumer<Stream<String>> consumer) {
-    for (File file : FileUtils.listFiles(path.toFile(), new RegexFileFilter("^part(.*?)"),
-        DirectoryFileFilter.DIRECTORY)) {
+    for (File file :
+        FileUtils.listFiles(
+            path.toFile(), new RegexFileFilter("^part(.*?)"), DirectoryFileFilter.DIRECTORY)) {
       try (Stream<String> stream = Files.lines(file.toPath(), StandardCharsets.UTF_8)) {
         consumer.accept(stream);
       }
@@ -63,17 +73,22 @@ public class FileTestUtil {
     Map<String, String> fileContentMap = new HashMap<>();
 
     try (var filesStream = Files.list(path)) {
-      filesStream.filter(Files::isRegularFile).filter(f -> {
-        if (Strings.isNullOrEmpty(extension)) return true;
-        return f.getFileName().toString().endsWith(extension);
-      }).forEach(file -> {
-        try {
-          String content = Files.readString(file, StandardCharsets.UTF_8);
-          fileContentMap.put(file.getFileName().toString(), content);
-        } catch (IOException e) {
-          e.printStackTrace();
-        }
-      });
+      filesStream
+          .filter(Files::isRegularFile)
+          .filter(
+              f -> {
+                if (Strings.isNullOrEmpty(extension)) return true;
+                return f.getFileName().toString().endsWith(extension);
+              })
+          .forEach(
+              file -> {
+                try {
+                  String content = Files.readString(file, StandardCharsets.UTF_8);
+                  fileContentMap.put(file.getFileName().toString(), content);
+                } catch (IOException e) {
+                  e.printStackTrace();
+                }
+              });
     }
 
     return fileContentMap;
@@ -87,9 +102,12 @@ public class FileTestUtil {
   }
 
   public static String getAllFilesAsString(Path dir) {
-    Collection<String> files = getAllFiles(dir).stream().map(p -> p.toString())
-        .filter(Predicate.not(Strings::isNullOrEmpty))
-        .sorted().collect(Collectors.toList());
+    Collection<String> files =
+        getAllFiles(dir).stream()
+            .map(p -> p.toString())
+            .filter(Predicate.not(Strings::isNullOrEmpty))
+            .sorted()
+            .collect(Collectors.toList());
     return String.join("\n", files);
   }
 
@@ -120,5 +138,4 @@ public class FileTestUtil {
   public static <T> String writeYaml(T object) {
     return yamlMapper.writeValueAsString(object);
   }
-
 }

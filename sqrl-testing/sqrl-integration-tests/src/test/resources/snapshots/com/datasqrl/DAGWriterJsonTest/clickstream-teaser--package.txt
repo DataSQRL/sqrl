@@ -7,7 +7,7 @@
   "inputs" : [ "default_catalog.default_database.Click" ],
   "annotations" : [ {
     "name" : "stream-root",
-    "description" : "Click__def"
+    "description" : "Click"
   }, {
     "name" : "base-table",
     "description" : "Click"
@@ -58,13 +58,13 @@
   "name" : "Click",
   "type" : "stream",
   "stage" : "flink",
-  "inputs" : [ "default_catalog.default_database.Click__def" ],
+  "inputs" : [ "default_catalog.default_database.Click__base" ],
   "annotations" : [ {
     "name" : "stream-root",
-    "description" : "Click__def"
+    "description" : "Click"
   } ],
-  "plan" : "LogicalProject(url=[$0], timestamp=[$1], userid=[$2])\n  LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($1, 1000:INTERVAL SECOND)])\n    LogicalTableScan(table=[[default_catalog, default_database, Click__def]])\n",
-  "sql" : "CREATE VIEW `Click`\nAS\nSELECT *\nFROM `default_catalog`.`default_database`.`Click__def`",
+  "plan" : "LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($1, 1000:INTERVAL SECOND)])\n  LogicalTableScan(table=[[default_catalog, default_database, Click]])\n",
+  "sql" : "CREATE VIEW `Click__view`\nAS\nSELECT `Click`.`url`, `Click`.`timestamp`, `Click`.`userid`\nFROM `default_catalog`.`default_database`.`Click` AS `Click`",
   "primary_key" : [ "url", "userid", "timestamp" ],
   "timestamp" : "timestamp",
   "schema" : [ {
@@ -78,8 +78,8 @@
     "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL"
   } ]
 }, {
-  "id" : "default_catalog.default_database.Click__def",
-  "name" : "Click__def",
+  "id" : "default_catalog.default_database.Click__base",
+  "name" : "Click",
   "type" : "import",
   "stage" : "flink",
   "inputs" : [ ],

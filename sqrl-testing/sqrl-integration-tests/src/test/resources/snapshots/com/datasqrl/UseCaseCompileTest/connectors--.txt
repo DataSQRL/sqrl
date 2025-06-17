@@ -3,106 +3,100 @@
 ID:     default_catalog.default_database.iceberg_parquet_table
 Type:   stream
 Stage:  flink
-Inputs: default_catalog.default_database.iceberg_parquet_table__def
+Inputs: default_catalog.default_database.iceberg_parquet_table__base
 Primary Key: -
 Timestamp  : -
 Schema:
  - user_id: INTEGER
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
 Plan:
-LogicalProject(user_id=[$0], name=[$1])
-  LogicalTableScan(table=[[default_catalog, default_database, iceberg_parquet_table__def]])
-SQL: CREATE VIEW `iceberg_parquet_table`
+LogicalTableScan(table=[[default_catalog, default_database, iceberg_parquet_table]])
+SQL: CREATE VIEW `iceberg_parquet_table__view`
 AS
-SELECT *
-FROM `default_catalog`.`default_database`.`iceberg_parquet_table__def`
+SELECT `iceberg_parquet_table`.`user_id`, `iceberg_parquet_table`.`name`
+FROM `default_catalog`.`default_database`.`iceberg_parquet_table` AS `iceberg_parquet_table`
 === kafka_avro_table
 ID:     default_catalog.default_database.kafka_avro_table
 Type:   stream
 Stage:  flink
-Inputs: default_catalog.default_database.kafka_avro_table__def
+Inputs: default_catalog.default_database.kafka_avro_table__base
 Primary Key: -
 Timestamp  : -
 Schema:
  - user_id: INTEGER
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
 Plan:
-LogicalProject(user_id=[$0], name=[$1])
-  LogicalTableScan(table=[[default_catalog, default_database, kafka_avro_table__def]])
-SQL: CREATE VIEW `kafka_avro_table`
+LogicalTableScan(table=[[default_catalog, default_database, kafka_avro_table]])
+SQL: CREATE VIEW `kafka_avro_table__view`
 AS
-SELECT *
-FROM `default_catalog`.`default_database`.`kafka_avro_table__def`
+SELECT `kafka_avro_table`.`user_id`, `kafka_avro_table`.`name`
+FROM `default_catalog`.`default_database`.`kafka_avro_table` AS `kafka_avro_table`
 === kafka_debezium_table
 ID:     default_catalog.default_database.kafka_debezium_table
 Type:   stream
 Stage:  flink
-Inputs: default_catalog.default_database.kafka_debezium_table__def
+Inputs: default_catalog.default_database.kafka_debezium_table__base
 Primary Key: -
 Timestamp  : -
 Schema:
  - user_id: INTEGER
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
 Plan:
-LogicalProject(user_id=[$0], name=[$1])
-  LogicalTableScan(table=[[default_catalog, default_database, kafka_debezium_table__def]])
-SQL: CREATE VIEW `kafka_debezium_table`
+LogicalTableScan(table=[[default_catalog, default_database, kafka_debezium_table]])
+SQL: CREATE VIEW `kafka_debezium_table__view`
 AS
-SELECT *
-FROM `default_catalog`.`default_database`.`kafka_debezium_table__def`
+SELECT `kafka_debezium_table`.`user_id`, `kafka_debezium_table`.`name`
+FROM `default_catalog`.`default_database`.`kafka_debezium_table` AS `kafka_debezium_table`
 === kafka_safe_csv_table
 ID:     default_catalog.default_database.kafka_safe_csv_table
 Type:   stream
 Stage:  flink
-Inputs: default_catalog.default_database.kafka_safe_csv_table__def
+Inputs: default_catalog.default_database.kafka_safe_csv_table__base
 Primary Key: -
 Timestamp  : -
 Schema:
  - user_id: INTEGER
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
 Plan:
-LogicalProject(user_id=[$0], name=[$1])
-  LogicalTableScan(table=[[default_catalog, default_database, kafka_safe_csv_table__def]])
-SQL: CREATE VIEW `kafka_safe_csv_table`
+LogicalTableScan(table=[[default_catalog, default_database, kafka_safe_csv_table]])
+SQL: CREATE VIEW `kafka_safe_csv_table__view`
 AS
-SELECT *
-FROM `default_catalog`.`default_database`.`kafka_safe_csv_table__def`
+SELECT `kafka_safe_csv_table`.`user_id`, `kafka_safe_csv_table`.`name`
+FROM `default_catalog`.`default_database`.`kafka_safe_csv_table` AS `kafka_safe_csv_table`
 === kafka_safe_json_table
 ID:     default_catalog.default_database.kafka_safe_json_table
 Type:   stream
 Stage:  flink
-Inputs: default_catalog.default_database.kafka_safe_json_table__def
+Inputs: default_catalog.default_database.kafka_safe_json_table__base
 Primary Key: -
 Timestamp  : -
 Schema:
  - user_id: INTEGER
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
 Plan:
-LogicalProject(user_id=[$0], name=[$1])
-  LogicalTableScan(table=[[default_catalog, default_database, kafka_safe_json_table__def]])
-SQL: CREATE VIEW `kafka_safe_json_table`
+LogicalTableScan(table=[[default_catalog, default_database, kafka_safe_json_table]])
+SQL: CREATE VIEW `kafka_safe_json_table__view`
 AS
-SELECT *
-FROM `default_catalog`.`default_database`.`kafka_safe_json_table__def`
+SELECT `kafka_safe_json_table`.`user_id`, `kafka_safe_json_table`.`name`
+FROM `default_catalog`.`default_database`.`kafka_safe_json_table` AS `kafka_safe_json_table`
 === upsert_kafka_confluent_avro
 ID:     default_catalog.default_database.upsert_kafka_confluent_avro
 Type:   state
 Stage:  flink
-Inputs: default_catalog.default_database.upsert_kafka_confluent_avro__def
+Inputs: default_catalog.default_database.upsert_kafka_confluent_avro__base
 Primary Key: user_id
 Timestamp  : -
 Schema:
  - user_id: INTEGER NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
 Plan:
-LogicalProject(user_id=[$0], name=[$1])
-  LogicalTableScan(table=[[default_catalog, default_database, upsert_kafka_confluent_avro__def]])
-SQL: CREATE VIEW `upsert_kafka_confluent_avro`
+LogicalTableScan(table=[[default_catalog, default_database, upsert_kafka_confluent_avro]])
+SQL: CREATE VIEW `upsert_kafka_confluent_avro__view`
 AS
-SELECT *
-FROM `default_catalog`.`default_database`.`upsert_kafka_confluent_avro__def`
+SELECT `upsert_kafka_confluent_avro`.`user_id`, `upsert_kafka_confluent_avro`.`name`
+FROM `default_catalog`.`default_database`.`upsert_kafka_confluent_avro` AS `upsert_kafka_confluent_avro`
 >>>flink-sql-no-functions.sql
-CREATE TABLE `kafka_avro_table__def` (
+CREATE TABLE `kafka_avro_table` (
   `user_id` INTEGER,
   `name` STRING
 ) WITH (
@@ -112,11 +106,7 @@ CREATE TABLE `kafka_avro_table__def` (
   'properties.group.id' = 'flink-kafka-avro-group',
   'format' = 'avro'
 );
-CREATE VIEW `kafka_avro_table`
-AS
-SELECT *
-FROM `default_catalog`.`default_database`.`kafka_avro_table__def`;
-CREATE TABLE `kafka_safe_json_table__def` (
+CREATE TABLE `kafka_safe_json_table` (
   `user_id` INTEGER,
   `name` STRING
 ) WITH (
@@ -126,11 +116,7 @@ CREATE TABLE `kafka_safe_json_table__def` (
   'properties.group.id' = 'test',
   'format' = 'flexible-json'
 );
-CREATE VIEW `kafka_safe_json_table`
-AS
-SELECT *
-FROM `default_catalog`.`default_database`.`kafka_safe_json_table__def`;
-CREATE TABLE `kafka_safe_csv_table__def` (
+CREATE TABLE `kafka_safe_csv_table` (
   `user_id` INTEGER,
   `name` STRING
 ) WITH (
@@ -140,11 +126,7 @@ CREATE TABLE `kafka_safe_csv_table__def` (
   'properties.group.id' = 'test',
   'format' = 'flexible-csv'
 );
-CREATE VIEW `kafka_safe_csv_table`
-AS
-SELECT *
-FROM `default_catalog`.`default_database`.`kafka_safe_csv_table__def`;
-CREATE TABLE `upsert_kafka_confluent_avro__def` (
+CREATE TABLE `upsert_kafka_confluent_avro` (
   `user_id` INTEGER,
   `name` STRING,
   PRIMARY KEY (`user_id`) NOT ENFORCED
@@ -158,11 +140,7 @@ CREATE TABLE `upsert_kafka_confluent_avro__def` (
   'value.format' = 'avro-confluent',
   'value.avro-confluent.schema-registry.url' = 'http://localhost:8081'
 );
-CREATE VIEW `upsert_kafka_confluent_avro`
-AS
-SELECT *
-FROM `default_catalog`.`default_database`.`upsert_kafka_confluent_avro__def`;
-CREATE TABLE `kafka_debezium_table__def` (
+CREATE TABLE `kafka_debezium_table` (
   `user_id` INTEGER,
   `name` STRING
 ) WITH (
@@ -172,11 +150,7 @@ CREATE TABLE `kafka_debezium_table__def` (
   'properties.bootstrap.servers' = 'localhost:9092',
   'format' = 'debezium-json'
 );
-CREATE VIEW `kafka_debezium_table`
-AS
-SELECT *
-FROM `default_catalog`.`default_database`.`kafka_debezium_table__def`;
-CREATE TABLE `iceberg_parquet_table__def` (
+CREATE TABLE `iceberg_parquet_table` (
   `user_id` INTEGER,
   `name` STRING
 )
@@ -189,11 +163,7 @@ WITH (
   'format-version' = '2',
   'write.format.default' = 'parquet'
 );
-CREATE VIEW `iceberg_parquet_table`
-AS
-SELECT *
-FROM `default_catalog`.`default_database`.`iceberg_parquet_table__def`;
-CREATE TABLE `_jdbc_table__def` (
+CREATE TABLE `_jdbc_table` (
   `user_id` INTEGER,
   `name` STRING
 ) WITH (
@@ -203,10 +173,6 @@ CREATE TABLE `_jdbc_table__def` (
   'username' = 'myuser',
   'password' = 'mypassword'
 );
-CREATE VIEW `_jdbc_table`
-AS
-SELECT *
-FROM `default_catalog`.`default_database`.`_jdbc_table__def`;
 CREATE TABLE `iceberg_parquet_table_1` (
   `user_id` INTEGER,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
@@ -286,23 +252,23 @@ CREATE TABLE `upsert_kafka_confluent_avro_6` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`iceberg_parquet_table_1`
-(SELECT `user_id`, `name`, HASHCOLUMNS(`user_id`, `name`) AS `__pk_hash`
+(SELECT `user_id`, `name`, `hashColumns`(`user_id`, `name`) AS `__pk_hash`
  FROM `default_catalog`.`default_database`.`iceberg_parquet_table`)
 ;
 INSERT INTO `default_catalog`.`default_database`.`kafka_avro_table_2`
- (SELECT `user_id`, `name`, HASHCOLUMNS(`user_id`, `name`) AS `__pk_hash`
+ (SELECT `user_id`, `name`, `hashColumns`(`user_id`, `name`) AS `__pk_hash`
   FROM `default_catalog`.`default_database`.`kafka_avro_table`)
  ;
  INSERT INTO `default_catalog`.`default_database`.`kafka_debezium_table_3`
-  (SELECT `user_id`, `name`, HASHCOLUMNS(`user_id`, `name`) AS `__pk_hash`
+  (SELECT `user_id`, `name`, `hashColumns`(`user_id`, `name`) AS `__pk_hash`
    FROM `default_catalog`.`default_database`.`kafka_debezium_table`)
   ;
   INSERT INTO `default_catalog`.`default_database`.`kafka_safe_csv_table_4`
-   (SELECT `user_id`, `name`, HASHCOLUMNS(`user_id`, `name`) AS `__pk_hash`
+   (SELECT `user_id`, `name`, `hashColumns`(`user_id`, `name`) AS `__pk_hash`
     FROM `default_catalog`.`default_database`.`kafka_safe_csv_table`)
    ;
    INSERT INTO `default_catalog`.`default_database`.`kafka_safe_json_table_5`
-    (SELECT `user_id`, `name`, HASHCOLUMNS(`user_id`, `name`) AS `__pk_hash`
+    (SELECT `user_id`, `name`, `hashColumns`(`user_id`, `name`) AS `__pk_hash`
      FROM `default_catalog`.`default_database`.`kafka_safe_json_table`)
     ;
     INSERT INTO `default_catalog`.`default_database`.`upsert_kafka_confluent_avro_6`

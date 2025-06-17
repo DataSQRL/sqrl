@@ -1,7 +1,29 @@
+/*
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.datasqrl.packager.preprocess;
 
 import static com.datasqrl.config.SqrlConstants.DATA_DIR;
 
+import com.datasqrl.discovery.file.FileCompression;
+import com.datasqrl.discovery.file.FileCompression.CompressionIO;
+import com.datasqrl.discovery.file.FilenameAnalyzer;
+import com.datasqrl.discovery.file.FilenameAnalyzer.Components;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.packager.preprocessor.Preprocessor;
+import com.google.common.io.ByteStreams;
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -13,14 +35,6 @@ import java.nio.file.Path;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
-
-import com.datasqrl.discovery.file.FileCompression;
-import com.datasqrl.discovery.file.FileCompression.CompressionIO;
-import com.datasqrl.discovery.file.FilenameAnalyzer;
-import com.datasqrl.discovery.file.FilenameAnalyzer.Components;
-import com.datasqrl.error.ErrorCollector;
-import com.google.common.io.ByteStreams;
-
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
@@ -30,7 +44,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class CopyStaticDataPreprocessor implements Preprocessor {
 
-  public static final Set<String> DATA_FILE_EXTENSIONS = Set.of("jsonl","csv");
+  public static final Set<String> DATA_FILE_EXTENSIONS = Set.of("jsonl", "csv");
 
   private static final FilenameAnalyzer DATA_PATTERN = FilenameAnalyzer.of(DATA_FILE_EXTENSIONS);
   private static final FilenameAnalyzer CSV_PATTERN = FilenameAnalyzer.of(Set.of("csv"));
@@ -46,15 +60,17 @@ public class CopyStaticDataPreprocessor implements Preprocessor {
     Path dataDir = processorContext.getBuildDir().resolve(DATA_DIR);
     Files.createDirectories(dataDir);
     Path data = dataDir.resolve(path.getFileName());
-    if (!Files.isRegularFile(data)) { //copy only if file does not already exist
+    if (!Files.isRegularFile(data)) { // copy only if file does not already exist
       Optional<Components> match = CSV_PATTERN.analyze(path);
       if (match.isPresent()) {
         Optional<CompressionIO> fileCompress = FileCompression.of(match.get().getCompression());
         if (fileCompress.isPresent()) {
-          //Need to remove header row for CSV files since Flink does not support headers
+          // Need to remove header row for CSV files since Flink does not support headers
           copyFileSkipFirstLine(path, data, fileCompress.get());
         } else {
-          errors.warn("Compression codex %s not supported. CSV file [%s] not copied.", match.get().getCompression(), path);
+          errors.warn(
+              "Compression codex %s not supported. CSV file [%s] not copied.",
+              match.get().getCompression(), path);
         }
       } else {
         Files.copy(path, data);
@@ -79,8 +95,7 @@ public class CopyStaticDataPreprocessor implements Preprocessor {
 
   private static InputStream skipFirstLine(InputStream rawIn) throws IOException {
     // Make sure we can mark and reset (peek the next byte safely)
-    var in = (rawIn instanceof BufferedInputStream bis) ? bis
-        : new BufferedInputStream(rawIn);
+    var in = (rawIn instanceof BufferedInputStream bis) ? bis : new BufferedInputStream(rawIn);
 
     while (true) {
       in.mark(1);
@@ -107,5 +122,4 @@ public class CopyStaticDataPreprocessor implements Preprocessor {
 
     return in;
   }
-
 }

@@ -1,18 +1,28 @@
 /*
- * Copyright (c) 2021, DataSQRL. All rights reserved. Use is subject to license terms.
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.datasqrl.util;
 
+import com.datasqrl.graphql.server.CustomScalars;
+import com.google.common.base.Predicates;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.util.function.Predicate;
-
-import com.datasqrl.graphql.server.CustomScalars;
-import com.google.common.base.Predicates;
-
 import lombok.SneakyThrows;
 
 public class ResultSetPrinter {
@@ -22,7 +32,9 @@ public class ResultSetPrinter {
   }
 
   @SneakyThrows
-  public static int print(ResultSet resultSet, PrintStream out,
+  public static int print(
+      ResultSet resultSet,
+      PrintStream out,
       Predicate<String> filterColumnsByName,
       Predicate<Integer> filterColumnsByType) {
     final ResultSetMetaData metaData = resultSet.getMetaData();
@@ -46,9 +58,8 @@ public class ResultSetPrinter {
         }
         Object o = resultSet.getObject(i);
         if (o instanceof Double) {
-          //We convert to string to strip some irrelevant double digits during the conversion
-          o = CustomScalars.Double.getCoercing()
-                .serialize(o);
+          // We convert to string to strip some irrelevant double digits during the conversion
+          o = CustomScalars.Double.getCoercing().serialize(o);
         }
         out.print(o);
       }
@@ -60,7 +71,9 @@ public class ResultSetPrinter {
     return toString(resultSet, Predicates.alwaysTrue(), Predicates.alwaysTrue());
   }
 
-  public static String toString(ResultSet resultSet, Predicate<String> filterColumnsByName,
+  public static String toString(
+      ResultSet resultSet,
+      Predicate<String> filterColumnsByName,
       Predicate<Integer> filterColumnsByType) {
     var os = new ByteArrayOutputStream();
     var ps = new PrintStream(os);
@@ -68,9 +81,10 @@ public class ResultSetPrinter {
     return os.toString(StandardCharsets.UTF_8);
   }
 
-  public static String[] toLines(ResultSet resultSet, Predicate<String> filterColumnsByName,
+  public static String[] toLines(
+      ResultSet resultSet,
+      Predicate<String> filterColumnsByName,
       Predicate<Integer> filterColumnsByType) {
-    return toString(resultSet, filterColumnsByName, filterColumnsByType)
-        .split("\\R");
+    return toString(resultSet, filterColumnsByName, filterColumnsByType).split("\\R");
   }
 }

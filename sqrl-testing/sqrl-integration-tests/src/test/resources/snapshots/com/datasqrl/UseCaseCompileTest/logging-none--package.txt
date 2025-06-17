@@ -3,9 +3,9 @@
 ID:     default_catalog.default_database.Data
 Type:   stream
 Stage:  flink
-Inputs: default_catalog.default_database.Data__def
+Inputs: default_catalog.default_database.Data__base
 Annotations:
- - stream-root: Data__def
+ - stream-root: Data
 Primary Key: ID
 Timestamp  : TIMESTAMP
 Schema:
@@ -14,14 +14,13 @@ Schema:
  - SOME_VALUE: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - TIMESTAMP: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Plan:
-LogicalProject(ID=[$0], EPOCH_TIMESTAMP=[$1], SOME_VALUE=[$2], TIMESTAMP=[$3])
-  LogicalWatermarkAssigner(rowtime=[TIMESTAMP], watermark=[-($3, 1:INTERVAL SECOND)])
-    LogicalProject(ID=[$0], EPOCH_TIMESTAMP=[$1], SOME_VALUE=[$2], TIMESTAMP=[COALESCE(TO_TIMESTAMP_LTZ($1, 3), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
-      LogicalTableScan(table=[[default_catalog, default_database, Data__def]])
-SQL: CREATE VIEW `Data`
+LogicalWatermarkAssigner(rowtime=[TIMESTAMP], watermark=[-($3, 1:INTERVAL SECOND)])
+  LogicalProject(ID=[$0], EPOCH_TIMESTAMP=[$1], SOME_VALUE=[$2], TIMESTAMP=[COALESCE(TO_TIMESTAMP_LTZ($1, 3), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
+    LogicalTableScan(table=[[default_catalog, default_database, Data]])
+SQL: CREATE VIEW `Data__view`
 AS
-SELECT *
-FROM `default_catalog`.`default_database`.`Data__def`
+SELECT `Data`.`ID`, `Data`.`EPOCH_TIMESTAMP`, `Data`.`SOME_VALUE`, `Data`.`TIMESTAMP`
+FROM `default_catalog`.`default_database`.`Data` AS `Data`
 === DummyLogData
 ID:     print.DummyLogData
 Type:   export
@@ -29,11 +28,11 @@ Stage:  flink
 Inputs: default_catalog.default_database.Data
 
 >>>flink-sql-no-functions.sql
-CREATE TABLE `Data__def` (
+CREATE TABLE `Data` (
   `ID` BIGINT NOT NULL,
   `EPOCH_TIMESTAMP` BIGINT NOT NULL,
   `SOME_VALUE` STRING NOT NULL,
-  `TIMESTAMP` AS COALESCE(TO_TIMESTAMP_LTZ(`EPOCH_TIMESTAMP`, 3), TIMESTAMP '1970-01-01 00:00:00.000'),
+  `TIMESTAMP` AS COALESCE(`TO_TIMESTAMP_LTZ`(`EPOCH_TIMESTAMP`, 3), TIMESTAMP '1970-01-01 00:00:00.000'),
   PRIMARY KEY (`ID`) NOT ENFORCED,
   WATERMARK FOR `TIMESTAMP` AS `TIMESTAMP` - INTERVAL '0.001' SECOND
 ) WITH (
@@ -47,10 +46,6 @@ CREATE TABLE `Data__def` (
   'fields.EPOCH_TIMESTAMP.end' = '1719319565000',
   'fields.SOME_VALUE.kind' = 'random'
 );
-CREATE VIEW `Data`
-AS
-SELECT *
-FROM `default_catalog`.`default_database`.`Data__def`;
 CREATE TABLE `DummyLogData_1` (
   `ID` BIGINT NOT NULL,
   `EPOCH_TIMESTAMP` BIGINT NOT NULL,

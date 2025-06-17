@@ -3,9 +3,9 @@
 ID:     default_catalog.default_database.Customer
 Type:   stream
 Stage:  flink
-Inputs: default_catalog.default_database.Customer__def
+Inputs: default_catalog.default_database.Customer__base
 Annotations:
- - stream-root: Customer__def
+ - stream-root: Customer
 Primary Key: customerid, lastUpdated
 Timestamp  : _ingest_time
 Schema:
@@ -15,13 +15,12 @@ Schema:
  - lastUpdated: BIGINT NOT NULL
  - _ingest_time: TIMESTAMP_LTZ(3) *PROCTIME* NOT NULL
 Plan:
-LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], _ingest_time=[$4])
-  LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], _ingest_time=[PROCTIME()])
-    LogicalTableScan(table=[[default_catalog, default_database, Customer__def]])
-SQL: CREATE VIEW `Customer`
+LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], _ingest_time=[PROCTIME()])
+  LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW `Customer__view`
 AS
-SELECT *
-FROM `default_catalog`.`default_database`.`Customer__def`
+SELECT `Customer`.`customerid`, `Customer`.`email`, `Customer`.`name`, `Customer`.`lastUpdated`, `Customer`.`_ingest_time`
+FROM `default_catalog`.`default_database`.`Customer` AS `Customer`
 === OrderCustomer1
 ID:     default_catalog.default_database.OrderCustomer1
 Type:   stream
@@ -61,10 +60,10 @@ SQL: CREATE VIEW OrderCustomer2 AS  SELECT o.id, c.name, GREATEST(o._ingest_time
 ID:     default_catalog.default_database.Orders
 Type:   stream
 Stage:  flink
-Inputs: default_catalog.default_database.Orders__def
+Inputs: default_catalog.default_database.Orders__base
 Annotations:
  - features: DENORMALIZE (feature)
- - stream-root: Orders__def
+ - stream-root: Orders
 Primary Key: id, time
 Timestamp  : _ingest_time
 Schema:
@@ -74,13 +73,12 @@ Schema:
  - entries: RecordType:peek_no_expand(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
  - _ingest_time: TIMESTAMP_LTZ(3) *PROCTIME* NOT NULL
 Plan:
-LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3], _ingest_time=[$4])
-  LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3], _ingest_time=[PROCTIME()])
-    LogicalTableScan(table=[[default_catalog, default_database, Orders__def]])
-SQL: CREATE VIEW `Orders`
+LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3], _ingest_time=[PROCTIME()])
+  LogicalTableScan(table=[[default_catalog, default_database, Orders]])
+SQL: CREATE VIEW `Orders__view`
 AS
-SELECT *
-FROM `default_catalog`.`default_database`.`Orders__def`
+SELECT `Orders`.`id`, `Orders`.`customerid`, `Orders`.`time`, `Orders`.`entries`, `Orders`.`_ingest_time`
+FROM `default_catalog`.`default_database`.`Orders` AS `Orders`
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `Customer__schema` (
   `customerid` BIGINT NOT NULL,
@@ -90,8 +88,8 @@ CREATE TEMPORARY TABLE `Customer__schema` (
 ) WITH (
   'connector' = 'datagen'
 );
-CREATE TABLE `Customer__def` (
-  `_ingest_time` AS PROCTIME(),
+CREATE TABLE `Customer` (
+  `_ingest_time` AS `PROCTIME`(),
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED
 ) WITH (
   'format' = 'json',
@@ -100,10 +98,6 @@ CREATE TABLE `Customer__def` (
   'connector' = 'filesystem'
 )
 LIKE `Customer__schema`;
-CREATE VIEW `Customer`
-AS
-SELECT *
-FROM `default_catalog`.`default_database`.`Customer__def`;
 CREATE TEMPORARY TABLE `Orders__schema` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
@@ -112,8 +106,8 @@ CREATE TEMPORARY TABLE `Orders__schema` (
 ) WITH (
   'connector' = 'datagen'
 );
-CREATE TABLE `Orders__def` (
-  `_ingest_time` AS PROCTIME(),
+CREATE TABLE `Orders` (
+  `_ingest_time` AS `PROCTIME`(),
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
 ) WITH (
   'format' = 'flexible-json',
@@ -122,10 +116,6 @@ CREATE TABLE `Orders__def` (
   'connector' = 'filesystem'
 )
 LIKE `Orders__schema`;
-CREATE VIEW `Orders`
-AS
-SELECT *
-FROM `default_catalog`.`default_database`.`Orders__def`;
 CREATE VIEW `OrderCustomer1`
 AS
 SELECT `o`.`id`, `c`.`name`
@@ -133,7 +123,7 @@ FROM `Orders` AS `o`
  INNER JOIN `Customer` AS `c` ON `o`.`customerid` = `c`.`customerid`;
 CREATE VIEW `OrderCustomer2`
 AS
-SELECT `o`.`id`, `c`.`name`, GREATEST(`o`.`_ingest_time`, `c`.`_ingest_time`) AS `timestamp`
+SELECT `o`.`id`, `c`.`name`, `GREATEST`(`o`.`_ingest_time`, `c`.`_ingest_time`) AS `timestamp`
 FROM `Orders` AS `o`
  INNER JOIN `Customer` AS `c` ON `o`.`customerid` = `c`.`customerid`;
 CREATE TABLE `Customer_1` (
@@ -172,7 +162,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_1`
  FROM `default_catalog`.`default_database`.`Customer`)
 ;
 INSERT INTO `default_catalog`.`default_database`.`Orders_2`
- (SELECT `id`, `customerid`, `time`, TO_JSONB(`entries`) AS `entries`, `_ingest_time`
+ (SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`, `_ingest_time`
   FROM `default_catalog`.`default_database`.`Orders`)
  ;
  END
@@ -299,7 +289,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
     {
       "name" : "OrderCustomer2",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomer2\"(\"id\", \"name\", \"timestamp\") AS SELECT \"Orders_22\".\"id\", \"Customer_12\".\"name\", GREATEST(\"Orders_22\".\"_ingest_time\", \"Customer_12\".\"_ingest_time\") AS \"timestamp\"\nFROM \"Orders_2\" AS \"Orders_22\"\n INNER JOIN \"Customer_1\" AS \"Customer_12\" ON \"Orders_22\".\"customerid\" = \"Customer_12\".\"customerid\"",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomer2\"(\"id\", \"name\", \"timestamp\") AS SELECT \"Orders_22\".\"id\", \"Customer_12\".\"name\", \"GREATEST\"(\"Orders_22\".\"_ingest_time\", \"Customer_12\".\"_ingest_time\") AS \"timestamp\"\nFROM \"Orders_2\" AS \"Orders_22\"\n INNER JOIN \"Customer_1\" AS \"Customer_12\" ON \"Orders_22\".\"customerid\" = \"Customer_12\".\"customerid\"",
       "fields" : [
         {
           "name" : "id",
@@ -601,7 +591,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT \"Orders_20\".\"id\", \"Customer_10\".\"name\", GREATEST(\"Orders_20\".\"_ingest_time\", \"Customer_10\".\"_ingest_time\") AS \"timestamp\"\nFROM \"Orders_2\" AS \"Orders_20\"\n INNER JOIN \"Customer_1\" AS \"Customer_10\" ON \"Orders_20\".\"customerid\" = \"Customer_10\".\"customerid\"",
+            "sql" : "SELECT \"Orders_20\".\"id\", \"Customer_10\".\"name\", \"GREATEST\"(\"Orders_20\".\"_ingest_time\", \"Customer_10\".\"_ingest_time\") AS \"timestamp\"\nFROM \"Orders_2\" AS \"Orders_20\"\n INNER JOIN \"Customer_1\" AS \"Customer_10\" ON \"Orders_20\".\"customerid\" = \"Customer_10\".\"customerid\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"

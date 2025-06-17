@@ -3,7 +3,7 @@
 ID:     default_catalog.default_database.Category
 Type:   stream
 Stage:  flink
-Inputs: default_catalog.default_database.Category__def
+Inputs: default_catalog.default_database.Category__base
 Primary Key: -
 Timestamp  : updateTime
 Schema:
@@ -12,14 +12,13 @@ Schema:
  - description: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
  - updateTime: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Plan:
-LogicalProject(categoryid=[$0], name=[$1], description=[$2], updateTime=[$3])
-  LogicalWatermarkAssigner(rowtime=[updateTime], watermark=[-($3, 1:INTERVAL SECOND)])
-    LogicalProject(categoryid=[$0], name=[$1], description=[$2], updateTime=[NOW()])
-      LogicalTableScan(table=[[default_catalog, default_database, Category__def]])
-SQL: CREATE VIEW `Category`
+LogicalWatermarkAssigner(rowtime=[updateTime], watermark=[-($3, 1:INTERVAL SECOND)])
+  LogicalProject(categoryid=[$0], name=[$1], description=[$2], updateTime=[NOW()])
+    LogicalTableScan(table=[[default_catalog, default_database, Category]])
+SQL: CREATE VIEW `Category__view`
 AS
-SELECT *
-FROM `default_catalog`.`default_database`.`Category__def`
+SELECT `Category`.`categoryid`, `Category`.`name`, `Category`.`description`, `Category`.`updateTime`
+FROM `default_catalog`.`default_database`.`Category` AS `Category`
 === CategoryDistinct
 ID:     default_catalog.default_database.CategoryDistinct
 Type:   state
@@ -46,11 +45,11 @@ FROM (SELECT `categoryid`, `name`, `description`, `updateTime`, ROW_NUMBER() OVE
   FROM `default_catalog`.`default_database`.`Category`) AS `t`
 WHERE `__sqrlinternal_rownum` = 1
 >>>flink-sql-no-functions.sql
-CREATE TABLE `Category__def` (
+CREATE TABLE `Category` (
   `categoryid` INTEGER NOT NULL,
   `name` STRING NOT NULL,
   `description` STRING,
-  `updateTime` AS NOW(),
+  `updateTime` AS `NOW`(),
   WATERMARK FOR `updateTime` AS `updateTime` - INTERVAL '0.001' SECOND
 ) WITH (
   'format' = 'flexible-json',
@@ -58,10 +57,6 @@ CREATE TABLE `Category__def` (
   'source.monitor-interval' = '10 sec',
   'connector' = 'filesystem'
 );
-CREATE VIEW `Category`
-AS
-SELECT *
-FROM `default_catalog`.`default_database`.`Category__def`;
 CREATE VIEW `CategoryDistinct`
 AS
 SELECT `categoryid`, `name`, `description`, `updateTime`
@@ -99,7 +94,7 @@ CREATE TABLE `CategoryDistinct_2` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Category_1`
-(SELECT `categoryid`, `name`, `description`, `updateTime`, HASHCOLUMNS(`categoryid`, `name`, `description`, `updateTime`) AS `__pk_hash`
+(SELECT `categoryid`, `name`, `description`, `updateTime`, `hashColumns`(`categoryid`, `name`, `description`, `updateTime`) AS `__pk_hash`
  FROM `default_catalog`.`default_database`.`Category`)
 ;
 INSERT INTO `default_catalog`.`default_database`.`CategoryDistinct_2`

@@ -5,7 +5,7 @@ Type:   stream
 Stage:  flink
 Inputs: default_catalog.default_database._customer
 Annotations:
- - stream-root: _customer__def
+ - stream-root: _customer
 Primary Key: customerid, lastUpdated
 Timestamp  : timestamp
 Schema:
@@ -24,9 +24,9 @@ SQL: CREATE VIEW AnotherCustomer AS  SELECT * FROM _customer WHERE customerid > 
 ID:     default_catalog.default_database.Customer
 Type:   stream
 Stage:  flink
-Inputs: default_catalog.default_database.Customer__def
+Inputs: default_catalog.default_database.Customer__base
 Annotations:
- - stream-root: Customer__def
+ - stream-root: Customer
 Primary Key: customerid, lastUpdated
 Timestamp  : timestamp
 Schema:
@@ -36,21 +36,20 @@ Schema:
  - lastUpdated: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Plan:
-LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
-  LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
-    LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($3, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
-      LogicalTableScan(table=[[default_catalog, default_database, Customer__def]])
-SQL: CREATE VIEW `Customer`
+LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
+  LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($3, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
+    LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW `Customer__view`
 AS
-SELECT *
-FROM `default_catalog`.`default_database`.`Customer__def`
+SELECT `Customer`.`customerid`, `Customer`.`email`, `Customer`.`name`, `Customer`.`lastUpdated`, `Customer`.`timestamp`
+FROM `default_catalog`.`default_database`.`Customer` AS `Customer`
 === FinalCustomer
 ID:     default_catalog.default_database.FinalCustomer
 Type:   stream
 Stage:  flink
 Inputs: default_catalog.default_database._SomeCustomer
 Annotations:
- - stream-root: Customer__def
+ - stream-root: Customer
 Primary Key: customerid, lastUpdated
 Timestamp  : -
 Schema:
@@ -67,7 +66,7 @@ Type:   stream
 Stage:  flink
 Inputs: default_catalog.default_database.Customer
 Annotations:
- - stream-root: Customer__def
+ - stream-root: Customer
 Primary Key: customerid, lastUpdated
 Timestamp  : timestamp
 Schema:
@@ -86,9 +85,9 @@ SQL: CREATE VIEW _SomeCustomer AS  SELECT * FROM Customer WHERE customerid > 1;
 ID:     default_catalog.default_database._customer
 Type:   stream
 Stage:  flink
-Inputs: default_catalog.default_database._customer__def
+Inputs: default_catalog.default_database._customer__base
 Annotations:
- - stream-root: _customer__def
+ - stream-root: _customer
 Primary Key: customerid, lastUpdated
 Timestamp  : timestamp
 Schema:
@@ -98,14 +97,13 @@ Schema:
  - lastUpdated: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Plan:
-LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
-  LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
-    LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($3, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
-      LogicalTableScan(table=[[default_catalog, default_database, _customer__def]])
-SQL: CREATE VIEW `_customer`
+LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
+  LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($3, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
+    LogicalTableScan(table=[[default_catalog, default_database, _customer]])
+SQL: CREATE VIEW `_customer__view`
 AS
-SELECT *
-FROM `default_catalog`.`default_database`.`_customer__def`
+SELECT `_customer`.`customerid`, `_customer`.`email`, `_customer`.`name`, `_customer`.`lastUpdated`, `_customer`.`timestamp`
+FROM `default_catalog`.`default_database`.`_customer` AS `_customer`
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `Customer__schema` (
   `customerid` BIGINT NOT NULL,
@@ -115,8 +113,8 @@ CREATE TEMPORARY TABLE `Customer__schema` (
 ) WITH (
   'connector' = 'datagen'
 );
-CREATE TABLE `Customer__def` (
-  `timestamp` AS COALESCE(TO_TIMESTAMP_LTZ(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
+CREATE TABLE `Customer` (
+  `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
 ) WITH (
@@ -126,10 +124,6 @@ CREATE TABLE `Customer__def` (
   'connector' = 'filesystem'
 )
 LIKE `Customer__schema`;
-CREATE VIEW `Customer`
-AS
-SELECT *
-FROM `default_catalog`.`default_database`.`Customer__def`;
 CREATE TEMPORARY TABLE `_HiddenCustomer__schema` (
   `customerid` BIGINT NOT NULL,
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -138,8 +132,8 @@ CREATE TEMPORARY TABLE `_HiddenCustomer__schema` (
 ) WITH (
   'connector' = 'datagen'
 );
-CREATE TABLE `_HiddenCustomer__def` (
-  `timestamp` AS COALESCE(TO_TIMESTAMP_LTZ(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
+CREATE TABLE `_HiddenCustomer` (
+  `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
 ) WITH (
@@ -149,10 +143,6 @@ CREATE TABLE `_HiddenCustomer__def` (
   'connector' = 'filesystem'
 )
 LIKE `_HiddenCustomer__schema`;
-CREATE VIEW `_HiddenCustomer`
-AS
-SELECT *
-FROM `default_catalog`.`default_database`.`_HiddenCustomer__def`;
 CREATE TEMPORARY TABLE `_customer__schema` (
   `customerid` BIGINT NOT NULL,
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -161,8 +151,8 @@ CREATE TEMPORARY TABLE `_customer__schema` (
 ) WITH (
   'connector' = 'datagen'
 );
-CREATE TABLE `_customer__def` (
-  `timestamp` AS COALESCE(TO_TIMESTAMP_LTZ(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
+CREATE TABLE `_customer` (
+  `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
 ) WITH (
@@ -172,10 +162,6 @@ CREATE TABLE `_customer__def` (
   'connector' = 'filesystem'
 )
 LIKE `_customer__schema`;
-CREATE VIEW `_customer`
-AS
-SELECT *
-FROM `default_catalog`.`default_database`.`_customer__def`;
 CREATE TEMPORARY TABLE `_orders__schema` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
@@ -184,7 +170,7 @@ CREATE TEMPORARY TABLE `_orders__schema` (
 ) WITH (
   'connector' = 'datagen'
 );
-CREATE TABLE `_orders__def` (
+CREATE TABLE `_orders` (
   PRIMARY KEY (`id`, `time`) NOT ENFORCED,
   WATERMARK FOR `time` AS `time` - INTERVAL '0.001' SECOND
 ) WITH (
@@ -194,10 +180,6 @@ CREATE TABLE `_orders__def` (
   'connector' = 'filesystem'
 )
 LIKE `_orders__schema`;
-CREATE VIEW `_orders`
-AS
-SELECT *
-FROM `default_catalog`.`default_database`.`_orders__def`;
 CREATE TEMPORARY TABLE `_product__schema` (
   `productid` BIGINT NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -207,7 +189,7 @@ CREATE TEMPORARY TABLE `_product__schema` (
 ) WITH (
   'connector' = 'datagen'
 );
-CREATE TABLE `_product__def` (
+CREATE TABLE `_product` (
   PRIMARY KEY (`productid`, `name`, `description`, `category`) NOT ENFORCED,
   WATERMARK FOR `_ingest_time` AS `_ingest_time` - INTERVAL '0.001' SECOND
 ) WITH (
@@ -217,10 +199,6 @@ CREATE TABLE `_product__def` (
   'connector' = 'filesystem'
 )
 LIKE `_product__schema`;
-CREATE VIEW `_product`
-AS
-SELECT *
-FROM `default_catalog`.`default_database`.`_product__def`;
 CREATE VIEW `AnotherCustomer`
 AS
 SELECT *

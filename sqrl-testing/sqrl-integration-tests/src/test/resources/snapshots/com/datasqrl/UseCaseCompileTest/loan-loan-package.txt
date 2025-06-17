@@ -3,10 +3,10 @@
 ID:     default_catalog.default_database.AddChatMessage
 Type:   stream
 Stage:  flink
-Inputs: default_catalog.default_database.AddChatMessage__def
+Inputs: default_catalog.default_database.AddChatMessage__base
 Annotations:
  - features: DENORMALIZE (feature)
- - stream-root: AddChatMessage__def
+ - stream-root: AddChatMessage
 Primary Key: _uuid
 Timestamp  : event_time
 Schema:
@@ -17,21 +17,20 @@ Schema:
  - context: RecordType:peek_no_expand(INTEGER customerid) NOT NULL
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME*
 Plan:
-LogicalProject(_uuid=[$0], role=[$1], content=[$2], name=[$3], context=[$4], event_time=[$5])
-  LogicalWatermarkAssigner(rowtime=[event_time], watermark=[-($5, 0:INTERVAL SECOND)])
-    LogicalProject(_uuid=[$0], role=[$1], content=[$2], name=[$3], context=[$4], event_time=[CAST($5):TIMESTAMP_LTZ(3) *ROWTIME*])
-      LogicalTableScan(table=[[default_catalog, default_database, AddChatMessage__def, metadata=[timestamp]]])
-SQL: CREATE VIEW `AddChatMessage`
+LogicalWatermarkAssigner(rowtime=[event_time], watermark=[-($5, 0:INTERVAL SECOND)])
+  LogicalProject(_uuid=[$0], role=[$1], content=[$2], name=[$3], context=[$4], event_time=[CAST($5):TIMESTAMP_LTZ(3) *ROWTIME*])
+    LogicalTableScan(table=[[default_catalog, default_database, AddChatMessage, metadata=[timestamp]]])
+SQL: CREATE VIEW `AddChatMessage__view`
 AS
-SELECT *
-FROM `default_catalog`.`default_database`.`AddChatMessage__def`
+SELECT `AddChatMessage`.`_uuid`, `AddChatMessage`.`role`, `AddChatMessage`.`content`, `AddChatMessage`.`name`, `AddChatMessage`.`context`, `AddChatMessage`.`event_time`
+FROM `default_catalog`.`default_database`.`AddChatMessage` AS `AddChatMessage`
 === ApplicationAlert
 ID:     default_catalog.default_database.ApplicationAlert
 Type:   stream
 Stage:  flink
 Inputs: default_catalog.default_database.ApplicationStatus
 Annotations:
- - stream-root: ApplicationUpdates__def
+ - stream-root: ApplicationUpdates
 Primary Key: _uuid
 Timestamp  : -
 Schema:
@@ -56,7 +55,7 @@ Type:   stream
 Stage:  flink
 Inputs: default_catalog.default_database.ApplicationUpdates, default_catalog.default_database.Applications, default_catalog.default_database.LoanTypes
 Annotations:
- - stream-root: ApplicationUpdates__def
+ - stream-root: ApplicationUpdates
 Primary Key: _uuid
 Timestamp  : event_time
 Schema:
@@ -91,9 +90,9 @@ SQL: CREATE VIEW ApplicationStatus AS  SELECT u._uuid, u.status, u.message, u.ev
 ID:     default_catalog.default_database.ApplicationUpdates
 Type:   stream
 Stage:  flink
-Inputs: default_catalog.default_database.ApplicationUpdates__def
+Inputs: default_catalog.default_database.ApplicationUpdates__base
 Annotations:
- - stream-root: ApplicationUpdates__def
+ - stream-root: ApplicationUpdates
 Primary Key: _uuid
 Timestamp  : event_time
 Schema:
@@ -103,14 +102,13 @@ Schema:
  - message: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME*
 Plan:
-LogicalProject(_uuid=[$0], loan_application_id=[$1], status=[$2], message=[$3], event_time=[$4])
-  LogicalWatermarkAssigner(rowtime=[event_time], watermark=[-($4, 0:INTERVAL SECOND)])
-    LogicalProject(_uuid=[$0], loan_application_id=[$1], status=[$2], message=[$3], event_time=[CAST($4):TIMESTAMP_LTZ(3) *ROWTIME*])
-      LogicalTableScan(table=[[default_catalog, default_database, ApplicationUpdates__def, metadata=[timestamp]]])
-SQL: CREATE VIEW `ApplicationUpdates`
+LogicalWatermarkAssigner(rowtime=[event_time], watermark=[-($4, 0:INTERVAL SECOND)])
+  LogicalProject(_uuid=[$0], loan_application_id=[$1], status=[$2], message=[$3], event_time=[CAST($4):TIMESTAMP_LTZ(3) *ROWTIME*])
+    LogicalTableScan(table=[[default_catalog, default_database, ApplicationUpdates, metadata=[timestamp]]])
+SQL: CREATE VIEW `ApplicationUpdates__view`
 AS
-SELECT *
-FROM `default_catalog`.`default_database`.`ApplicationUpdates__def`
+SELECT `ApplicationUpdates`.`_uuid`, `ApplicationUpdates`.`loan_application_id`, `ApplicationUpdates`.`status`, `ApplicationUpdates`.`message`, `ApplicationUpdates`.`event_time`
+FROM `default_catalog`.`default_database`.`ApplicationUpdates` AS `ApplicationUpdates`
 === Applications
 ID:     default_catalog.default_database.Applications
 Type:   state
@@ -118,7 +116,7 @@ Stage:  flink
 Inputs: default_catalog.default_database.ApplicationsStream
 Annotations:
  - mostRecentDistinct: true
- - stream-root: ApplicationsStream__def
+ - stream-root: ApplicationsStream
 Primary Key: id
 Timestamp  : updated_at
 Schema:
@@ -144,9 +142,9 @@ WHERE `__sqrlinternal_rownum` = 1
 ID:     default_catalog.default_database.ApplicationsStream
 Type:   stream
 Stage:  flink
-Inputs: default_catalog.default_database.ApplicationsStream__def
+Inputs: default_catalog.default_database.ApplicationsStream__base
 Annotations:
- - stream-root: ApplicationsStream__def
+ - stream-root: ApplicationsStream
 Primary Key: id, updated_at
 Timestamp  : updated_at
 Schema:
@@ -158,20 +156,19 @@ Schema:
  - application_date: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - updated_at: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Plan:
-LogicalProject(id=[$0], customer_id=[$1], loan_type_id=[$2], amount=[$3], duration=[$4], application_date=[$5], updated_at=[$6])
-  LogicalWatermarkAssigner(rowtime=[updated_at], watermark=[-($6, 1:INTERVAL SECOND)])
-    LogicalTableScan(table=[[default_catalog, default_database, ApplicationsStream__def]])
-SQL: CREATE VIEW `ApplicationsStream`
+LogicalWatermarkAssigner(rowtime=[updated_at], watermark=[-($6, 1:INTERVAL SECOND)])
+  LogicalTableScan(table=[[default_catalog, default_database, ApplicationsStream]])
+SQL: CREATE VIEW `ApplicationsStream__view`
 AS
-SELECT *
-FROM `default_catalog`.`default_database`.`ApplicationsStream__def`
+SELECT `ApplicationsStream`.`id`, `ApplicationsStream`.`customer_id`, `ApplicationsStream`.`loan_type_id`, `ApplicationsStream`.`amount`, `ApplicationsStream`.`duration`, `ApplicationsStream`.`application_date`, `ApplicationsStream`.`updated_at`
+FROM `default_catalog`.`default_database`.`ApplicationsStream` AS `ApplicationsStream`
 === CustomerChatMessage
 ID:     default_catalog.default_database.CustomerChatMessage
 Type:   stream
 Stage:  flink
 Inputs: default_catalog.default_database.AddChatMessage
 Annotations:
- - stream-root: AddChatMessage__def
+ - stream-root: AddChatMessage
  - sort: [4 DESC-nulls-last]
 Primary Key: uuid
 Timestamp  : timestamp
@@ -196,7 +193,7 @@ Stage:  flink
 Inputs: default_catalog.default_database.CustomersStream
 Annotations:
  - mostRecentDistinct: true
- - stream-root: CustomersStream__def
+ - stream-root: CustomersStream
 Primary Key: id
 Timestamp  : updated_at
 Schema:
@@ -223,9 +220,9 @@ WHERE `__sqrlinternal_rownum` = 1
 ID:     default_catalog.default_database.CustomersStream
 Type:   stream
 Stage:  flink
-Inputs: default_catalog.default_database.CustomersStream__def
+Inputs: default_catalog.default_database.CustomersStream__base
 Annotations:
- - stream-root: CustomersStream__def
+ - stream-root: CustomersStream
 Primary Key: id, updated_at
 Timestamp  : updated_at
 Schema:
@@ -238,13 +235,12 @@ Schema:
  - date_of_birth: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - updated_at: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Plan:
-LogicalProject(id=[$0], first_name=[$1], last_name=[$2], email=[$3], phone=[$4], address=[$5], date_of_birth=[$6], updated_at=[$7])
-  LogicalWatermarkAssigner(rowtime=[updated_at], watermark=[-($7, 1:INTERVAL SECOND)])
-    LogicalTableScan(table=[[default_catalog, default_database, CustomersStream__def]])
-SQL: CREATE VIEW `CustomersStream`
+LogicalWatermarkAssigner(rowtime=[updated_at], watermark=[-($7, 1:INTERVAL SECOND)])
+  LogicalTableScan(table=[[default_catalog, default_database, CustomersStream]])
+SQL: CREATE VIEW `CustomersStream__view`
 AS
-SELECT *
-FROM `default_catalog`.`default_database`.`CustomersStream__def`
+SELECT `CustomersStream`.`id`, `CustomersStream`.`first_name`, `CustomersStream`.`last_name`, `CustomersStream`.`email`, `CustomersStream`.`phone`, `CustomersStream`.`address`, `CustomersStream`.`date_of_birth`, `CustomersStream`.`updated_at`
+FROM `default_catalog`.`default_database`.`CustomersStream` AS `CustomersStream`
 === LoanTypes
 ID:     default_catalog.default_database.LoanTypes
 Type:   state
@@ -252,7 +248,7 @@ Stage:  flink
 Inputs: default_catalog.default_database.LoanTypesStream
 Annotations:
  - mostRecentDistinct: true
- - stream-root: LoanTypesStream__def
+ - stream-root: LoanTypesStream
 Primary Key: id
 Timestamp  : updated_at
 Schema:
@@ -280,9 +276,9 @@ WHERE `__sqrlinternal_rownum` = 1
 ID:     default_catalog.default_database.LoanTypesStream
 Type:   stream
 Stage:  flink
-Inputs: default_catalog.default_database.LoanTypesStream__def
+Inputs: default_catalog.default_database.LoanTypesStream__base
 Annotations:
- - stream-root: LoanTypesStream__def
+ - stream-root: LoanTypesStream
 Primary Key: id, updated_at
 Timestamp  : updated_at
 Schema:
@@ -296,13 +292,12 @@ Schema:
  - min_duration: BIGINT NOT NULL
  - updated_at: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Plan:
-LogicalProject(id=[$0], name=[$1], description=[$2], interest_rate=[$3], max_amount=[$4], min_amount=[$5], max_duration=[$6], min_duration=[$7], updated_at=[$8])
-  LogicalWatermarkAssigner(rowtime=[updated_at], watermark=[-($8, 1:INTERVAL SECOND)])
-    LogicalTableScan(table=[[default_catalog, default_database, LoanTypesStream__def]])
-SQL: CREATE VIEW `LoanTypesStream`
+LogicalWatermarkAssigner(rowtime=[updated_at], watermark=[-($8, 1:INTERVAL SECOND)])
+  LogicalTableScan(table=[[default_catalog, default_database, LoanTypesStream]])
+SQL: CREATE VIEW `LoanTypesStream__view`
 AS
-SELECT *
-FROM `default_catalog`.`default_database`.`LoanTypesStream__def`
+SELECT `LoanTypesStream`.`id`, `LoanTypesStream`.`name`, `LoanTypesStream`.`description`, `LoanTypesStream`.`interest_rate`, `LoanTypesStream`.`max_amount`, `LoanTypesStream`.`min_amount`, `LoanTypesStream`.`max_duration`, `LoanTypesStream`.`min_duration`, `LoanTypesStream`.`updated_at`
+FROM `default_catalog`.`default_database`.`LoanTypesStream` AS `LoanTypesStream`
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `CustomersStream__schema` (
   `id` BIGINT NOT NULL,
@@ -316,7 +311,7 @@ CREATE TEMPORARY TABLE `CustomersStream__schema` (
 ) WITH (
   'connector' = 'datagen'
 );
-CREATE TABLE `CustomersStream__def` (
+CREATE TABLE `CustomersStream` (
   PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED,
   WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '0.001' SECOND
 ) WITH (
@@ -326,10 +321,6 @@ CREATE TABLE `CustomersStream__def` (
   'connector' = 'filesystem'
 )
 LIKE `CustomersStream__schema`;
-CREATE VIEW `CustomersStream`
-AS
-SELECT *
-FROM `default_catalog`.`default_database`.`CustomersStream__def`;
 CREATE TEMPORARY TABLE `ApplicationsStream__schema` (
   `id` BIGINT NOT NULL,
   `customer_id` BIGINT NOT NULL,
@@ -341,7 +332,7 @@ CREATE TEMPORARY TABLE `ApplicationsStream__schema` (
 ) WITH (
   'connector' = 'datagen'
 );
-CREATE TABLE `ApplicationsStream__def` (
+CREATE TABLE `ApplicationsStream` (
   PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED,
   WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '0.001' SECOND
 ) WITH (
@@ -351,10 +342,6 @@ CREATE TABLE `ApplicationsStream__def` (
   'connector' = 'filesystem'
 )
 LIKE `ApplicationsStream__schema`;
-CREATE VIEW `ApplicationsStream`
-AS
-SELECT *
-FROM `default_catalog`.`default_database`.`ApplicationsStream__def`;
 CREATE TEMPORARY TABLE `LoanTypesStream__schema` (
   `id` BIGINT NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -368,7 +355,7 @@ CREATE TEMPORARY TABLE `LoanTypesStream__schema` (
 ) WITH (
   'connector' = 'datagen'
 );
-CREATE TABLE `LoanTypesStream__def` (
+CREATE TABLE `LoanTypesStream` (
   PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED,
   WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '0.001' SECOND
 ) WITH (
@@ -378,11 +365,7 @@ CREATE TABLE `LoanTypesStream__def` (
   'connector' = 'filesystem'
 )
 LIKE `LoanTypesStream__schema`;
-CREATE VIEW `LoanTypesStream`
-AS
-SELECT *
-FROM `default_catalog`.`default_database`.`LoanTypesStream__def`;
-CREATE TABLE `ApplicationUpdates__def` (
+CREATE TABLE `ApplicationUpdates` (
   `_uuid` STRING NOT NULL,
   `loan_application_id` BIGINT NOT NULL,
   `status` STRING NOT NULL,
@@ -398,10 +381,6 @@ CREATE TABLE `ApplicationUpdates__def` (
   'properties.auto.offset.reset' = 'earliest',
   'topic' = 'ApplicationUpdates'
 );
-CREATE VIEW `ApplicationUpdates`
-AS
-SELECT *
-FROM `default_catalog`.`default_database`.`ApplicationUpdates__def`;
 CREATE VIEW `Customers`
 AS
 SELECT `id`, `first_name`, `last_name`, `email`, `phone`, `address`, `date_of_birth`, `updated_at`
@@ -431,7 +410,7 @@ AS
 SELECT `_uuid`, `id`, `customer_id`, `loan_type_id`, `max_amount`, `min_amount`, `amount`
 FROM `ApplicationStatus` AS `a`
 WHERE `status` = 'underwriting' AND (`amount` > `max_amount` OR `amount` < `min_amount`);
-CREATE TABLE `AddChatMessage__def` (
+CREATE TABLE `AddChatMessage` (
   `_uuid` STRING NOT NULL,
   `role` STRING NOT NULL,
   `content` STRING NOT NULL,
@@ -448,10 +427,6 @@ CREATE TABLE `AddChatMessage__def` (
   'properties.auto.offset.reset' = 'earliest',
   'topic' = 'AddChatMessage'
 );
-CREATE VIEW `AddChatMessage`
-AS
-SELECT *
-FROM `default_catalog`.`default_database`.`AddChatMessage__def`;
 CREATE VIEW `CustomerChatMessage`
 AS
 SELECT `role`, `content`, `name`, `c`.`context`.`customerid`, `event_time` AS `timestamp`, `_uuid` AS `uuid`
@@ -661,7 +636,7 @@ CREATE TABLE `LoanTypesStream_11` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`AddChatMessage_1`
-(SELECT `_uuid`, `role`, `content`, `name`, TO_JSONB(`context`) AS `context`, `event_time`
+(SELECT `_uuid`, `role`, `content`, `name`, `to_jsonb`(`context`) AS `context`, `event_time`
  FROM `default_catalog`.`default_database`.`AddChatMessage`)
 ;
 INSERT INTO `default_catalog`.`default_database`.`ApplicationAlert_2`
@@ -710,7 +685,7 @@ INSERT INTO `default_catalog`.`default_database`.`ApplicationAlert_2`
   "topics" : [
     {
       "topicName" : "AddChatMessage",
-      "tableName" : "AddChatMessage__def",
+      "tableName" : "AddChatMessage",
       "numPartitions" : 1,
       "replicationFactor" : 1,
       "replicasAssignments" : { },
@@ -718,7 +693,7 @@ INSERT INTO `default_catalog`.`default_database`.`ApplicationAlert_2`
     },
     {
       "topicName" : "ApplicationUpdates",
-      "tableName" : "ApplicationUpdates__def",
+      "tableName" : "ApplicationUpdates",
       "numPartitions" : 1,
       "replicationFactor" : 1,
       "replicasAssignments" : { },

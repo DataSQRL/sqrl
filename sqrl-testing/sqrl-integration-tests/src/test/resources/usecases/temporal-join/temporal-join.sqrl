@@ -1,0 +1,22 @@
+CREATE TABLE SensorReading (
+   sensorid INT NOT NULL,
+   temperature FLOAT NOT NULL,
+   event_time TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp'
+);
+
+CREATE TABLE SensorUpdates (
+    sensorid INT NOT NULL,
+    sensor_name STRING NOT NULL,
+    lastUpdated TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp'
+);
+
+EXPORT SensorReading TO logger.SensorReading;
+EXPORT SensorUpdates TO logger.SensorUpdates;
+
+_SensorDistinct := DISTINCT SensorUpdates ON sensorid ORDER BY lastUpdated DESC;
+
+EnrichedSensorReading := SELECT r.sensorid, r.temperature, r.event_time, u.sensor_name
+                         FROM SensorReading r LEFT JOIN _SensorDistinct FOR SYSTEM_TIME AS OF r.event_time u on r.sensorid = u.sensorid
+                         ORDER BY r.event_time ASC;
+
+EXPORT EnrichedSensorReading TO logger.Result;

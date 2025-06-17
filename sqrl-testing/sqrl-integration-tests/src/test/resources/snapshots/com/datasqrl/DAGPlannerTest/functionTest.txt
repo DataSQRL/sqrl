@@ -5,7 +5,7 @@ Type:   stream
 Stage:  flink
 Inputs: default_catalog.default_database.Product
 Annotations:
- - stream-root: Product__def
+ - stream-root: Product
 Primary Key: -
 Timestamp  : -
 Schema:
@@ -22,9 +22,9 @@ SQL: CREATE VIEW FunctionCalls AS  SELECT text_search('garden gnome', category, 
 ID:     default_catalog.default_database.Product
 Type:   stream
 Stage:  flink
-Inputs: default_catalog.default_database.Product__def
+Inputs: default_catalog.default_database.Product__base
 Annotations:
- - stream-root: Product__def
+ - stream-root: Product
 Primary Key: productid, name, description, category
 Timestamp  : _ingest_time
 Schema:
@@ -34,13 +34,12 @@ Schema:
  - category: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - _ingest_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Plan:
-LogicalProject(productid=[$0], name=[$1], description=[$2], category=[$3], _ingest_time=[$4])
-  LogicalWatermarkAssigner(rowtime=[_ingest_time], watermark=[-($4, 1:INTERVAL SECOND)])
-    LogicalTableScan(table=[[default_catalog, default_database, Product__def]])
-SQL: CREATE VIEW `Product`
+LogicalWatermarkAssigner(rowtime=[_ingest_time], watermark=[-($4, 1:INTERVAL SECOND)])
+  LogicalTableScan(table=[[default_catalog, default_database, Product]])
+SQL: CREATE VIEW `Product__view`
 AS
-SELECT *
-FROM `default_catalog`.`default_database`.`Product__def`
+SELECT `Product`.`productid`, `Product`.`name`, `Product`.`description`, `Product`.`category`, `Product`.`_ingest_time`
+FROM `default_catalog`.`default_database`.`Product` AS `Product`
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `Product__schema` (
   `productid` BIGINT NOT NULL,
@@ -51,7 +50,7 @@ CREATE TEMPORARY TABLE `Product__schema` (
 ) WITH (
   'connector' = 'datagen'
 );
-CREATE TABLE `Product__def` (
+CREATE TABLE `Product` (
   PRIMARY KEY (`productid`, `name`, `description`, `category`) NOT ENFORCED,
   WATERMARK FOR `_ingest_time` AS `_ingest_time` - INTERVAL '0.001' SECOND
 ) WITH (
@@ -61,13 +60,9 @@ CREATE TABLE `Product__def` (
   'connector' = 'filesystem'
 )
 LIKE `Product__schema`;
-CREATE VIEW `Product`
-AS
-SELECT *
-FROM `default_catalog`.`default_database`.`Product__def`;
 CREATE VIEW `FunctionCalls`
 AS
-SELECT TEXT_SEARCH('garden gnome', `category`, `name`) AS `searchResult`, FORMAT('Go buy: %s in %s with id=%s', `name`, `category`, CAST(`productid` AS STRING)) AS `format`
+SELECT `text_search`('garden gnome', `category`, `name`) AS `searchResult`, `format`('Go buy: %s in %s with id=%s', `name`, `category`, CAST(`productid` AS STRING)) AS `format`
 FROM `Product`;
 CREATE TABLE `FunctionCalls_1` (
   `searchResult` DOUBLE NOT NULL,
@@ -99,7 +94,7 @@ CREATE TABLE `Product_2` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`FunctionCalls_1`
-(SELECT `searchResult`, `format`, HASHCOLUMNS(`searchResult`, `format`) AS `__pk_hash`
+(SELECT `searchResult`, `format`, `hashColumns`(`searchResult`, `format`) AS `__pk_hash`
  FROM `default_catalog`.`default_database`.`FunctionCalls`)
 ;
 INSERT INTO `default_catalog`.`default_database`.`Product_2`

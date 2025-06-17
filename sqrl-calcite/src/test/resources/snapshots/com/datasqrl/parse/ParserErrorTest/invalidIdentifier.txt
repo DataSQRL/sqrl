@@ -1,4 +1,0 @@
-[FATAL] mismatched input at '$'. Expecting: '/*+', 'CREATE', 'EXPORT', 'IMPORT', <identifier>
-Test$0.example := SELECT * FROM x;
-----^
-

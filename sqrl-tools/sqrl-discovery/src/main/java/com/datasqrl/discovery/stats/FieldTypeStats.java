@@ -1,16 +1,26 @@
 /*
- * Copyright (c) 2021, DataSQRL. All rights reserved. Use is subject to license terms.
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.datasqrl.discovery.stats;
-
-import java.io.Serializable;
-import java.util.Map;
-import java.util.Objects;
 
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.io.schema.flexible.input.TypeSignature;
 import com.datasqrl.io.schema.flexible.type.Type;
-
+import java.io.Serializable;
+import java.util.Map;
+import java.util.Objects;
 import lombok.NonNull;
 
 public class FieldTypeStats implements Serializable, Cloneable, TypeSignature {
@@ -20,13 +30,12 @@ public class FieldTypeStats implements Serializable, Cloneable, TypeSignature {
   int arrayDepth;
 
   long count;
-  //Only not-null if detected is an array
+  // Only not-null if detected is an array
   LogarithmicHistogram.Accumulator arrayCardinality;
-  //Only not-null if detected is a NestedRelation
+  // Only not-null if detected is a NestedRelation
   RelationStats nestedRelationStats;
 
-  public FieldTypeStats() {
-  } //For Kryo;
+  public FieldTypeStats() {} // For Kryo;
 
   public FieldTypeStats(@NonNull Type raw, int arrayDepth) {
     this(raw, raw, arrayDepth);
@@ -44,8 +53,8 @@ public class FieldTypeStats implements Serializable, Cloneable, TypeSignature {
   }
 
   public static FieldTypeStats of(@NonNull TypeSignature.Simple signature) {
-    return new FieldTypeStats(signature.getRaw(), signature.getDetected(),
-        signature.getArrayDepth());
+    return new FieldTypeStats(
+        signature.getRaw(), signature.getDetected(), signature.getArrayDepth());
   }
 
   @Override
@@ -67,8 +76,8 @@ public class FieldTypeStats implements Serializable, Cloneable, TypeSignature {
     count++;
   }
 
-  public void addNested(@NonNull Map<String, Object> nested,
-      @NonNull NameCanonicalizer canonicalizer) {
+  public void addNested(
+      @NonNull Map<String, Object> nested, @NonNull NameCanonicalizer canonicalizer) {
     if (nestedRelationStats == null) {
       nestedRelationStats = new RelationStats();
     }
@@ -85,8 +94,8 @@ public class FieldTypeStats implements Serializable, Cloneable, TypeSignature {
 
   private void addArrayCardinality(int numElements) {
     if (arrayCardinality == null) {
-      arrayCardinality = new LogarithmicHistogram.Accumulator(ARRAY_CARDINALITY_BASE,
-          ARRAY_CARDINALITY_BUCKETS);
+      arrayCardinality =
+          new LogarithmicHistogram.Accumulator(ARRAY_CARDINALITY_BASE, ARRAY_CARDINALITY_BUCKETS);
     }
     arrayCardinality.add(numElements);
   }
@@ -96,8 +105,8 @@ public class FieldTypeStats implements Serializable, Cloneable, TypeSignature {
     count += other.count;
     if (other.arrayCardinality != null) {
       if (arrayCardinality == null) {
-        arrayCardinality = new LogarithmicHistogram.Accumulator(ARRAY_CARDINALITY_BASE,
-            ARRAY_CARDINALITY_BUCKETS);
+        arrayCardinality =
+            new LogarithmicHistogram.Accumulator(ARRAY_CARDINALITY_BASE, ARRAY_CARDINALITY_BUCKETS);
       }
       arrayCardinality.merge(other.arrayCardinality);
     }
@@ -108,7 +117,6 @@ public class FieldTypeStats implements Serializable, Cloneable, TypeSignature {
       nestedRelationStats.merge(other.nestedRelationStats);
     }
   }
-
 
   @Override
   public boolean equals(Object o) {
@@ -136,8 +144,4 @@ public class FieldTypeStats implements Serializable, Cloneable, TypeSignature {
     result += "}^" + arrayDepth;
     return result;
   }
-
-
 }
-
-

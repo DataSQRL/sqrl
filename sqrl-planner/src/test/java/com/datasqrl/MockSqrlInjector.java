@@ -1,14 +1,20 @@
+/*
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.datasqrl;
 
-import java.nio.file.Path;
-import java.util.Map;
-import java.util.Optional;
-
-import org.apache.calcite.rel.type.RelDataTypeFactory;
-import org.apache.calcite.tools.RelBuilder;
-
-import com.datasqrl.calcite.SqrlFramework;
-import com.datasqrl.calcite.SqrlFrameworkImpl;
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.canonicalizer.NamePath;
@@ -16,8 +22,6 @@ import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.PackageJson.CompilerConfig;
 import com.datasqrl.config.SqrlCompilerConfiguration;
 import com.datasqrl.config.SqrlConfigPipeline;
-import com.datasqrl.config.SqrlRelBuilder;
-import com.datasqrl.config.TableConfigLoader;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.loaders.ModuleLoader;
@@ -29,6 +33,10 @@ import com.datasqrl.plan.MainScript;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.name.Named;
+import java.nio.file.Path;
+import java.util.Map;
+import java.util.Optional;
+import org.apache.calcite.rel.type.RelDataTypeFactory;
 
 public class MockSqrlInjector extends AbstractModule {
 
@@ -36,38 +44,33 @@ public class MockSqrlInjector extends AbstractModule {
   private final PackageJson config;
   private final Path rootDir;
   private final Map<NamePath, SqrlModule> addlModules;
-  private final TableConfigLoader tableConfigFactory;
   private final Optional<Path> errorDir;
 
-  public MockSqrlInjector(ErrorCollector errors, PackageJson config, Optional<Path> errorDir,
-      Path rootDir, Map<NamePath, SqrlModule> addlModules, TableConfigLoader tableConfigFactory) {
+  public MockSqrlInjector(
+      ErrorCollector errors,
+      PackageJson config,
+      Optional<Path> errorDir,
+      Path rootDir,
+      Map<NamePath, SqrlModule> addlModules) {
     this.errors = errors;
     this.config = config;
     this.rootDir = rootDir;
     this.errorDir = errorDir;
     this.addlModules = addlModules;
-    this.tableConfigFactory = tableConfigFactory;
   }
 
   @Override
   public void configure() {
-    bind(SqrlFramework.class).to(SqrlFrameworkImpl.class);
     bind(RelDataTypeFactory.class).to(TypeFactory.class);
     bind(MainScript.class).to(MainScriptImpl.class);
     bind(ExecutionPipeline.class).to(SqrlConfigPipeline.class);
     bind(CompilerConfig.class).to(SqrlCompilerConfiguration.class);
-    bind(RelBuilder.class).to(SqrlRelBuilder.class);
     bind(ModuleLoader.class).to(ModuleLoaderImpl.class);
   }
 
   @Provides
   public ErrorCollector provideErrorCollector() {
     return errors;
-  }
-
-  @Provides
-  public TableConfigLoader provideTableConfigFactory() {
-    return tableConfigFactory;
   }
 
   @Provides
@@ -108,15 +111,14 @@ public class MockSqrlInjector extends AbstractModule {
   @Provides
   public ResourceResolver provideResourceResolver() {
     if (rootDir == null) {
-      return new FileResourceResolver(Path.of("../sqrl-testing/sqrl-integration-tests/src/test/resources/dagplanner"));
+      return new FileResourceResolver(
+          Path.of("../sqrl-testing/sqrl-integration-tests/src/test/resources/dagplanner"));
     }
     return new FileResourceResolver(rootDir);
   }
-
 
   @Provides
   public PackageJson provideSqrlConfig() {
     return config;
   }
-
 }

@@ -1,25 +1,24 @@
 /*
- * Copyright (c) 2021, DataSQRL. All rights reserved. Use is subject to license terms.
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.datasqrl.cmd;
 
 import static com.datasqrl.config.ScriptConfigImpl.GRAPHQL_NORMALIZED_FILE_NAME;
 import static com.datasqrl.config.SqrlConstants.PACKAGE_JSON;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
-import org.apache.calcite.jdbc.SqrlSchema;
-import org.apache.commons.lang3.tuple.Pair;
-
-import com.datasqrl.calcite.type.TypeFactory;
-import com.datasqrl.canonicalizer.NameCanonicalizer;
-import com.datasqrl.compile.CompilationProcessV2;
+import com.datasqrl.compile.CompilationProcess;
 import com.datasqrl.compile.DirectoryManager;
 import com.datasqrl.compile.TestPlan;
 import com.datasqrl.config.PackageJson;
@@ -31,13 +30,20 @@ import com.datasqrl.error.ErrorPrefix;
 import com.datasqrl.graphql.APIType;
 import com.datasqrl.graphql.server.RootGraphqlModel.StringSchema;
 import com.datasqrl.inject.SqrlInjector;
-import com.datasqrl.inject.StatefulModule;
+import com.datasqrl.packager.PackageBootstrap;
 import com.datasqrl.packager.Packager;
 import com.datasqrl.plan.validate.ExecutionGoal;
 import com.google.inject.Guice;
-
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import picocli.CommandLine;
 
 @Slf4j
@@ -62,7 +68,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
   protected Path targetDir = DEFAULT_TARGET_DIR;
 
   @Override
-@SneakyThrows
+  @SneakyThrows
   public void execute(ErrorCollector errors) {
     execute(errors, root.rootDir.resolve("snapshots"), Optional.empty(), ExecutionGoal.COMPILE);
   }
@@ -71,8 +77,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
       ErrorCollector errors, Path snapshotPath, Optional<Path> testsPath, ExecutionGoal goal) {
 
     var packageBootstrap = new PackageBootstrap(errors);
-    var sqrlConfig =
-        packageBootstrap.bootstrap(root.rootDir, this.root.packageFiles, this.files);
+    var sqrlConfig = packageBootstrap.bootstrap(root.rootDir, this.root.packageFiles, this.files);
 
     var snapshotPathConf = sqrlConfig.getCompilerConfig().getSnapshotPath();
     if (snapshotPathConf.isEmpty()) {
@@ -98,8 +103,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
 
     var injector =
         Guice.createInjector(
-            new SqrlInjector(errors, root.rootDir, getTargetDir(), sqrlConfig, getGoal()),
-            new StatefulModule(new SqrlSchema(new TypeFactory(), NameCanonicalizer.SYSTEM)));
+            new SqrlInjector(errors, root.rootDir, getTargetDir(), sqrlConfig, getGoal()));
 
     var packager = injector.getInstance(Packager.class);
     packager.preprocess(errors.withLocation(ErrorPrefix.CONFIG.resolve(PACKAGE_JSON)));
@@ -107,7 +111,7 @@ public abstract class AbstractCompilerCommand extends AbstractCommand {
       return;
     }
 
-    var compilationProcess = injector.getInstance(CompilationProcessV2.class);
+    var compilationProcess = injector.getInstance(CompilationProcess.class);
     testsPath.ifPresent(this::validateTestPath);
 
     Pair<PhysicalPlan, ? extends TestPlan> plan = compilationProcess.executeCompilation(testsPath);

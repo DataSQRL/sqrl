@@ -26,7 +26,7 @@ SQL: CREATE VIEW OrderCount AS  SELECT id, COUNT(1) as number, SUM(i.quantity) a
 ID:     default_catalog.default_database.Orders
 Type:   stream
 Stage:  flink
-Inputs: default_catalog.default_database.Orders__def
+Inputs: default_catalog.default_database.Orders__base
 Annotations:
  - features: DENORMALIZE (feature)
 Primary Key: -
@@ -38,14 +38,13 @@ Schema:
  - items: RecordType:peek_no_expand(INTEGER NOT NULL productid, INTEGER NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
  - _source_time: TIMESTAMP_LTZ(3) *ROWTIME*
 Plan:
-LogicalProject(id=[$0], customerid=[$1], time=[$2], items=[$3], _source_time=[$4])
-  LogicalWatermarkAssigner(rowtime=[_source_time], watermark=[$4])
-    LogicalProject(id=[$0], customerid=[$1], time=[$2], items=[$3], _source_time=[CAST($4):TIMESTAMP_LTZ(3) *ROWTIME*])
-      LogicalTableScan(table=[[default_catalog, default_database, Orders__def, metadata=[timestamp]]])
-SQL: CREATE VIEW `Orders`
+LogicalWatermarkAssigner(rowtime=[_source_time], watermark=[$4])
+  LogicalProject(id=[$0], customerid=[$1], time=[$2], items=[$3], _source_time=[CAST($4):TIMESTAMP_LTZ(3) *ROWTIME*])
+    LogicalTableScan(table=[[default_catalog, default_database, Orders, metadata=[timestamp]]])
+SQL: CREATE VIEW `Orders__view`
 AS
-SELECT *
-FROM `default_catalog`.`default_database`.`Orders__def`
+SELECT `Orders`.`id`, `Orders`.`customerid`, `Orders`.`time`, `Orders`.`items`, `Orders`.`_source_time`
+FROM `default_catalog`.`default_database`.`Orders` AS `Orders`
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `Orders__schema` (
   `id` BIGINT NOT NULL,
@@ -55,7 +54,7 @@ CREATE TEMPORARY TABLE `Orders__schema` (
 ) WITH (
   'connector' = 'datagen'
 );
-CREATE TABLE `Orders__def` (
+CREATE TABLE `Orders` (
   `_source_time` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
   WATERMARK FOR `_source_time` AS `_source_time`
 ) WITH (
@@ -67,10 +66,6 @@ CREATE TABLE `Orders__def` (
   'avro.timestamp_mapping.legacy' = 'false'
 )
 LIKE `Orders__schema`;
-CREATE VIEW `Orders`
-AS
-SELECT *
-FROM `default_catalog`.`default_database`.`Orders__def`;
 CREATE VIEW `OrderCount`
 AS
 SELECT `id`, COUNT(1) AS `number`, SUM(`i`.`quantity`) AS `volume`
@@ -112,7 +107,7 @@ INSERT INTO `default_catalog`.`default_database`.`OrderCount_1`
  FROM `default_catalog`.`default_database`.`OrderCount`)
 ;
 INSERT INTO `default_catalog`.`default_database`.`Orders_2`
- (SELECT `id`, `customerid`, `time`, TO_JSONB(`items`) AS `items`, `_source_time`, HASHCOLUMNS(`id`, `customerid`, `time`, `items`, `_source_time`) AS `__pk_hash`
+ (SELECT `id`, `customerid`, `time`, `to_jsonb`(`items`) AS `items`, `_source_time`, `hashColumns`(`id`, `customerid`, `time`, `items`, `_source_time`) AS `__pk_hash`
   FROM `default_catalog`.`default_database`.`Orders`)
  ;
  END

@@ -5,7 +5,7 @@ Type:   stream
 Stage:  iceberg
 Inputs: default_catalog.default_database._MyApplications1
 Annotations:
- - stream-root: _Applications__def
+ - stream-root: _Applications
 Primary Key: -
 Timestamp  : -
 Schema:
@@ -22,7 +22,7 @@ Type:   stream
 Stage:  iceberg
 Inputs: default_catalog.default_database._MyApplications2
 Annotations:
- - stream-root: _Applications__def
+ - stream-root: _Applications
 Primary Key: -
 Timestamp  : -
 Schema:
@@ -39,7 +39,7 @@ Type:   stream
 Stage:  postgres
 Inputs: default_catalog.default_database._MyApplications2
 Annotations:
- - stream-root: _Applications__def
+ - stream-root: _Applications
 Primary Key: -
 Timestamp  : -
 Schema:
@@ -54,9 +54,9 @@ SQL: CREATE VIEW MyTable3 AS  SELECT id, 'hello world3' as hello FROM _MyApplica
 ID:     default_catalog.default_database._Applications
 Type:   stream
 Stage:  flink
-Inputs: default_catalog.default_database._Applications__def
+Inputs: default_catalog.default_database._Applications__base
 Annotations:
- - stream-root: _Applications__def
+ - stream-root: _Applications
 Primary Key: id, updated_at
 Timestamp  : updated_at
 Schema:
@@ -68,20 +68,19 @@ Schema:
  - application_date: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - updated_at: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Plan:
-LogicalProject(id=[$0], customer_id=[$1], loan_type_id=[$2], amount=[$3], duration=[$4], application_date=[$5], updated_at=[$6])
-  LogicalWatermarkAssigner(rowtime=[updated_at], watermark=[-($6, 1:INTERVAL SECOND)])
-    LogicalTableScan(table=[[default_catalog, default_database, _Applications__def]])
-SQL: CREATE VIEW `_Applications`
+LogicalWatermarkAssigner(rowtime=[updated_at], watermark=[-($6, 1:INTERVAL SECOND)])
+  LogicalTableScan(table=[[default_catalog, default_database, _Applications]])
+SQL: CREATE VIEW `_Applications__view`
 AS
-SELECT *
-FROM `default_catalog`.`default_database`.`_Applications__def`
+SELECT `_Applications`.`id`, `_Applications`.`customer_id`, `_Applications`.`loan_type_id`, `_Applications`.`amount`, `_Applications`.`duration`, `_Applications`.`application_date`, `_Applications`.`updated_at`
+FROM `default_catalog`.`default_database`.`_Applications` AS `_Applications`
 === _MyApplications1
 ID:     default_catalog.default_database._MyApplications1
 Type:   stream
 Stage:  flink
 Inputs: default_catalog.default_database._Applications
 Annotations:
- - stream-root: _Applications__def
+ - stream-root: _Applications
 Primary Key: id, updated_at
 Timestamp  : updated_at
 Schema:
@@ -103,7 +102,7 @@ Type:   stream
 Stage:  flink
 Inputs: default_catalog.default_database._Applications
 Annotations:
- - stream-root: _Applications__def
+ - stream-root: _Applications
 Primary Key: id, updated_at
 Timestamp  : updated_at
 Schema:
@@ -132,7 +131,7 @@ CREATE TEMPORARY TABLE `_Applications__schema` (
 ) WITH (
   'connector' = 'datagen'
 );
-CREATE TABLE `_Applications__def` (
+CREATE TABLE `_Applications` (
   PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED,
   WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '0.001' SECOND
 ) WITH (
@@ -142,10 +141,6 @@ CREATE TABLE `_Applications__def` (
   'connector' = 'filesystem'
 )
 LIKE `_Applications__schema`;
-CREATE VIEW `_Applications`
-AS
-SELECT *
-FROM `default_catalog`.`default_database`.`_Applications__def`;
 CREATE VIEW `_MyApplications1`
 AS
 SELECT *
@@ -276,7 +271,7 @@ FROM "_MyApplications2_3"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT \"id\", 'hello world1' AS \"hello\"\nFROM ICEBERG_SCAN('/tmp/duckdb/default_database/_MyApplications1_1', ALLOW_MOVED_PATHS = TRUE)",
+            "sql" : "SELECT \"id\", 'hello world1' AS \"hello\"\nFROM \"iceberg_scan\"('/tmp/duckdb/default_database/_MyApplications1_1', ALLOW_MOVED_PATHS = TRUE)",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "DUCKDB"
@@ -300,7 +295,7 @@ FROM "_MyApplications2_3"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT \"id\", 'hello world2' AS \"hello\"\nFROM ICEBERG_SCAN('/tmp/duckdb/default_database/_MyApplications2_2', ALLOW_MOVED_PATHS = TRUE)",
+            "sql" : "SELECT \"id\", 'hello world2' AS \"hello\"\nFROM \"iceberg_scan\"('/tmp/duckdb/default_database/_MyApplications2_2', ALLOW_MOVED_PATHS = TRUE)",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "DUCKDB"

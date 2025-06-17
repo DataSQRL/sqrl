@@ -3,9 +3,9 @@
 ID:     default_catalog.default_database.Customer
 Type:   stream
 Stage:  flink
-Inputs: default_catalog.default_database.Customer__def
+Inputs: default_catalog.default_database.Customer__base
 Annotations:
- - stream-root: Customer__def
+ - stream-root: Customer
 Primary Key: customerid, lastUpdated
 Timestamp  : timestamp
 Schema:
@@ -15,14 +15,13 @@ Schema:
  - lastUpdated: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Plan:
-LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
-  LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
-    LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($3, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
-      LogicalTableScan(table=[[default_catalog, default_database, Customer__def]])
-SQL: CREATE VIEW `Customer`
+LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
+  LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($3, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
+    LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW `Customer__view`
 AS
-SELECT *
-FROM `default_catalog`.`default_database`.`Customer__def`
+SELECT `Customer`.`customerid`, `Customer`.`email`, `Customer`.`name`, `Customer`.`lastUpdated`, `Customer`.`timestamp`
+FROM `default_catalog`.`default_database`.`Customer` AS `Customer`
 === DistinctCustomer
 ID:     default_catalog.default_database.DistinctCustomer
 Type:   state
@@ -30,7 +29,7 @@ Stage:  flink
 Inputs: default_catalog.default_database.Customer
 Annotations:
  - mostRecentDistinct: true
- - stream-root: Customer__def
+ - stream-root: Customer
 Primary Key: customerid
 Timestamp  : timestamp
 Schema:
@@ -71,10 +70,10 @@ SQL: CREATE VIEW JoinStream AS  SELECT o.id, c.name FROM Orders o JOIN Customer 
 ID:     default_catalog.default_database.Orders
 Type:   stream
 Stage:  flink
-Inputs: default_catalog.default_database.Orders__def
+Inputs: default_catalog.default_database.Orders__base
 Annotations:
  - features: DENORMALIZE (feature)
- - stream-root: Orders__def
+ - stream-root: Orders
 Primary Key: id, time
 Timestamp  : time
 Schema:
@@ -83,13 +82,12 @@ Schema:
  - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - entries: RecordType:peek_no_expand(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
 Plan:
-LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3])
-  LogicalWatermarkAssigner(rowtime=[time], watermark=[-($2, 1:INTERVAL SECOND)])
-    LogicalTableScan(table=[[default_catalog, default_database, Orders__def]])
-SQL: CREATE VIEW `Orders`
+LogicalWatermarkAssigner(rowtime=[time], watermark=[-($2, 1:INTERVAL SECOND)])
+  LogicalTableScan(table=[[default_catalog, default_database, Orders]])
+SQL: CREATE VIEW `Orders__view`
 AS
-SELECT *
-FROM `default_catalog`.`default_database`.`Orders__def`
+SELECT `Orders`.`id`, `Orders`.`customerid`, `Orders`.`time`, `Orders`.`entries`
+FROM `default_catalog`.`default_database`.`Orders` AS `Orders`
 === DistinctStream
 ID:     log.DistinctStream
 Type:   export
@@ -111,8 +109,8 @@ CREATE TEMPORARY TABLE `Customer__schema` (
 ) WITH (
   'connector' = 'datagen'
 );
-CREATE TABLE `Customer__def` (
-  `timestamp` AS COALESCE(TO_TIMESTAMP_LTZ(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
+CREATE TABLE `Customer` (
+  `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
 ) WITH (
@@ -122,10 +120,6 @@ CREATE TABLE `Customer__def` (
   'connector' = 'filesystem'
 )
 LIKE `Customer__schema`;
-CREATE VIEW `Customer`
-AS
-SELECT *
-FROM `default_catalog`.`default_database`.`Customer__def`;
 CREATE TEMPORARY TABLE `Orders__schema` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
@@ -134,7 +128,7 @@ CREATE TEMPORARY TABLE `Orders__schema` (
 ) WITH (
   'connector' = 'datagen'
 );
-CREATE TABLE `Orders__def` (
+CREATE TABLE `Orders` (
   PRIMARY KEY (`id`, `time`) NOT ENFORCED,
   WATERMARK FOR `time` AS `time` - INTERVAL '0.001' SECOND
 ) WITH (
@@ -144,10 +138,6 @@ CREATE TABLE `Orders__def` (
   'connector' = 'filesystem'
 )
 LIKE `Orders__schema`;
-CREATE VIEW `Orders`
-AS
-SELECT *
-FROM `default_catalog`.`default_database`.`Orders__def`;
 CREATE VIEW `JoinStream`
 AS
 SELECT `o`.`id`, `c`.`name`
@@ -182,12 +172,12 @@ CREATE TABLE `DistinctStream_2` (
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`customerid`) NOT ENFORCED
 ) WITH (
+  'topic' = 'kafka-upsert-DistinctStream',
   'connector' = 'upsert-kafka',
   'value.format' = 'flexible-json',
   'key.format' = 'raw',
   'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
-  'properties.group.id' = '${PROPERTIES_GROUP_ID}',
-  'topic' = 'DistinctStream'
+  'properties.group.id' = '${PROPERTIES_GROUP_ID}'
 );
 CREATE TABLE `DistinctCustomer_3` (
   `customerid` BIGINT NOT NULL,
@@ -208,13 +198,13 @@ CREATE TABLE `JoinStream_4` (
   `id` BIGINT NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL
 ) WITH (
+  'topic' = 'kafka-JoinStream',
   'connector' = 'kafka',
   'format' = 'flexible-json',
   'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${PROPERTIES_GROUP_ID}',
   'scan.startup.mode' = 'group-offsets',
-  'properties.auto.offset.reset' = 'earliest',
-  'topic' = 'JoinStream'
+  'properties.auto.offset.reset' = 'earliest'
 );
 CREATE TABLE `JoinStream_5` (
   `id` BIGINT NOT NULL,
@@ -261,11 +251,11 @@ INSERT INTO `default_catalog`.`default_database`.`DistinctStream_2`
     FROM `default_catalog`.`default_database`.`JoinStream`)
    ;
    INSERT INTO `default_catalog`.`default_database`.`JoinStream_5`
-    (SELECT `id`, `name`, HASHCOLUMNS(`id`, `name`) AS `__pk_hash`
+    (SELECT `id`, `name`, `hashColumns`(`id`, `name`) AS `__pk_hash`
      FROM `default_catalog`.`default_database`.`JoinStream`)
     ;
     INSERT INTO `default_catalog`.`default_database`.`Orders_6`
-     (SELECT `id`, `customerid`, `time`, TO_JSONB(`entries`) AS `entries`
+     (SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`
       FROM `default_catalog`.`default_database`.`Orders`)
      ;
      END
@@ -273,7 +263,7 @@ INSERT INTO `default_catalog`.`default_database`.`DistinctStream_2`
 {
   "topics" : [
     {
-      "topicName" : "DistinctStream",
+      "topicName" : "kafka-upsert-DistinctStream",
       "tableName" : "DistinctStream_2",
       "numPartitions" : 1,
       "replicationFactor" : 1,
@@ -281,7 +271,7 @@ INSERT INTO `default_catalog`.`default_database`.`DistinctStream_2`
       "config" : { }
     },
     {
-      "topicName" : "JoinStream",
+      "topicName" : "kafka-JoinStream",
       "tableName" : "JoinStream_4",
       "numPartitions" : 1,
       "replicationFactor" : 1,

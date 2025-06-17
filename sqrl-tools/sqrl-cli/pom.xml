@@ -1,28 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright © 2021 DataSQRL (contact@datasqrl.com)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>com.datasqrl</groupId>
     <artifactId>sqrl-tools</artifactId>
     <version>0.7.0-SNAPSHOT</version>
   </parent>
-  <modelVersion>4.0.0</modelVersion>
 
   <artifactId>sqrl-cli</artifactId>
 
-  <properties>
-    <maven.compiler.source>11</maven.compiler.source>
-    <maven.compiler.target>11</maven.compiler.target>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-  </properties>
-
   <dependencies>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-base</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-calcite</artifactId>
-    </dependency>
     <dependency>
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-packager</artifactId>
@@ -68,14 +72,8 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <artifactId>sqrl-calcite</artifactId>
       <groupId>com.datasqrl</groupId>
-      <type>test-jar</type>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <artifactId>sqrl-planner</artifactId>
-      <groupId>com.datasqrl</groupId>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
@@ -87,7 +85,6 @@
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-connector-kafka</artifactId>
-      <version>3.2.0-1.19</version>
       <scope>runtime</scope>
     </dependency>
     <dependency>
@@ -139,18 +136,16 @@
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-avro-confluent-registry</artifactId>
-      <version>1.19.1</version>
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-s3-fs-hadoop</artifactId>
-      <version>${flink.version}</version>
     </dependency>
 
     <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-common</artifactId>
-      <version>2.10.2</version>
+      <version>${hadoop.version}</version>
       <exclusions>
         <exclusion>
           <groupId>org.slf4j</groupId>
@@ -170,15 +165,15 @@
           <artifactId>slf4j-log4j12</artifactId>
         </exclusion>
         <exclusion>
-        	<groupId>log4j</groupId>
-        	<artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
+          <artifactId>log4j</artifactId>
         </exclusion>
       </exclusions>
     </dependency>
     <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-hdfs</artifactId>
-      <version>2.10.2</version>
+      <version>${hadoop.version}</version>
       <exclusions>
         <exclusion>
           <groupId>io.netty</groupId>
@@ -201,7 +196,7 @@
     <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-mapreduce-client-core</artifactId>
-      <version>3.4.1</version>
+      <version>${hadoop.version}</version>
       <exclusions>
         <exclusion>
           <groupId>org.slf4j</groupId>
@@ -216,8 +211,8 @@
           <artifactId>netty</artifactId>
         </exclusion>
         <exclusion>
-        	<groupId>log4j</groupId>
-        	<artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
+          <artifactId>log4j</artifactId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -235,10 +230,10 @@
         <artifactId>maven-shade-plugin</artifactId>
         <executions>
           <execution>
-            <phase>package</phase>
             <goals>
               <goal>shade</goal>
             </goals>
+            <phase>package</phase>
             <configuration>
               <finalName>sqrl-cli</finalName>
               <shadedArtifactAttached>true</shadedArtifactAttached>
@@ -247,7 +242,7 @@
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                   <mainClass>com.datasqrl.DatasqrlCMD</mainClass>
                 </transformer>
-                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"></transformer>
               </transformers>
               <filters>
                 <filter>
@@ -292,4 +287,44 @@
       </plugin>
     </plugins>
   </build>
+
+  <profiles>
+    <profile>
+      <id>instrument</id>
+
+      <dependencies>
+        <dependency>
+          <groupId>org.jacoco</groupId>
+          <artifactId>org.jacoco.agent</artifactId>
+          <version>${jacoco.version}</version>
+          <classifier>runtime</classifier>
+        </dependency>
+      </dependencies>
+
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>com.marvinformatics.jacoco</groupId>
+            <artifactId>easy-jacoco-maven-plugin</artifactId>
+            <version>0.1.4</version>
+            <executions>
+              <execution>
+                <id>instrument-uber-jar</id>
+                <goals>
+                  <goal>instrument-jar</goal>
+                </goals>
+                <configuration>
+                  <source>${project.build.directory}/sqrl-cli.jar</source>
+                  <destination>${project.build.directory}/sqrl-cli.jar</destination>
+                  <includes>
+                    <include>com/datasqrl/*</include>
+                  </includes>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>

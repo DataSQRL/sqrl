@@ -24,7 +24,7 @@ Type:   stream
 Stage:  flink
 Inputs: default_catalog.default_database._Orders
 Annotations:
- - stream-root: _Orders__def
+ - stream-root: _Orders
 Primary Key: -
 Timestamp  : time
 Schema:
@@ -47,10 +47,10 @@ SQL: CREATE VIEW _OrderEntries AS  SELECT o.id, o.customerid, o.`time`, e.produc
 ID:     default_catalog.default_database._Orders
 Type:   stream
 Stage:  flink
-Inputs: default_catalog.default_database._Orders__def
+Inputs: default_catalog.default_database._Orders__base
 Annotations:
  - features: DENORMALIZE (feature)
- - stream-root: _Orders__def
+ - stream-root: _Orders
 Primary Key: id, time
 Timestamp  : time
 Schema:
@@ -59,13 +59,12 @@ Schema:
  - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - entries: RecordType:peek_no_expand(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
 Plan:
-LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3])
-  LogicalWatermarkAssigner(rowtime=[time], watermark=[-($2, 1:INTERVAL SECOND)])
-    LogicalTableScan(table=[[default_catalog, default_database, _Orders__def]])
-SQL: CREATE VIEW `_Orders`
+LogicalWatermarkAssigner(rowtime=[time], watermark=[-($2, 1:INTERVAL SECOND)])
+  LogicalTableScan(table=[[default_catalog, default_database, _Orders]])
+SQL: CREATE VIEW `_Orders__view`
 AS
-SELECT *
-FROM `default_catalog`.`default_database`.`_Orders__def`
+SELECT `_Orders`.`id`, `_Orders`.`customerid`, `_Orders`.`time`, `_Orders`.`entries`
+FROM `default_catalog`.`default_database`.`_Orders` AS `_Orders`
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `_Orders__schema` (
   `id` BIGINT NOT NULL,
@@ -75,7 +74,7 @@ CREATE TEMPORARY TABLE `_Orders__schema` (
 ) WITH (
   'connector' = 'datagen'
 );
-CREATE TABLE `_Orders__def` (
+CREATE TABLE `_Orders` (
   PRIMARY KEY (`id`, `time`) NOT ENFORCED,
   WATERMARK FOR `time` AS `time` - INTERVAL '0.001' SECOND
 ) WITH (
@@ -85,10 +84,6 @@ CREATE TABLE `_Orders__def` (
   'connector' = 'filesystem'
 )
 LIKE `_Orders__schema`;
-CREATE VIEW `_Orders`
-AS
-SELECT *
-FROM `default_catalog`.`default_database`.`_Orders__def`;
 CREATE VIEW `_OrderEntries`
 AS
 SELECT `o`.`id`, `o`.`customerid`, `o`.`time`, `e`.`productid`, `e`.`quantity`, `e`.`discount`
@@ -118,7 +113,7 @@ CREATE TABLE `_OrderEntries_1` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`_OrderEntries_1`
-(SELECT `id`, `customerid`, `time`, `productid`, `quantity`, `discount`, HASHCOLUMNS(`id`, `customerid`, `time`, `productid`, `quantity`, `discount`) AS `__pk_hash`
+(SELECT `id`, `customerid`, `time`, `productid`, `quantity`, `discount`, `hashColumns`(`id`, `customerid`, `time`, `productid`, `quantity`, `discount`) AS `__pk_hash`
  FROM `default_catalog`.`default_database`.`_OrderEntries`)
 ;
 END

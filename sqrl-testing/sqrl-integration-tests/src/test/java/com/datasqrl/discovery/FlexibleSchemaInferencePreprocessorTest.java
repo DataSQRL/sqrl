@@ -1,35 +1,43 @@
+/*
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.datasqrl.discovery;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.function.Predicate;
-import java.util.stream.Stream;
-
-import org.apache.calcite.jdbc.SqrlSchema;
-import org.junit.jupiter.api.extension.ExtensionContext;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.ArgumentsProvider;
-import org.junit.jupiter.params.provider.ArgumentsSource;
-
 import com.datasqrl.AbstractAssetSnapshotTest;
-import com.datasqrl.calcite.type.TypeFactory;
-import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.SqrlConfigCommons;
 import com.datasqrl.discovery.preprocessor.FlexibleSchemaInferencePreprocessor;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrinter;
 import com.datasqrl.inject.SqrlInjector;
-import com.datasqrl.inject.StatefulModule;
-import com.datasqrl.packager.preprocess.Preprocessor.ProcessorContext;
+import com.datasqrl.packager.preprocessor.Preprocessor.ProcessorContext;
 import com.datasqrl.plan.validate.ExecutionGoal;
 import com.datasqrl.util.SnapshotTest.Snapshot;
 import com.google.inject.Guice;
-
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
 import lombok.SneakyThrows;
+import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.ArgumentsProvider;
+import org.junit.jupiter.params.provider.ArgumentsSource;
 
 public class FlexibleSchemaInferencePreprocessorTest extends AbstractAssetSnapshotTest {
 
@@ -54,8 +62,7 @@ public class FlexibleSchemaInferencePreprocessorTest extends AbstractAssetSnapsh
                 FILES_DIR,
                 super.outputDir,
                 packageJson,
-                ExecutionGoal.COMPILE),
-            new StatefulModule(new SqrlSchema(new TypeFactory(), NameCanonicalizer.SYSTEM)));
+                ExecutionGoal.COMPILE));
     preprocessor = injector.getInstance(FlexibleSchemaInferencePreprocessor.class);
     super.buildDir = outputDir;
   }

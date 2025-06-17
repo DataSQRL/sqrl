@@ -5,7 +5,7 @@ Type:   stream
 Stage:  flink
 Inputs: default_catalog.default_database._SensorReading, default_catalog.default_database._Sensors
 Annotations:
- - stream-root: _SensorReading__def
+ - stream-root: _SensorReading
 Primary Key: -
 Timestamp  : event_time
 Schema:
@@ -30,7 +30,7 @@ Stage:  flink
 Inputs: default_catalog.default_database.MachineReading
 Annotations:
  - features: STREAM_WINDOW_AGGREGATION (feature)
- - stream-root: _SensorReading__def
+ - stream-root: _SensorReading
 Primary Key: -
 Timestamp  : time_hour
 Schema:
@@ -52,9 +52,9 @@ SQL: CREATE VIEW MachineTempByHour AS  SELECT machineid, window_time as time_hou
 ID:     default_catalog.default_database._SensorReading
 Type:   stream
 Stage:  flink
-Inputs: default_catalog.default_database._SensorReading__def
+Inputs: default_catalog.default_database._SensorReading__base
 Annotations:
- - stream-root: _SensorReading__def
+ - stream-root: _SensorReading
 Primary Key: event_id
 Timestamp  : event_time
 Schema:
@@ -63,19 +63,18 @@ Schema:
  - temperature: FLOAT
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME*
 Plan:
-LogicalProject(event_id=[$0], sensorid=[$1], temperature=[$2], event_time=[$3])
-  LogicalWatermarkAssigner(rowtime=[event_time], watermark=[-($3, 0:INTERVAL SECOND)])
-    LogicalProject(event_id=[$0], sensorid=[$1], temperature=[$2], event_time=[CAST($3):TIMESTAMP_LTZ(3) *ROWTIME*])
-      LogicalTableScan(table=[[default_catalog, default_database, _SensorReading__def, metadata=[timestamp]]])
-SQL: CREATE VIEW `_SensorReading`
+LogicalWatermarkAssigner(rowtime=[event_time], watermark=[-($3, 0:INTERVAL SECOND)])
+  LogicalProject(event_id=[$0], sensorid=[$1], temperature=[$2], event_time=[CAST($3):TIMESTAMP_LTZ(3) *ROWTIME*])
+    LogicalTableScan(table=[[default_catalog, default_database, _SensorReading, metadata=[timestamp]]])
+SQL: CREATE VIEW `_SensorReading__view`
 AS
-SELECT *
-FROM `default_catalog`.`default_database`.`_SensorReading__def`
+SELECT `_SensorReading`.`event_id`, `_SensorReading`.`sensorid`, `_SensorReading`.`temperature`, `_SensorReading`.`event_time`
+FROM `default_catalog`.`default_database`.`_SensorReading` AS `_SensorReading`
 === _Sensors
 ID:     default_catalog.default_database._Sensors
 Type:   state
 Stage:  flink
-Inputs: default_catalog.default_database._Sensors__def
+Inputs: default_catalog.default_database._Sensors__base
 Primary Key: sensorid
 Timestamp  : updatedTime
 Schema:
@@ -83,52 +82,43 @@ Schema:
  - machineid: INTEGER
  - updatedTime: TIMESTAMP_LTZ(3) *ROWTIME*
 Plan:
-LogicalProject(sensorid=[$0], machineid=[$1], updatedTime=[$2])
-  LogicalWatermarkAssigner(rowtime=[updatedTime], watermark=[-($2, 0:INTERVAL SECOND)])
-    LogicalProject(sensorid=[$0], machineid=[$1], updatedTime=[CAST($2):TIMESTAMP_LTZ(3) *ROWTIME*])
-      LogicalTableScan(table=[[default_catalog, default_database, _Sensors__def, metadata=[timestamp]]])
-SQL: CREATE VIEW `_Sensors`
+LogicalWatermarkAssigner(rowtime=[updatedTime], watermark=[-($2, 0:INTERVAL SECOND)])
+  LogicalProject(sensorid=[$0], machineid=[$1], updatedTime=[CAST($2):TIMESTAMP_LTZ(3) *ROWTIME*])
+    LogicalTableScan(table=[[default_catalog, default_database, _Sensors, metadata=[timestamp]]])
+SQL: CREATE VIEW `_Sensors__view`
 AS
-SELECT *
-FROM `default_catalog`.`default_database`.`_Sensors__def`
+SELECT `_Sensors`.`sensorid`, `_Sensors`.`machineid`, `_Sensors`.`updatedTime`
+FROM `default_catalog`.`default_database`.`_Sensors` AS `_Sensors`
 >>>flink-sql-no-functions.sql
-CREATE TABLE `_Sensors__def` (
+CREATE TABLE `_Sensors` (
   `sensorid` INTEGER,
   `machineid` INTEGER,
   `updatedTime` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
   PRIMARY KEY (`sensorid`) NOT ENFORCED,
   WATERMARK FOR `updatedTime` AS `updatedTime` - INTERVAL '0.0' SECOND
 ) WITH (
+  'topic' = 'kafka-upsert-_Sensors',
   'connector' = 'upsert-kafka',
   'value.format' = 'flexible-json',
   'key.format' = 'raw',
   'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
-  'properties.group.id' = '${PROPERTIES_GROUP_ID}',
-  'topic' = '_Sensors'
+  'properties.group.id' = '${PROPERTIES_GROUP_ID}'
 );
-CREATE VIEW `_Sensors`
-AS
-SELECT *
-FROM `default_catalog`.`default_database`.`_Sensors__def`;
-CREATE TABLE `_SensorReading__def` (
+CREATE TABLE `_SensorReading` (
   `event_id` STRING NOT NULL,
   `sensorid` INTEGER,
   `temperature` FLOAT,
   `event_time` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
   WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
 ) WITH (
+  'topic' = 'kafka-_SensorReading',
   'connector' = 'kafka',
   'format' = 'flexible-json',
   'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${PROPERTIES_GROUP_ID}',
   'scan.startup.mode' = 'group-offsets',
-  'properties.auto.offset.reset' = 'earliest',
-  'topic' = '_SensorReading'
+  'properties.auto.offset.reset' = 'earliest'
 );
-CREATE VIEW `_SensorReading`
-AS
-SELECT *
-FROM `default_catalog`.`default_database`.`_SensorReading__def`;
 CREATE VIEW `MachineReading`
 AS
 SELECT `r`.`sensorid`, `r`.`temperature`, `r`.`event_time`, `s`.`machineid`
@@ -170,11 +160,11 @@ CREATE TABLE `MachineTempByHour_2` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`MachineReading_1`
-(SELECT `sensorid`, `temperature`, `event_time`, `machineid`, HASHCOLUMNS(`sensorid`, `temperature`, `event_time`, `machineid`) AS `__pk_hash`
+(SELECT `sensorid`, `temperature`, `event_time`, `machineid`, `hashColumns`(`sensorid`, `temperature`, `event_time`, `machineid`) AS `__pk_hash`
  FROM `default_catalog`.`default_database`.`MachineReading`)
 ;
 INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
- (SELECT `machineid`, `time_hour`, `avg_temperature`, HASHCOLUMNS(`machineid`, `time_hour`, `avg_temperature`) AS `__pk_hash`
+ (SELECT `machineid`, `time_hour`, `avg_temperature`, `hashColumns`(`machineid`, `time_hour`, `avg_temperature`) AS `__pk_hash`
   FROM `default_catalog`.`default_database`.`MachineTempByHour`)
  ;
  END
@@ -182,16 +172,16 @@ INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
 {
   "topics" : [
     {
-      "topicName" : "_SensorReading",
-      "tableName" : "_SensorReading__def",
+      "topicName" : "kafka-_SensorReading",
+      "tableName" : "_SensorReading",
       "numPartitions" : 1,
       "replicationFactor" : 1,
       "replicasAssignments" : { },
       "config" : { }
     },
     {
-      "topicName" : "_Sensors",
-      "tableName" : "_Sensors__def",
+      "topicName" : "kafka-upsert-_Sensors",
+      "tableName" : "_Sensors",
       "numPartitions" : 1,
       "replicationFactor" : 1,
       "replicasAssignments" : { },
@@ -549,7 +539,7 @@ INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
       {
         "type" : "kafka",
         "fieldName" : "_SensorReading",
-        "topic" : "_SensorReading",
+        "topic" : "kafka-_SensorReading",
         "computedColumns" : {
           "event_id" : "UUID",
           "event_time" : "TIMESTAMP"
@@ -559,7 +549,7 @@ INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
       {
         "type" : "kafka",
         "fieldName" : "_Sensors",
-        "topic" : "_Sensors",
+        "topic" : "kafka-upsert-_Sensors",
         "computedColumns" : {
           "updatedTime" : "TIMESTAMP"
         },

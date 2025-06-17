@@ -3,7 +3,7 @@
 ID:     default_catalog.default_database.SensorReading
 Type:   stream
 Stage:  flink
-Inputs: default_catalog.default_database.SensorReading__def
+Inputs: default_catalog.default_database.SensorReading__base
 Primary Key: -
 Timestamp  : timestamp
 Schema:
@@ -13,14 +13,13 @@ Schema:
  - temperature: DOUBLE NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Plan:
-LogicalProject(uuid=[$0], sensorid=[$1], epoch_timestamp=[$2], temperature=[$3], timestamp=[$4])
-  LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
-    LogicalProject(uuid=[$0], sensorid=[$1], epoch_timestamp=[$2], temperature=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($2, 3), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
-      LogicalTableScan(table=[[default_catalog, default_database, SensorReading__def]])
-SQL: CREATE VIEW `SensorReading`
+LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
+  LogicalProject(uuid=[$0], sensorid=[$1], epoch_timestamp=[$2], temperature=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($2, 3), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
+    LogicalTableScan(table=[[default_catalog, default_database, SensorReading]])
+SQL: CREATE VIEW `SensorReading__view`
 AS
-SELECT *
-FROM `default_catalog`.`default_database`.`SensorReading__def`
+SELECT `SensorReading`.`uuid`, `SensorReading`.`sensorid`, `SensorReading`.`epoch_timestamp`, `SensorReading`.`temperature`, `SensorReading`.`timestamp`
+FROM `default_catalog`.`default_database`.`SensorReading` AS `SensorReading`
 === SensorTempByHour
 ID:     default_catalog.default_database.SensorTempByHour
 Type:   stream
@@ -46,12 +45,12 @@ SQL: CREATE VIEW SensorTempByHour AS  SELECT sensorid, window_time as time_hour,
                      GROUP BY sensorid, window_start, window_end, window_time;
 
 >>>flink-sql-no-functions.sql
-CREATE TABLE `SensorReading__def` (
+CREATE TABLE `SensorReading` (
   `uuid` STRING NOT NULL,
   `sensorid` BIGINT NOT NULL,
   `epoch_timestamp` BIGINT NOT NULL,
   `temperature` DOUBLE NOT NULL,
-  `timestamp` AS COALESCE(TO_TIMESTAMP_LTZ(`epoch_timestamp`, 3), TIMESTAMP '1970-01-01 00:00:00.000'),
+  `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`epoch_timestamp`, 3), TIMESTAMP '1970-01-01 00:00:00.000'),
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
 ) WITH (
   'connector' = 'datagen',
@@ -65,10 +64,6 @@ CREATE TABLE `SensorReading__def` (
   'fields.uuid.kind' = 'random',
   'fields.temperature.kind' = 'random'
 );
-CREATE VIEW `SensorReading`
-AS
-SELECT *
-FROM `default_catalog`.`default_database`.`SensorReading__def`;
 CREATE VIEW `SensorTempByHour`
 AS
 SELECT `sensorid`, `window_time` AS `time_hour`, AVG(`temperature`) AS `avg_temperature`
@@ -105,7 +100,7 @@ CREATE TABLE `SensorTempByHour_2` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`SensorReading_1`
-(SELECT `uuid`, `sensorid`, `epoch_timestamp`, `temperature`, `timestamp`, HASHCOLUMNS(`uuid`, `sensorid`, `epoch_timestamp`, `temperature`, `timestamp`) AS `__pk_hash`
+(SELECT `uuid`, `sensorid`, `epoch_timestamp`, `temperature`, `timestamp`, `hashColumns`(`uuid`, `sensorid`, `epoch_timestamp`, `temperature`, `timestamp`) AS `__pk_hash`
  FROM `default_catalog`.`default_database`.`SensorReading`)
 ;
 INSERT INTO `default_catalog`.`default_database`.`SensorTempByHour_2`

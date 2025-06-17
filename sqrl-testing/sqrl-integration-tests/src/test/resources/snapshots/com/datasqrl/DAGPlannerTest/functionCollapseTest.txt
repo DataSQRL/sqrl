@@ -3,9 +3,9 @@
 ID:     default_catalog.default_database.Customer
 Type:   stream
 Stage:  flink
-Inputs: default_catalog.default_database.Customer__def
+Inputs: default_catalog.default_database.Customer__base
 Annotations:
- - stream-root: Customer__def
+ - stream-root: Customer
 Primary Key: customerid, lastUpdated
 Timestamp  : timestamp
 Schema:
@@ -15,14 +15,13 @@ Schema:
  - lastUpdated: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Plan:
-LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
-  LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
-    LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($3, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
-      LogicalTableScan(table=[[default_catalog, default_database, Customer__def]])
-SQL: CREATE VIEW `Customer`
+LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
+  LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($3, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
+    LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW `Customer__view`
 AS
-SELECT *
-FROM `default_catalog`.`default_database`.`Customer__def`
+SELECT `Customer`.`customerid`, `Customer`.`email`, `Customer`.`name`, `Customer`.`lastUpdated`, `Customer`.`timestamp`
+FROM `default_catalog`.`default_database`.`Customer` AS `Customer`
 === CustomerHighCount
 ID:     default_catalog.default_database.CustomerHighCount
 Type:   stream
@@ -77,8 +76,8 @@ CREATE TEMPORARY TABLE `Customer__schema` (
 ) WITH (
   'connector' = 'datagen'
 );
-CREATE TABLE `Customer__def` (
-  `timestamp` AS COALESCE(TO_TIMESTAMP_LTZ(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
+CREATE TABLE `Customer` (
+  `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
 ) WITH (
@@ -88,10 +87,6 @@ CREATE TABLE `Customer__def` (
   'connector' = 'filesystem'
 )
 LIKE `Customer__schema`;
-CREATE VIEW `Customer`
-AS
-SELECT *
-FROM `default_catalog`.`default_database`.`Customer__def`;
 CREATE VIEW `CustomerTimeWindow`
 AS
 SELECT `window_start`, `window_end`, COUNT(DISTINCT `email`) AS `unique_email_count`

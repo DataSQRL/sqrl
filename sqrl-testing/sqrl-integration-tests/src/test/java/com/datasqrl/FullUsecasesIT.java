@@ -1,3 +1,18 @@
+/*
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.datasqrl;
 
 import static org.junit.Assume.assumeFalse;
@@ -62,6 +77,7 @@ public class FullUsecasesIT {
 
   List<ScriptCriteria> disabledScripts =
       List.of(
+          new ScriptCriteria("flink-only.sqrl", "test"), // not a full test case
           new ScriptCriteria("flink-functions.sqrl", "test"), // not a full test case
           new ScriptCriteria("flink-functions.sqrl", "run"), // not a full test case
           new ScriptCriteria("conference-disabled.sqrl", "test"), // fails in build server
@@ -80,7 +96,11 @@ public class FullUsecasesIT {
           new ScriptCriteria("postgres-log-disabled.sqrl", "test"),
           new ScriptCriteria("postgres-log-disabled.sqrl", "run"),
           new ScriptCriteria("connectors.sqrl", "test"), // should not be executed
-          new ScriptCriteria("flink_kafka.sqrl", "run") // does not expose an API
+          new ScriptCriteria("flink_kafka.sqrl", "run"), // does not expose an API
+          new ScriptCriteria(
+              "temporal-join.sqrl",
+              "run") // TODO: only 'run' when there are no tests (i.e. snapshot dir) - there is no
+          // benefit to also running, it's wasteful
           );
 
   static final Path PROJECT_ROOT = Path.of(System.getProperty("user.dir"));
@@ -370,7 +390,7 @@ public class FullUsecasesIT {
   @MethodSource("useCaseProvider")
   @Disabled
   public void runTestCaseByName(UseCaseTestParameter param) {
-    if (param.sqrlFileName.equals("openai-cicd-test.sqrl") && param.goal.equals("test")) {
+    if (param.sqrlFileName.equals("temporal-join.sqrl") && param.goal.equals("test")) {
       testUseCase(param);
     } else {
       assumeFalse(true);

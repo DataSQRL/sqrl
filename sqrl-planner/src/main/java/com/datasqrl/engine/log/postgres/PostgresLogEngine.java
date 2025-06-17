@@ -1,19 +1,24 @@
+/*
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.datasqrl.engine.log.postgres;
 
 import static com.datasqrl.config.EngineType.LOG;
 import static com.datasqrl.engine.log.postgres.PostgresLogEngineFactory.ENGINE_NAME;
 
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Optional;
-
-import org.apache.calcite.rel.type.RelDataType;
-
-import com.datasqrl.calcite.SqrlFramework;
-import com.datasqrl.config.ConnectorFactory;
 import com.datasqrl.config.ConnectorFactoryFactory;
-import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.PackageJson.EmptyEngineConfig;
 import com.datasqrl.config.PackageJson.EngineConfig;
@@ -23,51 +28,29 @@ import com.datasqrl.engine.EngineFeature;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.database.EngineCreateTable;
-import com.datasqrl.engine.database.relational.ddl.JdbcDDLServiceLoader;
-import com.datasqrl.engine.database.relational.ddl.PostgresDDLFactory;
-import com.datasqrl.engine.database.relational.ddl.statements.InsertStatement;
-import com.datasqrl.engine.database.relational.ddl.statements.notify.ListenNotifyAssets;
-import com.datasqrl.engine.log.Log;
 import com.datasqrl.engine.log.LogEngine;
-import com.datasqrl.engine.log.LogFactory;
-import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
-import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.plan.global.PhysicalDAGPlan.LogStagePlan;
-import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
-import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
-import com.datasqrl.sql.SqlDDLStatement;
-import com.datasqrl.v2.analyzer.TableAnalysis;
-import com.datasqrl.v2.dag.plan.MaterializationStagePlan;
-import com.datasqrl.v2.tables.FlinkTableBuilder;
-import com.google.common.base.Preconditions;
+import com.datasqrl.planner.analyzer.TableAnalysis;
+import com.datasqrl.planner.dag.plan.MaterializationStagePlan;
+import com.datasqrl.planner.tables.FlinkTableBuilder;
 import com.google.inject.Inject;
-
+import java.util.EnumSet;
+import java.util.Optional;
 import lombok.Getter;
+import org.apache.calcite.rel.type.RelDataType;
 
 public class PostgresLogEngine extends ExecutionEngine.Base implements LogEngine {
 
-  @Getter
-  private final EngineConfig engineConfig;
-
-  private final ConnectorFactory sourceConnectorFactory;
-  private final ConnectorFactory sinkConnectorFactory;
+  @Getter private final EngineConfig engineConfig;
 
   @Inject
   public PostgresLogEngine(PackageJson json, ConnectorFactoryFactory connectorFactory) {
     super(ENGINE_NAME, LOG, EnumSet.noneOf(EngineFeature.class));
 
-    this.engineConfig = json.getEngines().getEngineConfig(ENGINE_NAME)
-        .orElseGet(() -> new EmptyEngineConfig(ENGINE_NAME));
-    this.sourceConnectorFactory = connectorFactory.create(LOG, "postgres_log-source")
-        .orElseThrow(()->new RuntimeException("Could not find postgres_log source connector"));
-    this.sinkConnectorFactory = connectorFactory.create(LOG, "postgres_log-sink")
-        .orElseThrow(()->new RuntimeException("Could not find postgres_log sink connector"));
-  }
-
-  @Override
-  public LogFactory getLogFactory() {
-    return new PostgresLogFactory(sourceConnectorFactory, sinkConnectorFactory);
+    this.engineConfig =
+        json.getEngines()
+            .getEngineConfig(ENGINE_NAME)
+            .orElseGet(() -> new EmptyEngineConfig(ENGINE_NAME));
   }
 
   @Override
@@ -76,8 +59,12 @@ public class PostgresLogEngine extends ExecutionEngine.Base implements LogEngine
   }
 
   @Override
-  public EngineCreateTable createTable(ExecutionStage stage, String originalTableName,
-      FlinkTableBuilder tableBuilder, RelDataType relDataType, Optional<TableAnalysis> tableAnalysis) {
+  public EngineCreateTable createTable(
+      ExecutionStage stage,
+      String originalTableName,
+      FlinkTableBuilder tableBuilder,
+      RelDataType relDataType,
+      Optional<TableAnalysis> tableAnalysis) {
     throw new UnsupportedOperationException("not yet supported");
   }
 

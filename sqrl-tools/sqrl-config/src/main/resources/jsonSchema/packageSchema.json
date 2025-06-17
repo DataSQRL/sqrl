@@ -24,26 +24,13 @@
         }
       ]
     },
-    "compile": {
-      "type": "object",
-      "minProperties": 1,
-      "properties": {
-        "sqrl-version": {
-          "type": "string"
-        },
-        "flink-build-image": {
-          "type": "string"
-        },
-        "sqrl-vertx-image": {
-          "type": "string"
-        }
-      },
-      "additionalProperties": false
-    },
     "compiler": {
       "type": "object",
       "minProperties": 1,
       "properties": {
+        "compilePlan": {
+          "type": "boolean"
+        },
         "explain": {
           "type": "object",
           "minProperties": 1,
@@ -95,18 +82,6 @@
       },
       "additionalProperties": false
     },
-    "profiles": {
-      "oneOf": [
-        {
-          "type": "array",
-          "items": { "type": "string" },
-          "minItems": 1
-        },
-        {
-          "type": "string"
-        }
-      ]
-    },
     "engines": {
       "type": "object",
       "minProperties": 1,
@@ -115,11 +90,19 @@
           "type": "object",
           "minProperties": 1,
           "properties": {
+            "mode": {
+              "type": "string"
+            },
             "connectors": {
               "type": "object",
               "minProperties": 1
+            },
+            "config": {
+              "type": "object",
+              "minProperties": 1
             }
-          }
+          },
+          "additionalProperties": false
         },
         "snowflake": {
           "type": "object",
@@ -227,8 +210,15 @@
       "properties": {
         "delay-sec": {
           "type": "integer"
+        },
+        "mutation-delay": {
+          "type": "integer"
+        },
+        "required-checkpoints": {
+          "type": "integer"
         }
-      }
+      },
+      "additionalProperties": false
     }
   },
   "additionalProperties": false

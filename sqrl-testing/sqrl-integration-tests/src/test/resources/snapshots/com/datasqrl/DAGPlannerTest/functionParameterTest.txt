@@ -3,9 +3,9 @@
 ID:     default_catalog.default_database.Customer
 Type:   stream
 Stage:  flink
-Inputs: default_catalog.default_database.Customer__def
+Inputs: default_catalog.default_database.Customer__base
 Annotations:
- - stream-root: Customer__def
+ - stream-root: Customer
 Primary Key: customerid, lastUpdated
 Timestamp  : timestamp
 Schema:
@@ -15,21 +15,20 @@ Schema:
  - lastUpdated: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Plan:
-LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
-  LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
-    LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($3, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
-      LogicalTableScan(table=[[default_catalog, default_database, Customer__def]])
-SQL: CREATE VIEW `Customer`
+LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
+  LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($3, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
+    LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW `Customer__view`
 AS
-SELECT *
-FROM `default_catalog`.`default_database`.`Customer__def`
+SELECT `Customer`.`customerid`, `Customer`.`email`, `Customer`.`name`, `Customer`.`lastUpdated`, `Customer`.`timestamp`
+FROM `default_catalog`.`default_database`.`Customer` AS `Customer`
 === CustomerByEmail
 ID:     default_catalog.default_database.CustomerByEmail
 Type:   query
 Stage:  postgres
 Inputs: default_catalog.default_database.Customer
 Annotations:
- - stream-root: Customer__def
+ - stream-root: Customer
  - parameters: email, id
  - base-table: Customer
 Plan:
@@ -44,7 +43,7 @@ Type:   query
 Stage:  postgres
 Inputs: default_catalog.default_database.Customer
 Annotations:
- - stream-root: Customer__def
+ - stream-root: Customer
  - parameters: ids
  - base-table: Customer
 Plan:
@@ -59,7 +58,7 @@ Type:   stream
 Stage:  flink
 Inputs: default_catalog.default_database.Customer
 Annotations:
- - stream-root: Customer__def
+ - stream-root: Customer
 Primary Key: customerid, lastUpdated
 Timestamp  : timestamp
 Schema:
@@ -73,6 +72,24 @@ LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timesta
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
 SQL: CREATE VIEW CustomerByNothing AS  SELECT * FROM Customer;
 
+=== CustomersByTime
+ID:     default_catalog.default_database.CustomersByTime
+Type:   query
+Stage:  postgres
+Inputs: default_catalog.default_database.Customer
+Annotations:
+ - stream-root: Customer
+ - parameters: customerid, fromTime
+ - base-table: Customer
+Plan:
+LogicalSort(sort0=[$4], dir0=[ASC-nulls-first])
+  LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
+    LogicalFilter(condition=[AND(=($0, ?0), >=(+($4, 14400000:INTERVAL HOUR), ?1))])
+      LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW CustomersByTime AS 
+    SELECT * FROM Customer WHERE customerid = ?           AND `timestamp` + INTERVAL '4' HOUR >= ?        
+    ORDER BY `timestamp` ASC;
+
 === SelectCustomer
 ID:     default_catalog.default_database.SelectCustomer
 Type:   query
@@ -80,7 +97,7 @@ Stage:  postgres
 Inputs: default_catalog.default_database.CustomerByEmail
 Annotations:
  - features: TABLE_FUNCTION_SCAN (feature)
- - stream-root: Customer__def
+ - stream-root: Customer
  - parameters: id
  - base-table: Customer
 Plan:
@@ -97,8 +114,8 @@ CREATE TEMPORARY TABLE `Customer__schema` (
 ) WITH (
   'connector' = 'datagen'
 );
-CREATE TABLE `Customer__def` (
-  `timestamp` AS COALESCE(TO_TIMESTAMP_LTZ(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
+CREATE TABLE `Customer` (
+  `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
 ) WITH (
@@ -108,10 +125,6 @@ CREATE TABLE `Customer__def` (
   'connector' = 'filesystem'
 )
 LIKE `Customer__schema`;
-CREATE VIEW `Customer`
-AS
-SELECT *
-FROM `default_catalog`.`default_database`.`Customer__def`;
 CREATE VIEW `CustomerByNothing`
 AS
 SELECT *
@@ -138,13 +151,13 @@ CREATE TABLE `CustomerByNothing_2` (
   `lastUpdated` BIGINT NOT NULL,
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
 ) WITH (
+  'topic' = 'kafka-CustomerByNothing',
   'connector' = 'kafka',
   'format' = 'flexible-json',
   'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${PROPERTIES_GROUP_ID}',
   'scan.startup.mode' = 'group-offsets',
-  'properties.auto.offset.reset' = 'earliest',
-  'topic' = 'CustomerByNothing'
+  'properties.auto.offset.reset' = 'earliest'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Customer_1`
@@ -160,7 +173,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByNothing_2`
 {
   "topics" : [
     {
-      "topicName" : "CustomerByNothing",
+      "topicName" : "kafka-CustomerByNothing",
       "tableName" : "CustomerByNothing_2",
       "numPartitions" : 1,
       "replicationFactor" : 1,
@@ -235,6 +248,11 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByNothing_2`
           "nullable" : false
         }
       ]
+    },
+    {
+      "name" : "Customer_1_btree_c0c4",
+      "type" : "INDEX",
+      "sql" : "CREATE INDEX IF NOT EXISTS \"Customer_1_btree_c0c4\" ON \"Customer_1\" USING btree (\"customerid\",\"timestamp\")"
     },
     {
       "name" : "Customer_1_btree_c1c0",
@@ -513,11 +531,52 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByNothing_2`
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Customer_1\"\nWHERE ARRAY_CONTAINS(CAST($1 AS JSONB), \"customerid\")",
+            "sql" : "SELECT *\nFROM \"Customer_1\"\nWHERE \"array_contains\"(CAST($1 AS JSONB), \"customerid\")",
             "parameters" : [
               {
                 "type" : "arg",
                 "path" : "ids"
+              }
+            ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
+          }
+        }
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "CustomersByTime",
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "customerid"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
+            },
+            {
+              "type" : "variable",
+              "path" : "fromTime"
+            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM \"Customer_1\"\nWHERE \"customerid\" = $1 AND \"timestamp\" + INTERVAL '4' HOUR >= $2\nORDER BY \"timestamp\" NULLS FIRST",
+            "parameters" : [
+              {
+                "type" : "arg",
+                "path" : "customerid"
+              },
+              {
+                "type" : "arg",
+                "path" : "fromTime"
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
@@ -564,14 +623,14 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByNothing_2`
       {
         "type" : "kafka",
         "fieldName" : "CustomerByNothing",
-        "topic" : "CustomerByNothing",
+        "topic" : "kafka-CustomerByNothing",
         "sinkConfig" : { },
         "filters" : { }
       }
     ],
     "schema" : {
       "type" : "string",
-      "schema" : "type Customer {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n}\n\n\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerByEmail(email: String!, id: GraphQLBigInteger, limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerByIds(ids: [GraphQLBigInteger]!, limit: Int = 10, offset: Int = 0): [Customer!]\n  SelectCustomer(id: GraphQLBigInteger, limit: Int = 10, offset: Int = 0): [Customer!]\n}\n\ntype Subscription {\n  CustomerByNothing: Customer\n}\n"
+      "schema" : "type Customer {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n}\n\n\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerByEmail(email: String!, id: GraphQLBigInteger, limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerByIds(ids: [GraphQLBigInteger]!, limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomersByTime(customerid: GraphQLBigInteger!, fromTime: DateTime!, limit: Int = 10, offset: Int = 0): [Customer!]\n  SelectCustomer(id: GraphQLBigInteger, limit: Int = 10, offset: Int = 0): [Customer!]\n}\n\ntype Subscription {\n  CustomerByNothing: Customer\n}\n"
     }
   }
 }

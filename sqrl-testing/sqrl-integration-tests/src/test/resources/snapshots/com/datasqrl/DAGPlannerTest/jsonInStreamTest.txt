@@ -6,7 +6,7 @@ Stage:  flink
 Inputs: default_catalog.default_database.CustomerStream
 Annotations:
  - mostRecentDistinct: true
- - stream-root: CustomerStream__def
+ - stream-root: CustomerStream
 Primary Key: customerid
 Timestamp  : timestamp
 Schema:
@@ -30,9 +30,9 @@ WHERE `__sqrlinternal_rownum` = 1
 ID:     default_catalog.default_database.CustomerStream
 Type:   stream
 Stage:  flink
-Inputs: default_catalog.default_database.CustomerStream__def
+Inputs: default_catalog.default_database.CustomerStream__base
 Annotations:
- - stream-root: CustomerStream__def
+ - stream-root: CustomerStream
 Primary Key: customerid, lastUpdated
 Timestamp  : timestamp
 Schema:
@@ -42,21 +42,20 @@ Schema:
  - lastUpdated: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Plan:
-LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
-  LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
-    LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($3, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
-      LogicalTableScan(table=[[default_catalog, default_database, CustomerStream__def]])
-SQL: CREATE VIEW `CustomerStream`
+LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
+  LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($3, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
+    LogicalTableScan(table=[[default_catalog, default_database, CustomerStream]])
+SQL: CREATE VIEW `CustomerStream__view`
 AS
-SELECT *
-FROM `default_catalog`.`default_database`.`CustomerStream__def`
+SELECT `CustomerStream`.`customerid`, `CustomerStream`.`email`, `CustomerStream`.`name`, `CustomerStream`.`lastUpdated`, `CustomerStream`.`timestamp`
+FROM `default_catalog`.`default_database`.`CustomerStream` AS `CustomerStream`
 === ObjComplex
 ID:     default_catalog.default_database.ObjComplex
 Type:   state
 Stage:  flink
 Inputs: default_catalog.default_database.Customer
 Annotations:
- - stream-root: CustomerStream__def
+ - stream-root: CustomerStream
 Primary Key: customerid
 Timestamp  : -
 Schema:
@@ -89,7 +88,7 @@ Type:   state
 Stage:  flink
 Inputs: default_catalog.default_database.Customer
 Annotations:
- - stream-root: CustomerStream__def
+ - stream-root: CustomerStream
 Primary Key: customerid
 Timestamp  : -
 Schema:
@@ -106,7 +105,7 @@ Type:   state
 Stage:  flink
 Inputs: default_catalog.default_database.Customer
 Annotations:
- - stream-root: CustomerStream__def
+ - stream-root: CustomerStream
 Primary Key: customerid
 Timestamp  : -
 Schema:
@@ -123,7 +122,7 @@ Type:   state
 Stage:  flink
 Inputs: default_catalog.default_database.Customer
 Annotations:
- - stream-root: CustomerStream__def
+ - stream-root: CustomerStream
 Primary Key: customerid
 Timestamp  : -
 Schema:
@@ -140,7 +139,7 @@ Type:   state
 Stage:  flink
 Inputs: default_catalog.default_database.Customer
 Annotations:
- - stream-root: CustomerStream__def
+ - stream-root: CustomerStream
 Primary Key: customerid
 Timestamp  : -
 Schema:
@@ -173,7 +172,7 @@ Type:   state
 Stage:  flink
 Inputs: default_catalog.default_database.Customer
 Annotations:
- - stream-root: CustomerStream__def
+ - stream-root: CustomerStream
 Primary Key: customerid
 Timestamp  : -
 Schema:
@@ -190,7 +189,7 @@ Type:   state
 Stage:  flink
 Inputs: default_catalog.default_database.Customer
 Annotations:
- - stream-root: CustomerStream__def
+ - stream-root: CustomerStream
 Primary Key: customerid
 Timestamp  : -
 Schema:
@@ -207,7 +206,7 @@ Type:   state
 Stage:  flink
 Inputs: default_catalog.default_database.Customer
 Annotations:
- - stream-root: CustomerStream__def
+ - stream-root: CustomerStream
 Primary Key: customerid
 Timestamp  : -
 Schema:
@@ -227,8 +226,8 @@ CREATE TEMPORARY TABLE `CustomerStream__schema` (
 ) WITH (
   'connector' = 'datagen'
 );
-CREATE TABLE `CustomerStream__def` (
-  `timestamp` AS COALESCE(TO_TIMESTAMP_LTZ(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
+CREATE TABLE `CustomerStream` (
+  `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
 ) WITH (
@@ -238,10 +237,6 @@ CREATE TABLE `CustomerStream__def` (
   'connector' = 'filesystem'
 )
 LIKE `CustomerStream__schema`;
-CREATE VIEW `CustomerStream`
-AS
-SELECT *
-FROM `default_catalog`.`default_database`.`CustomerStream__def`;
 CREATE VIEW `Customer`
 AS
 SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`
@@ -250,45 +245,45 @@ FROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMB
 WHERE `__sqrlinternal_rownum` = 1;
 CREATE VIEW `toJsonTable`
 AS
-SELECT `customerid`, TO_JSONB('{"a": 1}') AS `obj`
+SELECT `customerid`, `to_jsonb`('{"a": 1}') AS `obj`
 FROM `Customer`;
 CREATE VIEW `jsonArrayTable`
 AS
-SELECT `customerid`, JSONB_ARRAY(`customerid`) AS `obj`
+SELECT `customerid`, `jsonb_array`(`customerid`) AS `obj`
 FROM `Customer`;
 CREATE VIEW `jsonObjectAggTable`
 AS
-SELECT `name`, JSONB_OBJECT_AGG('key', `name`) AS `agg`
+SELECT `name`, `jsonb_object_agg`('key', `name`) AS `agg`
 FROM `Customer`
 GROUP BY `name`;
 CREATE VIEW `jsonToStringTable`
 AS
-SELECT `customerid`, JSONB_TO_STRING(TO_JSONB('{"a": 1}')) AS `obj`
+SELECT `customerid`, `jsonb_to_string`(`to_jsonb`('{"a": 1}')) AS `obj`
 FROM `Customer`;
 CREATE VIEW `jsonExtractTable`
 AS
-SELECT `customerid`, JSONB_EXTRACT(TO_JSONB('{"a": "hello"}'), CAST('$.a' AS VARCHAR), CAST('default' AS VARCHAR)) AS `obj`
+SELECT `customerid`, `jsonb_extract`(`to_jsonb`('{"a": "hello"}'), CAST('$.a' AS VARCHAR), CAST('default' AS VARCHAR)) AS `obj`
 FROM `Customer`;
 CREATE VIEW `jsonQueryTable`
 AS
-SELECT `customerid`, JSONB_QUERY(TO_JSONB('{"a": {"b": 1}}'), '$.a') AS `obj`
+SELECT `customerid`, `jsonb_query`(`to_jsonb`('{"a": {"b": 1}}'), '$.a') AS `obj`
 FROM `Customer`;
 CREATE VIEW `jsonExistsTable`
 AS
-SELECT `customerid`, JSONB_EXISTS(TO_JSONB('{"a": true}'), '$.a') AS `obj`
+SELECT `customerid`, `jsonb_exists`(`to_jsonb`('{"a": true}'), '$.a') AS `obj`
 FROM `Customer`;
 CREATE VIEW `jsonConcatTable`
 AS
-SELECT `customerid`, JSONB_CONCAT(TO_JSONB('{"a": true}'), TO_JSONB('{"a": false}')) AS `obj`
+SELECT `customerid`, `jsonb_concat`(`to_jsonb`('{"a": true}'), `to_jsonb`('{"a": false}')) AS `obj`
 FROM `Customer`;
 CREATE VIEW `jsonArrayAggTable`
 AS
-SELECT `name`, JSONB_ARRAY_AGG(`name`) AS `agg`
+SELECT `name`, `jsonb_array_agg`(`name`) AS `agg`
 FROM `Customer`
 GROUP BY `name`;
 CREATE VIEW `ObjComplex`
 AS
-SELECT `customerid`, JSONB_OBJECT(CONCAT('application#', CAST(`name` AS VARCHAR)), `customerid`) AS `obj`
+SELECT `customerid`, `jsonb_object`(`concat`('application#', CAST(`name` AS VARCHAR)), `customerid`) AS `obj`
 FROM `Customer`;
 CREATE TABLE `Customer_1` (
   `customerid` BIGINT NOT NULL,

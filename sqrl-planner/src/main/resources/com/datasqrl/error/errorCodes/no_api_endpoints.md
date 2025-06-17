@@ -1,0 +1,1 @@
+A SQRL script needs to define at least one function or table endpoint that is exposed in the API (i.e. queryable and not hidden)

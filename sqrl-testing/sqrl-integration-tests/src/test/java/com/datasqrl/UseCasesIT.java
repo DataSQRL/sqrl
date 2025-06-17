@@ -1,21 +1,32 @@
+/*
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.datasqrl;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
+import com.datasqrl.cmd.AssertStatusHook;
+import com.datasqrl.cmd.RootCommand;
+import com.datasqrl.cmd.StatusHook;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
 import org.apache.flink.calcite.shaded.com.google.common.base.Strings;
 
-import com.datasqrl.cmd.AssertStatusHook;
-import com.datasqrl.cmd.RootCommand;
-import com.datasqrl.cmd.StatusHook;
-
-/**
- * Tests some use cases in the test/resources/usecases folder using the `test` command.
- */
+/** Tests some use cases in the test/resources/usecases folder using the `test` command. */
 public class UseCasesIT {
   private static final Path RESOURCES = Path.of("src/test/resources/usecases");
 
@@ -23,17 +34,20 @@ public class UseCasesIT {
     execute("test", path, script, graphql, null);
   }
 
-  public void execute(String goal, String path, String script, String graphql, String testSuffix, String... args) {
+  public void execute(
+      String goal, String path, String script, String graphql, String testSuffix, String... args) {
     var rootDir = RESOURCES.resolve(path);
     List<String> argsList = new ArrayList<>();
     argsList.add(goal);
     argsList.add(script);
     if (!Strings.isNullOrEmpty(graphql)) {
-        argsList.add(graphql);
+      argsList.add(graphql);
     }
-    if (testSuffix!=null) {
-      argsList.add("-s"); argsList.add("snapshots-"+testSuffix);
-      argsList.add("--tests"); argsList.add("tests-"+testSuffix);
+    if (testSuffix != null) {
+      argsList.add("-s");
+      argsList.add("snapshots-" + testSuffix);
+      argsList.add("--tests");
+      argsList.add("tests-" + testSuffix);
     }
     argsList.addAll(Arrays.asList(args));
 
@@ -46,10 +60,9 @@ public class UseCasesIT {
     argsList.add("compile");
     argsList.add(script);
     if (!Strings.isNullOrEmpty(graphql)) {
-        argsList.add(graphql);
+      argsList.add(graphql);
     }
-    execute(RESOURCES.resolve(path),
-        new AssertStatusHook(), argsList.toArray(a->new String[a]));
+    execute(RESOURCES.resolve(path), new AssertStatusHook(), argsList.toArray(a -> new String[a]));
   }
 
   public static int execute(Path rootDir, StatusHook hook, String... args) {

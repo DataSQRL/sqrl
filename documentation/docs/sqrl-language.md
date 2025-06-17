@@ -6,7 +6,7 @@ The "R" that SQRL adds to SQL stands for "reactive" and "relationships".
 
 ## FlinkSQL
 
-SQRL extends the syntax and semantics of [FlinkSQL](https://nightlies.apache.org/flink/flink-docs-stable/docs/dev/table/sql/overview/) for table and view definitions.
+SQRL extends the syntax and semantics of [FlinkSQL](https://nightlies.apache.org/flink/flink-docs-release-1.19/docs/dev/table/sql/overview/) for table and view definitions.
 
 Specifically, SQRL supports the entire FlinkSQL syntax for:
 
@@ -14,7 +14,7 @@ Specifically, SQRL supports the entire FlinkSQL syntax for:
 * SELECT (queries) within the definitions above
 * USE
 
-Refer to the [FlinkSQL documentation](https://nightlies.apache.org/flink/flink-docs-stable/docs/dev/table/sql/overview/) for a detailed specification. 
+Refer to the [FlinkSQL documentation](https://nightlies.apache.org/flink/flink-docs-release-1.19/docs/dev/table/sql/overview/) for a detailed specification. 
 Note, that SQRL may lag behind the most current version of FlinkSQL. SQRL currently extends
 FlinkSQL 1.19 - make sure to adjust the version in the documentation links as needed.
 
@@ -253,7 +253,7 @@ SQRL supports two types of comments:
 **Single-line Comments**: These are initiated with double dashes `--`. Everything following the `--` on the same line is considered part of the comment.
 ```sql
 -- This is a single-line comment explaining the next SQL command
-IMPORT data.SalesRecords;
+NewTable := SELECT * FROM OtherTable;
 ```
 Only single-line comments are supported at the end of statements on the same line.
 
@@ -264,7 +264,7 @@ Only single-line comments are supported at the end of statements on the same lin
  * It can span multiple lines and is often used to comment out
  * chunks of code or to provide detailed documentation.
  */
-IMPORT data.StockAdjustments;
+NewTable := SELECT * FROM OtherTable;
 ```
 
 **Documentation**

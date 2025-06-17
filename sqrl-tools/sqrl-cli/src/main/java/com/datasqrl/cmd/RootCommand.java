@@ -1,25 +1,41 @@
 /*
- * Copyright (c) 2021, DataSQRL. All rights reserved. Use is subject to license terms.
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.datasqrl.cmd;
 
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
-
 import lombok.Getter;
 import lombok.NonNull;
 import picocli.CommandLine;
 import picocli.CommandLine.ScopeType;
 
-@CommandLine.Command(name = "datasqrl", mixinStandardHelpOptions = true, version = "v0.5.10",
-    subcommands = {CompilerCommand.class, TestCommand.class, LoginCommand.class, RunCommand.class})
+@CommandLine.Command(
+    name = "datasqrl",
+    mixinStandardHelpOptions = true,
+    version = "v0.5.10",
+    subcommands = {CompilerCommand.class, TestCommand.class, RunCommand.class})
 @Getter
 public class RootCommand implements Runnable {
 
-  @CommandLine.Option(names = {"-c", "--config"}, description = "Package configuration file(s)"
-      , scope = ScopeType.INHERIT)
-  protected List<Path> packageFiles = Collections.EMPTY_LIST;
+  @CommandLine.Option(
+      names = {"-c", "--config"},
+      description = "Package configuration file(s)",
+      scope = ScopeType.INHERIT)
+  protected List<Path> packageFiles = Collections.emptyList();
 
   @Override
   public void run() {
@@ -45,5 +61,4 @@ public class RootCommand implements Runnable {
   public CommandLine getCmd() {
     return new CommandLine(this).setCaseInsensitiveEnumValuesAllowed(true);
   }
-
 }

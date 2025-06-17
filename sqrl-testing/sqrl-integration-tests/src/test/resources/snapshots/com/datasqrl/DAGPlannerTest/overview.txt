@@ -6,7 +6,7 @@ Stage:  flink
 Inputs: default_catalog.default_database.CustomerImport
 Annotations:
  - mostRecentDistinct: true
- - stream-root: CustomerImport__def
+ - stream-root: CustomerImport
 Primary Key: customerid
 Timestamp  : timestamp
 Schema:
@@ -32,7 +32,7 @@ Type:   query
 Stage:  postgres
 Inputs: default_catalog.default_database.Customer
 Annotations:
- - stream-root: CustomerImport__def
+ - stream-root: CustomerImport
  - parameters: customerid
  - base-table: Customer
 Plan:
@@ -45,9 +45,9 @@ SQL: CREATE VIEW CustomerById AS  SELECT * FROM Customer WHERE customerid = ?   
 ID:     default_catalog.default_database.CustomerImport
 Type:   stream
 Stage:  flink
-Inputs: default_catalog.default_database.CustomerImport__def
+Inputs: default_catalog.default_database.CustomerImport__base
 Annotations:
- - stream-root: CustomerImport__def
+ - stream-root: CustomerImport
 Primary Key: customerid, lastUpdated
 Timestamp  : timestamp
 Schema:
@@ -57,21 +57,20 @@ Schema:
  - lastUpdated: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Plan:
-LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
-  LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
-    LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($3, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
-      LogicalTableScan(table=[[default_catalog, default_database, CustomerImport__def]])
-SQL: CREATE VIEW `CustomerImport`
+LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
+  LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($3, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
+    LogicalTableScan(table=[[default_catalog, default_database, CustomerImport]])
+SQL: CREATE VIEW `CustomerImport__view`
 AS
-SELECT *
-FROM `default_catalog`.`default_database`.`CustomerImport__def`
+SELECT `CustomerImport`.`customerid`, `CustomerImport`.`email`, `CustomerImport`.`name`, `CustomerImport`.`lastUpdated`, `CustomerImport`.`timestamp`
+FROM `default_catalog`.`default_database`.`CustomerImport` AS `CustomerImport`
 === LargeOrderSubscription
 ID:     default_catalog.default_database.LargeOrderSubscription
 Type:   query
 Stage:  kafka
 Inputs: default_catalog.default_database.LargeOrders
 Annotations:
- - stream-root: SimpleOrders__def
+ - stream-root: SimpleOrders
  - parameters: customerid
  - base-table: SimpleOrders
 Plan:
@@ -86,7 +85,7 @@ Type:   stream
 Stage:  flink
 Inputs: default_catalog.default_database.SimpleOrders
 Annotations:
- - stream-root: SimpleOrders__def
+ - stream-root: SimpleOrders
 Primary Key: _uuid
 Timestamp  : orderTime
 Schema:
@@ -105,10 +104,10 @@ SQL: CREATE VIEW LargeOrders AS  SELECT * FROM SimpleOrders WHERE amount > 100;
 ID:     default_catalog.default_database.Orders
 Type:   stream
 Stage:  flink
-Inputs: default_catalog.default_database.Orders__def
+Inputs: default_catalog.default_database.Orders__base
 Annotations:
  - features: DENORMALIZE (feature)
- - stream-root: Orders__def
+ - stream-root: Orders
 Primary Key: id, time
 Timestamp  : time
 Schema:
@@ -117,20 +116,19 @@ Schema:
  - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - entries: RecordType:peek_no_expand(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
 Plan:
-LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3])
-  LogicalWatermarkAssigner(rowtime=[time], watermark=[-($2, 1:INTERVAL SECOND)])
-    LogicalTableScan(table=[[default_catalog, default_database, Orders__def]])
-SQL: CREATE VIEW `Orders`
+LogicalWatermarkAssigner(rowtime=[time], watermark=[-($2, 1:INTERVAL SECOND)])
+  LogicalTableScan(table=[[default_catalog, default_database, Orders]])
+SQL: CREATE VIEW `Orders__view`
 AS
-SELECT *
-FROM `default_catalog`.`default_database`.`Orders__def`
+SELECT `Orders`.`id`, `Orders`.`customerid`, `Orders`.`time`, `Orders`.`entries`
+FROM `default_catalog`.`default_database`.`Orders` AS `Orders`
 === SimpleOrders
 ID:     default_catalog.default_database.SimpleOrders
 Type:   stream
 Stage:  flink
-Inputs: default_catalog.default_database.SimpleOrders__def
+Inputs: default_catalog.default_database.SimpleOrders__base
 Annotations:
- - stream-root: SimpleOrders__def
+ - stream-root: SimpleOrders
 Primary Key: _uuid
 Timestamp  : orderTime
 Schema:
@@ -140,21 +138,20 @@ Schema:
  - amount: FLOAT
  - orderTime: TIMESTAMP_LTZ(3) *ROWTIME*
 Plan:
-LogicalProject(_uuid=[$0], orderid=[$1], customerid=[$2], amount=[$3], orderTime=[$4])
-  LogicalWatermarkAssigner(rowtime=[orderTime], watermark=[-($4, 0:INTERVAL SECOND)])
-    LogicalProject(_uuid=[$0], orderid=[$1], customerid=[$2], amount=[$3], orderTime=[CAST($4):TIMESTAMP_LTZ(3) *ROWTIME*])
-      LogicalTableScan(table=[[default_catalog, default_database, SimpleOrders__def, metadata=[timestamp]]])
-SQL: CREATE VIEW `SimpleOrders`
+LogicalWatermarkAssigner(rowtime=[orderTime], watermark=[-($4, 0:INTERVAL SECOND)])
+  LogicalProject(_uuid=[$0], orderid=[$1], customerid=[$2], amount=[$3], orderTime=[CAST($4):TIMESTAMP_LTZ(3) *ROWTIME*])
+    LogicalTableScan(table=[[default_catalog, default_database, SimpleOrders, metadata=[timestamp]]])
+SQL: CREATE VIEW `SimpleOrders__view`
 AS
-SELECT *
-FROM `default_catalog`.`default_database`.`SimpleOrders__def`
+SELECT `SimpleOrders`.`_uuid`, `SimpleOrders`.`orderid`, `SimpleOrders`.`customerid`, `SimpleOrders`.`amount`, `SimpleOrders`.`orderTime`
+FROM `default_catalog`.`default_database`.`SimpleOrders` AS `SimpleOrders`
 === UnnestOrders
 ID:     default_catalog.default_database.UnnestOrders
 Type:   stream
 Stage:  flink
 Inputs: default_catalog.default_database.Orders
 Annotations:
- - stream-root: Orders__def
+ - stream-root: Orders
 Primary Key: -
 Timestamp  : time
 Schema:
@@ -194,8 +191,8 @@ CREATE TEMPORARY TABLE `CustomerImport__schema` (
 ) WITH (
   'connector' = 'datagen'
 );
-CREATE TABLE `CustomerImport__def` (
-  `timestamp` AS COALESCE(TO_TIMESTAMP_LTZ(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
+CREATE TABLE `CustomerImport` (
+  `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
 ) WITH (
@@ -205,10 +202,6 @@ CREATE TABLE `CustomerImport__def` (
   'connector' = 'filesystem'
 )
 LIKE `CustomerImport__schema`;
-CREATE VIEW `CustomerImport`
-AS
-SELECT *
-FROM `default_catalog`.`default_database`.`CustomerImport__def`;
 CREATE TEMPORARY TABLE `Orders__schema` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
@@ -217,7 +210,7 @@ CREATE TEMPORARY TABLE `Orders__schema` (
 ) WITH (
   'connector' = 'datagen'
 );
-CREATE TABLE `Orders__def` (
+CREATE TABLE `Orders` (
   PRIMARY KEY (`id`, `time`) NOT ENFORCED,
   WATERMARK FOR `time` AS `time` - INTERVAL '0.001' SECOND
 ) WITH (
@@ -227,11 +220,7 @@ CREATE TABLE `Orders__def` (
   'connector' = 'filesystem'
 )
 LIKE `Orders__schema`;
-CREATE VIEW `Orders`
-AS
-SELECT *
-FROM `default_catalog`.`default_database`.`Orders__def`;
-CREATE TABLE `SimpleOrders__def` (
+CREATE TABLE `SimpleOrders` (
   `_uuid` VARCHAR NOT NULL,
   `orderid` INTEGER,
   `customerid` BIGINT,
@@ -239,18 +228,14 @@ CREATE TABLE `SimpleOrders__def` (
   `orderTime` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
   WATERMARK FOR `orderTime` AS `orderTime` - INTERVAL '0.0' SECOND
 ) WITH (
+  'topic' = 'kafka-SimpleOrders',
   'connector' = 'kafka',
   'format' = 'flexible-json',
   'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${PROPERTIES_GROUP_ID}',
   'scan.startup.mode' = 'group-offsets',
-  'properties.auto.offset.reset' = 'earliest',
-  'topic' = 'SimpleOrders'
+  'properties.auto.offset.reset' = 'earliest'
 );
-CREATE VIEW `SimpleOrders`
-AS
-SELECT *
-FROM `default_catalog`.`default_database`.`SimpleOrders__def`;
 CREATE VIEW `LargeOrders`
 AS
 SELECT *
@@ -276,7 +261,7 @@ CREATE TEMPORARY TABLE `customersink_ex2__schema` (
 ) WITH (
   'connector' = 'datagen'
 );
-CREATE TABLE `customersink_ex2__def` (
+CREATE TABLE `customersink_ex2` (
   PRIMARY KEY (`customerid`) NOT ENFORCED
 ) WITH (
   'connector' = 'print'
@@ -334,13 +319,13 @@ CREATE TABLE `LargeOrders_4` (
   `amount` FLOAT,
   `orderTime` TIMESTAMP(3) WITH LOCAL TIME ZONE
 ) WITH (
+  'topic' = 'kafka-LargeOrders',
   'connector' = 'kafka',
   'format' = 'flexible-json',
   'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${PROPERTIES_GROUP_ID}',
   'scan.startup.mode' = 'group-offsets',
-  'properties.auto.offset.reset' = 'earliest',
-  'topic' = 'LargeOrders'
+  'properties.auto.offset.reset' = 'earliest'
 );
 CREATE TABLE `Orders_5` (
   `id` BIGINT NOT NULL,
@@ -404,7 +389,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_1`
 (SELECT *
  FROM `default_catalog`.`default_database`.`CustomerImport`)
 ;
-INSERT INTO `default_catalog`.`default_database`.`customersink_ex2__def`
+INSERT INTO `default_catalog`.`default_database`.`customersink_ex2`
  (SELECT *
   FROM `default_catalog`.`default_database`.`CustomerImport`)
  ;
@@ -421,7 +406,7 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2__def`
      FROM `default_catalog`.`default_database`.`LargeOrders`)
     ;
     INSERT INTO `default_catalog`.`default_database`.`Orders_5`
-     (SELECT `id`, `customerid`, `time`, TO_JSONB(`entries`) AS `entries`
+     (SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`
       FROM `default_catalog`.`default_database`.`Orders`)
      ;
      INSERT INTO `default_catalog`.`default_database`.`SimpleOrders_6`
@@ -433,7 +418,7 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2__def`
         FROM `default_catalog`.`default_database`.`UnnestOrders`)
        ;
        INSERT INTO `default_catalog`.`default_database`.`UnnestOrders_8`
-        (SELECT `id`, `customerid`, `time`, `productid`, `quantity`, `discount`, HASHCOLUMNS(`id`, `customerid`, `time`, `productid`, `quantity`, `discount`) AS `__pk_hash`
+        (SELECT `id`, `customerid`, `time`, `productid`, `quantity`, `discount`, `hashColumns`(`id`, `customerid`, `time`, `productid`, `quantity`, `discount`) AS `__pk_hash`
          FROM `default_catalog`.`default_database`.`UnnestOrders`)
         ;
         END
@@ -441,7 +426,7 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2__def`
 {
   "topics" : [
     {
-      "topicName" : "LargeOrders",
+      "topicName" : "kafka-LargeOrders",
       "tableName" : "LargeOrders_4",
       "numPartitions" : 1,
       "replicationFactor" : 1,
@@ -449,8 +434,8 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2__def`
       "config" : { }
     },
     {
-      "topicName" : "SimpleOrders",
-      "tableName" : "SimpleOrders__def",
+      "topicName" : "kafka-SimpleOrders",
+      "tableName" : "SimpleOrders",
       "numPartitions" : 1,
       "replicationFactor" : 1,
       "replicasAssignments" : { },
@@ -1289,7 +1274,7 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2__def`
       {
         "type" : "kafka",
         "fieldName" : "SimpleOrders",
-        "topic" : "SimpleOrders",
+        "topic" : "kafka-SimpleOrders",
         "computedColumns" : {
           "orderTime" : "TIMESTAMP",
           "_uuid" : "UUID"
@@ -1301,7 +1286,7 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2__def`
       {
         "type" : "kafka",
         "fieldName" : "LargeOrderSubscription",
-        "topic" : "LargeOrders",
+        "topic" : "kafka-LargeOrders",
         "sinkConfig" : { },
         "filters" : {
           "customerid" : "customerid"

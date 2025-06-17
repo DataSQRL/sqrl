@@ -61,6 +61,7 @@ commands:
       - run:
           name: Determine Docker tag & registry
           command: |
+            set -x
             # helper to extract the first PR number, if any
             get_pr_number() {
               if [ -n "$CIRCLE_PULL_REQUEST" ]; then
@@ -170,6 +171,44 @@ commands:
               mvn -B versions:set -DnewVersion=$CIRCLE_TAG
             fi
 
+  run-docker-test:
+    description: >
+      Run a sqrl-test container:
+        • fail if an expected pattern is **missing**
+        • fail if any SLF4J / log4j warnings **appear**
+    parameters:
+      test_args:        { type: string }
+      working_dir:      { type: string }
+      expected_pattern: { type: string }
+    steps:
+      - run:
+          name: Run tests and assertions
+          working_directory: << parameters.working_dir >>
+          environment:
+            LOG_FILE: "/tmp/sqrl-test-logs-$$.txt"
+          command: |
+            set -o pipefail
+
+            # 1 ── run container and capture all output
+            docker run -i --rm -v "$PWD:/build" sqrl-test \
+              << parameters.test_args >> 2>&1 | tee "$LOG_FILE"
+            DOCKER_EXIT=${PIPESTATUS[0]}
+
+            # 2 ──  slf4j / log4j warnings must NOT appear
+            if grep -qE '(log4j:WARN|SLF4J\(W\)|SLF4J:WARN)' "$LOG_FILE"; then
+              echo "❌  SLF4J / log4j warnings detected – failing the job." >&2
+              exit 1
+            fi
+
+            # 3 ──  the job-specific pattern MUST appear
+            if ! grep -q "<< parameters.expected_pattern >>" "$LOG_FILE"; then
+              echo "❌  Expected log entry “<< parameters.expected_pattern >>” not found – failing the job." >&2
+              exit 1
+            fi
+
+            # 4 ──  still propagate the container’s exit status
+            exit "$DOCKER_EXIT"
+
 jobs:
   build-base:
     docker:
@@ -194,7 +233,7 @@ jobs:
       - generate-settings
       - run:
           name: Run Unit Tests
-          command: mvn -U -T1 -B install -DskipITs -Pskip-shade-plugin
+          command: mvn -U -T2 -B install -DskipITs -Pskip-shade-plugin
       - save-test-results
 
   integration-tests:
@@ -215,8 +254,11 @@ jobs:
       - generate-settings
       - install-jdk
       - run:
+          name: Auth ghcr
+          command: echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
+      - run:
           name: Run Integration Tests
-          command: mvn -U -T1 -B install -Dtest=skip -Dsurefire.failIfNoSpecifiedTests=false -Pskip-shade-plugin
+          command: mvn -U -T2 -B install -Dtest=skip -Dsurefire.failIfNoSpecifiedTests=false -Pskip-shade-plugin
       - save-test-results
 
   build-test-image:
@@ -230,24 +272,40 @@ jobs:
       - install-jdk
       - run:
           name: Build shaded JAR
-          command: mvn -U clean -T1 -B install -DskipTests -DskipITs -DskipVertexFatJar -Pinstrument
-      - run:
-          name: Pull base image
-          command: docker pull eclipse-temurin:17-jdk-noble
+          command: mvn -U clean -T1C -B install -DskipTests -DskipITs
       - compute-base-tag
       - run:
           name: Pull base image
           command: docker pull datasqrl/base-sqrl:$BASE_TAG
       - run:
-          name: Build Docker image
-          command: docker build --build-arg BASE_TAG=$BASE_TAG -t sqrl-test ./sqrl-tools
-      - run:
-          name: Save Docker image
-          command: docker save -o sqrl-test.tar sqrl-test
-      - persist_to_workspace:
-          root: .
-          paths:
-            - sqrl-test.tar
+          name: Build and push test images
+          command: |
+            set -ex
+            echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+            echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
+
+            # ── cmd test image ────────────────────────────────────────────────
+            docker build \
+              --build-arg BASE_TAG=$BASE_TAG \
+              -t datasqrl/cmd-test-image:${CIRCLE_SHA1} \
+              ./sqrl-tools
+            docker push datasqrl/cmd-test-image:${CIRCLE_SHA1}
+
+            # ── sqrl-server test image ───────────────────────────────────────
+            docker build \
+              -t datasqrl/sqrl-server-test-image:${CIRCLE_SHA1} \
+              sqrl-server/sqrl-server-vertx
+            docker push datasqrl/sqrl-server-test-image:${CIRCLE_SHA1}
+
+            # ── flink-runner test image ──────────────────────────────────────
+            docker build \
+              --build-arg BASE_TAG=$BASE_TAG \
+              -t datasqrl/sqrl-flink-runner-test-image:${CIRCLE_SHA1} \
+              sqrl-tools/sqrl-flink-runner/target
+            docker push datasqrl/sqrl-flink-runner-test-image:${CIRCLE_SHA1}
+
+            # wait for all images to be pushed
+            wait
 
   deploy:
     docker:
@@ -266,70 +324,137 @@ jobs:
             echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf
       - run:
           name: Build shaded JAR
-          command: mvn -U clean -T1 -B deploy -DskipTests -DskipITs ${CIRCLE_TAG:+-Prelease}
+          command: mvn -U clean -T1C -B deploy -DskipTests -DskipITs ${CIRCLE_TAG:+-Prelease}
 
   run-conference-tests: &disabled
     executor: default-machine
     steps:
       - checkout
-      - attach_workspace:
-          at: .
-      - run: docker load -i sqrl-test.tar
       - run:
-          name: Conference Tests
+          name: Pull test image
           command: |
-            docker run -i --rm -v $PWD:/build sqrl-test test conference.sqrl conference.graphqls --snapshots snapshots-conference --tests tests-conference
-          working_directory: ./sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/conference
+            docker pull datasqrl/cmd-test-image:${CIRCLE_SHA1}
+            docker tag  datasqrl/cmd-test-image:${CIRCLE_SHA1} sqrl-test
+      - run-docker-test:
+          working_dir: ./sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/conference
+          test_args: test conference.sqrl conference.graphqls --snapshots snapshots-conference --tests tests-conference
 
   run-connectors-tests:
     executor: default-machine
     steps:
       - checkout
-      - attach_workspace:
-          at: .
-      - run: docker load -i sqrl-test.tar
       - run:
-          name: Connectors Tests
+          name: Pull test image
           command: |
-            docker run -i --rm -v $PWD:/build sqrl-test \
-              test connectors.sqrl
-          working_directory: ./sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/connectors-test
+            docker pull datasqrl/cmd-test-image:${CIRCLE_SHA1}
+            docker tag  datasqrl/cmd-test-image:${CIRCLE_SHA1} sqrl-test
+      - run-docker-test:
+          working_dir: ./sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/connectors-test
+          test_args: test connectors.sqrl
+          expected_pattern: 'WARN  org.apache.flink.metrics'
 
   run-udf-tests:
     executor: default-machine
     steps:
       - checkout
-      - attach_workspace:
-          at: .
-      - run: docker load -i sqrl-test.tar
       - run:
-          name: UDF Tests
+          name: Pull test image
           command: |
-            docker run -i --rm -v $PWD:/build sqrl-test \
-              test myudf.sqrl \
-              --snapshots snapshots-myudf --tests tests-myudf
-          working_directory: ./sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/udf
+            docker pull datasqrl/cmd-test-image:${CIRCLE_SHA1}
+            docker tag  datasqrl/cmd-test-image:${CIRCLE_SHA1} sqrl-test
+      - run-docker-test:
+          working_dir: ./sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/udf
+          test_args: test myudf.sqrl --snapshots snapshots-myudf --tests tests-myudf
+          expected_pattern: 'WARN  org.apache.flink.runtime.security.token.DefaultDelegationTokenManager'
 
-  build-jars:
-    docker:
-      - image: cimg/openjdk:17.0
+  run-vertx-tests:
+    executor: default-machine
+    steps:
+      - checkout
+      - run:
+          name: Pull test image
+          command: |
+            docker pull datasqrl/cmd-test-image:${CIRCLE_SHA1}
+            docker pull datasqrl/sqrl-server-test-image:${CIRCLE_SHA1}
+      - run:
+          working_directory: ./sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/udf
+          name: Launch sqrl-server and test if API is running
+          command: |
+            docker run --rm -v "$PWD:/build" -e TZ="UTC" datasqrl/cmd-test-image:${CIRCLE_SHA1} compile myudf.sqrl
+            docker run -d --name sqrl-server --rm -v $(pwd)/build/deploy/plan/vertx.json:/opt/sqrl/server-model.json \
+                                                  -v $(pwd)/build/deploy/plan/vertx-config.json:/opt/sqrl/server-config.json \
+                                                  -p 8888:8888 \
+                                                  datasqrl/sqrl-server-test-image:${CIRCLE_SHA1}
+            sleep 2s
+            docker logs sqrl-server
+            curl -s -X POST http://localhost:8888/graphql   -H 'Content-Type: application/json'   --data '{"query":"query { __typename }"}'
+
+  build-images:
+    # use a full VM so we can run Docker / Buildx
+    executor: default-machine
+
     steps:
       - checkout-and-version
       - restore_cache:
           keys:
             - m2-{{ checksum "pom.xml" }}
       - generate-settings
+      - install-jdk
+
       - run:
           name: Build shaded JARs
-          command: mvn -U -T1 -B install -DskipTests -DskipITs
-      - persist_to_workspace:
-          root: .
-          paths:
-            - sqrl-tools/sqrl-cli/target/sqrl-cli.jar
-            - sqrl-tools/sqrl-run/target/sqrl-run.jar
-            - sqrl-tools/sqrl-test/target/sqrl-test.jar
-            - sqrl-server/sqrl-server-vertx/target/vertx-server.jar
-            - sqrl-tools/sqrl-flink-runner/target/*
+          command: mvn -U -T1C -B install -DskipTests -DskipITs
+
+      - determine-version
+      - compute-base-tag
+
+      # enable QEMU for multi-arch, install Buildx, login
+      - run:
+          name: Prepare Docker build environment
+          command: |
+            sudo apt-get update && sudo apt-get install -y qemu-user-static binfmt-support
+            docker run --privileged --rm tonistiigi/binfmt --install all
+
+            sudo mkdir -p /usr/local/lib/docker/cli-plugins
+            curl -sSL https://github.com/docker/buildx/releases/download/v0.12.0/buildx-v0.12.0.linux-amd64 \
+                 -o buildx
+            chmod +x buildx
+            sudo mv buildx /usr/local/lib/docker/cli-plugins/docker-buildx
+            docker buildx create --use --name sqrl-builder
+            docker buildx inspect --bootstrap
+
+            echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
+            echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+
+            docker pull datasqrl/base-sqrl:$BASE_TAG
+
+      - run:
+          name: Build + push Docker images
+          command: |
+            set -x
+            build_and_push() {
+              local repo="$1" ; shift
+              local dir="$1"  ; shift
+
+              docker buildx build \
+                --platform linux/amd64,linux/arm64 \
+                --push \
+                --build-arg BASE_TAG=$BASE_TAG \
+                -t $REGISTRY/$repo:$TAG_SUFFIX \
+                -f $dir/Dockerfile \
+                $dir
+
+              # tag :latest on release builds
+              if [ "$LATEST_TAG" = "true" ]; then
+                docker buildx imagetools create \
+                  -t $REGISTRY/$repo:latest \
+                  $REGISTRY/$repo:$TAG_SUFFIX
+              fi
+            }
+
+            build_and_push cmd                 sqrl-tools
+            build_and_push sqrl-server         sqrl-server/sqrl-server-vertx
+            build_and_push sqrl-flink-runner   sqrl-tools/sqrl-flink-runner/target
 
   docker-build-base-image:
     machine:
@@ -384,77 +509,6 @@ jobs:
               -f sqrl-tools/Dockerfile.base \
               sqrl-tools
 
-  docker-build-and-push:
-    parameters:
-      image_repo:  { type: string }
-      context_dir: { type: string }
-    machine:
-      image: ubuntu-2004:202111-02
-    steps:
-      - checkout
-      - attach_workspace:
-          at: .
-      - determine-version
-
-      # --- enable cross-compilation ---------------------------------
-      - run:
-          name: Enable QEMU for ARM build
-          command: |
-            sudo apt-get update
-            sudo apt-get install -y qemu-user-static binfmt-support
-            docker run --privileged --rm tonistiigi/binfmt --install all
-
-      # --- install Buildx (x86 binary is fine) ----------------------
-      - run:
-          name: Install docker buildx
-          command: |
-            sudo mkdir -p /usr/local/lib/docker/cli-plugins
-            curl -sSL https://github.com/docker/buildx/releases/download/v0.12.0/buildx-v0.12.0.linux-amd64 \
-                 -o buildx
-            chmod +x buildx
-            sudo mv buildx /usr/local/lib/docker/cli-plugins/docker-buildx
-            docker buildx create --use --name sqrl-builder
-            docker buildx inspect --bootstrap
-
-      # --- login to the correct registry ---------------------------
-      - run:
-          name: Registry login
-          command: |
-            if [ -n "$CIRCLE_PULL_REQUEST" ]; then
-              echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
-              echo "Logged on ghcr.io"
-            else
-              echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-              echo "Logged on docker"
-            fi
-
-      - compute-base-tag
-
-      # --- pull base image so the subsequent build reuses layers --------
-      - run:
-          name: Pull base image
-          command: docker pull datasqrl/base-sqrl:$BASE_TAG
-
-      # --- build and push both platforms in one go -----------------
-      - run:
-          name: Build & push $REGISTRY/<< parameters.image_repo >>:$TAG_SUFFIX
-          command: |
-            docker buildx build \
-              --platform linux/amd64,linux/arm64 \
-              --push \
-              --build-arg BASE_TAG=$BASE_TAG \
-              -t $REGISTRY/<< parameters.image_repo >>:$TAG_SUFFIX \
-              -f << parameters.context_dir >>/Dockerfile \
-              << parameters.context_dir >>
-
-            # push "latest" if this is a tag build
-            if [ "$LATEST_TAG" = "true" ]; then
-              docker buildx imagetools create \
-                -t $REGISTRY/<< parameters.image_repo >>:latest \
-                $REGISTRY/<< parameters.image_repo >>:$TAG_SUFFIX
-            fi
-
-
 workflows:
   ci:
     jobs:
@@ -485,10 +539,11 @@ workflows:
               test_sharding_index: [0, 1]
           requires:
             - build-base
-      - build-jars:
+      - build-images:
           <<: *job-defaults
           requires:
             - build-base
+            - docker-build-base-image
       - deploy:
           <<: *job-defaults
           requires:
@@ -502,28 +557,6 @@ workflows:
               ignore: /.*/
           requires:
             - build-base
-      - docker-build-and-push:
-          <<: *job-defaults
-          name: build-push-cmd
-          image_repo: cmd
-          context_dir: sqrl-tools
-          requires:
-            - build-jars
-            - docker-build-base-image
-      - docker-build-and-push:
-          <<: *job-defaults
-          name: build-push-server
-          image_repo: sqrl-server
-          context_dir: sqrl-server/sqrl-server-vertx
-          requires:
-            - build-jars
-      - docker-build-and-push:
-          <<: *job-defaults
-          name: build-push-flink
-          image_repo: sqrl-flink-runner
-          context_dir: sqrl-tools/sqrl-flink-runner/target
-          requires:
-            - build-jars
       - run-connectors-tests:
           <<: *job-defaults
           filters:
@@ -534,6 +567,15 @@ workflows:
           requires:
             - build-test-image
       - run-udf-tests:
+          <<: *job-defaults
+          filters:
+            branches:
+              only: /.*/
+            tags:
+              ignore: /.*/
+          requires:
+            - build-test-image
+      - run-vertx-tests:
           <<: *job-defaults
           filters:
             branches:

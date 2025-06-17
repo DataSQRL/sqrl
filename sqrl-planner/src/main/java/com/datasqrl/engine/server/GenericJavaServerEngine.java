@@ -1,28 +1,28 @@
+/*
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.datasqrl.engine.server;
 
 import static com.datasqrl.engine.EngineFeature.NO_CAPABILITIES;
 
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import com.datasqrl.calcite.SqrlFramework;
 import com.datasqrl.config.EngineType;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
-import com.datasqrl.engine.pipeline.ExecutionPipeline;
-import com.datasqrl.engine.pipeline.ExecutionStage;
-import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.plan.global.PhysicalDAGPlan.ServerStagePlan;
-import com.datasqrl.plan.global.PhysicalDAGPlan.StagePlan;
-import com.datasqrl.plan.global.PhysicalDAGPlan.StageSink;
-import com.google.common.base.Preconditions;
-
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * A generic java server engine.
- */
+/** A generic java server engine. */
 @Slf4j
 public abstract class GenericJavaServerEngine extends ExecutionEngine.Base implements ServerEngine {
 
@@ -31,11 +31,13 @@ public abstract class GenericJavaServerEngine extends ExecutionEngine.Base imple
   }
 
   @Override
-  public EnginePhysicalPlan plan(com.datasqrl.v2.dag.plan.ServerStagePlan serverPlan) {
-    serverPlan.getFunctions().stream().filter(fct -> fct.getExecutableQuery()==null).forEach(fct -> {
-      throw new IllegalStateException("Function has not been planned: " + fct);
-    });
+  public EnginePhysicalPlan plan(com.datasqrl.planner.dag.plan.ServerStagePlan serverPlan) {
+    serverPlan.getFunctions().stream()
+        .filter(fct -> fct.getExecutableQuery() == null)
+        .forEach(
+            fct -> {
+              throw new IllegalStateException("Function has not been planned: " + fct);
+            });
     return new ServerPhysicalPlan(serverPlan.getFunctions(), serverPlan.getMutations(), null);
   }
-
 }

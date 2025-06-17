@@ -45,7 +45,7 @@ Type:   stream
 Stage:  postgres
 Inputs: default_catalog.default_database.Numbers, default_catalog.default_database.Orders
 Annotations:
- - stream-root: Orders__def
+ - stream-root: Orders
 Primary Key: id, time
 Timestamp  : time
 Schema:
@@ -66,7 +66,7 @@ Type:   stream
 Stage:  postgres
 Inputs: default_catalog.default_database.Orders
 Annotations:
- - stream-root: Orders__def
+ - stream-root: Orders
 Primary Key: id, time
 Timestamp  : time
 Schema:
@@ -87,7 +87,7 @@ Type:   stream
 Stage:  postgres
 Inputs: default_catalog.default_database.Orders
 Annotations:
- - stream-root: Orders__def
+ - stream-root: Orders
 Primary Key: id, time, otherid
 Timestamp  : time
 Schema:
@@ -107,7 +107,7 @@ Type:   stream
 Stage:  postgres
 Inputs: default_catalog.default_database.Orders
 Annotations:
- - stream-root: Orders__def
+ - stream-root: Orders
 Primary Key: id, time, pk
 Timestamp  : time
 Schema:
@@ -125,10 +125,10 @@ SQL: CREATE VIEW OrderPairs2 AS  SELECT o.id, o.`time`, t.pk FROM Orders o CROSS
 ID:     default_catalog.default_database.Orders
 Type:   stream
 Stage:  flink
-Inputs: default_catalog.default_database.Orders__def
+Inputs: default_catalog.default_database.Orders__base
 Annotations:
  - features: DENORMALIZE (feature)
- - stream-root: Orders__def
+ - stream-root: Orders
 Primary Key: id, time
 Timestamp  : time
 Schema:
@@ -137,13 +137,12 @@ Schema:
  - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - entries: RecordType:peek_no_expand(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
 Plan:
-LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3])
-  LogicalWatermarkAssigner(rowtime=[time], watermark=[-($2, 1:INTERVAL SECOND)])
-    LogicalTableScan(table=[[default_catalog, default_database, Orders__def]])
-SQL: CREATE VIEW `Orders`
+LogicalWatermarkAssigner(rowtime=[time], watermark=[-($2, 1:INTERVAL SECOND)])
+  LogicalTableScan(table=[[default_catalog, default_database, Orders]])
+SQL: CREATE VIEW `Orders__view`
 AS
-SELECT *
-FROM `default_catalog`.`default_database`.`Orders__def`
+SELECT `Orders`.`id`, `Orders`.`customerid`, `Orders`.`time`, `Orders`.`entries`
+FROM `default_catalog`.`default_database`.`Orders` AS `Orders`
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `Orders__schema` (
   `id` BIGINT NOT NULL,
@@ -153,7 +152,7 @@ CREATE TEMPORARY TABLE `Orders__schema` (
 ) WITH (
   'connector' = 'datagen'
 );
-CREATE TABLE `Orders__def` (
+CREATE TABLE `Orders` (
   PRIMARY KEY (`id`, `time`) NOT ENFORCED,
   WATERMARK FOR `time` AS `time` - INTERVAL '0.001' SECOND
 ) WITH (
@@ -163,10 +162,6 @@ CREATE TABLE `Orders__def` (
   'connector' = 'filesystem'
 )
 LIKE `Orders__schema`;
-CREATE VIEW `Orders`
-AS
-SELECT *
-FROM `default_catalog`.`default_database`.`Orders__def`;
 CREATE VIEW `Numbers`
 AS
 SELECT *
@@ -1279,7 +1274,7 @@ INSERT INTO `default_catalog`.`default_database`.`Numbers2_2`
    FROM `default_catalog`.`default_database`.`NumbersLarge`)
   ;
   INSERT INTO `default_catalog`.`default_database`.`Orders_4`
-   (SELECT `id`, `customerid`, `time`, TO_JSONB(`entries`) AS `entries`
+   (SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`
     FROM `default_catalog`.`default_database`.`Orders`)
    ;
    END

@@ -1,17 +1,19 @@
 /*
- * Copyright (c) 2021, DataSQRL. All rights reserved. Use is subject to license terms.
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.datasqrl.loaders;
-
-import java.util.Optional;
-
-import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.config.TableConfig;
-import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.io.tables.TableSchema;
-import com.datasqrl.io.tables.TableSink;
-import com.datasqrl.io.tables.TableSinkImpl;
-import com.datasqrl.io.tables.TableSource;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -20,26 +22,4 @@ public class DataSource {
 
   public static final String TABLE_FILE_SUFFIX = ".table.sql";
   public static final String DATASYSTEM_FILE_PREFIX = "dynamic.sink";
-
-  public Optional<TableSource> readTableSource(TableSchema tableSchema, TableConfig tableConfig,
-                                               ErrorCollector errors, NamePath basePath) {
-    if (!tableConfig.getBase().getType().isSource()) {
-      return Optional.empty();
-    }
-    //TableSource requires a schema
-    if (tableSchema == null) {
-      errors.warn("Found configuration for table [%s] but no schema. Table not loaded.",
-          tableConfig.getName());
-      return Optional.empty();
-    }
-    return Optional.of(TableSource.create(tableConfig, basePath, tableSchema));
-  }
-
-  public Optional<TableSink> readTableSink(Optional<TableSchema> schema, TableConfig tableConfig, NamePath basePath) {
-    if (!tableConfig.getBase().getType().isSink()) {
-      return Optional.empty();
-    }
-
-    return Optional.of(TableSinkImpl.create(tableConfig, basePath, schema));
-  }
 }

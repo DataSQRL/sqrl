@@ -1,11 +1,26 @@
+/*
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.datasqrl.config;
 
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 public class PackageJsonImpl implements PackageJson {
+
   public static final String ENGINES_PROPERTY = "engines";
   public static final String DISCOVERY_KEY = "discovery";
   public static final String DEPENDENCIES_KEY = "dependencies";
@@ -14,6 +29,7 @@ public class PackageJsonImpl implements PackageJson {
   public static final String PACKAGE_KEY = "package";
   public static final String PIPELINE_KEY = "enabled-engines";
   public static final String CONNECTORS_KEY = "connectors";
+  public static final String CONFIG_KEY = "config";
   public static final String TEST_RUNNER_KEY = "test-runner";
 
   private SqrlConfig sqrlConfig;
@@ -62,18 +78,8 @@ public class PackageJsonImpl implements PackageJson {
   }
 
   @Override
-  public Map<String, Object> toMap() {
-    return sqrlConfig.toMap();
-  }
-
-  @Override
   public CompilerConfigImpl getCompilerConfig() {
     return new CompilerConfigImpl(sqrlConfig.getSubConfig(COMPILER_KEY));
-  }
-
-  @Override
-  public PackageConfigurationImpl getPackageConfig() {
-    return sqrlConfig.getSubConfig(PACKAGE_KEY).allAs(PackageConfigurationImpl.class).get();
   }
 
   @Override
@@ -83,7 +89,7 @@ public class PackageJsonImpl implements PackageJson {
 
   @Override
   public boolean hasScriptKey() {
-    //ScriptConfiguration.SCRIPT_KEY
+    // ScriptConfiguration.SCRIPT_KEY
     return false;
   }
 
@@ -97,8 +103,6 @@ public class PackageJsonImpl implements PackageJson {
 
   @Override
   public String toString() {
-    return "PackageJsonImpl{" +
-        "sqrlConfig=" + sqrlConfig.toMap() +
-        '}';
+    return "PackageJsonImpl{" + sqrlConfig + '}';
   }
 }

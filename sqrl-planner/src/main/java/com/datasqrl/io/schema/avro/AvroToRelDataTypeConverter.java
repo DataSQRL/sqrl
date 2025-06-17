@@ -1,25 +1,37 @@
+/*
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.datasqrl.io.schema.avro;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Set;
-
-import org.apache.avro.Schema;
-import org.apache.avro.Schema.Field;
-import org.apache.avro.Schema.Type;
-import org.apache.calcite.rel.type.RelDataType;
-import org.apache.flink.formats.avro.typeutils.AvroSchemaConverter;
 
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
-
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Set;
 import lombok.AllArgsConstructor;
+import org.apache.avro.Schema;
+import org.apache.avro.Schema.Field;
+import org.apache.avro.Schema.Type;
+import org.apache.calcite.rel.type.RelDataType;
+import org.apache.flink.formats.avro.typeutils.AvroSchemaConverter;
 import org.apache.flink.table.types.DataType;
 
 @AllArgsConstructor
@@ -35,13 +47,12 @@ public class AvroToRelDataTypeConverter {
   public RelDataType convert(Schema schema) {
     validateSchema(schema, NamePath.ROOT, new HashSet<>()); // recursion stack
 
-    DataType dataType = AvroSchemaConverter.convertToDataType(schema.toString(false),
-        legacyTimestampMapping);
+    DataType dataType =
+        AvroSchemaConverter.convertToDataType(schema.toString(false), legacyTimestampMapping);
 
     TypeFactory typeFactory = TypeFactory.getTypeFactory();
 
-    return typeFactory.createFieldTypeFromLogicalType(
-        dataType.getLogicalType());
+    return typeFactory.createFieldTypeFromLogicalType(dataType.getLogicalType());
   }
 
   private void validateSchema(Schema schema, NamePath path, Set<Schema> recursionStack) {
@@ -50,7 +61,8 @@ public class AvroToRelDataTypeConverter {
     }
 
     if (!recursionStack.add(schema)) {
-      throw errors.exception(ErrorCode.SCHEMA_ERROR, "Cyclic-recursive schema reference detected at: %s.", path);
+      throw errors.exception(
+          ErrorCode.SCHEMA_ERROR, "Cyclic-recursive schema reference detected at: %s.", path);
     }
 
     try {
@@ -64,9 +76,11 @@ public class AvroToRelDataTypeConverter {
           }
 
           if (nonNullTypes.size() != 1) {
-            throw errors.exception(ErrorCode.SCHEMA_ERROR,
+            throw errors.exception(
+                ErrorCode.SCHEMA_ERROR,
                 "Only AVRO unions with a single non-null type are supported, but found %d non-null types at: %s",
-                nonNullTypes.size(), path);
+                nonNullTypes.size(),
+                path);
           }
 
           Schema innerSchema = nonNullTypes.get(0);
@@ -111,8 +125,8 @@ public class AvroToRelDataTypeConverter {
       case NULL:
         return;
       default:
-        throw errors.exception(ErrorCode.SCHEMA_ERROR, "Unrecognized AVRO Type [%s] at: %s",
-            schema.getType(), path);
+        throw errors.exception(
+            ErrorCode.SCHEMA_ERROR, "Unrecognized AVRO Type [%s] at: %s", schema.getType(), path);
     }
   }
 }

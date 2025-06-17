@@ -1,14 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright © 2021 DataSQRL (contact@datasqrl.com)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.datasqrl</groupId>
   <artifactId>sqrl-root</artifactId>
-  <packaging>pom</packaging>
   <version>0.7.0-SNAPSHOT</version>
-  
-  <url>https://www.datasqrl.com/docs/intro/</url>
+  <packaging>pom</packaging>
   <description>DataSQRL is a data streaming framework for incremental and real-time data processing applications. Ingest, transform, store, and serve data as iceberg views, data APIs, or LLM tooling with the simplicity of SQL.</description>
-  
+
+  <url>https://www.datasqrl.com/docs/intro/</url>
+
+  <inceptionYear>2021</inceptionYear>
+
   <licenses>
     <license>
       <name>Apache License, Version 2.0</name>
@@ -16,76 +36,6 @@
       <distribution>repo</distribution>
     </license>
   </licenses>
-
-  <modules>
-    <module>sqrl-base</module>
-    <module>sqrl-calcite</module>
-    <module>sqrl-planner</module>
-    <module>sqrl-testing</module>
-    <module>sqrl-tools</module>
-    <module>sqrl-flink-lib</module>
-    <module>sqrl-functions</module>
-    <module>sqrl-server</module>
-  </modules>
-
-  <properties>
-    <maven.compiler.source>17</maven.compiler.source>
-    <maven.compiler.target>17</maven.compiler.target>
-    <mockito.version>4.8.0</mockito.version>
-    <jackson.version>2.19.0</jackson.version>
-    <vertx.version>4.5.14</vertx.version>
-    <agroal.version>2.6</agroal.version>
-    <kafka.version>3.4.0</kafka.version>
-    <flink.version>1.19.2</flink.version>
-    <slf4j.version>1.7.36</slf4j.version>
-    <postgres.version>42.7.5</postgres.version>
-    <log4j.version>2.24.3</log4j.version>
-    <scala.version>2.12</scala.version>
-    <guava.version>33.4.8-jre</guava.version>
-    <commonsio.version>2.19.0</commonsio.version>
-    <commons-lang3.version>3.17.0</commons-lang3.version>
-    <commons-config.version>2.12.0</commons-config.version>
-    <commons-collections.version>4.4</commons-collections.version>
-    <httpcomponents.version>4.5.14</httpcomponents.version>
-    <commons-bean.version>1.10.1</commons-bean.version>
-    <h2.version>2.3.232</h2.version>
-    <opencsv.version>5.11</opencsv.version>
-    <javax.validation.version>2.0.1.Final</javax.validation.version>
-    <glassfish.version>3.0.0</glassfish.version>
-    <reactive-streams.version>1.0.4</reactive-streams.version>
-    <testcontainers.version>1.21.0</testcontainers.version>
-    <scram.version>2.1</scram.version>
-    <protobuf.version>4.30.2</protobuf.version>
-    <picocli.version>4.7.7</picocli.version>
-    <commonscodec.version>1.18.0</commonscodec.version>
-    <zip4j.version>2.11.2</zip4j.version>
-    <guice.version>5.1.0</guice.version>
-    <autoservice.version>1.1.1</autoservice.version>
-    <antlr.version>4.9.2</antlr.version>
-    <guava.version>33.4.8-jre</guava.version>
-    <lombok.version>1.18.38</lombok.version>
-    <junit.jupiter.version>5.12.2</junit.jupiter.version>
-    <calcite.version>1.27.0</calcite.version>
-    <graphql-java.version>23.1</graphql-java.version>
-    <graphql-java-extended-scalars.version>22.0</graphql-java-extended-scalars.version>
-    <projectreactor.version>3.5.6</projectreactor.version>
-    <avro.version>1.12.0</avro.version>
-    <freemarker.version>2.3.34</freemarker.version>
-    <jsonschema.version>1.5.2</jsonschema.version>
-    <flinkrunner.version>0.6.0</flinkrunner.version>
-    <iceberg.version>1.9.0</iceberg.version>
-    
-    <maven-javadoc-plugin.version>3.11.2</maven-javadoc-plugin.version>
-    <maven-source-plugin.version>3.3.1</maven-source-plugin.version>
-    <maven-gpg-plugin.version>3.2.7</maven-gpg-plugin.version>
-
-    <!-- params -->
-    <snapshots.update>false</snapshots.update>
-    <maven.compiler.source>17</maven.compiler.source>
-    <maven.compiler.target>17</maven.compiler.target>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-
-  </properties>
   <developers>
     <developer>
       <name>Daniel Henneberger</name>
@@ -94,212 +44,103 @@
     </developer>
   </developers>
 
+  <modules>
+    <module>sqrl-planner</module>
+    <module>sqrl-testing</module>
+    <module>sqrl-tools</module>
+    <module>sqrl-functions</module>
+    <module>sqrl-server</module>
+  </modules>
+
   <scm>
     <connection>scm:git:https://github.com/DataSQRL/sqrl.git</connection>
-    <url>https://github.com/DataSQRL/sqrl</url>
     <developerConnection>scm:git:https://github.com/DataSQRL/sqrl.git</developerConnection>
     <tag>HEAD</tag>
+    <url>https://github.com/DataSQRL/sqrl</url>
   </scm>
 
-  <profiles>
-    <profile>
-      <id>update-snapshots</id>
-      <properties>
-        <snapshots.update>true</snapshots.update>
-      </properties>
-    </profile>
+  <distributionManagement>
+    <repository>
+      <id>github</id>
+      <url>https://maven.pkg.github.com/DataSQRL/sqrl</url>
+    </repository>
+    <snapshotRepository>
+      <id>github</id>
+      <url>https://maven.pkg.github.com/DataSQRL/sqrl</url>
+    </snapshotRepository>
+  </distributionManagement>
 
-    <profile>
-      <id>skip-shade-plugin</id>
+  <properties>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
+    <mockito.version>4.8.0</mockito.version>
+    <jackson.version>2.19.1</jackson.version>
+    <vertx.version>5.0.0</vertx.version>
+    <agroal.version>2.7.1</agroal.version>
+    <kafka.version>3.4.0</kafka.version>
+    <flink.version>1.19.2</flink.version>
+    <slf4j.version>2.0.17</slf4j.version>
+    <postgres.version>42.7.7</postgres.version>
+    <log4j.version>2.24.3</log4j.version>
+    <scala.version>2.12</scala.version>
+    <guava.version>33.4.8-jre</guava.version>
+    <commonsio.version>2.19.0</commonsio.version>
+    <commons-lang3.version>3.17.0</commons-lang3.version>
+    <!-- hadoop shades in commons-config 2.1.1, so upgrade path here is very narrow -->
+    <commons-config.version>2.3</commons-config.version>
+    <commons-collections.version>4.5.0</commons-collections.version>
+    <httpcomponents.version>4.5.14</httpcomponents.version>
+    <commons-bean.version>1.11.0</commons-bean.version>
+    <h2.version>2.3.232</h2.version>
+    <opencsv.version>5.11.1</opencsv.version>
+    <javax.validation.version>2.0.1.Final</javax.validation.version>
+    <glassfish.version>3.0.0</glassfish.version>
+    <reactive-streams.version>1.0.4</reactive-streams.version>
+    <testcontainers.version>1.21.1</testcontainers.version>
+    <scram.version>2.1</scram.version>
+    <protobuf.version>4.31.1</protobuf.version>
+    <picocli.version>4.7.7</picocli.version>
+    <commonscodec.version>1.18.0</commonscodec.version>
+    <zip4j.version>2.11.5</zip4j.version>
+    <guice.version>5.1.0</guice.version>
+    <autoservice.version>1.1.1</autoservice.version>
+    <antlr.version>4.13.2</antlr.version>
+    <guava.version>33.4.8-jre</guava.version>
+    <lombok.version>1.18.38</lombok.version>
+    <junit.jupiter.version>5.13.1</junit.jupiter.version>
+    <calcite.version>1.27.0</calcite.version>
+    <graphql-java.version>23.1</graphql-java.version>
+    <graphql-java-extended-scalars.version>22.0</graphql-java-extended-scalars.version>
+    <projectreactor.version>3.7.7</projectreactor.version>
+    <avro.version>1.12.0</avro.version>
+    <freemarker.version>2.3.34</freemarker.version>
+    <jsonschema.version>1.5.7</jsonschema.version>
+    <iceberg.version>1.9.1</iceberg.version>
+    <hadoop.version>3.4.1</hadoop.version>
+    <jacoco.version>0.8.13</jacoco.version>
 
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-shade-plugin</artifactId>
-            <configuration>
-              <skip>true</skip>
-            </configuration>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
+    <maven-javadoc-plugin.version>3.11.2</maven-javadoc-plugin.version>
+    <maven-source-plugin.version>3.3.1</maven-source-plugin.version>
+    <maven-gpg-plugin.version>3.2.7</maven-gpg-plugin.version>
+    <license-maven-plugin.version>5.0.0</license-maven-plugin.version>
+    <git-code-format-maven-plugin.version>5.3</git-code-format-maven-plugin.version>
+    <sortpom.plugin.version>4.0.0</sortpom.plugin.version>
 
-    <profile>
-        <id>m2e</id>
-        <activation>
-            <property>
-                <name>m2e.version</name>
-            </property>
-        </activation>
+    <!-- params -->
+    <snapshots.update>false</snapshots.update>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <build>
-            <directory>${project.basedir}/m2e-target</directory>
-            <plugins>
-              <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>build-helper-maven-plugin</artifactId>
-                <version>3.6.0</version>
-                <executions>
-                  <execution>
-                    <id>add-source</id>
-                    <goals>
-                      <goal>add-source</goal>
-                    </goals>
-                    <phase>generate-sources</phase>
-                    <configuration>
-                      <sources>
-                        <source>target/generated-sources/annotations</source>
-                        <source>target/generated-sources/java</source>
-                      </sources>
-                    </configuration>
-                  </execution>
-                  <execution>
-                    <id>add-google-auto</id>
-                    <goals>
-                      <goal>add-resource</goal>
-                    </goals>
-                    <phase>generate-sources</phase>
-                    <configuration>
-                      <resources>
-                        <resource>
-                          <directory>target/classes</directory>
-                          <excludes>
-                            <exclude>**/*.class</exclude>
-                          </excludes>
-                        </resource>
-                      </resources>
-                    </configuration>
-                  </execution>
-                  <execution>
-                    <id>add-test-source</id>
-                    <goals>
-                      <goal>add-test-source</goal>
-                    </goals>
-                    <phase>generate-test-sources</phase>
-                    <configuration>
-                      <sources>
-                        <source>target/generated-test-sources/test-annotations</source>
-                      </sources>
-                    </configuration>
-                  </execution>
-                </executions>
-              </plugin>
-            </plugins>
-        </build>
-    </profile>
-    <profile>
-      <id>release</id>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.sonatype.central</groupId>
-            <artifactId>central-publishing-maven-plugin</artifactId>
-            <version>0.7.0</version>
-            <extensions>true</extensions>
-            <configuration>
-              <publishingServerId>central</publishingServerId>
-
-              <excludeArtifacts>
-                <!-- client jars are too large, skipping uploading for now -->
-                <excludeArtifact>sqrl-server-vertx</excludeArtifact>
-                <excludeArtifact>sqrl-cli</excludeArtifact>
-                <excludeArtifact>sqrl-test</excludeArtifact>
-                <excludeArtifact>sqrl-run</excludeArtifact>
-              </excludeArtifacts>
-
-              <autoPublish>true</autoPublish>
-            </configuration>
-          </plugin>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-gpg-plugin</artifactId>
-            <version>${maven-gpg-plugin.version}</version>
-            <executions>
-              <execution>
-                <id>sign-artifacts</id>
-                <goals>
-                  <goal>sign</goal>
-                </goals>
-                <phase>verify</phase>
-              </execution>
-            </executions>
-          </plugin>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-source-plugin</artifactId>
-            <version>${maven-source-plugin.version}</version>
-            <executions>
-              <execution>
-                <id>attach-sources</id>
-                <goals>
-                  <goal>jar-no-fork</goal>
-                </goals>
-                <phase>package</phase>
-              </execution>
-            </executions>
-          </plugin>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-javadoc-plugin</artifactId>
-            <version>${maven-javadoc-plugin.version}</version>
-            <configuration>
-              <failOnError>false</failOnError>
-            </configuration>
-            <executions>
-              <execution>
-                <id>attach-javadocs</id>
-                <goals>
-                  <goal>jar</goal>
-                </goals>
-                <phase>package</phase>
-                <configuration>
-                  <show>public</show>
-                  <failOnError>false</failOnError>
-                  <detectOfflineLinks>false</detectOfflineLinks>
-                  <doclint>all,-missing</doclint>
-                  <nohelp>true</nohelp>
-                  <excludePackageNames>*.internal.*,testutil,demo</excludePackageNames>
-                  <quiet>true</quiet>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-  </profiles>
-
-  <dependencies>
-    <dependency>
-      <groupId>org.projectlombok</groupId>
-      <artifactId>lombok</artifactId>
-      <scope>provided</scope>
-    </dependency>
-
-    <!-- common test infra-->
-    <dependency>
-      <groupId>org.junit.jupiter</groupId>
-      <artifactId>junit-jupiter-engine</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.junit.jupiter</groupId>
-      <artifactId>junit-jupiter-params</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.junit.jupiter</groupId>
-      <artifactId>junit-jupiter-api</artifactId>
-      <scope>test</scope>
-    </dependency>
-  </dependencies>
+    <flinkrunner.image.repo>ghcr.io</flinkrunner.image.repo>
+    <flinkrunner.version>1.0.0-SNAPSHOT</flinkrunner.version>
+  </properties>
   <dependencyManagement>
     <dependencies>
       <dependency>
         <groupId>org.yaml</groupId>
         <artifactId>snakeyaml</artifactId>
-        <version>2.2</version>
+        <version>2.4</version>
       </dependency>
 
       <!-- SQRL deps, please keep this in order -->
@@ -437,31 +278,31 @@
       <dependency>
         <groupId>com.datasqrl</groupId>
         <artifactId>sqrl-calcite</artifactId>
+        <version>${project.version}</version>
         <type>test-jar</type>
         <scope>test</scope>
-        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>com.datasqrl</groupId>
         <artifactId>sqrl-cli</artifactId>
+        <version>${project.version}</version>
         <type>test-jar</type>
         <scope>test</scope>
-        <version>${project.version}</version>
       </dependency>
 
       <dependency>
         <groupId>com.datasqrl</groupId>
         <artifactId>sqrl-planner</artifactId>
+        <version>${project.version}</version>
         <type>test-jar</type>
         <scope>test</scope>
-        <version>${project.version}</version>
       </dependency>
 
       <!-- Test utils -->
       <dependency>
         <groupId>com.theokanning.openai-gpt3-java</groupId>
         <artifactId>service</artifactId>
-        <version>0.11.0</version>
+        <version>0.18.2</version>
         <scope>test</scope>
       </dependency>
 
@@ -573,7 +414,7 @@
       <dependency>
         <groupId>io.micrometer</groupId>
         <artifactId>micrometer-registry-prometheus</artifactId>
-        <version>1.14.6</version>
+        <version>1.15.1</version>
       </dependency>
       <!-- required for vertx jdbc -->
       <dependency>
@@ -726,8 +567,8 @@
         <groupId>org.apache.kafka</groupId>
         <artifactId>kafka_${scala.version}</artifactId>
         <version>${kafka.version}</version>
-        <scope>test</scope>
         <classifier>test</classifier>
+        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.apache.kafka</groupId>
@@ -739,8 +580,8 @@
         <groupId>org.apache.kafka</groupId>
         <artifactId>kafka-streams</artifactId>
         <version>${kafka.version}</version>
-        <scope>test</scope>
         <classifier>test</classifier>
+        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.apache.kafka</groupId>
@@ -760,7 +601,7 @@
       <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty-codec</artifactId>
-        <version>4.2.1.Final</version>
+        <version>4.2.2.Final</version>
       </dependency>
       <dependency>
         <groupId>org.postgresql</groupId>
@@ -883,7 +724,7 @@
       </dependency>
       <dependency>
         <groupId>org.apache.logging.log4j</groupId>
-        <artifactId>log4j-slf4j-impl</artifactId>
+        <artifactId>log4j-slf4j2-impl</artifactId>
         <version>${log4j.version}</version>
       </dependency>
 
@@ -901,63 +742,101 @@
         <scope>test</scope>
       </dependency>
 
-        <dependency>
-            <groupId>com.datasqrl.flinkrunner</groupId>
-            <artifactId>flexible-csv-format</artifactId>
-            <version>${flinkrunner.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.datasqrl.flinkrunner</groupId>
-            <artifactId>functions-common</artifactId>
-            <version>${flinkrunner.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.datasqrl.flinkrunner</groupId>
-            <artifactId>json-type</artifactId>
-            <version>${flinkrunner.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.datasqrl.flinkrunner</groupId>
-            <artifactId>flexible-json-format</artifactId>
-            <version>${flinkrunner.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.datasqrl.flinkrunner</groupId>
-            <artifactId>text-functions</artifactId>
-            <version>${flinkrunner.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.datasqrl.flinkrunner</groupId>
-            <artifactId>math-functions</artifactId>
-            <version>${flinkrunner.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.datasqrl.flinkrunner</groupId>
-            <artifactId>openai-functions</artifactId>
-            <version>${flinkrunner.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.datasqrl.flinkrunner</groupId>
-            <artifactId>vector-type</artifactId>
-            <version>${flinkrunner.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.datasqrl.flinkrunner</groupId>
-            <artifactId>kafka-safe-connector</artifactId>
-            <version>${flinkrunner.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.datasqrl.flinkrunner</groupId>
-            <artifactId>postgresql-connector</artifactId>
-            <version>${flinkrunner.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.datasqrl.flinkrunner</groupId>
-            <artifactId>flink-sql-runner</artifactId>
-            <version>${flinkrunner.version}</version>
-        </dependency>
+      <dependency>
+        <groupId>com.datasqrl.flinkrunner</groupId>
+        <artifactId>flexible-csv-format</artifactId>
+        <version>${flinkrunner.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.datasqrl.flinkrunner</groupId>
+        <artifactId>functions-common</artifactId>
+        <version>${flinkrunner.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.datasqrl.flinkrunner</groupId>
+        <artifactId>json-type</artifactId>
+        <version>${flinkrunner.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.datasqrl.flinkrunner</groupId>
+        <artifactId>flexible-json-format</artifactId>
+        <version>${flinkrunner.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.datasqrl.flinkrunner</groupId>
+        <artifactId>text-functions</artifactId>
+        <version>${flinkrunner.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.datasqrl.flinkrunner</groupId>
+        <artifactId>math-functions</artifactId>
+        <version>${flinkrunner.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.datasqrl.flinkrunner</groupId>
+        <artifactId>openai-functions</artifactId>
+        <version>${flinkrunner.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.datasqrl.flinkrunner</groupId>
+        <artifactId>vector-type</artifactId>
+        <version>${flinkrunner.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.datasqrl.flinkrunner</groupId>
+        <artifactId>kafka-safe-connector</artifactId>
+        <version>${flinkrunner.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.datasqrl.flinkrunner</groupId>
+        <artifactId>postgresql-connector</artifactId>
+        <version>${flinkrunner.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.datasqrl.flinkrunner</groupId>
+        <artifactId>flink-sql-runner</artifactId>
+        <version>${flinkrunner.version}</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <!-- common test infra-->
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-engine</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-params</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-api</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <repositories>
+    <repository>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+      <id>github</id>
+      <url>https://maven.pkg.github.com/DataSQRL/flink-sql-runner</url>
+    </repository>
+  </repositories>
   <!--    <scm>-->
   <!--        <url>https://github.com/DataSQRL/sqrl.git</url>-->
   <!--        <connection>scm:git:git@github.com:DataSQRL/sqrl.git</connection>-->
@@ -965,11 +844,25 @@
   <!--      <tag>HEAD</tag>-->
   <!--  </scm>-->
   <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-shade-plugin</artifactId>
+          <version>3.6.0</version>
+        </plugin>
+        <plugin>
+          <groupId>io.reactiverse</groupId>
+          <artifactId>vertx-maven-plugin</artifactId>
+          <version>2.0.2</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
     <plugins>
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
-        <version>0.8.13</version>
+        <version>${jacoco.version}</version>
         <configuration>
           <excludes>
             <exclude>org/**</exclude>
@@ -980,7 +873,7 @@
       <plugin>
         <groupId>com.marvinformatics.jacoco</groupId>
         <artifactId>easy-jacoco-maven-plugin</artifactId>
-        <version>0.1.3</version>
+        <version>0.1.4</version>
         <configuration>
           <projectRules>
             <rule>
@@ -1022,13 +915,6 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
         <version>3.4.2</version>
-        <executions>
-          <execution>
-            <goals>
-              <goal>test-jar</goal>
-            </goals>
-          </execution>
-        </executions>
         <configuration>
           <!-- do not build an empty jar if the project is
                e.g. a pom project -->
@@ -1041,6 +927,13 @@
             </manifest>
           </archive>
         </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>test-jar</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -1059,14 +952,6 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-failsafe-plugin</artifactId>
         <version>3.5.3</version>
-        <executions>
-          <execution>
-            <goals>
-              <goal>integration-test</goal>
-              <goal>verify</goal>
-            </goals>
-          </execution>
-        </executions>
         <configuration>
           <includes>
             <include>**/*IT.java</include>
@@ -1075,46 +960,327 @@
             <TZ>America/Los_Angeles</TZ>
           </environmentVariables>
         </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>integration-test</goal>
+              <goal>verify</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>com.mycila</groupId>
+        <artifactId>license-maven-plugin</artifactId>
+        <version>${license-maven-plugin.version}</version>
+        <configuration>
+          <properties>
+            <owner>DataSQRL</owner>
+            <email>contact@datasqrl.com</email>
+          </properties>
+          <licenseSets>
+            <licenseSet>
+              <header>com/mycila/maven/plugin/license/templates/APACHE-2.txt</header>
+              <excludes>
+                <exclude>src/test/resources/**</exclude>
+                <exclude>m2e-target/**</exclude>
+                <exclude>bin/**</exclude>
+              </excludes>
+            </licenseSet>
+          </licenseSets>
+          <strictCheck>true</strictCheck>
+        </configuration>
+        <dependencies>
+          <dependency>
+            <groupId>com.mycila</groupId>
+            <artifactId>license-maven-plugin-git</artifactId>
+            <version>${license-maven-plugin.version}</version>
+          </dependency>
+        </dependencies>
+        <executions>
+          <execution>
+            <id>check</id>
+            <goals>
+              <goal>check</goal>
+            </goals>
+            <phase>compile</phase>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>com.cosium.code</groupId>
+        <artifactId>git-code-format-maven-plugin</artifactId>
+        <version>${git-code-format-maven-plugin.version}</version>
+        <dependencies>
+          <dependency>
+            <groupId>com.cosium.code</groupId>
+            <artifactId>google-java-format</artifactId>
+            <version>${git-code-format-maven-plugin.version}</version>
+          </dependency>
+        </dependencies>
+        <executions>
+          <!-- On commit, format the modified files -->
+          <execution>
+            <id>install-formatter-hook</id>
+            <goals>
+              <goal>install-hooks</goal>
+            </goals>
+            <!-- inherited = false means it won't re-run in submodules if not desired -->
+            <inherited>false</inherited>
+          </execution>
+          <!-- On Maven verify, fail if code is not formatted -->
+          <execution>
+            <id>validate-code-format</id>
+            <goals>
+              <goal>validate-code-format</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>com.github.ekryd.sortpom</groupId>
+        <artifactId>sortpom-maven-plugin</artifactId>
+        <version>${sortpom.plugin.version}</version>
+        <configuration>
+          <keepBlankLines>true</keepBlankLines>
+          <lineSeparator>\n</lineSeparator>
+          <predefinedSortOrder>recommended_2008_06</predefinedSortOrder>
+          <createBackupFile>false</createBackupFile>
+        </configuration>
       </plugin>
     </plugins>
-    <pluginManagement>
-      <plugins>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-shade-plugin</artifactId>
-          <version>3.6.0</version>
-        </plugin>
-        <plugin>
-          <groupId>io.reactiverse</groupId>
-          <artifactId>vertx-maven-plugin</artifactId>
-          <version>2.0.1</version>
-        </plugin>
-      </plugins>    
-    </pluginManagement>
   </build>
 
-  <repositories>
-    <repository>
-      <id>github</id>
-      <url>https://maven.pkg.github.com/DataSQRL/flink-sql-runner</url>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-      <releases>
-        <enabled>false</enabled>
-      </releases>
-    </repository>
-  </repositories>
+  <profiles>
+    <profile>
+      <id>update-snapshots</id>
+      <properties>
+        <snapshots.update>true</snapshots.update>
+      </properties>
+    </profile>
 
-  <distributionManagement>
-    <repository>
-      <id>github</id>
-      <url>https://maven.pkg.github.com/DataSQRL/sqrl</url>
-    </repository>
-    <snapshotRepository>
-      <id>github</id>
-      <url>https://maven.pkg.github.com/DataSQRL/sqrl</url>
-    </snapshotRepository>
-  </distributionManagement>
+    <profile>
+      <id>skip-shade-plugin</id>
+
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-shade-plugin</artifactId>
+            <configuration>
+              <skip>true</skip>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <id>m2e</id>
+      <activation>
+        <property>
+          <name>m2e.version</name>
+        </property>
+      </activation>
+
+      <build>
+        <directory>${project.basedir}/m2e-target</directory>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>build-helper-maven-plugin</artifactId>
+            <version>3.6.1</version>
+            <executions>
+              <execution>
+                <id>add-source</id>
+                <goals>
+                  <goal>add-source</goal>
+                </goals>
+                <phase>generate-sources</phase>
+                <configuration>
+                  <sources>
+                    <source>target/generated-sources/annotations</source>
+                    <source>target/generated-sources/java</source>
+                  </sources>
+                </configuration>
+              </execution>
+              <execution>
+                <id>add-google-auto</id>
+                <goals>
+                  <goal>add-resource</goal>
+                </goals>
+                <phase>generate-sources</phase>
+                <configuration>
+                  <resources>
+                    <resource>
+                      <directory>target/classes</directory>
+                      <excludes>
+                        <exclude>**/*.class</exclude>
+                      </excludes>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+              <execution>
+                <id>add-test-source</id>
+                <goals>
+                  <goal>add-test-source</goal>
+                </goals>
+                <phase>generate-test-sources</phase>
+                <configuration>
+                  <sources>
+                    <source>target/generated-test-sources/test-annotations</source>
+                  </sources>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>release</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.sonatype.central</groupId>
+            <artifactId>central-publishing-maven-plugin</artifactId>
+            <version>0.7.0</version>
+            <extensions>true</extensions>
+            <configuration>
+              <publishingServerId>central</publishingServerId>
+
+              <excludeArtifacts>
+                <!-- client jars are too large, skipping uploading for now -->
+                <excludeArtifact>sqrl-server-vertx</excludeArtifact>
+                <excludeArtifact>sqrl-cli</excludeArtifact>
+                <excludeArtifact>sqrl-test</excludeArtifact>
+                <excludeArtifact>sqrl-run</excludeArtifact>
+              </excludeArtifacts>
+
+              <autoPublish>true</autoPublish>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <version>${maven-gpg-plugin.version}</version>
+            <executions>
+              <execution>
+                <id>sign-artifacts</id>
+                <goals>
+                  <goal>sign</goal>
+                </goals>
+                <phase>verify</phase>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-source-plugin</artifactId>
+            <version>${maven-source-plugin.version}</version>
+            <executions>
+              <execution>
+                <id>attach-sources</id>
+                <goals>
+                  <goal>jar-no-fork</goal>
+                </goals>
+                <phase>package</phase>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <version>${maven-javadoc-plugin.version}</version>
+            <configuration>
+              <failOnError>false</failOnError>
+            </configuration>
+            <executions>
+              <execution>
+                <id>attach-javadocs</id>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+                <phase>package</phase>
+                <configuration>
+                  <show>public</show>
+                  <failOnError>false</failOnError>
+                  <detectOfflineLinks>false</detectOfflineLinks>
+                  <doclint>all,-missing</doclint>
+                  <nohelp>true</nohelp>
+                  <excludePackageNames>*.internal.*,testutil,demo</excludePackageNames>
+                  <quiet>true</quiet>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <id>dev</id>
+      <properties>
+        <gcf.skipInstallHooks>false</gcf.skipInstallHooks>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>com.cosium.code</groupId>
+            <artifactId>git-code-format-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>format-code</id>
+                <goals>
+                  <goal>format-code</goal>
+                </goals>
+                <phase>initialize</phase>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>com.github.ekryd.sortpom</groupId>
+            <artifactId>sortpom-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>format</id>
+                <goals>
+                  <goal>sort</goal>
+                </goals>
+                <phase>initialize</phase>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>com.mycila</groupId>
+            <artifactId>license-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>format</id>
+                <goals>
+                  <goal>format</goal>
+                </goals>
+                <phase>initialize</phase>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <!-- just compile, skip all other checks -->
+      <id>quickbuild</id>
+      <properties>
+        <skipTests>true</skipTests>
+        <enforcer.skip>true</enforcer.skip>
+        <maven.javadoc.skip>true</maven.javadoc.skip>
+        <gcf.skip>true</gcf.skip>
+        <license.skip>true</license.skip>
+      </properties>
+    </profile>
+  </profiles>
 
 </project>

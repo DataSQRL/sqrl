@@ -1,6 +1,17 @@
-
 /*
- * Copyright (c) 2021, DataSQRL. All rights reserved. Use is subject to license terms.
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.datasqrl.cmd;
 
@@ -8,19 +19,6 @@ import static com.datasqrl.config.ScriptConfigImpl.GRAPHQL_NORMALIZED_FILE_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.apache.commons.io.FileUtils;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInfo;
 
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrinter;
@@ -30,8 +28,18 @@ import com.datasqrl.util.TestScript;
 import com.datasqrl.util.data.Nutshop;
 import com.datasqrl.util.data.Retail;
 import com.datasqrl.util.data.Sensors;
-
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.SneakyThrows;
+import org.apache.commons.io.FileUtils;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
 @Disabled
 public class TestCmd {
@@ -42,7 +50,6 @@ public class TestCmd {
   private static final Path RESOURCES = Path.of("src/test/resources/");
   private static final Path SUBSCRIPTION_PATH = RESOURCES.resolve("subscriptions");
   private static final Path CC_PATH = RESOURCES.resolve("creditcard");
-  private static final Path PROFILES_PATH = RESOURCES.resolve("profiles");
   private static final Path AVRO_PATH = RESOURCES.resolve("avro");
   private static final Path JSON_PATH = RESOURCES.resolve("json");
 
@@ -79,46 +86,54 @@ public class TestCmd {
   @Test
   public void compileMutations() {
     var root = Path.of("../../sqrl-examples/mutations");
-    execute(root,
-        "compile", "script.sqrl",
-        "schema.graphqls");
+    execute(root, "compile", "script.sqrl", "schema.graphqls");
   }
 
   @Test
   public void compileSubscriptions() {
-    execute(SUBSCRIPTION_PATH,
-        "compile", "script.sqrl",
-       "schema.graphqls");
+    execute(SUBSCRIPTION_PATH, "compile", "script.sqrl", "schema.graphqls");
   }
 
   @Test
   public void validateTest() {
-    execute(SUBSCRIPTION_PATH,
-        "validate", "script.sqrl",
-       "schema.graphqls");
+    execute(SUBSCRIPTION_PATH, "validate", "script.sqrl", "schema.graphqls");
   }
 
   @Test
   public void compileSubscriptionsInvalidGraphql() {
-    execute(SUBSCRIPTION_PATH, ERROR_STATUS_HOOK,
-        "compile","invalidscript.sqrl",
-       "invalidschema.graphqls");
+    execute(
+        SUBSCRIPTION_PATH,
+        ERROR_STATUS_HOOK,
+        "compile",
+        "invalidscript.sqrl",
+        "invalidschema.graphqls");
     snapshot.createOrValidate();
   }
 
   @Test
   public void discoverNutshop() {
-    execute(Nutshop.INSTANCE.getRootPackageDirectory(),
-        "discover", Nutshop.INSTANCE.getDataDirectory().toString(), "-o", OUTPUT_DIR.toString(), "-l", "3600");
+    execute(
+        Nutshop.INSTANCE.getRootPackageDirectory(),
+        "discover",
+        Nutshop.INSTANCE.getDataDirectory().toString(),
+        "-o",
+        OUTPUT_DIR.toString(),
+        "-l",
+        "3600");
     createSnapshot();
   }
 
   @Test
   @Disabled
   public void discoverExternal() {
-    execute(Sensors.INSTANCE.getRootPackageDirectory(),
-        "discover", "patientdata",
-        "-o", "patientpackage", "-l", "3600");
+    execute(
+        Sensors.INSTANCE.getRootPackageDirectory(),
+        "discover",
+        "patientdata",
+        "-o",
+        "patientpackage",
+        "-l",
+        "3600");
   }
 
   @Test
@@ -127,11 +142,18 @@ public class TestCmd {
     buildDir = rootDir.resolve("build");
 
     var script = Nutshop.INSTANCE.getScripts().get(1);
-    execute(rootDir, "compile",
+    execute(
+        rootDir,
+        "compile",
         script.getRootPackageDirectory().relativize(script.getScriptPath()).toString(),
-        script.getRootPackageDirectory().relativize(script.getGraphQLSchemas().get(0).getSchemaPath()).toString(),
-        "-t", OUTPUT_DIR.toString(),
-        "--mnt", rootDir.toString());
+        script
+            .getRootPackageDirectory()
+            .relativize(script.getGraphQLSchemas().get(0).getSchemaPath())
+            .toString(),
+        "-t",
+        OUTPUT_DIR.toString(),
+        "--mnt",
+        rootDir.toString());
     createSnapshot();
   }
 
@@ -143,9 +165,13 @@ public class TestCmd {
 
     TestScript script = Nutshop.INSTANCE.getScripts().get(1);
 
-    int statusCode = execute(rootDir, StatusHook.NONE,"compile",
-        script.getRootPackageDirectory().relativize(script.getScriptPath()).toString(),
-        "doesNotExist.graphql");
+    int statusCode =
+        execute(
+            rootDir,
+            StatusHook.NONE,
+            "compile",
+            script.getRootPackageDirectory().relativize(script.getScriptPath()).toString(),
+            "doesNotExist.graphql");
     assertEquals(1, statusCode, "Non-zero status code expected");
   }
 
@@ -156,12 +182,21 @@ public class TestCmd {
     buildDir = rootDir.resolve("build");
 
     TestScript script = Nutshop.INSTANCE.getScripts().get(1);
-    execute(rootDir, "compile",
+    execute(
+        rootDir,
+        "compile",
         script.getRootPackageDirectory().relativize(script.getScriptPath()).toString(),
-        script.getRootPackageDirectory().relativize(script.getGraphQLSchemas().get(0).getSchemaPath()).toString(),
-            "-t", OUTPUT_DIR.toString(), "-a", "GraphQL");
+        script
+            .getRootPackageDirectory()
+            .relativize(script.getGraphQLSchemas().get(0).getSchemaPath())
+            .toString(),
+        "-t",
+        OUTPUT_DIR.toString(),
+        "-a",
+        "GraphQL");
     Path schemaFile = rootDir.resolve(GRAPHQL_NORMALIZED_FILE_NAME);
-    assertTrue(Files.isRegularFile(schemaFile),
+    assertTrue(
+        Files.isRegularFile(schemaFile),
         () -> "Schema file could not be found: %s".formatted(schemaFile));
     Files.deleteIfExists(schemaFile);
     createSnapshot();
@@ -210,14 +245,13 @@ public class TestCmd {
       args.add(graphql);
     }
 
-    execute(path, args.toArray(a->new String[a]));
+    execute(path, args.toArray(a -> new String[a]));
     snapshotSql();
   }
 
   @SneakyThrows
   private void snapshotSql() {
-    snapshot.addContent(Files.readString(OUTPUT_DIR.resolve(PLAN_SQL)),
-        "sql");
+    snapshot.addContent(Files.readString(OUTPUT_DIR.resolve(PLAN_SQL)), "sql");
     snapshot.createOrValidate();
   }
 
@@ -227,16 +261,23 @@ public class TestCmd {
     buildDir = rootDir.resolve("build");
 
     var script = Retail.INSTANCE.getScript(Retail.RetailScriptNames.FULL);
-    execute(rootDir, "compile",
+    execute(
+        rootDir,
+        "compile",
         script.getRootPackageDirectory().relativize(script.getScriptPath()).toString(),
-        "-t", OUTPUT_DIR.toString());
+        "-t",
+        OUTPUT_DIR.toString());
     createSnapshot();
   }
 
   @Test
   public void discoverRetail() {
-    execute(Retail.INSTANCE.getRootPackageDirectory(),
-        "discover", Retail.INSTANCE.getDataDirectory().toString(), "-o", OUTPUT_DIR.toString());
+    execute(
+        Retail.INSTANCE.getRootPackageDirectory(),
+        "discover",
+        Retail.INSTANCE.getDataDirectory().toString(),
+        "-o",
+        OUTPUT_DIR.toString());
     createSnapshot();
   }
 
@@ -244,9 +285,7 @@ public class TestCmd {
   @Test
   public void testCreditCardInfiniteLoop() {
     var basePath = CC_PATH;
-    execute(basePath,
-        "compile", "creditcard.sqrl",
-        "creditcard.graphqls");
+    execute(basePath, "compile", "creditcard.sqrl", "creditcard.graphqls");
   }
 
   public static int execute(Path rootDir, String... args) {
@@ -267,9 +306,7 @@ public class TestCmd {
     private boolean failed;
 
     @Override
-    public void onSuccess(ErrorCollector errors) {
-
-    }
+    public void onSuccess(ErrorCollector errors) {}
 
     @Override
     public void onFailure(Throwable e, ErrorCollector errors) {

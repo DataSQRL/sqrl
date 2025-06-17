@@ -1,3 +1,18 @@
+/*
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.datasqrl.io.schema.avro;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -8,9 +23,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import com.datasqrl.error.ErrorCollector;
 import java.util.Arrays;
 import java.util.List;
-
 import org.apache.avro.LogicalType;
 import org.apache.avro.LogicalTypes;
 import org.apache.avro.Schema;
@@ -20,8 +35,6 @@ import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import com.datasqrl.error.ErrorCollector;
 
 public class AvroToRelDataTypeConverterTest {
 
@@ -155,31 +168,37 @@ public class AvroToRelDataTypeConverterTest {
   @Test
   public void testUnionTypes() {
     // Union of NULL and INT (nullable INT)
-    var nullableIntSchema = Schema.createUnion(
-        Arrays.asList(Schema.create(Type.NULL), Schema.create(Type.INT)));
+    var nullableIntSchema =
+        Schema.createUnion(Arrays.asList(Schema.create(Type.NULL), Schema.create(Type.INT)));
     var nullableIntType = converter.convert(nullableIntSchema);
     assertEquals(SqlTypeName.INTEGER, nullableIntType.getSqlTypeName());
     assertTrue(nullableIntType.isNullable());
 
     // Union with multiple non-null types (should report an error)
-    var invalidUnionSchema = Schema.createUnion(
-        Arrays.asList(Schema.create(Type.INT), Schema.create(Type.STRING)));
+    var invalidUnionSchema =
+        Schema.createUnion(Arrays.asList(Schema.create(Type.INT), Schema.create(Type.STRING)));
     try {
       var invalidUnionType = converter.convert(invalidUnionSchema);
       System.out.println(invalidUnionType);
       fail("Expected failure");
-    } catch (Exception e) {}
+    } catch (Exception e) {
+    }
     assertTrue(errors.hasErrors());
   }
 
   @Test
   public void testRecordType() {
     // Create a record schema with various fields
-    var recordSchema = SchemaBuilder.record("TestRecord").fields()
-        .requiredString("name")
-        .optionalInt("age")
-        .name("balance").type().optional().type(LogicalTypes.decimal(10, 2).addToSchema(Schema.create(Type.BYTES)))
-        .endRecord();
+    var recordSchema =
+        SchemaBuilder.record("TestRecord")
+            .fields()
+            .requiredString("name")
+            .optionalInt("age")
+            .name("balance")
+            .type()
+            .optional()
+            .type(LogicalTypes.decimal(10, 2).addToSchema(Schema.create(Type.BYTES)))
+            .endRecord();
 
     var recordType = converter.convert(recordSchema);
     assertNotNull(recordType);
@@ -233,7 +252,7 @@ public class AvroToRelDataTypeConverterTest {
     var enumType = converter.convert(enumSchema);
     assertEquals(SqlTypeName.VARCHAR, enumType.getSqlTypeName());
     var expectedLength = symbols.stream().mapToInt(String::length).max().orElse(1);
-//    assertEquals(expectedLength, enumType.getPrecision());
+    //    assertEquals(expectedLength, enumType.getPrecision());
   }
 
   @Test
@@ -248,15 +267,28 @@ public class AvroToRelDataTypeConverterTest {
   @Test
   public void testComplexRecord() {
     // Record with nested record, array, and map
-    var innerRecordSchema = SchemaBuilder.record("InnerRecord").fields()
-        .requiredInt("innerField")
-        .endRecord();
+    var innerRecordSchema =
+        SchemaBuilder.record("InnerRecord").fields().requiredInt("innerField").endRecord();
 
-    var complexRecordSchema = SchemaBuilder.record("ComplexRecord").fields()
-        .name("nestedRecord").type(innerRecordSchema).noDefault()
-        .name("intArray").type().array().items().intType().noDefault()
-        .name("stringMap").type().map().values().stringType().noDefault()
-        .endRecord();
+    var complexRecordSchema =
+        SchemaBuilder.record("ComplexRecord")
+            .fields()
+            .name("nestedRecord")
+            .type(innerRecordSchema)
+            .noDefault()
+            .name("intArray")
+            .type()
+            .array()
+            .items()
+            .intType()
+            .noDefault()
+            .name("stringMap")
+            .type()
+            .map()
+            .values()
+            .stringType()
+            .noDefault()
+            .endRecord();
 
     var complexRecordType = converter.convert(complexRecordSchema);
     assertNotNull(complexRecordType);
@@ -268,7 +300,8 @@ public class AvroToRelDataTypeConverterTest {
     var nestedRecordType = nestedRecordField.getType();
     assertEquals(SqlTypeName.ROW, nestedRecordType.getSqlTypeName());
     assertEquals(1, nestedRecordType.getFieldCount());
-    assertEquals(SqlTypeName.INTEGER, nestedRecordType.getFieldList().get(0).getType().getSqlTypeName());
+    assertEquals(
+        SqlTypeName.INTEGER, nestedRecordType.getFieldList().get(0).getType().getSqlTypeName());
 
     // Validate array field
     var intArrayField = complexRecordType.getFieldList().get(1);
@@ -289,14 +322,15 @@ public class AvroToRelDataTypeConverterTest {
   @Test
   public void testInvalidSchema() {
     // Invalid schema: Union with multiple non-null types
-    var invalidUnionSchema = Schema.createUnion(
-        Arrays.asList(Schema.create(Type.INT), Schema.create(Type.STRING)));
+    var invalidUnionSchema =
+        Schema.createUnion(Arrays.asList(Schema.create(Type.INT), Schema.create(Type.STRING)));
     RelDataType type = null;
     try {
       type = converter.convert(invalidUnionSchema);
       System.out.println(type);
       fail("Expected failure");
-    } catch (Exception e) {}
+    } catch (Exception e) {
+    }
     assertNull(type);
     assertTrue(errors.hasErrors());
   }
@@ -304,10 +338,22 @@ public class AvroToRelDataTypeConverterTest {
   @Test
   public void testNullableFieldsInRecord() {
     // Record with nullable fields
-    var recordSchema = SchemaBuilder.record("NullableRecord").fields()
-        .name("nullableInt").type().unionOf().nullType().and().intType().endUnion().noDefault()
-        .name("nonNullableString").type().stringType().noDefault()
-        .endRecord();
+    var recordSchema =
+        SchemaBuilder.record("NullableRecord")
+            .fields()
+            .name("nullableInt")
+            .type()
+            .unionOf()
+            .nullType()
+            .and()
+            .intType()
+            .endUnion()
+            .noDefault()
+            .name("nonNullableString")
+            .type()
+            .stringType()
+            .noDefault()
+            .endRecord();
 
     var recordType = converter.convert(recordSchema);
     assertNotNull(recordType);
@@ -346,7 +392,8 @@ public class AvroToRelDataTypeConverterTest {
   public void testUnsupportedLogicalType() {
     // Add an unsupported logical type to a schema
     var unsupportedLogicalSchema = Schema.create(Type.INT);
-    LogicalTypes.LogicalTypeFactory customFactory = schema -> new LogicalType("custom-logical-type");
+    LogicalTypes.LogicalTypeFactory customFactory =
+        schema -> new LogicalType("custom-logical-type");
     LogicalTypes.register("custom-logical-type", customFactory);
     new LogicalType("custom-logical-type").addToSchema(unsupportedLogicalSchema);
 
@@ -363,27 +410,37 @@ public class AvroToRelDataTypeConverterTest {
   @Test
   public void testRecursiveSchema() {
     // Recursive record schema (simplified for test)
-    var recursiveSchema = SchemaBuilder.record("Node").fields()
-        .name("value").type().intType().noDefault()
-        .name("next").type().optional().type("Node")
-        .endRecord();
+    var recursiveSchema =
+        SchemaBuilder.record("Node")
+            .fields()
+            .name("value")
+            .type()
+            .intType()
+            .noDefault()
+            .name("next")
+            .type()
+            .optional()
+            .type("Node")
+            .endRecord();
 
     // Since the converter doesn't handle recursive schemas, it should report an error
     try {
       var type = converter.convert(recursiveSchema);
       fail("Should fail");
-    } catch (Exception e) {}
+    } catch (Exception e) {
+    }
     assertTrue(errors.hasErrors());
   }
 
   @Test
   public void testSchemaWithAliases() {
     // Schema with aliases (should be ignored in conversion)
-    var aliasedSchema = SchemaBuilder.record("OriginalName")
-        .aliases("Alias1", "Alias2")
-        .fields()
-        .requiredString("field")
-        .endRecord();
+    var aliasedSchema =
+        SchemaBuilder.record("OriginalName")
+            .aliases("Alias1", "Alias2")
+            .fields()
+            .requiredString("field")
+            .endRecord();
 
     var type = converter.convert(aliasedSchema);
     assertNotNull(type);
@@ -394,15 +451,19 @@ public class AvroToRelDataTypeConverterTest {
   @Test
   public void testTypeReuseVsRecursiveSchema() {
     // Named reusable schema (non-recursive)
-    var sharedRecord = SchemaBuilder.record("Shared").fields()
-        .requiredString("label")
-        .endRecord();
+    var sharedRecord = SchemaBuilder.record("Shared").fields().requiredString("label").endRecord();
 
     // Schema that reuses 'Shared' twice (no recursion)
-    var reusableSchema = SchemaBuilder.record("Container").fields()
-        .name("first").type(sharedRecord).noDefault()
-        .name("second").type(sharedRecord).noDefault()
-        .endRecord();
+    var reusableSchema =
+        SchemaBuilder.record("Container")
+            .fields()
+            .name("first")
+            .type(sharedRecord)
+            .noDefault()
+            .name("second")
+            .type(sharedRecord)
+            .noDefault()
+            .endRecord();
 
     var reusableType = converter.convert(reusableSchema);
     assertNotNull(reusableType);
@@ -411,10 +472,15 @@ public class AvroToRelDataTypeConverterTest {
     assertEquals(SqlTypeName.ROW, reusableType.getFieldList().get(1).getType().getSqlTypeName());
 
     // Recursive schema: a 'Node' record that refers to itself
-    var recursiveSchema = SchemaBuilder.record("Node").fields()
-        .requiredInt("value")
-        .name("next").type().optional().type("Node")
-        .endRecord();
+    var recursiveSchema =
+        SchemaBuilder.record("Node")
+            .fields()
+            .requiredInt("value")
+            .name("next")
+            .type()
+            .optional()
+            .type("Node")
+            .endRecord();
 
     var recursiveErrors = ErrorCollector.root();
     var recursiveConverter = new AvroToRelDataTypeConverter(recursiveErrors, false);

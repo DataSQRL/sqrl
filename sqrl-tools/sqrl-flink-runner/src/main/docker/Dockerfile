@@ -1,5 +1,5 @@
 #
-# Copyright © 2024 DataSQRL (contact@datasqrl.com)
+# Copyright © 2021 DataSQRL (contact@datasqrl.com)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,6 +14,6 @@
 # limitations under the License.
 #
 
-FROM datasqrl/flink-sql-runner:${flinkrunner.version}-flink-1.19
+FROM ${flinkrunner.image.repo}/datasqrl/flink-sql-runner:${flinkrunner.version}-flink-1.19
 
 COPY sqrl-functions/*.jar /opt/flink/lib/
