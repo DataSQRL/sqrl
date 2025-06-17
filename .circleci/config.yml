@@ -293,7 +293,7 @@ jobs:
 
             # ── sqrl-server test image ───────────────────────────────────────
             docker build \
-              -t datasqrl/sqrl-server-test-image:test \
+              -t datasqrl/sqrl-server-test-image:${CIRCLE_SHA1} \
               sqrl-server/sqrl-server-vertx
             docker push datasqrl/sqrl-server-test-image:${CIRCLE_SHA1}
 
