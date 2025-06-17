@@ -172,6 +172,21 @@
     "allowedHeaders": [],
     "exposedHeaders": []
   },
+  "authEnabled": false,
+  "authOptions": {
+    "pubSecKeys": [
+      {
+        "algorithm": "${JWT_ALGORITHM}",
+        "buffer": "${JWT_SECRET}"
+      }
+    ],
+    "jwtOptions": {
+      "issuer": "${JWT_ISSUER}",
+      "audience": ["${JWT_AUDIENCE}"],
+      "expiresInSeconds": "${JWT_EXPIRES_IN_SECONDS}",
+      "leeway": "${JWT_LEEWAY}"
+    }
+  },
   "apolloWSOptions": {
     "keepAlive": 30000
   }

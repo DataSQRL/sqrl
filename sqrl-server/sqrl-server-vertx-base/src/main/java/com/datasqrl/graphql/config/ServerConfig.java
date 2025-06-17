@@ -44,7 +44,7 @@ public class ServerConfig {
   PgConnectOptions pgConnectOptions;
   PoolOptions poolOptions;
   CorsHandlerOptions corsHandlerOptions;
-  JWTAuthOptions authOptions;
+  JWTAuthOptions jwtAuth;
 
   // I moved it here as I believe it belongs to the server configuration.
   // The method itself is needed for easier mocking.

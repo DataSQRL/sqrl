@@ -382,6 +382,28 @@ jobs:
             docker logs sqrl-server
             curl -s -X POST http://localhost:8888/graphql   -H 'Content-Type: application/json'   --data '{"query":"query { __typename }"}'
 
+  run-jwt-tests:
+    executor: default-machine
+    steps:
+      - checkout
+      - run:
+          name: Pull test image
+          command: |
+            docker pull datasqrl/cmd-test-image:${CIRCLE_SHA1}
+            docker pull datasqrl/sqrl-server-test-image:${CIRCLE_SHA1}
+      - run:
+          working_directory: ./sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/jwt
+          name: Launch sqrl-server with JWT auth and test tokens
+          command: |
+            docker run --rm -v "$PWD:/build" -e TZ="UTC" datasqrl/cmd-test-image:${CIRCLE_SHA1} compile jwt.sqrl
+            docker run -d --name sqrl-server --rm -v $(pwd)/build/deploy/plan/vertx.json:/opt/sqrl/server-model.json \
+                                                  -v $(pwd)/build/deploy/plan/vertx-config.json:/opt/sqrl/server-config.json \
+                                                  -p 8888:8888 \
+                                                  datasqrl/sqrl-server-test-image:${CIRCLE_SHA1}
+            sleep 2s
+            docker logs sqrl-server
+            curl -s -X POST http://localhost:8888/graphql -H 'Content-Type: application/json' --data '{"query":"query { __typename }"}'
+
   build-images:
     # use a full VM so we can run Docker / Buildx
     executor: default-machine
@@ -568,6 +590,16 @@ workflows:
           requires:
             - build-test-image
       - run-vertx-tests:
+          <<: *job-defaults
+          filters:
+            branches:
+              only: /.*/
+            tags:
+              ignore: /.*/
+          requires:
+            - build-test-image
+
+      - run-jwt-tests:
           <<: *job-defaults
           filters:
             branches:

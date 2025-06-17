@@ -98,7 +98,7 @@ class GraphQLJwtHandlerTest {
             return CLUSTER.bootstrapServers();
           }
         };
-    serverConfig.setAuthOptions(
+    serverConfig.setJwtAuth(
         new JWTAuthOptions()
             .addPubSecKey(new PubSecKeyOptions().setAlgorithm("HS256").setBuffer("dGVzdA==")));
     serverConfig.setPoolOptions(new PgPoolOptions());
@@ -125,7 +125,7 @@ class GraphQLJwtHandlerTest {
 
   @Test
   void jwtAuthentication(VertxTestContext testContext) {
-    var provider = JWTAuth.create(vertx, this.serverConfig.getAuthOptions());
+    var provider = JWTAuth.create(vertx, this.serverConfig.getJwtAuth());
 
     // Generate token
     var token = provider.generateToken(new JsonObject(), new JWTOptions().setExpiresInSeconds(60));
