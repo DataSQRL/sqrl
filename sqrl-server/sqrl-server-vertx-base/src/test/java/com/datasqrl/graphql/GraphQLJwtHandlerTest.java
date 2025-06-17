@@ -32,9 +32,7 @@ import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.WebSocketConnectOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.JWTOptions;
-import io.vertx.ext.auth.PubSecKeyOptions;
 import io.vertx.ext.auth.jwt.JWTAuth;
-import io.vertx.ext.auth.jwt.JWTAuthOptions;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.junit5.VertxExtension;
@@ -98,9 +96,6 @@ class GraphQLJwtHandlerTest {
             return CLUSTER.bootstrapServers();
           }
         };
-    serverConfig.setAuthOptions(
-        new JWTAuthOptions()
-            .addPubSecKey(new PubSecKeyOptions().setAlgorithm("HS256").setBuffer("dGVzdA==")));
     serverConfig.setPoolOptions(new PgPoolOptions());
     serverConfig.setServletConfig(new ServletConfig());
     serverConfig.setCorsHandlerOptions(new CorsHandlerOptions());
@@ -125,7 +120,7 @@ class GraphQLJwtHandlerTest {
 
   @Test
   public void testJWTAuthentication(VertxTestContext testContext) {
-    var provider = JWTAuth.create(vertx, this.serverConfig.getAuthOptions());
+    var provider = JWTAuth.create(vertx, this.serverConfig.getJwtAuth());
 
     // Generate token
     var token = provider.generateToken(new JsonObject(), new JWTOptions().setExpiresInSeconds(60));

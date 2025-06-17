@@ -219,7 +219,7 @@ public class GraphQLServer extends AbstractVerticle {
     if (this.config.getGraphiQLHandlerOptions() != null) {
       var handlerBuilder =
           GraphiQLHandler.builder(vertx).with(this.config.getGraphiQLHandlerOptions());
-      if (this.config.getAuthOptions() != null) {
+      if (this.config.getJwtAuth() != null) {
         handlerBuilder.addingHeaders(
             rc -> {
               String token = rc.get("token");
@@ -257,8 +257,8 @@ public class GraphQLServer extends AbstractVerticle {
 
     var handler = router.route(this.config.getServletConfig().getGraphQLEndpoint());
     Optional<JWTAuth> authProvider =
-        this.config.getAuthOptions() != null
-            ? Optional.of(JWTAuth.create(vertx, this.config.getAuthOptions()))
+        this.config.getJwtAuth() != null
+            ? Optional.of(JWTAuth.create(vertx, this.config.getJwtAuth()))
             : Optional.empty();
     authProvider.ifPresent(
         (auth) -> {
