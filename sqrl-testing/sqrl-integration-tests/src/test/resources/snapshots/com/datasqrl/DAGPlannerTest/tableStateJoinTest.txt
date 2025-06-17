@@ -1273,6 +1273,224 @@ INSERT INTO `default_catalog`.`default_database`.`OrderCustomer_2`
     ],
     "mutations" : [ ],
     "subscriptions" : [ ],
+    "operations" : [
+      {
+        "function" : {
+          "name" : "GetCustomer",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query Customer($limit: Int = 10, $offset: Int = 0) {\nCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+          "queryName" : "Customer",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/Customer{?offset,limit}",
+        "httpMethod" : "GET"
+      },
+      {
+        "function" : {
+          "name" : "GetOrderCustomer",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query OrderCustomer($limit: Int = 10, $offset: Int = 0) {\nOrderCustomer(limit: $limit, offset: $offset) {\ntime\nid\nname\ncustomerid\n}\n\n}",
+          "queryName" : "OrderCustomer",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/OrderCustomer{?offset,limit}",
+        "httpMethod" : "GET"
+      },
+      {
+        "function" : {
+          "name" : "GetOrderCustomerConstant",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query OrderCustomerConstant($limit: Int = 10, $offset: Int = 0) {\nOrderCustomerConstant(limit: $limit, offset: $offset) {\ntime\nid\nname\ncustomerid\n}\n\n}",
+          "queryName" : "OrderCustomerConstant",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/OrderCustomerConstant{?offset,limit}",
+        "httpMethod" : "GET"
+      },
+      {
+        "function" : {
+          "name" : "GetOrderCustomerLeft",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query OrderCustomerLeft($limit: Int = 10, $offset: Int = 0) {\nOrderCustomerLeft(limit: $limit, offset: $offset) {\nlastUpdated\nid\nname\ncustomerid\n}\n\n}",
+          "queryName" : "OrderCustomerLeft",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/OrderCustomerLeft{?offset,limit}",
+        "httpMethod" : "GET"
+      },
+      {
+        "function" : {
+          "name" : "GetOrderCustomerLeftExcluded",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query OrderCustomerLeftExcluded($limit: Int = 10, $offset: Int = 0) {\nOrderCustomerLeftExcluded(limit: $limit, offset: $offset) {\ntime\nid\ncustomerid\n}\n\n}",
+          "queryName" : "OrderCustomerLeftExcluded",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/OrderCustomerLeftExcluded{?offset,limit}",
+        "httpMethod" : "GET"
+      },
+      {
+        "function" : {
+          "name" : "GetOrderCustomerRight",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query OrderCustomerRight($limit: Int = 10, $offset: Int = 0) {\nOrderCustomerRight(limit: $limit, offset: $offset) {\nouuid\nid\nname\ncustomerid\n}\n\n}",
+          "queryName" : "OrderCustomerRight",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/OrderCustomerRight{?offset,limit}",
+        "httpMethod" : "GET"
+      },
+      {
+        "function" : {
+          "name" : "GetOrderCustomerRightExcluded",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query OrderCustomerRightExcluded($limit: Int = 10, $offset: Int = 0) {\nOrderCustomerRightExcluded(limit: $limit, offset: $offset) {\nlastUpdated\ncustomerid\nname\n}\n\n}",
+          "queryName" : "OrderCustomerRightExcluded",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/OrderCustomerRightExcluded{?offset,limit}",
+        "httpMethod" : "GET"
+      },
+      {
+        "function" : {
+          "name" : "GetOrders",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query Orders($limit: Int = 10, $offset: Int = 0) {\nOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
+          "queryName" : "Orders",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/Orders{?offset,limit}",
+        "httpMethod" : "GET"
+      }
+    ],
     "schema" : {
       "type" : "string",
       "schema" : "type Customer {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n}\n\n\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype OrderCustomer {\n  time: DateTime!\n  id: GraphQLBigInteger!\n  name: String!\n  customerid: GraphQLBigInteger!\n}\n\ntype OrderCustomerConstant {\n  time: DateTime!\n  id: GraphQLBigInteger!\n  name: String!\n  customerid: GraphQLBigInteger!\n}\n\ntype OrderCustomerLeft {\n  lastUpdated: GraphQLBigInteger\n  id: GraphQLBigInteger!\n  name: String\n  customerid: GraphQLBigInteger!\n}\n\ntype OrderCustomerLeftExcluded {\n  time: DateTime!\n  id: GraphQLBigInteger!\n  customerid: GraphQLBigInteger!\n}\n\ntype OrderCustomerRight {\n  ouuid: GraphQLBigInteger!\n  id: GraphQLBigInteger\n  name: String!\n  customerid: GraphQLBigInteger\n}\n\ntype OrderCustomerRightExcluded {\n  lastUpdated: GraphQLBigInteger!\n  customerid: GraphQLBigInteger!\n  name: String!\n}\n\ntype Orders {\n  id: GraphQLBigInteger!\n  customerid: GraphQLBigInteger!\n  time: DateTime!\n  entries: [Orders_entriesOutput]!\n}\n\ntype Orders_entriesOutput {\n  productid: GraphQLBigInteger!\n  quantity: GraphQLBigInteger!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  OrderCustomer(limit: Int = 10, offset: Int = 0): [OrderCustomer!]\n  OrderCustomerConstant(limit: Int = 10, offset: Int = 0): [OrderCustomerConstant!]\n  OrderCustomerLeft(limit: Int = 10, offset: Int = 0): [OrderCustomerLeft!]\n  OrderCustomerLeftExcluded(limit: Int = 10, offset: Int = 0): [OrderCustomerLeftExcluded!]\n  OrderCustomerRight(limit: Int = 10, offset: Int = 0): [OrderCustomerRight!]\n  OrderCustomerRightExcluded(limit: Int = 10, offset: Int = 0): [OrderCustomerRightExcluded!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n}\n"

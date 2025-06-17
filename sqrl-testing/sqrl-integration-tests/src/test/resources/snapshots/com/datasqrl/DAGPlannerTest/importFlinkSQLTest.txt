@@ -459,6 +459,62 @@ INSERT INTO `default_catalog`.`default_database`.`CategoryDistinct_2`
     ],
     "mutations" : [ ],
     "subscriptions" : [ ],
+    "operations" : [
+      {
+        "function" : {
+          "name" : "GetCategory",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query Category($limit: Int = 10, $offset: Int = 0) {\nCategory(limit: $limit, offset: $offset) {\ncategoryid\nname\ndescription\nupdateTime\n}\n\n}",
+          "queryName" : "Category",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/Category{?offset,limit}",
+        "httpMethod" : "GET"
+      },
+      {
+        "function" : {
+          "name" : "GetCategoryDistinct",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query CategoryDistinct($limit: Int = 10, $offset: Int = 0) {\nCategoryDistinct(limit: $limit, offset: $offset) {\ncategoryid\nname\ndescription\nupdateTime\n}\n\n}",
+          "queryName" : "CategoryDistinct",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/CategoryDistinct{?offset,limit}",
+        "httpMethod" : "GET"
+      }
+    ],
     "schema" : {
       "type" : "string",
       "schema" : "type Category {\n  categoryid: Int!\n  name: String!\n  description: String\n  updateTime: DateTime!\n}\n\ntype CategoryDistinct {\n  categoryid: Int!\n  name: String!\n  description: String\n  updateTime: DateTime!\n}\n\n\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Query {\n  Category(limit: Int = 10, offset: Int = 0): [Category!]\n  CategoryDistinct(limit: Int = 10, offset: Int = 0): [CategoryDistinct!]\n}\n"

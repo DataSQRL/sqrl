@@ -686,6 +686,89 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerOrdersJoin_2`
     ],
     "mutations" : [ ],
     "subscriptions" : [ ],
+    "operations" : [
+      {
+        "function" : {
+          "name" : "GetCustomer",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query Customer($limit: Int = 10, $offset: Int = 0) {\nCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\n}\n\n}",
+          "queryName" : "Customer",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/Customer{?offset,limit}",
+        "httpMethod" : "GET"
+      },
+      {
+        "function" : {
+          "name" : "GetCustomerOrdersJoin",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query CustomerOrdersJoin($limit: Int = 10, $offset: Int = 0) {\nCustomerOrdersJoin(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\nid\ncustomerid0\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
+          "queryName" : "CustomerOrdersJoin",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/CustomerOrdersJoin{?offset,limit}",
+        "httpMethod" : "GET"
+      },
+      {
+        "function" : {
+          "name" : "GetOrders",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query Orders($limit: Int = 10, $offset: Int = 0) {\nOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
+          "queryName" : "Orders",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/Orders{?offset,limit}",
+        "httpMethod" : "GET"
+      }
+    ],
     "schema" : {
       "type" : "string",
       "schema" : "type Customer {\n  customerid: GraphQLBigInteger!\n  email: String\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n}\n\ntype CustomerOrdersJoin {\n  customerid: GraphQLBigInteger!\n  email: String\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  id: GraphQLBigInteger!\n  customerid0: GraphQLBigInteger!\n  time: DateTime!\n  entries: [CustomerOrdersJoin_entriesOutput]!\n}\n\ntype CustomerOrdersJoin_entriesOutput {\n  productid: GraphQLBigInteger!\n  quantity: GraphQLBigInteger!\n  unit_price: Float!\n  discount: Float\n}\n\n\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Orders {\n  id: GraphQLBigInteger!\n  customerid: GraphQLBigInteger!\n  time: DateTime!\n  entries: [Orders_entriesOutput]!\n}\n\ntype Orders_entriesOutput {\n  productid: GraphQLBigInteger!\n  quantity: GraphQLBigInteger!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerOrdersJoin(limit: Int = 10, offset: Int = 0): [CustomerOrdersJoin!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n}\n"

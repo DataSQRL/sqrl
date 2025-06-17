@@ -138,6 +138,35 @@ FROM "MathFunctions_1"
     ],
     "mutations" : [ ],
     "subscriptions" : [ ],
+    "operations" : [
+      {
+        "function" : {
+          "name" : "GetMathFunctions",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query MathFunctions($limit: Int = 10, $offset: Int = 0) {\nMathFunctions(limit: $limit, offset: $offset) {\nd\nb\ncbrt\ncopy_sign\nexpm1\nhypot\nlog1p\nnext_after\nscalb\nulp\nbinomial_distribution\nexponential_distribution\nnormal_distribution\npoisson_distribution\n}\n\n}",
+          "queryName" : "MathFunctions",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/MathFunctions{?offset,limit}",
+        "httpMethod" : "GET"
+      }
+    ],
     "schema" : {
       "type" : "string",
       "schema" : "\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype MathFunctions {\n  d: Float!\n  b: Int!\n  cbrt: Float\n  copy_sign: Float\n  expm1: Float\n  hypot: Float\n  log1p: Float\n  next_after: Float\n  scalb: Float\n  ulp: Float\n  binomial_distribution: Float\n  exponential_distribution: Float\n  normal_distribution: Float\n  poisson_distribution: Float\n}\n\ntype Query {\n  MathFunctions(limit: Int = 10, offset: Int = 0): [MathFunctions!]\n}\n"

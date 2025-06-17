@@ -451,6 +451,170 @@ FROM "upsert_kafka_confluent_avro_6"
     ],
     "mutations" : [ ],
     "subscriptions" : [ ],
+    "operations" : [
+      {
+        "function" : {
+          "name" : "Geticeberg_parquet_table",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query iceberg_parquet_table($limit: Int = 10, $offset: Int = 0) {\niceberg_parquet_table(limit: $limit, offset: $offset) {\nuser_id\nname\n}\n\n}",
+          "queryName" : "iceberg_parquet_table",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/iceberg_parquet_table{?offset,limit}",
+        "httpMethod" : "GET"
+      },
+      {
+        "function" : {
+          "name" : "Getkafka_avro_table",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query kafka_avro_table($limit: Int = 10, $offset: Int = 0) {\nkafka_avro_table(limit: $limit, offset: $offset) {\nuser_id\nname\n}\n\n}",
+          "queryName" : "kafka_avro_table",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/kafka_avro_table{?offset,limit}",
+        "httpMethod" : "GET"
+      },
+      {
+        "function" : {
+          "name" : "Getkafka_debezium_table",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query kafka_debezium_table($limit: Int = 10, $offset: Int = 0) {\nkafka_debezium_table(limit: $limit, offset: $offset) {\nuser_id\nname\n}\n\n}",
+          "queryName" : "kafka_debezium_table",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/kafka_debezium_table{?offset,limit}",
+        "httpMethod" : "GET"
+      },
+      {
+        "function" : {
+          "name" : "Getkafka_safe_csv_table",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query kafka_safe_csv_table($limit: Int = 10, $offset: Int = 0) {\nkafka_safe_csv_table(limit: $limit, offset: $offset) {\nuser_id\nname\n}\n\n}",
+          "queryName" : "kafka_safe_csv_table",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/kafka_safe_csv_table{?offset,limit}",
+        "httpMethod" : "GET"
+      },
+      {
+        "function" : {
+          "name" : "Getkafka_safe_json_table",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query kafka_safe_json_table($limit: Int = 10, $offset: Int = 0) {\nkafka_safe_json_table(limit: $limit, offset: $offset) {\nuser_id\nname\n}\n\n}",
+          "queryName" : "kafka_safe_json_table",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/kafka_safe_json_table{?offset,limit}",
+        "httpMethod" : "GET"
+      },
+      {
+        "function" : {
+          "name" : "Getupsert_kafka_confluent_avro",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query upsert_kafka_confluent_avro($limit: Int = 10, $offset: Int = 0) {\nupsert_kafka_confluent_avro(limit: $limit, offset: $offset) {\nuser_id\nname\n}\n\n}",
+          "queryName" : "upsert_kafka_confluent_avro",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/upsert_kafka_confluent_avro{?offset,limit}",
+        "httpMethod" : "GET"
+      }
+    ],
     "schema" : {
       "type" : "string",
       "schema" : "\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Query {\n  iceberg_parquet_table(limit: Int = 10, offset: Int = 0): [iceberg_parquet_table!]\n  kafka_avro_table(limit: Int = 10, offset: Int = 0): [kafka_avro_table!]\n  kafka_debezium_table(limit: Int = 10, offset: Int = 0): [kafka_debezium_table!]\n  kafka_safe_csv_table(limit: Int = 10, offset: Int = 0): [kafka_safe_csv_table!]\n  kafka_safe_json_table(limit: Int = 10, offset: Int = 0): [kafka_safe_json_table!]\n  upsert_kafka_confluent_avro(limit: Int = 10, offset: Int = 0): [upsert_kafka_confluent_avro!]\n}\n\ntype iceberg_parquet_table {\n  user_id: Int\n  name: String\n}\n\ntype kafka_avro_table {\n  user_id: Int\n  name: String\n}\n\ntype kafka_debezium_table {\n  user_id: Int\n  name: String\n}\n\ntype kafka_safe_csv_table {\n  user_id: Int\n  name: String\n}\n\ntype kafka_safe_json_table {\n  user_id: Int\n  name: String\n}\n\ntype upsert_kafka_confluent_avro {\n  user_id: Int!\n  name: String\n}\n"

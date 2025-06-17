@@ -339,6 +339,119 @@ FROM "SensorReading_3"
         }
       }
     ],
+    "operations" : [
+      {
+        "function" : {
+          "name" : "GetHighTempAlert",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query HighTempAlert($limit: Int = 10, $offset: Int = 0) {\nHighTempAlert(limit: $limit, offset: $offset) {\nsensorid\ntemperature\nevent_time\n}\n\n}",
+          "queryName" : "HighTempAlert",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/HighTempAlert{?offset,limit}",
+        "httpMethod" : "GET"
+      },
+      {
+        "function" : {
+          "name" : "GetSensorMaxTemp",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query SensorMaxTemp($limit: Int = 10, $offset: Int = 0) {\nSensorMaxTemp(limit: $limit, offset: $offset) {\nsensorid\nmaxTemp\n}\n\n}",
+          "queryName" : "SensorMaxTemp",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/SensorMaxTemp{?offset,limit}",
+        "httpMethod" : "GET"
+      },
+      {
+        "function" : {
+          "name" : "GetSensorReading",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query SensorReading($limit: Int = 10, $offset: Int = 0) {\nSensorReading(limit: $limit, offset: $offset) {\nsensorid\ntemperature\nevent_time\n}\n\n}",
+          "queryName" : "SensorReading",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/SensorReading{?offset,limit}",
+        "httpMethod" : "GET"
+      },
+      {
+        "function" : {
+          "name" : "AddSensorReading",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "temperature" : {
+                "type" : "number"
+              },
+              "sensorid" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [
+              "sensorid",
+              "temperature"
+            ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "mutation SensorReading($sensorid: Int!, $temperature: Float!) {\nSensorReading(event: { sensorid: $sensorid, temperature: $temperature }) {\nsensorid\ntemperature\nevent_time\n}\n\n}",
+          "queryName" : "SensorReading",
+          "operationType" : "MUTATION"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "mutations/SensorReading",
+        "httpMethod" : "POST"
+      }
+    ],
     "schema" : {
       "type" : "string",
       "schema" : "\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Mutation {\n  SensorReading(event: SensorReadingInput!): SensorReadingResultOutput!\n}\n\ntype Query {\n  HighTempAlert(limit: Int = 10, offset: Int = 0): [SensorReading!]\n  SensorMaxTemp(limit: Int = 10, offset: Int = 0): [SensorMaxTemp!]\n  SensorReading(limit: Int = 10, offset: Int = 0): [SensorReading!]\n}\n\ntype SensorMaxTemp {\n  sensorid: Int!\n  maxTemp: Float!\n}\n\ntype SensorReading {\n  sensorid: Int!\n  temperature: Float!\n  event_time: DateTime\n}\n\ninput SensorReadingInput {\n  sensorid: Int!\n  temperature: Float!\n}\n\ntype SensorReadingResultOutput {\n  sensorid: Int!\n  temperature: Float!\n  event_time: DateTime\n}\n\ntype Subscription {\n  SensorReadingSubscription: SensorReading\n  SensorSubscriptionById(sensorid: Int!): SensorReading\n}\n"

@@ -406,6 +406,35 @@ END
     ],
     "mutations" : [ ],
     "subscriptions" : [ ],
+    "operations" : [
+      {
+        "function" : {
+          "name" : "GetOrderEntryJoin",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query OrderEntryJoin($limit: Int = 10, $offset: Int = 0) {\nOrderEntryJoin(limit: $limit, offset: $offset) {\nid1\nid2\nmulti\n}\n\n}",
+          "queryName" : "OrderEntryJoin",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/OrderEntryJoin{?offset,limit}",
+        "httpMethod" : "GET"
+      }
+    ],
     "schema" : {
       "type" : "string",
       "schema" : "\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype OrderEntryJoin {\n  id1: GraphQLBigInteger!\n  id2: GraphQLBigInteger!\n  multi: GraphQLBigInteger!\n}\n\ntype Query {\n  OrderEntryJoin(limit: Int = 10, offset: Int = 0): [OrderEntryJoin!]\n}\n"

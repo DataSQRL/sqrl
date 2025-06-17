@@ -1017,6 +1017,170 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerCumulate_2`
     ],
     "mutations" : [ ],
     "subscriptions" : [ ],
+    "operations" : [
+      {
+        "function" : {
+          "name" : "GetCustomer",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query Customer($limit: Int = 10, $offset: Int = 0) {\nCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+          "queryName" : "Customer",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/Customer{?offset,limit}",
+        "httpMethod" : "GET"
+      },
+      {
+        "function" : {
+          "name" : "GetCustomerCumulate",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query CustomerCumulate($limit: Int = 10, $offset: Int = 0) {\nCustomerCumulate(limit: $limit, offset: $offset) {\nwindow_start\nwindow_end\ntotal\n}\n\n}",
+          "queryName" : "CustomerCumulate",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/CustomerCumulate{?offset,limit}",
+        "httpMethod" : "GET"
+      },
+      {
+        "function" : {
+          "name" : "GetCustomerHop",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query CustomerHop($limit: Int = 10, $offset: Int = 0) {\nCustomerHop(limit: $limit, offset: $offset) {\nwindow_start\nwindow_end\nwindow_time\ntotal\n}\n\n}",
+          "queryName" : "CustomerHop",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/CustomerHop{?offset,limit}",
+        "httpMethod" : "GET"
+      },
+      {
+        "function" : {
+          "name" : "GetCustomerSession",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query CustomerSession($limit: Int = 10, $offset: Int = 0) {\nCustomerSession(limit: $limit, offset: $offset) {\ncustomerid\nwindow_start\nwindow_end\nwindow_time\ntotal\n}\n\n}",
+          "queryName" : "CustomerSession",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/CustomerSession{?offset,limit}",
+        "httpMethod" : "GET"
+      },
+      {
+        "function" : {
+          "name" : "GetCustomerTumble",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query CustomerTumble($limit: Int = 10, $offset: Int = 0) {\nCustomerTumble(limit: $limit, offset: $offset) {\nwindow_start\nwindow_end\ntotal\n}\n\n}",
+          "queryName" : "CustomerTumble",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/CustomerTumble{?offset,limit}",
+        "httpMethod" : "GET"
+      },
+      {
+        "function" : {
+          "name" : "GetStreamJoin",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query StreamJoin($limit: Int = 10, $offset: Int = 0) {\nStreamJoin(limit: $limit, offset: $offset) {\nwindow_start\nwindow_end\nwindow_time\ntotal\ncustomerid\nwindow_start0\nwindow_end0\nwindow_time0\ntotal0\n}\n\n}",
+          "queryName" : "StreamJoin",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/StreamJoin{?offset,limit}",
+        "httpMethod" : "GET"
+      }
+    ],
     "schema" : {
       "type" : "string",
       "schema" : "type Customer {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n}\n\ntype CustomerCumulate {\n  window_start: DateTime!\n  window_end: DateTime!\n  total: GraphQLBigInteger!\n}\n\ntype CustomerHop {\n  window_start: DateTime!\n  window_end: DateTime!\n  window_time: DateTime!\n  total: GraphQLBigInteger!\n}\n\ntype CustomerSession {\n  customerid: GraphQLBigInteger!\n  window_start: DateTime!\n  window_end: DateTime!\n  window_time: DateTime!\n  total: GraphQLBigInteger!\n}\n\ntype CustomerTumble {\n  window_start: DateTime!\n  window_end: DateTime!\n  total: GraphQLBigInteger!\n}\n\n\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerCumulate(limit: Int = 10, offset: Int = 0): [CustomerCumulate!]\n  CustomerHop(limit: Int = 10, offset: Int = 0): [CustomerHop!]\n  CustomerSession(limit: Int = 10, offset: Int = 0): [CustomerSession!]\n  CustomerTumble(limit: Int = 10, offset: Int = 0): [CustomerTumble!]\n  StreamJoin(limit: Int = 10, offset: Int = 0): [StreamJoin!]\n}\n\ntype StreamJoin {\n  window_start: DateTime!\n  window_end: DateTime!\n  window_time: DateTime!\n  total: GraphQLBigInteger!\n  customerid: GraphQLBigInteger!\n  window_start0: DateTime!\n  window_end0: DateTime!\n  window_time0: DateTime!\n  total0: GraphQLBigInteger!\n}\n"

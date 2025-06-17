@@ -316,6 +316,121 @@ FROM "VisitAfter_4"
     ],
     "mutations" : [ ],
     "subscriptions" : [ ],
+    "operations" : [
+      {
+        "function" : {
+          "name" : "GetClick",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query Click($limit: Int = 10, $offset: Int = 0) {\nClick(limit: $limit, offset: $offset) {\nurl\ntimestamp\nuserid\n}\n\n}",
+          "queryName" : "Click",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/Click{?offset,limit}",
+        "httpMethod" : "GET"
+      },
+      {
+        "function" : {
+          "name" : "GetRecommendation",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              },
+              "url" : {
+                "type" : "string"
+              }
+            },
+            "required" : [
+              "url"
+            ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query Recommendation($url: String!, $limit: Int = 10, $offset: Int = 0) {\nRecommendation(url: $url, limit: $limit, offset: $offset) {\nurl\nrec\nfrequency\n}\n\n}",
+          "queryName" : "Recommendation",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/Recommendation{?offset,limit,url}",
+        "httpMethod" : "GET"
+      },
+      {
+        "function" : {
+          "name" : "GetTrending",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query Trending($limit: Int = 10, $offset: Int = 0) {\nTrending(limit: $limit, offset: $offset) {\nurl\ntotal\n}\n\n}",
+          "queryName" : "Trending",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/Trending{?offset,limit}",
+        "httpMethod" : "GET"
+      },
+      {
+        "function" : {
+          "name" : "GetVisitAfter",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query VisitAfter($limit: Int = 10, $offset: Int = 0) {\nVisitAfter(limit: $limit, offset: $offset) {\nbeforeURL\nafterURL\ntimestamp\n}\n\n}",
+          "queryName" : "VisitAfter",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/VisitAfter{?offset,limit}",
+        "httpMethod" : "GET"
+      }
+    ],
     "schema" : {
       "type" : "string",
       "schema" : "type Click {\n  url: String!\n  timestamp: DateTime!\n  userid: String!\n}\n\n\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Query {\n  Click(limit: Int = 10, offset: Int = 0): [Click!]\n  Recommendation(url: String!, limit: Int = 10, offset: Int = 0): [Recommendation!]\n  Trending(limit: Int = 10, offset: Int = 0): [Trending!]\n  VisitAfter(limit: Int = 10, offset: Int = 0): [VisitAfter!]\n}\n\ntype Recommendation {\n  url: String!\n  rec: String!\n  frequency: GraphQLBigInteger!\n}\n\ntype Trending {\n  url: String!\n  total: GraphQLBigInteger!\n}\n\ntype VisitAfter {\n  beforeURL: String!\n  afterURL: String!\n  timestamp: DateTime!\n}\n"

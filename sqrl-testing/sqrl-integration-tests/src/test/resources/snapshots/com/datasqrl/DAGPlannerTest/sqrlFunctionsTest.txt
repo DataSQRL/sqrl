@@ -386,6 +386,62 @@ INSERT INTO `default_catalog`.`default_database`.`MyTable2_2`
     ],
     "mutations" : [ ],
     "subscriptions" : [ ],
+    "operations" : [
+      {
+        "function" : {
+          "name" : "GetMyTable",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query MyTable($limit: Int = 10, $offset: Int = 0) {\nMyTable(limit: $limit, offset: $offset) {\nval\nmyTimestamp\n}\n\n}",
+          "queryName" : "MyTable",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/MyTable{?offset,limit}",
+        "httpMethod" : "GET"
+      },
+      {
+        "function" : {
+          "name" : "GetMyTable2",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query MyTable2($limit: Int = 10, $offset: Int = 0) {\nMyTable2(limit: $limit, offset: $offset) {\nval\nmyTimestamp\n}\n\n}",
+          "queryName" : "MyTable2",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/MyTable2{?offset,limit}",
+        "httpMethod" : "GET"
+      }
+    ],
     "schema" : {
       "type" : "string",
       "schema" : "\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype MyTable {\n  val: Int!\n  myTimestamp: DateTime!\n}\n\ntype MyTable2 {\n  val: Int!\n  myTimestamp: DateTime!\n}\n\ntype Query {\n  MyTable(limit: Int = 10, offset: Int = 0): [MyTable!]\n  MyTable2(limit: Int = 10, offset: Int = 0): [MyTable2!]\n}\n"

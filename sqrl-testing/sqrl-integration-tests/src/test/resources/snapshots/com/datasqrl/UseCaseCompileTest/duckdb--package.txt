@@ -329,6 +329,89 @@ FROM "_MyApplications2_3"
     ],
     "mutations" : [ ],
     "subscriptions" : [ ],
+    "operations" : [
+      {
+        "function" : {
+          "name" : "GetMyTable1",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query MyTable1($limit: Int = 10, $offset: Int = 0) {\nMyTable1(limit: $limit, offset: $offset) {\nid\nhello\n}\n\n}",
+          "queryName" : "MyTable1",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/MyTable1{?offset,limit}",
+        "httpMethod" : "GET"
+      },
+      {
+        "function" : {
+          "name" : "GetMyTable2",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query MyTable2($limit: Int = 10, $offset: Int = 0) {\nMyTable2(limit: $limit, offset: $offset) {\nid\nhello\n}\n\n}",
+          "queryName" : "MyTable2",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/MyTable2{?offset,limit}",
+        "httpMethod" : "GET"
+      },
+      {
+        "function" : {
+          "name" : "GetMyTable3",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query MyTable3($limit: Int = 10, $offset: Int = 0) {\nMyTable3(limit: $limit, offset: $offset) {\nid\nhello\n}\n\n}",
+          "queryName" : "MyTable3",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/MyTable3{?offset,limit}",
+        "httpMethod" : "GET"
+      }
+    ],
     "schema" : {
       "type" : "string",
       "schema" : "\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype MyTable1 {\n  id: GraphQLBigInteger!\n  hello: String!\n}\n\ntype MyTable2 {\n  id: GraphQLBigInteger!\n  hello: String!\n}\n\ntype MyTable3 {\n  id: GraphQLBigInteger!\n  hello: String!\n}\n\ntype Query {\n  MyTable1(limit: Int = 10, offset: Int = 0): [MyTable1!]\n  MyTable2(limit: Int = 10, offset: Int = 0): [MyTable2!]\n  MyTable3(limit: Int = 10, offset: Int = 0): [MyTable3!]\n}\n"

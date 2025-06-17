@@ -148,6 +148,62 @@ FROM "results_2"
     ],
     "mutations" : [ ],
     "subscriptions" : [ ],
+    "operations" : [
+      {
+        "function" : {
+          "name" : "Getdata",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query data($limit: Int = 10, $offset: Int = 0) {\ndata(limit: $limit, offset: $offset) {\nval\n}\n\n}",
+          "queryName" : "data",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/data{?offset,limit}",
+        "httpMethod" : "GET"
+      },
+      {
+        "function" : {
+          "name" : "Getresults",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query results($limit: Int = 10, $offset: Int = 0) {\nresults(limit: $limit, offset: $offset) {\ncompletions_result\nextract_json_result_response\nextract_json_result_with_schema_response\n}\n\n}",
+          "queryName" : "results",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/results{?offset,limit}",
+        "httpMethod" : "GET"
+      }
+    ],
     "schema" : {
       "type" : "string",
       "schema" : "\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Query {\n  data(limit: Int = 10, offset: Int = 0): [data!]\n  results(limit: Int = 10, offset: Int = 0): [results!]\n}\n\ntype data {\n  val: Int!\n}\n\ntype results {\n  completions_result: String\n  extract_json_result_response: String\n  extract_json_result_with_schema_response: String\n}\n"

@@ -390,6 +390,151 @@ FROM "SensorReading_4"
         "filters" : { }
       }
     ],
+    "operations" : [
+      {
+        "function" : {
+          "name" : "GetSensorAnalysis",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query SensorAnalysis($limit: Int = 10, $offset: Int = 0) {\nSensorAnalysis(limit: $limit, offset: $offset) {\nsensorid\navg_temperatures\nmax_temperature\n}\n\n}",
+          "queryName" : "SensorAnalysis",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/SensorAnalysis{?offset,limit}",
+        "httpMethod" : "GET"
+      },
+      {
+        "function" : {
+          "name" : "GetSensorMaxTempLastMin",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query SensorMaxTempLastMin($limit: Int = 10, $offset: Int = 0) {\nSensorMaxTempLastMin(limit: $limit, offset: $offset) {\nsensorid\nendOfMin\navg_temperature\n}\n\n}",
+          "queryName" : "SensorMaxTempLastMin",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/SensorMaxTempLastMin{?offset,limit}",
+        "httpMethod" : "GET"
+      },
+      {
+        "function" : {
+          "name" : "GetSensorReading",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query SensorReading($limit: Int = 10, $offset: Int = 0) {\nSensorReading(limit: $limit, offset: $offset) {\nsensorid\ntemperature\nevent_time\n}\n\n}",
+          "queryName" : "SensorReading",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/SensorReading{?offset,limit}",
+        "httpMethod" : "GET"
+      },
+      {
+        "function" : {
+          "name" : "GetSensorAnalysisById",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              },
+              "sensorid" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [
+              "sensorid"
+            ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query SensorAnalysisById($sensorid: Int!, $limit: Int = 10, $offset: Int = 0) {\nSensorAnalysisById(sensorid: $sensorid, limit: $limit, offset: $offset) {\nsensorid\navg_temperatures\nmax_temperature\n}\n\n}",
+          "queryName" : "SensorAnalysisById",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/SensorAnalysisById{?offset,limit,sensorid}",
+        "httpMethod" : "GET"
+      },
+      {
+        "function" : {
+          "name" : "AddSensorReading",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "temperature" : {
+                "type" : "number"
+              },
+              "sensorid" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [
+              "sensorid",
+              "temperature"
+            ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "mutation SensorReading($sensorid: Int!, $temperature: Float!) {\nSensorReading(event: { sensorid: $sensorid, temperature: $temperature }) {\nsensorid\ntemperature\nevent_time\n}\n\n}",
+          "queryName" : "SensorReading",
+          "operationType" : "MUTATION"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "mutations/SensorReading",
+        "httpMethod" : "POST"
+      }
+    ],
     "schema" : {
       "type" : "string",
       "schema" : "\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Mutation {\n  SensorReading(event: SensorReadingInput!): SensorReadingResultOutput!\n}\n\ntype Query {\n  SensorAnalysis(limit: Int = 10, offset: Int = 0): [SensorAnalysis!]\n  SensorMaxTempLastMin(limit: Int = 10, offset: Int = 0): [SensorMaxTempLastMin!]\n  SensorReading(limit: Int = 10, offset: Int = 0): [SensorReading!]\n  SensorAnalysisById(sensorid: Int!, limit: Int = 10, offset: Int = 0): [SensorAnalysis!]\n}\n\ntype SensorAnalysis {\n  sensorid: Int!\n  avg_temperatures: Float!\n  max_temperature: Float!\n}\n\ntype SensorMaxTempLastMin {\n  sensorid: Int!\n  endOfMin: DateTime!\n  avg_temperature: Float!\n}\n\ntype SensorReading {\n  sensorid: Int!\n  temperature: Float!\n  event_time: DateTime\n}\n\ninput SensorReadingInput {\n  sensorid: Int!\n  temperature: Float!\n}\n\ntype SensorReadingResultOutput {\n  sensorid: Int!\n  temperature: Float!\n  event_time: DateTime\n}\n\ntype Subscription {\n  HighTempAlert: SensorReading\n}\n"

@@ -84,6 +84,35 @@ FROM "FunctionApplied_1"
     ],
     "mutations" : [ ],
     "subscriptions" : [ ],
+    "operations" : [
+      {
+        "function" : {
+          "name" : "GetFunctionApplied",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query FunctionApplied($limit: Int = 10, $offset: Int = 0) {\nFunctionApplied(limit: $limit, offset: $offset) {\nid\nfct_result\n}\n\n}",
+          "queryName" : "FunctionApplied",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/FunctionApplied{?offset,limit}",
+        "httpMethod" : "GET"
+      }
+    ],
     "schema" : {
       "type" : "string",
       "schema" : "type FunctionApplied {\n  id: Int!\n  fct_result: Boolean\n}\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Query {\n  FunctionApplied(limit: Int = 10, offset: Int = 0): [FunctionApplied!]\n}\n"

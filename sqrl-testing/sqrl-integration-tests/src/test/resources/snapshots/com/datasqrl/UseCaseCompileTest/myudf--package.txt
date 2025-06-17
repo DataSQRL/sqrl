@@ -230,6 +230,89 @@ FROM (SELECT "val", "myFnc"
     ],
     "mutations" : [ ],
     "subscriptions" : [ ],
+    "operations" : [
+      {
+        "function" : {
+          "name" : "GetMyAsyncTable",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query MyAsyncTable($limit: Int = 10, $offset: Int = 0) {\nMyAsyncTable(limit: $limit, offset: $offset) {\nval\nmyFnc\n}\n\n}",
+          "queryName" : "MyAsyncTable",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/MyAsyncTable{?offset,limit}",
+        "httpMethod" : "GET"
+      },
+      {
+        "function" : {
+          "name" : "GetMyTable",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query MyTable($limit: Int = 10, $offset: Int = 0) {\nMyTable(limit: $limit, offset: $offset) {\nval\nmyFnc\n}\n\n}",
+          "queryName" : "MyTable",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/MyTable{?offset,limit}",
+        "httpMethod" : "GET"
+      },
+      {
+        "function" : {
+          "name" : "GetMyTableAnother",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query MyTableAnother($limit: Int = 10, $offset: Int = 0) {\nMyTableAnother(limit: $limit, offset: $offset) {\nval\nmyFnc\n}\n\n}",
+          "queryName" : "MyTableAnother",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/MyTableAnother{?offset,limit}",
+        "httpMethod" : "GET"
+      }
+    ],
     "schema" : {
       "type" : "string",
       "schema" : "\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype MyAsyncTable {\n  val: String!\n  myFnc: String\n}\n\ntype MyTable {\n  val: Int!\n  myFnc: GraphQLBigInteger\n}\n\ntype MyTableAnother {\n  val: Int!\n  myFnc: GraphQLBigInteger\n}\n\ntype Query {\n  MyAsyncTable(limit: Int = 10, offset: Int = 0): [MyAsyncTable!]\n  MyTable(limit: Int = 10, offset: Int = 0): [MyTable!]\n  MyTableAnother(limit: Int = 10, offset: Int = 0): [MyTableAnother!]\n}\n"
