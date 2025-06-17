@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.gqlconverter.converter;
+package com.datasqrl.graphql.converter;
 
 import static graphql.Scalars.GraphQLString;
 
-import com.datasqrl.gqlconverter.operation.ApiOperation;
-import com.datasqrl.gqlconverter.operation.FunctionDefinition;
-import com.datasqrl.gqlconverter.operation.FunctionDefinition.Argument;
-import com.datasqrl.gqlconverter.operation.FunctionDefinition.Parameters;
-import com.datasqrl.gqlconverter.operation.GraphQLQuery;
-import com.datasqrl.gqlconverter.util.ErrorHandling;
+import com.datasqrl.graphql.server.operation.ApiOperation;
+import com.datasqrl.graphql.server.operation.FunctionDefinition;
+import com.datasqrl.graphql.server.operation.FunctionDefinition.Argument;
+import com.datasqrl.graphql.server.operation.FunctionDefinition.Parameters;
+import com.datasqrl.graphql.server.operation.GraphQLQuery;
+import com.google.common.base.Preconditions;
 import graphql.language.Comment;
 import graphql.language.Definition;
 import graphql.language.Document;
@@ -115,14 +115,14 @@ public class GraphQLSchemaConverter {
   public List<ApiOperation> convertOperations(String operationDefinition) {
     Parser parser = new Parser();
     Document document = parser.parseDocument(operationDefinition);
-    ErrorHandling.checkArgument(
+    Preconditions.checkArgument(
         !document.getDefinitions().isEmpty(), "Operation definition contains no definitions");
 
     List<ApiOperation> functions = new ArrayList<>();
     Iterator<Definition> defIter = document.getDefinitions().iterator();
     Definition definition = defIter.next();
     do {
-      ErrorHandling.checkArgument(
+      Preconditions.checkArgument(
           definition instanceof OperationDefinition,
           "Expected definition to be an operation, but got: %s",
           operationDefinition);
@@ -190,7 +190,7 @@ public class GraphQLSchemaConverter {
    */
   public FunctionDefinition convertOperationDefinition(OperationDefinition node) {
     Operation op = node.getOperation();
-    ErrorHandling.checkArgument(
+    Preconditions.checkArgument(
         op == Operation.QUERY || op == Operation.MUTATION,
         "Do not yet support subscriptions: %s",
         node.getName());
@@ -445,6 +445,7 @@ public class GraphQLSchemaConverter {
                     nestedField.getName(),
                     nestedField.getDescription());
             String typeString = printFieldType(nestedField);
+            if (numArgs > 0) queryHeader.append(", ");
             queryHeader.append(argName).append(": ").append(typeString);
             numArgs++;
             if (nestedFields.hasNext()) {
@@ -465,6 +466,7 @@ public class GraphQLSchemaConverter {
                   arg.getName(),
                   arg.getDescription());
           String typeString = printArgumentType(arg);
+          if (numArgs > 0) queryHeader.append(", ");
           queryHeader.append(argName).append(": ").append(typeString);
           numArgs++;
         }
@@ -491,7 +493,7 @@ public class GraphQLSchemaConverter {
                 ctx.nested(nestedField.getName(), objectType, numArgs));
         atLeastOneField |= success;
       }
-      ErrorHandling.checkArgument(
+      Preconditions.checkArgument(
           atLeastOneField, "Expected at least on field on path: {}", ctx.opName());
       queryBody.append("}");
     }
@@ -552,7 +554,7 @@ public class GraphQLSchemaConverter {
     Pattern pattern = Pattern.compile(fieldName + "\\s*:\\s*([^)}]+)");
     // Print argument as part of a dummy field in a dummy schema
     Matcher matcher = pattern.matcher(output);
-    ErrorHandling.checkArgument(matcher.find(), "Could not find type in: %s", output);
+    Preconditions.checkArgument(matcher.find(), "Could not find type in: %s", output);
     return matcher.group(1).trim();
   }
 

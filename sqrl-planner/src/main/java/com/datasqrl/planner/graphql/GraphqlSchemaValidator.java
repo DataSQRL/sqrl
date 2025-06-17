@@ -463,7 +463,7 @@ public class GraphqlSchemaValidator extends GraphqlSchemaWalker {
 
   public void validate(APISource source) {
     try {
-      var registry = (new SchemaParser()).parse(source.getSchemaDefinition());
+      var registry = (new SchemaParser()).parse(source.getDefinition());
       var queryType = getType(registry, () -> getQueryTypeName(registry));
       if (queryType.isEmpty()) {
         throw createThrowable(null, "Cannot find graphql root Query type");

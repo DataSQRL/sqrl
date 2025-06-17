@@ -210,7 +210,7 @@ public class SqlScriptPlanner {
               .fatal(msgLocation.getMessage());
         }
         if (e instanceof ValidationException) {
-          if (e.getCause() != e) {
+          if (e.getCause() != null && e.getCause() != e) {
             e = e.getCause();
           }
         }

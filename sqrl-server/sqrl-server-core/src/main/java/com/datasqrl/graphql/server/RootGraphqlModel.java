@@ -16,6 +16,7 @@
 package com.datasqrl.graphql.server;
 
 import com.datasqrl.graphql.jdbc.DatabaseType;
+import com.datasqrl.graphql.server.operation.ApiOperation;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
@@ -55,7 +56,7 @@ public class RootGraphqlModel {
   @Singular List<QueryCoords> queries;
   @Singular List<MutationCoords> mutations;
   @Singular List<SubscriptionCoords> subscriptions;
-
+  @Singular List<ApiOperation> operations;
   Schema schema;
 
   @JsonCreator
@@ -63,10 +64,12 @@ public class RootGraphqlModel {
       @JsonProperty("queries") List<QueryCoords> queries,
       @JsonProperty("mutations") List<MutationCoords> mutations,
       @JsonProperty("subscriptions") List<SubscriptionCoords> subscriptions,
+      @JsonProperty("operations") List<ApiOperation> operations,
       @JsonProperty("schema") Schema schema) {
     this.queries = queries;
     this.mutations = mutations == null ? List.of() : mutations;
     this.subscriptions = subscriptions == null ? List.of() : subscriptions;
+    this.operations = operations == null ? List.of() : operations;
     this.schema = schema;
   }
 

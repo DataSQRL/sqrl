@@ -13,18 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.gqlconverter.util;
+package com.datasqrl.graphql.server.operation;
 
-/** Utility methods for error handling */
-public class ErrorHandling {
+import graphql.language.OperationDefinition.Operation;
 
-  public static void checkArgument(boolean condition, String message, Object... args) {
-    if (!condition) {
-      throw new IllegalArgumentException(String.format(message, args));
-    }
-  }
-
-  public static void checkArgument(boolean condition) {
-    checkArgument(condition, "Unexpected arguments in method invocation");
-  }
-}
+/**
+ * Default GraphQL query implementation
+ *
+ * @param query query string
+ */
+public record GraphQLQuery(String query, String queryName, Operation operationType) {}

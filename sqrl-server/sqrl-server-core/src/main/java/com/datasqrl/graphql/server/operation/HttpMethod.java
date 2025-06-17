@@ -1,4 +1,4 @@
-package com.datasqrl.gqlconverter.operation;
+package com.datasqrl.graphql.server.operation;
 
 public enum HttpMethod {
   GET,

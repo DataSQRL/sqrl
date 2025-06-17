@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.gqlconverter.operation;
+package com.datasqrl.graphql.server.operation;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;

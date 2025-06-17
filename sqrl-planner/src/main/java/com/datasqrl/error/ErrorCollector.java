@@ -240,8 +240,4 @@ public class ErrorCollector implements Iterable<ErrorMessage>, Serializable {
         new Implementation(label, ErrorMessage.getMessage(msg, args), location, Severity.NOTICE);
     addInternal(errorMessage);
   }
-
-  public ErrorCollector withSchema(String name, String schema) {
-    return withLocation(ErrorPrefix.SCRIPT.resolve(name)).withSource(schema);
-  }
 }

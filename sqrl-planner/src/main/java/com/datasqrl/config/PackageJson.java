@@ -55,6 +55,8 @@ public interface PackageJson {
 
     OutputConfig getOutput();
 
+    OperationsConfig getOperations();
+
     Optional<String> getSnapshotPath();
 
     void setSnapshotPath(String string);
@@ -64,6 +66,14 @@ public interface PackageJson {
     String getLogger();
 
     boolean isExtendedScalarTypes();
+  }
+
+  interface OperationsConfig {
+    boolean isGenerate();
+
+    boolean isAddPrefix();
+
+    int getMaxDepth();
   }
 
   interface OutputConfig {

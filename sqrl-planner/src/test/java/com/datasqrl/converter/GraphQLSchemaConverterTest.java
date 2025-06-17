@@ -13,17 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.gqlconverter.converter;
+package com.datasqrl.converter;
 
-import static com.datasqrl.gqlconverter.converter.GraphQLSchemaConverterConfig.ignorePrefix;
+import static com.datasqrl.graphql.converter.GraphQLSchemaConverterConfig.ignorePrefix;
 import static graphql.Assert.assertFalse;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.datasqrl.gqlconverter.TestUtil;
-import com.datasqrl.gqlconverter.operation.ApiOperation;
+import com.datasqrl.graphql.converter.GraphQLSchemaConverter;
+import com.datasqrl.graphql.converter.GraphQLSchemaConverterConfig;
+import com.datasqrl.graphql.server.operation.ApiOperation;
+import com.datasqrl.util.FileUtil;
+import com.datasqrl.util.SnapshotTest;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.MapperFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import graphql.parser.Parser;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -39,7 +46,7 @@ public class GraphQLSchemaConverterTest {
   public void testNutshop() {
     GraphQLSchemaConverter converter =
         new GraphQLSchemaConverter(
-            TestUtil.getResourcesFileAsString("graphql/nutshop-schema.graphqls"),
+            getTestSchema("nutshop-schema.graphqls"),
             GraphQLSchemaConverterConfig.builder()
                 .addPrefix(false)
                 .operationFilter(ignorePrefix("internal"))
@@ -58,27 +65,25 @@ public class GraphQLSchemaConverterTest {
 
   @Test
   public void testCreditCard() {
-    List<ApiOperation> functions = getFunctionsFromPath("graphql/creditcard-rewards.graphqls");
+    List<ApiOperation> functions = getFunctionsFromPath("creditcard-rewards.graphqls");
     assertEquals(6, functions.size());
     snapshot(functions, "creditcard-rewards");
   }
 
   @Test
   public void testLawEnforcement() {
-    List<ApiOperation> functions = getFunctionsFromPath("graphql/law_enforcement.graphqls");
+    List<ApiOperation> functions = getFunctionsFromPath("law_enforcement.graphqls");
     assertEquals(7, functions.size());
     snapshot(functions, "law_enforcement");
   }
 
   @Test
   public void testSensors() {
-    GraphQLSchemaConverter converter =
-        getConverter(TestUtil.getResourcesFileAsString("graphql/sensors.graphqls"));
+    GraphQLSchemaConverter converter = getConverter(getTestSchema("sensors.graphqls"));
     List<ApiOperation> functions = converter.convertSchema();
     assertEquals(5, functions.size());
     List<ApiOperation> queries =
-        converter.convertOperations(
-            TestUtil.getResourcesFileAsString("graphql/sensors-aboveTemp.graphql"));
+        converter.convertOperations(getTestSchema("sensors-aboveTemp.graphql"));
     assertEquals(2, queries.size());
     assertEquals("HighTemps", queries.get(0).getFunction().getName());
     functions.addAll(queries);
@@ -86,7 +91,7 @@ public class GraphQLSchemaConverterTest {
   }
 
   public List<ApiOperation> getFunctionsFromPath(String path) {
-    return getFunctions(TestUtil.getResourcesFileAsString(path));
+    return getFunctions(getTestSchema(path));
   }
 
   public List<ApiOperation> getFunctions(String schemaString) {
@@ -110,10 +115,10 @@ public class GraphQLSchemaConverterTest {
 
   @SneakyThrows
   public static String convertToJsonDefault(List<ApiOperation> functions) {
-    return TestUtil.toJsonString(functions);
+    return toJsonString(functions);
   }
 
-  public static void snapshot(List<ApiOperation> functions, String testName) {
+  public void snapshot(List<ApiOperation> functions, String testName) {
     for (ApiOperation apiOperation : functions) {
       // make sure ALL queries have a good syntax
       var query = apiOperation.getApiQuery().query();
@@ -122,16 +127,16 @@ public class GraphQLSchemaConverterTest {
             Parser.parse(query);
           });
     }
-    TestUtil.snapshotTest(
-        convertToJsonDefault(functions),
-        Path.of("src", "test", "resources", "snapshot", testName + ".json"));
+    var snapshot = SnapshotTest.Snapshot.of(getClass(), testName);
+    snapshot.addContent(convertToJsonDefault(functions));
+    snapshot.createOrValidate();
   }
 
   @Test
   void givenComplexFieldDefinition_whenVisiting_thenGenerateValidQuery() {
     GraphQLSchemaConverter converter =
         new GraphQLSchemaConverter(
-            TestUtil.getResourcesFileAsString("graphql/rick_morty-schema.graphqls"),
+            getTestSchema("rick_morty-schema.graphqls"),
             GraphQLSchemaConverterConfig.builder()
                 .operationFilter(ignorePrefix("internal"))
                 .build());
@@ -154,5 +159,19 @@ public class GraphQLSchemaConverterTest {
         });
     assertFalse(episodes.getFunction().getParameters().getProperties().containsKey("customerid"));
     snapshot(functions, "rick-morty");
+  }
+
+  @SneakyThrows
+  private static String getTestSchema(String schemaFile) {
+    return FileUtil.readResource("graphql/converter/" + schemaFile);
+  }
+
+  public static String toJsonString(List<ApiOperation> tools) throws IOException {
+    ObjectMapper mapper = new ObjectMapper();
+    mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+    mapper
+        .enable(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS)
+        .enable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY);
+    return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(mapper.valueToTree(tools));
   }
 }

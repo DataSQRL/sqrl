@@ -63,4 +63,9 @@ public class CompilerConfigImpl implements PackageJson.CompilerConfig {
   public OutputConfig getOutput() {
     return OutputConfigImpl.from(sqrlConfig.getSubConfig("output"));
   }
+
+  @Override
+  public OperationsConfigImpl getOperations() {
+    return OperationsConfigImpl.from(sqrlConfig.getSubConfig("operations"));
+  }
 }

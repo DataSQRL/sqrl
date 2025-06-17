@@ -1,0 +1,256 @@
+[ {
+  "apiQuery" : {
+    "operationType" : "QUERY",
+    "query" : "query character($id: ID!) {\ncharacter(id: $id) {\nid\nname\nstatus\nspecies\ntype\ngender\norigin {\nid\nname\ntype\ndimension\ncreated\n}\nlocation {\nid\nname\ntype\ndimension\ncreated\n}\nimage\nepisode {\nid\nname\nair_date\nepisode\ncreated\n}\ncreated\n}\n\n}",
+    "queryName" : "character"
+  },
+  "function" : {
+    "description" : "Get a specific character by ID",
+    "name" : "Getcharacter",
+    "parameters" : {
+      "properties" : {
+        "id" : {
+          "type" : "string"
+        }
+      },
+      "required" : [ "id" ],
+      "type" : "object"
+    }
+  },
+  "httpMethod" : "GET",
+  "resource" : false,
+  "restEndpoint" : true,
+  "tool" : true,
+  "uriTemplate" : "queries/character{?id}"
+}, {
+  "apiQuery" : {
+    "operationType" : "QUERY",
+    "query" : "query characters($page: Int, $name: String, $status: String, $species: String, $type: String, $gender: String) {\ncharacters(page: $page, filter: { name: $name, status: $status, species: $species, type: $type, gender: $gender }) {\ninfo {\ncount\npages\nnext\nprev\n}\nresults {\nid\nname\nstatus\nspecies\ntype\ngender\norigin {\nid\nname\ntype\ndimension\ncreated\n}\nlocation {\nid\nname\ntype\ndimension\ncreated\n}\nimage\nepisode {\nid\nname\nair_date\nepisode\ncreated\n}\ncreated\n}\n}\n\n}",
+    "queryName" : "characters"
+  },
+  "function" : {
+    "description" : "Get the list of all characters",
+    "name" : "Getcharacters",
+    "parameters" : {
+      "properties" : {
+        "gender" : {
+          "type" : "string"
+        },
+        "name" : {
+          "type" : "string"
+        },
+        "page" : {
+          "type" : "integer"
+        },
+        "species" : {
+          "type" : "string"
+        },
+        "status" : {
+          "type" : "string"
+        },
+        "type" : {
+          "type" : "string"
+        }
+      },
+      "required" : [ ],
+      "type" : "object"
+    }
+  },
+  "httpMethod" : "GET",
+  "resource" : false,
+  "restEndpoint" : true,
+  "tool" : true,
+  "uriTemplate" : "queries/characters{?gender,species,name,page,type,status}"
+}, {
+  "apiQuery" : {
+    "operationType" : "QUERY",
+    "query" : "query charactersByIds($ids: [ID!]!) {\ncharactersByIds(ids: $ids) {\nid\nname\nstatus\nspecies\ntype\ngender\norigin {\nid\nname\ntype\ndimension\ncreated\n}\nlocation {\nid\nname\ntype\ndimension\ncreated\n}\nimage\nepisode {\nid\nname\nair_date\nepisode\ncreated\n}\ncreated\n}\n\n}",
+    "queryName" : "charactersByIds"
+  },
+  "function" : {
+    "description" : "Get a list of characters selected by ids",
+    "name" : "GetcharactersByIds",
+    "parameters" : {
+      "properties" : {
+        "ids" : {
+          "items" : {
+            "type" : "string"
+          },
+          "type" : "array"
+        }
+      },
+      "required" : [ "ids" ],
+      "type" : "object"
+    }
+  },
+  "httpMethod" : "GET",
+  "resource" : false,
+  "restEndpoint" : true,
+  "tool" : true,
+  "uriTemplate" : "queries/charactersByIds{?ids}"
+}, {
+  "apiQuery" : {
+    "operationType" : "QUERY",
+    "query" : "query location($id: ID!) {\nlocation(id: $id) {\nid\nname\ntype\ndimension\nresidents {\nid\nname\nstatus\nspecies\ntype\ngender\nimage\nepisode {\nid\nname\nair_date\nepisode\ncreated\n}\ncreated\n}\ncreated\n}\n\n}",
+    "queryName" : "location"
+  },
+  "function" : {
+    "description" : "Get a specific locations by ID",
+    "name" : "Getlocation",
+    "parameters" : {
+      "properties" : {
+        "id" : {
+          "type" : "string"
+        }
+      },
+      "required" : [ "id" ],
+      "type" : "object"
+    }
+  },
+  "httpMethod" : "GET",
+  "resource" : false,
+  "restEndpoint" : true,
+  "tool" : true,
+  "uriTemplate" : "queries/location{?id}"
+}, {
+  "apiQuery" : {
+    "operationType" : "QUERY",
+    "query" : "query locations($page: Int, $name: String, $type: String, $dimension: String) {\nlocations(page: $page, filter: { name: $name, type: $type, dimension: $dimension }) {\ninfo {\ncount\npages\nnext\nprev\n}\nresults {\nid\nname\ntype\ndimension\nresidents {\nid\nname\nstatus\nspecies\ntype\ngender\nimage\ncreated\n}\ncreated\n}\n}\n\n}",
+    "queryName" : "locations"
+  },
+  "function" : {
+    "description" : "Get the list of all locations",
+    "name" : "Getlocations",
+    "parameters" : {
+      "properties" : {
+        "dimension" : {
+          "type" : "string"
+        },
+        "name" : {
+          "type" : "string"
+        },
+        "page" : {
+          "type" : "integer"
+        },
+        "type" : {
+          "type" : "string"
+        }
+      },
+      "required" : [ ],
+      "type" : "object"
+    }
+  },
+  "httpMethod" : "GET",
+  "resource" : false,
+  "restEndpoint" : true,
+  "tool" : true,
+  "uriTemplate" : "queries/locations{?name,page,type,dimension}"
+}, {
+  "apiQuery" : {
+    "operationType" : "QUERY",
+    "query" : "query locationsByIds($ids: [ID!]!) {\nlocationsByIds(ids: $ids) {\nid\nname\ntype\ndimension\nresidents {\nid\nname\nstatus\nspecies\ntype\ngender\nimage\nepisode {\nid\nname\nair_date\nepisode\ncreated\n}\ncreated\n}\ncreated\n}\n\n}",
+    "queryName" : "locationsByIds"
+  },
+  "function" : {
+    "description" : "Get a list of locations selected by ids",
+    "name" : "GetlocationsByIds",
+    "parameters" : {
+      "properties" : {
+        "ids" : {
+          "items" : {
+            "type" : "string"
+          },
+          "type" : "array"
+        }
+      },
+      "required" : [ "ids" ],
+      "type" : "object"
+    }
+  },
+  "httpMethod" : "GET",
+  "resource" : false,
+  "restEndpoint" : true,
+  "tool" : true,
+  "uriTemplate" : "queries/locationsByIds{?ids}"
+}, {
+  "apiQuery" : {
+    "operationType" : "QUERY",
+    "query" : "query episode($id: ID!) {\nepisode(id: $id) {\nid\nname\nair_date\nepisode\ncharacters {\nid\nname\nstatus\nspecies\ntype\ngender\norigin {\nid\nname\ntype\ndimension\ncreated\n}\nlocation {\nid\nname\ntype\ndimension\ncreated\n}\nimage\ncreated\n}\ncreated\n}\n\n}",
+    "queryName" : "episode"
+  },
+  "function" : {
+    "description" : "Get a specific episode by ID",
+    "name" : "Getepisode",
+    "parameters" : {
+      "properties" : {
+        "id" : {
+          "type" : "string"
+        }
+      },
+      "required" : [ "id" ],
+      "type" : "object"
+    }
+  },
+  "httpMethod" : "GET",
+  "resource" : false,
+  "restEndpoint" : true,
+  "tool" : true,
+  "uriTemplate" : "queries/episode{?id}"
+}, {
+  "apiQuery" : {
+    "operationType" : "QUERY",
+    "query" : "query episodes($page: Int, $name: String, $episode: String) {\nepisodes(page: $page, filter: { name: $name, episode: $episode }) {\ninfo {\ncount\npages\nnext\nprev\n}\nresults {\nid\nname\nair_date\nepisode\ncharacters {\nid\nname\nstatus\nspecies\ntype\ngender\nimage\ncreated\n}\ncreated\n}\n}\n\n}",
+    "queryName" : "episodes"
+  },
+  "function" : {
+    "description" : "Get the list of all episodes",
+    "name" : "Getepisodes",
+    "parameters" : {
+      "properties" : {
+        "episode" : {
+          "type" : "string"
+        },
+        "name" : {
+          "type" : "string"
+        },
+        "page" : {
+          "type" : "integer"
+        }
+      },
+      "required" : [ ],
+      "type" : "object"
+    }
+  },
+  "httpMethod" : "GET",
+  "resource" : false,
+  "restEndpoint" : true,
+  "tool" : true,
+  "uriTemplate" : "queries/episodes{?name,episode,page}"
+}, {
+  "apiQuery" : {
+    "operationType" : "QUERY",
+    "query" : "query episodesByIds($ids: [ID!]!) {\nepisodesByIds(ids: $ids) {\nid\nname\nair_date\nepisode\ncharacters {\nid\nname\nstatus\nspecies\ntype\ngender\norigin {\nid\nname\ntype\ndimension\ncreated\n}\nlocation {\nid\nname\ntype\ndimension\ncreated\n}\nimage\ncreated\n}\ncreated\n}\n\n}",
+    "queryName" : "episodesByIds"
+  },
+  "function" : {
+    "description" : "Get a list of episodes selected by ids",
+    "name" : "GetepisodesByIds",
+    "parameters" : {
+      "properties" : {
+        "ids" : {
+          "items" : {
+            "type" : "string"
+          },
+          "type" : "array"
+        }
+      },
+      "required" : [ "ids" ],
+      "type" : "object"
+    }
+  },
+  "httpMethod" : "GET",
+  "resource" : false,
+  "restEndpoint" : true,
+  "tool" : true,
+  "uriTemplate" : "queries/episodesByIds{?ids}"
+} ]

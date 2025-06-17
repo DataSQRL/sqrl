@@ -16,7 +16,6 @@
 package com.datasqrl.compile;
 
 import com.datasqrl.actions.DagWriter;
-import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.config.BuildPath;
 import com.datasqrl.config.GraphqlSourceFactory;
 import com.datasqrl.config.PackageJson;
@@ -25,14 +24,14 @@ import com.datasqrl.engine.server.ServerPhysicalPlan;
 import com.datasqrl.engine.stream.flink.FlinkStreamEngine;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.graphql.APISourceImpl;
+import com.datasqrl.graphql.APISource;
 import com.datasqrl.plan.MainScript;
 import com.datasqrl.plan.global.PhysicalPlanRewriter;
 import com.datasqrl.plan.validate.ExecutionGoal;
 import com.datasqrl.planner.SqlScriptPlanner;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
 import com.datasqrl.planner.dag.DAGPlanner;
-import com.datasqrl.planner.graphql.GenerateCoords;
+import com.datasqrl.planner.graphql.GenerateServerModel;
 import com.datasqrl.planner.graphql.InferGraphqlSchema;
 import com.datasqrl.util.ServiceLoaderDiscovery;
 import com.google.inject.Inject;
@@ -50,7 +49,7 @@ public class CompilationProcess {
   private final BuildPath buildPath;
   private final MainScript mainScript;
   private final PackageJson config;
-  private final GenerateCoords generateCoords;
+  private final GenerateServerModel generateServerModel;
   private final InferGraphqlSchema inferGraphqlSchema;
   private final DagWriter writeDeploymentArtifactsHook;
   private final GraphqlSourceFactory graphqlSourceFactory;
@@ -88,17 +87,13 @@ public class CompilationProcess {
       var apiSource = graphqlSourceFactory.get();
       if (apiSource.isEmpty()
           || executionGoal == ExecutionGoal.TEST) { // Infer schema from functions
-        apiSource =
-            inferGraphqlSchema
-                .inferGraphQLSchema(serverPlan)
-                .map(
-                    schemaString ->
-                        new APISourceImpl(Name.system("<generated-schema>"), schemaString));
+        apiSource = inferGraphqlSchema.inferGraphQLSchema(serverPlan).map(APISource::of);
       } else {
         inferGraphqlSchema.validateSchema(apiSource.get(), serverPlan);
       }
       assert apiSource.isPresent();
-      generateCoords.generateCoordsAndUpdateServerPlan(apiSource, serverPlan);
+      serverPlan.setModel(
+          generateServerModel.generateGraphQLModel(apiSource.get(), serverPlan, List.of()));
 
       // create test artifact
       if (executionGoal == ExecutionGoal.TEST) {

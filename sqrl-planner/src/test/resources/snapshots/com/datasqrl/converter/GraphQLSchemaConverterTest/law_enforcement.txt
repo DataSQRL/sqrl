@@ -1,0 +1,270 @@
+[ {
+  "apiQuery" : {
+    "operationType" : "QUERY",
+    "query" : "query BoloDetails($make: String!, $model: String, $limit: Int = 10, $offset: Int = 0) {\nBoloDetails(make: $make, model: $model, limit: $limit, offset: $offset) {\nbolo_id\nvehicle_id\nissue_date\nstatus\nlast_updated\nmake\nmodel\nyear\nregistration_state\nregistration_number\nlicense_state\ndriver_id\n}\n\n}",
+    "queryName" : "BoloDetails"
+  },
+  "function" : {
+    "description" : "Fetches Bolo details with specified vehicle characteristics.",
+    "name" : "GetBoloDetails",
+    "parameters" : {
+      "properties" : {
+        "limit" : {
+          "description" : "The maximum number of results to return. Defaults to 10.",
+          "type" : "integer"
+        },
+        "make" : {
+          "description" : "The make of the vehicle (e.g., Ford, Toyota).",
+          "type" : "string"
+        },
+        "model" : {
+          "description" : "The model of the vehicle.",
+          "type" : "string"
+        },
+        "offset" : {
+          "description" : "The number of results to skip before starting to return results. Defaults to 0.",
+          "type" : "integer"
+        }
+      },
+      "required" : [ "make" ],
+      "type" : "object"
+    }
+  },
+  "httpMethod" : "GET",
+  "resource" : false,
+  "restEndpoint" : true,
+  "tool" : true,
+  "uriTemplate" : "queries/BoloDetails{?offset,limit,model,make}"
+}, {
+  "apiQuery" : {
+    "operationType" : "QUERY",
+    "query" : "query Driver($license_number: String!, $limit: Int = 10, $offset: Int = 0$bolos_limit: Int = 10, $bolos_offset: Int = 0$vehicles_limit: Int = 10, $vehicles_offset: Int = 0$vehicles_bolos_limit: Int = 10, $vehicles_bolos_offset: Int = 0$vehicles_tracking_limit: Int = 10, $vehicles_tracking_offset: Int = 0$warrants_limit: Int = 10, $warrants_offset: Int = 0) {\nDriver(license_number: $license_number, limit: $limit, offset: $offset) {\ndriver_id\nfirst_name\nlast_name\nlicense_number\nlicense_state\ndate_of_birth\nlicense_status\nlicense_expiry_date\nlast_updated\nbolos(limit: $bolos_limit, offset: $bolos_offset) {\nbolo_id\nvehicle_id\nissue_date\nstatus\nlast_updated\nmake\nmodel\nyear\nregistration_state\nregistration_number\nlicense_state\ndriver_id\n}\nvehicles(limit: $vehicles_limit, offset: $vehicles_offset) {\nvehicle_id\nregistration_number\nregistration_state\nregistration_expiry\nmake\nmodel\nyear\nowner_driver_id\nlast_updated\nbolos(limit: $vehicles_bolos_limit, offset: $vehicles_bolos_offset) {\nbolo_id\nvehicle_id\nissue_date\nstatus\nlast_updated\nmake\nmodel\nyear\nregistration_state\nregistration_number\nlicense_state\ndriver_id\n}\ntracking(limit: $vehicles_tracking_limit, offset: $vehicles_tracking_offset) {\nlatitude\nlongitude\nevent_time\n}\n}\nwarrants(limit: $warrants_limit, offset: $warrants_offset) {\nwarrant_id\nperson_id\nwarrant_status\ncrime_description\nstate_of_issuance\nissue_date\nlast_updated\n}\n}\n\n}",
+    "queryName" : "Driver"
+  },
+  "function" : {
+    "description" : "Retrieves driver information using their license number.",
+    "name" : "GetDriver",
+    "parameters" : {
+      "properties" : {
+        "bolos_limit" : {
+          "type" : "integer"
+        },
+        "bolos_offset" : {
+          "type" : "integer"
+        },
+        "license_number" : {
+          "description" : "The license number of the driver.",
+          "type" : "string"
+        },
+        "limit" : {
+          "description" : "The maximum number of results to return. Defaults to 10.",
+          "type" : "integer"
+        },
+        "offset" : {
+          "description" : "The number of results to skip before starting to return results. Defaults to 0.",
+          "type" : "integer"
+        },
+        "vehicles_bolos_limit" : {
+          "type" : "integer"
+        },
+        "vehicles_bolos_offset" : {
+          "type" : "integer"
+        },
+        "vehicles_limit" : {
+          "type" : "integer"
+        },
+        "vehicles_offset" : {
+          "type" : "integer"
+        },
+        "vehicles_tracking_limit" : {
+          "type" : "integer"
+        },
+        "vehicles_tracking_offset" : {
+          "type" : "integer"
+        },
+        "warrants_limit" : {
+          "type" : "integer"
+        },
+        "warrants_offset" : {
+          "type" : "integer"
+        }
+      },
+      "required" : [ "license_number" ],
+      "type" : "object"
+    }
+  },
+  "httpMethod" : "GET",
+  "resource" : false,
+  "restEndpoint" : true,
+  "tool" : true,
+  "uriTemplate" : "queries/Driver{?vehicles_tracking_limit,offset,bolos_limit,bolos_offset,vehicles_limit,license_number,vehicles_bolos_limit,vehicles_bolos_offset,warrants_limit,vehicles_tracking_offset,limit,vehicles_offset,warrants_offset}"
+}, {
+  "apiQuery" : {
+    "operationType" : "QUERY",
+    "query" : "query Vehicle($registration_number: String!, $limit: Int = 10, $offset: Int = 0$bolos_limit: Int = 10, $bolos_offset: Int = 0$tracking_limit: Int = 10, $tracking_offset: Int = 0) {\nVehicle(registration_number: $registration_number, limit: $limit, offset: $offset) {\nvehicle_id\nregistration_number\nregistration_state\nregistration_expiry\nmake\nmodel\nyear\nowner_driver_id\nlast_updated\nbolos(limit: $bolos_limit, offset: $bolos_offset) {\nbolo_id\nvehicle_id\nissue_date\nstatus\nlast_updated\nmake\nmodel\nyear\nregistration_state\nregistration_number\nlicense_state\ndriver_id\n}\ntracking(limit: $tracking_limit, offset: $tracking_offset) {\nlatitude\nlongitude\nevent_time\n}\n}\n\n}",
+    "queryName" : "Vehicle"
+  },
+  "function" : {
+    "description" : "Retrieves vehicle details using the registration number.",
+    "name" : "GetVehicle",
+    "parameters" : {
+      "properties" : {
+        "bolos_limit" : {
+          "type" : "integer"
+        },
+        "bolos_offset" : {
+          "type" : "integer"
+        },
+        "limit" : {
+          "description" : "The maximum number of results to return. Defaults to 10.",
+          "type" : "integer"
+        },
+        "offset" : {
+          "description" : "The number of results to skip before starting to return results. Defaults to 0.",
+          "type" : "integer"
+        },
+        "registration_number" : {
+          "description" : "The registration number of the vehicle, i.e. the license plate number.",
+          "type" : "string"
+        },
+        "tracking_limit" : {
+          "type" : "integer"
+        },
+        "tracking_offset" : {
+          "type" : "integer"
+        }
+      },
+      "required" : [ "registration_number" ],
+      "type" : "object"
+    }
+  },
+  "httpMethod" : "GET",
+  "resource" : false,
+  "restEndpoint" : true,
+  "tool" : true,
+  "uriTemplate" : "queries/Vehicle{?offset,registration_number,limit,tracking_limit,bolos_limit,tracking_offset,bolos_offset}"
+}, {
+  "apiQuery" : {
+    "operationType" : "QUERY",
+    "query" : "query WarrantsByCrime($crime: String, $limit: Int = 100, $offset: Int = 0) {\nWarrantsByCrime(crime: $crime, limit: $limit, offset: $offset) {\ncrime\nnum_warrants\n}\n\n}",
+    "queryName" : "WarrantsByCrime"
+  },
+  "function" : {
+    "description" : "Fetches statistics on warrants filtered by the type of crime.",
+    "name" : "GetWarrantsByCrime",
+    "parameters" : {
+      "properties" : {
+        "crime" : {
+          "description" : "The type of crime.",
+          "type" : "string"
+        },
+        "limit" : {
+          "type" : "integer"
+        },
+        "offset" : {
+          "type" : "integer"
+        }
+      },
+      "required" : [ ],
+      "type" : "object"
+    }
+  },
+  "httpMethod" : "GET",
+  "resource" : false,
+  "restEndpoint" : true,
+  "tool" : true,
+  "uriTemplate" : "queries/WarrantsByCrime{?offset,limit,crime}"
+}, {
+  "apiQuery" : {
+    "operationType" : "QUERY",
+    "query" : "query WarrantsByState($status: String, $limit: Int = 100, $offset: Int = 0) {\nWarrantsByState(status: $status, limit: $limit, offset: $offset) {\nstate\nstatus\nnum_warrants\n}\n\n}",
+    "queryName" : "WarrantsByState"
+  },
+  "function" : {
+    "description" : "Fetches statistics on warrants issued by state filtered by their status.",
+    "name" : "GetWarrantsByState",
+    "parameters" : {
+      "properties" : {
+        "limit" : {
+          "type" : "integer"
+        },
+        "offset" : {
+          "type" : "integer"
+        },
+        "status" : {
+          "description" : "The status of the warrant (one of: active, urgent, closed, suspended).",
+          "type" : "string"
+        }
+      },
+      "required" : [ ],
+      "type" : "object"
+    }
+  },
+  "httpMethod" : "GET",
+  "resource" : false,
+  "restEndpoint" : true,
+  "tool" : true,
+  "uriTemplate" : "queries/WarrantsByState{?offset,limit,status}"
+}, {
+  "apiQuery" : {
+    "operationType" : "QUERY",
+    "query" : "query BolosByWeekState($state: String, $limit: Int = 100, $offset: Int = 0) {\nBolosByWeekState(state: $state, limit: $limit, offset: $offset) {\nweek\nstate\nnum_bolos\n}\n\n}",
+    "queryName" : "BolosByWeekState"
+  },
+  "function" : {
+    "description" : "Fetches Bolo (be on the lookout) statistics by week filtered by state. It returns the data ordered\nby week starting from the most recent and going backwards from there.",
+    "name" : "GetBolosByWeekState",
+    "parameters" : {
+      "properties" : {
+        "limit" : {
+          "description" : "The maximum number of results to return. Defaults to 100. Set to the number of past weeks to return\nmultiplied by the number of states.",
+          "type" : "integer"
+        },
+        "offset" : {
+          "description" : "The number of results to skip before starting to return results. Defaults to 0.",
+          "type" : "integer"
+        },
+        "state" : {
+          "description" : "The state for which Bolos are to be fetched abbreviated to two uppercase letters (e.g. WA, CA).",
+          "type" : "string"
+        }
+      },
+      "required" : [ ],
+      "type" : "object"
+    }
+  },
+  "httpMethod" : "GET",
+  "resource" : false,
+  "restEndpoint" : true,
+  "tool" : true,
+  "uriTemplate" : "queries/BolosByWeekState{?offset,limit,state}"
+}, {
+  "apiQuery" : {
+    "operationType" : "MUTATION",
+    "query" : "mutation Tracking($plate: String!, $latitude: Float!, $longitude: Float!) {\nTracking(encounter: { plate: $plate, latitude: $latitude, longitude: $longitude }) {\n_uuid\nplate\n}\n\n}",
+    "queryName" : "Tracking"
+  },
+  "function" : {
+    "name" : "AddTracking",
+    "parameters" : {
+      "properties" : {
+        "latitude" : {
+          "type" : "number"
+        },
+        "longitude" : {
+          "type" : "number"
+        },
+        "plate" : {
+          "type" : "string"
+        }
+      },
+      "required" : [ "plate", "latitude", "longitude" ],
+      "type" : "object"
+    }
+  },
+  "httpMethod" : "POST",
+  "resource" : false,
+  "restEndpoint" : true,
+  "tool" : true,
+  "uriTemplate" : "mutations/Tracking"
+} ]

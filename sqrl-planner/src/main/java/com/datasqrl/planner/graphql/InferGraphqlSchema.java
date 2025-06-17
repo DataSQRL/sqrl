@@ -45,18 +45,13 @@ public class InferGraphqlSchema {
     return gqlSchema.map(schema -> new SchemaPrinter(opts).print(schema));
   }
 
-  private ErrorCollector createErrorCollectorWithSchema(APISource apiSource) {
-    return errorCollector.withSchema(
-        apiSource.getName().getDisplay(), apiSource.getSchemaDefinition());
-  }
-
   // Validates the schema
   public void validateSchema(APISource apiSource, ServerPhysicalPlan serverPlan) {
     var schemaValidator =
         new GraphqlSchemaValidator(
             serverPlan.getFunctions(),
             serverPlan.getMutations(),
-            createErrorCollectorWithSchema(apiSource));
+            errorCollector.withScript(apiSource.getPath(), apiSource.getDefinition()));
     schemaValidator.validate(apiSource);
   }
 }

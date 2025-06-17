@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.gqlconverter.converter;
+package com.datasqrl.graphql.converter;
 
 import graphql.language.OperationDefinition.Operation;
 import java.util.Arrays;

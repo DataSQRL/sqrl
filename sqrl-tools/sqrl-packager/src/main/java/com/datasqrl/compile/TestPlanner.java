@@ -95,7 +95,7 @@ public class TestPlanner {
           }
         });
 
-    var document = parser.parseDocument(source.getSchemaDefinition());
+    var document = parser.parseDocument(source.getDefinition());
 
     // TODO: really ? a static method on GraphqlSchemaVisitor passing a GraphqlSchemaVisitor ? =>
     // refactor
