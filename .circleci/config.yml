@@ -293,8 +293,7 @@ jobs:
 
             # ── sqrl-server test image ───────────────────────────────────────
             docker build \
-              --build-arg BASE_TAG=$BASE_TAG \
-              -t datasqrl/sqrl-server-test-image:${CIRCLE_SHA1} \
+              -t datasqrl/sqrl-server-test-image:test \
               sqrl-server/sqrl-server-vertx
             docker push datasqrl/sqrl-server-test-image:${CIRCLE_SHA1}
 
@@ -424,11 +423,8 @@ jobs:
             docker buildx create --use --name sqrl-builder
             docker buildx inspect --bootstrap
 
-            if [ -n "$CIRCLE_PULL_REQUEST" ]; then
-              echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
-            else
-              echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-            fi
+            echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
+            echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
 
             docker pull datasqrl/base-sqrl:$BASE_TAG
 
