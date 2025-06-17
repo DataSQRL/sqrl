@@ -97,15 +97,26 @@ public class HttpServerVerticle extends AbstractVerticle {
     Optional<JWTAuth> jwtOpt =
         Optional.ofNullable(config.getAuthOptions()).map(authCfg -> JWTAuth.create(vertx, authCfg));
 
-    // GraphQL
+    // Deploy GraphQL verticle first
+    GraphQLServerVerticle graphQLVerticle = new GraphQLServerVerticle(root, config, model, jwtOpt);
     vertx
-        .deployVerticle(() -> new GraphQLServerVerticle(root, config, model, jwtOpt), childOpts)
-        .onFailure(err -> log.error("Failed to deploy GraphQL verticle", err));
+        .deployVerticle(graphQLVerticle, childOpts)
+        .onSuccess(
+            graphQLDeploymentId -> {
+              log.info("GraphQL verticle deployed successfully: {}", graphQLDeploymentId);
 
-    // REST→GraphQL façade (optional, comment out if not yet implemented)
-    vertx
-        .deployVerticle(() -> new RestBridgeVerticle(root, config, model, jwtOpt), childOpts)
-        .onFailure(err -> log.error("Failed to deploy REST bridge verticle", err));
+              // Deploy REST bridge verticle with access to GraphQL engine
+              RestBridgeVerticle restBridgeVerticle =
+                  new RestBridgeVerticle(root, config, model, jwtOpt, graphQLVerticle);
+              vertx
+                  .deployVerticle(restBridgeVerticle, childOpts)
+                  .onSuccess(
+                      restDeploymentId ->
+                          log.info(
+                              "REST bridge verticle deployed successfully: {}", restDeploymentId))
+                  .onFailure(err -> log.error("Failed to deploy REST bridge verticle", err));
+            })
+        .onFailure(err -> log.error("Failed to deploy GraphQL verticle", err));
 
     // ── Start the HTTP server ────────────────────────────────────────────────
     vertx

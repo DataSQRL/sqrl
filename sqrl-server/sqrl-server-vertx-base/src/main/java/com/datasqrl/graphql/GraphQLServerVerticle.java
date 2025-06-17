@@ -50,6 +50,7 @@ public class GraphQLServerVerticle extends AbstractVerticle {
   private final RootGraphqlModel model;
   private final Optional<JWTAuth> jwtAuth;
   private final JdbcClientsConfig jdbcClientsConfig;
+  private GraphQL graphQLEngine;
 
   public GraphQLServerVerticle(
       Router router, ServerConfig config, RootGraphqlModel model, Optional<JWTAuth> jwtAuth) {
@@ -78,27 +79,27 @@ public class GraphQLServerVerticle extends AbstractVerticle {
   protected void setupGraphQLRoutes(Promise<Void> startPromise) {
     // Setup GraphiQL handler if configured
     if (this.config.getGraphiQLHandlerOptions() != null) {
-      var handlerBuilder =
+      var graphiQlHandlerBuilder =
           GraphiQLHandler.builder(vertx).with(this.config.getGraphiQLHandlerOptions());
       if (this.config.getAuthOptions() != null) {
-        handlerBuilder.addingHeaders(
+        graphiQlHandlerBuilder.addingHeaders(
             rc -> {
               String token = rc.get("token");
               return MultiMap.caseInsensitiveMultiMap().add("Authorization", "Bearer " + token);
             });
       }
 
-      var handler = handlerBuilder.build();
+      var graphiQlHandler = graphiQlHandlerBuilder.build();
       router
           .route(this.config.getServletConfig().getGraphiQLEndpoint())
-          .subRouter(handler.router());
+          .subRouter(graphiQlHandler.router());
     }
 
     // Setup database clients
     Map<DatabaseType, SqlClient> clients = jdbcClientsConfig.createClients();
 
     // Create GraphQL engine
-    var graphQL = createGraphQL(clients, startPromise);
+    this.graphQLEngine = createGraphQL(clients, startPromise);
 
     // Setup GraphQL endpoint with auth if configured
     var handler = router.route(this.config.getServletConfig().getGraphQLEndpoint());
@@ -110,10 +111,19 @@ public class GraphQLServerVerticle extends AbstractVerticle {
         });
 
     handler
-        .handler(GraphQLWSHandler.create(graphQL))
-        .handler(GraphQLHandler.create(graphQL, this.config.getGraphQLHandlerOptions()));
+        .handler(GraphQLWSHandler.create(this.graphQLEngine))
+        .handler(GraphQLHandler.create(this.graphQLEngine, this.config.getGraphQLHandlerOptions()));
 
     startPromise.complete();
+  }
+
+  /**
+   * Returns the GraphQL engine instance for internal use by other verticles.
+   *
+   * @return the GraphQL engine, or null if not yet initialized
+   */
+  public GraphQL getGraphQLEngine() {
+    return this.graphQLEngine;
   }
 
   public GraphQL createGraphQL(Map<DatabaseType, SqlClient> client, Promise<Void> startPromise) {
