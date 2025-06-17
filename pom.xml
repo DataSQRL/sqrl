@@ -414,7 +414,7 @@
       <dependency>
         <groupId>io.micrometer</groupId>
         <artifactId>micrometer-registry-prometheus</artifactId>
-        <version>1.15.0</version>
+        <version>1.15.1</version>
       </dependency>
       <!-- required for vertx jdbc -->
       <dependency>
