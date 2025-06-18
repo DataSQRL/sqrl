@@ -34,6 +34,7 @@ import com.datasqrl.tests.TestExtension;
 import com.datasqrl.tests.UseCaseTestExtensions;
 import com.datasqrl.util.FlinkOperatorStatusChecker;
 import com.datasqrl.util.SnapshotTest.Snapshot;
+import com.google.common.collect.MoreCollectors;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -57,6 +58,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -385,18 +387,18 @@ public class FullUseCasesIT {
     System.out.println(testNo + ":" + param);
   }
 
-  @ParameterizedTest
-  @MethodSource("useCaseProvider")
+  @Test
   @Disabled
-  public void runTestCaseByName(UseCaseTestParameter param) {
-    assumeTrue(
-        param.sqrlFileName.equals("stdlib-math.sqrl") && param.goal.equals("test"),
-        "Not the test marked for execution.");
-
+  public void runTestCaseByName() {
+    var param =
+        useCaseProvider().stream()
+            .filter(p -> p.sqrlFileName.equals("sensors-mutation.sqrl") && p.goal.equals("test"))
+            .collect(MoreCollectors.onlyElement());
     testUseCase(param);
   }
 
-  static Set<UseCaseTestParameter> useCaseProvider() throws Exception {
+  @SneakyThrows
+  static Set<UseCaseTestParameter> useCaseProvider() {
     var useCasesDir = USE_CASES;
     Set<UseCaseTestParameter> params = new TreeSet<>();
 
