@@ -18,7 +18,6 @@ package com.datasqrl.packager.util;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datasqrl.graphql.config.ServerConfig;
-import com.datasqrl.graphql.config.ServerConfigOptionsConverter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vertx.core.json.JsonObject;
 import java.io.File;
@@ -38,8 +37,8 @@ class ServerConfigTemplateTest {
   @SneakyThrows
   void test() {
     var original = mapper.readValue(TEMPLATE, Map.class);
-    var afterParsing = parseServerConfig(original);
-    assertThat(afterParsing)
+    var afterParsing = new ServerConfig(new JsonObject(original));
+    assertThat(mapper.convertValue(afterParsing, Map.class))
         .usingRecursiveComparison()
         .withComparatorForType(numberComparatorIgnoringType(), Number.class)
         .isEqualTo(original);
@@ -54,21 +53,12 @@ class ServerConfigTemplateTest {
     };
   }
 
-  private static Map parseServerConfig(Map original) {
-    var json = new JsonObject(original);
-    ServerConfig serverConfig = new ServerConfig();
-    ServerConfigOptionsConverter.fromJson(json, serverConfig);
-
-    var afterParsing = mapper.convertValue(serverConfig, Map.class);
-    return afterParsing;
-  }
-
   @SneakyThrows
   public static void main(String[] args) {
     var original = mapper.readValue(TEMPLATE, Map.class);
-    var afterParsing = parseServerConfig(original);
+    var afterParsing = new ServerConfig(new JsonObject(original));
 
-    if (!Objects.equals(original, afterParsing)) {
+    if (!Objects.equals(original, mapper.convertValue(afterParsing, Map.class))) {
       mapper.copy().writerWithDefaultPrettyPrinter().writeValue(TEMPLATE, afterParsing);
     }
   }

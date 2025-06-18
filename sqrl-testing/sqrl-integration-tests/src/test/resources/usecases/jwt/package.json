@@ -9,6 +9,10 @@
             {
               "algorithm": "HS256",
               "buffer": "dGVzdFNlY3JldA=="
+            },
+            {
+              "algorithm": "HS256",
+              "buffer": "dGVzdFNlY3JldA=="
             }
           ],
           "jwtOptions": {
