@@ -30,6 +30,8 @@ import lombok.Value;
 @Value
 public class ApiOperation {
 
+  public static final String TOP_LEVEL_FIELD_ALIAS = "results";
+
   @NonNull FunctionDefinition function;
   @NonNull GraphQLQuery apiQuery;
   boolean isTool; // MCP Tool

@@ -316,6 +316,10 @@ public class GraphQLSchemaConverter {
           numArgs + additionalArgs,
           nestedPath);
     }
+
+    public boolean isTopLevel() {
+      return path.isEmpty();
+    }
   }
 
   private static FunctionDefinition initializeFunctionDefinition(String name, String description) {
@@ -417,7 +421,9 @@ public class GraphQLSchemaConverter {
         return false;
       }
     }
-
+    if (ctx.isTopLevel() && config.hasTopLevelFieldAlias()) {
+      queryBody.append(config.getTopLevelAlias()).append(": ");
+    }
     queryBody.append(fieldDef.getName());
     int numArgs = 0;
     if (!fieldDef.getArguments().isEmpty()) {

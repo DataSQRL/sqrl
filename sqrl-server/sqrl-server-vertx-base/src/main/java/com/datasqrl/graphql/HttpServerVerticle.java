@@ -41,28 +41,41 @@ public class HttpServerVerticle extends AbstractVerticle {
   // Lifecyle
   // ---------------------------------------------------------------------------
 
+  public HttpServerVerticle(ServerConfig config, RootGraphqlModel model) {
+    this.config = config;
+    this.model = model;
+  }
+
   @Override
   public void start(Promise<Void> startPromise) {
-    // Load model synchronously
-    try {
-      this.model = loadModel();
-    } catch (Exception e) {
-      startPromise.fail(e);
-      return;
+    if (this.model == null) {
+      try {
+        this.model = loadModel();
+      } catch (Exception e) {
+        startPromise.fail(e);
+        return;
+      }
     }
 
-    // Load server-config.json asynchronously (existing behaviour)
-    loadConfig()
-        .onFailure(startPromise::fail)
-        .onSuccess(
-            raw -> {
-              this.config = new ServerConfig(raw);
-              try {
-                bootstrap(startPromise);
-              } catch (Exception e) {
-                startPromise.fail(e);
-              }
-            });
+    if (this.config == null) {
+      loadConfig()
+          .onFailure(startPromise::fail)
+          .onSuccess(
+              raw -> {
+                this.config = new ServerConfig(raw);
+                try {
+                  bootstrap(startPromise);
+                } catch (Exception e) {
+                  startPromise.fail(e);
+                }
+              });
+    } else {
+      try {
+        bootstrap(startPromise);
+      } catch (Exception e) {
+        startPromise.fail(e);
+      }
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -104,7 +117,16 @@ public class HttpServerVerticle extends AbstractVerticle {
         .onSuccess(
             graphQLDeploymentId -> {
               log.info("GraphQL verticle deployed successfully: {}", graphQLDeploymentId);
-
+              // Deploy MCP bridge verticle with access to GraphQL engine
+              McpBridgeVerticle mcpBridgeVerticle =
+                  new McpBridgeVerticle(root, config, model, jwtOpt, graphQLVerticle);
+              vertx
+                  .deployVerticle(mcpBridgeVerticle, childOpts)
+                  .onSuccess(
+                      mcpDeploymentId ->
+                          log.info(
+                              "MCP bridge verticle deployed successfully: {}", mcpDeploymentId))
+                  .onFailure(err -> log.error("Failed to deploy MCP bridge verticle", err));
               // Deploy REST bridge verticle with access to GraphQL engine
               RestBridgeVerticle restBridgeVerticle =
                   new RestBridgeVerticle(root, config, model, jwtOpt, graphQLVerticle);

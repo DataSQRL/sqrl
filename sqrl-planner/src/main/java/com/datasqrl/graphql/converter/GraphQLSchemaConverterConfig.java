@@ -15,6 +15,7 @@
  */
 package com.datasqrl.graphql.converter;
 
+import com.datasqrl.graphql.server.operation.ApiOperation;
 import graphql.language.OperationDefinition.Operation;
 import java.util.Arrays;
 import java.util.Map;
@@ -45,6 +46,9 @@ public class GraphQLSchemaConverterConfig {
   /** Whether to a prefix when generating operations to ensure uniqueness */
   @Builder.Default boolean addPrefix = true;
 
+  /** Whether to do a top level field alias for the result */
+  @Builder.Default String topLevelAlias = ApiOperation.TOP_LEVEL_FIELD_ALIAS;
+
   /**
    * Returns an operations filter that filters out all operations which start with the given list of
    * prefixes.
@@ -65,5 +69,9 @@ public class GraphQLSchemaConverterConfig {
       name = OPERATION_PREFIX_MAP.get(operationType) + name;
     }
     return name;
+  }
+
+  public boolean hasTopLevelFieldAlias() {
+    return topLevelAlias != null && !topLevelAlias.isEmpty();
   }
 }

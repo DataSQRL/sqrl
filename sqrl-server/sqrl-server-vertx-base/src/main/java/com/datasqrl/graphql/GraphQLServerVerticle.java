@@ -49,7 +49,6 @@ public class GraphQLServerVerticle extends AbstractVerticle {
   private final ServerConfig config;
   private final RootGraphqlModel model;
   private final Optional<JWTAuth> jwtAuth;
-  private final JdbcClientsConfig jdbcClientsConfig;
   private GraphQL graphQLEngine;
 
   public GraphQLServerVerticle(
@@ -58,7 +57,6 @@ public class GraphQLServerVerticle extends AbstractVerticle {
     this.config = config;
     this.model = model;
     this.jwtAuth = jwtAuth;
-    this.jdbcClientsConfig = new JdbcClientsConfig(vertx, config);
   }
 
   @Override
@@ -96,7 +94,8 @@ public class GraphQLServerVerticle extends AbstractVerticle {
     }
 
     // Setup database clients
-    Map<DatabaseType, SqlClient> clients = jdbcClientsConfig.createClients();
+    JdbcClientsConfig jdbcConfig = new JdbcClientsConfig(vertx, config);
+    Map<DatabaseType, SqlClient> clients = jdbcConfig.createClients();
 
     // Create GraphQL engine
     this.graphQLEngine = createGraphQL(clients, startPromise);

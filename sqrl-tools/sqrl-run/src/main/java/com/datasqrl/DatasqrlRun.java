@@ -16,7 +16,7 @@
 package com.datasqrl;
 
 import com.datasqrl.flinkrunner.functions.AutoRegisterSystemFunction;
-import com.datasqrl.graphql.GraphQLServer;
+import com.datasqrl.graphql.HttpServerVerticle;
 import com.datasqrl.graphql.JsonEnvVarDeserializer;
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.server.RootGraphqlModel;
@@ -429,7 +429,7 @@ public class DatasqrlRun {
           .setDatabase(getenv("PGDATABASE"));
     }
 
-    GraphQLServer server = new GraphQLServer(rootGraphqlModel, serverConfig, getSnowflakeUrl());
+    HttpServerVerticle server = new HttpServerVerticle(serverConfig, rootGraphqlModel);
 
     PrometheusMeterRegistry prometheusMeterRegistry =
         new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
