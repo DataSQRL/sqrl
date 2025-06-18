@@ -106,10 +106,7 @@ public abstract class AbstractBridgeVerticle extends AbstractVerticle {
 
     try {
       // Build a JSON Schema from the parameters definition
-      String schemaText =
-          objectMapper
-              .setSerializationInclusion(JsonInclude.Include.NON_NULL)
-              .writeValueAsString(parameters);
+      String schemaText = getSchemaMapper().writeValueAsString(parameters);
       JsonSchemaFactory factory = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V202012);
       JsonSchema schema = factory.getSchema(schemaText);
 
@@ -134,6 +131,10 @@ public abstract class AbstractBridgeVerticle extends AbstractVerticle {
     } catch (Exception e) {
       throw new ValidationException("Parameter validation failed: " + e.getMessage());
     }
+  }
+
+  protected ObjectMapper getSchemaMapper() {
+    return objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
   }
 
   protected Future<ExecutionResult> executeGraphQLAsync(

@@ -4,14 +4,18 @@ import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.graphql.server.operation.ApiOperation;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import graphql.language.OperationDefinition.Operation;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
+import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.jwt.JWTAuth;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +31,8 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
 
   private static final String JSONRPC_VERSION = "2.0";
   private static final String PROTOCOL_VERSION = "2024-11-05";
+  private static final String CT_JSON = "application/json";
+  private static final String CT_SSE = "text/event-stream";
 
   private final ConcurrentHashMap<String, SseConnection> sseConnections = new ConcurrentHashMap<>();
   private final Map<String, ApiOperation> tools;
@@ -56,31 +62,16 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
 
     // MCP SSE endpoint - handles POST for messages
     router
-        .post(mcpRoutePrefix + "/sse")
+        .post(mcpRoutePrefix)
         .handler(
             ctx -> {
-              JsonObject body = ctx.body().asJsonObject();
-
-              // Handle JSON-RPC request asynchronously
-              handleRequest(ctx, body)
-                  .onComplete(
-                      ar -> {
-                        if (ar.succeeded()) {
-                          JsonObject result = ar.result();
-                          if (result != null) {
-                            ctx.response()
-                                .putHeader("Content-Type", "application/json")
-                                .end(result.encode());
-                          } else {
-                            // For notifications that return null
-                            ctx.response().setStatusCode(204).end();
-                          }
-                        } else {
-                          ctx.response()
-                              .setStatusCode(500)
-                              .end(new JsonObject().put("error", ar.cause().getMessage()).encode());
-                        }
-                      });
+              JsonNode payload = null;
+              try {
+                payload = objectMapper.readTree(ctx.body().buffer().getBytes());
+              } catch (IOException e) {
+                throw new RuntimeException(e);
+              }
+              processIncomingMessages(ctx, payload);
             });
 
     // SSE endpoint for server-to-client streaming
@@ -88,6 +79,10 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
         .get(mcpRoutePrefix + "/sse")
         .handler(
             ctx -> {
+              if (!accepts(ctx, CT_SSE)) {
+                ctx.response().setStatusCode(406).end();
+                return;
+              }
               HttpServerResponse response = ctx.response();
 
               // Set up SSE headers
@@ -164,14 +159,14 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
     }
   }
 
-  public Future<JsonObject> handleRequest(RoutingContext ctx, JsonObject request) {
-    String method = request.getString("method");
-    Object id = request.getValue("id");
-    JsonObject params = request.getJsonObject("params", new JsonObject());
+  public Future<JsonObject> handleRequest(RoutingContext ctx, JsonNode request) {
+    String method = request.get("method").asText();
+    JsonNode id = request.get("id");
+    JsonNode params = request.get("params");
 
     // Enhanced debugging for tool calls
     if ("tools/call".equals(method)) {
-      System.err.println("[DEBUG] Tool call request: " + request.encode());
+      log.warn("[DEBUG] Tool call request: {}", request);
     }
 
     // Handle notifications (messages without id) - these should not return responses
@@ -233,7 +228,7 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
   /**
    * Handle notifications (messages without id field). Notifications should not return responses.
    */
-  private Future<JsonObject> handleNotification(String method, JsonObject params) {
+  private Future<JsonObject> handleNotification(String method, JsonNode params) {
     switch (method) {
       case "notifications/initialized":
         // Handle the initialized notification - just log it
@@ -253,7 +248,7 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
     return Future.succeededFuture(null);
   }
 
-  private JsonObject handleInitialize(JsonObject params) {
+  private JsonObject handleInitialize(JsonNode params) {
     JsonObject capabilities =
         new JsonObject()
             .put("tools", new JsonObject())
@@ -274,8 +269,8 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
    * @param params
    * @return
    */
-  private Future<JsonObject> handleReadResource(RoutingContext ctx, JsonObject params) {
-    String uri = params.getString("uri");
+  private Future<JsonObject> handleReadResource(RoutingContext ctx, JsonNode params) {
+    String uri = params.get("uri").asText();
     if (uri == null) {
       return Future.failedFuture(new McpException(-32602, "URI parameter required"));
     }
@@ -291,17 +286,17 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
     return Future.succeededFuture(new JsonObject().put("contents", contents));
   }
 
-  private Future<JsonObject> handleCallTool(RoutingContext ctx, JsonObject params)
-      throws Exception {
-    String toolName = params.getString("name");
-    JsonObject arguments = params.getJsonObject("arguments", new JsonObject());
+  private Future<JsonObject> handleCallTool(RoutingContext ctx, JsonNode params) throws Exception {
+    String toolName = params.get("name").asText();
+    JsonNode arguments = params.get("arguments");
 
     ApiOperation tool = tools.get(toolName);
     if (tool == null) {
       return Future.failedFuture(new McpException(-32602, "Tool not found: " + toolName));
     }
-
-    return bridgeRequestToGraphQL(ctx, tool, arguments.getMap())
+    Map<String, Object> variables =
+        objectMapper.convertValue(arguments, new TypeReference<Map<String, Object>>() {});
+    return bridgeRequestToGraphQL(ctx, tool, variables)
         .map(
             executionResult -> {
               JsonObject json;
@@ -345,13 +340,24 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
 
     for (ApiOperation tool : toolOperations) {
       Map<String, Object> inputSchema =
-          objectMapper.convertValue(
-              tool.getFunction().getParameters(), new TypeReference<Map<String, Object>>() {});
+          getSchemaMapper()
+              .convertValue(
+                  tool.getFunction().getParameters(), new TypeReference<Map<String, Object>>() {});
+      String description = tool.getFunction().getDescription();
+      if (description == null) {
+        description =
+            "Invokes %s %s"
+                .formatted(
+                    tool.getFunction().getName(),
+                    tool.getApiQuery().operationType().name().toLowerCase());
+      }
+      boolean isReadOnly = tool.getApiQuery().operationType() != Operation.MUTATION;
       JsonObject toolInfo =
           new JsonObject()
               .put("name", tool.getName())
-              .put("description", tool.getFunction().getDescription())
-              .put("inputSchema", inputSchema);
+              .put("description", description)
+              .put("inputSchema", inputSchema)
+              .put("readOnlyHint", isReadOnly);
       toolsArray.add(toolInfo);
     }
     return new JsonObject().put("tools", toolsArray);
@@ -360,11 +366,15 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
   private JsonObject getResourceList(Collection<ApiOperation> resourceOperations) {
     JsonArray resourcesArray = new JsonArray();
     for (ApiOperation resource : resourceOperations) {
+      String description = resource.getFunction().getDescription();
+      if (description == null) {
+        description = "Returns %s resource".formatted(resource.getFunction().getName());
+      }
       JsonObject resourceDef =
           new JsonObject()
               .put("uri", resource.getUriTemplate())
               .put("name", resource.getName())
-              .put("description", resource.getFunction().getDescription())
+              .put("description", description)
               .put("mimeType", "application/json");
       resourcesArray.add(resourceDef);
     }
@@ -378,6 +388,98 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
   private JsonObject createErrorResponse(Object id, int code, String message) {
     JsonObject error = new JsonObject().put("code", code).put("message", message);
     return new JsonObject().put("jsonrpc", JSONRPC_VERSION).put("id", id).put("error", error);
+  }
+
+  // ---------------------------------------------------------------------------
+  // MCP Streamable‑HTTP helpers
+  // ---------------------------------------------------------------------------
+
+  private void processIncomingMessages(RoutingContext ctx, JsonNode payload) {
+    boolean containsRequest = containsRequestObjects(payload);
+
+    // Pure notifications (no "method" requests) → 202 Accepted
+    if (!containsRequest) {
+      ctx.response().setStatusCode(202).end();
+      return;
+    }
+
+    boolean clientAcceptsSse =
+        accepts(ctx, CT_SSE) && !accepts(ctx, CT_JSON); // prefer JSON if both present
+
+    if (clientAcceptsSse && requestNeedsStreaming(payload)) {
+      streamResponse(ctx, payload);
+    } else {
+      singleJsonResponse(ctx, payload);
+    }
+  }
+
+  private void singleJsonResponse(RoutingContext ctx, JsonNode payload) {
+    if (!payload.isObject()) {
+      ctx.fail(400, new IllegalArgumentException("Batch requests not supported yet"));
+      return;
+    }
+    handleRequest(ctx, payload)
+        .onSuccess(
+            result -> {
+              if (result != null) {
+                ctx.response().putHeader(HttpHeaders.CONTENT_TYPE, CT_JSON).end(result.encode());
+              } else {
+                ctx.response().setStatusCode(204).end();
+              }
+            })
+        .onFailure(
+            err -> {
+              ctx.response()
+                  .setStatusCode(500)
+                  .end(new JsonObject().put("error", err.getMessage()).encode());
+            });
+  }
+
+  private void streamResponse(RoutingContext ctx, JsonNode payload) {
+    if (!payload.isObject()) {
+      ctx.fail(400, new IllegalArgumentException("Batch requests not supported in streaming mode"));
+      return;
+    }
+    HttpServerResponse res = ctx.response();
+    res.setChunked(true)
+        .putHeader(HttpHeaders.CONTENT_TYPE, CT_SSE)
+        .putHeader("Cache-Control", "no-cache");
+
+    handleRequest(ctx, payload)
+        .onSuccess(
+            result -> {
+              // send single chunk – for true multi‑chunk you’d wire this to reactive execution
+              res.write("data: " + result.encode() + "\n\n").onComplete(ar -> res.end());
+            })
+        .onFailure(
+            err -> {
+              res.write(
+                      "data: " + new JsonObject().put("error", err.getMessage()).encode() + "\n\n")
+                  .onComplete(ar -> res.end());
+            });
+  }
+
+  private static boolean containsRequestObjects(JsonNode node) {
+    if (node.isArray()) {
+      for (JsonNode n : node) {
+        if (n.hasNonNull("method")) return true;
+      }
+      return false;
+    }
+    return node.hasNonNull("method");
+  }
+
+  /** Minimal heuristic: initialise & streamed tool calls need SSE */
+  private static boolean requestNeedsStreaming(JsonNode payload) {
+    if (!payload.isObject()) return false;
+    String method = payload.path("method").asText("");
+    return "initialize".equals(method)
+        || ("tools/call".equals(method) && payload.path("params").path("stream").asBoolean(false));
+  }
+
+  private static boolean accepts(RoutingContext ctx, String mime) {
+    List<String> accept = ctx.request().headers().getAll(HttpHeaders.ACCEPT);
+    return accept.stream().anyMatch(h -> h.contains(mime));
   }
 
   static class McpException extends RuntimeException {
