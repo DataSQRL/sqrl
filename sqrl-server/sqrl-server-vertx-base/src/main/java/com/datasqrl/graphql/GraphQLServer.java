@@ -129,7 +129,7 @@ public class GraphQLServer extends AbstractVerticle {
 
   @SneakyThrows
   private static RootGraphqlModel readModel() {
-    return getObjectMapper().readValue(new File("server-model.json"), ModelContainer.class).model;
+    return getObjectMapper().readValue(new File("vertx.json"), ModelContainer.class).model;
   }
 
   public static ObjectMapper getObjectMapper() {
@@ -146,7 +146,7 @@ public class GraphQLServer extends AbstractVerticle {
     Promise<JsonObject> promise = Promise.promise();
     vertx
         .fileSystem()
-        .readFile("server-config.json")
+        .readFile("vertx-config.json")
         .onComplete(
             result -> {
               if (result.succeeded()) {
