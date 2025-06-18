@@ -3,6 +3,7 @@ package com.datasqrl.graphql;
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.graphql.server.operation.ApiOperation;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import graphql.language.OperationDefinition.Operation;
@@ -83,10 +84,10 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
               JsonNode payload = null;
               try {
                 payload = objectMapper.readTree(ctx.body().buffer().getBytes());
-              } catch (IOException e) {
+                processIncomingMessages(ctx, payload);
+              } catch (IOException e) { // TODO: improve error handling
                 throw new RuntimeException(e);
               }
-              processIncomingMessages(ctx, payload);
             });
 
     // SSE endpoint for server-to-client streaming
@@ -218,14 +219,21 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
 
                 return Future.succeededFuture(errorResponse);
               });
+    } catch (ValidationException e) {
+      JsonObject json = new JsonObject();
+      json.put(
+          "content",
+          List.of(
+              new JsonObject()
+                  .put("type", "text")
+                  .put("text", "Validation error: " + e.getMessage())));
+      json.put("isError", true);
+      JsonObject response = createResponse(id, json);
+      return Future.succeededFuture(response);
     } catch (Exception e) {
       JsonObject errorResponse =
           createErrorResponse(id, -32603, "Internal error: " + e.getMessage());
-
-      if ("tools/call".equals(method)) {
-        log.error("Tool call exception response: {}", errorResponse.encode());
-      }
-
+      log.error("Request error: {}", errorResponse.encode());
       return Future.succeededFuture(errorResponse);
     }
   }
@@ -291,7 +299,8 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
     return Future.succeededFuture(new JsonObject().put("contents", contents));
   }
 
-  private Future<JsonObject> handleCallTool(RoutingContext ctx, JsonNode params) throws Exception {
+  private Future<JsonObject> handleCallTool(RoutingContext ctx, JsonNode params)
+      throws ValidationException {
     String toolName = params.get("name").asText();
     JsonNode arguments = params.get("arguments");
 
@@ -304,9 +313,8 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
     return bridgeRequestToGraphQL(ctx, tool, variables)
         .map(
             executionResult -> {
-              JsonObject json;
+              JsonObject json = new JsonObject();
               if (!executionResult.getErrors().isEmpty()) {
-                json = new JsonObject();
                 json.put(
                     "content",
                     executionResult.getErrors().stream()
@@ -314,12 +322,28 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
                             err ->
                                 new JsonObject()
                                     .put("type", "text")
-                                    .put("text", "Tool Error:" + err.getPath())
-                                    .put("extensions", err.getExtensions()))
+                                    .put("text", "Tool Error:" + err.getPath()))
                         .toList());
                 json.put("isError", true);
               } else {
-                json = new JsonObject((Map) executionResult.getData());
+                Object result = executionResult.getData();
+                // Unnest if possible for flatter REST responses
+                if (result instanceof Map resultMap) {
+                  if (resultMap.size() == 1
+                      && resultMap.containsKey(ApiOperation.TOP_LEVEL_FIELD_ALIAS)) {
+                    result = resultMap.get(ApiOperation.TOP_LEVEL_FIELD_ALIAS);
+                  }
+                }
+                try {
+                  json.put(
+                      "content",
+                      List.of(
+                          new JsonObject()
+                              .put("type", "text")
+                              .put("text", objectMapper.writeValueAsString(result))));
+                } catch (JsonProcessingException e) {
+                  throw new RuntimeException(e);
+                }
               }
               return json;
             })
@@ -362,7 +386,7 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
               .put("name", tool.getName())
               .put("description", description)
               .put("inputSchema", inputSchema)
-              .put("readOnlyHint", isReadOnly);
+              .put("annotations", new JsonObject().put("readOnlyHint", isReadOnly));
       toolsArray.add(toolInfo);
     }
     return new JsonObject().put("tools", toolsArray);
@@ -427,17 +451,12 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
     handleRequest(ctx, payload)
         .onSuccess(
             result -> {
+              log.info("Result: {}", result);
               if (result != null) {
                 ctx.response().putHeader(HttpHeaders.CONTENT_TYPE, CT_JSON).end(result.encode());
               } else {
                 ctx.response().setStatusCode(204).end();
               }
-            })
-        .onFailure(
-            err -> {
-              ctx.response()
-                  .setStatusCode(500)
-                  .end(new JsonObject().put("error", err.getMessage()).encode());
             });
   }
 

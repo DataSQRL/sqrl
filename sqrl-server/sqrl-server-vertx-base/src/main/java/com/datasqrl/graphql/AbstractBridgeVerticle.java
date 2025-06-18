@@ -20,6 +20,7 @@ import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.graphql.server.operation.ApiOperation;
 import com.datasqrl.graphql.server.operation.FunctionDefinition;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.schema.JsonSchema;
@@ -89,7 +90,8 @@ public abstract class AbstractBridgeVerticle extends AbstractVerticle {
   }
 
   protected Future<ExecutionResult> bridgeRequestToGraphQL(
-      RoutingContext ctx, ApiOperation operation, Map<String, Object> variables) throws Exception {
+      RoutingContext ctx, ApiOperation operation, Map<String, Object> variables)
+      throws ValidationException {
     // Validate parameters
     validateParameters(variables, operation);
 
@@ -103,33 +105,31 @@ public abstract class AbstractBridgeVerticle extends AbstractVerticle {
     if (parameters == null) {
       return; // No validation required
     }
-
+    final JsonNode arguments;
+    final JsonSchema schema;
     try {
       // Build a JSON Schema from the parameters definition
       String schemaText = getSchemaMapper().writeValueAsString(parameters);
       JsonSchemaFactory factory = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V202012);
-      JsonSchema schema = factory.getSchema(schemaText);
+      schema = factory.getSchema(schemaText);
 
       // Convert the collected variables to a JsonNode
-      JsonNode arguments;
       if (variables == null || variables.isEmpty()) {
         arguments = objectMapper.readTree("{}");
       } else {
         arguments = objectMapper.valueToTree(variables);
       }
+    } catch (JsonProcessingException e) {
+      throw new ValidationException("Could not parse parameter JSON:" + e.getMessage());
+    }
 
-      // Validate against the schema
-      Set<ValidationMessage> schemaErrors = schema.validate(arguments);
-      if (!schemaErrors.isEmpty()) {
-        String schemaErrorsText =
-            schemaErrors.stream()
-                .map(ValidationMessage::toString)
-                .collect(Collectors.joining("; "));
-        log.info("Function call had schema errors: {}", schemaErrorsText);
-        throw new ValidationException("Invalid Schema: " + schemaErrorsText);
-      }
-    } catch (Exception e) {
-      throw new ValidationException("Parameter validation failed: " + e.getMessage());
+    // Validate against the schema
+    Set<ValidationMessage> schemaErrors = schema.validate(arguments);
+    if (!schemaErrors.isEmpty()) {
+      String schemaErrorsText =
+          schemaErrors.stream().map(ValidationMessage::toString).collect(Collectors.joining("; "));
+      log.info("Function call had schema errors: {}", schemaErrorsText);
+      throw new ValidationException("Invalid Schema: " + schemaErrorsText);
     }
   }
 
