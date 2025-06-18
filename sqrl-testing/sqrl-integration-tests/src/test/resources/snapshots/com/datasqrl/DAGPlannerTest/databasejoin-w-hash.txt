@@ -113,7 +113,7 @@ CREATE TABLE `_OrderEntries_1` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`_OrderEntries_1`
-(SELECT `id`, `customerid`, `time`, `productid`, `quantity`, `discount`, `hashColumns`(`id`, `customerid`, `time`, `productid`, `quantity`, `discount`) AS `__pk_hash`
+(SELECT `id`, `customerid`, `time`, `productid`, `quantity`, `discount`, `hash_columns`(`id`, `customerid`, `time`, `productid`, `quantity`, `discount`) AS `__pk_hash`
  FROM `default_catalog`.`default_database`.`_OrderEntries`)
 ;
 END

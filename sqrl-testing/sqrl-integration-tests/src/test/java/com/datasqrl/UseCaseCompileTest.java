@@ -15,10 +15,11 @@
  */
 package com.datasqrl;
 
-import static org.junit.Assume.assumeFalse;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.nio.file.Path;
 import lombok.SneakyThrows;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
@@ -45,11 +46,11 @@ public class UseCaseCompileTest extends AbstractUseCaseTest {
 
   @ParameterizedTest
   @ArgumentsSource(UseCaseFiles.class)
+  @Disabled
   public void runTestCaseByName(Path script, Path graphQlFile, Path packageFile) {
-    if (script.toString().endsWith("analytics-only.sqrl")) {
-      super.testUsecase(script, graphQlFile, packageFile);
-    } else {
-      assumeFalse(true);
-    }
+    assumeTrue(
+        script.toString().endsWith("analytics-only.sqrl"), "Not the test marked for execution.");
+
+    super.testUsecase(script, graphQlFile, packageFile);
   }
 }

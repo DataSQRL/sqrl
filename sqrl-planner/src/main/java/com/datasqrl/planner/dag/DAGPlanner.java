@@ -28,7 +28,7 @@ import com.datasqrl.engine.export.ExportEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.function.CommonFunctions;
+import com.datasqrl.flinkrunner.stdlib.commons.hash_columns;
 import com.datasqrl.plan.global.StageAnalysis;
 import com.datasqrl.plan.util.PrimaryKeyMap;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
@@ -93,6 +93,8 @@ import org.apache.flink.table.planner.plan.schema.TimeIndicatorRelDataType;
 /** Optimizes the DAG and produces the physical plan after DAG cutting */
 @AllArgsConstructor(onConstructor_ = @Inject)
 public class DAGPlanner {
+
+  private static final FunctionDefinition HASH_COLUMNS = new hash_columns();
 
   private final ExecutionPipeline pipeline;
   private final ErrorCollector errors;
@@ -459,7 +461,7 @@ public class DAGPlanner {
             relBuilder
                 .getRexBuilder()
                 .makeCall(
-                    sqrlEnv.lookupUserDefinedFunction(CommonFunctions.HASH_COLUMNS),
+                    sqrlEnv.lookupUserDefinedFunction(HASH_COLUMNS),
                     CalciteUtil.getSelectRex(relBuilder, addHashColumn)),
             HASHED_PK_NAME);
       } else {

@@ -584,7 +584,7 @@ CREATE TABLE `Orders_6` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `items` RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
+  `items` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
@@ -666,7 +666,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerPromotion_1`
      FROM `default_catalog`.`default_database`.`CustomersPastPurchases`)
     ;
     INSERT INTO `default_catalog`.`default_database`.`CustomersSpending_5`
-     (SELECT `customerid`, `week`, `spend`, `saved`, `hashColumns`(`customerid`, `week`, `spend`, `saved`) AS `__pk_hash`
+     (SELECT `customerid`, `week`, `spend`, `saved`, `hash_columns`(`customerid`, `week`, `spend`, `saved`) AS `__pk_hash`
       FROM `default_catalog`.`default_database`.`CustomersSpending`)
      ;
      INSERT INTO `default_catalog`.`default_database`.`Orders_6`
@@ -674,7 +674,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerPromotion_1`
        FROM `default_catalog`.`default_database`.`Orders`)
       ;
       INSERT INTO `default_catalog`.`default_database`.`OrdersTotals_7`
-       (SELECT `id`, `time`, `customerid`, `price`, `saving`, `hashColumns`(`id`, `time`, `customerid`, `price`, `saving`) AS `__pk_hash`
+       (SELECT `id`, `time`, `customerid`, `price`, `saving`, `hash_columns`(`id`, `time`, `customerid`, `price`, `saving`) AS `__pk_hash`
         FROM `default_catalog`.`default_database`.`OrdersTotals`)
        ;
        INSERT INTO `default_catalog`.`default_database`.`Products_8`
@@ -682,7 +682,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerPromotion_1`
          FROM `default_catalog`.`default_database`.`_ProductsStream`)
         ;
         INSERT INTO `default_catalog`.`default_database`.`ProductsByCountry_9`
-         (SELECT `productid`, `country`, `quantity`, `spend`, `weight`, `hashColumns`(`productid`, `country`) AS `__pk_hash`
+         (SELECT `productid`, `country`, `quantity`, `spend`, `weight`, `hash_columns`(`productid`, `country`) AS `__pk_hash`
           FROM `default_catalog`.`default_database`.`ProductsByCountry`)
          ;
          END

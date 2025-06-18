@@ -94,7 +94,7 @@ CREATE TABLE `Product_2` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`FunctionCalls_1`
-(SELECT `searchResult`, `format`, `hashColumns`(`searchResult`, `format`) AS `__pk_hash`
+(SELECT `searchResult`, `format`, `hash_columns`(`searchResult`, `format`) AS `__pk_hash`
  FROM `default_catalog`.`default_database`.`FunctionCalls`)
 ;
 INSERT INTO `default_catalog`.`default_database`.`Product_2`

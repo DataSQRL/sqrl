@@ -15,7 +15,7 @@
  */
 package com.datasqrl.function.vector;
 
-import com.datasqrl.flinkrunner.functions.vector.VectorFunctions;
+import com.datasqrl.flinkrunner.stdlib.vector.VectorFunctions;
 import com.datasqrl.function.CalciteFunctionUtil;
 import com.datasqrl.function.PgSpecificOperatorTable;
 import com.datasqrl.function.translations.PostgresSqlTranslation;

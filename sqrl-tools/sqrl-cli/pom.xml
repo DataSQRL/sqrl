@@ -99,35 +99,39 @@
     </dependency>
     <dependency>
       <groupId>com.datasqrl.flinkrunner</groupId>
-      <artifactId>functions-common</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl.flinkrunner</groupId>
-      <artifactId>json-type</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl.flinkrunner</groupId>
       <artifactId>flexible-json-format</artifactId>
     </dependency>
     <dependency>
       <groupId>com.datasqrl.flinkrunner</groupId>
-      <artifactId>vector-type</artifactId>
+      <artifactId>stdlib-utils</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl.flinkrunner</groupId>
+      <artifactId>stdlib-commons</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl.flinkrunner</groupId>
+      <artifactId>stdlib-json</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl.flinkrunner</groupId>
+      <artifactId>stdlib-text</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl.flinkrunner</groupId>
+      <artifactId>stdlib-math</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl.flinkrunner</groupId>
+      <artifactId>stdlib-openai</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl.flinkrunner</groupId>
+      <artifactId>stdlib-vector</artifactId>
     </dependency>
     <dependency>
       <groupId>com.datasqrl.flinkrunner</groupId>
       <artifactId>kafka-safe-connector</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl.flinkrunner</groupId>
-      <artifactId>text-functions</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl.flinkrunner</groupId>
-      <artifactId>math-functions</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl.flinkrunner</groupId>
-      <artifactId>openai-functions</artifactId>
     </dependency>
     <dependency>
       <groupId>com.datasqrl.flinkrunner</groupId>
@@ -215,11 +219,6 @@
           <artifactId>log4j</artifactId>
         </exclusion>
       </exclusions>
-    </dependency>
-
-    <dependency>
-      <groupId>${project.groupId}</groupId>
-      <artifactId>sqrl-functions</artifactId>
     </dependency>
   </dependencies>
 

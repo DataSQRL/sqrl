@@ -15,7 +15,7 @@
  */
 package com.datasqrl.function.vector;
 
-import com.datasqrl.flinkrunner.functions.vector.euclidean_distance;
+import com.datasqrl.flinkrunner.stdlib.vector.euclidean_distance;
 import com.datasqrl.function.FunctionMetadata;
 import com.datasqrl.function.IndexableFunction;
 import com.datasqrl.plan.global.IndexType;

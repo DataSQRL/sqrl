@@ -220,7 +220,7 @@ CREATE TABLE `Submission_2` (
   `documentation` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `readme` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `keywords` RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
+  `keywords` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
   `uniqueId` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `file` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `hash` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -285,11 +285,11 @@ INSERT INTO `default_catalog`.`default_database`.`Package_1`
  FROM `default_catalog`.`default_database`.`Package`)
 ;
 INSERT INTO `default_catalog`.`default_database`.`Submission_2`
- (SELECT `name`, `version`, `variant`, `latest`, `type`, `license`, `repository`, `homepage`, `documentation`, `readme`, `description`, `to_jsonb`(`keywords`) AS `keywords`, `uniqueId`, `file`, `hash`, `authorId`, `submissionTime`, `event_time`, `variant0`, `repoURL`, `hashColumns`(`name`, `version`, `variant`, `latest`, `type`, `license`, `repository`, `homepage`, `documentation`, `readme`, `description`, `keywords`, `uniqueId`, `file`, `hash`, `authorId`, `submissionTime`, `event_time`, `variant0`, `repoURL`) AS `__pk_hash`
+ (SELECT `name`, `version`, `variant`, `latest`, `type`, `license`, `repository`, `homepage`, `documentation`, `readme`, `description`, `to_jsonb`(`keywords`) AS `keywords`, `uniqueId`, `file`, `hash`, `authorId`, `submissionTime`, `event_time`, `variant0`, `repoURL`, `hash_columns`(`name`, `version`, `variant`, `latest`, `type`, `license`, `repository`, `homepage`, `documentation`, `readme`, `description`, `keywords`, `uniqueId`, `file`, `hash`, `authorId`, `submissionTime`, `event_time`, `variant0`, `repoURL`) AS `__pk_hash`
   FROM `default_catalog`.`default_database`.`Submission`)
  ;
  INSERT INTO `default_catalog`.`default_database`.`SubmissionTopics_3`
-  (SELECT `pkgName`, `topicName`, `submissionTime`, `hashColumns`(`pkgName`, `topicName`, `submissionTime`) AS `__pk_hash`
+  (SELECT `pkgName`, `topicName`, `submissionTime`, `hash_columns`(`pkgName`, `topicName`, `submissionTime`) AS `__pk_hash`
    FROM `default_catalog`.`default_database`.`SubmissionTopics`)
   ;
   INSERT INTO `default_catalog`.`default_database`.`TopicPackages_4`

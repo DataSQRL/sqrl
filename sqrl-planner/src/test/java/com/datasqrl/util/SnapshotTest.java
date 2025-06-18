@@ -153,8 +153,9 @@ public class SnapshotTest {
                   + "file://"
                   + path.toFile().getAbsolutePath());
         } else {
-          // WARNING: This is written in the opposite way and treats content as the "expected".
-          assertThat(path).hasContent(content);
+          assertThat(path)
+              .as("WARN: The 'expected' and 'actual' values are flipped")
+              .hasContent(content);
         }
       }
     }

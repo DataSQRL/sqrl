@@ -60,7 +60,7 @@ Primary Key: customerid
 Timestamp  : -
 Schema:
  - customerid: BIGINT NOT NULL
- - obj: RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw==')
+ - obj: RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM=')
 Plan:
 LogicalProject(customerid=[$0], obj=[jsonb_object(CONCAT('application#', $2), $0)])
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
@@ -75,7 +75,7 @@ Primary Key: name
 Timestamp  : -
 Schema:
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - agg: RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw==')
+ - agg: RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM=')
 Plan:
 LogicalAggregate(group=[{0}], agg=[jsonb_array_agg($0)])
   LogicalProject(name=[$2])
@@ -93,7 +93,7 @@ Primary Key: customerid
 Timestamp  : -
 Schema:
  - customerid: BIGINT NOT NULL
- - obj: RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw==')
+ - obj: RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM=')
 Plan:
 LogicalProject(customerid=[$0], obj=[jsonb_array($0)])
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
@@ -110,7 +110,7 @@ Primary Key: customerid
 Timestamp  : -
 Schema:
  - customerid: BIGINT NOT NULL
- - obj: RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw==')
+ - obj: RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM=')
 Plan:
 LogicalProject(customerid=[$0], obj=[jsonb_concat(to_jsonb('{"a": true}'), to_jsonb('{"a": false}'))])
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
@@ -159,7 +159,7 @@ Primary Key: name
 Timestamp  : -
 Schema:
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - agg: RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw==')
+ - agg: RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM=')
 Plan:
 LogicalAggregate(group=[{0}], agg=[jsonb_object_agg($1, $0)])
   LogicalProject(name=[$2], $f1=['key'])
@@ -211,7 +211,7 @@ Primary Key: customerid
 Timestamp  : -
 Schema:
  - customerid: BIGINT NOT NULL
- - obj: RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw==')
+ - obj: RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM=')
 Plan:
 LogicalProject(customerid=[$0], obj=[to_jsonb('{"a": 1}')])
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
@@ -317,7 +317,7 @@ CREATE TABLE `CustomerStream_2` (
 );
 CREATE TABLE `ObjComplex_3` (
   `customerid` BIGINT NOT NULL,
-  `obj` RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
+  `obj` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
   PRIMARY KEY (`customerid`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
@@ -329,7 +329,7 @@ CREATE TABLE `ObjComplex_3` (
 );
 CREATE TABLE `jsonArrayAggTable_4` (
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `agg` RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
+  `agg` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
   PRIMARY KEY (`name`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
@@ -341,7 +341,7 @@ CREATE TABLE `jsonArrayAggTable_4` (
 );
 CREATE TABLE `jsonArrayTable_5` (
   `customerid` BIGINT NOT NULL,
-  `obj` RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
+  `obj` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
   PRIMARY KEY (`customerid`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
@@ -353,7 +353,7 @@ CREATE TABLE `jsonArrayTable_5` (
 );
 CREATE TABLE `jsonConcatTable_6` (
   `customerid` BIGINT NOT NULL,
-  `obj` RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
+  `obj` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
   PRIMARY KEY (`customerid`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
@@ -389,7 +389,7 @@ CREATE TABLE `jsonExtractTable_8` (
 );
 CREATE TABLE `jsonObjectAggTable_9` (
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `agg` RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
+  `agg` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
   PRIMARY KEY (`name`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
@@ -425,7 +425,7 @@ CREATE TABLE `jsonToStringTable_11` (
 );
 CREATE TABLE `toJsonTable_12` (
   `customerid` BIGINT NOT NULL,
-  `obj` RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
+  `obj` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
   PRIMARY KEY (`customerid`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',

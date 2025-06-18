@@ -258,7 +258,7 @@ jobs:
           command: echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
       - run:
           name: Run Integration Tests
-          command: mvn -U -T2 -B install -Dtest=skip -Dsurefire.failIfNoSpecifiedTests=false -Pskip-shade-plugin
+          command: mvn -U -T2 -B install -Dflinkrunner.image.repo="ghcr.io" -Dflinkrunner.image.tag="" -Dtest=skip -Dsurefire.failIfNoSpecifiedTests=false -Pskip-shade-plugin
       - save-test-results
 
   build-test-image:
@@ -296,13 +296,6 @@ jobs:
               -t datasqrl/sqrl-server-test-image:${CIRCLE_SHA1} \
               sqrl-server/sqrl-server-vertx
             docker push datasqrl/sqrl-server-test-image:${CIRCLE_SHA1}
-
-            # ── flink-runner test image ──────────────────────────────────────
-            docker build \
-              --build-arg BASE_TAG=$BASE_TAG \
-              -t datasqrl/sqrl-flink-runner-test-image:${CIRCLE_SHA1} \
-              sqrl-tools/sqrl-flink-runner/target
-            docker push datasqrl/sqrl-flink-runner-test-image:${CIRCLE_SHA1}
 
             # wait for all images to be pushed
             wait
@@ -454,7 +447,6 @@ jobs:
 
             build_and_push cmd                 sqrl-tools
             build_and_push sqrl-server         sqrl-server/sqrl-server-vertx
-            build_and_push sqrl-flink-runner   sqrl-tools/sqrl-flink-runner/target
 
   docker-build-base-image:
     machine:

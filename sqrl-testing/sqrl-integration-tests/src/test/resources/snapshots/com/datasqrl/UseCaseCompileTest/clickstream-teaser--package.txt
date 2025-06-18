@@ -186,7 +186,7 @@ INSERT INTO `default_catalog`.`default_database`.`Recommendation_2`
    FROM `default_catalog`.`default_database`.`Trending`)
   ;
   INSERT INTO `default_catalog`.`default_database`.`VisitAfter_4`
-   (SELECT `beforeURL`, `afterURL`, `timestamp`, `hashColumns`(`beforeURL`, `afterURL`, `timestamp`) AS `__pk_hash`
+   (SELECT `beforeURL`, `afterURL`, `timestamp`, `hash_columns`(`beforeURL`, `afterURL`, `timestamp`) AS `__pk_hash`
     FROM `default_catalog`.`default_database`.`VisitAfter`)
    ;
    END

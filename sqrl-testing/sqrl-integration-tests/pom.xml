@@ -173,5 +173,22 @@
       <artifactId>sqrl-test</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-simple</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.awaitility</groupId>
+      <artifactId>awaitility</artifactId>
+      <version>4.3.0</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.nextbreakpoint</groupId>
+      <artifactId>com.nextbreakpoint.flink.client</artifactId>
+      <version>1.1.4</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 </project>

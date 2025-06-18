@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.sqrl.runner;
+package com.datasqrl.flinkrunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.nextbreakpoint.flink.client.model.JobStatus;
 import org.junit.jupiter.api.Test;
 
-class SqrlFlinkRunnerIT extends AbstractITSupport {
+class FlinkSqlRunnerIT extends AbstractITSupport {
 
   @Test
   void givenPlan_whenInvokingFormatFunction_thenSuccess() throws Exception {
@@ -92,6 +92,6 @@ class SqrlFlinkRunnerIT extends AbstractITSupport {
     // check log printed, means sqrl concat function was executed correctly
     assertThat(taskExecutorLogs)
         .as("Expected output not found in TaskManager logs")
-        .contains("Hello Bob!");
+        .contains("Hello, Bob");
   }
 }
