@@ -376,7 +376,7 @@ public class GraphqlSchemaValidator extends GraphqlSchemaWalker {
     // Check that arguments match the table function parameters in name and types
     final List<FunctionParameter> externalParameters =
         tableFunction.getParameters().stream()
-            .filter(parameter -> !((SqrlFunctionParameter) parameter).isParentField())
+            .filter(parameter -> ((SqrlFunctionParameter) parameter).isExternalArgument())
             .collect(Collectors.toList());
     arguments.stream()
         .filter(argument -> !argument.getName().equals(LIMIT) && !argument.getName().equals(OFFSET))

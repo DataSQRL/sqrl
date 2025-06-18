@@ -18,9 +18,10 @@ package com.datasqrl.graphql.jdbc;
 import com.datasqrl.graphql.server.QueryExecutionContext;
 import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
 import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentParameter;
+import com.datasqrl.graphql.server.RootGraphqlModel.MetadataParameter;
 import com.datasqrl.graphql.server.RootGraphqlModel.ParameterHandlerVisitor;
+import com.datasqrl.graphql.server.RootGraphqlModel.ParentParameter;
 import com.datasqrl.graphql.server.RootGraphqlModel.QueryParameterHandler;
-import com.datasqrl.graphql.server.RootGraphqlModel.SourceParameter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -35,11 +36,11 @@ public abstract class AbstractQueryExecutionContext
 
   @SneakyThrows
   @Override
-  public Object visitSourceParameter(
-      SourceParameter sourceParameter, QueryExecutionContext context) {
+  public Object visitParentParameter(
+      ParentParameter parentParameter, QueryExecutionContext context) {
     return context
         .getContext()
-        .createPropertyFetcher(sourceParameter.getKey())
+        .createPropertyFetcher(parentParameter.getKey())
         .get(context.getEnvironment());
   }
 
@@ -51,6 +52,14 @@ public abstract class AbstractQueryExecutionContext
         .findFirst()
         .map(Argument::getValue)
         .orElse(null);
+  }
+
+  @Override
+  public Object visitMetadataParameter(
+      MetadataParameter metadataParameter, QueryExecutionContext context) {
+    // TODO: @Marvin, this is where we need to pull the auth metadata from the JWT context or
+    // throw an exception if it is not present
+    throw new UnsupportedOperationException("Not yet implemented");
   }
 
   public List getParamArguments(List<QueryParameterHandler> parameters) {

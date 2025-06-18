@@ -379,10 +379,6 @@ END
             },
             {
               "type" : "variable",
-              "path" : "customerid"
-            },
-            {
-              "type" : "variable",
               "path" : "limit"
             },
             {
@@ -395,8 +391,11 @@ END
             "sql" : "SELECT *\nFROM \"Customer_1\"\nWHERE \"customerid\" = $1 AND \"timestamp\" + INTERVAL '4' HOUR >= $2\nORDER BY \"timestamp\" NULLS FIRST",
             "parameters" : [
               {
-                "type" : "arg",
-                "path" : "customerid"
+                "type" : "metadata",
+                "metadata" : {
+                  "metadataType" : "AUTH",
+                  "name" : "userid"
+                }
               },
               {
                 "type" : "arg",
@@ -429,7 +428,7 @@ END
           }
         },
         "apiQuery" : {
-          "query" : "query Customer($limit: Int = 10, $offset: Int = 0) {\nresults: Customer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+          "query" : "query Customer($limit: Int = 10, $offset: Int = 0) {\nCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
           "queryName" : "Customer",
           "operationType" : "QUERY"
         },
@@ -448,9 +447,6 @@ END
               "offset" : {
                 "type" : "integer"
               },
-              "customerid" : {
-                "type" : "string"
-              },
               "fromTime" : {
                 "type" : "string"
               },
@@ -459,26 +455,25 @@ END
               }
             },
             "required" : [
-              "customerid",
               "fromTime"
             ]
           }
         },
         "apiQuery" : {
-          "query" : "query CustomersByTime($customerid: GraphQLBigInteger!, $fromTime: DateTime!, $limit: Int = 10, $offset: Int = 0) {\nresults: CustomersByTime(customerid: $customerid, fromTime: $fromTime, limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+          "query" : "query CustomersByTime($fromTime: DateTime!, $limit: Int = 10, $offset: Int = 0) {\nCustomersByTime(fromTime: $fromTime, limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
           "queryName" : "CustomersByTime",
           "operationType" : "QUERY"
         },
         "tool" : true,
         "resource" : false,
         "restEndpoint" : true,
-        "uriTemplate" : "queries/CustomersByTime{?offset,customerid,fromTime,limit}",
+        "uriTemplate" : "queries/CustomersByTime{?offset,fromTime,limit}",
         "httpMethod" : "GET"
       }
     ],
     "schema" : {
       "type" : "string",
-      "schema" : "type Customer {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n}\n\n\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomersByTime(customerid: GraphQLBigInteger!, fromTime: DateTime!, limit: Int = 10, offset: Int = 0): [Customer!]\n}\n"
+      "schema" : "type Customer {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n}\n\n\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomersByTime(fromTime: DateTime!, limit: Int = 10, offset: Int = 0): [Customer!]\n}\n"
     }
   }
 }

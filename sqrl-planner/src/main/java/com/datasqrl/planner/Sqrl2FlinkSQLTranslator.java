@@ -517,7 +517,11 @@ public class Sqrl2FlinkSQLTranslator {
       var type = parsedArg.getResolvedRelDataType();
       parameters.add(
           new SqrlFunctionParameter(
-              parsedArg.getName().get(), parsedArg.getIndex(), type, parsedArg.isParentField()));
+              parsedArg.getName().get(),
+              parsedArg.getIndex(),
+              type,
+              parsedArg.isParentField(),
+              parsedArg.getResolvedMetadata()));
     }
     // Analyze Query
     var funcDef2 = parseSQL(originalSql);
@@ -900,15 +904,21 @@ public class Sqrl2FlinkSQLTranslator {
   }
 
   private List<RelDataTypeField> convertSchema2RelDataType(Schema schema) {
-    List<RelDataTypeField> fields = new ArrayList<>();
+    return parseSchema(schema).stream().map(ParsedRelDataTypeResult::field).toList();
+  }
+
+  private List<ParsedRelDataTypeResult> parseSchema(Schema schema) {
+    List<ParsedRelDataTypeResult> fields = new ArrayList<>();
     Function<Expression, ResolvedExpression> expressionResolver = null;
     for (var i = 0; i < schema.getColumns().size(); i++) {
       var column = schema.getColumns().get(i);
       AbstractDataType type = null;
+      Optional<String> metadata = Optional.empty();
       if (column instanceof UnresolvedPhysicalColumn physicalColumn) {
         type = physicalColumn.getDataType();
       } else if (column instanceof UnresolvedMetadataColumn metadataColumn) {
         type = metadataColumn.getDataType();
+        metadata = Optional.ofNullable(metadataColumn.getMetadataKey());
       } else if (column instanceof UnresolvedComputedColumn computedColumn) {
         if (expressionResolver == null) {
           expressionResolver = getExpressionResolver(); // lazy initialization
@@ -919,10 +929,12 @@ public class Sqrl2FlinkSQLTranslator {
       }
       if (type instanceof DataType dataType) {
         fields.add(
-            new RelDataTypeFieldImpl(
-                column.getName(),
-                i,
-                typeFactory.createFieldTypeFromLogicalType(dataType.getLogicalType())));
+            new ParsedRelDataTypeResult(
+                new RelDataTypeFieldImpl(
+                    column.getName(),
+                    i,
+                    typeFactory.createFieldTypeFromLogicalType(dataType.getLogicalType())),
+                metadata));
       } else {
         throw new StatementParserException(
             ErrorLabel.GENERIC, new FileLocation(i, 1), "Invalid type: " + column);
@@ -931,11 +943,8 @@ public class Sqrl2FlinkSQLTranslator {
     return fields;
   }
 
-  @Value
-  public static class ParsedDataType {
-    RelDataType relDataType;
-    DataType dataType;
-  }
+  public record ParsedRelDataTypeResult(RelDataTypeField field, Optional<String> metadata) {}
+  ;
 
   private static final String DATATYPE_PARSING_PREFIX =
       "CREATE TEMPORARY TABLE __sqrlinternal_types(";
@@ -946,7 +955,7 @@ public class Sqrl2FlinkSQLTranslator {
    * @param dataTypeDefinition
    * @return
    */
-  public List<RelDataTypeField> parse2RelDataType(ParsedObject<String> dataTypeDefinition) {
+  public List<ParsedRelDataTypeResult> parse2RelDataType(ParsedObject<String> dataTypeDefinition) {
     if (dataTypeDefinition.isEmpty()) {
       return List.of();
     }
@@ -954,7 +963,7 @@ public class Sqrl2FlinkSQLTranslator {
     try {
       var op = (CreateTableOperation) getOperation(parseSQL(createTableStatement));
       var schema = op.getCatalogTable().getUnresolvedSchema();
-      return convertSchema2RelDataType(schema);
+      return parseSchema(schema);
     } catch (Exception e) {
       var location = dataTypeDefinition.getFileLocation();
       var converted = ParsePosUtil.convertFlinkParserException(e);

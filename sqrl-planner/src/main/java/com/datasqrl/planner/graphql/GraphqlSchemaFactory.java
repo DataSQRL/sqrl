@@ -325,7 +325,7 @@ public class GraphqlSchemaFactory {
   private List<GraphQLArgument> createArguments(SqrlTableFunction tableFunction) {
     List<FunctionParameter> parameters =
         tableFunction.getParameters().stream()
-            .filter(parameter -> !((SqrlFunctionParameter) parameter).isParentField())
+            .filter(parameter -> ((SqrlFunctionParameter) parameter).isExternalArgument())
             .collect(Collectors.toList());
 
     final List<GraphQLArgument> parametersArguments =
