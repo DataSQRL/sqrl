@@ -16,14 +16,14 @@ jobs:
           persist-credentials: false # we will use a deploy token instead
           submodules: false
 
-      - name: Init Function Docs submodule
+      - name: Init STDLIB Docs submodule
         run: |
       - name: Init submodules and sparse checkout
         run: |
           git submodule update --init --depth 1
-          cd documentation/docs/functions-docs
+          cd documentation/docs/stdlib-docs
           git sparse-checkout init --cone
-          git sparse-checkout set function-docs
+          git sparse-checkout set stdlib-docs
           git checkout main
           git pull --ff-only origin main
 
