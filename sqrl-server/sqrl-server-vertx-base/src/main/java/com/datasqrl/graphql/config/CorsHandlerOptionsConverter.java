@@ -20,6 +20,8 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 public class CorsHandlerOptionsConverter {
 
@@ -32,8 +34,8 @@ public class CorsHandlerOptionsConverter {
           }
           break;
         case "allowedOrigins":
-          if (member.getValue() instanceof List) {
-            obj.setAllowedOrigins(new ArrayList<>((List<String>) member.getValue()));
+          if (member.getValue() instanceof Iterable c) {
+            obj.setAllowedOrigins(toList(c));
           }
           break;
         case "allowCredentials":
@@ -52,22 +54,32 @@ public class CorsHandlerOptionsConverter {
           }
           break;
         case "allowedMethods":
-          if (member.getValue() instanceof Set) {
-            obj.setAllowedMethods(new LinkedHashSet<>((Set<String>) member.getValue()));
+          if (member.getValue() instanceof Iterable c) {
+            obj.setAllowedMethods(toSet(c));
           }
           break;
         case "allowedHeaders":
-          if (member.getValue() instanceof Set) {
-            obj.setAllowedHeaders(new LinkedHashSet<>((Set<String>) member.getValue()));
+          if (member.getValue() instanceof Iterable c) {
+            obj.setAllowedHeaders(toSet(c));
           }
           break;
         case "exposedHeaders":
-          if (member.getValue() instanceof Set) {
-            obj.setExposedHeaders(new LinkedHashSet<>((Set<String>) member.getValue()));
+          if (member.getValue() instanceof Iterable c) {
+            obj.setExposedHeaders(toSet(c));
           }
           break;
       }
     }
+  }
+
+  private static List<String> toList(Iterable<?> c) {
+    return StreamSupport.stream(c.spliterator(), false).map(String.class::cast).toList();
+  }
+
+  private static Set<String> toSet(Iterable<?> c) {
+    return StreamSupport.stream(c.spliterator(), false)
+        .map(String.class::cast)
+        .collect(Collectors.toCollection(LinkedHashSet::new));
   }
 
   public static void toJson(CorsHandlerOptions obj, JsonObject json) {

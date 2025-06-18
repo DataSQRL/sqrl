@@ -75,7 +75,7 @@ public abstract class GenericJavaServerEngine extends ExecutionEngine.Base imple
     var configOverrides = objectMapper.valueToTree(engineConfig.getConfig());
     var mergedConfig = deepMerge(objectMapper.valueToTree(serverConfig), configOverrides);
 
-    return objectMapper.copy().writerWithDefaultPrettyPrinter().writeValueAsString(mergedConfig);
+    return objectMapper.copy().writer(new PrettyPrinter()).writeValueAsString(mergedConfig);
   }
 
   public static JsonNode deepMerge(JsonNode mainNode, JsonNode updateNode) {
