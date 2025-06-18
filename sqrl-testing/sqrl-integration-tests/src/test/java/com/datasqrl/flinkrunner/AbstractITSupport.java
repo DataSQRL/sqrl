@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.sqrl.runner;
+package com.datasqrl.flinkrunner;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
+import com.datasqrl.cmd.AssertStatusHook;
 import com.datasqrl.cmd.RootCommand;
 import com.nextbreakpoint.flink.client.api.ApiException;
 import com.nextbreakpoint.flink.client.api.FlinkApi;
@@ -29,16 +30,13 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
 import org.awaitility.core.ThrowingRunnable;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.utility.DockerImageName;
 
-@Slf4j
 public class AbstractITSupport {
 
   protected GenericContainer<?> flinkContainer;
@@ -46,13 +44,23 @@ public class AbstractITSupport {
   @SuppressWarnings("resource")
   @BeforeEach
   void startFlink() {
+    var imgRepo = System.getProperty("flinkrunner.image.repo", "");
+    if (!imgRepo.isEmpty()) {
+      imgRepo += "/datasqrl/";
+    }
+
+    var version = System.getProperty("flinkrunner.image.tag", "latest");
+    if (version.isEmpty()) {
+      version = System.getProperty("flinkrunner.version", "latest");
+    }
+    if (!version.equals("latest")) {
+      version += "-flink-1.19";
+    }
+
     flinkContainer =
-        new GenericContainer<>(DockerImageName.parse("sqrl-flink-runner"))
+        new GenericContainer<>(DockerImageName.parse(imgRepo + "flink-sql-runner:" + version))
             .withExposedPorts(8081)
-            .withFileSystemBind(
-                "target/test-classes/use-cases", // local path
-                "/flink/sql", // container path
-                BindMode.READ_ONLY)
+            .withFileSystemBind("target/test-classes/usecases", "/flink/sql", BindMode.READ_ONLY)
             .withCommand("bash", "-c", "bin/start-cluster.sh && tail -f /dev/null");
     flinkContainer.start();
   }
@@ -83,11 +91,7 @@ public class AbstractITSupport {
         .atMost(100, SECONDS)
         .pollInterval(500, MILLISECONDS)
         .ignoreExceptions()
-        .until(
-            () -> {
-              log.info("Awaiting for flink api to warm up");
-              return client.getJobsOverview() != null;
-            });
+        .until(() -> client.getJobsOverview() != null);
 
     final var statusOverview = client.getJobIdsWithStatusesOverview();
     statusOverview
@@ -113,7 +117,7 @@ public class AbstractITSupport {
 
   @SneakyThrows
   public Path compilePlan(String name) {
-    Path script = Path.of("target/test-classes/use-cases", name, name + ".sqrl").toAbsolutePath();
+    Path script = Path.of("target/test-classes/usecases", name, name + ".sqrl").toAbsolutePath();
     assertThat(script).exists();
     Path baseDir = script.getParent();
     List<String> arguments = new ArrayList<>();
@@ -127,8 +131,8 @@ public class AbstractITSupport {
     if (statusHook.failure() != null) {
       throw statusHook.failure();
     }
-    if (statusHook.isSuccess() && code != 0) Assertions.assertEquals(0, code);
+    if (statusHook.isSuccess() && code != 0) assertThat(code).isZero();
 
-    return Path.of("target/test-classes/use-cases", name, "deploy/plan/flink-compiled-plan.json");
+    return Path.of("target/test-classes/usecases", name, "deploy/plan/flink-compiled-plan.json");
   }
 }
