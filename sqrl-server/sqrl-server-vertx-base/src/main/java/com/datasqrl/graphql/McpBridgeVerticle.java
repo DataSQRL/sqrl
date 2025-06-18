@@ -34,11 +34,15 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
   private static final String CT_JSON = "application/json";
   private static final String CT_SSE = "text/event-stream";
 
+  public static final String RESOURCES_RESULT_KEY = "resources";
+  public static final String RESOURCE_TEMPLATES_RESULT_KEY = "resourceTemplates";
+
   private final ConcurrentHashMap<String, SseConnection> sseConnections = new ConcurrentHashMap<>();
   private final Map<String, ApiOperation> tools;
   private final JsonObject toolsList;
   private final List<ApiOperation> resources;
   private final JsonObject resourceList;
+  private final JsonObject resourceTemplatesList;
 
   public McpBridgeVerticle(
       Router router,
@@ -53,7 +57,18 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
             .collect(Collectors.toMap(ApiOperation::getId, Function.identity()));
     this.toolsList = getToolsList(this.tools.values());
     this.resources = model.getOperations().stream().filter(ApiOperation::isResource).toList();
-    this.resourceList = getResourceList(resources);
+    this.resourceList =
+        getResourceList(
+            RESOURCES_RESULT_KEY,
+            resources.stream()
+                .filter(op -> op.getFunction().getParameters().getProperties().isEmpty())
+                .collect(Collectors.toList()));
+    this.resourceTemplatesList =
+        getResourceList(
+            RESOURCE_TEMPLATES_RESULT_KEY,
+            resources.stream()
+                .filter(op -> !op.getFunction().getParameters().getProperties().isEmpty())
+                .collect(Collectors.toList()));
   }
 
   @Override
@@ -119,7 +134,7 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
                   v -> {
                     vertx.cancelTimer(timerId);
                     sseConnections.remove(connectionId);
-                    System.err.println("SSE connection closed: " + connectionId);
+                    log.info("SSE connection closed: {}", connectionId);
                   });
 
               // Handle client disconnect
@@ -127,8 +142,7 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
                   throwable -> {
                     vertx.cancelTimer(timerId);
                     sseConnections.remove(connectionId);
-                    System.err.println(
-                        "SSE connection error: " + connectionId + " - " + throwable.getMessage());
+                    log.warn("SSE connection error: {} - {}", connectionId, throwable.getMessage());
                   });
             });
     startPromise.complete();
@@ -139,7 +153,7 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
       String message = String.format("event: %s\ndata: %s\n\n", event, data.encode());
       connection.response.write(message);
     } catch (Exception e) {
-      System.err.println("Error sending SSE message: " + e.getMessage());
+      log.error("Error sending SSE message: {}", e.getMessage());
       sseConnections.remove(connection.id);
     }
   }
@@ -164,11 +178,6 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
     JsonNode id = request.get("id");
     JsonNode params = request.get("params");
 
-    // Enhanced debugging for tool calls
-    if ("tools/call".equals(method)) {
-      log.warn("[DEBUG] Tool call request: {}", request);
-    }
-
     // Handle notifications (messages without id) - these should not return responses
     if (id == null) {
       return handleNotification(method, params);
@@ -181,6 +190,7 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
             case "tools/list" -> Future.succeededFuture(toolsList);
             case "tools/call" -> handleCallTool(ctx, params);
             case "resources/list" -> Future.succeededFuture(resourceList);
+            case "resources/templates/list" -> Future.succeededFuture(resourceTemplatesList);
             case "resources/read" -> handleReadResource(ctx, params);
             case "ping" -> Future.succeededFuture(new JsonObject());
             default -> Future.failedFuture(new McpException(-32601, "Method not found"));
@@ -189,12 +199,7 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
       return resultFuture
           .map(
               result -> {
-                JsonObject response = createResponse(id, result);
-                // Enhanced debugging for tool call responses
-                if ("tools/call".equals(method)) {
-                  System.err.println("[DEBUG] Tool call response: " + response.encode());
-                }
-                return response;
+                return createResponse(id, result);
               })
           .recover(
               error -> {
@@ -208,7 +213,7 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
 
                 // Enhanced debugging for tool call errors
                 if ("tools/call".equals(method)) {
-                  System.err.println("[DEBUG] Tool call error response: " + errorResponse.encode());
+                  log.error("Tool call error response: {}", errorResponse.encode());
                 }
 
                 return Future.succeededFuture(errorResponse);
@@ -218,7 +223,7 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
           createErrorResponse(id, -32603, "Internal error: " + e.getMessage());
 
       if ("tools/call".equals(method)) {
-        System.err.println("[DEBUG] Tool call exception response: " + errorResponse.encode());
+        log.error("Tool call exception response: {}", errorResponse.encode());
       }
 
       return Future.succeededFuture(errorResponse);
@@ -232,15 +237,15 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
     switch (method) {
       case "notifications/initialized":
         // Handle the initialized notification - just log it
-        System.err.println("Client initialized notification received");
+        log.info("Client initialized notification received");
         break;
       case "notifications/cancelled":
         // Handle cancellation notifications if needed
-        System.err.println("Request cancelled notification received");
+        log.info("Request cancelled notification received");
         break;
       default:
         // Unknown notifications are ignored (as per JSON-RPC spec)
-        System.err.println("Unknown notification: " + method);
+        log.warn("Unknown notification: {}", method);
         break;
     }
 
@@ -363,7 +368,8 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
     return new JsonObject().put("tools", toolsArray);
   }
 
-  private JsonObject getResourceList(Collection<ApiOperation> resourceOperations) {
+  private JsonObject getResourceList(
+      String resultKey, Collection<ApiOperation> resourceOperations) {
     JsonArray resourcesArray = new JsonArray();
     for (ApiOperation resource : resourceOperations) {
       String description = resource.getFunction().getDescription();
@@ -378,7 +384,7 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
               .put("mimeType", "application/json");
       resourcesArray.add(resourceDef);
     }
-    return new JsonObject().put("resources", resourcesArray);
+    return new JsonObject().put(resultKey, resourcesArray);
   }
 
   private JsonObject createResponse(Object id, JsonObject result) {
