@@ -579,16 +579,22 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
   "servletConfig": {
     "graphiQLEndpoint": "/graphiql*",
     "graphQLEndpoint": "/graphql",
-    "usePgPool": true,
-    "useApolloWs": false,
-    "graphQLWsEndpoint": "/graphql-ws"
+    "usePgPool": true
   },
   "graphQLHandlerOptions": {
     "requestBatchingEnabled": false,
     "requestMultipartEnabled": false
   },
   "graphiQLHandlerOptions": {
-    "enabled": true
+    "enabled": true,
+    "httpEnabled": true,
+    "graphQLUri": "/graphql",
+    "graphQLWSEnabled": true,
+    "graphQLWSUri": "/graphql",
+    "headers": null,
+    "wsConnectionParams": null,
+    "query": null,
+    "variables": null
   },
   "httpServerOptions": {
     "sendBufferSize": -1,
@@ -606,31 +612,44 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
     "writeIdleTimeout": 0,
     "idleTimeoutUnit": "SECONDS",
     "ssl": false,
-    "sslHandshakeTimeout": 10,
-    "sslHandshakeTimeoutUnit": "SECONDS",
-    "enabledCipherSuites": [],
-    "crlPaths": [],
-    "crlValues": [],
-    "useAlpn": false,
-    "enabledSecureTransportProtocols": [
-      "TLSv1",
-      "TLSv1.1",
-      "TLSv1.2"
-    ],
+    "sslEngineOptions": null,
+    "sslOptions": {
+      "sslHandshakeTimeout": 10,
+      "sslHandshakeTimeoutUnit": "SECONDS",
+      "keyCertOptions": null,
+      "trustOptions": null,
+      "enabledCipherSuites": [],
+      "crlPaths": [],
+      "crlValues": [],
+      "useAlpn": false,
+      "enabledSecureTransportProtocols": [
+        "TLSv1",
+        "TLSv1.1",
+        "TLSv1.2"
+      ],
+      "applicationLayerProtocols": null,
+      "clientAuth": "NONE",
+      "sni": false
+    },
     "tcpFastOpen": false,
     "tcpCork": false,
     "tcpQuickAck": false,
     "tcpUserTimeout": 0,
+    "enabledCipherSuites": [],
+    "crlPaths": [],
+    "crlValues": [],
     "port": 8888,
     "host": "0.0.0.0",
     "acceptBacklog": -1,
-    "clientAuth": "NONE",
-    "sni": false,
     "useProxyProtocol": false,
     "proxyProtocolTimeout": 10,
     "proxyProtocolTimeoutUnit": "SECONDS",
+    "registerWriteHandler": false,
+    "trafficShapingOptions": null,
     "compressionSupported": false,
     "compressionLevel": 6,
+    "compressionContentSizeThreshold": 0,
+    "compressors": null,
     "maxWebSocketFrameSize": 65536,
     "maxWebSocketMessageSize": 262144,
     "webSocketSubProtocols": [
@@ -642,18 +661,22 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
     "maxInitialLineLength": 4096,
     "maxHeaderSize": 8192,
     "maxFormAttributeSize": 8192,
+    "maxFormFields": 256,
+    "maxFormBufferedBytes": 1024,
     "initialSettings": {
       "headerTableSize": 4096,
       "pushEnabled": true,
       "maxConcurrentStreams": 100,
       "initialWindowSize": 65535,
       "maxFrameSize": 16384,
-      "maxHeaderListSize": 8192
+      "maxHeaderListSize": 8192,
+      "extraSettings": null
     },
     "alpnVersions": [
       "HTTP_2",
       "HTTP_1_1"
     ],
+    "http2ClearTextEnabled": true,
     "http2ConnectionWindowSize": -1,
     "decompressionSupported": false,
     "acceptUnmaskedFrames": false,
@@ -664,45 +687,27 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
     "webSocketAllowServerNoContext": false,
     "webSocketPreferredClientNoContext": false,
     "webSocketClosingTimeout": 10,
-    "tracingPolicy": "ALWAYS"
-  },
-  "pgConnectOptions": {
-    "sendBufferSize": -1,
-    "receiveBufferSize": -1,
-    "trafficClass": -1,
-    "reuseAddress": true,
-    "logActivity": false,
-    "activityLogDataFormat": "HEX_DUMP",
-    "reusePort": false,
-    "tcpNoDelay": true,
-    "tcpKeepAlive": false,
-    "soLinger": -1,
-    "idleTimeout": 0,
-    "readIdleTimeout": 0,
-    "writeIdleTimeout": 0,
-    "idleTimeoutUnit": "SECONDS",
-    "ssl": false,
-    "sslHandshakeTimeout": 10,
-    "sslHandshakeTimeoutUnit": "SECONDS",
-    "enabledCipherSuites": [],
-    "crlPaths": [],
-    "crlValues": [],
+    "tracingPolicy": "ALWAYS",
+    "registerWebSocketWriteHandlers": false,
+    "http2RstFloodMaxRstFramePerWindow": 200,
+    "http2RstFloodWindowDuration": 30,
+    "http2RstFloodWindowDurationTimeUnit": "SECONDS",
+    "strictThreadMode": false,
     "useAlpn": false,
+    "keyCertOptions": null,
+    "trustOptions": null,
+    "clientAuth": "NONE",
     "enabledSecureTransportProtocols": [
       "TLSv1",
       "TLSv1.1",
       "TLSv1.2"
     ],
-    "tcpFastOpen": false,
-    "tcpCork": false,
-    "tcpQuickAck": false,
-    "tcpUserTimeout": 0,
-    "connectTimeout": 60000,
-    "trustAll": false,
-    "metricsName": "",
-    "reconnectAttempts": 0,
-    "reconnectInterval": 1000,
-    "hostnameVerificationAlgorithm": "",
+    "sslHandshakeTimeout": 10,
+    "sslHandshakeTimeoutUnit": "SECONDS",
+    "sni": false,
+    "fileRegionEnabled": true
+  },
+  "pgConnectOptions": {
     "host": "${PGHOST}",
     "port": 5432,
     "user": "${PGUSER}",
@@ -710,18 +715,24 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
     "database": "${PGDATABASE}",
     "cachePreparedStatements": false,
     "preparedStatementCacheMaxSize": 256,
-    "preparedStatementCacheSqlFilter": {},
+    "preparedStatementCacheSqlFilter": { },
     "properties": {
       "DateStyle": "ISO",
       "client_encoding": "utf8",
       "application_name": "vertx-pg-client",
       "extra_float_digits": "2"
     },
+    "tracingPolicy": null,
+    "reconnectAttempts": 0,
+    "reconnectInterval": 1000,
+    "metricsName": "",
+    "sslOptions": null,
     "pipeliningLimit": 256,
     "sslMode": "DISABLE",
+    "useLayer7Proxy": false,
     "socketAddress": {
-      "domainSocket": false,
-      "inetSocket": true
+      "inetSocket": true,
+      "domainSocket": false
     },
     "usingDomainSocket": false
   },
@@ -730,6 +741,8 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
     "maxWaitQueueSize": -1,
     "idleTimeout": 0,
     "idleTimeoutUnit": "SECONDS",
+    "maxLifetime": 0,
+    "maxLifetimeUnit": "SECONDS",
     "poolCleanerPeriod": 1000,
     "connectionTimeout": 30,
     "connectionTimeoutUnit": "SECONDS",
@@ -739,21 +752,19 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
   },
   "corsHandlerOptions": {
     "allowedOrigin": "*",
+    "allowedOrigins": null,
     "allowCredentials": false,
     "maxAgeSeconds": -1,
     "allowPrivateNetwork": false,
     "allowedMethods": [
-      "GET",
-      "POST"
+      "POST",
+      "GET"
     ],
     "allowedHeaders": [],
     "exposedHeaders": []
   },
-  "apolloWSOptions": {
-    "keepAlive": 30000
-  }
+  "jwtAuth": null
 }
-
 >>>vertx.json
 {
   "model" : {
