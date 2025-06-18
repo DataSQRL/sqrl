@@ -17,8 +17,8 @@ package com.datasqrl.datatype.flink.jdbc;
 
 import com.datasqrl.datatype.DataTypeMapping;
 import com.datasqrl.datatype.DataTypeMappings;
-import com.datasqrl.flinkrunner.types.json.FlinkJsonType;
-import com.datasqrl.flinkrunner.types.vector.FlinkVectorType;
+import com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType;
+import com.datasqrl.flinkrunner.stdlib.vector.FlinkVectorType;
 import java.util.Optional;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.sql.type.SqlTypeName;

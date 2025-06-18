@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.function.text;
+package com.datasqrl.flinkrunner.stdlib.text;
 
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.convert.SimpleCallTransform.SimpleCallTransformConfig;

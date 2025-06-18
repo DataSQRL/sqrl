@@ -15,7 +15,7 @@
  */
 package com.datasqrl;
 
-import com.datasqrl.flinkrunner.functions.AutoRegisterSystemFunction;
+import com.datasqrl.flinkrunner.stdlib.utils.AutoRegisterSystemFunction;
 import com.datasqrl.graphql.GraphQLServer;
 import com.datasqrl.graphql.JsonEnvVarDeserializer;
 import com.datasqrl.graphql.config.ServerConfig;

@@ -188,7 +188,7 @@ CREATE TABLE `SensorReading_3` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`SecReading_1`
-(SELECT `sensorid`, `timeSec`, `temp`, `hashColumns`(`sensorid`, `timeSec`, `temp`) AS `__pk_hash`
+(SELECT `sensorid`, `timeSec`, `temp`, `hash_columns`(`sensorid`, `timeSec`, `temp`) AS `__pk_hash`
  FROM `default_catalog`.`default_database`.`SecReading`)
 ;
 INSERT INTO `default_catalog`.`default_database`.`SensorMaxTemp_2`

@@ -15,8 +15,8 @@
  */
 package com.datasqrl;
 
-import static org.junit.Assume.assumeFalse;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import com.datasqrl.cmd.AssertStatusHook;
 import com.datasqrl.config.PackageJson;
@@ -63,7 +63,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 @Slf4j
 @ExtendWith(MiniClusterExtension.class)
-public class FullUsecasesIT {
+public class FullUseCasesIT {
   private static final Path RESOURCES = Path.of("src/test/resources");
   private static final Path USE_CASES = RESOURCES.resolve("usecases");
 
@@ -234,7 +234,7 @@ public class FullUsecasesIT {
 
     this.snapshot =
         Snapshot.of(
-            FullUsecasesIT.class,
+            FullUseCasesIT.class,
             param.testName,
             param.getSqrlFileName().substring(0, param.getSqrlFileName().length() - 5));
     TestExtension testExtension = testExtensions.create(param.getTestName());
@@ -371,11 +371,10 @@ public class FullUsecasesIT {
     var testToExecute = 45;
     testNo++;
     System.out.println(testNo + ":" + param);
-    if (testToExecute == testNo) {
-      testUseCase(param);
-    } else {
-      assumeFalse(true);
-    }
+
+    assumeTrue(testToExecute == testNo, "Not the test marked for execution.");
+
+    testUseCase(param);
   }
 
   @ParameterizedTest
@@ -390,11 +389,11 @@ public class FullUsecasesIT {
   @MethodSource("useCaseProvider")
   @Disabled
   public void runTestCaseByName(UseCaseTestParameter param) {
-    if (param.sqrlFileName.equals("temporal-join.sqrl") && param.goal.equals("test")) {
-      testUseCase(param);
-    } else {
-      assumeFalse(true);
-    }
+    assumeTrue(
+        param.sqrlFileName.equals("stdlib-math.sqrl") && param.goal.equals("test"),
+        "Not the test marked for execution.");
+
+    testUseCase(param);
   }
 
   static Set<UseCaseTestParameter> useCaseProvider() throws Exception {

@@ -16,10 +16,11 @@
 package com.datasqrl.datatype;
 
 import com.datasqrl.datatype.DataTypeMapping.SimpleMapper;
-import com.datasqrl.flinkrunner.functions.json.jsonb_to_string;
-import com.datasqrl.flinkrunner.functions.json.to_jsonb;
-import com.datasqrl.flinkrunner.functions.vector.double_to_vector;
-import com.datasqrl.flinkrunner.functions.vector.vector_to_double;
+import com.datasqrl.flinkrunner.stdlib.commons.serialize_to_bytes;
+import com.datasqrl.flinkrunner.stdlib.json.jsonb_to_string;
+import com.datasqrl.flinkrunner.stdlib.json.to_jsonb;
+import com.datasqrl.flinkrunner.stdlib.vector.double_to_vector;
+import com.datasqrl.flinkrunner.stdlib.vector.vector_to_double;
 import java.util.Optional;
 
 public class DataTypeMappings {
@@ -35,5 +36,5 @@ public class DataTypeMappings {
   public static DataTypeMapping.Mapper VECTOR_TO_DOUBLE_ONLY =
       new SimpleMapper(new vector_to_double(), Optional.empty());
   public static DataTypeMapping.Mapper TO_BYTES_ONLY =
-      new SimpleMapper(new SerializeToBytes(), Optional.empty());
+      new SimpleMapper(new serialize_to_bytes(), Optional.empty());
 }

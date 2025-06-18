@@ -100,7 +100,7 @@ CREATE TABLE `SensorTempByHour_2` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`SensorReading_1`
-(SELECT `uuid`, `sensorid`, `epoch_timestamp`, `temperature`, `timestamp`, `hashColumns`(`uuid`, `sensorid`, `epoch_timestamp`, `temperature`, `timestamp`) AS `__pk_hash`
+(SELECT `uuid`, `sensorid`, `epoch_timestamp`, `temperature`, `timestamp`, `hash_columns`(`uuid`, `sensorid`, `epoch_timestamp`, `temperature`, `timestamp`) AS `__pk_hash`
  FROM `default_catalog`.`default_database`.`SensorReading`)
 ;
 INSERT INTO `default_catalog`.`default_database`.`SensorTempByHour_2`

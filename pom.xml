@@ -48,7 +48,6 @@
     <module>sqrl-planner</module>
     <module>sqrl-testing</module>
     <module>sqrl-tools</module>
-    <module>sqrl-functions</module>
     <module>sqrl-server</module>
   </modules>
 
@@ -133,7 +132,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
     <flinkrunner.image.repo>ghcr.io</flinkrunner.image.repo>
-    <flinkrunner.version>1.0.0-SNAPSHOT</flinkrunner.version>
+    <flinkrunner.version>0.7-SNAPSHOT</flinkrunner.version>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -235,11 +234,6 @@
       <dependency>
         <groupId>com.datasqrl</groupId>
         <artifactId>sqrl-flexible-csv</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.datasqrl</groupId>
-        <artifactId>sqrl-functions</artifactId>
         <version>${project.version}</version>
       </dependency>
       <!-- tests -->
@@ -749,37 +743,42 @@
       </dependency>
       <dependency>
         <groupId>com.datasqrl.flinkrunner</groupId>
-        <artifactId>functions-common</artifactId>
-        <version>${flinkrunner.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.datasqrl.flinkrunner</groupId>
-        <artifactId>json-type</artifactId>
-        <version>${flinkrunner.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.datasqrl.flinkrunner</groupId>
         <artifactId>flexible-json-format</artifactId>
         <version>${flinkrunner.version}</version>
       </dependency>
       <dependency>
         <groupId>com.datasqrl.flinkrunner</groupId>
-        <artifactId>text-functions</artifactId>
+        <artifactId>stdlib-utils</artifactId>
         <version>${flinkrunner.version}</version>
       </dependency>
       <dependency>
         <groupId>com.datasqrl.flinkrunner</groupId>
-        <artifactId>math-functions</artifactId>
+        <artifactId>stdlib-commons</artifactId>
         <version>${flinkrunner.version}</version>
       </dependency>
       <dependency>
         <groupId>com.datasqrl.flinkrunner</groupId>
-        <artifactId>openai-functions</artifactId>
+        <artifactId>stdlib-json</artifactId>
         <version>${flinkrunner.version}</version>
       </dependency>
       <dependency>
         <groupId>com.datasqrl.flinkrunner</groupId>
-        <artifactId>vector-type</artifactId>
+        <artifactId>stdlib-text</artifactId>
+        <version>${flinkrunner.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.datasqrl.flinkrunner</groupId>
+        <artifactId>stdlib-math</artifactId>
+        <version>${flinkrunner.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.datasqrl.flinkrunner</groupId>
+        <artifactId>stdlib-openai</artifactId>
+        <version>${flinkrunner.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.datasqrl.flinkrunner</groupId>
+        <artifactId>stdlib-vector</artifactId>
         <version>${flinkrunner.version}</version>
       </dependency>
       <dependency>
@@ -827,22 +826,17 @@
 
   <repositories>
     <repository>
+      <id>github</id>
+      <url>https://maven.pkg.github.com/DataSQRL/flink-sql-runner</url>
       <releases>
         <enabled>false</enabled>
       </releases>
       <snapshots>
         <enabled>true</enabled>
       </snapshots>
-      <id>github</id>
-      <url>https://maven.pkg.github.com/DataSQRL/flink-sql-runner</url>
     </repository>
   </repositories>
-  <!--    <scm>-->
-  <!--        <url>https://github.com/DataSQRL/sqrl.git</url>-->
-  <!--        <connection>scm:git:git@github.com:DataSQRL/sqrl.git</connection>-->
-  <!--        <developerConnection>scm:git:git@github.com:DataSQRL/sqrl.git</developerConnection>-->
-  <!--      <tag>HEAD</tag>-->
-  <!--  </scm>-->
+
   <build>
     <pluginManagement>
       <plugins>

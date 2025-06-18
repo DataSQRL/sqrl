@@ -223,7 +223,7 @@ CREATE TABLE `Orders_6` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `entries` RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
+  `entries` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
@@ -251,7 +251,7 @@ INSERT INTO `default_catalog`.`default_database`.`DistinctStream_2`
     FROM `default_catalog`.`default_database`.`JoinStream`)
    ;
    INSERT INTO `default_catalog`.`default_database`.`JoinStream_5`
-    (SELECT `id`, `name`, `hashColumns`(`id`, `name`) AS `__pk_hash`
+    (SELECT `id`, `name`, `hash_columns`(`id`, `name`) AS `__pk_hash`
      FROM `default_catalog`.`default_database`.`JoinStream`)
     ;
     INSERT INTO `default_catalog`.`default_database`.`Orders_6`

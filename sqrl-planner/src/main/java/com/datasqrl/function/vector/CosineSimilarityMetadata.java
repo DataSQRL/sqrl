@@ -15,7 +15,7 @@
  */
 package com.datasqrl.function.vector;
 
-import com.datasqrl.flinkrunner.functions.vector.cosine_similarity;
+import com.datasqrl.flinkrunner.stdlib.vector.cosine_similarity;
 import com.datasqrl.function.FunctionMetadata;
 import com.datasqrl.function.IndexableFunction;
 import com.datasqrl.plan.global.IndexType;
