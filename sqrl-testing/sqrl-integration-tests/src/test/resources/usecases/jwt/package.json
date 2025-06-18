@@ -4,7 +4,7 @@
     "vertx" : {
       "authKind": "JWT",
       "config": {
-        "jwtAuthentication": {
+        "jwtAuth": {
           "pubSecKeys": [
             {
               "algorithm": "HS256",
