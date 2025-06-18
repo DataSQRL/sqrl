@@ -392,37 +392,8 @@ jobs:
             docker pull datasqrl/cmd-test-image:${CIRCLE_SHA1}
             docker pull datasqrl/sqrl-server-test-image:${CIRCLE_SHA1}
       - run:
-          working_directory: ./sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/jwt
-          name: Launch sqrl-server with JWT auth and test tokens
-          command: |
-            docker run -v "$PWD:/build" -e TZ="UTC" datasqrl/cmd-test-image:${CIRCLE_SHA1} compile jwt.sqrl
-            docker run -d --name sqrl-server -v $(pwd)/build/deploy/plan/vertx.json:/opt/sqrl/vertx.json \
-                                                  -v $(pwd)/build/deploy/plan/vertx-config.json:/opt/sqrl/vertx-config.json \
-                                                  -p 8888:8888 \
-                                                  datasqrl/sqrl-server-test-image:${CIRCLE_SHA1}
-            sleep 2s
-            docker logs sqrl-server
-            # Expect Unauthorized without token
-            if curl -s -X POST http://localhost:8888/graphql \
-                   -H 'Content-Type: application/json' \
-                   --data '{"query":"query { __typename }"}' | grep -q Unauthorized; then
-              echo "Unauthorized as expected"
-            else
-              echo "Expected Unauthorized but got success" >&2
-              exit 1
-            fi
-
-            # Generate JWT token (HS256, secret=testSecret)
-            HEADER=$(echo -n '{"alg":"HS256","typ":"JWT"}' | openssl base64 | tr -d '=' | tr '/+' '_-' | tr -d '\n')
-            PAYLOAD=$(echo -n '{"iss":"my-test-issuer","aud":["my-test-audience"],"exp":'$(expr $(date +%s) + 3600)'}' | openssl base64 | tr -d '=' | tr '/+' '_-' | tr -d '\n')
-            SIGNATURE=$(printf '%s.%s' "$HEADER" "$PAYLOAD" | openssl dgst -binary -sha256 -hmac 'testSecret' | openssl base64 | tr -d '=' | tr '/+' '_-' | tr -d '\n')
-            TOKEN="$HEADER.$PAYLOAD.$SIGNATURE"
-
-            # Expect success with token
-            curl -s -X POST http://localhost:8888/graphql \
-              -H 'Content-Type: application/json' \
-              -H "Authorization: Bearer $TOKEN" \
-              --data '{"query":"query { __typename }"}' | grep -q '__typename'
+          name: Run JWT tests
+          command: ./.circleci/run-jwt-tests.sh
 
   build-images:
     # use a full VM so we can run Docker / Buildx
