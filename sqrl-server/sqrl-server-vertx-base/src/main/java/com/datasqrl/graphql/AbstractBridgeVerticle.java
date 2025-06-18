@@ -154,6 +154,16 @@ public abstract class AbstractBridgeVerticle extends AbstractVerticle {
     return Future.fromCompletionStage(graphQLEngine.executeAsync(execInput));
   }
 
+  protected Object getExecutionData(ExecutionResult executionResult, ApiOperation operation) {
+    Object result = executionResult.getData();
+    if (result instanceof Map resultMap && operation.removeNesting()) {
+      if (resultMap.size() == 1) {
+        result = resultMap.values().iterator().next(); // Get only element
+      }
+    }
+    return result;
+  }
+
   protected void extractGetParameters(
       RoutingContext ctx, ApiOperation operation, Map<String, Object> variables) {
     HttpServerRequest request = ctx.request();

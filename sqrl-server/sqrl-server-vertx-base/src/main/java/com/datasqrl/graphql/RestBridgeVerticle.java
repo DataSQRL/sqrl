@@ -19,7 +19,6 @@ import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.graphql.server.operation.ApiOperation;
 import com.datasqrl.graphql.server.operation.HttpMethod;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import graphql.ExecutionResult;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
@@ -41,6 +40,8 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class RestBridgeVerticle extends AbstractBridgeVerticle {
+
+  public static final String RESULT_DATA_KEY = "data";
 
   // Pattern for RFC 6570 URI template query parameters: {?param1,param2}
   private static final Pattern QUERY_PARAMS_PATTERN = Pattern.compile("\\{\\?([^}]+)\\}");
@@ -131,19 +132,8 @@ public class RestBridgeVerticle extends AbstractBridgeVerticle {
                                             .put("extensions", err.getExtensions()))
                                 .toList());
                       } else {
-                        Object result = executionResult.getData();
-                        // Unnest if possible for flatter REST responses
-                        if (result instanceof Map resultMap) {
-                          if (resultMap.size() == 1
-                              && resultMap.containsKey(ApiOperation.TOP_LEVEL_FIELD_ALIAS)) {
-                            result = resultMap.get(ApiOperation.TOP_LEVEL_FIELD_ALIAS);
-                          }
-                        }
-                        try {
-                          ctx.end(objectMapper.writeValueAsString(result));
-                        } catch (JsonProcessingException e) {
-                          throw new RuntimeException(e);
-                        }
+                        Object result = getExecutionData(executionResult, operation);
+                        ctx.end(new JsonObject().put(RESULT_DATA_KEY, result).encode());
                       }
                     })
                 .onFailure(err -> handleError(err, ctx, 500, "Error in query processing"));

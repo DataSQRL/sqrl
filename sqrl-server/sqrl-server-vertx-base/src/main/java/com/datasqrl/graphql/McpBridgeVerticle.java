@@ -326,14 +326,7 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
                         .toList());
                 json.put("isError", true);
               } else {
-                Object result = executionResult.getData();
-                // Unnest if possible for flatter REST responses
-                if (result instanceof Map resultMap) {
-                  if (resultMap.size() == 1
-                      && resultMap.containsKey(ApiOperation.TOP_LEVEL_FIELD_ALIAS)) {
-                    result = resultMap.get(ApiOperation.TOP_LEVEL_FIELD_ALIAS);
-                  }
-                }
+                Object result = getExecutionData(executionResult, tool);
                 try {
                   json.put(
                       "content",

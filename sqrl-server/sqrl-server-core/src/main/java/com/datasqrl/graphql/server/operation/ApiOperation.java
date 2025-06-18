@@ -30,8 +30,6 @@ import lombok.Value;
 @Value
 public class ApiOperation {
 
-  public static final String TOP_LEVEL_FIELD_ALIAS = "results";
-
   @NonNull FunctionDefinition function;
   @NonNull GraphQLQuery apiQuery;
   boolean isTool; // MCP Tool
@@ -85,6 +83,17 @@ public class ApiOperation {
   @JsonIgnore
   public String getName() {
     return function.getName();
+  }
+
+  /**
+   * Whether to remove the operation-level nesting of result data for GraphQL queries for this
+   * operation when returned through the bridge TODO: make configurable
+   *
+   * @return
+   */
+  @JsonIgnore
+  public boolean removeNesting() {
+    return true;
   }
 
   @Override
