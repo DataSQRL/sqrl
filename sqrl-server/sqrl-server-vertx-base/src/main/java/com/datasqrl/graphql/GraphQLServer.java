@@ -59,8 +59,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.duckdb.DuckDBDriver;
 
 /**
- * This Verticle is responsible for configuring the GraphQL server, setting up routes, metrics etc
- * that will be deployed inside vert.x.
+ * @deprecated TODO: Should be deleted once GraphQLJwtHandlerTest is refactored
  */
 @Slf4j
 public class GraphQLServer extends AbstractVerticle {

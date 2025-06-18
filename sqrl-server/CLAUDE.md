@@ -64,7 +64,7 @@ Multi-database support through `SqlClient` interface:
 
 ### Main Entry Points
 - `com.datasqrl.graphql.SqrlLauncher`: Main class for standalone deployment
-- `com.datasqrl.graphql.GraphQLServer`: Main Verticle that configures the GraphQL server
+- `com.datasqrl.graphql.GraphQLServerVerticle`: Main Verticle that configures the GraphQL server
 
 ### Core Model Classes
 - `RootGraphqlModel`: Central model class encapsulating GraphQL schema and execution coordinates
