@@ -345,11 +345,6 @@
       </dependency>
       <dependency>
         <groupId>org.apache.commons</groupId>
-        <artifactId>commons-configuration2</artifactId>
-        <version>${commons-config.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.commons</groupId>
         <artifactId>commons-collections4</artifactId>
         <version>${commons-collections.version}</version>
       </dependency>

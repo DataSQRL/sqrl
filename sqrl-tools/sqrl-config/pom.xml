@@ -33,12 +33,12 @@
     </dependency>
     <!-- Configuration -->
     <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-configuration2</artifactId>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-annotations</artifactId>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-annotations</artifactId>
+      <artifactId>jackson-databind</artifactId>
     </dependency>
     <dependency>
       <groupId>commons-beanutils</groupId>
