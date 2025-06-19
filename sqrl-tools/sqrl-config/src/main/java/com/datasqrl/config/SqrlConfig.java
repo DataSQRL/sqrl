@@ -41,6 +41,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import lombok.AccessLevel;
@@ -57,7 +58,6 @@ public class SqrlConfig {
 
   private static final ObjectMapper MAPPER =
       new ObjectMapper()
-          .findAndRegisterModules()
           .setVisibility(
               com.fasterxml.jackson.annotation.PropertyAccessor.FIELD,
               com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY)
@@ -469,7 +469,7 @@ public class SqrlConfig {
 
   public Map<String, String> toStringMap() {
     Map<String, Object> map = toMap();
-    LinkedHashMap<String, String> out = new LinkedHashMap<>();
+    Map<String, String> out = new TreeMap<>();
     map.forEach((k, v) -> out.put(k, String.valueOf(v)));
     return out;
   }
