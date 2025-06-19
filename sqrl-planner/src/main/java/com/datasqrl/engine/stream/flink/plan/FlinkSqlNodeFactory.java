@@ -19,7 +19,6 @@ import com.datasqrl.calcite.schema.sql.SqlDataTypeSpecBuilder;
 import com.datasqrl.sql.SqlCallRewriter;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -165,7 +164,7 @@ public class FlinkSqlNodeFactory {
   }
 
   public static Map<String, String> propertiesToMap(SqlNodeList nodeList) {
-    Map<String, String> result = new HashMap<>();
+    Map<String, String> result = new TreeMap<>();
     for (SqlNode node : nodeList) {
       var option = (SqlTableOption) node;
       var keyLiteral = (SqlLiteral) option.getKey();

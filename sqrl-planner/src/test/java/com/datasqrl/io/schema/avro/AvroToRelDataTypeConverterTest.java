@@ -18,7 +18,6 @@ package com.datasqrl.io.schema.avro;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
-import static org.assertj.core.api.Assertions.fail;
 
 import com.datasqrl.error.ErrorCollector;
 import java.util.Arrays;
