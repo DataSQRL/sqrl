@@ -283,7 +283,8 @@ class FullUseCasesIT {
             case SUCCESS_WITH_CONTENT:
               break;
             default:
-              fail("Flink job failed with: " + result.getResultKind());
+              org.assertj.core.api.Assertions.fail(
+                  "Flink job failed with: " + result.getResultKind());
               break;
           }
 
