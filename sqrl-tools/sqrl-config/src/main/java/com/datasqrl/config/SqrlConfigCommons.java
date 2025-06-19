@@ -37,11 +37,11 @@ import java.nio.file.StandardOpenOption;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import lombok.AccessLevel;
@@ -249,8 +249,8 @@ public class SqrlConfigCommons implements SqrlConfig {
   }
 
   @Override
-  public <T> Value<LinkedHashMap<String, T>> asMap(String key, Class<T> clazz) {
-    var map = new LinkedHashMap<String, T>();
+  public <T> Value<Map<String, T>> asMap(String key, Class<T> clazz) {
+    var map = new TreeMap<String, T>();
     SqrlConfig subConfig = getSubConfig(key);
     subConfig.getKeys().forEach(subKey -> map.put(subKey, subConfig.as(subKey, clazz).get()));
     return new ValueImpl<>(expandKey(key), errors, Optional.of(map));
@@ -338,7 +338,7 @@ public class SqrlConfigCommons implements SqrlConfig {
 
   @Override
   public Map<String, Object> toMap() {
-    var map = new LinkedHashMap<String, Object>();
+    var map = new TreeMap<String, Object>();
     getKeys()
         .forEach(
             localKey -> {
@@ -364,7 +364,7 @@ public class SqrlConfigCommons implements SqrlConfig {
 
   @Override
   public Map<String, String> toStringMap() {
-    var map = new LinkedHashMap<String, String>();
+    var map = new TreeMap<String, String>();
     toMap().forEach((k, v) -> map.put(k, String.valueOf(v)));
     return map;
   }

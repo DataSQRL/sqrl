@@ -112,12 +112,12 @@ CREATE TABLE `_Sensors` (
   PRIMARY KEY (`sensorid`) NOT ENFORCED,
   WATERMARK FOR `updatedTime` AS `updatedTime` - INTERVAL '0.0' SECOND
 ) WITH (
-  'topic' = 'kafka-upsert-_Sensors',
   'connector' = 'upsert-kafka',
-  'value.format' = 'flexible-json',
   'key.format' = 'raw',
   'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
-  'properties.group.id' = '${PROPERTIES_GROUP_ID}'
+  'properties.group.id' = '${PROPERTIES_GROUP_ID}',
+  'topic' = 'kafka-upsert-_Sensors',
+  'value.format' = 'flexible-json'
 );
 CREATE TABLE `_SensorReading` (
   `event_id` STRING NOT NULL,
@@ -126,13 +126,13 @@ CREATE TABLE `_SensorReading` (
   `event_time` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
   WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
 ) WITH (
-  'topic' = 'kafka-_SensorReading',
   'connector' = 'kafka',
   'format' = 'flexible-json',
+  'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${PROPERTIES_GROUP_ID}',
   'scan.startup.mode' = 'group-offsets',
-  'properties.auto.offset.reset' = 'earliest'
+  'topic' = 'kafka-_SensorReading'
 );
 CREATE VIEW `MachineReading`
 AS
@@ -153,11 +153,11 @@ CREATE TABLE `MachineReading_1` (
   PRIMARY KEY (`__pk_hash`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'MachineReading_1',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'MachineReading_1'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `MachineTempByHour_2` (
   `machineid` INTEGER,
@@ -167,11 +167,11 @@ CREATE TABLE `MachineTempByHour_2` (
   PRIMARY KEY (`__pk_hash`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'MachineTempByHour_2',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'MachineTempByHour_2'
+  'username' = '${JDBC_USERNAME}'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`MachineReading_1`

@@ -1218,33 +1218,33 @@ CREATE TABLE `Numbers_1` (
   PRIMARY KEY (`id`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'Numbers_1',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'Numbers_1'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `Numbers2_2` (
   `id` INTEGER NOT NULL,
   PRIMARY KEY (`id`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'Numbers2_2',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'Numbers2_2'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `NumbersLarge_3` (
   `id` INTEGER NOT NULL,
   PRIMARY KEY (`id`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'NumbersLarge_3',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'NumbersLarge_3'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `Orders_4` (
   `id` BIGINT NOT NULL,
@@ -1254,11 +1254,11 @@ CREATE TABLE `Orders_4` (
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'Orders_4',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'Orders_4'
+  'username' = '${JDBC_USERNAME}'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Numbers_1`

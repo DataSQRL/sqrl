@@ -17,7 +17,6 @@ package com.datasqrl.config;
 
 import com.datasqrl.error.ErrorCollector;
 import java.nio.file.Path;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -75,7 +74,7 @@ interface SqrlConfig {
 
   <T> Value<List<T>> asList(String key, Class<T> clazz);
 
-  <T> Value<LinkedHashMap<String, T>> asMap(String key, Class<T> clazz);
+  <T> Value<Map<String, T>> asMap(String key, Class<T> clazz);
 
   ErrorCollector getErrorCollector();
 

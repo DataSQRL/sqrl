@@ -173,11 +173,11 @@ CREATE TABLE `MyOrdersIndexBtree_1` (
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'MyOrdersIndexBtree_1',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'MyOrdersIndexBtree_1'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `MyOrdersIndexHash_2` (
   `id` BIGINT NOT NULL,
@@ -187,11 +187,11 @@ CREATE TABLE `MyOrdersIndexHash_2` (
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'MyOrdersIndexHash_2',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'MyOrdersIndexHash_2'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `MyOrdersNoHint_3` (
   `id` BIGINT NOT NULL,
@@ -201,11 +201,11 @@ CREATE TABLE `MyOrdersNoHint_3` (
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'MyOrdersNoHint_3',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'MyOrdersNoHint_3'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `MyOrdersNoIndex_4` (
   `id` BIGINT NOT NULL,
@@ -215,11 +215,11 @@ CREATE TABLE `MyOrdersNoIndex_4` (
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'MyOrdersNoIndex_4',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'MyOrdersNoIndex_4'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `MyOrdersTwoIndex_5` (
   `id` BIGINT NOT NULL,
@@ -229,11 +229,11 @@ CREATE TABLE `MyOrdersTwoIndex_5` (
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'MyOrdersTwoIndex_5',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'MyOrdersTwoIndex_5'
+  'username' = '${JDBC_USERNAME}'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`MyOrdersIndexBtree_1`

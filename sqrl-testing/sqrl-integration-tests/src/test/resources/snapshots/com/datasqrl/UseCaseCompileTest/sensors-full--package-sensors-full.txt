@@ -303,11 +303,11 @@ CREATE TABLE `HighTemp_1` (
   PRIMARY KEY (`sensorid`, `timeSec`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'HighTemp_1',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'HighTemp_1'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `Machine_2` (
   `machineId` BIGINT NOT NULL,
@@ -316,11 +316,11 @@ CREATE TABLE `Machine_2` (
   PRIMARY KEY (`machineId`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'Machine_2',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'Machine_2'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `SecReading_3` (
   `sensorid` BIGINT NOT NULL,
@@ -329,11 +329,11 @@ CREATE TABLE `SecReading_3` (
   PRIMARY KEY (`sensorid`, `timeSec`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'SecReading_3',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'SecReading_3'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `SensorLastHour_4` (
   `sensorid` BIGINT NOT NULL,
@@ -343,11 +343,11 @@ CREATE TABLE `SensorLastHour_4` (
   PRIMARY KEY (`sensorid`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'SensorLastHour_4',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'SensorLastHour_4'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `SensorReading_5` (
   `sensorid` BIGINT NOT NULL,
@@ -358,11 +358,11 @@ CREATE TABLE `SensorReading_5` (
   PRIMARY KEY (`sensorid`, `time`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'SensorReading_5',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'SensorReading_5'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `SensorUpdates_6` (
   `id` BIGINT NOT NULL,
@@ -372,11 +372,11 @@ CREATE TABLE `SensorUpdates_6` (
   PRIMARY KEY (`id`, `placed`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'SensorUpdates_6',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'SensorUpdates_6'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `Sensors_7` (
   `id` BIGINT NOT NULL,
@@ -386,11 +386,11 @@ CREATE TABLE `Sensors_7` (
   PRIMARY KEY (`id`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'Sensors_7',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'Sensors_7'
+  'username' = '${JDBC_USERNAME}'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`HighTemp_1`

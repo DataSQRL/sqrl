@@ -86,11 +86,11 @@ CREATE TABLE `OrderAgg1_1` (
   PRIMARY KEY (`customer`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'OrderAgg1_1',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'OrderAgg1_1'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `OrderAgg2_2` (
   `order_count` BIGINT NOT NULL,
@@ -98,11 +98,11 @@ CREATE TABLE `OrderAgg2_2` (
   PRIMARY KEY (`__pk_hash`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'OrderAgg2_2',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'OrderAgg2_2'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `Orders_3` (
   `id` BIGINT NOT NULL,
@@ -112,11 +112,11 @@ CREATE TABLE `Orders_3` (
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'Orders_3',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'Orders_3'
+  'username' = '${JDBC_USERNAME}'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`OrderAgg1_1`

@@ -54,10 +54,10 @@ CREATE TABLE `LogData_1` (
 ) WITH (
   'connector' = 'kafka',
   'format' = 'flexible-json',
+  'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${PROPERTIES_GROUP_ID}',
   'scan.startup.mode' = 'group-offsets',
-  'properties.auto.offset.reset' = 'earliest',
   'topic' = 'LogData'
 );
 EXECUTE STATEMENT SET BEGIN

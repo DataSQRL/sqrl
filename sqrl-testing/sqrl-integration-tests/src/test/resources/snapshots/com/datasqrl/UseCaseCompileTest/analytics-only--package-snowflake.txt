@@ -308,12 +308,12 @@ CREATE TABLE `ApplicationStatus_1` (
 )
 PARTITIONED BY (`customer_id`)
 WITH (
-  'write.parquet.page-size-bytes' = '1000',
-  'warehouse' = '/tmp/duckdb',
-  'catalog-type' = 'hadoop',
   'catalog-name' = 'mydatabase',
+  'catalog-table' = 'ApplicationStatus_1',
+  'catalog-type' = 'hadoop',
   'connector' = 'iceberg',
-  'catalog-table' = 'ApplicationStatus_1'
+  'warehouse' = '/tmp/duckdb',
+  'write.parquet.page-size-bytes' = '1000'
 );
 CREATE TABLE `_Applications_2` (
   `id` BIGINT NOT NULL,
@@ -327,12 +327,12 @@ CREATE TABLE `_Applications_2` (
 )
 PARTITIONED BY (`loan_type_id`)
 WITH (
-  'write.parquet.page-size-bytes' = '1000',
-  'warehouse' = '/tmp/duckdb',
-  'catalog-type' = 'hadoop',
   'catalog-name' = 'mydatabase',
+  'catalog-table' = '_Applications_2',
+  'catalog-type' = 'hadoop',
   'connector' = 'iceberg',
-  'catalog-table' = '_Applications_2'
+  'warehouse' = '/tmp/duckdb',
+  'write.parquet.page-size-bytes' = '1000'
 );
 CREATE TABLE `_LoanTypes_3` (
   `id` BIGINT NOT NULL,
@@ -346,12 +346,12 @@ CREATE TABLE `_LoanTypes_3` (
   `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`id`) NOT ENFORCED
 ) WITH (
-  'write.parquet.page-size-bytes' = '1000',
-  'warehouse' = '/tmp/duckdb',
-  'catalog-type' = 'hadoop',
   'catalog-name' = 'mydatabase',
+  'catalog-table' = '_LoanTypes_3',
+  'catalog-type' = 'hadoop',
   'connector' = 'iceberg',
-  'catalog-table' = '_LoanTypes_3'
+  'warehouse' = '/tmp/duckdb',
+  'write.parquet.page-size-bytes' = '1000'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`ApplicationStatus_1`
