@@ -35,7 +35,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class SqrlConfigTest {
+public class SqrlConfigTest {
 
   private ErrorCollector errors;
   private SqrlConfig config;
@@ -403,6 +403,7 @@ class SqrlConfigTest {
   @AllArgsConstructor
   @NoArgsConstructor
   public static class TestClass {
+
     int field1;
 
     @Constraints.MinLength(min = 3)
@@ -412,6 +413,7 @@ class SqrlConfigTest {
   }
 
   public static class ConstraintClass {
+
     @Constraints.Default int optInt = 33;
 
     @Constraints.MinLength(min = 5)
@@ -422,7 +424,9 @@ class SqrlConfigTest {
   }
 
   public static class NestedClass {
+
     int counter;
+
     ConstraintClass obj;
   }
 

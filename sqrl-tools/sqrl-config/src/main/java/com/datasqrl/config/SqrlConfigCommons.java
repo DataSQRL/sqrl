@@ -15,53 +15,51 @@
  */
 package com.datasqrl.config;
 
+import com.datasqrl.error.ErrorCollector;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.List;
 
-import com.datasqrl.error.ErrorCollector;
-
 /** Delegates all configuration loading methods to the Jackson-based implementation. */
 public class SqrlConfigCommons {
 
- 
   private SqrlConfigCommons() {}
 
   public static PackageJson getDefaultPackageJson(ErrorCollector errors) {
-    return SqrlConfigJackson.fromFilesPackageJson(errors, List.of());
+    return SqrlConfig.fromFilesPackageJson(errors, List.of());
   }
 
   public static PackageJson fromFilesPackageJson(ErrorCollector errors, List<Path> files) {
-    return SqrlConfigJackson.fromFilesPackageJson(errors, files);
+    return SqrlConfig.fromFilesPackageJson(errors, files);
   }
 
   public static PackageJson fromFilesPublishPackageJson(ErrorCollector errors, List<Path> files) {
-    return SqrlConfigJackson.fromFilesPublishPackageJson(errors, files);
+    return SqrlConfig.fromFilesPublishPackageJson(errors, files);
   }
 
   public static SqrlConfig fromFiles(ErrorCollector errors, Path firstFile) {
-    return SqrlConfigJackson.fromFiles(errors, firstFile);
+    return SqrlConfig.fromFiles(errors, firstFile);
   }
 
   public static boolean validateJsonFile(
       Path jsonFilePath, String schemaResourcePath, ErrorCollector errors) {
-    return SqrlConfigJackson.validateJsonFile(jsonFilePath, schemaResourcePath, errors);
+    return SqrlConfig.validateJsonFile(jsonFilePath, schemaResourcePath, errors);
   }
 
   public static SqrlConfig getPackageConfig(
       ErrorCollector errors, String jsonSchemaResource, List<Path> files) {
-    return SqrlConfigJackson.getPackageConfig(errors, jsonSchemaResource, files);
+    return SqrlConfig.getPackageConfig(errors, jsonSchemaResource, files);
   }
 
   public static SqrlConfig fromURL(ErrorCollector errors, URL url) {
-    return SqrlConfigJackson.fromURL(errors, url);
+    return SqrlConfig.fromURL(errors, url);
   }
 
   public static SqrlConfig fromString(ErrorCollector errors, String string) {
-    return SqrlConfigJackson.fromString(errors, string);
+    return SqrlConfig.fromString(errors, string);
   }
 
   public static SqrlConfig create(ErrorCollector errors, int version) {
-    return SqrlConfigJackson.create(errors, version);
+    return SqrlConfig.create(errors, version);
   }
 }
