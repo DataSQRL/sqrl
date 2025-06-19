@@ -165,13 +165,13 @@ class FlinkKafkaIntegrationIT {
     // Parse the key and value from JSON strings to objects if necessary
     // Assuming the key and value are JSON strings
     // For simplicity, let's just check the lengths
-    assertThat(key != null).isTrue();
-    assertThat(value != null).isTrue();
+    assertThat(key).isNotNull();
+    assertThat(value).isNotNull();
 
     // Optionally, parse the JSON and check the contents
     // For this example, we'll check the lengths
     // Since the 'large_message' field is 1 MB, the value should be at least 1 MB in size
-    assertThat(value.length() >= 1048576).isTrue();
+    assertThat(value).hasSizeGreaterThanOrEqualTo(1048576);
 
     System.out.println("Message successfully written and read from Kafka.");
   }

@@ -16,7 +16,7 @@
 package com.datasqrl.engine.database.relational.ddl.statements.notify;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -46,14 +46,8 @@ class CreateNotifyTriggerDDLTest {
 
   @Test
   void emptyPrimaryKeys() {
-    Exception exception =
-        assertThatExceptionOfType(IllegalStateException.class)
-            .isThrownBy(
-                () -> {
-                  new CreateNotifyTriggerDDL("test_table", Collections.emptyList());
-                })
-            .actual();
-    assertThat(exception.getMessage())
-        .isEqualTo("There should be at least one primary key to generate a notify payload.");
+    assertThatThrownBy(() -> new CreateNotifyTriggerDDL("test_table", Collections.emptyList()))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessage("There should be at least one primary key to generate a notify payload.");
   }
 }

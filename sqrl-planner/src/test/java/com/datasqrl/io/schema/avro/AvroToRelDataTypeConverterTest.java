@@ -16,8 +16,8 @@
 package com.datasqrl.io.schema.avro;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
 
 import com.datasqrl.error.ErrorCollector;
 import java.util.Arrays;
@@ -402,7 +402,7 @@ class AvroToRelDataTypeConverterTest {
   @Test
   void nullSchema() {
     // Test conversion with null schema (should throw NullPointerException)
-    assertThatExceptionOfType(NullPointerException.class).isThrownBy(() -> converter.convert(null));
+    assertThatThrownBy(() -> converter.convert(null)).isInstanceOf(NullPointerException.class);
   }
 
   @Test
@@ -485,8 +485,8 @@ class AvroToRelDataTypeConverterTest {
     var recursiveErrors = ErrorCollector.root();
     var recursiveConverter = new AvroToRelDataTypeConverter(recursiveErrors, false);
 
-    assertThatExceptionOfType(RuntimeException.class)
-        .isThrownBy(() -> recursiveConverter.convert(recursiveSchema));
+    assertThatThrownBy(() -> recursiveConverter.convert(recursiveSchema))
+        .isInstanceOf(RuntimeException.class);
     assertThat(recursiveErrors.hasErrors()).isTrue();
   }
 }

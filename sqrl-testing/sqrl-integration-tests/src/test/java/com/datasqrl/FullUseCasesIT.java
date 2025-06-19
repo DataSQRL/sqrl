@@ -15,7 +15,7 @@
  */
 package com.datasqrl;
 
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.fail;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import com.datasqrl.cmd.AssertStatusHook;
@@ -282,8 +282,7 @@ class FullUseCasesIT {
             case SUCCESS_WITH_CONTENT:
               break;
             default:
-              org.assertj.core.api.Assertions.fail(
-                  "Flink job failed with: " + result.getResultKind());
+              fail("Flink job failed with: " + result.getResultKind());
               break;
           }
 

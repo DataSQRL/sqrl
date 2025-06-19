@@ -47,9 +47,7 @@ class BasicTypeTest {
       assertThat(TimestampType.INSTANCE.conversion().detectType(timeStr)).as(timeStr).isTrue();
       var errors = ErrorCollector.root();
       var result = TimestampType.INSTANCE.conversion().parseDetected(timeStr, errors);
-      assertThat(result).isPresent();
-      assertThat(result.get()).isNotNull();
-      assertThat(result).contains(Instant.parse(resultTimes[i]));
+      assertThat(result).isPresent().contains(Instant.parse(resultTimes[i]));
       //      System.out.println(result.get());
       assertThat(errors.hasErrorsWarningsOrNotices()).isFalse();
     }

@@ -16,8 +16,8 @@
 package com.datasqrl.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
 
 import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCollector;
@@ -67,13 +67,13 @@ public class ConfigurationTest {
     var x2 = config.as("x2", ConstraintClass.class).get();
     assertThat(x2.optInt).isEqualTo(33);
 
-    assertThatExceptionOfType(CollectedException.class)
-        .isThrownBy(() -> config.as("xf1", ConstraintClass.class).get())
-        .withMessageContaining("is not valid");
+    assertThatThrownBy(() -> config.as("xf1", ConstraintClass.class).get())
+        .isInstanceOf(CollectedException.class)
+        .hasMessageContaining("is not valid");
 
-    assertThatExceptionOfType(CollectedException.class)
-        .isThrownBy(() -> config.as("xf2", ConstraintClass.class).get())
-        .withMessageContaining("Could not find key");
+    assertThatThrownBy(() -> config.as("xf2", ConstraintClass.class).get())
+        .isInstanceOf(CollectedException.class)
+        .hasMessageContaining("Could not find key");
 
     var nested = config.as("nested", NestedClass.class).get();
     assertThat(nested.counter).isEqualTo(5);
