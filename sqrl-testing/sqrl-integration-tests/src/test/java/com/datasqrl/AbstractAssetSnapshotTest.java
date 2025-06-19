@@ -15,6 +15,8 @@
  */
 package com.datasqrl;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.datasqrl.cmd.AssertStatusHook;
 import com.datasqrl.cmd.RootCommand;
 import com.datasqrl.config.SqrlConstants;
@@ -39,7 +41,6 @@ import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -176,7 +177,7 @@ public abstract class AbstractAssetSnapshotTest {
     var code =
         new RootCommand(rootDir, statusHook).getCmd().execute(argsList.toArray(String[]::new));
     if (statusHook.isSuccess() && code != 0) {
-      Assertions.assertEquals(0, code);
+      assertThat(code).isEqualTo(0);
     }
     return statusHook;
   }

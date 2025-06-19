@@ -15,8 +15,7 @@
  */
 package com.datasqrl;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datasqrl.util.SnapshotTest.Snapshot;
 import java.nio.file.Files;
@@ -35,8 +34,8 @@ public class DAGPlannerTest extends AbstractAssetSnapshotTest {
 
   @ParameterizedTest
   @ArgumentsSource(DagPlannerSQRLFiles.class)
-  void testScripts(Path script) {
-    assertTrue(Files.exists(script));
+  void scripts(Path script) {
+    assertThat(Files.exists(script)).isTrue();
     var testModifier = TestNameModifier.of(script);
     var expectFailure = testModifier == TestNameModifier.fail;
     var printMessages =
@@ -49,7 +48,7 @@ public class DAGPlannerTest extends AbstractAssetSnapshotTest {
             script.getFileName().toString(),
             "-t",
             outputDir.getFileName().toString());
-    assertEquals(expectFailure, hook.isFailed(), hook.getMessages());
+    assertThat(hook.isFailed()).as(hook.getMessages()).isEqualTo(expectFailure);
     if (printMessages) {
       createMessageSnapshot(hook.getMessages());
     } else {

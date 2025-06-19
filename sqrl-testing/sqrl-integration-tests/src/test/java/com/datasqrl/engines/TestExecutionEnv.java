@@ -15,7 +15,7 @@
  */
 package com.datasqrl.engines;
 
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.fail;
 
 import com.datasqrl.DatasqrlTest;
 import com.datasqrl.FullUseCasesIT.UseCaseTestParameter;

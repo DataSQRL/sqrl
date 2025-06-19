@@ -15,7 +15,7 @@
  */
 package com.datasqrl.schema;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datasqrl.io.schema.flexible.type.basic.BasicType;
 import com.datasqrl.io.schema.flexible.type.basic.BasicTypeManager;
@@ -32,17 +32,17 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 
-public class TypeTest {
+class TypeTest {
 
   SnapshotTest.Snapshot snapshot;
 
   @BeforeEach
-  public void setup(TestInfo testInfo) throws IOException {
+  void setup(TestInfo testInfo) throws IOException {
     this.snapshot = SnapshotTest.Snapshot.of(getClass(), testInfo);
   }
 
   @Test
-  public void printCombinationMatrix() {
+  void printCombinationMatrix() {
     for (Map.Entry<Pair<BasicType, BasicType>, Pair<BasicType, Integer>> entry :
         BasicTypeManager.TYPE_COMBINATION_MATRIX.entrySet()) {
       var types = entry.getKey();
@@ -55,16 +55,13 @@ public class TypeTest {
   }
 
   @Test
-  public void testBasicTypes() {
-    assertEquals(6, BasicTypeManager.ALL_TYPES.length);
-    assertEquals(
-        DoubleType.INSTANCE,
-        BasicTypeManager.combine(BigIntType.INSTANCE, DoubleType.INSTANCE, 10).get());
-    assertEquals(
-        StringType.INSTANCE,
-        BasicTypeManager.combine(BigIntType.INSTANCE, TimestampType.INSTANCE, 50).get());
-    assertEquals(
-        IntervalType.INSTANCE,
-        BasicTypeManager.combine(BigIntType.INSTANCE, IntervalType.INSTANCE, 40).get());
+  void basicTypes() {
+    assertThat(BasicTypeManager.ALL_TYPES.length).isEqualTo(6);
+    assertThat(BasicTypeManager.combine(BigIntType.INSTANCE, DoubleType.INSTANCE, 10).get())
+        .isEqualTo(DoubleType.INSTANCE);
+    assertThat(BasicTypeManager.combine(BigIntType.INSTANCE, TimestampType.INSTANCE, 50).get())
+        .isEqualTo(StringType.INSTANCE);
+    assertThat(BasicTypeManager.combine(BigIntType.INSTANCE, IntervalType.INSTANCE, 40).get())
+        .isEqualTo(IntervalType.INSTANCE);
   }
 }

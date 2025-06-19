@@ -63,7 +63,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 @Slf4j
 @ExtendWith(MiniClusterExtension.class)
-public class FullUseCasesIT {
+class FullUseCasesIT {
   private static final Path RESOURCES = Path.of("src/test/resources");
   private static final Path USE_CASES = RESOURCES.resolve("usecases");
 
@@ -112,7 +112,7 @@ public class FullUseCasesIT {
   boolean executed = false;
 
   @AfterEach
-  public void tearDown() throws Exception {
+  void tearDown() throws Exception {
     if (containerHook != null && executed) {
       containerHook.clear();
       executed = false;
@@ -120,7 +120,7 @@ public class FullUseCasesIT {
   }
 
   @BeforeAll
-  public static void before() {
+  static void before() {
     var engines = new EngineFactory().createAll();
 
     containerHook = engines.accept(new TestContainersForTestGoal(), null);
@@ -128,7 +128,7 @@ public class FullUseCasesIT {
   }
 
   @AfterAll
-  public static void after() {
+  static void after() {
     if (containerHook != null) {
       containerHook.teardown();
     }
@@ -183,7 +183,7 @@ public class FullUseCasesIT {
   static int testShardingIndex;
 
   @BeforeAll
-  public static void initTestShading() throws Exception {
+  static void initTestShading() throws Exception {
     var total = System.getenv("TEST_SHARDING_TOTAL");
     if (ObjectUtils.isEmpty(total)) {
       log.warn("No test sharding");
@@ -199,7 +199,7 @@ public class FullUseCasesIT {
   @SneakyThrows
   @ParameterizedTest
   @MethodSource("useCaseProvider")
-  public void testUseCase(UseCaseTestParameter param) {
+  void useCase(UseCaseTestParameter param) {
     if (disabledScripts.contains(new ScriptCriteria(param.getSqrlFileName(), param.getGoal()))) {
       log.warn("Skipping disabled test:" + param.getSqrlFileName());
       Assumptions.assumeThat(false)
@@ -330,7 +330,8 @@ public class FullUseCasesIT {
             case SUCCESS_WITH_CONTENT:
               break;
             default:
-              fail("Flink job failed with: " + result.getResultKind());
+              org.assertj.core.api.Assertions.fail(
+                  "Flink job failed with: " + result.getResultKind());
               break;
           }
 
@@ -340,7 +341,7 @@ public class FullUseCasesIT {
           }
         } catch (Exception e) {
           e.printStackTrace();
-          fail(e);
+          org.assertj.core.api.Assertions.fail("", e);
         }
       }
 
@@ -367,20 +368,20 @@ public class FullUseCasesIT {
   @ParameterizedTest
   @MethodSource("useCaseProvider")
   @Disabled
-  public void runTestNumber(UseCaseTestParameter param) {
+  void runTestNumber(UseCaseTestParameter param) {
     var testToExecute = 45;
     testNo++;
     System.out.println(testNo + ":" + param);
 
     assumeTrue(testToExecute == testNo, "Not the test marked for execution.");
 
-    testUseCase(param);
+    useCase(param);
   }
 
   @ParameterizedTest
   @MethodSource("useCaseProvider")
   @Disabled
-  public void printUseCaseNumbers(UseCaseTestParameter param) {
+  void printUseCaseNumbers(UseCaseTestParameter param) {
     testNo++;
     System.out.println(testNo + ":" + param);
   }
@@ -388,12 +389,12 @@ public class FullUseCasesIT {
   @ParameterizedTest
   @MethodSource("useCaseProvider")
   @Disabled
-  public void runTestCaseByName(UseCaseTestParameter param) {
+  void runTestCaseByName(UseCaseTestParameter param) {
     assumeTrue(
         param.sqrlFileName.equals("stdlib-math.sqrl") && param.goal.equals("test"),
         "Not the test marked for execution.");
 
-    testUseCase(param);
+    useCase(param);
   }
 
   static Set<UseCaseTestParameter> useCaseProvider() throws Exception {

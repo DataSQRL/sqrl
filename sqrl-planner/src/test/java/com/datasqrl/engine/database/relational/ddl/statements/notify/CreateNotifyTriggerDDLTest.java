@@ -15,17 +15,17 @@
  */
 package com.datasqrl.engine.database.relational.ddl.statements.notify;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
 
 import java.util.Arrays;
 import java.util.Collections;
 import org.junit.jupiter.api.Test;
 
-public class CreateNotifyTriggerDDLTest {
+class CreateNotifyTriggerDDLTest {
 
   @Test
-  public void testGetSql() {
+  void getSql() {
     var ddl = new CreateNotifyTriggerDDL("test_table", Arrays.asList("id", "name"));
     var expectedSql =
         """
@@ -41,19 +41,19 @@ public class CreateNotifyTriggerDDLTest {
         AFTER INSERT ON "test_table"
         FOR EACH ROW EXECUTE PROCEDURE notify_on_test_table_insert();\
         """;
-    assertEquals(expectedSql, ddl.getSql());
+    assertThat(ddl.getSql()).isEqualTo(expectedSql);
   }
 
   @Test
-  public void testEmptyPrimaryKeys() {
+  void emptyPrimaryKeys() {
     Exception exception =
-        assertThrows(
-            IllegalStateException.class,
-            () -> {
-              new CreateNotifyTriggerDDL("test_table", Collections.emptyList());
-            });
-    assertEquals(
-        "There should be at least one primary key to generate a notify payload.",
-        exception.getMessage());
+        assertThatExceptionOfType(IllegalStateException.class)
+            .isThrownBy(
+                () -> {
+                  new CreateNotifyTriggerDDL("test_table", Collections.emptyList());
+                })
+            .actual();
+    assertThat(exception.getMessage())
+        .isEqualTo("There should be at least one primary key to generate a notify payload.");
   }
 }

@@ -15,7 +15,7 @@
  */
 package com.datasqrl;
 
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.fail;
 
 import com.datasqrl.cmd.AssertStatusHook;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -57,7 +57,7 @@ public class PostgresViewIT extends AbstractUseCaseTest {
       verifyPostgresSchema(script);
     } catch (Exception e) {
       e.printStackTrace();
-      fail(e);
+      fail("", e);
     }
   }
 

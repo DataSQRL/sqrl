@@ -15,10 +15,7 @@
  */
 package com.datasqrl.schema.type;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.schema.flexible.type.basic.TimestampType;
@@ -26,11 +23,11 @@ import java.time.Instant;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-public class BasicTypeTest {
+class BasicTypeTest {
 
   @Test
   @Disabled
-  public void testDateTimeParsing() {
+  void dateTimeParsing() {
     String[] timeStrs = {
       "2022-07-15 10:15:30",
       "2022-07-15 10:15:30.543",
@@ -47,14 +44,14 @@ public class BasicTypeTest {
     };
     for (var i = 0; i < timeStrs.length; i++) {
       var timeStr = timeStrs[i];
-      assertTrue(TimestampType.INSTANCE.conversion().detectType(timeStr), timeStr);
+      assertThat(TimestampType.INSTANCE.conversion().detectType(timeStr)).as(timeStr).isTrue();
       var errors = ErrorCollector.root();
       var result = TimestampType.INSTANCE.conversion().parseDetected(timeStr, errors);
-      assertTrue(result.isPresent());
-      assertNotNull(result.get());
-      assertEquals(Instant.parse(resultTimes[i]), result.get());
+      assertThat(result).isPresent();
+      assertThat(result.get()).isNotNull();
+      assertThat(result).contains(Instant.parse(resultTimes[i]));
       //      System.out.println(result.get());
-      assertFalse(errors.hasErrorsWarningsOrNotices());
+      assertThat(errors.hasErrorsWarningsOrNotices()).isFalse();
     }
   }
 }

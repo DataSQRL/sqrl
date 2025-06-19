@@ -15,7 +15,7 @@
  */
 package com.datasqrl.discovery;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datasqrl.AbstractAssetSnapshotTest;
 import com.datasqrl.config.PackageJson;
@@ -70,11 +70,11 @@ public class FlexibleSchemaInferencePreprocessorTest extends AbstractAssetSnapsh
   @ParameterizedTest
   @ArgumentsSource(DataFiles.class)
   @SneakyThrows
-  void testScripts(Path file) {
-    assertTrue(Files.exists(file));
+  void scripts(Path file) {
+    assertThat(Files.exists(file)).isTrue();
     Path targetFile = Files.copy(file, outputDir.resolve(file.getFileName()));
     String filename = file.getFileName().toString();
-    assertTrue(preprocessor.getPattern().matcher(filename).matches());
+    assertThat(preprocessor.getPattern().matcher(filename).matches()).isTrue();
     this.snapshot = Snapshot.of(getDisplayName(file), getClass());
     preprocessor.processFile(
         targetFile, new ProcessorContext(outputDir, buildDir, packageJson), errors);

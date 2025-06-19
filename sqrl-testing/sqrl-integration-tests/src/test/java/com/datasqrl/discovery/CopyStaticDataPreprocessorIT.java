@@ -44,7 +44,7 @@ public class CopyStaticDataPreprocessorIT extends AbstractAssetSnapshotTest {
   @ParameterizedTest
   @ArgumentsSource(DataFiles.class)
   @SneakyThrows
-  void testScripts(Path file) {
+  void scripts(Path file) {
     assertThat(file).exists();
     String filename = file.getFileName().toString();
     assertThat(filename).matches(preprocessor.getPattern());
