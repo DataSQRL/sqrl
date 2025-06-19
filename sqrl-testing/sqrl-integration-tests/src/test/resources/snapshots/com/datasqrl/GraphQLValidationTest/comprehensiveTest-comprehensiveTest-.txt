@@ -1590,6 +1590,515 @@ FROM "UnnestOrders_16"
         }
       }
     ],
+    "operations" : [
+      {
+        "function" : {
+          "name" : "GetAnotherCustomer",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query AnotherCustomer($limit: Int = 10, $offset: Int = 0) {\nAnotherCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nlastUpdated\n}\n\n}",
+          "queryName" : "AnotherCustomer",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/AnotherCustomer{?offset,limit}",
+        "httpMethod" : "GET"
+      },
+      {
+        "function" : {
+          "name" : "GetCustomer",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query Customer($limit: Int = 10, $offset: Int = 0) {\nCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+          "queryName" : "Customer",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/Customer{?offset,limit}",
+        "httpMethod" : "GET"
+      },
+      {
+        "function" : {
+          "name" : "GetCustomerByMultipleTime",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query CustomerByMultipleTime($limit: Int = 10, $offset: Int = 0) {\nCustomerByMultipleTime(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+          "queryName" : "CustomerByMultipleTime",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/CustomerByMultipleTime{?offset,limit}",
+        "httpMethod" : "GET"
+      },
+      {
+        "function" : {
+          "name" : "GetCustomerByTime2",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query CustomerByTime2($limit: Int = 10, $offset: Int = 0) {\nCustomerByTime2(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+          "queryName" : "CustomerByTime2",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/CustomerByTime2{?offset,limit}",
+        "httpMethod" : "GET"
+      },
+      {
+        "function" : {
+          "name" : "GetCustomerFilteredDistinct",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query CustomerFilteredDistinct($limit: Int = 10, $offset: Int = 0) {\nCustomerFilteredDistinct(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+          "queryName" : "CustomerFilteredDistinct",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/CustomerFilteredDistinct{?offset,limit}",
+        "httpMethod" : "GET"
+      },
+      {
+        "function" : {
+          "name" : "GetCustomerTimeWindow",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query CustomerTimeWindow($limit: Int = 10, $offset: Int = 0) {\nCustomerTimeWindow(limit: $limit, offset: $offset) {\nwindow_start\nwindow_end\nunique_email_count\n}\n\n}",
+          "queryName" : "CustomerTimeWindow",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/CustomerTimeWindow{?offset,limit}",
+        "httpMethod" : "GET"
+      },
+      {
+        "function" : {
+          "name" : "GetExplicitDistinct",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query ExplicitDistinct($limit: Int = 10, $offset: Int = 0) {\nExplicitDistinct(limit: $limit, offset: $offset) {\ncustomerid\ntimestamp\nname\n}\n\n}",
+          "queryName" : "ExplicitDistinct",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/ExplicitDistinct{?offset,limit}",
+        "httpMethod" : "GET"
+      },
+      {
+        "function" : {
+          "name" : "GetExternalOrders",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query ExternalOrders($limit: Int = 10, $offset: Int = 0) {\nExternalOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
+          "queryName" : "ExternalOrders",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/ExternalOrders{?offset,limit}",
+        "httpMethod" : "GET"
+      },
+      {
+        "function" : {
+          "name" : "GetInvalidDistinct",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query InvalidDistinct($limit: Int = 10, $offset: Int = 0) {\nInvalidDistinct(limit: $limit, offset: $offset) {\ncustomerid\ntimestamp\nnamee\n}\n\n}",
+          "queryName" : "InvalidDistinct",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/InvalidDistinct{?offset,limit}",
+        "httpMethod" : "GET"
+      },
+      {
+        "function" : {
+          "name" : "GetMissedTemporalJoin",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query MissedTemporalJoin($limit: Int = 10, $offset: Int = 0) {\nMissedTemporalJoin(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\ncustomerid0\ntimestamp\nname\n}\n\n}",
+          "queryName" : "MissedTemporalJoin",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/MissedTemporalJoin{?offset,limit}",
+        "httpMethod" : "GET"
+      },
+      {
+        "function" : {
+          "name" : "GetOrders",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query Orders($limit: Int = 10, $offset: Int = 0) {\nOrders(limit: $limit, offset: $offset) {\norderid\namount\n}\n\n}",
+          "queryName" : "Orders",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/Orders{?offset,limit}",
+        "httpMethod" : "GET"
+      },
+      {
+        "function" : {
+          "name" : "GetSelectCustomers",
+          "description" : "This is for selected customers\nand their orders",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query SelectCustomers($limit: Int = 10, $offset: Int = 0) {\nSelectCustomers(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+          "queryName" : "SelectCustomers",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/SelectCustomers{?offset,limit}",
+        "httpMethod" : "GET"
+      },
+      {
+        "function" : {
+          "name" : "GetTemporalJoin",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query TemporalJoin($limit: Int = 10, $offset: Int = 0) {\nTemporalJoin(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\ncustomerid0\ntimestamp\nname\n}\n\n}",
+          "queryName" : "TemporalJoin",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/TemporalJoin{?offset,limit}",
+        "httpMethod" : "GET"
+      },
+      {
+        "function" : {
+          "name" : "GetUnnestOrders",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query UnnestOrders($limit: Int = 10, $offset: Int = 0) {\nUnnestOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nproductid\nquantity\ndiscount\nnewId\n}\n\n}",
+          "queryName" : "UnnestOrders",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/UnnestOrders{?offset,limit}",
+        "httpMethod" : "GET"
+      },
+      {
+        "function" : {
+          "name" : "GetCustomerById",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              },
+              "minId" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [
+              "minId"
+            ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query CustomerById($minId: Int!, $limit: Int = 10, $offset: Int = 0) {\nCustomerById(minId: $minId, limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+          "queryName" : "CustomerById",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/CustomerById{?offset,limit,minId}",
+        "httpMethod" : "GET"
+      },
+      {
+        "function" : {
+          "name" : "GetCustomerQuery",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              },
+              "id" : {
+                "type" : "string"
+              }
+            },
+            "required" : [
+              "id"
+            ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query CustomerQuery($id: GraphQLBigInteger!, $limit: Int = 10, $offset: Int = 0) {\nCustomerQuery(id: $id, limit: $limit, offset: $offset) {\ncustomerid\nemail\nlastUpdated\n}\n\n}",
+          "queryName" : "CustomerQuery",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/CustomerQuery{?offset,limit,id}",
+        "httpMethod" : "GET"
+      },
+      {
+        "function" : {
+          "name" : "GetTableFunctionCallsTblFct",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "arg2" : {
+                "type" : "integer"
+              },
+              "offset" : {
+                "type" : "integer"
+              },
+              "arg1" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [
+              "arg2"
+            ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "query TableFunctionCallsTblFct($arg1: Int, $arg2: Int!, $limit: Int = 10, $offset: Int = 0) {\nTableFunctionCallsTblFct(arg1: $arg1, arg2: $arg2, limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+          "queryName" : "TableFunctionCallsTblFct",
+          "operationType" : "QUERY"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "queries/TableFunctionCallsTblFct{?arg2,offset,arg1,limit}",
+        "httpMethod" : "GET"
+      },
+      {
+        "function" : {
+          "name" : "AddOrders",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "amount" : {
+                "type" : "number"
+              },
+              "orderid" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [
+              "orderid"
+            ]
+          }
+        },
+        "apiQuery" : {
+          "query" : "mutation Orders($orderid: Int!, $amount: Float) {\nOrders(event: { orderid: $orderid, amount: $amount }) {\norderid\namount\n}\n\n}",
+          "queryName" : "Orders",
+          "operationType" : "MUTATION"
+        },
+        "tool" : true,
+        "resource" : false,
+        "restEndpoint" : true,
+        "uriTemplate" : "mutations/Orders",
+        "httpMethod" : "POST"
+      }
+    ],
     "schema" : {
       "type" : "string",
       "schema" : "type AnotherCustomer {\n    customerid: GraphQLBigInteger!\n    email: String!\n    lastUpdated: GraphQLBigInteger!\n}\n\ntype Customer {\n    customerid: GraphQLBigInteger!\n    email: String!\n    name: String!\n    lastUpdated: GraphQLBigInteger!\n    timestamp: DateTime\n    related(limit: Int = 10, offset: Int = 0): [Customer!]\n    relatedByLength(length: Int, limit: Int = 10, offset: Int = 0): [Customer!]\n}\n\ntype CustomerByMultipleTime {\n    customerid: GraphQLBigInteger!\n    email: String!\n    name: String!\n    lastUpdated: GraphQLBigInteger!\n    timestamp: DateTime\n}\n\ntype CustomerByTime2 {\n    customerid: GraphQLBigInteger!\n    email: String!\n    name: String!\n    lastUpdated: GraphQLBigInteger!\n    timestamp: DateTime\n}\n\ntype CustomerFilteredDistinct {\n    customerid: GraphQLBigInteger!\n    email: String!\n    name: String!\n    lastUpdated: GraphQLBigInteger!\n    timestamp: DateTime\n}\n\ntype CustomerTimeWindow {\n    window_start: DateTime!\n    window_end: DateTime!\n    unique_email_count: GraphQLBigInteger!\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype ExplicitDistinct {\n    customerid: GraphQLBigInteger!\n    timestamp: DateTime\n    name: String!\n}\n\ntype ExternalOrders {\n    id: GraphQLBigInteger!\n    customerid: GraphQLBigInteger!\n    time: DateTime!\n    entries: [ExternalOrders_entriesOutput]!\n}\n\ntype ExternalOrders_entriesOutput {\n    productid: GraphQLBigInteger!\n    quantity: GraphQLBigInteger!\n    unit_price: Float!\n    discount: Float\n}\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype InvalidDistinct {\n    customerid: GraphQLBigInteger!\n    timestamp: DateTime\n    namee: String!\n}\n\ntype MissedTemporalJoin {\n    id: GraphQLBigInteger!\n    customerid: GraphQLBigInteger!\n    time: DateTime!\n    entries: [MissedTemporalJoin_entriesOutput]!\n    customerid0: GraphQLBigInteger!\n    timestamp: DateTime\n    name: String!\n}\n\ntype MissedTemporalJoin_entriesOutput {\n    productid: GraphQLBigInteger!\n    quantity: GraphQLBigInteger!\n    unit_price: Float!\n    discount: Float\n}\n\ntype Mutation {\n    Orders(event: OrdersInput!): OrdersResultOutput!\n}\n\ntype Orders {\n    orderid: Int!\n    amount: Float\n}\n\ninput OrdersInput {\n    orderid: Int!\n    amount: Float\n}\n\ntype OrdersResultOutput {\n    orderid: Int!\n    amount: Float\n}\n\ntype Query {\n    AnotherCustomer(limit: Int = 10, offset: Int = 0): [AnotherCustomer!]\n    Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n    CustomerByMultipleTime(limit: Int = 10, offset: Int = 0): [CustomerByMultipleTime!]\n    CustomerByTime2(limit: Int = 10, offset: Int = 0): [CustomerByTime2!]\n    CustomerFilteredDistinct(limit: Int = 10, offset: Int = 0): [CustomerFilteredDistinct!]\n    CustomerTimeWindow(limit: Int = 10, offset: Int = 0): [CustomerTimeWindow!]\n    ExplicitDistinct(limit: Int = 10, offset: Int = 0): [ExplicitDistinct!]\n    ExternalOrders(limit: Int = 10, offset: Int = 0): [ExternalOrders!]\n    InvalidDistinct(limit: Int = 10, offset: Int = 0): [InvalidDistinct!]\n    MissedTemporalJoin(limit: Int = 10, offset: Int = 0): [MissedTemporalJoin!]\n    Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n    \"\"\"\n    This is for selected customers\n    and their orders\n    \"\"\"\n    SelectCustomers(limit: Int = 10, offset: Int = 0): [Customer!]\n    TemporalJoin(limit: Int = 10, offset: Int = 0): [TemporalJoin!]\n    UnnestOrders(limit: Int = 10, offset: Int = 0): [UnnestOrders!]\n    CustomerById(minId: Int!, limit: Int = 10, offset: Int = 0): [Customer!]\n    CustomerQuery(id: GraphQLBigInteger!, limit: Int = 10, offset: Int = 0): [AnotherCustomer!]\n    TableFunctionCallsTblFct(arg1: Int, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]\n}\n\ntype Subscription {\n    CustomerSubscription: Customer\n    CustomerSubscriptionById(minId: Int!): Customer\n}\n\ntype TemporalJoin {\n    id: GraphQLBigInteger!\n    customerid: GraphQLBigInteger!\n    time: DateTime!\n    entries: [TemporalJoin_entriesOutput]!\n    customerid0: GraphQLBigInteger!\n    timestamp: DateTime\n    name: String!\n}\n\ntype TemporalJoin_entriesOutput {\n    productid: GraphQLBigInteger!\n    quantity: GraphQLBigInteger!\n    unit_price: Float!\n    discount: Float\n}\n\ntype UnnestOrders {\n    id: GraphQLBigInteger!\n    customerid: GraphQLBigInteger!\n    time: DateTime!\n    productid: GraphQLBigInteger!\n    quantity: GraphQLBigInteger!\n    discount: Float\n    newId: GraphQLBigInteger!\n}\n"
