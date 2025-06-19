@@ -15,6 +15,7 @@
  */
 package com.datasqrl.config;
 
+import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ResourceFileUtil;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -25,10 +26,14 @@ import com.networknt.schema.JsonSchemaFactory;
 import com.networknt.schema.SpecVersion.VersionFlag;
 import com.networknt.schema.ValidationMessage;
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -43,6 +48,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
+import lombok.SneakyThrows;
 
 /** Jackson-based implementation of {@link SqrlConfig} with JSON Schema validation and merging. */
 public class SqrlConfig {
@@ -62,9 +68,9 @@ public class SqrlConfig {
               com.fasterxml.jackson.databind.SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
 
   private final ErrorCollector errors;
-  private final ObjectNode root;
+  private ObjectNode root;
   private final String configFilename;
-  private final String prefix;
+  private String prefix;
 
   private SqrlConfig(ErrorCollector errors, ObjectNode root, String configFilename, String prefix) {
     this.errors = errors;
@@ -134,7 +140,17 @@ public class SqrlConfig {
       ErrorCollector errors, String jsonSchemaResource, List<Path> files) {
     boolean valid = true;
     List<JsonNode> jsons = new ArrayList<>();
-    for (int i = files.size() - 1; i >= 0; i--) {
+
+    try {
+      URL url = SqrlConfigCommons.class.getResource("/default-package.json");
+      if (url != null) {
+        jsons.add(MAPPER.readTree(url));
+      }
+    } catch (IOException e) {
+      throw errors.exception("Error loading default configuration: %s", e.toString());
+    }
+
+    for (int i = 0; i < files.size(); i++) {
       Path file = files.get(i);
       ErrorCollector local = errors.withConfig(file.toString());
       valid &= validateJsonFile(file, jsonSchemaResource, local);
@@ -143,14 +159,6 @@ public class SqrlConfig {
       } catch (IOException e) {
         throw local.exception("Could not parse JSON file [%s]: %s", file, e.toString());
       }
-    }
-    try {
-      URL url = SqrlConfigCommons.class.getResource("/default-package.json");
-      if (url != null) {
-        jsons.add(MAPPER.readTree(url));
-      }
-    } catch (IOException e) {
-      throw errors.exception("Error loading default configuration: %s", e.toString());
     }
     if (!valid) {
       throw errors.exception("Configuration file invalid: %s", files);
@@ -204,18 +212,30 @@ public class SqrlConfig {
   }
 
   private JsonNode node() {
+    return node(false);
+  }
+
+  private JsonNode node(boolean createIfMissing) {
     if (prefix.isEmpty()) {
       return root;
     }
-    JsonNode n = root;
+
+    ObjectNode current = root;
     for (String seg : prefix.split("\\.")) {
-      if (n.has(seg)) {
-        n = n.get(seg);
-      } else {
-        return null;
+      JsonNode child = current.get(seg);
+
+      if (child == null) {
+        if (createIfMissing) {
+          child = current.objectNode();
+          current.set(seg, child);
+        } else {
+          return null;
+        }
       }
+
+      current = (ObjectNode) child;
     }
-    return n;
+    return current;
   }
 
   private String getFullKey(String key) {
@@ -258,18 +278,77 @@ public class SqrlConfig {
     return n != null && n.has(key) && !n.get(key).isContainerNode();
   }
 
+  @SneakyThrows
   public <T> Value<T> as(String key, Class<T> clazz) {
     String fullKey = getFullKey(key);
     JsonNode n = node();
     T value = null;
-    if (n != null && n.has(key)) {
+    if (isBasicClass(clazz)) {
+      if (n != null && n.has(key)) {
+        try {
+          value = MAPPER.treeToValue(n.get(key), clazz);
+        } catch (Exception e) {
+          throw errors.exception(
+              "Could not parse key [%s] as %s: %s", fullKey, clazz, e.toString());
+        }
+      }
+    } else {
+      var config = getSubConfig(key);
+      value = clazz.getDeclaredConstructor().newInstance();
       try {
-        value = MAPPER.treeToValue(n.get(key), clazz);
+        for (Field field : clazz.getDeclaredFields()) {
+          if (Modifier.isStatic(field.getModifiers())) {
+            continue;
+          }
+          field.setAccessible(true);
+          Class<?> fieldClass = field.getType();
+          Value configValue;
+          var name = field.getName();
+          if (fieldClass.isAssignableFrom(ArrayList.class)) {
+            var genericType = field.getGenericType();
+            errors.checkFatal(
+                genericType instanceof ParameterizedType,
+                "Field [%s] on class [%s] does not have a valid generic type",
+                name,
+                clazz.getName());
+            var parameterizedType = (ParameterizedType) genericType;
+            var typeArguments = parameterizedType.getActualTypeArguments();
+            errors.checkFatal(
+                typeArguments.length == 1 && typeArguments[0] instanceof Class,
+                "Field [%s] on class [%s] does not have a valid generic type",
+                name,
+                clazz.getName());
+            Class<?> listClass = (Class<?>) typeArguments[0];
+            configValue = config.asList(name, listClass);
+          } else {
+            configValue = config.as(name, fieldClass);
+          }
+          if (field.getAnnotation(Constraints.Default.class) != null) {
+            configValue.withDefault(field.get(value));
+          }
+          configValue = Constraints.addConstraints(field, configValue);
+          field.set(value, configValue.get());
+        }
       } catch (Exception e) {
-        throw errors.exception("Could not parse key [%s] as %s: %s", fullKey, clazz, e.toString());
+        if (e instanceof CollectedException exception) {
+          throw exception;
+        }
+        throw errors.exception(
+            "Could not map configuration values on " + "object of clazz [%s]: %s",
+            clazz.getName(), e.toString());
       }
     }
+
     return new ValueImpl<>(fullKey, errors, value);
+  }
+
+  private boolean isBasicClass(Class<?> clazz) {
+    return clazz.isArray()
+        || clazz.isPrimitive()
+        || String.class.isAssignableFrom(clazz)
+        || Number.class.isAssignableFrom(clazz)
+        || Boolean.class.isAssignableFrom(clazz)
+        || Duration.class.isAssignableFrom(clazz);
   }
 
   public <T> Value<T> allAs(Class<T> clazz) {
@@ -339,17 +418,19 @@ public class SqrlConfig {
         tree.isObject(),
         "Cannot set multiple properties from non-object: %s",
         value.getClass().getName());
-    ObjectNode curr = (ObjectNode) node();
+    ObjectNode curr = (ObjectNode) node(true);
     tree.fields().forEachRemaining(e -> curr.set(e.getKey(), e.getValue()));
+  }
+
+  private ObjectNode createNode() {
+    // TODO Auto-generated method stub
+    return null;
   }
 
   public void copy(SqrlConfig from) {
     errors.checkFatal(from instanceof SqrlConfig, "Cannot copy config from other impl");
-    SqrlConfig other = (SqrlConfig) from;
-    com.fasterxml.jackson.databind.JsonNode sub = other.node();
-    if (sub instanceof com.fasterxml.jackson.databind.node.ObjectNode) {
-      sub.fields().forEachRemaining(e -> setProperty(e.getKey(), e.getValue()));
-    }
+    root = from.root.deepCopy();
+    this.prefix = from.prefix;
   }
 
   public String toString() {
@@ -442,6 +523,11 @@ public class SqrlConfig {
       T mapped = property != null ? mapFunction.apply(property) : null;
       return new ValueImpl<>(fullKey, errors, mapped).withDefault(defaultValue);
     }
+
+    @Override
+    public boolean isPresent() {
+      return property != null;
+    }
   }
 
   @AllArgsConstructor
@@ -489,13 +575,14 @@ public class SqrlConfig {
     T get();
 
     default Optional<T> getOptional() {
-      var value = this.withDefault(null).get();
-      if (value == null) {
-        return Optional.empty();
+      if (isPresent()) {
+        return Optional.of(get());
       } else {
-        return Optional.of(value);
+        return Optional.empty();
       }
     }
+
+    boolean isPresent();
 
     Value<T> withDefault(T defaultValue);
 
