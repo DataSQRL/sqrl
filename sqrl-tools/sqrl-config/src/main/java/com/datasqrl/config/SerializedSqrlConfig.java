@@ -23,7 +23,7 @@ import java.io.Serializable;
 import lombok.NonNull;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
-@JsonSubTypes({@Type(value = SqrlConfigJackson.Serialized.class, name = "jackson")})
+@JsonSubTypes({@Type(value = SqrlConfig.Serialized.class, name = "jackson")})
 public interface SerializedSqrlConfig extends Serializable {
 
   public SqrlConfig deserialize(@NonNull ErrorCollector errors);

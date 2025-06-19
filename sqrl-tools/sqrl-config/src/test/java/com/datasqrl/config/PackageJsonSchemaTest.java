@@ -15,8 +15,8 @@
  */
 package com.datasqrl.config;
 
-import static com.datasqrl.config.ConfigurationTest.CONFIG_DIR;
-import static com.datasqrl.config.ConfigurationTest.testForErrors;
+import static com.datasqrl.config.SqrlConfigTest.CONFIG_DIR;
+import static com.datasqrl.config.SqrlConfigTest.testForErrors;
 import static org.assertj.core.api.Assertions.fail;
 
 import com.datasqrl.error.ErrorCollector;
