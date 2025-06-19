@@ -95,7 +95,7 @@
     <javax.validation.version>2.0.1.Final</javax.validation.version>
     <glassfish.version>3.0.0</glassfish.version>
     <reactive-streams.version>1.0.4</reactive-streams.version>
-    <testcontainers.version>1.21.1</testcontainers.version>
+    <testcontainers.version>1.21.2</testcontainers.version>
     <scram.version>2.1</scram.version>
     <protobuf.version>4.31.1</protobuf.version>
     <picocli.version>4.7.7</picocli.version>
