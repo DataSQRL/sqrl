@@ -132,10 +132,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
     <flinkrunner.version>0.7-SNAPSHOT</flinkrunner.version>
-    <flinkrunner.image.repo></flinkrunner.image.repo>
-    <!-- set by CI -->
-    <flinkrunner.image.tag></flinkrunner.image.tag>
-    <!-- set by CI -->
+    <flinkrunner.image.repo>ghcr.io</flinkrunner.image.repo>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -968,7 +965,6 @@
           </environmentVariables>
           <systemPropertyVariables>
             <flinkrunner.image.repo>${flinkrunner.image.repo}</flinkrunner.image.repo>
-            <flinkrunner.image.tag>${flinkrunner.image.tag}</flinkrunner.image.tag>
             <flinkrunner.version>${flinkrunner.version}</flinkrunner.version>
           </systemPropertyVariables>
         </configuration>

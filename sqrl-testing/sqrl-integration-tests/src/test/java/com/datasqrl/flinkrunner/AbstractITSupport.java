@@ -44,21 +44,14 @@ public class AbstractITSupport {
   @SuppressWarnings("resource")
   @BeforeEach
   void startFlink() {
-    var imgRepo = System.getProperty("flinkrunner.image.repo", "");
-    if (!imgRepo.isEmpty()) {
-      imgRepo += "/datasqrl/";
-    }
-
-    var version = System.getProperty("flinkrunner.image.tag", "latest");
-    if (version.isEmpty()) {
-      version = System.getProperty("flinkrunner.version", "latest");
-    }
-    if (!version.equals("latest")) {
-      version += "-flink-1.19";
+    var imgRepo = System.getProperty("flinkrunner.image.repo", "ghcr.io");
+    var tag = System.getProperty("flinkrunner.version", "latest");
+    if (!tag.equals("latest")) {
+      tag += "-flink-1.19";
     }
 
     flinkContainer =
-        new GenericContainer<>(DockerImageName.parse(imgRepo + "flink-sql-runner:" + version))
+        new GenericContainer<>(DockerImageName.parse(imgRepo + "/datasqrl/flink-sql-runner:" + tag))
             .withExposedPorts(8081)
             .withFileSystemBind("target/test-classes/usecases", "/flink/sql", BindMode.READ_ONLY)
             .withCommand("bash", "-c", "bin/start-cluster.sh && tail -f /dev/null");
