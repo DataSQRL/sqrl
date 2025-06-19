@@ -46,7 +46,17 @@ import lombok.NonNull;
 /** Jackson-based implementation of {@link SqrlConfig} with JSON Schema validation and merging. */
 public class SqrlConfigJackson implements SqrlConfig {
 
-  private static final ObjectMapper MAPPER = new ObjectMapper().findAndRegisterModules();
+  private static final ObjectMapper MAPPER =
+      new ObjectMapper()
+          .findAndRegisterModules()
+          .setVisibility(
+              com.fasterxml.jackson.annotation.PropertyAccessor.FIELD,
+              com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY)
+          .configure(
+              com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES,
+              false)
+          .configure(
+              com.fasterxml.jackson.databind.SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
 
   private final ErrorCollector errors;
   private final ObjectNode root;
@@ -348,7 +358,10 @@ public class SqrlConfigJackson implements SqrlConfig {
   public void copy(SqrlConfig from) {
     errors.checkFatal(from instanceof SqrlConfigJackson, "Cannot copy config from other impl");
     SqrlConfigJackson other = (SqrlConfigJackson) from;
-    other.root.fields().forEachRemaining(e -> setProperty(e.getKey(), e.getValue()));
+    com.fasterxml.jackson.databind.JsonNode sub = other.node();
+    if (sub instanceof com.fasterxml.jackson.databind.node.ObjectNode) {
+      sub.fields().forEachRemaining(e -> setProperty(e.getKey(), e.getValue()));
+    }
   }
 
   @Override
