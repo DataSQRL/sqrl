@@ -32,7 +32,6 @@ import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.EnginePhysicalPlan.DeploymentArtifact;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.PhysicalPlan.PhysicalStagePlan;
-import com.datasqrl.engine.server.ServerPhysicalPlan;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.packager.Preprocessors.PreprocessorsContext;
 import com.datasqrl.plan.MainScript;
@@ -287,10 +286,6 @@ public class Packager {
     // artifacts that the plan has
     for (PhysicalStagePlan stagePlan : plan.getStagePlans()) {
       writePlan(stagePlan.getStage().getName(), stagePlan.getPlan(), planDir);
-
-      if (stagePlan.getPlan() instanceof ServerPhysicalPlan) {
-        copyVertxConfig(planDir.resolve("vertx-config.json"));
-      }
     }
 
     if (testPlan != null) {
@@ -304,13 +299,6 @@ public class Packager {
     moveFolder(targetDir, SqrlConstants.DATA_DIR);
     copyJarFiles(buildDir.getBuildDir());
     moveFolder(targetDir, SqrlConstants.LIB_DIR);
-  }
-
-  @SneakyThrows
-  private void copyVertxConfig(Path configFile) {
-    try (var input = getClass().getResourceAsStream("/templates/server-config.json")) {
-      Files.copy(input, configFile, StandardCopyOption.REPLACE_EXISTING);
-    }
   }
 
   private void copyDataFiles(Path buildDir) throws IOException {
@@ -388,10 +376,11 @@ public class Packager {
     ObjectWriter jsonWriter =
         SqrlObjectMapper.INSTANCE.enable(SerializationFeature.INDENT_OUTPUT).writer(prettyPrinter);
 
-    DeploymentArtifact physicalPlanArtifcat = new DeploymentArtifact(".json", plan);
-    for (DeploymentArtifact artifact :
-        ListUtils.union(plan.getDeploymentArtifacts(), List.of(physicalPlanArtifcat))) {
-      Path filePath = planDir.resolve(name + artifact.getFileSuffix());
+    var artifacts =
+        ListUtils.union(
+            plan.getDeploymentArtifacts(), List.of(new DeploymentArtifact(".json", plan)));
+    for (DeploymentArtifact artifact : artifacts) {
+      Path filePath = planDir.resolve(name + artifact.getFileSuffix()).toAbsolutePath();
       if (artifact.getContent() instanceof String) {
         Files.writeString(
             filePath,

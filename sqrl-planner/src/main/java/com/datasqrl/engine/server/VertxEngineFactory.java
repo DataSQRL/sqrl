@@ -16,8 +16,12 @@
 package com.datasqrl.engine.server;
 
 import com.datasqrl.config.EngineFactory;
+import com.datasqrl.config.PackageJson;
+import com.datasqrl.config.PackageJson.EmptyEngineConfig;
 import com.datasqrl.engine.IExecutionEngine;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.auto.service.AutoService;
+import com.google.inject.Inject;
 
 @AutoService(EngineFactory.class)
 public class VertxEngineFactory extends GenericJavaServerEngineFactory {
@@ -36,8 +40,15 @@ public class VertxEngineFactory extends GenericJavaServerEngineFactory {
 
   public static class VertxEngine extends GenericJavaServerEngine {
 
-    public VertxEngine() {
-      super(ENGINE_NAME);
+    @Inject
+    public VertxEngine(PackageJson packageJson, ObjectMapper objectMapper) {
+      super(
+          ENGINE_NAME,
+          packageJson
+              .getEngines()
+              .getEngineConfig(ENGINE_NAME)
+              .orElseGet(() -> new EmptyEngineConfig(ENGINE_NAME)),
+          objectMapper);
     }
   }
 }

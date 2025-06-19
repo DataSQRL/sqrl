@@ -1,0 +1,6 @@
+MyTable := SELECT val
+           FROM (VALUES ((1)), ((2)), ((3)), ((4)), ((5)),
+            ((6)), ((7)), ((8)), ((9)), ((10))) AS t(val) ORDER BY val;
+
+/*+test*/
+MyTableTest := SELECT * FROM MyTable;
