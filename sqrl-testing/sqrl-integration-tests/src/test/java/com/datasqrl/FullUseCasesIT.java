@@ -15,7 +15,7 @@
  */
 package com.datasqrl;
 
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.fail;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import com.datasqrl.cmd.AssertStatusHook;
@@ -37,16 +37,12 @@ import com.datasqrl.util.SnapshotTest.Snapshot;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 import lombok.SneakyThrows;
-import lombok.ToString;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
@@ -63,7 +59,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 @Slf4j
 @ExtendWith(MiniClusterExtension.class)
-public class FullUseCasesIT {
+class FullUseCasesIT {
   private static final Path RESOURCES = Path.of("src/test/resources");
   private static final Path USE_CASES = RESOURCES.resolve("usecases");
 
@@ -112,7 +108,7 @@ public class FullUseCasesIT {
   boolean executed = false;
 
   @AfterEach
-  public void tearDown() throws Exception {
+  void tearDown() throws Exception {
     if (containerHook != null && executed) {
       containerHook.clear();
       executed = false;
@@ -120,7 +116,7 @@ public class FullUseCasesIT {
   }
 
   @BeforeAll
-  public static void before() {
+  static void before() {
     var engines = new EngineFactory().createAll();
 
     containerHook = engines.accept(new TestContainersForTestGoal(), null);
@@ -128,53 +124,9 @@ public class FullUseCasesIT {
   }
 
   @AfterAll
-  public static void after() {
+  static void after() {
     if (containerHook != null) {
       containerHook.teardown();
-    }
-  }
-
-  @AllArgsConstructor
-  @Getter
-  @ToString
-  public static class UseCaseTestParameter implements Comparable<UseCaseTestParameter> {
-
-    String parentDirectory;
-    String goal;
-
-    @ToString.Include(rank = 0)
-    String useCaseName;
-
-    @ToString.Include(rank = 1)
-    String sqrlFileName;
-
-    String graphqlFileName;
-    String testName;
-    String testPath;
-    String optionalParam; // Can be null
-    String packageJsonPath; // Can be null
-
-    public UseCaseTestParameter cloneWithGoal(String goal) {
-      return new UseCaseTestParameter(
-          parentDirectory,
-          goal,
-          useCaseName,
-          sqrlFileName,
-          graphqlFileName,
-          testName,
-          testPath,
-          optionalParam,
-          packageJsonPath);
-    }
-
-    private static final Comparator<UseCaseTestParameter> ORDER =
-        Comparator.comparing(UseCaseTestParameter::getSqrlFileName)
-            .thenComparing(UseCaseTestParameter::getGoal)
-            .thenComparing(UseCaseTestParameter::toString);
-
-    @Override
-    public int compareTo(UseCaseTestParameter o) {
-      return ORDER.compare(this, o);
     }
   }
 
@@ -183,7 +135,7 @@ public class FullUseCasesIT {
   static int testShardingIndex;
 
   @BeforeAll
-  public static void initTestShading() throws Exception {
+  static void initTestShading() throws Exception {
     var total = System.getenv("TEST_SHARDING_TOTAL");
     if (ObjectUtils.isEmpty(total)) {
       log.warn("No test sharding");
@@ -199,7 +151,7 @@ public class FullUseCasesIT {
   @SneakyThrows
   @ParameterizedTest
   @MethodSource("useCaseProvider")
-  public void testUseCase(UseCaseTestParameter param) {
+  void useCase(UseCaseTestParameter param) {
     if (disabledScripts.contains(new ScriptCriteria(param.getSqrlFileName(), param.getGoal()))) {
       log.warn("Skipping disabled test:" + param.getSqrlFileName());
       Assumptions.assumeThat(false)
@@ -340,7 +292,7 @@ public class FullUseCasesIT {
           }
         } catch (Exception e) {
           e.printStackTrace();
-          fail(e);
+          org.assertj.core.api.Assertions.fail("", e);
         }
       }
 
@@ -367,20 +319,20 @@ public class FullUseCasesIT {
   @ParameterizedTest
   @MethodSource("useCaseProvider")
   @Disabled
-  public void runTestNumber(UseCaseTestParameter param) {
+  void runTestNumber(UseCaseTestParameter param) {
     var testToExecute = 45;
     testNo++;
     System.out.println(testNo + ":" + param);
 
     assumeTrue(testToExecute == testNo, "Not the test marked for execution.");
 
-    testUseCase(param);
+    useCase(param);
   }
 
   @ParameterizedTest
   @MethodSource("useCaseProvider")
   @Disabled
-  public void printUseCaseNumbers(UseCaseTestParameter param) {
+  void printUseCaseNumbers(UseCaseTestParameter param) {
     testNo++;
     System.out.println(testNo + ":" + param);
   }
@@ -388,12 +340,12 @@ public class FullUseCasesIT {
   @ParameterizedTest
   @MethodSource("useCaseProvider")
   @Disabled
-  public void runTestCaseByName(UseCaseTestParameter param) {
+  void runTestCaseByName(UseCaseTestParameter param) {
     assumeTrue(
         param.sqrlFileName.equals("stdlib-math.sqrl") && param.goal.equals("test"),
         "Not the test marked for execution.");
 
-    testUseCase(param);
+    useCase(param);
   }
 
   static Set<UseCaseTestParameter> useCaseProvider() throws Exception {

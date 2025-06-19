@@ -15,7 +15,7 @@
  */
 package com.datasqrl.packager;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datasqrl.packager.util.FileHash;
 import java.io.InputStream;
@@ -25,22 +25,22 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 @Disabled
-public class FileHashTest {
+class FileHashTest {
 
   @Test
   @SneakyThrows
-  public void testFileHash() {
+  void fileHash() {
     InputStream is =
         Thread.currentThread()
             .getContextClassLoader()
             .getResourceAsStream("package-configtest.json");
-    assertEquals("6798e72912ab81cac1b0a9b713175730", FileHash.getFor(is));
+    assertThat(FileHash.getFor(is)).isEqualTo("6798e72912ab81cac1b0a9b713175730");
   }
 
   @Test
   @Disabled
   @SneakyThrows
-  public void generateHash() {
+  void generateHash() {
     System.out.println(
         FileHash.getFor(
             Path.of(

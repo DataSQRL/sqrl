@@ -15,8 +15,7 @@
  */
 package com.datasqrl;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -34,21 +33,20 @@ import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.utility.DockerImageName;
 
 // @ExtendWith(MiniClusterExtension.class)
-public class FlinkKafkaIntegrationIT {
+class FlinkKafkaIntegrationIT {
 
   private static KafkaContainer kafkaContainer;
 
   @SuppressWarnings("resource")
-  @BeforeClass
-  public static void setup() {
+  @BeforeAll
+  static void setup() {
     kafkaContainer =
         new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:7.9.2"))
             .withEnv(
@@ -59,13 +57,13 @@ public class FlinkKafkaIntegrationIT {
     kafkaContainer.start();
   }
 
-  @AfterClass
-  public static void teardown() {
+  @AfterAll
+  static void teardown() {
     kafkaContainer.stop();
   }
 
   @Test
-  public void testFlinkKafkaLargeMessage() throws Exception {
+  void flinkKafkaLargeMessage() throws Exception {
 
     // Get Kafka bootstrap servers from the test container
     var kafkaBootstrapServers = kafkaContainer.getBootstrapServers();
@@ -136,7 +134,7 @@ public class FlinkKafkaIntegrationIT {
     // Wait for the job to finish
     result.await(10, TimeUnit.SECONDS);
     var resultKind = result.getResultKind();
-    assertEquals(ResultKind.SUCCESS_WITH_CONTENT, resultKind);
+    assertThat(resultKind).isEqualTo(ResultKind.SUCCESS_WITH_CONTENT);
 
     result.print();
 
@@ -158,7 +156,7 @@ public class FlinkKafkaIntegrationIT {
     consumer.close();
 
     // Verify that the message was written
-    Assertions.assertEquals(1, recordsList.size());
+    assertThat(recordsList).hasSize(1);
     var record = recordsList.get(0);
 
     var key = record.key();
@@ -167,13 +165,13 @@ public class FlinkKafkaIntegrationIT {
     // Parse the key and value from JSON strings to objects if necessary
     // Assuming the key and value are JSON strings
     // For simplicity, let's just check the lengths
-    assertTrue(key != null);
-    assertTrue(value != null);
+    assertThat(key).isNotNull();
+    assertThat(value).isNotNull();
 
     // Optionally, parse the JSON and check the contents
     // For this example, we'll check the lengths
     // Since the 'large_message' field is 1 MB, the value should be at least 1 MB in size
-    assertTrue(value.length() >= 1048576);
+    assertThat(value).hasSizeGreaterThanOrEqualTo(1048576);
 
     System.out.println("Message successfully written and read from Kafka.");
   }

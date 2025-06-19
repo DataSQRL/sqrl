@@ -15,8 +15,7 @@
  */
 package com.datasqrl.graphql;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 import graphql.schema.DataFetcher;
@@ -29,31 +28,31 @@ import org.mockito.Mockito;
 class VertxContextTest {
 
   @Test
-  void testCaseInsensitivePropertyFetcherNonNullValue() {
+  void caseInsensitivePropertyFetcherNonNullValue() {
     var jsonObject = new JsonObject();
     jsonObject.put("TestKey", "TestValue");
     var result = testValue(jsonObject);
-    assertEquals("TestValue", result);
+    assertThat(result).isEqualTo("TestValue");
   }
 
   @Test
-  void testCaseInsensitivePropertyFetcherNullValue() {
+  void caseInsensitivePropertyFetcherNullValue() {
     // Creating a JsonObject with a key but null value
     var jsonObject = new JsonObject();
     jsonObject.put("TestKey", null);
 
     var result = testValue(jsonObject);
-    assertNull(result);
+    assertThat(result).isNull();
   }
 
   @Test
-  void testCaseInsensitivePropertyFetcherNoMatch() {
+  void caseInsensitivePropertyFetcherNoMatch() {
     // Creating a JsonObject without the matching key
     var jsonObject = new JsonObject();
     jsonObject.put("AnotherKey", "SomeValue");
 
     var result = testValue(jsonObject);
-    assertNull(result);
+    assertThat(result).isNull();
   }
 
   @SneakyThrows

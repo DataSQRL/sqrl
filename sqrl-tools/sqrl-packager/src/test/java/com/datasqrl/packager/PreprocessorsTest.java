@@ -15,7 +15,7 @@
  */
 package com.datasqrl.packager;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mockStatic;
@@ -45,7 +45,7 @@ import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class PreprocessorsTest {
+class PreprocessorsTest {
 
   @InjectMocks private Preprocessors preprocessors;
 
@@ -58,7 +58,7 @@ public class PreprocessorsTest {
 
   @SneakyThrows
   @BeforeEach
-  public void setUp() {
+  void setUp() {
     Set<Preprocessor> preprocessorSet = new HashSet<>();
     preprocessorSet.add(firstPreprocessor);
     preprocessorSet.add(secondPreprocessor);
@@ -75,7 +75,7 @@ public class PreprocessorsTest {
   }
 
   @Test
-  public void testMultiplePreprocessorsForSingleFile() {
+  void multiplePreprocessorsForSingleFile() {
     var fileToProcess = Path.of("/test/src/File.java");
     when(firstPreprocessor.getPattern()).thenReturn(Pattern.compile(".*\\.java"));
     when(secondPreprocessor.getPattern()).thenReturn(Pattern.compile("File.*"));
@@ -88,7 +88,7 @@ public class PreprocessorsTest {
 
   @SneakyThrows
   @Test
-  public void testExcludedDirectories() {
+  void excludedDirectories() {
     Path includedFile = Path.of("/test/src/File.java");
     Path excludedDirBuild = Path.of("/test/build");
     Path excludedDirFile = Path.of("/test/build/File.java");
@@ -108,7 +108,7 @@ public class PreprocessorsTest {
       mockedFiles.when(() -> Files.isRegularFile(excludedDirFile)).thenReturn(false);
 
       // Call the handle method
-      assertTrue(preprocessors.handle(context));
+      assertThat(preprocessors.handle(context)).isTrue();
 
       // Verify that preprocessors are never called for the paths in excluded directories
       verify(firstPreprocessor, never()).processFile(eq(excludedDirFile), any(), any());

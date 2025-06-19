@@ -16,9 +16,8 @@
 package com.datasqrl.cmd;
 
 import static com.datasqrl.config.ScriptConfigImpl.GRAPHQL_NORMALIZED_FILE_NAME;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrinter;
@@ -57,14 +56,14 @@ public class TestCmd {
   SnapshotTest.Snapshot snapshot;
 
   @BeforeEach
-  public void setup(TestInfo testInfo) throws IOException {
+  void setup(TestInfo testInfo) throws IOException {
     clearDir(OUTPUT_DIR);
     Files.createDirectories(OUTPUT_DIR);
     this.snapshot = SnapshotTest.Snapshot.of(getClass(), testInfo);
   }
 
   @AfterEach
-  public void clearDirs() throws IOException {
+  void clearDirs() throws IOException {
     clearDir(OUTPUT_DIR);
     clearDir(buildDir);
   }
@@ -84,23 +83,23 @@ public class TestCmd {
   }
 
   @Test
-  public void compileMutations() {
+  void compileMutations() {
     var root = Path.of("../../sqrl-examples/mutations");
     execute(root, "compile", "script.sqrl", "schema.graphqls");
   }
 
   @Test
-  public void compileSubscriptions() {
+  void compileSubscriptions() {
     execute(SUBSCRIPTION_PATH, "compile", "script.sqrl", "schema.graphqls");
   }
 
   @Test
-  public void validateTest() {
+  void validateTest() {
     execute(SUBSCRIPTION_PATH, "validate", "script.sqrl", "schema.graphqls");
   }
 
   @Test
-  public void compileSubscriptionsInvalidGraphql() {
+  void compileSubscriptionsInvalidGraphql() {
     execute(
         SUBSCRIPTION_PATH,
         ERROR_STATUS_HOOK,
@@ -111,7 +110,7 @@ public class TestCmd {
   }
 
   @Test
-  public void discoverNutshop() {
+  void discoverNutshop() {
     execute(
         Nutshop.INSTANCE.getRootPackageDirectory(),
         "discover",
@@ -125,7 +124,7 @@ public class TestCmd {
 
   @Test
   @Disabled
-  public void discoverExternal() {
+  void discoverExternal() {
     execute(
         Sensors.INSTANCE.getRootPackageDirectory(),
         "discover",
@@ -137,7 +136,7 @@ public class TestCmd {
   }
 
   @Test
-  public void compileNutshop() {
+  void compileNutshop() {
     var rootDir = Nutshop.INSTANCE.getRootPackageDirectory();
     buildDir = rootDir.resolve("build");
 
@@ -159,7 +158,7 @@ public class TestCmd {
 
   @Test
   @SneakyThrows
-  public void compileError() {
+  void compileError() {
     Path rootDir = Nutshop.INSTANCE.getRootPackageDirectory();
     buildDir = rootDir.resolve("build");
 
@@ -172,12 +171,12 @@ public class TestCmd {
             "compile",
             script.getRootPackageDirectory().relativize(script.getScriptPath()).toString(),
             "doesNotExist.graphql");
-    assertEquals(1, statusCode, "Non-zero status code expected");
+    assertThat(statusCode).as("Non-zero status code expected").isEqualTo(1);
   }
 
   @Test
   @SneakyThrows
-  public void compileNutshopWithSchema() {
+  void compileNutshopWithSchema() {
     Path rootDir = Nutshop.INSTANCE.getRootPackageDirectory();
     buildDir = rootDir.resolve("build");
 
@@ -195,37 +194,37 @@ public class TestCmd {
         "-a",
         "GraphQL");
     Path schemaFile = rootDir.resolve(GRAPHQL_NORMALIZED_FILE_NAME);
-    assertTrue(
-        Files.isRegularFile(schemaFile),
-        () -> "Schema file could not be found: %s".formatted(schemaFile));
+    assertThat(Files.isRegularFile(schemaFile))
+        .as(() -> "Schema file could not be found: %s".formatted(schemaFile))
+        .isTrue();
     Files.deleteIfExists(schemaFile);
     createSnapshot();
   }
 
   @Test
-  public void compileJsonDowncasting() {
+  void compileJsonDowncasting() {
     // Should have a raw json type for postgres and a jsontostring for kafka
     compilePlan(JSON_PATH, null, null);
   }
 
   @Test
-  public void compileFlexibleJson() {
+  void compileFlexibleJson() {
     // Should have a raw json type for postgres and a jsontostring for kafka
     compilePlan(RESOURCES.resolve("flexible-json"), "package.json", null);
   }
 
   @Test
-  public void compileAvroWOdatabase() {
+  void compileAvroWOdatabase() {
     compilePlan(AVRO_PATH, "packageWOdatabase.json", "schema.graphqls");
   }
 
   @Test
-  public void compileAvroWOserver() {
+  void compileAvroWOserver() {
     compilePlan(AVRO_PATH, "packageWOserver.json", "schema.graphqls");
   }
 
   @Test
-  public void compileAvroWserverdatabase() {
+  void compileAvroWserverdatabase() {
     compilePlan(AVRO_PATH, "packageWserverdatabase.json", "schema.graphqls");
   }
 
@@ -256,7 +255,7 @@ public class TestCmd {
   }
 
   @Test
-  public void compileRetail() {
+  void compileRetail() {
     var rootDir = Retail.INSTANCE.getRootPackageDirectory();
     buildDir = rootDir.resolve("build");
 
@@ -271,7 +270,7 @@ public class TestCmd {
   }
 
   @Test
-  public void discoverRetail() {
+  void discoverRetail() {
     execute(
         Retail.INSTANCE.getRootPackageDirectory(),
         "discover",
@@ -283,7 +282,7 @@ public class TestCmd {
 
   // SQRL #479 - Infinite loop replication
   @Test
-  public void testCreditCardInfiniteLoop() {
+  void creditCardInfiniteLoop() {
     var basePath = CC_PATH;
     execute(basePath, "compile", "creditcard.sqrl", "creditcard.graphqls");
   }
@@ -296,7 +295,7 @@ public class TestCmd {
     var rootCommand = new RootCommand(rootDir, hook);
     var exitCode = rootCommand.getCmd().execute(args) + (hook.isSuccess() ? 0 : 1);
     if (exitCode != 0) {
-      fail();
+      fail("");
     }
     return exitCode;
   }

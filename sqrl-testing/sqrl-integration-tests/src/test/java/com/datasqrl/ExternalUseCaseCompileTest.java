@@ -27,7 +27,7 @@ public class ExternalUseCaseCompileTest extends AbstractUseCaseTest {
   public static Path USECASE_DIR;
 
   @BeforeAll
-  public static void readEnvironment() {
+  static void readEnvironment() {
     var dirName = System.getenv("DATASQRL_EXTERNAL_TEST_DIR");
     USECASE_DIR = Path.of(dirName);
     System.out.println(USECASE_DIR);

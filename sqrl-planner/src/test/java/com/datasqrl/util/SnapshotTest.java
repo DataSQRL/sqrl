@@ -16,8 +16,7 @@
 package com.datasqrl.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.fail;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -144,14 +143,14 @@ public class SnapshotTest {
         the assertThat output is easier to analyze.
         */
         if (JUNIT_SNAPSHOTS != null) {
-          assertEquals(
-              expected,
-              content,
-              "Mismatched snapshots: "
-                  + fileName
-                  + " "
-                  + "file://"
-                  + path.toFile().getAbsolutePath());
+          assertThat(content)
+              .as(
+                  "Mismatched snapshots: "
+                      + fileName
+                      + " "
+                      + "file://"
+                      + path.toFile().getAbsolutePath())
+              .isEqualTo(expected);
         } else {
           assertThat(path)
               .as("WARN: The 'expected' and 'actual' values are flipped")

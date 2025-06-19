@@ -15,7 +15,7 @@
  */
 package com.datasqrl.tests;
 
-import static junit.framework.TestCase.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -30,8 +30,10 @@ public class IcebergTestExtension extends DuckdbTestExtension {
   @Override
   public void teardown() {
     // assert that there is a 'my-table' iceberg table
-    assertTrue(
-        Files.exists(Path.of("/tmp/duckdb/default_database/my-table/metadata/v1.metadata.json")));
+    assertThat(
+            Files.exists(
+                Path.of("/tmp/duckdb/default_database/my-table/metadata/v1.metadata.json")))
+        .isTrue();
     super.teardown();
   }
 }

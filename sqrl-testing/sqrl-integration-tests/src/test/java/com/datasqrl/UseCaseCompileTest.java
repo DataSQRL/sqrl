@@ -47,7 +47,7 @@ public class UseCaseCompileTest extends AbstractUseCaseTest {
   @ParameterizedTest
   @ArgumentsSource(UseCaseFiles.class)
   @Disabled
-  public void runTestCaseByName(Path script, Path graphQlFile, Path packageFile) {
+  void runTestCaseByName(Path script, Path graphQlFile, Path packageFile) {
     assumeTrue(
         script.toString().endsWith("analytics-only.sqrl"), "Not the test marked for execution.");
 

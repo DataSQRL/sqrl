@@ -63,7 +63,7 @@ class GraphQLJwtHandlerTest {
 
   @SneakyThrows
   @BeforeEach
-  public void setup(VertxTestContext testContext) {
+  void setup(VertxTestContext testContext) {
     CLUSTER.start();
     try (var admin =
         AdminClient.create(Map.of(BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers()))) {
@@ -119,12 +119,12 @@ class GraphQLJwtHandlerTest {
 
   @SneakyThrows
   @AfterEach
-  public void teardown(VertxTestContext testContext) {
+  void teardown(VertxTestContext testContext) {
     vertx.close().onSuccess((c) -> testContext.completeNow());
   }
 
   @Test
-  public void testJWTAuthentication(VertxTestContext testContext) {
+  void jwtAuthentication(VertxTestContext testContext) {
     var provider = JWTAuth.create(vertx, this.serverConfig.getAuthOptions());
 
     // Generate token
@@ -146,7 +146,7 @@ class GraphQLJwtHandlerTest {
   }
 
   @Test
-  public void testInvalidJWTAuthentication(VertxTestContext testContext) {
+  void invalidJWTAuthentication(VertxTestContext testContext) {
     sendQuery(
         "Badtoken",
         ar -> {
@@ -163,7 +163,7 @@ class GraphQLJwtHandlerTest {
   }
 
   @Test
-  public void testWebsocketBadAuth(VertxTestContext testContext) {
+  void websocketBadAuth(VertxTestContext testContext) {
     var options =
         new WebSocketConnectOptions()
             .setPort(serverConfig.getHttpServerOptions().getPort())
@@ -189,7 +189,7 @@ class GraphQLJwtHandlerTest {
 
   @Disabled
   @Test
-  public void testWebsocket(VertxTestContext testContext) {
+  void websocket(VertxTestContext testContext) {
     //    var provider = JWTAuth.create(vertx, this.serverConfig.getAuthOptions());
     //    var token = provider.generateToken(new JsonObject(),
     //        new JWTOptions().setExpiresInSeconds(60));

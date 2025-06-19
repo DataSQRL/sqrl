@@ -15,11 +15,11 @@
  */
 package com.datasqrl.config;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.fail;
 
+import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrinter;
 import java.nio.file.Files;
@@ -41,55 +41,54 @@ public class ConfigurationTest {
   private ErrorCollector errors = ErrorCollector.root();
 
   @Test
-  public void testJsonConfiguration() {
+  void jsonConfiguration() {
     //    System.out.println(CONFIG_DIR.toAbsolutePath().toString());
     testConfig1(SqrlConfigCommons.fromFiles(errors, CONFIG_FILE1));
   }
 
   public void testConfig1(SqrlConfig config) {
-    assertEquals(5, config.asInt("key2").get());
-    assertEquals(5L, config.asLong("key2").get());
-    assertEquals("value1", config.asString("key1").get());
-    assertTrue(config.asBool("key3").get());
-    assertEquals(List.of("a", "b", "c"), config.asList("list", String.class).get());
+    assertThat(config.asInt("key2").get()).isEqualTo(5);
+    assertThat(config.asLong("key2").get()).isEqualTo(5L);
+    assertThat(config.asString("key1").get()).isEqualTo("value1");
+    assertThat(config.asBool("key3").get()).isTrue();
+    assertThat(config.asList("list", String.class).get()).isEqualTo(List.of("a", "b", "c"));
     Map<String, TestClass> map = config.asMap("map", TestClass.class).get();
-    assertEquals(3, map.size());
-    assertEquals(7, map.get("e2").field1);
-    assertEquals("flip", map.get("e3").field2);
-    assertEquals(List.of("a", "b", "c"), map.get("e1").field3);
-    assertEquals(1, config.getVersion());
+    assertThat(map).hasSize(3);
+    assertThat(map.get("e2").field1).isEqualTo(7);
+    assertThat(map.get("e3").field2).isEqualTo("flip");
+    assertThat(map.get("e1").field3).isEqualTo(List.of("a", "b", "c"));
+    assertThat(config.getVersion()).isEqualTo(1);
 
     var x1 = config.as("x1", ConstraintClass.class).get();
-    assertEquals(2, x1.optInt);
-    assertFalse(x1.flag);
-    assertEquals("hello world", x1.optString);
+    assertThat(x1.optInt).isEqualTo(2);
+    assertThat(x1.flag).isFalse();
+    assertThat(x1.optString).isEqualTo("hello world");
 
     var x2 = config.as("x2", ConstraintClass.class).get();
-    assertEquals(33, x2.optInt);
+    assertThat(x2.optInt).isEqualTo(33);
 
-    for (var i = 1; i <= 2; i++) {
-      try {
-        config.as("xf" + i, ConstraintClass.class).get();
-        fail();
-      } catch (Exception e) {
-        System.out.println(e.getMessage());
-      }
-    }
+    assertThatThrownBy(() -> config.as("xf1", ConstraintClass.class).get())
+        .isInstanceOf(CollectedException.class)
+        .hasMessageContaining("is not valid");
+
+    assertThatThrownBy(() -> config.as("xf2", ConstraintClass.class).get())
+        .isInstanceOf(CollectedException.class)
+        .hasMessageContaining("Could not find key");
 
     var nested = config.as("nested", NestedClass.class).get();
-    assertEquals(5, nested.counter);
-    assertEquals(33, nested.obj.optInt);
-    assertTrue(nested.obj.flag);
+    assertThat(nested.counter).isEqualTo(5);
+    assertThat(nested.obj.optInt).isEqualTo(33);
+    assertThat(nested.obj.flag).isTrue();
   }
 
   private void testSubConf(SqrlConfig config) {
-    assertEquals("that", config.asString("delimited.config.option").get());
-    assertEquals(1, config.asInt("one").get());
-    assertEquals("piff", config.asString("token").get());
+    assertThat(config.asString("delimited.config.option").get()).isEqualTo("that");
+    assertThat(config.asInt("one").get()).isEqualTo(1);
+    assertThat(config.asString("token").get()).isEqualTo("piff");
   }
 
   @Test
-  public void testWritingFile() {
+  void writingFile() {
     var config = SqrlConfigCommons.fromFiles(errors, CONFIG_FILE1);
     var tempFile = makeTempFile();
     config.toFile(tempFile);
@@ -98,7 +97,7 @@ public class ConfigurationTest {
   }
 
   @Test
-  public void testWritingFile2() {
+  void writingFile2() {
     var config = SqrlConfigCommons.fromFiles(errors, CONFIG_FILE1);
     var tempFile = makeTempFile();
     config.getSubConfig("subConf").toFile(tempFile, true);
@@ -107,7 +106,7 @@ public class ConfigurationTest {
   }
 
   @Test
-  public void copyTest() {
+  void copyTest() {
     var other = SqrlConfigCommons.fromFiles(errors, CONFIG_FILE1).getSubConfig("subConf");
     var newConf = SqrlConfig.createCurrentVersion();
     newConf.copy(other);
@@ -115,21 +114,22 @@ public class ConfigurationTest {
   }
 
   @Test
-  public void testCreate() {
+  void create() {
     var newConf = SqrlConfig.createCurrentVersion();
     newConf.setProperty("test", true);
     var tc = new TestClass(9, "boat", List.of("x", "y", "z"));
     newConf.getSubConfig("clazz").setProperties(tc);
-    assertTrue(newConf.asBool("test").get());
-    assertEquals(tc.field3, newConf.getSubConfig("clazz").allAs(TestClass.class).get().field3);
+    assertThat(newConf.asBool("test").get()).isTrue();
+    assertThat(newConf.getSubConfig("clazz").allAs(TestClass.class).get().field3)
+        .isEqualTo(tc.field3);
     makeTempFile();
     newConf.toFile(tempFile, true);
     var config2 = SqrlConfigCommons.fromFiles(errors, tempFile);
-    assertTrue(config2.asBool("test").get());
+    assertThat(config2.asBool("test").get()).isTrue();
     var tc2 = config2.getSubConfig("clazz").allAs(TestClass.class).get();
-    assertEquals(tc.field1, tc2.field1);
-    assertEquals(tc.field2, tc2.field2);
-    assertEquals(tc.field3, tc2.field3);
+    assertThat(tc2.field1).isEqualTo(tc.field1);
+    assertThat(tc2.field2).isEqualTo(tc.field2);
+    assertThat(tc2.field3).isEqualTo(tc.field3);
   }
 
   private Path tempFile;
@@ -142,7 +142,7 @@ public class ConfigurationTest {
 
   @AfterEach
   @SneakyThrows
-  public void deleteTempFile() {
+  void deleteTempFile() {
     if (tempFile != null) {
       Files.deleteIfExists(tempFile);
       tempFile = null;
@@ -183,10 +183,10 @@ public class ConfigurationTest {
     var errors = ErrorCollector.root();
     try {
       failure.accept(errors);
-      fail();
+      fail("");
     } catch (Exception e) {
       System.out.println(ErrorPrinter.prettyPrint(errors));
-      assertTrue(errors.isFatal());
+      assertThat(errors.isFatal()).isTrue();
     }
   }
 }

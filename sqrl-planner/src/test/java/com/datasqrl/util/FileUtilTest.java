@@ -15,26 +15,25 @@
  */
 package com.datasqrl.util;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 
-public class FileUtilTest {
+class FileUtilTest {
 
   @Test
-  public void testHiddenFolder() throws IOException {
+  void hiddenFolder() throws IOException {
     var p = FileUtil.makeHiddenFolder(Path.of("./"), "datasqrl-test");
-    assertTrue(Files.isDirectory(p));
+    assertThat(Files.isDirectory(p)).isTrue();
     Files.deleteIfExists(p);
   }
 
   @Test
-  public void testFileName() {
-    assertEquals("file.txt", FileUtil.getFileName("/../../my/folder/file.txt"));
-    assertEquals("file.txt", FileUtil.getFileName("file.txt"));
+  void fileName() {
+    assertThat(FileUtil.getFileName("/../../my/folder/file.txt")).isEqualTo("file.txt");
+    assertThat(FileUtil.getFileName("file.txt")).isEqualTo("file.txt");
   }
 }

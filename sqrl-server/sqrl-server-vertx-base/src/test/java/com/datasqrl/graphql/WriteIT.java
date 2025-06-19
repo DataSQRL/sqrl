@@ -17,9 +17,7 @@ package com.datasqrl.graphql;
 
 import static org.apache.kafka.clients.producer.ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG;
 import static org.apache.kafka.clients.producer.ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -93,7 +91,7 @@ class WriteIT {
 
   @SneakyThrows
   @BeforeEach
-  public void init(Vertx vertx) {
+  void init(Vertx vertx) {
     CLUSTER.start();
 
     PgConnectOptions options = new PgConnectOptions();
@@ -176,13 +174,13 @@ class WriteIT {
   }
 
   @AfterEach
-  public void after() {
+  void after() {
     client.close();
   }
 
   @SneakyThrows
   @Test
-  public void test() {
+  void test() {
 
     KafkaConsumer<String, String> consumer = new KafkaConsumer<>(getKafkaProps());
 
@@ -214,16 +212,16 @@ class WriteIT {
     ExecutionResult executionResult = graphQL.execute(executionInput);
 
     Map<String, Object> data = executionResult.getData();
-    assertEquals(1, data.size());
-    assertEquals(
-        "{customerid=123, ts=2001-01-01T10:00:00.000-05:00}", data.get("addCustomer").toString());
+    assertThat(data).hasSize(1);
+    assertThat(data.get("addCustomer"))
+        .hasToString("{customerid=123, ts=2001-01-01T10:00:00.000-05:00}");
 
     try {
       ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(1000));
-      assertFalse(records.isEmpty());
+      assertThat(records.isEmpty()).isFalse();
 
       for (ConsumerRecord<String, String> record : records) {
-        assertTrue(record.value().startsWith("{\"customerid\":123"));
+        assertThat(record.value()).startsWith("{\"customerid\":123");
       }
     } catch (WakeupException e) {
       // Ignore exception

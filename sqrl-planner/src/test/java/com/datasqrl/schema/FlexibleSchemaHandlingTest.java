@@ -15,8 +15,7 @@
  */
 package com.datasqrl.schema;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
@@ -60,7 +59,7 @@ public class FlexibleSchemaHandlingTest {
 
   @ParameterizedTest
   @ArgumentsSource(SchemaConverterProvider.class)
-  public <S> void conversionTest(InputSchema inputSchema, SchemaConverterTestCase<S> visitorTest) {
+  <S> void conversionTest(InputSchema inputSchema, SchemaConverterTestCase<S> visitorTest) {
     var snapshot =
         SnapshotTest.Snapshot.of(
             getClass(),
@@ -76,12 +75,12 @@ public class FlexibleSchemaHandlingTest {
           var tableSchema = new FlexibleTableSchemaHolder(table);
           var dataType =
               SchemaToRelDataTypeFactory.load(tableSchema).map(tableSchema, tableName, errors);
-          assertFalse(errors.hasErrors(), errors.toString());
+          assertThat(errors.hasErrors()).as(errors.toString()).isFalse();
           if (alias.isPresent()) {
             continue;
           }
           var resultSchema = visitorTest.schemaConverter.convertSchema(dataType);
-          assertNotNull(resultSchema);
+          assertThat(resultSchema).isNotNull();
           var caseName = getCaseName(table.getName().getDisplay(), hasSourceTimestamp);
           snapshot.addContent(resultSchema.toString(), caseName);
         }
@@ -121,8 +120,8 @@ public class FlexibleSchemaHandlingTest {
             .map(td -> importer.convert(td, errors).get())
             .collect(Collectors.toList());
 
-    assertFalse(errors.isFatal(), errors.toString());
-    assertFalse(schemas.isEmpty());
+    assertThat(errors.isFatal()).as(errors.toString()).isFalse();
+    assertThat(schemas).isNotEmpty();
     return schemas;
   }
 
