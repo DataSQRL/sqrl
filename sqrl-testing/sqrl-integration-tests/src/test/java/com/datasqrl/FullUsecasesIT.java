@@ -311,7 +311,6 @@ public class FullUsecasesIT {
                   .flatMap(TestRunnerConfiguration::getDelaySec)
                   .map(Duration::getSeconds)
                   .orElse((long) -1);
-          delaySec = 600;
           int requiredCheckpoints =
               packageJson
                   .getTestConfig()
@@ -391,7 +390,7 @@ public class FullUsecasesIT {
   @MethodSource("useCaseProvider")
   @Disabled
   public void runTestCaseByName(UseCaseTestParameter param) {
-    if (param.sqrlFileName.equals("temporal-join.sqrl") && param.goal.equals("test")) {
+    if (param.sqrlFileName.equals("metrics.sqrl") && param.goal.equals("run")) {
       testUseCase(param);
     } else {
       assumeFalse(true);
