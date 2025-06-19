@@ -37,16 +37,12 @@ import com.datasqrl.util.SnapshotTest.Snapshot;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 import lombok.SneakyThrows;
-import lombok.ToString;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
@@ -131,50 +127,6 @@ class FullUseCasesIT {
   static void after() {
     if (containerHook != null) {
       containerHook.teardown();
-    }
-  }
-
-  @AllArgsConstructor
-  @Getter
-  @ToString
-  public static class UseCaseTestParameter implements Comparable<UseCaseTestParameter> {
-
-    String parentDirectory;
-    String goal;
-
-    @ToString.Include(rank = 0)
-    String useCaseName;
-
-    @ToString.Include(rank = 1)
-    String sqrlFileName;
-
-    String graphqlFileName;
-    String testName;
-    String testPath;
-    String optionalParam; // Can be null
-    String packageJsonPath; // Can be null
-
-    public UseCaseTestParameter cloneWithGoal(String goal) {
-      return new UseCaseTestParameter(
-          parentDirectory,
-          goal,
-          useCaseName,
-          sqrlFileName,
-          graphqlFileName,
-          testName,
-          testPath,
-          optionalParam,
-          packageJsonPath);
-    }
-
-    private static final Comparator<UseCaseTestParameter> ORDER =
-        Comparator.comparing(UseCaseTestParameter::getSqrlFileName)
-            .thenComparing(UseCaseTestParameter::getGoal)
-            .thenComparing(UseCaseTestParameter::toString);
-
-    @Override
-    public int compareTo(UseCaseTestParameter o) {
-      return ORDER.compare(this, o);
     }
   }
 

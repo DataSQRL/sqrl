@@ -18,7 +18,7 @@ package com.datasqrl.engines;
 import static org.assertj.core.api.Assertions.fail;
 
 import com.datasqrl.DatasqrlTest;
-import com.datasqrl.FullUseCasesIT.UseCaseTestParameter;
+import com.datasqrl.UseCaseTestParameter;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.engines.TestEngine.DuckdbTestEngine;
