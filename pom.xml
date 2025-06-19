@@ -132,8 +132,10 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
     <flinkrunner.version>0.7-SNAPSHOT</flinkrunner.version>
-    <flinkrunner.image.repo/> <!-- set by CI -->
-    <flinkrunner.image.tag></flinkrunner.image.tag> <!-- set by CI -->
+    <flinkrunner.image.repo></flinkrunner.image.repo>
+    <!-- set by CI -->
+    <flinkrunner.image.tag></flinkrunner.image.tag>
+    <!-- set by CI -->
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -827,14 +829,14 @@
 
   <repositories>
     <repository>
-      <id>github</id>
-      <url>https://maven.pkg.github.com/DataSQRL/flink-sql-runner</url>
       <releases>
         <enabled>false</enabled>
       </releases>
       <snapshots>
         <enabled>true</enabled>
       </snapshots>
+      <id>github</id>
+      <url>https://maven.pkg.github.com/DataSQRL/flink-sql-runner</url>
     </repository>
   </repositories>
 
