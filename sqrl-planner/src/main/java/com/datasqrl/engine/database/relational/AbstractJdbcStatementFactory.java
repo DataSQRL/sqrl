@@ -15,7 +15,6 @@
  */
 package com.datasqrl.engine.database.relational;
 
-
 import com.datasqrl.calcite.OperatorRuleTransformer;
 import com.datasqrl.calcite.convert.RelToSqlNode;
 import com.datasqrl.calcite.convert.SqlNodeToString;
