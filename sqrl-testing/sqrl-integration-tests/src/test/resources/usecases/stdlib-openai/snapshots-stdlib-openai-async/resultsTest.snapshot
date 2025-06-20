@@ -1,0 +1,1 @@
+{"data":{"resultsTest":[{"completions_result":"\"Crunching data like a squirrel.\"","extract_json_result_response":"{\"response\":\"Crunching data like a squirrel.\"}","extract_json_result_with_schema_response":"{\"response\":{\"myField\":\"Hello squirrels!\"}}"}]}}
