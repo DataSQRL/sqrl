@@ -475,7 +475,7 @@ public class SqrlConfig {
   }
 
   public SerializedSqrlConfig serialize() {
-    Map<String, Object> map = new TreeMap<>();
+    Map<String, Object> map = new LinkedHashMap<>();
     node().fields().forEachRemaining(e -> map.put(e.getKey(), e.getValue()));
     return new Serialized(configFilename, map, prefix);
   }
@@ -486,7 +486,7 @@ public class SqrlConfig {
     private final ErrorCollector errors;
     private final T property;
     private T defaultValue;
-    private final Map<Predicate<T>, String> validators = new TreeMap<>();
+    private final Map<Predicate<T>, String> validators = new LinkedHashMap<>();
 
     ValueImpl(String fullKey, ErrorCollector errors, T property) {
       this.fullKey = fullKey;
