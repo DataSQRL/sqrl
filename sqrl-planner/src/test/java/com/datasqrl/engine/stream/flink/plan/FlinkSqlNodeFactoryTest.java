@@ -161,7 +161,7 @@ class FlinkSqlNodeFactoryTest {
 
   @Test
   void createProperties() {
-    Map<String, Object> options = new HashMap<>();
+    Map<String, String> options = new HashMap<>();
     options.put("connector", "kafka");
     options.put("topic", "my_topic");
     options.put("format", "json");
@@ -218,7 +218,7 @@ class FlinkSqlNodeFactoryTest {
     metadataConfig.put("metadata_col2", metadataEntry2);
 
     List<String> primaryKeyConstraint = Arrays.asList("id");
-    Map<String, Object> connectorProperties = new LinkedHashMap<>();
+    Map<String, String> connectorProperties = new LinkedHashMap<>();
     connectorProperties.put("connector", "filesystem");
     connectorProperties.put("path", "/tmp/data");
     connectorProperties.put("format", "csv");

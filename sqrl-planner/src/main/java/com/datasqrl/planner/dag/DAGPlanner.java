@@ -186,10 +186,10 @@ public class DAGPlanner {
                     Function.identity(),
                     s -> MaterializationStagePlan.builder().utils(engineUtils).stage(s)));
 
-    var logStage = pipeline.getStageByType(EngineType.LOG);
-    if (logStage.isPresent()) {
+    var mutationStage = pipeline.getMutationStage();
+    if (mutationStage.isPresent()) {
       // Add mutations that were planned during DAG building
-      var planBuilder = exportPlans.get(logStage.get());
+      var planBuilder = exportPlans.get(mutationStage.get());
       dag.allNodesByClass(TableNode.class)
           .flatMap(node -> node.getMutation().stream())
           .forEach(

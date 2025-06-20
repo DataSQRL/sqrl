@@ -15,6 +15,7 @@
  */
 package com.datasqrl.planner.analyzer.cost;
 
+import com.datasqrl.engine.EngineFeature;
 import com.datasqrl.engine.database.AnalyticDatabaseEngine;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.planner.analyzer.TableAnalysis;
@@ -71,10 +72,15 @@ public record SimpleCostAnalysisModel(@NonNull Type type) implements CostModel {
             };
         break;
       case SERVER:
-        cost = cost * 2;
+        cost = cost * 4;
         break;
       case LOG:
         cost = cost * 1.5;
+        // We give logs that don't support mutations a slight benefit since they were added to
+        // support subscriptions like this
+        if (executionStage.supportsFeature(EngineFeature.MUTATIONS)) {
+          cost = cost * 1.2;
+        }
         break;
       default:
         throw new UnsupportedOperationException(

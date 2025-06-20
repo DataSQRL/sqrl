@@ -638,11 +638,14 @@ CREATE TABLE `Orders` (
   PRIMARY KEY (`orderid`) NOT ENFORCED
 ) WITH (
   'connector' = 'upsert-kafka',
-  'value.format' = 'flexible-json',
-  'key.format' = 'raw',
   'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${PROPERTIES_GROUP_ID}',
-  'topic' = 'Orders'
+  'properties.auto.offset.reset' = 'earliest',
+  'topic' = 'Orders',
+  'key.format' = 'flexible-json',
+  'value.format' = 'flexible-json',
+  'value.flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'key.flexible-json.timestamp-format.standard' = 'ISO-8601'
 );
 CREATE VIEW `CustomerTimeWindow`
 AS
@@ -707,10 +710,9 @@ CREATE TABLE `Customer_3` (
 ) WITH (
   'connector' = 'kafka',
   'format' = 'flexible-json',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${PROPERTIES_GROUP_ID}',
-  'scan.startup.mode' = 'group-offsets',
-  'properties.auto.offset.reset' = 'earliest',
   'topic' = 'Customer'
 );
 CREATE TABLE `CustomerByMultipleTime_4` (
@@ -767,10 +769,9 @@ CREATE TABLE `CustomerSubscription_7` (
 ) WITH (
   'connector' = 'kafka',
   'format' = 'flexible-json',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${PROPERTIES_GROUP_ID}',
-  'scan.startup.mode' = 'group-offsets',
-  'properties.auto.offset.reset' = 'earliest',
   'topic' = 'CustomerSubscription'
 );
 CREATE TABLE `TimeWindow_8` (
@@ -973,25 +974,25 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
     {
       "topicName" : "Customer",
       "tableName" : "Customer_3",
+      "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 1,
-      "replicasAssignments" : { },
       "config" : { }
     },
     {
       "topicName" : "CustomerSubscription",
       "tableName" : "CustomerSubscription_7",
+      "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 1,
-      "replicasAssignments" : { },
       "config" : { }
     },
     {
       "topicName" : "Orders",
       "tableName" : "Orders",
+      "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 1,
-      "replicasAssignments" : { },
       "config" : { }
     }
   ]

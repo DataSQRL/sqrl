@@ -12,30 +12,19 @@
           "url": "jdbc:postgresql://${JDBC_AUTHORITY}",
           "table-name": "${sqrl:table-name}"
         },
+        "kafka-mutation": {
+          "connector" : "kafka",
+          "format" : "flexible-json",
+          "flexible-json.timestamp-format.standard": "ISO-8601",
+          "properties.bootstrap.servers": "${PROPERTIES_BOOTSTRAP_SERVERS}",
+          "properties.group.id": "${PROPERTIES_GROUP_ID}",
+          "properties.auto.offset.reset" : "earliest",
+          "topic" : "${sqrl:original-table-name}"
+        },
         "kafka": {
           "connector" : "kafka",
           "format" : "flexible-json",
-          "properties.bootstrap.servers": "${PROPERTIES_BOOTSTRAP_SERVERS}",
-          "properties.group.id": "${PROPERTIES_GROUP_ID}",
-          "scan.startup.mode" : "group-offsets",
-          "properties.auto.offset.reset" : "earliest",
-          "topic" : "${sqrl:original-table-name}"
-        },
-        "kafka-keyed": {
-          "connector" : "kafka",
-          "value.format" : "flexible-json",
-          "key.format": "json",
-          "key.fields": "${sqrl:kafka-key}",
-          "properties.bootstrap.servers": "${PROPERTIES_BOOTSTRAP_SERVERS}",
-          "properties.group.id": "${PROPERTIES_GROUP_ID}",
-          "scan.startup.mode" : "group-offsets",
-          "properties.auto.offset.reset" : "earliest",
-          "topic" : "${sqrl:original-table-name}"
-        },
-        "kafka-upsert": {
-          "connector" : "upsert-kafka",
-          "value.format" : "flexible-json",
-          "key.format": "json",
+          "flexible-json.timestamp-format.standard": "ISO-8601",
           "properties.bootstrap.servers": "${PROPERTIES_BOOTSTRAP_SERVERS}",
           "properties.group.id": "${PROPERTIES_GROUP_ID}",
           "topic" : "${sqrl:original-table-name}"

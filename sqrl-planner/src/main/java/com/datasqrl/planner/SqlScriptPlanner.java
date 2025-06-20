@@ -793,13 +793,13 @@ public class SqlScriptPlanner {
    * @return
    */
   private MutationBuilder getLogEngineBuilder(HintsAndDocs hintsAndDocs) {
-    var logStage = pipeline.getStageByType(EngineType.LOG);
+    var logStage = pipeline.getMutationStage();
     if (logStage.isEmpty()) {
       return (t, d) -> {
         throw new StatementParserException(
             ErrorLabel.GENERIC,
             FileLocation.START,
-            "CREATE TABLE requires that a log engine is configured");
+            "CREATE TABLE requires that a log engine is configured that supports mutations");
       };
     }
     var engine = (LogEngine) logStage.get().getEngine();
@@ -808,7 +808,7 @@ public class SqlScriptPlanner {
       var mutationBuilder = MutationQuery.builder();
       mutationBuilder.stage(logStage.get());
       mutationBuilder.createTopic(
-          engine.createTable(
+          engine.createMutation(
               logStage.get(), originalTableName, tableBuilder, datatype, Optional.empty()));
       mutationBuilder.name(Name.system(originalTableName));
       mutationBuilder.documentation(hintsAndDocs.documentation);
