@@ -15,6 +15,7 @@
  */
 package com.datasqrl.engine.database.relational;
 
+
 import com.datasqrl.calcite.OperatorRuleTransformer;
 import com.datasqrl.calcite.convert.RelToSqlNode;
 import com.datasqrl.calcite.convert.SqlNodeToString;
@@ -31,6 +32,7 @@ import com.datasqrl.util.CalciteUtil;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -58,15 +60,26 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
   protected final SqlNodeToString sqlNodeToString;
 
   @Override
-  public QueryResult createQuery(Query query, boolean withView) {
+  public QueryResult createQuery(
+      Query query, boolean withView, Map<String, JdbcEngineCreateTable> tableIdMap) {
     return createQuery(
-        query.getFunction().getFullPath().getLast().getDisplay(), query.getRelNode(), withView);
+        query.getFunction().getSimpleName(),
+        query.getRelNode(),
+        withView,
+        getTableNameMapping(tableIdMap));
   }
 
-  public QueryResult createQuery(String viewName, RelNode relNode, boolean withView) {
+  protected static Map<String, String> getTableNameMapping(
+      Map<String, JdbcEngineCreateTable> tableIdMap) {
+    return tableIdMap.entrySet().stream()
+        .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getTableName()));
+  }
+
+  public QueryResult createQuery(
+      String viewName, RelNode relNode, boolean withView, Map<String, String> tableNameMapping) {
     var rewrittenRelNode = dialectCallConverter.convert(relNode);
-    var sqlNode = relToSqlConverter.convert(rewrittenRelNode);
-    var sql = sqlNodeToString.convert(sqlNode).getSql();
+    var sqlNodes = relToSqlConverter.convert(rewrittenRelNode, tableNameMapping);
+    var sql = sqlNodeToString.convert(sqlNodes).getSql();
     var qBuilder = ExecutableJdbcReadQuery.builder();
     qBuilder.sql(sql);
 
@@ -79,7 +92,7 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
                   .map(f -> new SqlIdentifier(f.getName(), SqlParserPos.ZERO))
                   .collect(Collectors.toList()),
               SqlParserPos.ZERO);
-      var viewSql = createView(viewNameIdentifier, columnList, sqlNode.getSqlNode());
+      var viewSql = createView(viewNameIdentifier, columnList, sqlNodes.getSqlNode());
       var datatype = relNode.getRowType();
       view =
           new JdbcStatement(
@@ -94,7 +107,7 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
 
   @Override
   public JdbcStatement createTable(JdbcEngineCreateTable createTable) {
-    var tableName = createTable.getTable().getTableName();
+    var tableName = createTable.getTableName();
     var ddl =
         createTable(
             tableName,

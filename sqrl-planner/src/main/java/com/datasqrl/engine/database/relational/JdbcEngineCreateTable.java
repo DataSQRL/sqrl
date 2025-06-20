@@ -28,6 +28,7 @@ import org.apache.calcite.rel.type.RelDataType;
 @Value
 public class JdbcEngineCreateTable implements EngineCreateTable {
 
+  String tableName;
   FlinkTableBuilder table;
   RelDataType datatype;
   TableAnalysis tableAnalysis;

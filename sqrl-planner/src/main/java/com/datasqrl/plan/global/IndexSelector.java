@@ -386,10 +386,6 @@ public class IndexSelector {
     int paramIndex = PARAM_OFFSET;
     SqrlRexUtil rexUtil = new SqrlRexUtil(framework.getTypeFactory());
 
-    private TableAnalysis getTable(String tableId) {
-      return tableMap.get(tableId);
-    }
-
     @Override
     public void visit(RelNode node, int ordinal, RelNode parent) {
       if (node instanceof Join join) {

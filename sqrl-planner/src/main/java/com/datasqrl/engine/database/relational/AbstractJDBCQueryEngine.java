@@ -21,6 +21,7 @@ import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.EngineType;
 import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.engine.database.QueryEngine;
+import com.datasqrl.planner.tables.FlinkTableBuilder;
 import lombok.NonNull;
 
 /** Abstract implementation of a relational {@link QueryEngine}. */
@@ -29,5 +30,10 @@ public abstract class AbstractJDBCQueryEngine extends AbstractJDBCEngine impleme
   public AbstractJDBCQueryEngine(
       String name, @NonNull EngineConfig engineConfig, ConnectorFactoryFactory connectorFactory) {
     super(name, EngineType.QUERY, STANDARD_QUERY, engineConfig, connectorFactory);
+  }
+
+  @Override
+  public String getConnectorTableName(FlinkTableBuilder tableBuilder) {
+    throw new UnsupportedOperationException();
   }
 }

@@ -13,6 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.plan.rules;
+package com.datasqrl.planner.analyzer.cost;
 
-public interface ComputeCost extends Comparable<ComputeCost> {}
+import com.google.common.base.Preconditions;
+import lombok.NonNull;
+
+public interface ComputeCost extends Comparable<ComputeCost> {
+
+  record Simple(double cost) implements ComputeCost {
+    @Override
+    public int compareTo(@NonNull ComputeCost o) {
+      Preconditions.checkArgument(o instanceof Simple);
+      return Double.compare(cost, ((Simple) o).cost);
+    }
+  }
+}

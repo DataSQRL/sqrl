@@ -65,6 +65,8 @@ import org.apache.flink.sql.parser.ddl.SqlTableColumn;
 @Slf4j
 public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
 
+  public static final String CONNECTOR_TOPIC_KEY = "topic";
+
   @Getter private final EngineConfig engineConfig;
   private final ConnectorConf streamConnectorConf;
   private final ConnectorConf upsertConnectorConf;
@@ -127,7 +129,8 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
       }
     }
     tableBuilder.setConnectorOptions(conf.toMapWithSubstitution(ctxBuilder.build()));
-    return new NewTopic(tableBuilder.getTopicName(), tableBuilder.getTableName());
+    return new NewTopic(
+        tableBuilder.getConnectorOptions().get(CONNECTOR_TOPIC_KEY), tableBuilder.getTableName());
   }
 
   @Override

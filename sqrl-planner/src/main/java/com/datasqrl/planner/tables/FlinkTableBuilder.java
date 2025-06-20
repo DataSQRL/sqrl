@@ -203,8 +203,4 @@ public class FlinkTableBuilder {
         table.getPartitionKeyList(),
         table.getWatermark().orElse(null));
   }
-
-  public String getTopicName() {
-    return getConnectorOptions().get("topic");
-  }
 }

@@ -94,6 +94,8 @@ import org.apache.flink.table.planner.plan.schema.TimeIndicatorRelDataType;
 @AllArgsConstructor(onConstructor_ = @Inject)
 public class DAGPlanner {
 
+  public static final String UNIQUE_TABLE_APPENDIX = "_"; // TODO: add $ to ensure uniqueness?
+
   private static final FunctionDefinition HASH_COLUMNS = new hash_columns();
 
   private final ExecutionPipeline pipeline;
@@ -199,14 +201,9 @@ public class DAGPlanner {
 
     Map<InputTableKey, ObjectIdentifier> streamTableMapping = new HashMap<>();
     final var exportTableCounter = new AtomicInteger(0);
-    final var outputConfig = packageJson.getCompilerConfig().getOutput();
-    Function<String, String> externalNameFct =
+    Function<String, String> uniqueNameFct =
         name -> {
-          var result = name + outputConfig.getTableSuffix();
-          if (outputConfig.isAddUid()) {
-            result += "_" + exportTableCounter.incrementAndGet();
-          }
-          return result;
+          return name + UNIQUE_TABLE_APPENDIX + exportTableCounter.incrementAndGet();
         };
     var planBuilder = PhysicalPlan.builder();
     // move assembler logic here
@@ -271,7 +268,7 @@ public class DAGPlanner {
                   }
                   var relBuilder = sqrlEnv.getTableScan(sinkNodeTable.getObjectIdentifier());
                   var tblBuilder = new FlinkTableBuilder();
-                  tblBuilder.setName(externalNameFct.apply(originalTableName));
+                  tblBuilder.setName(uniqueNameFct.apply(originalTableName));
                   // #1st: determine primary key and partition key (if present)
                   var pk = deterinePrimaryKey(originalNodeTable, relBuilder, sqrlEnv, exportStage);
                   if (pk.isDefined()) {

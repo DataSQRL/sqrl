@@ -24,7 +24,7 @@
         "kafka-keyed": {
           "connector" : "kafka",
           "value.format" : "flexible-json",
-          "key.format": "raw",
+          "key.format": "json",
           "key.fields": "${sqrl:kafka-key}",
           "properties.bootstrap.servers": "${PROPERTIES_BOOTSTRAP_SERVERS}",
           "properties.group.id": "${PROPERTIES_GROUP_ID}",
@@ -35,7 +35,7 @@
         "kafka-upsert": {
           "connector" : "upsert-kafka",
           "value.format" : "flexible-json",
-          "key.format": "raw",
+          "key.format": "json",
           "properties.bootstrap.servers": "${PROPERTIES_BOOTSTRAP_SERVERS}",
           "properties.group.id": "${PROPERTIES_GROUP_ID}",
           "topic" : "${sqrl:original-table-name}"

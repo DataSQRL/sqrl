@@ -23,6 +23,7 @@ import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.engine.database.DatabaseEngine;
 import com.datasqrl.engine.database.QueryEngine;
 import com.datasqrl.plan.global.IndexSelectorConfig;
+import com.datasqrl.planner.tables.FlinkTableBuilder;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
@@ -30,6 +31,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public abstract class AbstractJDBCDatabaseEngine extends AbstractJDBCEngine
     implements DatabaseEngine {
+
+  public static final String CONNECTOR_TABLENAME_KEY = "table-name";
 
   public AbstractJDBCDatabaseEngine(
       String name, @NonNull EngineConfig engineConfig, ConnectorFactoryFactory connectorFactory) {
@@ -44,6 +47,11 @@ public abstract class AbstractJDBCDatabaseEngine extends AbstractJDBCEngine
   @Override
   public void addQueryEngine(QueryEngine queryEngine) {
     throw new UnsupportedOperationException("JDBC database engines do not support query engines");
+  }
+
+  @Override
+  public String getConnectorTableName(FlinkTableBuilder tableBuilder) {
+    return tableBuilder.getConnectorOptions().get(CONNECTOR_TABLENAME_KEY);
   }
 
   //  @Override

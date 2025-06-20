@@ -96,8 +96,17 @@ public class SqrlTableFunction implements TableFunction, TableOrFunctionAnalysis
     return !parameters.isEmpty();
   }
 
+  /**
+   * Used to register function in catalog. Requires that it's simple
+   *
+   * @return
+   */
   public String getFunctionCatalogName() {
     Preconditions.checkArgument(fullPath.size() == 1);
+    return getSimpleName();
+  }
+
+  public String getSimpleName() {
     return fullPath.getLast().getDisplay();
   }
 

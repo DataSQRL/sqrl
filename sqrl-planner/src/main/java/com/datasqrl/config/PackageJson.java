@@ -16,6 +16,7 @@
 package com.datasqrl.config;
 
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.planner.analyzer.cost.CostModel;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
@@ -51,9 +52,9 @@ public interface PackageJson {
 
     boolean compilePlan();
 
-    ExplainConfig getExplain();
+    CostModel getCostModel();
 
-    OutputConfig getOutput();
+    ExplainConfig getExplain();
 
     Optional<String> getSnapshotPath();
 
@@ -64,13 +65,6 @@ public interface PackageJson {
     String getLogger();
 
     boolean isExtendedScalarTypes();
-  }
-
-  interface OutputConfig {
-
-    boolean isAddUid();
-
-    String getTableSuffix();
   }
 
   interface ExplainConfig {

@@ -17,28 +17,34 @@ package com.datasqrl.planner.analyzer.cost;
 
 import com.datasqrl.engine.database.AnalyticDatabaseEngine;
 import com.datasqrl.engine.pipeline.ExecutionStage;
-import com.datasqrl.plan.rules.ComputeCost;
 import com.datasqrl.planner.analyzer.TableAnalysis;
-import com.google.common.base.Preconditions;
+import com.datasqrl.planner.analyzer.cost.ComputeCost.Simple;
 import java.util.List;
+import java.util.Optional;
 import lombok.NonNull;
-import lombok.Value;
 
-@Value
-public class SimpleCostAnalysisModel implements ComputeCost {
+public record SimpleCostAnalysisModel(@NonNull Type type) implements CostModel {
 
-  private final double cost;
+  public enum Type {
+    DEFAULT,
+    READ,
+    WRITE;
 
-  private SimpleCostAnalysisModel(double cost) {
-    this.cost = cost;
+    public static Optional<Type> fromString(String value) {
+      for (Type type : Type.values()) {
+        if (type.name().equalsIgnoreCase(value)) {
+          return Optional.of(type);
+        }
+      }
+      return Optional.empty();
+    }
   }
 
-  public static SimpleCostAnalysisModel ofSourceSink() {
-    return new SimpleCostAnalysisModel(0.0);
+  public Simple getSourceSinkCost() {
+    return new Simple(0.0);
   }
 
-  public static SimpleCostAnalysisModel of(
-      ExecutionStage executionStage, TableAnalysis tableAnalysis) {
+  public Simple getCost(ExecutionStage executionStage, TableAnalysis tableAnalysis) {
     var cost = 1.0;
     switch (executionStage.getEngine().getType()) {
       case DATABASE:
@@ -52,11 +58,17 @@ public class SimpleCostAnalysisModel implements ComputeCost {
         }
         break;
       case STREAMS:
-        // We assume that pre-computing is generally cheaper (by factor of 10) unless (standard)
-        // joins are
-        // involved which can lead to combinatorial explosion. So, we primarily cost the joins
-        cost = joinCost(tableAnalysis.getCosts());
-        cost = cost / 10;
+        cost =
+            switch (type) {
+                // We assume that pre-computing is generally cheaper (by factor of 10) unless
+                // (standard)
+                // joins are
+                // involved which can lead to combinatorial explosion. So, we primarily cost the
+                // joins
+              case DEFAULT -> joinCost(tableAnalysis.getCosts()) / 10;
+              case WRITE -> cost / 10; // Make it always cheaper than database
+              case READ -> cost * 2; // Make it more expensive than database to favor reads
+            };
         break;
       case SERVER:
         cost = cost * 2;
@@ -68,13 +80,7 @@ public class SimpleCostAnalysisModel implements ComputeCost {
         throw new UnsupportedOperationException(
             "Unsupported engine type: " + executionStage.getEngine().getType());
     }
-    return new SimpleCostAnalysisModel(cost);
-  }
-
-  @Override
-  public int compareTo(@NonNull ComputeCost o) {
-    Preconditions.checkArgument(o instanceof SimpleCostAnalysisModel);
-    return Double.compare(cost, ((SimpleCostAnalysisModel) o).cost);
+    return new Simple(cost);
   }
 
   public static double joinCost(List<CostAnalysis> costs) {

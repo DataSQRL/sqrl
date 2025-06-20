@@ -115,7 +115,7 @@ CREATE TABLE `_Sensors` (
   'topic' = 'kafka-upsert-_Sensors',
   'connector' = 'upsert-kafka',
   'value.format' = 'flexible-json',
-  'key.format' = 'raw',
+  'key.format' = 'json',
   'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${PROPERTIES_GROUP_ID}'
 );

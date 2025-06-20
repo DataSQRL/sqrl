@@ -1,0 +1,14 @@
+CREATE TABLE SensorReading (
+   sensorid INT NOT NULL,
+   temperature FLOAT NOT NULL,
+   event_time TIMESTAMP_LTZ(3) NOT NULL,
+   PRIMARY KEY (sensorid, event_time) NOT ENFORCED
+);
+
+SensorReadingById(sensorid INT NOT NULL):= SELECT * FROM SensorReading
+                    WHERE sensorid = :sensorid ORDER BY event_time DESC;
+
+/*+query_by_any(sensorid) */
+SensorAggregate := SELECT sensorid, MAX(temperature) AS maxTemp
+                   FROM SensorReading
+                   GROUP BY sensorid ORDER BY sensorid ASC;

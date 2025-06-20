@@ -16,12 +16,14 @@
 package com.datasqrl.calcite.convert;
 
 import com.datasqrl.calcite.Dialect;
+import java.util.Map;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.sql.SqlNode;
 
 /** Converts a RelNode to a SqlNode for a given dialect */
 public interface RelToSqlNode {
-  SqlNodes convert(RelNode relNode);
+
+  SqlNodes convert(RelNode relNode, Map<String, String> tableNameMapping);
 
   Dialect getDialect();
 

@@ -45,8 +45,11 @@ public class JdbcPhysicalPlan implements DatabasePhysicalPlan {
    */
   @JsonIgnore @Singular List<RelNode> queries;
 
-  /** A mapping of CREATE TABLE from their materialized name to the original TableAnalysis */
-  @JsonIgnore Map<String, TableAnalysis> tableMap;
+  /**
+   * The original {@link JdbcEngineCreateTable} definitions so we can extract the mappings from
+   * table names and ids
+   */
+  @JsonIgnore List<JdbcEngineCreateTable> createTables;
 
   public List<JdbcStatement> getStatementsForType(JdbcStatement.Type type) {
     return statements.stream().filter(s -> s.getType() == type).collect(Collectors.toList());
@@ -56,6 +59,16 @@ public class JdbcPhysicalPlan implements DatabasePhysicalPlan {
     return DeploymentArtifact.toSqlString(statements.stream().map(JdbcStatement::getSql));
   }
 
+  @JsonIgnore
+  public Map<String, TableAnalysis> getTableId2AnalysisMap() {
+    return createTables.stream()
+        .collect(
+            Collectors.toMap(
+                createTable -> createTable.getTable().getTableName(),
+                JdbcEngineCreateTable::getTableAnalysis));
+  }
+
+  @JsonIgnore
   @Override
   public List<DeploymentArtifact> getDeploymentArtifacts() {
     return List.of(

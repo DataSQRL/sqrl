@@ -31,8 +31,10 @@ import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.dag.plan.MaterializationStagePlan;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NonNull;
@@ -82,8 +84,11 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
     tableBuilder.setConnectorOptions(
         connect.toMapWithSubstitution(
             Context.builder().tableName(tableName).origTableName(originalTableName).build()));
-    return new JdbcEngineCreateTable(tableBuilder, relDataType, tableAnalysis.get());
+    return new JdbcEngineCreateTable(
+        getConnectorTableName(tableBuilder), tableBuilder, relDataType, tableAnalysis.get());
   }
+
+  public abstract String getConnectorTableName(FlinkTableBuilder tableBuilder);
 
   public abstract JdbcStatementFactory getStatementFactory();
 
@@ -94,27 +99,31 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
     // Create extensions
     planBuilder.statements(stmtFactory.extractExtensions(stagePlan.getQueries()));
     // Create tables
-    stagePlan.getTables().stream()
-        .map(JdbcEngineCreateTable.class::cast)
+    Set<String> tableNames = new HashSet<>();
+    var jdbcCreateTables =
+        stagePlan.getTables().stream().map(JdbcEngineCreateTable.class::cast).toList();
+    jdbcCreateTables.stream()
         .map(stmtFactory::createTable)
-        .forEach(planBuilder::statement);
-    Map<String, TableAnalysis> tableMap =
-        stagePlan.getTables().stream()
-            .map(JdbcEngineCreateTable.class::cast)
-            .collect(
-                Collectors.toMap(
-                    createTable -> createTable.getTable().getTableName(),
-                    JdbcEngineCreateTable::getTableAnalysis));
-    planBuilder.tableMap(tableMap);
+        .forEach(
+            stmt -> {
+              planBuilder.statement(stmt);
+              tableNames.add(stmt.getName());
+            });
+
+    planBuilder.createTables(jdbcCreateTables);
     // Create executable queries & views
     if (stmtFactory.supportsQueries()) {
+      Map<String, JdbcEngineCreateTable> tableIdMap =
+          jdbcCreateTables.stream()
+              .collect(
+                  Collectors.toMap(createTable -> createTable.getTable().getTableName(), f -> f));
       stagePlan
           .getQueries()
           .forEach(
               query -> {
                 planBuilder.query(query.getRelNode());
                 var function = query.getFunction();
-                var result = stmtFactory.createQuery(query, !function.hasParameters());
+                var result = stmtFactory.createQuery(query, !function.hasParameters(), tableIdMap);
                 if (result.getExecQueryBuilder() != null && function.getExecutableQuery() == null) {
                   function.setExecutableQuery(
                       result
@@ -123,7 +132,8 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
                           .stage(stagePlan.getStage())
                           .build());
                 }
-                if (result.getView() != null) {
+                // Only add views that don't clash with tables
+                if (result.getView() != null && !tableNames.contains(result.getView().getName())) {
                   planBuilder.statement(result.getView());
                 }
               });
