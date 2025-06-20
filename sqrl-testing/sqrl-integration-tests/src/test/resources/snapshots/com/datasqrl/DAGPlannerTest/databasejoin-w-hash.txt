@@ -105,11 +105,11 @@ CREATE TABLE `_OrderEntries_1` (
   PRIMARY KEY (`__pk_hash`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = '_OrderEntries_1',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = '_OrderEntries_1'
+  'username' = '${JDBC_USERNAME}'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`_OrderEntries_1`

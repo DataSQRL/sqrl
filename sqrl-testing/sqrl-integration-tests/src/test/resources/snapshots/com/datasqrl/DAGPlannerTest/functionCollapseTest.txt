@@ -106,11 +106,11 @@ CREATE TABLE `Customer_1` (
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'Customer_1',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'Customer_1'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `CustomerHighCount_2` (
   `window_start` TIMESTAMP(3) NOT NULL,
@@ -119,11 +119,11 @@ CREATE TABLE `CustomerHighCount_2` (
   PRIMARY KEY (`window_start`, `window_end`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'CustomerHighCount_2',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'CustomerHighCount_2'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `CustomerTimeWindow_3` (
   `window_start` TIMESTAMP(3) NOT NULL,
@@ -132,11 +132,11 @@ CREATE TABLE `CustomerTimeWindow_3` (
   PRIMARY KEY (`window_start`, `window_end`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'CustomerTimeWindow_3',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'CustomerTimeWindow_3'
+  'username' = '${JDBC_USERNAME}'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Customer_1`

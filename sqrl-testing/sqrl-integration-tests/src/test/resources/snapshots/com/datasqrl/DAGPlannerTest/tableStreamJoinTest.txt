@@ -238,11 +238,11 @@ CREATE TABLE `Customer_1` (
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'Customer_1',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'Customer_1'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `Orders_2` (
   `id` BIGINT NOT NULL,
@@ -252,11 +252,11 @@ CREATE TABLE `Orders_2` (
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'Orders_2',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'Orders_2'
+  'username' = '${JDBC_USERNAME}'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Customer_1`

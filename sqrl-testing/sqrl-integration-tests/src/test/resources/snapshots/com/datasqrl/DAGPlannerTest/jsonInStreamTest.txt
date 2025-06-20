@@ -294,11 +294,11 @@ CREATE TABLE `Customer_1` (
   PRIMARY KEY (`customerid`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'Customer_1',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'Customer_1'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `CustomerStream_2` (
   `customerid` BIGINT NOT NULL,
@@ -309,11 +309,11 @@ CREATE TABLE `CustomerStream_2` (
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'CustomerStream_2',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'CustomerStream_2'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `ObjComplex_3` (
   `customerid` BIGINT NOT NULL,
@@ -321,11 +321,11 @@ CREATE TABLE `ObjComplex_3` (
   PRIMARY KEY (`customerid`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'ObjComplex_3',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'ObjComplex_3'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `jsonArrayAggTable_4` (
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -333,11 +333,11 @@ CREATE TABLE `jsonArrayAggTable_4` (
   PRIMARY KEY (`name`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'jsonArrayAggTable_4',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'jsonArrayAggTable_4'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `jsonArrayTable_5` (
   `customerid` BIGINT NOT NULL,
@@ -345,11 +345,11 @@ CREATE TABLE `jsonArrayTable_5` (
   PRIMARY KEY (`customerid`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'jsonArrayTable_5',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'jsonArrayTable_5'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `jsonConcatTable_6` (
   `customerid` BIGINT NOT NULL,
@@ -357,11 +357,11 @@ CREATE TABLE `jsonConcatTable_6` (
   PRIMARY KEY (`customerid`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'jsonConcatTable_6',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'jsonConcatTable_6'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `jsonExistsTable_7` (
   `customerid` BIGINT NOT NULL,
@@ -369,11 +369,11 @@ CREATE TABLE `jsonExistsTable_7` (
   PRIMARY KEY (`customerid`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'jsonExistsTable_7',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'jsonExistsTable_7'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `jsonExtractTable_8` (
   `customerid` BIGINT NOT NULL,
@@ -381,11 +381,11 @@ CREATE TABLE `jsonExtractTable_8` (
   PRIMARY KEY (`customerid`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'jsonExtractTable_8',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'jsonExtractTable_8'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `jsonObjectAggTable_9` (
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -393,11 +393,11 @@ CREATE TABLE `jsonObjectAggTable_9` (
   PRIMARY KEY (`name`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'jsonObjectAggTable_9',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'jsonObjectAggTable_9'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `jsonQueryTable_10` (
   `customerid` BIGINT NOT NULL,
@@ -405,11 +405,11 @@ CREATE TABLE `jsonQueryTable_10` (
   PRIMARY KEY (`customerid`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'jsonQueryTable_10',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'jsonQueryTable_10'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `jsonToStringTable_11` (
   `customerid` BIGINT NOT NULL,
@@ -417,11 +417,11 @@ CREATE TABLE `jsonToStringTable_11` (
   PRIMARY KEY (`customerid`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'jsonToStringTable_11',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'jsonToStringTable_11'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `toJsonTable_12` (
   `customerid` BIGINT NOT NULL,
@@ -429,11 +429,11 @@ CREATE TABLE `toJsonTable_12` (
   PRIMARY KEY (`customerid`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'toJsonTable_12',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'toJsonTable_12'
+  'username' = '${JDBC_USERNAME}'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Customer_1`

@@ -163,10 +163,10 @@ CREATE TABLE `UserTokens` (
 ) WITH (
   'connector' = 'kafka',
   'format' = 'flexible-json',
+  'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${PROPERTIES_GROUP_ID}',
   'scan.startup.mode' = 'group-offsets',
-  'properties.auto.offset.reset' = 'earliest',
   'topic' = 'UserTokens'
 );
 CREATE VIEW `TotalUserTokens`
@@ -222,11 +222,11 @@ CREATE TABLE `TotalOrgTokens_1` (
   PRIMARY KEY (`orgid`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'TotalOrgTokens_1',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'TotalOrgTokens_1'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `TotalUserTokens_2` (
   `userid` BIGINT NOT NULL,
@@ -235,11 +235,11 @@ CREATE TABLE `TotalUserTokens_2` (
   PRIMARY KEY (`userid`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'TotalUserTokens_2',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'TotalUserTokens_2'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `UsageAlert_3` (
   `userid` BIGINT NOT NULL,
@@ -248,10 +248,10 @@ CREATE TABLE `UsageAlert_3` (
 ) WITH (
   'connector' = 'kafka',
   'format' = 'flexible-json',
+  'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${PROPERTIES_GROUP_ID}',
   'scan.startup.mode' = 'group-offsets',
-  'properties.auto.offset.reset' = 'earliest',
   'topic' = 'UsageAlert'
 );
 EXECUTE STATEMENT SET BEGIN

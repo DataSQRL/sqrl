@@ -197,11 +197,11 @@ CREATE TABLE `Customer_1` (
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'Customer_1',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'Customer_1'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `CustomerCumulate_2` (
   `window_start` TIMESTAMP(3) NOT NULL,
@@ -210,11 +210,11 @@ CREATE TABLE `CustomerCumulate_2` (
   PRIMARY KEY (`window_start`, `window_end`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'CustomerCumulate_2',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'CustomerCumulate_2'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `CustomerHop_3` (
   `window_start` TIMESTAMP(3) NOT NULL,
@@ -224,11 +224,11 @@ CREATE TABLE `CustomerHop_3` (
   PRIMARY KEY (`window_start`, `window_end`, `window_time`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'CustomerHop_3',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'CustomerHop_3'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `CustomerSession_4` (
   `customerid` BIGINT NOT NULL,
@@ -239,11 +239,11 @@ CREATE TABLE `CustomerSession_4` (
   PRIMARY KEY (`window_start`, `window_end`, `window_time`, `customerid`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'CustomerSession_4',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'CustomerSession_4'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `CustomerTumble_5` (
   `window_start` TIMESTAMP(3) NOT NULL,
@@ -252,11 +252,11 @@ CREATE TABLE `CustomerTumble_5` (
   PRIMARY KEY (`window_start`, `window_end`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'CustomerTumble_5',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'CustomerTumble_5'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `StreamJoin_6` (
   `window_start` TIMESTAMP(3) NOT NULL,
@@ -271,11 +271,11 @@ CREATE TABLE `StreamJoin_6` (
   PRIMARY KEY (`window_start`, `window_end`, `window_time`, `window_start0`, `window_end0`, `customerid`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'StreamJoin_6',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'StreamJoin_6'
+  'username' = '${JDBC_USERNAME}'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Customer_1`

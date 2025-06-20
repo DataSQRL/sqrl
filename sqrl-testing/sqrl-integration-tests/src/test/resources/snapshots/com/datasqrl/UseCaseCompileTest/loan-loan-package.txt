@@ -375,10 +375,10 @@ CREATE TABLE `ApplicationUpdates` (
 ) WITH (
   'connector' = 'kafka',
   'format' = 'flexible-json',
+  'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${PROPERTIES_GROUP_ID}',
   'scan.startup.mode' = 'group-offsets',
-  'properties.auto.offset.reset' = 'earliest',
   'topic' = 'ApplicationUpdates'
 );
 CREATE VIEW `Customers`
@@ -421,10 +421,10 @@ CREATE TABLE `AddChatMessage` (
 ) WITH (
   'connector' = 'kafka',
   'format' = 'flexible-json',
+  'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${PROPERTIES_GROUP_ID}',
   'scan.startup.mode' = 'group-offsets',
-  'properties.auto.offset.reset' = 'earliest',
   'topic' = 'AddChatMessage'
 );
 CREATE VIEW `CustomerChatMessage`
@@ -451,11 +451,11 @@ CREATE TABLE `AddChatMessage_1` (
   PRIMARY KEY (`_uuid`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'AddChatMessage_1',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'AddChatMessage_1'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `ApplicationAlert_2` (
   `_uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -468,11 +468,11 @@ CREATE TABLE `ApplicationAlert_2` (
   PRIMARY KEY (`_uuid`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'ApplicationAlert_2',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'ApplicationAlert_2'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `ApplicationStatus_3` (
   `_uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -489,11 +489,11 @@ CREATE TABLE `ApplicationStatus_3` (
   PRIMARY KEY (`_uuid`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'ApplicationStatus_3',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'ApplicationStatus_3'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `ApplicationUpdates_4` (
   `_uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -504,11 +504,11 @@ CREATE TABLE `ApplicationUpdates_4` (
   PRIMARY KEY (`_uuid`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'ApplicationUpdates_4',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'ApplicationUpdates_4'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `Applications_5` (
   `id` BIGINT NOT NULL,
@@ -521,11 +521,11 @@ CREATE TABLE `Applications_5` (
   PRIMARY KEY (`id`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'Applications_5',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'Applications_5'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `ApplicationsStream_6` (
   `id` BIGINT NOT NULL,
@@ -538,11 +538,11 @@ CREATE TABLE `ApplicationsStream_6` (
   PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'ApplicationsStream_6',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'ApplicationsStream_6'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `CustomerChatMessage_7` (
   `role` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -554,11 +554,11 @@ CREATE TABLE `CustomerChatMessage_7` (
   PRIMARY KEY (`uuid`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'CustomerChatMessage_7',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'CustomerChatMessage_7'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `Customers_8` (
   `id` BIGINT NOT NULL,
@@ -572,11 +572,11 @@ CREATE TABLE `Customers_8` (
   PRIMARY KEY (`id`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'Customers_8',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'Customers_8'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `CustomersStream_9` (
   `id` BIGINT NOT NULL,
@@ -590,11 +590,11 @@ CREATE TABLE `CustomersStream_9` (
   PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'CustomersStream_9',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'CustomersStream_9'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `LoanTypes_10` (
   `id` BIGINT NOT NULL,
@@ -609,11 +609,11 @@ CREATE TABLE `LoanTypes_10` (
   PRIMARY KEY (`id`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'LoanTypes_10',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'LoanTypes_10'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `LoanTypesStream_11` (
   `id` BIGINT NOT NULL,
@@ -628,11 +628,11 @@ CREATE TABLE `LoanTypesStream_11` (
   PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'LoanTypesStream_11',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'LoanTypesStream_11'
+  'username' = '${JDBC_USERNAME}'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`AddChatMessage_1`

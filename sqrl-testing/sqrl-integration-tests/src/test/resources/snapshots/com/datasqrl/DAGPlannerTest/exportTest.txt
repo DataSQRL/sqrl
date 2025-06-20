@@ -158,11 +158,11 @@ CREATE TABLE `Customer_1` (
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'Customer_1',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'Customer_1'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `DistinctStream_2` (
   `customerid` BIGINT NOT NULL,
@@ -172,12 +172,12 @@ CREATE TABLE `DistinctStream_2` (
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`customerid`) NOT ENFORCED
 ) WITH (
-  'topic' = 'kafka-upsert-DistinctStream',
   'connector' = 'upsert-kafka',
-  'value.format' = 'flexible-json',
   'key.format' = 'raw',
   'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
-  'properties.group.id' = '${PROPERTIES_GROUP_ID}'
+  'properties.group.id' = '${PROPERTIES_GROUP_ID}',
+  'topic' = 'kafka-upsert-DistinctStream',
+  'value.format' = 'flexible-json'
 );
 CREATE TABLE `DistinctCustomer_3` (
   `customerid` BIGINT NOT NULL,
@@ -188,23 +188,23 @@ CREATE TABLE `DistinctCustomer_3` (
   PRIMARY KEY (`customerid`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'DistinctCustomer_3',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'DistinctCustomer_3'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `JoinStream_4` (
   `id` BIGINT NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL
 ) WITH (
-  'topic' = 'kafka-JoinStream',
   'connector' = 'kafka',
   'format' = 'flexible-json',
+  'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${PROPERTIES_GROUP_ID}',
   'scan.startup.mode' = 'group-offsets',
-  'properties.auto.offset.reset' = 'earliest'
+  'topic' = 'kafka-JoinStream'
 );
 CREATE TABLE `JoinStream_5` (
   `id` BIGINT NOT NULL,
@@ -213,11 +213,11 @@ CREATE TABLE `JoinStream_5` (
   PRIMARY KEY (`__pk_hash`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'JoinStream_5',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'JoinStream_5'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `Orders_6` (
   `id` BIGINT NOT NULL,
@@ -227,11 +227,11 @@ CREATE TABLE `Orders_6` (
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'Orders_6',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'Orders_6'
+  'username' = '${JDBC_USERNAME}'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Customer_1`
