@@ -637,12 +637,15 @@ CREATE TABLE `Orders` (
   `amount` FLOAT,
   PRIMARY KEY (`orderid`) NOT ENFORCED
 ) WITH (
-  'topic' = 'kafka-upsert-Orders',
+  'topic' = 'kafka-mutation-Orders',
   'connector' = 'upsert-kafka',
-  'value.format' = 'flexible-json',
-  'key.format' = 'json',
   'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
-  'properties.group.id' = '${PROPERTIES_GROUP_ID}'
+  'properties.group.id' = '${PROPERTIES_GROUP_ID}',
+  'properties.auto.offset.reset' = 'earliest',
+  'key.format' = 'flexible-json',
+  'value.format' = 'flexible-json',
+  'value.flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'key.flexible-json.timestamp-format.standard' = 'ISO-8601'
 );
 CREATE VIEW `CustomerTimeWindow`
 AS
@@ -708,10 +711,9 @@ CREATE TABLE `Customer_3` (
   'topic' = 'kafka-Customer',
   'connector' = 'kafka',
   'format' = 'flexible-json',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
-  'properties.group.id' = '${PROPERTIES_GROUP_ID}',
-  'scan.startup.mode' = 'group-offsets',
-  'properties.auto.offset.reset' = 'earliest'
+  'properties.group.id' = '${PROPERTIES_GROUP_ID}'
 );
 CREATE TABLE `CustomerByMultipleTime_4` (
   `customerid` BIGINT NOT NULL,
@@ -768,10 +770,9 @@ CREATE TABLE `CustomerSubscription_7` (
   'topic' = 'kafka-CustomerSubscription',
   'connector' = 'kafka',
   'format' = 'flexible-json',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
-  'properties.group.id' = '${PROPERTIES_GROUP_ID}',
-  'scan.startup.mode' = 'group-offsets',
-  'properties.auto.offset.reset' = 'earliest'
+  'properties.group.id' = '${PROPERTIES_GROUP_ID}'
 );
 CREATE TABLE `TimeWindow_8` (
   `window_start` TIMESTAMP(3) NOT NULL,
@@ -973,25 +974,25 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
     {
       "topicName" : "kafka-Customer",
       "tableName" : "Customer_3",
+      "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 1,
-      "replicasAssignments" : { },
       "config" : { }
     },
     {
       "topicName" : "kafka-CustomerSubscription",
       "tableName" : "CustomerSubscription_7",
+      "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 1,
-      "replicasAssignments" : { },
       "config" : { }
     },
     {
-      "topicName" : "kafka-upsert-Orders",
+      "topicName" : "kafka-mutation-Orders",
       "tableName" : "Orders",
+      "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 1,
-      "replicasAssignments" : { },
       "config" : { }
     }
   ]
@@ -2525,7 +2526,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
       {
         "type" : "kafka",
         "fieldName" : "Orders",
-        "topic" : "kafka-upsert-Orders",
+        "topic" : "kafka-mutation-Orders",
         "computedColumns" : { },
         "sinkConfig" : { }
       }

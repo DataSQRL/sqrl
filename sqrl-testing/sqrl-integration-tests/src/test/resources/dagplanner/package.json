@@ -6,11 +6,8 @@
         "kafka": {
           "topic" : "kafka-${sqrl:original-table-name}"
         },
-        "kafka-keyed": {
-          "topic" : "kafka-keyed-${sqrl:original-table-name}"
-        },
-        "kafka-upsert": {
-          "topic" : "kafka-upsert-${sqrl:original-table-name}"
+        "kafka-mutation": {
+          "topic" : "kafka-mutation-${sqrl:original-table-name}"
         }
       }
     }

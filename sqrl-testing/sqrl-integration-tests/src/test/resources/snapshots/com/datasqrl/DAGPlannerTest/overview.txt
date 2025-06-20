@@ -228,12 +228,12 @@ CREATE TABLE `SimpleOrders` (
   `orderTime` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
   WATERMARK FOR `orderTime` AS `orderTime` - INTERVAL '0.0' SECOND
 ) WITH (
-  'topic' = 'kafka-SimpleOrders',
+  'topic' = 'kafka-mutation-SimpleOrders',
   'connector' = 'kafka',
   'format' = 'flexible-json',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${PROPERTIES_GROUP_ID}',
-  'scan.startup.mode' = 'group-offsets',
   'properties.auto.offset.reset' = 'earliest'
 );
 CREATE VIEW `LargeOrders`
@@ -322,10 +322,9 @@ CREATE TABLE `LargeOrders_4` (
   'topic' = 'kafka-LargeOrders',
   'connector' = 'kafka',
   'format' = 'flexible-json',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
-  'properties.group.id' = '${PROPERTIES_GROUP_ID}',
-  'scan.startup.mode' = 'group-offsets',
-  'properties.auto.offset.reset' = 'earliest'
+  'properties.group.id' = '${PROPERTIES_GROUP_ID}'
 );
 CREATE TABLE `Orders_5` (
   `id` BIGINT NOT NULL,
@@ -428,17 +427,17 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2`
     {
       "topicName" : "kafka-LargeOrders",
       "tableName" : "LargeOrders_4",
+      "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 1,
-      "replicasAssignments" : { },
       "config" : { }
     },
     {
-      "topicName" : "kafka-SimpleOrders",
+      "topicName" : "kafka-mutation-SimpleOrders",
       "tableName" : "SimpleOrders",
+      "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 1,
-      "replicasAssignments" : { },
       "config" : { }
     }
   ]
@@ -1274,7 +1273,7 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2`
       {
         "type" : "kafka",
         "fieldName" : "SimpleOrders",
-        "topic" : "kafka-SimpleOrders",
+        "topic" : "kafka-mutation-SimpleOrders",
         "computedColumns" : {
           "orderTime" : "TIMESTAMP",
           "_uuid" : "UUID"
