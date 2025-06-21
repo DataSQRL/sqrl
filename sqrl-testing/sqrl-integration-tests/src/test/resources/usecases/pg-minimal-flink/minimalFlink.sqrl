@@ -1,14 +1,30 @@
 CREATE TABLE SensorReading (
    sensorid INT NOT NULL,
    temperature FLOAT NOT NULL,
-   event_time TIMESTAMP_LTZ(3) NOT NULL,
+   event_time BIGINT NOT NULL,
    PRIMARY KEY (sensorid, event_time) NOT ENFORCED
+) WITH (
+    'connector' = 'datagen',
+    'number-of-rows' = '10',
+    'rows-per-second' = '10',
+    'fields.sensorid.kind' = 'random',
+    'fields.sensorid.min' = '1',
+    'fields.sensorid.max' = '1',
+    'fields.temperature.kind' = 'sequence',
+    'fields.temperature.start' = '20',
+    'fields.temperature.end' = '29',
+     'fields.event_time.kind' = 'sequence',
+     'fields.event_time.start' = '1750533400',
+     'fields.event_time.end' = '1750533429'
 );
 
 SensorReadingById(sensorid INT NOT NULL):= SELECT * FROM SensorReading
                     WHERE sensorid = :sensorid ORDER BY event_time DESC;
 
 /*+query_by_any(sensorid) */
-SensorAggregate := SELECT sensorid, MAX(temperature) AS maxTemp
+SensorAggregate := SELECT sensorid, MAX(temperature) AS maxTemp, AVG(temperature) AS avgTemp
                    FROM SensorReading
                    GROUP BY sensorid ORDER BY sensorid ASC;
+
+/*+test */
+SensorAggregateTest := SELECT * FROM SensorAggregate ORDER BY sensorid ASC;

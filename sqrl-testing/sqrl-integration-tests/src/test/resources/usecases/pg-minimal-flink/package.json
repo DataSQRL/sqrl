@@ -3,15 +3,6 @@
   "compiler": {
     "cost-model": "read"
   },
-  "engines" : {
-    "flink" : {
-      "connectors": {
-        "postgres": {
-          "table-name": "${sqrl:original-table-name}"
-        }
-      }
-    }
-  },
   "test-runner": {
     "delay-sec": -1
   }

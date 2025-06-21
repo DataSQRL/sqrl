@@ -93,6 +93,7 @@ class FullUseCasesIT {
           new ScriptCriteria("postgres-log-disabled.sqrl", "run"),
           new ScriptCriteria("connectors.sqrl", "test"), // should not be executed
           new ScriptCriteria("flink_kafka.sqrl", "run"), // does not expose an API
+          new ScriptCriteria("minimalFlink.sqrl", "run"), // only want to test this
           new ScriptCriteria(
               "temporal-join.sqrl",
               "run") // TODO: only 'run' when there are no tests (i.e. snapshot dir) - there is no
@@ -342,7 +343,7 @@ class FullUseCasesIT {
   @Disabled
   void runTestCaseByName(UseCaseTestParameter param) {
     assumeTrue(
-        param.sqrlFileName.equals("stdlib-math.sqrl") && param.goal.equals("test"),
+        param.sqrlFileName.equals("minimalFlink.sqrl") && param.goal.equals("test"),
         "Not the test marked for execution.");
 
     useCase(param);

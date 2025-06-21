@@ -55,7 +55,7 @@ CREATE TABLE `data_1` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'data_1'
+  'table-name' = 'data'
 );
 CREATE TABLE `results_2` (
   `completions_result` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
@@ -69,7 +69,7 @@ CREATE TABLE `results_2` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'results_2'
+  'table-name' = 'results'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`data_1`
@@ -86,13 +86,10 @@ INSERT INTO `default_catalog`.`default_database`.`results_2`
   "topics" : [ ]
 }
 >>>postgres-schema.sql
-CREATE TABLE IF NOT EXISTS "data_1" ("val" INTEGER NOT NULL, "__pk_hash" INTEGER NOT NULL , PRIMARY KEY ("__pk_hash"));
-CREATE TABLE IF NOT EXISTS "results_2" ("completions_result" TEXT , "extract_json_result_response" TEXT , "extract_json_result_with_schema_response" TEXT , "__pk_hash" INTEGER NOT NULL , PRIMARY KEY ("__pk_hash"))
+CREATE TABLE IF NOT EXISTS "data" ("val" INTEGER NOT NULL, "__pk_hash" INTEGER NOT NULL , PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "results" ("completions_result" TEXT , "extract_json_result_response" TEXT , "extract_json_result_with_schema_response" TEXT , "__pk_hash" INTEGER NOT NULL , PRIMARY KEY ("__pk_hash"))
 >>>postgres-views.sql
-CREATE OR REPLACE VIEW "data"("val") AS SELECT "val"
-FROM "data_1";
-CREATE OR REPLACE VIEW "results"("completions_result", "extract_json_result_response", "extract_json_result_with_schema_response") AS SELECT "completions_result", "extract_json_result_response", "extract_json_result_with_schema_response"
-FROM "results_2"
+
 >>>vertx.json
 {
   "model" : {
@@ -114,7 +111,7 @@ FROM "results_2"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT \"val\"\nFROM \"data_1\"",
+            "sql" : "SELECT \"val\"\nFROM \"data\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
@@ -138,7 +135,7 @@ FROM "results_2"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT \"completions_result\", \"extract_json_result_response\", \"extract_json_result_with_schema_response\"\nFROM \"results_2\"",
+            "sql" : "SELECT \"completions_result\", \"extract_json_result_response\", \"extract_json_result_with_schema_response\"\nFROM \"results\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
