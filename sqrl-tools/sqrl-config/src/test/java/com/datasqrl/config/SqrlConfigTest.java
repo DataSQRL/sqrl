@@ -33,7 +33,7 @@ import lombok.SneakyThrows;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
-public class ConfigurationTest {
+public class SqrlConfigTest {
 
   public static final Path CONFIG_DIR = Path.of("src", "test", "resources", "config");
   public static final Path CONFIG_FILE1 = CONFIG_DIR.resolve("config1.json");
