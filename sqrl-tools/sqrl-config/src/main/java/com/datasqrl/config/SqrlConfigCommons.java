@@ -15,16 +15,14 @@
  */
 package com.datasqrl.config;
 
+import com.datasqrl.error.ErrorCollector;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.List;
 
-import com.datasqrl.error.ErrorCollector;
-
 /** Delegates all configuration loading methods to the Jackson-based implementation. */
 public class SqrlConfigCommons {
 
- 
   private SqrlConfigCommons() {}
 
   public static PackageJson getDefaultPackageJson(ErrorCollector errors) {
