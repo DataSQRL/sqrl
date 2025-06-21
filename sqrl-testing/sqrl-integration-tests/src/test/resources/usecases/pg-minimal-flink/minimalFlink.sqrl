@@ -21,7 +21,6 @@ CREATE TABLE SensorReading (
 SensorReadingById(sensorid INT NOT NULL):= SELECT * FROM SensorReading
                     WHERE sensorid = :sensorid ORDER BY event_time DESC;
 
-/*+query_by_any(sensorid) */
 SensorAggregate := SELECT sensorid, MAX(temperature) AS maxTemp, AVG(temperature) AS avgTemp
                    FROM SensorReading
                    GROUP BY sensorid ORDER BY sensorid ASC;
