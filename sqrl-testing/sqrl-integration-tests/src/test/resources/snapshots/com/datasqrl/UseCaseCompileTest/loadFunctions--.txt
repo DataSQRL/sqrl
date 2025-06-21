@@ -36,7 +36,7 @@ CREATE TABLE `FunctionApplied_1` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'FunctionApplied_1'
+  'table-name' = 'FunctionApplied'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`FunctionApplied_1`
@@ -49,10 +49,9 @@ END
   "topics" : [ ]
 }
 >>>postgres-schema.sql
-CREATE TABLE IF NOT EXISTS "FunctionApplied_1" ("id" INTEGER NOT NULL, "fct_result" BOOLEAN  , PRIMARY KEY ("id"))
+CREATE TABLE IF NOT EXISTS "FunctionApplied" ("id" INTEGER NOT NULL, "fct_result" BOOLEAN  , PRIMARY KEY ("id"))
 >>>postgres-views.sql
-CREATE OR REPLACE VIEW "FunctionApplied"("id", "fct_result") AS SELECT *
-FROM "FunctionApplied_1"
+
 >>>vertx.json
 {
   "model" : {
@@ -74,7 +73,7 @@ FROM "FunctionApplied_1"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"FunctionApplied_1\"",
+            "sql" : "SELECT *\nFROM \"FunctionApplied\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"

@@ -115,12 +115,12 @@ CREATE TABLE `Customer_1` (
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED
 ) WITH (
+  'table-name' = 'Customer_1',
   'connector' = 'jdbc-sqrl',
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'Customer_1'
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}'
 );
 CREATE TABLE `CustomerUpdates_2` (
   `customerid` BIGINT NOT NULL,
@@ -129,12 +129,12 @@ CREATE TABLE `CustomerUpdates_2` (
   `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
   PRIMARY KEY (`__pk_hash`) NOT ENFORCED
 ) WITH (
+  'table-name' = 'CustomerUpdates_2',
   'connector' = 'jdbc-sqrl',
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'CustomerUpdates_2'
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}'
 );
 CREATE TABLE `DistinctCustomerUpdates_3` (
   `customerid` BIGINT NOT NULL,
@@ -142,12 +142,12 @@ CREATE TABLE `DistinctCustomerUpdates_3` (
   `total` BIGINT NOT NULL,
   PRIMARY KEY (`customerid`) NOT ENFORCED
 ) WITH (
+  'table-name' = 'DistinctCustomerUpdates_3',
   'connector' = 'jdbc-sqrl',
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'DistinctCustomerUpdates_3'
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Customer_1`

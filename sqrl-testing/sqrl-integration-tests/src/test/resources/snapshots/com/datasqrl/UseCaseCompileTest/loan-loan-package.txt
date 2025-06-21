@@ -375,9 +375,9 @@ CREATE TABLE `ApplicationUpdates` (
 ) WITH (
   'connector' = 'kafka',
   'format' = 'flexible-json',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${PROPERTIES_GROUP_ID}',
-  'scan.startup.mode' = 'group-offsets',
   'properties.auto.offset.reset' = 'earliest',
   'topic' = 'ApplicationUpdates'
 );
@@ -421,9 +421,9 @@ CREATE TABLE `AddChatMessage` (
 ) WITH (
   'connector' = 'kafka',
   'format' = 'flexible-json',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${PROPERTIES_GROUP_ID}',
-  'scan.startup.mode' = 'group-offsets',
   'properties.auto.offset.reset' = 'earliest',
   'topic' = 'AddChatMessage'
 );
@@ -455,7 +455,7 @@ CREATE TABLE `AddChatMessage_1` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'AddChatMessage_1'
+  'table-name' = 'AddChatMessage'
 );
 CREATE TABLE `ApplicationAlert_2` (
   `_uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -472,7 +472,7 @@ CREATE TABLE `ApplicationAlert_2` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'ApplicationAlert_2'
+  'table-name' = 'ApplicationAlert'
 );
 CREATE TABLE `ApplicationStatus_3` (
   `_uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -493,7 +493,7 @@ CREATE TABLE `ApplicationStatus_3` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'ApplicationStatus_3'
+  'table-name' = 'ApplicationStatus'
 );
 CREATE TABLE `ApplicationUpdates_4` (
   `_uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -508,7 +508,7 @@ CREATE TABLE `ApplicationUpdates_4` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'ApplicationUpdates_4'
+  'table-name' = 'ApplicationUpdates'
 );
 CREATE TABLE `Applications_5` (
   `id` BIGINT NOT NULL,
@@ -525,7 +525,7 @@ CREATE TABLE `Applications_5` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'Applications_5'
+  'table-name' = 'Applications'
 );
 CREATE TABLE `ApplicationsStream_6` (
   `id` BIGINT NOT NULL,
@@ -542,7 +542,7 @@ CREATE TABLE `ApplicationsStream_6` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'ApplicationsStream_6'
+  'table-name' = 'ApplicationsStream'
 );
 CREATE TABLE `CustomerChatMessage_7` (
   `role` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -558,7 +558,7 @@ CREATE TABLE `CustomerChatMessage_7` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'CustomerChatMessage_7'
+  'table-name' = 'CustomerChatMessage'
 );
 CREATE TABLE `Customers_8` (
   `id` BIGINT NOT NULL,
@@ -576,7 +576,7 @@ CREATE TABLE `Customers_8` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'Customers_8'
+  'table-name' = 'Customers'
 );
 CREATE TABLE `CustomersStream_9` (
   `id` BIGINT NOT NULL,
@@ -594,7 +594,7 @@ CREATE TABLE `CustomersStream_9` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'CustomersStream_9'
+  'table-name' = 'CustomersStream'
 );
 CREATE TABLE `LoanTypes_10` (
   `id` BIGINT NOT NULL,
@@ -613,7 +613,7 @@ CREATE TABLE `LoanTypes_10` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'LoanTypes_10'
+  'table-name' = 'LoanTypes'
 );
 CREATE TABLE `LoanTypesStream_11` (
   `id` BIGINT NOT NULL,
@@ -632,7 +632,7 @@ CREATE TABLE `LoanTypesStream_11` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'LoanTypesStream_11'
+  'table-name' = 'LoanTypesStream'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`AddChatMessage_1`
@@ -686,61 +686,38 @@ INSERT INTO `default_catalog`.`default_database`.`ApplicationAlert_2`
     {
       "topicName" : "AddChatMessage",
       "tableName" : "AddChatMessage",
+      "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 1,
-      "replicasAssignments" : { },
       "config" : { }
     },
     {
       "topicName" : "ApplicationUpdates",
       "tableName" : "ApplicationUpdates",
+      "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 1,
-      "replicasAssignments" : { },
       "config" : { }
     }
   ]
 }
 >>>postgres-schema.sql
-CREATE TABLE IF NOT EXISTS "AddChatMessage_1" ("_uuid" TEXT NOT NULL, "role" TEXT NOT NULL, "content" TEXT NOT NULL, "name" TEXT , "context" JSONB , "event_time" TIMESTAMP WITH TIME ZONE  , PRIMARY KEY ("_uuid"));
-CREATE TABLE IF NOT EXISTS "ApplicationAlert_2" ("_uuid" TEXT NOT NULL, "id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "loan_type_id" BIGINT NOT NULL, "max_amount" DOUBLE PRECISION NOT NULL, "min_amount" DOUBLE PRECISION NOT NULL, "amount" DOUBLE PRECISION NOT NULL , PRIMARY KEY ("_uuid"));
-CREATE TABLE IF NOT EXISTS "ApplicationStatus_3" ("_uuid" TEXT NOT NULL, "status" TEXT NOT NULL, "message" TEXT , "event_time" TIMESTAMP WITH TIME ZONE , "id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "loan_type_id" BIGINT NOT NULL, "amount" DOUBLE PRECISION NOT NULL, "duration" BIGINT NOT NULL, "max_amount" DOUBLE PRECISION NOT NULL, "min_amount" DOUBLE PRECISION NOT NULL , PRIMARY KEY ("_uuid"));
-CREATE TABLE IF NOT EXISTS "ApplicationUpdates_4" ("_uuid" TEXT NOT NULL, "loan_application_id" BIGINT NOT NULL, "status" TEXT NOT NULL, "message" TEXT , "event_time" TIMESTAMP WITH TIME ZONE  , PRIMARY KEY ("_uuid"));
-CREATE TABLE IF NOT EXISTS "Applications_5" ("id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "loan_type_id" BIGINT NOT NULL, "amount" DOUBLE PRECISION NOT NULL, "duration" BIGINT NOT NULL, "application_date" TIMESTAMP WITH TIME ZONE NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));
-CREATE TABLE IF NOT EXISTS "ApplicationsStream_6" ("id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "loan_type_id" BIGINT NOT NULL, "amount" DOUBLE PRECISION NOT NULL, "duration" BIGINT NOT NULL, "application_date" TIMESTAMP WITH TIME ZONE NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id","updated_at"));
-CREATE TABLE IF NOT EXISTS "CustomerChatMessage_7" ("role" TEXT NOT NULL, "content" TEXT NOT NULL, "name" TEXT , "customerid" INTEGER , "timestamp" TIMESTAMP WITH TIME ZONE , "uuid" TEXT NOT NULL , PRIMARY KEY ("uuid"));
-CREATE TABLE IF NOT EXISTS "Customers_8" ("id" BIGINT NOT NULL, "first_name" TEXT NOT NULL, "last_name" TEXT NOT NULL, "email" TEXT NOT NULL, "phone" TEXT NOT NULL, "address" TEXT NOT NULL, "date_of_birth" TEXT NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));
-CREATE TABLE IF NOT EXISTS "CustomersStream_9" ("id" BIGINT NOT NULL, "first_name" TEXT NOT NULL, "last_name" TEXT NOT NULL, "email" TEXT NOT NULL, "phone" TEXT NOT NULL, "address" TEXT NOT NULL, "date_of_birth" TEXT NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id","updated_at"));
-CREATE TABLE IF NOT EXISTS "LoanTypes_10" ("id" BIGINT NOT NULL, "name" TEXT NOT NULL, "description" TEXT NOT NULL, "interest_rate" DOUBLE PRECISION NOT NULL, "max_amount" DOUBLE PRECISION NOT NULL, "min_amount" DOUBLE PRECISION NOT NULL, "max_duration" BIGINT NOT NULL, "min_duration" BIGINT NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));
-CREATE TABLE IF NOT EXISTS "LoanTypesStream_11" ("id" BIGINT NOT NULL, "name" TEXT NOT NULL, "description" TEXT NOT NULL, "interest_rate" DOUBLE PRECISION NOT NULL, "max_amount" DOUBLE PRECISION NOT NULL, "min_amount" DOUBLE PRECISION NOT NULL, "max_duration" BIGINT NOT NULL, "min_duration" BIGINT NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id","updated_at"));
+CREATE TABLE IF NOT EXISTS "AddChatMessage" ("_uuid" TEXT NOT NULL, "role" TEXT NOT NULL, "content" TEXT NOT NULL, "name" TEXT , "context" JSONB , "event_time" TIMESTAMP WITH TIME ZONE  , PRIMARY KEY ("_uuid"));
+CREATE TABLE IF NOT EXISTS "ApplicationAlert" ("_uuid" TEXT NOT NULL, "id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "loan_type_id" BIGINT NOT NULL, "max_amount" DOUBLE PRECISION NOT NULL, "min_amount" DOUBLE PRECISION NOT NULL, "amount" DOUBLE PRECISION NOT NULL , PRIMARY KEY ("_uuid"));
+CREATE TABLE IF NOT EXISTS "ApplicationStatus" ("_uuid" TEXT NOT NULL, "status" TEXT NOT NULL, "message" TEXT , "event_time" TIMESTAMP WITH TIME ZONE , "id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "loan_type_id" BIGINT NOT NULL, "amount" DOUBLE PRECISION NOT NULL, "duration" BIGINT NOT NULL, "max_amount" DOUBLE PRECISION NOT NULL, "min_amount" DOUBLE PRECISION NOT NULL , PRIMARY KEY ("_uuid"));
+CREATE TABLE IF NOT EXISTS "ApplicationUpdates" ("_uuid" TEXT NOT NULL, "loan_application_id" BIGINT NOT NULL, "status" TEXT NOT NULL, "message" TEXT , "event_time" TIMESTAMP WITH TIME ZONE  , PRIMARY KEY ("_uuid"));
+CREATE TABLE IF NOT EXISTS "Applications" ("id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "loan_type_id" BIGINT NOT NULL, "amount" DOUBLE PRECISION NOT NULL, "duration" BIGINT NOT NULL, "application_date" TIMESTAMP WITH TIME ZONE NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));
+CREATE TABLE IF NOT EXISTS "ApplicationsStream" ("id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "loan_type_id" BIGINT NOT NULL, "amount" DOUBLE PRECISION NOT NULL, "duration" BIGINT NOT NULL, "application_date" TIMESTAMP WITH TIME ZONE NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id","updated_at"));
+CREATE TABLE IF NOT EXISTS "CustomerChatMessage" ("role" TEXT NOT NULL, "content" TEXT NOT NULL, "name" TEXT , "customerid" INTEGER , "timestamp" TIMESTAMP WITH TIME ZONE , "uuid" TEXT NOT NULL , PRIMARY KEY ("uuid"));
+CREATE TABLE IF NOT EXISTS "Customers" ("id" BIGINT NOT NULL, "first_name" TEXT NOT NULL, "last_name" TEXT NOT NULL, "email" TEXT NOT NULL, "phone" TEXT NOT NULL, "address" TEXT NOT NULL, "date_of_birth" TEXT NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));
+CREATE TABLE IF NOT EXISTS "CustomersStream" ("id" BIGINT NOT NULL, "first_name" TEXT NOT NULL, "last_name" TEXT NOT NULL, "email" TEXT NOT NULL, "phone" TEXT NOT NULL, "address" TEXT NOT NULL, "date_of_birth" TEXT NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id","updated_at"));
+CREATE TABLE IF NOT EXISTS "LoanTypes" ("id" BIGINT NOT NULL, "name" TEXT NOT NULL, "description" TEXT NOT NULL, "interest_rate" DOUBLE PRECISION NOT NULL, "max_amount" DOUBLE PRECISION NOT NULL, "min_amount" DOUBLE PRECISION NOT NULL, "max_duration" BIGINT NOT NULL, "min_duration" BIGINT NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));
+CREATE TABLE IF NOT EXISTS "LoanTypesStream" ("id" BIGINT NOT NULL, "name" TEXT NOT NULL, "description" TEXT NOT NULL, "interest_rate" DOUBLE PRECISION NOT NULL, "max_amount" DOUBLE PRECISION NOT NULL, "min_amount" DOUBLE PRECISION NOT NULL, "max_duration" BIGINT NOT NULL, "min_duration" BIGINT NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id","updated_at"));
 
-CREATE INDEX IF NOT EXISTS "ApplicationUpdates_4_hash_c1" ON "ApplicationUpdates_4" USING hash ("loan_application_id");
-CREATE INDEX IF NOT EXISTS "Applications_5_hash_c1" ON "Applications_5" USING hash ("customer_id")
+CREATE INDEX IF NOT EXISTS "ApplicationUpdates_hash_c1" ON "ApplicationUpdates" USING hash ("loan_application_id");
+CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash ("customer_id")
 >>>postgres-views.sql
-CREATE OR REPLACE VIEW "AddChatMessage"("_uuid", "role", "content", "name", "context", "event_time") AS SELECT *
-FROM "AddChatMessage_1";
-CREATE OR REPLACE VIEW "ApplicationAlert"("_uuid", "id", "customer_id", "loan_type_id", "max_amount", "min_amount", "amount") AS SELECT *
-FROM "ApplicationAlert_2";
-CREATE OR REPLACE VIEW "ApplicationStatus"("_uuid", "status", "message", "event_time", "id", "customer_id", "loan_type_id", "amount", "duration", "max_amount", "min_amount") AS SELECT *
-FROM "ApplicationStatus_3";
-CREATE OR REPLACE VIEW "ApplicationUpdates"("_uuid", "loan_application_id", "status", "message", "event_time") AS SELECT *
-FROM "ApplicationUpdates_4";
-CREATE OR REPLACE VIEW "Applications"("id", "customer_id", "loan_type_id", "amount", "duration", "application_date", "updated_at") AS SELECT *
-FROM "Applications_5";
-CREATE OR REPLACE VIEW "ApplicationsStream"("id", "customer_id", "loan_type_id", "amount", "duration", "application_date", "updated_at") AS SELECT *
-FROM "ApplicationsStream_6";
-CREATE OR REPLACE VIEW "CustomerChatMessage"("role", "content", "name", "customerid", "timestamp", "uuid") AS SELECT *
-FROM (SELECT "role", "content", "name", "customerid", "timestamp", "uuid"
-  FROM "CustomerChatMessage_7"
-  ORDER BY "timestamp" DESC NULLS LAST) AS "t1";
-CREATE OR REPLACE VIEW "Customers"("id", "first_name", "last_name", "email", "phone", "address", "date_of_birth", "updated_at") AS SELECT *
-FROM "Customers_8";
-CREATE OR REPLACE VIEW "CustomersStream"("id", "first_name", "last_name", "email", "phone", "address", "date_of_birth", "updated_at") AS SELECT *
-FROM "CustomersStream_9";
-CREATE OR REPLACE VIEW "LoanTypes"("id", "name", "description", "interest_rate", "max_amount", "min_amount", "max_duration", "min_duration", "updated_at") AS SELECT *
-FROM "LoanTypes_10";
-CREATE OR REPLACE VIEW "LoanTypesStream"("id", "name", "description", "interest_rate", "max_amount", "min_amount", "max_duration", "min_duration", "updated_at") AS SELECT *
-FROM "LoanTypesStream_11"
+
 >>>vertx.json
 {
   "model" : {
@@ -762,7 +739,7 @@ FROM "LoanTypesStream_11"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"AddChatMessage_1\"",
+            "sql" : "SELECT *\nFROM \"AddChatMessage\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
@@ -786,7 +763,7 @@ FROM "LoanTypesStream_11"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"ApplicationAlert_2\"",
+            "sql" : "SELECT *\nFROM \"ApplicationAlert\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
@@ -810,7 +787,7 @@ FROM "LoanTypesStream_11"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"ApplicationStatus_3\"",
+            "sql" : "SELECT *\nFROM \"ApplicationStatus\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
@@ -834,7 +811,7 @@ FROM "LoanTypesStream_11"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"ApplicationUpdates_4\"",
+            "sql" : "SELECT *\nFROM \"ApplicationUpdates\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
@@ -858,7 +835,7 @@ FROM "LoanTypesStream_11"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Applications_5\"\nWHERE $1 = \"id\"",
+            "sql" : "SELECT *\nFROM \"Applications\"\nWHERE $1 = \"id\"",
             "parameters" : [
               {
                 "type" : "source",
@@ -887,7 +864,7 @@ FROM "LoanTypesStream_11"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"LoanTypes_10\"\nWHERE $1 = \"id\"",
+            "sql" : "SELECT *\nFROM \"LoanTypes\"\nWHERE $1 = \"id\"",
             "parameters" : [
               {
                 "type" : "source",
@@ -916,7 +893,7 @@ FROM "LoanTypesStream_11"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"ApplicationUpdates_4\"\nWHERE $1 = \"loan_application_id\"\nORDER BY \"event_time\" NULLS FIRST",
+            "sql" : "SELECT *\nFROM \"ApplicationUpdates\"\nWHERE $1 = \"loan_application_id\"\nORDER BY \"event_time\" NULLS FIRST",
             "parameters" : [
               {
                 "type" : "source",
@@ -945,7 +922,7 @@ FROM "LoanTypesStream_11"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Applications_5\"",
+            "sql" : "SELECT *\nFROM \"Applications\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
@@ -969,7 +946,7 @@ FROM "LoanTypesStream_11"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"ApplicationsStream_6\"",
+            "sql" : "SELECT *\nFROM \"ApplicationsStream\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
@@ -993,7 +970,7 @@ FROM "LoanTypesStream_11"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM (SELECT \"role\", \"content\", \"name\", \"customerid\", \"timestamp\", \"uuid\"\n  FROM \"CustomerChatMessage_7\"\n  ORDER BY \"timestamp\" DESC NULLS LAST) AS \"t\"",
+            "sql" : "SELECT *\nFROM (SELECT \"role\", \"content\", \"name\", \"customerid\", \"timestamp\", \"uuid\"\n  FROM \"CustomerChatMessage\"\n  ORDER BY \"timestamp\" DESC NULLS LAST) AS \"t\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
@@ -1017,7 +994,7 @@ FROM "LoanTypesStream_11"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Customers_8\"",
+            "sql" : "SELECT *\nFROM \"Customers\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
@@ -1041,7 +1018,7 @@ FROM "LoanTypesStream_11"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Applications_5\"\nWHERE $1 = \"customer_id\"\nORDER BY \"application_date\" NULLS FIRST",
+            "sql" : "SELECT *\nFROM \"Applications\"\nWHERE $1 = \"customer_id\"\nORDER BY \"application_date\" NULLS FIRST",
             "parameters" : [
               {
                 "type" : "source",
@@ -1070,7 +1047,7 @@ FROM "LoanTypesStream_11"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT \"loan_type_id\", SUM(\"amount\") AS \"total_amount\", COUNT(*) AS \"total_loans\"\nFROM \"Applications_5\"\nWHERE $1 = \"customer_id\"\nGROUP BY \"loan_type_id\"",
+            "sql" : "SELECT \"loan_type_id\", SUM(\"amount\") AS \"total_amount\", COUNT(*) AS \"total_loans\"\nFROM \"Applications\"\nWHERE $1 = \"customer_id\"\nGROUP BY \"loan_type_id\"",
             "parameters" : [
               {
                 "type" : "source",
@@ -1099,7 +1076,7 @@ FROM "LoanTypesStream_11"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"CustomersStream_9\"",
+            "sql" : "SELECT *\nFROM \"CustomersStream\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
@@ -1123,7 +1100,7 @@ FROM "LoanTypesStream_11"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"LoanTypes_10\"",
+            "sql" : "SELECT *\nFROM \"LoanTypes\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
@@ -1147,7 +1124,7 @@ FROM "LoanTypesStream_11"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"LoanTypesStream_11\"",
+            "sql" : "SELECT *\nFROM \"LoanTypesStream\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"

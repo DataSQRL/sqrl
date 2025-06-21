@@ -75,7 +75,7 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
       FlinkTableBuilder tableBuilder,
       RelDataType relDataType,
       Optional<TableAnalysis> tableAnalysis) {
-    var tableName = tableBuilder.getTableName();
+    var tableId = tableBuilder.getTableName();
     var connect =
         connector.orElseThrow(
             () ->
@@ -83,7 +83,7 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
                     "Missing Flink connector configuration for engine: " + getName()));
     tableBuilder.setConnectorOptions(
         connect.toMapWithSubstitution(
-            Context.builder().tableName(tableName).origTableName(originalTableName).build()));
+            Context.builder().tableName(originalTableName).tableId(tableId).build()));
     return new JdbcEngineCreateTable(
         getConnectorTableName(tableBuilder), tableBuilder, relDataType, tableAnalysis.get());
   }
@@ -109,14 +109,13 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
               planBuilder.statement(stmt);
               tableNames.add(stmt.getName());
             });
-
-    planBuilder.createTables(jdbcCreateTables);
+    Map<String, JdbcEngineCreateTable> tableIdMap =
+        jdbcCreateTables.stream()
+            .collect(
+                Collectors.toMap(createTable -> createTable.getTable().getTableName(), f -> f));
+    planBuilder.tableIdMap(tableIdMap);
     // Create executable queries & views
     if (stmtFactory.supportsQueries()) {
-      Map<String, JdbcEngineCreateTable> tableIdMap =
-          jdbcCreateTables.stream()
-              .collect(
-                  Collectors.toMap(createTable -> createTable.getTable().getTableName(), f -> f));
       stagePlan
           .getQueries()
           .forEach(

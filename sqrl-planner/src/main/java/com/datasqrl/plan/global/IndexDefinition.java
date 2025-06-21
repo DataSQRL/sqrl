@@ -25,14 +25,14 @@ public class IndexDefinition implements Comparable<IndexDefinition> {
 
   public static final String INDEX_NAME = "_index_";
 
-  String tableId;
+  String tableName;
   List<Integer> columns;
   List<String> columnNames;
   int partitionOffset;
   IndexType type;
 
   public IndexDefinition(
-      String tableId,
+      String tableName,
       List<Integer> columns,
       List<String> allFieldNames,
       int partitionOffset,
@@ -47,7 +47,7 @@ public class IndexDefinition implements Comparable<IndexDefinition> {
         "Invalid partition offset: %s | %s",
         partitionOffset,
         columns.size());
-    this.tableId = tableId;
+    this.tableName = tableName;
     this.columns = columns;
     this.partitionOffset = partitionOffset;
     this.columnNames = columns.stream().map(allFieldNames::get).collect(Collectors.toList());
@@ -55,7 +55,7 @@ public class IndexDefinition implements Comparable<IndexDefinition> {
   }
 
   public String getName() {
-    return tableId
+    return tableName
         + "_"
         + type.name().toLowerCase()
         + "_"

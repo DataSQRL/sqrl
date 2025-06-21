@@ -90,7 +90,7 @@ CREATE TABLE `MyAsyncTable_1` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'MyAsyncTable_1'
+  'table-name' = 'MyAsyncTable'
 );
 CREATE TABLE `MyTable_2` (
   `val` INTEGER NOT NULL,
@@ -102,7 +102,7 @@ CREATE TABLE `MyTable_2` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'MyTable_2'
+  'table-name' = 'MyTable'
 );
 CREATE TABLE `MyTableAnother_3` (
   `val` INTEGER NOT NULL,
@@ -114,7 +114,7 @@ CREATE TABLE `MyTableAnother_3` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'MyTableAnother_3'
+  'table-name' = 'MyTableAnother'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`MyAsyncTable_1`
@@ -135,22 +135,11 @@ INSERT INTO `default_catalog`.`default_database`.`MyTable_2`
   "topics" : [ ]
 }
 >>>postgres-schema.sql
-CREATE TABLE IF NOT EXISTS "MyAsyncTable_1" ("val" TEXT NOT NULL, "myFnc" TEXT  , PRIMARY KEY ("val"));
-CREATE TABLE IF NOT EXISTS "MyTable_2" ("val" INTEGER NOT NULL, "myFnc" BIGINT  , PRIMARY KEY ("val"));
-CREATE TABLE IF NOT EXISTS "MyTableAnother_3" ("val" INTEGER NOT NULL, "myFnc" BIGINT  , PRIMARY KEY ("val"))
+CREATE TABLE IF NOT EXISTS "MyAsyncTable" ("val" TEXT NOT NULL, "myFnc" TEXT  , PRIMARY KEY ("val"));
+CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, "myFnc" BIGINT  , PRIMARY KEY ("val"));
+CREATE TABLE IF NOT EXISTS "MyTableAnother" ("val" INTEGER NOT NULL, "myFnc" BIGINT  , PRIMARY KEY ("val"))
 >>>postgres-views.sql
-CREATE OR REPLACE VIEW "MyAsyncTable"("val", "myFnc") AS SELECT *
-FROM (SELECT "val", "myFnc"
-  FROM "MyAsyncTable_1"
-  ORDER BY "val" NULLS FIRST) AS "t1";
-CREATE OR REPLACE VIEW "MyTable"("val", "myFnc") AS SELECT *
-FROM (SELECT "val", "myFnc"
-  FROM "MyTable_2"
-  ORDER BY "val" NULLS FIRST) AS "t1";
-CREATE OR REPLACE VIEW "MyTableAnother"("val", "myFnc") AS SELECT *
-FROM (SELECT "val", "myFnc"
-  FROM "MyTableAnother_3"
-  ORDER BY "val" NULLS FIRST) AS "t1"
+
 >>>vertx.json
 {
   "model" : {
@@ -172,7 +161,7 @@ FROM (SELECT "val", "myFnc"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM (SELECT \"val\", \"myFnc\"\n  FROM \"MyAsyncTable_1\"\n  ORDER BY \"val\" NULLS FIRST) AS \"t\"",
+            "sql" : "SELECT *\nFROM (SELECT \"val\", \"myFnc\"\n  FROM \"MyAsyncTable\"\n  ORDER BY \"val\" NULLS FIRST) AS \"t\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
@@ -196,7 +185,7 @@ FROM (SELECT "val", "myFnc"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM (SELECT \"val\", \"myFnc\"\n  FROM \"MyTable_2\"\n  ORDER BY \"val\" NULLS FIRST) AS \"t\"",
+            "sql" : "SELECT *\nFROM (SELECT \"val\", \"myFnc\"\n  FROM \"MyTable\"\n  ORDER BY \"val\" NULLS FIRST) AS \"t\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
@@ -220,7 +209,7 @@ FROM (SELECT "val", "myFnc"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM (SELECT \"val\", \"myFnc\"\n  FROM \"MyTableAnother_3\"\n  ORDER BY \"val\" NULLS FIRST) AS \"t\"",
+            "sql" : "SELECT *\nFROM (SELECT \"val\", \"myFnc\"\n  FROM \"MyTableAnother\"\n  ORDER BY \"val\" NULLS FIRST) AS \"t\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"

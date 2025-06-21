@@ -184,7 +184,7 @@ CREATE TABLE `iceberg_parquet_table_1` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'iceberg_parquet_table_1'
+  'table-name' = 'iceberg_parquet_table'
 );
 CREATE TABLE `kafka_avro_table_2` (
   `user_id` INTEGER,
@@ -197,7 +197,7 @@ CREATE TABLE `kafka_avro_table_2` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'kafka_avro_table_2'
+  'table-name' = 'kafka_avro_table'
 );
 CREATE TABLE `kafka_debezium_table_3` (
   `user_id` INTEGER,
@@ -210,7 +210,7 @@ CREATE TABLE `kafka_debezium_table_3` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'kafka_debezium_table_3'
+  'table-name' = 'kafka_debezium_table'
 );
 CREATE TABLE `kafka_safe_csv_table_4` (
   `user_id` INTEGER,
@@ -223,7 +223,7 @@ CREATE TABLE `kafka_safe_csv_table_4` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'kafka_safe_csv_table_4'
+  'table-name' = 'kafka_safe_csv_table'
 );
 CREATE TABLE `kafka_safe_json_table_5` (
   `user_id` INTEGER,
@@ -236,7 +236,7 @@ CREATE TABLE `kafka_safe_json_table_5` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'kafka_safe_json_table_5'
+  'table-name' = 'kafka_safe_json_table'
 );
 CREATE TABLE `upsert_kafka_confluent_avro_6` (
   `user_id` INTEGER NOT NULL,
@@ -248,7 +248,7 @@ CREATE TABLE `upsert_kafka_confluent_avro_6` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'upsert_kafka_confluent_avro_6'
+  'table-name' = 'upsert_kafka_confluent_avro'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`iceberg_parquet_table_1`
@@ -281,25 +281,14 @@ INSERT INTO `default_catalog`.`default_database`.`kafka_avro_table_2`
   "topics" : [ ]
 }
 >>>postgres-schema.sql
-CREATE TABLE IF NOT EXISTS "iceberg_parquet_table_1" ("user_id" INTEGER , "name" TEXT , "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
-CREATE TABLE IF NOT EXISTS "kafka_avro_table_2" ("user_id" INTEGER , "name" TEXT , "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
-CREATE TABLE IF NOT EXISTS "kafka_debezium_table_3" ("user_id" INTEGER , "name" TEXT , "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
-CREATE TABLE IF NOT EXISTS "kafka_safe_csv_table_4" ("user_id" INTEGER , "name" TEXT , "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
-CREATE TABLE IF NOT EXISTS "kafka_safe_json_table_5" ("user_id" INTEGER , "name" TEXT , "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
-CREATE TABLE IF NOT EXISTS "upsert_kafka_confluent_avro_6" ("user_id" INTEGER NOT NULL, "name" TEXT  , PRIMARY KEY ("user_id"))
+CREATE TABLE IF NOT EXISTS "iceberg_parquet_table" ("user_id" INTEGER , "name" TEXT , "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "kafka_avro_table" ("user_id" INTEGER , "name" TEXT , "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "kafka_debezium_table" ("user_id" INTEGER , "name" TEXT , "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "kafka_safe_csv_table" ("user_id" INTEGER , "name" TEXT , "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "kafka_safe_json_table" ("user_id" INTEGER , "name" TEXT , "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "upsert_kafka_confluent_avro" ("user_id" INTEGER NOT NULL, "name" TEXT  , PRIMARY KEY ("user_id"))
 >>>postgres-views.sql
-CREATE OR REPLACE VIEW "iceberg_parquet_table"("user_id", "name") AS SELECT "user_id", "name"
-FROM "iceberg_parquet_table_1";
-CREATE OR REPLACE VIEW "kafka_avro_table"("user_id", "name") AS SELECT "user_id", "name"
-FROM "kafka_avro_table_2";
-CREATE OR REPLACE VIEW "kafka_debezium_table"("user_id", "name") AS SELECT "user_id", "name"
-FROM "kafka_debezium_table_3";
-CREATE OR REPLACE VIEW "kafka_safe_csv_table"("user_id", "name") AS SELECT "user_id", "name"
-FROM "kafka_safe_csv_table_4";
-CREATE OR REPLACE VIEW "kafka_safe_json_table"("user_id", "name") AS SELECT "user_id", "name"
-FROM "kafka_safe_json_table_5";
-CREATE OR REPLACE VIEW "upsert_kafka_confluent_avro"("user_id", "name") AS SELECT *
-FROM "upsert_kafka_confluent_avro_6"
+
 >>>vertx.json
 {
   "model" : {
@@ -321,7 +310,7 @@ FROM "upsert_kafka_confluent_avro_6"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT \"user_id\", \"name\"\nFROM \"iceberg_parquet_table_1\"",
+            "sql" : "SELECT \"user_id\", \"name\"\nFROM \"iceberg_parquet_table\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
@@ -345,7 +334,7 @@ FROM "upsert_kafka_confluent_avro_6"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT \"user_id\", \"name\"\nFROM \"kafka_avro_table_2\"",
+            "sql" : "SELECT \"user_id\", \"name\"\nFROM \"kafka_avro_table\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
@@ -369,7 +358,7 @@ FROM "upsert_kafka_confluent_avro_6"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT \"user_id\", \"name\"\nFROM \"kafka_debezium_table_3\"",
+            "sql" : "SELECT \"user_id\", \"name\"\nFROM \"kafka_debezium_table\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
@@ -393,7 +382,7 @@ FROM "upsert_kafka_confluent_avro_6"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT \"user_id\", \"name\"\nFROM \"kafka_safe_csv_table_4\"",
+            "sql" : "SELECT \"user_id\", \"name\"\nFROM \"kafka_safe_csv_table\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
@@ -417,7 +406,7 @@ FROM "upsert_kafka_confluent_avro_6"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT \"user_id\", \"name\"\nFROM \"kafka_safe_json_table_5\"",
+            "sql" : "SELECT \"user_id\", \"name\"\nFROM \"kafka_safe_json_table\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
@@ -441,7 +430,7 @@ FROM "upsert_kafka_confluent_avro_6"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"upsert_kafka_confluent_avro_6\"",
+            "sql" : "SELECT *\nFROM \"upsert_kafka_confluent_avro\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"

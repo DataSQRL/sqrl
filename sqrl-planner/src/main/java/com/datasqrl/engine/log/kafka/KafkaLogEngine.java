@@ -116,7 +116,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
       Optional<TableAnalysis> tableAnalysis,
       boolean isMutation) {
     var ctxBuilder =
-        Context.builder().tableName(tableBuilder.getTableName()).origTableName(originalTableName);
+        Context.builder().tableName(originalTableName).tableId(tableBuilder.getTableName());
     var conf = isMutation ? mutationConnectorConf : streamConnectorConf;
     boolean isUpsert = false;
     List<String> messageKey = List.of();

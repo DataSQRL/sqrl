@@ -54,10 +54,9 @@ CREATE TABLE `LogData_1` (
 ) WITH (
   'connector' = 'kafka',
   'format' = 'flexible-json',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${PROPERTIES_GROUP_ID}',
-  'scan.startup.mode' = 'group-offsets',
-  'properties.auto.offset.reset' = 'earliest',
   'topic' = 'LogData'
 );
 EXECUTE STATEMENT SET BEGIN
@@ -72,9 +71,9 @@ END
     {
       "topicName" : "LogData",
       "tableName" : "LogData_1",
+      "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 1,
-      "replicasAssignments" : { },
       "config" : { }
     }
   ]

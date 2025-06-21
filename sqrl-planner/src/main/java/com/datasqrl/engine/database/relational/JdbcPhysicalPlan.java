@@ -18,7 +18,6 @@ package com.datasqrl.engine.database.relational;
 import com.datasqrl.engine.database.DatabasePhysicalPlan;
 import com.datasqrl.engine.database.relational.JdbcStatement.Type;
 import com.datasqrl.engine.pipeline.ExecutionStage;
-import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.List;
 import java.util.Map;
@@ -49,7 +48,7 @@ public class JdbcPhysicalPlan implements DatabasePhysicalPlan {
    * The original {@link JdbcEngineCreateTable} definitions so we can extract the mappings from
    * table names and ids
    */
-  @JsonIgnore List<JdbcEngineCreateTable> createTables;
+  @JsonIgnore Map<String, JdbcEngineCreateTable> tableIdMap;
 
   public List<JdbcStatement> getStatementsForType(JdbcStatement.Type type) {
     return statements.stream().filter(s -> s.getType() == type).collect(Collectors.toList());
@@ -57,15 +56,6 @@ public class JdbcPhysicalPlan implements DatabasePhysicalPlan {
 
   private static String toSql(List<JdbcStatement> statements) {
     return DeploymentArtifact.toSqlString(statements.stream().map(JdbcStatement::getSql));
-  }
-
-  @JsonIgnore
-  public Map<String, TableAnalysis> getTableId2AnalysisMap() {
-    return createTables.stream()
-        .collect(
-            Collectors.toMap(
-                createTable -> createTable.getTable().getTableName(),
-                JdbcEngineCreateTable::getTableAnalysis));
   }
 
   @JsonIgnore

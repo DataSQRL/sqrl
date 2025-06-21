@@ -41,8 +41,7 @@ public class JdbcIndexOptimization implements PhysicalPlanRewriter {
     var jdbcPlan = (JdbcPhysicalPlan) plan;
     var engine = (AbstractJDBCDatabaseEngine) jdbcPlan.getStage().getEngine();
     var indexSelectorConfig = engine.getIndexSelectorConfig();
-    var indexSelector =
-        new IndexSelector(sqrlEnv, indexSelectorConfig, jdbcPlan.getTableId2AnalysisMap());
+    var indexSelector = new IndexSelector(sqrlEnv, indexSelectorConfig, jdbcPlan.getTableIdMap());
 
     Collection<QueryIndexSummary> queryIndexSummaries =
         jdbcPlan.getQueries().stream()
@@ -52,7 +51,8 @@ public class JdbcIndexOptimization implements PhysicalPlanRewriter {
     List<IndexDefinition> indexDefinitions =
         new ArrayList<>(indexSelector.optimizeIndexes(queryIndexSummaries).keySet());
     jdbcPlan
-        .getCreateTables()
+        .getTableIdMap()
+        .values()
         .forEach(
             createTable -> {
               var tableName = createTable.getTableName();
@@ -62,7 +62,7 @@ public class JdbcIndexOptimization implements PhysicalPlanRewriter {
                   .ifPresent(
                       indexHints -> {
                         // First, remove all generated indexes for that table...
-                        indexDefinitions.removeIf(idx -> idx.getTableId().equals(tableName));
+                        indexDefinitions.removeIf(idx -> idx.getTableName().equals(tableName));
                         // and overwrite with the specified ones
                         indexDefinitions.addAll(indexHints);
                       });

@@ -131,7 +131,7 @@ CREATE TABLE `Click_1` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'Click_1'
+  'table-name' = 'Click'
 );
 CREATE TABLE `Recommendation_2` (
   `url` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -144,7 +144,7 @@ CREATE TABLE `Recommendation_2` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'Recommendation_2'
+  'table-name' = 'Recommendation'
 );
 CREATE TABLE `Trending_3` (
   `url` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -156,7 +156,7 @@ CREATE TABLE `Trending_3` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'Trending_3'
+  'table-name' = 'Trending'
 );
 CREATE TABLE `VisitAfter_4` (
   `beforeURL` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -170,7 +170,7 @@ CREATE TABLE `VisitAfter_4` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'VisitAfter_4'
+  'table-name' = 'VisitAfter'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Click_1`
@@ -191,19 +191,12 @@ INSERT INTO `default_catalog`.`default_database`.`Recommendation_2`
    ;
    END
 >>>postgres-schema.sql
-CREATE TABLE IF NOT EXISTS "Click_1" ("url" TEXT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "userid" TEXT NOT NULL , PRIMARY KEY ("url","userid","timestamp"));
-CREATE TABLE IF NOT EXISTS "Recommendation_2" ("url" TEXT NOT NULL, "rec" TEXT NOT NULL, "frequency" BIGINT NOT NULL , PRIMARY KEY ("url","rec"));
-CREATE TABLE IF NOT EXISTS "Trending_3" ("url" TEXT NOT NULL, "total" BIGINT NOT NULL , PRIMARY KEY ("url"));
-CREATE TABLE IF NOT EXISTS "VisitAfter_4" ("beforeURL" TEXT NOT NULL, "afterURL" TEXT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"))
+CREATE TABLE IF NOT EXISTS "Click" ("url" TEXT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "userid" TEXT NOT NULL , PRIMARY KEY ("url","userid","timestamp"));
+CREATE TABLE IF NOT EXISTS "Recommendation" ("url" TEXT NOT NULL, "rec" TEXT NOT NULL, "frequency" BIGINT NOT NULL , PRIMARY KEY ("url","rec"));
+CREATE TABLE IF NOT EXISTS "Trending" ("url" TEXT NOT NULL, "total" BIGINT NOT NULL , PRIMARY KEY ("url"));
+CREATE TABLE IF NOT EXISTS "VisitAfter" ("beforeURL" TEXT NOT NULL, "afterURL" TEXT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"))
 >>>postgres-views.sql
-CREATE OR REPLACE VIEW "Click"("url", "timestamp", "userid") AS SELECT *
-FROM "Click_1";
-CREATE OR REPLACE VIEW "Trending"("url", "total") AS SELECT *
-FROM (SELECT "url", "total"
-  FROM "Trending_3"
-  ORDER BY "total" DESC NULLS LAST, "url" NULLS FIRST) AS "t1";
-CREATE OR REPLACE VIEW "VisitAfter"("beforeURL", "afterURL", "timestamp") AS SELECT "beforeURL", "afterURL", "timestamp"
-FROM "VisitAfter_4"
+
 >>>vertx.json
 {
   "model" : {
@@ -225,7 +218,7 @@ FROM "VisitAfter_4"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Click_1\"",
+            "sql" : "SELECT *\nFROM \"Click\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
@@ -253,7 +246,7 @@ FROM "VisitAfter_4"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM (SELECT \"url\", \"rec\", \"frequency\"\n  FROM \"Recommendation_2\"\n  ORDER BY \"url\" NULLS FIRST, \"frequency\" DESC NULLS LAST) AS \"t\"\nWHERE \"url\" = $1",
+            "sql" : "SELECT *\nFROM (SELECT \"url\", \"rec\", \"frequency\"\n  FROM \"Recommendation\"\n  ORDER BY \"url\" NULLS FIRST, \"frequency\" DESC NULLS LAST) AS \"t\"\nWHERE \"url\" = $1",
             "parameters" : [
               {
                 "type" : "arg",
@@ -282,7 +275,7 @@ FROM "VisitAfter_4"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM (SELECT \"url\", \"total\"\n  FROM \"Trending_3\"\n  ORDER BY \"total\" DESC NULLS LAST, \"url\" NULLS FIRST) AS \"t\"",
+            "sql" : "SELECT *\nFROM (SELECT \"url\", \"total\"\n  FROM \"Trending\"\n  ORDER BY \"total\" DESC NULLS LAST, \"url\" NULLS FIRST) AS \"t\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
@@ -306,7 +299,7 @@ FROM "VisitAfter_4"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT \"beforeURL\", \"afterURL\", \"timestamp\"\nFROM \"VisitAfter_4\"",
+            "sql" : "SELECT \"beforeURL\", \"afterURL\", \"timestamp\"\nFROM \"VisitAfter\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"

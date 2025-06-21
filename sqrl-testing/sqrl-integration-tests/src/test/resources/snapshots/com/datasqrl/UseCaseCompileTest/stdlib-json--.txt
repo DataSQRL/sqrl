@@ -110,7 +110,7 @@ CREATE TABLE `Json_1` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'Json_1'
+  'table-name' = 'Json'
 );
 CREATE TABLE `UnmodifiedJsonData_2` (
   `id` BIGINT NOT NULL,
@@ -126,7 +126,7 @@ CREATE TABLE `UnmodifiedJsonData_2` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'UnmodifiedJsonData_2'
+  'table-name' = 'UnmodifiedJsonData'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Json_1`
@@ -143,15 +143,10 @@ INSERT INTO `default_catalog`.`default_database`.`UnmodifiedJsonData_2`
   "topics" : [ ]
 }
 >>>postgres-schema.sql
-CREATE TABLE IF NOT EXISTS "Json_1" ("id" BIGINT NOT NULL, "val" TEXT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));
-CREATE TABLE IF NOT EXISTS "UnmodifiedJsonData_2" ("id" BIGINT NOT NULL, "val" TEXT NOT NULL, "json_col" JSONB , "json_col_2" JSONB , "json_col_3" JSONB , "json_col_4" JSONB  , PRIMARY KEY ("id"))
+CREATE TABLE IF NOT EXISTS "Json" ("id" BIGINT NOT NULL, "val" TEXT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));
+CREATE TABLE IF NOT EXISTS "UnmodifiedJsonData" ("id" BIGINT NOT NULL, "val" TEXT NOT NULL, "json_col" JSONB , "json_col_2" JSONB , "json_col_3" JSONB , "json_col_4" JSONB  , PRIMARY KEY ("id"))
 >>>postgres-views.sql
-CREATE OR REPLACE VIEW "Json"("id", "val", "timestamp") AS SELECT *
-FROM "Json_1";
-CREATE OR REPLACE VIEW "UnmodifiedJsonData"("id", "val", "json_col", "json_col_2", "json_col_3", "json_col_4") AS SELECT *
-FROM (SELECT "id", "val", "json_col", "json_col_2", "json_col_3", "json_col_4"
-  FROM "UnmodifiedJsonData_2"
-  ORDER BY "id" NULLS FIRST) AS "t1"
+
 >>>vertx.json
 {
   "model" : {
@@ -173,7 +168,7 @@ FROM (SELECT "id", "val", "json_col", "json_col_2", "json_col_3", "json_col_4"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Json_1\"",
+            "sql" : "SELECT *\nFROM \"Json\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
@@ -197,7 +192,7 @@ FROM (SELECT "id", "val", "json_col", "json_col_2", "json_col_3", "json_col_4"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM (SELECT \"id\", \"val\", \"json_col\", \"json_col_2\", \"json_col_3\", \"json_col_4\"\n  FROM \"UnmodifiedJsonData_2\"\n  ORDER BY \"id\" NULLS FIRST) AS \"t\"",
+            "sql" : "SELECT *\nFROM (SELECT \"id\", \"val\", \"json_col\", \"json_col_2\", \"json_col_3\", \"json_col_4\"\n  FROM \"UnmodifiedJsonData\"\n  ORDER BY \"id\" NULLS FIRST) AS \"t\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"

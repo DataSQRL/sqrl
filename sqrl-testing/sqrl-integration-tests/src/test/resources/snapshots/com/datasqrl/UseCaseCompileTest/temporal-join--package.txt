@@ -113,9 +113,9 @@ CREATE TABLE `SensorReading` (
 ) WITH (
   'connector' = 'kafka',
   'format' = 'flexible-json',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${PROPERTIES_GROUP_ID}',
-  'scan.startup.mode' = 'group-offsets',
   'properties.auto.offset.reset' = 'earliest',
   'topic' = 'SensorReading'
 );
@@ -127,9 +127,9 @@ CREATE TABLE `SensorUpdates` (
 ) WITH (
   'connector' = 'kafka',
   'format' = 'flexible-json',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${PROPERTIES_GROUP_ID}',
-  'scan.startup.mode' = 'group-offsets',
   'properties.auto.offset.reset' = 'earliest',
   'topic' = 'SensorUpdates'
 );
@@ -166,7 +166,7 @@ CREATE TABLE `EnrichedSensorReading_2` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'EnrichedSensorReading_2'
+  'table-name' = 'EnrichedSensorReading'
 );
 CREATE TABLE `SensorReading_3` (
   `sensorid` INTEGER NOT NULL,
@@ -188,7 +188,7 @@ CREATE TABLE `SensorReading_4` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'SensorReading_4'
+  'table-name' = 'SensorReading'
 );
 CREATE TABLE `SensorUpdates_5` (
   `sensorid` INTEGER NOT NULL,
@@ -210,7 +210,7 @@ CREATE TABLE `SensorUpdates_6` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'SensorUpdates_6'
+  'table-name' = 'SensorUpdates'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Result_1`
@@ -244,34 +244,27 @@ INSERT INTO `default_catalog`.`default_database`.`EnrichedSensorReading_2`
     {
       "topicName" : "SensorReading",
       "tableName" : "SensorReading",
+      "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 1,
-      "replicasAssignments" : { },
       "config" : { }
     },
     {
       "topicName" : "SensorUpdates",
       "tableName" : "SensorUpdates",
+      "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 1,
-      "replicasAssignments" : { },
       "config" : { }
     }
   ]
 }
 >>>postgres-schema.sql
-CREATE TABLE IF NOT EXISTS "EnrichedSensorReading_2" ("sensorid" INTEGER NOT NULL, "temperature" FLOAT NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE NOT NULL, "sensor_name" TEXT , "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
-CREATE TABLE IF NOT EXISTS "SensorReading_4" ("sensorid" INTEGER NOT NULL, "temperature" FLOAT NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
-CREATE TABLE IF NOT EXISTS "SensorUpdates_6" ("sensorid" INTEGER NOT NULL, "sensor_name" TEXT NOT NULL, "lastUpdated" TIMESTAMP WITH TIME ZONE NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"))
+CREATE TABLE IF NOT EXISTS "EnrichedSensorReading" ("sensorid" INTEGER NOT NULL, "temperature" FLOAT NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE NOT NULL, "sensor_name" TEXT , "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" INTEGER NOT NULL, "temperature" FLOAT NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "SensorUpdates" ("sensorid" INTEGER NOT NULL, "sensor_name" TEXT NOT NULL, "lastUpdated" TIMESTAMP WITH TIME ZONE NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"))
 >>>postgres-views.sql
-CREATE OR REPLACE VIEW "EnrichedSensorReading"("sensorid", "temperature", "event_time", "sensor_name") AS SELECT *
-FROM (SELECT "sensorid", "temperature", "event_time", "sensor_name"
-  FROM "EnrichedSensorReading_2"
-  ORDER BY "event_time" NULLS FIRST) AS "t3";
-CREATE OR REPLACE VIEW "SensorReading"("sensorid", "temperature", "event_time") AS SELECT "sensorid", "temperature", "event_time"
-FROM "SensorReading_4";
-CREATE OR REPLACE VIEW "SensorUpdates"("sensorid", "sensor_name", "lastUpdated") AS SELECT "sensorid", "sensor_name", "lastUpdated"
-FROM "SensorUpdates_6"
+
 >>>vertx.json
 {
   "model" : {
@@ -293,7 +286,7 @@ FROM "SensorUpdates_6"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM (SELECT \"sensorid\", \"temperature\", \"event_time\", \"sensor_name\"\n  FROM \"EnrichedSensorReading_2\"\n  ORDER BY \"event_time\" NULLS FIRST) AS \"t0\"",
+            "sql" : "SELECT *\nFROM (SELECT \"sensorid\", \"temperature\", \"event_time\", \"sensor_name\"\n  FROM \"EnrichedSensorReading\"\n  ORDER BY \"event_time\" NULLS FIRST) AS \"t0\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
@@ -317,7 +310,7 @@ FROM "SensorUpdates_6"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT \"sensorid\", \"temperature\", \"event_time\"\nFROM \"SensorReading_4\"",
+            "sql" : "SELECT \"sensorid\", \"temperature\", \"event_time\"\nFROM \"SensorReading\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
@@ -341,7 +334,7 @@ FROM "SensorUpdates_6"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT \"sensorid\", \"sensor_name\", \"lastUpdated\"\nFROM \"SensorUpdates_6\"",
+            "sql" : "SELECT \"sensorid\", \"sensor_name\", \"lastUpdated\"\nFROM \"SensorUpdates\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"

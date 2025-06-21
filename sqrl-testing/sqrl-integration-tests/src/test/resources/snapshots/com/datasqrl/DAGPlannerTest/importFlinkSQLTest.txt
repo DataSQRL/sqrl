@@ -71,12 +71,12 @@ CREATE TABLE `Category_1` (
   `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
   PRIMARY KEY (`__pk_hash`) NOT ENFORCED
 ) WITH (
+  'table-name' = 'Category_1',
   'connector' = 'jdbc-sqrl',
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'Category_1'
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}'
 );
 CREATE TABLE `CategoryDistinct_2` (
   `categoryid` INTEGER NOT NULL,
@@ -85,12 +85,12 @@ CREATE TABLE `CategoryDistinct_2` (
   `updateTime` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`categoryid`) NOT ENFORCED
 ) WITH (
+  'table-name' = 'CategoryDistinct_2',
   'connector' = 'jdbc-sqrl',
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'CategoryDistinct_2'
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Category_1`

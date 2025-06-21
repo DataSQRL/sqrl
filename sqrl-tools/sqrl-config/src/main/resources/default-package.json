@@ -19,7 +19,7 @@
           "properties.bootstrap.servers": "${PROPERTIES_BOOTSTRAP_SERVERS}",
           "properties.group.id": "${PROPERTIES_GROUP_ID}",
           "properties.auto.offset.reset" : "earliest",
-          "topic" : "${sqrl:original-table-name}"
+          "topic" : "${sqrl:table-name}"
         },
         "kafka": {
           "connector" : "kafka",
@@ -27,7 +27,7 @@
           "flexible-json.timestamp-format.standard": "ISO-8601",
           "properties.bootstrap.servers": "${PROPERTIES_BOOTSTRAP_SERVERS}",
           "properties.group.id": "${PROPERTIES_GROUP_ID}",
-          "topic" : "${sqrl:original-table-name}"
+          "topic" : "${sqrl:table-name}"
         },
         "localfile": {
           "connector" : "filesystem",
@@ -62,7 +62,7 @@
         },
         "print": {
           "connector": "print",
-          "print-identifier": "${sqrl:original-table-name}"
+          "print-identifier": "${sqrl:table-name}"
         }
       }
     },

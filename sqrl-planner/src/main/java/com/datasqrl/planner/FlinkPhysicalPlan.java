@@ -15,7 +15,6 @@
  */
 package com.datasqrl.planner;
 
-
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.planner.tables.FlinkConnectorConfig;
 import com.fasterxml.jackson.annotation.JsonIgnore;

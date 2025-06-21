@@ -116,7 +116,7 @@ CREATE TABLE `CategoryCentroids_1` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'CategoryCentroids_1'
+  'table-name' = 'CategoryCentroids'
 );
 CREATE TABLE `VectorData_2` (
   `doc_id` INTEGER NOT NULL,
@@ -129,7 +129,7 @@ CREATE TABLE `VectorData_2` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'VectorData_2'
+  'table-name' = 'VectorData'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`CategoryCentroids_1`
@@ -148,13 +148,12 @@ INSERT INTO `default_catalog`.`default_database`.`VectorData_2`
 >>>postgres-schema.sql
 CREATE EXTENSION IF NOT EXISTS vector;
 
-CREATE TABLE IF NOT EXISTS "CategoryCentroids_1" ("category_id" INTEGER NOT NULL, "center_vector" JSONB  , PRIMARY KEY ("category_id"));
-CREATE TABLE IF NOT EXISTS "VectorData_2" ("doc_id" INTEGER NOT NULL, "category_id" INTEGER NOT NULL, "vector" VECTOR(5)  , PRIMARY KEY ("doc_id"));
+CREATE TABLE IF NOT EXISTS "CategoryCentroids" ("category_id" INTEGER NOT NULL, "center_vector" JSONB  , PRIMARY KEY ("category_id"));
+CREATE TABLE IF NOT EXISTS "VectorData" ("doc_id" INTEGER NOT NULL, "category_id" INTEGER NOT NULL, "vector" VECTOR(5)  , PRIMARY KEY ("doc_id"));
 
-CREATE INDEX IF NOT EXISTS "VectorData_2_vector_cosine_c2" ON "VectorData_2" USING HNSW ("vector" vector_cosine_ops)
+CREATE INDEX IF NOT EXISTS "VectorData_vector_cosine_c2" ON "VectorData" USING HNSW ("vector" vector_cosine_ops)
 >>>postgres-views.sql
-CREATE OR REPLACE VIEW "VectorData"("doc_id", "category_id", "vector") AS SELECT *
-FROM "VectorData_2"
+
 >>>vertx.json
 {
   "model" : {
@@ -180,7 +179,7 @@ FROM "VectorData_2"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"CategoryCentroids_1\"\nWHERE \"category_id\" = $1",
+            "sql" : "SELECT *\nFROM \"CategoryCentroids\"\nWHERE \"category_id\" = $1",
             "parameters" : [
               {
                 "type" : "arg",
@@ -209,7 +208,7 @@ FROM "VectorData_2"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"VectorData_2\"",
+            "sql" : "SELECT *\nFROM \"VectorData\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
@@ -237,7 +236,7 @@ FROM "VectorData_2"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT \"VectorData_22\".\"doc_id\", 1 - (\"VectorData_20\".\"vector\" <=> \"VectorData_22\".\"vector\") AS \"score\"\nFROM \"VectorData_2\" AS \"VectorData_20\"\n INNER JOIN \"VectorData_2\" AS \"VectorData_22\" ON \"VectorData_20\".\"doc_id\" <> \"VectorData_22\".\"doc_id\"\nWHERE \"VectorData_20\".\"doc_id\" = $1\nORDER BY 1 - (\"VectorData_20\".\"vector\" <=> \"VectorData_22\".\"vector\") DESC NULLS LAST, \"VectorData_22\".\"doc_id\" NULLS FIRST",
+            "sql" : "SELECT \"VectorData0\".\"doc_id\", 1 - (\"VectorData\".\"vector\" <=> \"VectorData0\".\"vector\") AS \"score\"\nFROM \"VectorData\"\n INNER JOIN \"VectorData\" AS \"VectorData0\" ON \"VectorData\".\"doc_id\" <> \"VectorData0\".\"doc_id\"\nWHERE \"VectorData\".\"doc_id\" = $1\nORDER BY 1 - (\"VectorData\".\"vector\" <=> \"VectorData0\".\"vector\") DESC NULLS LAST, \"VectorData0\".\"doc_id\" NULLS FIRST",
             "parameters" : [
               {
                 "type" : "arg",
@@ -270,7 +269,7 @@ FROM "VectorData_2"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT \"VectorData_22\".\"doc_id\", \"VectorData_22\".\"category_id\", \"VectorData_22\".\"vector\", 1 - (\"VectorData_20\".\"vector\" <=> \"VectorData_22\".\"vector\")\nFROM \"VectorData_2\" AS \"VectorData_20\"\n INNER JOIN \"VectorData_2\" AS \"VectorData_22\" ON 1 - (\"VectorData_20\".\"vector\" <=> \"VectorData_22\".\"vector\") > 0.5\nWHERE \"VectorData_20\".\"doc_id\" = $1 AND \"VectorData_20\".\"doc_id\" <> \"VectorData_22\".\"doc_id\"\nORDER BY 1 - (\"VectorData_20\".\"vector\" <=> \"VectorData_22\".\"vector\") DESC NULLS LAST",
+            "sql" : "SELECT \"VectorData0\".\"doc_id\", \"VectorData0\".\"category_id\", \"VectorData0\".\"vector\", 1 - (\"VectorData\".\"vector\" <=> \"VectorData0\".\"vector\")\nFROM \"VectorData\"\n INNER JOIN \"VectorData\" AS \"VectorData0\" ON 1 - (\"VectorData\".\"vector\" <=> \"VectorData0\".\"vector\") > 0.5\nWHERE \"VectorData\".\"doc_id\" = $1 AND \"VectorData\".\"doc_id\" <> \"VectorData0\".\"doc_id\"\nORDER BY 1 - (\"VectorData\".\"vector\" <=> \"VectorData0\".\"vector\") DESC NULLS LAST",
             "parameters" : [
               {
                 "type" : "arg",

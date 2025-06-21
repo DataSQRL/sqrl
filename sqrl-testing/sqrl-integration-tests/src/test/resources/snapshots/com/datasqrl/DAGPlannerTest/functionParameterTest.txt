@@ -137,12 +137,12 @@ CREATE TABLE `Customer_1` (
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED
 ) WITH (
+  'table-name' = 'Customer_1',
   'connector' = 'jdbc-sqrl',
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'Customer_1'
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}'
 );
 CREATE TABLE `CustomerByNothing_2` (
   `customerid` BIGINT NOT NULL,

@@ -120,12 +120,12 @@ CREATE TABLE `Customer_1` (
   `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED
 ) WITH (
+  'table-name' = 'Customer_1',
   'connector' = 'jdbc-sqrl',
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'Customer_1'
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}'
 );
 CREATE TABLE `CustomerOrdersJoin_2` (
   `customerid` BIGINT NOT NULL,
@@ -140,12 +140,12 @@ CREATE TABLE `CustomerOrdersJoin_2` (
   `_ingest_time0` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`customerid`, `lastUpdated`, `id`, `time`) NOT ENFORCED
 ) WITH (
+  'table-name' = 'CustomerOrdersJoin_2',
   'connector' = 'jdbc-sqrl',
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'CustomerOrdersJoin_2'
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}'
 );
 CREATE TABLE `Orders_3` (
   `id` BIGINT NOT NULL,
@@ -155,12 +155,12 @@ CREATE TABLE `Orders_3` (
   `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
 ) WITH (
+  'table-name' = 'Orders_3',
   'connector' = 'jdbc-sqrl',
   'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'Orders_3'
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Customer_1`

@@ -39,7 +39,7 @@ public interface ConnectorConf {
   @Builder
   class Context {
     String tableName;
-    String origTableName;
+    String tableId;
     String filename;
     String format;
     @Singular Map<String, String> variables;
@@ -49,8 +49,8 @@ public interface ConnectorConf {
       if (tableName != null) {
         vars.put("table-name", tableName);
       }
-      if (origTableName != null) {
-        vars.put("original-table-name", origTableName);
+      if (tableId != null) {
+        vars.put("table-id", tableId);
       }
       if (filename != null) {
         vars.put("filename", filename);

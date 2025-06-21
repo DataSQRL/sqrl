@@ -684,7 +684,7 @@ CREATE TABLE `AnotherCustomer_1` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'AnotherCustomer_1'
+  'table-name' = 'AnotherCustomer'
 );
 CREATE TABLE `Customer_2` (
   `customerid` BIGINT NOT NULL,
@@ -699,7 +699,7 @@ CREATE TABLE `Customer_2` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'Customer_2'
+  'table-name' = 'Customer'
 );
 CREATE TABLE `Customer_3` (
   `customerid` BIGINT NOT NULL,
@@ -728,7 +728,7 @@ CREATE TABLE `CustomerByMultipleTime_4` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'CustomerByMultipleTime_4'
+  'table-name' = 'CustomerByMultipleTime'
 );
 CREATE TABLE `CustomerByTime2_5` (
   `customerid` BIGINT NOT NULL,
@@ -743,7 +743,7 @@ CREATE TABLE `CustomerByTime2_5` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'CustomerByTime2_5'
+  'table-name' = 'CustomerByTime2'
 );
 CREATE TABLE `CustomerFilteredDistinct_6` (
   `customerid` BIGINT NOT NULL,
@@ -758,7 +758,7 @@ CREATE TABLE `CustomerFilteredDistinct_6` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'CustomerFilteredDistinct_6'
+  'table-name' = 'CustomerFilteredDistinct'
 );
 CREATE TABLE `CustomerSubscription_7` (
   `customerid` BIGINT NOT NULL,
@@ -794,7 +794,7 @@ CREATE TABLE `CustomerTimeWindow_9` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'CustomerTimeWindow_9'
+  'table-name' = 'CustomerTimeWindow'
 );
 CREATE TABLE `ExplicitDistinct_10` (
   `customerid` BIGINT NOT NULL,
@@ -807,7 +807,7 @@ CREATE TABLE `ExplicitDistinct_10` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'ExplicitDistinct_10'
+  'table-name' = 'ExplicitDistinct'
 );
 CREATE TABLE `ExternalOrders_11` (
   `id` BIGINT NOT NULL,
@@ -821,7 +821,7 @@ CREATE TABLE `ExternalOrders_11` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'ExternalOrders_11'
+  'table-name' = 'ExternalOrders'
 );
 CREATE TABLE `InvalidDistinct_12` (
   `customerid` BIGINT NOT NULL,
@@ -834,7 +834,7 @@ CREATE TABLE `InvalidDistinct_12` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'InvalidDistinct_12'
+  'table-name' = 'InvalidDistinct'
 );
 CREATE TABLE `Orders_13` (
   `orderid` INTEGER NOT NULL,
@@ -846,7 +846,7 @@ CREATE TABLE `Orders_13` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'Orders_13'
+  'table-name' = 'Orders'
 );
 CREATE TABLE `SelectCustomers_14` (
   `customerid` BIGINT NOT NULL,
@@ -861,7 +861,7 @@ CREATE TABLE `SelectCustomers_14` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'SelectCustomers_14'
+  'table-name' = 'SelectCustomers'
 );
 CREATE TABLE `TemporalJoin_15` (
   `id` BIGINT NOT NULL,
@@ -878,7 +878,7 @@ CREATE TABLE `TemporalJoin_15` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'TemporalJoin_15'
+  'table-name' = 'TemporalJoin'
 );
 CREATE TABLE `UnnestOrders_16` (
   `id` BIGINT NOT NULL,
@@ -896,7 +896,7 @@ CREATE TABLE `UnnestOrders_16` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'UnnestOrders_16'
+  'table-name' = 'UnnestOrders'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`AnotherCustomer_1`
@@ -998,58 +998,29 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
   ]
 }
 >>>postgres-schema.sql
-CREATE TABLE IF NOT EXISTS "AnotherCustomer_1" ("customerid" BIGINT NOT NULL, "email" TEXT NOT NULL, "lastUpdated" BIGINT NOT NULL , PRIMARY KEY ("customerid","lastUpdated"));
-CREATE TABLE IF NOT EXISTS "Customer_2" ("customerid" BIGINT NOT NULL, "email" TEXT NOT NULL, "name" TEXT NOT NULL, "lastUpdated" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("customerid","lastUpdated"));
-CREATE TABLE IF NOT EXISTS "CustomerByMultipleTime_4" ("customerid" BIGINT NOT NULL, "email" TEXT NOT NULL, "name" TEXT NOT NULL, "lastUpdated" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("customerid","email"));
-CREATE TABLE IF NOT EXISTS "CustomerByTime2_5" ("customerid" BIGINT NOT NULL, "email" TEXT NOT NULL, "name" TEXT NOT NULL, "lastUpdated" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("customerid"));
-CREATE TABLE IF NOT EXISTS "CustomerFilteredDistinct_6" ("customerid" BIGINT NOT NULL, "email" TEXT NOT NULL, "name" TEXT NOT NULL, "lastUpdated" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("customerid"));
-CREATE TABLE IF NOT EXISTS "CustomerTimeWindow_9" ("window_start" TIMESTAMP WITHOUT TIME ZONE NOT NULL, "window_end" TIMESTAMP WITHOUT TIME ZONE NOT NULL, "unique_email_count" BIGINT NOT NULL , PRIMARY KEY ("window_start","window_end"));
-CREATE TABLE IF NOT EXISTS "ExplicitDistinct_10" ("customerid" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "name" TEXT NOT NULL , PRIMARY KEY ("customerid"));
-CREATE TABLE IF NOT EXISTS "ExternalOrders_11" ("id" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "time" TIMESTAMP WITH TIME ZONE NOT NULL, "entries" JSONB  , PRIMARY KEY ("id","time"));
-CREATE TABLE IF NOT EXISTS "InvalidDistinct_12" ("customerid" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "namee" TEXT NOT NULL , PRIMARY KEY ("customerid"));
-CREATE TABLE IF NOT EXISTS "Orders_13" ("orderid" INTEGER NOT NULL, "amount" FLOAT  , PRIMARY KEY ("orderid"));
-CREATE TABLE IF NOT EXISTS "SelectCustomers_14" ("customerid" BIGINT NOT NULL, "email" TEXT NOT NULL, "name" TEXT NOT NULL, "lastUpdated" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("customerid","name"));
-CREATE TABLE IF NOT EXISTS "TemporalJoin_15" ("id" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "time" TIMESTAMP WITH TIME ZONE NOT NULL, "entries" JSONB , "customerid0" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "name" TEXT NOT NULL , PRIMARY KEY ("id","time"));
-CREATE TABLE IF NOT EXISTS "UnnestOrders_16" ("id" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "time" TIMESTAMP WITH TIME ZONE NOT NULL, "productid" BIGINT NOT NULL, "quantity" BIGINT NOT NULL, "discount" DOUBLE PRECISION , "newId" BIGINT NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "AnotherCustomer" ("customerid" BIGINT NOT NULL, "email" TEXT NOT NULL, "lastUpdated" BIGINT NOT NULL , PRIMARY KEY ("customerid","lastUpdated"));
+CREATE TABLE IF NOT EXISTS "Customer" ("customerid" BIGINT NOT NULL, "email" TEXT NOT NULL, "name" TEXT NOT NULL, "lastUpdated" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("customerid","lastUpdated"));
+CREATE TABLE IF NOT EXISTS "CustomerByMultipleTime" ("customerid" BIGINT NOT NULL, "email" TEXT NOT NULL, "name" TEXT NOT NULL, "lastUpdated" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("customerid","email"));
+CREATE TABLE IF NOT EXISTS "CustomerByTime2" ("customerid" BIGINT NOT NULL, "email" TEXT NOT NULL, "name" TEXT NOT NULL, "lastUpdated" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("customerid"));
+CREATE TABLE IF NOT EXISTS "CustomerFilteredDistinct" ("customerid" BIGINT NOT NULL, "email" TEXT NOT NULL, "name" TEXT NOT NULL, "lastUpdated" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("customerid"));
+CREATE TABLE IF NOT EXISTS "CustomerTimeWindow" ("window_start" TIMESTAMP WITHOUT TIME ZONE NOT NULL, "window_end" TIMESTAMP WITHOUT TIME ZONE NOT NULL, "unique_email_count" BIGINT NOT NULL , PRIMARY KEY ("window_start","window_end"));
+CREATE TABLE IF NOT EXISTS "ExplicitDistinct" ("customerid" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "name" TEXT NOT NULL , PRIMARY KEY ("customerid"));
+CREATE TABLE IF NOT EXISTS "ExternalOrders" ("id" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "time" TIMESTAMP WITH TIME ZONE NOT NULL, "entries" JSONB  , PRIMARY KEY ("id","time"));
+CREATE TABLE IF NOT EXISTS "InvalidDistinct" ("customerid" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "namee" TEXT NOT NULL , PRIMARY KEY ("customerid"));
+CREATE TABLE IF NOT EXISTS "Orders" ("orderid" INTEGER NOT NULL, "amount" FLOAT  , PRIMARY KEY ("orderid"));
+CREATE TABLE IF NOT EXISTS "SelectCustomers" ("customerid" BIGINT NOT NULL, "email" TEXT NOT NULL, "name" TEXT NOT NULL, "lastUpdated" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("customerid","name"));
+CREATE TABLE IF NOT EXISTS "TemporalJoin" ("id" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "time" TIMESTAMP WITH TIME ZONE NOT NULL, "entries" JSONB , "customerid0" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "name" TEXT NOT NULL , PRIMARY KEY ("id","time"));
+CREATE TABLE IF NOT EXISTS "UnnestOrders" ("id" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "time" TIMESTAMP WITH TIME ZONE NOT NULL, "productid" BIGINT NOT NULL, "quantity" BIGINT NOT NULL, "discount" DOUBLE PRECISION , "newId" BIGINT NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
 
-CREATE INDEX IF NOT EXISTS "SelectCustomers_14_hash_c2" ON "SelectCustomers_14" USING hash ("name")
+CREATE INDEX IF NOT EXISTS "SelectCustomers_hash_c2" ON "SelectCustomers" USING hash ("name")
 >>>postgres-views.sql
-CREATE OR REPLACE VIEW "AnotherCustomer"("customerid", "email", "lastUpdated") AS SELECT *
-FROM "AnotherCustomer_1";
-CREATE OR REPLACE VIEW "Customer"("customerid", "email", "name", "lastUpdated", "timestamp") AS SELECT *
-FROM "Customer_2";
-CREATE OR REPLACE VIEW "CustomerByMultipleTime"("customerid", "email", "name", "lastUpdated", "timestamp") AS SELECT *
-FROM "CustomerByMultipleTime_4";
-CREATE OR REPLACE VIEW "CustomerByTime2"("customerid", "email", "name", "lastUpdated", "timestamp") AS SELECT *
-FROM "CustomerByTime2_5";
-CREATE OR REPLACE VIEW "CustomerFilteredDistinct"("customerid", "email", "name", "lastUpdated", "timestamp") AS SELECT *
-FROM "CustomerFilteredDistinct_6";
-CREATE OR REPLACE VIEW "CustomerTimeWindow"("window_start", "window_end", "unique_email_count") AS SELECT *
-FROM "CustomerTimeWindow_9";
 CREATE OR REPLACE VIEW "CustomerTimeWindowTest"("window_start", "window_end", "unique_email_count") AS SELECT *
 FROM (SELECT "window_start", "window_end", "unique_email_count"
-  FROM "CustomerTimeWindow_9"
+  FROM "CustomerTimeWindow"
   ORDER BY "window_end" DESC NULLS LAST) AS "t3";
-CREATE OR REPLACE VIEW "ExplicitDistinct"("customerid", "timestamp", "name") AS SELECT *
-FROM "ExplicitDistinct_10";
-CREATE OR REPLACE VIEW "ExternalOrders"("id", "customerid", "time", "entries") AS SELECT *
-FROM "ExternalOrders_11";
-CREATE OR REPLACE VIEW "InvalidDistinct"("customerid", "timestamp", "namee") AS SELECT *
-FROM "InvalidDistinct_12";
 CREATE OR REPLACE VIEW "MissedTemporalJoin"("id", "customerid", "time", "entries", "customerid0", "timestamp", "name") AS SELECT *
-FROM "ExternalOrders_11" AS "ExternalOrders_112"
- INNER JOIN "ExplicitDistinct_10" AS "ExplicitDistinct_102" ON "ExternalOrders_112"."customerid" = "ExplicitDistinct_102"."customerid";
-CREATE OR REPLACE VIEW "Orders"("orderid", "amount") AS SELECT *
-FROM "Orders_13";
-CREATE OR REPLACE VIEW "SelectCustomers"("customerid", "email", "name", "lastUpdated", "timestamp") AS SELECT *
-FROM (SELECT "customerid", "email", "name", "lastUpdated", "timestamp"
-  FROM "SelectCustomers_14"
-  ORDER BY "timestamp" DESC NULLS LAST
-  FETCH NEXT 10 ROWS ONLY) AS "t1";
-CREATE OR REPLACE VIEW "TemporalJoin"("id", "customerid", "time", "entries", "customerid0", "timestamp", "name") AS SELECT *
-FROM "TemporalJoin_15";
-CREATE OR REPLACE VIEW "UnnestOrders"("id", "customerid", "time", "productid", "quantity", "discount", "newId") AS SELECT "id", "customerid", "time", "productid", "quantity", "discount", "newId"
-FROM "UnnestOrders_16"
+FROM "ExternalOrders" AS "ExternalOrders0"
+ INNER JOIN "ExplicitDistinct" AS "ExplicitDistinct0" ON "ExternalOrders0"."customerid" = "ExplicitDistinct0"."customerid"
 >>>vertx.json
 {
   "model" : {
@@ -1071,7 +1042,7 @@ FROM "UnnestOrders_16"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Customer_2\"\nWHERE $1 = \"customerid\"\nORDER BY \"timestamp\" NULLS FIRST",
+            "sql" : "SELECT *\nFROM \"Customer\"\nWHERE $1 = \"customerid\"\nORDER BY \"timestamp\" NULLS FIRST",
             "parameters" : [
               {
                 "type" : "source",
@@ -1104,7 +1075,7 @@ FROM "UnnestOrders_16"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Customer_2\"\nWHERE $2 = \"customerid\" AND CHAR_LENGTH(\"email\") >= $1\nORDER BY \"timestamp\" NULLS FIRST",
+            "sql" : "SELECT *\nFROM \"Customer\"\nWHERE $2 = \"customerid\" AND CHAR_LENGTH(\"email\") >= $1\nORDER BY \"timestamp\" NULLS FIRST",
             "parameters" : [
               {
                 "type" : "arg",
@@ -1137,7 +1108,7 @@ FROM "UnnestOrders_16"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"AnotherCustomer_1\"",
+            "sql" : "SELECT *\nFROM \"AnotherCustomer\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
@@ -1161,7 +1132,7 @@ FROM "UnnestOrders_16"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Customer_2\"",
+            "sql" : "SELECT *\nFROM \"Customer\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
@@ -1185,7 +1156,7 @@ FROM "UnnestOrders_16"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"CustomerByMultipleTime_4\"",
+            "sql" : "SELECT *\nFROM \"CustomerByMultipleTime\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
@@ -1209,7 +1180,7 @@ FROM "UnnestOrders_16"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"CustomerByTime2_5\"",
+            "sql" : "SELECT *\nFROM \"CustomerByTime2\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
@@ -1233,7 +1204,7 @@ FROM "UnnestOrders_16"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"CustomerFilteredDistinct_6\"",
+            "sql" : "SELECT *\nFROM \"CustomerFilteredDistinct\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
@@ -1257,7 +1228,7 @@ FROM "UnnestOrders_16"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"CustomerTimeWindow_9\"",
+            "sql" : "SELECT *\nFROM \"CustomerTimeWindow\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
@@ -1281,7 +1252,7 @@ FROM "UnnestOrders_16"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"ExplicitDistinct_10\"",
+            "sql" : "SELECT *\nFROM \"ExplicitDistinct\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
@@ -1305,7 +1276,7 @@ FROM "UnnestOrders_16"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"ExternalOrders_11\"",
+            "sql" : "SELECT *\nFROM \"ExternalOrders\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
@@ -1329,7 +1300,7 @@ FROM "UnnestOrders_16"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"InvalidDistinct_12\"",
+            "sql" : "SELECT *\nFROM \"InvalidDistinct\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
@@ -1353,7 +1324,7 @@ FROM "UnnestOrders_16"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"ExternalOrders_11\" AS \"ExternalOrders_110\"\n INNER JOIN \"ExplicitDistinct_10\" AS \"ExplicitDistinct_100\" ON \"ExternalOrders_110\".\"customerid\" = \"ExplicitDistinct_100\".\"customerid\"",
+            "sql" : "SELECT *\nFROM \"ExternalOrders\"\n INNER JOIN \"ExplicitDistinct\" ON \"ExternalOrders\".\"customerid\" = \"ExplicitDistinct\".\"customerid\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
@@ -1377,7 +1348,7 @@ FROM "UnnestOrders_16"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Orders_13\"",
+            "sql" : "SELECT *\nFROM \"Orders\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
@@ -1401,7 +1372,7 @@ FROM "UnnestOrders_16"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM (SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\"\n  FROM \"SelectCustomers_14\"\n  ORDER BY \"timestamp\" DESC NULLS LAST\n  FETCH NEXT 10 ROWS ONLY) AS \"t\"",
+            "sql" : "SELECT *\nFROM (SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\"\n  FROM \"SelectCustomers\"\n  ORDER BY \"timestamp\" DESC NULLS LAST\n  FETCH NEXT 10 ROWS ONLY) AS \"t\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
@@ -1425,7 +1396,7 @@ FROM "UnnestOrders_16"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"TemporalJoin_15\"",
+            "sql" : "SELECT *\nFROM \"TemporalJoin\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
@@ -1449,7 +1420,7 @@ FROM "UnnestOrders_16"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT \"id\", \"customerid\", \"time\", \"productid\", \"quantity\", \"discount\", \"newId\"\nFROM \"UnnestOrders_16\"",
+            "sql" : "SELECT \"id\", \"customerid\", \"time\", \"productid\", \"quantity\", \"discount\", \"newId\"\nFROM \"UnnestOrders\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
@@ -1477,7 +1448,7 @@ FROM "UnnestOrders_16"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Customer_2\"\nWHERE \"customerid\" > $1",
+            "sql" : "SELECT *\nFROM \"Customer\"\nWHERE \"customerid\" > $1",
             "parameters" : [
               {
                 "type" : "arg",
@@ -1510,7 +1481,7 @@ FROM "UnnestOrders_16"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"AnotherCustomer_1\"\nWHERE \"customerid\" = $1",
+            "sql" : "SELECT *\nFROM \"AnotherCustomer\"\nWHERE \"customerid\" = $1",
             "parameters" : [
               {
                 "type" : "arg",
@@ -1547,7 +1518,7 @@ FROM "UnnestOrders_16"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"Customer_2\"\n  WHERE \"customerid\" > $2) AS \"t0\"\nWHERE \"customerid\" > $1",
+            "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"Customer\"\n  WHERE \"customerid\" > $2) AS \"t0\"\nWHERE \"customerid\" > $1",
             "parameters" : [
               {
                 "type" : "arg",

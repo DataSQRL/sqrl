@@ -48,8 +48,8 @@ public class PrintEngine implements ExportEngine {
     tableBuilder.setConnectorOptions(
         connectorConf.toMapWithSubstitution(
             Context.builder()
-                .tableName(tableBuilder.getTableName())
-                .origTableName(originalTableName)
+                .tableName(originalTableName)
+                .tableId(tableBuilder.getTableName())
                 .build()));
     return EngineCreateTable.NONE;
   }

@@ -83,7 +83,7 @@ CREATE TABLE `OrderCount_1` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'OrderCount_1'
+  'table-name' = 'OrderCount'
 );
 CREATE TABLE `Orders_2` (
   `id` BIGINT NOT NULL,
@@ -99,7 +99,7 @@ CREATE TABLE `Orders_2` (
   'driver' = 'org.postgresql.Driver',
   'username' = '${JDBC_USERNAME}',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'Orders_2'
+  'table-name' = 'Orders'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`OrderCount_1`
@@ -112,10 +112,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
  ;
  END
 >>>postgres-schema.sql
-CREATE TABLE IF NOT EXISTS "OrderCount_1" ("id" BIGINT NOT NULL, "number" BIGINT NOT NULL, "volume" INTEGER NOT NULL , PRIMARY KEY ("id"));
-CREATE TABLE IF NOT EXISTS "Orders_2" ("id" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "time" TEXT NOT NULL, "items" JSONB , "_source_time" TIMESTAMP WITH TIME ZONE , "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"))
+CREATE TABLE IF NOT EXISTS "OrderCount" ("id" BIGINT NOT NULL, "number" BIGINT NOT NULL, "volume" INTEGER NOT NULL , PRIMARY KEY ("id"));
+CREATE TABLE IF NOT EXISTS "Orders" ("id" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "time" TEXT NOT NULL, "items" JSONB , "_source_time" TIMESTAMP WITH TIME ZONE , "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"))
 >>>postgres-views.sql
-CREATE OR REPLACE VIEW "OrderCount"("id", "number", "volume") AS SELECT *
-FROM "OrderCount_1";
-CREATE OR REPLACE VIEW "Orders"("id", "customerid", "time", "items", "_source_time") AS SELECT "id", "customerid", "time", "items", "_source_time"
-FROM "Orders_2"
+
