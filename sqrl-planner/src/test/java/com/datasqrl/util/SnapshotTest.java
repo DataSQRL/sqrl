@@ -152,9 +152,10 @@ public class SnapshotTest {
                       + path.toFile().getAbsolutePath())
               .isEqualTo(expected);
         } else {
-          assertThat(path)
-              .as("WARN: The 'expected' and 'actual' values are flipped")
-              .hasContent(content);
+          var result = path.getParent().resolve("build").resolve(path.getFileName());
+          Files.createDirectories(result.getParent());
+          Files.write(result, content.getBytes());
+          assertThat(result).hasContent(expected);
         }
       }
     }

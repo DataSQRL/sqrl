@@ -123,12 +123,12 @@ CREATE TABLE `Orders_1` (
   `entries` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
 ) WITH (
-  'table-name' = 'Orders_1',
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}'
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'Orders_1',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `SelectOrders1_2` (
   `id` BIGINT NOT NULL,
@@ -137,12 +137,12 @@ CREATE TABLE `SelectOrders1_2` (
   `entries` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
 ) WITH (
-  'table-name' = 'SelectOrders1_2',
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}'
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'SelectOrders1_2',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `SelectOrders2_3` (
   `id` BIGINT NOT NULL,
@@ -151,12 +151,12 @@ CREATE TABLE `SelectOrders2_3` (
   `entries` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
 ) WITH (
-  'table-name' = 'SelectOrders2_3',
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}'
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'SelectOrders2_3',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'username' = '${JDBC_USERNAME}'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Orders_1`

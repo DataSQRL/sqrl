@@ -152,11 +152,11 @@ CREATE TABLE `SecReading_1` (
   PRIMARY KEY (`__pk_hash`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'SecReading',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'SecReading'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `SensorMaxTemp_2` (
   `sensorid` BIGINT NOT NULL,
@@ -165,11 +165,11 @@ CREATE TABLE `SensorMaxTemp_2` (
   PRIMARY KEY (`sensorid`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'SensorMaxTemp',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'SensorMaxTemp'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `SensorReading_3` (
   `sensorid` BIGINT NOT NULL,
@@ -180,11 +180,11 @@ CREATE TABLE `SensorReading_3` (
   PRIMARY KEY (`sensorid`, `time`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'SensorReading',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'SensorReading'
+  'username' = '${JDBC_USERNAME}'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`SecReading_1`

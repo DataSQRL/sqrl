@@ -1217,34 +1217,34 @@ CREATE TABLE `Numbers_1` (
   `id` INTEGER NOT NULL,
   PRIMARY KEY (`id`) NOT ENFORCED
 ) WITH (
-  'table-name' = 'Numbers_1',
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}'
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'Numbers_1',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `Numbers2_2` (
   `id` INTEGER NOT NULL,
   PRIMARY KEY (`id`) NOT ENFORCED
 ) WITH (
-  'table-name' = 'Numbers2_2',
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}'
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'Numbers2_2',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `NumbersLarge_3` (
   `id` INTEGER NOT NULL,
   PRIMARY KEY (`id`) NOT ENFORCED
 ) WITH (
-  'table-name' = 'NumbersLarge_3',
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}'
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'NumbersLarge_3',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `Orders_4` (
   `id` BIGINT NOT NULL,
@@ -1253,12 +1253,12 @@ CREATE TABLE `Orders_4` (
   `entries` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
 ) WITH (
-  'table-name' = 'Orders_4',
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}'
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'Orders_4',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'username' = '${JDBC_USERNAME}'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Numbers_1`

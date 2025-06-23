@@ -233,11 +233,11 @@ CREATE TABLE `ApplicationUpdates_1` (
   PRIMARY KEY (`loan_application_id`, `event_time`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'ApplicationUpdates',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'ApplicationUpdates'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `Applications_2` (
   `id` BIGINT NOT NULL,
@@ -250,11 +250,11 @@ CREATE TABLE `Applications_2` (
   PRIMARY KEY (`id`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'Applications',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'Applications'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `CustomerUpdates_3` (
   `customer_id` BIGINT NOT NULL,
@@ -262,11 +262,11 @@ CREATE TABLE `CustomerUpdates_3` (
   PRIMARY KEY (`customer_id`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'CustomerUpdates',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'CustomerUpdates'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `Customers_4` (
   `id` BIGINT NOT NULL,
@@ -280,11 +280,11 @@ CREATE TABLE `Customers_4` (
   PRIMARY KEY (`id`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'Customers',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'Customers'
+  'username' = '${JDBC_USERNAME}'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`ApplicationUpdates_1`

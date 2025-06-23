@@ -511,8 +511,8 @@ CREATE TABLE `CustomerPromotion_1` (
   `saved` DOUBLE NOT NULL
 ) WITH (
   'connector' = 'kafka',
-  'format' = 'flexible-json',
   'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
   'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${PROPERTIES_GROUP_ID}',
   'topic' = 'CustomerPromotion'
@@ -529,11 +529,11 @@ CREATE TABLE `Customers_2` (
   PRIMARY KEY (`id`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'Customers',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'Customers'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `CustomersOrderStats_3` (
   `customerid` BIGINT NOT NULL,
@@ -544,11 +544,11 @@ CREATE TABLE `CustomersOrderStats_3` (
   PRIMARY KEY (`customerid`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'CustomersOrderStats',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'CustomersOrderStats'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `CustomersPastPurchases_4` (
   `customerid` BIGINT NOT NULL,
@@ -558,11 +558,11 @@ CREATE TABLE `CustomersPastPurchases_4` (
   PRIMARY KEY (`customerid`, `productid`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'CustomersPastPurchases',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'CustomersPastPurchases'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `CustomersSpending_5` (
   `customerid` BIGINT NOT NULL,
@@ -573,11 +573,11 @@ CREATE TABLE `CustomersSpending_5` (
   PRIMARY KEY (`__pk_hash`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'CustomersSpending',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'CustomersSpending'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `Orders_6` (
   `id` BIGINT NOT NULL,
@@ -587,11 +587,11 @@ CREATE TABLE `Orders_6` (
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'Orders',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'Orders'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `OrdersTotals_7` (
   `id` BIGINT NOT NULL,
@@ -603,11 +603,11 @@ CREATE TABLE `OrdersTotals_7` (
   PRIMARY KEY (`__pk_hash`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'OrdersTotals',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'OrdersTotals'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `Products_8` (
   `id` BIGINT NOT NULL,
@@ -621,11 +621,11 @@ CREATE TABLE `Products_8` (
   PRIMARY KEY (`id`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'Products',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'Products'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `ProductsByCountry_9` (
   `productid` BIGINT NOT NULL,
@@ -637,11 +637,11 @@ CREATE TABLE `ProductsByCountry_9` (
   PRIMARY KEY (`__pk_hash`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'ProductsByCountry',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'ProductsByCountry'
+  'username' = '${JDBC_USERNAME}'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`promotion_ex1`

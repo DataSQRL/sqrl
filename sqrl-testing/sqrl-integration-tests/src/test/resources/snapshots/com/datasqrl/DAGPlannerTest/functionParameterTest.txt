@@ -137,12 +137,12 @@ CREATE TABLE `Customer_1` (
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED
 ) WITH (
-  'table-name' = 'Customer_1',
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}'
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'Customer_1',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `CustomerByNothing_2` (
   `customerid` BIGINT NOT NULL,
@@ -151,12 +151,12 @@ CREATE TABLE `CustomerByNothing_2` (
   `lastUpdated` BIGINT NOT NULL,
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
 ) WITH (
-  'topic' = 'kafka-CustomerByNothing',
   'connector' = 'kafka',
-  'format' = 'flexible-json',
   'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
   'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
-  'properties.group.id' = '${PROPERTIES_GROUP_ID}'
+  'properties.group.id' = '${PROPERTIES_GROUP_ID}',
+  'topic' = 'kafka-CustomerByNothing'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Customer_1`

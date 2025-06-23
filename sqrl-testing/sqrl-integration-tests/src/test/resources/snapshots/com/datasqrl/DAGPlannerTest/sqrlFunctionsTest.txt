@@ -45,24 +45,24 @@ CREATE TABLE `MyTable_1` (
   `myTimestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`val`) NOT ENFORCED
 ) WITH (
-  'table-name' = 'MyTable_1',
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}'
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'MyTable_1',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `MyTable2_2` (
   `val` INTEGER NOT NULL,
   `myTimestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`val`) NOT ENFORCED
 ) WITH (
-  'table-name' = 'MyTable2_2',
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}'
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'MyTable2_2',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'username' = '${JDBC_USERNAME}'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`MyTable_1`

@@ -637,15 +637,15 @@ CREATE TABLE `Orders` (
   `amount` FLOAT,
   PRIMARY KEY (`orderid`) NOT ENFORCED
 ) WITH (
-  'topic' = 'kafka-mutation-Orders',
   'connector' = 'upsert-kafka',
+  'key.flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'key.format' = 'flexible-json',
+  'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${PROPERTIES_GROUP_ID}',
-  'properties.auto.offset.reset' = 'earliest',
-  'key.format' = 'flexible-json',
-  'value.format' = 'flexible-json',
+  'topic' = 'kafka-mutation-Orders',
   'value.flexible-json.timestamp-format.standard' = 'ISO-8601',
-  'key.flexible-json.timestamp-format.standard' = 'ISO-8601'
+  'value.format' = 'flexible-json'
 );
 CREATE VIEW `CustomerTimeWindow`
 AS
@@ -679,12 +679,12 @@ CREATE TABLE `AnotherCustomer_1` (
   `lastUpdated` BIGINT NOT NULL,
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED
 ) WITH (
-  'table-name' = 'AnotherCustomer_1',
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}'
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'AnotherCustomer_1',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `Customer_2` (
   `customerid` BIGINT NOT NULL,
@@ -694,12 +694,12 @@ CREATE TABLE `Customer_2` (
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED
 ) WITH (
-  'table-name' = 'Customer_2',
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}'
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'Customer_2',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `Customer_3` (
   `customerid` BIGINT NOT NULL,
@@ -708,12 +708,12 @@ CREATE TABLE `Customer_3` (
   `lastUpdated` BIGINT NOT NULL,
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
 ) WITH (
-  'topic' = 'kafka-Customer',
   'connector' = 'kafka',
-  'format' = 'flexible-json',
   'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
   'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
-  'properties.group.id' = '${PROPERTIES_GROUP_ID}'
+  'properties.group.id' = '${PROPERTIES_GROUP_ID}',
+  'topic' = 'kafka-Customer'
 );
 CREATE TABLE `CustomerByMultipleTime_4` (
   `customerid` BIGINT NOT NULL,
@@ -723,12 +723,12 @@ CREATE TABLE `CustomerByMultipleTime_4` (
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`customerid`, `email`) NOT ENFORCED
 ) WITH (
-  'table-name' = 'CustomerByMultipleTime_4',
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}'
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'CustomerByMultipleTime_4',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `CustomerByTime2_5` (
   `customerid` BIGINT NOT NULL,
@@ -738,12 +738,12 @@ CREATE TABLE `CustomerByTime2_5` (
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`customerid`) NOT ENFORCED
 ) WITH (
-  'table-name' = 'CustomerByTime2_5',
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}'
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'CustomerByTime2_5',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `CustomerFilteredDistinct_6` (
   `customerid` BIGINT NOT NULL,
@@ -753,12 +753,12 @@ CREATE TABLE `CustomerFilteredDistinct_6` (
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`customerid`) NOT ENFORCED
 ) WITH (
-  'table-name' = 'CustomerFilteredDistinct_6',
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}'
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'CustomerFilteredDistinct_6',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `CustomerSubscription_7` (
   `customerid` BIGINT NOT NULL,
@@ -767,12 +767,12 @@ CREATE TABLE `CustomerSubscription_7` (
   `lastUpdated` BIGINT NOT NULL,
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
 ) WITH (
-  'topic' = 'kafka-CustomerSubscription',
   'connector' = 'kafka',
-  'format' = 'flexible-json',
   'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
   'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
-  'properties.group.id' = '${PROPERTIES_GROUP_ID}'
+  'properties.group.id' = '${PROPERTIES_GROUP_ID}',
+  'topic' = 'kafka-CustomerSubscription'
 );
 CREATE TABLE `TimeWindow_8` (
   `window_start` TIMESTAMP(3) NOT NULL,
@@ -789,12 +789,12 @@ CREATE TABLE `CustomerTimeWindow_9` (
   `unique_email_count` BIGINT NOT NULL,
   PRIMARY KEY (`window_start`, `window_end`) NOT ENFORCED
 ) WITH (
-  'table-name' = 'CustomerTimeWindow_9',
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}'
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'CustomerTimeWindow_9',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `ExplicitDistinct_10` (
   `customerid` BIGINT NOT NULL,
@@ -802,12 +802,12 @@ CREATE TABLE `ExplicitDistinct_10` (
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   PRIMARY KEY (`customerid`) NOT ENFORCED
 ) WITH (
-  'table-name' = 'ExplicitDistinct_10',
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}'
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'ExplicitDistinct_10',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `ExternalOrders_11` (
   `id` BIGINT NOT NULL,
@@ -816,12 +816,12 @@ CREATE TABLE `ExternalOrders_11` (
   `entries` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
 ) WITH (
-  'table-name' = 'ExternalOrders_11',
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}'
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'ExternalOrders_11',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `InvalidDistinct_12` (
   `customerid` BIGINT NOT NULL,
@@ -829,24 +829,24 @@ CREATE TABLE `InvalidDistinct_12` (
   `namee` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   PRIMARY KEY (`customerid`) NOT ENFORCED
 ) WITH (
-  'table-name' = 'InvalidDistinct_12',
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}'
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'InvalidDistinct_12',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `Orders_13` (
   `orderid` INTEGER NOT NULL,
   `amount` FLOAT,
   PRIMARY KEY (`orderid`) NOT ENFORCED
 ) WITH (
-  'table-name' = 'Orders_13',
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}'
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'Orders_13',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `SelectCustomers_14` (
   `customerid` BIGINT NOT NULL,
@@ -856,12 +856,12 @@ CREATE TABLE `SelectCustomers_14` (
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`customerid`, `name`) NOT ENFORCED
 ) WITH (
-  'table-name' = 'SelectCustomers_14',
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}'
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'SelectCustomers_14',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `TemporalJoin_15` (
   `id` BIGINT NOT NULL,
@@ -873,12 +873,12 @@ CREATE TABLE `TemporalJoin_15` (
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
 ) WITH (
-  'table-name' = 'TemporalJoin_15',
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}'
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'TemporalJoin_15',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `UnnestOrders_16` (
   `id` BIGINT NOT NULL,
@@ -891,12 +891,12 @@ CREATE TABLE `UnnestOrders_16` (
   `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
   PRIMARY KEY (`__pk_hash`) NOT ENFORCED
 ) WITH (
-  'table-name' = 'UnnestOrders_16',
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}'
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'UnnestOrders_16',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'username' = '${JDBC_USERNAME}'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`AnotherCustomer_1`

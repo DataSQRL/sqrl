@@ -320,12 +320,12 @@ CREATE TABLE `Customer_1` (
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`customerid`) NOT ENFORCED
 ) WITH (
-  'table-name' = 'Customer_1',
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}'
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'Customer_1',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `OrderCustomer_2` (
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
@@ -334,12 +334,12 @@ CREATE TABLE `OrderCustomer_2` (
   `customerid` BIGINT NOT NULL,
   PRIMARY KEY (`id`) NOT ENFORCED
 ) WITH (
-  'table-name' = 'OrderCustomer_2',
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}'
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'OrderCustomer_2',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `OrderCustomerConstant_3` (
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
@@ -348,12 +348,12 @@ CREATE TABLE `OrderCustomerConstant_3` (
   `customerid` BIGINT NOT NULL,
   PRIMARY KEY (`id`) NOT ENFORCED
 ) WITH (
-  'table-name' = 'OrderCustomerConstant_3',
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}'
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'OrderCustomerConstant_3',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `OrderCustomerLeft_4` (
   `lastUpdated` BIGINT,
@@ -362,12 +362,12 @@ CREATE TABLE `OrderCustomerLeft_4` (
   `customerid` BIGINT NOT NULL,
   PRIMARY KEY (`id`) NOT ENFORCED
 ) WITH (
-  'table-name' = 'OrderCustomerLeft_4',
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}'
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'OrderCustomerLeft_4',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `OrderCustomerLeftExcluded_5` (
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
@@ -375,12 +375,12 @@ CREATE TABLE `OrderCustomerLeftExcluded_5` (
   `customerid` BIGINT NOT NULL,
   PRIMARY KEY (`id`) NOT ENFORCED
 ) WITH (
-  'table-name' = 'OrderCustomerLeftExcluded_5',
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}'
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'OrderCustomerLeftExcluded_5',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `OrderCustomerRight_6` (
   `ouuid` BIGINT NOT NULL,
@@ -389,12 +389,12 @@ CREATE TABLE `OrderCustomerRight_6` (
   `customerid` BIGINT,
   PRIMARY KEY (`ouuid`) NOT ENFORCED
 ) WITH (
-  'table-name' = 'OrderCustomerRight_6',
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}'
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'OrderCustomerRight_6',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `OrderCustomerRightExcluded_7` (
   `lastUpdated` BIGINT NOT NULL,
@@ -403,12 +403,12 @@ CREATE TABLE `OrderCustomerRightExcluded_7` (
   `__pk_hash` INTEGER NOT NULL,
   PRIMARY KEY (`__pk_hash`) NOT ENFORCED
 ) WITH (
-  'table-name' = 'OrderCustomerRightExcluded_7',
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}'
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'OrderCustomerRightExcluded_7',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `Orders_8` (
   `id` BIGINT NOT NULL,
@@ -417,12 +417,12 @@ CREATE TABLE `Orders_8` (
   `entries` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
   PRIMARY KEY (`id`) NOT ENFORCED
 ) WITH (
-  'table-name' = 'Orders_8',
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}'
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'Orders_8',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'username' = '${JDBC_USERNAME}'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Customer_1`

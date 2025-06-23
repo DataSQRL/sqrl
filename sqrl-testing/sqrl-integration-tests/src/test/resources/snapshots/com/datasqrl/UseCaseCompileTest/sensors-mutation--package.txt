@@ -97,11 +97,11 @@ CREATE TABLE `SensorReading` (
   WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
 ) WITH (
   'connector' = 'kafka',
-  'format' = 'flexible-json',
   'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
+  'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${PROPERTIES_GROUP_ID}',
-  'properties.auto.offset.reset' = 'earliest',
   'topic' = 'SensorReading'
 );
 CREATE VIEW `SensorMaxTemp`
@@ -134,11 +134,11 @@ CREATE TABLE `HighTempAlert_1` (
   PRIMARY KEY (`__pk_hash`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'HighTempAlert',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'HighTempAlert'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `SensorMaxTemp_2` (
   `sensorid` INTEGER NOT NULL,
@@ -146,11 +146,11 @@ CREATE TABLE `SensorMaxTemp_2` (
   PRIMARY KEY (`sensorid`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'SensorMaxTemp',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'SensorMaxTemp'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `SensorReading_3` (
   `sensorid` INTEGER NOT NULL,
@@ -160,11 +160,11 @@ CREATE TABLE `SensorReading_3` (
   PRIMARY KEY (`__pk_hash`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'SensorReading',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'SensorReading'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `SensorReadingSubscription_4` (
   `sensorid` INTEGER NOT NULL,
@@ -172,8 +172,8 @@ CREATE TABLE `SensorReadingSubscription_4` (
   `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE
 ) WITH (
   'connector' = 'kafka',
-  'format' = 'flexible-json',
   'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
   'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${PROPERTIES_GROUP_ID}',
   'topic' = 'SensorReadingSubscription'

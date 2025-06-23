@@ -16,9 +16,9 @@
 package com.datasqrl.config;
 
 import com.google.common.base.Preconditions;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.TreeMap;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -53,7 +53,7 @@ public class ConnectorConfImpl implements ConnectorConf {
                     e -> Pattern.compile(getVariableRegex(e.getKey()), Pattern.CASE_INSENSITIVE),
                     Map.Entry::getValue));
 
-    Map<String, String> resultMap = new LinkedHashMap<>();
+    Map<String, String> resultMap = new TreeMap<>();
     for (Map.Entry<String, Object> entry : configMap.entrySet()) {
       var value = entry.getValue();
       if (value instanceof String strValue) {

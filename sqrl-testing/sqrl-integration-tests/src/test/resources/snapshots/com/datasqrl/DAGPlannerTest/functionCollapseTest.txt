@@ -105,12 +105,12 @@ CREATE TABLE `Customer_1` (
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED
 ) WITH (
-  'table-name' = 'Customer_1',
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}'
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'Customer_1',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `CustomerHighCount_2` (
   `window_start` TIMESTAMP(3) NOT NULL,
@@ -118,12 +118,12 @@ CREATE TABLE `CustomerHighCount_2` (
   `unique_email_count` BIGINT NOT NULL,
   PRIMARY KEY (`window_start`, `window_end`) NOT ENFORCED
 ) WITH (
-  'table-name' = 'CustomerHighCount_2',
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}'
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'CustomerHighCount_2',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `CustomerTimeWindow_3` (
   `window_start` TIMESTAMP(3) NOT NULL,
@@ -131,12 +131,12 @@ CREATE TABLE `CustomerTimeWindow_3` (
   `unique_email_count` BIGINT NOT NULL,
   PRIMARY KEY (`window_start`, `window_end`) NOT ENFORCED
 ) WITH (
-  'table-name' = 'CustomerTimeWindow_3',
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}'
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'CustomerTimeWindow_3',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'username' = '${JDBC_USERNAME}'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Customer_1`

@@ -174,12 +174,12 @@ CREATE TABLE `_MyApplications1_1` (
 )
 PARTITIONED BY (`id`)
 WITH (
-  'write.parquet.page-size-bytes' = '1000',
-  'warehouse' = '/tmp/duckdb',
-  'catalog-type' = 'hadoop',
   'catalog-name' = 'mydatabase',
+  'catalog-table' = '_MyApplications1',
+  'catalog-type' = 'hadoop',
   'connector' = 'iceberg',
-  'catalog-table' = '_MyApplications1'
+  'warehouse' = '/tmp/duckdb',
+  'write.parquet.page-size-bytes' = '1000'
 );
 CREATE TABLE `_MyApplications2_2` (
   `id` BIGINT NOT NULL,
@@ -191,12 +191,12 @@ CREATE TABLE `_MyApplications2_2` (
   `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED
 ) WITH (
-  'write.parquet.page-size-bytes' = '1000',
-  'warehouse' = '/tmp/duckdb',
-  'catalog-type' = 'hadoop',
   'catalog-name' = 'mydatabase',
+  'catalog-table' = '_MyApplications2',
+  'catalog-type' = 'hadoop',
   'connector' = 'iceberg',
-  'catalog-table' = '_MyApplications2'
+  'warehouse' = '/tmp/duckdb',
+  'write.parquet.page-size-bytes' = '1000'
 );
 CREATE TABLE `_MyApplications2_3` (
   `id` BIGINT NOT NULL,
@@ -209,11 +209,11 @@ CREATE TABLE `_MyApplications2_3` (
   PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = '_MyApplications2',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = '_MyApplications2'
+  'username' = '${JDBC_USERNAME}'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`_MyApplications1_1`

@@ -202,11 +202,11 @@ CREATE TABLE `Package_1` (
   PRIMARY KEY (`name`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'Package',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'Package'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `Submission_2` (
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -233,11 +233,11 @@ CREATE TABLE `Submission_2` (
   PRIMARY KEY (`__pk_hash`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'Submission',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'Submission'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `SubmissionTopics_3` (
   `pkgName` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -247,11 +247,11 @@ CREATE TABLE `SubmissionTopics_3` (
   PRIMARY KEY (`__pk_hash`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'SubmissionTopics',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'SubmissionTopics'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `TopicPackages_4` (
   `pkgName` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -261,11 +261,11 @@ CREATE TABLE `TopicPackages_4` (
   PRIMARY KEY (`pkgName`, `topicName`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'TopicPackages',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'TopicPackages'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `TopicSearch_5` (
   `topicName` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -273,11 +273,11 @@ CREATE TABLE `TopicSearch_5` (
   PRIMARY KEY (`topicName`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'TopicSearch',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'TopicSearch'
+  'username' = '${JDBC_USERNAME}'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Package_1`

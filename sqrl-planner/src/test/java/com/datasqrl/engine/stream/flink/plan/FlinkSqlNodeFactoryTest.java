@@ -257,8 +257,8 @@ class FlinkSqlNodeFactoryTest {
         PARTITIONED BY (`name`)
         WITH (
           'connector' = 'filesystem',
-          'path' = '/tmp/data',
-          'format' = 'csv'
+          'format' = 'csv',
+          'path' = '/tmp/data'
         )""";
     assertThat(sql.trim()).isEqualTo(expectedSql.trim());
   }

@@ -263,8 +263,8 @@ CREATE TABLE `ApplicationStatus_1` (
   `min_amount` DOUBLE NOT NULL
 ) WITH (
   'connector' = 'kafka',
-  'format' = 'flexible-json',
   'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
   'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${PROPERTIES_GROUP_ID}',
   'topic' = 'ApplicationStatus'
