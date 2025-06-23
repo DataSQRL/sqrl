@@ -13,6 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.plan.rules;
+package com.datasqrl.planner.analyzer.cost;
 
-public interface ComputeCost extends Comparable<ComputeCost> {}
+import com.datasqrl.engine.pipeline.ExecutionStage;
+import com.datasqrl.planner.analyzer.TableAnalysis;
+
+public interface CostModel {
+
+  ComputeCost getSourceSinkCost();
+
+  ComputeCost getCost(ExecutionStage executionStage, TableAnalysis tableAnalysis);
+}

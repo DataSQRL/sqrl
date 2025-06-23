@@ -25,11 +25,11 @@ import lombok.Value;
 /** TODO: change value type in map to 'String' */
 public interface ConnectorConf {
 
-  Map<String, Object> toMap();
+  Map<String, String> toMap();
 
-  Map<String, Object> toMapWithSubstitution(Map<String, String> variables);
+  Map<String, String> toMapWithSubstitution(Map<String, String> variables);
 
-  default Map<String, Object> toMapWithSubstitution(Context context) {
+  default Map<String, String> toMapWithSubstitution(Context context) {
     return toMapWithSubstitution(context.toVariables());
   }
 
@@ -39,7 +39,7 @@ public interface ConnectorConf {
   @Builder
   class Context {
     String tableName;
-    String origTableName;
+    String tableId;
     String filename;
     String format;
     @Singular Map<String, String> variables;
@@ -49,8 +49,8 @@ public interface ConnectorConf {
       if (tableName != null) {
         vars.put("table-name", tableName);
       }
-      if (origTableName != null) {
-        vars.put("original-table-name", origTableName);
+      if (tableId != null) {
+        vars.put("table-id", tableId);
       }
       if (filename != null) {
         vars.put("filename", filename);

@@ -204,7 +204,7 @@ CREATE TABLE `Package_1` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${JDBC_PASSWORD}',
-  'table-name' = 'Package_1',
+  'table-name' = 'Package',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'username' = '${JDBC_USERNAME}'
 );
@@ -235,7 +235,7 @@ CREATE TABLE `Submission_2` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${JDBC_PASSWORD}',
-  'table-name' = 'Submission_2',
+  'table-name' = 'Submission',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'username' = '${JDBC_USERNAME}'
 );
@@ -249,7 +249,7 @@ CREATE TABLE `SubmissionTopics_3` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${JDBC_PASSWORD}',
-  'table-name' = 'SubmissionTopics_3',
+  'table-name' = 'SubmissionTopics',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'username' = '${JDBC_USERNAME}'
 );
@@ -263,7 +263,7 @@ CREATE TABLE `TopicPackages_4` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${JDBC_PASSWORD}',
-  'table-name' = 'TopicPackages_4',
+  'table-name' = 'TopicPackages',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'username' = '${JDBC_USERNAME}'
 );
@@ -275,7 +275,7 @@ CREATE TABLE `TopicSearch_5` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${JDBC_PASSWORD}',
-  'table-name' = 'TopicSearch_5',
+  'table-name' = 'TopicSearch',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'username' = '${JDBC_USERNAME}'
 );
@@ -302,20 +302,17 @@ INSERT INTO `default_catalog`.`default_database`.`Submission_2`
     ;
     END
 >>>postgres-schema.sql
-CREATE TABLE IF NOT EXISTS "Package_1" ("name" TEXT NOT NULL , PRIMARY KEY ("name"));
-CREATE TABLE IF NOT EXISTS "Submission_2" ("name" TEXT NOT NULL, "version" TEXT NOT NULL, "variant" TEXT NOT NULL, "latest" BOOLEAN NOT NULL, "type" TEXT NOT NULL, "license" TEXT NOT NULL, "repository" TEXT NOT NULL, "homepage" TEXT NOT NULL, "documentation" TEXT NOT NULL, "readme" TEXT NOT NULL, "description" TEXT NOT NULL, "keywords" JSONB , "uniqueId" TEXT NOT NULL, "file" TEXT NOT NULL, "hash" TEXT NOT NULL, "authorId" TEXT NOT NULL, "submissionTime" TIMESTAMP WITH TIME ZONE NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE NOT NULL, "variant0" TEXT NOT NULL, "repoURL" TEXT NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
-CREATE TABLE IF NOT EXISTS "SubmissionTopics_3" ("pkgName" TEXT NOT NULL, "topicName" TEXT NOT NULL, "submissionTime" TIMESTAMP WITH TIME ZONE NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
-CREATE TABLE IF NOT EXISTS "TopicPackages_4" ("pkgName" TEXT NOT NULL, "topicName" TEXT NOT NULL, "numSubmissions" BIGINT NOT NULL, "lastSubmission" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("pkgName","topicName"));
-CREATE TABLE IF NOT EXISTS "TopicSearch_5" ("topicName" TEXT NOT NULL, "numPackages" BIGINT NOT NULL , PRIMARY KEY ("topicName"));
+CREATE TABLE IF NOT EXISTS "Package" ("name" TEXT NOT NULL , PRIMARY KEY ("name"));
+CREATE TABLE IF NOT EXISTS "Submission" ("name" TEXT NOT NULL, "version" TEXT NOT NULL, "variant" TEXT NOT NULL, "latest" BOOLEAN NOT NULL, "type" TEXT NOT NULL, "license" TEXT NOT NULL, "repository" TEXT NOT NULL, "homepage" TEXT NOT NULL, "documentation" TEXT NOT NULL, "readme" TEXT NOT NULL, "description" TEXT NOT NULL, "keywords" JSONB , "uniqueId" TEXT NOT NULL, "file" TEXT NOT NULL, "hash" TEXT NOT NULL, "authorId" TEXT NOT NULL, "submissionTime" TIMESTAMP WITH TIME ZONE NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE NOT NULL, "variant0" TEXT NOT NULL, "repoURL" TEXT NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "SubmissionTopics" ("pkgName" TEXT NOT NULL, "topicName" TEXT NOT NULL, "submissionTime" TIMESTAMP WITH TIME ZONE NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "TopicPackages" ("pkgName" TEXT NOT NULL, "topicName" TEXT NOT NULL, "numSubmissions" BIGINT NOT NULL, "lastSubmission" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("pkgName","topicName"));
+CREATE TABLE IF NOT EXISTS "TopicSearch" ("topicName" TEXT NOT NULL, "numPackages" BIGINT NOT NULL , PRIMARY KEY ("topicName"));
 
-CREATE INDEX IF NOT EXISTS "Submission_2_btree_c0c1c2" ON "Submission_2" USING btree ("name","version","variant");
-CREATE INDEX IF NOT EXISTS "Submission_2_btree_c0c2" ON "Submission_2" USING btree ("name","variant");
-CREATE INDEX IF NOT EXISTS "Submission_2_btree_c0c3" ON "Submission_2" USING btree ("name","latest")
+CREATE INDEX IF NOT EXISTS "Submission_btree_c0c1c2" ON "Submission" USING btree ("name","version","variant");
+CREATE INDEX IF NOT EXISTS "Submission_btree_c0c2" ON "Submission" USING btree ("name","variant");
+CREATE INDEX IF NOT EXISTS "Submission_btree_c0c3" ON "Submission" USING btree ("name","latest")
 >>>postgres-views.sql
-CREATE OR REPLACE VIEW "Submission"("name", "version", "variant", "latest", "type", "license", "repository", "homepage", "documentation", "readme", "description", "keywords", "uniqueId", "file", "hash", "authorId", "submissionTime", "event_time", "variant0", "repoURL") AS SELECT "name", "version", "variant", "latest", "type", "license", "repository", "homepage", "documentation", "readme", "description", "keywords", "uniqueId", "file", "hash", "authorId", "submissionTime", "event_time", "variant0", "repoURL"
-FROM "Submission_2";
-CREATE OR REPLACE VIEW "SubmissionTopics"("pkgName", "topicName", "submissionTime") AS SELECT "pkgName", "topicName", "submissionTime"
-FROM "SubmissionTopics_3"
+
 >>>vertx.json
 {
   "model" : {
@@ -341,7 +338,7 @@ FROM "SubmissionTopics_3"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Package_1\"\nWHERE \"name\" = $1 OR $1 IS NULL",
+            "sql" : "SELECT *\nFROM \"Package\"\nWHERE \"name\" = $1 OR $1 IS NULL",
             "parameters" : [
               {
                 "type" : "arg",
@@ -361,7 +358,7 @@ FROM "SubmissionTopics_3"
           "arguments" : [ ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM (SELECT \"name\", \"version\", \"variant\", \"latest\", \"type\", \"license\", \"repository\", \"homepage\", \"documentation\", \"readme\", \"description\", \"keywords\", \"uniqueId\", \"file\", \"hash\", \"authorId\", \"submissionTime\", \"event_time\", \"variant0\", \"repoURL\"\n  FROM \"Submission_2\") AS \"t\"\nWHERE $1 = \"name\" AND \"latest\" = TRUE\nORDER BY \"submissionTime\" DESC NULLS LAST\nFETCH NEXT 1 ROWS ONLY",
+            "sql" : "SELECT *\nFROM (SELECT \"name\", \"version\", \"variant\", \"latest\", \"type\", \"license\", \"repository\", \"homepage\", \"documentation\", \"readme\", \"description\", \"keywords\", \"uniqueId\", \"file\", \"hash\", \"authorId\", \"submissionTime\", \"event_time\", \"variant0\", \"repoURL\"\n  FROM \"Submission\") AS \"t\"\nWHERE $1 = \"name\" AND \"latest\" = TRUE\nORDER BY \"submissionTime\" DESC NULLS LAST\nFETCH NEXT 1 ROWS ONLY",
             "parameters" : [
               {
                 "type" : "source",
@@ -398,7 +395,7 @@ FROM "SubmissionTopics_3"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM (SELECT \"name\", \"version\", \"variant\", \"latest\", \"type\", \"license\", \"repository\", \"homepage\", \"documentation\", \"readme\", \"description\", \"keywords\", \"uniqueId\", \"file\", \"hash\", \"authorId\", \"submissionTime\", \"event_time\", \"variant0\", \"repoURL\"\n  FROM \"Submission_2\") AS \"t\"\nWHERE $3 = \"name\" AND ($1 IS NULL OR $1 = \"version\") AND ($2 IS NULL OR $2 = \"variant\")\nORDER BY \"submissionTime\" DESC NULLS LAST",
+            "sql" : "SELECT *\nFROM (SELECT \"name\", \"version\", \"variant\", \"latest\", \"type\", \"license\", \"repository\", \"homepage\", \"documentation\", \"readme\", \"description\", \"keywords\", \"uniqueId\", \"file\", \"hash\", \"authorId\", \"submissionTime\", \"event_time\", \"variant0\", \"repoURL\"\n  FROM \"Submission\") AS \"t\"\nWHERE $3 = \"name\" AND ($1 IS NULL OR $1 = \"version\") AND ($2 IS NULL OR $2 = \"variant\")\nORDER BY \"submissionTime\" DESC NULLS LAST",
             "parameters" : [
               {
                 "type" : "arg",
@@ -439,7 +436,7 @@ FROM "SubmissionTopics_3"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM (SELECT \"topicName\", \"numPackages\"\n  FROM \"TopicSearch_5\"\n  ORDER BY \"numPackages\" DESC NULLS LAST, \"topicName\" NULLS FIRST) AS \"t\"\nWHERE \"topicName\" = $1 OR $1 IS NULL",
+            "sql" : "SELECT *\nFROM (SELECT \"topicName\", \"numPackages\"\n  FROM \"TopicSearch\"\n  ORDER BY \"numPackages\" DESC NULLS LAST, \"topicName\" NULLS FIRST) AS \"t\"\nWHERE \"topicName\" = $1 OR $1 IS NULL",
             "parameters" : [
               {
                 "type" : "arg",
@@ -472,7 +469,7 @@ FROM "SubmissionTopics_3"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM (SELECT \"pkgName\", \"topicName\", \"numSubmissions\", \"lastSubmission\"\n  FROM \"TopicPackages_4\"\n  ORDER BY \"numSubmissions\" DESC NULLS LAST, \"pkgName\" NULLS FIRST) AS \"t\"\nWHERE \"topicName\" = $1",
+            "sql" : "SELECT *\nFROM (SELECT \"pkgName\", \"topicName\", \"numSubmissions\", \"lastSubmission\"\n  FROM \"TopicPackages\"\n  ORDER BY \"numSubmissions\" DESC NULLS LAST, \"pkgName\" NULLS FIRST) AS \"t\"\nWHERE \"topicName\" = $1",
             "parameters" : [
               {
                 "type" : "arg",
@@ -492,7 +489,7 @@ FROM "SubmissionTopics_3"
           "arguments" : [ ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM (SELECT \"name\", \"version\", \"variant\", \"latest\", \"type\", \"license\", \"repository\", \"homepage\", \"documentation\", \"readme\", \"description\", \"keywords\", \"uniqueId\", \"file\", \"hash\", \"authorId\", \"submissionTime\", \"event_time\", \"variant0\", \"repoURL\"\n  FROM \"Submission_2\") AS \"t\"\nWHERE $1 = \"name\" AND \"latest\" = TRUE\nORDER BY \"submissionTime\" DESC NULLS LAST\nFETCH NEXT 1 ROWS ONLY",
+            "sql" : "SELECT *\nFROM (SELECT \"name\", \"version\", \"variant\", \"latest\", \"type\", \"license\", \"repository\", \"homepage\", \"documentation\", \"readme\", \"description\", \"keywords\", \"uniqueId\", \"file\", \"hash\", \"authorId\", \"submissionTime\", \"event_time\", \"variant0\", \"repoURL\"\n  FROM \"Submission\") AS \"t\"\nWHERE $1 = \"name\" AND \"latest\" = TRUE\nORDER BY \"submissionTime\" DESC NULLS LAST\nFETCH NEXT 1 ROWS ONLY",
             "parameters" : [
               {
                 "type" : "source",

@@ -24,6 +24,7 @@ import com.datasqrl.planner.dag.nodes.ExportNode;
 import com.datasqrl.planner.dag.nodes.PipelineNode;
 import com.datasqrl.planner.dag.nodes.TableFunctionNode;
 import com.datasqrl.planner.dag.nodes.TableNode;
+import com.datasqrl.planner.tables.FlinkConnectorConfig;
 import com.datasqrl.planner.tables.SqrlTableFunction;
 import com.datasqrl.util.CalciteHacks;
 import com.datasqrl.util.StreamUtil;
@@ -278,8 +279,8 @@ public class PipelineDAGExporter {
     Map<String, String> connector;
 
     String connectorString() {
-      if (connector != null && connector.get("connector") != null) {
-        return "Connector: " + connector.get("connector");
+      if (connector != null && connector.get(FlinkConnectorConfig.CONNECTOR_KEY) != null) {
+        return "Connector: " + connector.get(FlinkConnectorConfig.CONNECTOR_KEY);
       }
       return "";
     }

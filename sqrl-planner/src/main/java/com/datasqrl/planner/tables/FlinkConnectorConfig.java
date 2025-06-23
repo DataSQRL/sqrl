@@ -38,6 +38,7 @@ public class FlinkConnectorConfig implements ConnectorConfig {
 
   public static final String FORMAT_KEY = "format";
   public static final String VALUE_FORMAT_KEY = "value.format";
+  public static final String KEY_FORMAT_KEY = "key.format";
 
   public static Map<String, TableType> CONNECTOR_TYPE_MAP =
       ImmutableMap.of(

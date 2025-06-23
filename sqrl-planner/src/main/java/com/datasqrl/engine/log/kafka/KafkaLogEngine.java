@@ -42,6 +42,7 @@ import com.datasqrl.util.StreamUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Streams;
 import com.google.inject.Inject;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -65,23 +66,35 @@ import org.apache.flink.sql.parser.ddl.SqlTableColumn;
 @Slf4j
 public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
 
+  public static final String CONNECTOR_TOPIC_KEY = "topic";
+  public static final String UPSERT_FORMAT = "upsert-%s";
+
+  public static final EnumSet<EngineFeature> KAFKA_FEATURES = EnumSet.of(EngineFeature.MUTATIONS);
+
   @Getter private final EngineConfig engineConfig;
   private final ConnectorConf streamConnectorConf;
-  private final ConnectorConf upsertConnectorConf;
-  private final ConnectorConf keyedStreamConnectorConf;
+  private final ConnectorConf mutationConnectorConf;
 
   @Inject
   public KafkaLogEngine(PackageJson json, ConnectorFactoryFactory connectorFactory) {
-    super(KafkaLogEngineFactory.ENGINE_NAME, EngineType.LOG, EngineFeature.STANDARD_LOG);
+    super(KafkaLogEngineFactory.ENGINE_NAME, EngineType.LOG, KAFKA_FEATURES);
     this.engineConfig =
         json.getEngines()
             .getEngineConfig(KafkaLogEngineFactory.ENGINE_NAME)
             .orElseGet(() -> new EmptyEngineConfig(KafkaLogEngineFactory.ENGINE_NAME));
     this.streamConnectorConf = connectorFactory.getConfig(KafkaLogEngineFactory.ENGINE_NAME);
-    this.upsertConnectorConf =
-        connectorFactory.getConfig(KafkaLogEngineFactory.ENGINE_NAME + "-upsert");
-    this.keyedStreamConnectorConf =
-        connectorFactory.getConfig(KafkaLogEngineFactory.ENGINE_NAME + "-keyed");
+    this.mutationConnectorConf =
+        connectorFactory.getConfig(KafkaLogEngineFactory.ENGINE_NAME + "-mutation");
+  }
+
+  @Override
+  public EngineCreateTable createMutation(
+      ExecutionStage stage,
+      String originalTableName,
+      FlinkTableBuilder tableBuilder,
+      RelDataType relDataType,
+      Optional<TableAnalysis> tableAnalysis) {
+    return createInternal(stage, originalTableName, tableBuilder, relDataType, tableAnalysis, true);
   }
 
   @Override
@@ -91,43 +104,88 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
       FlinkTableBuilder tableBuilder,
       RelDataType relDataType,
       Optional<TableAnalysis> tableAnalysis) {
+    return createInternal(
+        stage, originalTableName, tableBuilder, relDataType, tableAnalysis, false);
+  }
+
+  public EngineCreateTable createInternal(
+      ExecutionStage stage,
+      String originalTableName,
+      FlinkTableBuilder tableBuilder,
+      RelDataType relDataType,
+      Optional<TableAnalysis> tableAnalysis,
+      boolean isMutation) {
     var ctxBuilder =
-        Context.builder().tableName(tableBuilder.getTableName()).origTableName(originalTableName);
-    var conf = streamConnectorConf;
+        Context.builder().tableName(originalTableName).tableId(tableBuilder.getTableName());
+    var conf = isMutation ? mutationConnectorConf : streamConnectorConf;
+    boolean isUpsert = false;
     List<String> messageKey = List.of();
     if (tableBuilder.hasPartition()) {
       messageKey = tableBuilder.getPartition();
     }
     if (tableBuilder.hasPrimaryKey()) {
       if (tableAnalysis.map(TableAnalysis::getType).orElse(TableType.STATE).isState()) {
-        conf = upsertConnectorConf;
+        isUpsert = true;
         // The primary key must be the partition key
         messageKey = List.of();
       } else {
         tableBuilder.removePrimaryKey();
       }
     }
-    if (!messageKey.isEmpty()) {
-      conf = keyedStreamConnectorConf;
-      ctxBuilder.variable("kafka-key", String.join(";", messageKey));
-    }
-    /* TODO: add engine configuration option that makes rowtime (if present in relDataType) the kafka timestamp by default by
-       annotating the column in the table with 'timestamp' metadata in the column list of the table builder
-    */
-    // Set watermark column for mutations based on 'timestamp' metadata
-    for (SqlNode node : tableBuilder.getColumnList().getList()) {
-      if (node instanceof SqlTableColumn.SqlMetadataColumn metadataColumn) {
-        if (metadataColumn
-            .getMetadataAlias()
-            .filter(s -> s.equalsIgnoreCase("timestamp"))
-            .isPresent()) {
-          // TODO: make watermark configurable to 1 milli
-          tableBuilder.setWatermarkMillis(metadataColumn.getName().getSimple(), 0);
+    if (isMutation) {
+      // Set watermark column for mutations based on 'timestamp' metadata
+      for (SqlNode node : tableBuilder.getColumnList().getList()) {
+        if (node instanceof SqlTableColumn.SqlMetadataColumn metadataColumn) {
+          if (metadataColumn
+              .getMetadataAlias()
+              .filter(s -> s.equalsIgnoreCase("timestamp"))
+              .isPresent()) {
+            // TODO: make watermark configurable to 1 milli
+            tableBuilder.setWatermarkMillis(metadataColumn.getName().getSimple(), 0);
+          }
         }
       }
     }
-    tableBuilder.setConnectorOptions(conf.toMapWithSubstitution(ctxBuilder.build()));
-    return new NewTopic(tableBuilder.getTopicName(), tableBuilder.getTableName());
+    Map<String, String> connectorConfig = conf.toMapWithSubstitution(ctxBuilder.build());
+    // Configure format depending on type
+    String format = connectorConfig.get(FlinkConnectorConfig.FORMAT_KEY);
+    Preconditions.checkArgument(
+        format != null && !format.isBlank(),
+        "Need to configure a 'format' for connector {}",
+        KafkaLogEngineFactory.ENGINE_NAME);
+
+    if (!messageKey.isEmpty()) {
+      connectorConfig.put("key.fields", String.join(";", messageKey));
+    }
+    if (isUpsert) {
+      connectorConfig.put(
+          FlinkConnectorConfig.CONNECTOR_KEY,
+          UPSERT_FORMAT.formatted(connectorConfig.get(FlinkConnectorConfig.CONNECTOR_KEY)));
+    }
+    if (!messageKey.isEmpty() || isUpsert) {
+      connectorConfig.remove(FlinkConnectorConfig.FORMAT_KEY);
+      connectorConfig.put(FlinkConnectorConfig.KEY_FORMAT_KEY, format);
+      connectorConfig.put(FlinkConnectorConfig.VALUE_FORMAT_KEY, format);
+      // Extract format-specific options and re-assign them with key. and value. prefixes
+      Map<String, String> formatOptions = new HashMap<>();
+      for (java.util.Iterator<Map.Entry<String, String>> it = connectorConfig.entrySet().iterator();
+          it.hasNext(); ) {
+        Map.Entry<String, String> entry = it.next();
+        if (entry.getKey().startsWith(format)) {
+          formatOptions.put(entry.getKey(), entry.getValue());
+          it.remove();
+        }
+      }
+      for (Map.Entry<String, String> entry : formatOptions.entrySet()) {
+        connectorConfig.put("value." + entry.getKey(), entry.getValue());
+        connectorConfig.put("key." + entry.getKey(), entry.getValue());
+      }
+    }
+
+    tableBuilder.setConnectorOptions(connectorConfig);
+    String topicName = connectorConfig.get(CONNECTOR_TOPIC_KEY);
+    // TODO: Add schema based on reldatatype
+    return new NewTopic(topicName, tableBuilder.getTableName(), format);
   }
 
   @Override

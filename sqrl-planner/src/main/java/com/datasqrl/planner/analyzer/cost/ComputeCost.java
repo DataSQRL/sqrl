@@ -13,26 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.engine.log.kafka;
+package com.datasqrl.planner.analyzer.cost;
 
-import com.datasqrl.engine.database.EngineCreateTable;
-import java.util.Map;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import com.google.common.base.Preconditions;
+import lombok.NonNull;
 
-@AllArgsConstructor
-@NoArgsConstructor
-@Getter
-public class NewTopic implements EngineCreateTable {
-  private String topicName;
-  private String tableName;
-  private String format;
-  private int numPartitions;
-  private short replicationFactor;
-  private Map<String, String> config;
+public interface ComputeCost extends Comparable<ComputeCost> {
 
-  public NewTopic(String topicName, String tableName, String format) {
-    this(topicName, tableName, format, 1, (short) 1, Map.of());
+  record Simple(double cost) implements ComputeCost {
+    @Override
+    public int compareTo(@NonNull ComputeCost o) {
+      Preconditions.checkArgument(o instanceof Simple);
+      return Double.compare(cost, ((Simple) o).cost);
+    }
   }
 }

@@ -22,10 +22,13 @@ import com.datasqrl.config.PackageJson.EmptyEngineConfig;
 import com.datasqrl.datatype.DataTypeMapping;
 import com.datasqrl.datatype.flink.iceberg.IcebergDataTypeMapper;
 import com.datasqrl.engine.database.QueryEngine;
+import com.datasqrl.planner.tables.FlinkTableBuilder;
 import com.google.inject.Inject;
 import lombok.NonNull;
 
 public class IcebergEngine extends AbstractJDBCTableFormatEngine {
+
+  public static final String CONNECTOR_TABLENAME_KEY = "catalog-table";
 
   @Inject
   public IcebergEngine(@NonNull PackageJson json, ConnectorFactoryFactory connectorFactory) {
@@ -45,6 +48,11 @@ public class IcebergEngine extends AbstractJDBCTableFormatEngine {
   @Override
   protected JdbcDialect getDialect() {
     return JdbcDialect.Iceberg;
+  }
+
+  @Override
+  public String getConnectorTableName(FlinkTableBuilder tableBuilder) {
+    return tableBuilder.getConnectorOptions().get(CONNECTOR_TABLENAME_KEY);
   }
 
   @Override

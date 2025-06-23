@@ -47,7 +47,7 @@ import com.datasqrl.plan.table.RelDataTypeTableSchema;
 import com.datasqrl.plan.validate.ExecutionGoal;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator.MutationBuilder;
 import com.datasqrl.planner.analyzer.TableAnalysis;
-import com.datasqrl.planner.analyzer.cost.SimpleCostAnalysisModel;
+import com.datasqrl.planner.analyzer.cost.CostModel;
 import com.datasqrl.planner.dag.DAGBuilder;
 import com.datasqrl.planner.dag.nodes.ExportNode;
 import com.datasqrl.planner.dag.nodes.TableFunctionNode;
@@ -129,6 +129,7 @@ public class SqlScriptPlanner {
   private final ExecutionPipeline pipeline;
   private final ExecutionGoal executionGoal;
 
+  private final CostModel costModel;
   @Getter private final DAGBuilder dagBuilder;
   @Getter private final ExecutionStage streamStage;
   private final List<ExecutionStage> tableStages;
@@ -154,6 +155,7 @@ public class SqlScriptPlanner {
     this.pipeline = pipeline;
     this.executionGoal = executionGoal;
 
+    this.costModel = packageJson.getCompilerConfig().getCostModel();
     this.dagBuilder = new DAGBuilder();
     // Extract the various types of stages supported by the configured pipeline
     var streamStage = pipeline.getStageByType(EngineType.STREAMS);
@@ -210,7 +212,7 @@ public class SqlScriptPlanner {
               .fatal(msgLocation.getMessage());
         }
         if (e instanceof ValidationException) {
-          if (e.getCause() != e) {
+          if (e.getCause() != null && e.getCause() != e) {
             e = e.getCause();
           }
         }
@@ -408,7 +410,7 @@ public class SqlScriptPlanner {
       } else {
         var visibility = new AccessVisibility(access, hints.isTest(), true, isHidden);
         addTableToDag(
-            sqrlEnv.addView(originalSql, hints, errors), hintsAndDocs, visibility, sqrlEnv);
+            sqrlEnv.addView(originalSql, hints, errors), hintsAndDocs, visibility, false, sqrlEnv);
       }
     } else if (stmt instanceof FlinkSQLStatement flinkStmt) {
       var node = sqrlEnv.parseSQL(flinkStmt.getSql().get());
@@ -420,6 +422,7 @@ public class SqlScriptPlanner {
             sqrlEnv.addView(flinkStmt.getSql().get(), hints, errors),
             hintsAndDocs,
             visibility,
+            false,
             sqrlEnv);
       } else if (node instanceof SqlCreateTable) {
         sqrlEnv
@@ -474,7 +477,7 @@ public class SqlScriptPlanner {
   public static final Name STAR = Name.system("*");
 
   private Map<ExecutionStage, StageAnalysis> getSourceSinkStageAnalysis() {
-    return Map.of(streamStage, new Cost(streamStage, SimpleCostAnalysisModel.ofSourceSink(), true));
+    return Map.of(streamStage, new Cost(streamStage, costModel.getSourceSinkCost(), true));
   }
 
   /**
@@ -505,8 +508,7 @@ public class SqlScriptPlanner {
       if (unsupported.isEmpty()) {
         stageAnalysis.put(
             executionStage,
-            new Cost(
-                executionStage, SimpleCostAnalysisModel.of(executionStage, tableAnalysis), true));
+            new Cost(executionStage, costModel.getCost(executionStage, tableAnalysis), true));
       } else {
         stageAnalysis.put(executionStage, new MissingCapability(executionStage, unsupported));
       }
@@ -598,7 +600,7 @@ public class SqlScriptPlanner {
             false,
             true,
             isHidden);
-    addTableToDag(tableAnalysis, hintsAndDocs, visibility, sqrlEnv);
+    addTableToDag(tableAnalysis, hintsAndDocs, visibility, true, sqrlEnv);
   }
 
   /**
@@ -614,9 +616,15 @@ public class SqlScriptPlanner {
       TableAnalysis tableAnalysis,
       HintsAndDocs hintsAndDocs,
       AccessVisibility visibility,
+      boolean isSource,
       Sqrl2FlinkSQLTranslator sqrlEnv) {
     var availableStages = determineStages(tableStages, hintsAndDocs.hints);
-    var tableNode = new TableNode(tableAnalysis, getStageAnalysis(tableAnalysis, availableStages));
+    var tableNode =
+        new TableNode(
+            tableAnalysis,
+            isSource
+                ? getSourceSinkStageAnalysis()
+                : getStageAnalysis(tableAnalysis, availableStages));
     dagBuilder.add(tableNode);
 
     // Figure out if and what type of access function we should add for this table
@@ -785,13 +793,13 @@ public class SqlScriptPlanner {
    * @return
    */
   private MutationBuilder getLogEngineBuilder(HintsAndDocs hintsAndDocs) {
-    var logStage = pipeline.getStageByType(EngineType.LOG);
+    var logStage = pipeline.getMutationStage();
     if (logStage.isEmpty()) {
       return (t, d) -> {
         throw new StatementParserException(
             ErrorLabel.GENERIC,
             FileLocation.START,
-            "CREATE TABLE requires that a log engine is configured");
+            "CREATE TABLE requires that a log engine is configured that supports mutations");
       };
     }
     var engine = (LogEngine) logStage.get().getEngine();
@@ -800,7 +808,7 @@ public class SqlScriptPlanner {
       var mutationBuilder = MutationQuery.builder();
       mutationBuilder.stage(logStage.get());
       mutationBuilder.createTopic(
-          engine.createTable(
+          engine.createMutation(
               logStage.get(), originalTableName, tableBuilder, datatype, Optional.empty()));
       mutationBuilder.name(Name.system(originalTableName));
       mutationBuilder.documentation(hintsAndDocs.documentation);

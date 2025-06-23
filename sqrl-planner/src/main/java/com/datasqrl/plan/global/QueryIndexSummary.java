@@ -176,7 +176,7 @@ public class QueryIndexSummary {
 
   @Override
   public String toString() {
-    return table.getNameId()
+    return table.getTableId()
         + "eq"
         + equalityColumns.toString()
         + "iq"

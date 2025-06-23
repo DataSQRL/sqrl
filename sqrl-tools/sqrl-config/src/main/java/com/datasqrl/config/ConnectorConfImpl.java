@@ -29,13 +29,13 @@ public class ConnectorConfImpl implements ConnectorConf {
   SqrlConfig sqrlConfig;
 
   @Override
-  public Map<String, Object> toMap() {
-    return sqrlConfig.toMap();
+  public Map<String, String> toMap() {
+    return (Map) sqrlConfig.toMap();
   }
 
   @Override
-  public Map<String, Object> toMapWithSubstitution(Map<String, String> variables) {
-    return replaceVariablesInValues(toMap(), variables);
+  public Map<String, String> toMapWithSubstitution(Map<String, String> variables) {
+    return replaceVariablesInValues(sqrlConfig.toMap(), variables);
   }
 
   @Override
@@ -44,12 +44,8 @@ public class ConnectorConfImpl implements ConnectorConf {
     Preconditions.checkArgument(value != null, "Should not be null: %", key);
   }
 
-  private Map<String, Object> replaceVariablesInValues(
+  private Map<String, String> replaceVariablesInValues(
       Map<String, Object> configMap, Map<String, String> variables) {
-    if (configMap.isEmpty() || variables.isEmpty()) {
-      return configMap;
-    }
-
     Map<Pattern, String> variableMatcher =
         variables.entrySet().stream()
             .collect(
@@ -57,7 +53,7 @@ public class ConnectorConfImpl implements ConnectorConf {
                     e -> Pattern.compile(getVariableRegex(e.getKey()), Pattern.CASE_INSENSITIVE),
                     Map.Entry::getValue));
 
-    Map<String, Object> resultMap = new TreeMap<>();
+    Map<String, String> resultMap = new TreeMap<>();
     for (Map.Entry<String, Object> entry : configMap.entrySet()) {
       var value = entry.getValue();
       if (value instanceof String strValue) {
@@ -71,8 +67,8 @@ public class ConnectorConfImpl implements ConnectorConf {
                     validate(
                         entry.getKey(), x -> false, "Value contains invalid variable name: " + s));
         resultMap.put(entry.getKey(), strValue);
-      } else {
-        resultMap.put(entry.getKey(), value);
+      } else if (value != null) {
+        resultMap.put(entry.getKey(), String.valueOf(value));
       }
     }
 

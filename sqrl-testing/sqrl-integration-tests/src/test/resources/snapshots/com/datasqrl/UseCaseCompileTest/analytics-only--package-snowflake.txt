@@ -309,7 +309,7 @@ CREATE TABLE `ApplicationStatus_1` (
 PARTITIONED BY (`customer_id`)
 WITH (
   'catalog-name' = 'mydatabase',
-  'catalog-table' = 'ApplicationStatus_1',
+  'catalog-table' = 'ApplicationStatus',
   'catalog-type' = 'hadoop',
   'connector' = 'iceberg',
   'warehouse' = '/tmp/duckdb',
@@ -328,7 +328,7 @@ CREATE TABLE `_Applications_2` (
 PARTITIONED BY (`loan_type_id`)
 WITH (
   'catalog-name' = 'mydatabase',
-  'catalog-table' = '_Applications_2',
+  'catalog-table' = '_Applications',
   'catalog-type' = 'hadoop',
   'connector' = 'iceberg',
   'warehouse' = '/tmp/duckdb',
@@ -347,7 +347,7 @@ CREATE TABLE `_LoanTypes_3` (
   PRIMARY KEY (`id`) NOT ENFORCED
 ) WITH (
   'catalog-name' = 'mydatabase',
-  'catalog-table' = '_LoanTypes_3',
+  'catalog-table' = '_LoanTypes',
   'catalog-type' = 'hadoop',
   'connector' = 'iceberg',
   'warehouse' = '/tmp/duckdb',
@@ -368,19 +368,17 @@ INSERT INTO `default_catalog`.`default_database`.`_Applications_2`
   ;
   END
 >>>iceberg-schema.sql
-CREATE TABLE IF NOT EXISTS "ApplicationStatus_1" ("status" TEXT NOT NULL, "message" TEXT NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE NOT NULL, "id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "loan_type_id" BIGINT NOT NULL, "amount" DOUBLE PRECISION NOT NULL, "duration" BIGINT NOT NULL, "max_amount" DOUBLE PRECISION NOT NULL, "min_amount" DOUBLE PRECISION NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
-CREATE TABLE IF NOT EXISTS "_Applications_2" ("id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "loan_type_id" BIGINT NOT NULL, "amount" DOUBLE PRECISION NOT NULL, "duration" BIGINT NOT NULL, "application_date" TIMESTAMP WITH TIME ZONE NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));
-CREATE TABLE IF NOT EXISTS "_LoanTypes_3" ("id" BIGINT NOT NULL, "name" TEXT NOT NULL, "description" TEXT NOT NULL, "interest_rate" DOUBLE PRECISION NOT NULL, "max_amount" DOUBLE PRECISION NOT NULL, "min_amount" DOUBLE PRECISION NOT NULL, "max_duration" BIGINT NOT NULL, "min_duration" BIGINT NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"))
+CREATE TABLE IF NOT EXISTS "ApplicationStatus" ("status" TEXT NOT NULL, "message" TEXT NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE NOT NULL, "id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "loan_type_id" BIGINT NOT NULL, "amount" DOUBLE PRECISION NOT NULL, "duration" BIGINT NOT NULL, "max_amount" DOUBLE PRECISION NOT NULL, "min_amount" DOUBLE PRECISION NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "_Applications" ("id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "loan_type_id" BIGINT NOT NULL, "amount" DOUBLE PRECISION NOT NULL, "duration" BIGINT NOT NULL, "application_date" TIMESTAMP WITH TIME ZONE NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));
+CREATE TABLE IF NOT EXISTS "_LoanTypes" ("id" BIGINT NOT NULL, "name" TEXT NOT NULL, "description" TEXT NOT NULL, "interest_rate" DOUBLE PRECISION NOT NULL, "max_amount" DOUBLE PRECISION NOT NULL, "min_amount" DOUBLE PRECISION NOT NULL, "max_duration" BIGINT NOT NULL, "min_duration" BIGINT NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"))
 >>>iceberg-snowflake-schema.sql
-CREATE OR REPLACE ICEBERG TABLE ApplicationStatus_1 EXTERNAL_VOLUME = '${SNOWFLAKE_EXTERNAL_VOLUME}' CATALOG = '${SNOWFLAKE_CATALOG_NAME}' CATALOG_TABLE_NAME = 'ApplicationStatus_1';
-CREATE OR REPLACE ICEBERG TABLE _Applications_2 EXTERNAL_VOLUME = '${SNOWFLAKE_EXTERNAL_VOLUME}' CATALOG = '${SNOWFLAKE_CATALOG_NAME}' CATALOG_TABLE_NAME = '_Applications_2';
-CREATE OR REPLACE ICEBERG TABLE _LoanTypes_3 EXTERNAL_VOLUME = '${SNOWFLAKE_EXTERNAL_VOLUME}' CATALOG = '${SNOWFLAKE_CATALOG_NAME}' CATALOG_TABLE_NAME = '_LoanTypes_3'
+CREATE OR REPLACE ICEBERG TABLE ApplicationStatus EXTERNAL_VOLUME = '${SNOWFLAKE_EXTERNAL_VOLUME}' CATALOG = '${SNOWFLAKE_CATALOG_NAME}' CATALOG_TABLE_NAME = 'ApplicationStatus';
+CREATE OR REPLACE ICEBERG TABLE _Applications EXTERNAL_VOLUME = '${SNOWFLAKE_EXTERNAL_VOLUME}' CATALOG = '${SNOWFLAKE_CATALOG_NAME}' CATALOG_TABLE_NAME = '_Applications';
+CREATE OR REPLACE ICEBERG TABLE _LoanTypes EXTERNAL_VOLUME = '${SNOWFLAKE_EXTERNAL_VOLUME}' CATALOG = '${SNOWFLAKE_CATALOG_NAME}' CATALOG_TABLE_NAME = '_LoanTypes'
 >>>iceberg-snowflake-views.sql
-CREATE OR REPLACE VIEW ApplicationInfo(id, customer_id, loan_type_id, amount, duration, application_date, updated_at, id0, name, description, interest_rate, max_amount, min_amount, max_duration, min_duration, updated_at0, id2) AS SELECT _Applications_20.id, _Applications_20.customer_id, _Applications_20.loan_type_id, _Applications_20.amount, _Applications_20.duration, _Applications_20.application_date, _Applications_20.updated_at, _LoanTypes_30.id AS id0, _LoanTypes_30.name, _LoanTypes_30.description, _LoanTypes_30.interest_rate, _LoanTypes_30.max_amount, _LoanTypes_30.min_amount, _LoanTypes_30.max_duration, _LoanTypes_30.min_duration, _LoanTypes_30.updated_at AS updated_at0, _LoanTypes_32.id AS id2
-FROM _Applications_2 AS _Applications_20
-INNER JOIN _LoanTypes_3 AS _LoanTypes_30 ON _Applications_20.loan_type_id = _LoanTypes_30.id
-LEFT JOIN _LoanTypes_3 AS _LoanTypes_32 ON _Applications_20.customer_id = _LoanTypes_32.id;
-CREATE OR REPLACE VIEW ApplicationStatus(status, message, event_time, id, customer_id, loan_type_id, amount, duration, max_amount, min_amount) AS SELECT status, message, event_time, id, customer_id, loan_type_id, amount, duration, max_amount, min_amount
-FROM ApplicationStatus_1
+CREATE OR REPLACE VIEW ApplicationInfo(id, customer_id, loan_type_id, amount, duration, application_date, updated_at, id0, name, description, interest_rate, max_amount, min_amount, max_duration, min_duration, updated_at0, id2) AS SELECT _Applications.id, _Applications.customer_id, _Applications.loan_type_id, _Applications.amount, _Applications.duration, _Applications.application_date, _Applications.updated_at, _LoanTypes.id AS id0, _LoanTypes.name, _LoanTypes.description, _LoanTypes.interest_rate, _LoanTypes.max_amount, _LoanTypes.min_amount, _LoanTypes.max_duration, _LoanTypes.min_duration, _LoanTypes.updated_at AS updated_at0, _LoanTypes0.id AS id2
+FROM _Applications
+INNER JOIN _LoanTypes ON _Applications.loan_type_id = _LoanTypes.id
+LEFT JOIN _LoanTypes AS _LoanTypes0 ON _Applications.customer_id = _LoanTypes0.id
 >>>iceberg-views.sql
 

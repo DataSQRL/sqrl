@@ -235,7 +235,7 @@ CREATE TABLE `ApplicationUpdates_1` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${JDBC_PASSWORD}',
-  'table-name' = 'ApplicationUpdates_1',
+  'table-name' = 'ApplicationUpdates',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'username' = '${JDBC_USERNAME}'
 );
@@ -252,7 +252,7 @@ CREATE TABLE `Applications_2` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${JDBC_PASSWORD}',
-  'table-name' = 'Applications_2',
+  'table-name' = 'Applications',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'username' = '${JDBC_USERNAME}'
 );
@@ -264,7 +264,7 @@ CREATE TABLE `CustomerUpdates_3` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${JDBC_PASSWORD}',
-  'table-name' = 'CustomerUpdates_3',
+  'table-name' = 'CustomerUpdates',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'username' = '${JDBC_USERNAME}'
 );
@@ -282,7 +282,7 @@ CREATE TABLE `Customers_4` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${JDBC_PASSWORD}',
-  'table-name' = 'Customers_4',
+  'table-name' = 'Customers',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'username' = '${JDBC_USERNAME}'
 );
@@ -305,19 +305,12 @@ INSERT INTO `default_catalog`.`default_database`.`Applications_2`
    ;
    END
 >>>postgres-schema.sql
-CREATE TABLE IF NOT EXISTS "ApplicationUpdates_1" ("loan_application_id" BIGINT NOT NULL, "status" TEXT NOT NULL, "message" TEXT NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("loan_application_id","event_time"));
-CREATE TABLE IF NOT EXISTS "Applications_2" ("id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "loan_type_id" BIGINT NOT NULL, "amount" DOUBLE PRECISION NOT NULL, "duration" BIGINT NOT NULL, "application_date" TIMESTAMP WITH TIME ZONE NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));
-CREATE TABLE IF NOT EXISTS "CustomerUpdates_3" ("customer_id" BIGINT NOT NULL, "num_updates" BIGINT NOT NULL , PRIMARY KEY ("customer_id"));
-CREATE TABLE IF NOT EXISTS "Customers_4" ("id" BIGINT NOT NULL, "first_name" TEXT NOT NULL, "last_name" TEXT NOT NULL, "email" TEXT NOT NULL, "phone" TEXT NOT NULL, "address" TEXT NOT NULL, "date_of_birth" TEXT NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"))
+CREATE TABLE IF NOT EXISTS "ApplicationUpdates" ("loan_application_id" BIGINT NOT NULL, "status" TEXT NOT NULL, "message" TEXT NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("loan_application_id","event_time"));
+CREATE TABLE IF NOT EXISTS "Applications" ("id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "loan_type_id" BIGINT NOT NULL, "amount" DOUBLE PRECISION NOT NULL, "duration" BIGINT NOT NULL, "application_date" TIMESTAMP WITH TIME ZONE NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));
+CREATE TABLE IF NOT EXISTS "CustomerUpdates" ("customer_id" BIGINT NOT NULL, "num_updates" BIGINT NOT NULL , PRIMARY KEY ("customer_id"));
+CREATE TABLE IF NOT EXISTS "Customers" ("id" BIGINT NOT NULL, "first_name" TEXT NOT NULL, "last_name" TEXT NOT NULL, "email" TEXT NOT NULL, "phone" TEXT NOT NULL, "address" TEXT NOT NULL, "date_of_birth" TEXT NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"))
 >>>postgres-views.sql
-CREATE OR REPLACE VIEW "ApplicationUpdates"("loan_application_id", "status", "message", "event_time") AS SELECT *
-FROM "ApplicationUpdates_1";
-CREATE OR REPLACE VIEW "Applications"("id", "customer_id", "loan_type_id", "amount", "duration", "application_date", "updated_at") AS SELECT *
-FROM "Applications_2";
-CREATE OR REPLACE VIEW "CustomerUpdates"("customer_id", "num_updates") AS SELECT *
-FROM "CustomerUpdates_3";
-CREATE OR REPLACE VIEW "Customers"("id", "first_name", "last_name", "email", "phone", "address", "date_of_birth", "updated_at") AS SELECT *
-FROM "Customers_4"
+
 >>>vertx.json
 {
   "model" : {
@@ -339,7 +332,7 @@ FROM "Customers_4"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"ApplicationUpdates_1\"",
+            "sql" : "SELECT *\nFROM \"ApplicationUpdates\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
@@ -363,7 +356,7 @@ FROM "Customers_4"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Applications_2\"",
+            "sql" : "SELECT *\nFROM \"Applications\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
@@ -387,7 +380,7 @@ FROM "Customers_4"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"CustomerUpdates_3\"",
+            "sql" : "SELECT *\nFROM \"CustomerUpdates\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
@@ -411,7 +404,7 @@ FROM "Customers_4"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Customers_4\"",
+            "sql" : "SELECT *\nFROM \"Customers\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"

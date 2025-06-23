@@ -64,7 +64,7 @@ CREATE TABLE `Orders_1` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${JDBC_PASSWORD}',
-  'table-name' = 'Orders_1',
+  'table-name' = 'Orders',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'username' = '${JDBC_USERNAME}'
 );
@@ -79,10 +79,9 @@ END
   "topics" : [ ]
 }
 >>>postgres-schema.sql
-CREATE TABLE IF NOT EXISTS "Orders_1" ("id" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "time" TIMESTAMP WITH TIME ZONE NOT NULL, "productid" BIGINT NOT NULL, "quantity" BIGINT NOT NULL, "unit_price" DOUBLE PRECISION , "discount" DOUBLE PRECISION , "_ingest_time" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id","customerid","time"))
+CREATE TABLE IF NOT EXISTS "Orders" ("id" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "time" TIMESTAMP WITH TIME ZONE NOT NULL, "productid" BIGINT NOT NULL, "quantity" BIGINT NOT NULL, "unit_price" DOUBLE PRECISION , "discount" DOUBLE PRECISION , "_ingest_time" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id","customerid","time"))
 >>>postgres-views.sql
-CREATE OR REPLACE VIEW "Orders"("id", "customerid", "time", "productid", "quantity", "unit_price", "discount", "_ingest_time") AS SELECT *
-FROM "Orders_1"
+
 >>>vertx.json
 {
   "model" : {
@@ -104,7 +103,7 @@ FROM "Orders_1"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Orders_1\"",
+            "sql" : "SELECT *\nFROM \"Orders\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"

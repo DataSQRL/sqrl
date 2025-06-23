@@ -88,7 +88,7 @@ CREATE TABLE `MathFunctions_1` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${JDBC_PASSWORD}',
-  'table-name' = 'MathFunctions_1',
+  'table-name' = 'MathFunctions',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'username' = '${JDBC_USERNAME}'
 );
@@ -103,10 +103,9 @@ END
   "topics" : [ ]
 }
 >>>postgres-schema.sql
-CREATE TABLE IF NOT EXISTS "MathFunctions_1" ("d" NUMERIC NOT NULL, "b" INTEGER NOT NULL, "cbrt" DOUBLE PRECISION , "copy_sign" DOUBLE PRECISION , "expm1" DOUBLE PRECISION , "hypot" DOUBLE PRECISION , "log1p" DOUBLE PRECISION , "next_after" DOUBLE PRECISION , "scalb" DOUBLE PRECISION , "ulp" DOUBLE PRECISION , "binomial_distribution" DOUBLE PRECISION , "exponential_distribution" DOUBLE PRECISION , "normal_distribution" DOUBLE PRECISION , "poisson_distribution" DOUBLE PRECISION  , PRIMARY KEY ("d"))
+CREATE TABLE IF NOT EXISTS "MathFunctions" ("d" NUMERIC NOT NULL, "b" INTEGER NOT NULL, "cbrt" DOUBLE PRECISION , "copy_sign" DOUBLE PRECISION , "expm1" DOUBLE PRECISION , "hypot" DOUBLE PRECISION , "log1p" DOUBLE PRECISION , "next_after" DOUBLE PRECISION , "scalb" DOUBLE PRECISION , "ulp" DOUBLE PRECISION , "binomial_distribution" DOUBLE PRECISION , "exponential_distribution" DOUBLE PRECISION , "normal_distribution" DOUBLE PRECISION , "poisson_distribution" DOUBLE PRECISION  , PRIMARY KEY ("d"))
 >>>postgres-views.sql
-CREATE OR REPLACE VIEW "MathFunctions"("d", "b", "cbrt", "copy_sign", "expm1", "hypot", "log1p", "next_after", "scalb", "ulp", "binomial_distribution", "exponential_distribution", "normal_distribution", "poisson_distribution") AS SELECT *
-FROM "MathFunctions_1"
+
 >>>vertx.json
 {
   "model" : {
@@ -128,7 +127,7 @@ FROM "MathFunctions_1"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"MathFunctions_1\"",
+            "sql" : "SELECT *\nFROM \"MathFunctions\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"

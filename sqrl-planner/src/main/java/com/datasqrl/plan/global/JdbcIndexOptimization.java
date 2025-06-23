@@ -41,7 +41,7 @@ public class JdbcIndexOptimization implements PhysicalPlanRewriter {
     var jdbcPlan = (JdbcPhysicalPlan) plan;
     var engine = (AbstractJDBCDatabaseEngine) jdbcPlan.getStage().getEngine();
     var indexSelectorConfig = engine.getIndexSelectorConfig();
-    var indexSelector = new IndexSelector(sqrlEnv, indexSelectorConfig, jdbcPlan.getTableMap());
+    var indexSelector = new IndexSelector(sqrlEnv, indexSelectorConfig, jdbcPlan.getTableIdMap());
 
     Collection<QueryIndexSummary> queryIndexSummaries =
         jdbcPlan.getQueries().stream()
@@ -51,18 +51,22 @@ public class JdbcIndexOptimization implements PhysicalPlanRewriter {
     List<IndexDefinition> indexDefinitions =
         new ArrayList<>(indexSelector.optimizeIndexes(queryIndexSummaries).keySet());
     jdbcPlan
-        .getTableMap()
+        .getTableIdMap()
+        .values()
         .forEach(
-            (tableName, table) ->
-                indexSelector
-                    .getIndexHints(tableName, table)
-                    .ifPresent(
-                        indexHints -> {
-                          // First, remove all generated indexes for that table...
-                          indexDefinitions.removeIf(idx -> idx.getTableId().equals(tableName));
-                          // and overwrite with the specified ones
-                          indexDefinitions.addAll(indexHints);
-                        }));
+            createTable -> {
+              var tableName = createTable.getTableName();
+              var table = createTable.getTableAnalysis();
+              indexSelector
+                  .getIndexHints(tableName, table)
+                  .ifPresent(
+                      indexHints -> {
+                        // First, remove all generated indexes for that table...
+                        indexDefinitions.removeIf(idx -> idx.getTableName().equals(tableName));
+                        // and overwrite with the specified ones
+                        indexDefinitions.addAll(indexHints);
+                      });
+            });
     var builder = jdbcPlan.toBuilder();
     var stmtFactory = engine.getStatementFactory();
     indexDefinitions.stream().sorted().map(stmtFactory::addIndex).forEach(builder::statement);

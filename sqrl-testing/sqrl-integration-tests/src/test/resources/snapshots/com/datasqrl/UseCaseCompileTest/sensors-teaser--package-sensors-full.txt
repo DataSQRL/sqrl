@@ -154,7 +154,7 @@ CREATE TABLE `SecReading_1` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${JDBC_PASSWORD}',
-  'table-name' = 'SecReading_1',
+  'table-name' = 'SecReading',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'username' = '${JDBC_USERNAME}'
 );
@@ -167,7 +167,7 @@ CREATE TABLE `SensorMaxTemp_2` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${JDBC_PASSWORD}',
-  'table-name' = 'SensorMaxTemp_2',
+  'table-name' = 'SensorMaxTemp',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'username' = '${JDBC_USERNAME}'
 );
@@ -182,7 +182,7 @@ CREATE TABLE `SensorReading_3` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${JDBC_PASSWORD}',
-  'table-name' = 'SensorReading_3',
+  'table-name' = 'SensorReading',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'username' = '${JDBC_USERNAME}'
 );
@@ -205,12 +205,11 @@ INSERT INTO `default_catalog`.`default_database`.`SensorMaxTemp_2`
   "topics" : [ ]
 }
 >>>postgres-schema.sql
-CREATE TABLE IF NOT EXISTS "SecReading_1" ("sensorid" BIGINT NOT NULL, "timeSec" TIMESTAMP WITH TIME ZONE NOT NULL, "temp" DOUBLE PRECISION NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
-CREATE TABLE IF NOT EXISTS "SensorMaxTemp_2" ("sensorid" BIGINT NOT NULL, "window_time" TIMESTAMP WITH TIME ZONE NOT NULL, "maxTemp" DOUBLE PRECISION NOT NULL , PRIMARY KEY ("sensorid"));
-CREATE TABLE IF NOT EXISTS "SensorReading_3" ("sensorid" BIGINT NOT NULL, "time" BIGINT NOT NULL, "temperature" DOUBLE PRECISION NOT NULL, "humidity" DOUBLE PRECISION NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("sensorid","time"))
+CREATE TABLE IF NOT EXISTS "SecReading" ("sensorid" BIGINT NOT NULL, "timeSec" TIMESTAMP WITH TIME ZONE NOT NULL, "temp" DOUBLE PRECISION NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "SensorMaxTemp" ("sensorid" BIGINT NOT NULL, "window_time" TIMESTAMP WITH TIME ZONE NOT NULL, "maxTemp" DOUBLE PRECISION NOT NULL , PRIMARY KEY ("sensorid"));
+CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" BIGINT NOT NULL, "time" BIGINT NOT NULL, "temperature" DOUBLE PRECISION NOT NULL, "humidity" DOUBLE PRECISION NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("sensorid","time"))
 >>>postgres-views.sql
-CREATE OR REPLACE VIEW "SensorReading"("sensorid", "time", "temperature", "humidity", "timestamp") AS SELECT *
-FROM "SensorReading_3"
+
 >>>vertx.json
 {
   "model" : {
@@ -236,7 +235,7 @@ FROM "SensorReading_3"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM (SELECT \"sensorid\", \"timeSec\", \"temp\"\n  FROM \"SecReading_1\"\n  ORDER BY \"timeSec\" DESC NULLS LAST) AS \"t0\"\nWHERE \"sensorid\" = $1",
+            "sql" : "SELECT *\nFROM (SELECT \"sensorid\", \"timeSec\", \"temp\"\n  FROM \"SecReading\"\n  ORDER BY \"timeSec\" DESC NULLS LAST) AS \"t0\"\nWHERE \"sensorid\" = $1",
             "parameters" : [
               {
                 "type" : "arg",
@@ -269,7 +268,7 @@ FROM "SensorReading_3"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"SensorMaxTemp_2\"\nWHERE \"sensorid\" = $1 OR $1 IS NULL",
+            "sql" : "SELECT *\nFROM \"SensorMaxTemp\"\nWHERE \"sensorid\" = $1 OR $1 IS NULL",
             "parameters" : [
               {
                 "type" : "arg",
@@ -298,7 +297,7 @@ FROM "SensorReading_3"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"SensorReading_3\"",
+            "sql" : "SELECT *\nFROM \"SensorReading\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"

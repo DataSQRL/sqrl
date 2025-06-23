@@ -4,13 +4,13 @@
     "flink" : {
       "connectors": {
         "kafka": {
-          "topic" : "kafka-${sqrl:original-table-name}"
+          "topic" : "kafka-${sqrl:table-name}"
         },
-        "kafka-keyed": {
-          "topic" : "kafka-keyed-${sqrl:original-table-name}"
+        "kafka-mutation": {
+          "topic" : "kafka-mutation-${sqrl:table-name}"
         },
-        "kafka-upsert": {
-          "topic" : "kafka-upsert-${sqrl:original-table-name}"
+        "postgres": {
+          "table-name": "${sqrl:table-id}"
         }
       }
     }

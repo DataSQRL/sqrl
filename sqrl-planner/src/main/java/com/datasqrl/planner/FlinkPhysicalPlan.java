@@ -16,6 +16,7 @@
 package com.datasqrl.planner;
 
 import com.datasqrl.engine.EnginePhysicalPlan;
+import com.datasqrl.planner.tables.FlinkConnectorConfig;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
@@ -101,13 +102,13 @@ public class FlinkPhysicalPlan implements EnginePhysicalPlan {
       if (node instanceof SqlCreateTable table) {
         for (SqlNode option : table.getPropertyList().getList()) {
           var sqlTableOption = (SqlTableOption) option;
-          if (sqlTableOption.getKeyString().equalsIgnoreCase("connector")) {
+          if (sqlTableOption.getKeyString().equalsIgnoreCase(FlinkConnectorConfig.CONNECTOR_KEY)) {
             connectors.add(sqlTableOption.getValueString());
           }
           switch (sqlTableOption.getKeyString()) {
-            case "format":
-            case "key.format":
-            case "value.format":
+            case FlinkConnectorConfig.FORMAT_KEY:
+            case FlinkConnectorConfig.KEY_FORMAT_KEY:
+            case FlinkConnectorConfig.VALUE_FORMAT_KEY:
               formats.add(sqlTableOption.getValueString());
           }
         }

@@ -1,0 +1,212 @@
+>>>pipeline_explain.txt
+=== SensorAggregate
+ID:     default_catalog.default_database.SensorAggregate
+Type:   state
+Stage:  postgres
+Inputs: default_catalog.default_database.SensorReading
+Annotations:
+ - sort: [0 ASC-nulls-first]
+Primary Key: sensorid
+Timestamp  : -
+Schema:
+ - sensorid: INTEGER NOT NULL
+ - maxTemp: FLOAT NOT NULL
+ - avgTemp: FLOAT NOT NULL
+Plan:
+LogicalAggregate(group=[{0}], maxTemp=[MAX($1)], avgTemp=[AVG($1)])
+  LogicalProject(sensorid=[$0], temperature=[$1])
+    LogicalTableScan(table=[[default_catalog, default_database, SensorReading]])
+SQL: CREATE VIEW SensorAggregate AS  SELECT sensorid, MAX(temperature) AS maxTemp, AVG(temperature) AS avgTemp
+                   FROM SensorReading
+                   GROUP BY sensorid ORDER BY sensorid ASC;
+
+=== SensorReading
+ID:     default_catalog.default_database.SensorReading
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database.SensorReading__base
+Annotations:
+ - stream-root: SensorReading
+Primary Key: sensorid, event_time
+Timestamp  : -
+Schema:
+ - sensorid: INTEGER NOT NULL
+ - temperature: FLOAT NOT NULL
+ - event_time: BIGINT NOT NULL
+Plan:
+LogicalTableScan(table=[[default_catalog, default_database, SensorReading]])
+SQL: CREATE VIEW `SensorReading__view`
+AS
+SELECT `SensorReading`.`sensorid`, `SensorReading`.`temperature`, `SensorReading`.`event_time`
+FROM `default_catalog`.`default_database`.`SensorReading` AS `SensorReading`
+=== SensorReadingById
+ID:     default_catalog.default_database.SensorReadingById
+Type:   query
+Stage:  postgres
+Inputs: default_catalog.default_database.SensorReading
+Annotations:
+ - stream-root: SensorReading
+ - parameters: sensorid
+ - base-table: SensorReading
+Plan:
+LogicalSort(sort0=[$2], dir0=[DESC-nulls-last])
+  LogicalProject(sensorid=[$0], temperature=[$1], event_time=[$2])
+    LogicalFilter(condition=[=($0, ?0)])
+      LogicalTableScan(table=[[default_catalog, default_database, SensorReading]])
+SQL: CREATE VIEW SensorReadingById AS  SELECT * FROM SensorReading
+                    WHERE sensorid = ?         ORDER BY event_time DESC;
+
+>>>flink-sql-no-functions.sql
+CREATE TABLE `SensorReading` (
+  `sensorid` INTEGER NOT NULL,
+  `temperature` FLOAT NOT NULL,
+  `event_time` BIGINT NOT NULL,
+  PRIMARY KEY (`sensorid`, `event_time`) NOT ENFORCED
+) WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10',
+  'rows-per-second' = '10',
+  'fields.sensorid.kind' = 'random',
+  'fields.sensorid.min' = '1',
+  'fields.sensorid.max' = '1',
+  'fields.temperature.kind' = 'sequence',
+  'fields.temperature.start' = '20',
+  'fields.temperature.end' = '29',
+  'fields.event_time.kind' = 'sequence',
+  'fields.event_time.start' = '1750533400',
+  'fields.event_time.end' = '1750533429'
+);
+CREATE VIEW `SensorAggregate`
+AS
+SELECT `sensorid`, MAX(`temperature`) AS `maxTemp`, AVG(`temperature`) AS `avgTemp`
+FROM `SensorReading`
+GROUP BY `sensorid`;
+CREATE VIEW `SensorAggregateTest`
+AS
+SELECT *
+FROM `SensorAggregate`;
+CREATE TABLE `SensorReading_1` (
+  `sensorid` INTEGER NOT NULL,
+  `temperature` FLOAT NOT NULL,
+  `event_time` BIGINT NOT NULL,
+  PRIMARY KEY (`sensorid`, `event_time`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'SensorReading',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'username' = '${JDBC_USERNAME}'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`SensorReading_1`
+(SELECT *
+ FROM `default_catalog`.`default_database`.`SensorReading`)
+;
+END
+>>>kafka.json
+{
+  "topics" : [ ]
+}
+>>>postgres-schema.sql
+CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" INTEGER NOT NULL, "temperature" FLOAT NOT NULL, "event_time" BIGINT NOT NULL , PRIMARY KEY ("sensorid","event_time"))
+>>>postgres-views.sql
+CREATE OR REPLACE VIEW "SensorAggregate"("sensorid", "maxTemp", "avgTemp") AS SELECT *
+FROM (SELECT "sensorid", MAX("temperature") AS "maxTemp", AVG("temperature") AS "avgTemp"
+  FROM "SensorReading"
+  GROUP BY "sensorid"
+  ORDER BY "sensorid" NULLS FIRST) AS "t5"
+>>>vertx.json
+{
+  "model" : {
+    "queries" : [
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "SensorAggregate",
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
+            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM (SELECT \"sensorid\", MAX(\"temperature\") AS \"maxTemp\", AVG(\"temperature\") AS \"avgTemp\"\n  FROM \"SensorReading\"\n  GROUP BY \"sensorid\"\n  ORDER BY \"sensorid\" NULLS FIRST) AS \"t1\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
+          }
+        }
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "SensorReading",
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
+            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM \"SensorReading\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
+          }
+        }
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "SensorReadingById",
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "sensorid"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
+            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM \"SensorReading\"\nWHERE \"sensorid\" = $1\nORDER BY \"event_time\" DESC NULLS LAST",
+            "parameters" : [
+              {
+                "type" : "arg",
+                "path" : "sensorid"
+              }
+            ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
+          }
+        }
+      }
+    ],
+    "mutations" : [ ],
+    "subscriptions" : [ ],
+    "schema" : {
+      "type" : "string",
+      "schema" : "\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Query {\n  SensorAggregate(limit: Int = 10, offset: Int = 0): [SensorAggregate!]\n  SensorReading(limit: Int = 10, offset: Int = 0): [SensorReading!]\n  SensorReadingById(sensorid: Int!, limit: Int = 10, offset: Int = 0): [SensorReading!]\n}\n\ntype SensorAggregate {\n  sensorid: Int!\n  maxTemp: Float!\n  avgTemp: Float!\n}\n\ntype SensorReading {\n  sensorid: Int!\n  temperature: Float!\n  event_time: GraphQLBigInteger!\n}\n"
+    }
+  }
+}
