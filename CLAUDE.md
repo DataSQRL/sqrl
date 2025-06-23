@@ -130,6 +130,24 @@ This is a multi-module Maven project with the following key components:
       .collect(Collectors.toList());
   ```
 
+### Snapshot Files
+
+Snapshot files are located in `sqrl-testing/sqrl-integration-tests/src/test/resources/snapshots/com/datasqrl/` and contain expected outputs for integration tests. These `.txt` files capture the complete compiled output of SQRL scripts, including:
+
+- **Flink SQL DDL**: Stream processing table definitions and queries
+- **Kafka Configuration**: Topic and serialization settings
+- **PostgreSQL Schema**: Database table definitions and indexes
+- **GraphQL API Schema**: Auto-generated API definitions and resolvers
+
+**Purpose**: Snapshot testing ensures that changes to the compiler produce consistent, expected outputs. When the compiler behavior changes intentionally, snapshots must be updated using `mvn clean install -P update-snapshots`.
+
+**Common Changes**: 
+- Configuration property ordering (cosmetic changes)
+- New features adding additional output artifacts
+- Schema changes affecting generated SQL or GraphQL
+
+**Debugging**: If snapshot tests fail, compare the expected vs actual output to understand how your changes affected the compiler's generated artifacts.
+
 ## Troubleshooting
 
 ### Mac Docker Issues
