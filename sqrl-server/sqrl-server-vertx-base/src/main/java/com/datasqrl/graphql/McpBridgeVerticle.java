@@ -18,6 +18,7 @@ package com.datasqrl.graphql;
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.graphql.server.operation.ApiOperation;
+import com.datasqrl.graphql.server.operation.McpMethodType;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -69,10 +70,13 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
     super(router, config, model, jwtAuth, graphQLServerVerticle);
     this.tools =
         model.getOperations().stream()
-            .filter(ApiOperation::isTool)
+            .filter(op -> op.getMcpMethod() == McpMethodType.TOOL)
             .collect(Collectors.toMap(ApiOperation::getId, Function.identity()));
     this.toolsList = getToolsList(this.tools.values());
-    this.resources = model.getOperations().stream().filter(ApiOperation::isResource).toList();
+    this.resources =
+        model.getOperations().stream()
+            .filter(op -> op.getMcpMethod() == McpMethodType.RESOURCE)
+            .toList();
     this.resourceList =
         getResourceList(
             RESOURCES_RESULT_KEY,

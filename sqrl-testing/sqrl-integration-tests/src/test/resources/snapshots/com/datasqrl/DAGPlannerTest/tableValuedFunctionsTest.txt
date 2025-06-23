@@ -1034,16 +1034,15 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerCumulate_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query Customer($limit: Int = 10, $offset: Int = 0) {\nCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
           "queryName" : "Customer",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/Customer{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/Customer{?offset,limit}"
       },
       {
         "function" : {
@@ -1061,16 +1060,15 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerCumulate_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query CustomerCumulate($limit: Int = 10, $offset: Int = 0) {\nCustomerCumulate(limit: $limit, offset: $offset) {\nwindow_start\nwindow_end\ntotal\n}\n\n}",
           "queryName" : "CustomerCumulate",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/CustomerCumulate{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/CustomerCumulate{?offset,limit}"
       },
       {
         "function" : {
@@ -1088,16 +1086,15 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerCumulate_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query CustomerHop($limit: Int = 10, $offset: Int = 0) {\nCustomerHop(limit: $limit, offset: $offset) {\nwindow_start\nwindow_end\nwindow_time\ntotal\n}\n\n}",
           "queryName" : "CustomerHop",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/CustomerHop{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/CustomerHop{?offset,limit}"
       },
       {
         "function" : {
@@ -1115,16 +1112,15 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerCumulate_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query CustomerSession($limit: Int = 10, $offset: Int = 0) {\nCustomerSession(limit: $limit, offset: $offset) {\ncustomerid\nwindow_start\nwindow_end\nwindow_time\ntotal\n}\n\n}",
           "queryName" : "CustomerSession",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/CustomerSession{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/CustomerSession{?offset,limit}"
       },
       {
         "function" : {
@@ -1142,16 +1138,15 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerCumulate_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query CustomerTumble($limit: Int = 10, $offset: Int = 0) {\nCustomerTumble(limit: $limit, offset: $offset) {\nwindow_start\nwindow_end\ntotal\n}\n\n}",
           "queryName" : "CustomerTumble",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/CustomerTumble{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/CustomerTumble{?offset,limit}"
       },
       {
         "function" : {
@@ -1169,16 +1164,15 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerCumulate_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query StreamJoin($limit: Int = 10, $offset: Int = 0) {\nStreamJoin(limit: $limit, offset: $offset) {\nwindow_start\nwindow_end\nwindow_time\ntotal\ncustomerid\nwindow_start0\nwindow_end0\nwindow_time0\ntotal0\n}\n\n}",
           "queryName" : "StreamJoin",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/StreamJoin{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/StreamJoin{?offset,limit}"
       }
     ],
     "schema" : {

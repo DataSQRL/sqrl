@@ -333,16 +333,15 @@ FROM "VisitAfter_4"
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query Click($limit: Int = 10, $offset: Int = 0) {\nClick(limit: $limit, offset: $offset) {\nurl\ntimestamp\nuserid\n}\n\n}",
           "queryName" : "Click",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/Click{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/Click{?offset,limit}"
       },
       {
         "function" : {
@@ -365,16 +364,15 @@ FROM "VisitAfter_4"
             ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query Recommendation($url: String!, $limit: Int = 10, $offset: Int = 0) {\nRecommendation(url: $url, limit: $limit, offset: $offset) {\nurl\nrec\nfrequency\n}\n\n}",
           "queryName" : "Recommendation",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/Recommendation{?offset,limit,url}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/Recommendation{?offset,limit,url}"
       },
       {
         "function" : {
@@ -392,16 +390,15 @@ FROM "VisitAfter_4"
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query Trending($limit: Int = 10, $offset: Int = 0) {\nTrending(limit: $limit, offset: $offset) {\nurl\ntotal\n}\n\n}",
           "queryName" : "Trending",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/Trending{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/Trending{?offset,limit}"
       },
       {
         "function" : {
@@ -419,16 +416,15 @@ FROM "VisitAfter_4"
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query VisitAfter($limit: Int = 10, $offset: Int = 0) {\nVisitAfter(limit: $limit, offset: $offset) {\nbeforeURL\nafterURL\ntimestamp\n}\n\n}",
           "queryName" : "VisitAfter",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/VisitAfter{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/VisitAfter{?offset,limit}"
       }
     ],
     "schema" : {

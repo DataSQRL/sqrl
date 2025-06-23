@@ -574,16 +574,15 @@ INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query MachineReading($limit: Int = 10, $offset: Int = 0) {\nMachineReading(limit: $limit, offset: $offset) {\nsensorid\ntemperature\nevent_time\nmachineid\n}\n\n}",
           "queryName" : "MachineReading",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/MachineReading{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/MachineReading{?offset,limit}"
       },
       {
         "function" : {
@@ -601,16 +600,15 @@ INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query MachineTempByHour($limit: Int = 10, $offset: Int = 0) {\nMachineTempByHour(limit: $limit, offset: $offset) {\nmachineid\ntime_hour\navg_temperature\n}\n\n}",
           "queryName" : "MachineTempByHour",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/MachineTempByHour{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/MachineTempByHour{?offset,limit}"
       },
       {
         "function" : {
@@ -628,16 +626,15 @@ INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "mutation _SensorReading($sensorid: Int, $temperature: Float) {\n_SensorReading(event: { sensorid: $sensorid, temperature: $temperature }) {\nevent_id\nsensorid\ntemperature\nevent_time\n}\n\n}",
           "queryName" : "_SensorReading",
           "operationType" : "MUTATION"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "mutations/_SensorReading",
-        "httpMethod" : "POST"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "POST",
+        "uriTemplate" : "mutations/_SensorReading"
       },
       {
         "function" : {
@@ -657,16 +654,15 @@ INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
             ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "mutation _Sensors($sensorid: Int!, $machineid: Int) {\n_Sensors(event: { sensorid: $sensorid, machineid: $machineid }) {\nsensorid\nmachineid\nupdatedTime\n}\n\n}",
           "queryName" : "_Sensors",
           "operationType" : "MUTATION"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "mutations/_Sensors",
-        "httpMethod" : "POST"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "POST",
+        "uriTemplate" : "mutations/_Sensors"
       }
     ],
     "schema" : {

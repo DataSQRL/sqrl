@@ -15,6 +15,7 @@
  */
 package com.datasqrl.graphql.server.operation;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import java.util.Map;
@@ -52,6 +53,11 @@ public class FunctionDefinition {
     private String type;
     private Map<String, Argument> properties = Map.of();
     private List<String> required = List.of();
+
+    @JsonIgnore
+    public boolean isNested() {
+      return properties.values().stream().anyMatch(arg -> arg.getParameters() != null);
+    }
   }
 
   @Data
@@ -60,6 +66,7 @@ public class FunctionDefinition {
     private String type;
     private String description;
     private Argument items;
+    private Parameters parameters;
 
     @JsonProperty("enum")
     private Set<?> enumValues;

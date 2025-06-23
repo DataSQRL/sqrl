@@ -880,16 +880,15 @@ INSERT INTO `default_catalog`.`default_database`.`MyOrdersIndexHash_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query MyOrdersIndexBtree($limit: Int = 10, $offset: Int = 0) {\nMyOrdersIndexBtree(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
           "queryName" : "MyOrdersIndexBtree",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/MyOrdersIndexBtree{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/MyOrdersIndexBtree{?offset,limit}"
       },
       {
         "function" : {
@@ -907,16 +906,15 @@ INSERT INTO `default_catalog`.`default_database`.`MyOrdersIndexHash_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query MyOrdersIndexHash($limit: Int = 10, $offset: Int = 0) {\nMyOrdersIndexHash(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
           "queryName" : "MyOrdersIndexHash",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/MyOrdersIndexHash{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/MyOrdersIndexHash{?offset,limit}"
       },
       {
         "function" : {
@@ -934,16 +932,15 @@ INSERT INTO `default_catalog`.`default_database`.`MyOrdersIndexHash_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query MyOrdersNoHint($limit: Int = 10, $offset: Int = 0) {\nMyOrdersNoHint(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
           "queryName" : "MyOrdersNoHint",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/MyOrdersNoHint{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/MyOrdersNoHint{?offset,limit}"
       },
       {
         "function" : {
@@ -961,16 +958,15 @@ INSERT INTO `default_catalog`.`default_database`.`MyOrdersIndexHash_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query MyOrdersNoIndex($limit: Int = 10, $offset: Int = 0) {\nMyOrdersNoIndex(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
           "queryName" : "MyOrdersNoIndex",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/MyOrdersNoIndex{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/MyOrdersNoIndex{?offset,limit}"
       },
       {
         "function" : {
@@ -988,16 +984,15 @@ INSERT INTO `default_catalog`.`default_database`.`MyOrdersIndexHash_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query MyOrdersTwoIndex($limit: Int = 10, $offset: Int = 0) {\nMyOrdersTwoIndex(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
           "queryName" : "MyOrdersTwoIndex",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/MyOrdersTwoIndex{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/MyOrdersTwoIndex{?offset,limit}"
       }
     ],
     "schema" : {

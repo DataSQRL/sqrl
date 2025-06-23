@@ -437,16 +437,15 @@ FROM "TotalOrgTokens_1"
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query TotalOrgTokens($limit: Int = 10, $offset: Int = 0) {\nTotalOrgTokens(limit: $limit, offset: $offset) {\norgid\ntotal_tokens\ntotal_requests\n}\n\n}",
           "queryName" : "TotalOrgTokens",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/TotalOrgTokens{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/TotalOrgTokens{?offset,limit}"
       },
       {
         "function" : {
@@ -469,16 +468,15 @@ FROM "TotalOrgTokens_1"
             ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query TotalUserTokens($userid: GraphQLBigInteger!, $limit: Int = 10, $offset: Int = 0) {\nTotalUserTokens(userid: $userid, limit: $limit, offset: $offset) {\nuserid\ntotal_tokens\ntotal_requests\n}\n\n}",
           "queryName" : "TotalUserTokens",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/TotalUserTokens{?offset,limit,userid}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/TotalUserTokens{?offset,limit,userid}"
       },
       {
         "function" : {
@@ -505,16 +503,15 @@ FROM "TotalOrgTokens_1"
             ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query TotalOrgTokensByRange($minTokens: GraphQLBigInteger!, $maxTokens: GraphQLBigInteger!, $limit: Int = 10, $offset: Int = 0) {\nTotalOrgTokensByRange(minTokens: $minTokens, maxTokens: $maxTokens, limit: $limit, offset: $offset) {\norgid\ntotal_tokens\ntotal_requests\n}\n\n}",
           "queryName" : "TotalOrgTokensByRange",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/TotalOrgTokensByRange{?offset,maxTokens,limit,minTokens}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/TotalOrgTokensByRange{?offset,maxTokens,limit,minTokens}"
       },
       {
         "function" : {
@@ -535,16 +532,15 @@ FROM "TotalOrgTokens_1"
             ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "mutation UserTokens($userid: GraphQLBigInteger!, $tokens: GraphQLBigInteger!) {\nUserTokens(event: { userid: $userid, tokens: $tokens }) {\nuserid\ntokens\nrequest_time\n}\n\n}",
           "queryName" : "UserTokens",
           "operationType" : "MUTATION"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "mutations/UserTokens",
-        "httpMethod" : "POST"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "POST",
+        "uriTemplate" : "mutations/UserTokens"
       }
     ],
     "schema" : {

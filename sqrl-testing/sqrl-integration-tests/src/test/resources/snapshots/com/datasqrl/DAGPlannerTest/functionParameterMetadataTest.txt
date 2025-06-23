@@ -427,16 +427,15 @@ END
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query Customer($limit: Int = 10, $offset: Int = 0) {\nCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
           "queryName" : "Customer",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/Customer{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/Customer{?offset,limit}"
       },
       {
         "function" : {
@@ -459,16 +458,15 @@ END
             ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query CustomersByTime($fromTime: DateTime!, $limit: Int = 10, $offset: Int = 0) {\nCustomersByTime(fromTime: $fromTime, limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
           "queryName" : "CustomersByTime",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/CustomersByTime{?offset,fromTime,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/CustomersByTime{?offset,fromTime,limit}"
       }
     ],
     "schema" : {

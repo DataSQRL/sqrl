@@ -15,8 +15,8 @@
  */
 package com.datasqrl.graphql.server.operation;
 
-public enum HttpMethod {
+public enum RestMethodType {
+  NONE,
   GET,
-  POST,
-  PUT;
+  POST;
 }

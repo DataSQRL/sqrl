@@ -438,16 +438,15 @@ FROM "Customers_4"
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query ApplicationUpdates($limit: Int = 10, $offset: Int = 0) {\nApplicationUpdates(limit: $limit, offset: $offset) {\nloan_application_id\nstatus\nmessage\nevent_time\n}\n\n}",
           "queryName" : "ApplicationUpdates",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/ApplicationUpdates{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/ApplicationUpdates{?offset,limit}"
       },
       {
         "function" : {
@@ -465,16 +464,15 @@ FROM "Customers_4"
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query Applications($limit: Int = 10, $offset: Int = 0) {\nApplications(limit: $limit, offset: $offset) {\nid\ncustomer_id\nloan_type_id\namount\nduration\napplication_date\nupdated_at\n}\n\n}",
           "queryName" : "Applications",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/Applications{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/Applications{?offset,limit}"
       },
       {
         "function" : {
@@ -492,16 +490,15 @@ FROM "Customers_4"
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query CustomerUpdates($limit: Int = 10, $offset: Int = 0) {\nCustomerUpdates(limit: $limit, offset: $offset) {\ncustomer_id\nnum_updates\n}\n\n}",
           "queryName" : "CustomerUpdates",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/CustomerUpdates{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/CustomerUpdates{?offset,limit}"
       },
       {
         "function" : {
@@ -519,16 +516,15 @@ FROM "Customers_4"
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query Customers($limit: Int = 10, $offset: Int = 0) {\nCustomers(limit: $limit, offset: $offset) {\nid\nfirst_name\nlast_name\nemail\nphone\naddress\ndate_of_birth\nupdated_at\n}\n\n}",
           "queryName" : "Customers",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/Customers{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/Customers{?offset,limit}"
       }
     ],
     "schema" : {

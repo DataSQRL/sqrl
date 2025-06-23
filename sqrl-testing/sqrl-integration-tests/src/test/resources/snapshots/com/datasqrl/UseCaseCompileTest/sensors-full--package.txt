@@ -765,16 +765,15 @@ FROM "Sensors_7"
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query HighTemp($limit: Int = 10, $offset: Int = 0) {\nHighTemp(limit: $limit, offset: $offset) {\nmachineId\nsensorid\ntemp\ntimeSec\n}\n\n}",
           "queryName" : "HighTemp",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/HighTemp{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/HighTemp{?offset,limit}"
       },
       {
         "function" : {
@@ -810,16 +809,15 @@ FROM "Sensors_7"
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query Machine($limit: Int = 10, $offset: Int = 0$sensors_limit: Int = 10, $sensors_offset: Int = 0$sensors_lastHour_limit: Int = 10, $sensors_lastHour_offset: Int = 0$sensors_readings_limit: Int = 10, $sensors_readings_offset: Int = 0) {\nMachine(limit: $limit, offset: $offset) {\nmachineId\nmaxTemp\navgTemp\nsensors(limit: $sensors_limit, offset: $sensors_offset) {\nid\nmachineId\nplaced\ntimestamp\nlastHour(limit: $sensors_lastHour_limit, offset: $sensors_lastHour_offset) {\nsensorid\nwindow_time\navgTemp\nmaxTemp\n}\nreadings(limit: $sensors_readings_limit, offset: $sensors_readings_offset) {\nsensorid\ntimeSec\ntemp\n}\n}\n}\n\n}",
           "queryName" : "Machine",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/Machine{?sensors_lastHour_offset,offset,sensors_readings_offset,sensors_limit,limit,sensors_readings_limit,sensors_offset,sensors_lastHour_limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/Machine{?sensors_lastHour_offset,offset,sensors_readings_offset,sensors_limit,limit,sensors_readings_limit,sensors_offset,sensors_lastHour_limit}"
       },
       {
         "function" : {
@@ -837,16 +835,15 @@ FROM "Sensors_7"
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query SecReading($limit: Int = 10, $offset: Int = 0) {\nSecReading(limit: $limit, offset: $offset) {\nsensorid\ntimeSec\ntemp\n}\n\n}",
           "queryName" : "SecReading",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/SecReading{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/SecReading{?offset,limit}"
       },
       {
         "function" : {
@@ -864,16 +861,15 @@ FROM "Sensors_7"
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query SensorLastHour($limit: Int = 10, $offset: Int = 0) {\nSensorLastHour(limit: $limit, offset: $offset) {\nsensorid\nwindow_time\navgTemp\nmaxTemp\n}\n\n}",
           "queryName" : "SensorLastHour",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/SensorLastHour{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/SensorLastHour{?offset,limit}"
       },
       {
         "function" : {
@@ -891,16 +887,15 @@ FROM "Sensors_7"
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query SensorReading($limit: Int = 10, $offset: Int = 0) {\nSensorReading(limit: $limit, offset: $offset) {\nsensorid\ntime\ntemperature\nhumidity\ntimestamp\n}\n\n}",
           "queryName" : "SensorReading",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/SensorReading{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/SensorReading{?offset,limit}"
       },
       {
         "function" : {
@@ -918,16 +913,15 @@ FROM "Sensors_7"
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query SensorUpdates($limit: Int = 10, $offset: Int = 0) {\nSensorUpdates(limit: $limit, offset: $offset) {\nid\nmachineId\nplaced\ntimestamp\n}\n\n}",
           "queryName" : "SensorUpdates",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/SensorUpdates{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/SensorUpdates{?offset,limit}"
       },
       {
         "function" : {
@@ -957,16 +951,15 @@ FROM "Sensors_7"
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query Sensors($limit: Int = 10, $offset: Int = 0$lastHour_limit: Int = 10, $lastHour_offset: Int = 0$readings_limit: Int = 10, $readings_offset: Int = 0) {\nSensors(limit: $limit, offset: $offset) {\nid\nmachineId\nplaced\ntimestamp\nlastHour(limit: $lastHour_limit, offset: $lastHour_offset) {\nsensorid\nwindow_time\navgTemp\nmaxTemp\n}\nreadings(limit: $readings_limit, offset: $readings_offset) {\nsensorid\ntimeSec\ntemp\n}\n}\n\n}",
           "queryName" : "Sensors",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/Sensors{?offset,readings_limit,limit,readings_offset,lastHour_offset,lastHour_limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/Sensors{?offset,readings_limit,limit,readings_offset,lastHour_offset,lastHour_limit}"
       },
       {
         "function" : {
@@ -989,16 +982,15 @@ FROM "Sensors_7"
             ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query SecReadingByTemp($temp: Int!, $limit: Int = 10, $offset: Int = 0) {\nSecReadingByTemp(temp: $temp, limit: $limit, offset: $offset) {\nsensorid\ntimeSec\ntemp\n}\n\n}",
           "queryName" : "SecReadingByTemp",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/SecReadingByTemp{?temp,offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/SecReadingByTemp{?temp,offset,limit}"
       }
     ],
     "schema" : {

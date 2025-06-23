@@ -2,7 +2,7 @@
 query HighTemps(
     # The temperature
     $temperature: Float!
-) {
+) @api(rest: "none") {
     ReadingsAboveTemp(temp: $temperature) {
         sensorid
         temperature
@@ -11,7 +11,7 @@ query HighTemps(
 # high temperature readings
 query HighTemps2(
     $temp: Float!
-) {
+) @api(uri: "/temp/high{?temp}") {
     ReadingsAboveTemp(temp: $temp) {
         sensorid
         temperature

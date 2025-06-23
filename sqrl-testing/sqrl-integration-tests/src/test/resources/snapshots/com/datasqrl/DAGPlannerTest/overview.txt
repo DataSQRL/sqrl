@@ -1327,16 +1327,15 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2`
             ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query Customer($limit: Int = 10, $offset: Int = 0$largeOrders_minAmount: Float!, $largeOrders_limit: Int = 10, $largeOrders_offset: Int = 0$orders_limit: Int = 10, $orders_offset: Int = 0) {\nCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\nlargeOrders(minAmount: $largeOrders_minAmount, limit: $largeOrders_limit, offset: $largeOrders_offset) {\norderid\ncustomerid\namount\norderTime\n}\norders(limit: $orders_limit, offset: $orders_offset) {\norderid\ncustomerid\namount\norderTime\n}\n}\n\n}",
           "queryName" : "Customer",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/Customer{?largeOrders_limit,orders_limit,offset,largeOrders_offset,limit,largeOrders_minAmount,orders_offset}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/Customer{?largeOrders_limit,orders_limit,offset,largeOrders_offset,limit,largeOrders_minAmount,orders_offset}"
       },
       {
         "function" : {
@@ -1354,16 +1353,15 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query CustomerImport($limit: Int = 10, $offset: Int = 0) {\nCustomerImport(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
           "queryName" : "CustomerImport",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/CustomerImport{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/CustomerImport{?offset,limit}"
       },
       {
         "function" : {
@@ -1381,16 +1379,15 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query LargeOrders($limit: Int = 10, $offset: Int = 0) {\nLargeOrders(limit: $limit, offset: $offset) {\norderid\ncustomerid\namount\norderTime\n}\n\n}",
           "queryName" : "LargeOrders",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/LargeOrders{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/LargeOrders{?offset,limit}"
       },
       {
         "function" : {
@@ -1408,16 +1405,15 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query Orders($limit: Int = 10, $offset: Int = 0) {\nOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
           "queryName" : "Orders",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/Orders{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/Orders{?offset,limit}"
       },
       {
         "function" : {
@@ -1435,16 +1431,15 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query SimpleOrders($limit: Int = 10, $offset: Int = 0) {\nSimpleOrders(limit: $limit, offset: $offset) {\norderid\ncustomerid\namount\norderTime\n}\n\n}",
           "queryName" : "SimpleOrders",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/SimpleOrders{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/SimpleOrders{?offset,limit}"
       },
       {
         "function" : {
@@ -1462,16 +1457,15 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query UnnestOrders($limit: Int = 10, $offset: Int = 0) {\nUnnestOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nproductid\nquantity\ndiscount\n}\n\n}",
           "queryName" : "UnnestOrders",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/UnnestOrders{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/UnnestOrders{?offset,limit}"
       },
       {
         "function" : {
@@ -1510,16 +1504,15 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2`
             ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query CustomerById($customerid: GraphQLBigInteger!, $limit: Int = 10, $offset: Int = 0$largeOrders_minAmount: Float!, $largeOrders_limit: Int = 10, $largeOrders_offset: Int = 0$orders_limit: Int = 10, $orders_offset: Int = 0) {\nCustomerById(customerid: $customerid, limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\nlargeOrders(minAmount: $largeOrders_minAmount, limit: $largeOrders_limit, offset: $largeOrders_offset) {\norderid\ncustomerid\namount\norderTime\n}\norders(limit: $orders_limit, offset: $orders_offset) {\norderid\ncustomerid\namount\norderTime\n}\n}\n\n}",
           "queryName" : "CustomerById",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/CustomerById{?largeOrders_limit,orders_limit,offset,largeOrders_offset,customerid,limit,largeOrders_minAmount,orders_offset}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/CustomerById{?largeOrders_limit,orders_limit,offset,largeOrders_offset,customerid,limit,largeOrders_minAmount,orders_offset}"
       },
       {
         "function" : {
@@ -1540,16 +1533,15 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "mutation SimpleOrders($orderid: Int, $customerid: GraphQLBigInteger, $amount: Float) {\nSimpleOrders(event: { orderid: $orderid, customerid: $customerid, amount: $amount }) {\norderid\ncustomerid\namount\norderTime\n}\n\n}",
           "queryName" : "SimpleOrders",
           "operationType" : "MUTATION"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "mutations/SimpleOrders",
-        "httpMethod" : "POST"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "POST",
+        "uriTemplate" : "mutations/SimpleOrders"
       }
     ],
     "schema" : {

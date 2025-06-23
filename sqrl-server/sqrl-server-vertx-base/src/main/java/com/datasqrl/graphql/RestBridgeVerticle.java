@@ -18,7 +18,7 @@ package com.datasqrl.graphql;
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.graphql.server.operation.ApiOperation;
-import com.datasqrl.graphql.server.operation.HttpMethod;
+import com.datasqrl.graphql.server.operation.RestMethodType;
 import graphql.ExecutionResult;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
@@ -79,7 +79,7 @@ public class RestBridgeVerticle extends AbstractBridgeVerticle {
 
   private void createRestEndpoint(ApiOperation operation) {
     String uriTemplate = operation.getUriTemplate();
-    HttpMethod httpMethod = operation.getHttpMethod();
+    RestMethodType httpMethod = operation.getRestMethod();
 
     if (uriTemplate == null || httpMethod == null) {
       log.warn(
@@ -102,7 +102,7 @@ public class RestBridgeVerticle extends AbstractBridgeVerticle {
         switch (httpMethod) {
           case GET -> router.get(routePattern);
           case POST -> router.post(routePattern);
-          case PUT -> throw new UnsupportedOperationException("PUT not yet supported");
+          case NONE -> throw new UnsupportedOperationException("Should not be called");
         };
 
     // Add JWT auth if configured
@@ -169,7 +169,7 @@ public class RestBridgeVerticle extends AbstractBridgeVerticle {
   protected Map<String, Object> extractParameters(RoutingContext ctx, ApiOperation operation) {
     Map<String, Object> variables = new HashMap<>();
 
-    if (operation.getHttpMethod() == HttpMethod.GET) {
+    if (operation.getRestMethod() == RestMethodType.GET) {
       // For GET requests, extract parameters from URL query parameters and path parameters
       extractGetParameters(ctx, operation, variables);
     } else {

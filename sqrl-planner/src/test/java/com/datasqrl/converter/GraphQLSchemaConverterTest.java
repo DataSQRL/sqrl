@@ -133,7 +133,7 @@ public class GraphQLSchemaConverterTest {
   }
 
   @Test
-  void givenComplexFieldDefinition_whenVisiting_thenGenerateValidQuery() {
+  void testRickandMorty() {
     GraphQLSchemaConverter converter =
         new GraphQLSchemaConverter(
             getTestSchema("rick_morty-schema.graphqls"),

@@ -1,3 +1,10 @@
+directive @api(
+  mcp: String,
+  rest: String,
+  uri: String,
+  format: String
+) on FIELD_DEFINITION | QUERY | MUTATION
+
   type Query {
     """
     Get a specific character by ID
@@ -17,7 +24,7 @@
     """
     Get a specific locations by ID
     """
-    location(id: ID!): Location
+    location(id: ID!): Location @api(mcp: "none", rest: "none")
 
     """
     Get the list of all locations
@@ -27,7 +34,7 @@
     """
     Get a list of locations selected by ids
     """
-    locationsByIds(ids: [ID!]!): [Location]
+    locationsByIds(ids: [ID!]!): [Location] @api(rest: "post")
 
     """
     Get a specific episode by ID

@@ -224,16 +224,15 @@ FROM (SELECT "id", "val", "json_col", "json_col_2", "json_col_3", "json_col_4"
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query Json($limit: Int = 10, $offset: Int = 0) {\nJson(limit: $limit, offset: $offset) {\nid\nval\ntimestamp\n}\n\n}",
           "queryName" : "Json",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/Json{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/Json{?offset,limit}"
       },
       {
         "function" : {
@@ -251,16 +250,15 @@ FROM (SELECT "id", "val", "json_col", "json_col_2", "json_col_3", "json_col_4"
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query UnmodifiedJsonData($limit: Int = 10, $offset: Int = 0) {\nUnmodifiedJsonData(limit: $limit, offset: $offset) {\nid\nval\njson_col\njson_col_2\njson_col_3\njson_col_4\n}\n\n}",
           "queryName" : "UnmodifiedJsonData",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/UnmodifiedJsonData{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/UnmodifiedJsonData{?offset,limit}"
       }
     ],
     "schema" : {

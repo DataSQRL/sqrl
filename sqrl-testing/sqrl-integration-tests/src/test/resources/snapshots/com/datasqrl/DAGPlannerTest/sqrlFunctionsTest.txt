@@ -403,16 +403,15 @@ INSERT INTO `default_catalog`.`default_database`.`MyTable2_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query MyTable($limit: Int = 10, $offset: Int = 0) {\nMyTable(limit: $limit, offset: $offset) {\nval\nmyTimestamp\n}\n\n}",
           "queryName" : "MyTable",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/MyTable{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/MyTable{?offset,limit}"
       },
       {
         "function" : {
@@ -430,16 +429,15 @@ INSERT INTO `default_catalog`.`default_database`.`MyTable2_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query MyTable2($limit: Int = 10, $offset: Int = 0) {\nMyTable2(limit: $limit, offset: $offset) {\nval\nmyTimestamp\n}\n\n}",
           "queryName" : "MyTable2",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/MyTable2{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/MyTable2{?offset,limit}"
       }
     ],
     "schema" : {

@@ -476,16 +476,15 @@ INSERT INTO `default_catalog`.`default_database`.`CategoryDistinct_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query Category($limit: Int = 10, $offset: Int = 0) {\nCategory(limit: $limit, offset: $offset) {\ncategoryid\nname\ndescription\nupdateTime\n}\n\n}",
           "queryName" : "Category",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/Category{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/Category{?offset,limit}"
       },
       {
         "function" : {
@@ -503,16 +502,15 @@ INSERT INTO `default_catalog`.`default_database`.`CategoryDistinct_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query CategoryDistinct($limit: Int = 10, $offset: Int = 0) {\nCategoryDistinct(limit: $limit, offset: $offset) {\ncategoryid\nname\ndescription\nupdateTime\n}\n\n}",
           "queryName" : "CategoryDistinct",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/CategoryDistinct{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/CategoryDistinct{?offset,limit}"
       }
     ],
     "schema" : {

@@ -18,6 +18,7 @@ package com.datasqrl.graphql;
 import com.datasqrl.graphql.config.CorsHandlerOptions;
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.server.RootGraphqlModel;
+import com.datasqrl.graphql.server.operation.ApiOperation;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
@@ -127,31 +128,37 @@ public class HttpServerVerticle extends AbstractVerticle {
 
     // Deploy GraphQL verticle first
     GraphQLServerVerticle graphQLVerticle = new GraphQLServerVerticle(root, config, model, jwtOpt);
+    boolean hasMcp = model.getOperations().stream().anyMatch(ApiOperation::isMcpEndpoint);
+    boolean hasRest = model.getOperations().stream().anyMatch(ApiOperation::isRestEndpoint);
     vertx
         .deployVerticle(graphQLVerticle, childOpts)
         .onSuccess(
             graphQLDeploymentId -> {
               log.info("GraphQL verticle deployed successfully: {}", graphQLDeploymentId);
-              // Deploy MCP bridge verticle with access to GraphQL engine
-              McpBridgeVerticle mcpBridgeVerticle =
-                  new McpBridgeVerticle(root, config, model, jwtOpt, graphQLVerticle);
-              vertx
-                  .deployVerticle(mcpBridgeVerticle, childOpts)
-                  .onSuccess(
-                      mcpDeploymentId ->
-                          log.info(
-                              "MCP bridge verticle deployed successfully: {}", mcpDeploymentId))
-                  .onFailure(err -> log.error("Failed to deploy MCP bridge verticle", err));
-              // Deploy REST bridge verticle with access to GraphQL engine
-              RestBridgeVerticle restBridgeVerticle =
-                  new RestBridgeVerticle(root, config, model, jwtOpt, graphQLVerticle);
-              vertx
-                  .deployVerticle(restBridgeVerticle, childOpts)
-                  .onSuccess(
-                      restDeploymentId ->
-                          log.info(
-                              "REST bridge verticle deployed successfully: {}", restDeploymentId))
-                  .onFailure(err -> log.error("Failed to deploy REST bridge verticle", err));
+              if (hasMcp) {
+                // Deploy MCP bridge verticle with access to GraphQL engine
+                McpBridgeVerticle mcpBridgeVerticle =
+                    new McpBridgeVerticle(root, config, model, jwtOpt, graphQLVerticle);
+                vertx
+                    .deployVerticle(mcpBridgeVerticle, childOpts)
+                    .onSuccess(
+                        mcpDeploymentId ->
+                            log.info(
+                                "MCP bridge verticle deployed successfully: {}", mcpDeploymentId))
+                    .onFailure(err -> log.error("Failed to deploy MCP bridge verticle", err));
+              }
+              if (hasRest) {
+                // Deploy REST bridge verticle with access to GraphQL engine
+                RestBridgeVerticle restBridgeVerticle =
+                    new RestBridgeVerticle(root, config, model, jwtOpt, graphQLVerticle);
+                vertx
+                    .deployVerticle(restBridgeVerticle, childOpts)
+                    .onSuccess(
+                        restDeploymentId ->
+                            log.info(
+                                "REST bridge verticle deployed successfully: {}", restDeploymentId))
+                    .onFailure(err -> log.error("Failed to deploy REST bridge verticle", err));
+              }
             })
         .onFailure(err -> log.error("Failed to deploy GraphQL verticle", err));
 

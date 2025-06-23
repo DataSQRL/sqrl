@@ -1,9 +1,5 @@
 [ {
-  "apiQuery" : {
-    "operationType" : "QUERY",
-    "query" : "query BoloDetails($make: String!, $model: String, $limit: Int = 10, $offset: Int = 0) {\nBoloDetails(make: $make, model: $model, limit: $limit, offset: $offset) {\nbolo_id\nvehicle_id\nissue_date\nstatus\nlast_updated\nmake\nmodel\nyear\nregistration_state\nregistration_number\nlicense_state\ndriver_id\n}\n\n}",
-    "queryName" : "BoloDetails"
-  },
+  "format" : "JSON",
   "function" : {
     "description" : "Fetches Bolo details with specified vehicle characteristics.",
     "name" : "GetBoloDetails",
@@ -30,17 +26,16 @@
       "type" : "object"
     }
   },
-  "httpMethod" : "GET",
-  "resource" : false,
-  "restEndpoint" : true,
-  "tool" : true,
-  "uriTemplate" : "queries/BoloDetails{?offset,limit,model,make}"
-}, {
   "apiQuery" : {
     "operationType" : "QUERY",
-    "query" : "query Driver($license_number: String!, $limit: Int = 10, $offset: Int = 0$bolos_limit: Int = 10, $bolos_offset: Int = 0$vehicles_limit: Int = 10, $vehicles_offset: Int = 0$vehicles_bolos_limit: Int = 10, $vehicles_bolos_offset: Int = 0$vehicles_tracking_limit: Int = 10, $vehicles_tracking_offset: Int = 0$warrants_limit: Int = 10, $warrants_offset: Int = 0) {\nDriver(license_number: $license_number, limit: $limit, offset: $offset) {\ndriver_id\nfirst_name\nlast_name\nlicense_number\nlicense_state\ndate_of_birth\nlicense_status\nlicense_expiry_date\nlast_updated\nbolos(limit: $bolos_limit, offset: $bolos_offset) {\nbolo_id\nvehicle_id\nissue_date\nstatus\nlast_updated\nmake\nmodel\nyear\nregistration_state\nregistration_number\nlicense_state\ndriver_id\n}\nvehicles(limit: $vehicles_limit, offset: $vehicles_offset) {\nvehicle_id\nregistration_number\nregistration_state\nregistration_expiry\nmake\nmodel\nyear\nowner_driver_id\nlast_updated\nbolos(limit: $vehicles_bolos_limit, offset: $vehicles_bolos_offset) {\nbolo_id\nvehicle_id\nissue_date\nstatus\nlast_updated\nmake\nmodel\nyear\nregistration_state\nregistration_number\nlicense_state\ndriver_id\n}\ntracking(limit: $vehicles_tracking_limit, offset: $vehicles_tracking_offset) {\nlatitude\nlongitude\nevent_time\n}\n}\nwarrants(limit: $warrants_limit, offset: $warrants_offset) {\nwarrant_id\nperson_id\nwarrant_status\ncrime_description\nstate_of_issuance\nissue_date\nlast_updated\n}\n}\n\n}",
-    "queryName" : "Driver"
+    "query" : "query BoloDetails($make: String!, $model: String, $limit: Int = 10, $offset: Int = 0) {\nBoloDetails(make: $make, model: $model, limit: $limit, offset: $offset) {\nbolo_id\nvehicle_id\nissue_date\nstatus\nlast_updated\nmake\nmodel\nyear\nregistration_state\nregistration_number\nlicense_state\ndriver_id\n}\n\n}",
+    "queryName" : "BoloDetails"
   },
+  "mcpMethod" : "TOOL",
+  "restMethod" : "GET",
+  "uriTemplate" : "queries/BoloDetails{?offset,limit,model,make}"
+}, {
+  "format" : "JSON",
   "function" : {
     "description" : "Retrieves driver information using their license number.",
     "name" : "GetDriver",
@@ -93,17 +88,16 @@
       "type" : "object"
     }
   },
-  "httpMethod" : "GET",
-  "resource" : false,
-  "restEndpoint" : true,
-  "tool" : true,
-  "uriTemplate" : "queries/Driver{?vehicles_tracking_limit,offset,bolos_limit,bolos_offset,vehicles_limit,license_number,vehicles_bolos_limit,vehicles_bolos_offset,warrants_limit,vehicles_tracking_offset,limit,vehicles_offset,warrants_offset}"
-}, {
   "apiQuery" : {
     "operationType" : "QUERY",
-    "query" : "query Vehicle($registration_number: String!, $limit: Int = 10, $offset: Int = 0$bolos_limit: Int = 10, $bolos_offset: Int = 0$tracking_limit: Int = 10, $tracking_offset: Int = 0) {\nVehicle(registration_number: $registration_number, limit: $limit, offset: $offset) {\nvehicle_id\nregistration_number\nregistration_state\nregistration_expiry\nmake\nmodel\nyear\nowner_driver_id\nlast_updated\nbolos(limit: $bolos_limit, offset: $bolos_offset) {\nbolo_id\nvehicle_id\nissue_date\nstatus\nlast_updated\nmake\nmodel\nyear\nregistration_state\nregistration_number\nlicense_state\ndriver_id\n}\ntracking(limit: $tracking_limit, offset: $tracking_offset) {\nlatitude\nlongitude\nevent_time\n}\n}\n\n}",
-    "queryName" : "Vehicle"
+    "query" : "query Driver($license_number: String!, $limit: Int = 10, $offset: Int = 0$bolos_limit: Int = 10, $bolos_offset: Int = 0$vehicles_limit: Int = 10, $vehicles_offset: Int = 0$vehicles_bolos_limit: Int = 10, $vehicles_bolos_offset: Int = 0$vehicles_tracking_limit: Int = 10, $vehicles_tracking_offset: Int = 0$warrants_limit: Int = 10, $warrants_offset: Int = 0) {\nDriver(license_number: $license_number, limit: $limit, offset: $offset) {\ndriver_id\nfirst_name\nlast_name\nlicense_number\nlicense_state\ndate_of_birth\nlicense_status\nlicense_expiry_date\nlast_updated\nbolos(limit: $bolos_limit, offset: $bolos_offset) {\nbolo_id\nvehicle_id\nissue_date\nstatus\nlast_updated\nmake\nmodel\nyear\nregistration_state\nregistration_number\nlicense_state\ndriver_id\n}\nvehicles(limit: $vehicles_limit, offset: $vehicles_offset) {\nvehicle_id\nregistration_number\nregistration_state\nregistration_expiry\nmake\nmodel\nyear\nowner_driver_id\nlast_updated\nbolos(limit: $vehicles_bolos_limit, offset: $vehicles_bolos_offset) {\nbolo_id\nvehicle_id\nissue_date\nstatus\nlast_updated\nmake\nmodel\nyear\nregistration_state\nregistration_number\nlicense_state\ndriver_id\n}\ntracking(limit: $vehicles_tracking_limit, offset: $vehicles_tracking_offset) {\nlatitude\nlongitude\nevent_time\n}\n}\nwarrants(limit: $warrants_limit, offset: $warrants_offset) {\nwarrant_id\nperson_id\nwarrant_status\ncrime_description\nstate_of_issuance\nissue_date\nlast_updated\n}\n}\n\n}",
+    "queryName" : "Driver"
   },
+  "mcpMethod" : "TOOL",
+  "restMethod" : "GET",
+  "uriTemplate" : "queries/Driver{?vehicles_tracking_limit,offset,bolos_limit,bolos_offset,vehicles_limit,license_number,vehicles_bolos_limit,vehicles_bolos_offset,warrants_limit,vehicles_tracking_offset,limit,vehicles_offset,warrants_offset}"
+}, {
+  "format" : "JSON",
   "function" : {
     "description" : "Retrieves vehicle details using the registration number.",
     "name" : "GetVehicle",
@@ -138,17 +132,16 @@
       "type" : "object"
     }
   },
-  "httpMethod" : "GET",
-  "resource" : false,
-  "restEndpoint" : true,
-  "tool" : true,
-  "uriTemplate" : "queries/Vehicle{?offset,registration_number,limit,tracking_limit,bolos_limit,tracking_offset,bolos_offset}"
-}, {
   "apiQuery" : {
     "operationType" : "QUERY",
-    "query" : "query WarrantsByCrime($crime: String, $limit: Int = 100, $offset: Int = 0) {\nWarrantsByCrime(crime: $crime, limit: $limit, offset: $offset) {\ncrime\nnum_warrants\n}\n\n}",
-    "queryName" : "WarrantsByCrime"
+    "query" : "query Vehicle($registration_number: String!, $limit: Int = 10, $offset: Int = 0$bolos_limit: Int = 10, $bolos_offset: Int = 0$tracking_limit: Int = 10, $tracking_offset: Int = 0) {\nVehicle(registration_number: $registration_number, limit: $limit, offset: $offset) {\nvehicle_id\nregistration_number\nregistration_state\nregistration_expiry\nmake\nmodel\nyear\nowner_driver_id\nlast_updated\nbolos(limit: $bolos_limit, offset: $bolos_offset) {\nbolo_id\nvehicle_id\nissue_date\nstatus\nlast_updated\nmake\nmodel\nyear\nregistration_state\nregistration_number\nlicense_state\ndriver_id\n}\ntracking(limit: $tracking_limit, offset: $tracking_offset) {\nlatitude\nlongitude\nevent_time\n}\n}\n\n}",
+    "queryName" : "Vehicle"
   },
+  "mcpMethod" : "TOOL",
+  "restMethod" : "GET",
+  "uriTemplate" : "queries/Vehicle{?offset,registration_number,limit,tracking_limit,bolos_limit,tracking_offset,bolos_offset}"
+}, {
+  "format" : "JSON",
   "function" : {
     "description" : "Fetches statistics on warrants filtered by the type of crime.",
     "name" : "GetWarrantsByCrime",
@@ -169,17 +162,16 @@
       "type" : "object"
     }
   },
-  "httpMethod" : "GET",
-  "resource" : false,
-  "restEndpoint" : true,
-  "tool" : true,
-  "uriTemplate" : "queries/WarrantsByCrime{?offset,limit,crime}"
-}, {
   "apiQuery" : {
     "operationType" : "QUERY",
-    "query" : "query WarrantsByState($status: String, $limit: Int = 100, $offset: Int = 0) {\nWarrantsByState(status: $status, limit: $limit, offset: $offset) {\nstate\nstatus\nnum_warrants\n}\n\n}",
-    "queryName" : "WarrantsByState"
+    "query" : "query WarrantsByCrime($crime: String, $limit: Int = 100, $offset: Int = 0) {\nWarrantsByCrime(crime: $crime, limit: $limit, offset: $offset) {\ncrime\nnum_warrants\n}\n\n}",
+    "queryName" : "WarrantsByCrime"
   },
+  "mcpMethod" : "TOOL",
+  "restMethod" : "GET",
+  "uriTemplate" : "queries/WarrantsByCrime{?offset,limit,crime}"
+}, {
+  "format" : "JSON",
   "function" : {
     "description" : "Fetches statistics on warrants issued by state filtered by their status.",
     "name" : "GetWarrantsByState",
@@ -200,17 +192,16 @@
       "type" : "object"
     }
   },
-  "httpMethod" : "GET",
-  "resource" : false,
-  "restEndpoint" : true,
-  "tool" : true,
-  "uriTemplate" : "queries/WarrantsByState{?offset,limit,status}"
-}, {
   "apiQuery" : {
     "operationType" : "QUERY",
-    "query" : "query BolosByWeekState($state: String, $limit: Int = 100, $offset: Int = 0) {\nBolosByWeekState(state: $state, limit: $limit, offset: $offset) {\nweek\nstate\nnum_bolos\n}\n\n}",
-    "queryName" : "BolosByWeekState"
+    "query" : "query WarrantsByState($status: String, $limit: Int = 100, $offset: Int = 0) {\nWarrantsByState(status: $status, limit: $limit, offset: $offset) {\nstate\nstatus\nnum_warrants\n}\n\n}",
+    "queryName" : "WarrantsByState"
   },
+  "mcpMethod" : "TOOL",
+  "restMethod" : "GET",
+  "uriTemplate" : "queries/WarrantsByState{?offset,limit,status}"
+}, {
+  "format" : "JSON",
   "function" : {
     "description" : "Fetches Bolo (be on the lookout) statistics by week filtered by state. It returns the data ordered\nby week starting from the most recent and going backwards from there.",
     "name" : "GetBolosByWeekState",
@@ -233,17 +224,16 @@
       "type" : "object"
     }
   },
-  "httpMethod" : "GET",
-  "resource" : false,
-  "restEndpoint" : true,
-  "tool" : true,
+  "apiQuery" : {
+    "operationType" : "QUERY",
+    "query" : "query BolosByWeekState($state: String, $limit: Int = 100, $offset: Int = 0) {\nBolosByWeekState(state: $state, limit: $limit, offset: $offset) {\nweek\nstate\nnum_bolos\n}\n\n}",
+    "queryName" : "BolosByWeekState"
+  },
+  "mcpMethod" : "TOOL",
+  "restMethod" : "GET",
   "uriTemplate" : "queries/BolosByWeekState{?offset,limit,state}"
 }, {
-  "apiQuery" : {
-    "operationType" : "MUTATION",
-    "query" : "mutation Tracking($plate: String!, $latitude: Float!, $longitude: Float!) {\nTracking(encounter: { plate: $plate, latitude: $latitude, longitude: $longitude }) {\n_uuid\nplate\n}\n\n}",
-    "queryName" : "Tracking"
-  },
+  "format" : "JSON",
   "function" : {
     "name" : "AddTracking",
     "parameters" : {
@@ -262,9 +252,12 @@
       "type" : "object"
     }
   },
-  "httpMethod" : "POST",
-  "resource" : false,
-  "restEndpoint" : true,
-  "tool" : true,
+  "apiQuery" : {
+    "operationType" : "MUTATION",
+    "query" : "mutation Tracking($plate: String!, $latitude: Float!, $longitude: Float!) {\nTracking(encounter: { plate: $plate, latitude: $latitude, longitude: $longitude }) {\n_uuid\nplate\n}\n\n}",
+    "queryName" : "Tracking"
+  },
+  "mcpMethod" : "TOOL",
+  "restMethod" : "POST",
   "uriTemplate" : "mutations/Tracking"
 } ]

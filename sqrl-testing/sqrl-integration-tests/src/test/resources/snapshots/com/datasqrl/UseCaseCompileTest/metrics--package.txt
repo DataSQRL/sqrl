@@ -404,16 +404,15 @@ FROM "SensorMaxTempLastMin_3"
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query SensorMaxTempLastMin($limit: Int = 10, $offset: Int = 0) {\nSensorMaxTempLastMin(limit: $limit, offset: $offset) {\nsensorid\nendOfMin\navg_temperature\n}\n\n}",
           "queryName" : "SensorMaxTempLastMin",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/SensorMaxTempLastMin{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/SensorMaxTempLastMin{?offset,limit}"
       },
       {
         "function" : {
@@ -437,16 +436,15 @@ FROM "SensorMaxTempLastMin_3"
             ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query SensorAnalysisById($sensorid: Int!, $limit: Int = 10, $offset: Int = 0) {\nSensorAnalysisById(sensorid: $sensorid, limit: $limit, offset: $offset) {\nsensorid\navg_temperatures\nmax_temperature\n}\n\n}",
           "queryName" : "SensorAnalysisById",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/SensorAnalysisById{?offset,limit,sensorid}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/SensorAnalysisById{?offset,limit,sensorid}"
       },
       {
         "function" : {
@@ -470,16 +468,15 @@ FROM "SensorMaxTempLastMin_3"
             ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query SensorReadingById($sensorid: Int!, $limit: Int = 10, $offset: Int = 0) {\nSensorReadingById(sensorid: $sensorid, limit: $limit, offset: $offset) {\nsensorid\ntemperature\nevent_time\n}\n\n}",
           "queryName" : "SensorReadingById",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/SensorReadingById{?offset,limit,sensorid}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/SensorReadingById{?offset,limit,sensorid}"
       },
       {
         "function" : {
@@ -500,16 +497,15 @@ FROM "SensorMaxTempLastMin_3"
             ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "mutation SensorReading($sensorid: Int!, $temperature: Float!) {\nSensorReading(event: { sensorid: $sensorid, temperature: $temperature }) {\nsensorid\ntemperature\nevent_time\n}\n\n}",
           "queryName" : "SensorReading",
           "operationType" : "MUTATION"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "mutations/SensorReading",
-        "httpMethod" : "POST"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "POST",
+        "uriTemplate" : "mutations/SensorReading"
       }
     ],
     "schema" : {

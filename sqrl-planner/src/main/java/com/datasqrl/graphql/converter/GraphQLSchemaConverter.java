@@ -22,9 +22,13 @@ import com.datasqrl.graphql.server.operation.FunctionDefinition;
 import com.datasqrl.graphql.server.operation.FunctionDefinition.Argument;
 import com.datasqrl.graphql.server.operation.FunctionDefinition.Parameters;
 import com.datasqrl.graphql.server.operation.GraphQLQuery;
+import com.datasqrl.graphql.server.operation.McpMethodType;
+import com.datasqrl.graphql.server.operation.RestMethodType;
+import com.datasqrl.graphql.server.operation.ResultFormat;
 import com.google.common.base.Preconditions;
 import graphql.language.Comment;
 import graphql.language.Definition;
+import graphql.language.Directive;
 import graphql.language.Document;
 import graphql.language.ListType;
 import graphql.language.NonNullType;
@@ -37,6 +41,7 @@ import graphql.language.VariableDefinition;
 import graphql.parser.Parser;
 import graphql.scalars.ExtendedScalars;
 import graphql.schema.GraphQLArgument;
+import graphql.schema.GraphQLDirective;
 import graphql.schema.GraphQLEnumType;
 import graphql.schema.GraphQLEnumValueDefinition;
 import graphql.schema.GraphQLFieldDefinition;
@@ -55,6 +60,10 @@ import graphql.schema.idl.SchemaGenerator;
 import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.SchemaPrinter;
 import graphql.schema.idl.TypeDefinitionRegistry;
+import graphql.language.BooleanValue;
+import graphql.language.StringValue;
+import graphql.language.EnumValue;
+import graphql.language.Value;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -62,19 +71,19 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
 /**
  * Converts a given GraphQL Schema to a tools configuration for the function backend. It extracts
  * all queries and mutations and converts them into {@link ApiOperation}.
  */
-@Value
+@lombok.Value
 @Slf4j
 public class GraphQLSchemaConverter {
 
@@ -145,7 +154,9 @@ public class GraphQLSchemaConverter {
               endLocation.getLine(),
               endLocation.getColumn());
       GraphQLQuery query = new GraphQLQuery(queryString, fctDef.getName(), opDef.getOperation());
-      functions.add(new ApiOperation(fctDef, query));
+      ApiOperation.ApiOperationBuilder builder = ApiOperation.getBuilder(fctDef, query);
+      applyApiArgs(toArgMap(opDef.getDirectives()), builder);
+      functions.add(builder.build());
     } while (definition != null);
     return functions;
   }
@@ -249,17 +260,10 @@ public class GraphQLSchemaConverter {
             mutations.stream().map(fieldDef -> new OperationField(Operation.MUTATION, fieldDef)))
         .flatMap(
             input -> {
-              try {
-                if (config
-                    .getOperationFilter()
-                    .test(input.op(), input.fieldDefinition().getName())) {
-                  return Stream.of(convert(input.op(), input.fieldDefinition()));
-                } // else filter out
-                return Stream.of();
-              } catch (Exception e) {
-                log.error("Error converting query: {}", input.fieldDefinition().getName(), e);
-                return Stream.of();
-              }
+              if (config.getOperationFilter().test(input.op(), input.fieldDefinition().getName())) {
+                return Stream.of(convert(input.op(), input.fieldDefinition()));
+              } // else filter out
+              return Stream.of();
             })
         .forEach(functions::add);
     return functions;
@@ -352,7 +356,9 @@ public class GraphQLSchemaConverter {
     queryHeader.append(") {\n").append(queryBody).append("\n}");
     GraphQLQuery apiQuery =
         new GraphQLQuery(queryHeader.toString(), fieldDef.getName(), operationType);
-    return new ApiOperation(funcDef, apiQuery);
+    ApiOperation.ApiOperationBuilder builder = ApiOperation.getBuilder(funcDef, apiQuery);
+    applyApiArgs(toArgMap(fieldDef.getDirective("api")), builder);
+    return builder.build();
   }
 
   private static String combineStrings(String prefix, String suffix) {
@@ -386,6 +392,24 @@ public class GraphQLSchemaConverter {
           convert(
               convertRequired((GraphQLInputType) ((GraphQLList) graphQLInputType).getWrappedType())
                   .type()));
+    } else if (graphQLInputType instanceof GraphQLInputObjectType inputObjectType) {
+      argument.setType("object");
+      Map<String, Argument> properties = new HashMap<>();
+      List<String> required = new ArrayList<>();
+      for (GraphQLInputObjectField field : inputObjectType.getFieldDefinitions()) {
+        UnwrappedType unwrapped = convertRequired(field.getType());
+        Argument nestedArg = convert(unwrapped.type());
+        nestedArg.setDescription(field.getDescription());
+        properties.put(field.getName(), nestedArg);
+        if (unwrapped.required()) {
+          required.add(field.getName());
+        }
+      }
+      Parameters nestedParams = new Parameters();
+      nestedParams.setType("object");
+      nestedParams.setProperties(properties);
+      nestedParams.setRequired(required);
+      argument.setParameters(nestedParams);
     } else {
       throw new UnsupportedOperationException("Unsupported type: " + graphQLInputType);
     }
@@ -573,4 +597,54 @@ public class GraphQLSchemaConverter {
       return type;
     }
   }
+
+  // === Consolidated @api directive handling ====================================================
+  private void applyApiArgs(Map<String, Object> args, ApiOperation.ApiOperationBuilder builder) {
+    if (args == null || args.isEmpty()) return;
+    Object v;
+    if ((v = args.get("mcp")) != null) {
+      builder.mcpMethod(McpMethodType.valueOf(v.toString().toUpperCase()));
+    }
+    if ((v = args.get("rest")) != null) {
+      builder.restMethod(RestMethodType.valueOf(v.toString().toUpperCase()));
+    }
+    if ((v = args.get("format")) != null) {
+      builder.format(ResultFormat.valueOf(v.toString().toUpperCase()));
+    }
+    if ((v = args.get("uri")) != null) builder.uriTemplate(v.toString());
+  }
+
+  private Map<String, Object> toArgMap(List<Directive> directives) {
+    Map<String, Object> map = new HashMap<>();
+    if (directives == null) return map;
+    for (Directive dir : directives) {
+      if (!"api".equals(dir.getName())) continue;
+      dir.getArguments()
+          .forEach(arg -> map.put(arg.getName(), convertLanguageValue(arg.getValue())));
+    }
+    return map;
+  }
+
+  private Map<String, Object> toArgMap(GraphQLDirective directive) {
+    Map<String, Object> map = new HashMap<>();
+    if (directive == null) return map;
+    directive
+        .getArguments()
+        .forEach(
+            arg ->
+                map.put(
+                    arg.getName(),
+                    convertLanguageValue((Value<?>) arg.getArgumentValue().getValue())));
+    return map;
+  }
+
+  private Object convertLanguageValue(Value<?> value) {
+    if (value == null) return null;
+    if (value instanceof BooleanValue bv) return bv.isValue();
+    if (value instanceof StringValue sv) return sv.getValue();
+    if (value instanceof EnumValue ev) return ev.getName();
+    // Fallback to string representation
+    return value.toString();
+  }
+  // === End consolidated helpers ================================================================`
 }

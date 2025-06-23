@@ -454,16 +454,15 @@ INSERT INTO `default_catalog`.`default_database`.`_OrdersTotals_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query Orders($limit: Int = 10, $offset: Int = 0$totals_limit: Int = 10, $totals_offset: Int = 0) {\nOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\ntotals(limit: $totals_limit, offset: $totals_offset) {\nid\nprice\nsaving\n}\n}\n\n}",
           "queryName" : "Orders",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/Orders{?totals_limit,offset,totals_offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/Orders{?totals_limit,offset,totals_offset,limit}"
       }
     ],
     "schema" : {

@@ -489,16 +489,15 @@ INSERT INTO `default_catalog`.`default_database`.`Product_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query Customer($limit: Int = 10, $offset: Int = 0) {\nCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
           "queryName" : "Customer",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/Customer{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/Customer{?offset,limit}"
       },
       {
         "function" : {
@@ -521,16 +520,15 @@ INSERT INTO `default_catalog`.`default_database`.`Product_2`
             ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query Product($productid: GraphQLBigInteger!, $limit: Int = 10, $offset: Int = 0) {\nProduct(productid: $productid, limit: $limit, offset: $offset) {\nproductid\nname\ndescription\ncategory\n}\n\n}",
           "queryName" : "Product",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/Product{?productid,offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/Product{?productid,offset,limit}"
       }
     ],
     "schema" : {

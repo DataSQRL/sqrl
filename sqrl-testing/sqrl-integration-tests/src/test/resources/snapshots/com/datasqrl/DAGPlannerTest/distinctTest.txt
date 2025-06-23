@@ -1451,16 +1451,15 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByMultiple_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query Customer($limit: Int = 10, $offset: Int = 0) {\nCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
           "queryName" : "Customer",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/Customer{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/Customer{?offset,limit}"
       },
       {
         "function" : {
@@ -1478,16 +1477,15 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByMultiple_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query CustomerByMultiple($limit: Int = 10, $offset: Int = 0) {\nCustomerByMultiple(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
           "queryName" : "CustomerByMultiple",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/CustomerByMultiple{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/CustomerByMultiple{?offset,limit}"
       },
       {
         "function" : {
@@ -1505,16 +1503,15 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByMultiple_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query CustomerByMultipleTime($limit: Int = 10, $offset: Int = 0) {\nCustomerByMultipleTime(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
           "queryName" : "CustomerByMultipleTime",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/CustomerByMultipleTime{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/CustomerByMultipleTime{?offset,limit}"
       },
       {
         "function" : {
@@ -1532,16 +1529,15 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByMultiple_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query CustomerByTime($limit: Int = 10, $offset: Int = 0) {\nCustomerByTime(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
           "queryName" : "CustomerByTime",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/CustomerByTime{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/CustomerByTime{?offset,limit}"
       },
       {
         "function" : {
@@ -1559,16 +1555,15 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByMultiple_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query CustomerByTime2($limit: Int = 10, $offset: Int = 0) {\nCustomerByTime2(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
           "queryName" : "CustomerByTime2",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/CustomerByTime2{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/CustomerByTime2{?offset,limit}"
       },
       {
         "function" : {
@@ -1586,16 +1581,15 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByMultiple_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query CustomerByTimeAsc($limit: Int = 10, $offset: Int = 0) {\nCustomerByTimeAsc(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
           "queryName" : "CustomerByTimeAsc",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/CustomerByTimeAsc{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/CustomerByTimeAsc{?offset,limit}"
       },
       {
         "function" : {
@@ -1613,16 +1607,15 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByMultiple_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query CustomerByUpdated($limit: Int = 10, $offset: Int = 0) {\nCustomerByUpdated(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
           "queryName" : "CustomerByUpdated",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/CustomerByUpdated{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/CustomerByUpdated{?offset,limit}"
       },
       {
         "function" : {
@@ -1640,16 +1633,15 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByMultiple_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query CustomerByUpdatedAsc($limit: Int = 10, $offset: Int = 0) {\nCustomerByUpdatedAsc(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
           "queryName" : "CustomerByUpdatedAsc",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/CustomerByUpdatedAsc{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/CustomerByUpdatedAsc{?offset,limit}"
       },
       {
         "function" : {
@@ -1667,16 +1659,15 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByMultiple_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query ExplicitDistinct($limit: Int = 10, $offset: Int = 0) {\nExplicitDistinct(limit: $limit, offset: $offset) {\ncustomerid\ntimestamp\nname\n}\n\n}",
           "queryName" : "ExplicitDistinct",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/ExplicitDistinct{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/ExplicitDistinct{?offset,limit}"
       }
     ],
     "schema" : {

@@ -230,16 +230,15 @@ FROM "Orders_2"
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query DistinctOrders($limit: Int = 10, $offset: Int = 0) {\nDistinctOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nproductid\nquantity\nunit_price\ndiscount\n}\n\n}",
           "queryName" : "DistinctOrders",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/DistinctOrders{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/DistinctOrders{?offset,limit}"
       },
       {
         "function" : {
@@ -257,16 +256,15 @@ FROM "Orders_2"
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query Orders($limit: Int = 10, $offset: Int = 0) {\nOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nproductid\nquantity\nunit_price\ndiscount\n}\n\n}",
           "queryName" : "Orders",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/Orders{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/Orders{?offset,limit}"
       }
     ],
     "schema" : {

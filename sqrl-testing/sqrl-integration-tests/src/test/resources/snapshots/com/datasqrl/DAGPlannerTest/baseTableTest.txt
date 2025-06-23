@@ -958,16 +958,15 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerWithEmail_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query Customer($limit: Int = 10, $offset: Int = 0) {\nCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
           "queryName" : "Customer",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/Customer{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/Customer{?offset,limit}"
       },
       {
         "function" : {
@@ -985,16 +984,15 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerWithEmail_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query CustomerWithEmail($limit: Int = 10, $offset: Int = 0) {\nCustomerWithEmail(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
           "queryName" : "CustomerWithEmail",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/CustomerWithEmail{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/CustomerWithEmail{?offset,limit}"
       },
       {
         "function" : {
@@ -1012,16 +1010,15 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerWithEmail_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query DistinctCustomer($limit: Int = 10, $offset: Int = 0) {\nDistinctCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
           "queryName" : "DistinctCustomer",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/DistinctCustomer{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/DistinctCustomer{?offset,limit}"
       },
       {
         "function" : {
@@ -1039,16 +1036,15 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerWithEmail_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query Product($limit: Int = 10, $offset: Int = 0) {\nProduct(limit: $limit, offset: $offset) {\nproductid\nname\ndescription\ncategory\n}\n\n}",
           "queryName" : "Product",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/Product{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/Product{?offset,limit}"
       },
       {
         "function" : {
@@ -1071,16 +1067,15 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerWithEmail_2`
             ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query CustomerById($id: GraphQLBigInteger!, $limit: Int = 10, $offset: Int = 0) {\nCustomerById(id: $id, limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
           "queryName" : "CustomerById",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/CustomerById{?offset,limit,id}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/CustomerById{?offset,limit,id}"
       },
       {
         "function" : {
@@ -1103,16 +1098,15 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerWithEmail_2`
             ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query DistinctCustomerById($id: GraphQLBigInteger!, $limit: Int = 10, $offset: Int = 0) {\nDistinctCustomerById(id: $id, limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
           "queryName" : "DistinctCustomerById",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/DistinctCustomerById{?offset,limit,id}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/DistinctCustomerById{?offset,limit,id}"
       },
       {
         "function" : {
@@ -1135,16 +1129,15 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerWithEmail_2`
             ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query ProductByCategory($category: String!, $limit: Int = 10, $offset: Int = 0) {\nProductByCategory(category: $category, limit: $limit, offset: $offset) {\nproductid\nname\ndescription\ncategory\n}\n\n}",
           "queryName" : "ProductByCategory",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/ProductByCategory{?offset,limit,category}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/ProductByCategory{?offset,limit,category}"
       }
     ],
     "schema" : {

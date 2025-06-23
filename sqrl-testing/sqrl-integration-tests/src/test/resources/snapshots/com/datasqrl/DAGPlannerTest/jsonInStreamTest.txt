@@ -1454,16 +1454,15 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query Customer($limit: Int = 10, $offset: Int = 0) {\nCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
           "queryName" : "Customer",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/Customer{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/Customer{?offset,limit}"
       },
       {
         "function" : {
@@ -1481,16 +1480,15 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query CustomerStream($limit: Int = 10, $offset: Int = 0) {\nCustomerStream(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
           "queryName" : "CustomerStream",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/CustomerStream{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/CustomerStream{?offset,limit}"
       },
       {
         "function" : {
@@ -1508,16 +1506,15 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query ObjComplex($limit: Int = 10, $offset: Int = 0) {\nObjComplex(limit: $limit, offset: $offset) {\ncustomerid\nobj\n}\n\n}",
           "queryName" : "ObjComplex",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/ObjComplex{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/ObjComplex{?offset,limit}"
       },
       {
         "function" : {
@@ -1535,16 +1532,15 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query jsonArrayAggTable($limit: Int = 10, $offset: Int = 0) {\njsonArrayAggTable(limit: $limit, offset: $offset) {\nname\nagg\n}\n\n}",
           "queryName" : "jsonArrayAggTable",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/jsonArrayAggTable{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/jsonArrayAggTable{?offset,limit}"
       },
       {
         "function" : {
@@ -1562,16 +1558,15 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query jsonArrayTable($limit: Int = 10, $offset: Int = 0) {\njsonArrayTable(limit: $limit, offset: $offset) {\ncustomerid\nobj\n}\n\n}",
           "queryName" : "jsonArrayTable",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/jsonArrayTable{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/jsonArrayTable{?offset,limit}"
       },
       {
         "function" : {
@@ -1589,16 +1584,15 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query jsonConcatTable($limit: Int = 10, $offset: Int = 0) {\njsonConcatTable(limit: $limit, offset: $offset) {\ncustomerid\nobj\n}\n\n}",
           "queryName" : "jsonConcatTable",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/jsonConcatTable{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/jsonConcatTable{?offset,limit}"
       },
       {
         "function" : {
@@ -1616,16 +1610,15 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query jsonExistsTable($limit: Int = 10, $offset: Int = 0) {\njsonExistsTable(limit: $limit, offset: $offset) {\ncustomerid\nobj\n}\n\n}",
           "queryName" : "jsonExistsTable",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/jsonExistsTable{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/jsonExistsTable{?offset,limit}"
       },
       {
         "function" : {
@@ -1643,16 +1636,15 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query jsonExtractTable($limit: Int = 10, $offset: Int = 0) {\njsonExtractTable(limit: $limit, offset: $offset) {\ncustomerid\nobj\n}\n\n}",
           "queryName" : "jsonExtractTable",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/jsonExtractTable{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/jsonExtractTable{?offset,limit}"
       },
       {
         "function" : {
@@ -1670,16 +1662,15 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query jsonObjectAggTable($limit: Int = 10, $offset: Int = 0) {\njsonObjectAggTable(limit: $limit, offset: $offset) {\nname\nagg\n}\n\n}",
           "queryName" : "jsonObjectAggTable",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/jsonObjectAggTable{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/jsonObjectAggTable{?offset,limit}"
       },
       {
         "function" : {
@@ -1697,16 +1688,15 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query jsonQueryTable($limit: Int = 10, $offset: Int = 0) {\njsonQueryTable(limit: $limit, offset: $offset) {\ncustomerid\nobj\n}\n\n}",
           "queryName" : "jsonQueryTable",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/jsonQueryTable{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/jsonQueryTable{?offset,limit}"
       },
       {
         "function" : {
@@ -1724,16 +1714,15 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query jsonToStringTable($limit: Int = 10, $offset: Int = 0) {\njsonToStringTable(limit: $limit, offset: $offset) {\ncustomerid\nobj\n}\n\n}",
           "queryName" : "jsonToStringTable",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/jsonToStringTable{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/jsonToStringTable{?offset,limit}"
       },
       {
         "function" : {
@@ -1751,16 +1740,15 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query toJsonTable($limit: Int = 10, $offset: Int = 0) {\ntoJsonTable(limit: $limit, offset: $offset) {\ncustomerid\nobj\n}\n\n}",
           "queryName" : "toJsonTable",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/toJsonTable{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/toJsonTable{?offset,limit}"
       }
     ],
     "schema" : {

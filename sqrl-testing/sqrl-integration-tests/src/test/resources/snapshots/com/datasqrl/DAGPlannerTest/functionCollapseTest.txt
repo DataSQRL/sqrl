@@ -589,16 +589,15 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerHighCount_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query Customer($limit: Int = 10, $offset: Int = 0) {\nCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
           "queryName" : "Customer",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/Customer{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/Customer{?offset,limit}"
       },
       {
         "function" : {
@@ -616,16 +615,15 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerHighCount_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query CustomerHighCount($limit: Int = 10, $offset: Int = 0) {\nCustomerHighCount(limit: $limit, offset: $offset) {\nwindow_start\nwindow_end\nunique_email_count\n}\n\n}",
           "queryName" : "CustomerHighCount",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/CustomerHighCount{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/CustomerHighCount{?offset,limit}"
       },
       {
         "function" : {
@@ -643,16 +641,15 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerHighCount_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query CustomerTimeWindow($limit: Int = 10, $offset: Int = 0) {\nCustomerTimeWindow(limit: $limit, offset: $offset) {\nwindow_start\nwindow_end\nunique_email_count\n}\n\n}",
           "queryName" : "CustomerTimeWindow",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/CustomerTimeWindow{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/CustomerTimeWindow{?offset,limit}"
       }
     ],
     "schema" : {

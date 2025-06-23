@@ -307,16 +307,15 @@ FROM "VectorData_2"
             ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query CategoryCentroids($category_id: Int!, $limit: Int = 10, $offset: Int = 0) {\nCategoryCentroids(category_id: $category_id, limit: $limit, offset: $offset) {\ncategory_id\ncenter_vector\n}\n\n}",
           "queryName" : "CategoryCentroids",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/CategoryCentroids{?category_id,offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/CategoryCentroids{?category_id,offset,limit}"
       },
       {
         "function" : {
@@ -334,16 +333,15 @@ FROM "VectorData_2"
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query VectorData($limit: Int = 10, $offset: Int = 0) {\nVectorData(limit: $limit, offset: $offset) {\ndoc_id\ncategory_id\n}\n\n}",
           "queryName" : "VectorData",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/VectorData{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/VectorData{?offset,limit}"
       },
       {
         "function" : {
@@ -366,16 +364,15 @@ FROM "VectorData_2"
             ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query DocumentSimilarity($doc_id: Int!, $limit: Int = 10, $offset: Int = 0) {\nDocumentSimilarity(doc_id: $doc_id, limit: $limit, offset: $offset) {\ndoc_id\nscore\n}\n\n}",
           "queryName" : "DocumentSimilarity",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/DocumentSimilarity{?offset,limit,doc_id}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/DocumentSimilarity{?offset,limit,doc_id}"
       },
       {
         "function" : {
@@ -398,16 +395,15 @@ FROM "VectorData_2"
             ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query DocumentSimilarityIndex($doc_id: Int!, $limit: Int = 10, $offset: Int = 0) {\nDocumentSimilarityIndex(doc_id: $doc_id, limit: $limit, offset: $offset) {\ndoc_id\ncategory_id\n}\n\n}",
           "queryName" : "DocumentSimilarityIndex",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/DocumentSimilarityIndex{?offset,limit,doc_id}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/DocumentSimilarityIndex{?offset,limit,doc_id}"
       }
     ],
     "schema" : {

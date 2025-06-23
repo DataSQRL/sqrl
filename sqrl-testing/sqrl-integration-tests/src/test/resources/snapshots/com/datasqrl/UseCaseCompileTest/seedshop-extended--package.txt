@@ -1163,16 +1163,15 @@ FROM "Orders_6"
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query Customers($id: GraphQLBigInteger, $email: String, $limit: Int = 10, $offset: Int = 0$order_stats_limit: Int = 10, $order_stats_offset: Int = 0$past_purchases_limit: Int = 10, $past_purchases_offset: Int = 0$purchases_limit: Int = 10, $purchases_offset: Int = 0$purchases_totals_limit: Int = 10, $purchases_totals_offset: Int = 0$spending_limit: Int = 10, $spending_offset: Int = 0) {\nCustomers(id: $id, email: $email, limit: $limit, offset: $offset) {\nid\nfirst_name\nlast_name\nemail\nip_address\ncountry\nchanged_on\ntimestamp\norder_stats(limit: $order_stats_limit, offset: $order_stats_offset) {\ncustomerid\nfirst_order\ntotal_spend\ntotal_saved\nnum_orders\n}\npast_purchases(limit: $past_purchases_limit, offset: $past_purchases_offset) {\ncustomerid\nproductid\nnum_orders\ntotal_quantity\n}\npurchases(limit: $purchases_limit, offset: $purchases_offset) {\nid\ncustomerid\ntime\nitems {\nproductid\nquantity\nunit_price\ndiscount\n}\ntotals(limit: $purchases_totals_limit, offset: $purchases_totals_offset) {\nid\ntime\ncustomerid\nprice\nsaving\n}\n}\nspending(limit: $spending_limit, offset: $spending_offset) {\ncustomerid\nweek\nspend\nsaved\n}\n}\n\n}",
           "queryName" : "Customers",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/Customers{?order_stats_offset,offset,past_purchases_limit,purchases_offset,purchases_limit,purchases_totals_offset,spending_offset,spending_limit,order_stats_limit,limit,purchases_totals_limit,id,email,past_purchases_offset}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/Customers{?order_stats_offset,offset,past_purchases_limit,purchases_offset,purchases_limit,purchases_totals_offset,spending_offset,spending_limit,order_stats_limit,limit,purchases_totals_limit,id,email,past_purchases_offset}"
       },
       {
         "function" : {
@@ -1220,16 +1219,15 @@ FROM "Orders_6"
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query Orders($limit: Int = 10, $offset: Int = 0$customer_limit: Int = 10, $customer_offset: Int = 0$customer_order_stats_limit: Int = 10, $customer_order_stats_offset: Int = 0$customer_past_purchases_limit: Int = 10, $customer_past_purchases_offset: Int = 0$customer_spending_limit: Int = 10, $customer_spending_offset: Int = 0$totals_limit: Int = 10, $totals_offset: Int = 0) {\nOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nitems {\nproductid\nquantity\nunit_price\ndiscount\n}\ncustomer(limit: $customer_limit, offset: $customer_offset) {\nid\nfirst_name\nlast_name\nemail\nip_address\ncountry\nchanged_on\ntimestamp\norder_stats(limit: $customer_order_stats_limit, offset: $customer_order_stats_offset) {\ncustomerid\nfirst_order\ntotal_spend\ntotal_saved\nnum_orders\n}\npast_purchases(limit: $customer_past_purchases_limit, offset: $customer_past_purchases_offset) {\ncustomerid\nproductid\nnum_orders\ntotal_quantity\n}\nspending(limit: $customer_spending_limit, offset: $customer_spending_offset) {\ncustomerid\nweek\nspend\nsaved\n}\n}\ntotals(limit: $totals_limit, offset: $totals_offset) {\nid\ntime\ncustomerid\nprice\nsaving\n}\n}\n\n}",
           "queryName" : "Orders",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/Orders{?customer_past_purchases_limit,customer_past_purchases_offset,totals_limit,offset,customer_order_stats_offset,totals_offset,customer_limit,limit,customer_order_stats_limit,customer_offset,customer_spending_offset,customer_spending_limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/Orders{?customer_past_purchases_limit,customer_past_purchases_offset,totals_limit,offset,customer_order_stats_offset,totals_offset,customer_limit,limit,customer_order_stats_limit,customer_offset,customer_spending_offset,customer_spending_limit}"
       },
       {
         "function" : {
@@ -1252,16 +1250,15 @@ FROM "Orders_6"
             ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query Products($id: GraphQLBigInteger!, $limit: Int = 10, $offset: Int = 0) {\nProducts(id: $id, limit: $limit, offset: $offset) {\nid\nname\nsizing\nweight_in_gram\ntype\ncategory\nusda_id\nupdated\n}\n\n}",
           "queryName" : "Products",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/Products{?offset,limit,id}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/Products{?offset,limit,id}"
       },
       {
         "function" : {
@@ -1284,16 +1281,15 @@ FROM "Orders_6"
             ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query ProductsByCountry($productid: GraphQLBigInteger!, $limit: Int = 10, $offset: Int = 0) {\nProductsByCountry(productid: $productid, limit: $limit, offset: $offset) {\nproductid\ncountry\nquantity\nspend\nweight\n}\n\n}",
           "queryName" : "ProductsByCountry",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/ProductsByCountry{?productid,offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/ProductsByCountry{?productid,offset,limit}"
       },
       {
         "function" : {
@@ -1316,16 +1312,15 @@ FROM "Orders_6"
             ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query ProductSearch($query: String!, $limit: Int = 10, $offset: Int = 0) {\nProductSearch(query: $query, limit: $limit, offset: $offset) {\nid\nname\nsizing\nweight_in_gram\ntype\ncategory\nusda_id\nupdated\nscore\n}\n\n}",
           "queryName" : "ProductSearch",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/ProductSearch{?offset,query,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/ProductSearch{?offset,query,limit}"
       },
       {
         "function" : {
@@ -1352,16 +1347,15 @@ FROM "Orders_6"
             ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query ProductSearchWithId($query: String!, $id: Int!, $limit: Int = 10, $offset: Int = 0) {\nProductSearchWithId(query: $query, id: $id, limit: $limit, offset: $offset) {\nid\nname\nsizing\nweight_in_gram\ntype\ncategory\nusda_id\nupdated\n}\n\n}",
           "queryName" : "ProductSearchWithId",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/ProductSearchWithId{?offset,query,limit,id}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/ProductSearchWithId{?offset,query,limit,id}"
       }
     ],
     "schema" : {

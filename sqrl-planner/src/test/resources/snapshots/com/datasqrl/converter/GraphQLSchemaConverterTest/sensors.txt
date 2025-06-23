@@ -1,9 +1,5 @@
 [ {
-  "apiQuery" : {
-    "operationType" : "QUERY",
-    "query" : "query SensorReading($sensorid: Int!, $limit: Int = 10, $offset: Int = 0) {\nSensorReading(sensorid: $sensorid, limit: $limit, offset: $offset) {\nsensorid\ntemperature\nevent_time\n}\n\n}",
-    "queryName" : "SensorReading"
-  },
+  "format" : "JSON",
   "function" : {
     "description" : "Returns the sensor temperature readings for each second by most recent for a given sensor id",
     "name" : "GetSensorReading",
@@ -25,17 +21,16 @@
       "type" : "object"
     }
   },
-  "httpMethod" : "GET",
-  "resource" : false,
-  "restEndpoint" : true,
-  "tool" : true,
-  "uriTemplate" : "queries/SensorReading{?offset,limit,sensorid}"
-}, {
   "apiQuery" : {
     "operationType" : "QUERY",
-    "query" : "query ReadingsAboveTemp($temp: Float!, $limit: Int = 10) {\nReadingsAboveTemp(temp: $temp, limit: $limit) {\nsensorid\ntemperature\nevent_time\n}\n\n}",
-    "queryName" : "ReadingsAboveTemp"
+    "query" : "query SensorReading($sensorid: Int!, $limit: Int = 10, $offset: Int = 0) {\nSensorReading(sensorid: $sensorid, limit: $limit, offset: $offset) {\nsensorid\ntemperature\nevent_time\n}\n\n}",
+    "queryName" : "SensorReading"
   },
+  "mcpMethod" : "TOOL",
+  "restMethod" : "GET",
+  "uriTemplate" : "queries/SensorReading{?offset,limit,sensorid}"
+}, {
+  "format" : "JSON",
   "function" : {
     "description" : "Returns all sensor temperature readings above the given temperature",
     "name" : "GetReadingsAboveTemp",
@@ -52,17 +47,16 @@
       "type" : "object"
     }
   },
-  "httpMethod" : "GET",
-  "resource" : false,
-  "restEndpoint" : true,
-  "tool" : true,
-  "uriTemplate" : "queries/ReadingsAboveTemp{?temp,limit}"
-}, {
   "apiQuery" : {
     "operationType" : "QUERY",
-    "query" : "query SensorMaxTempLastMinute($sensorid: Int, $limit: Int = 10, $offset: Int = 0) {\nSensorMaxTempLastMinute(sensorid: $sensorid, limit: $limit, offset: $offset) {\nsensorid\nmaxTemp\nlast_updated\n}\n\n}",
-    "queryName" : "SensorMaxTempLastMinute"
+    "query" : "query ReadingsAboveTemp($temp: Float!, $limit: Int = 10) {\nReadingsAboveTemp(temp: $temp, limit: $limit) {\nsensorid\ntemperature\nevent_time\n}\n\n}",
+    "queryName" : "ReadingsAboveTemp"
   },
+  "mcpMethod" : "TOOL",
+  "restMethod" : "GET",
+  "uriTemplate" : "queries/ReadingsAboveTemp{?temp,limit}"
+}, {
+  "format" : "JSON",
   "function" : {
     "description" : "Returns the maximum temperature recorded by each sensor in the last minute",
     "name" : "GetSensorMaxTempLastMinute",
@@ -84,17 +78,16 @@
       "type" : "object"
     }
   },
-  "httpMethod" : "GET",
-  "resource" : false,
-  "restEndpoint" : true,
-  "tool" : true,
-  "uriTemplate" : "queries/SensorMaxTempLastMinute{?offset,limit,sensorid}"
-}, {
   "apiQuery" : {
     "operationType" : "QUERY",
-    "query" : "query SensorMaxTemp($sensorid: Int, $limit: Int = 10, $offset: Int = 0) {\nSensorMaxTemp(sensorid: $sensorid, limit: $limit, offset: $offset) {\nsensorid\nmaxTemp\nlast_updated\n}\n\n}",
-    "queryName" : "SensorMaxTemp"
+    "query" : "query SensorMaxTempLastMinute($sensorid: Int, $limit: Int = 10, $offset: Int = 0) {\nSensorMaxTempLastMinute(sensorid: $sensorid, limit: $limit, offset: $offset) {\nsensorid\nmaxTemp\nlast_updated\n}\n\n}",
+    "queryName" : "SensorMaxTempLastMinute"
   },
+  "mcpMethod" : "TOOL",
+  "restMethod" : "GET",
+  "uriTemplate" : "queries/SensorMaxTempLastMinute{?offset,limit,sensorid}"
+}, {
+  "format" : "JSON",
   "function" : {
     "description" : "Returns the maximum temperature recorded by each sensor",
     "name" : "GetSensorMaxTemp",
@@ -116,17 +109,16 @@
       "type" : "object"
     }
   },
-  "httpMethod" : "GET",
-  "resource" : false,
-  "restEndpoint" : true,
-  "tool" : true,
+  "apiQuery" : {
+    "operationType" : "QUERY",
+    "query" : "query SensorMaxTemp($sensorid: Int, $limit: Int = 10, $offset: Int = 0) {\nSensorMaxTemp(sensorid: $sensorid, limit: $limit, offset: $offset) {\nsensorid\nmaxTemp\nlast_updated\n}\n\n}",
+    "queryName" : "SensorMaxTemp"
+  },
+  "mcpMethod" : "TOOL",
+  "restMethod" : "GET",
   "uriTemplate" : "queries/SensorMaxTemp{?offset,limit,sensorid}"
 }, {
-  "apiQuery" : {
-    "operationType" : "MUTATION",
-    "query" : "mutation AddReading($sensorid: Int!, $temperature: Float!) {\nAddReading(metric: { sensorid: $sensorid, temperature: $temperature }) {\nsensorid\ntemperature\nevent_time\n}\n\n}",
-    "queryName" : "AddReading"
-  },
+  "format" : "JSON",
   "function" : {
     "name" : "AddAddReading",
     "parameters" : {
@@ -142,17 +134,16 @@
       "type" : "object"
     }
   },
-  "httpMethod" : "POST",
-  "resource" : false,
-  "restEndpoint" : true,
-  "tool" : true,
+  "apiQuery" : {
+    "operationType" : "MUTATION",
+    "query" : "mutation AddReading($sensorid: Int!, $temperature: Float!) {\nAddReading(metric: { sensorid: $sensorid, temperature: $temperature }) {\nsensorid\ntemperature\nevent_time\n}\n\n}",
+    "queryName" : "AddReading"
+  },
+  "mcpMethod" : "TOOL",
+  "restMethod" : "POST",
   "uriTemplate" : "mutations/AddReading"
 }, {
-  "apiQuery" : {
-    "operationType" : "QUERY",
-    "query" : "query HighTemps(\n    $temperature: Float!\n) {\n    ReadingsAboveTemp(temp: $temperature) {\n        sensorid\n        temperature\n    }\n}\n",
-    "queryName" : "HighTemps"
-  },
+  "format" : "JSON",
   "function" : {
     "description" : " Returns all readings with a temperature higher than the provided value",
     "name" : "HighTemps",
@@ -167,17 +158,16 @@
       "type" : "object"
     }
   },
-  "httpMethod" : "GET",
-  "resource" : false,
-  "restEndpoint" : true,
-  "tool" : true,
-  "uriTemplate" : "queries/HighTemps{?temperature}"
-}, {
   "apiQuery" : {
     "operationType" : "QUERY",
-    "query" : "query HighTemps2(\n    $temp: Float!\n) {\n    ReadingsAboveTemp(temp: $temp) {\n        sensorid\n        temperature\n    }\n}\n",
-    "queryName" : "HighTemps2"
+    "query" : "query HighTemps(\n    $temperature: Float!\n) @api(rest: \"none\") {\n    ReadingsAboveTemp(temp: $temperature) {\n        sensorid\n        temperature\n    }\n}\n",
+    "queryName" : "HighTemps"
   },
+  "mcpMethod" : "TOOL",
+  "restMethod" : "NONE",
+  "uriTemplate" : "queries/HighTemps{?temperature}"
+}, {
+  "format" : "JSON",
   "function" : {
     "description" : " high temperature readings",
     "name" : "HighTemps2",
@@ -192,9 +182,12 @@
       "type" : "object"
     }
   },
-  "httpMethod" : "GET",
-  "resource" : false,
-  "restEndpoint" : true,
-  "tool" : true,
-  "uriTemplate" : "queries/HighTemps2{?temp}"
+  "apiQuery" : {
+    "operationType" : "QUERY",
+    "query" : "query HighTemps2(\n    $temp: Float!\n) @api(uri: \"/temp/high{?temp}\") {\n    ReadingsAboveTemp(temp: $temp) {\n        sensorid\n        temperature\n    }\n}\n",
+    "queryName" : "HighTemps2"
+  },
+  "mcpMethod" : "TOOL",
+  "restMethod" : "GET",
+  "uriTemplate" : "/temp/high{?temp}"
 } ]

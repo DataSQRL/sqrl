@@ -311,6 +311,7 @@ public class FullUsecasesIT {
                   .flatMap(TestRunnerConfiguration::getDelaySec)
                   .map(Duration::getSeconds)
                   .orElse((long) -1);
+          //          delaySec = 600;
           int requiredCheckpoints =
               packageJson
                   .getTestConfig()

@@ -18,8 +18,8 @@ package com.datasqrl.graphql.server.operation;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import graphql.language.OperationDefinition.Operation;
 import java.util.Objects;
+import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
 
@@ -28,46 +28,43 @@ import lombok.Value;
  * passed to the LLM as a tool and the {@link GraphQLQuery} that is executed.
  */
 @Value
+@Builder
 public class ApiOperation {
 
   @NonNull FunctionDefinition function;
   @NonNull GraphQLQuery apiQuery;
-  boolean isTool; // MCP Tool
-  boolean isResource; // MCP Resource
-  boolean isRestEndpoint; // REST Resource
+  McpMethodType mcpMethod; // The MCP endpoint type or NONE if no MCP
+  RestMethodType restMethod; // The REST Method for the operation or NONE if no REST
 
   /** RFC 6570 URI template for Resource endpoint (both MCP and REST) */
   String uriTemplate;
 
-  HttpMethod httpMethod; // REST Method
+  ResultFormat format;
 
-  public ApiOperation(FunctionDefinition function, GraphQLQuery apiQuery) {
-    this(
-        function,
-        apiQuery,
-        true,
-        false,
-        apiQuery.operationType() != Operation.SUBSCRIPTION,
-        getDefaultUriTemplate(function, apiQuery),
-        getDefaultHttpMethod(apiQuery));
+  public static ApiOperationBuilder getBuilder(FunctionDefinition function, GraphQLQuery apiQuery) {
+    return builder()
+        .function(function)
+        .apiQuery(apiQuery)
+        .mcpMethod(getDefaultMcpMethod(function))
+        .restMethod(getDefaultRestMethod(apiQuery))
+        .uriTemplate(getDefaultUriTemplate(function, apiQuery))
+        .format(ResultFormat.JSON);
   }
 
   @JsonCreator
   public ApiOperation(
       @JsonProperty("function") FunctionDefinition function,
-      @JsonProperty("apiQuery") GraphQLQuery apiQuery,
-      @JsonProperty("tool") boolean isTool,
-      @JsonProperty("resource") boolean isResource,
-      @JsonProperty("restEndpoint") boolean isRestEndpoint,
-      @JsonProperty("uriTemplate") String uriTemplate,
-      @JsonProperty("httpMethod") HttpMethod httpMethod) {
+      @JsonProperty("query") GraphQLQuery apiQuery,
+      @JsonProperty("mcp") McpMethodType mcpMethod,
+      @JsonProperty("rest") RestMethodType restMethod,
+      @JsonProperty("uri") String uriTemplate,
+      @JsonProperty("format") ResultFormat format) {
     this.function = function;
     this.apiQuery = apiQuery;
-    this.isTool = isTool;
-    this.isResource = isResource;
-    this.isRestEndpoint = isRestEndpoint;
+    this.mcpMethod = mcpMethod;
+    this.restMethod = restMethod;
     this.uriTemplate = uriTemplate;
-    this.httpMethod = httpMethod;
+    this.format = format;
   }
 
   /**
@@ -83,6 +80,16 @@ public class ApiOperation {
   @JsonIgnore
   public String getName() {
     return function.getName();
+  }
+
+  @JsonIgnore
+  public boolean isRestEndpoint() {
+    return restMethod != RestMethodType.NONE;
+  }
+
+  @JsonIgnore
+  public boolean isMcpEndpoint() {
+    return mcpMethod != McpMethodType.NONE;
   }
 
   /**
@@ -110,11 +117,19 @@ public class ApiOperation {
     return Objects.hashCode(getId());
   }
 
-  public static HttpMethod getDefaultHttpMethod(GraphQLQuery apiQuery) {
+  public static McpMethodType getDefaultMcpMethod(FunctionDefinition function) {
+    if (function.getParameters() == null || !function.getParameters().isNested()) {
+      return McpMethodType.TOOL;
+    } else {
+      return McpMethodType.NONE;
+    }
+  }
+
+  public static RestMethodType getDefaultRestMethod(GraphQLQuery apiQuery) {
     return switch (apiQuery.operationType()) {
-      case QUERY -> HttpMethod.GET;
-      case MUTATION -> HttpMethod.POST;
-      case SUBSCRIPTION -> null;
+      case QUERY -> RestMethodType.GET;
+      case MUTATION -> RestMethodType.POST;
+      case SUBSCRIPTION -> RestMethodType.NONE;
     };
   }
 

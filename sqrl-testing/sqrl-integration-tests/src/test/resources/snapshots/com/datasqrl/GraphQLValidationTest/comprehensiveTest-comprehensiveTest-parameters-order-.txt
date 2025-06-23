@@ -1189,16 +1189,15 @@ FROM "UnnestOrders_16"
             ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query TableFunctionCallsTblFct($arg2: Int!, $arg1: Int!, $limit: Int = 10, $offset: Int = 0) {\nTableFunctionCallsTblFct(arg2: $arg2, arg1: $arg1, limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
           "queryName" : "TableFunctionCallsTblFct",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/TableFunctionCallsTblFct{?arg2,offset,arg1,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/TableFunctionCallsTblFct{?arg2,offset,arg1,limit}"
       }
     ],
     "schema" : {

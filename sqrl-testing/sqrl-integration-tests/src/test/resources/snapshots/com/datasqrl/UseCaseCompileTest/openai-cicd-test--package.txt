@@ -165,16 +165,15 @@ FROM "results_2"
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query data($limit: Int = 10, $offset: Int = 0) {\ndata(limit: $limit, offset: $offset) {\nval\n}\n\n}",
           "queryName" : "data",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/data{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/data{?offset,limit}"
       },
       {
         "function" : {
@@ -192,16 +191,15 @@ FROM "results_2"
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query results($limit: Int = 10, $offset: Int = 0) {\nresults(limit: $limit, offset: $offset) {\ncompletions_result\nextract_json_result_response\nextract_json_result_with_schema_response\n}\n\n}",
           "queryName" : "results",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/results{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/results{?offset,limit}"
       }
     ],
     "schema" : {

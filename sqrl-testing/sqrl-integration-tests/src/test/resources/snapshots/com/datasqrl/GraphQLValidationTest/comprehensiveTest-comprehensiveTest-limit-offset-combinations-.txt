@@ -1244,16 +1244,15 @@ FROM "UnnestOrders_16"
             ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query TableFunctionCallsTblFct($arg1: Int!, $arg2: Int!, $limit: Int = 10, $offset: Int = 0) {\nTableFunctionCallsTblFct(arg1: $arg1, arg2: $arg2, limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
           "queryName" : "TableFunctionCallsTblFct",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/TableFunctionCallsTblFct{?arg2,offset,arg1,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/TableFunctionCallsTblFct{?arg2,offset,arg1,limit}"
       },
       {
         "function" : {
@@ -1264,16 +1263,15 @@ FROM "UnnestOrders_16"
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query CustomerByTime2() {\nCustomerByTime2 {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
           "queryName" : "CustomerByTime2",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/CustomerByTime2",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/CustomerByTime2"
       },
       {
         "function" : {
@@ -1288,16 +1286,15 @@ FROM "UnnestOrders_16"
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query CustomerByMultipleTime($limit: Int = 10) {\nCustomerByMultipleTime(limit: $limit) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
           "queryName" : "CustomerByMultipleTime",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/CustomerByMultipleTime{?limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/CustomerByMultipleTime{?limit}"
       },
       {
         "function" : {
@@ -1312,16 +1309,15 @@ FROM "UnnestOrders_16"
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query SelectCustomers($offset: Int = 0) {\nSelectCustomers(offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
           "queryName" : "SelectCustomers",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/SelectCustomers{?offset}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/SelectCustomers{?offset}"
       }
     ],
     "schema" : {

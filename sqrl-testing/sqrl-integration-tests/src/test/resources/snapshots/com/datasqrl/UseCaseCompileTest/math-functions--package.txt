@@ -155,16 +155,15 @@ FROM "MathFunctions_1"
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query MathFunctions($limit: Int = 10, $offset: Int = 0) {\nMathFunctions(limit: $limit, offset: $offset) {\nd\nb\ncbrt\ncopy_sign\nexpm1\nhypot\nlog1p\nnext_after\nscalb\nulp\nbinomial_distribution\nexponential_distribution\nnormal_distribution\npoisson_distribution\n}\n\n}",
           "queryName" : "MathFunctions",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/MathFunctions{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/MathFunctions{?offset,limit}"
       }
     ],
     "schema" : {

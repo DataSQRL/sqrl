@@ -104,9 +104,13 @@ public interface PackageJson {
 
     Optional<String> getGraphql();
 
+    //    List<String> getOperations();
+
     void setMainScript(String script);
 
     void setGraphql(String graphql);
+
+    //    void setOperations(List<String> operations);
   }
 
   interface EnginesConfig {

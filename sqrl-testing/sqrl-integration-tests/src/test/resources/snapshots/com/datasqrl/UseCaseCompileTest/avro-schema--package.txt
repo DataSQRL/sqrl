@@ -271,16 +271,15 @@ FROM (SELECT "uuidField", "timestampMillisField", "nullableTimestampMillisField"
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query Schema($limit: Int = 10, $offset: Int = 0) {\nSchema(limit: $limit, offset: $offset) {\nuuidField\ntimestampMillisField\nnullableTimestampMillisField\ntimestampMicrosField\nnullableTimestampMicrosField\ndateField\nnullableDateField\ntimeMillisField\nnullableTimeMillisField\ntimeMicrosField\nnullableTimeMicrosField\ncomplexArrayField {\nitemFieldOne\nitemFieldTwo\n}\nnullableComplexArrayField {\nnullableItemFieldOne\nnullableItemFieldTwo\n}\nmultiNestedRecord {\nnestedLevelOne {\nlevelOneField\n}\n}\nstringField\nnullableStringField\nintField\nnullableIntField\nlongField\nnullableLongField\nfloatField\nnullableFloatField\ndoubleField\nnullableDoubleField\nbooleanField\nnullableBooleanField\nenumField\nnullableEnumField\narrayField\nnullableArrayField\nnestedRecord {\nnestedStringField\nnestedIntField\nnestedArrayField\nnestedMapField\n}\nnullableNestedRecord {\nnullableNestedStringField\nnullableNestedLongField\n}\ndecimalField\nmapField\nnullableMapField\n}\n\n}",
           "queryName" : "Schema",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/Schema{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/Schema{?offset,limit}"
       }
     ],
     "schema" : {

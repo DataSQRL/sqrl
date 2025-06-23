@@ -685,16 +685,15 @@ INSERT INTO `default_catalog`.`default_database`.`SelectOrders1_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query Orders($limit: Int = 10, $offset: Int = 0) {\nOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
           "queryName" : "Orders",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/Orders{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/Orders{?offset,limit}"
       },
       {
         "function" : {
@@ -712,16 +711,15 @@ INSERT INTO `default_catalog`.`default_database`.`SelectOrders1_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query SelectOrders1($limit: Int = 10, $offset: Int = 0) {\nSelectOrders1(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
           "queryName" : "SelectOrders1",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/SelectOrders1{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/SelectOrders1{?offset,limit}"
       },
       {
         "function" : {
@@ -739,16 +737,15 @@ INSERT INTO `default_catalog`.`default_database`.`SelectOrders1_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query SelectOrders2($limit: Int = 10, $offset: Int = 0) {\nSelectOrders2(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
           "queryName" : "SelectOrders2",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/SelectOrders2{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/SelectOrders2{?offset,limit}"
       },
       {
         "function" : {
@@ -771,16 +768,15 @@ INSERT INTO `default_catalog`.`default_database`.`SelectOrders1_2`
             ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query OrdersById1($id: GraphQLBigInteger!, $limit: Int = 10, $offset: Int = 0) {\nOrdersById1(id: $id, limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
           "queryName" : "OrdersById1",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/OrdersById1{?offset,limit,id}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/OrdersById1{?offset,limit,id}"
       },
       {
         "function" : {
@@ -803,16 +799,15 @@ INSERT INTO `default_catalog`.`default_database`.`SelectOrders1_2`
             ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query OrdersById2($id: GraphQLBigInteger!, $limit: Int = 10, $offset: Int = 0) {\nOrdersById2(id: $id, limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
           "queryName" : "OrdersById2",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/OrdersById2{?offset,limit,id}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/OrdersById2{?offset,limit,id}"
       }
     ],
     "schema" : {

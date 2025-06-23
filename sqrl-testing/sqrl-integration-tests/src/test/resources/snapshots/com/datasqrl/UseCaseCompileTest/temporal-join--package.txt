@@ -387,16 +387,15 @@ FROM "SensorUpdates_6"
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query EnrichedSensorReading($limit: Int = 10, $offset: Int = 0) {\nEnrichedSensorReading(limit: $limit, offset: $offset) {\nsensorid\ntemperature\nevent_time\nsensor_name\n}\n\n}",
           "queryName" : "EnrichedSensorReading",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/EnrichedSensorReading{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/EnrichedSensorReading{?offset,limit}"
       },
       {
         "function" : {
@@ -414,16 +413,15 @@ FROM "SensorUpdates_6"
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query SensorReading($limit: Int = 10, $offset: Int = 0) {\nSensorReading(limit: $limit, offset: $offset) {\nsensorid\ntemperature\nevent_time\n}\n\n}",
           "queryName" : "SensorReading",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/SensorReading{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/SensorReading{?offset,limit}"
       },
       {
         "function" : {
@@ -441,16 +439,15 @@ FROM "SensorUpdates_6"
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query SensorUpdates($limit: Int = 10, $offset: Int = 0) {\nSensorUpdates(limit: $limit, offset: $offset) {\nsensorid\nsensor_name\nlastUpdated\n}\n\n}",
           "queryName" : "SensorUpdates",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/SensorUpdates{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/SensorUpdates{?offset,limit}"
       },
       {
         "function" : {
@@ -471,16 +468,15 @@ FROM "SensorUpdates_6"
             ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "mutation SensorReading($sensorid: Int!, $temperature: Float!) {\nSensorReading(event: { sensorid: $sensorid, temperature: $temperature }) {\nsensorid\ntemperature\nevent_time\n}\n\n}",
           "queryName" : "SensorReading",
           "operationType" : "MUTATION"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "mutations/SensorReading",
-        "httpMethod" : "POST"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "POST",
+        "uriTemplate" : "mutations/SensorReading"
       },
       {
         "function" : {
@@ -501,16 +497,15 @@ FROM "SensorUpdates_6"
             ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "mutation SensorUpdates($sensorid: Int!, $sensor_name: String!) {\nSensorUpdates(event: { sensorid: $sensorid, sensor_name: $sensor_name }) {\nsensorid\nsensor_name\nlastUpdated\n}\n\n}",
           "queryName" : "SensorUpdates",
           "operationType" : "MUTATION"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "mutations/SensorUpdates",
-        "httpMethod" : "POST"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "POST",
+        "uriTemplate" : "mutations/SensorUpdates"
       }
     ],
     "schema" : {

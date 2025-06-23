@@ -598,16 +598,15 @@ INSERT INTO `default_catalog`.`default_database`.`OrderIds_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query FilteredOrders($limit: Int = 10, $offset: Int = 0) {\nFilteredOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\ncol2\n}\n\n}",
           "queryName" : "FilteredOrders",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/FilteredOrders{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/FilteredOrders{?offset,limit}"
       },
       {
         "function" : {
@@ -625,16 +624,15 @@ INSERT INTO `default_catalog`.`default_database`.`OrderIds_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query OrderIds($limit: Int = 10, $offset: Int = 0) {\nOrderIds(limit: $limit, offset: $offset) {\nid1\nid2\ntime\n}\n\n}",
           "queryName" : "OrderIds",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/OrderIds{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/OrderIds{?offset,limit}"
       },
       {
         "function" : {
@@ -652,16 +650,15 @@ INSERT INTO `default_catalog`.`default_database`.`OrderIds_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query Orders($limit: Int = 10, $offset: Int = 0) {\nOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
           "queryName" : "Orders",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/Orders{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/Orders{?offset,limit}"
       }
     ],
     "schema" : {

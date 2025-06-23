@@ -1887,16 +1887,15 @@ INSERT INTO `default_catalog`.`default_database`.`Numbers2_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query Numbers($limit: Int = 10, $offset: Int = 0) {\nNumbers(limit: $limit, offset: $offset) {\nid\n}\n\n}",
           "queryName" : "Numbers",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/Numbers{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/Numbers{?offset,limit}"
       },
       {
         "function" : {
@@ -1914,16 +1913,15 @@ INSERT INTO `default_catalog`.`default_database`.`Numbers2_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query Numbers2($limit: Int = 10, $offset: Int = 0) {\nNumbers2(limit: $limit, offset: $offset) {\nid\n}\n\n}",
           "queryName" : "Numbers2",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/Numbers2{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/Numbers2{?offset,limit}"
       },
       {
         "function" : {
@@ -1941,16 +1939,15 @@ INSERT INTO `default_catalog`.`default_database`.`Numbers2_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query NumbersLarge($limit: Int = 10, $offset: Int = 0) {\nNumbersLarge(limit: $limit, offset: $offset) {\nid\n}\n\n}",
           "queryName" : "NumbersLarge",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/NumbersLarge{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/NumbersLarge{?offset,limit}"
       },
       {
         "function" : {
@@ -1968,16 +1965,15 @@ INSERT INTO `default_catalog`.`default_database`.`Numbers2_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query OrderNumbers($limit: Int = 10, $offset: Int = 0) {\nOrderNumbers(limit: $limit, offset: $offset) {\nid\ntime\n}\n\n}",
           "queryName" : "OrderNumbers",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/OrderNumbers{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/OrderNumbers{?offset,limit}"
       },
       {
         "function" : {
@@ -1995,16 +1991,15 @@ INSERT INTO `default_catalog`.`default_database`.`Numbers2_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query OrderNumbers2($limit: Int = 10, $offset: Int = 0) {\nOrderNumbers2(limit: $limit, offset: $offset) {\nid\ntime\n}\n\n}",
           "queryName" : "OrderNumbers2",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/OrderNumbers2{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/OrderNumbers2{?offset,limit}"
       },
       {
         "function" : {
@@ -2022,16 +2017,15 @@ INSERT INTO `default_catalog`.`default_database`.`Numbers2_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query OrderPairs($limit: Int = 10, $offset: Int = 0) {\nOrderPairs(limit: $limit, offset: $offset) {\nid\ntime\notherid\n}\n\n}",
           "queryName" : "OrderPairs",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/OrderPairs{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/OrderPairs{?offset,limit}"
       },
       {
         "function" : {
@@ -2049,16 +2043,15 @@ INSERT INTO `default_catalog`.`default_database`.`Numbers2_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query OrderPairs2($limit: Int = 10, $offset: Int = 0) {\nOrderPairs2(limit: $limit, offset: $offset) {\nid\ntime\npk\n}\n\n}",
           "queryName" : "OrderPairs2",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/OrderPairs2{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/OrderPairs2{?offset,limit}"
       },
       {
         "function" : {
@@ -2076,16 +2069,15 @@ INSERT INTO `default_catalog`.`default_database`.`Numbers2_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query Orders($limit: Int = 10, $offset: Int = 0) {\nOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
           "queryName" : "Orders",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/Orders{?offset,limit}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/Orders{?offset,limit}"
       }
     ],
     "schema" : {

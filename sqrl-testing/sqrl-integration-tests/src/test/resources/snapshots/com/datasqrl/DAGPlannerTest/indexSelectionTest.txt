@@ -860,16 +860,15 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query Customer($limit: Int = 10, $offset: Int = 0$orders_limit: Int = 10, $orders_offset: Int = 0) {\nCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\norders(limit: $orders_limit, offset: $orders_offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n}\n\n}",
           "queryName" : "Customer",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/Customer{?orders_limit,offset,limit,orders_offset}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/Customer{?orders_limit,offset,limit,orders_offset}"
       },
       {
         "function" : {
@@ -896,16 +895,15 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
             ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query Orders($time: DateTime!, $customerid: GraphQLBigInteger!, $limit: Int = 10, $offset: Int = 0) {\nOrders(time: $time, customerid: $customerid, limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
           "queryName" : "Orders",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/Orders{?offset,customerid,limit,time}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/Orders{?offset,customerid,limit,time}"
       },
       {
         "function" : {
@@ -935,16 +933,15 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
             "required" : [ ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query Product($name: String, $description: String, $category: String, $_ingest_time: DateTime, $limit: Int = 10, $offset: Int = 0) {\nProduct(name: $name, description: $description, category: $category, _ingest_time: $_ingest_time, limit: $limit, offset: $offset) {\nproductid\nname\ndescription\ncategory\n}\n\n}",
           "queryName" : "Product",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/Product{?offset,name,limit,description,category,_ingest_time}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/Product{?offset,name,limit,description,category,_ingest_time}"
       },
       {
         "function" : {
@@ -967,16 +964,15 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
             ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query OrdersById($id: GraphQLBigInteger!, $limit: Int = 10, $offset: Int = 0) {\nOrdersById(id: $id, limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
           "queryName" : "OrdersById",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/OrdersById{?offset,limit,id}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/OrdersById{?offset,limit,id}"
       },
       {
         "function" : {
@@ -1003,16 +999,15 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
             ]
           }
         },
+        "format" : "JSON",
         "apiQuery" : {
           "query" : "query OrdersByTime($time: DateTime!, $customerid: GraphQLBigInteger!, $limit: Int = 10, $offset: Int = 0) {\nOrdersByTime(time: $time, customerid: $customerid, limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
           "queryName" : "OrdersByTime",
           "operationType" : "QUERY"
         },
-        "tool" : true,
-        "resource" : false,
-        "restEndpoint" : true,
-        "uriTemplate" : "queries/OrdersByTime{?offset,customerid,limit,time}",
-        "httpMethod" : "GET"
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/OrdersByTime{?offset,customerid,limit,time}"
       }
     ],
     "schema" : {
