@@ -28,10 +28,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.json.jackson.VertxModule;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.SneakyThrows;
@@ -69,63 +65,8 @@ public abstract class GenericJavaServerEngine extends ExecutionEngine.Base imple
 
   @SneakyThrows
   private String serverConfig() {
-    var mergedConfig = mergeConfigs(readDefaultConfig(), patchJwtConfig(engineConfig.getConfig()));
+    var mergedConfig = mergeConfigs(readDefaultConfig(), engineConfig.getConfig());
     return objectMapper.writer(new PrettyPrinter()).writeValueAsString(mergedConfig);
-  }
-
-  private Map<String, Object> patchJwtConfig(Map<String, Object> source) {
-    // apache configuration2 stores things in memory in a flatten format and it doesn't hold a copy
-    // of the original configuration/format
-
-    // FIXME this if a temporary fix, and must be reevaluated
-    Object jwtAuthObj = source.get("jwtAuth");
-    if (!(jwtAuthObj instanceof Map)) {
-      return source; // nothing to patch
-    }
-    Map<String, Object> jwtAuth = (Map<String, Object>) jwtAuthObj;
-
-    Object pubSecObj = jwtAuth.get("pubSecKeys");
-    if (pubSecObj instanceof Map) {
-      Map<String, Object> pubSecKeysMap = (Map<String, Object>) pubSecObj;
-
-      /* ----- extract the two parallel lists ----- */
-      List<?> algos = toList(pubSecKeysMap.get("algorithm"));
-      List<?> buffers = toList(pubSecKeysMap.get("buffer"));
-
-      /* ----- rebuild as List<Map<String,String>> ----- */
-      List<Map<String, Object>> pubSecKeys = new ArrayList<>();
-      int n = Math.max(algos.size(), buffers.size());
-      for (int i = 0; i < n; i++) {
-        Map<String, Object> entry = new LinkedHashMap<>();
-        if (i < algos.size()) entry.put("algorithm", algos.get(i));
-        if (i < buffers.size()) entry.put("buffer", buffers.get(i));
-        pubSecKeys.add(entry);
-      }
-
-      jwtAuth.put("pubSecKeys", pubSecKeys); // **replace** old structure
-    }
-
-    /* ----------  ensure audience is a List  ---------- */
-    Object jwtOptionsObj = jwtAuth.get("jwtOptions");
-    if (jwtOptionsObj instanceof Map) {
-      Map<String, Object> jwtOptions = (Map<String, Object>) jwtOptionsObj;
-      Object audience = jwtOptions.get("audience");
-      if (!(audience instanceof List)) {
-        jwtOptions.put(
-            "audience",
-            audience == null ? Collections.emptyList() : Collections.singletonList(audience));
-      }
-    }
-
-    return source; // patched in place
-  }
-
-  /* ----------  helper: coerce any value to List<?>  ---------- */
-  private static List<?> toList(Object o) {
-    if (o == null) return Collections.emptyList();
-    if (o instanceof List) return (List<?>) o;
-    if (o.getClass().isArray()) return Arrays.asList((Object[]) o);
-    return Collections.singletonList(o);
   }
 
   @SneakyThrows

@@ -347,7 +347,7 @@ class FullUseCasesIT {
         useCaseProvider().stream()
             .filter(p -> p.sqrlFileName.equals("sensors-mutation.sqrl") && p.goal.equals("test"))
             .collect(MoreCollectors.onlyElement());
-    testUseCase(param);
+    useCase(param);
   }
 
   @SneakyThrows
