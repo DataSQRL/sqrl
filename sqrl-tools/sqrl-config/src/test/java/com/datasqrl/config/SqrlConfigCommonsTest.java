@@ -34,7 +34,7 @@ class SqrlConfigCommonsTest {
   }
 
   @Test
-  void givenNoPaths_whenCreatingConfig_thenReturnDefaults() {
+  void givenNoPaths_whenCreatingConfig_thenReturnsDefaults() {
     var underTest = SqrlConfigCommons.fromFilesPackageJson(errors, List.of());
 
     assertThat(underTest).isNotNull();
@@ -47,7 +47,7 @@ class SqrlConfigCommonsTest {
   }
 
   @Test
-  void givenSinglePath_whenCreatingConfig_thenOverrideDefaults() {
+  void givenSinglePath_whenCreatingConfig_thenOverridesDefaults() {
     var underTest =
         SqrlConfigCommons.fromFilesPackageJson(
             errors, List.of(Path.of("src/test/resources/config/test-package.json")));

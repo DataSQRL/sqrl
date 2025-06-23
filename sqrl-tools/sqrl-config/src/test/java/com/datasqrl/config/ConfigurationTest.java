@@ -41,8 +41,7 @@ public class ConfigurationTest {
   private ErrorCollector errors = ErrorCollector.root();
 
   @Test
-  void jsonConfiguration() {
-    //    System.out.println(CONFIG_DIR.toAbsolutePath().toString());
+  void givenJsonConfigFile_whenLoad_thenParsesCorrectly() {
     testConfig1(SqrlConfigCommons.fromFiles(errors, CONFIG_FILE1));
   }
 
@@ -88,7 +87,7 @@ public class ConfigurationTest {
   }
 
   @Test
-  void writingFile() {
+  void givenLoadedConfig_whenWriteToFile_thenLoadsIdentically() {
     var config = SqrlConfigCommons.fromFiles(errors, CONFIG_FILE1);
     var tempFile = makeTempFile();
     config.toFile(tempFile);
@@ -97,7 +96,7 @@ public class ConfigurationTest {
   }
 
   @Test
-  void writingFile2() {
+  void givenSubConfig_whenWriteToFile_thenLoadsCorrectSubset() {
     var config = SqrlConfigCommons.fromFiles(errors, CONFIG_FILE1);
     var tempFile = makeTempFile();
     config.getSubConfig("subConf").toFile(tempFile, true);
@@ -106,7 +105,7 @@ public class ConfigurationTest {
   }
 
   @Test
-  void copyTest() {
+  void givenSourceConfig_whenCopy_thenCopiesConfiguration() {
     var other = SqrlConfigCommons.fromFiles(errors, CONFIG_FILE1).getSubConfig("subConf");
     var newConf = SqrlConfig.createCurrentVersion();
     newConf.copy(other);
@@ -114,7 +113,7 @@ public class ConfigurationTest {
   }
 
   @Test
-  void create() {
+  void givenNewConfig_whenSetPropertiesAndObjects_thenPersistsCorrectly() {
     var newConf = SqrlConfig.createCurrentVersion();
     newConf.setProperty("test", true);
     var tc = new TestClass(9, "boat", List.of("x", "y", "z"));
