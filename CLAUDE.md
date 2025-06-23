@@ -35,7 +35,7 @@ mvn verify
 mvn jacoco:report
 
 # Test specific module
-mvn test -pl sqrl-planner
+mvn test -pl sqrl-planner -Deasyjacoco.skip
 ```
 
 ### Code Quality
@@ -111,6 +111,24 @@ This is a multi-module Maven project with the following key components:
 - **Snapshot Testing**: Ensures consistent output across builds
 - **End-to-End Testing**: Full pipeline testing with real services
 - **Coverage Requirement**: Minimum 70% instruction coverage with JaCoCo
+- **Test Naming**: All new test methods must follow the `given_when_then` pattern (e.g., `givenValidConfig_whenParseConfiguration_thenReturnsExpectedResult`)
+
+## Code Style Guidelines
+
+- **Java 17 Features**: Use modern Java 17 syntax and language features
+- **Type Inference**: Use `var` for local variables when the type is obvious from context
+- **Streams API**: Prefer Java Streams over traditional loops when appropriate for readability and performance
+- **Examples**:
+  ```java
+  // Use var for obvious types
+  var config = SqrlConfig.createCurrentVersion();
+  var dependencies = getDependencies();
+  
+  // Use Streams for collections
+  var validConfigs = configs.stream()
+      .filter(Config::isValid)
+      .collect(Collectors.toList());
+  ```
 
 ## Troubleshooting
 

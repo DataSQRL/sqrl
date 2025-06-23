@@ -15,8 +15,7 @@
  */
 package com.datasqrl.config;
 
-import static com.datasqrl.config.ConfigurationTest.CONFIG_DIR;
-import static com.datasqrl.config.ConfigurationTest.testForErrors;
+import static com.datasqrl.config.SqrlConfigTest.testForErrors;
 import static org.assertj.core.api.Assertions.fail;
 
 import com.datasqrl.error.ErrorCollector;
@@ -27,6 +26,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 class PackageJsonSchemaTest {
 
+  private static final Path CONFIG_DIR = Path.of("src", "test", "resources", "config");
   private static final Path TEST_CASES = Path.of(CONFIG_DIR.toString(), "package");
 
   @ParameterizedTest
