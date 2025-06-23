@@ -155,6 +155,7 @@ public class GraphQLSchemaConverter {
               endLocation.getColumn());
       GraphQLQuery query = new GraphQLQuery(queryString, fctDef.getName(), opDef.getOperation());
       ApiOperation.ApiOperationBuilder builder = ApiOperation.getBuilder(fctDef, query);
+      config.setProtocolSupport(builder);
       applyApiArgs(toArgMap(opDef.getDirectives()), builder);
       functions.add(builder.build());
     } while (definition != null);
@@ -357,6 +358,7 @@ public class GraphQLSchemaConverter {
     GraphQLQuery apiQuery =
         new GraphQLQuery(queryHeader.toString(), fieldDef.getName(), operationType);
     ApiOperation.ApiOperationBuilder builder = ApiOperation.getBuilder(funcDef, apiQuery);
+    config.setProtocolSupport(builder);
     applyApiArgs(toArgMap(fieldDef.getDirective("api")), builder);
     return builder.build();
   }

@@ -398,6 +398,8 @@ public class SqrlConfigCommons implements SqrlConfig {
     return fromFilesPackageJson(errors, List.of());
   }
 
+  public static final String x = "";
+
   public static PackageJson fromFilesPackageJson(ErrorCollector errors, @NonNull List<Path> files) {
     return new PackageJsonImpl(getPackageConfig(errors, "/jsonSchema/packageSchema.json", files));
   }

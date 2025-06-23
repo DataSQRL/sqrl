@@ -16,6 +16,7 @@
 package com.datasqrl.config;
 
 import java.util.Optional;
+import java.util.List;
 import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
@@ -25,6 +26,7 @@ public class ScriptConfigImpl implements PackageJson.ScriptConfig {
 
   public static final String MAIN_KEY = "main";
   public static final String GRAPHQL_KEY = "graphql";
+  public static final String OPERATIONS_KEY = "operations";
   public static final String GRAPHQL_NORMALIZED_FILE_NAME = "schema.graphqls";
 
   @Override
@@ -35,6 +37,11 @@ public class ScriptConfigImpl implements PackageJson.ScriptConfig {
   @Override
   public Optional<String> getGraphql() {
     return sqrlConfig.asString(GRAPHQL_KEY).getOptional();
+  }
+
+  @Override
+  public List<String> getOperations() {
+    return sqrlConfig.asList(OPERATIONS_KEY, String.class).get();
   }
 
   @Override

@@ -28,6 +28,7 @@ import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.PackageJson.CompilerConfig;
 import com.datasqrl.engine.server.ServerPhysicalPlan;
 import com.datasqrl.graphql.server.CustomScalars;
+import com.datasqrl.graphql.server.operation.ApiProtocols;
 import com.datasqrl.plan.table.Multiplicity;
 import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.dag.plan.MutationQuery;
@@ -38,12 +39,16 @@ import com.google.inject.Inject;
 import graphql.Scalars;
 import graphql.language.IntValue;
 import graphql.schema.GraphQLArgument;
+import graphql.schema.GraphQLDirective;
+import graphql.schema.GraphQLEnumType;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLOutputType;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphQLTypeReference;
+import graphql.introspection.Introspection;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -64,10 +69,12 @@ public class GraphqlSchemaFactory {
   private final List<GraphQLObjectType> objectTypes = new ArrayList<>();
   private final Set<String> definedTypeNames = new HashSet<>();
   private final boolean extendedScalarTypes;
+  private final boolean addApiDirective;
 
   @Inject
   public GraphqlSchemaFactory(CompilerConfig config) {
     this.extendedScalarTypes = config.isExtendedScalarTypes();
+    this.addApiDirective = !config.getApiConfig().isGraphQLProtocolOnly();
   }
 
   public Optional<GraphQLSchema> generate(ServerPhysicalPlan serverPlan) {
@@ -105,6 +112,7 @@ public class GraphqlSchemaFactory {
 
     graphQLSchemaBuilder.additionalTypes(new LinkedHashSet<>(objectTypes)); // the cleaned types
 
+    if (addApiDirective) addApiDirectiveTypes(graphQLSchemaBuilder);
     return Optional.of(graphQLSchemaBuilder.build());
   }
 
@@ -382,5 +390,47 @@ public class GraphqlSchemaFactory {
             ? tableFunction.getBaseTable().getName()
             : uniquifyNameForPath(tableFunction.getFullPath());
     return new GraphQLTypeReference(typeName);
+  }
+
+  public static final String API_DIRECTIVE_NAME = "api";
+
+  private void addApiDirectiveTypes(GraphQLSchema.Builder graphQLSchemaBuilder) {
+    var mcpMethodType =
+        GraphQLEnumType.newEnum()
+            .name("_McpMethodType")
+            .value("NONE")
+            .value("TOOL")
+            .value("RESOURCE")
+            .build();
+
+    var restMethodType =
+        GraphQLEnumType.newEnum()
+            .name("_RestMethodType")
+            .value("NONE")
+            .value("GET")
+            .value("POST")
+            .build();
+
+    var apiDirective =
+        GraphQLDirective.newDirective()
+            .name(API_DIRECTIVE_NAME)
+            .validLocations(
+                Introspection.DirectiveLocation.FIELD_DEFINITION,
+                Introspection.DirectiveLocation.QUERY,
+                Introspection.DirectiveLocation.MUTATION)
+            .argument(
+                GraphQLArgument.newArgument()
+                    .name("mcp")
+                    .type(new GraphQLTypeReference("_McpMethodType")))
+            .argument(
+                GraphQLArgument.newArgument()
+                    .name("rest")
+                    .type(new GraphQLTypeReference("_RestMethodType")))
+            .argument(GraphQLArgument.newArgument().name("uri").type(Scalars.GraphQLString))
+            .build();
+
+    graphQLSchemaBuilder.additionalType(mcpMethodType);
+    graphQLSchemaBuilder.additionalType(restMethodType);
+    graphQLSchemaBuilder.additionalDirective(apiDirective);
   }
 }

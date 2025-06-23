@@ -16,7 +16,7 @@
 package com.datasqrl.planner.graphql;
 
 import com.datasqrl.config.PackageJson;
-import com.datasqrl.config.PackageJson.OperationsConfig;
+import com.datasqrl.config.PackageJson.CompilerApiConfig;
 import com.datasqrl.engine.server.ServerPhysicalPlan;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.APISource;
@@ -52,11 +52,12 @@ public class GenerateServerModel {
             serverPlan.getFunctions(), serverPlan.getMutations(), errorCollector);
     graphqlModelGenerator.walkAPISource(graphqlSchema);
     StringSchema schema = StringSchema.builder().schema(graphqlSchema.getDefinition()).build();
-    OperationsConfig opsConfig = configuration.getCompilerConfig().getOperations();
+    CompilerApiConfig apiConig = configuration.getCompilerConfig().getApiConfig();
     GraphQLSchemaConverterConfig converterConfig =
         GraphQLSchemaConverterConfig.builder()
-            .addPrefix(opsConfig.isAddPrefix())
-            .maxDepth(opsConfig.getMaxDepth())
+            .addPrefix(apiConig.isAddOperationsPrefix())
+            .maxDepth(apiConig.getMaxResultDepth())
+            .protocols(apiConig.getProtocols())
             .build();
     GraphQLSchemaConverter converter =
         new GraphQLSchemaConverter(schema.getSchema(), converterConfig);
@@ -74,7 +75,7 @@ public class GenerateServerModel {
       }
     }
     // Second, we add the automatically generated operations
-    if (opsConfig.isGenerate()) {
+    if (apiConig.generateOperations()) {
       try {
         definedOperations.addAll(converter.convertSchema());
       } catch (Throwable e) {

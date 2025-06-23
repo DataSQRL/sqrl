@@ -1,8 +1,9 @@
+enum _McpMethodType { NONE, TOOL, RESOURCE }
+enum _RestMethodType { NONE, GET, POST }
 directive @api(
-  mcp: String,
-  rest: String,
-  uri: String,
-  format: String
+  mcp: _McpMethodType,
+  rest: _RestMethodType,
+  uri: String
 ) on FIELD_DEFINITION | QUERY | MUTATION
 
   type Query {
@@ -24,7 +25,7 @@ directive @api(
     """
     Get a specific locations by ID
     """
-    location(id: ID!): Location @api(mcp: "none", rest: "none")
+    location(id: ID!): Location @api(mcp: NONE, rest: NONE)
 
     """
     Get the list of all locations
@@ -34,7 +35,7 @@ directive @api(
     """
     Get a list of locations selected by ids
     """
-    locationsByIds(ids: [ID!]!): [Location] @api(rest: "post")
+    locationsByIds(ids: [ID!]!): [Location] @api(rest: POST)
 
     """
     Get a specific episode by ID

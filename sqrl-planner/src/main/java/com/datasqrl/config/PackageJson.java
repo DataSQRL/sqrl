@@ -16,7 +16,9 @@
 package com.datasqrl.config;
 
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.graphql.server.operation.ApiProtocols;
 import java.nio.file.Path;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -55,25 +57,28 @@ public interface PackageJson {
 
     OutputConfig getOutput();
 
-    OperationsConfig getOperations();
+    CompilerApiConfig getApiConfig();
 
     Optional<String> getSnapshotPath();
 
     void setSnapshotPath(String string);
-
-    boolean isAddArguments();
 
     String getLogger();
 
     boolean isExtendedScalarTypes();
   }
 
-  interface OperationsConfig {
-    boolean isGenerate();
+  interface CompilerApiConfig {
 
-    boolean isAddPrefix();
+    EnumSet<ApiProtocols> getProtocols();
 
-    int getMaxDepth();
+    boolean isGraphQLProtocolOnly();
+
+    boolean generateOperations();
+
+    boolean isAddOperationsPrefix();
+
+    int getMaxResultDepth();
   }
 
   interface OutputConfig {
@@ -104,7 +109,7 @@ public interface PackageJson {
 
     Optional<String> getGraphql();
 
-    //    List<String> getOperations();
+    List<String> getOperations();
 
     void setMainScript(String script);
 

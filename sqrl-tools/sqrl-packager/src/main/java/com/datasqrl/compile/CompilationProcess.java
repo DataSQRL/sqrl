@@ -84,7 +84,7 @@ public class CompilationProcess {
           "The SQRL script defines %s functions and %s mutations - cannot define an API",
           serverPlan.getFunctions().size(),
           serverPlan.getMutations().size());
-      var apiSource = graphqlSourceFactory.get();
+      var apiSource = graphqlSourceFactory.getApiSchema();
       if (apiSource.isEmpty()
           || executionGoal == ExecutionGoal.TEST) { // Infer schema from functions
         apiSource = inferGraphqlSchema.inferGraphQLSchema(serverPlan).map(APISource::of);
@@ -93,7 +93,8 @@ public class CompilationProcess {
       }
       assert apiSource.isPresent();
       serverPlan.setModel(
-          generateServerModel.generateGraphQLModel(apiSource.get(), serverPlan, List.of()));
+          generateServerModel.generateGraphQLModel(
+              apiSource.get(), serverPlan, graphqlSourceFactory.getOperations()));
 
       // create test artifact
       if (executionGoal == ExecutionGoal.TEST) {

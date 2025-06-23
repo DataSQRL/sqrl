@@ -15,8 +15,13 @@
  */
 package com.datasqrl.graphql.converter;
 
+import com.datasqrl.graphql.server.operation.ApiOperation;
+import com.datasqrl.graphql.server.operation.ApiProtocols;
+import com.datasqrl.graphql.server.operation.McpMethodType;
+import com.datasqrl.graphql.server.operation.RestMethodType;
 import graphql.language.OperationDefinition.Operation;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.Map;
 import java.util.function.BiPredicate;
 import lombok.Builder;
@@ -48,6 +53,8 @@ public class GraphQLSchemaConverterConfig {
   /** Whether to do a top level field alias for the result */
   @Builder.Default String topLevelAlias = null;
 
+  @Builder.Default EnumSet<ApiProtocols> protocols = EnumSet.allOf(ApiProtocols.class);
+
   /**
    * Returns an operations filter that filters out all operations which start with the given list of
    * prefixes.
@@ -72,5 +79,10 @@ public class GraphQLSchemaConverterConfig {
 
   public boolean hasTopLevelFieldAlias() {
     return topLevelAlias != null && !topLevelAlias.isEmpty();
+  }
+
+  public void setProtocolSupport(ApiOperation.ApiOperationBuilder apiBuilder) {
+    if (!protocols.contains(ApiProtocols.MCP)) apiBuilder.mcpMethod(McpMethodType.NONE);
+    if (!protocols.contains(ApiProtocols.REST)) apiBuilder.restMethod(RestMethodType.NONE);
   }
 }

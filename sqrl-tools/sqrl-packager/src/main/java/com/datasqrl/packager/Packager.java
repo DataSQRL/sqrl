@@ -188,6 +188,13 @@ public class Packager {
               buildDir.getBuildDir());
       destinationPaths.put(GRAPHQL_KEY, Optional.of(destinationPath));
     }
+    for (String operationFile : scriptConfig.getOperations()) {
+      var destinationPath =
+          copyRelativeFile(
+              rootDir.getRootDir().resolve(operationFile),
+              rootDir.getRootDir(),
+              buildDir.getBuildDir());
+    }
     return destinationPaths;
   }
 

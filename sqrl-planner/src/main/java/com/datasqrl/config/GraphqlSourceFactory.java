@@ -22,30 +22,35 @@ import com.google.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
+import lombok.Value;
 
+@Value
 public class GraphqlSourceFactory {
-  Optional<APISource> apiSchemaOpt;
+  Optional<APISource> apiSchema;
+  List<APISource> operations;
 
   @Inject
   public GraphqlSourceFactory(ScriptFiles scriptFiles, ResourceResolver resolver) {
-    apiSchemaOpt =
-        scriptFiles
-            .getConfig()
-            .getGraphql()
-            .map(
-                file -> {
-                  try {
-                    Path relativePath = Path.of(file);
-                    Optional<Path> absolutePath = resolver.resolveFile(relativePath);
-                    return APISource.of(relativePath, Files.readString(absolutePath.orElseThrow()));
-                  } catch (IOException e) {
-                    throw new RuntimeException(e);
-                  }
-                });
+    apiSchema = scriptFiles.getConfig().getGraphql().map(file -> resolvePath(file, resolver));
+    operations =
+        scriptFiles.getConfig().getOperations().stream()
+            .map(file -> resolvePath(file, resolver))
+            .toList();
   }
 
-  public Optional<APISource> get() {
-    return apiSchemaOpt;
+  private static APISource resolvePath(String file, ResourceResolver resolver) {
+    try {
+      Path relativePath = Path.of(file);
+      Optional<Path> absolutePath = resolver.resolveFile(relativePath);
+      return APISource.of(
+          relativePath,
+          Files.readString(
+              absolutePath.orElseThrow(
+                  () -> new IllegalArgumentException("Could not read file: " + relativePath))));
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 }
