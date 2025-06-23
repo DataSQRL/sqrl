@@ -300,6 +300,13 @@ jobs:
             # wait for all images to be pushed
             wait
 
+      - run:
+          name: Run container tests using TestContainers
+          command: |
+            mvn -U -T1 -B test -Dtest="*ContainerIT" \
+              -pl sqrl-container-testing \
+              -Dcontainer.image.tag=${CIRCLE_SHA1}
+
   deploy:
     docker:
       - image: cimg/openjdk:17.0
@@ -318,82 +325,6 @@ jobs:
       - run:
           name: Build shaded JAR
           command: mvn -U clean -T1C -B deploy -DskipTests -DskipITs ${CIRCLE_TAG:+-Prelease}
-
-  run-conference-tests: &disabled
-    executor: default-machine
-    steps:
-      - checkout
-      - run:
-          name: Pull test image
-          command: |
-            docker pull datasqrl/cmd-test-image:${CIRCLE_SHA1}
-            docker tag  datasqrl/cmd-test-image:${CIRCLE_SHA1} sqrl-test
-      - run-docker-test:
-          working_dir: ./sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/conference
-          test_args: test conference.sqrl conference.graphqls --snapshots snapshots-conference --tests tests-conference
-
-  run-connectors-tests:
-    executor: default-machine
-    steps:
-      - checkout
-      - run:
-          name: Pull test image
-          command: |
-            docker pull datasqrl/cmd-test-image:${CIRCLE_SHA1}
-            docker tag  datasqrl/cmd-test-image:${CIRCLE_SHA1} sqrl-test
-      - run-docker-test:
-          working_dir: ./sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/connectors-test
-          test_args: test connectors.sqrl
-          expected_pattern: 'WARN  org.apache.flink.metrics'
-
-  run-udf-tests:
-    executor: default-machine
-    steps:
-      - checkout
-      - run:
-          name: Pull test image
-          command: |
-            docker pull datasqrl/cmd-test-image:${CIRCLE_SHA1}
-            docker tag  datasqrl/cmd-test-image:${CIRCLE_SHA1} sqrl-test
-      - run-docker-test:
-          working_dir: ./sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/udf
-          test_args: test myudf.sqrl --snapshots snapshots-myudf --tests tests-myudf
-          expected_pattern: 'WARN  org.apache.flink.runtime.security.token.DefaultDelegationTokenManager'
-
-  run-vertx-tests:
-    executor: default-machine
-    steps:
-      - checkout
-      - run:
-          name: Pull test image
-          command: |
-            docker pull datasqrl/cmd-test-image:${CIRCLE_SHA1}
-            docker pull datasqrl/sqrl-server-test-image:${CIRCLE_SHA1}
-      - run:
-          working_directory: ./sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/udf
-          name: Launch sqrl-server and test if API is running
-          command: |
-            docker run -v "$PWD:/build" -e TZ="UTC" datasqrl/cmd-test-image:${CIRCLE_SHA1} compile myudf.sqrl
-            docker run -d --name sqrl-server -v $(pwd)/build/deploy/plan/vertx.json:/opt/sqrl/vertx.json \
-                                                  -v $(pwd)/build/deploy/plan/vertx-config.json:/opt/sqrl/vertx-config.json \
-                                                  -p 8888:8888 \
-                                                  datasqrl/sqrl-server-test-image:${CIRCLE_SHA1}
-            sleep 2s
-            docker logs sqrl-server
-            curl -s -X POST http://localhost:8888/graphql   -H 'Content-Type: application/json'   --data '{"query":"query { __typename }"}'
-
-  run-jwt-tests:
-    executor: default-machine
-    steps:
-      - checkout
-      - run:
-          name: Pull test image
-          command: |
-            docker pull datasqrl/cmd-test-image:${CIRCLE_SHA1}
-            docker pull datasqrl/sqrl-server-test-image:${CIRCLE_SHA1}
-      - run:
-          name: Run JWT tests
-          command: ./.circleci/run-jwt-tests.sh
 
   build-images:
     # use a full VM so we can run Docker / Buildx
@@ -562,40 +493,3 @@ workflows:
               ignore: /.*/
           requires:
             - build-base
-      - run-connectors-tests:
-          <<: *job-defaults
-          filters:
-            branches:
-              only: /.*/
-            tags:
-              ignore: /.*/
-          requires:
-            - build-test-image
-      - run-udf-tests:
-          <<: *job-defaults
-          filters:
-            branches:
-              only: /.*/
-            tags:
-              ignore: /.*/
-          requires:
-            - build-test-image
-      - run-vertx-tests:
-          <<: *job-defaults
-          filters:
-            branches:
-              only: /.*/
-            tags:
-              ignore: /.*/
-          requires:
-            - build-test-image
-
-      - run-jwt-tests:
-          <<: *job-defaults
-          filters:
-            branches:
-              only: /.*/
-            tags:
-              ignore: /.*/
-          requires:
-            - build-test-image
