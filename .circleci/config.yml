@@ -171,44 +171,6 @@ commands:
               mvn -B versions:set -DnewVersion=$CIRCLE_TAG
             fi
 
-  run-docker-test:
-    description: >
-      Run a sqrl-test container:
-        • fail if an expected pattern is **missing**
-        • fail if any SLF4J / log4j warnings **appear**
-    parameters:
-      test_args:        { type: string }
-      working_dir:      { type: string }
-      expected_pattern: { type: string }
-    steps:
-      - run:
-          name: Run tests and assertions
-          working_directory: << parameters.working_dir >>
-          environment:
-            LOG_FILE: "/tmp/sqrl-test-logs-$$.txt"
-          command: |
-            set -o pipefail
-
-            # 1 ── run container and capture all output
-            docker run -i -v "$PWD:/build" sqrl-test \
-              << parameters.test_args >> 2>&1 | tee "$LOG_FILE"
-            DOCKER_EXIT=${PIPESTATUS[0]}
-
-            # 2 ──  slf4j / log4j warnings must NOT appear
-            if grep -qE '(log4j:WARN|SLF4J\(W\)|SLF4J:WARN)' "$LOG_FILE"; then
-              echo "❌  SLF4J / log4j warnings detected – failing the job." >&2
-              exit 1
-            fi
-
-            # 3 ──  the job-specific pattern MUST appear
-            if ! grep -q "<< parameters.expected_pattern >>" "$LOG_FILE"; then
-              echo "❌  Expected log entry “<< parameters.expected_pattern >>” not found – failing the job." >&2
-              exit 1
-            fi
-
-            # 4 ──  still propagate the container’s exit status
-            exit "$DOCKER_EXIT"
-
 jobs:
   build-base:
     docker:
