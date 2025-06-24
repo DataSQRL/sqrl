@@ -51,7 +51,7 @@ class PackageJsonImplTest {
   void givenConfigWithEnabledEngines_whenCreatePackageJson_thenReturnsCorrectValues() {
     config.setProperty("enabled-engines", List.of("flink", "postgres", "kafka"));
 
-    PackageJsonImpl packageJson = new PackageJsonImpl(config);
+    var packageJson = new PackageJsonImpl(config);
 
     assertThat(packageJson.getEnabledEngines()).containsExactly("flink", "postgres", "kafka");
     assertThat(packageJson.getVersion()).isEqualTo(1);
@@ -64,7 +64,7 @@ class PackageJsonImplTest {
 
   @Test
   void givenPackageJson_whenSetPipeline_thenUpdatesEnabledEngines() {
-    PackageJsonImpl packageJson = new PackageJsonImpl(config);
+    var packageJson = new PackageJsonImpl(config);
 
     List<String> pipeline = List.of("stage1", "stage2", "stage3");
     packageJson.setPipeline(pipeline);
@@ -74,7 +74,7 @@ class PackageJsonImplTest {
 
   @Test
   void givenConfigWithoutScript_whenHasScriptKey_thenReturnsFalse() {
-    PackageJsonImpl packageJson = new PackageJsonImpl(config);
+    var packageJson = new PackageJsonImpl(config);
 
     assertThat(packageJson.hasScriptKey()).isFalse();
   }
@@ -83,7 +83,7 @@ class PackageJsonImplTest {
   void givenConfigWithScript_whenHasScriptKey_thenReturnsFalse() {
     config.getSubConfig("script").setProperty("main", "example.sqrl");
 
-    PackageJsonImpl packageJson = new PackageJsonImpl(config);
+    var packageJson = new PackageJsonImpl(config);
 
     // Current implementation always returns false - this appears to be unimplemented
     assertThat(packageJson.hasScriptKey()).isFalse();
@@ -93,7 +93,7 @@ class PackageJsonImplTest {
   void givenPackageJson_whenGetTestConfig_thenReturnsTestConfiguration() {
     config.getSubConfig("test-runner").setProperty("enabled", true);
 
-    PackageJsonImpl packageJson = new PackageJsonImpl(config);
+    var packageJson = new PackageJsonImpl(config);
 
     assertThat(packageJson.getTestConfig()).isPresent();
   }
@@ -118,7 +118,7 @@ class PackageJsonImplTest {
 
   @Test
   void givenEmptyConfig_whenCreateScriptConfig_thenReturnsEmptyValues() {
-    ScriptConfigImpl scriptConfig = new ScriptConfigImpl(config);
+    var scriptConfig = new ScriptConfigImpl(config);
 
     assertThat(scriptConfig.getMainScript()).isEmpty();
     assertThat(scriptConfig.getGraphql()).isEmpty();
@@ -126,7 +126,7 @@ class PackageJsonImplTest {
 
   @Test
   void givenScriptConfig_whenSetValues_thenUpdatesConfiguration() {
-    ScriptConfigImpl scriptConfig = new ScriptConfigImpl(config);
+    var scriptConfig = new ScriptConfigImpl(config);
 
     scriptConfig.setMainScript("main.sqrl");
     scriptConfig.setGraphql("schema.graphql");
@@ -140,7 +140,7 @@ class PackageJsonImplTest {
     config.getSubConfig("engines").getSubConfig("flink").setProperty("type", "flink");
     config.getSubConfig("engines").getSubConfig("postgres").setProperty("type", "postgres");
 
-    EnginesConfigImpl enginesConfig = new EnginesConfigImpl(config.getSubConfig("engines"));
+    var enginesConfig = new EnginesConfigImpl(config.getSubConfig("engines"));
 
     assertThat(enginesConfig.getEngineConfig("flink")).isPresent();
     assertThat(enginesConfig.getEngineConfig("postgres")).isPresent();
@@ -158,8 +158,7 @@ class PackageJsonImplTest {
         .getSubConfig("kafka")
         .setProperty("bootstrap.servers", "localhost:9092");
 
-    ConnectorsConfigImpl connectorsConfig =
-        new ConnectorsConfigImpl(config.getSubConfig("connectors"));
+    var connectorsConfig = new ConnectorsConfigImpl(config.getSubConfig("connectors"));
 
     assertThat(connectorsConfig.getConnectorConfig("jdbc")).isPresent();
     assertThat(connectorsConfig.getConnectorConfig("kafka")).isPresent();
@@ -172,7 +171,7 @@ class PackageJsonImplTest {
     config.getSubConfig("dependencies").getSubConfig("dep1").setProperty("name", "dependency1");
     config.getSubConfig("dependencies").getSubConfig("dep2").setProperty("name", "dependency2");
 
-    DependenciesConfigImpl dependenciesConfig =
+    var dependenciesConfig =
         new DependenciesConfigImpl(config, config.getSubConfig("dependencies"));
 
     assertThat(dependenciesConfig.getDependency("dep1")).isPresent();
@@ -182,7 +181,7 @@ class PackageJsonImplTest {
 
   @Test
   void givenConfig_whenCreateDiscoveryConfig_thenReturnsDiscoveryConfiguration() {
-    DiscoveryConfigImpl discoveryConfig = new DiscoveryConfigImpl(config.getSubConfig("discovery"));
+    var discoveryConfig = new DiscoveryConfigImpl(config.getSubConfig("discovery"));
 
     assertThat(discoveryConfig).isNotNull();
   }

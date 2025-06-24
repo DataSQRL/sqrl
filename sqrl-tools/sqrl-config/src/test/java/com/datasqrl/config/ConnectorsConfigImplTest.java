@@ -34,7 +34,7 @@ class ConnectorsConfigImplTest {
     config.getSubConfig("jdbc").setProperty("url", "jdbc:postgresql://localhost:5432/db");
     config.getSubConfig("kafka").setProperty("bootstrap.servers", "localhost:9092");
 
-    ConnectorsConfigImpl connectorsConfig = new ConnectorsConfigImpl(config);
+    var connectorsConfig = new ConnectorsConfigImpl(config);
 
     assertThat(connectorsConfig.getConnectorConfig("jdbc")).isPresent();
     assertThat(connectorsConfig.getConnectorConfig("kafka")).isPresent();
@@ -45,9 +45,9 @@ class ConnectorsConfigImplTest {
   void givenConfigWithConnector_whenGetConnectorConfigOrErr_thenReturnsConnectorConfig() {
     config.getSubConfig("jdbc").setProperty("url", "jdbc:postgresql://localhost:5432/db");
 
-    ConnectorsConfigImpl connectorsConfig = new ConnectorsConfigImpl(config);
+    var connectorsConfig = new ConnectorsConfigImpl(config);
 
-    ConnectorConf connectorConf = connectorsConfig.getConnectorConfigOrErr("jdbc");
+    var connectorConf = connectorsConfig.getConnectorConfigOrErr("jdbc");
 
     assertThat(connectorConf).isNotNull();
   }

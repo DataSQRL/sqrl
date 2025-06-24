@@ -34,7 +34,7 @@ class EnginesConfigImplTest {
     config.getSubConfig("flink").setProperty("type", "flink");
     config.getSubConfig("postgres").setProperty("type", "postgres");
 
-    EnginesConfigImpl enginesConfig = new EnginesConfigImpl(config);
+    var enginesConfig = new EnginesConfigImpl(config);
 
     assertThat(enginesConfig.getEngineConfig("flink")).isPresent();
     assertThat(enginesConfig.getEngineConfig("postgres")).isPresent();
@@ -43,9 +43,9 @@ class EnginesConfigImplTest {
 
   @Test
   void givenEnginesConfig_whenGetVersion_thenReturnsConfigVersion() {
-    EnginesConfigImpl enginesConfig = new EnginesConfigImpl(config);
+    var enginesConfig = new EnginesConfigImpl(config);
 
-    int version = enginesConfig.getVersion();
+    var version = enginesConfig.getVersion();
 
     assertThat(version).isEqualTo(1);
   }
@@ -54,9 +54,9 @@ class EnginesConfigImplTest {
   void givenConfigWithEngine_whenGetEngineConfigOrErr_thenReturnsEngineConfig() {
     config.getSubConfig("flink").setProperty("type", "flink");
 
-    EnginesConfigImpl enginesConfig = new EnginesConfigImpl(config);
+    var enginesConfig = new EnginesConfigImpl(config);
 
-    PackageJson.EngineConfig engineConfig = enginesConfig.getEngineConfigOrErr("flink");
+    var engineConfig = enginesConfig.getEngineConfigOrErr("flink");
 
     assertThat(engineConfig).isNotNull();
     assertThat(engineConfig.getEngineName()).isEqualTo("flink");

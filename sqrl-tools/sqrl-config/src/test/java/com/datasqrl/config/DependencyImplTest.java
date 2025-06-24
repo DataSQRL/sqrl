@@ -36,55 +36,55 @@ class DependencyImplTest {
   void givenConfigWithName_whenCreateFromConfig_thenSetsName() {
     config.setProperty("name", "test-dependency");
 
-    DependencyImpl dependency = new DependencyImpl(config);
+    var dependency = new DependencyImpl(config);
 
     assertThat(dependency.getName()).isEqualTo("test-dependency");
   }
 
   @Test
   void givenEmptyConfig_whenCreateFromConfig_thenNameIsNull() {
-    DependencyImpl dependency = new DependencyImpl(config);
+    var dependency = new DependencyImpl(config);
 
     assertThat(dependency.getName()).isNull();
   }
 
   @Test
   void givenNoArgs_whenCreateDependency_thenNameIsNull() {
-    DependencyImpl dependency = new DependencyImpl();
+    var dependency = new DependencyImpl();
 
     assertThat(dependency.getName()).isNull();
   }
 
   @Test
   void givenName_whenCreateDependency_thenSetsName() {
-    DependencyImpl dependency = new DependencyImpl("named-dep");
+    var dependency = new DependencyImpl("named-dep");
 
     assertThat(dependency.getName()).isEqualTo("named-dep");
   }
 
   @Test
   void givenDependencyWithoutName_whenNormalize_thenUsesDefaultName() {
-    DependencyImpl dependency = new DependencyImpl();
+    var dependency = new DependencyImpl();
 
-    Dependency normalized = dependency.normalize("default-name", errors);
+    var normalized = dependency.normalize("default-name", errors);
 
     assertThat(normalized.getName()).isEqualTo("default-name");
   }
 
   @Test
   void givenDependencyWithName_whenNormalize_thenKeepsOriginalName() {
-    DependencyImpl dependency = new DependencyImpl("explicit-name");
+    var dependency = new DependencyImpl("explicit-name");
 
-    Dependency normalized = dependency.normalize("default-name", errors);
+    var normalized = dependency.normalize("default-name", errors);
 
     assertThat(normalized.getName()).isEqualTo("explicit-name");
   }
 
   @Test
   void givenDependency_whenToString_thenReturnsName() {
-    DependencyImpl dependency = new DependencyImpl("test-name");
+    var dependency = new DependencyImpl("test-name");
 
-    String result = dependency.toString();
+    var result = dependency.toString();
 
     assertThat(result).isEqualTo("test-name");
   }

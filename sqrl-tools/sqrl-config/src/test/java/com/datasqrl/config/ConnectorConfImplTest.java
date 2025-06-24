@@ -18,19 +18,16 @@ package com.datasqrl.config;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.datasqrl.error.ErrorCollector;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class ConnectorConfImplTest {
 
-  private ErrorCollector errors;
   private SqrlConfig config;
 
   @BeforeEach
   void setUp() {
-    errors = ErrorCollector.root();
     config = SqrlConfig.createCurrentVersion();
   }
 
@@ -40,9 +37,9 @@ class ConnectorConfImplTest {
     config.setProperty("user", "testuser");
     config.setProperty("password", "testpass");
 
-    ConnectorConfImpl connectorConf = new ConnectorConfImpl(config);
+    var connectorConf = new ConnectorConfImpl(config);
 
-    Map<String, Object> map = connectorConf.toMap();
+    var map = connectorConf.toMap();
     assertThat(map).containsEntry("url", "jdbc:postgresql://localhost:5432/db");
     assertThat(map).containsEntry("user", "testuser");
     assertThat(map).containsEntry("password", "testpass");
@@ -53,15 +50,15 @@ class ConnectorConfImplTest {
     config.setProperty("url", "jdbc:postgresql://${sqrl:host}:${sqrl:port}/db");
     config.setProperty("user", "${sqrl:username}");
 
-    ConnectorConfImpl connectorConf = new ConnectorConfImpl(config);
+    var connectorConf = new ConnectorConfImpl(config);
 
-    Map<String, String> variables =
+    var variables =
         Map.of(
             "host", "myhost",
             "port", "5432",
             "username", "myuser");
 
-    Map<String, Object> map = connectorConf.toMapWithSubstitution(variables);
+    var map = connectorConf.toMapWithSubstitution(variables);
     assertThat(map).containsEntry("url", "jdbc:postgresql://myhost:5432/db");
     assertThat(map).containsEntry("user", "myuser");
   }
@@ -69,7 +66,7 @@ class ConnectorConfImplTest {
   @Test
   void givenConfigWithValidProperty_whenValidate_thenPasses() {
     config.setProperty("protocol", "https");
-    ConnectorConfImpl connectorConf = new ConnectorConfImpl(config);
+    var connectorConf = new ConnectorConfImpl(config);
 
     connectorConf.validate("protocol", s -> s.startsWith("http"), "Protocol must start with http");
   }
@@ -77,7 +74,7 @@ class ConnectorConfImplTest {
   @Test
   void givenConfigWithInvalidProperty_whenValidate_thenThrows() {
     config.setProperty("protocol", "https");
-    ConnectorConfImpl connectorConf = new ConnectorConfImpl(config);
+    var connectorConf = new ConnectorConfImpl(config);
 
     assertThatThrownBy(
             () -> connectorConf.validate("protocol", s -> s.equals("ftp"), "Protocol must be ftp"))
@@ -87,9 +84,9 @@ class ConnectorConfImplTest {
   @Test
   void givenConfigWithUnresolvedVariable_whenToMapWithSubstitution_thenThrows() {
     config.setProperty("url", "jdbc:postgresql://${sqrl:invalidvar}/db");
-    ConnectorConfImpl connectorConf = new ConnectorConfImpl(config);
+    var connectorConf = new ConnectorConfImpl(config);
 
-    Map<String, String> variables = Map.of("host", "myhost");
+    var variables = Map.of("host", "myhost");
 
     assertThatThrownBy(() -> connectorConf.toMapWithSubstitution(variables))
         .hasMessageContaining("invalid variable name");
@@ -97,10 +94,10 @@ class ConnectorConfImplTest {
 
   @Test
   void givenEmptyConfigAndEmptyVariables_whenToMapWithSubstitution_thenReturnsSameMap() {
-    ConnectorConfImpl connectorConf = new ConnectorConfImpl(config);
+    var connectorConf = new ConnectorConfImpl(config);
 
-    Map<String, Object> originalMap = connectorConf.toMap();
-    Map<String, Object> substitutedMap = connectorConf.toMapWithSubstitution(Map.of());
+    var originalMap = connectorConf.toMap();
+    var substitutedMap = connectorConf.toMapWithSubstitution(Map.of());
 
     assertThat(substitutedMap).isEqualTo(originalMap);
   }

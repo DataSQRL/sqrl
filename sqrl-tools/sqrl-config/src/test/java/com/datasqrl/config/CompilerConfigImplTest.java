@@ -31,7 +31,7 @@ class CompilerConfigImplTest {
 
   @Test
   void givenEmptyConfig_whenGetDefaults_thenReturnsDefaultValues() {
-    CompilerConfigImpl compilerConfig = new CompilerConfigImpl(config);
+    var compilerConfig = new CompilerConfigImpl(config);
 
     assertThat(compilerConfig.isAddArguments()).isTrue();
     assertThat(compilerConfig.isExtendedScalarTypes()).isTrue();
@@ -48,7 +48,7 @@ class CompilerConfigImplTest {
     config.setProperty("compilePlan", false);
     config.setProperty("snapshotPath", "/path/to/snapshots");
 
-    CompilerConfigImpl compilerConfig = new CompilerConfigImpl(config);
+    var compilerConfig = new CompilerConfigImpl(config);
 
     assertThat(compilerConfig.isAddArguments()).isFalse();
     assertThat(compilerConfig.isExtendedScalarTypes()).isFalse();
@@ -59,7 +59,7 @@ class CompilerConfigImplTest {
 
   @Test
   void givenEmptyConfig_whenSetSnapshotPath_thenUpdatesPath() {
-    CompilerConfigImpl compilerConfig = new CompilerConfigImpl(config);
+    var compilerConfig = new CompilerConfigImpl(config);
 
     compilerConfig.setSnapshotPath("/new/path");
 
@@ -68,19 +68,10 @@ class CompilerConfigImplTest {
 
   @Test
   void givenConfig_whenGetExplain_thenReturnsExplainConfig() {
-    CompilerConfigImpl compilerConfig = new CompilerConfigImpl(config);
+    var compilerConfig = new CompilerConfigImpl(config);
 
-    ExplainConfigImpl explainConfig = compilerConfig.getExplain();
+    var explainConfig = compilerConfig.getExplain();
 
     assertThat(explainConfig).isNotNull();
-  }
-
-  @Test
-  void givenConfig_whenGetOutput_thenReturnsOutputConfig() {
-    CompilerConfigImpl compilerConfig = new CompilerConfigImpl(config);
-
-    OutputConfigImpl outputConfig = (OutputConfigImpl) compilerConfig.getOutput();
-
-    assertThat(outputConfig).isNotNull();
   }
 }

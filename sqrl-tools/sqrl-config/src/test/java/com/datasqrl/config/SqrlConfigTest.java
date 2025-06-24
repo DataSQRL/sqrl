@@ -119,12 +119,12 @@ class SqrlConfigTest {
 
   @Test
   void givenNestedProperties_whenGetSubConfig_thenReturnsNestedValues() {
-    SqrlConfig parentConfig = config.getSubConfig("parent");
-    SqrlConfig childConfig = parentConfig.getSubConfig("child");
+    var parentConfig = config.getSubConfig("parent");
+    var childConfig = parentConfig.getSubConfig("child");
     childConfig.setProperty("value", "nested");
 
-    SqrlConfig subConfig = config.getSubConfig("parent");
-    SqrlConfig deepSubConfig = subConfig.getSubConfig("child");
+    var subConfig = config.getSubConfig("parent");
+    var deepSubConfig = subConfig.getSubConfig("child");
     assertThat(deepSubConfig.asString("value").get()).isEqualTo("nested");
   }
 
@@ -138,7 +138,7 @@ class SqrlConfigTest {
 
   @Test
   void givenSourceConfig_whenCopy_thenCopiesAllProperties() {
-    SqrlConfig source = SqrlConfig.createCurrentVersion();
+    var source = SqrlConfig.createCurrentVersion();
     source.setProperty("key1", "value1");
     source.setProperty("key2", 42);
     source.getSubConfig("nested").setProperty("key", "nestedValue");
@@ -152,11 +152,11 @@ class SqrlConfigTest {
 
   @Test
   void givenObject_whenSetProperties_thenSetsAllObjectProperties() {
-    TestObject testObj = new TestObject("testName", 99, true);
+    var testObj = new TestObject("testName", 99, true);
 
     config.getSubConfig("testObj").setProperties(testObj);
 
-    SqrlConfig testObjConfig = config.getSubConfig("testObj");
+    var testObjConfig = config.getSubConfig("testObj");
     assertThat(testObjConfig.asString("name").get()).isEqualTo("testName");
     assertThat(testObjConfig.asInt("number").get()).isEqualTo(99);
     assertThat(testObjConfig.asBool("flag").get()).isTrue();
@@ -164,12 +164,12 @@ class SqrlConfigTest {
 
   @Test
   void givenConfigWithObjectData_whenAllAs_thenReturnsObject() {
-    SqrlConfig testObjConfig = config.getSubConfig("testObj");
+    var testObjConfig = config.getSubConfig("testObj");
     testObjConfig.setProperty("name", "testName");
     testObjConfig.setProperty("number", 99);
     testObjConfig.setProperty("flag", true);
 
-    TestObject result = config.getSubConfig("testObj").allAs(TestObject.class).get();
+    var result = config.getSubConfig("testObj").allAs(TestObject.class).get();
 
     assertThat(result.name).isEqualTo("testName");
     assertThat(result.number).isEqualTo(99);
@@ -178,18 +178,18 @@ class SqrlConfigTest {
 
   @Test
   void givenConfigWithMapData_whenAsMap_thenReturnsMapOfObjects() {
-    SqrlConfig mapConfig = config.getSubConfig("map");
-    SqrlConfig item1Config = mapConfig.getSubConfig("item1");
+    var mapConfig = config.getSubConfig("map");
+    var item1Config = mapConfig.getSubConfig("item1");
     item1Config.setProperty("name", "first");
     item1Config.setProperty("number", 1);
     item1Config.setProperty("flag", true);
 
-    SqrlConfig item2Config = mapConfig.getSubConfig("item2");
+    var item2Config = mapConfig.getSubConfig("item2");
     item2Config.setProperty("name", "second");
     item2Config.setProperty("number", 2);
     item2Config.setProperty("flag", false);
 
-    Map<String, TestObject> map = config.asMap("map", TestObject.class).get();
+    var map = config.asMap("map", TestObject.class).get();
 
     assertThat(map).hasSize(2);
     assertThat(map.get("item1").name).isEqualTo("first");
@@ -237,19 +237,19 @@ class SqrlConfigTest {
     config.setProperty("key2", 42);
     config.getSubConfig("nested").setProperty("key", "nestedValue");
 
-    Map<String, Object> map = config.toMap();
+    var map = config.toMap();
 
     assertThat(map).containsEntry("key1", "value1");
     assertThat(map).containsEntry("key2", 42);
     assertThat(map).containsKey("nested");
     @SuppressWarnings("unchecked")
-    Map<String, Object> nestedMap = (Map<String, Object>) map.get("nested");
+    var nestedMap = (Map<String, Object>) map.get("nested");
     assertThat(nestedMap).containsEntry("key", "nestedValue");
   }
 
   @Test
   void givenNewConfig_whenCreateCurrentVersion_thenHasCorrectVersion() {
-    SqrlConfig newConfig = SqrlConfig.createCurrentVersion();
+    var newConfig = SqrlConfig.createCurrentVersion();
 
     assertThat(newConfig.getVersion()).isEqualTo(1);
   }
@@ -286,7 +286,7 @@ class SqrlConfigTest {
 
   @Test
   void givenJsonConfigFile_whenLoadViaCommons_thenParsesCorrectly() {
-    SqrlConfig config1 =
+    var config1 =
         SqrlConfigCommons.fromFiles(errors, Path.of("src/test/resources/config/config1.json"));
     testConfig1(config1);
   }
@@ -346,7 +346,7 @@ class SqrlConfigTest {
     assertThat(config.asString("key1").get()).isEqualTo("value1");
     assertThat(config.asBool("key3").get()).isTrue();
     assertThat(config.asList("list", String.class).get()).isEqualTo(List.of("a", "b", "c"));
-    Map<String, TestClass> map = config.asMap("map", TestClass.class).get();
+    var map = config.asMap("map", TestClass.class).get();
     assertThat(map).hasSize(3);
     assertThat(map.get("e2").field1).isEqualTo(7);
     assertThat(map.get("e3").field2).isEqualTo("flip");

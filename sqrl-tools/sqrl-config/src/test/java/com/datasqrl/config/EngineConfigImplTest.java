@@ -17,7 +17,6 @@ package com.datasqrl.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,20 +34,20 @@ class EngineConfigImplTest {
   void givenConfigWithType_whenGetEngineName_thenReturnsType() {
     config.setProperty("type", "flink");
 
-    EngineConfigImpl engineConfig = new EngineConfigImpl(config);
+    var engineConfig = new EngineConfigImpl(config);
 
     assertThat(engineConfig.getEngineName()).isEqualTo("flink");
   }
 
   @Test
   void givenConfigWithSettings_whenGetConfig_thenReturnsConfigMap() {
-    SqrlConfig configSubConfig = config.getSubConfig("config");
+    var configSubConfig = config.getSubConfig("config");
     configSubConfig.setProperty("version", "1.19.2");
     configSubConfig.setProperty("parallelism", 4);
 
-    EngineConfigImpl engineConfig = new EngineConfigImpl(config);
+    var engineConfig = new EngineConfigImpl(config);
 
-    Map<String, Object> configMap = engineConfig.getConfig();
+    var configMap = engineConfig.getConfig();
     assertThat(configMap).containsEntry("version", "1.19.2");
     assertThat(configMap).containsEntry("parallelism", 4);
   }
@@ -57,31 +56,31 @@ class EngineConfigImplTest {
   void givenConfigWithCustomSetting_whenGetSetting_thenReturnsValue() {
     config.setProperty("customSetting", "customValue");
 
-    EngineConfigImpl engineConfig = new EngineConfigImpl(config);
+    var engineConfig = new EngineConfigImpl(config);
 
-    String value = engineConfig.getSetting("customSetting", Optional.empty());
+    var value = engineConfig.getSetting("customSetting", Optional.empty());
     assertThat(value).isEqualTo("customValue");
   }
 
   @Test
   void givenConfigWithoutSetting_whenGetSettingWithDefault_thenReturnsDefault() {
-    EngineConfigImpl engineConfig = new EngineConfigImpl(config);
+    var engineConfig = new EngineConfigImpl(config);
 
-    String value = engineConfig.getSetting("missingSetting", Optional.of("default"));
+    var value = engineConfig.getSetting("missingSetting", Optional.of("default"));
 
     assertThat(value).isEqualTo("default");
   }
 
   @Test
   void givenConfigWithConnectors_whenGetConnectors_thenReturnsConnectorsConfig() {
-    SqrlConfig connectorsSubConfig = config.getSubConfig("connectors");
+    var connectorsSubConfig = config.getSubConfig("connectors");
     connectorsSubConfig
         .getSubConfig("jdbc")
         .setProperty("url", "jdbc:postgresql://localhost:5432/db");
 
-    EngineConfigImpl engineConfig = new EngineConfigImpl(config);
+    var engineConfig = new EngineConfigImpl(config);
 
-    ConnectorsConfig connectorsConfig = engineConfig.getConnectors();
+    var connectorsConfig = engineConfig.getConnectors();
 
     assertThat(connectorsConfig).isNotNull();
   }

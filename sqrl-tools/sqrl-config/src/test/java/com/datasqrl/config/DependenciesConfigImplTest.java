@@ -17,7 +17,6 @@ package com.datasqrl.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -37,8 +36,7 @@ class DependenciesConfigImplTest {
     dependenciesConfig.getSubConfig("dep1").setProperty("name", "dependency1");
     dependenciesConfig.getSubConfig("dep2").setProperty("name", "dependency2");
 
-    DependenciesConfigImpl dependenciesConfigImpl =
-        new DependenciesConfigImpl(rootConfig, dependenciesConfig);
+    var dependenciesConfigImpl = new DependenciesConfigImpl(rootConfig, dependenciesConfig);
 
     assertThat(dependenciesConfigImpl.getDependency("dep1")).isPresent();
     assertThat(dependenciesConfigImpl.getDependency("dep2")).isPresent();
@@ -47,9 +45,8 @@ class DependenciesConfigImplTest {
 
   @Test
   void givenDependenciesConfig_whenAddDependency_thenAddsDependencyToConfig() {
-    DependenciesConfigImpl dependenciesConfigImpl =
-        new DependenciesConfigImpl(rootConfig, dependenciesConfig);
-    DependencyImpl dependency = new DependencyImpl("test-dependency");
+    var dependenciesConfigImpl = new DependenciesConfigImpl(rootConfig, dependenciesConfig);
+    var dependency = new DependencyImpl("test-dependency");
 
     dependenciesConfigImpl.addDependency("test", dependency);
 
@@ -61,10 +58,9 @@ class DependenciesConfigImplTest {
     dependenciesConfig.getSubConfig("dep1").setProperty("name", "dependency1");
     dependenciesConfig.getSubConfig("dep2").setProperty("name", "dependency2");
 
-    DependenciesConfigImpl dependenciesConfigImpl =
-        new DependenciesConfigImpl(rootConfig, dependenciesConfig);
+    var dependenciesConfigImpl = new DependenciesConfigImpl(rootConfig, dependenciesConfig);
 
-    Map<String, DependencyImpl> dependencies = dependenciesConfigImpl.getDependencies();
+    var dependencies = dependenciesConfigImpl.getDependencies();
 
     assertThat(dependencies).hasSize(2);
     assertThat(dependencies).containsKey("dep1");
