@@ -21,10 +21,8 @@ import com.datasqrl.error.ResourceFileUtil;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.networknt.schema.JsonSchema;
 import com.networknt.schema.JsonSchemaFactory;
 import com.networknt.schema.SpecVersion.VersionFlag;
-import com.networknt.schema.ValidationMessage;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -40,7 +38,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -81,9 +78,9 @@ public class SqrlConfig {
 
   /** Create a new empty configuration with given version. */
   public static SqrlConfig create(ErrorCollector errors, int version) {
-    ObjectNode base = MAPPER.createObjectNode();
-    base.put(VERSION_KEY, version);
-    return new SqrlConfig(errors, base, null, "");
+    var root = MAPPER.createObjectNode();
+    root.put(VERSION_KEY, version);
+    return new SqrlConfig(errors, root, null, "");
   }
 
   /** Load configuration from a single JSON file. */
@@ -102,13 +99,17 @@ public class SqrlConfig {
         getPackageConfig(errors, "/jsonSchema/publishPackageSchema.json", files));
   }
 
+  public static PackageJson getDefaultPackageJson(ErrorCollector errors) {
+    return SqrlConfig.fromFilesPackageJson(errors, List.of());
+  }
+
   /** Validate a JSON file against the given schema resource. */
-  public static boolean validateJsonFile(
+  static boolean validateJsonFile(
       Path jsonFilePath, String schemaResourcePath, ErrorCollector errors) {
     if (schemaResourcePath == null) {
       return true;
     }
-    ErrorCollector collector = errors.abortOnFatal(false);
+    var collector = errors.abortOnFatal(false);
     JsonNode json;
     try {
       json = MAPPER.readTree(jsonFilePath.toFile());
@@ -116,7 +117,7 @@ public class SqrlConfig {
       collector.fatal("Could not read json file [%s]: %s", jsonFilePath, e);
       return false;
     }
-    String schemaText = ResourceFileUtil.readResourceFileContents(schemaResourcePath);
+    var schemaText = ResourceFileUtil.readResourceFileContents(schemaResourcePath);
     JsonNode schemaNode;
     try {
       schemaNode = MAPPER.readTree(schemaText);
@@ -124,8 +125,8 @@ public class SqrlConfig {
       collector.fatal("Could not parse json schema file [%s]: %s", schemaResourcePath, e);
       return false;
     }
-    JsonSchema schema = JsonSchemaFactory.getInstance(VersionFlag.V202012).getSchema(schemaNode);
-    Set<ValidationMessage> messages =
+    var schema = JsonSchemaFactory.getInstance(VersionFlag.V202012).getSchema(schemaNode);
+    var messages =
         schema.validate(json, ctx -> ctx.getExecutionConfig().setFormatAssertionsEnabled(true));
     if (messages.isEmpty()) {
       return true;
@@ -136,23 +137,25 @@ public class SqrlConfig {
   }
 
   /** Load multiple JSON files and default-package.json, validate and merge them. */
-  public static SqrlConfig getPackageConfig(
+  static SqrlConfig getPackageConfig(
       ErrorCollector errors, String jsonSchemaResource, List<Path> files) {
-    boolean valid = true;
+    var valid = true;
     List<JsonNode> jsons = new ArrayList<>();
 
     try {
-      URL url = SqrlConfigCommons.class.getResource("/default-package.json");
-      if (url != null) {
-        jsons.add(MAPPER.readTree(url));
+      var url = SqrlConfig.class.getResource("/default-package.json");
+      if (url == null) {
+        throw errors
+            .withConfig("/default-package.json")
+            .exception("Default configuration not found");
       }
+      jsons.add(MAPPER.readTree(url));
     } catch (IOException e) {
-      throw errors.exception("Error loading default configuration: %s", e.toString());
+      throw errors.withConfig("Error loading default configuration").handle(e);
     }
 
-    for (int i = 0; i < files.size(); i++) {
-      Path file = files.get(i);
-      ErrorCollector local = errors.withConfig(file.toString());
+    for (Path file : files) {
+      var local = errors.withConfig(file.toString());
       valid &= validateJsonFile(file, jsonSchemaResource, local);
       try {
         jsons.add(MAPPER.readTree(file.toFile()));
@@ -163,14 +166,14 @@ public class SqrlConfig {
     if (!valid) {
       throw errors.exception("Configuration file invalid: %s", files);
     }
-    ObjectNode merged = MAPPER.createObjectNode();
-    jsons.forEach(node -> merge(merged, node));
-    String configName = files.isEmpty() ? "default-package.json" : files.get(0).toString();
+    var merged = MAPPER.createObjectNode();
+    jsons.forEach(node -> merged.setAll((ObjectNode) node));
+    var configName = files.isEmpty() ? "default-package.json" : files.get(0).toString();
     return new SqrlConfig(errors.withConfig(configName), merged, configName, "");
   }
 
   /** Load configuration from a URL. */
-  public static SqrlConfig fromURL(ErrorCollector errors, URL url) {
+  static SqrlConfig fromURL(ErrorCollector errors, URL url) {
     JsonNode node;
     try {
       node = MAPPER.readTree(url);
@@ -179,36 +182,18 @@ public class SqrlConfig {
           .withConfig(url.toString())
           .exception("Could not read JSON from URL [%s]: %s", url, e.toString());
     }
-    ObjectNode merged = MAPPER.createObjectNode();
-    merge(merged, node);
-    return new SqrlConfig(errors.withConfig(url.toString()), merged, url.toString(), "");
+    return new SqrlConfig(errors.withConfig(url.toString()), (ObjectNode) node, url.toString(), "");
   }
 
   /** Load configuration from a raw JSON string. */
-  public static SqrlConfig fromString(ErrorCollector errors, String string) {
+  static SqrlConfig fromString(ErrorCollector errors, String string) {
     JsonNode node;
     try {
       node = MAPPER.readTree(string);
     } catch (IOException e) {
       throw errors.withConfig("local").exception("Could not parse JSON string: %s", e.toString());
     }
-    ObjectNode merged = MAPPER.createObjectNode();
-    merge(merged, node);
-    return new SqrlConfig(errors.withConfig("local"), merged, "local", "");
-  }
-
-  private static void merge(ObjectNode target, JsonNode update) {
-    update
-        .fields()
-        .forEachRemaining(
-            entry -> {
-              JsonNode existing = target.get(entry.getKey());
-              if (existing instanceof ObjectNode && entry.getValue().isObject()) {
-                merge((ObjectNode) existing, entry.getValue());
-              } else {
-                target.set(entry.getKey(), entry.getValue());
-              }
-            });
+    return new SqrlConfig(errors.withConfig("local"), (ObjectNode) node, "local", "");
   }
 
   private JsonNode node() {
@@ -220,9 +205,9 @@ public class SqrlConfig {
       return root;
     }
 
-    ObjectNode current = root;
+    var current = root;
     for (String seg : prefix.split("\\.")) {
-      JsonNode child = current.get(seg);
+      var child = current.get(seg);
 
       if (child == null) {
         if (createIfMissing) {
@@ -254,7 +239,7 @@ public class SqrlConfig {
   }
 
   public boolean hasSubConfig(String name) {
-    JsonNode n = node();
+    var n = node();
     return n != null && n.has(name) && n.get(name).isObject();
   }
 
@@ -264,7 +249,7 @@ public class SqrlConfig {
   }
 
   public Iterable<String> getKeys() {
-    JsonNode n = node();
+    var n = node();
     if (n == null || !n.isObject()) {
       return Collections.emptyList();
     }
@@ -274,7 +259,7 @@ public class SqrlConfig {
   }
 
   public boolean containsKey(String key) {
-    JsonNode n = node();
+    var n = node();
     return n != null && n.has(key) && !n.get(key).isContainerNode();
   }
 
@@ -352,7 +337,7 @@ public class SqrlConfig {
   }
 
   public <T> Value<T> allAs(Class<T> clazz) {
-    JsonNode n = node();
+    var n = node();
     errors.checkFatal(
         n != null && n.isObject(),
         "Cannot map configuration onto a non-object: %s",
@@ -369,7 +354,7 @@ public class SqrlConfig {
   }
 
   public <T> Value<List<T>> asList(String key, Class<T> clazz) {
-    JsonNode n = node();
+    var n = node();
     List<T> list = List.of();
     if (n != null && n.has(key) && n.get(key).isArray()) {
       list = new ArrayList<>();
@@ -381,7 +366,7 @@ public class SqrlConfig {
   }
 
   public <T> Value<Map<String, T>> asMap(String key, Class<T> clazz) {
-    JsonNode n = node();
+    var n = node();
     Map<String, T> map = new LinkedHashMap<>();
     if (n != null && n.has(key) && n.get(key).isObject()) {
       n.get(key)
@@ -396,13 +381,14 @@ public class SqrlConfig {
   }
 
   public SqrlConfig setProperty(String key, Object value) {
-    String[] parts = getFullKey(key).split("\\.");
-    ObjectNode curr = root;
-    for (int i = 0; i < parts.length - 1; i++) {
-      JsonNode child = curr.get(parts[i]);
+    var parts = getFullKey(key).split("\\.");
+    var curr = root;
+    for (var i = 0; i < parts.length - 1; i++) {
+      var part = parts[i];
+      var child = curr.get(part);
       if (!(child instanceof ObjectNode)) {
-        ObjectNode obj = MAPPER.createObjectNode();
-        curr.set(parts[i], obj);
+        var obj = MAPPER.createObjectNode();
+        curr.set(part, obj);
         curr = obj;
       } else {
         curr = (ObjectNode) child;
@@ -413,18 +399,13 @@ public class SqrlConfig {
   }
 
   public void setProperties(Object value) {
-    JsonNode tree = MAPPER.valueToTree(value);
+    var tree = MAPPER.valueToTree(value);
     errors.checkFatal(
         tree.isObject(),
         "Cannot set multiple properties from non-object: %s",
         value.getClass().getName());
-    ObjectNode curr = (ObjectNode) node(true);
+    var curr = (ObjectNode) node(true);
     tree.fields().forEachRemaining(e -> curr.set(e.getKey(), e.getValue()));
-  }
-
-  private ObjectNode createNode() {
-    // TODO Auto-generated method stub
-    return null;
   }
 
   public void copy(SqrlConfig from) {
@@ -433,6 +414,7 @@ public class SqrlConfig {
     this.prefix = from.prefix;
   }
 
+  @Override
   public String toString() {
     return "SqrlConfig{" + "configFilename='" + configFilename + '\'' + '}';
   }
@@ -446,12 +428,12 @@ public class SqrlConfig {
     if (prefix.isEmpty()) {
       toWrite = root;
     } else {
-      JsonNode n = node();
+      var n = node();
       errors.checkFatal(n != null && n.isObject(), "Cannot write non-object subConfig to file");
       toWrite = (ObjectNode) n;
     }
     try {
-      String text =
+      var text =
           pretty
               ? MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(toWrite)
               : MAPPER.writeValueAsString(toWrite);
@@ -468,7 +450,7 @@ public class SqrlConfig {
   }
 
   public Map<String, String> toStringMap() {
-    Map<String, Object> map = toMap();
+    var map = toMap();
     Map<String, String> out = new TreeMap<>();
     map.forEach((k, v) -> out.put(k, String.valueOf(v)));
     return out;
@@ -494,10 +476,11 @@ public class SqrlConfig {
       this.property = property;
     }
 
+    @Override
     public T get() {
-      boolean has = property != null || defaultValue != null;
+      var has = property != null || defaultValue != null;
       errors.checkFatal(has, "Could not find key [%s] in configuration", fullKey);
-      T value = property != null ? property : defaultValue;
+      var value = property != null ? property : defaultValue;
       for (Map.Entry<Predicate<T>, String> e : validators.entrySet()) {
         errors.checkFatal(
             e.getKey().test(value),
@@ -509,18 +492,21 @@ public class SqrlConfig {
       return value;
     }
 
+    @Override
     public Value<T> withDefault(T defaultValue) {
       this.defaultValue = defaultValue;
       return this;
     }
 
+    @Override
     public Value<T> validate(Predicate<T> validator, String msg) {
       validators.put(validator, msg);
       return this;
     }
 
+    @Override
     public Value<T> map(Function<T, T> mapFunction) {
-      T mapped = property != null ? mapFunction.apply(property) : null;
+      var mapped = property != null ? mapFunction.apply(property) : null;
       return new ValueImpl<>(fullKey, errors, mapped).withDefault(defaultValue);
     }
 
@@ -539,8 +525,9 @@ public class SqrlConfig {
     private Map<String, Object> configs;
     private String prefix;
 
+    @Override
     public SqrlConfig deserialize(@NonNull ErrorCollector errors) {
-      ObjectNode rootNode = MAPPER.createObjectNode();
+      var rootNode = MAPPER.createObjectNode();
       configs.forEach((k, v) -> rootNode.set(k, MAPPER.valueToTree(v)));
       ErrorCollector configErrors = errors;
       if (configFilename != null && !configFilename.isBlank()) {
@@ -570,7 +557,7 @@ public class SqrlConfig {
     return as(key, Boolean.class);
   }
 
-  interface Value<T> {
+  public interface Value<T> {
 
     T get();
 

@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import com.datasqrl.cmd.AssertStatusHook;
 import com.datasqrl.config.PackageJson;
-import com.datasqrl.config.SqrlConfigCommons;
+import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.config.TestRunnerConfiguration;
 import com.datasqrl.engines.TestContainersForTestGoal;
@@ -217,7 +217,7 @@ class FullUseCasesIT {
     }
 
     PackageJson packageJson =
-        SqrlConfigCommons.fromFilesPackageJson(
+        SqrlConfig.fromFilesPackageJson(
             ErrorCollector.root(),
             List.of(
                 rootDir.resolve(SqrlConstants.BUILD_DIR_NAME).resolve(SqrlConstants.PACKAGE_JSON)));
@@ -283,8 +283,7 @@ class FullUseCasesIT {
             case SUCCESS_WITH_CONTENT:
               break;
             default:
-              org.assertj.core.api.Assertions.fail(
-                  "Flink job failed with: " + result.getResultKind());
+              fail("Flink job failed with: " + result.getResultKind());
               break;
           }
 
@@ -294,7 +293,7 @@ class FullUseCasesIT {
           }
         } catch (Exception e) {
           e.printStackTrace();
-          org.assertj.core.api.Assertions.fail("", e);
+          fail("", e);
         }
       }
 

@@ -210,7 +210,7 @@ class SqrlConfigTest {
 
     assertThat(tempFile).exists();
 
-    SqrlConfig loadedConfig = SqrlConfigCommons.fromFiles(errors, tempFile);
+    SqrlConfig loadedConfig = SqrlConfig.fromFiles(errors, tempFile);
     assertThat(loadedConfig.asString("key1").get()).isEqualTo("value1");
     assertThat(loadedConfig.asInt("key2").get()).isEqualTo(42);
     assertThat(loadedConfig.getSubConfig("nested").asString("key").get()).isEqualTo("nestedValue");
@@ -256,7 +256,7 @@ class SqrlConfigTest {
 
   @Test
   void givenNoPaths_whenCreatingConfigFromPackageJson_thenReturnsDefaults() {
-    var underTest = SqrlConfigCommons.fromFilesPackageJson(errors, List.of());
+    var underTest = SqrlConfig.fromFilesPackageJson(errors, List.of());
 
     assertThat(underTest).isNotNull();
     assertThat(underTest.getVersion()).isEqualTo(1);
@@ -270,7 +270,7 @@ class SqrlConfigTest {
   @Test
   void givenSinglePath_whenCreatingConfigFromPackageJson_thenOverridesDefaults() {
     var underTest =
-        SqrlConfigCommons.fromFilesPackageJson(
+        SqrlConfig.fromFilesPackageJson(
             errors, List.of(Path.of("src/test/resources/config/test-package.json")));
 
     assertThat(underTest).isNotNull();
@@ -286,35 +286,34 @@ class SqrlConfigTest {
 
   @Test
   void givenJsonConfigFile_whenLoadViaCommons_thenParsesCorrectly() {
-    var config1 =
-        SqrlConfigCommons.fromFiles(errors, Path.of("src/test/resources/config/config1.json"));
+    var config1 = SqrlConfig.fromFiles(errors, Path.of("src/test/resources/config/config1.json"));
     testConfig1(config1);
   }
 
   @Test
   void givenLoadedConfig_whenWriteToFile_thenLoadsIdentically() {
     var loadedConfig =
-        SqrlConfigCommons.fromFiles(errors, Path.of("src/test/resources/config/config1.json"));
+        SqrlConfig.fromFiles(errors, Path.of("src/test/resources/config/config1.json"));
     var tempFile2 = createTempFile();
     loadedConfig.toFile(tempFile2);
-    var reloadedConfig = SqrlConfigCommons.fromFiles(errors, tempFile2);
+    var reloadedConfig = SqrlConfig.fromFiles(errors, tempFile2);
     testConfig1(reloadedConfig);
   }
 
   @Test
   void givenSubConfig_whenWriteToFile_thenLoadsCorrectSubset() {
     var loadedConfig =
-        SqrlConfigCommons.fromFiles(errors, Path.of("src/test/resources/config/config1.json"));
+        SqrlConfig.fromFiles(errors, Path.of("src/test/resources/config/config1.json"));
     var tempFile2 = createTempFile();
     loadedConfig.getSubConfig("subConf").toFile(tempFile2, true);
-    var subConfig = SqrlConfigCommons.fromFiles(errors, tempFile2);
+    var subConfig = SqrlConfig.fromFiles(errors, tempFile2);
     testSubConf(subConfig);
   }
 
   @Test
   void givenSourceConfig_whenCopy_thenCopiesConfiguration() {
     var other =
-        SqrlConfigCommons.fromFiles(errors, Path.of("src/test/resources/config/config1.json"))
+        SqrlConfig.fromFiles(errors, Path.of("src/test/resources/config/config1.json"))
             .getSubConfig("subConf");
     var newConf = SqrlConfig.createCurrentVersion();
     newConf.copy(other);
@@ -332,7 +331,7 @@ class SqrlConfigTest {
         .isEqualTo(tc.field3);
     var tempFile2 = createTempFile();
     newConf.toFile(tempFile2, true);
-    var config2 = SqrlConfigCommons.fromFiles(errors, tempFile2);
+    var config2 = SqrlConfig.fromFiles(errors, tempFile2);
     assertThat(config2.asBool("test").get()).isTrue();
     var tc2 = config2.getSubConfig("clazz").allAs(TestClass.class).get();
     assertThat(tc2.field1).isEqualTo(tc.field1);

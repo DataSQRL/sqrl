@@ -43,7 +43,7 @@ class PackageJsonSchemaTest {
   void validConfigFile(String configFileName) {
     var errors = ErrorCollector.root();
     try {
-      SqrlConfigCommons.fromFilesPackageJson(errors, List.of(TEST_CASES.resolve(configFileName)));
+      SqrlConfig.fromFilesPackageJson(errors, List.of(TEST_CASES.resolve(configFileName)));
     } catch (Exception e) {
       fail("Unexpected error: " + errors.getErrors().toString());
     }
@@ -66,7 +66,6 @@ class PackageJsonSchemaTest {
   void invalidConfigFile(String configFileName) {
     testForErrors(
         errors ->
-            SqrlConfigCommons.fromFilesPackageJson(
-                errors, List.of(CONFIG_DIR.resolve(configFileName))));
+            SqrlConfig.fromFilesPackageJson(errors, List.of(CONFIG_DIR.resolve(configFileName))));
   }
 }

@@ -19,7 +19,7 @@ import com.datasqrl.config.Dependency;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.PackageJson.DependenciesConfig;
 import com.datasqrl.config.PackageJson.ScriptConfig;
-import com.datasqrl.config.SqrlConfigCommons;
+import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrefix;
@@ -59,7 +59,7 @@ public class PackageBootstrap {
     existingPackage.ifPresent(configFiles::addAll);
 
     // Could not find any package json
-    PackageJson packageJson = SqrlConfigCommons.fromFilesPackageJson(errors, configFiles);
+    PackageJson packageJson = SqrlConfig.fromFilesPackageJson(errors, configFiles);
 
     // Add dependencies of discovered profiles
     dependencies.forEach(

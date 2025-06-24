@@ -26,5 +26,5 @@ import lombok.NonNull;
 @JsonSubTypes({@Type(value = SqrlConfig.Serialized.class, name = "jackson")})
 public interface SerializedSqrlConfig extends Serializable {
 
-  public SqrlConfig deserialize(@NonNull ErrorCollector errors);
+  SqrlConfig deserialize(@NonNull ErrorCollector errors);
 }
