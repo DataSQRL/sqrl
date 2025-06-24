@@ -1,7 +1,7 @@
 [FATAL]  Unknown identifier 'INTT'
-in script:parsererror-arguments-fail.sqrl [5:19]:
+in script:parsererror-arguments-fail.sqrl [3:1]:
+IMPORT ecommerceTs.Customer;
+
 CustomerQuery(id BIGINT,
-             arg2 STRING,
-             arg3 INTT) := SELECT * FROM Customer WHERE customerid = :id;
-------------------^
+^
 

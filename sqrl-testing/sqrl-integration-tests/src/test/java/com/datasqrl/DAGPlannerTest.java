@@ -76,7 +76,7 @@ public class DAGPlannerTest extends AbstractAssetSnapshotTest {
       if (path.getFileName().toString().contains("flink")
           || path.getFileName().toString().contains("schema")
           || path.getFileName().toString().contains("views")
-          || path.getFileName().toString().startsWith("vertx")) {
+          || path.getFileName().toString().startsWith("vertx-config.json")) {
         return false;
       }
       return true;

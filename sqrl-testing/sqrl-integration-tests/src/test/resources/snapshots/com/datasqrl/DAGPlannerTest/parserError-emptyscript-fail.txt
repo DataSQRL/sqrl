@@ -1,5 +1,3 @@
 [FATAL] Script is empty
-in script:parsererror-emptyscript-fail.sqrl [1:1]:
-
-^
+in script:parsererror-emptyscript-fail.sqrl:
 
