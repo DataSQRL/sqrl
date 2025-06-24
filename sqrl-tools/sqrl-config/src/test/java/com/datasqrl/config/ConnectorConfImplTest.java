@@ -28,7 +28,7 @@ class ConnectorConfImplTest {
 
   @BeforeEach
   void setUp() {
-    config = SqrlConfig.createCurrentVersion();
+    config = SqrlConfig.createCurrentVersion().getSubConfig("connector");
   }
 
   @Test
