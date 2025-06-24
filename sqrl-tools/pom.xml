@@ -34,7 +34,6 @@
     <module>sqrl-packager</module>
     <module>sqrl-run</module>
     <module>sqrl-test</module>
-    <module>sqrl-flink-runner</module>
   </modules>
 
   <dependencyManagement>
@@ -42,7 +41,7 @@
       <dependency>
         <groupId>software.amazon.awssdk</groupId>
         <artifactId>bom</artifactId>
-        <version>2.31.43</version>
+        <version>2.31.68</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>

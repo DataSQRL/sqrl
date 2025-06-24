@@ -26,13 +26,7 @@
 
   <artifactId>sqrl-packager</artifactId>
 
-  <properties>
-    <lombok.version>1.18.24</lombok.version>
-    <vertx.version>4.5.14</vertx.version>
-  </properties>
-
   <dependencies>
-
     <dependency>
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-config</artifactId>
@@ -133,7 +127,6 @@
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-web-client</artifactId>
-      <version>${vertx.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -161,13 +154,6 @@
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-junit-jupiter</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.assertj</groupId>
-      <artifactId>assertj-core</artifactId>
-      <version>3.27.3</version>
-      <scope>test</scope>
     </dependency>
   </dependencies>
 

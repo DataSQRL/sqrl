@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 import org.apache.calcite.avatica.util.TimeUnit;
 import org.apache.calcite.rel.type.RelDataType;
@@ -148,7 +149,7 @@ public class FlinkSqlNodeFactory {
         SqlParserPos.ZERO);
   }
 
-  public static SqlNodeList createProperties(Map<String, Object> options) {
+  public static SqlNodeList createProperties(Map<String, String> options) {
     List<SqlNode> props =
         options.entrySet().stream()
             .map(
@@ -190,7 +191,7 @@ public class FlinkSqlNodeFactory {
       Optional<String> timestampColumn,
       Map<String, MetadataEntry> metadataConfig,
       List<String> primaryKeyConstraint,
-      Map<String, Object> connectorProperties,
+      Map<String, String> connectorProperties,
       MetadataExpressionParser expressionParser) {
 
     var partitionKeysNode =
@@ -322,8 +323,8 @@ public class FlinkSqlNodeFactory {
   }
 
   private static SqlNodeList createPropertiesAndRemoveDefaults(
-      Map<String, Object> connectorProperties) {
-    Map<String, Object> options = new HashMap<>(connectorProperties);
+      Map<String, String> connectorProperties) {
+    Map<String, String> options = new TreeMap<>(connectorProperties);
     options.remove("version");
     options.remove("type");
     if (options.isEmpty()) {

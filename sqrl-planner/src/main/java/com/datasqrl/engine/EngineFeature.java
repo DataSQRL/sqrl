@@ -19,6 +19,8 @@ import java.util.EnumSet;
 
 public enum EngineFeature {
 
+  // Supports mutations
+  MUTATIONS,
   // Engine supports denormalized (or nested) data
   DENORMALIZE,
   // Engine supports temporal joins of any sort

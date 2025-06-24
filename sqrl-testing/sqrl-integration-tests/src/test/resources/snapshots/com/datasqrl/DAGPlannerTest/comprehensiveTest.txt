@@ -638,11 +638,14 @@ CREATE TABLE `Orders` (
   PRIMARY KEY (`orderid`) NOT ENFORCED
 ) WITH (
   'connector' = 'upsert-kafka',
-  'value.format' = 'flexible-json',
-  'key.format' = 'raw',
+  'key.flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'key.format' = 'flexible-json',
+  'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${PROPERTIES_GROUP_ID}',
-  'topic' = 'Orders'
+  'topic' = 'kafka-mutation-Orders',
+  'value.flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'value.format' = 'flexible-json'
 );
 CREATE VIEW `CustomerTimeWindow`
 AS
@@ -677,11 +680,11 @@ CREATE TABLE `AnotherCustomer_1` (
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'AnotherCustomer_1',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'AnotherCustomer_1'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `Customer_2` (
   `customerid` BIGINT NOT NULL,
@@ -692,11 +695,11 @@ CREATE TABLE `Customer_2` (
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'Customer_2',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'Customer_2'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `Customer_3` (
   `customerid` BIGINT NOT NULL,
@@ -706,12 +709,11 @@ CREATE TABLE `Customer_3` (
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
 ) WITH (
   'connector' = 'kafka',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
   'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${PROPERTIES_GROUP_ID}',
-  'scan.startup.mode' = 'group-offsets',
-  'properties.auto.offset.reset' = 'earliest',
-  'topic' = 'Customer'
+  'topic' = 'kafka-Customer'
 );
 CREATE TABLE `CustomerByMultipleTime_4` (
   `customerid` BIGINT NOT NULL,
@@ -722,11 +724,11 @@ CREATE TABLE `CustomerByMultipleTime_4` (
   PRIMARY KEY (`customerid`, `email`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'CustomerByMultipleTime_4',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'CustomerByMultipleTime_4'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `CustomerByTime2_5` (
   `customerid` BIGINT NOT NULL,
@@ -737,11 +739,11 @@ CREATE TABLE `CustomerByTime2_5` (
   PRIMARY KEY (`customerid`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'CustomerByTime2_5',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'CustomerByTime2_5'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `CustomerFilteredDistinct_6` (
   `customerid` BIGINT NOT NULL,
@@ -752,11 +754,11 @@ CREATE TABLE `CustomerFilteredDistinct_6` (
   PRIMARY KEY (`customerid`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'CustomerFilteredDistinct_6',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'CustomerFilteredDistinct_6'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `CustomerSubscription_7` (
   `customerid` BIGINT NOT NULL,
@@ -766,12 +768,11 @@ CREATE TABLE `CustomerSubscription_7` (
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
 ) WITH (
   'connector' = 'kafka',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
   'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${PROPERTIES_GROUP_ID}',
-  'scan.startup.mode' = 'group-offsets',
-  'properties.auto.offset.reset' = 'earliest',
-  'topic' = 'CustomerSubscription'
+  'topic' = 'kafka-CustomerSubscription'
 );
 CREATE TABLE `TimeWindow_8` (
   `window_start` TIMESTAMP(3) NOT NULL,
@@ -789,11 +790,11 @@ CREATE TABLE `CustomerTimeWindow_9` (
   PRIMARY KEY (`window_start`, `window_end`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'CustomerTimeWindow_9',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'CustomerTimeWindow_9'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `ExplicitDistinct_10` (
   `customerid` BIGINT NOT NULL,
@@ -802,25 +803,25 @@ CREATE TABLE `ExplicitDistinct_10` (
   PRIMARY KEY (`customerid`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'ExplicitDistinct_10',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'ExplicitDistinct_10'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `ExternalOrders_11` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `entries` RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
+  `entries` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'ExternalOrders_11',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'ExternalOrders_11'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `InvalidDistinct_12` (
   `customerid` BIGINT NOT NULL,
@@ -829,11 +830,11 @@ CREATE TABLE `InvalidDistinct_12` (
   PRIMARY KEY (`customerid`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'InvalidDistinct_12',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'InvalidDistinct_12'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `Orders_13` (
   `orderid` INTEGER NOT NULL,
@@ -841,11 +842,11 @@ CREATE TABLE `Orders_13` (
   PRIMARY KEY (`orderid`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'Orders_13',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'Orders_13'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `SelectCustomers_14` (
   `customerid` BIGINT NOT NULL,
@@ -856,28 +857,28 @@ CREATE TABLE `SelectCustomers_14` (
   PRIMARY KEY (`customerid`, `name`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'SelectCustomers_14',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'SelectCustomers_14'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `TemporalJoin_15` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `entries` RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
+  `entries` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
   `customerid0` BIGINT NOT NULL,
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'TemporalJoin_15',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'TemporalJoin_15'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `UnnestOrders_16` (
   `id` BIGINT NOT NULL,
@@ -891,11 +892,11 @@ CREATE TABLE `UnnestOrders_16` (
   PRIMARY KEY (`__pk_hash`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'UnnestOrders_16',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'UnnestOrders_16'
+  'username' = '${JDBC_USERNAME}'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`AnotherCustomer_1`
@@ -963,7 +964,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
                 FROM `default_catalog`.`default_database`.`TemporalJoin`)
                ;
                INSERT INTO `default_catalog`.`default_database`.`UnnestOrders_16`
-                (SELECT `id`, `customerid`, `time`, `productid`, `quantity`, `discount`, `newId`, `hashColumns`(`id`, `customerid`, `time`, `productid`, `quantity`, `discount`, `newId`) AS `__pk_hash`
+                (SELECT `id`, `customerid`, `time`, `productid`, `quantity`, `discount`, `newId`, `hash_columns`(`id`, `customerid`, `time`, `productid`, `quantity`, `discount`, `newId`) AS `__pk_hash`
                  FROM `default_catalog`.`default_database`.`UnnestOrders`)
                 ;
                 END
@@ -971,27 +972,27 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
 {
   "topics" : [
     {
-      "topicName" : "Customer",
+      "topicName" : "kafka-Customer",
       "tableName" : "Customer_3",
+      "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 1,
-      "replicasAssignments" : { },
       "config" : { }
     },
     {
-      "topicName" : "CustomerSubscription",
+      "topicName" : "kafka-CustomerSubscription",
       "tableName" : "CustomerSubscription_7",
+      "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 1,
-      "replicasAssignments" : { },
       "config" : { }
     },
     {
-      "topicName" : "Orders",
+      "topicName" : "kafka-mutation-Orders",
       "tableName" : "Orders",
+      "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 1,
-      "replicasAssignments" : { },
       "config" : { }
     }
   ]
@@ -1827,186 +1828,6 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
     }
   ]
 }
->>>vertx-config.json
-{
-  "servletConfig": {
-    "graphiQLEndpoint": "/graphiql*",
-    "graphQLEndpoint": "/graphql",
-    "usePgPool": true,
-    "useApolloWs": false,
-    "graphQLWsEndpoint": "/graphql-ws"
-  },
-  "graphQLHandlerOptions": {
-    "requestBatchingEnabled": false,
-    "requestMultipartEnabled": false
-  },
-  "graphiQLHandlerOptions": {
-    "enabled": true
-  },
-  "httpServerOptions": {
-    "sendBufferSize": -1,
-    "receiveBufferSize": -1,
-    "trafficClass": -1,
-    "reuseAddress": true,
-    "logActivity": false,
-    "activityLogDataFormat": "HEX_DUMP",
-    "reusePort": false,
-    "tcpNoDelay": true,
-    "tcpKeepAlive": false,
-    "soLinger": -1,
-    "idleTimeout": 0,
-    "readIdleTimeout": 0,
-    "writeIdleTimeout": 0,
-    "idleTimeoutUnit": "SECONDS",
-    "ssl": false,
-    "sslHandshakeTimeout": 10,
-    "sslHandshakeTimeoutUnit": "SECONDS",
-    "enabledCipherSuites": [],
-    "crlPaths": [],
-    "crlValues": [],
-    "useAlpn": false,
-    "enabledSecureTransportProtocols": [
-      "TLSv1",
-      "TLSv1.1",
-      "TLSv1.2"
-    ],
-    "tcpFastOpen": false,
-    "tcpCork": false,
-    "tcpQuickAck": false,
-    "tcpUserTimeout": 0,
-    "port": 8888,
-    "host": "0.0.0.0",
-    "acceptBacklog": -1,
-    "clientAuth": "NONE",
-    "sni": false,
-    "useProxyProtocol": false,
-    "proxyProtocolTimeout": 10,
-    "proxyProtocolTimeoutUnit": "SECONDS",
-    "compressionSupported": false,
-    "compressionLevel": 6,
-    "maxWebSocketFrameSize": 65536,
-    "maxWebSocketMessageSize": 262144,
-    "webSocketSubProtocols": [
-      "graphql-transport-ws",
-      "graphql-ws"
-    ],
-    "handle100ContinueAutomatically": false,
-    "maxChunkSize": 8192,
-    "maxInitialLineLength": 4096,
-    "maxHeaderSize": 8192,
-    "maxFormAttributeSize": 8192,
-    "initialSettings": {
-      "headerTableSize": 4096,
-      "pushEnabled": true,
-      "maxConcurrentStreams": 100,
-      "initialWindowSize": 65535,
-      "maxFrameSize": 16384,
-      "maxHeaderListSize": 8192
-    },
-    "alpnVersions": [
-      "HTTP_2",
-      "HTTP_1_1"
-    ],
-    "http2ConnectionWindowSize": -1,
-    "decompressionSupported": false,
-    "acceptUnmaskedFrames": false,
-    "decoderInitialBufferSize": 128,
-    "perFrameWebSocketCompressionSupported": true,
-    "perMessageWebSocketCompressionSupported": true,
-    "webSocketCompressionLevel": 6,
-    "webSocketAllowServerNoContext": false,
-    "webSocketPreferredClientNoContext": false,
-    "webSocketClosingTimeout": 10,
-    "tracingPolicy": "ALWAYS"
-  },
-  "pgConnectOptions": {
-    "sendBufferSize": -1,
-    "receiveBufferSize": -1,
-    "trafficClass": -1,
-    "reuseAddress": true,
-    "logActivity": false,
-    "activityLogDataFormat": "HEX_DUMP",
-    "reusePort": false,
-    "tcpNoDelay": true,
-    "tcpKeepAlive": false,
-    "soLinger": -1,
-    "idleTimeout": 0,
-    "readIdleTimeout": 0,
-    "writeIdleTimeout": 0,
-    "idleTimeoutUnit": "SECONDS",
-    "ssl": false,
-    "sslHandshakeTimeout": 10,
-    "sslHandshakeTimeoutUnit": "SECONDS",
-    "enabledCipherSuites": [],
-    "crlPaths": [],
-    "crlValues": [],
-    "useAlpn": false,
-    "enabledSecureTransportProtocols": [
-      "TLSv1",
-      "TLSv1.1",
-      "TLSv1.2"
-    ],
-    "tcpFastOpen": false,
-    "tcpCork": false,
-    "tcpQuickAck": false,
-    "tcpUserTimeout": 0,
-    "connectTimeout": 60000,
-    "trustAll": false,
-    "metricsName": "",
-    "reconnectAttempts": 0,
-    "reconnectInterval": 1000,
-    "hostnameVerificationAlgorithm": "",
-    "host": "${PGHOST}",
-    "port": 5432,
-    "user": "${PGUSER}",
-    "password": "${PGPASSWORD}",
-    "database": "${PGDATABASE}",
-    "cachePreparedStatements": false,
-    "preparedStatementCacheMaxSize": 256,
-    "preparedStatementCacheSqlFilter": {},
-    "properties": {
-      "DateStyle": "ISO",
-      "client_encoding": "utf8",
-      "application_name": "vertx-pg-client",
-      "extra_float_digits": "2"
-    },
-    "pipeliningLimit": 256,
-    "sslMode": "DISABLE",
-    "socketAddress": {
-      "domainSocket": false,
-      "inetSocket": true
-    },
-    "usingDomainSocket": false
-  },
-  "poolOptions": {
-    "maxSize": 4,
-    "maxWaitQueueSize": -1,
-    "idleTimeout": 0,
-    "idleTimeoutUnit": "SECONDS",
-    "poolCleanerPeriod": 1000,
-    "connectionTimeout": 30,
-    "connectionTimeoutUnit": "SECONDS",
-    "shared": false,
-    "name": "__vertx.DEFAULT",
-    "eventLoopSize": 0
-  },
-  "corsHandlerOptions": {
-    "allowedOrigin": "*",
-    "allowCredentials": false,
-    "maxAgeSeconds": -1,
-    "allowPrivateNetwork": false,
-    "allowedMethods": [
-      "GET",
-      "POST"
-    ],
-    "allowedHeaders": [],
-    "exposedHeaders": []
-  },
-  "apolloWSOptions": {
-    "keepAlive": 30000
-  }
-}
-
 >>>vertx.json
 {
   "model" : {
@@ -2525,7 +2346,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
       {
         "type" : "kafka",
         "fieldName" : "Orders",
-        "topic" : "Orders",
+        "topic" : "kafka-mutation-Orders",
         "computedColumns" : { },
         "sinkConfig" : { }
       }
@@ -2534,14 +2355,14 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
       {
         "type" : "kafka",
         "fieldName" : "CustomerSubscription",
-        "topic" : "CustomerSubscription",
+        "topic" : "kafka-CustomerSubscription",
         "sinkConfig" : { },
         "filters" : { }
       },
       {
         "type" : "kafka",
         "fieldName" : "CustomerSubscriptionById",
-        "topic" : "Customer",
+        "topic" : "kafka-Customer",
         "sinkConfig" : { },
         "filters" : {
           "minId" : "customerid"

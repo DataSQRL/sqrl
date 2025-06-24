@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "compiler": {
+    "cost-model": "read"
+  },
+  "test-runner": {
+    "delay-sec": -1
+  }
+}

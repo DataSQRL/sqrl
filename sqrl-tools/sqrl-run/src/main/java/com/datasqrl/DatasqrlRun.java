@@ -15,7 +15,7 @@
  */
 package com.datasqrl;
 
-import com.datasqrl.flinkrunner.functions.AutoRegisterSystemFunction;
+import com.datasqrl.flinkrunner.stdlib.utils.AutoRegisterSystemFunction;
 import com.datasqrl.graphql.HttpServerVerticle;
 import com.datasqrl.graphql.JsonEnvVarDeserializer;
 import com.datasqrl.graphql.config.ServerConfig;
@@ -29,7 +29,8 @@ import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.json.JsonObject;
-import io.vertx.micrometer.MicrometerMetricsOptions;
+import io.vertx.ext.auth.jwt.JWTAuthOptions;
+import io.vertx.micrometer.MicrometerMetricsFactory;
 import java.io.File;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -429,26 +430,49 @@ public class DatasqrlRun {
           .setDatabase(getenv("PGDATABASE"));
     }
 
-    HttpServerVerticle server = new HttpServerVerticle(serverConfig, rootGraphqlModel);
+    var auth = readAuthentication();
+    if (auth != null) {
+      serverConfig.setJwtAuth(auth);
+    }
 
-    PrometheusMeterRegistry prometheusMeterRegistry =
-        new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
-    MicrometerMetricsOptions metricsOptions =
-        new MicrometerMetricsOptions()
-            .setMicrometerRegistry(prometheusMeterRegistry)
-            .setEnabled(true);
+    var server = new HttpServerVerticle(serverConfig, rootGraphqlModel);
+
+    var prometheusMeterRegistry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
+    var metricsOptions =
+        new MicrometerMetricsFactory(prometheusMeterRegistry).newOptions().setEnabled(true);
 
     vertx = Vertx.vertx(new VertxOptions().setMetricsOptions(metricsOptions));
 
-    vertx.deployVerticle(
-        server,
-        res -> {
-          if (res.succeeded()) {
-            System.out.println("Deployment id is: " + res.result());
-          } else {
-            System.out.println("Deployment failed!");
-          }
-        });
+    vertx
+        .deployVerticle(server)
+        .onComplete(
+            res -> {
+              if (res.succeeded()) {
+                System.out.println("Deployment id is: " + res.result());
+              } else {
+                System.out.println("Deployment failed!");
+              }
+            });
+  }
+
+  private JWTAuthOptions readAuthentication() {
+    var packageJson = getPackageJson();
+    var engines = (Map) packageJson.get("engines");
+    if (engines == null) {
+      return null;
+    }
+
+    var vertx = (Map) engines.get("vertx");
+    if (vertx == null) {
+      return null;
+    }
+
+    var authentication = (Map) vertx.get("authentication");
+    if (authentication == null) {
+      return null;
+    }
+
+    return objectMapper.convertValue(authentication, JWTAuthOptions.class);
   }
 
   public Optional<String> getSnowflakeUrl() {

@@ -19,7 +19,7 @@ import static com.datasqrl.canonicalizer.Name.isSystemHidden;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.flinkrunner.types.json.FlinkJsonType;
+import com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType;
 import com.datasqrl.graphql.server.CustomScalars;
 import com.datasqrl.plan.table.Multiplicity;
 import graphql.Scalars;

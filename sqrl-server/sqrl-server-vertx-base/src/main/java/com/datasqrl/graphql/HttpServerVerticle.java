@@ -26,11 +26,11 @@ import io.vertx.core.*;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.jwt.JWTAuth;
-import io.vertx.ext.healthchecks.HealthCheckHandler;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.CorsHandler;
 import io.vertx.ext.web.handler.LoggerHandler;
+import io.vertx.ext.web.healthchecks.HealthCheckHandler;
 import io.vertx.micrometer.backends.BackendRegistries;
 import java.io.File;
 import java.util.Map;
@@ -124,7 +124,7 @@ public class HttpServerVerticle extends AbstractVerticle {
 
     // inside bootstrap() in HttpServerVerticle
     Optional<JWTAuth> jwtOpt =
-        Optional.ofNullable(config.getAuthOptions()).map(authCfg -> JWTAuth.create(vertx, authCfg));
+        Optional.ofNullable(config.getJwtAuth()).map(authCfg -> JWTAuth.create(vertx, authCfg));
 
     // Deploy GraphQL verticle first
     GraphQLServerVerticle graphQLVerticle = new GraphQLServerVerticle(root, config, model, jwtOpt);
@@ -184,8 +184,8 @@ public class HttpServerVerticle extends AbstractVerticle {
     Promise<JsonObject> promise = Promise.promise();
     vertx
         .fileSystem()
-        .readFile(
-            "server-config.json",
+        .readFile("vertx-config.json")
+        .onComplete(
             result -> {
               if (result.succeeded()) {
                 try {
@@ -221,7 +221,7 @@ public class HttpServerVerticle extends AbstractVerticle {
   private CorsHandler toCorsHandler(CorsHandlerOptions opts) {
     CorsHandler ch =
         opts.getAllowedOrigin() != null
-            ? CorsHandler.create(opts.getAllowedOrigin())
+            ? CorsHandler.create().addOrigin(opts.getAllowedOrigin())
             : CorsHandler.create();
 
     if (opts.getAllowedOrigins() != null) {

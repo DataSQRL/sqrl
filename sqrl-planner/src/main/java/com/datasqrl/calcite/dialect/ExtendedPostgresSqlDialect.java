@@ -18,8 +18,8 @@ package com.datasqrl.calcite.dialect;
 import static org.apache.calcite.sql.SqlKind.COLLECTION_TABLE;
 
 import com.datasqrl.calcite.Dialect;
-import com.datasqrl.flinkrunner.types.json.FlinkJsonType;
-import com.datasqrl.flinkrunner.types.vector.FlinkVectorType;
+import com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType;
+import com.datasqrl.flinkrunner.stdlib.vector.FlinkVectorType;
 import com.datasqrl.function.translations.SqlTranslation;
 import com.datasqrl.util.ServiceLoaderDiscovery;
 import java.util.Map;

@@ -511,11 +511,10 @@ CREATE TABLE `CustomerPromotion_1` (
   `saved` DOUBLE NOT NULL
 ) WITH (
   'connector' = 'kafka',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
   'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${PROPERTIES_GROUP_ID}',
-  'scan.startup.mode' = 'group-offsets',
-  'properties.auto.offset.reset' = 'earliest',
   'topic' = 'CustomerPromotion'
 );
 CREATE TABLE `Customers_2` (
@@ -530,11 +529,11 @@ CREATE TABLE `Customers_2` (
   PRIMARY KEY (`id`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'Customers',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'Customers_2'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `CustomersOrderStats_3` (
   `customerid` BIGINT NOT NULL,
@@ -545,11 +544,11 @@ CREATE TABLE `CustomersOrderStats_3` (
   PRIMARY KEY (`customerid`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'CustomersOrderStats',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'CustomersOrderStats_3'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `CustomersPastPurchases_4` (
   `customerid` BIGINT NOT NULL,
@@ -559,11 +558,11 @@ CREATE TABLE `CustomersPastPurchases_4` (
   PRIMARY KEY (`customerid`, `productid`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'CustomersPastPurchases',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'CustomersPastPurchases_4'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `CustomersSpending_5` (
   `customerid` BIGINT NOT NULL,
@@ -574,25 +573,25 @@ CREATE TABLE `CustomersSpending_5` (
   PRIMARY KEY (`__pk_hash`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'CustomersSpending',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'CustomersSpending_5'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `Orders_6` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `items` RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw=='),
+  `items` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'Orders',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'Orders_6'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `OrdersTotals_7` (
   `id` BIGINT NOT NULL,
@@ -604,11 +603,11 @@ CREATE TABLE `OrdersTotals_7` (
   PRIMARY KEY (`__pk_hash`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'OrdersTotals',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'OrdersTotals_7'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `Products_8` (
   `id` BIGINT NOT NULL,
@@ -622,11 +621,11 @@ CREATE TABLE `Products_8` (
   PRIMARY KEY (`id`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'Products',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'Products_8'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `ProductsByCountry_9` (
   `productid` BIGINT NOT NULL,
@@ -638,11 +637,11 @@ CREATE TABLE `ProductsByCountry_9` (
   PRIMARY KEY (`__pk_hash`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'ProductsByCountry',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'ProductsByCountry_9'
+  'username' = '${JDBC_USERNAME}'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`promotion_ex1`
@@ -666,7 +665,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerPromotion_1`
      FROM `default_catalog`.`default_database`.`CustomersPastPurchases`)
     ;
     INSERT INTO `default_catalog`.`default_database`.`CustomersSpending_5`
-     (SELECT `customerid`, `week`, `spend`, `saved`, `hashColumns`(`customerid`, `week`, `spend`, `saved`) AS `__pk_hash`
+     (SELECT `customerid`, `week`, `spend`, `saved`, `hash_columns`(`customerid`, `week`, `spend`, `saved`) AS `__pk_hash`
       FROM `default_catalog`.`default_database`.`CustomersSpending`)
      ;
      INSERT INTO `default_catalog`.`default_database`.`Orders_6`
@@ -674,7 +673,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerPromotion_1`
        FROM `default_catalog`.`default_database`.`Orders`)
       ;
       INSERT INTO `default_catalog`.`default_database`.`OrdersTotals_7`
-       (SELECT `id`, `time`, `customerid`, `price`, `saving`, `hashColumns`(`id`, `time`, `customerid`, `price`, `saving`) AS `__pk_hash`
+       (SELECT `id`, `time`, `customerid`, `price`, `saving`, `hash_columns`(`id`, `time`, `customerid`, `price`, `saving`) AS `__pk_hash`
         FROM `default_catalog`.`default_database`.`OrdersTotals`)
        ;
        INSERT INTO `default_catalog`.`default_database`.`Products_8`
@@ -682,7 +681,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerPromotion_1`
          FROM `default_catalog`.`default_database`.`_ProductsStream`)
         ;
         INSERT INTO `default_catalog`.`default_database`.`ProductsByCountry_9`
-         (SELECT `productid`, `country`, `quantity`, `spend`, `weight`, `hashColumns`(`productid`, `country`) AS `__pk_hash`
+         (SELECT `productid`, `country`, `quantity`, `spend`, `weight`, `hash_columns`(`productid`, `country`) AS `__pk_hash`
           FROM `default_catalog`.`default_database`.`ProductsByCountry`)
          ;
          END
@@ -692,30 +691,29 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerPromotion_1`
     {
       "topicName" : "CustomerPromotion",
       "tableName" : "CustomerPromotion_1",
+      "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 1,
-      "replicasAssignments" : { },
       "config" : { }
     }
   ]
 }
 >>>postgres-schema.sql
-CREATE TABLE IF NOT EXISTS "Customers_2" ("id" BIGINT NOT NULL, "first_name" TEXT NOT NULL, "last_name" TEXT NOT NULL, "email" TEXT NOT NULL, "ip_address" TEXT , "country" TEXT , "changed_on" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));
-CREATE TABLE IF NOT EXISTS "CustomersOrderStats_3" ("customerid" BIGINT NOT NULL, "first_order" TIMESTAMP WITH TIME ZONE NOT NULL, "total_spend" DOUBLE PRECISION NOT NULL, "total_saved" DOUBLE PRECISION NOT NULL, "num_orders" BIGINT NOT NULL , PRIMARY KEY ("customerid"));
-CREATE TABLE IF NOT EXISTS "CustomersPastPurchases_4" ("customerid" BIGINT NOT NULL, "productid" BIGINT NOT NULL, "num_orders" BIGINT NOT NULL, "total_quantity" BIGINT NOT NULL , PRIMARY KEY ("customerid","productid"));
-CREATE TABLE IF NOT EXISTS "CustomersSpending_5" ("customerid" BIGINT NOT NULL, "week" TIMESTAMP WITH TIME ZONE NOT NULL, "spend" DOUBLE PRECISION NOT NULL, "saved" DOUBLE PRECISION NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
-CREATE TABLE IF NOT EXISTS "Orders_6" ("id" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "time" TIMESTAMP WITH TIME ZONE NOT NULL, "items" JSONB  , PRIMARY KEY ("id","time"));
-CREATE TABLE IF NOT EXISTS "OrdersTotals_7" ("id" BIGINT NOT NULL, "time" TIMESTAMP WITH TIME ZONE NOT NULL, "customerid" BIGINT NOT NULL, "price" DOUBLE PRECISION NOT NULL, "saving" DOUBLE PRECISION NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
-CREATE TABLE IF NOT EXISTS "Products_8" ("id" BIGINT NOT NULL, "name" TEXT NOT NULL, "sizing" TEXT NOT NULL, "weight_in_gram" BIGINT NOT NULL, "type" TEXT NOT NULL, "category" TEXT NOT NULL, "usda_id" BIGINT NOT NULL, "updated" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));
-CREATE TABLE IF NOT EXISTS "ProductsByCountry_9" ("productid" BIGINT NOT NULL, "country" TEXT , "quantity" BIGINT NOT NULL, "spend" DOUBLE PRECISION NOT NULL, "weight" BIGINT NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "Customers" ("id" BIGINT NOT NULL, "first_name" TEXT NOT NULL, "last_name" TEXT NOT NULL, "email" TEXT NOT NULL, "ip_address" TEXT , "country" TEXT , "changed_on" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));
+CREATE TABLE IF NOT EXISTS "CustomersOrderStats" ("customerid" BIGINT NOT NULL, "first_order" TIMESTAMP WITH TIME ZONE NOT NULL, "total_spend" DOUBLE PRECISION NOT NULL, "total_saved" DOUBLE PRECISION NOT NULL, "num_orders" BIGINT NOT NULL , PRIMARY KEY ("customerid"));
+CREATE TABLE IF NOT EXISTS "CustomersPastPurchases" ("customerid" BIGINT NOT NULL, "productid" BIGINT NOT NULL, "num_orders" BIGINT NOT NULL, "total_quantity" BIGINT NOT NULL , PRIMARY KEY ("customerid","productid"));
+CREATE TABLE IF NOT EXISTS "CustomersSpending" ("customerid" BIGINT NOT NULL, "week" TIMESTAMP WITH TIME ZONE NOT NULL, "spend" DOUBLE PRECISION NOT NULL, "saved" DOUBLE PRECISION NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "Orders" ("id" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "time" TIMESTAMP WITH TIME ZONE NOT NULL, "items" JSONB  , PRIMARY KEY ("id","time"));
+CREATE TABLE IF NOT EXISTS "OrdersTotals" ("id" BIGINT NOT NULL, "time" TIMESTAMP WITH TIME ZONE NOT NULL, "customerid" BIGINT NOT NULL, "price" DOUBLE PRECISION NOT NULL, "saving" DOUBLE PRECISION NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "Products" ("id" BIGINT NOT NULL, "name" TEXT NOT NULL, "sizing" TEXT NOT NULL, "weight_in_gram" BIGINT NOT NULL, "type" TEXT NOT NULL, "category" TEXT NOT NULL, "usda_id" BIGINT NOT NULL, "updated" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));
+CREATE TABLE IF NOT EXISTS "ProductsByCountry" ("productid" BIGINT NOT NULL, "country" TEXT , "quantity" BIGINT NOT NULL, "spend" DOUBLE PRECISION NOT NULL, "weight" BIGINT NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
 
-CREATE INDEX IF NOT EXISTS "Customers_2_hash_c3" ON "Customers_2" USING hash ("email");
-CREATE INDEX IF NOT EXISTS "OrdersTotals_7_hash_c0" ON "OrdersTotals_7" USING hash ("id");
-CREATE INDEX IF NOT EXISTS "Orders_6_hash_c1" ON "Orders_6" USING hash ("customerid");
-CREATE INDEX IF NOT EXISTS "Products_8_text_c1c5" ON "Products_8" USING GIN (to_tsvector('english', coalesce("name", '') || ' ' || coalesce("category", '') ))
+CREATE INDEX IF NOT EXISTS "Customers_hash_c3" ON "Customers" USING hash ("email");
+CREATE INDEX IF NOT EXISTS "OrdersTotals_hash_c0" ON "OrdersTotals" USING hash ("id");
+CREATE INDEX IF NOT EXISTS "Orders_hash_c1" ON "Orders" USING hash ("customerid");
+CREATE INDEX IF NOT EXISTS "Products_text_c1c5" ON "Products" USING GIN (to_tsvector('english', coalesce("name", '') || ' ' || coalesce("category", '') ))
 >>>postgres-views.sql
-CREATE OR REPLACE VIEW "Orders"("id", "customerid", "time", "items") AS SELECT *
-FROM "Orders_6"
+
 >>>vertx.json
 {
   "model" : {
@@ -745,7 +743,7 @@ FROM "Orders_6"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Customers_2\"\nWHERE (\"id\" = $1 OR $1 IS NULL) AND (\"email\" = $2 OR $2 IS NULL)",
+            "sql" : "SELECT *\nFROM \"Customers\"\nWHERE (\"id\" = $1 OR $1 IS NULL) AND (\"email\" = $2 OR $2 IS NULL)",
             "parameters" : [
               {
                 "type" : "arg",
@@ -778,7 +776,7 @@ FROM "Orders_6"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"CustomersOrderStats_3\"\nWHERE \"customerid\" = $1",
+            "sql" : "SELECT *\nFROM \"CustomersOrderStats\"\nWHERE \"customerid\" = $1",
             "parameters" : [
               {
                 "type" : "source",
@@ -807,7 +805,7 @@ FROM "Orders_6"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"CustomersPastPurchases_4\"\nWHERE \"customerid\" = $1\nORDER BY \"num_orders\" DESC NULLS LAST, \"total_quantity\" DESC NULLS LAST",
+            "sql" : "SELECT *\nFROM \"CustomersPastPurchases\"\nWHERE \"customerid\" = $1\nORDER BY \"num_orders\" DESC NULLS LAST, \"total_quantity\" DESC NULLS LAST",
             "parameters" : [
               {
                 "type" : "source",
@@ -836,7 +834,7 @@ FROM "Orders_6"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Orders_6\"\nWHERE \"customerid\" = $1",
+            "sql" : "SELECT *\nFROM \"Orders\"\nWHERE \"customerid\" = $1",
             "parameters" : [
               {
                 "type" : "source",
@@ -865,7 +863,7 @@ FROM "Orders_6"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Customers_2\"\nWHERE $1 = \"id\"",
+            "sql" : "SELECT *\nFROM \"Customers\"\nWHERE $1 = \"id\"",
             "parameters" : [
               {
                 "type" : "source",
@@ -894,7 +892,7 @@ FROM "Orders_6"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM (SELECT \"id\", \"time\", \"customerid\", \"price\", \"saving\"\n  FROM \"OrdersTotals_7\") AS \"t\"\nWHERE $1 = \"id\"",
+            "sql" : "SELECT *\nFROM (SELECT \"id\", \"time\", \"customerid\", \"price\", \"saving\"\n  FROM \"OrdersTotals\") AS \"t\"\nWHERE $1 = \"id\"",
             "parameters" : [
               {
                 "type" : "source",
@@ -923,7 +921,7 @@ FROM "Orders_6"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM (SELECT \"customerid\", \"week\", \"spend\", \"saved\"\n  FROM \"CustomersSpending_5\"\n  ORDER BY \"week\" DESC NULLS LAST) AS \"t0\"\nWHERE \"customerid\" = $1",
+            "sql" : "SELECT *\nFROM (SELECT \"customerid\", \"week\", \"spend\", \"saved\"\n  FROM \"CustomersSpending\"\n  ORDER BY \"week\" DESC NULLS LAST) AS \"t0\"\nWHERE \"customerid\" = $1",
             "parameters" : [
               {
                 "type" : "source",
@@ -952,7 +950,7 @@ FROM "Orders_6"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Orders_6\"",
+            "sql" : "SELECT *\nFROM \"Orders\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
@@ -980,7 +978,7 @@ FROM "Orders_6"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Products_8\"\nWHERE \"id\" = $1",
+            "sql" : "SELECT *\nFROM \"Products\"\nWHERE \"id\" = $1",
             "parameters" : [
               {
                 "type" : "arg",
@@ -1013,7 +1011,7 @@ FROM "Orders_6"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM (SELECT \"productid\", \"country\", \"quantity\", \"spend\", \"weight\"\n  FROM \"ProductsByCountry_9\") AS \"t\"\nWHERE \"productid\" = $1",
+            "sql" : "SELECT *\nFROM (SELECT \"productid\", \"country\", \"quantity\", \"spend\", \"weight\"\n  FROM \"ProductsByCountry\") AS \"t\"\nWHERE \"productid\" = $1",
             "parameters" : [
               {
                 "type" : "arg",
@@ -1046,7 +1044,7 @@ FROM "Orders_6"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT \"id\", \"name\", \"sizing\", \"weight_in_gram\", \"type\", \"category\", \"usda_id\", \"updated\", \"ts_rank_cd\"(\"to_tsvector\"('english', COALESCE(\"name\", ' ')), \"websearch_to_tsquery\"('english', $1)) AS \"score\"\nFROM \"Products_8\"\nWHERE (\"to_tsvector\"('english', COALESCE(\"name\", ' ')) @@ \"websearch_to_tsquery\"('english', CAST($1 AS TEXT)))\nORDER BY \"ts_rank_cd\"(\"to_tsvector\"('english', COALESCE(\"name\", ' ')), \"websearch_to_tsquery\"('english', $1)) DESC NULLS LAST, \"id\" NULLS FIRST",
+            "sql" : "SELECT \"id\", \"name\", \"sizing\", \"weight_in_gram\", \"type\", \"category\", \"usda_id\", \"updated\", \"ts_rank_cd\"(\"to_tsvector\"('english', COALESCE(\"name\", ' ')), \"websearch_to_tsquery\"('english', $1)) AS \"score\"\nFROM \"Products\"\nWHERE (\"to_tsvector\"('english', COALESCE(\"name\", ' ')) @@ \"websearch_to_tsquery\"('english', CAST($1 AS TEXT)))\nORDER BY \"ts_rank_cd\"(\"to_tsvector\"('english', COALESCE(\"name\", ' ')), \"websearch_to_tsquery\"('english', $1)) DESC NULLS LAST, \"id\" NULLS FIRST",
             "parameters" : [
               {
                 "type" : "arg",
@@ -1083,7 +1081,7 @@ FROM "Orders_6"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Products_8\"\nWHERE (\"to_tsvector\"('english', COALESCE(\"name\", ' ') || ' ' || COALESCE(\"category\", ' ')) @@ \"websearch_to_tsquery\"('english', CAST($1 AS TEXT))) AND \"id\" > $2\nORDER BY \"id\" NULLS FIRST",
+            "sql" : "SELECT *\nFROM \"Products\"\nWHERE (\"to_tsvector\"('english', COALESCE(\"name\", ' ') || ' ' || COALESCE(\"category\", ' ')) @@ \"websearch_to_tsquery\"('english', CAST($1 AS TEXT))) AND \"id\" > $2\nORDER BY \"id\" NULLS FIRST",
             "parameters" : [
               {
                 "type" : "arg",

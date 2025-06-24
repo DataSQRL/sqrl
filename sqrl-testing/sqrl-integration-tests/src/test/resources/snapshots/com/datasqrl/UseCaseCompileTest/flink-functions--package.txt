@@ -13,7 +13,7 @@ Schema:
  - generated_uuid: CHAR(36) CHARACTER SET "UTF-16LE" NOT NULL
  - name_md5: CHAR(32) CHARACTER SET "UTF-16LE" NOT NULL
  - formatted_name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - name_json: RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw==')
+ - name_json: RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM=')
 Plan:
 LogicalProject(name_upper=[UPPER($0)], name_length=[CHAR_LENGTH($0)], time_now=[NOW()], current_unix_ts=[UNIX_TIMESTAMP()], generated_uuid=[UUID()], name_md5=[MD5($0)], formatted_name=[FORMAT('Hello, %s', $0)], name_json=[TO_JSONB(CONCAT('{"a": "', $0, '"}'))])
   LogicalValues(tuples=[[{ 'Alice' }, { 'Bob' }, { 'Charlie' }]])
@@ -50,7 +50,7 @@ CREATE TABLE `functions_1` (
   `generated_uuid` CHAR(36) CHARACTER SET `UTF-16LE` NOT NULL,
   `name_md5` CHAR(32) CHARACTER SET `UTF-16LE` NOT NULL,
   `formatted_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `name_json` RAW('com.datasqrl.flinkrunner.types.json.FlinkJsonType', 'AENjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIudHlwZXMuanNvbi5GbGlua0pzb25UeXBlU2VyaWFsaXplclNuYXBzaG90AAAAAw==')
+  `name_json` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM=')
 ) WITH (
   'connector' = 'print',
   'print-identifier' = 'functions'

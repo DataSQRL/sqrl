@@ -15,9 +15,9 @@
  */
 package com.datasqrl.function.vector;
 
+import com.datasqrl.flinkrunner.stdlib.text.text_search;
 import com.datasqrl.function.FunctionMetadata;
 import com.datasqrl.function.IndexableFunction;
-import com.datasqrl.function.text.text_search;
 import com.datasqrl.plan.global.IndexType;
 import com.google.auto.service.AutoService;
 import java.util.EnumSet;

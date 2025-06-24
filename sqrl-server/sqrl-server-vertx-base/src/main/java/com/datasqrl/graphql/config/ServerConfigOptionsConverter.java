@@ -60,8 +60,9 @@ public class ServerConfigOptionsConverter {
             json.getJsonObject("corsHandlerOptions") == null
                 ? new JsonObject()
                 : json.getJsonObject("corsHandlerOptions")));
-    if (json.getJsonObject("authOptions") != null) {
-      serverConfig.setAuthOptions(new JWTAuthOptions(json.getJsonObject("authOptions")));
-    }
+    serverConfig.setJwtAuth(
+        json.getJsonObject("jwtAuth") == null
+            ? null
+            : new JWTAuthOptions(json.getJsonObject("jwtAuth")));
   }
 }

@@ -18,8 +18,8 @@ package com.datasqrl.function.vector;
 import static com.datasqrl.function.FlinkUdfNsObject.getFunctionNameFromClass;
 
 import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.flinkrunner.functions.vector.VectorFunctions;
-import com.datasqrl.flinkrunner.types.vector.FlinkVectorType;
+import com.datasqrl.flinkrunner.stdlib.vector.FlinkVectorType;
+import com.datasqrl.flinkrunner.stdlib.vector.VectorFunctions;
 import com.datasqrl.sql.DatabaseExtension;
 import com.google.auto.service.AutoService;
 import java.util.Set;

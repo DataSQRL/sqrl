@@ -79,7 +79,7 @@ public class GraphQLServerVerticle extends AbstractVerticle {
     if (this.config.getGraphiQLHandlerOptions() != null) {
       var graphiQlHandlerBuilder =
           GraphiQLHandler.builder(vertx).with(this.config.getGraphiQLHandlerOptions());
-      if (this.config.getAuthOptions() != null) {
+      if (this.config.getJwtAuth() != null) {
         graphiQlHandlerBuilder.addingHeaders(
             rc -> {
               String token = rc.get("token");

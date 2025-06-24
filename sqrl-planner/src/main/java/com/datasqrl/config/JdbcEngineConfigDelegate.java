@@ -24,7 +24,7 @@ public class JdbcEngineConfigDelegate {
       Pattern.compile("^jdbc:(.*?):\\/\\/([^/:]*)(?::(\\d+))?\\/([^/:?]*)(.*)$");
   public static final Pattern JDBC_DIALECT_REGEX = Pattern.compile("^jdbc:(.*?):(.*)$");
 
-  private final Map<String, Object> map;
+  private final Map<String, String> map;
   private final String dialect;
   private String host;
   private int port;
@@ -33,7 +33,7 @@ public class JdbcEngineConfigDelegate {
 
   public JdbcEngineConfigDelegate(ConnectorConf connectorConf) {
     this.map = connectorConf.toMap();
-    this.url = (String) map.get("url");
+    this.url = map.get("url");
     var matcher = JDBC_URL_REGEX.matcher(url);
     if (matcher.find()) {
       var dialect = matcher.group(1);

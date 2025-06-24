@@ -45,7 +45,6 @@ import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 public class DuckDbStatementFactory extends AbstractJdbcStatementFactory {
 
   private final EngineConfig engineConfig;
-  private Map<String, String> connectorOptions;
 
   public DuckDbStatementFactory(EngineConfig engineConfig) {
     super(
@@ -61,35 +60,36 @@ public class DuckDbStatementFactory extends AbstractJdbcStatementFactory {
   }
 
   @Override
-  public JdbcStatement createTable(JdbcEngineCreateTable createTable) {
-    /* We make the simplifying assumptions that the connector options we care about in
-      createQuery relnode rewriting are the same for all tables.
-      To make this more robust, we would look them up by name
-    */
-
-    this.connectorOptions = createTable.getTable().getConnectorOptions();
-    return super.createTable(createTable);
-  }
-
-  @Override
   protected SqlDataTypeSpec getSqlType(RelDataType type, Optional<DataTypeHint> hint) {
     return ExtendedPostgresSqlDialect.DEFAULT.getCastSpec(type);
   }
 
+  /**
+   * DuckDB requires that we replace the tablescan with a function call that loads the iceberg
+   * table. This is done at the RelNode level.
+   *
+   * @param query
+   * @param withView
+   * @param tableIdMap
+   * @return
+   */
   @Override
-  public QueryResult createQuery(Query query, boolean withView) {
+  public QueryResult createQuery(
+      Query query, boolean withView, Map<String, JdbcEngineCreateTable> tableIdMap) {
     var relNode = query.getRelNode();
     var replaced =
         relNode.accept(
             new RelShuttleImpl() {
               @Override
               public RelNode visit(TableScan scan) {
-                Map<String, String> map = connectorOptions;
-                String warehouse = map.get("warehouse");
+                String tableId = scan.getTable().getQualifiedName().get(2);
+                JdbcEngineCreateTable createTable = tableIdMap.get(tableId);
+                Map<String, String> connector = createTable.getTable().getConnectorOptions();
+                String warehouse = connector.get("warehouse");
                 String databaseName =
-                    map.get("database-name") == null
+                    connector.get("database-name") == null
                         ? "default_database"
-                        : map.get("database-name");
+                        : connector.get("database-name");
                 RexBuilder rexBuilder = new RexBuilder(new TypeFactory());
                 if (warehouse.startsWith("file://")) {
                   warehouse = warehouse.substring(7);
@@ -104,11 +104,7 @@ public class DuckDbStatementFactory extends AbstractJdbcStatementFactory {
                     rexBuilder.makeCall(
                         lightweightOp("iceberg_scan"),
                         rexBuilder.makeLiteral(
-                            warehouse
-                                + "/"
-                                + databaseName
-                                + "/"
-                                + scan.getTable().getQualifiedName().get(2)),
+                            warehouse + "/" + databaseName + "/" + createTable.getTableName()),
                         allowMovedPaths);
                 return new LogicalTableFunctionScan(
                     scan.getCluster(),
@@ -121,7 +117,8 @@ public class DuckDbStatementFactory extends AbstractJdbcStatementFactory {
               }
             });
 
-    return createQuery(query.getFunction().getFunctionCatalogName(), replaced, false);
+    return createQuery(
+        query.getFunction().getSimpleName(), replaced, false, getTableNameMapping(tableIdMap));
   }
 
   @Override

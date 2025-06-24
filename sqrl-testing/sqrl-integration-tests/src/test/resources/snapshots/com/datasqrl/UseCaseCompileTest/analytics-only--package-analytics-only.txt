@@ -308,12 +308,12 @@ CREATE TABLE `ApplicationStatus_1` (
 )
 PARTITIONED BY (`customer_id`)
 WITH (
-  'write.parquet.page-size-bytes' = '1000',
-  'warehouse' = '/tmp/duckdb',
-  'catalog-type' = 'hadoop',
   'catalog-name' = 'mydatabase',
+  'catalog-table' = 'ApplicationStatus',
+  'catalog-type' = 'hadoop',
   'connector' = 'iceberg',
-  'catalog-table' = 'ApplicationStatus_1'
+  'warehouse' = '/tmp/duckdb',
+  'write.parquet.page-size-bytes' = '1000'
 );
 CREATE TABLE `_Applications_2` (
   `id` BIGINT NOT NULL,
@@ -327,12 +327,12 @@ CREATE TABLE `_Applications_2` (
 )
 PARTITIONED BY (`loan_type_id`)
 WITH (
-  'write.parquet.page-size-bytes' = '1000',
-  'warehouse' = '/tmp/duckdb',
-  'catalog-type' = 'hadoop',
   'catalog-name' = 'mydatabase',
+  'catalog-table' = '_Applications',
+  'catalog-type' = 'hadoop',
   'connector' = 'iceberg',
-  'catalog-table' = '_Applications_2'
+  'warehouse' = '/tmp/duckdb',
+  'write.parquet.page-size-bytes' = '1000'
 );
 CREATE TABLE `_LoanTypes_3` (
   `id` BIGINT NOT NULL,
@@ -346,16 +346,16 @@ CREATE TABLE `_LoanTypes_3` (
   `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`id`) NOT ENFORCED
 ) WITH (
-  'write.parquet.page-size-bytes' = '1000',
-  'warehouse' = '/tmp/duckdb',
-  'catalog-type' = 'hadoop',
   'catalog-name' = 'mydatabase',
+  'catalog-table' = '_LoanTypes',
+  'catalog-type' = 'hadoop',
   'connector' = 'iceberg',
-  'catalog-table' = '_LoanTypes_3'
+  'warehouse' = '/tmp/duckdb',
+  'write.parquet.page-size-bytes' = '1000'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`ApplicationStatus_1`
-(SELECT `status`, `message`, `event_time`, `id`, `customer_id`, `loan_type_id`, `amount`, `duration`, `max_amount`, `min_amount`, `hashColumns`(`status`, `message`, `event_time`, `id`, `customer_id`, `loan_type_id`, `amount`, `duration`, `max_amount`, `min_amount`) AS `__pk_hash`
+(SELECT `status`, `message`, `event_time`, `id`, `customer_id`, `loan_type_id`, `amount`, `duration`, `max_amount`, `min_amount`, `hash_columns`(`status`, `message`, `event_time`, `id`, `customer_id`, `loan_type_id`, `amount`, `duration`, `max_amount`, `min_amount`) AS `__pk_hash`
  FROM `default_catalog`.`default_database`.`ApplicationStatus`)
 ;
 INSERT INTO `default_catalog`.`default_database`.`_Applications_2`
@@ -368,15 +368,15 @@ INSERT INTO `default_catalog`.`default_database`.`_Applications_2`
   ;
   END
 >>>iceberg-duckdb-schema.sql
-CREATE TABLE IF NOT EXISTS "ApplicationStatus_1" ("status" TEXT NOT NULL, "message" TEXT NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE NOT NULL, "id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "loan_type_id" BIGINT NOT NULL, "amount" DOUBLE PRECISION NOT NULL, "duration" BIGINT NOT NULL, "max_amount" DOUBLE PRECISION NOT NULL, "min_amount" DOUBLE PRECISION NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
-CREATE TABLE IF NOT EXISTS "_Applications_2" ("id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "loan_type_id" BIGINT NOT NULL, "amount" DOUBLE PRECISION NOT NULL, "duration" BIGINT NOT NULL, "application_date" TIMESTAMP WITH TIME ZONE NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));
-CREATE TABLE IF NOT EXISTS "_LoanTypes_3" ("id" BIGINT NOT NULL, "name" TEXT NOT NULL, "description" TEXT NOT NULL, "interest_rate" DOUBLE PRECISION NOT NULL, "max_amount" DOUBLE PRECISION NOT NULL, "min_amount" DOUBLE PRECISION NOT NULL, "max_duration" BIGINT NOT NULL, "min_duration" BIGINT NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"))
+CREATE TABLE IF NOT EXISTS "ApplicationStatus" ("status" TEXT NOT NULL, "message" TEXT NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE NOT NULL, "id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "loan_type_id" BIGINT NOT NULL, "amount" DOUBLE PRECISION NOT NULL, "duration" BIGINT NOT NULL, "max_amount" DOUBLE PRECISION NOT NULL, "min_amount" DOUBLE PRECISION NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "_Applications" ("id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "loan_type_id" BIGINT NOT NULL, "amount" DOUBLE PRECISION NOT NULL, "duration" BIGINT NOT NULL, "application_date" TIMESTAMP WITH TIME ZONE NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));
+CREATE TABLE IF NOT EXISTS "_LoanTypes" ("id" BIGINT NOT NULL, "name" TEXT NOT NULL, "description" TEXT NOT NULL, "interest_rate" DOUBLE PRECISION NOT NULL, "max_amount" DOUBLE PRECISION NOT NULL, "min_amount" DOUBLE PRECISION NOT NULL, "max_duration" BIGINT NOT NULL, "min_duration" BIGINT NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"))
 >>>iceberg-duckdb-views.sql
 
 >>>iceberg-schema.sql
-CREATE TABLE IF NOT EXISTS "ApplicationStatus_1" ("status" TEXT NOT NULL, "message" TEXT NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE NOT NULL, "id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "loan_type_id" BIGINT NOT NULL, "amount" DOUBLE PRECISION NOT NULL, "duration" BIGINT NOT NULL, "max_amount" DOUBLE PRECISION NOT NULL, "min_amount" DOUBLE PRECISION NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
-CREATE TABLE IF NOT EXISTS "_Applications_2" ("id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "loan_type_id" BIGINT NOT NULL, "amount" DOUBLE PRECISION NOT NULL, "duration" BIGINT NOT NULL, "application_date" TIMESTAMP WITH TIME ZONE NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));
-CREATE TABLE IF NOT EXISTS "_LoanTypes_3" ("id" BIGINT NOT NULL, "name" TEXT NOT NULL, "description" TEXT NOT NULL, "interest_rate" DOUBLE PRECISION NOT NULL, "max_amount" DOUBLE PRECISION NOT NULL, "min_amount" DOUBLE PRECISION NOT NULL, "max_duration" BIGINT NOT NULL, "min_duration" BIGINT NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"))
+CREATE TABLE IF NOT EXISTS "ApplicationStatus" ("status" TEXT NOT NULL, "message" TEXT NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE NOT NULL, "id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "loan_type_id" BIGINT NOT NULL, "amount" DOUBLE PRECISION NOT NULL, "duration" BIGINT NOT NULL, "max_amount" DOUBLE PRECISION NOT NULL, "min_amount" DOUBLE PRECISION NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "_Applications" ("id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "loan_type_id" BIGINT NOT NULL, "amount" DOUBLE PRECISION NOT NULL, "duration" BIGINT NOT NULL, "application_date" TIMESTAMP WITH TIME ZONE NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));
+CREATE TABLE IF NOT EXISTS "_LoanTypes" ("id" BIGINT NOT NULL, "name" TEXT NOT NULL, "description" TEXT NOT NULL, "interest_rate" DOUBLE PRECISION NOT NULL, "max_amount" DOUBLE PRECISION NOT NULL, "min_amount" DOUBLE PRECISION NOT NULL, "max_duration" BIGINT NOT NULL, "min_duration" BIGINT NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"))
 >>>iceberg-views.sql
 
 >>>vertx.json
@@ -400,7 +400,7 @@ CREATE TABLE IF NOT EXISTS "_LoanTypes_3" ("id" BIGINT NOT NULL, "name" TEXT NOT
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT \"t\".\"id\", \"t\".\"customer_id\", \"t\".\"loan_type_id\", \"t\".\"amount\", \"t\".\"duration\", \"t\".\"application_date\", \"t\".\"updated_at\", \"t0\".\"id\" AS \"id0\", \"t0\".\"name\", \"t0\".\"description\", \"t0\".\"interest_rate\", \"t0\".\"max_amount\", \"t0\".\"min_amount\", \"t0\".\"max_duration\", \"t0\".\"min_duration\", \"t0\".\"updated_at\" AS \"updated_at0\", \"t1\".\"id\" AS \"id2\"\nFROM (SELECT *\n  FROM \"iceberg_scan\"('/tmp/duckdb/default_database/_Applications_2', ALLOW_MOVED_PATHS = TRUE)) AS \"t\"\n INNER JOIN (SELECT *\n  FROM \"iceberg_scan\"('/tmp/duckdb/default_database/_LoanTypes_3', ALLOW_MOVED_PATHS = TRUE)) AS \"t0\" ON \"t\".\"loan_type_id\" = \"t0\".\"id\"\n LEFT JOIN (SELECT *\n  FROM \"iceberg_scan\"('/tmp/duckdb/default_database/_LoanTypes_3', ALLOW_MOVED_PATHS = TRUE)) AS \"t1\" ON \"t\".\"customer_id\" = \"t1\".\"id\"",
+            "sql" : "SELECT \"t\".\"id\", \"t\".\"customer_id\", \"t\".\"loan_type_id\", \"t\".\"amount\", \"t\".\"duration\", \"t\".\"application_date\", \"t\".\"updated_at\", \"t0\".\"id\" AS \"id0\", \"t0\".\"name\", \"t0\".\"description\", \"t0\".\"interest_rate\", \"t0\".\"max_amount\", \"t0\".\"min_amount\", \"t0\".\"max_duration\", \"t0\".\"min_duration\", \"t0\".\"updated_at\" AS \"updated_at0\", \"t1\".\"id\" AS \"id2\"\nFROM (SELECT *\n  FROM \"iceberg_scan\"('/tmp/duckdb/default_database/_Applications', ALLOW_MOVED_PATHS = TRUE)) AS \"t\"\n INNER JOIN (SELECT *\n  FROM \"iceberg_scan\"('/tmp/duckdb/default_database/_LoanTypes', ALLOW_MOVED_PATHS = TRUE)) AS \"t0\" ON \"t\".\"loan_type_id\" = \"t0\".\"id\"\n LEFT JOIN (SELECT *\n  FROM \"iceberg_scan\"('/tmp/duckdb/default_database/_LoanTypes', ALLOW_MOVED_PATHS = TRUE)) AS \"t1\" ON \"t\".\"customer_id\" = \"t1\".\"id\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "DUCKDB"
@@ -424,7 +424,7 @@ CREATE TABLE IF NOT EXISTS "_LoanTypes_3" ("id" BIGINT NOT NULL, "name" TEXT NOT
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT \"status\", \"message\", \"event_time\", \"id\", \"customer_id\", \"loan_type_id\", \"amount\", \"duration\", \"max_amount\", \"min_amount\"\nFROM \"iceberg_scan\"('/tmp/duckdb/default_database/ApplicationStatus_1', ALLOW_MOVED_PATHS = TRUE)",
+            "sql" : "SELECT \"status\", \"message\", \"event_time\", \"id\", \"customer_id\", \"loan_type_id\", \"amount\", \"duration\", \"max_amount\", \"min_amount\"\nFROM \"iceberg_scan\"('/tmp/duckdb/default_database/ApplicationStatus', ALLOW_MOVED_PATHS = TRUE)",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "DUCKDB"

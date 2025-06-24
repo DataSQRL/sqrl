@@ -19,6 +19,7 @@ import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.planner.dag.plan.MaterializationStagePlan.Query;
 import java.util.List;
+import java.util.Map;
 import lombok.Value;
 
 public interface JdbcStatementFactory {
@@ -35,7 +36,8 @@ public interface JdbcStatementFactory {
     return true;
   }
 
-  QueryResult createQuery(Query query, boolean withView);
+  QueryResult createQuery(
+      Query query, boolean withView, Map<String, JdbcEngineCreateTable> tableIdMap);
 
   JdbcStatement addIndex(IndexDefinition indexDefinition);
 

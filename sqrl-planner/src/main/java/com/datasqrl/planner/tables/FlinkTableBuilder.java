@@ -115,7 +115,7 @@ public class FlinkTableBuilder {
     return convertedColumns;
   }
 
-  public FlinkTableBuilder setConnectorOptions(Map<String, Object> options) {
+  public FlinkTableBuilder setConnectorOptions(Map<String, String> options) {
     setPropertyList(FlinkSqlNodeFactory.createProperties(options));
     return this;
   }
@@ -125,7 +125,7 @@ public class FlinkTableBuilder {
   }
 
   public FlinkTableBuilder setDummyConnector() {
-    return setConnectorOptions(Map.of("connector", "datagen"));
+    return setConnectorOptions(Map.of(FlinkConnectorConfig.CONNECTOR_KEY, "datagen"));
   }
 
   public FlinkTableBuilder setWatermarkMillis(String timestampColumnName, long watermarkMillis) {

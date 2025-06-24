@@ -15,9 +15,8 @@
  */
 package com.datasqrl.config;
 
-import static com.datasqrl.config.ConfigurationTest.CONFIG_DIR;
-import static com.datasqrl.config.ConfigurationTest.testForErrors;
-import static org.junit.jupiter.api.Assertions.fail;
+import static com.datasqrl.config.SqrlConfigTest.testForErrors;
+import static org.assertj.core.api.Assertions.fail;
 
 import com.datasqrl.error.ErrorCollector;
 import java.nio.file.Path;
@@ -25,8 +24,9 @@ import java.util.List;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-public class PackageJsonSchemaTest {
+class PackageJsonSchemaTest {
 
+  private static final Path CONFIG_DIR = Path.of("src", "test", "resources", "config");
   private static final Path TEST_CASES = Path.of(CONFIG_DIR.toString(), "package");
 
   @ParameterizedTest
@@ -40,10 +40,10 @@ public class PackageJsonSchemaTest {
         "validPackageWithUrls.json",
         "onlyVersionFieldExists.json"
       })
-  public void testValidConfigFile(String configFileName) {
+  void validConfigFile(String configFileName) {
     var errors = ErrorCollector.root();
     try {
-      SqrlConfigCommons.fromFilesPackageJson(errors, List.of(TEST_CASES.resolve(configFileName)));
+      SqrlConfig.fromFilesPackageJson(errors, List.of(TEST_CASES.resolve(configFileName)));
     } catch (Exception e) {
       fail("Unexpected error: " + errors.getErrors().toString());
     }
@@ -63,10 +63,9 @@ public class PackageJsonSchemaTest {
         "invalidUrlInPackage.json",
         "emptyPropertiesInPackage.json"
       })
-  public void testInvalidConfigFile(String configFileName) {
+  void invalidConfigFile(String configFileName) {
     testForErrors(
         errors ->
-            SqrlConfigCommons.fromFilesPackageJson(
-                errors, List.of(CONFIG_DIR.resolve(configFileName))));
+            SqrlConfig.fromFilesPackageJson(errors, List.of(CONFIG_DIR.resolve(configFileName))));
   }
 }

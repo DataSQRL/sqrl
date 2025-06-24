@@ -17,6 +17,7 @@ package com.datasqrl.config;
 
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.server.operation.ApiProtocols;
+import com.datasqrl.planner.analyzer.cost.CostModel;
 import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.List;
@@ -53,9 +54,9 @@ public interface PackageJson {
 
     boolean compilePlan();
 
-    ExplainConfig getExplain();
+    CostModel getCostModel();
 
-    OutputConfig getOutput();
+    ExplainConfig getExplain();
 
     CompilerApiConfig getApiConfig();
 
@@ -79,13 +80,6 @@ public interface PackageJson {
     boolean isAddOperationsPrefix();
 
     int getMaxResultDepth();
-  }
-
-  interface OutputConfig {
-
-    boolean isAddUid();
-
-    String getTableSuffix();
   }
 
   interface ExplainConfig {

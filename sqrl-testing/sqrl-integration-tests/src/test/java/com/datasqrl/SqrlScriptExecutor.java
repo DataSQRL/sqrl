@@ -15,7 +15,7 @@
  */
 package com.datasqrl;
 
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.fail;
 
 import com.datasqrl.cmd.AssertStatusHook;
 import com.datasqrl.cmd.RootCommand;
@@ -66,9 +66,9 @@ public class SqrlScriptExecutor {
         rootCommand.getCmd().execute(argsList.toArray(new String[0])) + (hook.isSuccess() ? 0 : 1);
     if (exitCode != 0) {
       if (hook.failure() != null) {
-        fail(hook.failure());
+        fail("", hook.failure());
       }
-      fail();
+      fail("");
     }
   }
 }

@@ -17,7 +17,7 @@ package com.datasqrl.function.vector;
 
 import static com.datasqrl.function.FlinkUdfNsObject.getFunctionNameFromClass;
 
-import com.datasqrl.flinkrunner.functions.vector.center;
+import com.datasqrl.flinkrunner.stdlib.vector.center;
 import com.datasqrl.function.CalciteFunctionUtil;
 import com.datasqrl.function.translations.PostgresSqlTranslation;
 import com.datasqrl.function.translations.SqlTranslation;

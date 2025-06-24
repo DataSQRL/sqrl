@@ -15,15 +15,16 @@
  */
 package com.datasqrl.error;
 
-import org.junit.jupiter.api.Assertions;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.junit.jupiter.api.Test;
 
-public class ErrorCodeTest {
+class ErrorCodeTest {
 
   @Test
-  public void testErrorMessages() {
+  void errorMessages() {
     for (ErrorCode code : ErrorCode.values()) {
-      Assertions.assertTrue(!code.getErrorDescription().isEmpty(), code.getLabel());
+      assertThat(code.getErrorDescription().isEmpty()).as(code.getLabel()).isFalse();
     }
   }
 }

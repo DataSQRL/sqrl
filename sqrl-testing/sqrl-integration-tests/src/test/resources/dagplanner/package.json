@@ -1,3 +1,18 @@
 {
-  "version": "1"
+  "version": "1",
+  "engines" : {
+    "flink" : {
+      "connectors": {
+        "kafka": {
+          "topic" : "kafka-${sqrl:table-name}"
+        },
+        "kafka-mutation": {
+          "topic" : "kafka-mutation-${sqrl:table-name}"
+        },
+        "postgres": {
+          "table-name": "${sqrl:table-id}"
+        }
+      }
+    }
+  }
 }

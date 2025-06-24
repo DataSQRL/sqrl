@@ -15,13 +15,14 @@
  */
 package com.datasqrl.engine.stream.flink.plan;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.convert.SqlToStringFactory;
 import com.datasqrl.engine.stream.flink.plan.FlinkSqlNodeFactory.MetadataEntry;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -37,7 +38,7 @@ import org.apache.calcite.sql.type.SqlTypeFactoryImpl;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.junit.jupiter.api.Test;
 
-public class FlinkSqlNodeFactoryTest {
+class FlinkSqlNodeFactoryTest {
 
   @Value
   public static class MockMetadataEntry implements MetadataEntry {
@@ -52,7 +53,7 @@ public class FlinkSqlNodeFactoryTest {
   }
 
   @Test
-  void testCreateView() {
+  void createView() {
     var tableName = "my_view";
     SqlNode fromTable = FlinkSqlNodeFactory.identifier("source_table");
     var selectList = new SqlNodeList(SqlParserPos.ZERO);
@@ -80,11 +81,11 @@ public class FlinkSqlNodeFactoryTest {
         AS
         SELECT `*`
         FROM `source_table`""";
-    assertEquals(expectedSql, sql.trim());
+    assertThat(sql.trim()).isEqualTo(expectedSql);
   }
 
   @Test
-  void testCreateInsert() {
+  void createInsert() {
     var targetTable = "target_table";
     SqlNode fromTable = FlinkSqlNodeFactory.identifier("source_table");
     var selectList = new SqlNodeList(SqlParserPos.ZERO);
@@ -111,22 +112,22 @@ public class FlinkSqlNodeFactoryTest {
         INSERT INTO `target_table`
         (SELECT `*`
          FROM `source_table`)""";
-    assertEquals(expectedSql, sql.trim());
+    assertThat(sql.trim()).isEqualTo(expectedSql);
   }
 
   @Test
-  void testCreateFunction() {
+  void createFunction() {
     var functionName = "my_udf";
     var className = "com.example.MyUDF";
     var createFunction = FlinkSqlNodeFactory.createFunction(functionName, className, false);
 
     var sql = unparse(createFunction);
     var expectedSql = "CREATE FUNCTION IF NOT EXISTS `my_udf` AS 'com.example.MyUDF' LANGUAGE JAVA";
-    assertEquals(expectedSql, sql.trim());
+    assertThat(sql.trim()).isEqualTo(expectedSql);
   }
 
   @Test
-  void testCreateWatermark() {
+  void createWatermark() {
     var eventTimeColumn = "timestamp_col";
     var eventTimeIdentifier = FlinkSqlNodeFactory.identifier(eventTimeColumn);
     var delay = "5";
@@ -135,32 +136,32 @@ public class FlinkSqlNodeFactoryTest {
     var watermark = FlinkSqlNodeFactory.createWatermark(eventTimeIdentifier, watermarkStrategy);
     var sql = unparse(watermark);
     var expectedSql = "WATERMARK FOR `timestamp_col` AS `timestamp_col` - INTERVAL '5' SECOND";
-    assertEquals(expectedSql, sql.trim());
+    assertThat(sql.trim()).isEqualTo(expectedSql);
   }
 
   @Test
-  void testBoundedStrategy() {
+  void boundedStrategy() {
     var watermark = FlinkSqlNodeFactory.identifier("timestamp_col");
     var delay = "5";
 
     var boundedStrategy = FlinkSqlNodeFactory.boundedStrategy(watermark, delay);
     var sql = unparse(boundedStrategy);
     var expectedSql = "`timestamp_col` - INTERVAL '5' SECOND";
-    assertEquals(expectedSql, sql.trim());
+    assertThat(sql.trim()).isEqualTo(expectedSql);
   }
 
   @Test
-  void testCreatePrimaryKeyConstraint() {
+  void createPrimaryKeyConstraint() {
     List<String> primaryKeyColumns = Arrays.asList("id", "timestamp_col");
     var pkConstraint = FlinkSqlNodeFactory.createPrimaryKeyConstraint(primaryKeyColumns);
     var sql = unparse(pkConstraint);
     var expectedSql = "PRIMARY KEY (`id`, `timestamp_col`) NOT ENFORCED";
-    assertEquals(expectedSql, sql.trim());
+    assertThat(sql.trim()).isEqualTo(expectedSql);
   }
 
   @Test
-  void testCreateProperties() {
-    Map<String, Object> options = new HashMap<>();
+  void createProperties() {
+    Map<String, String> options = new HashMap<>();
     options.put("connector", "kafka");
     options.put("topic", "my_topic");
     options.put("format", "json");
@@ -168,20 +169,20 @@ public class FlinkSqlNodeFactoryTest {
     var properties = FlinkSqlNodeFactory.createProperties(options);
     var sql = unparse(properties);
     var expectedSql = "'connector' = 'kafka', 'format' = 'json', 'topic' = 'my_topic'";
-    assertEquals(expectedSql, sql.trim());
+    assertThat(sql.trim()).isEqualTo(expectedSql);
   }
 
   @Test
-  void testCreatePartitionKeys() {
+  void createPartitionKeys() {
     List<String> partitionKeys = Arrays.asList("year", "month", "day");
     var partitionKeysNode = FlinkSqlNodeFactory.createPartitionKeys(partitionKeys);
     var sql = unparse(partitionKeysNode);
     var expectedSql = "`year`, `month`, `day`";
-    assertEquals(expectedSql, sql.trim());
+    assertThat(sql.trim()).isEqualTo(expectedSql);
   }
 
   @Test
-  void testCreateTable() {
+  void createTable() {
     var tableName = "my_table";
     RelDataTypeFactory typeFactory = new SqlTypeFactoryImpl(RelDataTypeSystem.DEFAULT);
 
@@ -217,7 +218,7 @@ public class FlinkSqlNodeFactoryTest {
     metadataConfig.put("metadata_col2", metadataEntry2);
 
     List<String> primaryKeyConstraint = Arrays.asList("id");
-    Map<String, Object> connectorProperties = new HashMap<>();
+    Map<String, String> connectorProperties = new LinkedHashMap<>();
     connectorProperties.put("connector", "filesystem");
     connectorProperties.put("path", "/tmp/data");
     connectorProperties.put("format", "csv");
@@ -255,10 +256,10 @@ public class FlinkSqlNodeFactoryTest {
         )
         PARTITIONED BY (`name`)
         WITH (
+          'connector' = 'filesystem',
           'format' = 'csv',
-          'path' = '/tmp/data',
-          'connector' = 'filesystem'
+          'path' = '/tmp/data'
         )""";
-    assertEquals(expectedSql.trim(), sql.trim());
+    assertThat(sql.trim()).isEqualTo(expectedSql.trim());
   }
 }

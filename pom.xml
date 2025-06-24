@@ -48,7 +48,6 @@
     <module>sqrl-planner</module>
     <module>sqrl-testing</module>
     <module>sqrl-tools</module>
-    <module>sqrl-functions</module>
     <module>sqrl-server</module>
   </modules>
 
@@ -74,14 +73,14 @@
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
     <mockito.version>4.8.0</mockito.version>
-    <jackson.version>2.19.0</jackson.version>
-    <vertx.version>4.5.14</vertx.version>
-    <agroal.version>2.7</agroal.version>
+    <jackson.version>2.19.1</jackson.version>
+    <vertx.version>5.0.0</vertx.version>
+    <agroal.version>2.7.1</agroal.version>
     <kafka.version>3.4.0</kafka.version>
     <flink.version>1.19.2</flink.version>
     <slf4j.version>2.0.17</slf4j.version>
-    <postgres.version>42.7.5</postgres.version>
-    <log4j.version>2.24.3</log4j.version>
+    <postgres.version>42.7.7</postgres.version>
+    <log4j.version>2.25.0</log4j.version>
     <scala.version>2.12</scala.version>
     <guava.version>33.4.8-jre</guava.version>
     <commonsio.version>2.19.0</commonsio.version>
@@ -90,15 +89,15 @@
     <commons-config.version>2.3</commons-config.version>
     <commons-collections.version>4.5.0</commons-collections.version>
     <httpcomponents.version>4.5.14</httpcomponents.version>
-    <commons-bean.version>1.10.1</commons-bean.version>
+    <commons-bean.version>1.11.0</commons-bean.version>
     <h2.version>2.3.232</h2.version>
-    <opencsv.version>5.11</opencsv.version>
+    <opencsv.version>5.11.2</opencsv.version>
     <javax.validation.version>2.0.1.Final</javax.validation.version>
     <glassfish.version>3.0.0</glassfish.version>
     <reactive-streams.version>1.0.4</reactive-streams.version>
-    <testcontainers.version>1.21.0</testcontainers.version>
+    <testcontainers.version>1.21.2</testcontainers.version>
     <scram.version>2.1</scram.version>
-    <protobuf.version>4.31.0</protobuf.version>
+    <protobuf.version>4.31.1</protobuf.version>
     <picocli.version>4.7.7</picocli.version>
     <commonscodec.version>1.18.0</commonscodec.version>
     <zip4j.version>2.11.5</zip4j.version>
@@ -107,18 +106,18 @@
     <antlr.version>4.13.2</antlr.version>
     <guava.version>33.4.8-jre</guava.version>
     <lombok.version>1.18.38</lombok.version>
-    <junit.jupiter.version>5.12.2</junit.jupiter.version>
+    <junit.jupiter.version>5.13.1</junit.jupiter.version>
     <calcite.version>1.27.0</calcite.version>
     <graphql-java.version>19.2</graphql-java.version>
     <graphql-java-extended-scalars.version>22.0</graphql-java-extended-scalars.version>
-    <projectreactor.version>3.7.6</projectreactor.version>
+    <projectreactor.version>3.7.7</projectreactor.version>
     <avro.version>1.12.0</avro.version>
     <freemarker.version>2.3.34</freemarker.version>
-    <jsonschema.version>1.5.6</jsonschema.version>
-    <flinkrunner.version>1.0.0-SNAPSHOT</flinkrunner.version>
-    <iceberg.version>1.9.0</iceberg.version>
+    <jsonschema.version>1.5.7</jsonschema.version>
+    <iceberg.version>1.9.1</iceberg.version>
     <hadoop.version>3.4.1</hadoop.version>
     <jacoco.version>0.8.13</jacoco.version>
+    <assertj.version>3.27.3</assertj.version>
 
     <maven-javadoc-plugin.version>3.11.2</maven-javadoc-plugin.version>
     <maven-source-plugin.version>3.3.1</maven-source-plugin.version>
@@ -133,6 +132,8 @@
     <maven.compiler.target>17</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
+    <flinkrunner.version>0.7-SNAPSHOT</flinkrunner.version>
+    <flinkrunner.image.repo>ghcr.io</flinkrunner.image.repo>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -234,11 +235,6 @@
       <dependency>
         <groupId>com.datasqrl</groupId>
         <artifactId>sqrl-flexible-csv</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.datasqrl</groupId>
-        <artifactId>sqrl-functions</artifactId>
         <version>${project.version}</version>
       </dependency>
       <!-- tests -->
@@ -349,11 +345,6 @@
       </dependency>
       <dependency>
         <groupId>org.apache.commons</groupId>
-        <artifactId>commons-configuration2</artifactId>
-        <version>${commons-config.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.commons</groupId>
         <artifactId>commons-collections4</artifactId>
         <version>${commons-collections.version}</version>
       </dependency>
@@ -413,7 +404,7 @@
       <dependency>
         <groupId>io.micrometer</groupId>
         <artifactId>micrometer-registry-prometheus</artifactId>
-        <version>1.15.0</version>
+        <version>1.15.1</version>
       </dependency>
       <!-- required for vertx jdbc -->
       <dependency>
@@ -600,7 +591,7 @@
       <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty-codec</artifactId>
-        <version>4.2.1.Final</version>
+        <version>4.2.2.Final</version>
       </dependency>
       <dependency>
         <groupId>org.postgresql</groupId>
@@ -748,37 +739,42 @@
       </dependency>
       <dependency>
         <groupId>com.datasqrl.flinkrunner</groupId>
-        <artifactId>functions-common</artifactId>
-        <version>${flinkrunner.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.datasqrl.flinkrunner</groupId>
-        <artifactId>json-type</artifactId>
-        <version>${flinkrunner.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.datasqrl.flinkrunner</groupId>
         <artifactId>flexible-json-format</artifactId>
         <version>${flinkrunner.version}</version>
       </dependency>
       <dependency>
         <groupId>com.datasqrl.flinkrunner</groupId>
-        <artifactId>text-functions</artifactId>
+        <artifactId>stdlib-utils</artifactId>
         <version>${flinkrunner.version}</version>
       </dependency>
       <dependency>
         <groupId>com.datasqrl.flinkrunner</groupId>
-        <artifactId>math-functions</artifactId>
+        <artifactId>stdlib-commons</artifactId>
         <version>${flinkrunner.version}</version>
       </dependency>
       <dependency>
         <groupId>com.datasqrl.flinkrunner</groupId>
-        <artifactId>openai-functions</artifactId>
+        <artifactId>stdlib-json</artifactId>
         <version>${flinkrunner.version}</version>
       </dependency>
       <dependency>
         <groupId>com.datasqrl.flinkrunner</groupId>
-        <artifactId>vector-type</artifactId>
+        <artifactId>stdlib-text</artifactId>
+        <version>${flinkrunner.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.datasqrl.flinkrunner</groupId>
+        <artifactId>stdlib-math</artifactId>
+        <version>${flinkrunner.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.datasqrl.flinkrunner</groupId>
+        <artifactId>stdlib-openai</artifactId>
+        <version>${flinkrunner.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.datasqrl.flinkrunner</groupId>
+        <artifactId>stdlib-vector</artifactId>
         <version>${flinkrunner.version}</version>
       </dependency>
       <dependency>
@@ -822,6 +818,13 @@
       <artifactId>junit-jupiter-api</artifactId>
       <scope>test</scope>
     </dependency>
+
+    <dependency>
+      <groupId>org.assertj</groupId>
+      <artifactId>assertj-core</artifactId>
+      <version>${assertj.version}</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <repositories>
@@ -836,12 +839,7 @@
       <url>https://maven.pkg.github.com/DataSQRL/flink-sql-runner</url>
     </repository>
   </repositories>
-  <!--    <scm>-->
-  <!--        <url>https://github.com/DataSQRL/sqrl.git</url>-->
-  <!--        <connection>scm:git:git@github.com:DataSQRL/sqrl.git</connection>-->
-  <!--        <developerConnection>scm:git:git@github.com:DataSQRL/sqrl.git</developerConnection>-->
-  <!--      <tag>HEAD</tag>-->
-  <!--  </scm>-->
+
   <build>
     <pluginManagement>
       <plugins>
@@ -853,7 +851,17 @@
         <plugin>
           <groupId>io.reactiverse</groupId>
           <artifactId>vertx-maven-plugin</artifactId>
-          <version>2.0.1</version>
+          <version>2.0.2</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <version>3.11.2</version>
+        </plugin>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>exec-maven-plugin</artifactId>
+          <version>3.5.1</version>
         </plugin>
       </plugins>
     </pluginManagement>
@@ -958,6 +966,10 @@
           <environmentVariables>
             <TZ>America/Los_Angeles</TZ>
           </environmentVariables>
+          <systemPropertyVariables>
+            <flinkrunner.image.repo>${flinkrunner.image.repo}</flinkrunner.image.repo>
+            <flinkrunner.version>${flinkrunner.version}</flinkrunner.version>
+          </systemPropertyVariables>
         </configuration>
         <executions>
           <execution>
@@ -1090,7 +1102,7 @@
           <plugin>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>build-helper-maven-plugin</artifactId>
-            <version>3.6.0</version>
+            <version>3.6.1</version>
             <executions>
               <execution>
                 <id>add-source</id>
@@ -1146,7 +1158,7 @@
           <plugin>
             <groupId>org.sonatype.central</groupId>
             <artifactId>central-publishing-maven-plugin</artifactId>
-            <version>0.7.0</version>
+            <version>0.8.0</version>
             <extensions>true</extensions>
             <configuration>
               <publishingServerId>central</publishingServerId>

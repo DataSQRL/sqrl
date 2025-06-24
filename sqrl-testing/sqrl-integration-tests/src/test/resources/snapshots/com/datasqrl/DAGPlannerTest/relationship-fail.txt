@@ -38,9 +38,9 @@ Was expecting one of:
     <BRACKET_QUOTED_IDENTIFIER> ...
     <UNICODE_QUOTED_IDENTIFIER> ...
     
-in script:relationship-fail.sqrl [5:17]:
+in script:relationship-fail.sqrl [5:1]:
 IMPORT ecommerceTs.Orders; --base table = Orders
 
 rootFunction($i : INT) := SELECT id FROM Orders WHERE id = $i; -- no base table
-----------------^
+^
 

@@ -162,11 +162,11 @@ CREATE TABLE `UserTokens` (
   WATERMARK FOR `request_time` AS `request_time` - INTERVAL '0.0' SECOND
 ) WITH (
   'connector' = 'kafka',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
+  'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${PROPERTIES_GROUP_ID}',
-  'scan.startup.mode' = 'group-offsets',
-  'properties.auto.offset.reset' = 'earliest',
   'topic' = 'UserTokens'
 );
 CREATE VIEW `TotalUserTokens`
@@ -222,11 +222,11 @@ CREATE TABLE `TotalOrgTokens_1` (
   PRIMARY KEY (`orgid`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'TotalOrgTokens',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'TotalOrgTokens_1'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `TotalUserTokens_2` (
   `userid` BIGINT NOT NULL,
@@ -235,11 +235,11 @@ CREATE TABLE `TotalUserTokens_2` (
   PRIMARY KEY (`userid`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'TotalUserTokens',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'TotalUserTokens_2'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `UsageAlert_3` (
   `userid` BIGINT NOT NULL,
@@ -247,11 +247,10 @@ CREATE TABLE `UsageAlert_3` (
   `request_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
 ) WITH (
   'connector' = 'kafka',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
   'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${PROPERTIES_GROUP_ID}',
-  'scan.startup.mode' = 'group-offsets',
-  'properties.auto.offset.reset' = 'earliest',
   'topic' = 'UsageAlert'
 );
 EXECUTE STATEMENT SET BEGIN
@@ -274,29 +273,28 @@ INSERT INTO `default_catalog`.`default_database`.`TotalUserTokens_2`
     {
       "topicName" : "UsageAlert",
       "tableName" : "UsageAlert_3",
+      "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 1,
-      "replicasAssignments" : { },
       "config" : { }
     },
     {
       "topicName" : "UserTokens",
       "tableName" : "UserTokens",
+      "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 1,
-      "replicasAssignments" : { },
       "config" : { }
     }
   ]
 }
 >>>postgres-schema.sql
-CREATE TABLE IF NOT EXISTS "TotalOrgTokens_1" ("orgid" BIGINT NOT NULL, "total_tokens" BIGINT NOT NULL, "total_requests" BIGINT NOT NULL , PRIMARY KEY ("orgid"));
-CREATE TABLE IF NOT EXISTS "TotalUserTokens_2" ("userid" BIGINT NOT NULL, "total_tokens" BIGINT NOT NULL, "total_requests" BIGINT NOT NULL , PRIMARY KEY ("userid"));
+CREATE TABLE IF NOT EXISTS "TotalOrgTokens" ("orgid" BIGINT NOT NULL, "total_tokens" BIGINT NOT NULL, "total_requests" BIGINT NOT NULL , PRIMARY KEY ("orgid"));
+CREATE TABLE IF NOT EXISTS "TotalUserTokens" ("userid" BIGINT NOT NULL, "total_tokens" BIGINT NOT NULL, "total_requests" BIGINT NOT NULL , PRIMARY KEY ("userid"));
 
-CREATE INDEX IF NOT EXISTS "TotalOrgTokens_1_btree_c1" ON "TotalOrgTokens_1" USING btree ("total_tokens")
+CREATE INDEX IF NOT EXISTS "TotalOrgTokens_btree_c1" ON "TotalOrgTokens" USING btree ("total_tokens")
 >>>postgres-views.sql
-CREATE OR REPLACE VIEW "TotalOrgTokens"("orgid", "total_tokens", "total_requests") AS SELECT *
-FROM "TotalOrgTokens_1"
+
 >>>vertx.json
 {
   "model" : {
@@ -318,7 +316,7 @@ FROM "TotalOrgTokens_1"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"TotalOrgTokens_1\"",
+            "sql" : "SELECT *\nFROM \"TotalOrgTokens\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
@@ -346,7 +344,7 @@ FROM "TotalOrgTokens_1"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"TotalUserTokens_2\"\nWHERE \"userid\" = $1",
+            "sql" : "SELECT *\nFROM \"TotalUserTokens\"\nWHERE \"userid\" = $1",
             "parameters" : [
               {
                 "type" : "arg",
@@ -383,7 +381,7 @@ FROM "TotalOrgTokens_1"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"TotalOrgTokens_1\"\nWHERE \"total_tokens\" >= $1 AND \"total_tokens\" <= $2",
+            "sql" : "SELECT *\nFROM \"TotalOrgTokens\"\nWHERE \"total_tokens\" >= $1 AND \"total_tokens\" <= $2",
             "parameters" : [
               {
                 "type" : "arg",

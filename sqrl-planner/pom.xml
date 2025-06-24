@@ -76,10 +76,6 @@
       <groupId>org.apache.kafka</groupId>
       <artifactId>kafka-clients</artifactId>
     </dependency>
-    <dependency>
-      <groupId>org.apache.avro</groupId>
-      <artifactId>avro</artifactId>
-    </dependency>
 
     <dependency>
       <groupId>org.mockito</groupId>
@@ -116,10 +112,6 @@
     </dependency>
 
     <dependency>
-      <groupId>com.datasqrl.flinkrunner</groupId>
-      <artifactId>text-functions</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-collections4</artifactId>
       <scope>compile</scope>
@@ -132,10 +124,6 @@
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-server-vertx-base</artifactId>
       <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-functions</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
@@ -159,6 +147,18 @@
       <artifactId>flink-avro</artifactId>
     </dependency>
 
+    <dependency>
+      <groupId>com.datasqrl.flinkrunner</groupId>
+      <artifactId>stdlib-utils</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl.flinkrunner</groupId>
+      <artifactId>stdlib-commons</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl.flinkrunner</groupId>
+      <artifactId>stdlib-text</artifactId>
+    </dependency>
     <dependency>
       <groupId>com.datasqrl.flinkrunner</groupId>
       <artifactId>postgresql-connector</artifactId>

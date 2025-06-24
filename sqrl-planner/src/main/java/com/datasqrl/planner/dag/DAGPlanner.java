@@ -28,7 +28,7 @@ import com.datasqrl.engine.export.ExportEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.function.CommonFunctions;
+import com.datasqrl.flinkrunner.stdlib.commons.hash_columns;
 import com.datasqrl.plan.global.StageAnalysis;
 import com.datasqrl.plan.util.PrimaryKeyMap;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
@@ -93,6 +93,10 @@ import org.apache.flink.table.planner.plan.schema.TimeIndicatorRelDataType;
 /** Optimizes the DAG and produces the physical plan after DAG cutting */
 @AllArgsConstructor(onConstructor_ = @Inject)
 public class DAGPlanner {
+
+  public static final String UNIQUE_TABLE_APPENDIX = "_"; // TODO: add $ to ensure uniqueness?
+
+  private static final FunctionDefinition HASH_COLUMNS = new hash_columns();
 
   private final ExecutionPipeline pipeline;
   private final ErrorCollector errors;
@@ -182,10 +186,10 @@ public class DAGPlanner {
                     Function.identity(),
                     s -> MaterializationStagePlan.builder().utils(engineUtils).stage(s)));
 
-    var logStage = pipeline.getStageByType(EngineType.LOG);
-    if (logStage.isPresent()) {
+    var mutationStage = pipeline.getMutationStage();
+    if (mutationStage.isPresent()) {
       // Add mutations that were planned during DAG building
-      var planBuilder = exportPlans.get(logStage.get());
+      var planBuilder = exportPlans.get(mutationStage.get());
       dag.allNodesByClass(TableNode.class)
           .flatMap(node -> node.getMutation().stream())
           .forEach(
@@ -197,14 +201,9 @@ public class DAGPlanner {
 
     Map<InputTableKey, ObjectIdentifier> streamTableMapping = new HashMap<>();
     final var exportTableCounter = new AtomicInteger(0);
-    final var outputConfig = packageJson.getCompilerConfig().getOutput();
-    Function<String, String> externalNameFct =
+    Function<String, String> uniqueNameFct =
         name -> {
-          var result = name + outputConfig.getTableSuffix();
-          if (outputConfig.isAddUid()) {
-            result += "_" + exportTableCounter.incrementAndGet();
-          }
-          return result;
+          return name + UNIQUE_TABLE_APPENDIX + exportTableCounter.incrementAndGet();
         };
     var planBuilder = PhysicalPlan.builder();
     // move assembler logic here
@@ -269,7 +268,7 @@ public class DAGPlanner {
                   }
                   var relBuilder = sqrlEnv.getTableScan(sinkNodeTable.getObjectIdentifier());
                   var tblBuilder = new FlinkTableBuilder();
-                  tblBuilder.setName(externalNameFct.apply(originalTableName));
+                  tblBuilder.setName(uniqueNameFct.apply(originalTableName));
                   // #1st: determine primary key and partition key (if present)
                   var pk = deterinePrimaryKey(originalNodeTable, relBuilder, sqrlEnv, exportStage);
                   if (pk.isDefined()) {
@@ -459,7 +458,7 @@ public class DAGPlanner {
             relBuilder
                 .getRexBuilder()
                 .makeCall(
-                    sqrlEnv.lookupUserDefinedFunction(CommonFunctions.HASH_COLUMNS),
+                    sqrlEnv.lookupUserDefinedFunction(HASH_COLUMNS),
                     CalciteUtil.getSelectRex(relBuilder, addHashColumn)),
             HASHED_PK_NAME);
       } else {

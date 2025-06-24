@@ -16,6 +16,7 @@
 package com.datasqrl.plan.global;
 
 import com.datasqrl.calcite.SqrlRexUtil;
+import com.datasqrl.engine.database.relational.JdbcEngineCreateTable;
 import com.datasqrl.plan.global.QueryIndexSummary.IndexableFunctionCall;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
 import com.datasqrl.planner.analyzer.TableAnalysis;
@@ -66,7 +67,7 @@ public class IndexSelector {
 
   private final Sqrl2FlinkSQLTranslator framework;
   private final IndexSelectorConfig config;
-  private final Map<String, TableAnalysis> tableMap;
+  private final Map<String, JdbcEngineCreateTable> tableMap;
 
   public List<QueryIndexSummary> getIndexSelection(RelNode queryRelnode) {
     var pushedDownFilters = applyPushDownFilters(queryRelnode);
@@ -155,7 +156,7 @@ public class IndexSelector {
       for (int colIndex : indexedColumns) {
         indexes.put(
             new IndexDefinition(
-                table.getNameId(),
+                table.getTableName(),
                 List.of(colIndex),
                 table.getAnalysis().getRowType().getFieldNames(),
                 -1,
@@ -179,7 +180,7 @@ public class IndexSelector {
     return specialType.map(
         idxType ->
             new IndexDefinition(
-                table.getNameId(),
+                table.getTableName(),
                 fcall.getColumnIndexes(),
                 table.getAnalysis().getRowType().getFieldNames(),
                 -1,
@@ -197,7 +198,7 @@ public class IndexSelector {
       // The baseline cost is the cost of doing the lookup with the primary key index
       var pkIdx =
           IndexDefinition.getPrimaryKeyIndex(
-              table.getNameId(),
+              table.getTableName(),
               table.getAnalysis().getPrimaryKey().asSimpleList(),
               table.getAnalysis().getRowType().getFieldNames());
       initialCost = idx -> idx.getCost(pkIdx);
@@ -323,7 +324,7 @@ public class IndexSelector {
               for (var i = 0; i <= cols.size(); i++) {
                 result.add(
                     new IndexDefinition(
-                        queryIndexSummary.getTable().getNameId(),
+                        queryIndexSummary.getTable().getTableName(),
                         cols,
                         queryIndexSummary.getTable().getAnalysis().getRowType().getFieldNames(),
                         i,
@@ -335,7 +336,7 @@ public class IndexSelector {
             cols ->
                 result.add(
                     new IndexDefinition(
-                        queryIndexSummary.getTable().getNameId(),
+                        queryIndexSummary.getTable().getTableName(),
                         cols,
                         queryIndexSummary.getTable().getAnalysis().getRowType().getFieldNames(),
                         -1,
@@ -385,10 +386,6 @@ public class IndexSelector {
     List<QueryIndexSummary> queryIndexSummaries = new ArrayList<>();
     int paramIndex = PARAM_OFFSET;
     SqrlRexUtil rexUtil = new SqrlRexUtil(framework.getTypeFactory());
-
-    private TableAnalysis getTable(String tableId) {
-      return tableMap.get(tableId);
-    }
 
     @Override
     public void visit(RelNode node, int ordinal, RelNode parent) {
@@ -472,7 +469,7 @@ public class IndexSelector {
   }
 
   /**
-   * We need to look the TableAnalysis up by the nameid that is the name of the created table for
+   * We need to look the TableAnalysis up by the tableId that is the name of the created table for
    * the engine sink.
    *
    * @param scan
@@ -481,13 +478,15 @@ public class IndexSelector {
   private NamedTable getNamedTable(TableScan scan) {
     var names = scan.getTable().getQualifiedName();
     var nameId = names.get(names.size() - 1);
-    return new NamedTable(nameId, tableMap.get(nameId));
+    JdbcEngineCreateTable createTable = tableMap.get(nameId);
+    return new NamedTable(nameId, createTable.getTableName(), createTable.getTableAnalysis());
   }
 
   @Value
   @EqualsAndHashCode(onlyExplicitlyIncluded = true)
   public static class NamedTable {
-    @Include String nameId;
+    @Include String tableId;
+    String tableName;
     TableAnalysis analysis;
   }
 }

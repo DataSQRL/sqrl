@@ -15,7 +15,7 @@
  */
 package com.datasqrl;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datasqrl.cmd.AssertStatusHook;
 import com.datasqrl.util.SnapshotTest.Snapshot;
@@ -45,7 +45,7 @@ public class AbstractUseCaseTest extends AbstractAssetSnapshotTest {
   }
 
   void testUsecase(Path script, Path graphQLFile, Path packageFile) {
-    assertTrue(Files.exists(script));
+    assertThat(Files.exists(script)).isTrue();
     var baseDir = script.getParent();
     List<String> arguments = new ArrayList<>();
     arguments.add("compile");

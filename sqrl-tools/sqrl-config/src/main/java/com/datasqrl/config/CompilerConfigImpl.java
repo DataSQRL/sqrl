@@ -15,7 +15,9 @@
  */
 package com.datasqrl.config;
 
-import com.datasqrl.config.PackageJson.OutputConfig;
+import com.datasqrl.planner.analyzer.cost.CostModel;
+import com.datasqrl.planner.analyzer.cost.SimpleCostAnalysisModel;
+import com.datasqrl.planner.analyzer.cost.SimpleCostAnalysisModel.Type;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 
@@ -50,13 +52,21 @@ public class CompilerConfigImpl implements PackageJson.CompilerConfig {
   }
 
   @Override
-  public ExplainConfigImpl getExplain() {
-    return new ExplainConfigImpl(sqrlConfig.getSubConfig("explain"));
+  public CostModel getCostModel() {
+    return new SimpleCostAnalysisModel(
+        sqrlConfig
+            .asString("cost-model")
+            .validate(
+                str -> SimpleCostAnalysisModel.Type.fromString(str).isPresent(),
+                "Not a valid cost model, must be one of " + SimpleCostAnalysisModel.Type.values())
+            .getOptional()
+            .flatMap(SimpleCostAnalysisModel.Type::fromString)
+            .orElse(Type.DEFAULT));
   }
 
   @Override
-  public OutputConfig getOutput() {
-    return OutputConfigImpl.from(sqrlConfig.getSubConfig("output"));
+  public ExplainConfigImpl getExplain() {
+    return new ExplainConfigImpl(sqrlConfig.getSubConfig("explain"));
   }
 
   @Override

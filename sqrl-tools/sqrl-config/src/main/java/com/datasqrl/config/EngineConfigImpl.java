@@ -18,7 +18,6 @@ package com.datasqrl.config;
 import static com.datasqrl.config.PackageJsonImpl.CONFIG_KEY;
 import static com.datasqrl.config.PackageJsonImpl.CONNECTORS_KEY;
 
-import com.datasqrl.config.SqrlConfig.Value;
 import java.util.Map;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
@@ -38,7 +37,7 @@ public class EngineConfigImpl implements PackageJson.EngineConfig {
 
   @Override
   public String getSetting(String key, Optional<String> defaultValue) {
-    Value<String> result = sqrlConfig.asString(key);
+    var result = sqrlConfig.asString(key);
     if (defaultValue.isPresent()) {
       result = result.withDefault(defaultValue.get());
     }

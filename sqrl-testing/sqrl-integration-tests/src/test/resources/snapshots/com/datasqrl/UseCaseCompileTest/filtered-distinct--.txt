@@ -112,11 +112,11 @@ CREATE TABLE `DistinctOrders_1` (
   PRIMARY KEY (`id`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'DistinctOrders',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'DistinctOrders_1'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `Orders_2` (
   `id` BIGINT NOT NULL,
@@ -130,11 +130,11 @@ CREATE TABLE `Orders_2` (
   PRIMARY KEY (`id`, `customerid`, `time`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'Orders',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'Orders_2'
+  'username' = '${JDBC_USERNAME}'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`DistinctOrders_1`
@@ -151,13 +151,10 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
   "topics" : [ ]
 }
 >>>postgres-schema.sql
-CREATE TABLE IF NOT EXISTS "DistinctOrders_1" ("id" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "time" TIMESTAMP WITH TIME ZONE NOT NULL, "productid" BIGINT NOT NULL, "quantity" BIGINT NOT NULL, "unit_price" DOUBLE PRECISION , "discount" DOUBLE PRECISION , "_ingest_time" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));
-CREATE TABLE IF NOT EXISTS "Orders_2" ("id" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "time" TIMESTAMP WITH TIME ZONE NOT NULL, "productid" BIGINT NOT NULL, "quantity" BIGINT NOT NULL, "unit_price" DOUBLE PRECISION , "discount" DOUBLE PRECISION , "_ingest_time" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id","customerid","time"))
+CREATE TABLE IF NOT EXISTS "DistinctOrders" ("id" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "time" TIMESTAMP WITH TIME ZONE NOT NULL, "productid" BIGINT NOT NULL, "quantity" BIGINT NOT NULL, "unit_price" DOUBLE PRECISION , "discount" DOUBLE PRECISION , "_ingest_time" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));
+CREATE TABLE IF NOT EXISTS "Orders" ("id" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "time" TIMESTAMP WITH TIME ZONE NOT NULL, "productid" BIGINT NOT NULL, "quantity" BIGINT NOT NULL, "unit_price" DOUBLE PRECISION , "discount" DOUBLE PRECISION , "_ingest_time" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id","customerid","time"))
 >>>postgres-views.sql
-CREATE OR REPLACE VIEW "DistinctOrders"("id", "customerid", "time", "productid", "quantity", "unit_price", "discount", "_ingest_time") AS SELECT *
-FROM "DistinctOrders_1";
-CREATE OR REPLACE VIEW "Orders"("id", "customerid", "time", "productid", "quantity", "unit_price", "discount", "_ingest_time") AS SELECT *
-FROM "Orders_2"
+
 >>>vertx.json
 {
   "model" : {
@@ -179,7 +176,7 @@ FROM "Orders_2"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"DistinctOrders_1\"",
+            "sql" : "SELECT *\nFROM \"DistinctOrders\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
@@ -203,7 +200,7 @@ FROM "Orders_2"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Orders_2\"",
+            "sql" : "SELECT *\nFROM \"Orders\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"

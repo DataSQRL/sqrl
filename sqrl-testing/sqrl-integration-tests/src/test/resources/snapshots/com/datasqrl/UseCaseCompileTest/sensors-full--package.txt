@@ -303,11 +303,11 @@ CREATE TABLE `HighTemp_1` (
   PRIMARY KEY (`sensorid`, `timeSec`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'HighTemp',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'HighTemp_1'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `Machine_2` (
   `machineId` BIGINT NOT NULL,
@@ -316,11 +316,11 @@ CREATE TABLE `Machine_2` (
   PRIMARY KEY (`machineId`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'Machine',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'Machine_2'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `SecReading_3` (
   `sensorid` BIGINT NOT NULL,
@@ -329,11 +329,11 @@ CREATE TABLE `SecReading_3` (
   PRIMARY KEY (`sensorid`, `timeSec`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'SecReading',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'SecReading_3'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `SensorLastHour_4` (
   `sensorid` BIGINT NOT NULL,
@@ -343,11 +343,11 @@ CREATE TABLE `SensorLastHour_4` (
   PRIMARY KEY (`sensorid`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'SensorLastHour',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'SensorLastHour_4'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `SensorReading_5` (
   `sensorid` BIGINT NOT NULL,
@@ -358,11 +358,11 @@ CREATE TABLE `SensorReading_5` (
   PRIMARY KEY (`sensorid`, `time`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'SensorReading',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'SensorReading_5'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `SensorUpdates_6` (
   `id` BIGINT NOT NULL,
@@ -372,11 +372,11 @@ CREATE TABLE `SensorUpdates_6` (
   PRIMARY KEY (`id`, `placed`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'SensorUpdates',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'SensorUpdates_6'
+  'username' = '${JDBC_USERNAME}'
 );
 CREATE TABLE `Sensors_7` (
   `id` BIGINT NOT NULL,
@@ -386,11 +386,11 @@ CREATE TABLE `Sensors_7` (
   PRIMARY KEY (`id`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
-  'password' = '${JDBC_PASSWORD}',
   'driver' = 'org.postgresql.Driver',
-  'username' = '${JDBC_USERNAME}',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'Sensors',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'table-name' = 'Sensors_7'
+  'username' = '${JDBC_USERNAME}'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`HighTemp_1`
@@ -427,32 +427,17 @@ INSERT INTO `default_catalog`.`default_database`.`Machine_2`
   "topics" : [ ]
 }
 >>>postgres-schema.sql
-CREATE TABLE IF NOT EXISTS "HighTemp_1" ("machineId" BIGINT NOT NULL, "sensorid" BIGINT NOT NULL, "temp" DOUBLE PRECISION NOT NULL, "timeSec" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("sensorid","timeSec"));
-CREATE TABLE IF NOT EXISTS "Machine_2" ("machineId" BIGINT NOT NULL, "maxTemp" DOUBLE PRECISION NOT NULL, "avgTemp" DOUBLE PRECISION NOT NULL , PRIMARY KEY ("machineId"));
-CREATE TABLE IF NOT EXISTS "SecReading_3" ("sensorid" BIGINT NOT NULL, "timeSec" TIMESTAMP WITH TIME ZONE NOT NULL, "temp" DOUBLE PRECISION NOT NULL , PRIMARY KEY ("sensorid","timeSec"));
-CREATE TABLE IF NOT EXISTS "SensorLastHour_4" ("sensorid" BIGINT NOT NULL, "window_time" TIMESTAMP WITH TIME ZONE NOT NULL, "avgTemp" DOUBLE PRECISION NOT NULL, "maxTemp" DOUBLE PRECISION NOT NULL , PRIMARY KEY ("sensorid"));
-CREATE TABLE IF NOT EXISTS "SensorReading_5" ("sensorid" BIGINT NOT NULL, "time" BIGINT NOT NULL, "temperature" DOUBLE PRECISION NOT NULL, "humidity" DOUBLE PRECISION NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("sensorid","time"));
-CREATE TABLE IF NOT EXISTS "SensorUpdates_6" ("id" BIGINT NOT NULL, "machineId" BIGINT NOT NULL, "placed" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id","placed"));
-CREATE TABLE IF NOT EXISTS "Sensors_7" ("id" BIGINT NOT NULL, "machineId" BIGINT NOT NULL, "placed" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));
+CREATE TABLE IF NOT EXISTS "HighTemp" ("machineId" BIGINT NOT NULL, "sensorid" BIGINT NOT NULL, "temp" DOUBLE PRECISION NOT NULL, "timeSec" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("sensorid","timeSec"));
+CREATE TABLE IF NOT EXISTS "Machine" ("machineId" BIGINT NOT NULL, "maxTemp" DOUBLE PRECISION NOT NULL, "avgTemp" DOUBLE PRECISION NOT NULL , PRIMARY KEY ("machineId"));
+CREATE TABLE IF NOT EXISTS "SecReading" ("sensorid" BIGINT NOT NULL, "timeSec" TIMESTAMP WITH TIME ZONE NOT NULL, "temp" DOUBLE PRECISION NOT NULL , PRIMARY KEY ("sensorid","timeSec"));
+CREATE TABLE IF NOT EXISTS "SensorLastHour" ("sensorid" BIGINT NOT NULL, "window_time" TIMESTAMP WITH TIME ZONE NOT NULL, "avgTemp" DOUBLE PRECISION NOT NULL, "maxTemp" DOUBLE PRECISION NOT NULL , PRIMARY KEY ("sensorid"));
+CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" BIGINT NOT NULL, "time" BIGINT NOT NULL, "temperature" DOUBLE PRECISION NOT NULL, "humidity" DOUBLE PRECISION NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("sensorid","time"));
+CREATE TABLE IF NOT EXISTS "SensorUpdates" ("id" BIGINT NOT NULL, "machineId" BIGINT NOT NULL, "placed" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id","placed"));
+CREATE TABLE IF NOT EXISTS "Sensors" ("id" BIGINT NOT NULL, "machineId" BIGINT NOT NULL, "placed" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));
 
-CREATE INDEX IF NOT EXISTS "Sensors_7_hash_c1" ON "Sensors_7" USING hash ("machineId")
+CREATE INDEX IF NOT EXISTS "Sensors_hash_c1" ON "Sensors" USING hash ("machineId")
 >>>postgres-views.sql
-CREATE OR REPLACE VIEW "HighTemp"("machineId", "sensorid", "temp", "timeSec") AS SELECT *
-FROM "HighTemp_1";
-CREATE OR REPLACE VIEW "Machine"("machineId", "maxTemp", "avgTemp") AS SELECT *
-FROM "Machine_2";
-CREATE OR REPLACE VIEW "SecReading"("sensorid", "timeSec", "temp") AS SELECT *
-FROM (SELECT "sensorid", "timeSec", "temp"
-  FROM "SecReading_3"
-  ORDER BY "timeSec" DESC NULLS LAST) AS "t1";
-CREATE OR REPLACE VIEW "SensorLastHour"("sensorid", "window_time", "avgTemp", "maxTemp") AS SELECT *
-FROM "SensorLastHour_4";
-CREATE OR REPLACE VIEW "SensorReading"("sensorid", "time", "temperature", "humidity", "timestamp") AS SELECT *
-FROM "SensorReading_5";
-CREATE OR REPLACE VIEW "SensorUpdates"("id", "machineId", "placed", "timestamp") AS SELECT *
-FROM "SensorUpdates_6";
-CREATE OR REPLACE VIEW "Sensors"("id", "machineId", "placed", "timestamp") AS SELECT *
-FROM "Sensors_7"
+
 >>>vertx.json
 {
   "model" : {
@@ -474,7 +459,7 @@ FROM "Sensors_7"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"HighTemp_1\"",
+            "sql" : "SELECT *\nFROM \"HighTemp\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
@@ -498,7 +483,7 @@ FROM "Sensors_7"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Machine_2\"",
+            "sql" : "SELECT *\nFROM \"Machine\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
@@ -522,7 +507,7 @@ FROM "Sensors_7"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Sensors_7\"\nWHERE \"machineId\" = $1",
+            "sql" : "SELECT *\nFROM \"Sensors\"\nWHERE \"machineId\" = $1",
             "parameters" : [
               {
                 "type" : "source",
@@ -551,7 +536,7 @@ FROM "Sensors_7"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"SensorLastHour_4\"\nWHERE $1 = \"sensorid\"",
+            "sql" : "SELECT *\nFROM \"SensorLastHour\"\nWHERE $1 = \"sensorid\"",
             "parameters" : [
               {
                 "type" : "source",
@@ -580,7 +565,7 @@ FROM "Sensors_7"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM (SELECT \"sensorid\", \"timeSec\", \"temp\"\n  FROM \"SecReading_3\"\n  ORDER BY \"timeSec\" DESC NULLS LAST) AS \"t\"\nWHERE \"sensorid\" = $1",
+            "sql" : "SELECT *\nFROM (SELECT \"sensorid\", \"timeSec\", \"temp\"\n  FROM \"SecReading\"\n  ORDER BY \"timeSec\" DESC NULLS LAST) AS \"t\"\nWHERE \"sensorid\" = $1",
             "parameters" : [
               {
                 "type" : "source",
@@ -609,7 +594,7 @@ FROM "Sensors_7"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM (SELECT \"sensorid\", \"timeSec\", \"temp\"\n  FROM \"SecReading_3\"\n  ORDER BY \"timeSec\" DESC NULLS LAST) AS \"t\"",
+            "sql" : "SELECT *\nFROM (SELECT \"sensorid\", \"timeSec\", \"temp\"\n  FROM \"SecReading\"\n  ORDER BY \"timeSec\" DESC NULLS LAST) AS \"t\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
@@ -633,7 +618,7 @@ FROM "Sensors_7"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"SensorLastHour_4\"",
+            "sql" : "SELECT *\nFROM \"SensorLastHour\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
@@ -657,7 +642,7 @@ FROM "Sensors_7"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"SensorReading_5\"",
+            "sql" : "SELECT *\nFROM \"SensorReading\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
@@ -681,7 +666,7 @@ FROM "Sensors_7"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"SensorUpdates_6\"",
+            "sql" : "SELECT *\nFROM \"SensorUpdates\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
@@ -705,7 +690,7 @@ FROM "Sensors_7"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Sensors_7\"",
+            "sql" : "SELECT *\nFROM \"Sensors\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
@@ -733,7 +718,7 @@ FROM "Sensors_7"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM (SELECT \"sensorid\", \"timeSec\", \"temp\"\n  FROM \"SecReading_3\"\n  ORDER BY \"timeSec\" DESC NULLS LAST) AS \"t\"\nWHERE \"temp\" > $1\nORDER BY \"timeSec\" NULLS FIRST\nFETCH NEXT 10 ROWS ONLY",
+            "sql" : "SELECT *\nFROM (SELECT \"sensorid\", \"timeSec\", \"temp\"\n  FROM \"SecReading\"\n  ORDER BY \"timeSec\" DESC NULLS LAST) AS \"t\"\nWHERE \"temp\" > $1\nORDER BY \"timeSec\" NULLS FIRST\nFETCH NEXT 10 ROWS ONLY",
             "parameters" : [
               {
                 "type" : "arg",

@@ -19,10 +19,10 @@ import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.jdbc.DatabaseType;
 import com.google.common.base.Strings;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonObject;
+import io.vertx.jdbcclient.JDBCConnectOptions;
 import io.vertx.jdbcclient.JDBCPool;
-import io.vertx.pgclient.PgPool;
-import io.vertx.pgclient.impl.PgPoolOptions;
+import io.vertx.sqlclient.Pool;
+import io.vertx.sqlclient.PoolOptions;
 import io.vertx.sqlclient.SqlClient;
 import java.io.File;
 import java.util.HashMap;
@@ -85,13 +85,10 @@ public class JdbcClientsConfig {
       e.printStackTrace();
     }
 
-    final JsonObject config =
-        new JsonObject()
-            .put("driver_class", "net.snowflake.client.jdbc.SnowflakeDriver")
-            .put("url", url)
-            .put("CLIENT_SESSION_KEEP_ALIVE", "true");
+    var connectOptions =
+        new JDBCConnectOptions().setJdbcUrl(url + "?CLIENT_SESSION_KEEP_ALIVE=true");
 
-    return JDBCPool.pool(vertx, config);
+    return JDBCPool.pool(vertx, connectOptions, new PoolOptions());
   }
 
   @SneakyThrows
@@ -105,20 +102,15 @@ public class JdbcClientsConfig {
       e.printStackTrace();
     }
 
-    final JsonObject config =
-        new JsonObject()
-            .put("driver_class", "org.duckdb.DuckDBDriver")
-            .put("datasourceName", "pool-name")
-            .put("url", url)
-            .put(DuckDBDriver.JDBC_STREAM_RESULTS, String.valueOf(true));
+    var connectOptions =
+        new JDBCConnectOptions().setJdbcUrl(url + "?" + DuckDBDriver.JDBC_STREAM_RESULTS + "=true");
 
-    return JDBCPool.pool(vertx, config);
+    return JDBCPool.pool(vertx, connectOptions, new PoolOptions());
   }
 
   private SqlClient createPostgresSqlClient() {
-    return PgPool.client(
-        vertx,
-        this.config.getPgConnectOptions(),
-        new PgPoolOptions(this.config.getPoolOptions()).setPipelined(true));
+    var poolOptions = new PoolOptions(this.config.getPoolOptions());
+    // Note: setPipelined() method was removed in Vert.x 5, pipelining is now always enabled
+    return Pool.pool(vertx, this.config.getPgConnectOptions(), poolOptions);
   }
 }

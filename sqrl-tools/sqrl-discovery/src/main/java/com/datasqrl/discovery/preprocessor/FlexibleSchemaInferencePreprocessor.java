@@ -196,7 +196,7 @@ public class FlexibleSchemaInferencePreprocessor implements DiscoveryPreprocesso
               .toMapWithSubstitution(
                   Context.builder()
                       .tableName(tableName.getDisplay())
-                      .origTableName(tableName.getDisplay())
+                      .tableId(tableName.getDisplay())
                       .filename(file.getFileName().toString())
                       .format(reader.get().getFormat())
                       .build()));

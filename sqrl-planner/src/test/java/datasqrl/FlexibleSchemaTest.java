@@ -15,7 +15,7 @@
  */
 package datasqrl;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datasqrl.io.schema.flexible.input.external.TableDefinition;
 import com.datasqrl.serializer.Deserializer;
@@ -37,7 +37,7 @@ class FlexibleSchemaTest {
   @SneakyThrows
   @Test
   @Disabled
-  public void testFlink() {
+  void flink() {
     String schema =
         getSchema(Path.of("../sqrl-examples/conference/mysourcepackage/authtokens.schema.yml"));
 
@@ -54,13 +54,13 @@ CREATE TABLE MyUserTable (
 )""";
 
     List<Row> rows = test(tableSql, "SELECT * FROM MyUserTable");
-    assertEquals(1, rows.size());
+    assertThat(rows).hasSize(1);
   }
 
   @SneakyThrows
   @Test
   @Disabled
-  public void testFlinkCsv() {
+  void flinkCsv() {
     String schema =
         getSchema(Path.of("../../sqrl-examples/quickstart/mysourcepackage/products.schema.yml"));
 
@@ -86,7 +86,7 @@ CREATE TABLE MyUserTable (
         )""";
 
     List<Row> rows = test(tableSql, "SELECT * FROM MyUserTable");
-    assertEquals(25, rows.size());
+    assertThat(rows).hasSize(25);
   }
 
   @SneakyThrows

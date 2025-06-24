@@ -15,29 +15,28 @@
  */
 package com.datasqrl.packager.util;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.HashSet;
 import java.util.Set;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-public class GeneratePackageIdTest {
+class GeneratePackageIdTest {
 
   @Test
-  public void generateIds() {
+  void generateIds() {
     Set<String> ids = new HashSet<>();
     for (var i = 0; i < 100000; i++) {
       var id = GeneratePackageId.generate();
-      assertEquals(27, id.length());
-      assertTrue(ids.add(id));
+      assertThat(id).hasSize(27);
+      assertThat(ids.add(id)).isTrue();
     }
   }
 
   @Test
   @Disabled
-  public void generateSingleId() {
+  void generateSingleId() {
     System.out.println(GeneratePackageId.generate());
   }
 }

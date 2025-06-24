@@ -50,8 +50,12 @@ import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
  */
 public class RelToSqlConverterWithHints extends org.apache.calcite.rel.rel2sql.RelToSqlConverter {
 
-  public RelToSqlConverterWithHints(SqlDialect dialect) {
+  /** Mapping of table names to rename tables */
+  private final Map<String, String> tableNameMapping;
+
+  public RelToSqlConverterWithHints(SqlDialect dialect, Map<String, String> tableNameMapping) {
     super(dialect);
+    this.tableNameMapping = tableNameMapping;
   }
 
   // SQRL: add hints
@@ -146,9 +150,11 @@ public class RelToSqlConverterWithHints extends org.apache.calcite.rel.rel2sql.R
   public SqlImplementor.Result visit(TableScan e) {
     var result = super.visit(e);
     if (result.node instanceof SqlIdentifier tableId) {
-      if (tableId.names.size() > 1) {
-        var simpleId =
-            new SqlIdentifier(tableId.names.get(tableId.names.size() - 1), SqlParserPos.ZERO);
+      var originalTableName = tableId.names.get(tableId.names.size() - 1);
+      var newTableName = tableNameMapping.get(originalTableName);
+      if (newTableName == null) newTableName = originalTableName;
+      if (tableId.names.size() > 1 || !newTableName.equals(originalTableName)) {
+        var simpleId = new SqlIdentifier(newTableName, SqlParserPos.ZERO);
         return this.result(simpleId, ImmutableList.of(Clause.FROM), e, (Map) null);
       }
     }

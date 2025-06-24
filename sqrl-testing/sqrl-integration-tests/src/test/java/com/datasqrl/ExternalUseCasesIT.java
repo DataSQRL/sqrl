@@ -42,10 +42,11 @@ public class ExternalUseCasesIT {
 
   public static final Set<String> ALLOWED_COMMANDS = Set.of("compile", "test");
 
+  // todo: Must provide at least one test, cannot do that with parameterized tests
   @ParameterizedTest
   @ArgumentsSource(TestCasesProvider.class)
-  @Disabled // todo: Must provide at least one test, cannot do that with parameterized tests
-  public void testCase(Path rootDir, String command, String packageFilename) {
+  @Disabled
+  void testCase(Path rootDir, String command, String packageFilename) {
     List<String> argsList = new ArrayList<>();
     Preconditions.checkArgument(
         ALLOWED_COMMANDS.contains(command.toLowerCase()), "Unsupported command: %s", command);
