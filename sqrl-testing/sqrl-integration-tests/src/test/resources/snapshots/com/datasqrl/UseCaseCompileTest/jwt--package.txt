@@ -41,7 +41,7 @@ CREATE TABLE `MyTable_1` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${JDBC_PASSWORD}',
-  'table-name' = 'MyTable_1',
+  'table-name' = 'MyTable',
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'username' = '${JDBC_USERNAME}'
 );
@@ -56,12 +56,9 @@ END
   "topics" : [ ]
 }
 >>>postgres-schema.sql
-CREATE TABLE IF NOT EXISTS "MyTable_1" ("val" INTEGER NOT NULL , PRIMARY KEY ("val"))
+CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL , PRIMARY KEY ("val"))
 >>>postgres-views.sql
-CREATE OR REPLACE VIEW "MyTable"("val") AS SELECT *
-FROM (SELECT "val"
-  FROM "MyTable_1"
-  ORDER BY "val" NULLS FIRST) AS "t1"
+
 >>>vertx.json
 {
   "model" : {
@@ -83,7 +80,7 @@ FROM (SELECT "val"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM (SELECT \"val\"\n  FROM \"MyTable_1\"\n  ORDER BY \"val\" NULLS FIRST) AS \"t\"",
+            "sql" : "SELECT *\nFROM (SELECT \"val\"\n  FROM \"MyTable\"\n  ORDER BY \"val\" NULLS FIRST) AS \"t\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
