@@ -23,7 +23,7 @@ import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.EnginePhysicalPlan.DeploymentArtifact;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.graphql.config.ServerConfig;
-import com.fasterxml.jackson.databind.JsonNode;
+import com.datasqrl.util.JsonMergeUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.vertx.core.json.JsonObject;
@@ -79,33 +79,12 @@ public abstract class GenericJavaServerEngine extends ExecutionEngine.Base imple
     return serverConfig;
   }
 
+  @SuppressWarnings("unchecked")
   @SneakyThrows
   ServerConfig mergeConfigs(ServerConfig serverConfig, Map<String, Object> configOverrides) {
-    var mergedConfig =
-        deepMerge(
-            objectMapper.valueToTree(serverConfig), objectMapper.valueToTree(configOverrides));
-    var json = objectMapper.treeToValue(mergedConfig, Map.class);
+    var config = ((ObjectNode) objectMapper.valueToTree(serverConfig)).deepCopy();
+    JsonMergeUtils.merge(config, objectMapper.valueToTree(configOverrides));
+    var json = objectMapper.treeToValue(config, Map.class);
     return new ServerConfig(new JsonObject(json));
-  }
-
-  public static JsonNode deepMerge(JsonNode mainNode, JsonNode updateNode) {
-    if (mainNode instanceof ObjectNode && updateNode instanceof ObjectNode) {
-      ObjectNode merged = ((ObjectNode) mainNode).deepCopy();
-      updateNode
-          .fields()
-          .forEachRemaining(
-              entry -> {
-                JsonNode existingValue = merged.get(entry.getKey());
-                if (existingValue != null
-                    && existingValue.isObject()
-                    && entry.getValue().isObject()) {
-                  merged.set(entry.getKey(), deepMerge(existingValue, entry.getValue()));
-                } else {
-                  merged.set(entry.getKey(), entry.getValue());
-                }
-              });
-      return merged;
-    }
-    return updateNode;
   }
 }
