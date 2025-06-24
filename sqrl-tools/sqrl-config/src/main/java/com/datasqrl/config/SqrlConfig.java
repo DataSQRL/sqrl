@@ -167,9 +167,23 @@ public class SqrlConfig {
       throw errors.exception("Configuration file invalid: %s", files);
     }
     var merged = MAPPER.createObjectNode();
-    jsons.forEach(node -> merged.setAll((ObjectNode) node));
+    jsons.forEach(node -> merge(merged, node));
     var configName = files.isEmpty() ? "default-package.json" : files.get(0).toString();
     return new SqrlConfig(errors.withConfig(configName), merged, configName, "");
+  }
+
+  private static void merge(ObjectNode target, JsonNode update) {
+    update
+        .fields()
+        .forEachRemaining(
+            entry -> {
+              JsonNode existing = target.get(entry.getKey());
+              if (existing instanceof ObjectNode && entry.getValue().isObject()) {
+                merge((ObjectNode) existing, entry.getValue());
+              } else {
+                target.set(entry.getKey(), entry.getValue());
+              }
+            });
   }
 
   /** Load configuration from a URL. */
