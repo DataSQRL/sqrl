@@ -19,7 +19,6 @@ import com.datasqrl.planner.dag.plan.MutationQuery;
 import javax.annotation.Nullable;
 import lombok.NonNull;
 import lombok.Value;
-import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.catalog.ResolvedSchema;
 
 /** Metadata we keep track off for imported/exported tables and their definition */
