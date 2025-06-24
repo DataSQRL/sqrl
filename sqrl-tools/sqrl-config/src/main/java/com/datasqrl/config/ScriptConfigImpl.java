@@ -15,8 +15,8 @@
  */
 package com.datasqrl.config;
 
-import java.util.Optional;
 import java.util.List;
+import java.util.Optional;
 import lombok.AllArgsConstructor;
 
 @AllArgsConstructor

@@ -391,7 +391,7 @@ public class FullUsecasesIT {
   @MethodSource("useCaseProvider")
   @Disabled
   public void runTestCaseByName(UseCaseTestParameter param) {
-    if (param.sqrlFileName.equals("metrics.sqrl") && param.goal.equals("run")) {
+    if (param.sqrlFileName.equals("loan.sqrl") && param.goal.equals("run")) {
       testUseCase(param);
     } else {
       assumeFalse(true);

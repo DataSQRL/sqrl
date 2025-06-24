@@ -20,6 +20,7 @@ import javax.annotation.Nullable;
 import lombok.NonNull;
 import lombok.Value;
 import org.apache.flink.table.api.Schema;
+import org.apache.flink.table.catalog.ResolvedSchema;
 
 /** Metadata we keep track off for imported/exported tables and their definition */
 @Value
@@ -29,7 +30,7 @@ public class SourceSinkTableAnalysis {
   @NonNull FlinkConnectorConfig connector;
 
   /** The Flink schema of the source table */
-  @NonNull Schema schema;
+  @NonNull ResolvedSchema schema;
 
   /**
    * This is set for internal CREATE TABLE definitions that map to mutations only, otherwise null It
