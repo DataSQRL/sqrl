@@ -33,7 +33,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.stream.Collectors;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -128,8 +128,7 @@ public class TestContainersForTestGoal implements TestEngineVisitor<TestContaine
         props.put("bootstrap.servers", testKafka.getBootstrapServers());
         try (var admin = AdminClient.create(props)) {
           // List all topics
-          List<String> topics =
-              admin.listTopics().names().get().stream().collect(Collectors.toList());
+          List<String> topics = new ArrayList<>(admin.listTopics().names().get());
           // Delete all topics
           admin.deleteTopics(topics).all().get();
         } catch (Exception e) {
@@ -144,7 +143,11 @@ public class TestContainersForTestGoal implements TestEngineVisitor<TestContaine
 
       @Override
       public Map<String, String> getEnv() {
-        return Map.of("PROPERTIES_BOOTSTRAP_SERVERS", testKafka.getBootstrapServers());
+        return Map.of(
+            "PROPERTIES_BOOTSTRAP_SERVERS",
+            testKafka.getBootstrapServers(),
+            "PROPERTIES_GROUP_ID",
+            UUID.randomUUID().toString());
       }
     };
   }

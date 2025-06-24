@@ -25,16 +25,17 @@ export UDF_PATH=/build/build/deploy/flink/lib
 echo 'Compiling...this takes about 10 seconds'
 java -jar /opt/sqrl/sqrl-cli.jar ${@}
 
-if [ "$1" == "run" ] || [ "$1" == "test" ]; then
-   # Determine the jar to run
-    if [ "$1" == "run" ]; then
-        JAR_NAME="sqrl-run.jar"
+if [[ "$1" == "run" || "$1" == "test" ]]; then
+    JAR_NAME="sqrl-run.jar"
+    # Determine the main class to execute
+    if [[ "$1" == "run" ]]; then
+      CLASS_NAME=com.datasqrl.DatasqrlRun
     else
-        JAR_NAME="sqrl-test.jar"
+      CLASS_NAME=com.datasqrl.DatasqrlTest
     fi
 
     # Start Redpanda if KAFKA_HOST is not set
-    if [ -z "$KAFKA_HOST" ]; then
+    if [[ -z "$KAFKA_HOST" ]]; then
         echo "Starting Redpanda..."
         # corresponds to value in /etc/redpanda/redpanda.yaml redpanda.data_directory
         mkdir -p /data/redpanda/
@@ -46,7 +47,7 @@ if [ "$1" == "run" ] || [ "$1" == "test" ]; then
     fi
 
     # Start Postgres if POSTGRES_HOST is not set
-    if [ -z "$POSTGRES_HOST" ]; then
+    if [[ -z "$POSTGRES_HOST" ]]; then
         echo "Starting Postgres..."
         service postgresql start
         export POSTGRES_HOST=localhost
@@ -70,7 +71,7 @@ if [ "$1" == "run" ] || [ "$1" == "test" ]; then
     done
 
     echo "All services are up. Starting the main application..."
-    echo "$@ $JAR_NAME"
+    echo "$@ $CLASS_NAME"
 
-    exec java -jar "/opt/sqrl/$JAR_NAME" "$@"
+    exec java -cp "/opt/sqrl/sqrl-run.jar" "$CLASS_NAME" "$@"
 fi
