@@ -34,8 +34,11 @@ mvn verify
 # Coverage report
 mvn jacoco:report
 
-# Test specific module
+# Test specific module (ALWAYS include -Deasyjacoco.skip when using -pl)
 mvn test -pl sqrl-planner -Deasyjacoco.skip
+
+# Test specific test method in module
+mvn test -pl sqrl-tools/sqrl-config -Dtest=TestClassName#testMethodName -Deasyjacoco.skip
 ```
 
 ### Code Quality

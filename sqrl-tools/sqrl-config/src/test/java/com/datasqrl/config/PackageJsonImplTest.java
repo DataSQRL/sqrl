@@ -185,4 +185,21 @@ class PackageJsonImplTest {
 
     assertThat(discoveryConfig).isNotNull();
   }
+
+  @Test
+  void
+      givenTestFlinkConfig_whenReadFlinkConnectorsPrint_thenReturnsInheritedConnectorConfiguration() {
+    var testConfigPath = Path.of("src/test/resources/config/test-flink-config.json");
+    var packageJson = SqrlConfig.fromFilesPackageJson(errors, List.of(testConfigPath));
+
+    var enginesConfig = packageJson.getEngines();
+    var flinkConfig = enginesConfig.getEngineConfig("flink");
+
+    assertThat(flinkConfig).isPresent();
+    var flinkConnectorsConfig = flinkConfig.get().getConnectors();
+    var printConnectorConfig = flinkConnectorsConfig.getConnectorConfigOrErr("print").toMap();
+
+    assertThat(printConnectorConfig.get("connector")).contains("print");
+    assertThat(printConnectorConfig.get("print-identifier")).contains("${sqrl:table-name}");
+  }
 }
