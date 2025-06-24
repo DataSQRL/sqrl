@@ -171,8 +171,12 @@ public abstract class AbstractAssetSnapshotTest {
    * @return
    */
   protected AssertStatusHook execute(Path rootDir, List<String> argsList) {
-    this.buildDir = rootDir.resolve(SqrlConstants.BUILD_DIR_NAME);
-    this.planDir = buildDir.resolve(SqrlConstants.DEPLOY_DIR_NAME).resolve(SqrlConstants.PLAN_DIR);
+    this.buildDir = rootDir.resolve(SqrlConstants.BUILD_DIR_NAME).toAbsolutePath();
+    this.planDir =
+        buildDir
+            .resolve(SqrlConstants.DEPLOY_DIR_NAME)
+            .resolve(SqrlConstants.PLAN_DIR)
+            .toAbsolutePath();
     var statusHook = new AssertStatusHook();
     var code =
         new RootCommand(rootDir, statusHook).getCmd().execute(argsList.toArray(String[]::new));

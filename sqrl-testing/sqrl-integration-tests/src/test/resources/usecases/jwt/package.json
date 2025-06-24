@@ -1,0 +1,28 @@
+{
+  "version": "1",
+  "engines" : {
+    "vertx" : {
+      "authKind": "JWT",
+      "config": {
+        "jwtAuth": {
+          "pubSecKeys": [
+            {
+              "algorithm": "HS256",
+              "buffer": "dGVzdFNlY3JldA=="
+            },
+            {
+              "algorithm": "HS256",
+              "buffer": "dGVzdFNlY3JldA=="
+            }
+          ],
+          "jwtOptions": {
+            "issuer": "my-test-issuer",
+            "audience": ["my-test-audience"],
+            "expiresInSeconds": "3600",
+            "leeway": "60"
+          }
+        }
+      }
+    }
+  }
+}

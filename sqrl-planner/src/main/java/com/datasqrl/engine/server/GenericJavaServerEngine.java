@@ -18,19 +18,37 @@ package com.datasqrl.engine.server;
 import static com.datasqrl.engine.EngineFeature.NO_CAPABILITIES;
 
 import com.datasqrl.config.EngineType;
+import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.engine.EnginePhysicalPlan;
+import com.datasqrl.engine.EnginePhysicalPlan.DeploymentArtifact;
 import com.datasqrl.engine.ExecutionEngine;
+import com.datasqrl.graphql.config.ServerConfig;
+import com.datasqrl.util.JsonMergeUtils;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.vertx.core.json.JsonObject;
+import io.vertx.core.json.jackson.VertxModule;
+import java.util.List;
+import java.util.Map;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 /** A generic java server engine. */
 @Slf4j
 public abstract class GenericJavaServerEngine extends ExecutionEngine.Base implements ServerEngine {
 
-  public GenericJavaServerEngine(String engineName) {
+  private final EngineConfig engineConfig;
+  private final ObjectMapper objectMapper;
+
+  public GenericJavaServerEngine(
+      String engineName, EngineConfig engineConfig, ObjectMapper objectMapper) {
     super(engineName, EngineType.SERVER, NO_CAPABILITIES);
+    this.engineConfig = engineConfig;
+    this.objectMapper = objectMapper.copy().registerModule(new VertxModule());
   }
 
   @Override
+  @SneakyThrows
   public EnginePhysicalPlan plan(com.datasqrl.planner.dag.plan.ServerStagePlan serverPlan) {
     serverPlan.getFunctions().stream()
         .filter(fct -> fct.getExecutableQuery() == null)
@@ -38,6 +56,35 @@ public abstract class GenericJavaServerEngine extends ExecutionEngine.Base imple
             fct -> {
               throw new IllegalStateException("Function has not been planned: " + fct);
             });
-    return new ServerPhysicalPlan(serverPlan.getFunctions(), serverPlan.getMutations(), null);
+
+    return new ServerPhysicalPlan(
+        serverPlan.getFunctions(),
+        serverPlan.getMutations(),
+        List.of(new DeploymentArtifact("-config.json", serverConfig())));
+  }
+
+  @SneakyThrows
+  private String serverConfig() {
+    var mergedConfig = mergeConfigs(readDefaultConfig(), engineConfig.getConfig());
+    return objectMapper.writer(new PrettyPrinter()).writeValueAsString(mergedConfig);
+  }
+
+  @SneakyThrows
+  ServerConfig readDefaultConfig() {
+    ServerConfig serverConfig;
+    try (var input = getClass().getResourceAsStream("/templates/server-config.json")) {
+      var json = objectMapper.readValue(input, JsonObject.class);
+      serverConfig = new ServerConfig(json);
+    }
+    return serverConfig;
+  }
+
+  @SuppressWarnings("unchecked")
+  @SneakyThrows
+  ServerConfig mergeConfigs(ServerConfig serverConfig, Map<String, Object> configOverrides) {
+    var config = ((ObjectNode) objectMapper.valueToTree(serverConfig)).deepCopy();
+    JsonMergeUtils.merge(config, objectMapper.valueToTree(configOverrides));
+    var json = objectMapper.treeToValue(config, Map.class);
+    return new ServerConfig(new JsonObject(json));
   }
 }

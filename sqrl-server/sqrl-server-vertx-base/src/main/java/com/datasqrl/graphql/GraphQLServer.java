@@ -129,7 +129,7 @@ public class GraphQLServer extends AbstractVerticle {
 
   @SneakyThrows
   private static RootGraphqlModel readModel() {
-    return getObjectMapper().readValue(new File("server-model.json"), ModelContainer.class).model;
+    return getObjectMapper().readValue(new File("vertx.json"), ModelContainer.class).model;
   }
 
   public static ObjectMapper getObjectMapper() {
@@ -146,7 +146,7 @@ public class GraphQLServer extends AbstractVerticle {
     Promise<JsonObject> promise = Promise.promise();
     vertx
         .fileSystem()
-        .readFile("server-config.json")
+        .readFile("vertx-config.json")
         .onComplete(
             result -> {
               if (result.succeeded()) {
@@ -219,7 +219,7 @@ public class GraphQLServer extends AbstractVerticle {
     if (this.config.getGraphiQLHandlerOptions() != null) {
       var handlerBuilder =
           GraphiQLHandler.builder(vertx).with(this.config.getGraphiQLHandlerOptions());
-      if (this.config.getAuthOptions() != null) {
+      if (this.config.getJwtAuth() != null) {
         handlerBuilder.addingHeaders(
             rc -> {
               String token = rc.get("token");
@@ -257,8 +257,8 @@ public class GraphQLServer extends AbstractVerticle {
 
     var handler = router.route(this.config.getServletConfig().getGraphQLEndpoint());
     Optional<JWTAuth> authProvider =
-        this.config.getAuthOptions() != null
-            ? Optional.of(JWTAuth.create(vertx, this.config.getAuthOptions()))
+        this.config.getJwtAuth() != null
+            ? Optional.of(JWTAuth.create(vertx, this.config.getJwtAuth()))
             : Optional.empty();
     authProvider.ifPresent(
         (auth) -> {

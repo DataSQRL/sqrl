@@ -18,6 +18,7 @@ package com.datasqrl.config;
 import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ResourceFileUtil;
+import com.datasqrl.util.JsonMergeUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -140,7 +141,7 @@ public class SqrlConfig {
   static SqrlConfig getPackageConfig(
       ErrorCollector errors, String jsonSchemaResource, List<Path> files) {
     var valid = true;
-    List<JsonNode> jsons = new ArrayList<>();
+    List<ObjectNode> jsons = new ArrayList<>();
 
     try {
       var url = SqrlConfig.class.getResource("/default-package.json");
@@ -149,7 +150,7 @@ public class SqrlConfig {
             .withConfig("/default-package.json")
             .exception("Default configuration not found");
       }
-      jsons.add(MAPPER.readTree(url));
+      jsons.add((ObjectNode) MAPPER.readTree(url));
     } catch (IOException e) {
       throw errors.withConfig("Error loading default configuration").handle(e);
     }
@@ -158,7 +159,7 @@ public class SqrlConfig {
       var local = errors.withConfig(file.toString());
       valid &= validateJsonFile(file, jsonSchemaResource, local);
       try {
-        jsons.add(MAPPER.readTree(file.toFile()));
+        jsons.add((ObjectNode) MAPPER.readTree(file.toFile()));
       } catch (IOException e) {
         throw local.exception("Could not parse JSON file [%s]: %s", file, e.toString());
       }
@@ -167,23 +168,9 @@ public class SqrlConfig {
       throw errors.exception("Configuration file invalid: %s", files);
     }
     var merged = MAPPER.createObjectNode();
-    jsons.forEach(node -> merge(merged, node));
+    jsons.forEach(node -> JsonMergeUtils.merge(merged, node));
     var configName = files.isEmpty() ? "default-package.json" : files.get(0).toString();
     return new SqrlConfig(errors.withConfig(configName), merged, configName, "");
-  }
-
-  private static void merge(ObjectNode target, JsonNode update) {
-    update
-        .fields()
-        .forEachRemaining(
-            entry -> {
-              JsonNode existing = target.get(entry.getKey());
-              if (existing instanceof ObjectNode && entry.getValue().isObject()) {
-                merge((ObjectNode) existing, entry.getValue());
-              } else {
-                target.set(entry.getKey(), entry.getValue());
-              }
-            });
   }
 
   /** Load configuration from a URL. */

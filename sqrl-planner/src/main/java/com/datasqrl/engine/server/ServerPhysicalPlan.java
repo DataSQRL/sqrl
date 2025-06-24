@@ -21,19 +21,22 @@ import com.datasqrl.planner.dag.plan.MutationQuery;
 import com.datasqrl.planner.tables.SqrlTableFunction;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.List;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Getter
 public class ServerPhysicalPlan implements EnginePhysicalPlan {
 
   /** The endpoint functions for the server plan */
-  @JsonIgnore List<SqrlTableFunction> functions;
+  @JsonIgnore final List<SqrlTableFunction> functions;
 
   /** The mutation endpoints */
-  @JsonIgnore List<MutationQuery> mutations;
+  @JsonIgnore final List<MutationQuery> mutations;
+
+  /** Additional server configuration */
+  @JsonIgnore final List<DeploymentArtifact> deploymentArtifacts;
 
   /**
    * The generated API for the server. This gets generated after the planning and is added to the
