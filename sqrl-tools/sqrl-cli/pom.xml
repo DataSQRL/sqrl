@@ -141,6 +141,10 @@
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-avro-confluent-registry</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-s3-fs-hadoop</artifactId>
+    </dependency>
 
     <dependency>
       <groupId>org.apache.hadoop</groupId>
@@ -216,10 +220,6 @@
         </exclusion>
       </exclusions>
     </dependency>
-    <dependency>
-      <groupId>org.apache.flink</groupId>
-      <artifactId>flink-s3-fs-hadoop</artifactId>
-    </dependency>
   </dependencies>
 
   <build>
@@ -251,6 +251,12 @@
                     <exclude>META-INF/*.DSA</exclude>
                     <exclude>META-INF/*.RSA</exclude>
                     <exclude>META-INF/versions/19/**/*</exclude>
+                  </excludes>
+                </filter>
+                <filter>
+                  <artifact>org.apache.flink:flink-s3-fs-hadoop</artifact>
+                  <excludes>
+                    <exclude>com/fasterxml/jackson/**</exclude>
                   </excludes>
                 </filter>
               </filters>

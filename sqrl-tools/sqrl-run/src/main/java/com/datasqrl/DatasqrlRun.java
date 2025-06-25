@@ -15,13 +15,12 @@
  */
 package com.datasqrl;
 
-import com.datasqrl.flinkrunner.stdlib.utils.AutoRegisterSystemFunction;
+import com.datasqrl.flinkrunner.EnvVarResolver;
+import com.datasqrl.flinkrunner.SqrlRunner;
 import com.datasqrl.graphql.GraphQLServer;
-import com.datasqrl.graphql.JsonEnvVarDeserializer;
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.io.Resources;
 import io.micrometer.prometheusmetrics.PrometheusConfig;
@@ -33,8 +32,6 @@ import io.vertx.ext.auth.jwt.JWTAuthOptions;
 import io.vertx.micrometer.MicrometerMetricsFactory;
 import java.io.File;
 import java.net.URL;
-import java.net.URLClassLoader;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -46,21 +43,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
-import java.util.ServiceLoader;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.api.common.JobStatus;
+import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.configuration.Configuration;
-import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.table.api.CompiledPlan;
-import org.apache.flink.table.api.EnvironmentSettings;
-import org.apache.flink.table.api.PlanReference;
 import org.apache.flink.table.api.TableResult;
-import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.admin.NewTopic;
@@ -105,12 +95,6 @@ public class DatasqrlRun {
     initPostgres();
     initKafka();
 
-    // Register the custom deserializer module
-    objectMapper = new ObjectMapper();
-    var module = new SimpleModule();
-    module.addDeserializer(String.class, new JsonEnvVarDeserializer(env));
-    objectMapper.registerModule(module);
-
     startVertx();
     execute = runFlinkJob();
     if (hold) {
@@ -141,7 +125,7 @@ public class DatasqrlRun {
     // Read conf if present
     Path packageJson = build.resolve("package.json");
     Map<String, String> config = new HashMap<>();
-    boolean isStreaming = true;
+    RuntimeExecutionMode execMode = RuntimeExecutionMode.STREAMING;
     boolean isCompilePlan = true;
     if (packageJson.toFile().exists()) {
       Map packageJsonMap = getPackageJson();
@@ -150,7 +134,7 @@ public class DatasqrlRun {
         Object flink = ((Map) engines).get("flink");
         if (flink != null) {
           if (String.valueOf(((Map) flink).get("mode")).equalsIgnoreCase("batch")) {
-            isStreaming = false;
+            execMode = RuntimeExecutionMode.BATCH;
           }
           Object c = ((Map) flink).get("config");
           if (c instanceof Map m) {
@@ -181,42 +165,11 @@ public class DatasqrlRun {
     config.putIfAbsent("rest.port", "8081");
     config.putIfAbsent("execution.target", "local"); // mini cluster
     config.putIfAbsent("execution.attached", "true"); // mini cluster
-    if (isStreaming) {
+    if (execMode == RuntimeExecutionMode.STREAMING) {
       config.putIfAbsent("table.exec.source.idle-timeout", "1 s");
       config.putIfAbsent("execution.checkpointing.interval", "30 s");
       config.putIfAbsent("execution.checkpointing.min-pause", "20 s");
     }
-
-    String udfPath = getenv("UDF_PATH");
-    List<URL> jarUrls = new ArrayList<>();
-    if (udfPath != null) {
-      Path udfDir = Path.of(udfPath);
-      if (udfDir.toFile().exists() && udfDir.toFile().isDirectory()) {
-        // Iterate over all files in the directory and add JARs to the list
-        try (var stream = java.nio.file.Files.list(udfDir)) {
-          stream
-              .filter(file -> file.toString().endsWith(".jar"))
-              .forEach(
-                  file -> {
-                    try {
-                      jarUrls.add(file.toUri().toURL());
-                    } catch (Exception e) {
-                      log.error("Error adding JAR to classpath: " + file, e);
-                    }
-                  });
-        }
-      } else {
-        //        throw new RuntimeException("UDF_PATH is not a valid directory: " + udfPath);
-      }
-    }
-
-    // Add UDF JARs to classpath
-    URL[] urlArray = jarUrls.toArray(new URL[0]);
-    ClassLoader udfClassLoader = new URLClassLoader(urlArray, getClass().getClassLoader());
-
-    config.putIfAbsent(
-        "pipeline.classpaths",
-        jarUrls.stream().map(URL::toString).collect(Collectors.joining(",")));
 
     // Exposed for tests
     if (env.get("FLINK_RESTART_STRATEGY") != null) {
@@ -225,97 +178,26 @@ public class DatasqrlRun {
       config.putIfAbsent("restart-strategy.fixed-delay.delay", "5 s");
     }
 
-    /** TODO: This should use the FlinkSQL Runner instead of duplicating the code */
-    Configuration configuration = Configuration.fromMap(config);
-
-    StreamExecutionEnvironment sEnv = new StreamExecutionEnvironment(configuration, udfClassLoader);
-    EnvironmentSettings.Builder settingsBuilder =
-        EnvironmentSettings.newInstance()
-            .withConfiguration(configuration)
-            .withClassLoader(udfClassLoader);
-
-    if (!isStreaming) {
-      sEnv.setRuntimeMode(org.apache.flink.api.common.RuntimeExecutionMode.BATCH);
-      settingsBuilder.inBatchMode();
+    String sqlFile = null;
+    String planFile = null;
+    if (execMode == RuntimeExecutionMode.STREAMING && isCompilePlan) {
+      planFile = planPath.resolve("flink-compiled-plan.json").toAbsolutePath().toString();
     } else {
-      sEnv.setRuntimeMode(org.apache.flink.api.common.RuntimeExecutionMode.STREAMING);
-      settingsBuilder.inStreamingMode();
+      sqlFile = planPath.resolve("flink-sql.sql").toAbsolutePath().toString();
     }
 
-    EnvironmentSettings tEnvConfig = settingsBuilder.build();
-    StreamTableEnvironment tEnv = StreamTableEnvironment.create(sEnv, tEnvConfig);
+    var flinkConfig = Configuration.fromMap(config);
+    var resolver = new EnvVarResolver(env);
+    var udfPath = env.get("UDF_PATH");
 
-    if (isStreaming && isCompilePlan) {
-      // Register system functions
-      ServiceLoader<AutoRegisterSystemFunction> standardLibraryFunctions =
-          ServiceLoader.load(AutoRegisterSystemFunction.class);
+    SqrlRunner runner = new SqrlRunner(execMode, flinkConfig, resolver, sqlFile, planFile, udfPath);
 
-      standardLibraryFunctions.forEach(
-          function -> {
-            var sql =
-                "CREATE TEMPORARY FUNCTION IF NOT EXISTS `%s` AS '%s' LANGUAGE JAVA;"
-                    .formatted(
-                        function.getClass().getSimpleName().toLowerCase(),
-                        function.getClass().getName());
-            tEnv.executeSql(sql);
-          });
-
-      Path compiledPlanPath = planPath.resolve("flink-compiled-plan.json");
-      if (!compiledPlanPath.toFile().exists()) {
-        throw new IllegalStateException("Could not find compiled plan");
-      }
-      String compiledPlanJson = Files.readString(compiledPlanPath);
-      ;
-      CompiledPlan compiledPlan =
-          tEnv.loadPlan(PlanReference.fromJsonString(replaceWithEnv(compiledPlanJson)));
-      return compiledPlan.execute();
-    } else {
-      Path flinkPath = planPath.resolve("flink.json");
-      if (!flinkPath.toFile().exists()) {
-        throw new RuntimeException("Could not find flink plan: " + flinkPath);
-      }
-
-      Map map = objectMapper.readValue(planPath.resolve("flink.json").toFile(), Map.class);
-      List<String> statements = (List<String>) map.get("flinkSql");
-
-      for (int i = 0; i < statements.size() - 1; i++) {
-        String statement = statements.get(i);
-        if (statement.trim().isEmpty()) {
-          continue;
-        }
-        try {
-          TableResult tableResult = tEnv.executeSql(replaceWithEnv(statement));
-        } catch (Exception e) {
-          System.out.println("Could not execute statement: " + statement);
-          throw e;
-        }
-      }
-      String insert = replaceWithEnv(statements.get(statements.size() - 1));
-      return tEnv.executeSql(insert);
-    }
+    return runner.run();
   }
 
   @SneakyThrows
   protected Map getPackageJson() {
     return objectMapper.readValue(build.resolve("package.json").toFile(), Map.class);
-  }
-
-  public String replaceWithEnv(String command) {
-    var envVariables = env;
-    var pattern = Pattern.compile("\\$\\{(.*?)\\}");
-
-    var substitutedStr = command;
-    var result = new StringBuffer();
-    // First pass to replace environment variables
-    var matcher = pattern.matcher(substitutedStr);
-    while (matcher.find()) {
-      var key = matcher.group(1);
-      var envValue = envVariables.getOrDefault(key, "");
-      matcher.appendReplacement(result, Matcher.quoteReplacement(envValue));
-    }
-    matcher.appendTail(result);
-
-    return result.toString();
   }
 
   @SneakyThrows

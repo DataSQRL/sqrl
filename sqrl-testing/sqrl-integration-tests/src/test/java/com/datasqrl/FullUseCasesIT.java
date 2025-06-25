@@ -44,7 +44,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import lombok.SneakyThrows;
-import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.flink.table.api.TableResult;
@@ -67,11 +66,7 @@ class FullUseCasesIT {
 
   private Snapshot snapshot;
 
-  @Value
-  class ScriptCriteria {
-    String name;
-    String goal;
-  }
+  record ScriptCriteria(String name, String goal) {}
 
   List<ScriptCriteria> disabledScripts =
       List.of(
@@ -101,8 +96,6 @@ class FullUseCasesIT {
               "run") // TODO: only 'run' when there are no tests (i.e. snapshot dir) - there is no
           // benefit to also running, it's wasteful
           );
-
-  static final Path PROJECT_ROOT = Path.of(System.getProperty("user.dir"));
 
   private static TestContainerHook containerHook;
 
@@ -291,7 +284,9 @@ class FullUseCasesIT {
 
           try {
             result.getJobClient().get().cancel();
-          } catch (Exception e) {
+          } catch (Exception expected) {
+            // Necessary to get over the error that is thrown when the Flink mini-cluster is stopped
+            // already. For some test cases, that will happen, and is expected.
           }
         } catch (Exception e) {
           e.printStackTrace();

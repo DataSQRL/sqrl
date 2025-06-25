@@ -29,84 +29,70 @@
   <dependencies>
     <dependency>
       <groupId>org.apache.flink</groupId>
-      <artifactId>flink-core</artifactId>
-      <version>1.19.1</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.flink</groupId>
       <artifactId>flink-clients</artifactId>
-      <version>1.19.1</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.flink</groupId>
-      <artifactId>flink-file-sink-common</artifactId>
-      <version>1.19.1</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.flink</groupId>
-      <artifactId>flink-streaming-java</artifactId>
-      <version>1.19.1</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.flink</groupId>
-      <artifactId>flink-table-api-java-bridge</artifactId>
-      <version>1.19.1</version>
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-table-planner_2.12</artifactId>
-      <version>1.19.1</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.flink</groupId>
-      <artifactId>flink-table-common</artifactId>
-      <version>1.19.1</version>
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-table-runtime</artifactId>
-      <version>1.19.1</version>
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
-      <artifactId>flink-test-utils</artifactId>
-      <version>1.19.1</version>
+      <artifactId>flink-runtime-web</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
-      <artifactId>flink-connector-files</artifactId>
-      <version>1.19.1</version>
+      <artifactId>flink-avro</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-csv</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-json</artifactId>
-      <version>1.19.1</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-hadoop-fs</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-test-utils</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-s3-fs-hadoop</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-statebackend-rocksdb</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-avro-confluent-registry</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-connector-files</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-connector-kafka</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-connector-jdbc</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-connector-postgres-cdc</artifactId>
       <version>3.4.0</version>
     </dependency>
-    <dependency>
-      <groupId>org.apache.flink</groupId>
-      <artifactId>flink-hadoop-fs</artifactId>
-      <version>1.19.1</version>
-    </dependency>
-    <dependency>
-      <groupId>org.testcontainers</groupId>
-      <artifactId>testcontainers</artifactId>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.flink</groupId>
-      <artifactId>flink-runtime-web</artifactId>
-      <version>1.19.1</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.iceberg</groupId>
-      <artifactId>iceberg-flink-runtime-1.19</artifactId>
-      <version>${iceberg.version}</version>
-    </dependency>
+
     <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-common</artifactId>
@@ -124,7 +110,6 @@
           <groupId>org.apache.commons</groupId>
           <artifactId>commons-math3</artifactId>
         </exclusion>
-
       </exclusions>
     </dependency>
     <dependency>
@@ -142,14 +127,6 @@
         </exclusion>
       </exclusions>
     </dependency>
-    <!-- https://mvnrepository.com/artifact/org.apache.iceberg/iceberg-hive-metastore -->
-    <dependency>
-      <groupId>org.apache.iceberg</groupId>
-      <artifactId>iceberg-hive-metastore</artifactId>
-      <version>${iceberg.version}</version>
-    </dependency>
-    <!-- https://mvnrepository.com/artifact/org.apache.hive/hive-metastore -->
-
     <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-mapreduce-client-core</artifactId>
@@ -173,6 +150,7 @@
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-server-vertx-base</artifactId>
     </dependency>
+
     <dependency>
       <groupId>org.apache.kafka</groupId>
       <artifactId>kafka-clients</artifactId>
@@ -198,7 +176,6 @@
     <dependency>
       <groupId>org.apache.kafka</groupId>
       <artifactId>kafka-streams</artifactId>
-      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.kafka</groupId>
@@ -215,6 +192,11 @@
       <groupId>org.apache.zookeeper</groupId>
       <artifactId>zookeeper</artifactId>
       <version>3.9.3</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>testcontainers</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>
@@ -224,89 +206,28 @@
     </dependency>
 
     <dependency>
-      <groupId>org.apache.flink</groupId>
-      <artifactId>flink-avro</artifactId>
-      <version>1.19.1</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.flink</groupId>
-      <artifactId>flink-csv</artifactId>
-      <version>1.19.1</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.flink</groupId>
-      <artifactId>flink-avro-confluent-registry</artifactId>
-      <version>1.19.1</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.flink</groupId>
-      <artifactId>flink-connector-kafka</artifactId>
-      <version>3.2.0-1.19</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.flink</groupId>
-      <artifactId>flink-connector-jdbc</artifactId>
-      <version>3.2.0-1.19</version>
-    </dependency>
-    <dependency>
       <groupId>org.apache.iceberg</groupId>
       <artifactId>iceberg-flink</artifactId>
       <version>${iceberg.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.apache.flink</groupId>
-      <artifactId>flink-statebackend-rocksdb</artifactId>
-      <version>1.19.1</version>
+      <groupId>org.apache.iceberg</groupId>
+      <artifactId>iceberg-flink-runtime-1.19</artifactId>
+      <version>${iceberg.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.iceberg</groupId>
+      <artifactId>iceberg-hive-metastore</artifactId>
+      <version>${iceberg.version}</version>
     </dependency>
 
-    <dependency>
-      <groupId>com.datasqrl.flinkrunner</groupId>
-      <artifactId>flexible-csv-format</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl.flinkrunner</groupId>
-      <artifactId>flexible-json-format</artifactId>
-    </dependency>
     <dependency>
       <groupId>com.datasqrl.flinkrunner</groupId>
       <artifactId>stdlib-utils</artifactId>
     </dependency>
     <dependency>
       <groupId>com.datasqrl.flinkrunner</groupId>
-      <artifactId>stdlib-commons</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl.flinkrunner</groupId>
-      <artifactId>stdlib-json</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl.flinkrunner</groupId>
-      <artifactId>stdlib-text</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl.flinkrunner</groupId>
-      <artifactId>stdlib-math</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl.flinkrunner</groupId>
-      <artifactId>stdlib-openai</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl.flinkrunner</groupId>
-      <artifactId>stdlib-vector</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl.flinkrunner</groupId>
-      <artifactId>kafka-safe-connector</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl.flinkrunner</groupId>
-      <artifactId>postgresql-connector</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.flink</groupId>
-      <artifactId>flink-s3-fs-hadoop</artifactId>
-      <version>${flink.version}</version>
+      <artifactId>flink-sql-runner</artifactId>
     </dependency>
   </dependencies>
 
@@ -339,6 +260,12 @@
                     <exclude>META-INF/*.SF</exclude>
                     <exclude>META-INF/*.DSA</exclude>
                     <exclude>META-INF/*.RSA</exclude>
+                  </excludes>
+                </filter>
+                <filter>
+                  <artifact>org.apache.flink:flink-s3-fs-hadoop</artifact>
+                  <excludes>
+                    <exclude>com/fasterxml/jackson/**</exclude>
                   </excludes>
                 </filter>
               </filters>
