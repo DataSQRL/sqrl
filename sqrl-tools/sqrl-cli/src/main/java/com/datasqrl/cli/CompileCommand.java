@@ -13,10 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.plan.validate;
+package com.datasqrl.cli;
 
-public enum ExecutionGoal {
-  COMPILE,
-  RUN,
-  TEST
+import com.datasqrl.plan.validate.ExecutionGoal;
+import picocli.CommandLine;
+
+@CommandLine.Command(
+    name = "compile",
+    description = "Compiles an SQRL script and produces all build artifacts")
+public class CompileCommand extends AbstractCompileCommand {
+
+  @Override
+  public ExecutionGoal getGoal() {
+    return ExecutionGoal.COMPILE;
+  }
 }

@@ -15,7 +15,7 @@
  */
 package com.datasqrl;
 
-import com.datasqrl.cmd.AssertStatusHook;
+import com.datasqrl.cli.AssertStatusHook;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;

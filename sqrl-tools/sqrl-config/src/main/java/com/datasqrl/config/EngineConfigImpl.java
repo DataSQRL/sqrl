@@ -18,6 +18,7 @@ package com.datasqrl.config;
 import static com.datasqrl.config.PackageJsonImpl.CONFIG_KEY;
 import static com.datasqrl.config.PackageJsonImpl.CONNECTORS_KEY;
 
+import com.google.common.collect.Iterables;
 import java.util.Map;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
@@ -53,5 +54,10 @@ public class EngineConfigImpl implements PackageJson.EngineConfig {
   @Override
   public Map<String, Object> getConfig() {
     return sqrlConfig.getSubConfig(CONFIG_KEY).toMap();
+  }
+
+  @Override
+  public boolean isEmpty() {
+    return Iterables.isEmpty(sqrlConfig.getSubConfig(CONFIG_KEY).getKeys());
   }
 }

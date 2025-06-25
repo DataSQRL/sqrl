@@ -278,8 +278,7 @@ public class Packager {
   }
 
   @SneakyThrows
-  public void postprocess(
-      PackageJson sqrlConfig, Path rootDir, Path targetDir, PhysicalPlan plan, TestPlan testPlan) {
+  public void postprocess(Path targetDir, PhysicalPlan plan, TestPlan testPlan) {
     Path planDir = targetDir.resolve(SqrlConstants.PLAN_DIR);
     Files.createDirectories(planDir);
     // We'll write a single asset for each folder in the physical plan stage, plus any deployment
@@ -380,11 +379,11 @@ public class Packager {
         ListUtils.union(
             plan.getDeploymentArtifacts(), List.of(new DeploymentArtifact(".json", plan)));
     for (DeploymentArtifact artifact : artifacts) {
-      Path filePath = planDir.resolve(name + artifact.getFileSuffix()).toAbsolutePath();
-      if (artifact.getContent() instanceof String) {
+      Path filePath = planDir.resolve(name + artifact.fileSuffix()).toAbsolutePath();
+      if (artifact.content() instanceof String) {
         Files.writeString(
             filePath,
-            (String) artifact.getContent(),
+            (String) artifact.content(),
             StandardOpenOption.CREATE,
             StandardOpenOption.TRUNCATE_EXISTING,
             StandardOpenOption.WRITE);
@@ -403,8 +402,7 @@ public class Packager {
         return Optional.empty();
       }
     } else {
-      return Optional.of(
-          packageFiles.stream().map(rootDir::resolve).collect(Collectors.toUnmodifiableList()));
+      return Optional.of(packageFiles.stream().map(rootDir::resolve).toList());
     }
   }
 }

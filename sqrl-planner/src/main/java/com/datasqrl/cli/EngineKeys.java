@@ -13,10 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.plan.validate;
+package com.datasqrl.cli;
 
-public enum ExecutionGoal {
-  COMPILE,
-  RUN,
-  TEST
+public class EngineKeys {
+  public static final String LOG = "kafka";
+  public static final String SERVER = "vertx";
+  public static final String STREAMS = "flink";
+  public static final String DATABASE = "postgres";
+  public static final String TEST = "test";
+  public static final String ICEBERG = "iceberg";
+  public static final String DUCKDB = "duckdb";
 }

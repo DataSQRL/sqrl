@@ -32,7 +32,6 @@
     <module>sqrl-config</module>
     <module>sqrl-discovery</module>
     <module>sqrl-packager</module>
-    <module>sqrl-run</module>
   </modules>
 
   <dependencyManagement>

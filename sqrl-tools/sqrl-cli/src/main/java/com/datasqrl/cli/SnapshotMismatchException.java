@@ -13,10 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.plan.validate;
+package com.datasqrl.cli;
 
-public enum ExecutionGoal {
-  COMPILE,
-  RUN,
-  TEST
+public class SnapshotMismatchException extends Exception {
+  private final String testName;
+  private final String expected;
+  private final String actual;
+
+  public SnapshotMismatchException(String testName, String expected, String actual) {
+    super("Snapshot mismatch for test: " + testName);
+    this.testName = testName;
+    this.expected = expected;
+    this.actual = actual;
+  }
+
+  public String getTestName() {
+    return testName;
+  }
+
+  public String getExpected() {
+    return expected;
+  }
+
+  public String getActual() {
+    return actual;
+  }
 }

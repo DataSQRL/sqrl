@@ -17,7 +17,7 @@
 //
 // import static org.junit.jupiter.api.Assertions.assertEquals;
 //
-// import com.datasqrl.DatasqrlRun;
+// import com.datasqrl.cli.DatasqrlRun;
 // import java.io.IOException;
 // import java.net.URI;
 // import java.net.http.HttpClient;

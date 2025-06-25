@@ -17,7 +17,7 @@ package com.datasqrl;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.datasqrl.cmd.AssertStatusHook;
+import com.datasqrl.cli.AssertStatusHook;
 import com.datasqrl.util.SnapshotTest.Snapshot;
 import java.nio.file.Files;
 import java.nio.file.Path;

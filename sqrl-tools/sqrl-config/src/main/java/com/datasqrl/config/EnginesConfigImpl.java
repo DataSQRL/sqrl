@@ -15,12 +15,14 @@
  */
 package com.datasqrl.config;
 
+import com.datasqrl.config.PackageJson.EmptyEngineConfig;
 import com.datasqrl.config.PackageJson.EngineConfig;
+import com.datasqrl.config.PackageJson.EnginesConfig;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
-public class EnginesConfigImpl implements PackageJson.EnginesConfig {
+public class EnginesConfigImpl implements EnginesConfig {
   private SqrlConfig sqrlConfig;
 
   public int getVersion() {
@@ -39,6 +41,15 @@ public class EnginesConfigImpl implements PackageJson.EnginesConfig {
   @Override
   public EngineConfig getEngineConfigOrErr(String engineId) {
     sqrlConfig.validateSubConfig(engineId);
+    return new EngineConfigImpl(sqrlConfig.getSubConfig(engineId));
+  }
+
+  @Override
+  public EngineConfig getEngineConfigOrEmpty(String engineId) {
+    if (!sqrlConfig.hasSubConfig(engineId)) {
+      return new EmptyEngineConfig(engineId);
+    }
+
     return new EngineConfigImpl(sqrlConfig.getSubConfig(engineId));
   }
 }

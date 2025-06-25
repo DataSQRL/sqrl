@@ -18,7 +18,10 @@ package com.datasqrl;
 import static org.assertj.core.api.Assertions.fail;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
-import com.datasqrl.cmd.AssertStatusHook;
+import com.datasqrl.cli.AssertStatusHook;
+import com.datasqrl.cli.DatasqrlRun;
+import com.datasqrl.cli.util.FlinkConfigLoader;
+import com.datasqrl.cli.util.FlinkOperatorStatusChecker;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.config.SqrlConstants;
@@ -32,7 +35,6 @@ import com.datasqrl.engines.TestExecutionEnv.TestEnvContext;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.tests.TestExtension;
 import com.datasqrl.tests.UseCaseTestExtensions;
-import com.datasqrl.util.FlinkOperatorStatusChecker;
 import com.datasqrl.util.SnapshotTest.Snapshot;
 import com.google.common.collect.MoreCollectors;
 import java.nio.file.Files;
@@ -249,9 +251,9 @@ class FullUseCasesIT {
       DatasqrlRun run = null;
       if (param.getGoal().equals("run")) {
         try {
-          run =
-              new DatasqrlRun(
-                  context.getRootDir().resolve(SqrlConstants.PLAN_PATH), context.getEnv());
+          var planDir = context.getRootDir().resolve(SqrlConstants.PLAN_PATH);
+          var flinkConfig = FlinkConfigLoader.fromYamlFile(planDir);
+          run = new DatasqrlRun(planDir, packageJson, flinkConfig, context.getEnv());
           TableResult result = run.run(false);
           long delaySec =
               packageJson
@@ -340,7 +342,7 @@ class FullUseCasesIT {
   public void runTestCaseByName() {
     var param =
         useCaseProvider().stream()
-            .filter(p -> p.sqrlFileName.equals("sensors-mutation.sqrl") && p.goal.equals("test"))
+            .filter(p -> p.sqrlFileName.equals("avro-schema.sqrl") && p.goal.equals("run"))
             .collect(MoreCollectors.onlyElement());
     useCase(param);
   }

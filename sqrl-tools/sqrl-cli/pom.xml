@@ -27,6 +27,7 @@
   <artifactId>sqrl-cli</artifactId>
 
   <dependencies>
+    <!-- SQRL dependencies -->
     <dependency>
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-packager</artifactId>
@@ -39,15 +40,120 @@
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-discovery</artifactId>
     </dependency>
-
-    <!-- For the time being, include all connectors -->
     <dependency>
-      <groupId>org.apache.flink</groupId>
-      <artifactId>flink-file-sink-common</artifactId>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-server-vertx-base</artifactId>
     </dependency>
+
+    <dependency>
+      <groupId>com.datasqrl.flinkrunner</groupId>
+      <artifactId>stdlib-utils</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl.flinkrunner</groupId>
+      <artifactId>flink-sql-runner</artifactId>
+    </dependency>
+
+    <!-- Flink dependencies -->
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-clients</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-table-planner_2.12</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-table-runtime</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-runtime-web</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-avro</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-csv</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-json</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-hadoop-fs</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-test-utils</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-statebackend-rocksdb</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-avro-confluent-registry</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-connector-files</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-connector-kafka</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-connector-jdbc</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-connector-postgres-cdc</artifactId>
+      <version>3.4.0</version>
+    </dependency>
+
+<!-- Kafka dependencies -->
+    <dependency>
+      <groupId>org.apache.kafka</groupId>
+      <artifactId>kafka-clients</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.kafka</groupId>
+      <artifactId>kafka-clients</artifactId>
+      <classifier>test</classifier>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.kafka</groupId>
+      <artifactId>kafka_${scala.version}</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.kafka</groupId>
+      <artifactId>kafka_${scala.version}</artifactId>
+      <classifier>test</classifier>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.kafka</groupId>
+      <artifactId>kafka-streams</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.kafka</groupId>
+      <artifactId>kafka-streams</artifactId>
+      <classifier>test</classifier>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.kafka</groupId>
+      <artifactId>kafka-streams-test-utils</artifactId>
+      <scope>compile</scope>
     </dependency>
 
     <!-- util -->
@@ -60,92 +166,18 @@
       <artifactId>testcontainers</artifactId>
       <scope>compile</scope>
     </dependency>
-    <!-- Test jars -->
     <dependency>
-      <groupId>org.mockito</groupId>
-      <artifactId>mockito-core</artifactId>
-      <scope>test</scope>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>postgresql</artifactId>
+      <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>org.mockito</groupId>
-      <artifactId>mockito-junit-jupiter</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-planner</artifactId>
-      <type>test-jar</type>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.flink</groupId>
-      <artifactId>flink-json</artifactId>
-      <scope>runtime</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.flink</groupId>
-      <artifactId>flink-connector-kafka</artifactId>
-      <scope>runtime</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.iceberg</groupId>
-      <artifactId>iceberg-flink-runtime-1.19</artifactId>
-      <version>${iceberg.version}</version>
+      <groupId>org.apache.zookeeper</groupId>
+      <artifactId>zookeeper</artifactId>
+      <version>3.9.3</version>
     </dependency>
 
-    <dependency>
-      <groupId>com.datasqrl.flinkrunner</groupId>
-      <artifactId>flexible-csv-format</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl.flinkrunner</groupId>
-      <artifactId>flexible-json-format</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl.flinkrunner</groupId>
-      <artifactId>stdlib-utils</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl.flinkrunner</groupId>
-      <artifactId>stdlib-commons</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl.flinkrunner</groupId>
-      <artifactId>stdlib-json</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl.flinkrunner</groupId>
-      <artifactId>stdlib-text</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl.flinkrunner</groupId>
-      <artifactId>stdlib-math</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl.flinkrunner</groupId>
-      <artifactId>stdlib-openai</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl.flinkrunner</groupId>
-      <artifactId>stdlib-vector</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl.flinkrunner</groupId>
-      <artifactId>kafka-safe-connector</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl.flinkrunner</groupId>
-      <artifactId>postgresql-connector</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.flink</groupId>
-      <artifactId>flink-avro-confluent-registry</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.flink</groupId>
-      <artifactId>flink-s3-fs-hadoop</artifactId>
-    </dependency>
-
+    <!-- Hadoop dependencies -->
     <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-common</artifactId>
@@ -163,7 +195,6 @@
           <groupId>org.apache.commons</groupId>
           <artifactId>commons-math3</artifactId>
         </exclusion>
-
         <exclusion>
           <groupId>org.slf4j</groupId>
           <artifactId>slf4j-log4j12</artifactId>
@@ -189,14 +220,6 @@
         </exclusion>
       </exclusions>
     </dependency>
-    <!-- https://mvnrepository.com/artifact/org.apache.iceberg/iceberg-hive-metastore -->
-    <dependency>
-      <groupId>org.apache.iceberg</groupId>
-      <artifactId>iceberg-hive-metastore</artifactId>
-      <version>${iceberg.version}</version>
-    </dependency>
-    <!-- https://mvnrepository.com/artifact/org.apache.hive/hive-metastore -->
-
     <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-mapreduce-client-core</artifactId>
@@ -220,6 +243,49 @@
         </exclusion>
       </exclusions>
     </dependency>
+
+    <!-- Iceberg dependencies -->
+    <dependency>
+      <groupId>org.apache.iceberg</groupId>
+      <artifactId>iceberg-flink</artifactId>
+      <version>${iceberg.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.iceberg</groupId>
+      <artifactId>iceberg-flink-runtime-1.19</artifactId>
+      <version>${iceberg.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.iceberg</groupId>
+      <artifactId>iceberg-hive-metastore</artifactId>
+      <version>${iceberg.version}</version>
+    </dependency>
+
+    <!-- Test dependencies -->
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-junit-jupiter</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-planner</artifactId>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- The 'flink-s3-fs-hadoop' is kept down here for a reason!
+         It shades wrong versions of Jackson and Guava, and messes up the IntelliJ classpath otherwise.
+         On the Maven side, the faulty classes are excluded at shading, so the order would not matter there. -->
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-s3-fs-hadoop</artifactId>
+    </dependency>
   </dependencies>
 
   <build>
@@ -239,7 +305,7 @@
               <minimizeJar>false</minimizeJar>
               <transformers>
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                  <mainClass>com.datasqrl.DatasqrlCMD</mainClass>
+                  <mainClass>com.datasqrl.cli.DatasqrlCli</mainClass>
                 </transformer>
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"></transformer>
               </transformers>
@@ -257,6 +323,7 @@
                   <artifact>org.apache.flink:flink-s3-fs-hadoop</artifact>
                   <excludes>
                     <exclude>com/fasterxml/jackson/**</exclude>
+                    <exclude>com/google/**</exclude>
                   </excludes>
                 </filter>
               </filters>

@@ -17,7 +17,7 @@ package com.datasqrl;
 
 import static org.assertj.core.api.Assertions.fail;
 
-import com.datasqrl.cmd.AssertStatusHook;
+import com.datasqrl.cli.AssertStatusHook;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.file.Path;
 import java.util.ArrayList;
