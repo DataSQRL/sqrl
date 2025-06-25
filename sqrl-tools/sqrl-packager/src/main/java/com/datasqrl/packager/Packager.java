@@ -380,11 +380,11 @@ public class Packager {
         ListUtils.union(
             plan.getDeploymentArtifacts(), List.of(new DeploymentArtifact(".json", plan)));
     for (DeploymentArtifact artifact : artifacts) {
-      Path filePath = planDir.resolve(name + artifact.getFileSuffix()).toAbsolutePath();
-      if (artifact.getContent() instanceof String) {
+      Path filePath = planDir.resolve(name + artifact.fileSuffix()).toAbsolutePath();
+      if (artifact.content() instanceof String) {
         Files.writeString(
             filePath,
-            (String) artifact.getContent(),
+            (String) artifact.content(),
             StandardOpenOption.CREATE,
             StandardOpenOption.TRUNCATE_EXISTING,
             StandardOpenOption.WRITE);

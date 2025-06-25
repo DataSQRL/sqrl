@@ -20,7 +20,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import lombok.Value;
+import org.apache.flink.configuration.Configuration;
+import org.apache.flink.configuration.ConfigurationUtils;
 
 /** A jackson serializable object */
 public interface EnginePhysicalPlan {
@@ -30,10 +31,7 @@ public interface EnginePhysicalPlan {
     return List.of();
   }
 
-  @Value
-  class DeploymentArtifact {
-    String fileSuffix;
-    Object content;
+  record DeploymentArtifact(String fileSuffix, Object content) {
 
     public static String toSqlString(Stream<String> statements) {
       return statements.collect(Collectors.joining(";\n"));
@@ -41,6 +39,10 @@ public interface EnginePhysicalPlan {
 
     public static String toSqlString(Collection<String> statements) {
       return toSqlString(statements.stream());
+    }
+
+    public static String toYamlString(Configuration config) {
+      return String.join("\n", ConfigurationUtils.convertConfigToWritableLines(config, false));
     }
   }
 }
