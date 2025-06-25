@@ -262,6 +262,12 @@
                     <exclude>META-INF/*.RSA</exclude>
                   </excludes>
                 </filter>
+                <filter>
+                  <artifact>org.apache.flink:flink-s3-fs-hadoop</artifact>
+                  <excludes>
+                    <exclude>com/fasterxml/jackson/**</exclude>
+                  </excludes>
+                </filter>
               </filters>
             </configuration>
           </execution>
