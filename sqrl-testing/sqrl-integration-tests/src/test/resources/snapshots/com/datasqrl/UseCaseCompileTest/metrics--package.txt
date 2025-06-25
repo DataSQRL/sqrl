@@ -263,14 +263,13 @@ INSERT INTO `default_catalog`.`default_database`.`SensorAnalysis_2`
   ]
 }
 >>>postgres-schema.sql
-CREATE TABLE IF NOT EXISTS "SensorAnalysis_2" ("sensorid" INTEGER NOT NULL, "avg_temperatures" FLOAT NOT NULL, "max_temperature" FLOAT NOT NULL , PRIMARY KEY ("sensorid"));
-CREATE TABLE IF NOT EXISTS "SensorMaxTempLastMin_3" ("sensorid" INTEGER NOT NULL, "endOfMin" TIMESTAMP WITH TIME ZONE NOT NULL, "avg_temperature" FLOAT NOT NULL , PRIMARY KEY ("sensorid"));
-CREATE TABLE IF NOT EXISTS "SensorReading_4" ("sensorid" INTEGER NOT NULL, "temperature" FLOAT NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE , "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "SensorAnalysis" ("sensorid" INTEGER NOT NULL, "avg_temperatures" FLOAT NOT NULL, "max_temperature" FLOAT NOT NULL , PRIMARY KEY ("sensorid"));
+CREATE TABLE IF NOT EXISTS "SensorMaxTempLastMin" ("sensorid" INTEGER NOT NULL, "endOfMin" TIMESTAMP WITH TIME ZONE NOT NULL, "avg_temperature" FLOAT NOT NULL , PRIMARY KEY ("sensorid"));
+CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" INTEGER NOT NULL, "temperature" FLOAT NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE , "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
 
-CREATE INDEX IF NOT EXISTS "SensorReading_4_hash_c0" ON "SensorReading_4" USING hash ("sensorid")
+CREATE INDEX IF NOT EXISTS "SensorReading_hash_c0" ON "SensorReading" USING hash ("sensorid")
 >>>postgres-views.sql
-CREATE OR REPLACE VIEW "SensorMaxTempLastMin"("sensorid", "endOfMin", "avg_temperature") AS SELECT *
-FROM "SensorMaxTempLastMin_3"
+
 >>>vertx.json
 {
   "model" : {
@@ -292,7 +291,7 @@ FROM "SensorMaxTempLastMin_3"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"SensorMaxTempLastMin_3\"",
+            "sql" : "SELECT *\nFROM \"SensorMaxTempLastMin\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
@@ -353,7 +352,7 @@ FROM "SensorMaxTempLastMin_3"
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM (SELECT \"sensorid\", \"temperature\", \"event_time\"\n  FROM \"SensorReading_4\") AS \"t\"\nWHERE \"sensorid\" = $1\nORDER BY \"event_time\" DESC NULLS LAST",
+            "sql" : "SELECT *\nFROM (SELECT \"sensorid\", \"temperature\", \"event_time\"\n  FROM \"SensorReading\") AS \"t\"\nWHERE \"sensorid\" = $1\nORDER BY \"event_time\" DESC NULLS LAST",
             "parameters" : [
               {
                 "type" : "arg",
