@@ -22,19 +22,16 @@ import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.EqualsAndHashCode.Include;
 import lombok.Getter;
+import lombok.ToString;
 
 @AllArgsConstructor
 @Getter
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@ToString(of = "path")
 public class APISource {
 
   @Include Optional<Path> path;
   String definition;
-
-  @Override
-  public String toString() {
-    return path.toString();
-  }
 
   public static APISource of(Path path, String contents) throws IOException {
     return new APISource(Optional.of(path), contents);

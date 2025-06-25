@@ -29,7 +29,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @Builder
 @AllArgsConstructor
-public class ApiConfigImpl implements CompilerApiConfig {
+public class CompilerApiConfigImpl implements CompilerApiConfig {
 
   /** The protocols that are being exposed by the server and generated from SQRL */
   @Default EnumSet<ApiProtocols> protocols = EnumSet.allOf(ApiProtocols.class);
@@ -43,7 +43,7 @@ public class ApiConfigImpl implements CompilerApiConfig {
   /** The maximum depth of graph traversal when generating operations from schema */
   @Default int maxResultDepth = 3;
 
-  public static ApiConfigImpl from(SqrlConfig config) {
+  public static CompilerApiConfigImpl from(SqrlConfig config) {
     var builder = builder();
 
     List<ApiProtocols> protocols =

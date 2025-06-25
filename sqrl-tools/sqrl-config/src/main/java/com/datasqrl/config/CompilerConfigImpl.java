@@ -70,7 +70,7 @@ public class CompilerConfigImpl implements PackageJson.CompilerConfig {
   }
 
   @Override
-  public ApiConfigImpl getApiConfig() {
-    return ApiConfigImpl.from(sqrlConfig.getSubConfig("api"));
+  public CompilerApiConfigImpl getApiConfig() {
+    return CompilerApiConfigImpl.from(sqrlConfig.getSubConfig("api"));
   }
 }

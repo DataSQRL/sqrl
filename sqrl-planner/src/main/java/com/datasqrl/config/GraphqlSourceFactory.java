@@ -19,11 +19,11 @@ import com.datasqrl.graphql.APISource;
 import com.datasqrl.graphql.ScriptFiles;
 import com.datasqrl.module.resolver.ResourceResolver;
 import com.google.inject.Inject;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
+import lombok.SneakyThrows;
 import lombok.Value;
 
 @Value
@@ -40,17 +40,14 @@ public class GraphqlSourceFactory {
             .toList();
   }
 
+  @SneakyThrows
   private static APISource resolvePath(String file, ResourceResolver resolver) {
-    try {
-      Path relativePath = Path.of(file);
-      Optional<Path> absolutePath = resolver.resolveFile(relativePath);
-      return APISource.of(
-          relativePath,
-          Files.readString(
-              absolutePath.orElseThrow(
-                  () -> new IllegalArgumentException("Could not read file: " + relativePath))));
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    Path relativePath = Path.of(file);
+    Optional<Path> absolutePath = resolver.resolveFile(relativePath);
+    return APISource.of(
+        relativePath,
+        Files.readString(
+            absolutePath.orElseThrow(
+                () -> new IllegalArgumentException("Could not read file: " + relativePath))));
   }
 }
