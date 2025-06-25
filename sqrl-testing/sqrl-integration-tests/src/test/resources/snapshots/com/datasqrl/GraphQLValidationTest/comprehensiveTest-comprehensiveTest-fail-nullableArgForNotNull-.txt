@@ -20,7 +20,7 @@ CustomerTimeWindow := SELECT
 ^
 
 [FATAL] Field TableFunctionCallsTblFct at argument arg2 requires non-null type
-in script:comprehensivetest-fail-nullableargfornotnull [17:47]:
+in script:comprehensivetest-fail-nullableargfornotnull.graphqls [17:47]:
 
 type Query {
     TableFunctionCallsTblFct(arg1: Int, arg2: Int, limit: Int = 10, offset: Int = 0): [Customer!]

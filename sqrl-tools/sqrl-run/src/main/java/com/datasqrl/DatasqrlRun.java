@@ -16,7 +16,7 @@
 package com.datasqrl;
 
 import com.datasqrl.flinkrunner.stdlib.utils.AutoRegisterSystemFunction;
-import com.datasqrl.graphql.GraphQLServer;
+import com.datasqrl.graphql.HttpServerVerticle;
 import com.datasqrl.graphql.JsonEnvVarDeserializer;
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.server.RootGraphqlModel;
@@ -435,7 +435,7 @@ public class DatasqrlRun {
       serverConfig.setJwtAuth(auth);
     }
 
-    var server = new GraphQLServer(rootGraphqlModel, serverConfig, getSnowflakeUrl());
+    var server = new HttpServerVerticle(serverConfig, rootGraphqlModel);
 
     var prometheusMeterRegistry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
     var metricsOptions =

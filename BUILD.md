@@ -15,6 +15,11 @@ To re-generate the snapshots add
 If tests fail due to Flink memory or buffer issues, try uncommenting the configuration
 line in `ExecutionEnvironmentFactory.java`.
 
+To update formatting across files (this is validated by Github actions):
+```bash
+mvn clean install -Pdev
+```
+
 ## Build Docker
 
 Check out the `.github/workflows/docker.yml` for build steps.

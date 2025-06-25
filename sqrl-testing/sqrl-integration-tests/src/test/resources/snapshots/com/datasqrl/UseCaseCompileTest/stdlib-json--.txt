@@ -202,9 +202,63 @@ CREATE TABLE IF NOT EXISTS "UnmodifiedJsonData" ("id" BIGINT NOT NULL, "val" TEX
     ],
     "mutations" : [ ],
     "subscriptions" : [ ],
+    "operations" : [
+      {
+        "function" : {
+          "name" : "GetJson",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query Json($limit: Int = 10, $offset: Int = 0) {\nJson(limit: $limit, offset: $offset) {\nid\nval\ntimestamp\n}\n\n}",
+          "queryName" : "Json",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/Json{?offset,limit}"
+      },
+      {
+        "function" : {
+          "name" : "GetUnmodifiedJsonData",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query UnmodifiedJsonData($limit: Int = 10, $offset: Int = 0) {\nUnmodifiedJsonData(limit: $limit, offset: $offset) {\nid\nval\njson_col\njson_col_2\njson_col_3\njson_col_4\n}\n\n}",
+          "queryName" : "UnmodifiedJsonData",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/UnmodifiedJsonData{?offset,limit}"
+      }
+    ],
     "schema" : {
       "type" : "string",
-      "schema" : "\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\n\"A JSON scalar\"\nscalar JSON\n\ntype Json {\n  id: GraphQLBigInteger!\n  val: String!\n  timestamp: DateTime!\n}\n\ntype Query {\n  Json(limit: Int = 10, offset: Int = 0): [Json!]\n  UnmodifiedJsonData(limit: Int = 10, offset: Int = 0): [UnmodifiedJsonData!]\n}\n\ntype UnmodifiedJsonData {\n  id: GraphQLBigInteger!\n  val: String!\n  json_col: JSON\n  json_col_2: JSON\n  json_col_3: JSON\n  json_col_4: JSON\n}\n"
+      "schema" : "\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\n\"A JSON scalar\"\nscalar JSON\n\ntype Json {\n  id: GraphQLBigInteger!\n  val: String!\n  timestamp: DateTime!\n}\n\ntype Query {\n  Json(limit: Int = 10, offset: Int = 0): [Json!]\n  UnmodifiedJsonData(limit: Int = 10, offset: Int = 0): [UnmodifiedJsonData!]\n}\n\ntype UnmodifiedJsonData {\n  id: GraphQLBigInteger!\n  val: String!\n  json_col: JSON\n  json_col_2: JSON\n  json_col_3: JSON\n  json_col_4: JSON\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
     }
   }
 }

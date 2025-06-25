@@ -204,9 +204,94 @@ FROM (SELECT "sensorid", MAX("temperature") AS "maxTemp", AVG("temperature") AS 
     ],
     "mutations" : [ ],
     "subscriptions" : [ ],
+    "operations" : [
+      {
+        "function" : {
+          "name" : "GetSensorAggregate",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query SensorAggregate($limit: Int = 10, $offset: Int = 0) {\nSensorAggregate(limit: $limit, offset: $offset) {\nsensorid\nmaxTemp\navgTemp\n}\n\n}",
+          "queryName" : "SensorAggregate",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/SensorAggregate{?offset,limit}"
+      },
+      {
+        "function" : {
+          "name" : "GetSensorReading",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query SensorReading($limit: Int = 10, $offset: Int = 0) {\nSensorReading(limit: $limit, offset: $offset) {\nsensorid\ntemperature\nevent_time\n}\n\n}",
+          "queryName" : "SensorReading",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/SensorReading{?offset,limit}"
+      },
+      {
+        "function" : {
+          "name" : "GetSensorReadingById",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              },
+              "sensorid" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [
+              "sensorid"
+            ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query SensorReadingById($sensorid: Int!, $limit: Int = 10, $offset: Int = 0) {\nSensorReadingById(sensorid: $sensorid, limit: $limit, offset: $offset) {\nsensorid\ntemperature\nevent_time\n}\n\n}",
+          "queryName" : "SensorReadingById",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/SensorReadingById{?offset,limit,sensorid}"
+      }
+    ],
     "schema" : {
       "type" : "string",
-      "schema" : "\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Query {\n  SensorAggregate(limit: Int = 10, offset: Int = 0): [SensorAggregate!]\n  SensorReading(limit: Int = 10, offset: Int = 0): [SensorReading!]\n  SensorReadingById(sensorid: Int!, limit: Int = 10, offset: Int = 0): [SensorReading!]\n}\n\ntype SensorAggregate {\n  sensorid: Int!\n  maxTemp: Float!\n  avgTemp: Float!\n}\n\ntype SensorReading {\n  sensorid: Int!\n  temperature: Float!\n  event_time: GraphQLBigInteger!\n}\n"
+      "schema" : "\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Query {\n  SensorAggregate(limit: Int = 10, offset: Int = 0): [SensorAggregate!]\n  SensorReading(limit: Int = 10, offset: Int = 0): [SensorReading!]\n  SensorReadingById(sensorid: Int!, limit: Int = 10, offset: Int = 0): [SensorReading!]\n}\n\ntype SensorAggregate {\n  sensorid: Int!\n  maxTemp: Float!\n  avgTemp: Float!\n}\n\ntype SensorReading {\n  sensorid: Int!\n  temperature: Float!\n  event_time: GraphQLBigInteger!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
     }
   }
 }

@@ -15,7 +15,6 @@
  */
 package com.datasqrl;
 
-import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.module.resolver.ResourceResolver;
 import com.datasqrl.plan.MainScript;
@@ -37,7 +36,7 @@ public class MainScriptImpl implements MainScript {
         config
             .getScriptConfig()
             .getMainScript()
-            .map(NamePath::of)
+            .map(Path::of)
             .flatMap(resourceResolver::resolveFile)
             .orElseThrow(() -> new RuntimeException("Could not find main sqrl script file"));
     return FileUtil.readFile(mainScript);
@@ -48,7 +47,7 @@ public class MainScriptImpl implements MainScript {
     return config
         .getScriptConfig()
         .getMainScript()
-        .map(NamePath::of)
+        .map(Path::of)
         .flatMap(resourceResolver::resolveFile);
   }
 }

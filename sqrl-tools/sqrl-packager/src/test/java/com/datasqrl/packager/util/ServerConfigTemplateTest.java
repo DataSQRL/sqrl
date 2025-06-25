@@ -18,6 +18,7 @@ package com.datasqrl.packager.util;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datasqrl.graphql.config.ServerConfig;
+import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vertx.core.json.JsonObject;
 import java.io.File;
@@ -59,7 +60,10 @@ class ServerConfigTemplateTest {
     var afterParsing = new ServerConfig(new JsonObject(original));
 
     if (!Objects.equals(original, mapper.convertValue(afterParsing, Map.class))) {
-      mapper.copy().writerWithDefaultPrettyPrinter().writeValue(TEMPLATE, afterParsing);
+      mapper
+          .configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true)
+          .writerWithDefaultPrettyPrinter()
+          .writeValue(TEMPLATE, afterParsing);
     }
   }
 }

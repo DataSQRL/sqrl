@@ -16,8 +16,10 @@
 package com.datasqrl.config;
 
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.graphql.server.operation.ApiProtocols;
 import com.datasqrl.planner.analyzer.cost.CostModel;
 import java.nio.file.Path;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -56,15 +58,28 @@ public interface PackageJson {
 
     ExplainConfig getExplain();
 
+    CompilerApiConfig getApiConfig();
+
     Optional<String> getSnapshotPath();
 
     void setSnapshotPath(String string);
 
-    boolean isAddArguments();
-
     String getLogger();
 
     boolean isExtendedScalarTypes();
+  }
+
+  interface CompilerApiConfig {
+
+    EnumSet<ApiProtocols> getProtocols();
+
+    boolean isGraphQLProtocolOnly();
+
+    boolean generateOperations();
+
+    boolean isAddOperationsPrefix();
+
+    int getMaxResultDepth();
   }
 
   interface ExplainConfig {
@@ -88,9 +103,13 @@ public interface PackageJson {
 
     Optional<String> getGraphql();
 
+    List<String> getOperations();
+
     void setMainScript(String script);
 
     void setGraphql(String graphql);
+
+    //    void setOperations(List<String> operations);
   }
 
   interface EnginesConfig {

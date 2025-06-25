@@ -1690,9 +1690,219 @@ INSERT INTO `default_catalog`.`default_database`.`Numbers2_2`
     ],
     "mutations" : [ ],
     "subscriptions" : [ ],
+    "operations" : [
+      {
+        "function" : {
+          "name" : "GetNumbers",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query Numbers($limit: Int = 10, $offset: Int = 0) {\nNumbers(limit: $limit, offset: $offset) {\nid\n}\n\n}",
+          "queryName" : "Numbers",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/Numbers{?offset,limit}"
+      },
+      {
+        "function" : {
+          "name" : "GetNumbers2",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query Numbers2($limit: Int = 10, $offset: Int = 0) {\nNumbers2(limit: $limit, offset: $offset) {\nid\n}\n\n}",
+          "queryName" : "Numbers2",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/Numbers2{?offset,limit}"
+      },
+      {
+        "function" : {
+          "name" : "GetNumbersLarge",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query NumbersLarge($limit: Int = 10, $offset: Int = 0) {\nNumbersLarge(limit: $limit, offset: $offset) {\nid\n}\n\n}",
+          "queryName" : "NumbersLarge",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/NumbersLarge{?offset,limit}"
+      },
+      {
+        "function" : {
+          "name" : "GetOrderNumbers",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query OrderNumbers($limit: Int = 10, $offset: Int = 0) {\nOrderNumbers(limit: $limit, offset: $offset) {\nid\ntime\n}\n\n}",
+          "queryName" : "OrderNumbers",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/OrderNumbers{?offset,limit}"
+      },
+      {
+        "function" : {
+          "name" : "GetOrderNumbers2",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query OrderNumbers2($limit: Int = 10, $offset: Int = 0) {\nOrderNumbers2(limit: $limit, offset: $offset) {\nid\ntime\n}\n\n}",
+          "queryName" : "OrderNumbers2",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/OrderNumbers2{?offset,limit}"
+      },
+      {
+        "function" : {
+          "name" : "GetOrderPairs",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query OrderPairs($limit: Int = 10, $offset: Int = 0) {\nOrderPairs(limit: $limit, offset: $offset) {\nid\ntime\notherid\n}\n\n}",
+          "queryName" : "OrderPairs",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/OrderPairs{?offset,limit}"
+      },
+      {
+        "function" : {
+          "name" : "GetOrderPairs2",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query OrderPairs2($limit: Int = 10, $offset: Int = 0) {\nOrderPairs2(limit: $limit, offset: $offset) {\nid\ntime\npk\n}\n\n}",
+          "queryName" : "OrderPairs2",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/OrderPairs2{?offset,limit}"
+      },
+      {
+        "function" : {
+          "name" : "GetOrders",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query Orders($limit: Int = 10, $offset: Int = 0) {\nOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
+          "queryName" : "Orders",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/Orders{?offset,limit}"
+      }
+    ],
     "schema" : {
       "type" : "string",
-      "schema" : "\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Numbers {\n  id: Int!\n}\n\ntype Numbers2 {\n  id: Int!\n}\n\ntype NumbersLarge {\n  id: Int!\n}\n\ntype OrderNumbers {\n  id: GraphQLBigInteger!\n  time: DateTime!\n}\n\ntype OrderNumbers2 {\n  id: GraphQLBigInteger!\n  time: DateTime!\n}\n\ntype OrderPairs {\n  id: GraphQLBigInteger!\n  time: DateTime!\n  otherid: Int!\n}\n\ntype OrderPairs2 {\n  id: GraphQLBigInteger!\n  time: DateTime!\n  pk: Int!\n}\n\ntype Orders {\n  id: GraphQLBigInteger!\n  customerid: GraphQLBigInteger!\n  time: DateTime!\n  entries: [Orders_entriesOutput]!\n}\n\ntype Orders_entriesOutput {\n  productid: GraphQLBigInteger!\n  quantity: GraphQLBigInteger!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Query {\n  Numbers(limit: Int = 10, offset: Int = 0): [Numbers!]\n  Numbers2(limit: Int = 10, offset: Int = 0): [Numbers2!]\n  NumbersLarge(limit: Int = 10, offset: Int = 0): [NumbersLarge!]\n  OrderNumbers(limit: Int = 10, offset: Int = 0): [OrderNumbers!]\n  OrderNumbers2(limit: Int = 10, offset: Int = 0): [OrderNumbers2!]\n  OrderPairs(limit: Int = 10, offset: Int = 0): [OrderPairs!]\n  OrderPairs2(limit: Int = 10, offset: Int = 0): [OrderPairs2!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n}\n"
+      "schema" : "\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Numbers {\n  id: Int!\n}\n\ntype Numbers2 {\n  id: Int!\n}\n\ntype NumbersLarge {\n  id: Int!\n}\n\ntype OrderNumbers {\n  id: GraphQLBigInteger!\n  time: DateTime!\n}\n\ntype OrderNumbers2 {\n  id: GraphQLBigInteger!\n  time: DateTime!\n}\n\ntype OrderPairs {\n  id: GraphQLBigInteger!\n  time: DateTime!\n  otherid: Int!\n}\n\ntype OrderPairs2 {\n  id: GraphQLBigInteger!\n  time: DateTime!\n  pk: Int!\n}\n\ntype Orders {\n  id: GraphQLBigInteger!\n  customerid: GraphQLBigInteger!\n  time: DateTime!\n  entries: [Orders_entriesOutput]!\n}\n\ntype Orders_entriesOutput {\n  productid: GraphQLBigInteger!\n  quantity: GraphQLBigInteger!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Query {\n  Numbers(limit: Int = 10, offset: Int = 0): [Numbers!]\n  Numbers2(limit: Int = 10, offset: Int = 0): [Numbers2!]\n  NumbersLarge(limit: Int = 10, offset: Int = 0): [NumbersLarge!]\n  OrderNumbers(limit: Int = 10, offset: Int = 0): [OrderNumbers!]\n  OrderNumbers2(limit: Int = 10, offset: Int = 0): [OrderNumbers2!]\n  OrderPairs(limit: Int = 10, offset: Int = 0): [OrderPairs!]\n  OrderPairs2(limit: Int = 10, offset: Int = 0): [OrderPairs2!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
     }
   }
 }

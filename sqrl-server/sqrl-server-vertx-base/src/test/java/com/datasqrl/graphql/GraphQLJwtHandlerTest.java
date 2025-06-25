@@ -39,7 +39,7 @@ import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
-import io.vertx.pgclient.impl.PgPoolOptions;
+import io.vertx.sqlclient.PoolOptions;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -101,7 +101,7 @@ class GraphQLJwtHandlerTest {
     serverConfig.setJwtAuth(
         new JWTAuthOptions()
             .addPubSecKey(new PubSecKeyOptions().setAlgorithm("HS256").setBuffer("dGVzdA==")));
-    serverConfig.setPoolOptions(new PgPoolOptions());
+    serverConfig.setPoolOptions(new PoolOptions());
     serverConfig.setServletConfig(new ServletConfig());
     serverConfig.setCorsHandlerOptions(new CorsHandlerOptions());
     HttpServerOptions httpServerOptions =

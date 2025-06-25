@@ -1,0 +1,13 @@
+query ApplicationStatusSpecialMcp @api(rest: NONE, mcp: TOOL) {
+    ApplicationStatus(limit: 10, offset: 0) {
+        status
+        message
+        customer_id
+        loan_type_id
+        amount
+        duration
+        max_amount
+        min_amount
+    }
+
+}

@@ -15,30 +15,39 @@
  */
 package com.datasqrl.config;
 
-import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.graphql.APISource;
-import com.datasqrl.graphql.APISourceImpl;
 import com.datasqrl.graphql.ScriptFiles;
 import com.datasqrl.module.resolver.ResourceResolver;
 import com.google.inject.Inject;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
+import lombok.SneakyThrows;
+import lombok.Value;
 
+@Value
 public class GraphqlSourceFactory {
-  Optional<APISource> apiSchemaOpt;
+  Optional<APISource> apiSchema;
+  List<APISource> operations;
 
   @Inject
-  public GraphqlSourceFactory(
-      ScriptFiles scriptFiles,
-      NameCanonicalizer nameCanonicalizer,
-      ResourceResolver resourceResolver) {
-    apiSchemaOpt =
-        scriptFiles
-            .getConfig()
-            .getGraphql()
-            .map(file -> APISourceImpl.of(file, nameCanonicalizer, resourceResolver));
+  public GraphqlSourceFactory(ScriptFiles scriptFiles, ResourceResolver resolver) {
+    apiSchema = scriptFiles.getConfig().getGraphql().map(file -> resolvePath(file, resolver));
+    operations =
+        scriptFiles.getConfig().getOperations().stream()
+            .map(file -> resolvePath(file, resolver))
+            .toList();
   }
 
-  public Optional<APISource> get() {
-    return apiSchemaOpt;
+  @SneakyThrows
+  private static APISource resolvePath(String file, ResourceResolver resolver) {
+    Path relativePath = Path.of(file);
+    Optional<Path> absolutePath = resolver.resolveFile(relativePath);
+    return APISource.of(
+        relativePath,
+        Files.readString(
+            absolutePath.orElseThrow(
+                () -> new IllegalArgumentException("Could not read file: " + relativePath))));
   }
 }

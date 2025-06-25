@@ -380,9 +380,117 @@ INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
       }
     ],
     "subscriptions" : [ ],
+    "operations" : [
+      {
+        "function" : {
+          "name" : "GetMachineReading",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query MachineReading($limit: Int = 10, $offset: Int = 0) {\nMachineReading(limit: $limit, offset: $offset) {\nsensorid\ntemperature\nevent_time\nmachineid\n}\n\n}",
+          "queryName" : "MachineReading",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/MachineReading{?offset,limit}"
+      },
+      {
+        "function" : {
+          "name" : "GetMachineTempByHour",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query MachineTempByHour($limit: Int = 10, $offset: Int = 0) {\nMachineTempByHour(limit: $limit, offset: $offset) {\nmachineid\ntime_hour\navg_temperature\n}\n\n}",
+          "queryName" : "MachineTempByHour",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/MachineTempByHour{?offset,limit}"
+      },
+      {
+        "function" : {
+          "name" : "Add_SensorReading",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "temperature" : {
+                "type" : "number"
+              },
+              "sensorid" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "mutation _SensorReading($sensorid: Int, $temperature: Float) {\n_SensorReading(event: { sensorid: $sensorid, temperature: $temperature }) {\nevent_id\nsensorid\ntemperature\nevent_time\n}\n\n}",
+          "queryName" : "_SensorReading",
+          "operationType" : "MUTATION"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "POST",
+        "uriTemplate" : "mutations/_SensorReading"
+      },
+      {
+        "function" : {
+          "name" : "Add_Sensors",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "machineid" : {
+                "type" : "integer"
+              },
+              "sensorid" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [
+              "sensorid"
+            ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "mutation _Sensors($sensorid: Int!, $machineid: Int) {\n_Sensors(event: { sensorid: $sensorid, machineid: $machineid }) {\nsensorid\nmachineid\nupdatedTime\n}\n\n}",
+          "queryName" : "_Sensors",
+          "operationType" : "MUTATION"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "POST",
+        "uriTemplate" : "mutations/_Sensors"
+      }
+    ],
     "schema" : {
       "type" : "string",
-      "schema" : "\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype MachineReading {\n  sensorid: Int\n  temperature: Float\n  event_time: DateTime\n  machineid: Int\n}\n\ntype MachineTempByHour {\n  machineid: Int\n  time_hour: DateTime!\n  avg_temperature: Float\n}\n\ntype Mutation {\n  _SensorReading(event: _SensorReadingInput!): _SensorReadingResultOutput!\n  _Sensors(event: _SensorsInput!): _SensorsResultOutput!\n}\n\ntype Query {\n  MachineReading(limit: Int = 10, offset: Int = 0): [MachineReading!]\n  MachineTempByHour(limit: Int = 10, offset: Int = 0): [MachineTempByHour!]\n}\n\ninput _SensorReadingInput {\n  sensorid: Int\n  temperature: Float\n}\n\ntype _SensorReadingResultOutput {\n  event_id: String!\n  sensorid: Int\n  temperature: Float\n  event_time: DateTime\n}\n\ninput _SensorsInput {\n  sensorid: Int!\n  machineid: Int\n}\n\ntype _SensorsResultOutput {\n  sensorid: Int!\n  machineid: Int\n  updatedTime: DateTime\n}\n"
+      "schema" : "\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype MachineReading {\n  sensorid: Int\n  temperature: Float\n  event_time: DateTime\n  machineid: Int\n}\n\ntype MachineTempByHour {\n  machineid: Int\n  time_hour: DateTime!\n  avg_temperature: Float\n}\n\ntype Mutation {\n  _SensorReading(event: _SensorReadingInput!): _SensorReadingResultOutput!\n  _Sensors(event: _SensorsInput!): _SensorsResultOutput!\n}\n\ntype Query {\n  MachineReading(limit: Int = 10, offset: Int = 0): [MachineReading!]\n  MachineTempByHour(limit: Int = 10, offset: Int = 0): [MachineTempByHour!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ninput _SensorReadingInput {\n  sensorid: Int\n  temperature: Float\n}\n\ntype _SensorReadingResultOutput {\n  event_id: String!\n  sensorid: Int\n  temperature: Float\n  event_time: DateTime\n}\n\ninput _SensorsInput {\n  sensorid: Int!\n  machineid: Int\n}\n\ntype _SensorsResultOutput {\n  sensorid: Int!\n  machineid: Int\n  updatedTime: DateTime\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
     }
   }
 }

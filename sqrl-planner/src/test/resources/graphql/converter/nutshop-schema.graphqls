@@ -1,0 +1,136 @@
+"""An RFC-3339 compliant DateTime Scalar"""
+scalar DateTime
+
+type Query {
+    """ Retrieve weekly spending data for a specified customer."""
+    SpendingByWeek(
+        """
+        customerid: The unique identifier for the customer.
+        """
+        customerid: Int!,
+        """ The maximum number of results to return (default: 10)."""
+        limit: Int = 10,
+        """ The number of results to skip before starting to collect the result set (default: 0)."""
+        offset: Int = 0
+    ): [SpendingByWeek!]
+
+    """ Retrieve product information with optional filtering by product ID."""
+    Products(
+        """ The unique identifier for the product (optional)."""
+        id: Int,
+        """ The maximum number of results to return (default: 10)."""
+        limit: Int = 10,
+        """ The number of results to skip before starting to collect the result set (default: 0)."""
+        offset: Int = 0
+    ): [Products!]
+
+    """ Retrieve order information for a specified customer."""
+    Orders(
+        """ The unique identifier for the customer."""
+        customerid: Int!,
+        """ The maximum number of results to return (default: 10)."""
+        limit: Int = 10,
+        """ The number of results to skip before starting to collect the result set (default: 0)."""
+        offset: Int = 0
+    ): [Orders!]
+
+    """Retrieves orders for a given customer within the specified time range"""
+    OrdersByTimeRange(
+        """The unique identifier for the customer"""
+        customerid: Int!,
+        """Returns orders where the order timestamp is larger than this RFC-3339 compliant fromTime timestamp"""
+        fromTime: DateTime!,
+        """Returns orders where the order timestamp is smaller than this RFC-3339 compliant toTime timestamp"""
+        toTime: DateTime!
+    ): [Orders!]
+
+    """ Suggest products for a customer to order again based on their previous orders."""
+    OrderAgain(
+        # The unique identifier for the customer.
+        customerid: Int!,
+        # The maximum number of results to return (default: 10).
+        limit: Int = 10,
+        # The number of results to skip before starting to collect the result set (default: 0).
+        offset: Int = 0
+    ): [OrderAgain!]
+
+    InternalGetChatMessages(
+        customerid: Int!,
+        limit: Int = 10,
+        offset: Int = 0
+    ): [CustomerChatMessage!]
+}
+
+type SpendingByWeek {
+    week: String!
+    total_spend: Float!
+    total_savings: Float!
+}
+
+type OrderAgain {
+    product: Products!
+    num: Int!
+    quantity: Int!
+}
+
+type Orders {
+    id: Int!
+    customerid: Int!
+    timestamp: String!
+    items(limit: Int = 10): [items!]
+    total: total!
+}
+
+type items {
+    quantity: Int!
+    unit_price: Float!
+    discount0: Float!
+    total: Float!
+    product: Products
+}
+
+type total {
+    price: Float!
+    discount: Float!
+}
+
+type Products {
+    id: Int!
+    name: String!
+    sizing: String!
+    weight_in_gram: Float!
+    type: String!
+    category: String!
+    usda_id: Float!
+    updated: String!
+    orders(limit: Int = 10): [Orders!]
+}
+
+type CustomerChatMessage {
+    role: String!
+    content: String!
+    name: String
+    customerid: Int!
+    timestamp: String!
+    uuid: String!
+}
+
+type Mutation {
+    """ Saves a chat message"""
+    InternalSaveChatMessage(message: ChatMessageInput!): CreatedChatMessage
+}
+
+input ChatMessageInput {
+    # The role of the message author
+    role: String!
+    # The content of the message
+    content: String!
+    # The name of the function called (if any)
+    name: String
+    # The id of the customer for the chat session
+    customerid: Int!
+}
+
+type CreatedChatMessage {
+    _source_time: String!
+}

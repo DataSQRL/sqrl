@@ -15,6 +15,8 @@
  */
 package com.datasqrl.planner.tables;
 
+import com.datasqrl.graphql.server.MetadataType.ResolvedMetadata;
+import java.util.Optional;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.Value;
@@ -36,8 +38,10 @@ public class SqrlFunctionParameter implements FunctionParameter {
   @EqualsAndHashCode.Include @ToString.Include
   RelDataType relDataType; // this is the type of the argument
 
-  boolean
-      isParentField; // if true, this is a column on the "this" table, else a user provided argument
+  // if true, this is a column on the "this" table, else a user provided argument
+  boolean isParentField;
+
+  Optional<ResolvedMetadata> metadata;
 
   @Override
   public RelDataType getType(RelDataTypeFactory relDataTypeFactory) {
@@ -47,5 +51,13 @@ public class SqrlFunctionParameter implements FunctionParameter {
   @Override
   public boolean isOptional() {
     return false;
+  }
+
+  public boolean isMetadata() {
+    return metadata.isPresent();
+  }
+
+  public boolean isExternalArgument() {
+    return !isParentField && metadata.isEmpty();
   }
 }

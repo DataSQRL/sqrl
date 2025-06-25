@@ -408,9 +408,89 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerUpdates_2`
     ],
     "mutations" : [ ],
     "subscriptions" : [ ],
+    "operations" : [
+      {
+        "function" : {
+          "name" : "GetCustomer",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query Customer($limit: Int = 10, $offset: Int = 0) {\nCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+          "queryName" : "Customer",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/Customer{?offset,limit}"
+      },
+      {
+        "function" : {
+          "name" : "GetCustomerUpdates",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query CustomerUpdates($limit: Int = 10, $offset: Int = 0) {\nCustomerUpdates(limit: $limit, offset: $offset) {\ncustomerid\nendOfMin\ntotal\n}\n\n}",
+          "queryName" : "CustomerUpdates",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/CustomerUpdates{?offset,limit}"
+      },
+      {
+        "function" : {
+          "name" : "GetDistinctCustomerUpdates",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query DistinctCustomerUpdates($limit: Int = 10, $offset: Int = 0) {\nDistinctCustomerUpdates(limit: $limit, offset: $offset) {\ncustomerid\nendOfMin\ntotal\n}\n\n}",
+          "queryName" : "DistinctCustomerUpdates",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/DistinctCustomerUpdates{?offset,limit}"
+      }
+    ],
     "schema" : {
       "type" : "string",
-      "schema" : "type Customer {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n}\n\ntype CustomerUpdates {\n  customerid: GraphQLBigInteger!\n  endOfMin: DateTime!\n  total: GraphQLBigInteger!\n}\n\n\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype DistinctCustomerUpdates {\n  customerid: GraphQLBigInteger!\n  endOfMin: DateTime!\n  total: GraphQLBigInteger!\n}\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerUpdates(limit: Int = 10, offset: Int = 0): [CustomerUpdates!]\n  DistinctCustomerUpdates(limit: Int = 10, offset: Int = 0): [DistinctCustomerUpdates!]\n}\n"
+      "schema" : "type Customer {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n}\n\ntype CustomerUpdates {\n  customerid: GraphQLBigInteger!\n  endOfMin: DateTime!\n  total: GraphQLBigInteger!\n}\n\n\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype DistinctCustomerUpdates {\n  customerid: GraphQLBigInteger!\n  endOfMin: DateTime!\n  total: GraphQLBigInteger!\n}\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerUpdates(limit: Int = 10, offset: Int = 0): [CustomerUpdates!]\n  DistinctCustomerUpdates(limit: Int = 10, offset: Int = 0): [DistinctCustomerUpdates!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
     }
   }
 }

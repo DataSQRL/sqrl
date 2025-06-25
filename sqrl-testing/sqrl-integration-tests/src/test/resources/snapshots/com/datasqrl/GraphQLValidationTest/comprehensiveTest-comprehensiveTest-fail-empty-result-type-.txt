@@ -20,7 +20,7 @@ CustomerTimeWindow := SELECT
 ^
 
 [FATAL] Empty object type: Customer
-in script:comprehensivetest-fail-empty-result-type [1:1]:
+in script:comprehensivetest-fail-empty-result-type.graphqls [1:1]:
 type Customer {
 ^
 

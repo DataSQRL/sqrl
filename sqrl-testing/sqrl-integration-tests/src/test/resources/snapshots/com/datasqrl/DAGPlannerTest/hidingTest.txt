@@ -519,9 +519,89 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
     ],
     "mutations" : [ ],
     "subscriptions" : [ ],
+    "operations" : [
+      {
+        "function" : {
+          "name" : "GetAnotherCustomer",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query AnotherCustomer($limit: Int = 10, $offset: Int = 0) {\nAnotherCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+          "queryName" : "AnotherCustomer",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/AnotherCustomer{?offset,limit}"
+      },
+      {
+        "function" : {
+          "name" : "GetCustomer",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query Customer($limit: Int = 10, $offset: Int = 0) {\nCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+          "queryName" : "Customer",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/Customer{?offset,limit}"
+      },
+      {
+        "function" : {
+          "name" : "GetFinalCustomer",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query FinalCustomer($limit: Int = 10, $offset: Int = 0) {\nFinalCustomer(limit: $limit, offset: $offset) {\ncustomerid\nlastUpdated\n}\n\n}",
+          "queryName" : "FinalCustomer",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/FinalCustomer{?offset,limit}"
+      }
+    ],
     "schema" : {
       "type" : "string",
-      "schema" : "type AnotherCustomer {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n}\n\ntype Customer {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n}\n\n\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype FinalCustomer {\n  customerid: GraphQLBigInteger!\n  lastUpdated: GraphQLBigInteger!\n}\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Query {\n  AnotherCustomer(limit: Int = 10, offset: Int = 0): [AnotherCustomer!]\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  FinalCustomer(limit: Int = 10, offset: Int = 0): [FinalCustomer!]\n}\n"
+      "schema" : "type AnotherCustomer {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n}\n\ntype Customer {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n}\n\n\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype FinalCustomer {\n  customerid: GraphQLBigInteger!\n  lastUpdated: GraphQLBigInteger!\n}\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Query {\n  AnotherCustomer(limit: Int = 10, offset: Int = 0): [AnotherCustomer!]\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  FinalCustomer(limit: Int = 10, offset: Int = 0): [FinalCustomer!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
     }
   }
 }

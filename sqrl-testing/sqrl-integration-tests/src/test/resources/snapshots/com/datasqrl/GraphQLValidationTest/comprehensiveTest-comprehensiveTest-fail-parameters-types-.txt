@@ -20,7 +20,7 @@ CustomerTimeWindow := SELECT
 ^
 
 [FATAL] Scalar types not matching for field TableFunctionCallsTblFct at argument arg1: found Float but wanted Int
-in script:comprehensivetest-fail-parameters-types [17:36]:
+in script:comprehensivetest-fail-parameters-types.graphqls [17:36]:
 
 type Query {
     TableFunctionCallsTblFct(arg1: Float!, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]

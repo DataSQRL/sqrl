@@ -869,9 +869,323 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
     ],
     "mutations" : [ ],
     "subscriptions" : [ ],
+    "operations" : [
+      {
+        "function" : {
+          "name" : "GetCustomer",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query Customer($limit: Int = 10, $offset: Int = 0) {\nCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+          "queryName" : "Customer",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/Customer{?offset,limit}"
+      },
+      {
+        "function" : {
+          "name" : "GetCustomerStream",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query CustomerStream($limit: Int = 10, $offset: Int = 0) {\nCustomerStream(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+          "queryName" : "CustomerStream",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/CustomerStream{?offset,limit}"
+      },
+      {
+        "function" : {
+          "name" : "GetObjComplex",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query ObjComplex($limit: Int = 10, $offset: Int = 0) {\nObjComplex(limit: $limit, offset: $offset) {\nobj\n}\n\n}",
+          "queryName" : "ObjComplex",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/ObjComplex{?offset,limit}"
+      },
+      {
+        "function" : {
+          "name" : "GetjsonArrayAggTable",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query jsonArrayAggTable($limit: Int = 10, $offset: Int = 0) {\njsonArrayAggTable(limit: $limit, offset: $offset) {\nagg\n}\n\n}",
+          "queryName" : "jsonArrayAggTable",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/jsonArrayAggTable{?offset,limit}"
+      },
+      {
+        "function" : {
+          "name" : "GetjsonArrayTable",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query jsonArrayTable($limit: Int = 10, $offset: Int = 0) {\njsonArrayTable(limit: $limit, offset: $offset) {\nobj\n}\n\n}",
+          "queryName" : "jsonArrayTable",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/jsonArrayTable{?offset,limit}"
+      },
+      {
+        "function" : {
+          "name" : "GetjsonConcatTable",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query jsonConcatTable($limit: Int = 10, $offset: Int = 0) {\njsonConcatTable(limit: $limit, offset: $offset) {\nobj\n}\n\n}",
+          "queryName" : "jsonConcatTable",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/jsonConcatTable{?offset,limit}"
+      },
+      {
+        "function" : {
+          "name" : "GetjsonExistsTable",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query jsonExistsTable($limit: Int = 10, $offset: Int = 0) {\njsonExistsTable(limit: $limit, offset: $offset) {\nobj\n}\n\n}",
+          "queryName" : "jsonExistsTable",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/jsonExistsTable{?offset,limit}"
+      },
+      {
+        "function" : {
+          "name" : "GetjsonExtractTable",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query jsonExtractTable($limit: Int = 10, $offset: Int = 0) {\njsonExtractTable(limit: $limit, offset: $offset) {\nobj\n}\n\n}",
+          "queryName" : "jsonExtractTable",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/jsonExtractTable{?offset,limit}"
+      },
+      {
+        "function" : {
+          "name" : "GetjsonObjectAggTable",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query jsonObjectAggTable($limit: Int = 10, $offset: Int = 0) {\njsonObjectAggTable(limit: $limit, offset: $offset) {\nagg\n}\n\n}",
+          "queryName" : "jsonObjectAggTable",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/jsonObjectAggTable{?offset,limit}"
+      },
+      {
+        "function" : {
+          "name" : "GetjsonQueryTable",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query jsonQueryTable($limit: Int = 10, $offset: Int = 0) {\njsonQueryTable(limit: $limit, offset: $offset) {\nobj\n}\n\n}",
+          "queryName" : "jsonQueryTable",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/jsonQueryTable{?offset,limit}"
+      },
+      {
+        "function" : {
+          "name" : "GetjsonToStringTable",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query jsonToStringTable($limit: Int = 10, $offset: Int = 0) {\njsonToStringTable(limit: $limit, offset: $offset) {\nobj\n}\n\n}",
+          "queryName" : "jsonToStringTable",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/jsonToStringTable{?offset,limit}"
+      },
+      {
+        "function" : {
+          "name" : "GettoJsonTable",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query toJsonTable($limit: Int = 10, $offset: Int = 0) {\ntoJsonTable(limit: $limit, offset: $offset) {\nobj\n}\n\n}",
+          "queryName" : "toJsonTable",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/toJsonTable{?offset,limit}"
+      }
+    ],
     "schema" : {
       "type" : "string",
-      "schema" : "type Customer {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n}\n\ntype CustomerStream {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n}\n\n\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\n\"A JSON scalar\"\nscalar JSON\n\ntype ObjComplex {\n  obj: JSON\n}\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerStream(limit: Int = 10, offset: Int = 0): [CustomerStream!]\n  ObjComplex(limit: Int = 10, offset: Int = 0): [ObjComplex!]\n  jsonArrayAggTable(limit: Int = 10, offset: Int = 0): [jsonArrayAggTable!]\n  jsonArrayTable(limit: Int = 10, offset: Int = 0): [jsonArrayTable!]\n  jsonConcatTable(limit: Int = 10, offset: Int = 0): [jsonConcatTable!]\n  jsonExistsTable(limit: Int = 10, offset: Int = 0): [jsonExistsTable!]\n  jsonExtractTable(limit: Int = 10, offset: Int = 0): [jsonExtractTable!]\n  jsonObjectAggTable(limit: Int = 10, offset: Int = 0): [jsonObjectAggTable!]\n  jsonQueryTable(limit: Int = 10, offset: Int = 0): [jsonQueryTable!]\n  jsonToStringTable(limit: Int = 10, offset: Int = 0): [jsonToStringTable!]\n  toJsonTable(limit: Int = 10, offset: Int = 0): [toJsonTable!]\n}\n\ntype jsonArrayAggTable {\n  agg: JSON\n}\n\ntype jsonArrayTable {\n  obj: JSON\n}\n\ntype jsonConcatTable {\n  obj: JSON\n}\n\ntype jsonExistsTable {\n  obj: Boolean\n}\n\ntype jsonExtractTable {\n  obj: String\n}\n\ntype jsonObjectAggTable {\n  agg: JSON\n}\n\ntype jsonQueryTable {\n  obj: String\n}\n\ntype jsonToStringTable {\n  obj: String\n}\n\ntype toJsonTable {\n  obj: JSON\n}\n"
+      "schema" : "type Customer {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n}\n\ntype CustomerStream {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n}\n\n\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\n\"A JSON scalar\"\nscalar JSON\n\ntype ObjComplex {\n  obj: JSON\n}\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerStream(limit: Int = 10, offset: Int = 0): [CustomerStream!]\n  ObjComplex(limit: Int = 10, offset: Int = 0): [ObjComplex!]\n  jsonArrayAggTable(limit: Int = 10, offset: Int = 0): [jsonArrayAggTable!]\n  jsonArrayTable(limit: Int = 10, offset: Int = 0): [jsonArrayTable!]\n  jsonConcatTable(limit: Int = 10, offset: Int = 0): [jsonConcatTable!]\n  jsonExistsTable(limit: Int = 10, offset: Int = 0): [jsonExistsTable!]\n  jsonExtractTable(limit: Int = 10, offset: Int = 0): [jsonExtractTable!]\n  jsonObjectAggTable(limit: Int = 10, offset: Int = 0): [jsonObjectAggTable!]\n  jsonQueryTable(limit: Int = 10, offset: Int = 0): [jsonQueryTable!]\n  jsonToStringTable(limit: Int = 10, offset: Int = 0): [jsonToStringTable!]\n  toJsonTable(limit: Int = 10, offset: Int = 0): [toJsonTable!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ntype jsonArrayAggTable {\n  agg: JSON\n}\n\ntype jsonArrayTable {\n  obj: JSON\n}\n\ntype jsonConcatTable {\n  obj: JSON\n}\n\ntype jsonExistsTable {\n  obj: Boolean\n}\n\ntype jsonExtractTable {\n  obj: String\n}\n\ntype jsonObjectAggTable {\n  agg: JSON\n}\n\ntype jsonQueryTable {\n  obj: String\n}\n\ntype jsonToStringTable {\n  obj: String\n}\n\ntype toJsonTable {\n  obj: JSON\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
     }
   }
 }

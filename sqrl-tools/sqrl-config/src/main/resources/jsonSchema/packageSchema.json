@@ -58,14 +58,34 @@
         "snapshotPath": {
           "type": "string"
         },
-        "addArguments": {
-          "type": "boolean"
-        },
         "logger": {
           "type": "string"
         },
         "extendedScalarTypes": {
           "type": "boolean"
+        },
+        "api": {
+          "type": "object",
+          "properties": {
+            "protocols": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["GRAPHQL", "REST", "MCP"]
+              }
+            },
+            "endpoints": {
+              "type": "string",
+              "enum": ["OPS_ONLY", "GRAPHQL", "FULL"]
+            },
+            "add-prefix": {
+              "type": "boolean"
+            },
+            "result-depth": {
+              "type": "integer"
+            }
+          },
+          "additionalProperties": false
         }
       }
     },
@@ -78,6 +98,10 @@
         },
         "graphql": {
           "type": "string"
+        },
+        "operations": {
+          "type": "array",
+          "items": { "type": "string" }
         }
       },
       "additionalProperties": false

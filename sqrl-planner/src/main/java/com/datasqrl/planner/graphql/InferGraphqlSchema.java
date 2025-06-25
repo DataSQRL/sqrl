@@ -15,6 +15,8 @@
  */
 package com.datasqrl.planner.graphql;
 
+import static com.datasqrl.planner.graphql.GraphqlSchemaFactory.API_DIRECTIVE_NAME;
+
 import com.datasqrl.engine.server.ServerPhysicalPlan;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.APISource;
@@ -40,14 +42,9 @@ public class InferGraphqlSchema {
     SchemaPrinter.Options opts =
         SchemaPrinter.Options.defaultOptions()
             .setComparators(GraphqlTypeComparatorRegistry.AS_IS_REGISTRY)
-            .includeDirectives(false);
+            .includeDirectives(directiveName -> directiveName.equalsIgnoreCase(API_DIRECTIVE_NAME));
 
     return gqlSchema.map(schema -> new SchemaPrinter(opts).print(schema));
-  }
-
-  private ErrorCollector createErrorCollectorWithSchema(APISource apiSource) {
-    return errorCollector.withSchema(
-        apiSource.getName().getDisplay(), apiSource.getSchemaDefinition());
   }
 
   // Validates the schema
@@ -56,7 +53,7 @@ public class InferGraphqlSchema {
         new GraphqlSchemaValidator(
             serverPlan.getFunctions(),
             serverPlan.getMutations(),
-            createErrorCollectorWithSchema(apiSource));
+            errorCollector.withScript(apiSource.getPath(), apiSource.getDefinition()));
     schemaValidator.validate(apiSource);
   }
 }

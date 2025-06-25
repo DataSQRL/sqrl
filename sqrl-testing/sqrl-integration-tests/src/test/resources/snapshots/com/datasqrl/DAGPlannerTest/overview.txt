@@ -1112,9 +1112,260 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2`
         }
       }
     ],
+    "operations" : [
+      {
+        "function" : {
+          "name" : "GetCustomer",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "largeOrders_limit" : {
+                "type" : "integer"
+              },
+              "orders_limit" : {
+                "type" : "integer"
+              },
+              "offset" : {
+                "type" : "integer"
+              },
+              "largeOrders_offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              },
+              "largeOrders_minAmount" : {
+                "type" : "number"
+              },
+              "orders_offset" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [
+              "largeOrders_minAmount"
+            ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query Customer($limit: Int = 10, $offset: Int = 0$largeOrders_minAmount: Float!, $largeOrders_limit: Int = 10, $largeOrders_offset: Int = 0$orders_limit: Int = 10, $orders_offset: Int = 0) {\nCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\nlargeOrders(minAmount: $largeOrders_minAmount, limit: $largeOrders_limit, offset: $largeOrders_offset) {\norderid\ncustomerid\namount\norderTime\n}\norders(limit: $orders_limit, offset: $orders_offset) {\norderid\ncustomerid\namount\norderTime\n}\n}\n\n}",
+          "queryName" : "Customer",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/Customer{?largeOrders_limit,orders_limit,offset,largeOrders_offset,limit,largeOrders_minAmount,orders_offset}"
+      },
+      {
+        "function" : {
+          "name" : "GetCustomerImport",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query CustomerImport($limit: Int = 10, $offset: Int = 0) {\nCustomerImport(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+          "queryName" : "CustomerImport",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/CustomerImport{?offset,limit}"
+      },
+      {
+        "function" : {
+          "name" : "GetLargeOrders",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query LargeOrders($limit: Int = 10, $offset: Int = 0) {\nLargeOrders(limit: $limit, offset: $offset) {\norderid\ncustomerid\namount\norderTime\n}\n\n}",
+          "queryName" : "LargeOrders",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/LargeOrders{?offset,limit}"
+      },
+      {
+        "function" : {
+          "name" : "GetOrders",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query Orders($limit: Int = 10, $offset: Int = 0) {\nOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
+          "queryName" : "Orders",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/Orders{?offset,limit}"
+      },
+      {
+        "function" : {
+          "name" : "GetSimpleOrders",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query SimpleOrders($limit: Int = 10, $offset: Int = 0) {\nSimpleOrders(limit: $limit, offset: $offset) {\norderid\ncustomerid\namount\norderTime\n}\n\n}",
+          "queryName" : "SimpleOrders",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/SimpleOrders{?offset,limit}"
+      },
+      {
+        "function" : {
+          "name" : "GetUnnestOrders",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query UnnestOrders($limit: Int = 10, $offset: Int = 0) {\nUnnestOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nproductid\nquantity\ndiscount\n}\n\n}",
+          "queryName" : "UnnestOrders",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/UnnestOrders{?offset,limit}"
+      },
+      {
+        "function" : {
+          "name" : "GetCustomerById",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "largeOrders_limit" : {
+                "type" : "integer"
+              },
+              "orders_limit" : {
+                "type" : "integer"
+              },
+              "offset" : {
+                "type" : "integer"
+              },
+              "largeOrders_offset" : {
+                "type" : "integer"
+              },
+              "customerid" : {
+                "type" : "string"
+              },
+              "limit" : {
+                "type" : "integer"
+              },
+              "largeOrders_minAmount" : {
+                "type" : "number"
+              },
+              "orders_offset" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [
+              "customerid",
+              "largeOrders_minAmount"
+            ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query CustomerById($customerid: GraphQLBigInteger!, $limit: Int = 10, $offset: Int = 0$largeOrders_minAmount: Float!, $largeOrders_limit: Int = 10, $largeOrders_offset: Int = 0$orders_limit: Int = 10, $orders_offset: Int = 0) {\nCustomerById(customerid: $customerid, limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\nlargeOrders(minAmount: $largeOrders_minAmount, limit: $largeOrders_limit, offset: $largeOrders_offset) {\norderid\ncustomerid\namount\norderTime\n}\norders(limit: $orders_limit, offset: $orders_offset) {\norderid\ncustomerid\namount\norderTime\n}\n}\n\n}",
+          "queryName" : "CustomerById",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/CustomerById{?largeOrders_limit,orders_limit,offset,largeOrders_offset,customerid,limit,largeOrders_minAmount,orders_offset}"
+      },
+      {
+        "function" : {
+          "name" : "AddSimpleOrders",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "amount" : {
+                "type" : "number"
+              },
+              "orderid" : {
+                "type" : "integer"
+              },
+              "customerid" : {
+                "type" : "string"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "mutation SimpleOrders($orderid: Int, $customerid: GraphQLBigInteger, $amount: Float) {\nSimpleOrders(event: { orderid: $orderid, customerid: $customerid, amount: $amount }) {\norderid\ncustomerid\namount\norderTime\n}\n\n}",
+          "queryName" : "SimpleOrders",
+          "operationType" : "MUTATION"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "POST",
+        "uriTemplate" : "mutations/SimpleOrders"
+      }
+    ],
     "schema" : {
       "type" : "string",
-      "schema" : "type Customer {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n  largeOrders(minAmount: Float!, limit: Int = 10, offset: Int = 0): [SimpleOrders!]\n  orders(limit: Int = 10, offset: Int = 0): [SimpleOrders!]\n}\n\ntype CustomerImport {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n}\n\n\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Mutation {\n  SimpleOrders(event: SimpleOrdersInput!): SimpleOrdersResultOutput!\n}\n\ntype Orders {\n  id: GraphQLBigInteger!\n  customerid: GraphQLBigInteger!\n  time: DateTime!\n  entries: [Orders_entriesOutput]!\n}\n\ntype Orders_entriesOutput {\n  productid: GraphQLBigInteger!\n  quantity: GraphQLBigInteger!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerImport(limit: Int = 10, offset: Int = 0): [CustomerImport!]\n  LargeOrders(limit: Int = 10, offset: Int = 0): [SimpleOrders!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n  SimpleOrders(limit: Int = 10, offset: Int = 0): [SimpleOrders!]\n  UnnestOrders(limit: Int = 10, offset: Int = 0): [UnnestOrders!]\n  CustomerById(customerid: GraphQLBigInteger!, limit: Int = 10, offset: Int = 0): [Customer!]\n}\n\ntype SimpleOrders {\n  orderid: Int\n  customerid: GraphQLBigInteger\n  amount: Float\n  orderTime: DateTime\n}\n\ninput SimpleOrdersInput {\n  orderid: Int\n  customerid: GraphQLBigInteger\n  amount: Float\n}\n\ntype SimpleOrdersResultOutput {\n  orderid: Int\n  customerid: GraphQLBigInteger\n  amount: Float\n  orderTime: DateTime\n}\n\ntype Subscription {\n  LargeOrderSubscription(customerid: GraphQLBigInteger): SimpleOrders\n}\n\ntype UnnestOrders {\n  id: GraphQLBigInteger!\n  customerid: GraphQLBigInteger!\n  time: DateTime!\n  productid: GraphQLBigInteger!\n  quantity: GraphQLBigInteger!\n  discount: Float\n}\n"
+      "schema" : "type Customer {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n  largeOrders(minAmount: Float!, limit: Int = 10, offset: Int = 0): [SimpleOrders!]\n  orders(limit: Int = 10, offset: Int = 0): [SimpleOrders!]\n}\n\ntype CustomerImport {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n}\n\n\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Mutation {\n  SimpleOrders(event: SimpleOrdersInput!): SimpleOrdersResultOutput!\n}\n\ntype Orders {\n  id: GraphQLBigInteger!\n  customerid: GraphQLBigInteger!\n  time: DateTime!\n  entries: [Orders_entriesOutput]!\n}\n\ntype Orders_entriesOutput {\n  productid: GraphQLBigInteger!\n  quantity: GraphQLBigInteger!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerImport(limit: Int = 10, offset: Int = 0): [CustomerImport!]\n  LargeOrders(limit: Int = 10, offset: Int = 0): [SimpleOrders!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n  SimpleOrders(limit: Int = 10, offset: Int = 0): [SimpleOrders!]\n  UnnestOrders(limit: Int = 10, offset: Int = 0): [UnnestOrders!]\n  CustomerById(customerid: GraphQLBigInteger!, limit: Int = 10, offset: Int = 0): [Customer!]\n}\n\ntype SimpleOrders {\n  orderid: Int\n  customerid: GraphQLBigInteger\n  amount: Float\n  orderTime: DateTime\n}\n\ninput SimpleOrdersInput {\n  orderid: Int\n  customerid: GraphQLBigInteger\n  amount: Float\n}\n\ntype SimpleOrdersResultOutput {\n  orderid: Int\n  customerid: GraphQLBigInteger\n  amount: Float\n  orderTime: DateTime\n}\n\ntype Subscription {\n  LargeOrderSubscription(customerid: GraphQLBigInteger): SimpleOrders\n}\n\ntype UnnestOrders {\n  id: GraphQLBigInteger!\n  customerid: GraphQLBigInteger!\n  time: DateTime!\n  productid: GraphQLBigInteger!\n  quantity: GraphQLBigInteger!\n  discount: Float\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
     }
   }
 }

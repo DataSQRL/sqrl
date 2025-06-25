@@ -20,7 +20,7 @@ CustomerTimeWindow := SELECT
 ^
 
 [FATAL] Empty root object type: Query
-in script:comprehensivetest-fail-empty-query [1:1]:
+in script:comprehensivetest-fail-empty-query.graphqls [1:1]:
 type Query {
 ^
 

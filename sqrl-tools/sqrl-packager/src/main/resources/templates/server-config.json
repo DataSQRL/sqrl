@@ -2,6 +2,8 @@
   "servletConfig" : {
     "graphiQLEndpoint" : "/graphiql*",
     "graphQLEndpoint" : "/graphql",
+    "restEndpoint" : "/rest",
+    "mcpEndpoint" : "/mcp",
     "usePgPool" : true
   },
   "graphQLHandlerOptions" : {

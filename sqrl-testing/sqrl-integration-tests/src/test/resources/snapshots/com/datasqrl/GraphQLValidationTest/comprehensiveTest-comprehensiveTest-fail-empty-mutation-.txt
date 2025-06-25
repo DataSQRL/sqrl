@@ -20,7 +20,7 @@ CustomerTimeWindow := SELECT
 ^
 
 [FATAL] Empty root object type: Mutation
-in script:comprehensivetest-fail-empty-mutation [16:1]:
+in script:comprehensivetest-fail-empty-mutation.graphqls [16:1]:
 }
 
 type Mutation {

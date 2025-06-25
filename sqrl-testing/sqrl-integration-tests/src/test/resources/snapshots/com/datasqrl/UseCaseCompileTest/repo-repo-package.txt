@@ -504,6 +504,113 @@ CREATE INDEX IF NOT EXISTS "Submission_btree_c0c3" ON "Submission" USING btree (
     ],
     "mutations" : [ ],
     "subscriptions" : [ ],
+    "operations" : [
+      {
+        "function" : {
+          "name" : "GetPackage",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "versions_version" : {
+                "type" : "string"
+              },
+              "versions_offset" : {
+                "type" : "integer"
+              },
+              "offset" : {
+                "type" : "integer"
+              },
+              "name" : {
+                "type" : "string"
+              },
+              "limit" : {
+                "type" : "integer"
+              },
+              "versions_limit" : {
+                "type" : "integer"
+              },
+              "versions_variant" : {
+                "type" : "string"
+              }
+            },
+            "required" : [
+              "name",
+              "versions_version",
+              "versions_variant"
+            ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query Package($name: String!, $limit: Int = 10, $offset: Int = 0$versions_version: String!, $versions_variant: String!, $versions_limit: Int = 10, $versions_offset: Int = 0) {\nPackage(name: $name, limit: $limit, offset: $offset) {\nname\nlatest {\nname\nversion\nvariant\nlatest\ntype\nlicense\nrepository\nhomepage\ndocumentation\nreadme\ndescription\nuniqueId\nkeywords\nrepoURL\nfile\nhash\nsubmissionTime\n}\nversions(version: $versions_version, variant: $versions_variant, limit: $versions_limit, offset: $versions_offset) {\nname\nversion\nvariant\nlatest\ntype\nlicense\nrepository\nhomepage\ndocumentation\nreadme\ndescription\nuniqueId\nkeywords\nrepoURL\nfile\nhash\nsubmissionTime\n}\n}\n\n}",
+          "queryName" : "Package",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/Package{?versions_version,versions_offset,offset,name,limit,versions_limit,versions_variant}"
+      },
+      {
+        "function" : {
+          "name" : "GetTopicSearch",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              },
+              "topicName" : {
+                "type" : "string"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query TopicSearch($topicName: String, $limit: Int = 10, $offset: Int = 0) {\nTopicSearch(topicName: $topicName, limit: $limit, offset: $offset) {\ntopicName\nnumPackages\n}\n\n}",
+          "queryName" : "TopicSearch",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/TopicSearch{?offset,limit,topicName}"
+      },
+      {
+        "function" : {
+          "name" : "GetTopicPackages",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              },
+              "topicName" : {
+                "type" : "string"
+              }
+            },
+            "required" : [
+              "topicName"
+            ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query TopicPackages($topicName: String!, $limit: Int = 10, $offset: Int = 0) {\nTopicPackages(topicName: $topicName, limit: $limit, offset: $offset) {\ntopicName\npkgName\nlastSubmission\nnumSubmissions\nlatest {\nname\nversion\nvariant\nlatest\ntype\nlicense\nrepository\nhomepage\ndocumentation\nreadme\ndescription\nuniqueId\nkeywords\nrepoURL\nfile\nhash\nsubmissionTime\n}\n}\n\n}",
+          "queryName" : "TopicPackages",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/TopicPackages{?offset,limit,topicName}"
+      }
+    ],
     "schema" : {
       "type" : "string",
       "schema" : "type Package {\n  name: String!\n  latest: Submission\n  versions(version: String!, variant: String!, limit: Int = 10, offset: Int = 0): [Submission!]\n}\n\ntype Query {\n  Package(name: String!, limit: Int = 10, offset: Int = 0): [Package!]\n  TopicSearch(topicName: String, limit: Int = 10, offset: Int = 0): [TopicSearch!]\n  TopicPackages(topicName: String!, limit: Int = 10, offset: Int = 0): [TopicPackages!]\n}\n\ntype Submission {\n  name: String!\n  version: String!\n  variant: String!\n  latest: Boolean!\n  type: String\n  license: String\n  repository: String\n  homepage: String\n  documentation: String\n  readme: String\n  description: String\n  uniqueId: String!\n  keywords: [String!]\n  repoURL: String!\n  file: String!\n  hash: String!\n  submissionTime: String!\n}\n\ntype TopicSearch {\n  topicName: String!\n  numPackages: Int!\n}\n\ntype TopicPackages {\n  topicName: String!\n  pkgName: String!\n  lastSubmission: String!\n  numSubmissions: Int!\n  latest: Submission\n}"

@@ -20,7 +20,7 @@ CustomerTimeWindow := SELECT
 ^
 
 [FATAL] Could not find field different_output in type Orders
-in script:comprehensivetest-fail-not-equal-mutations-inout-types [17:5]:
+in script:comprehensivetest-fail-not-equal-mutations-inout-types.graphqls [17:5]:
 
 type Mutation {
     Orders(event: OrdersInput!): OrdersResultOutput!

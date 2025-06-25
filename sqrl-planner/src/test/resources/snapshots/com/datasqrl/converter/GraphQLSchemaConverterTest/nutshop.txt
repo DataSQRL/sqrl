@@ -1,0 +1,176 @@
+[ {
+  "format" : "JSON",
+  "function" : {
+    "description" : " Retrieve weekly spending data for a specified customer.",
+    "name" : "SpendingByWeek",
+    "parameters" : {
+      "properties" : {
+        "customerid" : {
+          "description" : "customerid: The unique identifier for the customer.",
+          "type" : "integer"
+        },
+        "limit" : {
+          "description" : " The maximum number of results to return (default: 10).",
+          "type" : "integer"
+        },
+        "offset" : {
+          "description" : " The number of results to skip before starting to collect the result set (default: 0).",
+          "type" : "integer"
+        }
+      },
+      "required" : [ "customerid" ],
+      "type" : "object"
+    }
+  },
+  "apiQuery" : {
+    "operationType" : "QUERY",
+    "query" : "query SpendingByWeek($customerid: Int!, $limit: Int = 10, $offset: Int = 0) {\nSpendingByWeek(customerid: $customerid, limit: $limit, offset: $offset) {\nweek\ntotal_spend\ntotal_savings\n}\n\n}",
+    "queryName" : "SpendingByWeek"
+  },
+  "mcpMethod" : "TOOL",
+  "restMethod" : "GET",
+  "uriTemplate" : "queries/SpendingByWeek{?offset,customerid,limit}"
+}, {
+  "format" : "JSON",
+  "function" : {
+    "description" : " Retrieve product information with optional filtering by product ID.",
+    "name" : "Products",
+    "parameters" : {
+      "properties" : {
+        "id" : {
+          "description" : " The unique identifier for the product (optional).",
+          "type" : "integer"
+        },
+        "limit" : {
+          "description" : " The maximum number of results to return (default: 10).",
+          "type" : "integer"
+        },
+        "offset" : {
+          "description" : " The number of results to skip before starting to collect the result set (default: 0).",
+          "type" : "integer"
+        },
+        "orders_items_limit" : {
+          "type" : "integer"
+        },
+        "orders_limit" : {
+          "type" : "integer"
+        }
+      },
+      "required" : [ ],
+      "type" : "object"
+    }
+  },
+  "apiQuery" : {
+    "operationType" : "QUERY",
+    "query" : "query Products($id: Int, $limit: Int = 10, $offset: Int = 0$orders_limit: Int = 10$orders_items_limit: Int = 10) {\nProducts(id: $id, limit: $limit, offset: $offset) {\nid\nname\nsizing\nweight_in_gram\ntype\ncategory\nusda_id\nupdated\norders(limit: $orders_limit) {\nid\ncustomerid\ntimestamp\nitems(limit: $orders_items_limit) {\nquantity\nunit_price\ndiscount0\ntotal\n}\ntotal {\nprice\ndiscount\n}\n}\n}\n\n}",
+    "queryName" : "Products"
+  },
+  "mcpMethod" : "TOOL",
+  "restMethod" : "GET",
+  "uriTemplate" : "queries/Products{?orders_limit,offset,limit,id,orders_items_limit}"
+}, {
+  "format" : "JSON",
+  "function" : {
+    "description" : " Retrieve order information for a specified customer.",
+    "name" : "Orders",
+    "parameters" : {
+      "properties" : {
+        "customerid" : {
+          "description" : " The unique identifier for the customer.",
+          "type" : "integer"
+        },
+        "items_limit" : {
+          "type" : "integer"
+        },
+        "limit" : {
+          "description" : " The maximum number of results to return (default: 10).",
+          "type" : "integer"
+        },
+        "offset" : {
+          "description" : " The number of results to skip before starting to collect the result set (default: 0).",
+          "type" : "integer"
+        }
+      },
+      "required" : [ "customerid" ],
+      "type" : "object"
+    }
+  },
+  "apiQuery" : {
+    "operationType" : "QUERY",
+    "query" : "query Orders($customerid: Int!, $limit: Int = 10, $offset: Int = 0$items_limit: Int = 10) {\nOrders(customerid: $customerid, limit: $limit, offset: $offset) {\nid\ncustomerid\ntimestamp\nitems(limit: $items_limit) {\nquantity\nunit_price\ndiscount0\ntotal\nproduct {\nid\nname\nsizing\nweight_in_gram\ntype\ncategory\nusda_id\nupdated\n}\n}\ntotal {\nprice\ndiscount\n}\n}\n\n}",
+    "queryName" : "Orders"
+  },
+  "mcpMethod" : "TOOL",
+  "restMethod" : "GET",
+  "uriTemplate" : "queries/Orders{?offset,customerid,limit,items_limit}"
+}, {
+  "format" : "JSON",
+  "function" : {
+    "description" : "Retrieves orders for a given customer within the specified time range",
+    "name" : "OrdersByTimeRange",
+    "parameters" : {
+      "properties" : {
+        "customerid" : {
+          "description" : "The unique identifier for the customer",
+          "type" : "integer"
+        },
+        "fromTime" : {
+          "description" : "Returns orders where the order timestamp is larger than this RFC-3339 compliant fromTime timestamp",
+          "type" : "string"
+        },
+        "items_limit" : {
+          "type" : "integer"
+        },
+        "toTime" : {
+          "description" : "Returns orders where the order timestamp is smaller than this RFC-3339 compliant toTime timestamp",
+          "type" : "string"
+        }
+      },
+      "required" : [ "customerid", "fromTime", "toTime" ],
+      "type" : "object"
+    }
+  },
+  "apiQuery" : {
+    "operationType" : "QUERY",
+    "query" : "query OrdersByTimeRange($customerid: Int!, $fromTime: DateTime!, $toTime: DateTime!$items_limit: Int = 10) {\nOrdersByTimeRange(customerid: $customerid, fromTime: $fromTime, toTime: $toTime) {\nid\ncustomerid\ntimestamp\nitems(limit: $items_limit) {\nquantity\nunit_price\ndiscount0\ntotal\nproduct {\nid\nname\nsizing\nweight_in_gram\ntype\ncategory\nusda_id\nupdated\n}\n}\ntotal {\nprice\ndiscount\n}\n}\n\n}",
+    "queryName" : "OrdersByTimeRange"
+  },
+  "mcpMethod" : "TOOL",
+  "restMethod" : "GET",
+  "uriTemplate" : "queries/OrdersByTimeRange{?customerid,fromTime,items_limit,toTime}"
+}, {
+  "format" : "JSON",
+  "function" : {
+    "description" : " Suggest products for a customer to order again based on their previous orders.",
+    "name" : "OrderAgain",
+    "parameters" : {
+      "properties" : {
+        "customerid" : {
+          "description" : " The unique identifier for the customer.",
+          "type" : "integer"
+        },
+        "limit" : {
+          "description" : " The maximum number of results to return (default: 10).",
+          "type" : "integer"
+        },
+        "offset" : {
+          "description" : " The number of results to skip before starting to collect the result set (default: 0).",
+          "type" : "integer"
+        },
+        "product_orders_limit" : {
+          "type" : "integer"
+        }
+      },
+      "required" : [ "customerid" ],
+      "type" : "object"
+    }
+  },
+  "apiQuery" : {
+    "operationType" : "QUERY",
+    "query" : "query OrderAgain($customerid: Int!, $limit: Int = 10, $offset: Int = 0$product_orders_limit: Int = 10) {\nOrderAgain(customerid: $customerid, limit: $limit, offset: $offset) {\nproduct {\nid\nname\nsizing\nweight_in_gram\ntype\ncategory\nusda_id\nupdated\norders(limit: $product_orders_limit) {\nid\ncustomerid\ntimestamp\n}\n}\nnum\nquantity\n}\n\n}",
+    "queryName" : "OrderAgain"
+  },
+  "mcpMethod" : "TOOL",
+  "restMethod" : "GET",
+  "uriTemplate" : "queries/OrderAgain{?offset,customerid,limit,product_orders_limit}"
+} ]

@@ -20,7 +20,7 @@ CustomerTimeWindow := SELECT
 ^
 
 [FATAL] Could not find object type in graphql type registry: ListType{type=NonNullType{type=TypeName{name='AnotherCustomer'}}}
-in script:comprehensivetest-fail-no-type [2:56]:
+in script:comprehensivetest-fail-no-type.graphqls [2:56]:
 type Query {
     AnotherCustomer(limit: Int = 10, offset: Int = 0): [AnotherCustomer!]
 -------------------------------------------------------^

@@ -309,9 +309,120 @@ CREATE TABLE IF NOT EXISTS "VisitAfter" ("beforeURL" TEXT NOT NULL, "afterURL" T
     ],
     "mutations" : [ ],
     "subscriptions" : [ ],
+    "operations" : [
+      {
+        "function" : {
+          "name" : "GetClick",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query Click($limit: Int = 10, $offset: Int = 0) {\nClick(limit: $limit, offset: $offset) {\nurl\ntimestamp\nuserid\n}\n\n}",
+          "queryName" : "Click",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/Click{?offset,limit}"
+      },
+      {
+        "function" : {
+          "name" : "GetRecommendation",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              },
+              "url" : {
+                "type" : "string"
+              }
+            },
+            "required" : [
+              "url"
+            ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query Recommendation($url: String!, $limit: Int = 10, $offset: Int = 0) {\nRecommendation(url: $url, limit: $limit, offset: $offset) {\nurl\nrec\nfrequency\n}\n\n}",
+          "queryName" : "Recommendation",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/Recommendation{?offset,limit,url}"
+      },
+      {
+        "function" : {
+          "name" : "GetTrending",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query Trending($limit: Int = 10, $offset: Int = 0) {\nTrending(limit: $limit, offset: $offset) {\nurl\ntotal\n}\n\n}",
+          "queryName" : "Trending",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/Trending{?offset,limit}"
+      },
+      {
+        "function" : {
+          "name" : "GetVisitAfter",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query VisitAfter($limit: Int = 10, $offset: Int = 0) {\nVisitAfter(limit: $limit, offset: $offset) {\nbeforeURL\nafterURL\ntimestamp\n}\n\n}",
+          "queryName" : "VisitAfter",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/VisitAfter{?offset,limit}"
+      }
+    ],
     "schema" : {
       "type" : "string",
-      "schema" : "type Click {\n  url: String!\n  timestamp: DateTime!\n  userid: String!\n}\n\n\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Query {\n  Click(limit: Int = 10, offset: Int = 0): [Click!]\n  Recommendation(url: String!, limit: Int = 10, offset: Int = 0): [Recommendation!]\n  Trending(limit: Int = 10, offset: Int = 0): [Trending!]\n  VisitAfter(limit: Int = 10, offset: Int = 0): [VisitAfter!]\n}\n\ntype Recommendation {\n  url: String!\n  rec: String!\n  frequency: GraphQLBigInteger!\n}\n\ntype Trending {\n  url: String!\n  total: GraphQLBigInteger!\n}\n\ntype VisitAfter {\n  beforeURL: String!\n  afterURL: String!\n  timestamp: DateTime!\n}\n"
+      "schema" : "type Click {\n  url: String!\n  timestamp: DateTime!\n  userid: String!\n}\n\n\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Query {\n  Click(limit: Int = 10, offset: Int = 0): [Click!]\n  Recommendation(url: String!, limit: Int = 10, offset: Int = 0): [Recommendation!]\n  Trending(limit: Int = 10, offset: Int = 0): [Trending!]\n  VisitAfter(limit: Int = 10, offset: Int = 0): [VisitAfter!]\n}\n\ntype Recommendation {\n  url: String!\n  rec: String!\n  frequency: GraphQLBigInteger!\n}\n\ntype Trending {\n  url: String!\n  total: GraphQLBigInteger!\n}\n\ntype VisitAfter {\n  beforeURL: String!\n  afterURL: String!\n  timestamp: DateTime!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
     }
   }
 }
