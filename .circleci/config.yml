@@ -233,35 +233,8 @@ jobs:
       - generate-settings
       - install-jdk
       - run:
-          name: Build shaded JAR
-          command: mvn -U clean -T1C -B install -DskipTests -DskipITs
-      - compute-base-tag
-      - run:
-          name: Pull base image
-          command: docker pull datasqrl/base-sqrl:$BASE_TAG
-      - run:
-          name: Build and push test images
-          command: |
-            set -ex
-            echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-            echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
-
-            # ── cmd test image ────────────────────────────────────────────────
-            docker build \
-              --build-arg BASE_TAG=$BASE_TAG \
-              -t datasqrl/cmd-test-image:${CIRCLE_SHA1} \
-              ./sqrl-tools
-            docker push datasqrl/cmd-test-image:${CIRCLE_SHA1}
-
-            # ── sqrl-server test image ───────────────────────────────────────
-            docker build \
-              -t datasqrl/sqrl-server-test-image:${CIRCLE_SHA1} \
-              sqrl-server/sqrl-server-vertx
-            docker push datasqrl/sqrl-server-test-image:${CIRCLE_SHA1}
-
-            # wait for all images to be pushed
-            wait
-
+          name: Build with Docker images
+          command: mvn -U clean -T1C -B package -DskipTests -DskipITs
       - run:
           name: Run container tests using TestContainers
           command: |
@@ -423,7 +396,6 @@ workflows:
               ignore: /.*/
           requires:
             - build-base
-            - docker-build-base-image
       - integration-tests:
           <<: *job-defaults
           filters:

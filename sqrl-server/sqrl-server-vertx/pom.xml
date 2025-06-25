@@ -65,6 +65,25 @@
           </execution>
         </executions>
       </plugin>
+      <plugin>
+        <groupId>com.spotify</groupId>
+        <artifactId>dockerfile-maven-plugin</artifactId>
+        <configuration>
+          <repository>datasqrl/sqrl-server</repository>
+          <tag>test</tag>
+          <dockerfile>Dockerfile</dockerfile>
+          <contextDirectory>${project.basedir}</contextDirectory>
+        </configuration>
+        <executions>
+          <execution>
+            <id>build-docker-image</id>
+            <phase>package</phase>
+            <goals>
+              <goal>build</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
 
