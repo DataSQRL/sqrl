@@ -17,6 +17,7 @@ package com.datasqrl.config;
 
 import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.error.ErrorMessage;
 import com.datasqrl.error.ResourceFileUtil;
 import com.datasqrl.util.JsonMergeUtils;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -165,7 +166,11 @@ public class SqrlConfig {
       }
     }
     if (!valid) {
-      throw errors.exception("Configuration file invalid: %s", files);
+      throw errors.exception(
+          errors
+              .getErrors()
+              .combineMessages(
+                  ErrorMessage.Severity.FATAL, "Failed to load package configuration:\n\n", "\n"));
     }
     var merged = MAPPER.createObjectNode();
     jsons.forEach(node -> JsonMergeUtils.merge(merged, node));
