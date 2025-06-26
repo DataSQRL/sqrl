@@ -57,9 +57,13 @@ public abstract class AbstractQueryExecutionContext
   @Override
   public Object visitMetadataParameter(
       MetadataParameter metadataParameter, QueryExecutionContext context) {
-    // TODO: @Marvin, this is where we need to pull the auth metadata from the JWT context or
-    // throw an exception if it is not present
-    throw new UnsupportedOperationException("Not yet implemented");
+
+    return context
+        // TODO: @Marvin, this is where we need to pull the auth metadata from the JWT context or
+        // throw an exception if it is not present
+        .getContext()
+        .getMetadataReader(metadataParameter.getMetadata().metadataType())
+        .read(context.getEnvironment(), metadataParameter.getMetadata().name());
   }
 
   public List getParamArguments(List<QueryParameterHandler> parameters) {

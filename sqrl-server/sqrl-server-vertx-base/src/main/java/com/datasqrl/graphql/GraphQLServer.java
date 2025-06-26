@@ -375,7 +375,7 @@ public class GraphQLServer extends AbstractVerticle {
                           model, vertx, config, startPromise, vertxJdbcClient))
                   .withExtendedScalarTypes(List.of(CustomScalars.GRAPHQL_BIGINTEGER))
                   .build(),
-              new VertxContext(vertxJdbcClient));
+              new VertxContext(vertxJdbcClient, null));
       var meterRegistry = BackendRegistries.getDefaultNow();
       if (meterRegistry != null) {
         graphQL.instrumentation(new MicrometerInstrumentation(meterRegistry));

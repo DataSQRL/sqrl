@@ -15,11 +15,15 @@
  */
 package com.datasqrl.graphql;
 
+import com.datasqrl.graphql.auth.JwtMetadataReader;
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.jdbc.DatabaseType;
 import com.datasqrl.graphql.server.CustomScalars;
 import com.datasqrl.graphql.server.GraphQLEngineBuilder;
+import com.datasqrl.graphql.server.MetadataReader;
+import com.datasqrl.graphql.server.MetadataType;
 import com.datasqrl.graphql.server.RootGraphqlModel;
+import com.google.common.collect.ImmutableMap;
 import com.symbaloo.graphqlmicrometer.MicrometerInstrumentation;
 import graphql.GraphQL;
 import io.vertx.core.AbstractVerticle;
@@ -36,6 +40,7 @@ import io.vertx.sqlclient.SqlClient;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -43,21 +48,14 @@ import lombok.extern.slf4j.Slf4j;
  * instantiated by HttpServerVerticle with shared config, model, and JWT auth provider.
  */
 @Slf4j
+@RequiredArgsConstructor
 public class GraphQLServerVerticle extends AbstractVerticle {
 
   private final Router router;
   private final ServerConfig config;
   private final RootGraphqlModel model;
-  private final Optional<JWTAuth> jwtAuth;
+  private final Optional<JWTAuth> authProvider;
   private GraphQL graphQLEngine;
-
-  public GraphQLServerVerticle(
-      Router router, ServerConfig config, RootGraphqlModel model, Optional<JWTAuth> jwtAuth) {
-    this.router = router;
-    this.config = config;
-    this.model = model;
-    this.jwtAuth = jwtAuth;
-  }
 
   @Override
   public void start(Promise<Void> startPromise) {
@@ -97,23 +95,33 @@ public class GraphQLServerVerticle extends AbstractVerticle {
     JdbcClientsConfig jdbcConfig = new JdbcClientsConfig(vertx, config);
     Map<DatabaseType, SqlClient> clients = jdbcConfig.createClients();
 
-    // Create GraphQL engine
-    this.graphQLEngine = createGraphQL(clients, startPromise);
-
     // Setup GraphQL endpoint with auth if configured
     var handler = router.route(this.config.getServletConfig().getGraphQLEndpoint());
-    jwtAuth.ifPresent(
-        auth -> {
+    authProvider.ifPresent(
+        (auth) -> {
           // Required for adding auth on ws handler
           System.setProperty("io.vertx.web.router.setup.lenient", "true");
           handler.handler(JWTAuthHandler.create(auth));
         });
+
+    // Create GraphQL engine
+    this.graphQLEngine = createGraphQL(clients, startPromise, createMetadataReaders());
 
     handler
         .handler(GraphQLWSHandler.create(this.graphQLEngine))
         .handler(GraphQLHandler.create(this.graphQLEngine, this.config.getGraphQLHandlerOptions()));
 
     startPromise.complete();
+  }
+
+  private Map<MetadataType, MetadataReader> createMetadataReaders() {
+    var readers = ImmutableMap.<MetadataType, MetadataReader>builder();
+    authProvider.ifPresent(
+        (auth) -> {
+          readers.put(MetadataType.AUTH, new JwtMetadataReader());
+        });
+
+    return readers.build();
   }
 
   /**
@@ -125,7 +133,10 @@ public class GraphQLServerVerticle extends AbstractVerticle {
     return this.graphQLEngine;
   }
 
-  public GraphQL createGraphQL(Map<DatabaseType, SqlClient> client, Promise<Void> startPromise) {
+  public GraphQL createGraphQL(
+      Map<DatabaseType, SqlClient> client,
+      Promise<Void> startPromise,
+      Map<MetadataType, MetadataReader> headerReaders) {
     try {
       var vertxJdbcClient = new VertxJdbcClient(client);
       var graphQL =
@@ -137,7 +148,7 @@ public class GraphQLServerVerticle extends AbstractVerticle {
                           model, vertx, config, startPromise, vertxJdbcClient))
                   .withExtendedScalarTypes(List.of(CustomScalars.GRAPHQL_BIGINTEGER))
                   .build(),
-              new VertxContext(vertxJdbcClient));
+              new VertxContext(vertxJdbcClient, headerReaders));
       var meterRegistry = BackendRegistries.getDefaultNow();
       if (meterRegistry != null) {
         graphQL.instrumentation(new MicrometerInstrumentation(meterRegistry));

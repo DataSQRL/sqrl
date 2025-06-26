@@ -23,13 +23,11 @@ import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.EnginePhysicalPlan.DeploymentArtifact;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.graphql.config.ServerConfig;
-import com.datasqrl.util.JsonMergeUtils;
+import com.datasqrl.graphql.config.ServerConfigUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.json.jackson.VertxModule;
 import java.util.List;
-import java.util.Map;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
@@ -44,7 +42,7 @@ public abstract class GenericJavaServerEngine extends ExecutionEngine.Base imple
       String engineName, EngineConfig engineConfig, ObjectMapper objectMapper) {
     super(engineName, EngineType.SERVER, NO_CAPABILITIES);
     this.engineConfig = engineConfig;
-    this.objectMapper = objectMapper.copy().registerModule(new VertxModule());
+    this.objectMapper = objectMapper;
   }
 
   @Override
@@ -65,7 +63,8 @@ public abstract class GenericJavaServerEngine extends ExecutionEngine.Base imple
 
   @SneakyThrows
   private String serverConfig() {
-    var mergedConfig = mergeConfigs(readDefaultConfig(), engineConfig.getConfig());
+    var mergedConfig =
+        ServerConfigUtil.mergeConfigs(objectMapper, readDefaultConfig(), engineConfig.getConfig());
     return objectMapper.writer(new PrettyPrinter()).writeValueAsString(mergedConfig);
   }
 
@@ -73,18 +72,10 @@ public abstract class GenericJavaServerEngine extends ExecutionEngine.Base imple
   ServerConfig readDefaultConfig() {
     ServerConfig serverConfig;
     try (var input = getClass().getResourceAsStream("/templates/server-config.json")) {
-      var json = objectMapper.readValue(input, JsonObject.class);
+      var json =
+          objectMapper.copy().registerModule(new VertxModule()).readValue(input, JsonObject.class);
       serverConfig = new ServerConfig(json);
     }
     return serverConfig;
-  }
-
-  @SuppressWarnings("unchecked")
-  @SneakyThrows
-  ServerConfig mergeConfigs(ServerConfig serverConfig, Map<String, Object> configOverrides) {
-    var config = ((ObjectNode) objectMapper.valueToTree(serverConfig)).deepCopy();
-    JsonMergeUtils.merge(config, objectMapper.valueToTree(configOverrides));
-    var json = objectMapper.treeToValue(config, Map.class);
-    return new ServerConfig(new JsonObject(json));
   }
 }

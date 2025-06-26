@@ -18,6 +18,7 @@ package com.datasqrl.engine.server;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datasqrl.config.PackageJson.EmptyEngineConfig;
+import com.datasqrl.graphql.config.ServerConfigUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.Map;
@@ -55,7 +56,7 @@ class GenericJavaServerEngineTest {
     var defaultConfig = underTest.readDefaultConfig();
     assertThat(defaultConfig.getJwtAuth()).isNull();
 
-    var result = underTest.mergeConfigs(defaultConfig, config);
+    var result = ServerConfigUtil.mergeConfigs(objectMapper, defaultConfig, config);
 
     assertThat(result).isNotNull();
     assertThat(result.getJwtAuth()).isNotNull();

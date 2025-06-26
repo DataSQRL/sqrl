@@ -19,6 +19,7 @@ import com.datasqrl.flinkrunner.stdlib.utils.AutoRegisterSystemFunction;
 import com.datasqrl.graphql.HttpServerVerticle;
 import com.datasqrl.graphql.JsonEnvVarDeserializer;
 import com.datasqrl.graphql.config.ServerConfig;
+import com.datasqrl.graphql.config.ServerConfigUtil;
 import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
@@ -29,7 +30,6 @@ import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.auth.jwt.JWTAuthOptions;
 import io.vertx.micrometer.MicrometerMetricsFactory;
 import java.io.File;
 import java.net.URL;
@@ -265,7 +265,6 @@ public class DatasqrlRun {
         throw new IllegalStateException("Could not find compiled plan");
       }
       String compiledPlanJson = Files.readString(compiledPlanPath);
-      ;
       CompiledPlan compiledPlan =
           tEnv.loadPlan(PlanReference.fromJsonString(replaceWithEnv(compiledPlanJson)));
       return compiledPlan.execute();
@@ -430,10 +429,7 @@ public class DatasqrlRun {
           .setDatabase(getenv("PGDATABASE"));
     }
 
-    var auth = readAuthentication();
-    if (auth != null) {
-      serverConfig.setJwtAuth(auth);
-    }
+    serverConfig = ServerConfigUtil.mergeConfigs(objectMapper, serverConfig, vertxConfig());
 
     var server = new HttpServerVerticle(serverConfig, rootGraphqlModel);
 
@@ -455,7 +451,8 @@ public class DatasqrlRun {
             });
   }
 
-  private JWTAuthOptions readAuthentication() {
+  @SuppressWarnings("unchecked")
+  private Map<String, Object> vertxConfig() {
     var packageJson = getPackageJson();
     var engines = (Map) packageJson.get("engines");
     if (engines == null) {
@@ -467,12 +464,12 @@ public class DatasqrlRun {
       return null;
     }
 
-    var authentication = (Map) vertx.get("authentication");
-    if (authentication == null) {
+    var config = (Map) vertx.get("config");
+    if (config == null) {
       return null;
     }
 
-    return objectMapper.convertValue(authentication, JWTAuthOptions.class);
+    return (Map<String, Object>) config;
   }
 
   public Optional<String> getSnowflakeUrl() {

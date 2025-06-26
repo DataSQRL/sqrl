@@ -20,6 +20,7 @@ import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedQuery;
 import graphql.schema.DataFetcher;
 import java.util.Set;
+import lombok.NonNull;
 
 //  @Value
 
@@ -32,4 +33,6 @@ public interface Context {
 
   DataFetcher<?> createArgumentLookupFetcher(
       GraphQLEngineBuilder server, Set<Argument> arguments, ResolvedQuery resolvedQuery);
+
+  MetadataReader getMetadataReader(@NonNull MetadataType metadataType);
 }

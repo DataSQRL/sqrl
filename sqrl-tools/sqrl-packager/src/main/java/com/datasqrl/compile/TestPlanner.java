@@ -48,10 +48,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
+import lombok.SneakyThrows;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.sql.type.SqlTypeName;
@@ -68,6 +73,7 @@ public class TestPlanner {
 
     testsPath.ifPresent(
         (p) -> {
+          var headers = loadHeaders(p);
           try (var paths = Files.walk(p)) {
             paths
                 .filter(Files::isRegularFile)
@@ -88,7 +94,8 @@ public class TestPlanner {
                           queries,
                           mutations,
                           subscriptions,
-                          file.getFileName().toString().replace(".graphql", ""));
+                          file.getFileName().toString().replace(".graphql", ""),
+                          headers);
                     });
           } catch (IOException e) {
             e.printStackTrace();
@@ -103,9 +110,41 @@ public class TestPlanner {
 
     for (Node definition : queryNodes) {
       var definition1 = (OperationDefinition) definition;
-      queries.add(new GraphqlQuery(definition1.getName(), AstPrinter.printAst(definition1)));
+      queries.add(new GraphqlQuery(definition1.getName(), AstPrinter.printAst(definition1), null));
     }
     return new TestPlan(queries, mutations, subscriptions);
+  }
+
+  @SneakyThrows
+  public Map<String, Properties> loadHeaders(Path root) {
+    try (Stream<Path> paths = Files.walk(root)) {
+      return paths
+          .filter(Files::isRegularFile)
+          .filter(p -> p.getFileName().toString().endsWith(".properties"))
+          .collect(
+              Collectors.toMap(
+                  this::stripExtension,
+                  this::readProperties,
+                  (a, b) -> {
+                    throw new IllegalStateException(
+                        "Duplicate .properties file name detected: " + a);
+                  },
+                  LinkedHashMap::new));
+    }
+  }
+
+  private String stripExtension(Path p) {
+    String name = p.getFileName().toString();
+    return name.substring(0, name.length() - ".properties".length());
+  }
+
+  @SneakyThrows
+  private Properties readProperties(Path p) {
+    Properties props = new Properties();
+    try (var in = Files.newInputStream(p)) {
+      props.load(in);
+      return props;
+    }
   }
 
   private void extractQueriesAndMutations(
@@ -113,10 +152,12 @@ public class TestPlanner {
       List<GraphqlQuery> queries,
       List<GraphqlQuery> mutations,
       List<GraphqlQuery> subscriptions,
-      String prefix) {
+      String prefix,
+      Map<String, Properties> headers) {
     for (Definition definition : document.getDefinitions()) {
       if (definition instanceof OperationDefinition operationDefinition) {
-        var query = new GraphqlQuery(prefix, AstPrinter.printAst(operationDefinition));
+        var query =
+            new GraphqlQuery(prefix, AstPrinter.printAst(operationDefinition), headers.get(prefix));
         switch (operationDefinition.getOperation()) {
           case QUERY:
             queries.add(query);

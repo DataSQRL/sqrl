@@ -342,18 +342,17 @@ class FullUseCasesIT {
   }
 
   @Test
-  @Disabled
   public void runTestCaseByName() {
     var param =
         useCaseProvider().stream()
-            .filter(p -> p.sqrlFileName.equals("sensors-mutation.sqrl") && p.goal.equals("test"))
+            .filter(p -> p.sqrlFileName.equals("jwt.sqrl") && p.goal.equals("test"))
             .collect(MoreCollectors.onlyElement());
     useCase(param);
   }
 
   @SneakyThrows
   static Set<UseCaseTestParameter> useCaseProvider() {
-    var useCasesDir = USE_CASES;
+    var useCasesDir = USE_CASES.toAbsolutePath();
     Set<UseCaseTestParameter> params = new TreeSet<>();
 
     Files.list(useCasesDir)

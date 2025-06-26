@@ -15,22 +15,29 @@
  */
 package com.datasqrl.graphql.jdbc;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.datasqrl.graphql.server.Context;
 import com.datasqrl.graphql.server.GraphQLEngineBuilder;
+import com.datasqrl.graphql.server.MetadataReader;
+import com.datasqrl.graphql.server.MetadataType;
 import com.datasqrl.graphql.server.QueryExecutionContext;
 import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.VariableArgument;
 import graphql.schema.DataFetcher;
 import graphql.schema.PropertyDataFetcher;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import lombok.NonNull;
 import lombok.Value;
 
 @Value
 public class JdbcContext implements Context {
 
   GenericJdbcClient client;
+  Map<MetadataType, MetadataReader> metadataReaders;
 
   @Override
   public DataFetcher<Object> createPropertyFetcher(String name) {
@@ -50,5 +57,10 @@ public class JdbcContext implements Context {
       QueryExecutionContext context = new JdbcExecutionContext(this, env, argumentSet);
       return resolvedQuery.accept(server, context);
     };
+  }
+
+  @Override
+  public MetadataReader getMetadataReader(@NonNull MetadataType metadataType) {
+    return checkNotNull(metadataReaders.get(metadataType), "Invalid metadataType %s", metadataType);
   }
 }
