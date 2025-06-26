@@ -36,6 +36,7 @@ public class GenerateServerModel {
 
   private final PackageJson configuration;
   private final ErrorCollector errorCollector;
+  private final GraphQLSchemaConverter converter;
 
   /**
    * Generates the {@link RootGraphqlModel} from the server plan and defined operations
@@ -51,7 +52,8 @@ public class GenerateServerModel {
         new GraphqlModelGenerator(
             serverPlan.getFunctions(), serverPlan.getMutations(), errorCollector);
     graphqlModelGenerator.walkAPISource(graphqlSchema);
-    StringSchema schema = StringSchema.builder().schema(graphqlSchema.getDefinition()).build();
+    var schema = StringSchema.builder().schema(graphqlSchema.getDefinition()).build();
+    var graphSchema = converter.getSchema(schema.getSchema());
     CompilerApiConfig apiConig = configuration.getCompilerConfig().getApiConfig();
     GraphQLSchemaConverterConfig converterConfig =
         GraphQLSchemaConverterConfig.builder()
@@ -59,8 +61,6 @@ public class GenerateServerModel {
             .maxDepth(apiConig.getMaxResultDepth())
             .protocols(apiConig.getProtocols())
             .build();
-    GraphQLSchemaConverter converter =
-        new GraphQLSchemaConverter(schema.getSchema(), converterConfig);
     ErrorCollector localErrors =
         errorCollector.withScript(graphqlSchema.getPath(), graphqlSchema.getDefinition());
     List<ApiOperation> definedOperations = new ArrayList<>();
@@ -69,7 +69,9 @@ public class GenerateServerModel {
       localErrors =
           errorCollector.withScript(operationFile.getPath(), operationFile.getDefinition());
       try {
-        definedOperations.addAll(converter.convertOperations(operationFile.getDefinition()));
+        definedOperations.addAll(
+            converter.convertOperations(
+                operationFile.getDefinition(), converterConfig, graphSchema));
       } catch (Throwable e) {
         throw localErrors.handle(e);
       }
@@ -77,7 +79,7 @@ public class GenerateServerModel {
     // Second, we add the automatically generated operations
     if (apiConig.generateOperations()) {
       try {
-        definedOperations.addAll(converter.convertSchema());
+        definedOperations.addAll(converter.convertSchema(converterConfig, graphSchema));
       } catch (Throwable e) {
         throw localErrors.handle(e);
       }

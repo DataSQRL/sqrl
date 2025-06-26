@@ -42,16 +42,18 @@ import org.junit.jupiter.api.Test;
 
 public class GraphQLSchemaConverterTest {
 
+  GraphQLSchemaConverter underTest = new GraphQLSchemaConverter();
+
   @Test
   public void testNutshop() {
-    GraphQLSchemaConverter converter =
-        new GraphQLSchemaConverter(
-            getTestSchema("nutshop-schema.graphqls"),
-            GraphQLSchemaConverterConfig.builder()
-                .addPrefix(false)
-                .operationFilter(ignorePrefix("internal"))
-                .build());
-    List<ApiOperation> functions = converter.convertSchema();
+    var schema = underTest.getSchema(getTestSchema("nutshop-schema.graphqls"));
+    var config =
+        GraphQLSchemaConverterConfig.builder()
+            .addPrefix(false)
+            .operationFilter(ignorePrefix("internal"))
+            .build();
+
+    List<ApiOperation> functions = underTest.convertSchema(config, schema);
     assertEquals(5, functions.size());
     // Test context key handling
     ApiOperation orders =
@@ -79,11 +81,13 @@ public class GraphQLSchemaConverterTest {
 
   @Test
   public void testSensors() {
-    GraphQLSchemaConverter converter = getConverter(getTestSchema("sensors.graphqls"));
-    List<ApiOperation> functions = converter.convertSchema();
+    var schema = underTest.getSchema(getTestSchema("sensors.graphqls"));
+    var config = GraphQLSchemaConverterConfig.DEFAULT;
+
+    List<ApiOperation> functions = underTest.convertSchema(config, schema);
     assertEquals(5, functions.size());
     List<ApiOperation> queries =
-        converter.convertOperations(getTestSchema("sensors-aboveTemp.graphql"));
+        underTest.convertOperations(getTestSchema("sensors-aboveTemp.graphql"), config, schema);
     assertEquals(2, queries.size());
     assertEquals("HighTemps", queries.get(0).getFunction().getName());
     functions.addAll(queries);
@@ -95,11 +99,8 @@ public class GraphQLSchemaConverterTest {
   }
 
   public List<ApiOperation> getFunctions(String schemaString) {
-    return getConverter(schemaString).convertSchema();
-  }
-
-  public GraphQLSchemaConverter getConverter(String schemaString) {
-    return new GraphQLSchemaConverter(schemaString);
+    return underTest.convertSchema(
+        GraphQLSchemaConverterConfig.DEFAULT, underTest.getSchema(schemaString));
   }
 
   @Test
@@ -134,14 +135,11 @@ public class GraphQLSchemaConverterTest {
 
   @Test
   void testRickandMorty() {
-    GraphQLSchemaConverter converter =
-        new GraphQLSchemaConverter(
-            getTestSchema("rick_morty-schema.graphqls"),
-            GraphQLSchemaConverterConfig.builder()
-                .operationFilter(ignorePrefix("internal"))
-                .build());
+    var schema = underTest.getSchema(getTestSchema("rick_morty-schema.graphqls"));
+    var config =
+        GraphQLSchemaConverterConfig.builder().operationFilter(ignorePrefix("internal")).build();
 
-    List<ApiOperation> functions = converter.convertSchema();
+    List<ApiOperation> functions = underTest.convertSchema(config, schema);
     assertEquals(9, functions.size());
     // Test context key handling
     ApiOperation episodes =

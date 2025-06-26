@@ -77,37 +77,16 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
  * Converts a given GraphQL Schema to a tools configuration for the function backend. It extracts
  * all queries and mutations and converts them into {@link ApiOperation}.
  */
-@lombok.Value
+@RequiredArgsConstructor
 @Slf4j
 public class GraphQLSchemaConverter {
-
-  GraphQLSchemaConverterConfig config;
-  GraphQLSchema schema;
-
-  public GraphQLSchemaConverter(String schemaString) {
-    this(schemaString, GraphQLSchemaConverterConfig.DEFAULT);
-  }
-
-  public GraphQLSchemaConverter(String schemaString, GraphQLSchemaConverterConfig config) {
-    this.config = config;
-    this.schema = getSchema(schemaString);
-  }
-
-  private static GraphQLSchema getSchema(String schemaString) {
-    TypeDefinitionRegistry typeRegistry = new SchemaParser().parse(schemaString);
-    RuntimeWiring.Builder runtimeWiringBuilder = RuntimeWiring.newRuntimeWiring();
-    getExtendedScalars().forEach(runtimeWiringBuilder::scalar);
-    // custom name for bigInteger on sqrl
-    runtimeWiringBuilder.scalar(
-        ExtendedScalars.GraphQLBigInteger.transform(builder -> builder.name("GraphQLBigInteger")));
-    return new SchemaGenerator().makeExecutableSchema(typeRegistry, runtimeWiringBuilder.build());
-  }
 
   SchemaPrinter schemaPrinter =
       new SchemaPrinter(SchemaPrinter.Options.defaultOptions().descriptionsAsHashComments(true));
@@ -117,11 +96,13 @@ public class GraphQLSchemaConverter {
    * equivalent list of API Functions.
    *
    * @param operationDefinition a string defining GraphQL operations
+   * @param schema
    * @return a list of API Functions equivalent to the provided GraphQL operations
    * @throws IllegalArgumentException if operation definition contains no definitions or if an
    *     unexpected definition type is provided
    */
-  public List<ApiOperation> convertOperations(String operationDefinition) {
+  public List<ApiOperation> convertOperations(
+      String operationDefinition, GraphQLSchemaConverterConfig config, GraphQLSchema schema) {
     Parser parser = new Parser();
     Document document = parser.parseDocument(operationDefinition);
     Preconditions.checkArgument(
@@ -136,7 +117,7 @@ public class GraphQLSchemaConverter {
           "Expected definition to be an operation, but got: %s",
           operationDefinition);
       OperationDefinition opDef = (OperationDefinition) definition;
-      FunctionDefinition fctDef = convertOperationDefinition(opDef);
+      FunctionDefinition fctDef = convertOperationDefinition(opDef, schema);
 
       SourceLocation startLocation = definition.getSourceLocation();
       SourceLocation endLocation = new SourceLocation(Integer.MAX_VALUE, Integer.MAX_VALUE);
@@ -198,9 +179,11 @@ public class GraphQLSchemaConverter {
    * Converts a given GraphQL operation definition into a FunctionDefinition.
    *
    * @param node the OperationDefinition to be converted
+   * @param schema
    * @return a FunctionDefinition that corresponds to the provided OperationDefinition
    */
-  public FunctionDefinition convertOperationDefinition(OperationDefinition node) {
+  public FunctionDefinition convertOperationDefinition(
+      OperationDefinition node, GraphQLSchema schema) {
     Operation op = node.getOperation();
     Preconditions.checkArgument(
         op == Operation.QUERY || op == Operation.MUTATION,
@@ -224,7 +207,7 @@ public class GraphQLSchemaConverter {
         required = true;
         type = nonNullType.getType();
       }
-      Argument argDef = convert(type);
+      Argument argDef = convert(type, schema);
       argDef.setDescription(description);
       if (required) params.getRequired().add(argName);
       params.getProperties().put(argName, argDef);
@@ -245,7 +228,8 @@ public class GraphQLSchemaConverter {
    * @return List of {@link ApiOperation} instances corresponding to all the queries and mutations
    *     in the GraphQL schema.
    */
-  public List<ApiOperation> convertSchema() {
+  public List<ApiOperation> convertSchema(
+      GraphQLSchemaConverterConfig config, GraphQLSchema schema) {
     List<ApiOperation> functions = new ArrayList<>();
 
     List<GraphQLFieldDefinition> queries =
@@ -262,7 +246,7 @@ public class GraphQLSchemaConverter {
         .flatMap(
             input -> {
               if (config.getOperationFilter().test(input.op(), input.fieldDefinition().getName())) {
-                return Stream.of(convert(input.op(), input.fieldDefinition()));
+                return Stream.of(convert(input.op(), input.fieldDefinition(), config));
               } // else filter out
               return Stream.of();
             })
@@ -270,14 +254,14 @@ public class GraphQLSchemaConverter {
     return functions;
   }
 
-  private Argument convert(Type type) {
+  private Argument convert(Type type, GraphQLSchema schema) {
     if (type instanceof NonNullType) {
-      return convert(((NonNullType) type).getType());
+      return convert(((NonNullType) type).getType(), schema);
     }
     Argument argument = new Argument();
     if (type instanceof ListType) {
       argument.setType("array");
-      argument.setItems(convert(((ListType) type).getType()));
+      argument.setItems(convert(((ListType) type).getType(), schema));
     } else if (type instanceof TypeName) {
       String typeName = ((TypeName) type).getName();
       GraphQLType graphQLType = schema.getType(typeName);
@@ -289,25 +273,6 @@ public class GraphQLSchemaConverter {
       }
     } else throw new UnsupportedOperationException("Unexpected type:  " + type);
     return argument;
-  }
-
-  private static List<GraphQLScalarType> getExtendedScalars() {
-    List<GraphQLScalarType> scalars = new ArrayList<>();
-
-    Field[] fields = ExtendedScalars.class.getFields();
-    for (Field field : fields) {
-      if (Modifier.isPublic(field.getModifiers())
-          && Modifier.isStatic(field.getModifiers())
-          && GraphQLScalarType.class.isAssignableFrom(field.getType())) {
-        try {
-          scalars.add((GraphQLScalarType) field.get(null));
-        } catch (IllegalAccessException e) {
-          throw new RuntimeException(e);
-        }
-      }
-    }
-
-    return scalars;
   }
 
   private record Context(String opName, String prefix, int numArgs, List<GraphQLObjectType> path) {
@@ -339,7 +304,10 @@ public class GraphQLSchemaConverter {
     return funcDef;
   }
 
-  private ApiOperation convert(Operation operationType, GraphQLFieldDefinition fieldDef) {
+  private ApiOperation convert(
+      Operation operationType,
+      GraphQLFieldDefinition fieldDef,
+      GraphQLSchemaConverterConfig config) {
     FunctionDefinition funcDef =
         initializeFunctionDefinition(
             config.getFunctionName(fieldDef.getName(), operationType), fieldDef.getDescription());
@@ -352,7 +320,7 @@ public class GraphQLSchemaConverter {
             .append("(");
     StringBuilder queryBody = new StringBuilder();
 
-    visit(fieldDef, queryBody, queryHeader, params, new Context(opName, "", 0, List.of()));
+    visit(fieldDef, queryBody, queryHeader, params, new Context(opName, "", 0, List.of()), config);
 
     queryHeader.append(") {\n").append(queryBody).append("\n}");
     GraphQLQuery apiQuery =
@@ -434,7 +402,8 @@ public class GraphQLSchemaConverter {
       StringBuilder queryBody,
       StringBuilder queryHeader,
       Parameters params,
-      Context ctx) {
+      Context ctx,
+      GraphQLSchemaConverterConfig config) {
     GraphQLOutputType type = unwrapType(fieldDef.getType());
     if (type instanceof GraphQLObjectType) {
       GraphQLObjectType objectType = (GraphQLObjectType) type;
@@ -522,7 +491,8 @@ public class GraphQLSchemaConverter {
                 queryBody,
                 queryHeader,
                 params,
-                ctx.nested(nestedField.getName(), objectType, numArgs));
+                ctx.nested(nestedField.getName(), objectType, numArgs),
+                config);
         atLeastOneField |= success;
       }
       Preconditions.checkArgument(
@@ -648,5 +618,33 @@ public class GraphQLSchemaConverter {
     // Fallback to string representation
     return value.toString();
   }
-  // === End consolidated helpers ================================================================`
+
+  public GraphQLSchema getSchema(String schemaString) {
+    TypeDefinitionRegistry typeRegistry = new SchemaParser().parse(schemaString);
+    RuntimeWiring.Builder runtimeWiringBuilder = RuntimeWiring.newRuntimeWiring();
+    getExtendedScalars().forEach(runtimeWiringBuilder::scalar);
+    // custom name for bigInteger on sqrl
+    runtimeWiringBuilder.scalar(
+        ExtendedScalars.GraphQLBigInteger.transform(builder -> builder.name("GraphQLBigInteger")));
+    return new SchemaGenerator().makeExecutableSchema(typeRegistry, runtimeWiringBuilder.build());
+  }
+
+  private List<GraphQLScalarType> getExtendedScalars() {
+    List<GraphQLScalarType> scalars = new ArrayList<>();
+
+    Field[] fields = ExtendedScalars.class.getFields();
+    for (Field field : fields) {
+      if (Modifier.isPublic(field.getModifiers())
+          && Modifier.isStatic(field.getModifiers())
+          && GraphQLScalarType.class.isAssignableFrom(field.getType())) {
+        try {
+          scalars.add((GraphQLScalarType) field.get(null));
+        } catch (IllegalAccessException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    }
+
+    return scalars;
+  }
 }
