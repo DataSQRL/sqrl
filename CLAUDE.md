@@ -101,6 +101,12 @@ This is a multi-module Maven project with the following key components:
 3. **Testing**: Run unit tests frequently, integration tests before commits
 4. **Code Quality**: All code uses Google Java Format and requires 70% test coverage
 
+## Git Commits
+
+- **Commit Messages**: Use succinct single-line messages describing the most important change
+- **Issue References**: Include issue links on second line if provided in the change prompt
+- **Co-authorship**: Do not add Claude as co-author unless explicitly requested
+
 ## Key Configuration
 
 - **Main POM**: `/pom.xml` - All dependencies and build configuration

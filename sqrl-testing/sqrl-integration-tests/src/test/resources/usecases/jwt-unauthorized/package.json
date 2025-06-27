@@ -1,8 +1,5 @@
 {
   "version": "1",
-  "test-runner" : {
-    "delay-sec" : -1
-  },
   "engines" : {
     "vertx" : {
       "authKind": "JWT",
