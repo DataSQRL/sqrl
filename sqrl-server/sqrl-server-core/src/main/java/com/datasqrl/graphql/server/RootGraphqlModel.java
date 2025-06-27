@@ -439,6 +439,7 @@ public class RootGraphqlModel {
   @JsonSubTypes({
     @Type(value = ParentParameter.class, name = ParentParameter.type),
     @Type(value = ArgumentParameter.class, name = ArgumentParameter.type),
+    @Type(value = ComputedParameter.class, name = ComputedParameter.type),
     @Type(value = MetadataParameter.class, name = MetadataParameter.type)
   })
   public interface QueryParameterHandler {
@@ -451,6 +452,8 @@ public class RootGraphqlModel {
     R visitParentParameter(ParentParameter parentParameter, C context);
 
     R visitMetadataParameter(MetadataParameter metadataParameter, C context);
+
+    R visitComputedParameter(ComputedParameter computedParameter, C context);
 
     R visitArgumentParameter(ArgumentParameter argumentParameter, C context);
   }
@@ -502,6 +505,23 @@ public class RootGraphqlModel {
     @Override
     public <R, C> R accept(ParameterHandlerVisitor<R, C> visitor, C context) {
       return visitor.visitMetadataParameter(this, context);
+    }
+  }
+
+  /** Parameter is computed based on other input arguments */
+  @Getter
+  @AllArgsConstructor
+  @NoArgsConstructor
+  @Builder
+  @ToString
+  public static class ComputedParameter implements QueryParameterHandler {
+
+    static final String type = "computed";
+    String functionUid;
+
+    @Override
+    public <R, C> R accept(ParameterHandlerVisitor<R, C> visitor, C context) {
+      return visitor.visitComputedParameter(this, context);
     }
   }
 

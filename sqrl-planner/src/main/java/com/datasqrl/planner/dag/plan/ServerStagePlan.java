@@ -16,6 +16,7 @@
 package com.datasqrl.planner.dag.plan;
 
 import com.datasqrl.engine.ExecutionEngine;
+import com.datasqrl.planner.exec.FlinkExecFunctionBuilder;
 import com.datasqrl.planner.tables.SqrlTableFunction;
 import java.util.List;
 import lombok.Builder;
@@ -27,6 +28,7 @@ import lombok.Value;
 public class ServerStagePlan {
 
   ExecutionEngine serverEngine;
+  FlinkExecFunctionBuilder execFunctionBuilder;
 
   /** All accessible functions */
   @Singular List<SqrlTableFunction> functions;

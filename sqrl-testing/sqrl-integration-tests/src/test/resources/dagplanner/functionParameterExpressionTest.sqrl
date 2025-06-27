@@ -1,0 +1,6 @@
+IMPORT ecommerceTs.Customer;
+
+CustomersByName(inputName STRING NOT NULL, shortName AS LEFT(hash_columns(inputName), 5)) :=
+    SELECT * FROM Customer WHERE name LIKE :shortName;
+
+

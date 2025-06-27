@@ -16,7 +16,9 @@
 package com.datasqrl.planner.tables;
 
 import com.datasqrl.graphql.server.ResolvedMetadata;
+import com.datasqrl.planner.exec.FlinkExecFunction;
 import java.util.Optional;
+import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.Value;
@@ -27,11 +29,14 @@ import org.apache.calcite.schema.FunctionParameter;
 /** A parameter of {@link SqrlTableFunction} */
 @Value
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@AllArgsConstructor
 @ToString(onlyExplicitlyIncluded = true)
 public class SqrlFunctionParameter implements FunctionParameter {
 
   @EqualsAndHashCode.Include @ToString.Include
   String name; // the properly resolved name of the argument
+
+  String description; // description of the parameters
 
   int ordinal; // the index within the list of query arguments
 
@@ -43,6 +48,12 @@ public class SqrlFunctionParameter implements FunctionParameter {
 
   Optional<ResolvedMetadata> metadata;
 
+  Optional<FlinkExecFunction> function;
+
+  public SqrlFunctionParameter(String name, int ordinal, RelDataType relDataType) {
+    this(name, "", ordinal, relDataType, false, Optional.empty(), Optional.empty());
+  }
+
   @Override
   public RelDataType getType(RelDataTypeFactory relDataTypeFactory) {
     return relDataType;
@@ -53,8 +64,16 @@ public class SqrlFunctionParameter implements FunctionParameter {
     return false;
   }
 
+  public boolean hasDescription() {
+    return description != null && !description.isBlank();
+  }
+
   public boolean isMetadata() {
     return metadata.isPresent();
+  }
+
+  public boolean isFunction() {
+    return function.isPresent();
   }
 
   public boolean isExternalArgument() {

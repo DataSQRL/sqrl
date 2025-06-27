@@ -343,6 +343,7 @@ public class SqlScriptPlanner {
                         new ParsedObject(field.getName(), FileLocation.START),
                         field.getType(),
                         metadata,
+                        parsedField.function(),
                         false,
                         arguments.size()));
               });

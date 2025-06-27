@@ -57,7 +57,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.rel.type.RelDataTypeField;
-import org.apache.calcite.schema.FunctionParameter;
 import org.apache.commons.collections.ListUtils;
 
 /** Creates a default graphql schema based on the SQRL schema */
@@ -329,10 +328,11 @@ public class GraphqlSchemaFactory {
   }
 
   private List<GraphQLArgument> createArguments(SqrlTableFunction tableFunction) {
-    List<FunctionParameter> parameters =
+    List<SqrlFunctionParameter> parameters =
         tableFunction.getParameters().stream()
-            .filter(parameter -> ((SqrlFunctionParameter) parameter).isExternalArgument())
-            .collect(Collectors.toList());
+            .map(SqrlFunctionParameter.class::cast)
+            .filter(SqrlFunctionParameter::isExternalArgument)
+            .toList();
 
     final List<GraphQLArgument> parametersArguments =
         parameters.stream()
@@ -342,16 +342,20 @@ public class GraphqlSchemaFactory {
                             p.getType(null), NamePath.of(p.getName()), extendedScalarTypes)
                         .isPresent())
             .map(
-                parameter ->
-                    GraphQLArgument.newArgument()
-                        .name(parameter.getName())
-                        .type(
-                            GraphqlSchemaUtil.getGraphQLInputType(
-                                    parameter.getType(null),
-                                    NamePath.of(parameter.getName()),
-                                    extendedScalarTypes)
-                                .get())
-                        .build())
+                parameter -> {
+                  GraphQLArgument.Builder argBuilder =
+                      GraphQLArgument.newArgument()
+                          .name(parameter.getName())
+                          .type(
+                              GraphqlSchemaUtil.getGraphQLInputType(
+                                      parameter.getType(null),
+                                      NamePath.of(parameter.getName()),
+                                      extendedScalarTypes)
+                                  .get());
+                  if (parameter.hasDescription())
+                    argBuilder.description(parameter.getDescription());
+                  return argBuilder.build();
+                })
             .collect(Collectors.toList());
     List<GraphQLArgument> limitAndOffsetArguments = List.of();
     if (tableFunction.getVisibility().getAccess() != AccessModifier.SUBSCRIPTION

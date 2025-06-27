@@ -28,6 +28,7 @@ import com.datasqrl.graphql.server.PaginationType;
 import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
 import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentLookupQueryCoords;
+import com.datasqrl.graphql.server.RootGraphqlModel.ComputedParameter;
 import com.datasqrl.graphql.server.RootGraphqlModel.FieldLookupQueryCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.KafkaMutationCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.KafkaSubscriptionCoords;
@@ -163,13 +164,12 @@ public class GraphqlModelGenerator extends GraphqlSchemaWalker {
     for (FunctionParameter functionParameter : tableFunction.getParameters()) {
       final var parameter = (SqrlFunctionParameter) functionParameter;
       QueryParameterHandler queryParam;
-      if (parameter.isParentField()) {
-        queryParam = new ParentParameter(parameter.getName());
-      } else if (parameter.isMetadata()) {
+      if (parameter.isParentField()) queryParam = new ParentParameter(parameter.getName());
+      else if (parameter.isMetadata())
         queryParam = new MetadataParameter(parameter.getMetadata().get());
-      } else {
-        queryParam = new RootGraphqlModel.ArgumentParameter(parameter.getName());
-      }
+      else if (parameter.isFunction())
+        queryParam = new ComputedParameter(parameter.getFunction().get().getFunctionId());
+      else queryParam = new RootGraphqlModel.ArgumentParameter(parameter.getName());
       parameters.add(queryParam);
     }
     RootGraphqlModel.QueryBase queryBase;

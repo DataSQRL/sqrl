@@ -387,6 +387,7 @@ public class DAGPlanner {
       Need to update SqlScriptPlanner availableStages for server to be included.
        */
       serverPlan.serverEngine(serverEngine.get());
+      serverPlan.execFunctionBuilder(sqrlEnv.getExecFunctionBuilder());
       var serverPhysicalPlan = serverEngine.get().plan(serverPlan.build());
       planBuilder.stagePlan(
           new PhysicalStagePlan(
