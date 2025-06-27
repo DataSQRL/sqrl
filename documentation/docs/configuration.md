@@ -246,7 +246,11 @@ Testing related configuration is found in the `test-runner` section.
 {
   "test-runner": {
     "delay-sec": 30,
-    "mutation-delay": 1
+    "mutation-delay": 1,
+    "headers": {
+      "Authorization": "Bearer token123",
+      "Content-Type": "application/json"
+    }
   }
 }
 ```
@@ -254,6 +258,7 @@ Testing related configuration is found in the `test-runner` section.
 * `delay-sec`: The number of seconds to wait between starting the processing of data and snapshotting the data. Defaults to 30.
 * `required-checkpoints`: The number of checkpoints that need to be completed before the test queries are executed. Defaults to 0. If this is configured to a positive value, `delay-sec` must be set to -1.
 * `mutation-delay`: The number of seconds to wait between execution mutation queries. Defaults to 0.
+* `headers`: HTTP headers to include in test runner HTTP client requests. Useful for setting authentication headers like Authorization tokens. Optional.
 
 
 ## Values
