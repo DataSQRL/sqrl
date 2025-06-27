@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.fail;
 
 import com.datasqrl.UseCaseTestParameter;
 import com.datasqrl.cli.DatasqrlTest;
-import com.datasqrl.cli.util.FlinkConfigLoader;
+import com.datasqrl.cli.util.ConfigLoaderUtils;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.engines.TestEngine.DuckdbTestEngine;
@@ -239,7 +239,7 @@ public class TestExecutionEnv implements TestEngineVisitor<Void, TestEnvContext>
             .resolve(SqrlConstants.BUILD_DIR_NAME)
             .resolve(SqrlConstants.DEPLOY_DIR_NAME)
             .resolve(SqrlConstants.PLAN_DIR);
-    var flinkConfig = FlinkConfigLoader.fromYamlFile(planDir);
+    var flinkConfig = ConfigLoaderUtils.loadFlinkConfig(planDir);
     var test = new DatasqrlTest(planDir, packageJson, flinkConfig, context.env);
     try {
       var run = test.run();

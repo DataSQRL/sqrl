@@ -15,14 +15,16 @@
  */
 package com.datasqrl.cli;
 
-import com.datasqrl.cli.util.FlinkConfigLoader;
+import com.datasqrl.cli.util.ConfigLoaderUtils;
 import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.validate.ExecutionGoal;
 import picocli.CommandLine;
 
-@CommandLine.Command(name = "run", description = "Lightweight sqrl script runner")
-public class RunCommand extends AbstractCompileCommand {
+@CommandLine.Command(
+    name = "run",
+    description = "Compiles, then runs a SQRL script in a lightweight, standalone environment")
+public class RunCmd extends AbstractCompileCmd {
 
   @Override
   public void execute(ErrorCollector errors) throws Exception {
@@ -30,14 +32,16 @@ public class RunCommand extends AbstractCompileCommand {
     super.execute(errors);
 
     // Skip run part in case we call the CMD from a test class, as it will be executed manually.
-    if (root.internalTestExec) {
+    if (cli.internalTestExec) {
       return;
     }
 
     // Run
-    var planDir = getTargetDir().resolve(SqrlConstants.PLAN_DIR);
-    var sqrlConfig = readSqrlConfig();
-    var flinkConfig = FlinkConfigLoader.fromYamlFile(planDir);
+    var targetDir = getTargetDir();
+    var planDir = targetDir.resolve(SqrlConstants.PLAN_DIR);
+    var sqrlConfig = ConfigLoaderUtils.loadPackageJson(targetDir);
+    var flinkConfig = ConfigLoaderUtils.loadFlinkConfig(planDir);
+
     var sqrlRun = new DatasqrlRun(planDir, sqrlConfig, flinkConfig);
     sqrlRun.run(true);
   }

@@ -15,16 +15,24 @@
  */
 package com.datasqrl.cli;
 
-import com.datasqrl.plan.validate.ExecutionGoal;
+import com.datasqrl.cli.util.ConfigLoaderUtils;
+import com.datasqrl.config.SqrlConstants;
+import com.datasqrl.error.ErrorCollector;
 import picocli.CommandLine;
 
 @CommandLine.Command(
-    name = "compile",
-    description = "Compiles an SQRL script and produces all build artifacts")
-public class CompileCommand extends AbstractCompileCommand {
+    name = "execute",
+    description = "Executes an already compiled SQRL script using its existing build artifacts")
+public class ExecuteCmd extends AbstractCmd {
 
   @Override
-  public ExecutionGoal getGoal() {
-    return ExecutionGoal.COMPILE;
+  protected void execute(ErrorCollector errors) throws Exception {
+    var targetDir = getTargetDir();
+    var planDir = targetDir.resolve(SqrlConstants.PLAN_DIR);
+    var sqrlConfig = ConfigLoaderUtils.loadPackageJson(targetDir);
+    var flinkConfig = ConfigLoaderUtils.loadFlinkConfig(planDir);
+
+    var sqrlRun = new DatasqrlRun(planDir, sqrlConfig, flinkConfig);
+    sqrlRun.run(true);
   }
 }

@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import com.datasqrl.cli.AssertStatusHook;
 import com.datasqrl.cli.DatasqrlRun;
-import com.datasqrl.cli.util.FlinkConfigLoader;
+import com.datasqrl.cli.util.ConfigLoaderUtils;
 import com.datasqrl.cli.util.FlinkOperatorStatusChecker;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.SqrlConfig;
@@ -252,7 +252,7 @@ class FullUseCasesIT {
       if (param.getGoal().equals("run")) {
         try {
           var planDir = context.getRootDir().resolve(SqrlConstants.PLAN_PATH);
-          var flinkConfig = FlinkConfigLoader.fromYamlFile(planDir);
+          var flinkConfig = ConfigLoaderUtils.loadFlinkConfig(planDir);
           run = new DatasqrlRun(planDir, packageJson, flinkConfig, context.getEnv());
           TableResult result = run.run(false);
           long delaySec =

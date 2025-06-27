@@ -17,18 +17,47 @@ package com.datasqrl.cli.util;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import com.datasqrl.config.PackageJson;
+import com.datasqrl.config.SqrlConfig;
+import com.datasqrl.config.SqrlConstants;
+import com.datasqrl.error.ErrorCollector;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.configuration.GlobalConfiguration;
 
-public final class FlinkConfigLoader {
+/** Utility class to load different kind of configurations during CLI process execution. */
+public final class ConfigLoaderUtils {
 
-  public static Configuration fromYamlFile(final Path planDir) throws IOException {
+  /**
+   * Loads SQRL {@code package.json} from an already comppiled project.
+   *
+   * @param deployDir deployment directory of a compiled SQRL project
+   * @return the loaded {@link PackageJson}
+   */
+  public static PackageJson loadPackageJson(final Path deployDir) {
     checkArgument(
-        planDir.toFile().exists() == planDir.toFile().isDirectory(),
+        deployDir.toFile().exists() && deployDir.toFile().isDirectory(),
+        "Failed to load " + SqrlConstants.PACKAGE_JSON + ", deploy dir does not exist.");
+
+    return SqrlConfig.fromFilesPackageJson(
+        ErrorCollector.root(), List.of(deployDir.getParent().resolve(SqrlConstants.PACKAGE_JSON)));
+  }
+
+  /**
+   * Loads Flink configuration from a {@code flink-config.yaml} file that is assumed to exist inside
+   * the given plan directory.
+   *
+   * @param planDir plan directory that contains tha YAML
+   * @return Flink {@link Configuration} with loaded config
+   * @throws IOException if any internal file operation fails
+   */
+  public static Configuration loadFlinkConfig(final Path planDir) throws IOException {
+    checkArgument(
+        planDir.toFile().exists() && planDir.toFile().isDirectory(),
         "Failed to load Flink config, plan dir does not exist.");
 
     var confFile = planDir.resolve("flink-config.yaml");

@@ -15,17 +15,27 @@
  */
 package com.datasqrl.cli;
 
+import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrinter;
+import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.SneakyThrows;
 import picocli.CommandLine;
 import picocli.CommandLine.IExitCodeGenerator;
 
-public abstract class AbstractCommand implements Runnable, IExitCodeGenerator {
+public abstract class AbstractCmd implements Runnable, IExitCodeGenerator {
 
-  @CommandLine.ParentCommand protected DatasqrlCli root;
+  protected static final Path DEFAULT_TARGET_DIR =
+      Path.of(SqrlConstants.BUILD_DIR_NAME, SqrlConstants.DEPLOY_DIR_NAME);
+
+  @CommandLine.ParentCommand protected DatasqrlCli cli;
+
+  @CommandLine.Option(
+      names = {"-t", "--target"},
+      description = "Target directory for deployment artifacts and plans")
+  protected Path targetDir = DEFAULT_TARGET_DIR;
 
   private final AtomicInteger exitCode = new AtomicInteger(0);
 
@@ -35,21 +45,29 @@ public abstract class AbstractCommand implements Runnable, IExitCodeGenerator {
     ErrorCollector collector = ErrorCollector.root();
     try {
       execute(collector);
-      root.statusHook.onSuccess(collector);
+      cli.statusHook.onSuccess(collector);
     } catch (CollectedException e) {
       if (e.isInternalError()) e.printStackTrace();
       e.printStackTrace();
-      root.statusHook.onFailure(e, collector);
+      cli.statusHook.onFailure(e, collector);
     } catch (Throwable e) { // unknown exception
       collector.getCatcher().handle(e);
       e.printStackTrace();
-      root.statusHook.onFailure(e, collector);
+      cli.statusHook.onFailure(e, collector);
     }
     if (collector.hasErrors()) exitCode.set(1);
     System.out.println(ErrorPrinter.prettyPrint(collector));
   }
 
   protected abstract void execute(ErrorCollector errors) throws Exception;
+
+  protected Path getTargetDir() {
+    if (targetDir.isAbsolute()) {
+      return targetDir;
+    }
+
+    return cli.rootDir.resolve(targetDir);
+  }
 
   @Override
   public int getExitCode() {

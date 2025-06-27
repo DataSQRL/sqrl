@@ -41,7 +41,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 
 @Disabled
-public class TestCmd {
+public class TestCommand {
   public static final String PLAN_SQL = "flink-plan.sql";
 
   private static final Path OUTPUT_DIR = Path.of("src", "test", "resources", "output");

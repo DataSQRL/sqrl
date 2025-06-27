@@ -15,7 +15,7 @@
  */
 package com.datasqrl.cli;
 
-import com.datasqrl.cli.util.FlinkConfigLoader;
+import com.datasqrl.cli.util.ConfigLoaderUtils;
 import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.validate.ExecutionGoal;
@@ -25,8 +25,9 @@ import java.util.List;
 import java.util.Optional;
 import picocli.CommandLine;
 
-@CommandLine.Command(name = "test", description = "Tests a SQRL script")
-public class TestCommand extends AbstractCompileCommand {
+@CommandLine.Command(name = "test", description = "Compiles, then tests a SQRL script")
+public class TestCmd extends AbstractCompileCmd {
+
   @CommandLine.Option(
       names = {"-s", "--snapshots"},
       description = "Path to snapshots")
@@ -43,23 +44,25 @@ public class TestCommand extends AbstractCompileCommand {
     super.execute(
         errors,
         snapshotPath == null
-            ? root.rootDir.resolve("snapshots")
-            : snapshotPath.isAbsolute() ? snapshotPath : root.rootDir.resolve(snapshotPath),
+            ? cli.rootDir.resolve("snapshots")
+            : snapshotPath.isAbsolute() ? snapshotPath : cli.rootDir.resolve(snapshotPath),
         tests == null
-            ? (Files.isDirectory(root.rootDir.resolve("tests"))
-                ? Optional.of(root.rootDir.resolve("tests"))
+            ? (Files.isDirectory(cli.rootDir.resolve("tests"))
+                ? Optional.of(cli.rootDir.resolve("tests"))
                 : Optional.empty())
-            : Optional.of((tests.isAbsolute() ? tests : root.rootDir.resolve(tests))));
+            : Optional.of((tests.isAbsolute() ? tests : cli.rootDir.resolve(tests))));
 
     // Skip test part in case we call the CMD from a test class, as it will be executed manually.
-    if (root.internalTestExec) {
+    if (cli.internalTestExec) {
       return;
     }
 
     // Test
-    var planDir = getTargetDir().resolve(SqrlConstants.PLAN_DIR);
-    var sqrlConfig = readSqrlConfig();
-    var flinkConfig = FlinkConfigLoader.fromYamlFile(planDir);
+    var targetDir = getTargetDir();
+    var planDir = targetDir.resolve(SqrlConstants.PLAN_DIR);
+    var sqrlConfig = ConfigLoaderUtils.loadPackageJson(targetDir);
+    var flinkConfig = ConfigLoaderUtils.loadFlinkConfig(planDir);
+
     var sqrlTest = new DatasqrlTest(planDir, sqrlConfig, flinkConfig, System.getenv());
     sqrlTest.run();
   }

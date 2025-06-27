@@ -21,9 +21,6 @@ import static com.datasqrl.config.SqrlConstants.PACKAGE_JSON;
 import com.datasqrl.compile.CompilationProcess;
 import com.datasqrl.compile.DirectoryManager;
 import com.datasqrl.compile.TestPlan;
-import com.datasqrl.config.PackageJson;
-import com.datasqrl.config.SqrlConfig;
-import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.server.ServerPhysicalPlan;
 import com.datasqrl.error.ErrorCollector;
@@ -45,10 +42,7 @@ import lombok.SneakyThrows;
 import org.apache.commons.lang3.tuple.Pair;
 import picocli.CommandLine;
 
-public abstract class AbstractCompileCommand extends AbstractCommand {
-
-  public static final Path DEFAULT_TARGET_DIR =
-      Path.of(SqrlConstants.BUILD_DIR_NAME, SqrlConstants.DEPLOY_DIR_NAME);
+public abstract class AbstractCompileCmd extends AbstractCmd {
 
   @CommandLine.Parameters(
       arity = "0..2",
@@ -60,21 +54,16 @@ public abstract class AbstractCompileCommand extends AbstractCommand {
       description = "Generates the API specification for the given type")
   protected APIType[] generateAPI = new APIType[0];
 
-  @CommandLine.Option(
-      names = {"-t", "--target"},
-      description = "Target directory for deployment artifacts and plans")
-  protected Path targetDir = DEFAULT_TARGET_DIR;
-
   public abstract ExecutionGoal getGoal();
 
   @Override
   protected void execute(ErrorCollector errors) throws Exception {
-    execute(errors, root.rootDir.resolve("snapshots"), Optional.empty());
+    execute(errors, cli.rootDir.resolve("snapshots"), Optional.empty());
   }
 
   protected void execute(ErrorCollector errors, Path snapshotPath, Optional<Path> testsPath) {
     var packageBootstrap = new PackageBootstrap(errors);
-    var sqrlConfig = packageBootstrap.bootstrap(root.rootDir, this.root.packageFiles, this.files);
+    var sqrlConfig = packageBootstrap.bootstrap(cli.rootDir, this.cli.packageFiles, this.files);
 
     var snapshotPathConf = sqrlConfig.getCompilerConfig().getSnapshotPath();
     if (snapshotPathConf.isEmpty()) {
@@ -88,11 +77,11 @@ public abstract class AbstractCompileCommand extends AbstractCommand {
 
     DirectoryManager.prepareTargetDirectory(getTargetDir());
     errors.checkFatal(
-        Files.isDirectory(root.rootDir), "Not a valid root directory: %s", root.rootDir);
+        Files.isDirectory(cli.rootDir), "Not a valid root directory: %s", cli.rootDir);
 
     var injector =
         Guice.createInjector(
-            new SqrlInjector(errors, root.rootDir, getTargetDir(), sqrlConfig, getGoal()));
+            new SqrlInjector(errors, cli.rootDir, getTargetDir(), sqrlConfig, getGoal()));
 
     var packager = injector.getInstance(Packager.class);
     packager.preprocess(errors.withLocation(ErrorPrefix.CONFIG.resolve(PACKAGE_JSON)));
@@ -110,7 +99,7 @@ public abstract class AbstractCompileCommand extends AbstractCommand {
     }
 
     if (isGenerateGraphql()) {
-      addGraphql(plan.getLeft(), root.rootDir);
+      addGraphql(plan.getLeft(), cli.rootDir);
     }
 
     postprocess(packager, getTargetDir(), plan.getLeft(), plan.getRight());
@@ -143,20 +132,6 @@ public abstract class AbstractCompileCommand extends AbstractCommand {
     Files.deleteIfExists(path);
     StringSchema stringSchema = (StringSchema) plans.get(0).getModel().getSchema();
     Files.writeString(path, stringSchema.getSchema(), StandardOpenOption.CREATE);
-  }
-
-  protected Path getTargetDir() {
-    if (targetDir.isAbsolute()) {
-      return targetDir;
-    } else {
-      return root.rootDir.resolve(targetDir);
-    }
-  }
-
-  protected PackageJson readSqrlConfig() {
-    return SqrlConfig.fromFilesPackageJson(
-        ErrorCollector.root(),
-        List.of(getTargetDir().getParent().resolve(SqrlConstants.PACKAGE_JSON)));
   }
 
   private void validateTestPath(Path path) {
