@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.Value;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.parser.SqlParserPos;
@@ -77,7 +77,7 @@ public class FlinkPhysicalPlan implements EnginePhysicalPlan {
     return builder.build();
   }
 
-  @Data
+  @Getter
   public static class Builder {
     private final List<String> flinkSql = new ArrayList<>();
     private final List<String> flinkSqlNoFunctions = new ArrayList<>();
@@ -86,7 +86,12 @@ public class FlinkPhysicalPlan implements EnginePhysicalPlan {
     private final Set<String> formats = new HashSet<>();
     private final Set<String> fullyResolvedFunctions = new HashSet<>();
     private final List<RichSqlInsert> statementSet = new ArrayList<>();
-    private Configuration config = new Configuration();
+
+    private Configuration config;
+
+    public Builder(Configuration config) {
+      this.config = config.clone();
+    }
 
     public void addInsert(RichSqlInsert insert) {
       statementSet.add(insert);
@@ -120,6 +125,12 @@ public class FlinkPhysicalPlan implements EnginePhysicalPlan {
       if (!(node instanceof SqlCreateFunction)) {
         flinkSqlNoFunctions.add(nodeSql);
       }
+    }
+
+    public void addInferredConfig(Configuration inferredConfig) {
+      // Make sure inferred Flink config cannot override already present config
+      inferredConfig.addAll(config);
+      config = inferredConfig.clone();
     }
 
     public SqlExecute getExecuteStatement() {

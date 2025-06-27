@@ -170,10 +170,10 @@ public class Sqrl2FlinkSQLTranslator {
   private final Supplier<FlinkPlannerImpl> validatorSupplier;
   private final SqrlFunctionCatalog sqrlFunctionCatalog;
   private final CatalogManager catalogManager;
+  private final FlinkPhysicalPlan.Builder planBuilder;
   @Getter private final FlinkTypeFactory typeFactory;
 
   @Getter private final TableAnalysisLookup tableLookup = new TableAnalysisLookup();
-  private final FlinkPhysicalPlan.Builder planBuilder = new Builder();
 
   public Sqrl2FlinkSQLTranslator(
       BuildPath buildPath, FlinkStreamEngine flink, CompilerConfig compilerConfig) {
@@ -199,17 +199,16 @@ public class Sqrl2FlinkSQLTranslator {
           jarUrls.stream().map(URL::toString).collect(Collectors.toList()));
     }
 
+    this.planBuilder = new Builder(config.clone());
     if (executionMode == ExecutionMode.STREAMING) {
-      config.addAll(flink.getStreamingSpecificConfig());
+      planBuilder.addInferredConfig(flink.getStreamingSpecificConfig());
     }
 
-    planBuilder.setConfig(config.clone());
-
     // Set up table environment
-    var sEnv = StreamExecutionEnvironment.getExecutionEnvironment(config);
+    var sEnv = StreamExecutionEnvironment.getExecutionEnvironment(planBuilder.getConfig());
     var tEnvConfig =
         EnvironmentSettings.newInstance()
-            .withConfiguration(config)
+            .withConfiguration(planBuilder.getConfig())
             .withClassLoader(udfClassLoader)
             .build();
     this.tEnv = (StreamTableEnvironmentImpl) StreamTableEnvironment.create(sEnv, tEnvConfig);
