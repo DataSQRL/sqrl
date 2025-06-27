@@ -20,8 +20,6 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import com.datasqrl.cli.AssertStatusHook;
 import com.datasqrl.cli.DatasqrlRun;
-import com.datasqrl.cli.util.ConfigLoaderUtils;
-import com.datasqrl.cli.util.FlinkOperatorStatusChecker;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.config.SqrlConstants;
@@ -35,6 +33,8 @@ import com.datasqrl.engines.TestExecutionEnv.TestEnvContext;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.tests.TestExtension;
 import com.datasqrl.tests.UseCaseTestExtensions;
+import com.datasqrl.util.ConfigLoaderUtils;
+import com.datasqrl.util.FlinkOperatorStatusChecker;
 import com.datasqrl.util.SnapshotTest.Snapshot;
 import com.google.common.collect.MoreCollectors;
 import java.nio.file.Files;
