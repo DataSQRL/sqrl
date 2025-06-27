@@ -494,7 +494,6 @@ public class RootGraphqlModel {
   @Getter
   @AllArgsConstructor
   @NoArgsConstructor
-  @Builder
   @ToString
   public static class MetadataParameter implements QueryParameterHandler {
 
