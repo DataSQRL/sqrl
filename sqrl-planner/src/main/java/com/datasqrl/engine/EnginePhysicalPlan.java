@@ -16,10 +16,12 @@
 package com.datasqrl.engine;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import lombok.AllArgsConstructor;
 import lombok.Value;
 
 /** A jackson serializable object */
@@ -31,9 +33,15 @@ public interface EnginePhysicalPlan {
   }
 
   @Value
+  @AllArgsConstructor
   class DeploymentArtifact {
     String fileSuffix;
     Object content;
+    ArtifactType artifactType;
+
+    public DeploymentArtifact(String fileSuffix, Object content) {
+      this(fileSuffix, content, ArtifactType.fromObject(content));
+    }
 
     public static String toSqlString(Stream<String> statements) {
       return statements.collect(Collectors.joining(";\n"));
@@ -41,6 +49,18 @@ public interface EnginePhysicalPlan {
 
     public static String toSqlString(Collection<String> statements) {
       return toSqlString(statements.stream());
+    }
+  }
+
+  enum ArtifactType {
+    STRING,
+    JSON,
+    SERIALIZED;
+
+    public static ArtifactType fromObject(Object content) {
+      if (content instanceof String) return STRING;
+      if (content instanceof Serializable) return SERIALIZED;
+      return JSON;
     }
   }
 }

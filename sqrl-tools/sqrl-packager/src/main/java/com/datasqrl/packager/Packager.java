@@ -45,6 +45,7 @@ import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import java.io.File;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -388,15 +389,20 @@ public class Packager {
             plan.getDeploymentArtifacts(), List.of(new DeploymentArtifact(".json", plan)));
     for (DeploymentArtifact artifact : artifacts) {
       Path filePath = planDir.resolve(name + artifact.getFileSuffix()).toAbsolutePath();
-      if (artifact.getContent() instanceof String) {
-        Files.writeString(
-            filePath,
-            (String) artifact.getContent(),
-            StandardOpenOption.CREATE,
-            StandardOpenOption.TRUNCATE_EXISTING,
-            StandardOpenOption.WRITE);
-      } else { // serialize as json
-        jsonWriter.writeValue(filePath.toFile(), plan);
+      switch (artifact.getArtifactType()) {
+        case STRING ->
+            Files.writeString(
+                filePath,
+                (String) artifact.getContent(),
+                StandardOpenOption.CREATE,
+                StandardOpenOption.TRUNCATE_EXISTING,
+                StandardOpenOption.WRITE);
+        case JSON -> jsonWriter.writeValue(filePath.toFile(), artifact.getContent());
+        case SERIALIZED -> {
+          try (ObjectOutputStream out = new ObjectOutputStream(Files.newOutputStream(filePath))) {
+            out.writeObject(artifact.getContent());
+          }
+        }
       }
     }
   }

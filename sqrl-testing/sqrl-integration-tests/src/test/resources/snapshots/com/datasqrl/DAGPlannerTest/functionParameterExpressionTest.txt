@@ -1,0 +1,335 @@
+>>>pipeline_explain.txt
+=== Customer
+ID:     default_catalog.default_database.Customer
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database.Customer__base
+Annotations:
+ - stream-root: Customer
+Primary Key: customerid, lastUpdated
+Timestamp  : timestamp
+Schema:
+ - customerid: BIGINT NOT NULL
+ - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - lastUpdated: BIGINT NOT NULL
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Plan:
+LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
+  LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($3, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
+    LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW `Customer__view`
+AS
+SELECT `Customer`.`customerid`, `Customer`.`email`, `Customer`.`name`, `Customer`.`lastUpdated`, `Customer`.`timestamp`
+FROM `default_catalog`.`default_database`.`Customer` AS `Customer`
+=== CustomersByName
+ID:     default_catalog.default_database.CustomersByName
+Type:   query
+Stage:  postgres
+Inputs: default_catalog.default_database.Customer
+Annotations:
+ - stream-root: Customer
+ - parameters: inputName, shortName
+ - base-table: Customer
+Plan:
+LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
+  LogicalFilter(condition=[LIKE($2, ?1)])
+    LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW CustomersByName AS 
+    SELECT * FROM Customer WHERE name LIKE ?         ;
+
+>>>flink-sql-no-functions.sql
+CREATE TEMPORARY TABLE `Customer__schema` (
+  `customerid` BIGINT NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `lastUpdated` BIGINT NOT NULL
+) WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `Customer` (
+  `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
+  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
+  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
+) WITH (
+  'format' = 'flexible-json',
+  'path' = 'file:/mock',
+  'source.monitor-interval' = '10 sec',
+  'connector' = 'filesystem'
+)
+LIKE `Customer__schema`;
+CREATE TABLE `Customer_1` (
+  `customerid` BIGINT NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `lastUpdated` BIGINT NOT NULL,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'Customer_1',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'username' = '${JDBC_USERNAME}'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`Customer_1`
+(SELECT *
+ FROM `default_catalog`.`default_database`.`Customer`)
+;
+END
+>>>kafka.json
+{
+  "topics" : [ ]
+}
+>>>postgres.json
+{
+  "statements" : [
+    {
+      "name" : "Customer_1",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Customer_1\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\",\"lastUpdated\"))",
+      "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "email",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "lastUpdated",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "timestamp",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ]
+    },
+    {
+      "name" : "Customer",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"Customer_1\"",
+      "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "email",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "lastUpdated",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "timestamp",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ]
+    }
+  ]
+}
+>>>vertx-exec-functions.json
+{
+  "functions" : [
+    {
+      "functionId" : "SqrlExec0",
+      "functionDescription" : "LEFT(`hash_columns`(`inputName`), 5)",
+      "inputType" : {
+        "typeRoot" : "ROW",
+        "fields" : [
+          {
+            "name" : "inputName",
+            "type" : {
+              "typeRoot" : "VARCHAR",
+              "length" : 2147483647,
+              "children" : [ ],
+              "defaultConversion" : "java.lang.String",
+              "nullable" : false
+            },
+            "description" : null
+          }
+        ],
+        "fieldNames" : [
+          "inputName"
+        ],
+        "children" : [
+          {
+            "typeRoot" : "VARCHAR",
+            "length" : 2147483647,
+            "children" : [ ],
+            "defaultConversion" : "java.lang.String",
+            "nullable" : false
+          }
+        ],
+        "fieldCount" : 1,
+        "defaultConversion" : "org.apache.flink.types.Row",
+        "nullable" : false
+      },
+      "code" : "\n      \n      // \n          \n      public class SqrlExec0$9\n          extends org.apache.flink.api.common.functions.RichFlatMapFunction {\n\n        private transient org.apache.flink.table.runtime.typeutils.StringDataSerializer typeSerializer$1;\n        private transient com.datasqrl.flinkrunner.stdlib.commons.hash_columns function_com$datasqrl$flinkrunner$stdlib$commons$hash_columns;\n        private transient org.apache.flink.table.data.conversion.StringStringConverter converter$3;\n        private transient org.apache.flink.table.data.conversion.StringStringConverter converter$5;\n        org.apache.flink.table.data.binary.BinaryRowData out = new org.apache.flink.table.data.binary.BinaryRowData(1);\n        org.apache.flink.table.data.writer.BinaryRowWriter outWriter = new org.apache.flink.table.data.writer.BinaryRowWriter(out);\n\n        public SqrlExec0$9(Object[] references) throws Exception {\n          typeSerializer$1 = (((org.apache.flink.table.runtime.typeutils.StringDataSerializer) references[0]));\n          function_com$datasqrl$flinkrunner$stdlib$commons$hash_columns = (((com.datasqrl.flinkrunner.stdlib.commons.hash_columns) references[1]));\n          converter$3 = (((org.apache.flink.table.data.conversion.StringStringConverter) references[2]));\n          converter$5 = (((org.apache.flink.table.data.conversion.StringStringConverter) references[3]));\n        }\n\n        \n\n        @Override\n        public void open(org.apache.flink.configuration.Configuration parameters) throws Exception {\n          \n          function_com$datasqrl$flinkrunner$stdlib$commons$hash_columns.open(new org.apache.flink.table.functions.FunctionContext(getRuntimeContext()));\n                 \n          \n          converter$3.open(getRuntimeContext().getUserCodeClassLoader());\n                     \n          \n          converter$5.open(getRuntimeContext().getUserCodeClassLoader());\n                     \n        }\n\n        @Override\n        public void flatMap(Object _in1, org.apache.flink.util.Collector c) throws Exception {\n          org.apache.flink.table.data.RowData in1 = (org.apache.flink.table.data.RowData) _in1;\n          \n          org.apache.flink.table.data.binary.BinaryStringData field$0;\n          boolean isNull$0;\n          org.apache.flink.table.data.binary.BinaryStringData field$2;\n          java.lang.String externalResult$4;\n          org.apache.flink.table.data.binary.BinaryStringData result$6;\n          boolean isNull$6;\n          boolean isNull$7;\n          org.apache.flink.table.data.binary.BinaryStringData result$8;\n          \n          isNull$0 = in1.isNullAt(0);\n          field$0 = org.apache.flink.table.data.binary.BinaryStringData.EMPTY_UTF8;\n          if (!isNull$0) {\n            field$0 = ((org.apache.flink.table.data.binary.BinaryStringData) in1.getString(0));\n          }\n          field$2 = field$0;\n          if (!isNull$0) {\n            field$2 = (org.apache.flink.table.data.binary.BinaryStringData) (typeSerializer$1.copy(field$2));\n          }\n                  \n          \n          \n          \n          \n          \n          \n          outWriter.reset();\n          \n          \n          \n          \n          \n          externalResult$4 = (java.lang.String) function_com$datasqrl$flinkrunner$stdlib$commons$hash_columns\n            .eval(isNull$0 ? null : ((java.lang.String) converter$3.toExternal((org.apache.flink.table.data.binary.BinaryStringData) field$2)));\n          \n          isNull$6 = externalResult$4 == null;\n          result$6 = org.apache.flink.table.data.binary.BinaryStringData.EMPTY_UTF8;\n          if (!isNull$6) {\n            result$6 = (org.apache.flink.table.data.binary.BinaryStringData) converter$5.toInternalOrNull((java.lang.String) externalResult$4);\n          }\n          \n          \n          isNull$7 = isNull$6 || false;\n          result$8 = org.apache.flink.table.data.binary.BinaryStringData.EMPTY_UTF8;\n          if (!isNull$7) {\n            \n          \n          result$8 = ((int) 5) <= 0 ? org.apache.flink.table.data.binary.BinaryStringData.EMPTY_UTF8 : org.apache.flink.table.data.binary.BinaryStringDataUtil.substringSQL(result$6, 1, ((int) 5));\n          \n            isNull$7 = (result$8 == null);\n          }\n          \n          if (isNull$7) {\n            outWriter.setNullAt(0);\n          } else {\n            outWriter.writeString(0, result$8);\n          }\n                     \n          outWriter.complete();\n                  \n          c.collect(out);\n          \n          \n        }\n\n        @Override\n        public void close() throws Exception {\n          function_com$datasqrl$flinkrunner$stdlib$commons$hash_columns.close();\n        }\n\n        \n      }\n    "
+    }
+  ]
+}
+>>>vertx.json
+{
+  "model" : {
+    "queries" : [
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "Customer",
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
+            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM \"Customer_1\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
+          }
+        }
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "CustomersByName",
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
+            },
+            {
+              "type" : "variable",
+              "path" : "inputName"
+            },
+            {
+              "type" : "variable",
+              "path" : "shortName"
+            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM \"Customer_1\"\nWHERE \"name\" LIKE $2",
+            "parameters" : [
+              {
+                "type" : "arg",
+                "path" : "inputName"
+              },
+              {
+                "type" : "computed",
+                "functionUid" : "SqrlExec0"
+              }
+            ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
+          }
+        }
+      }
+    ],
+    "mutations" : [ ],
+    "subscriptions" : [ ],
+    "operations" : [
+      {
+        "function" : {
+          "name" : "GetCustomer",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query Customer($limit: Int = 10, $offset: Int = 0) {\nCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+          "queryName" : "Customer",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/Customer{?offset,limit}"
+      },
+      {
+        "function" : {
+          "name" : "GetCustomersByName",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              },
+              "shortName" : {
+                "type" : "string"
+              },
+              "inputName" : {
+                "type" : "string"
+              }
+            },
+            "required" : [
+              "inputName"
+            ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query CustomersByName($inputName: String!, $shortName: String, $limit: Int = 10, $offset: Int = 0) {\nCustomersByName(inputName: $inputName, shortName: $shortName, limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+          "queryName" : "CustomersByName",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/CustomersByName{?offset,limit,shortName,inputName}"
+      }
+    ],
+    "schema" : {
+      "type" : "string",
+      "schema" : "type Customer {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n}\n\n\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomersByName(inputName: String!, shortName: String, limit: Int = 10, offset: Int = 0): [Customer!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+    }
+  }
+}
