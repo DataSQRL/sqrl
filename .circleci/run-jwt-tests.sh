@@ -9,7 +9,7 @@ cd "${PROJECT_ROOT}/sqrl-testing/sqrl-integration-tests/src/test/resources/useca
 docker run \
   -v "$PWD:/build" \
   -e TZ="UTC" \
-  "datasqrl/cmd-test-image:${CIRCLE_SHA1}" \
+  "datasqrl/cli-test-image:${CIRCLE_SHA1}" \
   compile jwt.sqrl
 
 docker run -d --name sqrl-server \
