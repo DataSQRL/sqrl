@@ -15,6 +15,8 @@
  */
 package com.datasqrl;
 
+import static org.apache.commons.lang3.ObjectUtils.isNotEmpty;
+
 import com.datasqrl.DatasqrlTest.SubscriptionQuery.SubscriptionPayload;
 import com.datasqrl.util.FlinkOperatorStatusChecker;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -31,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -107,6 +110,7 @@ public class DatasqrlTest {
     long delaySec = DEFAULT_DELAY_SEC;
     long mutationWait = MUTATION_WAIT_SEC;
     int requiredCheckpoints = 0;
+    Map<String, String> headers = Map.of();
     // todo: fix inject PackageJson and retrieve through interface
     Object testRunner = run.getPackageJson().get("test-runner");
     if (testRunner instanceof Map testRunnerMap) {
@@ -121,6 +125,10 @@ public class DatasqrlTest {
       Object m = testRunnerMap.get("mutation-delay");
       if (m instanceof Number number) {
         mutationWait = number.intValue();
+      }
+      Object h = testRunnerMap.get("headers");
+      if (h instanceof Map map) {
+        headers = map;
       }
     }
 
@@ -156,7 +164,9 @@ public class DatasqrlTest {
         for (GraphqlQuery subscription : testPlan.getSubscriptions()) {
           SubscriptionClient client =
               new SubscriptionClient(
-                  subscription.getName(), subscription.getQuery(), subscription.getHeaders());
+                  subscription.getName(),
+                  subscription.getQuery(),
+                  combine(headers, subscription.getHeaders()));
           subscriptionClients.add(client);
           CompletableFuture<Void> future = client.start();
           subscriptionFutures.add(future);
@@ -176,7 +186,8 @@ public class DatasqrlTest {
         // Execute mutations
         for (GraphqlQuery mutationQuery : testPlan.getMutations()) {
           // Execute mutation queries
-          String data = executeQuery(mutationQuery.getQuery(), mutationQuery.getHeaders());
+          String data =
+              executeQuery(mutationQuery.getQuery(), combine(headers, mutationQuery.getHeaders()));
           // Snapshot result
           Path snapshotPath = snapshotDir.resolve(mutationQuery.getName() + ".snapshot");
           snapshot(snapshotPath, mutationQuery.getName(), data, exceptions);
@@ -237,7 +248,7 @@ public class DatasqrlTest {
         TestPlan testPlan = testPlanOpt.get();
         for (GraphqlQuery query : testPlan.getQueries()) {
           // Execute queries
-          String data = executeQuery(query.getQuery(), query.getHeaders());
+          String data = executeQuery(query.getQuery(), combine(headers, query.getHeaders()));
 
           // Snapshot result
           Path snapshotPath = snapshotDir.resolve(query.getName() + ".snapshot");
@@ -333,8 +344,21 @@ public class DatasqrlTest {
     return exitCode;
   }
 
+  private Map<String, String> combine(Map<String, String> baseHeaders, Properties overrides) {
+    var headers = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+    if (isNotEmpty(baseHeaders)) {
+      headers.putAll(baseHeaders);
+    }
+
+    if (isNotEmpty(overrides)) {
+      overrides.forEach((key, value) -> headers.put(key.toString(), value.toString()));
+    }
+
+    return headers;
+  }
+
   @SneakyThrows
-  private String executeQuery(String query, Properties headers) {
+  private String executeQuery(String query, Map<String, String> headers) {
     var client = HttpClient.newHttpClient();
 
     var requestBuilder =
@@ -344,7 +368,7 @@ public class DatasqrlTest {
             .POST(HttpRequest.BodyPublishers.ofString(query));
 
     if (headers != null) {
-      headers.forEach((k, v) -> requestBuilder.header(k.toString(), v.toString()));
+      headers.forEach((k, v) -> requestBuilder.header(k, v));
     }
 
     var response = client.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofString());

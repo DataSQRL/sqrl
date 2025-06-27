@@ -26,7 +26,6 @@ import io.vertx.core.http.WebSocketConnectOptions;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -36,7 +35,7 @@ import lombok.SneakyThrows;
 public class SubscriptionClient {
   private final String name;
   private final String query;
-  private final Properties headers;
+  private final Map<String, String> headers;
   private final List<String> messages = new ArrayList<>();
   private WebSocket webSocket;
   private final Vertx vertx = Vertx.vertx();
@@ -48,7 +47,7 @@ public class SubscriptionClient {
     /* 1. Collect handshake headers */
     var headerMap = MultiMap.caseInsensitiveMultiMap();
     if (headers != null) {
-      headers.forEach((k, v) -> headerMap.add(k.toString(), v.toString()));
+      headers.forEach((k, v) -> headerMap.add(k, v));
     }
 
     /* 2. Describe the connection */

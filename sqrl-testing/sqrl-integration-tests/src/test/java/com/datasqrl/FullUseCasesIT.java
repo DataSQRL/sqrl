@@ -345,7 +345,8 @@ class FullUseCasesIT {
   public void runTestCaseByName() {
     var param =
         useCaseProvider().stream()
-            .filter(p -> p.sqrlFileName.equals("jwt.sqrl") && p.goal.equals("test"))
+            .peek(p -> System.out.println(p.sqrlFileName))
+            .filter(p -> p.sqrlFileName.equals("jwt-unauthorized.sqrl") && p.goal.equals("test"))
             .collect(MoreCollectors.onlyElement());
     useCase(param);
   }

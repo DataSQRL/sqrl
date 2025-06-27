@@ -240,6 +240,10 @@
         },
         "required-checkpoints": {
           "type": "integer"
+        },
+        "headers": {
+          "type": "object",
+          "minProperties": 1
         }
       },
       "additionalProperties": false
