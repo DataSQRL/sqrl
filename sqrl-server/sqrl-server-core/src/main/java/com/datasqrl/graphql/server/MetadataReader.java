@@ -19,5 +19,5 @@ import graphql.schema.DataFetchingEnvironment;
 
 public interface MetadataReader {
 
-  Object read(DataFetchingEnvironment environment, String name);
+  Object read(DataFetchingEnvironment environment, String name, boolean isRequired);
 }

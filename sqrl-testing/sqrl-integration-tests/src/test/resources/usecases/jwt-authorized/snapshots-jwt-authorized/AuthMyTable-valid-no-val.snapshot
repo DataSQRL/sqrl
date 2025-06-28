@@ -1,1 +1,1 @@
-{"data":{"AuthMyTable":[]}}
+{"errors":[{"message":"Exception while fetching data (/AuthMyTable) : Claim 'val' is not present on payload. Claims available: [header, payload, signatureBase, signature]","locations":[{"line":2,"column":3}],"path":["AuthMyTable"],"extensions":{"classification":"DataFetchingException"}}],"data":{"AuthMyTable":null}}

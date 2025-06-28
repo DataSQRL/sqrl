@@ -328,7 +328,8 @@ public class SqlScriptPlanner {
                         .map(
                             metaStr -> {
                               var resolvedMetadata =
-                                  SqrlTableFunctionStatement.parseMetadata(metaStr);
+                                  SqrlTableFunctionStatement.parseMetadata(
+                                      metaStr, !field.getType().isNullable());
                               errors.checkFatal(
                                   resolvedMetadata.isPresent(),
                                   ErrorCode.INVALID_TABLE_FUNCTION_ARGUMENTS,

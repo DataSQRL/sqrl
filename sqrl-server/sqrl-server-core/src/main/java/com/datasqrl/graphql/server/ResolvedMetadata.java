@@ -15,6 +15,7 @@
  */
 package com.datasqrl.graphql.server;
 
-public enum MetadataType {
-  AUTH
-}
+import lombok.NonNull;
+
+public record ResolvedMetadata(
+    @NonNull MetadataType metadataType, String name, boolean isRequired) {}

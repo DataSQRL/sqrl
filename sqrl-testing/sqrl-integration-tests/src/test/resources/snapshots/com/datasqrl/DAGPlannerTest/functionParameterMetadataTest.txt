@@ -214,7 +214,8 @@ END
                 "type" : "metadata",
                 "metadata" : {
                   "metadataType" : "AUTH",
-                  "name" : "userid"
+                  "name" : "userid",
+                  "isRequired" : true
                 }
               },
               {

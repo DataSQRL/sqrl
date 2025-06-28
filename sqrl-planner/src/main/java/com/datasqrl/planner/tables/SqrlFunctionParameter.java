@@ -15,7 +15,7 @@
  */
 package com.datasqrl.planner.tables;
 
-import com.datasqrl.graphql.server.MetadataType.ResolvedMetadata;
+import com.datasqrl.graphql.server.ResolvedMetadata;
 import java.util.Optional;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;

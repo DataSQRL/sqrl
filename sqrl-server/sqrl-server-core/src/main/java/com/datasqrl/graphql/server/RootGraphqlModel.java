@@ -16,7 +16,6 @@
 package com.datasqrl.graphql.server;
 
 import com.datasqrl.graphql.jdbc.DatabaseType;
-import com.datasqrl.graphql.server.MetadataType.ResolvedMetadata;
 import com.datasqrl.graphql.server.operation.ApiOperation;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;

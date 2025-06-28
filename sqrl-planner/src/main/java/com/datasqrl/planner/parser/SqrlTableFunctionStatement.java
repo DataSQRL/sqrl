@@ -17,7 +17,7 @@ package com.datasqrl.planner.parser;
 
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.graphql.server.MetadataType;
-import com.datasqrl.graphql.server.MetadataType.ResolvedMetadata;
+import com.datasqrl.graphql.server.ResolvedMetadata;
 import com.google.common.base.Preconditions;
 import java.util.List;
 import java.util.Optional;
@@ -76,14 +76,14 @@ public class SqrlTableFunctionStatement extends SqrlDefinition {
     }
   }
 
-  public static Optional<ResolvedMetadata> parseMetadata(String metadata) {
+  public static Optional<ResolvedMetadata> parseMetadata(String metadata, boolean isRequired) {
     if (metadata == null || !metadata.contains(".")) {
       return Optional.empty();
     }
     String[] parts = metadata.split("\\.", 2);
     try {
       MetadataType type = MetadataType.valueOf(parts[0].toUpperCase());
-      return Optional.of(new ResolvedMetadata(type, parts[1]));
+      return Optional.of(new ResolvedMetadata(type, parts[1], isRequired));
     } catch (IllegalArgumentException e) {
       return Optional.empty();
     }
