@@ -20,7 +20,6 @@ import com.datasqrl.config.ConnectorConf.Context;
 import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.EngineType;
 import com.datasqrl.config.PackageJson;
-import com.datasqrl.config.PackageJson.EmptyEngineConfig;
 import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.datatype.DataTypeMapping;
 import com.datasqrl.datatype.flink.json.FlexibleJsonFlinkFormatTypeMapper;
@@ -78,10 +77,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
   @Inject
   public KafkaLogEngine(PackageJson json, ConnectorFactoryFactory connectorFactory) {
     super(KafkaLogEngineFactory.ENGINE_NAME, EngineType.LOG, KAFKA_FEATURES);
-    this.engineConfig =
-        json.getEngines()
-            .getEngineConfig(KafkaLogEngineFactory.ENGINE_NAME)
-            .orElseGet(() -> new EmptyEngineConfig(KafkaLogEngineFactory.ENGINE_NAME));
+    this.engineConfig = json.getEngines().getEngineConfigOrEmpty(KafkaLogEngineFactory.ENGINE_NAME);
     this.streamConnectorConf = connectorFactory.getConfig(KafkaLogEngineFactory.ENGINE_NAME);
     this.mutationConnectorConf =
         connectorFactory.getConfig(KafkaLogEngineFactory.ENGINE_NAME + "-mutation");

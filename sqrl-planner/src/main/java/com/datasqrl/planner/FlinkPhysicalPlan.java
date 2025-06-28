@@ -19,15 +19,18 @@ import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.planner.tables.FlinkConnectorConfig;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.Value;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.parser.SqlParserPos;
+import org.apache.flink.configuration.Configuration;
 import org.apache.flink.sql.parser.ddl.SqlCreateFunction;
 import org.apache.flink.sql.parser.ddl.SqlCreateTable;
 import org.apache.flink.sql.parser.ddl.SqlTableOption;
@@ -56,33 +59,39 @@ public class FlinkPhysicalPlan implements EnginePhysicalPlan {
   @JsonIgnore Optional<String> compiledPlan;
   @JsonIgnore Optional<String> explainedPlan;
   @JsonIgnore List<String> flinkSqlNoFunctions;
+  @JsonIgnore Configuration config;
 
   @Override
   public List<DeploymentArtifact> getDeploymentArtifacts() {
-    List<DeploymentArtifact> deploymentArtifacts = new ArrayList<>();
-    deploymentArtifacts.add(
-        new DeploymentArtifact("-sql.sql", DeploymentArtifact.toSqlString(flinkSql)));
-    deploymentArtifacts.add(
+    var builder = ImmutableList.<DeploymentArtifact>builder();
+    builder.add(
+        new DeploymentArtifact("-config.yaml", DeploymentArtifact.toYamlString(config)),
+        new DeploymentArtifact("-sql.sql", DeploymentArtifact.toSqlString(flinkSql)),
         new DeploymentArtifact(
-            "-sql-no-functions.sql", DeploymentArtifact.toSqlString(flinkSqlNoFunctions)));
-    deploymentArtifacts.add(
+            "-sql-no-functions.sql", DeploymentArtifact.toSqlString(flinkSqlNoFunctions)),
         new DeploymentArtifact("-functions.sql", DeploymentArtifact.toSqlString(functions)));
-    compiledPlan.map(
-        plan -> deploymentArtifacts.add(new DeploymentArtifact("-compiled-plan.json", plan)));
-    explainedPlan.map(
-        plan -> deploymentArtifacts.add(new DeploymentArtifact("-explained-plan.txt", plan)));
-    return deploymentArtifacts;
+
+    compiledPlan.map(plan -> builder.add(new DeploymentArtifact("-compiled-plan.json", plan)));
+    explainedPlan.map(plan -> builder.add(new DeploymentArtifact("-explained-plan.txt", plan)));
+
+    return builder.build();
   }
 
-  @Value
+  @Getter
   public static class Builder {
-    List<String> flinkSql = new ArrayList<>();
-    List<String> flinkSqlNoFunctions = new ArrayList<>();
-    List<SqlNode> nodes = new ArrayList<>();
-    Set<String> connectors = new HashSet<>();
-    Set<String> formats = new HashSet<>();
-    Set<String> fullyResolvedFunctions = new HashSet<>();
-    List<RichSqlInsert> statementSet = new ArrayList<>();
+    private final List<String> flinkSql = new ArrayList<>();
+    private final List<String> flinkSqlNoFunctions = new ArrayList<>();
+    private final List<SqlNode> nodes = new ArrayList<>();
+    private final Set<String> connectors = new HashSet<>();
+    private final Set<String> formats = new HashSet<>();
+    private final Set<String> fullyResolvedFunctions = new HashSet<>();
+    private final List<RichSqlInsert> statementSet = new ArrayList<>();
+
+    private Configuration config;
+
+    public Builder(Configuration config) {
+      this.config = config.clone();
+    }
 
     public void addInsert(RichSqlInsert insert) {
       statementSet.add(insert);
@@ -118,6 +127,12 @@ public class FlinkPhysicalPlan implements EnginePhysicalPlan {
       }
     }
 
+    public void addInferredConfig(Configuration inferredConfig) {
+      // Make sure inferred Flink config cannot override already present config
+      inferredConfig.addAll(config);
+      config = inferredConfig.clone();
+    }
+
     public SqlExecute getExecuteStatement() {
       Preconditions.checkArgument(
           !statementSet.isEmpty(), "SQRL script does not contain any sink definitions");
@@ -138,7 +153,8 @@ public class FlinkPhysicalPlan implements EnginePhysicalPlan {
           fullyResolvedFunctions,
           compiledPlan.map(CompiledPlan::asJsonString),
           explainedPlan,
-          flinkSqlNoFunctions);
+          flinkSqlNoFunctions,
+          config);
     }
   }
 }

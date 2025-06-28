@@ -18,7 +18,6 @@ package com.datasqrl.engine.database.relational;
 import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.config.PackageJson;
-import com.datasqrl.config.PackageJson.EmptyEngineConfig;
 import com.datasqrl.datatype.DataTypeMapping;
 import com.datasqrl.datatype.flink.jdbc.FlinkSqrlPostgresDataTypeMapper;
 import com.datasqrl.engine.database.relational.ddl.PostgresDDLFactory;
@@ -32,9 +31,7 @@ public class PostgresJdbcEngine extends AbstractJDBCDatabaseEngine {
   public PostgresJdbcEngine(@NonNull PackageJson json, ConnectorFactoryFactory connectorFactory) {
     super(
         PostgresEngineFactory.ENGINE_NAME,
-        json.getEngines()
-            .getEngineConfig(PostgresEngineFactory.ENGINE_NAME)
-            .orElseGet(() -> new EmptyEngineConfig(PostgresEngineFactory.ENGINE_NAME)),
+        json.getEngines().getEngineConfigOrEmpty(PostgresEngineFactory.ENGINE_NAME),
         connectorFactory);
   }
 

@@ -17,8 +17,8 @@ package com.datasqrl;
 
 import static org.assertj.core.api.Assertions.fail;
 
-import com.datasqrl.cmd.AssertStatusHook;
-import com.datasqrl.cmd.RootCommand;
+import com.datasqrl.cli.AssertStatusHook;
+import com.datasqrl.cli.DatasqrlCli;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -61,9 +61,9 @@ public class SqrlScriptExecutor {
       argsList.addAll(Arrays.asList("-c", getPackageJsonPath()));
     }
     // Execute the command
-    var rootCommand = new RootCommand(rootDir, hook);
+    var cli = new DatasqrlCli(rootDir, hook, true);
     var exitCode =
-        rootCommand.getCmd().execute(argsList.toArray(new String[0])) + (hook.isSuccess() ? 0 : 1);
+        cli.getCmd().execute(argsList.toArray(new String[0])) + (hook.isSuccess() ? 0 : 1);
     if (exitCode != 0) {
       if (hook.failure() != null) {
         fail("", hook.failure());

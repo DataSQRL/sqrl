@@ -61,4 +61,17 @@ class EnginesConfigImplTest {
     assertThat(engineConfig).isNotNull();
     assertThat(engineConfig.getEngineName()).isEqualTo("flink");
   }
+
+  @Test
+  void givenConfigWithEngine_whenGetEngineConfigOrEempty_thenReturnsEngineConfig() {
+    config.getSubConfig("flink").setProperty("type", "flink");
+
+    var enginesConfig = new EnginesConfigImpl(config);
+
+    var engineConfig = enginesConfig.getEngineConfigOrEmpty("flink");
+
+    assertThat(engineConfig).isNotNull();
+    assertThat(engineConfig).isNotInstanceOf(PackageJson.EmptyEngineConfig.class);
+    assertThat(engineConfig.getEngineName()).isEqualTo("flink");
+  }
 }

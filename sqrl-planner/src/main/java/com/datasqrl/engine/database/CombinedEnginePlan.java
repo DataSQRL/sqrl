@@ -19,7 +19,6 @@ import com.datasqrl.engine.EnginePhysicalPlan;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import lombok.Builder;
 import lombok.Singular;
 import lombok.Value;
@@ -41,10 +40,10 @@ public class CombinedEnginePlan implements EnginePhysicalPlan {
                         artifact ->
                             new DeploymentArtifact(
                                 name.isBlank()
-                                    ? artifact.getFileSuffix()
-                                    : ("-" + name + artifact.getFileSuffix()),
-                                artifact.getContent()))
-                    .collect(Collectors.toList())));
+                                    ? artifact.fileSuffix()
+                                    : ("-" + name + artifact.fileSuffix()),
+                                artifact.content()))
+                    .toList()));
     return combined;
   }
 }

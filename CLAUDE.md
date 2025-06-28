@@ -75,7 +75,7 @@ This is a multi-module Maven project with the following key components:
 - `sqrl-server-vertx/` - Vert.x-based server implementation
 
 **sqrl-tools/** - Command-line tools and utilities:
-- `sqrl-cli/` - Main CLI interface (entry point: `com.datasqrl.cmd.RootCommand`)
+- `sqrl-cli/` - Main CLI interface (entry point: `com.datasqrl.cli.DatasqrlCli`)
 - `sqrl-config/` - Configuration file handling
 - `sqrl-packager/` - Dependency resolution and build preparation
 - `sqrl-run/` - Pipeline execution
@@ -164,6 +164,6 @@ If tests fail due to Flink memory issues, uncomment the configuration line in `E
 
 ## Entry Points
 
-- **CLI Main**: `com.datasqrl.cmd.RootCommand`
+- **CLI Main**: `com.datasqrl.cli.DatasqrlCli`
 - **Primary Commands**: `compile`, `run`, `test`
 - **GraphQL API**: Auto-generated from SQRL scripts, served at `http://localhost:8888/graphiql/`

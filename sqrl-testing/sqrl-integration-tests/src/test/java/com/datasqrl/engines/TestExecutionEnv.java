@@ -17,8 +17,9 @@ package com.datasqrl.engines;
 
 import static org.assertj.core.api.Assertions.fail;
 
-import com.datasqrl.DatasqrlTest;
 import com.datasqrl.UseCaseTestParameter;
+import com.datasqrl.cli.DatasqrlTest;
+import com.datasqrl.cli.util.ConfigLoaderUtils;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.engines.TestEngine.DuckdbTestEngine;
@@ -229,17 +230,17 @@ public class TestExecutionEnv implements TestEngineVisitor<Void, TestEnvContext>
     return null;
   }
 
+  @SneakyThrows
   @Override
   public Void visit(TestTestEngine engine, TestEnvContext context) {
-    var test =
-        new DatasqrlTest(
-            null,
-            context
-                .rootDir
-                .resolve(SqrlConstants.BUILD_DIR_NAME)
-                .resolve(SqrlConstants.DEPLOY_DIR_NAME)
-                .resolve(SqrlConstants.PLAN_DIR),
-            context.env);
+    var planDir =
+        context
+            .rootDir
+            .resolve(SqrlConstants.BUILD_DIR_NAME)
+            .resolve(SqrlConstants.DEPLOY_DIR_NAME)
+            .resolve(SqrlConstants.PLAN_DIR);
+    var flinkConfig = ConfigLoaderUtils.loadFlinkConfig(planDir);
+    var test = new DatasqrlTest(planDir, packageJson, flinkConfig, context.env);
     try {
       var run = test.run();
       if (run != 0) {

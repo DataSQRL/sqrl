@@ -17,8 +17,8 @@ package com.datasqrl;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.datasqrl.cmd.AssertStatusHook;
-import com.datasqrl.cmd.RootCommand;
+import com.datasqrl.cli.AssertStatusHook;
+import com.datasqrl.cli.DatasqrlCli;
 import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.util.FileUtil;
 import com.datasqrl.util.SnapshotTest.Snapshot;
@@ -179,7 +179,9 @@ public abstract class AbstractAssetSnapshotTest {
             .toAbsolutePath();
     var statusHook = new AssertStatusHook();
     var code =
-        new RootCommand(rootDir, statusHook).getCmd().execute(argsList.toArray(String[]::new));
+        new DatasqrlCli(rootDir, statusHook, true)
+            .getCmd()
+            .execute(argsList.toArray(String[]::new));
     if (statusHook.isSuccess() && code != 0) {
       assertThat(code).isEqualTo(0);
     }

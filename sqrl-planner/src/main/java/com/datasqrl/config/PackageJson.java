@@ -98,6 +98,8 @@ public interface PackageJson {
     Optional<EngineConfig> getEngineConfig(String engineId);
 
     EngineConfig getEngineConfigOrErr(String engineId);
+
+    EngineConfig getEngineConfigOrEmpty(String engineId);
   }
 
   interface EngineConfig {
@@ -109,6 +111,8 @@ public interface PackageJson {
     ConnectorsConfig getConnectors();
 
     Map<String, Object> getConfig();
+
+    boolean isEmpty();
   }
 
   @AllArgsConstructor
@@ -132,6 +136,11 @@ public interface PackageJson {
     @Override
     public Map<String, Object> getConfig() {
       return Map.of();
+    }
+
+    @Override
+    public boolean isEmpty() {
+      return true;
     }
   }
 
