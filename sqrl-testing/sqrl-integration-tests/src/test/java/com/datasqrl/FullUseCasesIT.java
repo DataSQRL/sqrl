@@ -96,6 +96,9 @@ class FullUseCasesIT {
           new ScriptCriteria("connectors.sqrl", "test"), // should not be executed
           new ScriptCriteria("flink_kafka.sqrl", "run"), // does not expose an API
           new ScriptCriteria("minimalFlink.sqrl", "run"), // only want to test this
+          // only want to test this, no way to authenticate on runs
+          new ScriptCriteria("jwt-authorized.sqrl", "run"),
+          new ScriptCriteria("jwt-unauthorized.sqrl", "run"),
           new ScriptCriteria(
               "temporal-join.sqrl",
               "run") // TODO: only 'run' when there are no tests (i.e. snapshot dir) - there is no

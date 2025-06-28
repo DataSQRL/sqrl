@@ -56,6 +56,15 @@ class McpApiValidationTest {
   private static final int MCP_SERVER_PORT = 8889;
   private final ObjectMapper objectMapper = new ObjectMapper();
 
+  private String getMcpInspectorImage() {
+    // Get the MCP inspector version dynamically or use a fallback
+    String mcpVersion = System.getProperty("mcp.inspector.version");
+    if (mcpVersion == null || mcpVersion.trim().isEmpty()) {
+      mcpVersion = "latest"; // fallback to latest when no specific version available
+    }
+    return "datasqrl/mcp-inspector:" + mcpVersion;
+  }
+
   private Vertx vertx;
   private McpBridgeVerticle mcpBridge;
   private ServerConfig serverConfig;
@@ -162,15 +171,14 @@ class McpApiValidationTest {
     // Get the host IP for container to access the MCP server
     String mcpUrl = String.format("http://host.testcontainers.internal:%d/mcp", MCP_SERVER_PORT);
 
-    // Create MCP inspector container to validate the MCP server
+    // Create MCP inspector container to validate the MCP server using pre-built image
     try (var mcpInspector =
-        new GenericContainer<>(DockerImageName.parse("node:18-alpine"))
+        new GenericContainer<>(DockerImageName.parse(getMcpInspectorImage()))
             .withCommand(
                 "sh",
                 "-c",
                 String.format(
                     """
-            npm install -g @modelcontextprotocol/inspector &&
             echo "Starting MCP validation for %s..." &&
             sleep 5 &&
             echo "Testing initialize..." &&
@@ -207,15 +215,14 @@ class McpApiValidationTest {
       throws Exception {
     String mcpUrl = String.format("http://host.testcontainers.internal:%d/mcp", MCP_SERVER_PORT);
 
-    // Create a more detailed MCP validation container
+    // Create a more detailed MCP validation container using pre-built image
     try (var validatorContainer =
-        new GenericContainer<>(DockerImageName.parse("node:18-alpine"))
+        new GenericContainer<>(DockerImageName.parse(getMcpInspectorImage()))
             .withCommand(
                 "sh",
                 "-c",
                 String.format(
                     """
-            npm install -g @modelcontextprotocol/inspector &&
             echo "Starting detailed MCP validation..." &&
             sleep 5 &&
             echo "=== Testing tools/list ===" &&
