@@ -16,7 +16,6 @@
 package com.datasqrl.graphql;
 
 import static org.apache.kafka.clients.admin.AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG;
-import static org.junit.jupiter.api.Assertions.fail;
 
 import com.datasqrl.graphql.config.CorsHandlerOptions;
 import com.datasqrl.graphql.config.ServerConfig;
@@ -39,6 +38,7 @@ import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
+import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.sqlclient.PoolOptions;
 import java.util.List;
 import java.util.Map;
@@ -52,14 +52,29 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.utility.DockerImageName;
 
 @ExtendWith(VertxExtension.class)
+@Testcontainers
 class GraphQLJwtHandlerTest {
   EmbeddedKafkaCluster CLUSTER = new EmbeddedKafkaCluster(1);
+  private static final int SERVER_PORT = 8889; // Use different port to avoid conflicts
+
+  @Container
+  private PostgreSQLContainer testDatabase =
+      new PostgreSQLContainer(
+              DockerImageName.parse("ankane/pgvector:v0.5.0").asCompatibleSubstituteFor("postgres"))
+          .withDatabaseName("datasqrl")
+          .withUsername("foo")
+          .withPassword("secret");
 
   Vertx vertx;
-  GraphQLServer server;
+  GraphQLServerVerticle graphQLServerVerticle;
   ServerConfig serverConfig;
+  RootGraphqlModel model;
 
   @SneakyThrows
   @BeforeEach
@@ -70,7 +85,9 @@ class GraphQLJwtHandlerTest {
       admin.createTopics(List.of(new NewTopic("mytopic", Optional.empty(), Optional.empty())));
     }
     vertx = Vertx.vertx();
-    RootGraphqlModel root =
+
+    // Create the model with GraphQL schema and Kafka subscription
+    model =
         RootGraphqlModel.builder()
             .schema(
                 StringSchema.builder()
@@ -91,6 +108,7 @@ class GraphQLJwtHandlerTest {
                     .build())
             .build();
 
+    // Create server config with JWT auth and Kafka settings
     serverConfig =
         new ServerConfig() {
           @Override
@@ -104,23 +122,77 @@ class GraphQLJwtHandlerTest {
     serverConfig.setPoolOptions(new PoolOptions());
     serverConfig.setServletConfig(new ServletConfig());
     serverConfig.setCorsHandlerOptions(new CorsHandlerOptions());
+
+    // Configure PostgreSQL connection
+    PgConnectOptions pgOptions = new PgConnectOptions();
+    pgOptions.setDatabase(testDatabase.getDatabaseName());
+    pgOptions.setHost(testDatabase.getHost());
+    pgOptions.setPort(testDatabase.getMappedPort(PostgreSQLContainer.POSTGRESQL_PORT));
+    pgOptions.setUser(testDatabase.getUsername());
+    pgOptions.setPassword(testDatabase.getPassword());
+    serverConfig.setPgConnectOptions(pgOptions);
     HttpServerOptions httpServerOptions =
-        new HttpServerOptions().setPort(8888).setHost("localhost");
+        new HttpServerOptions().setPort(SERVER_PORT).setHost("0.0.0.0");
     serverConfig.setHttpServerOptions(httpServerOptions);
-    server = new GraphQLServer(root, serverConfig, Optional.empty());
+
+    // Create a minimal HTTP server with GraphQL verticle (following McpApiValidationIT pattern)
+    var httpServer = vertx.createHttpServer(httpServerOptions);
+    var router = io.vertx.ext.web.Router.router(vertx);
+
+    // Add basic handlers
+    router.route().handler(io.vertx.ext.web.handler.BodyHandler.create());
+    router.route().handler(io.vertx.ext.web.handler.LoggerHandler.create());
+
+    // Add CORS handler
+    var corsHandler =
+        io.vertx.ext.web.handler.CorsHandler.create()
+            .addOrigin("*")
+            .allowedMethod(io.vertx.core.http.HttpMethod.GET)
+            .allowedMethod(io.vertx.core.http.HttpMethod.POST)
+            .allowedMethod(io.vertx.core.http.HttpMethod.OPTIONS)
+            .allowedHeader("Access-Control-Request-Method")
+            .allowedHeader("Access-Control-Allow-Credentials")
+            .allowedHeader("Access-Control-Allow-Origin")
+            .allowedHeader("Access-Control-Allow-Headers")
+            .allowedHeader("Content-Type")
+            .allowedHeader("Authorization");
+    router.route().handler(corsHandler);
+
+    // Create the GraphQL server verticle directly (similar to McpBridgeVerticle)
+    var jwtAuth =
+        Optional.of(io.vertx.ext.auth.jwt.JWTAuth.create(vertx, serverConfig.getJwtAuth()));
+    graphQLServerVerticle = new GraphQLServerVerticle(router, serverConfig, model, jwtAuth);
+
     vertx
-        .deployVerticle(server)
-        .onSuccess((c) -> testContext.completeNow())
-        .onFailure((c) -> fail("Could not start"))
-        .toCompletionStage()
-        .toCompletableFuture()
-        .get();
+        .deployVerticle(graphQLServerVerticle)
+        .compose(
+            deploymentId -> {
+              httpServer.requestHandler(router);
+              return httpServer.listen();
+            })
+        .onSuccess(
+            server -> {
+              System.out.println("GraphQL server started on port " + SERVER_PORT);
+              testContext.completeNow();
+            })
+        .onFailure(testContext::failNow);
   }
 
   @SneakyThrows
   @AfterEach
   void teardown(VertxTestContext testContext) {
-    vertx.close().onSuccess((c) -> testContext.completeNow());
+    if (vertx != null) {
+      vertx
+          .close()
+          .onComplete(
+              ar -> {
+                CLUSTER.stop();
+                testContext.completeNow();
+              });
+    } else {
+      CLUSTER.stop();
+      testContext.completeNow();
+    }
   }
 
   @Test
@@ -166,7 +238,7 @@ class GraphQLJwtHandlerTest {
   void websocketBadAuth(VertxTestContext testContext) {
     var options =
         new WebSocketConnectOptions()
-            .setPort(serverConfig.getHttpServerOptions().getPort())
+            .setPort(SERVER_PORT)
             .setHost("localhost")
             .setURI("/graphql")
             .putHeader("Authorization", "Bearer badToken");
@@ -195,7 +267,7 @@ class GraphQLJwtHandlerTest {
     //        new JWTOptions().setExpiresInSeconds(60));
     //
     //    var options = new WebSocketConnectOptions()
-    //        .setPort(serverConfig.getHttpServerOptions().getPort())
+    //        .setPort(SERVER_PORT)
     //        .setHost("localhost")
     //        .setURI("/graphql") // Your actual WebSocket endpoint URI
     //        .addHeader("Authorization", "Bearer " + token); // Send the JWT as part of the initial
@@ -257,7 +329,7 @@ class GraphQLJwtHandlerTest {
     var query = new JsonObject().put("query", "query { mock }");
     var webClient = WebClient.create(vertx);
     webClient
-        .post(serverConfig.getHttpServerOptions().getPort(), "localhost", "/graphql")
+        .post(SERVER_PORT, "localhost", "/graphql")
         .putHeader("Authorization", "Bearer " + token)
         .putHeader("Content-Type", "application/json")
         .sendJson(query)
