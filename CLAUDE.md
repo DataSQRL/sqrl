@@ -106,6 +106,7 @@ This is a multi-module Maven project with the following key components:
 - **Commit Messages**: Use succinct single-line messages describing the most important change
 - **Issue References**: Include issue links on second line if provided in the change prompt
 - **Co-authorship**: Do not add Claude as co-author unless explicitly requested
+- **Commit Best Practice**: Always use `-s` and `-S` flags when committing to sign-off and sign commits cryptographically
 
 ## Key Configuration
 

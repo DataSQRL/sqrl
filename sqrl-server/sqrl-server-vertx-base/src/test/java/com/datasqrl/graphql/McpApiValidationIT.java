@@ -51,7 +51,7 @@ import org.testcontainers.utility.DockerImageName;
 
 @ExtendWith(VertxExtension.class)
 @Testcontainers
-class McpApiValidationTest {
+class McpApiValidationIT {
 
   private static final int MCP_SERVER_PORT = 8889;
   private final ObjectMapper objectMapper = new ObjectMapper();
