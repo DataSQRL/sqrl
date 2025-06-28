@@ -15,6 +15,8 @@
  */
 package com.datasqrl.graphql.config;
 
+import static org.apache.commons.lang3.ObjectUtils.isEmpty;
+
 import com.datasqrl.util.JsonMergeUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -31,6 +33,9 @@ public class ServerConfigUtil {
   @SneakyThrows
   public static ServerConfig mergeConfigs(
       ObjectMapper objectMapper, ServerConfig serverConfig, Map<String, Object> configOverrides) {
+    if (isEmpty(configOverrides)) {
+      return serverConfig;
+    }
     objectMapper = objectMapper.copy().registerModule(new VertxModule());
     var config = ((ObjectNode) objectMapper.valueToTree(serverConfig)).deepCopy();
     JsonMergeUtils.merge(config, objectMapper.valueToTree(configOverrides));
