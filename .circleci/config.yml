@@ -270,12 +270,13 @@ jobs:
             - m2-{{ checksum "pom.xml" }}
       - generate-settings
       - install-jdk
+      - compute-mcp-tag
       - run:
           name: Auth ghcr
           command: echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
       - run:
           name: Run Integration Tests
-          command: mvn -U -T2 -B install -Dtest=skip -Dsurefire.failIfNoSpecifiedTests=false -Pskip-shade-plugin
+          command: mvn -U -T2 -B install -Dtest=skip -Dsurefire.failIfNoSpecifiedTests=false -Pskip-shade-plugin -Dmcp.inspector.version=$MCP_TAG
       - save-test-results
 
   build-test-image:
@@ -617,6 +618,7 @@ workflows:
               test_sharding_index: [0, 1]
           requires:
             - build-base
+            - docker-build-mcp-inspector
       - build-images:
           <<: *job-defaults
           requires:
