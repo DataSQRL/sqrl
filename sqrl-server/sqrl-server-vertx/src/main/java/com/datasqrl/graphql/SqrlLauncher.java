@@ -27,7 +27,7 @@ public class SqrlLauncher implements VertxApplicationHooks {
 
   public static void main(String[] args) {
     if (args == null || args.length == 0) {
-      args = new String[] {GraphQLServer.class.getName()};
+      args = new String[] {HttpServerVerticle.class.getName()};
     }
     VertxApplication vertxApplication = new VertxApplication(args, new SqrlLauncher());
     vertxApplication.launch();
