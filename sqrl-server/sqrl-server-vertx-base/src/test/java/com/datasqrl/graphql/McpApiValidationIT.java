@@ -172,31 +172,33 @@ class McpApiValidationIT {
     String mcpUrl = String.format("http://host.testcontainers.internal:%d/mcp", MCP_SERVER_PORT);
 
     // Create MCP inspector container to validate the MCP server using pre-built image
-    try (var mcpInspector =
-        new GenericContainer<>(DockerImageName.parse(getMcpInspectorImage()))
-            .withCommand(
-                "sh",
-                "-c",
-                String.format(
-                    """
-            echo "Starting MCP validation for %s..." &&
-            sleep 5 &&
-            echo "Testing initialize..." &&
-            npx @modelcontextprotocol/inspector --cli %s --method initialize &&
-            echo "Testing tools/list..." &&
-            npx @modelcontextprotocol/inspector --cli %s --method tools/list &&
-            echo "Testing resources/list..." &&
-            npx @modelcontextprotocol/inspector --cli %s --method resources/list &&
-            echo "Testing ping..." &&
-            npx @modelcontextprotocol/inspector --cli %s --method ping &&
-            echo "All MCP validations completed successfully"
-            """,
-                    mcpUrl, mcpUrl, mcpUrl, mcpUrl, mcpUrl))
-            .withLogConsumer(
-                new Slf4jLogConsumer(org.slf4j.LoggerFactory.getLogger("mcp-inspector")))
-            .waitingFor(
-                Wait.forLogMessage(".*All MCP validations completed successfully.*", 1)
-                    .withStartupTimeout(Duration.ofMinutes(2)))) {
+    GenericContainer<?> mcpInspector = null;
+    try {
+      mcpInspector =
+          new GenericContainer<>(DockerImageName.parse(getMcpInspectorImage()))
+              .withCommand(
+                  "sh",
+                  "-c",
+                  String.format(
+                      """
+              echo "Starting MCP validation for %s..." &&
+              sleep 5 &&
+              echo "Testing initialize..." &&
+              npx @modelcontextprotocol/inspector --cli %s --method initialize &&
+              echo "Testing tools/list..." &&
+              npx @modelcontextprotocol/inspector --cli %s --method tools/list &&
+              echo "Testing resources/list..." &&
+              npx @modelcontextprotocol/inspector --cli %s --method resources/list &&
+              echo "Testing ping..." &&
+              npx @modelcontextprotocol/inspector --cli %s --method ping &&
+              echo "All MCP validations completed successfully"
+              """,
+                      mcpUrl, mcpUrl, mcpUrl, mcpUrl, mcpUrl))
+              .withLogConsumer(
+                  new Slf4jLogConsumer(org.slf4j.LoggerFactory.getLogger("mcp-inspector")))
+              .waitingFor(
+                  Wait.forLogMessage(".*All MCP validations completed successfully.*", 1)
+                      .withStartupTimeout(Duration.ofMinutes(2)));
 
       mcpInspector.start();
 
@@ -207,6 +209,27 @@ class McpApiValidationIT {
 
       // Validate that essential MCP operations completed successfully
       assertMcpValidationResults(logs);
+
+    } catch (Exception e) {
+      // Print container logs on failure for debugging
+      if (mcpInspector != null) {
+        try {
+          System.err.println("=== MCP INSPECTOR CONTAINER LOGS (due to test failure) ===");
+          System.err.println(mcpInspector.getLogs());
+          System.err.println("=== END CONTAINER LOGS ===");
+        } catch (Exception logException) {
+          System.err.println("Failed to retrieve container logs: " + logException.getMessage());
+        }
+      }
+      throw e;
+    } finally {
+      if (mcpInspector != null) {
+        try {
+          mcpInspector.stop();
+        } catch (Exception stopException) {
+          System.err.println("Failed to stop container: " + stopException.getMessage());
+        }
+      }
     }
   }
 
@@ -216,32 +239,34 @@ class McpApiValidationIT {
     String mcpUrl = String.format("http://host.testcontainers.internal:%d/mcp", MCP_SERVER_PORT);
 
     // Create a more detailed MCP validation container using pre-built image
-    try (var validatorContainer =
-        new GenericContainer<>(DockerImageName.parse(getMcpInspectorImage()))
-            .withCommand(
-                "sh",
-                "-c",
-                String.format(
-                    """
-            echo "Starting detailed MCP validation..." &&
-            sleep 5 &&
-            echo "=== Testing tools/list ===" &&
-            npx @modelcontextprotocol/inspector --cli %s --method tools/list > /tmp/tools_result.txt 2>&1 &&
-            cat /tmp/tools_result.txt &&
-            echo "=== Testing resources/list ===" &&
-            npx @modelcontextprotocol/inspector --cli %s --method resources/list > /tmp/resources_result.txt 2>&1 &&
-            cat /tmp/resources_result.txt &&
-            echo "=== Testing initialize ===" &&
-            npx @modelcontextprotocol/inspector --cli %s --method initialize > /tmp/init_result.txt 2>&1 &&
-            cat /tmp/init_result.txt &&
-            echo "All detailed validations completed"
-            """,
-                    mcpUrl, mcpUrl, mcpUrl))
-            .withLogConsumer(
-                new Slf4jLogConsumer(org.slf4j.LoggerFactory.getLogger("mcp-detailed-validator")))
-            .waitingFor(
-                Wait.forLogMessage(".*All detailed validations completed.*", 1)
-                    .withStartupTimeout(Duration.ofMinutes(2)))) {
+    GenericContainer<?> validatorContainer = null;
+    try {
+      validatorContainer =
+          new GenericContainer<>(DockerImageName.parse(getMcpInspectorImage()))
+              .withCommand(
+                  "sh",
+                  "-c",
+                  String.format(
+                      """
+              echo "Starting detailed MCP validation..." &&
+              sleep 5 &&
+              echo "=== Testing tools/list ===" &&
+              npx @modelcontextprotocol/inspector --cli %s --method tools/list > /tmp/tools_result.txt 2>&1 &&
+              cat /tmp/tools_result.txt &&
+              echo "=== Testing resources/list ===" &&
+              npx @modelcontextprotocol/inspector --cli %s --method resources/list > /tmp/resources_result.txt 2>&1 &&
+              cat /tmp/resources_result.txt &&
+              echo "=== Testing initialize ===" &&
+              npx @modelcontextprotocol/inspector --cli %s --method initialize > /tmp/init_result.txt 2>&1 &&
+              cat /tmp/init_result.txt &&
+              echo "All detailed validations completed"
+              """,
+                      mcpUrl, mcpUrl, mcpUrl))
+              .withLogConsumer(
+                  new Slf4jLogConsumer(org.slf4j.LoggerFactory.getLogger("mcp-detailed-validator")))
+              .waitingFor(
+                  Wait.forLogMessage(".*All detailed validations completed.*", 1)
+                      .withStartupTimeout(Duration.ofMinutes(2)));
 
       validatorContainer.start();
 
@@ -252,6 +277,27 @@ class McpApiValidationIT {
 
       // Validate specific MCP protocol responses
       validateMcpProtocolCompliance(logs);
+
+    } catch (Exception e) {
+      // Print container logs on failure for debugging
+      if (validatorContainer != null) {
+        try {
+          System.err.println("=== MCP DETAILED VALIDATOR CONTAINER LOGS (due to test failure) ===");
+          System.err.println(validatorContainer.getLogs());
+          System.err.println("=== END CONTAINER LOGS ===");
+        } catch (Exception logException) {
+          System.err.println("Failed to retrieve container logs: " + logException.getMessage());
+        }
+      }
+      throw e;
+    } finally {
+      if (validatorContainer != null) {
+        try {
+          validatorContainer.stop();
+        } catch (Exception stopException) {
+          System.err.println("Failed to stop container: " + stopException.getMessage());
+        }
+      }
     }
   }
 
