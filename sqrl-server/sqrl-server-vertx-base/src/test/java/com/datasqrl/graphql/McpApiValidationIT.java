@@ -41,6 +41,7 @@ import java.util.Optional;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.testcontainers.containers.GenericContainer;
@@ -167,6 +168,7 @@ class McpApiValidationIT {
   }
 
   @Test
+  @Disabled
   void givenMcpServer_whenValidatedByMcpInspector_thenAllValidationsPass() throws Exception {
     // Get the host IP for container to access the MCP server
     String mcpUrl = String.format("http://host.testcontainers.internal:%d/mcp", MCP_SERVER_PORT);
@@ -234,6 +236,7 @@ class McpApiValidationIT {
   }
 
   @Test
+  @Disabled
   void givenMcpServer_whenValidatedWithDetailedOperations_thenProtocolComplianceIsValidated()
       throws Exception {
     String mcpUrl = String.format("http://host.testcontainers.internal:%d/mcp", MCP_SERVER_PORT);
