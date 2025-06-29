@@ -57,6 +57,11 @@ public class HttpServerVerticle extends AbstractVerticle {
   // Lifecyle
   // ---------------------------------------------------------------------------
 
+  public HttpServerVerticle() {
+    this.config = null;
+    this.model = null;
+  }
+
   public HttpServerVerticle(ServerConfig config, RootGraphqlModel model) {
     this.config = config;
     this.model = model;
