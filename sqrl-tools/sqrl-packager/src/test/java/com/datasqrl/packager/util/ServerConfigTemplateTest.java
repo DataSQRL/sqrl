@@ -17,6 +17,7 @@ package com.datasqrl.packager.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.datasqrl.graphql.SqrlObjectMapper;
 import com.datasqrl.graphql.config.ServerConfig;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -31,7 +32,7 @@ import org.junit.jupiter.api.Test;
 class ServerConfigTemplateTest {
   private static final File TEMPLATE = new File("src/main/resources/templates/server-config.json");
 
-  private static ObjectMapper mapper = new ObjectMapper();
+  private static ObjectMapper mapper = SqrlObjectMapper.mapper;
 
   @SuppressWarnings("unchecked")
   @Test

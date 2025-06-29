@@ -529,6 +529,7 @@ jobs:
               --push \
               --platform linux/amd64,linux/arm64 \
               -t datasqrl/base-sqrl:$BASE_TAG \
+              -t datasqrl/base-sqrl:latest \
               -f sqrl-tools/Dockerfile.base \
               sqrl-tools
 

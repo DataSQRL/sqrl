@@ -18,6 +18,7 @@ package com.datasqrl.graphql;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import io.vertx.core.json.jackson.VertxModule;
 
 /** Configures a Jackson ObjectMapper for JSON serialization/deserialization. */
 public class SqrlObjectMapper {
@@ -27,5 +28,6 @@ public class SqrlObjectMapper {
   static {
     mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     mapper.registerModule(new JavaTimeModule());
+    mapper.registerModule(new VertxModule());
   }
 }

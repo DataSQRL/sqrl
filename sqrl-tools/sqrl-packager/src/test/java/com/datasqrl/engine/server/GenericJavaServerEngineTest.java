@@ -18,15 +18,18 @@ package com.datasqrl.engine.server;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datasqrl.config.PackageJson.EmptyEngineConfig;
+import com.datasqrl.graphql.SqrlObjectMapper;
 import com.datasqrl.graphql.config.ServerConfigUtil;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.Map;
+import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 
 class GenericJavaServerEngineTest {
 
-  private ObjectMapper objectMapper = new ObjectMapper();
+  private ObjectMapper objectMapper = SqrlObjectMapper.mapper;
   GenericJavaServerEngine underTest =
       new GenericJavaServerEngine("", new EmptyEngineConfig(""), objectMapper) {};
 
@@ -63,5 +66,52 @@ class GenericJavaServerEngineTest {
     assertThat(result.getJwtAuth().getPubSecKeys()).isNotNull().isNotEmpty();
     assertThat(result.getJwtAuth().getJWTOptions()).isNotNull();
     assertThat(result.getJwtAuth().getJWTOptions().getIssuer()).isEqualTo("my-test-issuer");
+  }
+
+  @Test
+  @SneakyThrows
+  void givenJwtConfiguration_whenConfigMerged_thenBuffersAreStringValues() {
+    // Create JWT configuration with buffer as simple string (not complex object)
+    Map<String, Object> pubSecKey =
+        Map.of(
+            "algorithm", "HS256",
+            "buffer", "dGVzdFNlY3JldA==");
+
+    Map<String, Object> jwtOptions =
+        Map.of(
+            "issuer", "my-test-issuer",
+            "audience", List.of("my-test-audience"),
+            "expiresInSeconds", "3600",
+            "leeway", "60");
+
+    Map<String, Object> jwtAuth =
+        Map.of("pubSecKeys", List.of(pubSecKey), "jwtOptions", jwtOptions);
+
+    Map<String, Object> config = Map.of("jwtAuth", jwtAuth);
+
+    // Test the configuration merging that would happen during serverConfig() generation
+    var defaultConfig = underTest.readDefaultConfig();
+    var mergedConfig = ServerConfigUtil.mergeConfigs(objectMapper, defaultConfig, config);
+
+    // Serialize the merged configuration to JSON string and parse back
+    var serializedJson = objectMapper.writeValueAsString(mergedConfig);
+    JsonNode configNode = objectMapper.readTree(serializedJson);
+    JsonNode pubSecKeysNode = configNode.path("jwtAuth").path("pubSecKeys");
+
+    assertThat(pubSecKeysNode.isArray()).isTrue();
+    assertThat(pubSecKeysNode.size()).isEqualTo(1);
+
+    JsonNode firstKey = pubSecKeysNode.get(0);
+    JsonNode bufferNode = firstKey.path("buffer");
+
+    // Verify buffer is a simple string value, not a complex object with "bytes" field
+    assertThat(bufferNode.isTextual()).isTrue();
+    // Note: VertxModule may process base64 buffers, but it should still be a string, not a complex
+    // object
+    assertThat(bufferNode.asText()).contains("dGVzdFNlY3JldA");
+
+    // Ensure buffer is not a complex object (would have been corrupted by old VertxModule usage)
+    assertThat(bufferNode.isObject()).isFalse();
+    assertThat(bufferNode.has("bytes")).isFalse();
   }
 }

@@ -26,7 +26,6 @@ import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.config.ServerConfigUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.json.jackson.VertxModule;
 import java.util.List;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -72,8 +71,7 @@ public abstract class GenericJavaServerEngine extends ExecutionEngine.Base imple
   ServerConfig readDefaultConfig() {
     ServerConfig serverConfig;
     try (var input = getClass().getResourceAsStream("/templates/server-config.json")) {
-      var json =
-          objectMapper.copy().registerModule(new VertxModule()).readValue(input, JsonObject.class);
+      var json = objectMapper.readValue(input, JsonObject.class);
       serverConfig = new ServerConfig(json);
     }
     return serverConfig;

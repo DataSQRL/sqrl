@@ -128,7 +128,7 @@ public class HttpServerVerticle extends AbstractVerticle {
     DeploymentOptions childOpts = new DeploymentOptions().setInstances(1);
 
     // inside bootstrap() in HttpServerVerticle
-    Optional<JWTAuth> jwtOpt =
+    var jwtOpt =
         Optional.ofNullable(config.getJwtAuth()).map(authCfg -> JWTAuth.create(vertx, authCfg));
 
     // Deploy GraphQL verticle first
