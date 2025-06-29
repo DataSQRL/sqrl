@@ -227,7 +227,7 @@ commands:
             exit "$DOCKER_EXIT"
 
 jobs:
-  build-base:
+  download-maven-dependencies:
     docker:
       - image: cimg/openjdk:17.0
     steps:
@@ -593,7 +593,7 @@ workflows:
           <<: *job-defaults
       - docker-build-mcp-inspector:
           <<: *job-defaults
-      - build-base:
+      - download-maven-dependencies:
           <<: *job-defaults
       - build-test-image:
           <<: *job-defaults
@@ -603,7 +603,7 @@ workflows:
             tags:
               ignore: /.*/
           requires:
-            - build-base
+            - download-maven-dependencies
             - docker-build-base-image
       - integration-tests:
           <<: *job-defaults
@@ -617,17 +617,17 @@ workflows:
               test_sharding_total:  [2]
               test_sharding_index: [0, 1]
           requires:
-            - build-base
+            - download-maven-dependencies
             - docker-build-mcp-inspector
       - build-images:
           <<: *job-defaults
           requires:
-            - build-base
+            - download-maven-dependencies
             - docker-build-base-image
       - deploy:
           <<: *job-defaults
           requires:
-            - build-base
+            - download-maven-dependencies
       - unit-tests:
           <<: *job-defaults
           filters:
@@ -636,7 +636,7 @@ workflows:
             tags:
               ignore: /.*/
           requires:
-            - build-base
+            - download-maven-dependencies
       - run-connectors-tests:
           <<: *job-defaults
           filters:
