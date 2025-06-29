@@ -873,6 +873,11 @@
           <artifactId>exec-maven-plugin</artifactId>
           <version>3.5.1</version>
         </plugin>
+        <plugin>
+          <groupId>com.spotify</groupId>
+          <artifactId>dockerfile-maven-plugin</artifactId>
+          <version>1.4.13</version>
+        </plugin>
       </plugins>
     </pluginManagement>
     <plugins>
@@ -1071,6 +1076,25 @@
           <createBackupFile>false</createBackupFile>
         </configuration>
       </plugin>
+      <plugin>
+        <groupId>com.spotify</groupId>
+        <artifactId>dockerfile-maven-plugin</artifactId>
+        <configuration>
+          <repository>datasqrl/cmd</repository>
+          <tag>test</tag>
+          <dockerfile>Dockerfile</dockerfile>
+          <contextDirectory>${project.basedir}</contextDirectory>
+        </configuration>
+        <executions>
+          <execution>
+            <id>build-docker-image</id>
+            <phase>package</phase>
+            <goals>
+              <goal>build</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
 
@@ -1090,6 +1114,13 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-shade-plugin</artifactId>
+            <configuration>
+              <skip>true</skip>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>com.spotify</groupId>
+            <artifactId>dockerfile-maven-plugin</artifactId>
             <configuration>
               <skip>true</skip>
             </configuration>
