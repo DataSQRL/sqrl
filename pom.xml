@@ -45,10 +45,11 @@
   </developers>
 
   <modules>
+    <module>sqrl-cli</module>
+    <module>sqrl-discovery</module>
     <module>sqrl-planner</module>
-    <module>sqrl-testing</module>
-    <module>sqrl-tools</module>
     <module>sqrl-server</module>
+    <module>sqrl-testing</module>
   </modules>
 
   <scm>
@@ -100,7 +101,6 @@
     <protobuf.version>4.31.1</protobuf.version>
     <picocli.version>4.7.7</picocli.version>
     <commonscodec.version>1.18.0</commonscodec.version>
-    <zip4j.version>2.11.5</zip4j.version>
     <guice.version>5.1.0</guice.version>
     <autoservice.version>1.1.1</autoservice.version>
     <antlr.version>4.13.2</antlr.version>
@@ -362,11 +362,6 @@
         <groupId>info.picocli</groupId>
         <artifactId>picocli</artifactId>
         <version>${picocli.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>net.lingala.zip4j</groupId>
-        <artifactId>zip4j</artifactId>
-        <version>${zip4j.version}</version>
       </dependency>
       <dependency>
         <groupId>com.esotericsoftware.kryo</groupId>

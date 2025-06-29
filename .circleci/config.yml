@@ -155,7 +155,7 @@ commands:
       - run:
           name: Compute BASE_TAG
           command: |
-            BASE_TAG=$(sha1sum sqrl-tools/Dockerfile.base | cut -c1-12)
+            BASE_TAG=$(sha1sum sqrl-cli/Dockerfile.base | cut -c1-12)
             echo "Computed BASE_TAG=${BASE_TAG}"
             echo "export BASE_TAG=${BASE_TAG}" >> "$BASH_ENV"
 
@@ -287,9 +287,9 @@ jobs:
             # ── cmd test image ────────────────────────────────────────────────
             docker build \
               --build-arg BASE_TAG=$BASE_TAG \
-              -t datasqrl/cmd-test-image:${CIRCLE_SHA1} \
-              ./sqrl-tools
-            docker push datasqrl/cmd-test-image:${CIRCLE_SHA1}
+              -t datasqrl/cli-test-image:${CIRCLE_SHA1} \
+              ./sqrl-cli
+            docker push datasqrl/cli-test-image:${CIRCLE_SHA1}
 
             # ── sqrl-server test image ───────────────────────────────────────
             docker build \
@@ -326,8 +326,8 @@ jobs:
       - run:
           name: Pull test image
           command: |
-            docker pull datasqrl/cmd-test-image:${CIRCLE_SHA1}
-            docker tag  datasqrl/cmd-test-image:${CIRCLE_SHA1} sqrl-test
+            docker pull datasqrl/cli-test-image:${CIRCLE_SHA1}
+            docker tag  datasqrl/cli-test-image:${CIRCLE_SHA1} sqrl-test
       - run-docker-test:
           working_dir: ./sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/conference
           test_args: test conference.sqrl conference.graphqls --snapshots snapshots-conference --tests tests-conference
@@ -339,8 +339,8 @@ jobs:
       - run:
           name: Pull test image
           command: |
-            docker pull datasqrl/cmd-test-image:${CIRCLE_SHA1}
-            docker tag  datasqrl/cmd-test-image:${CIRCLE_SHA1} sqrl-test
+            docker pull datasqrl/cli-test-image:${CIRCLE_SHA1}
+            docker tag  datasqrl/cli-test-image:${CIRCLE_SHA1} sqrl-test
       - run-docker-test:
           working_dir: ./sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/connectors-test
           test_args: test connectors.sqrl
@@ -353,8 +353,8 @@ jobs:
       - run:
           name: Pull test image
           command: |
-            docker pull datasqrl/cmd-test-image:${CIRCLE_SHA1}
-            docker tag  datasqrl/cmd-test-image:${CIRCLE_SHA1} sqrl-test
+            docker pull datasqrl/cli-test-image:${CIRCLE_SHA1}
+            docker tag  datasqrl/cli-test-image:${CIRCLE_SHA1} sqrl-test
       - run-docker-test:
           working_dir: ./sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/udf
           test_args: test myudf.sqrl --snapshots snapshots-myudf --tests tests-myudf
@@ -367,13 +367,13 @@ jobs:
       - run:
           name: Pull test image
           command: |
-            docker pull datasqrl/cmd-test-image:${CIRCLE_SHA1}
+            docker pull datasqrl/cli-test-image:${CIRCLE_SHA1}
             docker pull datasqrl/sqrl-server-test-image:${CIRCLE_SHA1}
       - run:
           working_directory: ./sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/udf
           name: Launch sqrl-server and test if API is running
           command: |
-            docker run -v "$PWD:/build" -e TZ="UTC" datasqrl/cmd-test-image:${CIRCLE_SHA1} compile myudf.sqrl
+            docker run -v "$PWD:/build" -e TZ="UTC" datasqrl/cli-test-image:${CIRCLE_SHA1} compile myudf.sqrl
             docker run -d --name sqrl-server -v $(pwd)/build/deploy/plan/vertx.json:/opt/sqrl/vertx.json \
                                                   -v $(pwd)/build/deploy/plan/vertx-config.json:/opt/sqrl/vertx-config.json \
                                                   -p 8888:8888 \
@@ -389,7 +389,7 @@ jobs:
       - run:
           name: Pull test image
           command: |
-            docker pull datasqrl/cmd-test-image:${CIRCLE_SHA1}
+            docker pull datasqrl/cli-test-image:${CIRCLE_SHA1}
             docker pull datasqrl/sqrl-server-test-image:${CIRCLE_SHA1}
       - run:
           name: Run JWT tests
@@ -458,7 +458,7 @@ jobs:
               fi
             }
 
-            build_and_push cmd                 sqrl-tools
+            build_and_push cli                 sqrl-cli
             build_and_push sqrl-server         sqrl-server/sqrl-server-vertx
 
   docker-build-base-image:
@@ -511,8 +511,8 @@ jobs:
               --push \
               --platform linux/amd64,linux/arm64 \
               -t datasqrl/base-sqrl:$BASE_TAG \
-              -f sqrl-tools/Dockerfile.base \
-              sqrl-tools
+              -f sqrl-cli/Dockerfile.base \
+              sqrl-cli
 
 workflows:
   ci:
