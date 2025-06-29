@@ -59,7 +59,7 @@ import org.testcontainers.utility.DockerImageName;
 
 @ExtendWith(VertxExtension.class)
 @Testcontainers
-class GraphQLJwtHandlerTest {
+class GraphQLJwtHandlerIT {
   EmbeddedKafkaCluster CLUSTER = new EmbeddedKafkaCluster(1);
   private static final int SERVER_PORT = 8889; // Use different port to avoid conflicts
 
