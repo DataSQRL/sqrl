@@ -15,13 +15,12 @@
  */
 package com.datasqrl.engine.server;
 
+import static com.datasqrl.graphql.SqrlObjectMapper.mapper;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datasqrl.config.PackageJson.EmptyEngineConfig;
-import com.datasqrl.graphql.SqrlObjectMapper;
 import com.datasqrl.graphql.config.ServerConfigUtil;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.Map;
 import lombok.SneakyThrows;
@@ -29,9 +28,7 @@ import org.junit.jupiter.api.Test;
 
 class GenericJavaServerEngineTest {
 
-  private ObjectMapper objectMapper = SqrlObjectMapper.mapper;
-  GenericJavaServerEngine underTest =
-      new GenericJavaServerEngine("", new EmptyEngineConfig(""), objectMapper) {};
+  GenericJavaServerEngine underTest = new GenericJavaServerEngine("", new EmptyEngineConfig("")) {};
 
   @Test
   void test() {
@@ -59,7 +56,7 @@ class GenericJavaServerEngineTest {
     var defaultConfig = underTest.readDefaultConfig();
     assertThat(defaultConfig.getJwtAuth()).isNull();
 
-    var result = ServerConfigUtil.mergeConfigs(objectMapper, defaultConfig, config);
+    var result = ServerConfigUtil.mergeConfigs(defaultConfig, config);
 
     assertThat(result).isNotNull();
     assertThat(result.getJwtAuth()).isNotNull();
@@ -91,11 +88,11 @@ class GenericJavaServerEngineTest {
 
     // Test the configuration merging that would happen during serverConfig() generation
     var defaultConfig = underTest.readDefaultConfig();
-    var mergedConfig = ServerConfigUtil.mergeConfigs(objectMapper, defaultConfig, config);
+    var mergedConfig = ServerConfigUtil.mergeConfigs(defaultConfig, config);
 
     // Serialize the merged configuration to JSON string and parse back
-    var serializedJson = objectMapper.writeValueAsString(mergedConfig);
-    JsonNode configNode = objectMapper.readTree(serializedJson);
+    var serializedJson = mapper.writeValueAsString(mergedConfig);
+    JsonNode configNode = mapper.readTree(serializedJson);
     JsonNode pubSecKeysNode = configNode.path("jwtAuth").path("pubSecKeys");
 
     assertThat(pubSecKeysNode.isArray()).isTrue();

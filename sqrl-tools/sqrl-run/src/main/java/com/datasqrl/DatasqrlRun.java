@@ -18,6 +18,7 @@ package com.datasqrl;
 import com.datasqrl.flinkrunner.stdlib.utils.AutoRegisterSystemFunction;
 import com.datasqrl.graphql.HttpServerVerticle;
 import com.datasqrl.graphql.JsonEnvVarDeserializer;
+import com.datasqrl.graphql.SqrlObjectMapper;
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.config.ServerConfigUtil;
 import com.datasqrl.graphql.server.RootGraphqlModel;
@@ -73,7 +74,7 @@ public class DatasqrlRun {
   Path build = Path.of(System.getProperty("user.dir")).resolve("build");
   Path planPath = build.resolve("deploy").resolve("plan");
 
-  ObjectMapper objectMapper = new ObjectMapper();
+  ObjectMapper objectMapper = SqrlObjectMapper.mapper;
 
   Vertx vertx;
   TableResult execute;
@@ -106,7 +107,7 @@ public class DatasqrlRun {
     initKafka();
 
     // Register the custom deserializer module
-    objectMapper = new ObjectMapper();
+    objectMapper = SqrlObjectMapper.mapper.copy();
     var module = new SimpleModule();
     module.addDeserializer(String.class, new JsonEnvVarDeserializer(env));
     objectMapper.registerModule(module);
@@ -429,7 +430,7 @@ public class DatasqrlRun {
           .setDatabase(getenv("PGDATABASE"));
     }
 
-    serverConfig = ServerConfigUtil.mergeConfigs(objectMapper, serverConfig, vertxConfig());
+    serverConfig = ServerConfigUtil.mergeConfigs(serverConfig, vertxConfig());
 
     var server = new HttpServerVerticle(serverConfig, rootGraphqlModel);
 

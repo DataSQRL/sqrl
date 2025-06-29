@@ -15,10 +15,10 @@
  */
 package com.datasqrl.graphql.config;
 
+import static com.datasqrl.graphql.SqrlObjectMapper.mapper;
 import static org.apache.commons.lang3.ObjectUtils.isEmpty;
 
 import com.datasqrl.util.JsonMergeUtils;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.vertx.core.json.JsonObject;
 import java.util.Map;
@@ -31,13 +31,13 @@ public class ServerConfigUtil {
   @SuppressWarnings("unchecked")
   @SneakyThrows
   public static ServerConfig mergeConfigs(
-      ObjectMapper objectMapper, ServerConfig serverConfig, Map<String, Object> configOverrides) {
+      ServerConfig serverConfig, Map<String, Object> configOverrides) {
     if (isEmpty(configOverrides)) {
       return serverConfig;
     }
-    var config = ((ObjectNode) objectMapper.valueToTree(serverConfig)).deepCopy();
-    JsonMergeUtils.merge(config, objectMapper.valueToTree(configOverrides));
-    var json = objectMapper.treeToValue(config, Map.class);
+    var config = ((ObjectNode) mapper.valueToTree(serverConfig)).deepCopy();
+    JsonMergeUtils.merge(config, mapper.valueToTree(configOverrides));
+    var json = mapper.treeToValue(config, Map.class);
     return new ServerConfig(new JsonObject(json));
   }
 }
