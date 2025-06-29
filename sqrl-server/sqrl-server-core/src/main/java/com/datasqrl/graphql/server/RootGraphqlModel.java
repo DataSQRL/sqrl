@@ -17,6 +17,7 @@ package com.datasqrl.graphql.server;
 
 import com.datasqrl.graphql.jdbc.DatabaseType;
 import com.datasqrl.graphql.server.operation.ApiOperation;
+import com.datasqrl.graphql.server.query.SqlQueryModifier;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
@@ -341,6 +342,7 @@ public class RootGraphqlModel {
     @Singular List<QueryParameterHandler> parameters;
     PaginationType pagination;
     DatabaseType database;
+    List<SqlQueryModifier> modifiers;
 
     public boolean requiresDynamicLimitOffset() {
       return pagination == PaginationType.LIMIT_AND_OFFSET && !database.supportsLimitOffsetBinding;
@@ -352,7 +354,7 @@ public class RootGraphqlModel {
     }
 
     public SqlQuery updateSQL(String newSQL) {
-      return new SqlQuery(newSQL, parameters, pagination, database);
+      return new SqlQuery(newSQL, parameters, pagination, database, modifiers);
     }
   }
 
@@ -523,36 +525,5 @@ public class RootGraphqlModel {
     public <R, C> R accept(ParameterHandlerVisitor<R, C> visitor, C context) {
       return visitor.visitComputedParameter(this, context);
     }
-  }
-
-  public interface ResolvedQueryVisitor<R, C> {
-
-    R visitResolvedSqlQuery(ResolvedSqlQuery query, C context);
-  }
-
-  public interface ResolvedQuery {
-
-    QueryBase getQuery();
-
-    public <R, C> R accept(ResolvedQueryVisitor<R, C> visitor, C context);
-  }
-
-  @AllArgsConstructor
-  @Getter
-  @NoArgsConstructor
-  public static class ResolvedSqlQuery implements ResolvedQuery {
-
-    SqlQuery query;
-    PreparedSqrlQuery preparedQueryContainer;
-
-    @Override
-    public <R, C> R accept(ResolvedQueryVisitor<R, C> visitor, C context) {
-      return visitor.visitResolvedSqlQuery(this, context);
-    }
-  }
-
-  public interface PreparedSqrlQuery<T> {
-
-    T getPreparedQuery();
   }
 }

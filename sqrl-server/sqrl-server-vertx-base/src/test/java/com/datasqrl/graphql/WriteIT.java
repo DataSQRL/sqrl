@@ -166,7 +166,8 @@ class WriteIT {
                                 "SELECT customerid FROM Customer",
                                 List.of(),
                                 PaginationType.NONE,
-                                DatabaseType.POSTGRES))
+                                DatabaseType.POSTGRES,
+                                List.of()))
                         .build())
                 .build())
         .mutation(new KafkaMutationCoords("addCustomer", topicName, Map.of(), Map.of()))

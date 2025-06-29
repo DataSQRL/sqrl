@@ -289,7 +289,8 @@ CREATE TABLE IF NOT EXISTS "SensorUpdates" ("sensorid" INTEGER NOT NULL, "sensor
             "sql" : "SELECT *\nFROM (SELECT \"sensorid\", \"temperature\", \"event_time\", \"sensor_name\"\n  FROM \"EnrichedSensorReading\"\n  ORDER BY \"event_time\" NULLS FIRST) AS \"t0\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -313,7 +314,8 @@ CREATE TABLE IF NOT EXISTS "SensorUpdates" ("sensorid" INTEGER NOT NULL, "sensor
             "sql" : "SELECT \"sensorid\", \"temperature\", \"event_time\"\nFROM \"SensorReading\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -337,7 +339,8 @@ CREATE TABLE IF NOT EXISTS "SensorUpdates" ("sensorid" INTEGER NOT NULL, "sensor
             "sql" : "SELECT \"sensorid\", \"sensor_name\", \"lastUpdated\"\nFROM \"SensorUpdates\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       }

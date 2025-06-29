@@ -742,7 +742,8 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
             "sql" : "SELECT *\nFROM \"AddChatMessage\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -766,7 +767,8 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
             "sql" : "SELECT *\nFROM \"ApplicationAlert\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -790,7 +792,8 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
             "sql" : "SELECT *\nFROM \"ApplicationStatus\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -814,7 +817,8 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
             "sql" : "SELECT *\nFROM \"ApplicationUpdates\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -843,7 +847,8 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -872,7 +877,8 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -901,7 +907,8 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -925,7 +932,8 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
             "sql" : "SELECT *\nFROM \"Applications\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -949,7 +957,8 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
             "sql" : "SELECT *\nFROM \"ApplicationsStream\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -973,7 +982,8 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
             "sql" : "SELECT *\nFROM (SELECT \"role\", \"content\", \"name\", \"customerid\", \"timestamp\", \"uuid\"\n  FROM \"CustomerChatMessage\"\n  ORDER BY \"timestamp\" DESC NULLS LAST) AS \"t\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -997,7 +1007,8 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
             "sql" : "SELECT *\nFROM \"Customers\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -1026,7 +1037,8 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -1055,7 +1067,8 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -1079,7 +1092,8 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
             "sql" : "SELECT *\nFROM \"CustomersStream\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -1103,7 +1117,8 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
             "sql" : "SELECT *\nFROM \"LoanTypes\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -1127,7 +1142,8 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
             "sql" : "SELECT *\nFROM \"LoanTypesStream\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       }

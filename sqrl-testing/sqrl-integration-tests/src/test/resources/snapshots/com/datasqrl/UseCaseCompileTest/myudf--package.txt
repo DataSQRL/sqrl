@@ -164,7 +164,8 @@ CREATE TABLE IF NOT EXISTS "MyTableAnother" ("val" INTEGER NOT NULL, "myFnc" BIG
             "sql" : "SELECT *\nFROM (SELECT \"val\", \"myFnc\"\n  FROM \"MyAsyncTable\"\n  ORDER BY \"val\" NULLS FIRST) AS \"t\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -188,7 +189,8 @@ CREATE TABLE IF NOT EXISTS "MyTableAnother" ("val" INTEGER NOT NULL, "myFnc" BIG
             "sql" : "SELECT *\nFROM (SELECT \"val\", \"myFnc\"\n  FROM \"MyTable\"\n  ORDER BY \"val\" NULLS FIRST) AS \"t\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -212,7 +214,8 @@ CREATE TABLE IF NOT EXISTS "MyTableAnother" ("val" INTEGER NOT NULL, "myFnc" BIG
             "sql" : "SELECT *\nFROM (SELECT \"val\", \"myFnc\"\n  FROM \"MyTableAnother\"\n  ORDER BY \"val\" NULLS FIRST) AS \"t\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       }

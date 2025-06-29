@@ -282,7 +282,8 @@ INSERT INTO `default_catalog`.`default_database`.`OrderAgg2_2`
             "sql" : "SELECT *\nFROM \"OrderAgg1_1\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -306,7 +307,8 @@ INSERT INTO `default_catalog`.`default_database`.`OrderAgg2_2`
             "sql" : "SELECT \"order_count\"\nFROM \"OrderAgg2_2\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -330,7 +332,8 @@ INSERT INTO `default_catalog`.`default_database`.`OrderAgg2_2`
             "sql" : "SELECT *\nFROM \"Orders_3\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       }

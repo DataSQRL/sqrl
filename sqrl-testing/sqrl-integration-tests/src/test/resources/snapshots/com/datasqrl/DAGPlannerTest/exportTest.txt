@@ -531,7 +531,8 @@ INSERT INTO `default_catalog`.`default_database`.`DistinctStream_2`
             "sql" : "SELECT *\nFROM \"Customer_1\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -555,7 +556,8 @@ INSERT INTO `default_catalog`.`default_database`.`DistinctStream_2`
             "sql" : "SELECT *\nFROM \"DistinctCustomer_3\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -579,7 +581,8 @@ INSERT INTO `default_catalog`.`default_database`.`DistinctStream_2`
             "sql" : "SELECT \"id\", \"name\"\nFROM \"JoinStream_5\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -603,7 +606,8 @@ INSERT INTO `default_catalog`.`default_database`.`DistinctStream_2`
             "sql" : "SELECT *\nFROM \"Orders_6\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       }

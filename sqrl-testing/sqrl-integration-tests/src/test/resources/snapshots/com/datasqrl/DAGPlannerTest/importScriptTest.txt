@@ -349,7 +349,8 @@ INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
             "sql" : "SELECT \"sensorid\", \"temperature\", \"event_time\", \"machineid\"\nFROM \"MachineReading_1\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -373,7 +374,8 @@ INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
             "sql" : "SELECT \"machineid\", \"time_hour\", \"avg_temperature\"\nFROM \"MachineTempByHour_2\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -406,7 +408,8 @@ INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       }

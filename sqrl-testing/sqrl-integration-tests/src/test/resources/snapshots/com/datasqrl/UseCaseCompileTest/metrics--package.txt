@@ -294,7 +294,8 @@ CREATE INDEX IF NOT EXISTS "SensorReading_hash_c0" ON "SensorReading" USING hash
             "sql" : "SELECT *\nFROM \"SensorMaxTempLastMin\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -327,7 +328,8 @@ CREATE INDEX IF NOT EXISTS "SensorReading_hash_c0" ON "SensorReading" USING hash
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -360,7 +362,8 @@ CREATE INDEX IF NOT EXISTS "SensorReading_hash_c0" ON "SensorReading" USING hash
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       }

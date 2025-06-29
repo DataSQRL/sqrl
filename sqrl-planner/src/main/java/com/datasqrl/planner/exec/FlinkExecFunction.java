@@ -25,6 +25,7 @@ public class FlinkExecFunction implements Serializable {
   @Getter private final String functionId;
   @Getter private final String functionDescription;
   @Getter private final RowType inputType;
+  @Getter private final RowType outputType;
   @JsonIgnore private final GeneratedFunction<FlatMapFunction<RowData, RowData>> function;
   @JsonIgnore private transient FlatMapFunction<RowData, RowData> instantiatedFunction = null;
 

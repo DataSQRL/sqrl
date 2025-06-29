@@ -46,7 +46,7 @@ public class CodeGenBridge {
         name,
         outType,
         outRowClz,
-        scala.collection.JavaConverters.asScalaBuffer(projection).toSeq(),
+        scala.collection.JavaConverters.asScalaBuffer(projection).seq(),
         condition.isPresent() ? new Some<>(condition.get()) : Option.empty(),
         cfg,
         cl);

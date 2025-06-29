@@ -45,9 +45,9 @@ public class SqrlFunctionParameter implements FunctionParameter {
 
   // if true, this is a column on the "this" table, else a user provided argument
   boolean isParentField;
-
+  // if this parameter is derived from request metadata
   Optional<ResolvedMetadata> metadata;
-
+  // if this parameter is computed from other parameters
   Optional<FlinkExecFunction> function;
 
   public SqrlFunctionParameter(String name, int ordinal, RelDataType relDataType) {
@@ -77,6 +77,6 @@ public class SqrlFunctionParameter implements FunctionParameter {
   }
 
   public boolean isExternalArgument() {
-    return !isParentField && metadata.isEmpty();
+    return !isParentField && metadata.isEmpty() && function.isEmpty();
   }
 }

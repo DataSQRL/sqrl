@@ -244,7 +244,8 @@ CREATE TABLE IF NOT EXISTS "Schema" ("uuidField" TEXT NOT NULL, "timestampMillis
             "sql" : "SELECT *\nFROM (SELECT \"uuidField\", \"timestampMillisField\", \"nullableTimestampMillisField\", \"timestampMicrosField\", \"nullableTimestampMicrosField\", \"dateField\", \"nullableDateField\", \"timeMillisField\", \"nullableTimeMillisField\", \"timeMicrosField\", \"nullableTimeMicrosField\", \"complexArrayField\", \"nullableComplexArrayField\", \"multiNestedRecord\", \"stringField\", \"nullableStringField\", \"intField\", \"nullableIntField\", \"longField\", \"nullableLongField\", \"floatField\", \"nullableFloatField\", \"doubleField\", \"nullableDoubleField\", \"booleanField\", \"nullableBooleanField\", \"enumField\", \"nullableEnumField\", \"arrayField\", \"nullableArrayField\", \"nestedRecord\", \"nullableNestedRecord\", \"decimalField\", \"mapField\", \"nullableMapField\"\n  FROM \"Schema\"\n  ORDER BY \"uuidField\" DESC NULLS LAST) AS \"t\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       }

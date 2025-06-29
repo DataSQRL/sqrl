@@ -20,6 +20,7 @@ import com.datasqrl.plan.global.IndexType;
 import com.datasqrl.planner.parser.ParsedObject;
 import com.datasqrl.planner.parser.SqrlHint;
 import com.datasqrl.planner.parser.StatementParserException;
+import com.datasqrl.util.EnumUtil;
 import com.google.auto.service.AutoService;
 import java.util.List;
 import lombok.Getter;
@@ -56,7 +57,7 @@ public class IndexHint extends ColumnNamesHint {
             source.getFileLocation(),
             "Index hint requires at least two arguments: the name of the index type and at least one column.");
       }
-      var optIndex = IndexType.fromName(arguments.get(0));
+      var optIndex = EnumUtil.getByName(IndexType.class, arguments.get(0));
       if (optIndex.isEmpty()) {
         throw new StatementParserException(
             ErrorLabel.GENERIC,

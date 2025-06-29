@@ -40,6 +40,7 @@ import com.datasqrl.graphql.server.RootGraphqlModel.QueryParameterHandler;
 import com.datasqrl.graphql.server.RootGraphqlModel.QueryWithArguments;
 import com.datasqrl.graphql.server.RootGraphqlModel.SqlQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.SubscriptionCoords;
+import com.datasqrl.graphql.server.query.SqlQueryModifier;
 import com.datasqrl.planner.dag.plan.MutationComputedColumn;
 import com.datasqrl.planner.dag.plan.MutationQuery;
 import com.datasqrl.planner.parser.AccessModifier;
@@ -174,6 +175,16 @@ public class GraphqlModelGenerator extends GraphqlSchemaWalker {
     }
     RootGraphqlModel.QueryBase queryBase;
 
+    List<SqlQueryModifier> modifiers =
+        tableFunction.getQueryModifiers().stream()
+            .map(
+                modifier -> {
+                  Preconditions.checkArgument(
+                      modifier instanceof SqlQueryModifier, "Unsupported modifier: %s", modifier);
+                  return (SqlQueryModifier) modifier;
+                })
+            .toList();
+
     var hasLimitOrOffset =
         atField.getInputValueDefinitions().stream()
             .map(InputValueDefinition::getName)
@@ -184,7 +195,8 @@ public class GraphqlModelGenerator extends GraphqlSchemaWalker {
             executableJdbcReadQuery.getSql(),
             parameters,
             hasLimitOrOffset ? PaginationType.LIMIT_AND_OFFSET : PaginationType.NONE,
-            executableJdbcReadQuery.getDatabase());
+            executableJdbcReadQuery.getDatabase(),
+            modifiers);
     var coordsBuilder =
         ArgumentLookupQueryCoords.builder()
             .parentType(parentType.getName())

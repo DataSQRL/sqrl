@@ -54,10 +54,12 @@ import com.datasqrl.planner.dag.nodes.TableFunctionNode;
 import com.datasqrl.planner.dag.nodes.TableNode;
 import com.datasqrl.planner.dag.plan.MutationComputedColumn;
 import com.datasqrl.planner.dag.plan.MutationQuery;
+import com.datasqrl.planner.hint.ColumnNamesHint;
 import com.datasqrl.planner.hint.ExecHint;
 import com.datasqrl.planner.hint.NoQueryHint;
 import com.datasqrl.planner.hint.PlannerHints;
 import com.datasqrl.planner.hint.QueryByAnyHint;
+import com.datasqrl.planner.hint.QueryBySqlHint;
 import com.datasqrl.planner.hint.TestHint;
 import com.datasqrl.planner.parser.AccessModifier;
 import com.datasqrl.planner.parser.FlinkSQLStatement;
@@ -422,7 +424,7 @@ public class SqlScriptPlanner {
             ErrorCode.FUNCTION_EXISTS,
             "Function or relationship [%s] already exists in catalog",
             tablePath);
-        addFunctionToDag(fct, hintsAndDocs);
+        addFunctionToDag(fct, hintsAndDocs, sqrlEnv);
         if (!fct.getVisibility().isAccessOnly()) {
           sqrlEnv.registerSqrlTableFunction(fct);
         }
@@ -650,15 +652,20 @@ public class SqlScriptPlanner {
     var queryByHint = hintsAndDocs.hints.getQueryByHint();
     if (visibility.isEndpoint()) { // only add function if this table is an endpoint
       var relBuilder = sqrlEnv.getTableScan(tableAnalysis.getObjectIdentifier());
+      HintsAndDocs functionHints =
+          HintsAndDocs.EMPTY; // we don't propagate hints to the access functions by default
       List<FunctionParameter> parameters = List.of();
       if (queryByHint.isPresent()) { // hint takes precendence for defining the access function
         var hint = queryByHint.get();
         if (hint instanceof NoQueryHint) { // Don't add an access function
           return;
+        } else if (hint instanceof QueryBySqlHint) {
+          functionHints = new HintsAndDocs(new PlannerHints(List.of(hint)), Optional.empty());
+        } else {
+          parameters =
+              SqlScriptPlannerUtil.addFilterByColumn(
+                  relBuilder, hint.getColumnIndexes(), hint instanceof QueryByAnyHint);
         }
-        parameters =
-            SqlScriptPlannerUtil.addFilterByColumn(
-                relBuilder, hint.getColumnIndexes(), hint instanceof QueryByAnyHint);
       }
       relBuilder.project(
           IntStream.range(0, tableAnalysis.getFieldLength())
@@ -676,8 +683,7 @@ public class SqlScriptPlanner {
       fctBuilder.fullPath(NamePath.of(tableName));
       fctBuilder.visibility(visibility);
       fctBuilder.documentation(hintsAndDocs.documentation);
-      addFunctionToDag(
-          fctBuilder.build(), HintsAndDocs.EMPTY); // hints don't apply to the function access
+      addFunctionToDag(fctBuilder.build(), functionHints, sqrlEnv);
     } else if (queryByHint.isPresent()) {
       throw new StatementParserException(
           ErrorLabel.GENERIC,
@@ -686,7 +692,22 @@ public class SqlScriptPlanner {
     }
   }
 
-  private void addFunctionToDag(SqrlTableFunction function, HintsAndDocs hintsAndDocs) {
+  private void addFunctionToDag(
+      SqrlTableFunction function, HintsAndDocs hintsAndDocs, Sqrl2FlinkSQLTranslator sqrlEnv) {
+    // Apply query_by_sql hint to modify the function
+    Optional<ColumnNamesHint> queryByHintOpt = hintsAndDocs.hints.getQueryByHint();
+    if (queryByHintOpt.isPresent()) {
+      var queryByHint = queryByHintOpt.get();
+      if (queryByHint instanceof QueryBySqlHint sqlHint) {
+        function = sqlHint.modifyFunction(function, sqrlEnv.getTypeFactory());
+      } else {
+        throw new StatementParserException(
+            ErrorLabel.GENERIC,
+            queryByHint.getSource().getFileLocation(),
+            "Hint does not apply to table functions: %s",
+            queryByHint);
+      }
+    }
     var availableStages =
         determineStages(
             determineViableStages(function.getVisibility().getAccess()), hintsAndDocs.hints);

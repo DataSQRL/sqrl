@@ -175,7 +175,8 @@ INSERT INTO `default_catalog`.`default_database`.`MyTable2_2`
             "sql" : "SELECT *\nFROM \"MyTable_1\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -199,7 +200,8 @@ INSERT INTO `default_catalog`.`default_database`.`MyTable2_2`
             "sql" : "SELECT *\nFROM \"MyTable2_2\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       }

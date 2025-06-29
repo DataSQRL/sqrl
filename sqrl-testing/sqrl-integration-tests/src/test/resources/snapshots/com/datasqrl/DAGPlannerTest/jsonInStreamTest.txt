@@ -986,7 +986,8 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
             "sql" : "SELECT *\nFROM \"Customer_1\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -1010,7 +1011,8 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
             "sql" : "SELECT *\nFROM \"CustomerStream_2\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -1034,7 +1036,8 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
             "sql" : "SELECT *\nFROM \"ObjComplex_3\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -1058,7 +1061,8 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
             "sql" : "SELECT *\nFROM \"jsonArrayAggTable_4\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -1082,7 +1086,8 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
             "sql" : "SELECT *\nFROM \"jsonArrayTable_5\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -1106,7 +1111,8 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
             "sql" : "SELECT *\nFROM \"jsonConcatTable_6\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -1130,7 +1136,8 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
             "sql" : "SELECT *\nFROM \"jsonExistsTable_7\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -1154,7 +1161,8 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
             "sql" : "SELECT *\nFROM \"jsonExtractTable_8\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -1178,7 +1186,8 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
             "sql" : "SELECT *\nFROM \"jsonObjectAggTable_9\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -1202,7 +1211,8 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
             "sql" : "SELECT *\nFROM \"jsonQueryTable_10\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -1226,7 +1236,8 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
             "sql" : "SELECT *\nFROM \"jsonToStringTable_11\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -1250,7 +1261,8 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
             "sql" : "SELECT *\nFROM \"toJsonTable_12\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       }

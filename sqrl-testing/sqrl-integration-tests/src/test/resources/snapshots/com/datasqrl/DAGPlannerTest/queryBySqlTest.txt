@@ -1,0 +1,243 @@
+>>>pipeline_explain.txt
+=== OrderEntries
+ID:     default_catalog.default_database.OrderEntries
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database._Orders
+Annotations:
+ - stream-root: _Orders
+Primary Key: -
+Timestamp  : time
+Schema:
+ - id: BIGINT NOT NULL
+ - customerid: BIGINT NOT NULL
+ - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+ - productid: BIGINT NOT NULL
+ - quantity: BIGINT NOT NULL
+ - unit_price: DOUBLE NOT NULL
+ - discount: DOUBLE
+Plan:
+LogicalProject(id=[$0], customerid=[$1], time=[$2], productid=[$4], quantity=[$5], unit_price=[$6], discount=[$7])
+  LogicalCorrelate(correlation=[$cor1], joinType=[inner], requiredColumns=[{3}])
+    LogicalTableScan(table=[[default_catalog, default_database, _Orders]])
+    Uncollect
+      LogicalProject(entries=[$cor1.entries])
+        LogicalValues(tuples=[[{ 0 }]])
+SQL: CREATE VIEW OrderEntries AS  SELECT o.id, o.customerid, o.`time`, e.* FROM _Orders o CROSS JOIN UNNEST(entries) e;
+
+=== _Orders
+ID:     default_catalog.default_database._Orders
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database._Orders__base
+Annotations:
+ - features: DENORMALIZE (feature)
+ - stream-root: _Orders
+Primary Key: id, time
+Timestamp  : time
+Schema:
+ - id: BIGINT NOT NULL
+ - customerid: BIGINT NOT NULL
+ - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+ - entries: RecordType:peek_no_expand(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
+Plan:
+LogicalWatermarkAssigner(rowtime=[time], watermark=[-($2, 1:INTERVAL SECOND)])
+  LogicalTableScan(table=[[default_catalog, default_database, _Orders]])
+SQL: CREATE VIEW `_Orders__view`
+AS
+SELECT `_Orders`.`id`, `_Orders`.`customerid`, `_Orders`.`time`, `_Orders`.`entries`
+FROM `default_catalog`.`default_database`.`_Orders` AS `_Orders`
+>>>flink-sql-no-functions.sql
+CREATE TEMPORARY TABLE `_Orders__schema` (
+  `id` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL
+) WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `_Orders` (
+  PRIMARY KEY (`id`, `time`) NOT ENFORCED,
+  WATERMARK FOR `time` AS `time` - INTERVAL '0.001' SECOND
+) WITH (
+  'format' = 'flexible-json',
+  'path' = 'file:/mock',
+  'source.monitor-interval' = '10 sec',
+  'connector' = 'filesystem'
+)
+LIKE `_Orders__schema`;
+CREATE VIEW `OrderEntries`
+AS
+SELECT `o`.`id`, `o`.`customerid`, `o`.`time`, `e`.*
+FROM `_Orders` AS `o`
+ CROSS JOIN UNNEST(`entries`) AS `e`;
+CREATE TABLE `OrderEntries_1` (
+  `id` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `productid` BIGINT NOT NULL,
+  `quantity` BIGINT NOT NULL,
+  `unit_price` DOUBLE NOT NULL,
+  `discount` DOUBLE,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'OrderEntries_1',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'username' = '${JDBC_USERNAME}'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`OrderEntries_1`
+(SELECT `id`, `customerid`, `time`, `productid`, `quantity`, `unit_price`, `discount`, `hash_columns`(`id`, `customerid`, `time`, `productid`, `quantity`, `unit_price`, `discount`) AS `__pk_hash`
+ FROM `default_catalog`.`default_database`.`OrderEntries`)
+;
+END
+>>>kafka.json
+{
+  "topics" : [ ]
+}
+>>>postgres.json
+{
+  "statements" : [
+    {
+      "name" : "OrderEntries_1",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"OrderEntries_1\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"productid\" BIGINT NOT NULL, \"quantity\" BIGINT NOT NULL, \"unit_price\" DOUBLE PRECISION NOT NULL, \"discount\" DOUBLE PRECISION , \"__pk_hash\" TEXT  , PRIMARY KEY (\"__pk_hash\"))",
+      "fields" : [
+        {
+          "name" : "id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "productid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "quantity",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "unit_price",
+          "type" : "DOUBLE PRECISION",
+          "nullable" : false
+        },
+        {
+          "name" : "discount",
+          "type" : "DOUBLE PRECISION",
+          "nullable" : true
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ]
+    }
+  ]
+}
+>>>vertx.json
+{
+  "model" : {
+    "queries" : [
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "OrderEntries",
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "whereClause"
+            },
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
+            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT \"id\", \"customerid\", \"time\", \"productid\", \"quantity\", \"unit_price\", \"discount\"\nFROM \"OrderEntries_1\"",
+            "parameters" : [
+              {
+                "type" : "arg",
+                "path" : "whereClause"
+              }
+            ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES",
+            "modifiers" : [
+              {
+                "type" : "FILTER",
+                "tableName" : "OrderEntries",
+                "parameterName" : "whereClause",
+                "tableSchema" : "CREATE TABLE `OrderEntries` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `productid` BIGINT NOT NULL,\n  `quantity` BIGINT NOT NULL,\n  `unit_price` DOUBLE NOT NULL,\n  `discount` DOUBLE\n)",
+                "preprocessor" : true,
+                "postprocessor" : false
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "mutations" : [ ],
+    "subscriptions" : [ ],
+    "operations" : [
+      {
+        "function" : {
+          "name" : "GetOrderEntries",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "whereClause" : {
+                "type" : "string",
+                "description" : "ANSI SQL where clause against the following table: CREATE TABLE `OrderEntries` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `productid` BIGINT NOT NULL,\n  `quantity` BIGINT NOT NULL,\n  `unit_price` DOUBLE NOT NULL,\n  `discount` DOUBLE\n). Only provide the WHERE condition not the whole query."
+              },
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [
+              "whereClause"
+            ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query OrderEntries($whereClause: String!, $limit: Int = 10, $offset: Int = 0) {\nOrderEntries(whereClause: $whereClause, limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nproductid\nquantity\nunit_price\ndiscount\n}\n\n}",
+          "queryName" : "OrderEntries",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/OrderEntries{?whereClause,offset,limit}"
+      }
+    ],
+    "schema" : {
+      "type" : "string",
+      "schema" : "\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype OrderEntries {\n  id: GraphQLBigInteger!\n  customerid: GraphQLBigInteger!\n  time: DateTime!\n  productid: GraphQLBigInteger!\n  quantity: GraphQLBigInteger!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Query {\n  OrderEntries(\n    \"\"\"\n    ANSI SQL where clause against the following table: CREATE TABLE `OrderEntries` (\n      `id` BIGINT NOT NULL,\n      `customerid` BIGINT NOT NULL,\n      `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n      `productid` BIGINT NOT NULL,\n      `quantity` BIGINT NOT NULL,\n      `unit_price` DOUBLE NOT NULL,\n      `discount` DOUBLE\n    ). Only provide the WHERE condition not the whole query.\n    \"\"\"\n    whereClause: String!,\n    limit: Int = 10,\n    offset: Int = 0\n  ): [OrderEntries!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+    }
+  }
+}

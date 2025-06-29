@@ -189,6 +189,37 @@ END
         "defaultConversion" : "org.apache.flink.types.Row",
         "nullable" : false
       },
+      "outputType" : {
+        "typeRoot" : "ROW",
+        "fields" : [
+          {
+            "name" : "f0",
+            "type" : {
+              "typeRoot" : "VARCHAR",
+              "length" : 32,
+              "children" : [ ],
+              "defaultConversion" : "java.lang.String",
+              "nullable" : true
+            },
+            "description" : null
+          }
+        ],
+        "fieldNames" : [
+          "f0"
+        ],
+        "children" : [
+          {
+            "typeRoot" : "VARCHAR",
+            "length" : 32,
+            "children" : [ ],
+            "defaultConversion" : "java.lang.String",
+            "nullable" : true
+          }
+        ],
+        "fieldCount" : 1,
+        "defaultConversion" : "org.apache.flink.types.Row",
+        "nullable" : false
+      },
       "code" : "\n      \n      // \n          \n      public class SqrlExec0$9\n          extends org.apache.flink.api.common.functions.RichFlatMapFunction {\n\n        private transient org.apache.flink.table.runtime.typeutils.StringDataSerializer typeSerializer$1;\n        private transient com.datasqrl.flinkrunner.stdlib.commons.hash_columns function_com$datasqrl$flinkrunner$stdlib$commons$hash_columns;\n        private transient org.apache.flink.table.data.conversion.StringStringConverter converter$3;\n        private transient org.apache.flink.table.data.conversion.StringStringConverter converter$5;\n        org.apache.flink.table.data.binary.BinaryRowData out = new org.apache.flink.table.data.binary.BinaryRowData(1);\n        org.apache.flink.table.data.writer.BinaryRowWriter outWriter = new org.apache.flink.table.data.writer.BinaryRowWriter(out);\n\n        public SqrlExec0$9(Object[] references) throws Exception {\n          typeSerializer$1 = (((org.apache.flink.table.runtime.typeutils.StringDataSerializer) references[0]));\n          function_com$datasqrl$flinkrunner$stdlib$commons$hash_columns = (((com.datasqrl.flinkrunner.stdlib.commons.hash_columns) references[1]));\n          converter$3 = (((org.apache.flink.table.data.conversion.StringStringConverter) references[2]));\n          converter$5 = (((org.apache.flink.table.data.conversion.StringStringConverter) references[3]));\n        }\n\n        \n\n        @Override\n        public void open(org.apache.flink.configuration.Configuration parameters) throws Exception {\n          \n          function_com$datasqrl$flinkrunner$stdlib$commons$hash_columns.open(new org.apache.flink.table.functions.FunctionContext(getRuntimeContext()));\n                 \n          \n          converter$3.open(getRuntimeContext().getUserCodeClassLoader());\n                     \n          \n          converter$5.open(getRuntimeContext().getUserCodeClassLoader());\n                     \n        }\n\n        @Override\n        public void flatMap(Object _in1, org.apache.flink.util.Collector c) throws Exception {\n          org.apache.flink.table.data.RowData in1 = (org.apache.flink.table.data.RowData) _in1;\n          \n          org.apache.flink.table.data.binary.BinaryStringData field$0;\n          boolean isNull$0;\n          org.apache.flink.table.data.binary.BinaryStringData field$2;\n          java.lang.String externalResult$4;\n          org.apache.flink.table.data.binary.BinaryStringData result$6;\n          boolean isNull$6;\n          boolean isNull$7;\n          org.apache.flink.table.data.binary.BinaryStringData result$8;\n          \n          isNull$0 = in1.isNullAt(0);\n          field$0 = org.apache.flink.table.data.binary.BinaryStringData.EMPTY_UTF8;\n          if (!isNull$0) {\n            field$0 = ((org.apache.flink.table.data.binary.BinaryStringData) in1.getString(0));\n          }\n          field$2 = field$0;\n          if (!isNull$0) {\n            field$2 = (org.apache.flink.table.data.binary.BinaryStringData) (typeSerializer$1.copy(field$2));\n          }\n                  \n          \n          \n          \n          \n          \n          \n          outWriter.reset();\n          \n          \n          \n          \n          \n          externalResult$4 = (java.lang.String) function_com$datasqrl$flinkrunner$stdlib$commons$hash_columns\n            .eval(isNull$0 ? null : ((java.lang.String) converter$3.toExternal((org.apache.flink.table.data.binary.BinaryStringData) field$2)));\n          \n          isNull$6 = externalResult$4 == null;\n          result$6 = org.apache.flink.table.data.binary.BinaryStringData.EMPTY_UTF8;\n          if (!isNull$6) {\n            result$6 = (org.apache.flink.table.data.binary.BinaryStringData) converter$5.toInternalOrNull((java.lang.String) externalResult$4);\n          }\n          \n          \n          isNull$7 = isNull$6 || false;\n          result$8 = org.apache.flink.table.data.binary.BinaryStringData.EMPTY_UTF8;\n          if (!isNull$7) {\n            \n          \n          result$8 = ((int) 5) <= 0 ? org.apache.flink.table.data.binary.BinaryStringData.EMPTY_UTF8 : org.apache.flink.table.data.binary.BinaryStringDataUtil.substringSQL(result$6, 1, ((int) 5));\n          \n            isNull$7 = (result$8 == null);\n          }\n          \n          if (isNull$7) {\n            outWriter.setNullAt(0);\n          } else {\n            outWriter.writeString(0, result$8);\n          }\n                     \n          outWriter.complete();\n                  \n          c.collect(out);\n          \n          \n        }\n\n        @Override\n        public void close() throws Exception {\n          function_com$datasqrl$flinkrunner$stdlib$commons$hash_columns.close();\n        }\n\n        \n      }\n    "
     }
   ]
@@ -217,7 +248,8 @@ END
             "sql" : "SELECT *\nFROM \"Customer_1\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -238,10 +270,6 @@ END
             {
               "type" : "variable",
               "path" : "inputName"
-            },
-            {
-              "type" : "variable",
-              "path" : "shortName"
             }
           ],
           "query" : {
@@ -258,7 +286,8 @@ END
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       }
@@ -304,9 +333,6 @@ END
               "limit" : {
                 "type" : "integer"
               },
-              "shortName" : {
-                "type" : "string"
-              },
               "inputName" : {
                 "type" : "string"
               }
@@ -318,18 +344,18 @@ END
         },
         "format" : "JSON",
         "apiQuery" : {
-          "query" : "query CustomersByName($inputName: String!, $shortName: String, $limit: Int = 10, $offset: Int = 0) {\nCustomersByName(inputName: $inputName, shortName: $shortName, limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+          "query" : "query CustomersByName($inputName: String!, $limit: Int = 10, $offset: Int = 0) {\nCustomersByName(inputName: $inputName, limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
           "queryName" : "CustomersByName",
           "operationType" : "QUERY"
         },
         "mcpMethod" : "TOOL",
         "restMethod" : "GET",
-        "uriTemplate" : "queries/CustomersByName{?offset,limit,shortName,inputName}"
+        "uriTemplate" : "queries/CustomersByName{?offset,limit,inputName}"
       }
     ],
     "schema" : {
       "type" : "string",
-      "schema" : "type Customer {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n}\n\n\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomersByName(inputName: String!, shortName: String, limit: Int = 10, offset: Int = 0): [Customer!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      "schema" : "type Customer {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n}\n\n\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomersByName(inputName: String!, limit: Int = 10, offset: Int = 0): [Customer!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
     }
   }
 }

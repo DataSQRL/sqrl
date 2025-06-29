@@ -210,7 +210,8 @@ INSERT INTO `default_catalog`.`default_database`.`ProductId_2`
             "sql" : "SELECT *\nFROM \"Orders_1\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -234,7 +235,8 @@ INSERT INTO `default_catalog`.`default_database`.`ProductId_2`
             "sql" : "SELECT *\nFROM \"ProductId_2\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       }

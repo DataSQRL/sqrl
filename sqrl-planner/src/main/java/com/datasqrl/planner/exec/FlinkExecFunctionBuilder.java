@@ -61,7 +61,7 @@ public class FlinkExecFunctionBuilder {
     log.debug("Generated executable function [{}]: {}", uniqueFunctionName, functionCode);
 
     FlinkExecFunction fef =
-        new FlinkExecFunction(uniqueFunctionName, description, inRowType, genFn, null);
+        new FlinkExecFunction(uniqueFunctionName, description, inRowType, outRowType, genFn, null);
     planBuilder.function(fef);
     return fef;
   }

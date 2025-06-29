@@ -559,7 +559,8 @@ INSERT INTO `default_catalog`.`default_database`.`OrderAgg2_2`
             "sql" : "SELECT *\nFROM \"OrderAgg1_1\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -583,7 +584,8 @@ INSERT INTO `default_catalog`.`default_database`.`OrderAgg2_2`
             "sql" : "SELECT *\nFROM \"OrderAgg2_2\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -607,7 +609,8 @@ INSERT INTO `default_catalog`.`default_database`.`OrderAgg2_2`
             "sql" : "SELECT *\nFROM \"OrderAgg3_3\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -631,7 +634,8 @@ INSERT INTO `default_catalog`.`default_database`.`OrderAgg2_2`
             "sql" : "SELECT *\nFROM \"OrderAgg4_4\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -655,7 +659,8 @@ INSERT INTO `default_catalog`.`default_database`.`OrderAgg2_2`
             "sql" : "SELECT *\nFROM \"Orders_5\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -679,7 +684,8 @@ INSERT INTO `default_catalog`.`default_database`.`OrderAgg2_2`
             "sql" : "SELECT *\nFROM \"OrdersState_6\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       }
