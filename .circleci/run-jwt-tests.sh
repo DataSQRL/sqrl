@@ -4,13 +4,13 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="${SCRIPT_DIR}/.."
 
-cd "${PROJECT_ROOT}/sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/jwt"
+cd "${PROJECT_ROOT}/sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/jwt-authorized"
 
 docker run \
   -v "$PWD:/build" \
   -e TZ="UTC" \
   "datasqrl/cmd-test-image:${CIRCLE_SHA1}" \
-  compile jwt.sqrl
+  compile jwt-authorized.sqrl
 
 docker run -d --name sqrl-server \
   -v "$PWD/build/deploy/plan/vertx.json:/opt/sqrl/vertx.json" \
