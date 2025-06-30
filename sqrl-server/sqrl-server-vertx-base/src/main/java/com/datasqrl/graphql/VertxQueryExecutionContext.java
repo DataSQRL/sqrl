@@ -103,7 +103,7 @@ public class VertxQueryExecutionContext extends AbstractQueryExecutionContext {
         .onFailure(
             f -> {
               f.printStackTrace();
-              cf.failedFuture(f);
+              cf.completeExceptionally(f);
             });
     return cf;
   }
