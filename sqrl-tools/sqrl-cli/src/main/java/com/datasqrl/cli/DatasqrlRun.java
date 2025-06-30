@@ -73,7 +73,7 @@ public class DatasqrlRun {
   private TableResult execute;
 
   public DatasqrlRun(Path planPath, PackageJson sqrlConfig, Configuration flinkConfig) {
-    this(planPath, sqrlConfig, flinkConfig, Map.of());
+    this(planPath, sqrlConfig, flinkConfig, System.getenv());
   }
 
   public DatasqrlRun(
