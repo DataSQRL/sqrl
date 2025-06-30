@@ -22,7 +22,7 @@ cd /build
 export DATA_PATH=/build/build/deploy/flink/data
 export UDF_PATH=/build/build/deploy/flink/lib
 
-if [[ "$1" == "run" || "$1" == "test" ]]; then
+if [[ "$1" == "run" || "$1" == "test" || "$1" == "execute" ]]; then
     # Start Redpanda if KAFKA_HOST is not set
     if [[ -z "$KAFKA_HOST" ]]; then
         echo "Starting Redpanda..."

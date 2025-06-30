@@ -41,7 +41,7 @@ public abstract class SqrlContainerTestBase {
 
   private static final Logger logger = LoggerFactory.getLogger(SqrlContainerTestBase.class);
 
-  protected static final String SQRL_CMD_IMAGE = "datasqrl/cli";
+  protected static final String SQRL_CMD_IMAGE = "datasqrl/cmd";
   protected static final String SQRL_SERVER_IMAGE = "datasqrl/sqrl-server";
   protected static final String BUILD_DIR = "/build";
   protected static final int GRAPHQL_PORT = 8888;

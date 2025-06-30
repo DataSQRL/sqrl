@@ -27,7 +27,7 @@
   <artifactId>sqrl-cli</artifactId>
 
   <properties>
-    <docker.image.name>datasqrl/cli</docker.image.name>
+    <docker.image.name>datasqrl/cmd</docker.image.name>
   </properties>
 
   <dependencies>

@@ -324,7 +324,7 @@ jobs:
               fi
             }
 
-            build_and_push cli                 sqrl-cli
+            build_and_push cmd                 sqrl-cli
             build_and_push sqrl-server         sqrl-server/sqrl-server-vertx
 
   docker-build-base-image:
