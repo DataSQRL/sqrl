@@ -41,7 +41,7 @@ public abstract class SqrlContainerTestBase {
 
   private static final Logger logger = LoggerFactory.getLogger(SqrlContainerTestBase.class);
 
-  protected static final String SQRL_CMD_IMAGE = "datasqrl/cmd";
+  protected static final String SQRL_CMD_IMAGE = "datasqrl/cli";
   protected static final String SQRL_SERVER_IMAGE = "datasqrl/sqrl-server";
   protected static final String BUILD_DIR = "/build";
   protected static final int GRAPHQL_PORT = 8888;
@@ -119,8 +119,10 @@ public abstract class SqrlContainerTestBase {
     } catch (Exception e) {
       logger.error("Failed to start GraphQL server container:");
       logger.error("Container image: {}", SQRL_SERVER_IMAGE + ":" + imageTag);
-      try {
-        logger.error("Container logs: {}", serverContainer.getLogs());
+      String logs = null;
+	try {
+          logs = serverContainer.getLogs();
+		logger.error("Container logs: {}", logs);
       } catch (Exception logException) {
         logger.error("Could not retrieve container logs: {}", logException.getMessage());
       }
@@ -132,7 +134,8 @@ public abstract class SqrlContainerTestBase {
       } catch (Exception stateException) {
         logger.error("Could not retrieve container state: {}", stateException.getMessage());
       }
-      throw new RuntimeException("Failed to start GraphQL server container", e);
+      
+      throw new RuntimeException("Failed to start GraphQL server container:\n" +logs, e);
     }
   }
 
@@ -161,7 +164,7 @@ public abstract class SqrlContainerTestBase {
   }
 
   protected String getImageTag() {
-    return System.getProperty("container.image.tag", "dev");
+    return System.getProperty("container.image.tag", "local");
   }
 
   protected Path getTestResourcePath(String relativePath) {

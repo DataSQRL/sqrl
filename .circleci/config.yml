@@ -234,11 +234,11 @@ jobs:
       - install-jdk
       - run:
           name: Build with Docker images
-          command: mvn -U clean -T1C -B package -DonlyContainerE2E -DskipTests -DskipITs
+          command: mvn -U clean -T1C -B package -DonlyImages -Ddocker.image.tag=${CIRCLE_SHA1}
       - run:
           name: Run container tests using TestContainers
           command: |
-            mvn -U -T1 -B test -Dtest="*ContainerIT" \
+            mvn -B install -DonlyContainerE2E \
               -pl :sqrl-container-testing \
               -Ddocker.image.tag=${CIRCLE_SHA1}
 
@@ -259,7 +259,7 @@ jobs:
             echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf
       - run:
           name: Build shaded JAR
-          command: mvn -U clean -T1C -B deploy -DonlyImages ${CIRCLE_TAG:+-Prelease}
+          command: mvn -U clean -T1C -B deploy -DonlyJars ${CIRCLE_TAG:+-Prelease}
 
   build-images:
     # use a full VM so we can run Docker / Buildx
@@ -275,7 +275,7 @@ jobs:
 
       - run:
           name: Build shaded JARs
-          command: mvn -U -T1C -B install -DonlyImages
+          command: mvn -U -T1C -B install -DonlyJars
 
       - determine-version
       - compute-base-tag

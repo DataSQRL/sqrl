@@ -21,6 +21,8 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import lombok.SneakyThrows;
+
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Date;
@@ -45,16 +47,12 @@ public class JwtContainerIT extends SqrlContainerTestBase {
   }
 
   @Test
-  @DisplayName(
-      "Given JWT-enabled SQRL script, when server started, then unauthorized requests return 401")
-  void givenJwtEnabledScript_whenServerStarted_thenUnauthorizedRequestsReturn401() {
+  @SneakyThrows  void givenJwtEnabledScript_whenServerStarted_thenUnauthorizedRequestsReturn401() {
     var testDir = getTestResourcePath("jwt").toAbsolutePath().toString();
     var imageTag = getImageTag();
 
     logger.info("Running JWT container test (unauthorized) with image tag: {}", imageTag);
 
-    assertDoesNotThrow(
-        () -> {
           compileSqrlScript("jwt.sqrl", testDir, imageTag);
 
           startGraphQLServer(testDir, imageTag);
@@ -64,20 +62,15 @@ public class JwtContainerIT extends SqrlContainerTestBase {
           assertThat(response.getStatusLine().getStatusCode()).isEqualTo(401);
 
           logger.info("JWT unauthorized test completed successfully");
-        });
   }
 
   @Test
-  @DisplayName(
-      "Given JWT-enabled SQRL script, when server started with valid JWT, then authorized requests succeed")
-  void givenJwtEnabledScript_whenServerStartedWithValidJwt_thenAuthorizedRequestsSucceed() {
+ @SneakyThrows  void givenJwtEnabledScript_whenServerStartedWithValidJwt_thenAuthorizedRequestsSucceed() {
     var testDir = getTestResourcePath("jwt").toAbsolutePath().toString();
     var imageTag = getImageTag();
 
     logger.info("Running JWT container test (authorized) with image tag: {}", imageTag);
 
-    assertDoesNotThrow(
-        () -> {
           compileSqrlScript("jwt.sqrl", testDir, imageTag);
 
           startGraphQLServer(testDir, imageTag);
@@ -95,7 +88,6 @@ public class JwtContainerIT extends SqrlContainerTestBase {
           assertThat(jsonResponse.get("data").get("__typename").asText()).isEqualTo("Query");
 
           logger.info("JWT authorized test completed successfully");
-        });
   }
 
   private String generateJwtToken() {

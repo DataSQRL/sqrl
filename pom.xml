@@ -1434,8 +1434,20 @@
       <properties>
         <skipTests>true</skipTests>
         <skipITs>true</skipITs>
+      </properties>
+      <!-- Note: This profile allows shade plugin for building images -->
+    </profile>
+    <profile>
+      <id>only-jars</id>
+      <activation>
+        <property>
+          <name>onlyJars</name>
+        </property>
+      </activation>
+      <properties>
+        <skipTests>true</skipTests>
+        <skipITs>true</skipITs>
         <dockerfile.skip>true</dockerfile.skip>
-        <maven.test.excludeProjects>sqrl-container-testing</maven.test.excludeProjects>
       </properties>
       <!-- Note: This profile allows shade plugin for deployment JARs -->
     </profile>

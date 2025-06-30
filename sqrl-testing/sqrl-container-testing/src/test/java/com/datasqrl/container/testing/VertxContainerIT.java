@@ -25,6 +25,8 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import lombok.SneakyThrows;
+
 public class VertxContainerIT extends SqrlContainerTestBase {
 
   private static final Logger logger = LoggerFactory.getLogger(VertxContainerIT.class);
@@ -35,16 +37,13 @@ public class VertxContainerIT extends SqrlContainerTestBase {
   }
 
   @Test
-  @DisplayName(
-      "Given UDF SQRL script, when compiled and GraphQL server started, then API responds correctly")
+  @SneakyThrows
   void givenUdfScript_whenCompiledAndServerStarted_thenApiRespondsCorrectly() {
     var testDir = getTestResourcePath("udf").toAbsolutePath().toString();
     var imageTag = getImageTag();
 
     logger.info("Running Vert.x container test with image tag: {}", imageTag);
 
-    assertDoesNotThrow(
-        () -> {
           compileSqrlScript("myudf.sqrl", testDir, imageTag);
 
           startGraphQLServer(testDir, imageTag);
@@ -61,6 +60,5 @@ public class VertxContainerIT extends SqrlContainerTestBase {
           assertThat(jsonResponse.get("data").get("__typename").asText()).isEqualTo("Query");
 
           logger.info("Vert.x container test completed successfully");
-        });
   }
 }
