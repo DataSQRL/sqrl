@@ -46,7 +46,7 @@ public class JwtContainerIT extends SqrlContainerTestBase {
   @Test
   @SneakyThrows
   void givenJwtEnabledScript_whenServerStarted_thenUnauthorizedRequestsReturn401() {
-    var testDir = getTestResourcePath("jwt").toAbsolutePath().toString();
+    var testDir = itPath("jwt");
 
     logger.info("Running JWT container test (unauthorized)");
 
@@ -64,7 +64,7 @@ public class JwtContainerIT extends SqrlContainerTestBase {
   @Test
   @SneakyThrows
   void givenJwtEnabledScript_whenServerStartedWithValidJwt_thenAuthorizedRequestsSucceed() {
-    var testDir = getTestResourcePath("jwt").toAbsolutePath().toString();
+    var testDir = itPath("jwt");
 
     logger.info("Running JWT container test (authorized)");
 

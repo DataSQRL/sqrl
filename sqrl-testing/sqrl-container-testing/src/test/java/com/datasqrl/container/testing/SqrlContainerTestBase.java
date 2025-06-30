@@ -15,11 +15,14 @@
  */
 package com.datasqrl.container.testing;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.regex.Pattern;
+import lombok.SneakyThrows;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
@@ -30,6 +33,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.Wait;
@@ -39,7 +43,7 @@ import org.testcontainers.utility.DockerImageName;
 @Testcontainers
 public abstract class SqrlContainerTestBase {
 
-  private static final Logger logger = LoggerFactory.getLogger(SqrlContainerTestBase.class);
+  private static final Logger log = LoggerFactory.getLogger(SqrlContainerTestBase.class);
 
   protected static final String SQRL_CMD_IMAGE = "datasqrl/cmd";
   protected static final String SQRL_SERVER_IMAGE = "datasqrl/sqrl-server";
@@ -57,7 +61,7 @@ public abstract class SqrlContainerTestBase {
   static void setUpSharedResources() {
     sharedNetwork = Network.newNetwork();
     sharedHttpClient = HttpClients.createDefault();
-    logger.info("Shared test resources initialized");
+    log.info("Shared test resources initialized");
   }
 
   @AfterAll
@@ -69,33 +73,36 @@ public abstract class SqrlContainerTestBase {
       if (sharedNetwork != null) {
         sharedNetwork.close();
       }
-      logger.info("Shared test resources cleaned up");
+      log.info("Shared test resources cleaned up");
     } catch (Exception e) {
-      logger.warn("Error during shared resource cleanup", e);
+      log.warn("Error during shared resource cleanup", e);
     }
   }
 
-  protected GenericContainer<?> createCmdContainer(String workingDir) {
+  protected GenericContainer<?> createCmdContainer(Path workingDir) {
+    assertThat(workingDir).exists().isDirectory();
+
     return new GenericContainer<>(DockerImageName.parse(SQRL_CMD_IMAGE + ":" + getImageTag()))
         .withNetwork(sharedNetwork)
         .withWorkingDirectory(BUILD_DIR)
-        .withFileSystemBind(workingDir, BUILD_DIR)
+        .withFileSystemBind(workingDir.toString(), BUILD_DIR, BindMode.READ_WRITE)
         .withEnv("TZ", "UTC");
   }
 
-  protected GenericContainer<?> createServerContainer(String workingDir) {
-    var deployPlanPath = Paths.get(workingDir, "build", "deploy", "plan").toString();
+  protected GenericContainer<?> createServerContainer(Path workingDir) {
+    var deployPlanPath = workingDir.resolve("build/deploy/plan");
+    assertThat(deployPlanPath).exists().isDirectory();
 
     return new GenericContainer<>(DockerImageName.parse(SQRL_SERVER_IMAGE + ":" + getImageTag()))
         .withNetwork(sharedNetwork)
         .withExposedPorts(GRAPHQL_PORT)
-        .withFileSystemBind(deployPlanPath, "/opt/sqrl/config")
+        .withFileSystemBind(deployPlanPath.toString(), "/opt/sqrl/config", BindMode.READ_ONLY)
         .waitingFor(
-            Wait.forLogMessage(".*GraphQL.*started.*", 1)
+            Wait.forLogMessage(".*GraphQLServer.*started.*", 1)
                 .withStartupTimeout(Duration.ofSeconds(20)));
   }
 
-  protected void compileSqrlScript(String scriptName, String workingDir) {
+  protected void compileSqrlScript(String scriptName, Path workingDir) {
     cmdContainer = createCmdContainer(workingDir).withCommand("compile", scriptName);
 
     cmdContainer.start();
@@ -103,42 +110,42 @@ public abstract class SqrlContainerTestBase {
     var exitCode = cmdContainer.getCurrentContainerInfo().getState().getExitCodeLong();
     if (exitCode != 0) {
       var logs = cmdContainer.getLogs();
-      logger.error("SQRL compilation failed with exit code {}: {}", exitCode, logs);
-      logger.error("Docker run command to reproduce:");
-      logger.error(
+      log.error("SQRL compilation failed with exit code {}: {}", exitCode, logs);
+      log.error("Docker run command to reproduce:");
+      log.error(
           getDockerRunCommand(
               workingDir, SQRL_CMD_IMAGE, getImageTag(), false, "compile", scriptName));
       throw new RuntimeException("SQRL compilation failed with exit code " + exitCode);
     }
 
-    logger.info("SQRL script {} compiled successfully", scriptName);
+    log.info("SQRL script {} compiled successfully \n{}", scriptName, cmdContainer.getLogs());
   }
 
-  protected void startGraphQLServer(String workingDir) {
+  protected void startGraphQLServer(Path workingDir) {
     serverContainer = createServerContainer(workingDir);
 
     try {
       serverContainer.start();
-      logger.info("GraphQL server started on port {}", serverContainer.getMappedPort(GRAPHQL_PORT));
+      log.info("GraphQL server started on port {}", serverContainer.getMappedPort(GRAPHQL_PORT));
     } catch (Exception e) {
-      logger.error("Failed to start GraphQL server container:");
-      logger.error("Container image: {}", SQRL_SERVER_IMAGE + ":" + getImageTag());
-      logger.error("Docker run command to reproduce:");
-      logger.error(getDockerRunCommand(workingDir, SQRL_SERVER_IMAGE, getImageTag(), true));
+      log.error("Failed to start GraphQL server container:");
+      log.error("Container image: {}", SQRL_SERVER_IMAGE + ":" + getImageTag());
+      log.error("Docker run command to reproduce:");
+      log.error(getDockerRunCommand(workingDir, SQRL_SERVER_IMAGE, getImageTag(), true));
       String logs = null;
       try {
         logs = serverContainer.getLogs();
-        logger.error("Container logs: {}", logs);
+        log.error("Container logs: {}", logs);
       } catch (Exception logException) {
-        logger.error("Could not retrieve container logs: {}", logException.getMessage());
+        log.error("Could not retrieve container logs: {}", logException.getMessage());
       }
       try {
         var containerInfo = serverContainer.getCurrentContainerInfo();
         if (containerInfo != null) {
-          logger.error("Container state: {}", containerInfo.getState());
+          log.error("Container state: {}", containerInfo.getState());
         }
       } catch (Exception stateException) {
-        logger.error("Could not retrieve container state: {}", stateException.getMessage());
+        log.error("Could not retrieve container state: {}", stateException.getMessage());
       }
 
       throw new RuntimeException("Failed to start GraphQL server container:\n" + logs, e);
@@ -174,12 +181,12 @@ public abstract class SqrlContainerTestBase {
   }
 
   private String getDockerRunCommand(
-      String workingDir, String imageName, String imageTag, boolean isServer, String... commands) {
+      Path workingDir, String imageName, String imageTag, boolean isServer, String... commands) {
     var sb = new StringBuilder();
     sb.append("docker run -it --rm");
 
     if (isServer) {
-      var deployPlanPath = Paths.get(workingDir, "build", "deploy", "plan").toString();
+      var deployPlanPath = workingDir.resolve("build/deploy/plan").toString();
       sb.append(" -p ").append(GRAPHQL_PORT).append(":").append(GRAPHQL_PORT);
       sb.append(" -v \"").append(deployPlanPath).append(":/opt/sqrl/config\"");
     } else {
@@ -197,8 +204,13 @@ public abstract class SqrlContainerTestBase {
     return sb.toString();
   }
 
-  protected Path getTestResourcePath(String relativePath) {
-    return Paths.get("src", "test", "resources", relativePath);
+  @SneakyThrows
+  protected Path itPath(String relativePath) {
+    var path =
+        Paths.get("../sqrl-integration-tests/src/test/resources/usecases", relativePath)
+            .toAbsolutePath();
+    assertThat(path).exists().isDirectory();
+    return path.toRealPath();
   }
 
   protected HttpResponse executeGraphQLQuery(String query) throws Exception {

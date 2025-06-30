@@ -36,7 +36,7 @@ public class VertxContainerIT extends SqrlContainerTestBase {
   @Test
   @SneakyThrows
   void givenUdfScript_whenCompiledAndServerStarted_thenApiRespondsCorrectly() {
-    var testDir = getTestResourcePath("udf").toAbsolutePath().toString();
+    var testDir = itPath("udf");
 
     logger.info("Running Vert.x container test");
 
