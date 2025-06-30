@@ -22,6 +22,7 @@ import com.datasqrl.compile.TestPlan.GraphqlQuery;
 import com.datasqrl.graphql.APISource;
 import com.datasqrl.graphql.visitor.GraphqlSchemaVisitor;
 import com.datasqrl.planner.tables.SqrlTableFunction;
+import com.datasqrl.util.FileUtil;
 import graphql.language.Argument;
 import graphql.language.AstPrinter;
 import graphql.language.Definition;
@@ -123,7 +124,7 @@ public class TestPlanner {
           .filter(p -> p.getFileName().toString().endsWith(".properties"))
           .collect(
               Collectors.toMap(
-                  this::stripExtension,
+                  file -> FileUtil.separateExtension(file).getLeft(),
                   this::readProperties,
                   (a, b) -> {
                     throw new IllegalStateException(
@@ -131,11 +132,6 @@ public class TestPlanner {
                   },
                   LinkedHashMap::new));
     }
-  }
-
-  private String stripExtension(Path p) {
-    String name = p.getFileName().toString();
-    return name.substring(0, name.length() - ".properties".length());
   }
 
   @SneakyThrows
@@ -221,7 +217,7 @@ public class TestPlanner {
       // Add input value definitions as arguments
       List<VariableDefinition> variableDefinitions =
           inputValueDefinitions.stream()
-              .map(input -> new VariableDefinition(input.getName(), input.getType(), null))
+              .map(input -> new VariableDefinition(input.getName(), input.getType()))
               .collect(Collectors.toList());
 
       operationBuilder.variableDefinitions(variableDefinitions);
