@@ -155,7 +155,7 @@ commands:
       - run:
           name: Compute BASE_TAG
           command: |
-            BASE_TAG=$(sha1sum sqrl-tools/Dockerfile.base | cut -c1-12)
+            BASE_TAG=$(sha1sum sqrl-cli/Dockerfile.base | cut -c1-12)
             echo "Computed BASE_TAG=${BASE_TAG}"
             echo "export BASE_TAG=${BASE_TAG}" >> "$BASH_ENV"
 
@@ -324,7 +324,7 @@ jobs:
               fi
             }
 
-            build_and_push cmd                 sqrl-tools
+            build_and_push cli                 sqrl-cli
             build_and_push sqrl-server         sqrl-server/sqrl-server-vertx
 
   docker-build-base-image:
@@ -377,8 +377,8 @@ jobs:
               --push \
               --platform linux/amd64,linux/arm64 \
               -t datasqrl/base-sqrl:$BASE_TAG \
-              -f sqrl-tools/Dockerfile.base \
-              sqrl-tools
+              -f sqrl-cli/Dockerfile.base \
+              sqrl-cli
 
 workflows:
   ci:
