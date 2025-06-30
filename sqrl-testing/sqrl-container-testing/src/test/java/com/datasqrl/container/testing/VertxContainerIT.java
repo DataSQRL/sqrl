@@ -40,13 +40,12 @@ public class VertxContainerIT extends SqrlContainerTestBase {
   @SneakyThrows
   void givenUdfScript_whenCompiledAndServerStarted_thenApiRespondsCorrectly() {
     var testDir = getTestResourcePath("udf").toAbsolutePath().toString();
-    var imageTag = getImageTag();
 
-    logger.info("Running Vert.x container test with image tag: {}", imageTag);
+    logger.info("Running Vert.x container test");
 
-          compileSqrlScript("myudf.sqrl", testDir, imageTag);
+          compileSqrlScript("myudf.sqrl", testDir);
 
-          startGraphQLServer(testDir, imageTag);
+          startGraphQLServer(testDir);
 
           var response = executeGraphQLQuery("{\"query\":\"query { __typename }\"}");
 

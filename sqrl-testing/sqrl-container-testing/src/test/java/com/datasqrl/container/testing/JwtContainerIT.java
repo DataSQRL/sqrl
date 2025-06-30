@@ -49,13 +49,12 @@ public class JwtContainerIT extends SqrlContainerTestBase {
   @Test
   @SneakyThrows  void givenJwtEnabledScript_whenServerStarted_thenUnauthorizedRequestsReturn401() {
     var testDir = getTestResourcePath("jwt").toAbsolutePath().toString();
-    var imageTag = getImageTag();
 
-    logger.info("Running JWT container test (unauthorized) with image tag: {}", imageTag);
+    logger.info("Running JWT container test (unauthorized)");
 
-          compileSqrlScript("jwt.sqrl", testDir, imageTag);
+          compileSqrlScript("jwt.sqrl", testDir);
 
-          startGraphQLServer(testDir, imageTag);
+          startGraphQLServer(testDir);
 
           var response = executeGraphQLQuery("{\"query\":\"query { __typename }\"}");
 
@@ -67,13 +66,12 @@ public class JwtContainerIT extends SqrlContainerTestBase {
   @Test
  @SneakyThrows  void givenJwtEnabledScript_whenServerStartedWithValidJwt_thenAuthorizedRequestsSucceed() {
     var testDir = getTestResourcePath("jwt").toAbsolutePath().toString();
-    var imageTag = getImageTag();
 
-    logger.info("Running JWT container test (authorized) with image tag: {}", imageTag);
+    logger.info("Running JWT container test (authorized)");
 
-          compileSqrlScript("jwt.sqrl", testDir, imageTag);
+          compileSqrlScript("jwt.sqrl", testDir);
 
-          startGraphQLServer(testDir, imageTag);
+          startGraphQLServer(testDir);
 
           var jwtToken = generateJwtToken();
           var response = executeGraphQLQuery("{\"query\":\"query { __typename }\"}", jwtToken);

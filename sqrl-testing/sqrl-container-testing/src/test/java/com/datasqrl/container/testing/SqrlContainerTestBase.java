@@ -75,18 +75,18 @@ public abstract class SqrlContainerTestBase {
     }
   }
 
-  protected GenericContainer<?> createCmdContainer(String workingDir, String imageTag) {
-    return new GenericContainer<>(DockerImageName.parse(SQRL_CMD_IMAGE + ":" + imageTag))
+  protected GenericContainer<?> createCmdContainer(String workingDir) {
+    return new GenericContainer<>(DockerImageName.parse(SQRL_CMD_IMAGE + ":" + getImageTag()))
         .withNetwork(sharedNetwork)
         .withWorkingDirectory(BUILD_DIR)
         .withFileSystemBind(workingDir, BUILD_DIR)
         .withEnv("TZ", "UTC");
   }
 
-  protected GenericContainer<?> createServerContainer(String workingDir, String imageTag) {
+  protected GenericContainer<?> createServerContainer(String workingDir) {
     var deployPlanPath = Paths.get(workingDir, "build", "deploy", "plan").toString();
 
-    return new GenericContainer<>(DockerImageName.parse(SQRL_SERVER_IMAGE + ":" + imageTag))
+    return new GenericContainer<>(DockerImageName.parse(SQRL_SERVER_IMAGE + ":" + getImageTag()))
         .withNetwork(sharedNetwork)
         .withExposedPorts(GRAPHQL_PORT)
         .withFileSystemBind(deployPlanPath, "/opt/sqrl")
@@ -95,8 +95,8 @@ public abstract class SqrlContainerTestBase {
                 .withStartupTimeout(Duration.ofSeconds(20)));
   }
 
-  protected void compileSqrlScript(String scriptName, String workingDir, String imageTag) {
-    cmdContainer = createCmdContainer(workingDir, imageTag).withCommand("compile", scriptName);
+  protected void compileSqrlScript(String scriptName, String workingDir) {
+    cmdContainer = createCmdContainer(workingDir).withCommand("compile", scriptName);
 
     cmdContainer.start();
 
@@ -110,15 +110,15 @@ public abstract class SqrlContainerTestBase {
     logger.info("SQRL script {} compiled successfully", scriptName);
   }
 
-  protected void startGraphQLServer(String workingDir, String imageTag) {
-    serverContainer = createServerContainer(workingDir, imageTag);
+  protected void startGraphQLServer(String workingDir) {
+    serverContainer = createServerContainer(workingDir);
     
     try {
       serverContainer.start();
       logger.info("GraphQL server started on port {}", serverContainer.getMappedPort(GRAPHQL_PORT));
     } catch (Exception e) {
       logger.error("Failed to start GraphQL server container:");
-      logger.error("Container image: {}", SQRL_SERVER_IMAGE + ":" + imageTag);
+      logger.error("Container image: {}", SQRL_SERVER_IMAGE + ":" + getImageTag());
       String logs = null;
 	try {
           logs = serverContainer.getLogs();
@@ -163,7 +163,7 @@ public abstract class SqrlContainerTestBase {
     }
   }
 
-  protected String getImageTag() {
+  private String getImageTag() {
     return System.getProperty("container.image.tag", "local");
   }
 
