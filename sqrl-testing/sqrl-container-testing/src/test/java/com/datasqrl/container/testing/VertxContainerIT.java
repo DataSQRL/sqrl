@@ -16,16 +16,13 @@
 package com.datasqrl.container.testing;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
+import lombok.SneakyThrows;
 import org.apache.http.util.EntityUtils;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import lombok.SneakyThrows;
 
 public class VertxContainerIT extends SqrlContainerTestBase {
 
@@ -43,21 +40,21 @@ public class VertxContainerIT extends SqrlContainerTestBase {
 
     logger.info("Running Vert.x container test");
 
-          compileSqrlScript("myudf.sqrl", testDir);
+    compileSqrlScript("myudf.sqrl", testDir);
 
-          startGraphQLServer(testDir);
+    startGraphQLServer(testDir);
 
-          var response = executeGraphQLQuery("{\"query\":\"query { __typename }\"}");
+    var response = executeGraphQLQuery("{\"query\":\"query { __typename }\"}");
 
-          assertThat(response.getStatusLine().getStatusCode()).isEqualTo(200);
+    assertThat(response.getStatusLine().getStatusCode()).isEqualTo(200);
 
-          var responseBody = EntityUtils.toString(response.getEntity());
-          var jsonResponse = objectMapper.readTree(responseBody);
+    var responseBody = EntityUtils.toString(response.getEntity());
+    var jsonResponse = objectMapper.readTree(responseBody);
 
-          assertThat(jsonResponse.has("data")).isTrue();
-          assertThat(jsonResponse.get("data").has("__typename")).isTrue();
-          assertThat(jsonResponse.get("data").get("__typename").asText()).isEqualTo("Query");
+    assertThat(jsonResponse.has("data")).isTrue();
+    assertThat(jsonResponse.get("data").has("__typename")).isTrue();
+    assertThat(jsonResponse.get("data").get("__typename").asText()).isEqualTo("Query");
 
-          logger.info("Vert.x container test completed successfully");
+    logger.info("Vert.x container test completed successfully");
   }
 }

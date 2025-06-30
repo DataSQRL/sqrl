@@ -15,5 +15,8 @@
 # limitations under the License.
 #
 
-cd /opt/sqrl
-java -jar vertx-server.jar
+# Change to config directory (default WORKDIR)
+cd /opt/sqrl/config
+
+# Run the application jar from the app directory
+java -jar /opt/sqrl/app/vertx-server.jar
