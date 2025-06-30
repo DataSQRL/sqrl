@@ -1422,8 +1422,7 @@
         <skipTests>true</skipTests>
         <skipITs>true</skipITs>
       </properties>
-      <!-- Note: This profile skips tests during package phase, but allows targeted container tests.
-           The default exclusion profile is automatically deactivated when this profile is active. -->
+      <!-- Note: This profile skips tests globally, but sqrl-container-testing overrides this -->
     </profile>
     <profile>
       <id>only-images</id>

@@ -85,5 +85,17 @@
         <maven.test.skip>true</maven.test.skip>
       </properties>
     </profile>
+    <profile>
+      <id>enable-container-e2e-tests</id>
+      <activation>
+        <property>
+          <name>onlyContainerE2E</name>
+        </property>
+      </activation>
+      <properties>
+        <skipTests>false</skipTests>
+        <skipITs>false</skipITs>
+      </properties>
+    </profile>
   </profiles>
 </project>

@@ -234,7 +234,7 @@ jobs:
       - install-jdk
       - run:
           name: Build with Docker images
-          command: mvn -U clean -T1C -B package -DonlyContainerE2E
+          command: mvn -U clean -T1C -B package -DonlyContainerE2E -DskipTests -DskipITs
       - run:
           name: Run container tests using TestContainers
           command: |
