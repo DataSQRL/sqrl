@@ -190,9 +190,7 @@ END
                 "type" : "FILTER",
                 "tableName" : "OrderEntries",
                 "parameterName" : "whereClause",
-                "tableSchema" : "CREATE TABLE `OrderEntries` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `productid` BIGINT NOT NULL,\n  `quantity` BIGINT NOT NULL,\n  `unit_price` DOUBLE NOT NULL,\n  `discount` DOUBLE\n)",
-                "preprocessor" : true,
-                "postprocessor" : false
+                "tableSchema" : "CREATE TABLE `OrderEntries` (\n  `id` BIGINT NOT NULL,\n  `customerid` BIGINT NOT NULL,\n  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `productid` BIGINT NOT NULL,\n  `quantity` BIGINT NOT NULL,\n  `unit_price` DOUBLE NOT NULL,\n  `discount` DOUBLE\n)"
               }
             ]
           }

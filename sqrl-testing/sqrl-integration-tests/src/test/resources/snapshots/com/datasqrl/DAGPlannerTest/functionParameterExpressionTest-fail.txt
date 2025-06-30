@@ -1,0 +1,14 @@
+[NOTICE] This table does not propagate the source row time columns: default_catalog.default_database.Customer[timestamp]
+in script:functionparameterexpressiontest-fail.sqrl [8:1]:
+IMPORT stdlib.openai.vector_embed;
+
+CustomerVectorEmbed := SELECT customerid, name, vector_embed(name, 'test-model') AS name_vector
+^
+
+[FATAL] Unexpected error in type inference logic of function 'cosine_similarity'. This is a bug.
+in script:functionparameterexpressiontest-fail.sqrl [11:1]:
+                       FROM Customer;
+
+CustomersByVector(name STRING NOT NULL, vector AS vector_embed(name, 'test-model')) :=
+^
+
