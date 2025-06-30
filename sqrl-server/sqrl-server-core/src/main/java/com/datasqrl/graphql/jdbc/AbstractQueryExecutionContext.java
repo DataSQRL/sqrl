@@ -60,8 +60,6 @@ public abstract class AbstractQueryExecutionContext
 
     var md = metadataParameter.getMetadata();
     return context
-        // TODO: @Marvin, this is where we need to pull the auth metadata from the JWT context or
-        // throw an exception if it is not present
         .getContext()
         .getMetadataReader(md.metadataType())
         .read(context.getEnvironment(), md.name(), md.isRequired());

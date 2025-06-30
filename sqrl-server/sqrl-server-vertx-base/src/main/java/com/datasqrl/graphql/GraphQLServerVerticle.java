@@ -68,9 +68,10 @@ public class GraphQLServerVerticle extends AbstractVerticle {
   }
 
   /**
-   * TODO: @Marvin need to clean up auth in here
+   * Sets up GraphQL routes including authentication handlers, GraphiQL interface, and the main
+   * GraphQL endpoint with WebSocket support.
    *
-   * @param startPromise
+   * @param startPromise the promise to complete when setup is finished
    */
   protected void setupGraphQLRoutes(Promise<Void> startPromise) {
     // Setup GraphiQL handler if configured
