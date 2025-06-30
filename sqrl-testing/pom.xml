@@ -29,6 +29,19 @@
 
   <modules>
     <module>sqrl-integration-tests</module>
-    <module>sqrl-container-testing</module>
   </modules>
+
+  <profiles>
+    <profile>
+      <id>include-container-testing</id>
+      <activation>
+        <property>
+          <name>onlyContainerE2E</name>
+        </property>
+      </activation>
+      <modules>
+        <module>sqrl-container-testing</module>
+      </modules>
+    </profile>
+  </profiles>
 </project>

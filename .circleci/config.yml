@@ -195,7 +195,7 @@ jobs:
       - generate-settings
       - run:
           name: Run Unit Tests
-          command: mvn -U -T2 -B install -DonlyUTs -pl -:sqrl-container-testing
+          command: mvn -U -T2 -B install -DonlyUTs
       - save-test-results
 
   integration-tests:
@@ -220,7 +220,7 @@ jobs:
           command: echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
       - run:
           name: Run Integration Tests
-          command: mvn -U -T2 -B install -DonlyITs -Dsurefire.failIfNoSpecifiedTests=false -pl -:sqrl-container-testing
+          command: mvn -U -T2 -B install -DonlyITs -Dsurefire.failIfNoSpecifiedTests=false
       - save-test-results
 
   container-e2e-test:
@@ -259,7 +259,7 @@ jobs:
             echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf
       - run:
           name: Build shaded JAR
-          command: mvn -U clean -T1C -B deploy -DonlyImages -pl -:sqrl-container-testing ${CIRCLE_TAG:+-Prelease}
+          command: mvn -U clean -T1C -B deploy -DonlyImages ${CIRCLE_TAG:+-Prelease}
 
   build-images:
     # use a full VM so we can run Docker / Buildx
@@ -275,7 +275,7 @@ jobs:
 
       - run:
           name: Build shaded JARs
-          command: mvn -U -T1C -B install -DonlyImages -pl -:sqrl-container-testing
+          command: mvn -U -T1C -B install -DonlyImages
 
       - determine-version
       - compute-base-tag

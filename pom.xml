@@ -1422,7 +1422,8 @@
         <skipTests>true</skipTests>
         <skipITs>true</skipITs>
       </properties>
-      <!-- Note: This profile skips tests during package phase, but allows targeted container tests -->
+      <!-- Note: This profile skips tests during package phase, but allows targeted container tests.
+           The default exclusion profile is automatically deactivated when this profile is active. -->
     </profile>
     <profile>
       <id>only-images</id>
