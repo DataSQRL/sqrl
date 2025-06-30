@@ -23,7 +23,7 @@ import com.datasqrl.discovery.FlexibleSchemaInferencePreprocessorTest.DataFiles;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.packager.preprocess.CopyStaticDataPreprocessor;
 import com.datasqrl.packager.preprocessor.Preprocessor.ProcessorContext;
-import com.datasqrl.packager.util.FileHash;
+import com.datasqrl.util.FileHash;
 import com.datasqrl.util.SnapshotTest.Snapshot;
 import java.nio.file.Path;
 import lombok.SneakyThrows;
