@@ -13,12 +13,12 @@ import CodeBlock from "@theme/CodeBlock";
 
 
 const header: HomepageHeaderProps = {
-  title: 'DataSQRL - Build Data Pipelines with Integrity',
-  tagLine: 'Data Pipelines with Integrity',
+  title: 'DataSQRL - Data Platform Framework',
+  tagLine: 'Data Platform Framework',
   text: (
       <>
-        Build data APIs, LLM tooling, and lakehouse views
-        with guaranteed consistency, reliability, and accuracy.
+        Build consistent and reliable data APIs, MCP servers,
+        and lakehouse views with SQL.
       </>
   ),
   buttonLink: 'docs/getting-started',
@@ -96,10 +96,13 @@ PotentialRewards(userid BIGINT, fromTime TIMESTAMP, toTime TIMESTAMP) :=
                   </CodeBlock>
                 </div>
                 <div className="col col--5 text--left">
-                  <h2>Complete Pipeline in One SQL Script</h2>
+                  <h2>Complete Pipeline in 1 SQL Script</h2>
                   <p className="hero__subtitle">
                     Implement the entire data pipeline in SQL to ingest, process, analyze,
                     store, and serve your data.
+                  </p>
+                  <p className="hero__subtitle">
+                    Eliminate the glue code with guaranteed consistency and high reliability.
                   </p>
                 </div>
               </div>
