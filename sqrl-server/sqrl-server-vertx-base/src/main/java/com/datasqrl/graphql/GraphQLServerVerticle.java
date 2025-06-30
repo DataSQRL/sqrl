@@ -15,7 +15,7 @@
  */
 package com.datasqrl.graphql;
 
-import com.datasqrl.graphql.auth.JwtMetadataReader;
+import com.datasqrl.graphql.auth.AuthMetadataReader;
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.jdbc.DatabaseType;
 import com.datasqrl.graphql.server.CustomScalars;
@@ -27,7 +27,6 @@ import com.google.common.collect.ImmutableMap;
 import com.symbaloo.graphqlmicrometer.MicrometerInstrumentation;
 import graphql.GraphQL;
 import io.vertx.core.AbstractVerticle;
-import io.vertx.core.MultiMap;
 import io.vertx.core.Promise;
 import io.vertx.ext.auth.jwt.JWTAuth;
 import io.vertx.ext.web.Router;
@@ -78,13 +77,6 @@ public class GraphQLServerVerticle extends AbstractVerticle {
     if (this.config.getGraphiQLHandlerOptions() != null) {
       var graphiQlHandlerBuilder =
           GraphiQLHandler.builder(vertx).with(this.config.getGraphiQLHandlerOptions());
-      if (this.config.getJwtAuth() != null) {
-        graphiQlHandlerBuilder.addingHeaders(
-            rc -> {
-              String token = rc.get("token");
-              return MultiMap.caseInsensitiveMultiMap().add("Authorization", "Bearer " + token);
-            });
-      }
 
       var graphiQlHandler = graphiQlHandlerBuilder.build();
       router
@@ -119,7 +111,7 @@ public class GraphQLServerVerticle extends AbstractVerticle {
     var readers = ImmutableMap.<MetadataType, MetadataReader>builder();
     authProvider.ifPresent(
         (auth) -> {
-          readers.put(MetadataType.AUTH, new JwtMetadataReader());
+          readers.put(MetadataType.AUTH, new AuthMetadataReader());
         });
 
     return readers.build();

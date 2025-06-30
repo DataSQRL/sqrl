@@ -18,33 +18,31 @@ package com.datasqrl.graphql.auth;
 import com.datasqrl.graphql.server.MetadataReader;
 import com.google.common.base.Preconditions;
 import graphql.schema.DataFetchingEnvironment;
-import io.vertx.ext.auth.impl.jose.JWT;
 import io.vertx.ext.web.RoutingContext;
+import lombok.extern.slf4j.Slf4j;
 
-public class JwtMetadataReader implements MetadataReader {
+@Slf4j
+public class AuthMetadataReader implements MetadataReader {
 
   @Override
   public Object read(DataFetchingEnvironment env, String name, boolean isRequired) {
     RoutingContext rc = env.getGraphQlContext().get(RoutingContext.class);
+    var principal = rc.user();
 
-    var headers = rc.request().headers();
-    var auth = headers.get("Authorization");
-
-    if (auth == null || !auth.startsWith("Bearer ")) {
-      throw new IllegalStateException("Missing bearer token");
+    if (principal == null) {
+      throw new IllegalStateException("Not authenticated");
     }
 
-    // no need to validate, if we reached this, Authorization already validated the tokens
-    var claims = JWT.parse(auth.substring("Bearer ".length()));
-    var payload = claims.getJsonObject("payload");
-
-    if (isRequired && !payload.containsKey(name)) {
+    if (isRequired && !principal.containsKey(name)) {
+      log.warn(
+          "Attribute {} is not present on authorization, attributes: {}",
+          name,
+          principal.attributes());
       throw new IllegalArgumentException(
-          "Claim '%s' is not present on payload. Claims available: %s"
-              .formatted(name, claims.fieldNames()));
+          "Attribute '%s' is not present on authorization".formatted(name));
     }
 
-    var value = payload.getValue(name);
+    var value = principal.get(name);
 
     if (isRequired) {
       Preconditions.checkNotNull(value, "Claim '%s' must not be null", name);
