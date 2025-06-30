@@ -86,17 +86,13 @@ Used as a *table-format* engine together with a query engine such as Flink or Sn
     "snapshotPath": "snapshots",  // snapshots output directory written during test runs
     "compilePlan": true,          // compile physical plans where supported
 
-    "explain": {                  // artefacts in build/pipeline_*.*
+    "explain": {                  // artifacts in build/pipeline_*.*
       "visual":   true,
       "text":     true,
       "sql":      false,
       "logical":  true,
       "physical": false,
       "sorted":   true            // deterministic ordering (mostly for tests)
-    },
-    "output": {
-      "add-uid": true,            // append a short unique id to sink tables
-      "table-suffix": ""          // e.g. "-blue" to separate envs
     }
   }
 }

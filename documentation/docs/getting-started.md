@@ -1,14 +1,14 @@
 # Getting Started with DataSQRL
+
 Welcome to DataSQRL! This guide walks you through building and running your first data pipeline using SQRL — from setup to customization and debugging.
 
----
 We are going to build a data pipeline with SQRL that:
 * Defines an API to receive user token usage data
 * Aggregates total token consumption per user
 * Triggers alerts when a single request exceeds 100,000 tokens
 
 <!-- Add video tutorial -->
-### Prerequisites
+## Prerequisites
 
 You'll need:
 
@@ -31,8 +31,6 @@ docker --version
 ```
 
 Make sure Docker is running before continuing.
-
-### Set Up Your First Project
 
 
 ## Define SQRL Script
