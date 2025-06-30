@@ -1094,7 +1094,11 @@
 
     <profile>
       <id>skip-shade-plugin</id>
-
+      <activation>
+        <property>
+          <name>skipFatjar</name>
+        </property>
+      </activation>
       <build>
         <plugins>
           <plugin>
@@ -1107,13 +1111,6 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-shade-plugin</artifactId>
-            <configuration>
-              <skip>true</skip>
-            </configuration>
-          </plugin>
-          <plugin>
-            <groupId>com.spotify</groupId>
-            <artifactId>dockerfile-maven-plugin</artifactId>
             <configuration>
               <skip>true</skip>
             </configuration>
@@ -1328,6 +1325,11 @@
     </profile>
     <profile>
       <id>skip-dockerfile-plugin</id>
+      <activation>
+        <property>
+          <name>skipFatjar</name>
+        </property>
+      </activation>
       <build>
         <plugins>
           <plugin>
