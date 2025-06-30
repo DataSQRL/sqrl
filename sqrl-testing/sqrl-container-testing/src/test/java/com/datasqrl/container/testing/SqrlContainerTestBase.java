@@ -84,16 +84,12 @@ public abstract class SqrlContainerTestBase {
   }
 
   protected GenericContainer<?> createServerContainer(String workingDir, String imageTag) {
-    var serverConfigPath =
-        Paths.get(workingDir, "build", "deploy", "plan", "vertx.json").toString();
-    var vertxConfigPath =
-        Paths.get(workingDir, "build", "deploy", "plan", "vertx-config.json").toString();
+    var deployPlanPath = Paths.get(workingDir, "build", "deploy", "plan").toString();
 
     return new GenericContainer<>(DockerImageName.parse(SQRL_SERVER_IMAGE + ":" + imageTag))
         .withNetwork(sharedNetwork)
         .withExposedPorts(GRAPHQL_PORT)
-        .withFileSystemBind(serverConfigPath, "/opt/sqrl/vertx.json")
-        .withFileSystemBind(vertxConfigPath, "/opt/sqrl/vertx-config.json")
+        .withFileSystemBind(deployPlanPath, "/opt/sqrl")
         .waitingFor(
             Wait.forLogMessage(".*GraphQL.*started.*", 1)
                 .withStartupTimeout(Duration.ofSeconds(20)));
@@ -116,9 +112,28 @@ public abstract class SqrlContainerTestBase {
 
   protected void startGraphQLServer(String workingDir, String imageTag) {
     serverContainer = createServerContainer(workingDir, imageTag);
-    serverContainer.start();
-
-    logger.info("GraphQL server started on port {}", serverContainer.getMappedPort(GRAPHQL_PORT));
+    
+    try {
+      serverContainer.start();
+      logger.info("GraphQL server started on port {}", serverContainer.getMappedPort(GRAPHQL_PORT));
+    } catch (Exception e) {
+      logger.error("Failed to start GraphQL server container:");
+      logger.error("Container image: {}", SQRL_SERVER_IMAGE + ":" + imageTag);
+      try {
+        logger.error("Container logs: {}", serverContainer.getLogs());
+      } catch (Exception logException) {
+        logger.error("Could not retrieve container logs: {}", logException.getMessage());
+      }
+      try {
+        var containerInfo = serverContainer.getCurrentContainerInfo();
+        if (containerInfo != null) {
+          logger.error("Container state: {}", containerInfo.getState());
+        }
+      } catch (Exception stateException) {
+        logger.error("Could not retrieve container state: {}", stateException.getMessage());
+      }
+      throw new RuntimeException("Failed to start GraphQL server container", e);
+    }
   }
 
   protected String getGraphQLEndpoint() {
