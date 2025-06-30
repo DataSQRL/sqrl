@@ -45,10 +45,11 @@
   </developers>
 
   <modules>
+    <module>sqrl-cli</module>
+    <module>sqrl-discovery</module>
     <module>sqrl-planner</module>
-    <module>sqrl-testing</module>
-    <module>sqrl-tools</module>
     <module>sqrl-server</module>
+    <module>sqrl-testing</module>
   </modules>
 
   <scm>
@@ -74,7 +75,7 @@
     <maven.compiler.target>17</maven.compiler.target>
     <mockito.version>4.8.0</mockito.version>
     <jackson.version>2.19.1</jackson.version>
-    <vertx.version>5.0.0</vertx.version>
+    <vertx.version>5.0.1</vertx.version>
     <agroal.version>2.7.1</agroal.version>
     <kafka.version>3.4.0</kafka.version>
     <flink.version>1.19.2</flink.version>
@@ -95,25 +96,24 @@
     <javax.validation.version>2.0.1.Final</javax.validation.version>
     <glassfish.version>3.0.0</glassfish.version>
     <reactive-streams.version>1.0.4</reactive-streams.version>
-    <testcontainers.version>1.21.2</testcontainers.version>
+    <testcontainers.version>1.21.3</testcontainers.version>
     <scram.version>2.1</scram.version>
     <protobuf.version>4.31.1</protobuf.version>
     <picocli.version>4.7.7</picocli.version>
     <commonscodec.version>1.18.0</commonscodec.version>
-    <zip4j.version>2.11.5</zip4j.version>
     <guice.version>5.1.0</guice.version>
     <autoservice.version>1.1.1</autoservice.version>
     <antlr.version>4.13.2</antlr.version>
     <guava.version>33.4.8-jre</guava.version>
     <lombok.version>1.18.38</lombok.version>
-    <junit.jupiter.version>5.13.1</junit.jupiter.version>
+    <junit.jupiter.version>5.13.2</junit.jupiter.version>
     <calcite.version>1.27.0</calcite.version>
     <graphql-java.version>19.2</graphql-java.version>
     <graphql-java-extended-scalars.version>22.0</graphql-java-extended-scalars.version>
     <projectreactor.version>3.7.7</projectreactor.version>
     <avro.version>1.12.0</avro.version>
     <freemarker.version>2.3.34</freemarker.version>
-    <jsonschema.version>1.5.7</jsonschema.version>
+    <jsonschema.version>1.5.8</jsonschema.version>
     <iceberg.version>1.9.1</iceberg.version>
     <hadoop.version>3.4.1</hadoop.version>
     <jacoco.version>0.8.13</jacoco.version>
@@ -364,11 +364,6 @@
         <version>${picocli.version}</version>
       </dependency>
       <dependency>
-        <groupId>net.lingala.zip4j</groupId>
-        <artifactId>zip4j</artifactId>
-        <version>${zip4j.version}</version>
-      </dependency>
-      <dependency>
         <groupId>com.esotericsoftware.kryo</groupId>
         <artifactId>kryo</artifactId>
         <version>2.24.0</version>
@@ -495,7 +490,17 @@
       </dependency>
       <dependency>
         <groupId>org.apache.flink</groupId>
+        <artifactId>flink-statebackend-rocksdb</artifactId>
+        <version>${flink.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.flink</groupId>
         <artifactId>flink-file-sink-common</artifactId>
+        <version>${flink.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.flink</groupId>
+        <artifactId>flink-hadoop-fs</artifactId>
         <version>${flink.version}</version>
       </dependency>
       <dependency>
@@ -523,7 +528,7 @@
       <dependency>
         <groupId>org.immutables</groupId>
         <artifactId>value</artifactId>
-        <version>2.10.1</version>
+        <version>2.11.0</version>
         <scope>compile</scope>
       </dependency>
 

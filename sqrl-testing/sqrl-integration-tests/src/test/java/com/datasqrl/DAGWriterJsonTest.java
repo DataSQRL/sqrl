@@ -15,7 +15,7 @@
  */
 package com.datasqrl;
 
-import com.datasqrl.actions.DagWriter;
+import com.datasqrl.compile.DagWriter;
 import java.nio.file.Path;
 import java.util.function.Predicate;
 import org.junit.jupiter.params.ParameterizedTest;

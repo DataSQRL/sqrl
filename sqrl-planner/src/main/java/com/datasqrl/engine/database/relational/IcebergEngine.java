@@ -18,7 +18,6 @@ package com.datasqrl.engine.database.relational;
 import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.config.PackageJson;
-import com.datasqrl.config.PackageJson.EmptyEngineConfig;
 import com.datasqrl.datatype.DataTypeMapping;
 import com.datasqrl.datatype.flink.iceberg.IcebergDataTypeMapper;
 import com.datasqrl.engine.database.QueryEngine;
@@ -34,9 +33,7 @@ public class IcebergEngine extends AbstractJDBCTableFormatEngine {
   public IcebergEngine(@NonNull PackageJson json, ConnectorFactoryFactory connectorFactory) {
     super(
         IcebergEngineFactory.ENGINE_NAME,
-        json.getEngines()
-            .getEngineConfig(IcebergEngineFactory.ENGINE_NAME)
-            .orElseGet(() -> new EmptyEngineConfig(IcebergEngineFactory.ENGINE_NAME)),
+        json.getEngines().getEngineConfigOrEmpty(IcebergEngineFactory.ENGINE_NAME),
         connectorFactory);
   }
 

@@ -95,7 +95,10 @@ import org.apache.calcite.sql.SqlOrderBy;
 import org.apache.calcite.sql.SqlSyntax;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.validate.SqlNameMatchers;
+import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.configuration.ExecutionOptions;
+import org.apache.flink.configuration.PipelineOptions;
 import org.apache.flink.sql.parser.ddl.SqlAlterViewAs;
 import org.apache.flink.sql.parser.ddl.SqlCreateTable;
 import org.apache.flink.sql.parser.ddl.SqlCreateTableLike;
@@ -170,10 +173,10 @@ public class Sqrl2FlinkSQLTranslator {
   private final Supplier<FlinkPlannerImpl> validatorSupplier;
   private final SqrlFunctionCatalog sqrlFunctionCatalog;
   private final CatalogManager catalogManager;
+  private final FlinkPhysicalPlan.Builder planBuilder;
   @Getter private final FlinkTypeFactory typeFactory;
 
   @Getter private final TableAnalysisLookup tableLookup = new TableAnalysisLookup();
-  private final FlinkPhysicalPlan.Builder planBuilder = new Builder();
 
   public Sqrl2FlinkSQLTranslator(
       BuildPath buildPath, FlinkStreamEngine flink, CompilerConfig compilerConfig) {
@@ -184,28 +187,33 @@ public class Sqrl2FlinkSQLTranslator {
     // Create a UDF class loader and configure
     ClassLoader udfClassLoader =
         new URLClassLoader(jarUrls.toArray(new URL[0]), getClass().getClassLoader());
-    Map<String, String> config = flink.getBaseConfiguration();
-    config.put(
-        "pipeline.classpaths",
-        jarUrls.stream().map(URL::toString).collect(Collectors.joining(",")));
-    // Set up execution environment
-    var sEnv = StreamExecutionEnvironment.getExecutionEnvironment(Configuration.fromMap(config));
-    // Create environment settings with class loader
-    // Configure batch or streaming environment
-    EnvironmentSettings.Builder settingsBuilder =
-        EnvironmentSettings.newInstance()
-            .withConfiguration(Configuration.fromMap(config))
-            .withClassLoader(udfClassLoader);
 
-    if (executionMode == ExecutionMode.STREAMING) {
-      sEnv.setRuntimeMode(org.apache.flink.api.common.RuntimeExecutionMode.STREAMING);
-      settingsBuilder.inStreamingMode();
-    } else {
-      sEnv.setRuntimeMode(org.apache.flink.api.common.RuntimeExecutionMode.BATCH);
-      settingsBuilder.inBatchMode();
+    // Init Flink config
+    var config = Configuration.fromMap(flink.getBaseConfiguration());
+    config.set(
+        ExecutionOptions.RUNTIME_MODE,
+        executionMode == ExecutionMode.STREAMING
+            ? RuntimeExecutionMode.STREAMING
+            : RuntimeExecutionMode.BATCH);
+
+    if (!jarUrls.isEmpty()) {
+      config.set(
+          PipelineOptions.CLASSPATHS,
+          jarUrls.stream().map(URL::toString).collect(Collectors.toList()));
     }
-    var tEnvConfig = settingsBuilder.build();
 
+    this.planBuilder = new Builder(config.clone());
+    if (executionMode == ExecutionMode.STREAMING) {
+      planBuilder.addInferredConfig(flink.getStreamingSpecificConfig());
+    }
+
+    // Set up table environment
+    var sEnv = StreamExecutionEnvironment.getExecutionEnvironment(planBuilder.getConfig());
+    var tEnvConfig =
+        EnvironmentSettings.newInstance()
+            .withConfiguration(planBuilder.getConfig())
+            .withClassLoader(udfClassLoader)
+            .build();
     this.tEnv = (StreamTableEnvironmentImpl) StreamTableEnvironment.create(sEnv, tEnvConfig);
 
     // Extract a number of classes we need access to for planning

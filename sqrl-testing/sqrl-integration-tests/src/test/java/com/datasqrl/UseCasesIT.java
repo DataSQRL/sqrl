@@ -17,9 +17,9 @@ package com.datasqrl;
 
 import static org.assertj.core.api.Assertions.fail;
 
-import com.datasqrl.cmd.AssertStatusHook;
-import com.datasqrl.cmd.RootCommand;
-import com.datasqrl.cmd.StatusHook;
+import com.datasqrl.cli.AssertStatusHook;
+import com.datasqrl.cli.DatasqrlCli;
+import com.datasqrl.cli.StatusHook;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -66,8 +66,8 @@ public class UseCasesIT {
   }
 
   public static int execute(Path rootDir, StatusHook hook, String... args) {
-    var rootCommand = new RootCommand(rootDir, hook);
-    var exitCode = rootCommand.getCmd().execute(args) + (hook.isSuccess() ? 0 : 1);
+    var cli = new DatasqrlCli(rootDir, hook, true);
+    var exitCode = cli.getCmd().execute(args) + (hook.isSuccess() ? 0 : 1);
     if (exitCode != 0) {
       fail("");
     }

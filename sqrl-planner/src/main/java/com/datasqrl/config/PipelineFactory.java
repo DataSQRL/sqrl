@@ -15,7 +15,7 @@
  */
 package com.datasqrl.config;
 
-import com.datasqrl.cmd.EngineKeys;
+import com.datasqrl.cli.EngineKeys;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.IExecutionEngine;
 import com.datasqrl.engine.database.DatabaseEngine;
@@ -33,7 +33,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NonNull;
 import org.apache.commons.lang3.tuple.Pair;
@@ -78,8 +77,7 @@ public class PipelineFactory {
     }
     // Register query engines with database engines that support them
     List<QueryEngine> queryEngines =
-        StreamUtil.filterByClass(engines.values(), QueryEngine.class)
-            .collect(Collectors.toUnmodifiableList());
+        StreamUtil.filterByClass(engines.values(), QueryEngine.class).toList();
     StreamUtil.filterByClass(engines.values(), DatabaseEngine.class)
         .forEach(
             databaseEngine ->

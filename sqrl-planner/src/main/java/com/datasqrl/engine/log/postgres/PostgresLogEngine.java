@@ -20,7 +20,6 @@ import static com.datasqrl.engine.log.postgres.PostgresLogEngineFactory.ENGINE_N
 
 import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.PackageJson;
-import com.datasqrl.config.PackageJson.EmptyEngineConfig;
 import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.datatype.DataTypeMapping;
 import com.datasqrl.datatype.flink.jdbc.FlinkSqrlPostgresDataTypeMapper;
@@ -47,10 +46,7 @@ public class PostgresLogEngine extends ExecutionEngine.Base implements LogEngine
   public PostgresLogEngine(PackageJson json, ConnectorFactoryFactory connectorFactory) {
     super(ENGINE_NAME, LOG, EnumSet.noneOf(EngineFeature.class));
 
-    this.engineConfig =
-        json.getEngines()
-            .getEngineConfig(ENGINE_NAME)
-            .orElseGet(() -> new EmptyEngineConfig(ENGINE_NAME));
+    this.engineConfig = json.getEngines().getEngineConfigOrEmpty(ENGINE_NAME);
   }
 
   @Override

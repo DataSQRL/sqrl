@@ -20,8 +20,8 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
-import com.datasqrl.cmd.AssertStatusHook;
-import com.datasqrl.cmd.RootCommand;
+import com.datasqrl.cli.AssertStatusHook;
+import com.datasqrl.cli.DatasqrlCli;
 import com.nextbreakpoint.flink.client.api.ApiException;
 import com.nextbreakpoint.flink.client.api.FlinkApi;
 import com.nextbreakpoint.flink.client.model.TerminationMode;
@@ -120,7 +120,9 @@ public class AbstractITSupport {
     arguments.add("package.json");
     AssertStatusHook statusHook = new AssertStatusHook();
     int code =
-        new RootCommand(baseDir, statusHook).getCmd().execute(arguments.toArray(String[]::new));
+        new DatasqrlCli(baseDir, statusHook, true)
+            .getCmd()
+            .execute(arguments.toArray(String[]::new));
     if (statusHook.failure() != null) {
       throw statusHook.failure();
     }

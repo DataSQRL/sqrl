@@ -18,7 +18,8 @@ package com.datasqrl;
 import static org.assertj.core.api.Assertions.fail;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
-import com.datasqrl.cmd.AssertStatusHook;
+import com.datasqrl.cli.AssertStatusHook;
+import com.datasqrl.cli.DatasqrlRun;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.config.SqrlConstants;
@@ -32,6 +33,7 @@ import com.datasqrl.engines.TestExecutionEnv.TestEnvContext;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.tests.TestExtension;
 import com.datasqrl.tests.UseCaseTestExtensions;
+import com.datasqrl.util.ConfigLoaderUtils;
 import com.datasqrl.util.FlinkOperatorStatusChecker;
 import com.datasqrl.util.SnapshotTest.Snapshot;
 import com.google.common.collect.MoreCollectors;
@@ -44,7 +46,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import lombok.SneakyThrows;
-import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.flink.table.api.TableResult;
@@ -67,11 +68,7 @@ class FullUseCasesIT {
 
   private Snapshot snapshot;
 
-  @Value
-  class ScriptCriteria {
-    String name;
-    String goal;
-  }
+  record ScriptCriteria(String name, String goal) {}
 
   List<ScriptCriteria> disabledScripts =
       List.of(
@@ -104,8 +101,6 @@ class FullUseCasesIT {
               "run") // TODO: only 'run' when there are no tests (i.e. snapshot dir) - there is no
           // benefit to also running, it's wasteful
           );
-
-  static final Path PROJECT_ROOT = Path.of(System.getProperty("user.dir"));
 
   private static TestContainerHook containerHook;
 
@@ -259,9 +254,9 @@ class FullUseCasesIT {
       DatasqrlRun run = null;
       if (param.getGoal().equals("run")) {
         try {
-          run =
-              new DatasqrlRun(
-                  context.getRootDir().resolve(SqrlConstants.PLAN_PATH), context.getEnv());
+          var planDir = context.getRootDir().resolve(SqrlConstants.PLAN_PATH);
+          var flinkConfig = ConfigLoaderUtils.loadFlinkConfig(planDir);
+          run = new DatasqrlRun(planDir, packageJson, flinkConfig, context.getEnv());
           TableResult result = run.run(false);
           long delaySec =
               packageJson
@@ -295,7 +290,9 @@ class FullUseCasesIT {
 
           try {
             result.getJobClient().get().cancel();
-          } catch (Exception e) {
+          } catch (Exception expected) {
+            // Necessary to get over the error that is thrown when the Flink mini-cluster is stopped
+            // already. For some test cases, that will happen, and is expected.
           }
         } catch (Exception e) {
           e.printStackTrace();
@@ -345,6 +342,7 @@ class FullUseCasesIT {
   }
 
   @Test
+  @Disabled
   public void runTestCaseByName() {
     var param =
         useCaseProvider().stream()
