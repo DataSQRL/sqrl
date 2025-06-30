@@ -109,8 +109,7 @@ commands:
             mvn -B \
               org.apache.maven.plugins:maven-dependency-plugin:3.8.1:go-offline \
               de.qaware.maven:go-offline-maven-plugin:1.2.8:resolve-dependencies \
-              -T3 \
-              -pl -:sqrl-container-testing
+              -T3
 
   save-test-results:
     description: "Save test results and upload to Codecov"
@@ -196,7 +195,7 @@ jobs:
       - generate-settings
       - run:
           name: Run Unit Tests
-          command: mvn -U -T2 -B install -DskipITs -DskipFatjar -pl -:sqrl-container-testing
+          command: mvn -U -T2 -B install -DonlyUTs -pl -:sqrl-container-testing
       - save-test-results
 
   integration-tests:
@@ -221,7 +220,7 @@ jobs:
           command: echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
       - run:
           name: Run Integration Tests
-          command: mvn -U -T2 -B install -Dtest=skip -Dsurefire.failIfNoSpecifiedTests=false -DskipFatjar -pl -:sqrl-container-testing
+          command: mvn -U -T2 -B install -DonlyITs -Dsurefire.failIfNoSpecifiedTests=false -pl -:sqrl-container-testing
       - save-test-results
 
   container-e2e-test:
@@ -235,7 +234,7 @@ jobs:
       - install-jdk
       - run:
           name: Build with Docker images
-          command: mvn -U clean -T1C -B package -DskipTests -DskipITs
+          command: mvn -U clean -T1C -B package -DonlyContainerE2E
       - run:
           name: Run container tests using TestContainers
           command: |
@@ -260,7 +259,7 @@ jobs:
             echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf
       - run:
           name: Build shaded JAR
-          command: mvn -U clean -T1C -B deploy -DskipTests -DskipITs -Ddockerfile.skip -pl -:sqrl-container-testing ${CIRCLE_TAG:+-Prelease}
+          command: mvn -U clean -T1C -B deploy -DonlyImages -pl -:sqrl-container-testing ${CIRCLE_TAG:+-Prelease}
 
   build-images:
     # use a full VM so we can run Docker / Buildx
@@ -276,7 +275,7 @@ jobs:
 
       - run:
           name: Build shaded JARs
-          command: mvn -U -T1C -B install -DskipTests -DskipITs -pl -:sqrl-container-testing
+          command: mvn -U -T1C -B install -DonlyImages -pl -:sqrl-container-testing
 
       - determine-version
       - compute-base-tag

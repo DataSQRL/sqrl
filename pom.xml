@@ -1342,6 +1342,103 @@
         </plugins>
       </build>
     </profile>
+    <!-- "Only" profiles - activate specific job types and skip everything else -->
+    <profile>
+      <id>only-unit-tests</id>
+      <activation>
+        <property>
+          <name>onlyUTs</name>
+        </property>
+      </activation>
+      <properties>
+        <skipITs>true</skipITs>
+        <dockerfile.skip>true</dockerfile.skip>
+        <maven.test.excludeProjects>sqrl-container-testing</maven.test.excludeProjects>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>io.reactiverse</groupId>
+            <artifactId>vertx-maven-plugin</artifactId>
+            <configuration>
+              <skip>true</skip>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-shade-plugin</artifactId>
+            <configuration>
+              <skip>true</skip>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>only-integration-tests</id>
+      <activation>
+        <property>
+          <name>onlyITs</name>
+        </property>
+      </activation>
+      <properties>
+        <dockerfile.skip>true</dockerfile.skip>
+        <maven.test.excludeProjects>sqrl-container-testing</maven.test.excludeProjects>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+              <skip>true</skip>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>io.reactiverse</groupId>
+            <artifactId>vertx-maven-plugin</artifactId>
+            <configuration>
+              <skip>true</skip>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-shade-plugin</artifactId>
+            <configuration>
+              <skip>true</skip>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>only-container-e2e</id>
+      <activation>
+        <property>
+          <name>onlyContainerE2E</name>
+        </property>
+      </activation>
+      <properties>
+        <skipTests>true</skipTests>
+        <skipITs>true</skipITs>
+      </properties>
+      <!-- Note: This profile skips tests during package phase, but allows targeted container tests -->
+    </profile>
+    <profile>
+      <id>only-images</id>
+      <activation>
+        <property>
+          <name>onlyImages</name>
+        </property>
+      </activation>
+      <properties>
+        <skipTests>true</skipTests>
+        <skipITs>true</skipITs>
+        <dockerfile.skip>true</dockerfile.skip>
+        <maven.test.excludeProjects>sqrl-container-testing</maven.test.excludeProjects>
+      </properties>
+      <!-- Note: This profile allows shade plugin for deployment JARs -->
+    </profile>
   </profiles>
 
 </project>
