@@ -29,5 +29,6 @@
 
   <modules>
     <module>sqrl-integration-tests</module>
+    <module>sqrl-container-testing</module>
   </modules>
 </project>
