@@ -29,6 +29,7 @@
   <properties>
     <vertx.verticle>com.datasqrl.graphql.GraphQLServer</vertx.verticle>
     <skipVertexFatJar>false</skipVertexFatJar>
+    <docker.image.name>datasqrl/sqrl-server</docker.image.name>
   </properties>
 
   <dependencies>
@@ -65,22 +66,17 @@
           </execution>
         </executions>
       </plugin>
+
       <plugin>
         <groupId>com.spotify</groupId>
         <artifactId>dockerfile-maven-plugin</artifactId>
-        <configuration>
-          <repository>datasqrl/sqrl-server</repository>
-          <tag>test</tag>
-          <dockerfile>Dockerfile</dockerfile>
-          <contextDirectory>${project.basedir}</contextDirectory>
-        </configuration>
         <executions>
           <execution>
             <id>build-docker-image</id>
-            <phase>package</phase>
             <goals>
               <goal>build</goal>
             </goals>
+            <phase>package</phase>
           </execution>
         </executions>
       </plugin>
@@ -88,29 +84,6 @@
   </build>
 
   <profiles>
-    <profile>
-      <id>skip-shade-plugin</id>
-
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>io.reactiverse</groupId>
-            <artifactId>vertx-maven-plugin</artifactId>
-            <configuration>
-              <skip>true</skip>
-            </configuration>
-          </plugin>
-          <plugin>
-            <groupId>com.spotify</groupId>
-            <artifactId>dockerfile-maven-plugin</artifactId>
-            <configuration>
-              <skip>true</skip>
-            </configuration>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-
     <profile>
       <id>instrument</id>
 

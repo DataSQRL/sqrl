@@ -26,6 +26,10 @@
 
   <artifactId>sqrl-cli</artifactId>
 
+  <properties>
+    <docker.image.name>datasqrl/cli</docker.image.name>
+  </properties>
+
   <dependencies>
     <!-- SQRL dependencies -->
     <dependency>
@@ -117,7 +121,7 @@
       <version>3.4.0</version>
     </dependency>
 
-<!-- Kafka dependencies -->
+    <!-- Kafka dependencies -->
     <dependency>
       <groupId>org.apache.kafka</groupId>
       <artifactId>kafka-clients</artifactId>
@@ -388,6 +392,20 @@
                 </relocation>
               </relocations>
             </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>com.spotify</groupId>
+        <artifactId>dockerfile-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>build-docker-image</id>
+            <goals>
+              <goal>build</goal>
+            </goals>
+            <phase>package</phase>
           </execution>
         </executions>
       </plugin>

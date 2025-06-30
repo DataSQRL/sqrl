@@ -125,6 +125,7 @@
     <license-maven-plugin.version>5.0.0</license-maven-plugin.version>
     <git-code-format-maven-plugin.version>5.3</git-code-format-maven-plugin.version>
     <sortpom.plugin.version>4.0.0</sortpom.plugin.version>
+    <dockerfile-maven-plugin.version>1.4.13</dockerfile-maven-plugin.version>
 
     <!-- params -->
     <snapshots.update>false</snapshots.update>
@@ -134,6 +135,7 @@
 
     <flinkrunner.version>0.7-SNAPSHOT</flinkrunner.version>
     <flinkrunner.image.repo>ghcr.io</flinkrunner.image.repo>
+    <docker.image.tag>local</docker.image.tag>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -871,7 +873,15 @@
         <plugin>
           <groupId>com.spotify</groupId>
           <artifactId>dockerfile-maven-plugin</artifactId>
-          <version>1.4.13</version>
+          <version>${dockerfile-maven-plugin.version}</version>
+          <configuration>
+            <repository>${docker.image.name}</repository>
+            <tag>${docker.image.tag}</tag>
+            <dockerfile>Dockerfile</dockerfile>
+            <contextDirectory>${project.basedir}</contextDirectory>
+            <useMavenSettingsForAuth>true</useMavenSettingsForAuth>
+            <pullNewerImage>false</pullNewerImage>
+          </configuration>
         </plugin>
       </plugins>
     </pluginManagement>
@@ -1071,25 +1081,6 @@
           <createBackupFile>false</createBackupFile>
         </configuration>
       </plugin>
-      <plugin>
-        <groupId>com.spotify</groupId>
-        <artifactId>dockerfile-maven-plugin</artifactId>
-        <configuration>
-          <repository>datasqrl/cmd</repository>
-          <tag>test</tag>
-          <dockerfile>Dockerfile</dockerfile>
-          <contextDirectory>${project.basedir}</contextDirectory>
-        </configuration>
-        <executions>
-          <execution>
-            <id>build-docker-image</id>
-            <phase>package</phase>
-            <goals>
-              <goal>build</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
     </plugins>
   </build>
 
@@ -1106,6 +1097,13 @@
 
       <build>
         <plugins>
+          <plugin>
+            <groupId>io.reactiverse</groupId>
+            <artifactId>vertx-maven-plugin</artifactId>
+            <configuration>
+              <skip>true</skip>
+            </configuration>
+          </plugin>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-shade-plugin</artifactId>

@@ -240,7 +240,7 @@ jobs:
           command: |
             mvn -U -T1 -B test -Dtest="*ContainerIT" \
               -pl sqrl-container-testing \
-              -Dcontainer.image.tag=${CIRCLE_SHA1}
+              -Ddocker.image.tag=${CIRCLE_SHA1}
 
   deploy:
     docker:
@@ -377,6 +377,7 @@ jobs:
               --push \
               --platform linux/amd64,linux/arm64 \
               -t datasqrl/base-sqrl:$BASE_TAG \
+              -t datasqrl/base-sqrl:latest \
               -f sqrl-cli/Dockerfile.base \
               sqrl-cli
 
