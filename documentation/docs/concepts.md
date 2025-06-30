@@ -1,6 +1,4 @@
-import useBaseUrl from '@docusaurus/useBaseUrl';
-
-# Concepts
+# Key DataSQRL Concepts
 
 This document explains some of the key concepts in streaming data processing.
 
@@ -10,7 +8,7 @@ Time is the most important concept in DataSQRL because it determines how data st
 
 For stream processing, it is useful to think of time as a timeline that stretches from the past through the present and into the future. The blue line in the picture below visualizes a timeline.
 
-<img src={useBaseUrl('/img/docs/timeline.svg')} alt="SQRL Timeline" width="100%" />
+<img src="/img/docs/timeline.svg" alt="SQRL Timeline" width="100%" />
 
 The blue vertical bar on the timeline represents the present. The present moment continuously advances on the timeline.
 

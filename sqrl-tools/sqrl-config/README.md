@@ -1,0 +1,1 @@
+Contains interfaces and implementation for reading configuration information from the package.json configuration files.

@@ -13,7 +13,7 @@ import CodeBlock from "@theme/CodeBlock";
 
 
 const header: HomepageHeaderProps = {
-  title: 'DataSQRL - Development Framework for Flink',
+  title: 'DataSQRL - Application Framework for Apache Flink',
   tagLine: 'Flink on Rails',
   text: (
       <>
@@ -108,7 +108,7 @@ UsageAlert := SUBSCRIBE SELECT * FROM UserTokens
                 <div className="col col--5 text--left">
                   <h2>DataSQRL Compiler</h2>
                   <p className="hero__subtitle">
-                    DataSQRL compiles Flink SQL to an integrated data pipeline that combines Flink with
+                    DataSQRL compiles Flink SQL to an integrated data architecture that combines Flink with
                     Postgres, Kafka, Iceberg, and API layer.
                   </p>
                   <p className="hero__subtitle">
@@ -142,6 +142,29 @@ docker run --rm -v $PWD:/build \\
                       to="/docs/getting-started">Get Started</Link>
                   <Link className="button button--primary button--lg"
                         to="/docs/intro">Learn More</Link>
+                </div>
+              </div>
+              <div className="row margin-bottom--xl">
+                <div className="col col--6 text--center">
+                  <div className={styles.videoWrapper}>
+                    <iframe
+                        width="100%"
+                        height="315"
+                        src="https://www.youtube.com/embed/LiDefKUgRDQ"
+                        title="DataSQRL Demo"
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allowFullScreen
+                    ></iframe>
+                  </div>
+                </div>
+                <div className="col col--5 text--left">
+                  <h2>Watch DataSQRL in Action</h2>
+                  <p className="hero__subtitle">
+                    Learn how DataSQRL simplifies building real-time data applications. This quick demo shows how to define your pipeline in SQL and go from source to API in minutes.
+                  </p>
+                  <Link className="button button--primary button--lg"
+                        to="/docs/getting-started">Try Now</Link>
                 </div>
               </div>
             </div>
