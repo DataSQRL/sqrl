@@ -66,8 +66,7 @@ public class FileResourceResolver implements ResourceResolver {
     var path = baseDir.resolve(relativePath);
     if (!Files.exists(path)) {
       return Optional.empty();
-    } else {
-      return Optional.of(path);
     }
+    return Optional.of(path);
   }
 }
