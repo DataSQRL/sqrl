@@ -33,7 +33,6 @@ class CompilerConfigImplTest {
   void givenEmptyConfig_whenGetDefaults_thenReturnsDefaultValues() {
     var compilerConfig = new CompilerConfigImpl(config);
 
-    assertThat(compilerConfig.isAddArguments()).isTrue();
     assertThat(compilerConfig.isExtendedScalarTypes()).isTrue();
     assertThat(compilerConfig.getLogger()).isEqualTo("print");
     assertThat(compilerConfig.compilePlan()).isTrue();
@@ -42,7 +41,6 @@ class CompilerConfigImplTest {
 
   @Test
   void givenCustomConfig_whenGetValues_thenReturnsCustomValues() {
-    config.setProperty("addArguments", false);
     config.setProperty("extendedScalarTypes", false);
     config.setProperty("logger", "custom");
     config.setProperty("compilePlan", false);
@@ -50,7 +48,6 @@ class CompilerConfigImplTest {
 
     var compilerConfig = new CompilerConfigImpl(config);
 
-    assertThat(compilerConfig.isAddArguments()).isFalse();
     assertThat(compilerConfig.isExtendedScalarTypes()).isFalse();
     assertThat(compilerConfig.getLogger()).isEqualTo("custom");
     assertThat(compilerConfig.compilePlan()).isFalse();

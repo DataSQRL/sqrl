@@ -83,9 +83,37 @@ CREATE TABLE IF NOT EXISTS "FunctionApplied" ("id" INTEGER NOT NULL, "fct_result
     ],
     "mutations" : [ ],
     "subscriptions" : [ ],
+    "operations" : [
+      {
+        "function" : {
+          "name" : "GetFunctionApplied",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query FunctionApplied($limit: Int = 10, $offset: Int = 0) {\nFunctionApplied(limit: $limit, offset: $offset) {\nid\nfct_result\n}\n\n}",
+          "queryName" : "FunctionApplied",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/FunctionApplied{?offset,limit}"
+      }
+    ],
     "schema" : {
       "type" : "string",
-      "schema" : "type FunctionApplied {\n  id: Int!\n  fct_result: Boolean\n}\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Query {\n  FunctionApplied(limit: Int = 10, offset: Int = 0): [FunctionApplied!]\n}\n"
+      "schema" : "type FunctionApplied {\n  id: Int!\n  fct_result: Boolean\n}\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Query {\n  FunctionApplied(limit: Int = 10, offset: Int = 0): [FunctionApplied!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
     }
   }
 }

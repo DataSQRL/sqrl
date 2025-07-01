@@ -18,8 +18,10 @@ package com.datasqrl.cli;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.flinkrunner.EnvVarResolver;
 import com.datasqrl.flinkrunner.SqrlRunner;
-import com.datasqrl.graphql.GraphQLServer;
+import com.datasqrl.graphql.HttpServerVerticle;
+import com.datasqrl.graphql.SqrlObjectMapper;
 import com.datasqrl.graphql.config.ServerConfig;
+import com.datasqrl.graphql.config.ServerConfigUtil;
 import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.Resources;
@@ -28,7 +30,6 @@ import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.auth.jwt.JWTAuthOptions;
 import io.vertx.micrometer.MicrometerMetricsFactory;
 import java.io.File;
 import java.net.URL;
@@ -83,7 +84,7 @@ public class DatasqrlRun {
     this.flinkConfig = flinkConfig;
     this.env = env;
     build = planPath.getParent().getParent();
-    objectMapper = new ObjectMapper();
+    objectMapper = SqrlObjectMapper.MAPPER;
   }
 
   public TableResult run(boolean hold) {
@@ -266,12 +267,9 @@ public class DatasqrlRun {
           .setDatabase(getenv("PGDATABASE"));
     }
 
-    var auth = readAuthentication();
-    if (auth != null) {
-      serverConfig.setJwtAuth(auth);
-    }
+    serverConfig = ServerConfigUtil.mergeConfigs(serverConfig, vertxConfig());
 
-    var server = new GraphQLServer(rootGraphqlModel, serverConfig, getSnowflakeUrl());
+    var server = new HttpServerVerticle(serverConfig, rootGraphqlModel);
 
     var prometheusMeterRegistry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
     var metricsOptions =
@@ -291,7 +289,8 @@ public class DatasqrlRun {
             });
   }
 
-  private JWTAuthOptions readAuthentication() {
+  @SuppressWarnings("unchecked")
+  private Map<String, Object> vertxConfig() {
     var packageJson = getPackageJson();
     var engines = (Map) packageJson.get("engines");
     if (engines == null) {
@@ -303,12 +302,12 @@ public class DatasqrlRun {
       return null;
     }
 
-    var authentication = (Map) vertx.get("authentication");
-    if (authentication == null) {
+    var config = (Map) vertx.get("config");
+    if (config == null) {
       return null;
     }
 
-    return objectMapper.convertValue(authentication, JWTAuthOptions.class);
+    return (Map<String, Object>) config;
   }
 
   public Optional<String> getSnowflakeUrl() {

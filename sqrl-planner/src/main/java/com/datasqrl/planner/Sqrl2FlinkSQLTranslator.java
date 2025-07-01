@@ -109,15 +109,17 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.CompiledPlan;
 import org.apache.flink.table.api.EnvironmentSettings;
 import org.apache.flink.table.api.Schema;
-import org.apache.flink.table.api.Schema.UnresolvedComputedColumn;
-import org.apache.flink.table.api.Schema.UnresolvedMetadataColumn;
-import org.apache.flink.table.api.Schema.UnresolvedPhysicalColumn;
 import org.apache.flink.table.api.TableException;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.table.api.bridge.java.internal.StreamTableEnvironmentImpl;
 import org.apache.flink.table.api.internal.TableResultInternal;
 import org.apache.flink.table.catalog.CatalogManager;
+import org.apache.flink.table.catalog.Column.ComputedColumn;
+import org.apache.flink.table.catalog.Column.MetadataColumn;
+import org.apache.flink.table.catalog.Column.PhysicalColumn;
 import org.apache.flink.table.catalog.ObjectIdentifier;
+import org.apache.flink.table.catalog.ResolvedCatalogTable;
+import org.apache.flink.table.catalog.ResolvedSchema;
 import org.apache.flink.table.expressions.Expression;
 import org.apache.flink.table.expressions.ResolvedExpression;
 import org.apache.flink.table.expressions.resolver.ExpressionResolver;
@@ -134,6 +136,7 @@ import org.apache.flink.table.planner.calcite.FlinkRelBuilder;
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.apache.flink.table.planner.delegation.ParserImpl;
 import org.apache.flink.table.planner.delegation.PlannerBase;
+import org.apache.flink.table.planner.expressions.RexNodeExpression;
 import org.apache.flink.table.planner.operations.SqlNodeConvertContext;
 import org.apache.flink.table.planner.operations.SqlNodeToOperationConversion;
 import org.apache.flink.table.planner.parse.CalciteParser;
@@ -525,7 +528,11 @@ public class Sqrl2FlinkSQLTranslator {
       var type = parsedArg.getResolvedRelDataType();
       parameters.add(
           new SqrlFunctionParameter(
-              parsedArg.getName().get(), parsedArg.getIndex(), type, parsedArg.isParentField()));
+              parsedArg.getName().get(),
+              parsedArg.getIndex(),
+              type,
+              parsedArg.isParentField(),
+              parsedArg.getResolvedMetadata()));
     }
     // Analyze Query
     var funcDef2 = parseSQL(originalSql);
@@ -793,7 +800,7 @@ public class Sqrl2FlinkSQLTranslator {
     }
     var tableOp = (CreateTableOperation) executeSqlNode(fullTable);
     // Create table analysis
-    var flinkSchema = tableOp.getCatalogTable().getUnresolvedSchema();
+    var flinkSchema = ((ResolvedCatalogTable) tableOp.getCatalogTable()).getResolvedSchema();
     // Map primary key
     var pk =
         flinkSchema
@@ -801,7 +808,7 @@ public class Sqrl2FlinkSQLTranslator {
             .map(
                 flinkPk ->
                     PrimaryKeyMap.of(
-                        flinkPk.getColumnNames().stream()
+                        flinkPk.getColumns().stream()
                             .map(
                                 name ->
                                     IntStream.range(0, flinkSchema.getColumns().size())
@@ -907,30 +914,36 @@ public class Sqrl2FlinkSQLTranslator {
         result == TableResultInternal.TABLE_RESULT_OK, "Result is not OK: %s", result);
   }
 
-  private List<RelDataTypeField> convertSchema2RelDataType(Schema schema) {
-    List<RelDataTypeField> fields = new ArrayList<>();
+  private List<RelDataTypeField> convertSchema2RelDataType(ResolvedSchema schema) {
+    return parseSchema(schema).stream().map(ParsedRelDataTypeResult::field).toList();
+  }
+
+  private List<ParsedRelDataTypeResult> parseSchema(ResolvedSchema schema) {
+    List<ParsedRelDataTypeResult> fields = new ArrayList<>();
     Function<Expression, ResolvedExpression> expressionResolver = null;
     for (var i = 0; i < schema.getColumns().size(); i++) {
       var column = schema.getColumns().get(i);
       AbstractDataType type = null;
-      if (column instanceof UnresolvedPhysicalColumn physicalColumn) {
+      Optional<String> metadata = Optional.empty();
+      Optional<RexNode> expression = Optional.empty();
+      if (column instanceof PhysicalColumn physicalColumn) {
         type = physicalColumn.getDataType();
-      } else if (column instanceof UnresolvedMetadataColumn metadataColumn) {
+      } else if (column instanceof MetadataColumn metadataColumn) {
         type = metadataColumn.getDataType();
-      } else if (column instanceof UnresolvedComputedColumn computedColumn) {
-        if (expressionResolver == null) {
-          expressionResolver = getExpressionResolver(); // lazy initialization
-        }
-        // Resolve the expression's data type
-        var resolvedExpression = expressionResolver.apply(computedColumn.getExpression());
-        type = resolvedExpression.getOutputDataType();
+        metadata = metadataColumn.getMetadataKey();
+      } else if (column instanceof ComputedColumn computedColumn) {
+        type = computedColumn.getDataType();
+        expression = Optional.of(((RexNodeExpression) computedColumn.getExpression()).getRexNode());
       }
       if (type instanceof DataType dataType) {
         fields.add(
-            new RelDataTypeFieldImpl(
-                column.getName(),
-                i,
-                typeFactory.createFieldTypeFromLogicalType(dataType.getLogicalType())));
+            new ParsedRelDataTypeResult(
+                new RelDataTypeFieldImpl(
+                    column.getName(),
+                    i,
+                    typeFactory.createFieldTypeFromLogicalType(dataType.getLogicalType())),
+                metadata,
+                expression));
       } else {
         throw new StatementParserException(
             ErrorLabel.GENERIC, new FileLocation(i, 1), "Invalid type: " + column);
@@ -939,14 +952,11 @@ public class Sqrl2FlinkSQLTranslator {
     return fields;
   }
 
-  @Value
-  public static class ParsedDataType {
-    RelDataType relDataType;
-    DataType dataType;
-  }
+  public record ParsedRelDataTypeResult(
+      RelDataTypeField field, Optional<String> metadata, Optional<RexNode> expression) {}
 
   private static final String DATATYPE_PARSING_PREFIX =
-      "CREATE TEMPORARY TABLE __sqrlinternal_types(";
+      "CREATE TEMPORARY TABLE __sqrlinternal_types( ";
 
   /**
    * Uses a CREATE TABLE statement to parse the data types from a string
@@ -954,15 +964,16 @@ public class Sqrl2FlinkSQLTranslator {
    * @param dataTypeDefinition
    * @return
    */
-  public List<RelDataTypeField> parse2RelDataType(ParsedObject<String> dataTypeDefinition) {
+  public List<ParsedRelDataTypeResult> parse2RelDataType(ParsedObject<String> dataTypeDefinition) {
     if (dataTypeDefinition.isEmpty()) {
       return List.of();
     }
-    var createTableStatement = DATATYPE_PARSING_PREFIX + dataTypeDefinition.get() + ");";
+    var createTableStatement =
+        DATATYPE_PARSING_PREFIX + dataTypeDefinition.get() + " ) WITH ('connector' = 'filesystem')";
     try {
       var op = (CreateTableOperation) getOperation(parseSQL(createTableStatement));
-      var schema = op.getCatalogTable().getUnresolvedSchema();
-      return convertSchema2RelDataType(schema);
+      var schema = ((ResolvedCatalogTable) op.getCatalogTable()).getResolvedSchema();
+      return parseSchema(schema);
     } catch (Exception e) {
       var location = dataTypeDefinition.getFileLocation();
       var converted = ParsePosUtil.convertFlinkParserException(e);

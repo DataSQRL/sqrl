@@ -1,8 +1,14 @@
+/*+no_query */
 CREATE TABLE SensorReading (
     sensorid INT NOT NULL,
     temperature FLOAT NOT NULL,
     event_time TIMESTAMP_LTZ(3) METADATA FROM 'timestamp'
 );
+/**
+  Returns the most recent sensor readings for the given sensor
+ */
+SensorReadingById(sensorid INT NOT NULL):= SELECT * FROM SensorReading
+                                              WHERE sensorid = :sensorid ORDER BY event_time DESC;
 
 HighTempAlert := SUBSCRIBE SELECT * FROM SensorReading WHERE temperature > 50;
 
@@ -13,8 +19,11 @@ _SensorMaxTempLastMinWindow := SELECT sensorid, window_time as endOfMin,
 
 SensorMaxTempLastMin := DISTINCT _SensorMaxTempLastMinWindow ON sensorid ORDER BY endOfMin DESC;
 
+/*+no_query */
 SensorAnalysis := SELECT sensorid, AVG(temperature) AS avg_temperatures,
                            MAX(temperature) AS max_temperature
                     FROM SensorReading GROUP BY sensorid ORDER BY sensorid DESC;
-
+/**
+  Analyzes the sensor readings for the given sensor with average and max temperatures.
+ */
 SensorAnalysisById(sensorid INT NOT NULL) := SELECT * FROM SensorAnalysis WHERE sensorid = :sensorid;

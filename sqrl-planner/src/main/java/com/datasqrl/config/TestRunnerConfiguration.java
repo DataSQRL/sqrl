@@ -16,6 +16,7 @@
 package com.datasqrl.config;
 
 import java.time.Duration;
+import java.util.Map;
 import java.util.Optional;
 
 public interface TestRunnerConfiguration {
@@ -23,4 +24,6 @@ public interface TestRunnerConfiguration {
   Optional<Duration> getDelaySec();
 
   Optional<Integer> getRequiredCheckpoints();
+
+  Map<String, String> getHeaders();
 }

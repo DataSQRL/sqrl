@@ -28,6 +28,8 @@ public interface ResourceResolver {
 
   Optional<Path> resolveFile(NamePath namePath);
 
+  Optional<Path> resolveFile(Path relativePath);
+
   static URL toURL(URI uri) {
     try {
       return uri.toURL();

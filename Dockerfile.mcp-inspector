@@ -1,0 +1,15 @@
+# MCP Inspector Docker Image
+# Pre-installs @modelcontextprotocol/inspector for faster test execution
+FROM node:18-alpine
+
+# Install MCP inspector globally
+RUN npm install -g @modelcontextprotocol/inspector
+
+# Add curl for health checks and debugging
+RUN apk add --no-cache curl
+
+# Set working directory
+WORKDIR /app
+
+# Default command runs the inspector
+CMD ["npx", "@modelcontextprotocol/inspector", "--help"]

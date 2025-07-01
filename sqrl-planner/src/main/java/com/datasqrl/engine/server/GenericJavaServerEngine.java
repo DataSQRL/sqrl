@@ -16,6 +16,7 @@
 package com.datasqrl.engine.server;
 
 import static com.datasqrl.engine.EngineFeature.NO_CAPABILITIES;
+import static com.datasqrl.graphql.SqrlObjectMapper.MAPPER;
 
 import com.datasqrl.config.EngineType;
 import com.datasqrl.config.PackageJson.EngineConfig;
@@ -23,13 +24,9 @@ import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.EnginePhysicalPlan.DeploymentArtifact;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.graphql.config.ServerConfig;
-import com.datasqrl.util.JsonMergeUtils;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.datasqrl.graphql.config.ServerConfigUtil;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.json.jackson.VertxModule;
 import java.util.List;
-import java.util.Map;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
@@ -38,13 +35,10 @@ import lombok.extern.slf4j.Slf4j;
 public abstract class GenericJavaServerEngine extends ExecutionEngine.Base implements ServerEngine {
 
   private final EngineConfig engineConfig;
-  private final ObjectMapper objectMapper;
 
-  public GenericJavaServerEngine(
-      String engineName, EngineConfig engineConfig, ObjectMapper objectMapper) {
+  public GenericJavaServerEngine(String engineName, EngineConfig engineConfig) {
     super(engineName, EngineType.SERVER, NO_CAPABILITIES);
     this.engineConfig = engineConfig;
-    this.objectMapper = objectMapper.copy().registerModule(new VertxModule());
   }
 
   @Override
@@ -65,26 +59,17 @@ public abstract class GenericJavaServerEngine extends ExecutionEngine.Base imple
 
   @SneakyThrows
   private String serverConfig() {
-    var mergedConfig = mergeConfigs(readDefaultConfig(), engineConfig.getConfig());
-    return objectMapper.writer(new PrettyPrinter()).writeValueAsString(mergedConfig);
+    var mergedConfig = ServerConfigUtil.mergeConfigs(readDefaultConfig(), engineConfig.getConfig());
+    return MAPPER.copy().writer(new PrettyPrinter()).writeValueAsString(mergedConfig);
   }
 
   @SneakyThrows
   ServerConfig readDefaultConfig() {
     ServerConfig serverConfig;
     try (var input = getClass().getResourceAsStream("/templates/server-config.json")) {
-      var json = objectMapper.readValue(input, JsonObject.class);
+      var json = MAPPER.readValue(input, JsonObject.class);
       serverConfig = new ServerConfig(json);
     }
     return serverConfig;
-  }
-
-  @SuppressWarnings("unchecked")
-  @SneakyThrows
-  ServerConfig mergeConfigs(ServerConfig serverConfig, Map<String, Object> configOverrides) {
-    var config = ((ObjectNode) objectMapper.valueToTree(serverConfig)).deepCopy();
-    JsonMergeUtils.merge(config, objectMapper.valueToTree(configOverrides));
-    var json = objectMapper.treeToValue(config, Map.class);
-    return new ServerConfig(new JsonObject(json));
   }
 }

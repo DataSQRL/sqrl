@@ -4,3 +4,9 @@ MyTable := SELECT val
 
 /*+test*/
 MyTableTest := SELECT * FROM MyTable;
+
+AuthMyTable(val BIGINT NOT NULL METADATA FROM 'auth.val') :=
+    SELECT t.* 
+      FROM MyTable t 
+     WHERE t.val = :val
+     ORDER BY t.val ASC;

@@ -19,6 +19,7 @@ import com.datasqrl.planner.tables.SqrlFunctionParameter;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.calcite.rex.RexDynamicParam;
 import org.apache.calcite.rex.RexNode;
@@ -56,7 +57,8 @@ public class SqlScriptPlannerUtil {
             relB.or(condition, relB.and(relB.isNull(param), relB.isNull(relB.field(colIndex))));
       }
       conditions.add(condition);
-      parameters.add(new SqrlFunctionParameter(field.getName(), ordinal, paramType, false));
+      parameters.add(
+          new SqrlFunctionParameter(field.getName(), ordinal, paramType, false, Optional.empty()));
     }
     relB.filter(relB.and(conditions));
     return parameters;

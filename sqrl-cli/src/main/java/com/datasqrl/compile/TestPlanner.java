@@ -19,9 +19,11 @@ import static com.datasqrl.planner.util.SqrTableFunctionUtil.getTableFunctionFro
 
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.compile.TestPlan.GraphqlQuery;
+import com.datasqrl.config.PackageJson;
 import com.datasqrl.graphql.APISource;
 import com.datasqrl.graphql.visitor.GraphqlSchemaVisitor;
 import com.datasqrl.planner.tables.SqrlTableFunction;
+import com.datasqrl.util.FileUtil;
 import graphql.language.Argument;
 import graphql.language.AstPrinter;
 import graphql.language.Definition;
@@ -49,16 +51,22 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Properties;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
+import lombok.SneakyThrows;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.sql.type.SqlTypeName;
 
+/** Constructs test plans with pre-computed headers and test information. */
 @AllArgsConstructor()
 public class TestPlanner {
   private List<SqrlTableFunction> tableFunctions;
+  private PackageJson packageJson;
 
   public TestPlan generateTestPlan(APISource source, Optional<Path> testsPath) {
     var parser = new Parser();
@@ -66,8 +74,12 @@ public class TestPlanner {
     List<GraphqlQuery> mutations = new ArrayList<>();
     List<GraphqlQuery> subscriptions = new ArrayList<>();
 
+    // Get base headers from PackageJson
+    var baseHeaders =
+        packageJson.getTestConfig().map(config -> config.getHeaders()).orElse(Map.of());
+
     testsPath.ifPresent(
-        (p) -> {
+        p -> {
           try (var paths = Files.walk(p)) {
             paths
                 .filter(Files::isRegularFile)
@@ -82,20 +94,22 @@ public class TestPlanner {
                         throw new RuntimeException(e);
                       }
                       var document = parser.parseDocument(content);
+                      var prefix = FileUtil.separateExtension(file).getLeft();
                       // TODO extract subscriptions from .graphql files
                       extractQueriesAndMutations(
                           document,
                           queries,
                           mutations,
                           subscriptions,
-                          file.getFileName().toString().replace(".graphql", ""));
+                          prefix,
+                          loadHeaders(file.getParent(), prefix, baseHeaders));
                     });
           } catch (IOException e) {
             e.printStackTrace();
           }
         });
 
-    var document = parser.parseDocument(source.getSchemaDefinition());
+    var document = parser.parseDocument(source.getDefinition());
 
     // TODO: really ? a static method on GraphqlSchemaVisitor passing a GraphqlSchemaVisitor ? =>
     // refactor
@@ -103,9 +117,46 @@ public class TestPlanner {
 
     for (Node definition : queryNodes) {
       var definition1 = (OperationDefinition) definition;
-      queries.add(new GraphqlQuery(definition1.getName(), AstPrinter.printAst(definition1)));
+      queries.add(
+          new GraphqlQuery(definition1.getName(), AstPrinter.printAst(definition1), baseHeaders));
     }
     return new TestPlan(queries, mutations, subscriptions);
+  }
+
+  @SneakyThrows
+  public Map<String, String> loadHeaders(
+      Path testDir, String prefix, Map<String, String> baseHeaders) {
+    var headersFile = testDir.resolve(prefix + ".properties");
+
+    if (!Files.isRegularFile(headersFile)) {
+      return baseHeaders;
+    }
+
+    var props = readProperties(headersFile);
+
+    // Combine base headers with file-specific headers
+    return combineHeaders(baseHeaders, props);
+  }
+
+  @SneakyThrows
+  private Properties readProperties(Path p) {
+    Properties props = new Properties();
+    try (var in = Files.newInputStream(p)) {
+      props.load(in);
+      return props;
+    }
+  }
+
+  private Map<String, String> combineHeaders(
+      Map<String, String> baseHeaders, Properties overrides) {
+    var headers = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+    headers.putAll(baseHeaders);
+
+    if (overrides != null && !overrides.isEmpty()) {
+      overrides.forEach((key, value) -> headers.put(key.toString(), value.toString()));
+    }
+
+    return headers;
   }
 
   private void extractQueriesAndMutations(
@@ -113,10 +164,11 @@ public class TestPlanner {
       List<GraphqlQuery> queries,
       List<GraphqlQuery> mutations,
       List<GraphqlQuery> subscriptions,
-      String prefix) {
+      String prefix,
+      Map<String, String> headers) {
     for (Definition definition : document.getDefinitions()) {
       if (definition instanceof OperationDefinition operationDefinition) {
-        var query = new GraphqlQuery(prefix, AstPrinter.printAst(operationDefinition));
+        var query = new GraphqlQuery(prefix, AstPrinter.printAst(operationDefinition), headers);
         switch (operationDefinition.getOperation()) {
           case QUERY:
             queries.add(query);
@@ -180,7 +232,7 @@ public class TestPlanner {
       // Add input value definitions as arguments
       List<VariableDefinition> variableDefinitions =
           inputValueDefinitions.stream()
-              .map(input -> new VariableDefinition(input.getName(), input.getType(), null))
+              .map(input -> new VariableDefinition(input.getName(), input.getType()))
               .collect(Collectors.toList());
 
       operationBuilder.variableDefinitions(variableDefinitions);

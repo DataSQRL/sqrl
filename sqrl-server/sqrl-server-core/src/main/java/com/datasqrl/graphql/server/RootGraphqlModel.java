@@ -16,6 +16,7 @@
 package com.datasqrl.graphql.server;
 
 import com.datasqrl.graphql.jdbc.DatabaseType;
+import com.datasqrl.graphql.server.operation.ApiOperation;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
@@ -55,7 +56,7 @@ public class RootGraphqlModel {
   @Singular List<QueryCoords> queries;
   @Singular List<MutationCoords> mutations;
   @Singular List<SubscriptionCoords> subscriptions;
-
+  @Singular List<ApiOperation> operations;
   Schema schema;
 
   @JsonCreator
@@ -63,10 +64,12 @@ public class RootGraphqlModel {
       @JsonProperty("queries") List<QueryCoords> queries,
       @JsonProperty("mutations") List<MutationCoords> mutations,
       @JsonProperty("subscriptions") List<SubscriptionCoords> subscriptions,
+      @JsonProperty("operations") List<ApiOperation> operations,
       @JsonProperty("schema") Schema schema) {
     this.queries = queries;
     this.mutations = mutations == null ? List.of() : mutations;
     this.subscriptions = subscriptions == null ? List.of() : subscriptions;
+    this.operations = operations == null ? List.of() : operations;
     this.schema = schema;
   }
 
@@ -434,8 +437,9 @@ public class RootGraphqlModel {
 
   @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
   @JsonSubTypes({
-    @Type(value = SourceParameter.class, name = SourceParameter.type),
-    @Type(value = ArgumentParameter.class, name = ArgumentParameter.type)
+    @Type(value = ParentParameter.class, name = ParentParameter.type),
+    @Type(value = ArgumentParameter.class, name = ArgumentParameter.type),
+    @Type(value = MetadataParameter.class, name = MetadataParameter.type)
   })
   public interface QueryParameterHandler {
 
@@ -444,27 +448,31 @@ public class RootGraphqlModel {
 
   public interface ParameterHandlerVisitor<R, C> {
 
-    R visitSourceParameter(SourceParameter sourceParameter, C context);
+    R visitParentParameter(ParentParameter parentParameter, C context);
+
+    R visitMetadataParameter(MetadataParameter metadataParameter, C context);
 
     R visitArgumentParameter(ArgumentParameter argumentParameter, C context);
   }
 
+  /** Parameter is passed in from the parent table that a relationship is defined on. */
   @Getter
   @AllArgsConstructor
   @NoArgsConstructor
   @Builder
   @ToString
-  public static class SourceParameter implements QueryParameterHandler {
+  public static class ParentParameter implements QueryParameterHandler {
 
     static final String type = "source";
     String key;
 
     @Override
     public <R, C> R accept(ParameterHandlerVisitor<R, C> visitor, C context) {
-      return visitor.visitSourceParameter(this, context);
+      return visitor.visitParentParameter(this, context);
     }
   }
 
+  /** Paramter is an argument provided by the user */
   @Getter
   @AllArgsConstructor
   @NoArgsConstructor
@@ -478,6 +486,22 @@ public class RootGraphqlModel {
     @Override
     public <R, C> R accept(ParameterHandlerVisitor<R, C> visitor, C context) {
       return visitor.visitArgumentParameter(this, context);
+    }
+  }
+
+  /** Parameter is metadata that is extracted from the context (e.g. auth) */
+  @Getter
+  @AllArgsConstructor
+  @NoArgsConstructor
+  @ToString
+  public static class MetadataParameter implements QueryParameterHandler {
+
+    static final String type = "metadata";
+    ResolvedMetadata metadata;
+
+    @Override
+    public <R, C> R accept(ParameterHandlerVisitor<R, C> visitor, C context) {
+      return visitor.visitMetadataParameter(this, context);
     }
   }
 

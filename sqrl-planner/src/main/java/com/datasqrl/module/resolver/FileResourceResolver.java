@@ -60,4 +60,13 @@ public class FileResourceResolver implements ResourceResolver {
     }
     return Optional.of(path);
   }
+
+  @Override
+  public Optional<Path> resolveFile(Path relativePath) {
+    var path = baseDir.resolve(relativePath);
+    if (!Files.exists(path)) {
+      return Optional.empty();
+    }
+    return Optional.of(path);
+  }
 }

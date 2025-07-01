@@ -17,7 +17,9 @@ package com.datasqrl.packager.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.datasqrl.graphql.SqrlObjectMapper;
 import com.datasqrl.graphql.config.ServerConfig;
+import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vertx.core.json.JsonObject;
 import java.io.File;
@@ -30,7 +32,7 @@ import org.junit.jupiter.api.Test;
 class ServerConfigTemplateTest {
   private static final File TEMPLATE = new File("src/main/resources/templates/server-config.json");
 
-  private static ObjectMapper mapper = new ObjectMapper();
+  private static ObjectMapper mapper = SqrlObjectMapper.MAPPER;
 
   @SuppressWarnings("unchecked")
   @Test
@@ -59,7 +61,10 @@ class ServerConfigTemplateTest {
     var afterParsing = new ServerConfig(new JsonObject(original));
 
     if (!Objects.equals(original, mapper.convertValue(afterParsing, Map.class))) {
-      mapper.copy().writerWithDefaultPrettyPrinter().writeValue(TEMPLATE, afterParsing);
+      mapper
+          .configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true)
+          .writerWithDefaultPrettyPrinter()
+          .writeValue(TEMPLATE, afterParsing);
     }
   }
 }

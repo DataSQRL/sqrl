@@ -307,9 +307,99 @@ CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" BIGINT NOT NULL, "time" B
     ],
     "mutations" : [ ],
     "subscriptions" : [ ],
+    "operations" : [
+      {
+        "function" : {
+          "name" : "GetSecReading",
+          "description" : "Returns the sensor temperature for a sensor by id from most recent.\n    Sensor temperature readings are averaged per second.",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              },
+              "sensorid" : {
+                "type" : "string"
+              }
+            },
+            "required" : [
+              "sensorid"
+            ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query SecReading($sensorid: GraphQLBigInteger!, $limit: Int = 10, $offset: Int = 0) {\nSecReading(sensorid: $sensorid, limit: $limit, offset: $offset) {\nsensorid\ntimeSec\ntemp\n}\n\n}",
+          "queryName" : "SecReading",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/SecReading{?offset,limit,sensorid}"
+      },
+      {
+        "function" : {
+          "name" : "GetSensorMaxTemp",
+          "description" : "Returns the maximum temperature recorded for a given sensor",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              },
+              "sensorid" : {
+                "type" : "string"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query SensorMaxTemp($sensorid: GraphQLBigInteger, $limit: Int = 10, $offset: Int = 0) {\nSensorMaxTemp(sensorid: $sensorid, limit: $limit, offset: $offset) {\nsensorid\nwindow_time\nmaxTemp\n}\n\n}",
+          "queryName" : "SensorMaxTemp",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/SensorMaxTemp{?offset,limit,sensorid}"
+      },
+      {
+        "function" : {
+          "name" : "GetSensorReading",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query SensorReading($limit: Int = 10, $offset: Int = 0) {\nSensorReading(limit: $limit, offset: $offset) {\nsensorid\ntime\ntemperature\nhumidity\ntimestamp\n}\n\n}",
+          "queryName" : "SensorReading",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/SensorReading{?offset,limit}"
+      }
+    ],
     "schema" : {
       "type" : "string",
-      "schema" : "\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Query {\n  \"\"\"\n  Returns the sensor temperature for a sensor by id from most recent.\n      Sensor temperature readings are averaged per second.\n  \"\"\"\n  SecReading(sensorid: GraphQLBigInteger!, limit: Int = 10, offset: Int = 0): [SecReading!]\n  \"Returns the maximum temperature recorded for a given sensor\"\n  SensorMaxTemp(sensorid: GraphQLBigInteger, limit: Int = 10, offset: Int = 0): [SensorMaxTemp!]\n  SensorReading(limit: Int = 10, offset: Int = 0): [SensorReading!]\n}\n\ntype SecReading {\n  sensorid: GraphQLBigInteger!\n  timeSec: DateTime!\n  temp: Float!\n}\n\ntype SensorMaxTemp {\n  sensorid: GraphQLBigInteger!\n  window_time: DateTime!\n  maxTemp: Float!\n}\n\ntype SensorReading {\n  sensorid: GraphQLBigInteger!\n  time: GraphQLBigInteger!\n  temperature: Float!\n  humidity: Float!\n  timestamp: DateTime!\n}\n"
+      "schema" : "\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Query {\n  \"\"\"\n  Returns the sensor temperature for a sensor by id from most recent.\n      Sensor temperature readings are averaged per second.\n  \"\"\"\n  SecReading(sensorid: GraphQLBigInteger!, limit: Int = 10, offset: Int = 0): [SecReading!]\n  \"Returns the maximum temperature recorded for a given sensor\"\n  SensorMaxTemp(sensorid: GraphQLBigInteger, limit: Int = 10, offset: Int = 0): [SensorMaxTemp!]\n  SensorReading(limit: Int = 10, offset: Int = 0): [SensorReading!]\n}\n\ntype SecReading {\n  sensorid: GraphQLBigInteger!\n  timeSec: DateTime!\n  temp: Float!\n}\n\ntype SensorMaxTemp {\n  sensorid: GraphQLBigInteger!\n  window_time: DateTime!\n  maxTemp: Float!\n}\n\ntype SensorReading {\n  sensorid: GraphQLBigInteger!\n  time: GraphQLBigInteger!\n  temperature: Float!\n  humidity: Float!\n  timestamp: DateTime!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
     }
   }
 }

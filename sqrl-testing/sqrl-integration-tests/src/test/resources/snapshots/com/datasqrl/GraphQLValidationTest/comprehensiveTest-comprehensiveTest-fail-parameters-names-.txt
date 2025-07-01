@@ -20,7 +20,7 @@ CustomerTimeWindow := SELECT
 ^
 
 [FATAL] GraphQl argument [wrongName] not found in the parameters of [TableFunctionCallsTblFct]
-in script:comprehensivetest-fail-parameters-names [17:5]:
+in script:comprehensivetest-fail-parameters-names.graphqls [17:5]:
 
 type Query {
     TableFunctionCallsTblFct(wrongName: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]

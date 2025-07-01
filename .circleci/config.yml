@@ -159,6 +159,46 @@ commands:
             echo "Computed BASE_TAG=${BASE_TAG}"
             echo "export BASE_TAG=${BASE_TAG}" >> "$BASH_ENV"
 
+  compute-mcp-tag:
+    description: "Compute MCP_TAG from latest @modelcontextprotocol/inspector version"
+    steps:
+      - run:
+          name: Compute MCP_TAG
+          command: |
+            # Install Node.js and npm if not available
+            if ! command -v npm &> /dev/null; then
+              curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+              sudo apt-get install -y nodejs
+            fi
+            
+            # Fetch the latest version of @modelcontextprotocol/inspector
+            MCP_TAG=$(npm view @modelcontextprotocol/inspector version)
+            echo "Latest MCP inspector version: ${MCP_TAG}"
+            echo "export MCP_TAG=${MCP_TAG}" >> "$BASH_ENV"
+
+  setup-buildx:
+    description: "Enable QEMU for ARM build and install Docker buildx"
+    parameters:
+      builder_name:
+        type: string
+        default: "default-builder"
+    steps:
+      - run:
+          name: Enable QEMU for ARM build
+          command: |
+            sudo apt-get update && sudo apt-get install -y qemu-user-static binfmt-support
+            docker run --privileged --rm tonistiigi/binfmt --install all
+      - run:
+          name: Install docker buildx
+          command: |
+            sudo mkdir -p /usr/local/lib/docker/cli-plugins
+            curl -sSL https://github.com/docker/buildx/releases/download/v0.12.0/buildx-v0.12.0.linux-amd64 \
+                 -o buildx
+            chmod +x buildx
+            sudo mv buildx /usr/local/lib/docker/cli-plugins/docker-buildx
+            docker buildx create --use --name << parameters.builder_name >>
+            docker buildx inspect --bootstrap
+
   checkout-and-version:
     steps:
       - checkout
@@ -210,7 +250,7 @@ commands:
             exit "$DOCKER_EXIT"
 
 jobs:
-  build-base:
+  download-maven-dependencies:
     docker:
       - image: cimg/openjdk:17.0
     steps:
@@ -253,12 +293,13 @@ jobs:
             - m2-{{ checksum "pom.xml" }}
       - generate-settings
       - install-jdk
+      - compute-mcp-tag
       - run:
           name: Auth ghcr
           command: echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
       - run:
           name: Run Integration Tests
-          command: mvn -U -T2 -B install -Dtest=skip -Dsurefire.failIfNoSpecifiedTests=false -Pskip-shade-plugin
+          command: mvn -U -T2 -B install -Dtest=skip -Dsurefire.failIfNoSpecifiedTests=false -Pskip-shade-plugin -Dmcp.inspector.version=$MCP_TAG
       - save-test-results
 
   build-test-image:
@@ -413,25 +454,14 @@ jobs:
 
       - determine-version
       - compute-base-tag
+      - setup-buildx:
+          builder_name: "sqrl-builder"
 
-      # enable QEMU for multi-arch, install Buildx, login
       - run:
-          name: Prepare Docker build environment
+          name: Login to registries and pull base image
           command: |
-            sudo apt-get update && sudo apt-get install -y qemu-user-static binfmt-support
-            docker run --privileged --rm tonistiigi/binfmt --install all
-
-            sudo mkdir -p /usr/local/lib/docker/cli-plugins
-            curl -sSL https://github.com/docker/buildx/releases/download/v0.12.0/buildx-v0.12.0.linux-amd64 \
-                 -o buildx
-            chmod +x buildx
-            sudo mv buildx /usr/local/lib/docker/cli-plugins/docker-buildx
-            docker buildx create --use --name sqrl-builder
-            docker buildx inspect --bootstrap
-
             echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
             echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-
             docker pull datasqrl/base-sqrl:$BASE_TAG
 
       - run:
@@ -467,22 +497,8 @@ jobs:
     steps:
       - checkout
       - compute-base-tag
-
-      - run:
-          name: Enable QEMU for ARM build
-          command: |
-            sudo apt-get update && sudo apt-get install -y qemu-user-static binfmt-support
-            docker run --privileged --rm tonistiigi/binfmt --install all
-      - run:
-          name: Install docker buildx
-          command: |
-            sudo mkdir -p /usr/local/lib/docker/cli-plugins
-            curl -sSL https://github.com/docker/buildx/releases/download/v0.12.0/buildx-v0.12.0.linux-amd64 \
-                 -o buildx
-            chmod +x buildx
-            sudo mv buildx /usr/local/lib/docker/cli-plugins/docker-buildx
-            docker buildx create --use --name base-builder
-            docker buildx inspect --bootstrap
+      - setup-buildx:
+          builder_name: "base-builder"
       - run:
           name: Login to Docker Hub
           command: |
@@ -511,15 +527,58 @@ jobs:
               --push \
               --platform linux/amd64,linux/arm64 \
               -t datasqrl/base-sqrl:$BASE_TAG \
+              -t datasqrl/base-sqrl:latest \
               -f sqrl-cli/Dockerfile.base \
               sqrl-cli
+
+  docker-build-mcp-inspector:
+    machine:
+      image: ubuntu-2004:202111-02
+    steps:
+      - checkout
+      - compute-mcp-tag
+      - setup-buildx:
+          builder_name: "mcp-builder"
+      - run:
+          name: Login to Docker Hub
+          command: |
+            echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+
+      - run:
+          name: Skip build if MCP inspector already exists
+          command: |
+            set +e
+
+            if docker buildx imagetools inspect datasqrl/mcp-inspector:${MCP_TAG} \
+                --format '{{json .}}' > /tmp/manifest.json 2>/dev/null; then
+              echo "── Manifest for datasqrl/mcp-inspector:${MCP_TAG} ────────────────"
+              cat /tmp/manifest.json | jq .
+              echo "───────────────────────────────────────────────────────────────"
+              echo "Tag already exists – skipping MCP inspector build."
+              circleci step halt
+            else
+              echo "Tag does not exist yet – will build MCP inspector image."
+            fi
+
+      - run:
+          name: Build & push datasqrl/mcp-inspector:$MCP_TAG
+          command: |
+            docker buildx build \
+              --push \
+              --platform linux/amd64,linux/arm64 \
+              -t datasqrl/mcp-inspector:$MCP_TAG \
+              -t datasqrl/mcp-inspector:latest \
+              -f Dockerfile.mcp-inspector \
+              .
 
 workflows:
   ci:
     jobs:
       - docker-build-base-image:
           <<: *job-defaults
-      - build-base:
+      - docker-build-mcp-inspector:
+          <<: *job-defaults
+      - download-maven-dependencies:
           <<: *job-defaults
       - build-test-image:
           <<: *job-defaults
@@ -529,7 +588,7 @@ workflows:
             tags:
               ignore: /.*/
           requires:
-            - build-base
+            - download-maven-dependencies
             - docker-build-base-image
       - integration-tests:
           <<: *job-defaults
@@ -543,16 +602,17 @@ workflows:
               test_sharding_total:  [2]
               test_sharding_index: [0, 1]
           requires:
-            - build-base
+            - download-maven-dependencies
+            - docker-build-mcp-inspector
       - build-images:
           <<: *job-defaults
           requires:
-            - build-base
+            - download-maven-dependencies
             - docker-build-base-image
       - deploy:
           <<: *job-defaults
           requires:
-            - build-base
+            - download-maven-dependencies
       - unit-tests:
           <<: *job-defaults
           filters:
@@ -561,7 +621,7 @@ workflows:
             tags:
               ignore: /.*/
           requires:
-            - build-base
+            - download-maven-dependencies
       - run-connectors-tests:
           <<: *job-defaults
           filters:

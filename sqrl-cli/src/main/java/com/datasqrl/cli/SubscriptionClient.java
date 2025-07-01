@@ -18,19 +18,24 @@ package com.datasqrl.cli;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vertx.core.Future;
+import io.vertx.core.MultiMap;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.WebSocket;
+import io.vertx.core.http.WebSocketConnectOptions;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 
 // Simplified example WebSocket client code using Vert.x
+@RequiredArgsConstructor
 public class SubscriptionClient {
   private final String name;
   private final String query;
+  private final Map<String, String> headers;
   private final List<String> messages = new ArrayList<>();
   private WebSocket webSocket;
   private final Vertx vertx = Vertx.vertx();
@@ -38,15 +43,26 @@ public class SubscriptionClient {
   private final ObjectMapper objectMapper = new ObjectMapper();
   private CompletableFuture<Void> connectedFuture = new CompletableFuture<>();
 
-  public SubscriptionClient(String name, String query) {
-    this.name = name;
-    this.query = query;
-  }
-
   public CompletableFuture<Void> start() {
-    var connect = vertx.createWebSocketClient().connect(8888, "localhost", "/graphql");
+    /* 1. Collect handshake headers */
+    var headerMap = MultiMap.caseInsensitiveMultiMap();
+    if (headers != null) {
+      headers.forEach((k, v) -> headerMap.add(k, v));
+    }
 
-    connect
+    /* 2. Describe the connection */
+    var opts =
+        new WebSocketConnectOptions()
+            .setHost("localhost")
+            .setPort(8888)
+            .setURI("/graphql")
+            .addSubProtocol("graphql-transport-ws") // or "graphql-ws"
+            .setHeaders(headerMap);
+
+    /* 3. Open the socket with the new WebSocketClient API */
+    var wsClient = vertx.createWebSocketClient();
+    wsClient
+        .connect(opts)
         .onSuccess(
             ws -> {
               this.webSocket = ws;

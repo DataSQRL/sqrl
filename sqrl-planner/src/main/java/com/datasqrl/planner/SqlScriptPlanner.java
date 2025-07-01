@@ -320,14 +320,32 @@ public class SqlScriptPlanner {
         if (!tblFctStmt.getSignature().isEmpty()) {
           var parsedArgs = sqrlEnv.parse2RelDataType(tblFctStmt.getSignature());
           parsedArgs.forEach(
-              field ->
-                  arguments.put(
-                      Name.system(field.getName()),
-                      new ParsedArgument(
-                          new ParsedObject(field.getName(), FileLocation.START),
-                          field.getType(),
-                          false,
-                          arguments.size())));
+              parsedField -> {
+                var field = parsedField.field();
+                var metadata =
+                    parsedField
+                        .metadata()
+                        .map(
+                            metaStr -> {
+                              var resolvedMetadata =
+                                  SqrlTableFunctionStatement.parseMetadata(
+                                      metaStr, !field.getType().isNullable());
+                              errors.checkFatal(
+                                  resolvedMetadata.isPresent(),
+                                  ErrorCode.INVALID_TABLE_FUNCTION_ARGUMENTS,
+                                  "Invalid metadata key provided: %s",
+                                  metaStr);
+                              return resolvedMetadata.get();
+                            });
+                arguments.put(
+                    Name.system(field.getName()),
+                    new ParsedArgument(
+                        new ParsedObject(field.getName(), FileLocation.START),
+                        field.getType(),
+                        metadata,
+                        false,
+                        arguments.size()));
+              });
         }
         TableAnalysis parentTbl = null;
         if (tblFctStmt.isRelationship()) {

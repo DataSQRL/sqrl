@@ -205,6 +205,13 @@ The built-in fallback (excerpt - full version [here](https://github.com/DataSQRL
       "url": "jdbc:snowflake://${SNOWFLAKE_ID}.snowflakecomputing.com/?…"
     }
   },
-  "test-runner": { "delay-sec": 30 }
+  "test-runner": {
+    "delay-sec": 30,
+    "mutation-delay": 1,
+    "headers": {
+      "Authorization": "Bearer token123",
+      "Content-Type": "application/json"
+    }
+  }
 }
 ```

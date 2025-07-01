@@ -31,7 +31,9 @@ import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentLookupQueryCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.FieldLookupQueryCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.KafkaMutationCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.KafkaSubscriptionCoords;
+import com.datasqrl.graphql.server.RootGraphqlModel.MetadataParameter;
 import com.datasqrl.graphql.server.RootGraphqlModel.MutationCoords;
+import com.datasqrl.graphql.server.RootGraphqlModel.ParentParameter;
 import com.datasqrl.graphql.server.RootGraphqlModel.QueryCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.QueryParameterHandler;
 import com.datasqrl.graphql.server.RootGraphqlModel.QueryWithArguments;
@@ -93,21 +95,6 @@ public class GraphqlModelGenerator extends GraphqlSchemaWalker {
                   Collectors.toMap(e -> inputArguments.get(e.getValue()).getName(), Entry::getKey));
       subscriptionCoords =
           new KafkaSubscriptionCoords(fieldName, kafkaQuery.getTopicName(), Map.of(), filters);
-      //    } else if (executableQuery instanceof PostgresSubscriptionQuery) {
-      //      ListenNotifyAssets listenNotifyAssets = ((PostgresLogPhysicalPlan) logPlan.get())
-      //          .getQueries().stream()
-      //          .filter(query -> query.getListen().getTableName().equals(tableName))
-      //          .findFirst()
-      //          .orElseThrow(
-      //              () -> new RuntimeException("Could not find query statement for table: " +
-      // tableName)
-      //          );
-      //
-      //      subscriptionCoords = new PostgresSubscriptionCoords(
-      //          fieldName, tableName, filters,
-      //          listenNotifyAssets.getListen().getSql(),
-      //          listenNotifyAssets.getOnNotify().getSql(),
-      //          listenNotifyAssets.getParameters());
     } else {
       throw new UnsupportedOperationException("Unsupported subscription query: " + executableQuery);
     }
@@ -128,31 +115,6 @@ public class GraphqlModelGenerator extends GraphqlSchemaWalker {
       mutationCoords =
           new KafkaMutationCoords(
               atField.getName(), newTopic.getTopicName(), computedColumns, Map.of());
-      //    } else if (logPlan.isPresent() && logPlan.get() instanceof PostgresLogPhysicalPlan) {
-      //      String tableName;
-      //      if (tableSource != null) {
-      //        Map<String, Object> map =
-      // tableSource.getConfiguration().getConnectorConfig().toMap();
-      //        tableName = (String) map.get("table-name");
-      //      } else if (src.isPresent()) {
-      //        // TODO: not sure if this is correct and needed
-      //        Map<String, Object> map = src.get().getConnectorConfig().toMap();
-      //        tableName = (String) map.get("table-name");
-      //      } else {
-      //        throw new RuntimeException("Could not find mutation: " + field.getName());
-      //      }
-      //
-      //      InsertStatement insertStatement = ((PostgresLogPhysicalPlan) logPlan.get())
-      //          .getInserts().stream()
-      //          .filter(insert -> insert.getTableName().equals(tableName))
-      //          .findFirst()
-      //          .orElseThrow(
-      //              () -> new RuntimeException("Could not find insert statement for table: " +
-      // tableName)
-      //          );
-      //
-      //      mutationCoords = new PostgresLogMutationCoords(field.getName(), tableName,
-      //          insertStatement.getSql(), insertStatement.getParams());
     } else {
       throw new RuntimeException("Unknown mutation implementation: " + mutation.getCreateTopic());
     }
@@ -200,10 +162,15 @@ public class GraphqlModelGenerator extends GraphqlSchemaWalker {
     List<QueryParameterHandler> parameters = new ArrayList<>();
     for (FunctionParameter functionParameter : tableFunction.getParameters()) {
       final var parameter = (SqrlFunctionParameter) functionParameter;
-      parameters.add(
-          parameter.isParentField()
-              ? new RootGraphqlModel.SourceParameter(parameter.getName())
-              : new RootGraphqlModel.ArgumentParameter(parameter.getName()));
+      QueryParameterHandler queryParam;
+      if (parameter.isParentField()) {
+        queryParam = new ParentParameter(parameter.getName());
+      } else if (parameter.isMetadata()) {
+        queryParam = new MetadataParameter(parameter.getMetadata().get());
+      } else {
+        queryParam = new RootGraphqlModel.ArgumentParameter(parameter.getName());
+      }
+      parameters.add(queryParam);
     }
     RootGraphqlModel.QueryBase queryBase;
 

@@ -4,13 +4,13 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="${SCRIPT_DIR}/.."
 
-cd "${PROJECT_ROOT}/sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/jwt"
+cd "${PROJECT_ROOT}/sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/jwt-authorized"
 
 docker run \
   -v "$PWD:/build" \
   -e TZ="UTC" \
   "datasqrl/cmd-test-image:${CIRCLE_SHA1}" \
-  compile jwt.sqrl
+  compile jwt-authorized.sqrl
 
 docker run -d --name sqrl-server \
   -v "$PWD/build/deploy/plan/vertx.json:/opt/sqrl/vertx.json" \
@@ -21,12 +21,27 @@ docker run -d --name sqrl-server \
 printf "⏳ Waiting for server"
 for i in {1..30}; do
   if curl -s http://localhost:8888/ > /dev/null 2>&1; then
-    echo " – ready"
+    echo " – server up"
     break
   fi
   sleep 1
   printf "."
   [[ $i == 30 ]] && { echo " ❌  server never came up"; docker logs sqrl-server; exit 1; }
+done
+
+printf "⏳ Waiting for GraphQL endpoint"
+for i in {1..30}; do
+  if curl -s -o /dev/null -w '%{http_code}' -X POST http://localhost:8888/graphql \
+       -H 'Content-Type: application/json' \
+       --data '{"query":"query { __typename }"}' | grep -q '^40[13]$'; then
+    echo " – ready"
+    # Give it a moment to fully complete deployment
+    sleep 2
+    break
+  fi
+  sleep 1
+  printf "."
+  [[ $i == 30 ]] && { echo " ❌  GraphQL endpoint never came up"; docker logs sqrl-server; exit 1; }
 done
 
 if curl -s -o /dev/null -w '%{http_code}' \
@@ -55,14 +70,19 @@ SIGNATURE=$(printf '%s.%s' "$HEADER" "$PAYLOAD" \
 
 TOKEN="${HEADER}.${PAYLOAD}.${SIGNATURE}"
 
-if curl -s -X POST http://localhost:8888/graphql \
+RESPONSE=$(curl -s -w '\n%{http_code}' -X POST http://localhost:8888/graphql \
         -H 'Content-Type: application/json' \
         -H "Authorization: Bearer ${TOKEN}" \
-        --data '{"query":"query { __typename }"}' \
-        | grep -q '"__typename"'; then
+        --data '{"query":"query { __typename }"}')
+
+HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+BODY=$(echo "$RESPONSE" | head -n -1)
+
+if [[ "$HTTP_CODE" == "200" ]] && echo "$BODY" | grep -q '"__typename"'; then
   echo "✅  Request authorised – token works"
 else
-  echo "❌  Authorised request failed"
+  echo "❌  Authorised request failed (HTTP $HTTP_CODE)"
+  echo "Response body: $BODY"
   docker logs sqrl-server
   exit 1
 fi

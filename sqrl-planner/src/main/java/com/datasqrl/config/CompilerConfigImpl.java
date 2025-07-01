@@ -37,11 +37,6 @@ public class CompilerConfigImpl implements PackageJson.CompilerConfig {
   }
 
   @Override
-  public boolean isAddArguments() {
-    return sqrlConfig.asBool("addArguments").getOptional().orElse(true);
-  }
-
-  @Override
   public boolean isExtendedScalarTypes() {
     return sqrlConfig.asBool("extendedScalarTypes").getOptional().orElse(true);
   }
@@ -72,5 +67,10 @@ public class CompilerConfigImpl implements PackageJson.CompilerConfig {
   @Override
   public ExplainConfigImpl getExplain() {
     return new ExplainConfigImpl(sqrlConfig.getSubConfig("explain"));
+  }
+
+  @Override
+  public CompilerApiConfigImpl getApiConfig() {
+    return CompilerApiConfigImpl.from(sqrlConfig.getSubConfig("api"));
   }
 }
