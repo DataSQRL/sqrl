@@ -987,6 +987,7 @@
           <environmentVariables>
             <TZ>America/Los_Angeles</TZ>
           </environmentVariables>
+          <failIfNoSpecifiedTests>false</failIfNoSpecifiedTests>
         </configuration>
       </plugin>
       <plugin>
@@ -1004,6 +1005,7 @@
             <flinkrunner.image.repo>${flinkrunner.image.repo}</flinkrunner.image.repo>
             <flinkrunner.version>${flinkrunner.version}</flinkrunner.version>
           </systemPropertyVariables>
+          <failIfNoSpecifiedTests>false</failIfNoSpecifiedTests>
         </configuration>
         <executions>
           <execution>
