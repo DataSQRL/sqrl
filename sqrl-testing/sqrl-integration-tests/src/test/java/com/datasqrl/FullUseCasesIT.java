@@ -60,6 +60,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
+/**
+ * Runs and Tests the uses cases in `resources/usecases`. This stands up the entire compiled
+ * pipeline and runs or tests the pipeline. Add use cases to the folder above to validate full
+ * pipeline execution.
+ *
+ * <p>Note, that this test is resource intensive and slow.
+ */
 @Slf4j
 @ExtendWith(MiniClusterExtension.class)
 class FullUseCasesIT {
@@ -264,7 +271,7 @@ class FullUseCasesIT {
                   .flatMap(TestRunnerConfiguration::getDelaySec)
                   .map(Duration::getSeconds)
                   .orElse((long) -1);
-          //          delaySec = 600;
+
           int requiredCheckpoints =
               packageJson
                   .getTestConfig()

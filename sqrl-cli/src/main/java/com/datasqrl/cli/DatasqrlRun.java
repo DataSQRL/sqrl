@@ -84,7 +84,7 @@ public class DatasqrlRun {
     this.flinkConfig = flinkConfig;
     this.env = env;
     build = planPath.getParent().getParent();
-    objectMapper = SqrlObjectMapper.mapper;
+    objectMapper = SqrlObjectMapper.MAPPER;
   }
 
   public TableResult run(boolean hold) {

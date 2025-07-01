@@ -15,8 +15,9 @@
  */
 package com.datasqrl.graphql.auth;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.datasqrl.graphql.server.MetadataReader;
-import com.google.common.base.Preconditions;
 import graphql.schema.DataFetchingEnvironment;
 import io.vertx.ext.web.RoutingContext;
 import lombok.extern.slf4j.Slf4j;
@@ -45,7 +46,7 @@ public class AuthMetadataReader implements MetadataReader {
     var value = principal.get(name);
 
     if (isRequired) {
-      Preconditions.checkNotNull(value, "Claim '%s' must not be null", name);
+      checkNotNull(value, "Claim '%s' must not be null", name);
     }
 
     return value;

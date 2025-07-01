@@ -16,7 +16,7 @@
 package com.datasqrl.engine.server;
 
 import static com.datasqrl.engine.EngineFeature.NO_CAPABILITIES;
-import static com.datasqrl.graphql.SqrlObjectMapper.mapper;
+import static com.datasqrl.graphql.SqrlObjectMapper.MAPPER;
 
 import com.datasqrl.config.EngineType;
 import com.datasqrl.config.PackageJson.EngineConfig;
@@ -60,14 +60,14 @@ public abstract class GenericJavaServerEngine extends ExecutionEngine.Base imple
   @SneakyThrows
   private String serverConfig() {
     var mergedConfig = ServerConfigUtil.mergeConfigs(readDefaultConfig(), engineConfig.getConfig());
-    return mapper.writer(new PrettyPrinter()).writeValueAsString(mergedConfig);
+    return MAPPER.copy().writer(new PrettyPrinter()).writeValueAsString(mergedConfig);
   }
 
   @SneakyThrows
   ServerConfig readDefaultConfig() {
     ServerConfig serverConfig;
     try (var input = getClass().getResourceAsStream("/templates/server-config.json")) {
-      var json = mapper.readValue(input, JsonObject.class);
+      var json = MAPPER.readValue(input, JsonObject.class);
       serverConfig = new ServerConfig(json);
     }
     return serverConfig;

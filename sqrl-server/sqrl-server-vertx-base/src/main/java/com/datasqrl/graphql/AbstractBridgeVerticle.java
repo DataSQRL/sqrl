@@ -29,11 +29,8 @@ import com.networknt.schema.SpecVersion;
 import com.networknt.schema.ValidationMessage;
 import graphql.ExecutionInput;
 import graphql.ExecutionResult;
-import graphql.GraphQL;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
-import io.vertx.core.MultiMap;
-import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.jwt.JWTAuth;
 import io.vertx.ext.web.Router;
@@ -41,7 +38,6 @@ import io.vertx.ext.web.RoutingContext;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 
@@ -76,8 +72,11 @@ public abstract class AbstractBridgeVerticle extends AbstractVerticle {
 
   protected void handleError(
       Throwable err, RoutingContext ctx, int statusCode, String errorMessage) {
-    if (statusCode == 500) log.error(errorMessage, err);
-    else log.info(errorMessage, err);
+    if (statusCode == 500) {
+      log.error(errorMessage, err);
+    } else {
+      log.info(errorMessage, err);
+    }
 
     ctx.response()
         .setStatusCode(statusCode)
@@ -101,7 +100,7 @@ public abstract class AbstractBridgeVerticle extends AbstractVerticle {
 
   protected void validateParameters(Map<String, Object> variables, ApiOperation operation)
       throws ValidationException {
-    FunctionDefinition.Parameters parameters = operation.getFunction().getParameters();
+    var parameters = operation.getFunction().getParameters();
     if (parameters == null) {
       return; // No validation required
     }
@@ -109,8 +108,8 @@ public abstract class AbstractBridgeVerticle extends AbstractVerticle {
     final JsonSchema schema;
     try {
       // Build a JSON Schema from the parameters definition
-      String schemaText = getSchemaMapper().writeValueAsString(parameters);
-      JsonSchemaFactory factory = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V202012);
+      var schemaText = getSchemaMapper().writeValueAsString(parameters);
+      var factory = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V202012);
       schema = factory.getSchema(schemaText);
 
       // Convert the collected variables to a JsonNode
@@ -124,9 +123,9 @@ public abstract class AbstractBridgeVerticle extends AbstractVerticle {
     }
 
     // Validate against the schema
-    Set<ValidationMessage> schemaErrors = schema.validate(arguments);
+    var schemaErrors = schema.validate(arguments);
     if (!schemaErrors.isEmpty()) {
-      String schemaErrorsText =
+      var schemaErrorsText =
           schemaErrors.stream().map(ValidationMessage::toString).collect(Collectors.joining("; "));
       log.info("Function call had schema errors: {}", schemaErrorsText);
       throw new ValidationException("Invalid Schema: " + schemaErrorsText);
@@ -140,10 +139,10 @@ public abstract class AbstractBridgeVerticle extends AbstractVerticle {
   protected Future<ExecutionResult> executeGraphQLAsync(
       RoutingContext ctx, ApiOperation operation, Map<String, Object> variables) {
 
-    GraphQL graphQLEngine = graphQLServerVerticle.getGraphQLEngine();
+    var graphQLEngine = graphQLServerVerticle.getGraphQLEngine();
 
     // Build the ExecutionInput
-    ExecutionInput execInput =
+    var execInput =
         ExecutionInput.newExecutionInput()
             .query(operation.getApiQuery().query())
             .operationName(operation.getApiQuery().queryName())
@@ -155,7 +154,7 @@ public abstract class AbstractBridgeVerticle extends AbstractVerticle {
   }
 
   protected Object getExecutionData(ExecutionResult executionResult, ApiOperation operation) {
-    Object result = executionResult.getData();
+    var result = executionResult.getData();
     if (result instanceof Map resultMap && operation.removeNesting()) {
       if (resultMap.size() == 1) {
         result = resultMap.values().iterator().next(); // Get only element
@@ -166,16 +165,16 @@ public abstract class AbstractBridgeVerticle extends AbstractVerticle {
 
   protected void extractGetParameters(
       RoutingContext ctx, ApiOperation operation, Map<String, Object> variables) {
-    HttpServerRequest request = ctx.request();
-    FunctionDefinition.Parameters functionParams = operation.getFunction().getParameters();
+    var request = ctx.request();
+    var functionParams = operation.getFunction().getParameters();
 
     if (functionParams == null || functionParams.getProperties() == null) {
       return;
     }
 
-    Map<String, FunctionDefinition.Argument> properties = functionParams.getProperties();
-    MultiMap queryParams = request.params();
-    Map<String, String> pathParams = ctx.pathParams();
+    var properties = functionParams.getProperties();
+    var queryParams = request.params();
+    var pathParams = ctx.pathParams();
 
     // Merge query and path parameters, giving precedence to path params
     Map<String, String> combinedParams = new HashMap<>();
@@ -185,10 +184,10 @@ public abstract class AbstractBridgeVerticle extends AbstractVerticle {
     combinedParams.putAll(pathParams); // path params take precedence
 
     for (Map.Entry<String, FunctionDefinition.Argument> entry : properties.entrySet()) {
-      String paramName = entry.getKey();
+      var paramName = entry.getKey();
       if (combinedParams.containsKey(paramName)) {
-        String value = combinedParams.get(paramName);
-        Object convertedValue = convertParameterValue(value, entry.getValue());
+        var value = combinedParams.get(paramName);
+        var convertedValue = convertParameterValue(value, entry.getValue());
         variables.put(paramName, convertedValue);
       }
     }

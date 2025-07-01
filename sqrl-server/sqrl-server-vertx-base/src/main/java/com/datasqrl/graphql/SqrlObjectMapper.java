@@ -23,11 +23,11 @@ import io.vertx.core.json.jackson.VertxModule;
 /** Configures a Jackson ObjectMapper for JSON serialization/deserialization. */
 public class SqrlObjectMapper {
 
-  public static final ObjectMapper mapper = new ObjectMapper();
+  public static final ObjectMapper MAPPER = new ObjectMapper();
 
   static {
-    mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-    mapper.registerModule(new JavaTimeModule());
-    mapper.registerModule(new VertxModule());
+    MAPPER.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+    MAPPER.registerModule(new JavaTimeModule());
+    MAPPER.registerModule(new VertxModule());
   }
 }

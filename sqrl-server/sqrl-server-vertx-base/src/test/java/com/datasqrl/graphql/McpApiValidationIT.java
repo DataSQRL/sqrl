@@ -15,7 +15,7 @@
  */
 package com.datasqrl.graphql;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
 
 import com.datasqrl.graphql.config.CorsHandlerOptions;
 import com.datasqrl.graphql.config.ServerConfig;
@@ -306,24 +306,24 @@ class McpApiValidationIT {
 
   private void assertMcpValidationResults(String logs) {
     // Check for successful completion message
-    assertTrue(
-        logs.contains("All MCP validations completed successfully"),
-        "MCP validation should complete successfully");
+    assertThat(logs)
+        .as("MCP validation should complete successfully")
+        .contains("All MCP validations completed successfully");
 
     // Check that we don't have major errors that would prevent validation
-    assertFalse(logs.contains("npm ERR!"), "Should not have npm installation errors");
-    assertFalse(logs.contains("ECONNREFUSED"), "Should be able to connect to MCP server");
+    assertThat(logs).as("Should not have npm installation errors").doesNotContain("npm ERR!");
+    assertThat(logs).as("Should be able to connect to MCP server").doesNotContain("ECONNREFUSED");
 
     // Check for successful method calls
-    assertTrue(
-        logs.contains("Testing initialize") || logs.contains("initialize"),
-        "Should test initialize method");
-    assertTrue(
-        logs.contains("Testing tools/list") || logs.contains("tools"),
-        "Should test tools/list method");
-    assertTrue(
-        logs.contains("Testing resources/list") || logs.contains("resources"),
-        "Should test resources/list method");
+    assertThat(logs.contains("Testing initialize") || logs.contains("initialize"))
+        .as("Should test initialize method")
+        .isTrue();
+    assertThat(logs.contains("Testing tools/list") || logs.contains("tools"))
+        .as("Should test tools/list method")
+        .isTrue();
+    assertThat(logs.contains("Testing resources/list") || logs.contains("resources"))
+        .as("Should test resources/list method")
+        .isTrue();
   }
 
   private void validateMcpProtocolCompliance(String logs) throws Exception {
@@ -348,37 +348,42 @@ class McpApiValidationIT {
               // Check for tools response
               if (result.has("tools")) {
                 foundValidToolsResponse = true;
-                assertTrue(result.get("tools").isArray(), "Tools should be an array");
+                assertThat(result.get("tools").isArray()).as("Tools should be an array").isTrue();
 
                 if (result.get("tools").size() > 0) {
                   JsonNode firstTool = result.get("tools").get(0);
-                  assertTrue(firstTool.has("name"), "Tool should have name");
-                  assertTrue(firstTool.has("description"), "Tool should have description");
-                  assertTrue(firstTool.has("inputSchema"), "Tool should have inputSchema");
+                  assertThat(firstTool.has("name")).as("Tool should have name").isTrue();
+                  assertThat(firstTool.has("description"))
+                      .as("Tool should have description")
+                      .isTrue();
+                  assertThat(firstTool.has("inputSchema"))
+                      .as("Tool should have inputSchema")
+                      .isTrue();
                 }
               }
 
               // Check for resources response
               if (result.has("resources")) {
                 foundValidResourcesResponse = true;
-                assertTrue(result.get("resources").isArray(), "Resources should be an array");
+                assertThat(result.get("resources").isArray())
+                    .as("Resources should be an array")
+                    .isTrue();
 
                 if (result.get("resources").size() > 0) {
                   JsonNode firstResource = result.get("resources").get(0);
-                  assertTrue(firstResource.has("uri"), "Resource should have uri");
-                  assertTrue(firstResource.has("name"), "Resource should have name");
+                  assertThat(firstResource.has("uri")).as("Resource should have uri").isTrue();
+                  assertThat(firstResource.has("name")).as("Resource should have name").isTrue();
                 }
               }
 
               // Check for initialize response
               if (result.has("protocolVersion")) {
                 foundValidInitResponse = true;
-                assertEquals(
-                    "2024-11-05",
-                    result.get("protocolVersion").asText(),
-                    "Should use correct MCP protocol version");
-                assertTrue(result.has("capabilities"), "Should have capabilities");
-                assertTrue(result.has("serverInfo"), "Should have serverInfo");
+                assertThat(result.get("protocolVersion").asText())
+                    .as("Should use correct MCP protocol version")
+                    .isEqualTo("2024-11-05");
+                assertThat(result.has("capabilities")).as("Should have capabilities").isTrue();
+                assertThat(result.has("serverInfo")).as("Should have serverInfo").isTrue();
               }
             }
           }
@@ -389,9 +394,9 @@ class McpApiValidationIT {
     }
 
     // At least one of the core MCP operations should have returned valid responses
-    assertTrue(
-        foundValidToolsResponse || foundValidResourcesResponse || foundValidInitResponse,
-        "Should find at least one valid MCP protocol response");
+    assertThat(foundValidToolsResponse || foundValidResourcesResponse || foundValidInitResponse)
+        .as("Should find at least one valid MCP protocol response")
+        .isTrue();
   }
 
   private ApiOperation createApiOperation(

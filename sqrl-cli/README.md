@@ -1,1 +1,3 @@
-This module compiles into an executable jar that exposes a command to run the DataSQRL packager, compiler, and discovery, as well as deploy SQRL scripts against configured execution engines (or default engines).
+The DataSQRL build tool is accessed through a command line interface.
+It defines all commands that DataSQRL supports and provides
+usability features to help the user and produce useful error messages.

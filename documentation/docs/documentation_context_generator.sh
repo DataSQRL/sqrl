@@ -14,15 +14,4 @@
 # limitations under the License.
 #
 
-# Set root logger level
-rootLogger.level = INFO
-
-# Define Console appender
-appender.console.type = Console
-appender.console.name = Console
-appender.console.target = SYSTEM_OUT
-appender.console.layout.type = PatternLayout
-appender.console.layout.pattern = %d [%t] %-5level %c - %m%n
-
-# Assign appender to root logger
-rootLogger.appenderRef.console.ref = Console
+cat sqrl-language.md configuration.md compiler.md concepts.md connectors.md howto.md functions.md functions-docs/function-docs/library-functions.md functions-docs/function-docs/system-functions.md getting-started.md > datasqrl_documentation.md

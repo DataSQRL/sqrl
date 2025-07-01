@@ -32,7 +32,7 @@ import org.junit.jupiter.api.Test;
 class ServerConfigTemplateTest {
   private static final File TEMPLATE = new File("src/main/resources/templates/server-config.json");
 
-  private static ObjectMapper mapper = SqrlObjectMapper.mapper;
+  private static ObjectMapper mapper = SqrlObjectMapper.MAPPER;
 
   @SuppressWarnings("unchecked")
   @Test

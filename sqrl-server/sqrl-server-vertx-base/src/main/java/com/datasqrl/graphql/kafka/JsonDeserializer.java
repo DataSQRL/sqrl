@@ -48,7 +48,7 @@ public class JsonDeserializer implements Deserializer<Map> {
     try {
       return data == null
           ? null
-          : SqrlObjectMapper.mapper.readValue(new String(data, this.encoding), Map.class);
+          : SqrlObjectMapper.MAPPER.readValue(new String(data, this.encoding), Map.class);
     } catch (UnsupportedEncodingException var4) {
       throw new SerializationException(
           "Error when deserializing byte[] to string due to unsupported encoding " + this.encoding);

@@ -51,7 +51,7 @@ public class JdbcClientsConfig {
 
   /** Creates a map of database clients for all configured database types. */
   public Map<DatabaseType, SqlClient> createClients() {
-    Map<DatabaseType, SqlClient> clients = new HashMap<>();
+    var clients = new HashMap<DatabaseType, SqlClient>();
     clients.put(DatabaseType.POSTGRES, createPostgresSqlClient());
     clients.put(DatabaseType.DUCKDB, createDuckdbSqlClient());
     snowflakeUrl.ifPresent(url -> clients.put(DatabaseType.SNOWFLAKE, createSnowflakeClient(url)));
@@ -64,12 +64,14 @@ public class JdbcClientsConfig {
     Map map = null;
     if (snowflakeConfig.exists()) {
       map = HttpServerVerticle.getObjectMapper().readValue(snowflakeConfig, Map.class);
-      if (map.isEmpty()) return Optional.empty();
+      if (map.isEmpty()) {
+        return Optional.empty();
+      }
     } else {
       return Optional.empty();
     }
 
-    String url = (String) map.get("url");
+    var url = (String) map.get("url");
     if (Strings.isNullOrEmpty(url)) {
       log.warn("Url must be specified in the snowflake engine");
       return Optional.empty();
@@ -79,11 +81,7 @@ public class JdbcClientsConfig {
 
   @SneakyThrows
   private SqlClient createSnowflakeClient(String url) {
-    try {
-      Class.forName("net.snowflake.client.jdbc.SnowflakeDriver");
-    } catch (ClassNotFoundException e) {
-      e.printStackTrace();
-    }
+    Class.forName("net.snowflake.client.jdbc.SnowflakeDriver");
 
     var connectOptions =
         new JDBCConnectOptions().setJdbcUrl(url + "?CLIENT_SESSION_KEEP_ALIVE=true");
@@ -93,14 +91,10 @@ public class JdbcClientsConfig {
 
   @SneakyThrows
   private SqlClient createDuckdbSqlClient() {
-    String url =
-        "jdbc:duckdb:"; // In-memory DuckDB instance or you can specify a file path for persistence
+    // In-memory DuckDB instance or you can specify a file path for persistence
+    var url = "jdbc:duckdb:";
 
-    try {
-      Class.forName("org.duckdb.DuckDBDriver");
-    } catch (ClassNotFoundException e) {
-      e.printStackTrace();
-    }
+    Class.forName("org.duckdb.DuckDBDriver");
 
     var connectOptions =
         new JDBCConnectOptions().setJdbcUrl(url + "?" + DuckDBDriver.JDBC_STREAM_RESULTS + "=true");

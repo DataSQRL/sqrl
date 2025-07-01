@@ -15,7 +15,7 @@
  */
 package com.datasqrl.graphql.config;
 
-import static com.datasqrl.graphql.SqrlObjectMapper.mapper;
+import static com.datasqrl.graphql.SqrlObjectMapper.MAPPER;
 import static org.apache.commons.lang3.ObjectUtils.isEmpty;
 
 import com.datasqrl.util.JsonMergeUtils;
@@ -35,9 +35,9 @@ public class ServerConfigUtil {
     if (isEmpty(configOverrides)) {
       return serverConfig;
     }
-    var config = ((ObjectNode) mapper.valueToTree(serverConfig)).deepCopy();
-    JsonMergeUtils.merge(config, mapper.valueToTree(configOverrides));
-    var json = mapper.treeToValue(config, Map.class);
+    var config = ((ObjectNode) MAPPER.valueToTree(serverConfig)).deepCopy();
+    JsonMergeUtils.merge(config, MAPPER.valueToTree(configOverrides));
+    var json = MAPPER.treeToValue(config, Map.class);
     return new ServerConfig(new JsonObject(json));
   }
 }
