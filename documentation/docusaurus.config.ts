@@ -114,11 +114,7 @@ const config: Config = {
             {
               label: 'User Documentation',
               to: '/docs/intro',
-            },
-            {
-              label: 'Developer Documentation',
-              to: '/docs/developer',
-            },
+            }
           ],
         },
         {

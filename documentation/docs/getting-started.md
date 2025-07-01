@@ -1,13 +1,46 @@
 # Getting Started with DataSQRL
 
+Welcome to DataSQRL! This guide walks you through building and running your first data pipeline using SQRL — from setup to customization and debugging.
+
 We are going to build a data pipeline with SQRL that:
-* ingests statistics on user requests for the token consumption
-* aggregates token consumption by user
-* and provides a push-based alert for high token consumption
+* Defines an API to receive user token usage data
+* Aggregates total token consumption per user
+* Triggers alerts when a single request exceeds 100,000 tokens
 
 <!-- Add video tutorial -->
+## Prerequisites
+
+You'll need:
+
+- **Docker** installed
+- A terminal (macOS/Linux: Terminal, Windows: PowerShell or WSL)
+- Basic understanding of SQL
+
+### Install Docker
+
+If you don't already have Docker:
+
+- **macOS**: [Download Docker Desktop for Mac](https://www.docker.com/products/docker-desktop/)
+- **Windows**: [Download Docker Desktop for Windows](https://www.docker.com/products/docker-desktop/)
+- **Linux**: Use your package manager (e.g., `sudo apt install docker.io`)
+
+Verify Docker is working:
+
+```bash
+docker --version
+```
+
+Make sure Docker is running before continuing.
+
 
 ## Define SQRL Script
+
+```bash
+mkdir myproject && cd myproject
+vi usertokens.sqrl
+```
+
+Paste this into `usertokens.sqrl`:
 
 ```sql title=usertokens.sqrl
 /*+no_query */
@@ -33,13 +66,6 @@ The architecture of the pipeline defined by the SQRL script looks as follows:
 ![Initial Pipeline Architecture](/img/diagrams/getting_started_diagram1.png)
 
 ## Run SQRL Script
-
-Create a file `usertokens.sqrl` with the content above in a new directory:
-```bash
-mkdir myproject; cd myproject;
-vi usertokens.sqrl;
-```
-
 We can now execute the SQRL script with the compiler:
 
 ```bash
@@ -154,7 +180,7 @@ UserTokensTest := SELECT * FROM TotalUserTokens ORDER BY userid ASC;
 OrgTokensTest := SELECT * FROM TotalOrgTokens ORDER BY orgid ASC;
 ```
 
-Add those two test cases to the `usertokens.sqrl` script. 
+Add those two test cases to the `usertokens.sqrl` script.
 
 We can also add tests as GraphQL queries that get executed against the API. For our example, we need to add a mutation query - otherwise there is no input data to test against.
 
@@ -217,5 +243,9 @@ docker run --rm -v $PWD:/build datasqrl/cmd:latest compile usertokens.sqrl usert
 
 Congratulations, you made the first big step toward building production-grade data pipelines the easy way.
 Next, check out:
-* **[Full Documentation](intro.md)** for the complete reference, language spec, and more. 
+* **[Full Documentation](intro.md)** for the complete reference, language spec, and more.
 * **[Tutorials](tutorials.md)** if you prefer learning by doing.
+
+## 4. Troubleshooting Common Issues
+
+- **Ports already in use**: Check if 8888 or 8081 is being used by another app
