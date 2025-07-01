@@ -13,11 +13,11 @@
           "pubSecKeys": [
             {
               "algorithm": "HS256",
-              "buffer": "dGVzdFNlY3JldFRoYXRJc0F0TGVhc3QyNTZCaXRzTG9uZzMyQ2hhcnM="
+              "buffer": "dGVzdFNlY3JldA=="
             },
             {
               "algorithm": "HS256",
-              "buffer": "dGVzdFNlY3JldFRoYXRJc0F0TGVhc3QyNTZCaXRzTG9uZzMyQ2hhcnM="
+              "buffer": "dGVzdFNlY3JldA=="
             }
           ],
           "jwtOptions": {
