@@ -128,12 +128,14 @@ This is a multi-module Maven project with the following key components:
 - **End-to-End Testing**: Full pipeline testing with real services
 - **Coverage Requirement**: Minimum 70% instruction coverage with JaCoCo
 - **Test Naming**: All new test methods must follow the `given_when_then` pattern (e.g., `givenValidConfig_whenParseConfiguration_thenReturnsExpectedResult`)
+- **Test Assertions**: Use AssertJ (`org.assertj.core.api.Assertions`) for all test assertions. Avoid JUnit's `org.junit.jupiter.api.Assertions` in favor of AssertJ's more fluent and readable API
 
 ## Code Style Guidelines
 
 - **Java 17 Features**: Use modern Java 17 syntax and language features
 - **Type Inference**: Use `var` for local variables when the type is obvious from context
 - **Streams API**: Prefer Java Streams over traditional loops when appropriate for readability and performance
+- **File Formatting**: All new files must end with an empty line
 - **Examples**:
   ```java
   // Use var for obvious types

@@ -16,11 +16,8 @@
 package com.datasqrl.converter;
 
 import static com.datasqrl.graphql.converter.GraphQLSchemaConverterConfig.ignorePrefix;
-import static graphql.Assert.assertFalse;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
 import com.datasqrl.graphql.converter.GraphQLSchemaConverter;
 import com.datasqrl.graphql.converter.GraphQLSchemaConverterConfig;
@@ -54,28 +51,28 @@ public class GraphQLSchemaConverterTest {
             .build();
 
     List<ApiOperation> functions = underTest.convertSchema(config, schema);
-    assertEquals(5, functions.size());
+    assertThat(functions).hasSize(5);
     // Test context key handling
     ApiOperation orders =
         functions.stream()
             .filter(f -> f.getFunction().getName().equalsIgnoreCase("orders"))
             .findFirst()
             .get();
-    assertTrue(orders.getFunction().getParameters().getProperties().containsKey("customerid"));
+    assertThat(orders.getFunction().getParameters().getProperties()).containsKey("customerid");
     snapshot(functions, "nutshop");
   }
 
   @Test
   public void testCreditCard() {
     List<ApiOperation> functions = getFunctionsFromPath("creditcard-rewards.graphqls");
-    assertEquals(6, functions.size());
+    assertThat(functions).hasSize(6);
     snapshot(functions, "creditcard-rewards");
   }
 
   @Test
   public void testLawEnforcement() {
     List<ApiOperation> functions = getFunctionsFromPath("law_enforcement.graphqls");
-    assertEquals(7, functions.size());
+    assertThat(functions).hasSize(7);
     snapshot(functions, "law_enforcement");
   }
 
@@ -85,11 +82,11 @@ public class GraphQLSchemaConverterTest {
     var config = GraphQLSchemaConverterConfig.DEFAULT;
 
     List<ApiOperation> functions = underTest.convertSchema(config, schema);
-    assertEquals(5, functions.size());
+    assertThat(functions).hasSize(5);
     List<ApiOperation> queries =
         underTest.convertOperations(getTestSchema("sensors-aboveTemp.graphql"), config, schema);
-    assertEquals(2, queries.size());
-    assertEquals("HighTemps", queries.get(0).getFunction().getName());
+    assertThat(queries).hasSize(2);
+    assertThat(queries.get(0).getFunction().getName()).isEqualTo("HighTemps");
     functions.addAll(queries);
     snapshot(functions, "sensors");
   }
@@ -123,10 +120,7 @@ public class GraphQLSchemaConverterTest {
     for (ApiOperation apiOperation : functions) {
       // make sure ALL queries have a good syntax
       var query = apiOperation.getApiQuery().query();
-      assertDoesNotThrow(
-          () -> {
-            Parser.parse(query);
-          });
+      assertThatCode(() -> Parser.parse(query)).doesNotThrowAnyException();
     }
     var snapshot = SnapshotTest.Snapshot.of(getClass(), testName);
     snapshot.addContent(convertToJsonDefault(functions));
@@ -140,7 +134,7 @@ public class GraphQLSchemaConverterTest {
         GraphQLSchemaConverterConfig.builder().operationFilter(ignorePrefix("internal")).build();
 
     List<ApiOperation> functions = underTest.convertSchema(config, schema);
-    assertEquals(9, functions.size());
+    assertThat(functions).hasSize(9);
     // Test context key handling
     ApiOperation episodes =
         functions.stream()
@@ -151,11 +145,9 @@ public class GraphQLSchemaConverterTest {
         .containsKeys("name", "episode", "page");
 
     var query = episodes.getApiQuery().query();
-    assertDoesNotThrow(
-        () -> {
-          Parser.parse(query);
-        });
-    assertFalse(episodes.getFunction().getParameters().getProperties().containsKey("customerid"));
+    assertThatCode(() -> Parser.parse(query)).doesNotThrowAnyException();
+    assertThat(episodes.getFunction().getParameters().getProperties())
+        .doesNotContainKey("customerid");
     snapshot(functions, "rick-morty");
   }
 
