@@ -337,9 +337,7 @@ public class DatasqrlTest {
 
   private Map<String, String> combine(Map<String, String> baseHeaders, Properties overrides) {
     var headers = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
-    if (isNotEmpty(baseHeaders)) {
-      headers.putAll(baseHeaders);
-    }
+    headers.putAll(baseHeaders);
 
     if (isNotEmpty(overrides)) {
       overrides.forEach((key, value) -> headers.put(key.toString(), value.toString()));

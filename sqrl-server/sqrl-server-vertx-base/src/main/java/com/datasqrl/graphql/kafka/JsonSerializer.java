@@ -48,7 +48,7 @@ public class JsonSerializer implements Serializer<Map> {
     try {
       return data == null
           ? null
-          : SqrlObjectMapper.mapper.writeValueAsString(data).getBytes(this.encoding);
+          : SqrlObjectMapper.MAPPER.writeValueAsString(data).getBytes(this.encoding);
     } catch (UnsupportedEncodingException var4) {
       throw new SerializationException(
           "Error when serializing string to byte[] due to unsupported encoding " + this.encoding);

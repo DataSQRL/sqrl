@@ -17,7 +17,6 @@ package com.datasqrl.engine.server;
 
 import com.datasqrl.config.EngineFactory;
 import com.datasqrl.config.PackageJson;
-import com.datasqrl.config.PackageJson.EmptyEngineConfig;
 import com.datasqrl.engine.IExecutionEngine;
 import com.google.auto.service.AutoService;
 import com.google.inject.Inject;
@@ -41,12 +40,7 @@ public class VertxEngineFactory extends GenericJavaServerEngineFactory {
 
     @Inject
     public VertxEngine(PackageJson packageJson) {
-      super(
-          ENGINE_NAME,
-          packageJson
-              .getEngines()
-              .getEngineConfig(ENGINE_NAME)
-              .orElseGet(() -> new EmptyEngineConfig(ENGINE_NAME)));
+      super(ENGINE_NAME, packageJson.getEngines().getEngineConfigOrEmpty(ENGINE_NAME));
     }
   }
 }

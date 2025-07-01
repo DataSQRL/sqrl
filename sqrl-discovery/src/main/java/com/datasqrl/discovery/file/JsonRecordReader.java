@@ -33,7 +33,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class JsonRecordReader implements RecordReader {
 
-  private final ObjectMapper mapper = SqrlObjectMapper.mapper;
+  private final ObjectMapper mapper = SqrlObjectMapper.MAPPER;
 
   @Override
   public String getFormat() {

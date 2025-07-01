@@ -15,7 +15,7 @@
  */
 package com.datasqrl.engine.server;
 
-import static com.datasqrl.graphql.SqrlObjectMapper.mapper;
+import static com.datasqrl.graphql.SqrlObjectMapper.MAPPER;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datasqrl.config.PackageJson.EmptyEngineConfig;
@@ -91,8 +91,8 @@ class GenericJavaServerEngineTest {
     var mergedConfig = ServerConfigUtil.mergeConfigs(defaultConfig, config);
 
     // Serialize the merged configuration to JSON string and parse back
-    var serializedJson = mapper.writeValueAsString(mergedConfig);
-    JsonNode configNode = mapper.readTree(serializedJson);
+    var serializedJson = MAPPER.writeValueAsString(mergedConfig);
+    JsonNode configNode = MAPPER.readTree(serializedJson);
     JsonNode pubSecKeysNode = configNode.path("jwtAuth").path("pubSecKeys");
 
     assertThat(pubSecKeysNode.isArray()).isTrue();
