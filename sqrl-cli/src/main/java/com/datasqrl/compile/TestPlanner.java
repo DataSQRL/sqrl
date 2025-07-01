@@ -50,14 +50,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import org.apache.calcite.rel.type.RelDataType;
@@ -76,9 +74,12 @@ public class TestPlanner {
     List<GraphqlQuery> mutations = new ArrayList<>();
     List<GraphqlQuery> subscriptions = new ArrayList<>();
 
+    // Get base headers from PackageJson
+    var baseHeaders =
+        packageJson.getTestConfig().map(config -> config.getHeaders()).orElse(Map.of());
+
     testsPath.ifPresent(
-        (p) -> {
-          var headers = loadHeaders(p);
+        p -> {
           try (var paths = Files.walk(p)) {
             paths
                 .filter(Files::isRegularFile)
@@ -93,14 +94,15 @@ public class TestPlanner {
                         throw new RuntimeException(e);
                       }
                       var document = parser.parseDocument(content);
+                      var prefix = FileUtil.separateExtension(file).getLeft();
                       // TODO extract subscriptions from .graphql files
                       extractQueriesAndMutations(
                           document,
                           queries,
                           mutations,
                           subscriptions,
-                          file.getFileName().toString().replace(".graphql", ""),
-                          headers);
+                          prefix,
+                          loadHeaders(file.getParent(), prefix, baseHeaders));
                     });
           } catch (IOException e) {
             e.printStackTrace();
@@ -115,44 +117,25 @@ public class TestPlanner {
 
     for (Node definition : queryNodes) {
       var definition1 = (OperationDefinition) definition;
-      queries.add(new GraphqlQuery(definition1.getName(), AstPrinter.printAst(definition1), null));
+      queries.add(
+          new GraphqlQuery(definition1.getName(), AstPrinter.printAst(definition1), baseHeaders));
     }
     return new TestPlan(queries, mutations, subscriptions);
   }
 
   @SneakyThrows
-  public Map<String, Map<String, String>> loadHeaders(Path root) {
-    // Get base headers from PackageJson
-    Map<String, String> baseHeaders =
-        packageJson.getTestConfig().map(config -> config.getHeaders()).orElse(Map.of());
+  public Map<String, String> loadHeaders(
+      Path testDir, String prefix, Map<String, String> baseHeaders) {
+    var headersFile = testDir.resolve(prefix + ".properties");
 
-    // Load file-specific headers and combine with base headers
-    try (Stream<Path> paths = Files.walk(root)) {
-      Map<String, Properties> fileHeaders =
-          paths
-              .filter(Files::isRegularFile)
-              .filter(p -> p.getFileName().toString().endsWith(".properties"))
-              .collect(
-                  Collectors.toMap(
-                      file -> FileUtil.separateExtension(file).getLeft(),
-                      this::readProperties,
-                      (a, b) -> {
-                        throw new IllegalStateException(
-                            "Duplicate .properties file name detected: " + a);
-                      },
-                      LinkedHashMap::new));
-
-      // Combine base headers with file-specific headers
-      return fileHeaders.entrySet().stream()
-          .collect(
-              Collectors.toMap(
-                  Map.Entry::getKey,
-                  entry -> combineHeaders(baseHeaders, entry.getValue()),
-                  (a, b) -> {
-                    throw new IllegalStateException("Duplicate header key: " + a);
-                  },
-                  LinkedHashMap::new));
+    if (!Files.isRegularFile(headersFile)) {
+      return baseHeaders;
     }
+
+    var props = readProperties(headersFile);
+
+    // Combine base headers with file-specific headers
+    return combineHeaders(baseHeaders, props);
   }
 
   @SneakyThrows
@@ -182,11 +165,10 @@ public class TestPlanner {
       List<GraphqlQuery> mutations,
       List<GraphqlQuery> subscriptions,
       String prefix,
-      Map<String, Map<String, String>> headers) {
+      Map<String, String> headers) {
     for (Definition definition : document.getDefinitions()) {
       if (definition instanceof OperationDefinition operationDefinition) {
-        var query =
-            new GraphqlQuery(prefix, AstPrinter.printAst(operationDefinition), headers.get(prefix));
+        var query = new GraphqlQuery(prefix, AstPrinter.printAst(operationDefinition), headers);
         switch (operationDefinition.getOperation()) {
           case QUERY:
             queries.add(query);
