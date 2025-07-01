@@ -44,6 +44,15 @@ mvn test -pl sqrl-planner -Deasyjacoco.skip
 
 # Test specific test method in module
 mvn test -pl sqrl-tools/sqrl-config -Dtest=TestClassName#testMethodName -Deasyjacoco.skip
+
+# Container tests (requires Docker images to be built)
+mvn -B install -DonlyContainerE2E -pl :sqrl-container-testing -Dit.test=TestClassName
+
+# Container tests with dev profile (recommended)
+mvn -B install -Pdev -Dit.test=TestClassName
+
+# Run all container tests (omit -pl when testing container code changes)
+mvn -B install -DonlyContainerE2E -Dit.test=*ContainerIT
 ```
 
 ### Code Quality
@@ -129,6 +138,20 @@ This is a multi-module Maven project with the following key components:
 - **Coverage Requirement**: Minimum 70% instruction coverage with JaCoCo
 - **Test Naming**: All new test methods must follow the `given_when_then` pattern (e.g., `givenValidConfig_whenParseConfiguration_thenReturnsExpectedResult`)
 - **Test Assertions**: Use AssertJ (`org.assertj.core.api.Assertions`) for all test assertions. Avoid JUnit's `org.junit.jupiter.api.Assertions` in favor of AssertJ's more fluent and readable API
+
+### Container Testing
+
+Container tests in `sqrl-container-testing` validate the end-to-end functionality of DataSQRL Docker images:
+
+- **Purpose**: Test the complete Docker image deployment including compilation and server startup
+- **Requirements**: Docker must be running and DataSQRL images must be built (`datasqrl/cmd:local`, `datasqrl/sqrl-server:local`)
+- **Test Structure**: Tests extend `SqrlContainerTestBase` which provides container management utilities
+- **Available Endpoints**: 
+  - `/graphql` - Main GraphQL API endpoint
+  - `/health` - Health check endpoint (returns 204 No Content when healthy)
+  - `/metrics` - Prometheus metrics endpoint (availability depends on configuration)
+- **Common Patterns**: Compile SQRL script → Start server container → Execute HTTP requests → Validate responses
+- **Test Data**: Uses test cases from `sqrl-integration-tests/src/test/resources/usecases/`
 
 ## Code Style Guidelines
 
