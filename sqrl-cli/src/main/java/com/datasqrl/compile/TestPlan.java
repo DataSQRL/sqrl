@@ -16,7 +16,7 @@
 package com.datasqrl.compile;
 
 import java.util.List;
-import java.util.Properties;
+import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -36,6 +36,6 @@ public class TestPlan {
   public static class GraphqlQuery {
     String name;
     String query;
-    Properties headers;
+    Map<String, String> headers;
   }
 }

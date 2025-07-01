@@ -17,6 +17,7 @@ package com.datasqrl.config;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
+import java.util.Map;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 
@@ -36,5 +37,10 @@ public class TestRunnerConfigImpl implements TestRunnerConfiguration {
   @Override
   public Optional<Integer> getRequiredCheckpoints() {
     return sqrlConfig.asInt("required-checkpoints").getOptional();
+  }
+
+  @Override
+  public Map<String, String> getHeaders() {
+    return sqrlConfig.asMap("headers", String.class).getOptional().orElse(Map.of());
   }
 }
