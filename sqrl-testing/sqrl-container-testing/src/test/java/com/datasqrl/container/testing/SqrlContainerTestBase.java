@@ -194,7 +194,7 @@ public abstract class SqrlContainerTestBase {
   }
 
   private String getImageTag() {
-    return System.getProperty("container.image.tag", "local");
+    return System.getProperty("docker.image.tag", "local");
   }
 
   private String getDockerRunCommand(
