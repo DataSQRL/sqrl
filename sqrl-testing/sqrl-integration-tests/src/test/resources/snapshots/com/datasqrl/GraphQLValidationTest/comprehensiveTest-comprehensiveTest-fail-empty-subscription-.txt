@@ -20,7 +20,7 @@ CustomerTimeWindow := SELECT
 ^
 
 [FATAL] Empty root object type: Subscription
-in script:comprehensivetest-fail-empty-subscription [16:1]:
+in script:comprehensivetest-fail-empty-subscription.graphqls [16:1]:
 }
 
 type Subscription {

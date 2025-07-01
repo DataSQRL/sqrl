@@ -15,12 +15,29 @@
  */
 package com.datasqrl.graphql;
 
-import com.datasqrl.canonicalizer.Name;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.Optional;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.EqualsAndHashCode.Include;
+import lombok.Getter;
+import lombok.ToString;
 
-public interface APISource {
-  Name getName();
+@AllArgsConstructor
+@Getter
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@ToString(of = "path")
+public class APISource {
 
-  String getSchemaDefinition();
+  @Include Optional<Path> path;
+  String definition;
 
-  APISource clone(String schema);
+  public static APISource of(Path path, String contents) throws IOException {
+    return new APISource(Optional.of(path), contents);
+  }
+
+  public static APISource of(String definition) {
+    return new APISource(Optional.empty(), definition);
+  }
 }

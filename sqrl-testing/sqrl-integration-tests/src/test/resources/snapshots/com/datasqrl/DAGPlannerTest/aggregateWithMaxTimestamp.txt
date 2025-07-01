@@ -686,9 +686,167 @@ INSERT INTO `default_catalog`.`default_database`.`OrderAgg2_2`
     ],
     "mutations" : [ ],
     "subscriptions" : [ ],
+    "operations" : [
+      {
+        "function" : {
+          "name" : "GetOrderAgg1",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query OrderAgg1($limit: Int = 10, $offset: Int = 0) {\nOrderAgg1(limit: $limit, offset: $offset) {\ncustomerid\ncnt\n}\n\n}",
+          "queryName" : "OrderAgg1",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/OrderAgg1{?offset,limit}"
+      },
+      {
+        "function" : {
+          "name" : "GetOrderAgg2",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query OrderAgg2($limit: Int = 10, $offset: Int = 0) {\nOrderAgg2(limit: $limit, offset: $offset) {\ncustomerid\ntimestamp\ncnt\n}\n\n}",
+          "queryName" : "OrderAgg2",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/OrderAgg2{?offset,limit}"
+      },
+      {
+        "function" : {
+          "name" : "GetOrderAgg3",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query OrderAgg3($limit: Int = 10, $offset: Int = 0) {\nOrderAgg3(limit: $limit, offset: $offset) {\ncustomerid\ncnt\n}\n\n}",
+          "queryName" : "OrderAgg3",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/OrderAgg3{?offset,limit}"
+      },
+      {
+        "function" : {
+          "name" : "GetOrderAgg4",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query OrderAgg4($limit: Int = 10, $offset: Int = 0) {\nOrderAgg4(limit: $limit, offset: $offset) {\ncustomerid\ntimestamp\ncnt\n}\n\n}",
+          "queryName" : "OrderAgg4",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/OrderAgg4{?offset,limit}"
+      },
+      {
+        "function" : {
+          "name" : "GetOrders",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query Orders($limit: Int = 10, $offset: Int = 0) {\nOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
+          "queryName" : "Orders",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/Orders{?offset,limit}"
+      },
+      {
+        "function" : {
+          "name" : "GetOrdersState",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query OrdersState($limit: Int = 10, $offset: Int = 0) {\nOrdersState(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
+          "queryName" : "OrdersState",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/OrdersState{?offset,limit}"
+      }
+    ],
     "schema" : {
       "type" : "string",
-      "schema" : "\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype OrderAgg1 {\n  customerid: GraphQLBigInteger!\n  cnt: GraphQLBigInteger!\n}\n\ntype OrderAgg2 {\n  customerid: GraphQLBigInteger!\n  timestamp: DateTime!\n  cnt: GraphQLBigInteger!\n}\n\ntype OrderAgg3 {\n  customerid: GraphQLBigInteger!\n  cnt: GraphQLBigInteger!\n}\n\ntype OrderAgg4 {\n  customerid: GraphQLBigInteger!\n  timestamp: DateTime!\n  cnt: GraphQLBigInteger!\n}\n\ntype Orders {\n  id: GraphQLBigInteger!\n  customerid: GraphQLBigInteger!\n  time: DateTime!\n  entries: [Orders_entriesOutput]!\n}\n\ntype OrdersState {\n  id: GraphQLBigInteger!\n  customerid: GraphQLBigInteger!\n  time: DateTime!\n  entries: [OrdersState_entriesOutput]!\n}\n\ntype OrdersState_entriesOutput {\n  productid: GraphQLBigInteger!\n  quantity: GraphQLBigInteger!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Orders_entriesOutput {\n  productid: GraphQLBigInteger!\n  quantity: GraphQLBigInteger!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Query {\n  OrderAgg1(limit: Int = 10, offset: Int = 0): [OrderAgg1!]\n  OrderAgg2(limit: Int = 10, offset: Int = 0): [OrderAgg2!]\n  OrderAgg3(limit: Int = 10, offset: Int = 0): [OrderAgg3!]\n  OrderAgg4(limit: Int = 10, offset: Int = 0): [OrderAgg4!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n  OrdersState(limit: Int = 10, offset: Int = 0): [OrdersState!]\n}\n"
+      "schema" : "\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype OrderAgg1 {\n  customerid: GraphQLBigInteger!\n  cnt: GraphQLBigInteger!\n}\n\ntype OrderAgg2 {\n  customerid: GraphQLBigInteger!\n  timestamp: DateTime!\n  cnt: GraphQLBigInteger!\n}\n\ntype OrderAgg3 {\n  customerid: GraphQLBigInteger!\n  cnt: GraphQLBigInteger!\n}\n\ntype OrderAgg4 {\n  customerid: GraphQLBigInteger!\n  timestamp: DateTime!\n  cnt: GraphQLBigInteger!\n}\n\ntype Orders {\n  id: GraphQLBigInteger!\n  customerid: GraphQLBigInteger!\n  time: DateTime!\n  entries: [Orders_entriesOutput]!\n}\n\ntype OrdersState {\n  id: GraphQLBigInteger!\n  customerid: GraphQLBigInteger!\n  time: DateTime!\n  entries: [OrdersState_entriesOutput]!\n}\n\ntype OrdersState_entriesOutput {\n  productid: GraphQLBigInteger!\n  quantity: GraphQLBigInteger!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Orders_entriesOutput {\n  productid: GraphQLBigInteger!\n  quantity: GraphQLBigInteger!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Query {\n  OrderAgg1(limit: Int = 10, offset: Int = 0): [OrderAgg1!]\n  OrderAgg2(limit: Int = 10, offset: Int = 0): [OrderAgg2!]\n  OrderAgg3(limit: Int = 10, offset: Int = 0): [OrderAgg3!]\n  OrderAgg4(limit: Int = 10, offset: Int = 0): [OrderAgg4!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n  OrdersState(limit: Int = 10, offset: Int = 0): [OrdersState!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
     }
   }
 }

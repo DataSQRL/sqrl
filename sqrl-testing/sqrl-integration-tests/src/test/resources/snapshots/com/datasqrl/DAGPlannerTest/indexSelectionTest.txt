@@ -657,9 +657,182 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
     ],
     "mutations" : [ ],
     "subscriptions" : [ ],
+    "operations" : [
+      {
+        "function" : {
+          "name" : "GetCustomer",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "orders_limit" : {
+                "type" : "integer"
+              },
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              },
+              "orders_offset" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query Customer($limit: Int = 10, $offset: Int = 0$orders_limit: Int = 10, $orders_offset: Int = 0) {\nCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\norders(limit: $orders_limit, offset: $orders_offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n}\n\n}",
+          "queryName" : "Customer",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/Customer{?orders_limit,offset,limit,orders_offset}"
+      },
+      {
+        "function" : {
+          "name" : "GetOrders",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "customerid" : {
+                "type" : "string"
+              },
+              "limit" : {
+                "type" : "integer"
+              },
+              "time" : {
+                "type" : "string"
+              }
+            },
+            "required" : [
+              "time",
+              "customerid"
+            ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query Orders($time: DateTime!, $customerid: GraphQLBigInteger!, $limit: Int = 10, $offset: Int = 0) {\nOrders(time: $time, customerid: $customerid, limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
+          "queryName" : "Orders",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/Orders{?offset,customerid,limit,time}"
+      },
+      {
+        "function" : {
+          "name" : "GetProduct",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "name" : {
+                "type" : "string"
+              },
+              "limit" : {
+                "type" : "integer"
+              },
+              "description" : {
+                "type" : "string"
+              },
+              "category" : {
+                "type" : "string"
+              },
+              "_ingest_time" : {
+                "type" : "string"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query Product($name: String, $description: String, $category: String, $_ingest_time: DateTime, $limit: Int = 10, $offset: Int = 0) {\nProduct(name: $name, description: $description, category: $category, _ingest_time: $_ingest_time, limit: $limit, offset: $offset) {\nproductid\nname\ndescription\ncategory\n}\n\n}",
+          "queryName" : "Product",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/Product{?offset,name,limit,description,category,_ingest_time}"
+      },
+      {
+        "function" : {
+          "name" : "GetOrdersById",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              },
+              "id" : {
+                "type" : "string"
+              }
+            },
+            "required" : [
+              "id"
+            ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query OrdersById($id: GraphQLBigInteger!, $limit: Int = 10, $offset: Int = 0) {\nOrdersById(id: $id, limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
+          "queryName" : "OrdersById",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/OrdersById{?offset,limit,id}"
+      },
+      {
+        "function" : {
+          "name" : "GetOrdersByTime",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "customerid" : {
+                "type" : "string"
+              },
+              "limit" : {
+                "type" : "integer"
+              },
+              "time" : {
+                "type" : "string"
+              }
+            },
+            "required" : [
+              "time",
+              "customerid"
+            ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query OrdersByTime($time: DateTime!, $customerid: GraphQLBigInteger!, $limit: Int = 10, $offset: Int = 0) {\nOrdersByTime(time: $time, customerid: $customerid, limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
+          "queryName" : "OrdersByTime",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/OrdersByTime{?offset,customerid,limit,time}"
+      }
+    ],
     "schema" : {
       "type" : "string",
-      "schema" : "type Customer {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n  orders(limit: Int = 10, offset: Int = 0): [Orders!]\n}\n\n\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Orders {\n  id: GraphQLBigInteger!\n  customerid: GraphQLBigInteger!\n  time: DateTime!\n  entries: [Orders_entriesOutput]!\n}\n\ntype Orders_entriesOutput {\n  productid: GraphQLBigInteger!\n  quantity: GraphQLBigInteger!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Product {\n  productid: GraphQLBigInteger!\n  name: String!\n  description: String!\n  category: String!\n}\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  Orders(time: DateTime!, customerid: GraphQLBigInteger!, limit: Int = 10, offset: Int = 0): [Orders!]\n  Product(name: String, description: String, category: String, _ingest_time: DateTime, limit: Int = 10, offset: Int = 0): [Product!]\n  OrdersById(id: GraphQLBigInteger!, limit: Int = 10, offset: Int = 0): [Orders!]\n  OrdersByTime(time: DateTime!, customerid: GraphQLBigInteger!, limit: Int = 10, offset: Int = 0): [Orders!]\n}\n"
+      "schema" : "type Customer {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n  orders(limit: Int = 10, offset: Int = 0): [Orders!]\n}\n\n\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Orders {\n  id: GraphQLBigInteger!\n  customerid: GraphQLBigInteger!\n  time: DateTime!\n  entries: [Orders_entriesOutput]!\n}\n\ntype Orders_entriesOutput {\n  productid: GraphQLBigInteger!\n  quantity: GraphQLBigInteger!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Product {\n  productid: GraphQLBigInteger!\n  name: String!\n  description: String!\n  category: String!\n}\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  Orders(time: DateTime!, customerid: GraphQLBigInteger!, limit: Int = 10, offset: Int = 0): [Orders!]\n  Product(name: String, description: String, category: String, _ingest_time: DateTime, limit: Int = 10, offset: Int = 0): [Product!]\n  OrdersById(id: GraphQLBigInteger!, limit: Int = 10, offset: Int = 0): [Orders!]\n  OrdersByTime(time: DateTime!, customerid: GraphQLBigInteger!, limit: Int = 10, offset: Int = 0): [Orders!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
     }
   }
 }

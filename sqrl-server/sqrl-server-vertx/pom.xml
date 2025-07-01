@@ -27,7 +27,7 @@
   <artifactId>sqrl-server-vertx</artifactId>
 
   <properties>
-    <vertx.verticle>com.datasqrl.graphql.GraphQLServer</vertx.verticle>
+    <vertx.verticle>com.datasqrl.graphql.HttpServerVerticle</vertx.verticle>
     <skipVertexFatJar>false</skipVertexFatJar>
     <docker.image.name>datasqrl/sqrl-server</docker.image.name>
   </properties>

@@ -1,0 +1,108 @@
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+
+type Query {
+    """Returns all the rewards that a customer has earned in the given time period"""
+    Rewards(
+        """customerid: Customer identifier"""
+        customerid: Int!,
+        """fromTime: RFC-3339 compliant date time scalar. Returns rewards after this time. Use the start of the day only, e.g. 2024-01-19T00:00:00-00:00."""
+        fromTime: DateTime!,
+        """toTime: RFC-3339 compliant date time scalar. Returns rewards up to this time. Use the start of the day only, e.g. 2024-01-19T00:00:00-00:00."""
+        toTime: DateTime!
+    ): [CustomerRewards!]
+
+    """Returns the total awards a customer earned by week starting from the most recent week."""
+    RewardsByWeek(
+        """customerid: Customer identifier"""
+        customerid: Int!,
+        """limit: The number of weeks to return starting from most recent to less recent weeks. For example, if limit is 12 it will return the last 12 weeks of total rewards earned."""
+        limit: Int = 12,
+        """offset: The number of weeks to offset. For example, if offset is 4, it will skip the last 4 weeks of rewards earned and return the weeks before that."""
+        offset: Int = 0
+    ): [RewardsByWeek!]
+
+    """Returns the total amount of rewards the customer has earned to date and the time since when they eared rewards"""
+    TotalReward(
+        """customerid: Customer identifier"""
+        customerid: Int!
+    ): TotalReward
+
+    """Returns all the potential rewards a customer could have earned in the given time period for the given card type. Use this function to show customers the rewards they would have earned if they had the given card."""
+    PotentialRewards(
+        """customerid: Customer identifier"""
+        customerid: Int!,
+        """cardType: The type of card to calculate potential rewards for (i.e. travel, sports, business, or family)"""
+        cardType: String!,
+        """fromTime: RFC-3339 compliant date time scalar. Returns rewards after this time. Use the start of the day only, e.g. 2024-01-19T00:00:00-00:00."""
+        fromTime: DateTime!,
+        """toTime: RFC-3339 compliant date time scalar. Returns rewards up to this time. Use the start of the day only, e.g. 2024-01-19T00:00:00-00:00."""
+        toTime: DateTime!
+    ): [PotentialRewards!]
+
+    """Returns the total awards a customer could have earned for a given card type by week starting from the most recent week. Use this function to show the customer what their reward earnings would have looked like, if they had a given card."""
+    PotentialRewardsByWeek(
+        """customerid: Customer identifier"""
+        customerid: Int!,
+        """cardType: The type of card to calculate potential rewards for (e.g., travel, sports, business, family)"""
+        cardType: String!,
+        """limit: The number of weeks to return starting from most recent to less recent weeks. For example, if limit is 12 it will return the last 12 weeks of total rewards earned."""
+        limit: Int = 12,
+        """offset: The number of weeks to offset. For example, if offset is 4, it will skip the last 4 weeks of rewards earned and return the weeks before that."""
+        offset: Int = 0
+    ): [PotentialRewardsByWeek!]
+
+    """Returns the total amount of rewards the customer could have earned for each type of credit card the customer does not yet have. Use this function to determine which credit card type to recommend to a customer."""
+    TotalPotentialReward(
+        """customerid: Customer identifier"""
+        customerid: Int!
+    ): [TotalPotentialReward!]
+
+}
+
+type CustomerRewards {
+    transactionId: Float!
+    customerid: Int!
+    cardNo: Float!
+    cardType: String!
+    time: DateTime!
+    amount: Float!
+    reward: Float!
+    merchantName: String!
+}
+
+type RewardsByWeek {
+    customerid: Int!
+    timeWeek: DateTime!
+    total_reward: Float!
+}
+
+type TotalReward {
+    customerid: Int!
+    total_reward: Float!
+    since_time: DateTime!
+}
+
+type PotentialRewards {
+    transactionId: Float!
+    customerid: Int!
+    rewardCardType: String!
+    time: DateTime!
+    amount: Float!
+    reward: Float!
+    merchantName: String!
+}
+
+type PotentialRewardsByWeek {
+    customerid: Int!
+    cardType: String!
+    timeWeek: DateTime!
+    total_reward: Float!
+}
+
+type TotalPotentialReward {
+    customerid: Int!
+    cardType: String!
+    total_reward: Float!
+    since_time: DateTime!
+}

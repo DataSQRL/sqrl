@@ -15,9 +15,13 @@
  */
 package com.datasqrl.graphql;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.datasqrl.graphql.jdbc.JdbcClient;
 import com.datasqrl.graphql.server.Context;
 import com.datasqrl.graphql.server.GraphQLEngineBuilder;
+import com.datasqrl.graphql.server.MetadataReader;
+import com.datasqrl.graphql.server.MetadataType;
 import com.datasqrl.graphql.server.QueryExecutionContext;
 import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedQuery;
@@ -26,9 +30,11 @@ import graphql.schema.DataFetcher;
 import graphql.schema.DataFetchingEnvironment;
 import graphql.schema.PropertyDataFetcher;
 import io.vertx.core.json.JsonObject;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
+import lombok.NonNull;
 import lombok.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,6 +49,7 @@ public class VertxContext implements Context {
 
   private static final Logger log = LoggerFactory.getLogger(VertxContext.class);
   VertxJdbcClient sqlClient;
+  Map<MetadataType, MetadataReader> metadataReaders;
 
   @Override
   public JdbcClient getClient() {
@@ -101,5 +108,10 @@ public class VertxContext implements Context {
         };
 
     return dataFetcher;
+  }
+
+  @Override
+  public MetadataReader getMetadataReader(@NonNull MetadataType metadataType) {
+    return checkNotNull(metadataReaders.get(metadataType), "Invalid metadataType %s", metadataType);
   }
 }

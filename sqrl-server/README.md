@@ -7,6 +7,6 @@ data systems of the pipeline (Postgres, Kafka, etc).
 The goal of the server implementation is to be very lean and efficient, using modern reactive Java
 libraries to minimize concurrency overhead.
 
-The server implementation is split into a generic GraphQL servlet implementation and
-a specific implementation that uses Vertx as the server engine.
+The server implementation is split into a "core" module that defines the interface to the compiler (i.e. the classes that get generated) and "base" which contains the servlet implementation for Vert.x.
+The "vertx" module is a lightweight module for a standalone deployment with Dockerfile.
 

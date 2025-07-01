@@ -1,0 +1,13 @@
+MyTable := SELECT val
+           FROM (VALUES ((1)), ((2)), ((3)), ((4)), ((5)),
+            ((6)), ((7)), ((8)), ((9)), ((10))) AS t(val) ORDER BY val;
+
+-- skip test for now, fails due to auth, need to figure out a way to bypass auth for tests
+-- /*+test*/
+-- MyTableTest := SELECT * FROM MyTable;
+
+AuthMyTable(val BIGINT NOT NULL METADATA FROM 'auth.val') :=
+    SELECT t.* 
+      FROM MyTable t 
+     WHERE t.val = :val
+     ORDER BY t.val ASC;

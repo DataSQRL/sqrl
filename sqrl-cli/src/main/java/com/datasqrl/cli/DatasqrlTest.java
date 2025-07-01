@@ -15,6 +15,8 @@
  */
 package com.datasqrl.cli;
 
+import static org.apache.commons.lang3.ObjectUtils.isNotEmpty;
+
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.util.FlinkOperatorStatusChecker;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -30,6 +32,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Properties;
+import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -97,6 +101,7 @@ public class DatasqrlTest {
     long delaySec = DEFAULT_DELAY_SEC;
     long mutationWait = MUTATION_WAIT_SEC;
     int requiredCheckpoints = 0;
+    Map<String, String> headers = Map.of();
     // todo: fix inject PackageJson and retrieve through interface
     Object testRunner = run.getPackageJson().get("test-runner");
     if (testRunner instanceof Map testRunnerMap) {
@@ -111,6 +116,10 @@ public class DatasqrlTest {
       Object m = testRunnerMap.get("mutation-delay");
       if (m instanceof Number number) {
         mutationWait = number.intValue();
+      }
+      Object h = testRunnerMap.get("headers");
+      if (h instanceof Map map) {
+        headers = map;
       }
     }
 
@@ -145,7 +154,10 @@ public class DatasqrlTest {
 
         for (GraphqlQuery subscription : testPlan.getSubscriptions()) {
           SubscriptionClient client =
-              new SubscriptionClient(subscription.getName(), subscription.getQuery());
+              new SubscriptionClient(
+                  subscription.getName(),
+                  subscription.getQuery(),
+                  combine(headers, subscription.getHeaders()));
           subscriptionClients.add(client);
           CompletableFuture<Void> future = client.start();
           subscriptionFutures.add(future);
@@ -165,7 +177,8 @@ public class DatasqrlTest {
         // Execute mutations
         for (GraphqlQuery mutationQuery : testPlan.getMutations()) {
           // Execute mutation queries
-          String data = executeQuery(mutationQuery.getQuery());
+          String data =
+              executeQuery(mutationQuery.getQuery(), combine(headers, mutationQuery.getHeaders()));
           // Snapshot result
           Path snapshotPath = snapshotDir.resolve(mutationQuery.getName() + ".snapshot");
           snapshot(snapshotPath, mutationQuery.getName(), data, exceptions);
@@ -226,7 +239,7 @@ public class DatasqrlTest {
         TestPlan testPlan = testPlanOpt.get();
         for (GraphqlQuery query : testPlan.getQueries()) {
           // Execute queries
-          String data = executeQuery(query.getQuery());
+          String data = executeQuery(query.getQuery(), combine(headers, query.getHeaders()));
 
           // Snapshot result
           Path snapshotPath = snapshotDir.resolve(query.getName() + ".snapshot");
@@ -322,22 +335,34 @@ public class DatasqrlTest {
     return exitCode;
   }
 
-  @SneakyThrows
-  private String executeQuery(String query) {
-    HttpClient client = HttpClient.newHttpClient();
+  private Map<String, String> combine(Map<String, String> baseHeaders, Properties overrides) {
+    var headers = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+    if (isNotEmpty(baseHeaders)) {
+      headers.putAll(baseHeaders);
+    }
 
-    HttpRequest request =
+    if (isNotEmpty(overrides)) {
+      overrides.forEach((key, value) -> headers.put(key.toString(), value.toString()));
+    }
+
+    return headers;
+  }
+
+  @SneakyThrows
+  private String executeQuery(String query, Map<String, String> headers) {
+    var client = HttpClient.newHttpClient();
+
+    var requestBuilder =
         HttpRequest.newBuilder()
             .uri(URI.create(GRAPHQL_ENDPOINT))
             .header("Content-Type", "application/graphql")
-            .POST(HttpRequest.BodyPublishers.ofString(query))
-            .build();
+            .POST(HttpRequest.BodyPublishers.ofString(query));
 
-    HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-    if (response.statusCode() != 200) {
-      throw new RuntimeException("Failed to post GraphQL query: " + response.body());
+    if (headers != null) {
+      headers.forEach((k, v) -> requestBuilder.header(k, v));
     }
+
+    var response = client.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofString());
 
     return response.body();
   }
@@ -386,6 +411,7 @@ public class DatasqrlTest {
 
     String name;
     String query;
+    Properties headers;
   }
 
   @Value

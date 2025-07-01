@@ -16,33 +16,19 @@
 package com.datasqrl;
 
 import java.nio.file.Path;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ArgumentsSource;
+import org.junit.jupiter.api.Test;
 
 @Disabled
 public class ExternalUseCaseCompileTest extends AbstractUseCaseTest {
 
   public static Path USECASE_DIR;
 
-  @BeforeAll
-  static void readEnvironment() {
-    var dirName = System.getenv("DATASQRL_EXTERNAL_TEST_DIR");
-    USECASE_DIR = Path.of(dirName);
-    System.out.println(USECASE_DIR);
-  }
-
-  @Override
-  @ParameterizedTest
-  @ArgumentsSource(UseCaseFiles.class)
-  void testUsecase(Path script, Path graphQlFile, Path packageFile) {
-    super.testUsecase(script, graphQlFile, packageFile);
-  }
-
-  static class UseCaseFiles extends SqrlScriptsAndLocalPackages {
-    public UseCaseFiles() {
-      super(USECASE_DIR, false);
-    }
+  @Test
+  public void testIndividual() {
+    super.testUsecase(
+        Path.of("/Users/matthias/git/datasqrl-cba/fraud/fraud.sqrl"),
+        null,
+        Path.of("/Users/matthias/git/datasqrl-cba/fraud/fraud_package_test.json"));
   }
 }

@@ -1,0 +1,5 @@
+IMPORT ecommerceTs.Customer;
+
+CustomersByTime(customerid BIGINT NOT NULL METADATA FROM 'auth.userid', fromTime TIMESTAMP NOT NULL) :=
+    SELECT * FROM Customer WHERE customerid = :customerid AND `timestamp` + INTERVAL '4' HOUR >= :fromTime
+    ORDER BY `timestamp` ASC;

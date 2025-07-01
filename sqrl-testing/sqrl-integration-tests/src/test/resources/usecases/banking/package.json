@@ -8,5 +8,10 @@
   },
   "test-runner": {
     "delay-sec": -1
+  },
+  "script": {
+    "main": "loan.sqrl",
+    "graphql": "loan.graphqls",
+    "operations": ["operations/query-applications.graphql"]
   }
 }

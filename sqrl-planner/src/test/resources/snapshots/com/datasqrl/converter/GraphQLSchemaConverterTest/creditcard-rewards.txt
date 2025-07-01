@@ -1,0 +1,185 @@
+[ {
+  "format" : "JSON",
+  "function" : {
+    "description" : "Returns all the rewards that a customer has earned in the given time period",
+    "name" : "GetRewards",
+    "parameters" : {
+      "properties" : {
+        "customerid" : {
+          "description" : "customerid: Customer identifier",
+          "type" : "integer"
+        },
+        "fromTime" : {
+          "description" : "fromTime: RFC-3339 compliant date time scalar. Returns rewards after this time. Use the start of the day only, e.g. 2024-01-19T00:00:00-00:00.",
+          "type" : "string"
+        },
+        "toTime" : {
+          "description" : "toTime: RFC-3339 compliant date time scalar. Returns rewards up to this time. Use the start of the day only, e.g. 2024-01-19T00:00:00-00:00.",
+          "type" : "string"
+        }
+      },
+      "required" : [ "customerid", "fromTime", "toTime" ],
+      "type" : "object"
+    }
+  },
+  "apiQuery" : {
+    "operationType" : "QUERY",
+    "query" : "query Rewards($customerid: Int!, $fromTime: DateTime!, $toTime: DateTime!) {\nRewards(customerid: $customerid, fromTime: $fromTime, toTime: $toTime) {\ntransactionId\ncustomerid\ncardNo\ncardType\ntime\namount\nreward\nmerchantName\n}\n\n}",
+    "queryName" : "Rewards"
+  },
+  "mcpMethod" : "TOOL",
+  "restMethod" : "GET",
+  "uriTemplate" : "queries/Rewards{?customerid,fromTime,toTime}"
+}, {
+  "format" : "JSON",
+  "function" : {
+    "description" : "Returns the total awards a customer earned by week starting from the most recent week.",
+    "name" : "GetRewardsByWeek",
+    "parameters" : {
+      "properties" : {
+        "customerid" : {
+          "description" : "customerid: Customer identifier",
+          "type" : "integer"
+        },
+        "limit" : {
+          "description" : "limit: The number of weeks to return starting from most recent to less recent weeks. For example, if limit is 12 it will return the last 12 weeks of total rewards earned.",
+          "type" : "integer"
+        },
+        "offset" : {
+          "description" : "offset: The number of weeks to offset. For example, if offset is 4, it will skip the last 4 weeks of rewards earned and return the weeks before that.",
+          "type" : "integer"
+        }
+      },
+      "required" : [ "customerid" ],
+      "type" : "object"
+    }
+  },
+  "apiQuery" : {
+    "operationType" : "QUERY",
+    "query" : "query RewardsByWeek($customerid: Int!, $limit: Int = 12, $offset: Int = 0) {\nRewardsByWeek(customerid: $customerid, limit: $limit, offset: $offset) {\ncustomerid\ntimeWeek\ntotal_reward\n}\n\n}",
+    "queryName" : "RewardsByWeek"
+  },
+  "mcpMethod" : "TOOL",
+  "restMethod" : "GET",
+  "uriTemplate" : "queries/RewardsByWeek{?offset,customerid,limit}"
+}, {
+  "format" : "JSON",
+  "function" : {
+    "description" : "Returns the total amount of rewards the customer has earned to date and the time since when they eared rewards",
+    "name" : "GetTotalReward",
+    "parameters" : {
+      "properties" : {
+        "customerid" : {
+          "description" : "customerid: Customer identifier",
+          "type" : "integer"
+        }
+      },
+      "required" : [ "customerid" ],
+      "type" : "object"
+    }
+  },
+  "apiQuery" : {
+    "operationType" : "QUERY",
+    "query" : "query TotalReward($customerid: Int!) {\nTotalReward(customerid: $customerid) {\ncustomerid\ntotal_reward\nsince_time\n}\n\n}",
+    "queryName" : "TotalReward"
+  },
+  "mcpMethod" : "TOOL",
+  "restMethod" : "GET",
+  "uriTemplate" : "queries/TotalReward{?customerid}"
+}, {
+  "format" : "JSON",
+  "function" : {
+    "description" : "Returns all the potential rewards a customer could have earned in the given time period for the given card type. Use this function to show customers the rewards they would have earned if they had the given card.",
+    "name" : "GetPotentialRewards",
+    "parameters" : {
+      "properties" : {
+        "cardType" : {
+          "description" : "cardType: The type of card to calculate potential rewards for (i.e. travel, sports, business, or family)",
+          "type" : "string"
+        },
+        "customerid" : {
+          "description" : "customerid: Customer identifier",
+          "type" : "integer"
+        },
+        "fromTime" : {
+          "description" : "fromTime: RFC-3339 compliant date time scalar. Returns rewards after this time. Use the start of the day only, e.g. 2024-01-19T00:00:00-00:00.",
+          "type" : "string"
+        },
+        "toTime" : {
+          "description" : "toTime: RFC-3339 compliant date time scalar. Returns rewards up to this time. Use the start of the day only, e.g. 2024-01-19T00:00:00-00:00.",
+          "type" : "string"
+        }
+      },
+      "required" : [ "customerid", "cardType", "fromTime", "toTime" ],
+      "type" : "object"
+    }
+  },
+  "apiQuery" : {
+    "operationType" : "QUERY",
+    "query" : "query PotentialRewards($customerid: Int!, $cardType: String!, $fromTime: DateTime!, $toTime: DateTime!) {\nPotentialRewards(customerid: $customerid, cardType: $cardType, fromTime: $fromTime, toTime: $toTime) {\ntransactionId\ncustomerid\nrewardCardType\ntime\namount\nreward\nmerchantName\n}\n\n}",
+    "queryName" : "PotentialRewards"
+  },
+  "mcpMethod" : "TOOL",
+  "restMethod" : "GET",
+  "uriTemplate" : "queries/PotentialRewards{?customerid,cardType,fromTime,toTime}"
+}, {
+  "format" : "JSON",
+  "function" : {
+    "description" : "Returns the total awards a customer could have earned for a given card type by week starting from the most recent week. Use this function to show the customer what their reward earnings would have looked like, if they had a given card.",
+    "name" : "GetPotentialRewardsByWeek",
+    "parameters" : {
+      "properties" : {
+        "cardType" : {
+          "description" : "cardType: The type of card to calculate potential rewards for (e.g., travel, sports, business, family)",
+          "type" : "string"
+        },
+        "customerid" : {
+          "description" : "customerid: Customer identifier",
+          "type" : "integer"
+        },
+        "limit" : {
+          "description" : "limit: The number of weeks to return starting from most recent to less recent weeks. For example, if limit is 12 it will return the last 12 weeks of total rewards earned.",
+          "type" : "integer"
+        },
+        "offset" : {
+          "description" : "offset: The number of weeks to offset. For example, if offset is 4, it will skip the last 4 weeks of rewards earned and return the weeks before that.",
+          "type" : "integer"
+        }
+      },
+      "required" : [ "customerid", "cardType" ],
+      "type" : "object"
+    }
+  },
+  "apiQuery" : {
+    "operationType" : "QUERY",
+    "query" : "query PotentialRewardsByWeek($customerid: Int!, $cardType: String!, $limit: Int = 12, $offset: Int = 0) {\nPotentialRewardsByWeek(customerid: $customerid, cardType: $cardType, limit: $limit, offset: $offset) {\ncustomerid\ncardType\ntimeWeek\ntotal_reward\n}\n\n}",
+    "queryName" : "PotentialRewardsByWeek"
+  },
+  "mcpMethod" : "TOOL",
+  "restMethod" : "GET",
+  "uriTemplate" : "queries/PotentialRewardsByWeek{?offset,customerid,cardType,limit}"
+}, {
+  "format" : "JSON",
+  "function" : {
+    "description" : "Returns the total amount of rewards the customer could have earned for each type of credit card the customer does not yet have. Use this function to determine which credit card type to recommend to a customer.",
+    "name" : "GetTotalPotentialReward",
+    "parameters" : {
+      "properties" : {
+        "customerid" : {
+          "description" : "customerid: Customer identifier",
+          "type" : "integer"
+        }
+      },
+      "required" : [ "customerid" ],
+      "type" : "object"
+    }
+  },
+  "apiQuery" : {
+    "operationType" : "QUERY",
+    "query" : "query TotalPotentialReward($customerid: Int!) {\nTotalPotentialReward(customerid: $customerid) {\ncustomerid\ncardType\ntotal_reward\nsince_time\n}\n\n}",
+    "queryName" : "TotalPotentialReward"
+  },
+  "mcpMethod" : "TOOL",
+  "restMethod" : "GET",
+  "uriTemplate" : "queries/TotalPotentialReward{?customerid}"
+} ]

@@ -79,7 +79,7 @@
     <agroal.version>2.7.1</agroal.version>
     <kafka.version>3.4.0</kafka.version>
     <flink.version>1.19.2</flink.version>
-    <slf4j.version>2.0.17</slf4j.version>
+    <slf4j.version>1.7.36</slf4j.version>
     <postgres.version>42.7.7</postgres.version>
     <log4j.version>2.25.0</log4j.version>
     <scala.version>2.12</scala.version>
@@ -721,7 +721,7 @@
       </dependency>
       <dependency>
         <groupId>org.apache.logging.log4j</groupId>
-        <artifactId>log4j-slf4j2-impl</artifactId>
+        <artifactId>log4j-slf4j-impl</artifactId>
         <version>${log4j.version}</version>
       </dependency>
 
@@ -917,6 +917,35 @@
             <license.skip>true</license.skip>
           </projectExtraProperties>
         </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <version>3.4.1</version>
+        <executions>
+          <execution>
+            <id>enforce-slf4j-version</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <bannedDependencies>
+                  <searchTransitive>true</searchTransitive>
+                  <includes>
+                    <include>*:*</include>
+                  </includes>
+                  <excludes>
+                    <!-- Ban SLF4J 2.x bridge to ensure only SLF4J 1.x is used -->
+                    <exclude>org.apache.logging.log4j:log4j-slf4j2-impl</exclude>
+                  </excludes>
+                  <message>SLF4J 2.x is not allowed. Use log4j-slf4j-impl instead of log4j-slf4j2-impl</message>
+                </bannedDependencies>
+              </rules>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
 
       <plugin>

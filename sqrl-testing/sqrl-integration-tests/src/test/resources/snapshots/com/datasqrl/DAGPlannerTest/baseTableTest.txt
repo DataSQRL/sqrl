@@ -761,9 +761,208 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerWithEmail_2`
     ],
     "mutations" : [ ],
     "subscriptions" : [ ],
+    "operations" : [
+      {
+        "function" : {
+          "name" : "GetCustomer",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query Customer($limit: Int = 10, $offset: Int = 0) {\nCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+          "queryName" : "Customer",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/Customer{?offset,limit}"
+      },
+      {
+        "function" : {
+          "name" : "GetCustomerWithEmail",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query CustomerWithEmail($limit: Int = 10, $offset: Int = 0) {\nCustomerWithEmail(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+          "queryName" : "CustomerWithEmail",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/CustomerWithEmail{?offset,limit}"
+      },
+      {
+        "function" : {
+          "name" : "GetDistinctCustomer",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query DistinctCustomer($limit: Int = 10, $offset: Int = 0) {\nDistinctCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+          "queryName" : "DistinctCustomer",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/DistinctCustomer{?offset,limit}"
+      },
+      {
+        "function" : {
+          "name" : "GetProduct",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query Product($limit: Int = 10, $offset: Int = 0) {\nProduct(limit: $limit, offset: $offset) {\nproductid\nname\ndescription\ncategory\n}\n\n}",
+          "queryName" : "Product",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/Product{?offset,limit}"
+      },
+      {
+        "function" : {
+          "name" : "GetCustomerById",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              },
+              "id" : {
+                "type" : "string"
+              }
+            },
+            "required" : [
+              "id"
+            ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query CustomerById($id: GraphQLBigInteger!, $limit: Int = 10, $offset: Int = 0) {\nCustomerById(id: $id, limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+          "queryName" : "CustomerById",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/CustomerById{?offset,limit,id}"
+      },
+      {
+        "function" : {
+          "name" : "GetDistinctCustomerById",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              },
+              "id" : {
+                "type" : "string"
+              }
+            },
+            "required" : [
+              "id"
+            ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query DistinctCustomerById($id: GraphQLBigInteger!, $limit: Int = 10, $offset: Int = 0) {\nDistinctCustomerById(id: $id, limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+          "queryName" : "DistinctCustomerById",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/DistinctCustomerById{?offset,limit,id}"
+      },
+      {
+        "function" : {
+          "name" : "GetProductByCategory",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              },
+              "category" : {
+                "type" : "string"
+              }
+            },
+            "required" : [
+              "category"
+            ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query ProductByCategory($category: String!, $limit: Int = 10, $offset: Int = 0) {\nProductByCategory(category: $category, limit: $limit, offset: $offset) {\nproductid\nname\ndescription\ncategory\n}\n\n}",
+          "queryName" : "ProductByCategory",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/ProductByCategory{?offset,limit,category}"
+      }
+    ],
     "schema" : {
       "type" : "string",
-      "schema" : "type Customer {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n}\n\n\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype DistinctCustomer {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n}\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Product {\n  productid: GraphQLBigInteger!\n  name: String!\n  description: String!\n  category: String!\n}\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerWithEmail(limit: Int = 10, offset: Int = 0): [Customer!]\n  DistinctCustomer(limit: Int = 10, offset: Int = 0): [DistinctCustomer!]\n  Product(limit: Int = 10, offset: Int = 0): [Product!]\n  CustomerById(id: GraphQLBigInteger!, limit: Int = 10, offset: Int = 0): [Customer!]\n  DistinctCustomerById(id: GraphQLBigInteger!, limit: Int = 10, offset: Int = 0): [DistinctCustomer!]\n  ProductByCategory(category: String!, limit: Int = 10, offset: Int = 0): [Product!]\n}\n"
+      "schema" : "type Customer {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n}\n\n\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\ntype DistinctCustomer {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n}\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Product {\n  productid: GraphQLBigInteger!\n  name: String!\n  description: String!\n  category: String!\n}\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerWithEmail(limit: Int = 10, offset: Int = 0): [Customer!]\n  DistinctCustomer(limit: Int = 10, offset: Int = 0): [DistinctCustomer!]\n  Product(limit: Int = 10, offset: Int = 0): [Product!]\n  CustomerById(id: GraphQLBigInteger!, limit: Int = 10, offset: Int = 0): [Customer!]\n  DistinctCustomerById(id: GraphQLBigInteger!, limit: Int = 10, offset: Int = 0): [DistinctCustomer!]\n  ProductByCategory(category: String!, limit: Int = 10, offset: Int = 0): [Product!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
     }
   }
 }

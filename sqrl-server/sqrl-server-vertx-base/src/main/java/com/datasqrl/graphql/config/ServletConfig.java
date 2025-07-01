@@ -34,5 +34,7 @@ public class ServletConfig {
 
   @Default String graphiQLEndpoint = "/graphiql*";
   @Default String graphQLEndpoint = "/graphql";
+  @Default String restEndpoint = "/rest";
+  @Default String mcpEndpoint = "/mcp";
   @Default boolean usePgPool = true;
 }

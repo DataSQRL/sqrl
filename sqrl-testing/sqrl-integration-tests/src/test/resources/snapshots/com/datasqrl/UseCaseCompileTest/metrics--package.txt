@@ -94,6 +94,22 @@ SQL: CREATE VIEW `SensorReading__view`
 AS
 SELECT `SensorReading`.`sensorid`, `SensorReading`.`temperature`, `SensorReading`.`event_time`
 FROM `default_catalog`.`default_database`.`SensorReading` AS `SensorReading`
+=== SensorReadingById
+ID:     default_catalog.default_database.SensorReadingById
+Type:   query
+Stage:  postgres
+Inputs: default_catalog.default_database.SensorReading
+Annotations:
+ - parameters: sensorid
+ - base-table: SensorReading
+Plan:
+LogicalSort(sort0=[$2], dir0=[DESC-nulls-last])
+  LogicalProject(sensorid=[$0], temperature=[$1], event_time=[$2])
+    LogicalFilter(condition=[=($0, ?0)])
+      LogicalTableScan(table=[[default_catalog, default_database, SensorReading]])
+SQL: CREATE VIEW SensorReadingById AS  SELECT * FROM SensorReading
+                                              WHERE sensorid = ?         ORDER BY event_time DESC;
+
 === _SensorMaxTempLastMinWindow
 ID:     default_catalog.default_database._SensorMaxTempLastMinWindow
 Type:   stream
@@ -249,37 +265,15 @@ INSERT INTO `default_catalog`.`default_database`.`SensorAnalysis_2`
 >>>postgres-schema.sql
 CREATE TABLE IF NOT EXISTS "SensorAnalysis" ("sensorid" INTEGER NOT NULL, "avg_temperatures" FLOAT NOT NULL, "max_temperature" FLOAT NOT NULL , PRIMARY KEY ("sensorid"));
 CREATE TABLE IF NOT EXISTS "SensorMaxTempLastMin" ("sensorid" INTEGER NOT NULL, "endOfMin" TIMESTAMP WITH TIME ZONE NOT NULL, "avg_temperature" FLOAT NOT NULL , PRIMARY KEY ("sensorid"));
-CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" INTEGER NOT NULL, "temperature" FLOAT NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE , "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"))
+CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" INTEGER NOT NULL, "temperature" FLOAT NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE , "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
+
+CREATE INDEX IF NOT EXISTS "SensorReading_hash_c0" ON "SensorReading" USING hash ("sensorid")
 >>>postgres-views.sql
 
 >>>vertx.json
 {
   "model" : {
     "queries" : [
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "SensorAnalysis",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM (SELECT \"sensorid\", \"avg_temperatures\", \"max_temperature\"\n  FROM \"SensorAnalysis\"\n  ORDER BY \"sensorid\" DESC NULLS LAST) AS \"t\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
-          }
-        }
-      },
       {
         "type" : "args",
         "parentType" : "Query",
@@ -298,30 +292,6 @@ CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" INTEGER NOT NULL, "temper
           "query" : {
             "type" : "SqlQuery",
             "sql" : "SELECT *\nFROM \"SensorMaxTempLastMin\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "SensorReading",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT \"sensorid\", \"temperature\", \"event_time\"\nFROM \"SensorReading\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"
@@ -360,6 +330,39 @@ CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" INTEGER NOT NULL, "temper
             "database" : "POSTGRES"
           }
         }
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "SensorReadingById",
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "sensorid"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
+            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM (SELECT \"sensorid\", \"temperature\", \"event_time\"\n  FROM \"SensorReading\") AS \"t\"\nWHERE \"sensorid\" = $1\nORDER BY \"event_time\" DESC NULLS LAST",
+            "parameters" : [
+              {
+                "type" : "arg",
+                "path" : "sensorid"
+              }
+            ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
+          }
+        }
       }
     ],
     "mutations" : [
@@ -382,9 +385,130 @@ CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" INTEGER NOT NULL, "temper
         "filters" : { }
       }
     ],
+    "operations" : [
+      {
+        "function" : {
+          "name" : "GetSensorMaxTempLastMin",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query SensorMaxTempLastMin($limit: Int = 10, $offset: Int = 0) {\nSensorMaxTempLastMin(limit: $limit, offset: $offset) {\nsensorid\nendOfMin\navg_temperature\n}\n\n}",
+          "queryName" : "SensorMaxTempLastMin",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/SensorMaxTempLastMin{?offset,limit}"
+      },
+      {
+        "function" : {
+          "name" : "GetSensorAnalysisById",
+          "description" : "Analyzes the sensor readings for the given sensor with average and max temperatures.",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              },
+              "sensorid" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [
+              "sensorid"
+            ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query SensorAnalysisById($sensorid: Int!, $limit: Int = 10, $offset: Int = 0) {\nSensorAnalysisById(sensorid: $sensorid, limit: $limit, offset: $offset) {\nsensorid\navg_temperatures\nmax_temperature\n}\n\n}",
+          "queryName" : "SensorAnalysisById",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/SensorAnalysisById{?offset,limit,sensorid}"
+      },
+      {
+        "function" : {
+          "name" : "GetSensorReadingById",
+          "description" : "Returns the most recent sensor readings for the given sensor",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              },
+              "sensorid" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [
+              "sensorid"
+            ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query SensorReadingById($sensorid: Int!, $limit: Int = 10, $offset: Int = 0) {\nSensorReadingById(sensorid: $sensorid, limit: $limit, offset: $offset) {\nsensorid\ntemperature\nevent_time\n}\n\n}",
+          "queryName" : "SensorReadingById",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/SensorReadingById{?offset,limit,sensorid}"
+      },
+      {
+        "function" : {
+          "name" : "AddSensorReading",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "temperature" : {
+                "type" : "number"
+              },
+              "sensorid" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [
+              "sensorid",
+              "temperature"
+            ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "mutation SensorReading($sensorid: Int!, $temperature: Float!) {\nSensorReading(event: { sensorid: $sensorid, temperature: $temperature }) {\nsensorid\ntemperature\nevent_time\n}\n\n}",
+          "queryName" : "SensorReading",
+          "operationType" : "MUTATION"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "POST",
+        "uriTemplate" : "mutations/SensorReading"
+      }
+    ],
     "schema" : {
       "type" : "string",
-      "schema" : "\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Mutation {\n  SensorReading(event: SensorReadingInput!): SensorReadingResultOutput!\n}\n\ntype Query {\n  SensorAnalysis(limit: Int = 10, offset: Int = 0): [SensorAnalysis!]\n  SensorMaxTempLastMin(limit: Int = 10, offset: Int = 0): [SensorMaxTempLastMin!]\n  SensorReading(limit: Int = 10, offset: Int = 0): [SensorReading!]\n  SensorAnalysisById(sensorid: Int!, limit: Int = 10, offset: Int = 0): [SensorAnalysis!]\n}\n\ntype SensorAnalysis {\n  sensorid: Int!\n  avg_temperatures: Float!\n  max_temperature: Float!\n}\n\ntype SensorMaxTempLastMin {\n  sensorid: Int!\n  endOfMin: DateTime!\n  avg_temperature: Float!\n}\n\ntype SensorReading {\n  sensorid: Int!\n  temperature: Float!\n  event_time: DateTime\n}\n\ninput SensorReadingInput {\n  sensorid: Int!\n  temperature: Float!\n}\n\ntype SensorReadingResultOutput {\n  sensorid: Int!\n  temperature: Float!\n  event_time: DateTime\n}\n\ntype Subscription {\n  HighTempAlert: SensorReading\n}\n"
+      "schema" : "\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Mutation {\n  SensorReading(event: SensorReadingInput!): SensorReadingResultOutput!\n}\n\ntype Query {\n  SensorMaxTempLastMin(limit: Int = 10, offset: Int = 0): [SensorMaxTempLastMin!]\n  \"Analyzes the sensor readings for the given sensor with average and max temperatures.\"\n  SensorAnalysisById(sensorid: Int!, limit: Int = 10, offset: Int = 0): [SensorAnalysis!]\n  \"Returns the most recent sensor readings for the given sensor\"\n  SensorReadingById(sensorid: Int!, limit: Int = 10, offset: Int = 0): [SensorReading!]\n}\n\ntype SensorAnalysis {\n  sensorid: Int!\n  avg_temperatures: Float!\n  max_temperature: Float!\n}\n\ntype SensorMaxTempLastMin {\n  sensorid: Int!\n  endOfMin: DateTime!\n  avg_temperature: Float!\n}\n\ntype SensorReading {\n  sensorid: Int!\n  temperature: Float!\n  event_time: DateTime\n}\n\ninput SensorReadingInput {\n  sensorid: Int!\n  temperature: Float!\n}\n\ntype SensorReadingResultOutput {\n  sensorid: Int!\n  temperature: Float!\n  event_time: DateTime\n}\n\ntype Subscription {\n  HighTempAlert: SensorReading\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
     }
   }
 }

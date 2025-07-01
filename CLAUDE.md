@@ -21,6 +21,11 @@ mvn clean install -P quickbuild
 
 # Format code automatically
 mvn -P dev initialize
+
+# Server-specific builds
+mvn clean package                    # Build fat JAR (vertx-server.jar)
+mvn clean package -Pskip-shade-plugin  # Build without fat JAR
+mvn clean package -Pinstrument     # Build with JaCoCo instrumentation
 ```
 
 ### Testing Commands
@@ -70,9 +75,10 @@ This is a multi-module Maven project with the following key components:
 
 **sqrl-planner/** - The compiler core that parses SQRL scripts, creates computation DAGs, optimizes them, and produces deployment artifacts. Built on Apache Calcite and Flink's parser.
 
-**sqrl-server/** - GraphQL API server implementation:
-- `sqrl-server-core/` - Generic GraphQL servlet
-- `sqrl-server-vertx/` - Vert.x-based server implementation
+**sqrl-server/** - GraphQL API server implementation that translates GraphQL queries, mutations, and subscriptions into database calls:
+- `sqrl-server-core/` - Core interfaces and models (GraphQL schema, execution coordinates)
+- `sqrl-server-vertx-base/` - Full Vert.x implementation with database clients and Kafka integration
+- `sqrl-server-vertx/` - Standalone deployment module with Docker support
 
 **sqrl-tools/** - Command-line tools and utilities:
 - `sqrl-cli/` - Main CLI interface (entry point: `com.datasqrl.cli.DatasqrlCli`)
@@ -101,11 +107,12 @@ This is a multi-module Maven project with the following key components:
 3. **Testing**: Run unit tests frequently, integration tests before commits
 4. **Code Quality**: All code uses Google Java Format and requires 70% test coverage
 
-## Git Commit Guidelines
+## Git Commits
 
-- **Single Line Messages**: Use only single-line commit messages
-- **Focus on Primary Change**: Describe the most important change made
-- **No Co-authoring**: Never add co-author information to commit messages
+- **Commit Messages**: Use succinct single-line messages describing the most important change
+- **Issue References**: Include issue links on second line if provided in the change prompt
+- **Co-authorship**: Do not add Claude as co-author unless explicitly requested
+- **Commit Best Practice**: Always use `-s` and `-S` flags when committing to sign-off and sign commits cryptographically
 
 ## Key Configuration
 
@@ -170,6 +177,49 @@ If tests fail due to Flink memory issues, uncomment the configuration line in `E
 
 ## Entry Points
 
+### CLI and Commands
 - **CLI Main**: `com.datasqrl.cli.DatasqrlCli`
 - **Primary Commands**: `compile`, `run`, `test`
 - **GraphQL API**: Auto-generated from SQRL scripts, served at `http://localhost:8888/graphiql/`
+
+### Server Entry Points
+- **Server Main**: `com.datasqrl.graphql.SqrlLauncher` - Main class for standalone deployment
+- **Main Verticle**: `com.datasqrl.graphql.GraphQLServerVerticle` - Main Verticle that configures the GraphQL server
+
+### Core Server Classes
+- **RootGraphqlModel**: Central model class encapsulating GraphQL schema and execution coordinates
+- **GraphQLEngineBuilder**: Builds GraphQL engine by wiring schema, resolvers, and custom scalars
+- **QueryExecutionContext**: Context for query execution
+
+## Server Architecture Details
+
+### Key Design Patterns
+- **Visitor Pattern**: Extensively used for processing GraphQL model (`RootVisitor`, `QueryCoordVisitor`, `SchemaVisitor`)
+- **Reactive Architecture**: Built on Vert.x event loop with CompletableFuture for async operations
+- **Schema-First**: GraphQL schema loaded from `server-model.json` at runtime with pre-compiled execution paths
+
+### Runtime Model
+The server operates on a compiled model where the DataSQRL compiler generates `server-model.json` containing all GraphQL execution metadata. The server loads this at startup and creates optimized execution paths - no runtime SQL generation occurs.
+
+### Database Abstraction
+Multi-database support through `SqlClient` interface:
+- PostgreSQL: Native Vert.x client with pipelining
+- DuckDB: JDBC-based connection
+- Snowflake: JDBC-based connection with specialized configuration
+
+### Server Configuration Files
+- `server-model.json`: Runtime GraphQL model and execution coordinates
+- `server-config.json`: Server configuration (ports, database connections)
+- `snowflake-config.json`: Optional Snowflake-specific configuration
+- `log4j2.properties`: Logging configuration
+
+## Important Development Notes
+
+### Module Dependencies
+Always check existing dependencies in `pom.xml` files before adding new libraries. The project uses specific versions of Vert.x, GraphQL-Java, and database drivers.
+
+### Database Operations
+All database operations are asynchronous and non-blocking. Use the appropriate `SqlClient` implementation for the target database system.
+
+### GraphQL Schema Modifications
+Schema changes require regenerating the `server-model.json` file through the DataSQRL compiler. The server does not support runtime schema modifications.

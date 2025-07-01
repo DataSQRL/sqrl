@@ -219,9 +219,89 @@ CREATE TABLE IF NOT EXISTS "MyTableAnother" ("val" INTEGER NOT NULL, "myFnc" BIG
     ],
     "mutations" : [ ],
     "subscriptions" : [ ],
+    "operations" : [
+      {
+        "function" : {
+          "name" : "GetMyAsyncTable",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query MyAsyncTable($limit: Int = 10, $offset: Int = 0) {\nMyAsyncTable(limit: $limit, offset: $offset) {\nval\nmyFnc\n}\n\n}",
+          "queryName" : "MyAsyncTable",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/MyAsyncTable{?offset,limit}"
+      },
+      {
+        "function" : {
+          "name" : "GetMyTable",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query MyTable($limit: Int = 10, $offset: Int = 0) {\nMyTable(limit: $limit, offset: $offset) {\nval\nmyFnc\n}\n\n}",
+          "queryName" : "MyTable",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/MyTable{?offset,limit}"
+      },
+      {
+        "function" : {
+          "name" : "GetMyTableAnother",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query MyTableAnother($limit: Int = 10, $offset: Int = 0) {\nMyTableAnother(limit: $limit, offset: $offset) {\nval\nmyFnc\n}\n\n}",
+          "queryName" : "MyTableAnother",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/MyTableAnother{?offset,limit}"
+      }
+    ],
     "schema" : {
       "type" : "string",
-      "schema" : "\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype MyAsyncTable {\n  val: String!\n  myFnc: String\n}\n\ntype MyTable {\n  val: Int!\n  myFnc: GraphQLBigInteger\n}\n\ntype MyTableAnother {\n  val: Int!\n  myFnc: GraphQLBigInteger\n}\n\ntype Query {\n  MyAsyncTable(limit: Int = 10, offset: Int = 0): [MyAsyncTable!]\n  MyTable(limit: Int = 10, offset: Int = 0): [MyTable!]\n  MyTableAnother(limit: Int = 10, offset: Int = 0): [MyTableAnother!]\n}\n"
+      "schema" : "\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype MyAsyncTable {\n  val: String!\n  myFnc: String\n}\n\ntype MyTable {\n  val: Int!\n  myFnc: GraphQLBigInteger\n}\n\ntype MyTableAnother {\n  val: Int!\n  myFnc: GraphQLBigInteger\n}\n\ntype Query {\n  MyAsyncTable(limit: Int = 10, offset: Int = 0): [MyAsyncTable!]\n  MyTable(limit: Int = 10, offset: Int = 0): [MyTable!]\n  MyTableAnother(limit: Int = 10, offset: Int = 0): [MyTableAnother!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
     }
   }
 }

@@ -284,9 +284,130 @@ CREATE INDEX IF NOT EXISTS "VectorData_vector_cosine_c2" ON "VectorData" USING H
     ],
     "mutations" : [ ],
     "subscriptions" : [ ],
+    "operations" : [
+      {
+        "function" : {
+          "name" : "GetCategoryCentroids",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "category_id" : {
+                "type" : "integer"
+              },
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [
+              "category_id"
+            ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query CategoryCentroids($category_id: Int!, $limit: Int = 10, $offset: Int = 0) {\nCategoryCentroids(category_id: $category_id, limit: $limit, offset: $offset) {\ncategory_id\ncenter_vector\n}\n\n}",
+          "queryName" : "CategoryCentroids",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/CategoryCentroids{?category_id,offset,limit}"
+      },
+      {
+        "function" : {
+          "name" : "GetVectorData",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query VectorData($limit: Int = 10, $offset: Int = 0) {\nVectorData(limit: $limit, offset: $offset) {\ndoc_id\ncategory_id\n}\n\n}",
+          "queryName" : "VectorData",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/VectorData{?offset,limit}"
+      },
+      {
+        "function" : {
+          "name" : "GetDocumentSimilarity",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              },
+              "doc_id" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [
+              "doc_id"
+            ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query DocumentSimilarity($doc_id: Int!, $limit: Int = 10, $offset: Int = 0) {\nDocumentSimilarity(doc_id: $doc_id, limit: $limit, offset: $offset) {\ndoc_id\nscore\n}\n\n}",
+          "queryName" : "DocumentSimilarity",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/DocumentSimilarity{?offset,limit,doc_id}"
+      },
+      {
+        "function" : {
+          "name" : "GetDocumentSimilarityIndex",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              },
+              "doc_id" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [
+              "doc_id"
+            ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query DocumentSimilarityIndex($doc_id: Int!, $limit: Int = 10, $offset: Int = 0) {\nDocumentSimilarityIndex(doc_id: $doc_id, limit: $limit, offset: $offset) {\ndoc_id\ncategory_id\n}\n\n}",
+          "queryName" : "DocumentSimilarityIndex",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/DocumentSimilarityIndex{?offset,limit,doc_id}"
+      }
+    ],
     "schema" : {
       "type" : "string",
-      "schema" : "type CategoryCentroids {\n  category_id: Int!\n  center_vector: [Float]\n}\n\ntype DocumentSimilarity {\n  doc_id: Int!\n  score: Float!\n}\n\ntype DocumentSimilarityIndex {\n  doc_id: Int!\n  category_id: Int!\n}\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Query {\n  CategoryCentroids(category_id: Int!, limit: Int = 10, offset: Int = 0): [CategoryCentroids!]\n  VectorData(limit: Int = 10, offset: Int = 0): [VectorData!]\n  DocumentSimilarity(doc_id: Int!, limit: Int = 10, offset: Int = 0): [DocumentSimilarity!]\n  DocumentSimilarityIndex(doc_id: Int!, limit: Int = 10, offset: Int = 0): [DocumentSimilarityIndex!]\n}\n\ntype VectorData {\n  doc_id: Int!\n  category_id: Int!\n}\n"
+      "schema" : "type CategoryCentroids {\n  category_id: Int!\n  center_vector: [Float]\n}\n\ntype DocumentSimilarity {\n  doc_id: Int!\n  score: Float!\n}\n\ntype DocumentSimilarityIndex {\n  doc_id: Int!\n  category_id: Int!\n}\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Query {\n  CategoryCentroids(category_id: Int!, limit: Int = 10, offset: Int = 0): [CategoryCentroids!]\n  VectorData(limit: Int = 10, offset: Int = 0): [VectorData!]\n  DocumentSimilarity(doc_id: Int!, limit: Int = 10, offset: Int = 0): [DocumentSimilarity!]\n  DocumentSimilarityIndex(doc_id: Int!, limit: Int = 10, offset: Int = 0): [DocumentSimilarityIndex!]\n}\n\ntype VectorData {\n  doc_id: Int!\n  category_id: Int!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
     }
   }
 }

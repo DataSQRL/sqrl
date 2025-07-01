@@ -93,6 +93,9 @@ class FullUseCasesIT {
           new ScriptCriteria("connectors.sqrl", "test"), // should not be executed
           new ScriptCriteria("flink_kafka.sqrl", "run"), // does not expose an API
           new ScriptCriteria("minimalFlink.sqrl", "run"), // only want to test this
+          // only want to test this, no way to authenticate on runs
+          new ScriptCriteria("jwt-authorized.sqrl", "run"),
+          new ScriptCriteria("jwt-unauthorized.sqrl", "run"),
           new ScriptCriteria(
               "temporal-join.sqrl",
               "run") // TODO: only 'run' when there are no tests (i.e. snapshot dir) - there is no
@@ -261,6 +264,7 @@ class FullUseCasesIT {
                   .flatMap(TestRunnerConfiguration::getDelaySec)
                   .map(Duration::getSeconds)
                   .orElse((long) -1);
+          //          delaySec = 600;
           int requiredCheckpoints =
               packageJson
                   .getTestConfig()
@@ -342,14 +346,14 @@ class FullUseCasesIT {
   public void runTestCaseByName() {
     var param =
         useCaseProvider().stream()
-            .filter(p -> p.sqrlFileName.equals("avro-schema.sqrl") && p.goal.equals("run"))
+            .filter(p -> p.sqrlFileName.equals("jwt-authorized.sqrl") && p.goal.equals("test"))
             .collect(MoreCollectors.onlyElement());
     useCase(param);
   }
 
   @SneakyThrows
   static Set<UseCaseTestParameter> useCaseProvider() {
-    var useCasesDir = USE_CASES;
+    var useCasesDir = USE_CASES.toAbsolutePath();
     Set<UseCaseTestParameter> params = new TreeSet<>();
 
     Files.list(useCasesDir)

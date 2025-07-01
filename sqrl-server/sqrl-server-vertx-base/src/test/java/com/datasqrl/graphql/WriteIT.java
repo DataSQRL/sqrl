@@ -197,7 +197,7 @@ class WriteIT {
                         new SubscriptionConfigurationImpl(
                             model, vertx, config, Promise.promise(), null))
                     .build(),
-                new VertxContext(new VertxJdbcClient(Map.of(DatabaseType.POSTGRES, client))))
+                new VertxContext(new VertxJdbcClient(Map.of(DatabaseType.POSTGRES, client)), null))
             .build();
 
     ExecutionInput executionInput =

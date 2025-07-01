@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import io.vertx.core.json.jackson.VertxModule;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
@@ -40,6 +41,7 @@ public class Deserializer {
         new ObjectMapper()
             .registerModule(new Jdk8Module())
             .registerModule(new JavaTimeModule())
+            .registerModule(new VertxModule())
             .registerModule(module)
             .setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
