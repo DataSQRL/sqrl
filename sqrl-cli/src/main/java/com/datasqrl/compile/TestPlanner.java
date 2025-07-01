@@ -19,6 +19,7 @@ import static com.datasqrl.planner.util.SqrTableFunctionUtil.getTableFunctionFro
 
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.compile.TestPlan.GraphqlQuery;
+import com.datasqrl.config.PackageJson;
 import com.datasqrl.graphql.APISource;
 import com.datasqrl.graphql.visitor.GraphqlSchemaVisitor;
 import com.datasqrl.planner.tables.SqrlTableFunction;
@@ -54,6 +55,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
@@ -62,9 +64,11 @@ import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.sql.type.SqlTypeName;
 
+/** Constructs test plans with pre-computed headers and test information. */
 @AllArgsConstructor()
 public class TestPlanner {
   private List<SqrlTableFunction> tableFunctions;
+  private PackageJson packageJson;
 
   public TestPlan generateTestPlan(APISource source, Optional<Path> testsPath) {
     var parser = new Parser();
@@ -117,18 +121,35 @@ public class TestPlanner {
   }
 
   @SneakyThrows
-  public Map<String, Properties> loadHeaders(Path root) {
+  public Map<String, Map<String, String>> loadHeaders(Path root) {
+    // Get base headers from PackageJson
+    Map<String, String> baseHeaders =
+        packageJson.getTestConfig().map(config -> config.getHeaders()).orElse(Map.of());
+
+    // Load file-specific headers and combine with base headers
     try (Stream<Path> paths = Files.walk(root)) {
-      return paths
-          .filter(Files::isRegularFile)
-          .filter(p -> p.getFileName().toString().endsWith(".properties"))
+      Map<String, Properties> fileHeaders =
+          paths
+              .filter(Files::isRegularFile)
+              .filter(p -> p.getFileName().toString().endsWith(".properties"))
+              .collect(
+                  Collectors.toMap(
+                      file -> FileUtil.separateExtension(file).getLeft(),
+                      this::readProperties,
+                      (a, b) -> {
+                        throw new IllegalStateException(
+                            "Duplicate .properties file name detected: " + a);
+                      },
+                      LinkedHashMap::new));
+
+      // Combine base headers with file-specific headers
+      return fileHeaders.entrySet().stream()
           .collect(
               Collectors.toMap(
-                  file -> FileUtil.separateExtension(file).getLeft(),
-                  this::readProperties,
+                  Map.Entry::getKey,
+                  entry -> combineHeaders(baseHeaders, entry.getValue()),
                   (a, b) -> {
-                    throw new IllegalStateException(
-                        "Duplicate .properties file name detected: " + a);
+                    throw new IllegalStateException("Duplicate header key: " + a);
                   },
                   LinkedHashMap::new));
     }
@@ -143,13 +164,25 @@ public class TestPlanner {
     }
   }
 
+  private Map<String, String> combineHeaders(
+      Map<String, String> baseHeaders, Properties overrides) {
+    var headers = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+    headers.putAll(baseHeaders);
+
+    if (overrides != null && !overrides.isEmpty()) {
+      overrides.forEach((key, value) -> headers.put(key.toString(), value.toString()));
+    }
+
+    return headers;
+  }
+
   private void extractQueriesAndMutations(
       Document document,
       List<GraphqlQuery> queries,
       List<GraphqlQuery> mutations,
       List<GraphqlQuery> subscriptions,
       String prefix,
-      Map<String, Properties> headers) {
+      Map<String, Map<String, String>> headers) {
     for (Definition definition : document.getDefinitions()) {
       if (definition instanceof OperationDefinition operationDefinition) {
         var query =
