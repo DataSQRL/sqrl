@@ -43,5 +43,12 @@
         <module>sqrl-container-testing</module>
       </modules>
     </profile>
+
+    <profile>
+      <id>dev</id>
+      <modules>
+        <module>sqrl-container-testing</module>
+      </modules>
+    </profile>
   </profiles>
 </project>

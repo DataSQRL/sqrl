@@ -29,6 +29,7 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.slf4j.Logger;
@@ -36,6 +37,7 @@ import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
+import org.testcontainers.containers.startupcheck.IndefiniteWaitOneShotStartupCheckStrategy;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
@@ -54,7 +56,7 @@ public abstract class SqrlContainerTestBase {
   protected static CloseableHttpClient sharedHttpClient;
   protected static final ObjectMapper objectMapper = new ObjectMapper();
 
-  protected GenericContainer<?> cmdContainer;
+  protected GenericContainer<?> cmd;
   protected GenericContainer<?> serverContainer;
 
   @BeforeAll
@@ -83,10 +85,10 @@ public abstract class SqrlContainerTestBase {
     assertThat(workingDir).exists().isDirectory();
 
     return new GenericContainer<>(DockerImageName.parse(SQRL_CMD_IMAGE + ":" + getImageTag()))
-        .withNetwork(sharedNetwork)
         .withWorkingDirectory(BUILD_DIR)
         .withFileSystemBind(workingDir.toString(), BUILD_DIR, BindMode.READ_WRITE)
-        .withEnv("TZ", "UTC");
+        .withEnv("TZ", "America/Los_Angeles")
+        .withStartupCheckStrategy(new IndefiniteWaitOneShotStartupCheckStrategy());
   }
 
   protected GenericContainer<?> createServerContainer(Path workingDir) {
@@ -98,30 +100,47 @@ public abstract class SqrlContainerTestBase {
         .withExposedPorts(GRAPHQL_PORT)
         .withFileSystemBind(deployPlanPath.toString(), "/opt/sqrl/config", BindMode.READ_ONLY)
         .waitingFor(
-            Wait.forLogMessage(".*GraphQLServer.*started.*", 1)
+            Wait.forLogMessage(".*GraphQL verticle deployed successfully.*", 1)
                 .withStartupTimeout(Duration.ofSeconds(20)));
   }
 
   protected void compileSqrlScript(String scriptName, Path workingDir) {
-    cmdContainer = createCmdContainer(workingDir).withCommand("compile", scriptName);
+    log.info("Docker run command to reproduce:");
+    log.info(
+        getDockerRunCommand(
+            workingDir, SQRL_CMD_IMAGE, getImageTag(), false, "compile", scriptName));
+    cmd = createCmdContainer(workingDir).withCommand("compile", scriptName);
 
-    cmdContainer.start();
+    cmd.start();
 
-    var exitCode = cmdContainer.getCurrentContainerInfo().getState().getExitCodeLong();
+    var exitCode = cmd.getCurrentContainerInfo().getState().getExitCodeLong();
+    var logs = cmd.getLogs();
     if (exitCode != 0) {
-      var logs = cmdContainer.getLogs();
-      log.error("SQRL compilation failed with exit code {}: {}", exitCode, logs);
-      log.error("Docker run command to reproduce:");
-      log.error(
-          getDockerRunCommand(
-              workingDir, SQRL_CMD_IMAGE, getImageTag(), false, "compile", scriptName));
+      log.error("SQRL compilation failed with exit code {}\n{}", exitCode, logs);
       throw new RuntimeException("SQRL compilation failed with exit code " + exitCode);
     }
 
-    log.info("SQRL script {} compiled successfully \n{}", scriptName, cmdContainer.getLogs());
+    log.info("SQRL script {} compiled successfully \n{}", scriptName, logs);
+    validatePlan(workingDir);
+  }
+
+  private void validatePlan(Path workingDir) {
+    var planDir = workingDir.resolve("build/deploy/plan");
+    assertThat(planDir).exists().isDirectory();
+
+    SoftAssertions.assertSoftly(
+        softAssertions -> {
+          softAssertions.assertThat(planDir.resolve("flink.json")).exists().isRegularFile();
+          softAssertions.assertThat(planDir.resolve("kafka.json")).exists().isRegularFile();
+          softAssertions.assertThat(planDir.resolve("postgres.json")).exists().isRegularFile();
+          softAssertions.assertThat(planDir.resolve("vertx.json")).exists().isRegularFile();
+          softAssertions.assertThat(planDir.resolve("vertx-config.json")).exists().isRegularFile();
+        });
   }
 
   protected void startGraphQLServer(Path workingDir) {
+    log.info("Docker run command to reproduce:");
+    log.info(getDockerRunCommand(workingDir, SQRL_SERVER_IMAGE, getImageTag(), true));
     serverContainer = createServerContainer(workingDir);
 
     try {
@@ -130,8 +149,6 @@ public abstract class SqrlContainerTestBase {
     } catch (Exception e) {
       log.error("Failed to start GraphQL server container:");
       log.error("Container image: {}", SQRL_SERVER_IMAGE + ":" + getImageTag());
-      log.error("Docker run command to reproduce:");
-      log.error(getDockerRunCommand(workingDir, SQRL_SERVER_IMAGE, getImageTag(), true));
       String logs = null;
       try {
         logs = serverContainer.getLogs();
@@ -192,7 +209,7 @@ public abstract class SqrlContainerTestBase {
     } else {
       sb.append(" -v \"").append(workingDir).append(":").append(BUILD_DIR).append("\"");
       sb.append(" -w ").append(BUILD_DIR);
-      sb.append(" -e TZ=UTC");
+      sb.append(" -e TZ=America/Los_Angeles");
     }
 
     sb.append(" ").append(imageName).append(":").append(imageTag);
@@ -233,9 +250,9 @@ public abstract class SqrlContainerTestBase {
       serverContainer.stop();
       serverContainer = null;
     }
-    if (cmdContainer != null && cmdContainer.isRunning()) {
-      cmdContainer.stop();
-      cmdContainer = null;
+    if (cmd != null && cmd.isRunning()) {
+      cmd.stop();
+      cmd = null;
     }
   }
 }

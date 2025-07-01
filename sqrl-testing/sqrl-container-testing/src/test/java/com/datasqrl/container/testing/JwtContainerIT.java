@@ -33,10 +33,9 @@ import org.slf4j.LoggerFactory;
 public class JwtContainerIT extends SqrlContainerTestBase {
 
   private static final Logger logger = LoggerFactory.getLogger(JwtContainerIT.class);
-  private static final String JWT_SECRET =
-      "my-secret-key-that-should-be-at-least-32-characters-long";
-  private static final String JWT_ISSUER = "test-issuer";
-  private static final String JWT_AUDIENCE = "test-audience";
+  private static final String JWT_SECRET = "testSecretThatIsAtLeast256BitsLong32Chars";
+  private static final String JWT_ISSUER = "my-test-issuer";
+  private static final String JWT_AUDIENCE = "my-test-audience";
 
   @AfterEach
   void tearDown() {
@@ -46,11 +45,11 @@ public class JwtContainerIT extends SqrlContainerTestBase {
   @Test
   @SneakyThrows
   void givenJwtEnabledScript_whenServerStarted_thenUnauthorizedRequestsReturn401() {
-    var testDir = itPath("jwt");
+    var testDir = itPath("jwt-authorized");
 
     logger.info("Running JWT container test (unauthorized)");
 
-    compileSqrlScript("jwt.sqrl", testDir);
+    compileSqrlScript("jwt-authorized.sqrl", testDir);
 
     startGraphQLServer(testDir);
 
@@ -64,16 +63,15 @@ public class JwtContainerIT extends SqrlContainerTestBase {
   @Test
   @SneakyThrows
   void givenJwtEnabledScript_whenServerStartedWithValidJwt_thenAuthorizedRequestsSucceed() {
-    var testDir = itPath("jwt");
+    var testDir = itPath("jwt-authorized");
 
     logger.info("Running JWT container test (authorized)");
 
-    compileSqrlScript("jwt.sqrl", testDir);
+    compileSqrlScript("jwt-authorized.sqrl", testDir);
 
     startGraphQLServer(testDir);
 
-    var jwtToken = generateJwtToken();
-    var response = executeGraphQLQuery("{\"query\":\"query { __typename }\"}", jwtToken);
+    var response = executeGraphQLQuery("{\"query\":\"query { __typename }\"}", generateJwtToken());
 
     assertThat(response.getStatusLine().getStatusCode()).isEqualTo(200);
 
@@ -90,7 +88,7 @@ public class JwtContainerIT extends SqrlContainerTestBase {
   private String generateJwtToken() {
     var key = Keys.hmacShaKeyFor(JWT_SECRET.getBytes(StandardCharsets.UTF_8));
     var now = Instant.now();
-    var expiration = now.plusSeconds(3600);
+    var expiration = now.plusSeconds(20);
 
     return Jwts.builder()
         .setIssuer(JWT_ISSUER)

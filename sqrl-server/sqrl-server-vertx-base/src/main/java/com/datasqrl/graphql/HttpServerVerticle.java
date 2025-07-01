@@ -211,7 +211,9 @@ public class HttpServerVerticle extends AbstractVerticle {
 
   @SneakyThrows
   private static RootGraphqlModel loadModel() {
-    return getObjectMapper().readValue(new File("vertx.json"), ModelContainer.class).model;
+    return getObjectMapper()
+        .readValue(new File("vertx.json").getAbsoluteFile(), ModelContainer.class)
+        .model;
   }
 
   public static ObjectMapper getObjectMapper() {
