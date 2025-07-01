@@ -176,6 +176,29 @@ commands:
             echo "Latest MCP inspector version: ${MCP_TAG}"
             echo "export MCP_TAG=${MCP_TAG}" >> "$BASH_ENV"
 
+  setup-buildx:
+    description: "Enable QEMU for ARM build and install Docker buildx"
+    parameters:
+      builder_name:
+        type: string
+        default: "default-builder"
+    steps:
+      - run:
+          name: Enable QEMU for ARM build
+          command: |
+            sudo apt-get update && sudo apt-get install -y qemu-user-static binfmt-support
+            docker run --privileged --rm tonistiigi/binfmt --install all
+      - run:
+          name: Install docker buildx
+          command: |
+            sudo mkdir -p /usr/local/lib/docker/cli-plugins
+            curl -sSL https://github.com/docker/buildx/releases/download/v0.12.0/buildx-v0.12.0.linux-amd64 \
+                 -o buildx
+            chmod +x buildx
+            sudo mv buildx /usr/local/lib/docker/cli-plugins/docker-buildx
+            docker buildx create --use --name << parameters.builder_name >>
+            docker buildx inspect --bootstrap
+
   checkout-and-version:
     steps:
       - checkout
@@ -431,25 +454,14 @@ jobs:
 
       - determine-version
       - compute-base-tag
+      - setup-buildx:
+          builder_name: "sqrl-builder"
 
-      # enable QEMU for multi-arch, install Buildx, login
       - run:
-          name: Prepare Docker build environment
+          name: Login to registries and pull base image
           command: |
-            sudo apt-get update && sudo apt-get install -y qemu-user-static binfmt-support
-            docker run --privileged --rm tonistiigi/binfmt --install all
-
-            sudo mkdir -p /usr/local/lib/docker/cli-plugins
-            curl -sSL https://github.com/docker/buildx/releases/download/v0.12.0/buildx-v0.12.0.linux-amd64 \
-                 -o buildx
-            chmod +x buildx
-            sudo mv buildx /usr/local/lib/docker/cli-plugins/docker-buildx
-            docker buildx create --use --name sqrl-builder
-            docker buildx inspect --bootstrap
-
             echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
             echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-
             docker pull datasqrl/base-sqrl:$BASE_TAG
 
       - run:
@@ -485,22 +497,8 @@ jobs:
     steps:
       - checkout
       - compute-base-tag
-
-      - run:
-          name: Enable QEMU for ARM build
-          command: |
-            sudo apt-get update && sudo apt-get install -y qemu-user-static binfmt-support
-            docker run --privileged --rm tonistiigi/binfmt --install all
-      - run:
-          name: Install docker buildx
-          command: |
-            sudo mkdir -p /usr/local/lib/docker/cli-plugins
-            curl -sSL https://github.com/docker/buildx/releases/download/v0.12.0/buildx-v0.12.0.linux-amd64 \
-                 -o buildx
-            chmod +x buildx
-            sudo mv buildx /usr/local/lib/docker/cli-plugins/docker-buildx
-            docker buildx create --use --name base-builder
-            docker buildx inspect --bootstrap
+      - setup-buildx:
+          builder_name: "base-builder"
       - run:
           name: Login to Docker Hub
           command: |
@@ -539,22 +537,8 @@ jobs:
     steps:
       - checkout
       - compute-mcp-tag
-
-      - run:
-          name: Enable QEMU for ARM build
-          command: |
-            sudo apt-get update && sudo apt-get install -y qemu-user-static binfmt-support
-            docker run --privileged --rm tonistiigi/binfmt --install all
-      - run:
-          name: Install docker buildx
-          command: |
-            sudo mkdir -p /usr/local/lib/docker/cli-plugins
-            curl -sSL https://github.com/docker/buildx/releases/download/v0.12.0/buildx-v0.12.0.linux-amd64 \
-                 -o buildx
-            chmod +x buildx
-            sudo mv buildx /usr/local/lib/docker/cli-plugins/docker-buildx
-            docker buildx create --use --name mcp-builder
-            docker buildx inspect --bootstrap
+      - setup-buildx:
+          builder_name: "mcp-builder"
       - run:
           name: Login to Docker Hub
           command: |
