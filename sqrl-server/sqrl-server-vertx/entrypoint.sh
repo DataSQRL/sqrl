@@ -18,5 +18,5 @@
 # Change to config directory (default WORKDIR)
 cd /opt/sqrl/config
 
-# Run the application jar from the app directory
-java -jar /opt/sqrl/app/vertx-server.jar
+# Run the application jar from the app directory using SqrlLauncher to enable metrics
+java -cp /opt/sqrl/app/vertx-server.jar com.datasqrl.graphql.SqrlLauncher

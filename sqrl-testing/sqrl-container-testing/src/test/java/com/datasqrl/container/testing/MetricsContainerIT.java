@@ -44,9 +44,10 @@ public class MetricsContainerIT extends SqrlContainerTestBase {
     compileSqrlScript("myudf.sqrl", testDir);
     startGraphQLServer(testDir);
 
-    var request =
-        new HttpGet("http://localhost:" + serverContainer.getMappedPort(GRAPHQL_PORT) + "/metrics");
-    var response = sharedHttpClient.execute(request);
+    var response =
+        sharedHttpClient.execute(
+            new HttpGet(
+                "http://localhost:" + serverContainer.getMappedPort(GRAPHQL_PORT) + "/metrics"));
 
     var statusCode = response.getStatusLine().getStatusCode();
 
@@ -62,15 +63,51 @@ public class MetricsContainerIT extends SqrlContainerTestBase {
           .contains("# TYPE");
 
       logger.info("Metrics endpoint is available and returning Prometheus metrics");
-    } else if (statusCode == 404) {
-      // Metrics endpoint not available - this is acceptable if Prometheus registry is not
-      // configured
-      logger.info(
-          "Metrics endpoint returns 404 - Prometheus registry may not be configured in container environment");
     } else {
-      throw new AssertionError("Unexpected status code for /metrics endpoint: " + statusCode);
+      throw new AssertionError(
+          "Unexpected status code for /metrics endpoint: "
+              + statusCode
+              + serverContainer.getLogs());
     }
 
     logger.info("Metrics endpoint validation completed successfully");
+  }
+
+  @Test
+  @SneakyThrows
+  void givenRunningServer_whenAccessingHealthEndpoint_thenReturnsHealthStatus() {
+    var testDir = itPath("udf");
+
+    logger.info("Running health check container test - validating /health endpoint");
+
+    compileSqrlScript("myudf.sqrl", testDir);
+    startGraphQLServer(testDir);
+
+    var response =
+        sharedHttpClient.execute(
+            new HttpGet(
+                "http://localhost:" + serverContainer.getMappedPort(GRAPHQL_PORT) + "/health"));
+
+    var statusCode = response.getStatusLine().getStatusCode();
+
+    // Health endpoint can return either 200 (with JSON) or 204 (no content) - both indicate healthy
+    assertThat(statusCode)
+        .as("Health endpoint should return either 200 (with JSON) or 204 (no content)")
+        .isIn(200, 204);
+
+    if (statusCode == 200) {
+      var responseBody = EntityUtils.toString(response.getEntity());
+      var jsonResponse = objectMapper.readTree(responseBody);
+
+      assertThat(jsonResponse.has("status")).isTrue();
+      assertThat(jsonResponse.get("status").asText()).isEqualTo("UP");
+      logger.info("Health endpoint returned 200 with JSON status");
+    } else {
+      // 204 No Content indicates healthy server with no registered health checks
+      logger.info(
+          "Health endpoint returned 204 - server is healthy but no health checks registered");
+    }
+
+    logger.info("Health endpoint validation completed successfully");
   }
 }
