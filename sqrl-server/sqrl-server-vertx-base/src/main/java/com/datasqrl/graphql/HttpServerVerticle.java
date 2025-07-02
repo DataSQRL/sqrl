@@ -111,11 +111,13 @@ public class HttpServerVerticle extends AbstractVerticle {
 
     // ── Metrics ───────────────────────────────────────────────────────────────
     var meterRegistry = findMeterRegistry();
-    root.route("/metrics")
-        .handler(
-            ctx -> {
-              ctx.response().putHeader("content-type", "text/plain").end(meterRegistry.scrape());
-            });
+    meterRegistry.ifPresent(
+        registry ->
+            root.route("/metrics")
+                .handler(
+                    ctx -> {
+                      ctx.response().putHeader("content-type", "text/plain").end(registry.scrape());
+                    }));
 
     // ── Global handlers (CORS, body, etc.) ────────────────────────────────────
     root.route().handler(toCorsHandler(config.getCorsHandlerOptions()));
@@ -180,19 +182,19 @@ public class HttpServerVerticle extends AbstractVerticle {
         .onFailure(startPromise::fail);
   }
 
-  private PrometheusMeterRegistry findMeterRegistry() {
+  private Optional<PrometheusMeterRegistry> findMeterRegistry() {
     var registry = BackendRegistries.getDefaultNow();
     log.info("Found registry: {}", registry != null ? registry.getClass().getSimpleName() : "null");
 
     if (registry instanceof PrometheusMeterRegistry meterRegistry) {
-      return meterRegistry;
+      return Optional.of(meterRegistry);
     }
 
     if (registry instanceof CompositeMeterRegistry compositeRegistry) {
       return compositeRegistry.getRegistries().stream()
           .filter(PrometheusMeterRegistry.class::isInstance)
           .map(PrometheusMeterRegistry.class::cast)
-          .collect(MoreCollectors.onlyElement());
+          .collect(MoreCollectors.toOptional());
     }
 
     throw new IllegalStateException(

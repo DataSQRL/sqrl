@@ -15,14 +15,13 @@
  */
 package com.datasqrl.container.testing;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Date;
+import javax.crypto.spec.SecretKeySpec;
 import lombok.SneakyThrows;
 import org.apache.http.util.EntityUtils;
 import org.junit.jupiter.api.AfterEach;
@@ -33,9 +32,6 @@ import org.slf4j.LoggerFactory;
 public class JwtContainerIT extends SqrlContainerTestBase {
 
   private static final Logger logger = LoggerFactory.getLogger(JwtContainerIT.class);
-  private static final String JWT_SECRET = "testSecretThatIsAtLeast256BitsLong32Chars";
-  private static final String JWT_ISSUER = "my-test-issuer";
-  private static final String JWT_AUDIENCE = "my-test-audience";
 
   @AfterEach
   void tearDown() {
@@ -86,16 +82,19 @@ public class JwtContainerIT extends SqrlContainerTestBase {
   }
 
   private String generateJwtToken() {
-    var key = Keys.hmacShaKeyFor(JWT_SECRET.getBytes(StandardCharsets.UTF_8));
     var now = Instant.now();
     var expiration = now.plusSeconds(20);
 
     return Jwts.builder()
-        .setIssuer(JWT_ISSUER)
-        .setAudience(JWT_AUDIENCE)
-        .setIssuedAt(Date.from(now))
-        .setExpiration(Date.from(expiration))
-        .signWith(key, SignatureAlgorithm.HS256)
+        .issuer("my-test-issuer")
+        .audience()
+        .add("my-test-audience")
+        .and()
+        .issuedAt(Date.from(now))
+        .expiration(Date.from(expiration))
+        .signWith(
+            new SecretKeySpec(
+                "testSecretThatIsAtLeast256BitsLong32Chars".getBytes(UTF_8), "HmacSHA256"))
         .compact();
   }
 }
