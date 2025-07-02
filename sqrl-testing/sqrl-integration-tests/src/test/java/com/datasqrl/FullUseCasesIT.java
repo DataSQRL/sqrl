@@ -349,6 +349,7 @@ class FullUseCasesIT {
   }
 
   @Test
+  @Disabled
   public void runTestCaseByName() {
     var param =
         useCaseProvider().stream()

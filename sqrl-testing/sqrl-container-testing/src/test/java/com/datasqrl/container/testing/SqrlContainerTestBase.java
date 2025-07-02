@@ -16,6 +16,7 @@
 package com.datasqrl.container.testing;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.SoftAssertions.assertSoftly;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.file.Path;
@@ -31,7 +32,6 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
-import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -138,15 +138,15 @@ public abstract class SqrlContainerTestBase {
       throw new RuntimeException("SQRL compilation failed with exit code " + exitCode);
     }
 
-    log.info("SQRL script {} compiled successfully \n{}", scriptName, logs);
-    validatePlan(workingDir);
+    log.info("SQRL script {} compiled successfully", scriptName);
+    validatePlan(workingDir, logs);
   }
 
-  private void validatePlan(Path workingDir) {
+  private void validatePlan(Path workingDir, String logs) {
     var planDir = workingDir.resolve("build/deploy/plan");
-    assertThat(planDir).exists().isDirectory();
+    assertThat(planDir).as("Compiler output:\n%s", logs).exists().isDirectory();
 
-    SoftAssertions.assertSoftly(
+    assertSoftly(
         softAssertions -> {
           softAssertions.assertThat(planDir.resolve("flink.json")).exists().isRegularFile();
           softAssertions.assertThat(planDir.resolve("kafka.json")).exists().isRegularFile();
