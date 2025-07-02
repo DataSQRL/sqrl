@@ -158,6 +158,11 @@ Container tests in `sqrl-container-testing` validate the end-to-end functionalit
 - **Java 17 Features**: Use modern Java 17 syntax and language features
 - **Type Inference**: Use `var` for local variables when the type is obvious from context
 - **Streams API**: Prefer Java Streams over traditional loops when appropriate for readability and performance
+- **Lombok Usage**: Prefer Lombok annotations to reduce boilerplate code:
+  - `@Slf4j` for logging instead of manual logger declarations
+  - `@SneakyThrows` for checked exception handling where appropriate
+  - `@Data`, `@Value`, `@Builder` for data classes
+  - `@RequiredArgsConstructor`, `@AllArgsConstructor` for constructors
 - **File Formatting**: All new files must end with an empty line
 - **Examples**:
   ```java

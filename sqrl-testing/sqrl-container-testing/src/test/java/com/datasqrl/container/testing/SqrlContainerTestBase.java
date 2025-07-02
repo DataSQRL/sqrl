@@ -36,8 +36,6 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
@@ -254,21 +252,22 @@ public abstract class SqrlContainerTestBase {
     var buildPath = testDir.resolve("build");
     if (buildPath.toFile().exists()) {
       // Use static logger access for static method
-      LoggerFactory.getLogger(SqrlContainerTestBase.class).info("Cleaning up build directory: {}", buildPath);
+      log.info("Cleaning up build directory: {}", buildPath);
       try {
         var network = Network.newNetwork();
-        var cleanupContainer = new GenericContainer<>(DockerImageName.parse("alpine:latest"))
-            .withNetwork(network)
-            .withCommand("sh", "-c", "rm -rf /testdir/build")
-            .withFileSystemBind(testDir.toString(), "/testdir", BindMode.READ_WRITE)
-            .withStartupCheckStrategy(new IndefiniteWaitOneShotStartupCheckStrategy());
-        
+        var cleanupContainer =
+            new GenericContainer<>(DockerImageName.parse("alpine:latest"))
+                .withNetwork(network)
+                .withCommand("sh", "-c", "rm -rf /testdir/build")
+                .withFileSystemBind(testDir.toString(), "/testdir", BindMode.READ_WRITE)
+                .withStartupCheckStrategy(new IndefiniteWaitOneShotStartupCheckStrategy());
+
         cleanupContainer.start();
         cleanupContainer.stop();
         network.close();
-        LoggerFactory.getLogger(SqrlContainerTestBase.class).info("Build directory cleanup completed");
+        log.info("Build directory cleanup completed");
       } catch (Exception e) {
-        LoggerFactory.getLogger(SqrlContainerTestBase.class).warn("Failed to cleanup build directory: {}", e.getMessage());
+        log.warn("Failed to cleanup build directory: {}", e.getMessage());
       }
     }
   }
