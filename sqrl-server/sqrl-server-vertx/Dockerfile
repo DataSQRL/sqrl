@@ -16,9 +16,16 @@
 
 FROM eclipse-temurin:17
 
-COPY target/vertx-server.jar /opt/sqrl/vertx-server.jar
+# Create directories for application and configuration
+RUN mkdir -p /opt/sqrl/app /opt/sqrl/config
+
+# Copy application jar to separate directory
+COPY target/vertx-server.jar /opt/sqrl/app/vertx-server.jar
 COPY entrypoint.sh /entrypoint.sh
 
 RUN chmod +x /entrypoint.sh
+
+# Set working directory to config directory by default
+WORKDIR /opt/sqrl/config
 
 ENTRYPOINT ["/entrypoint.sh"]

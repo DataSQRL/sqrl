@@ -36,6 +36,8 @@ public class SqrlLauncher implements VertxApplicationHooks {
   @Override
   public void beforeStartingVertx(HookContext context) {
     var prometheusMeterRegistry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
+    // Register the Prometheus registry with Micrometer's global registries
+    io.micrometer.core.instrument.Metrics.addRegistry(prometheusMeterRegistry);
     var metricsOptions =
         new MicrometerMetricsFactory(prometheusMeterRegistry).newOptions().setEnabled(true);
     context.vertxOptions().setMetricsOptions(metricsOptions);

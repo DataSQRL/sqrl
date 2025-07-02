@@ -21,6 +21,8 @@ import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.graphql.server.operation.ApiOperation;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.google.common.collect.MoreCollectors;
+import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
 import io.vertx.core.*;
 import io.vertx.core.http.HttpMethod;
@@ -108,14 +110,14 @@ public class HttpServerVerticle extends AbstractVerticle {
     root.route().handler(LoggerHandler.create());
 
     // ── Metrics ───────────────────────────────────────────────────────────────
-    var registry = BackendRegistries.getDefaultNow();
-    if (registry instanceof PrometheusMeterRegistry meterRegistry) {
-      root.route("/metrics")
-          .handler(
-              ctx -> {
-                ctx.response().putHeader("content-type", "text/plain").end(meterRegistry.scrape());
-              });
-    }
+    var meterRegistry = findMeterRegistry();
+    meterRegistry.ifPresent(
+        registry ->
+            root.route("/metrics")
+                .handler(
+                    ctx -> {
+                      ctx.response().putHeader("content-type", "text/plain").end(registry.scrape());
+                    }));
 
     // ── Global handlers (CORS, body, etc.) ────────────────────────────────────
     root.route().handler(toCorsHandler(config.getCorsHandlerOptions()));
@@ -180,6 +182,25 @@ public class HttpServerVerticle extends AbstractVerticle {
         .onFailure(startPromise::fail);
   }
 
+  private Optional<PrometheusMeterRegistry> findMeterRegistry() {
+    var registry = BackendRegistries.getDefaultNow();
+    log.info("Found registry: {}", registry != null ? registry.getClass().getSimpleName() : "null");
+
+    if (registry instanceof PrometheusMeterRegistry meterRegistry) {
+      return Optional.of(meterRegistry);
+    }
+
+    if (registry instanceof CompositeMeterRegistry compositeRegistry) {
+      return compositeRegistry.getRegistries().stream()
+          .filter(PrometheusMeterRegistry.class::isInstance)
+          .map(PrometheusMeterRegistry.class::cast)
+          .collect(MoreCollectors.toOptional());
+    }
+
+    throw new IllegalStateException(
+        "Unable to register metrics to: " + registry.getClass().getSimpleName());
+  }
+
   // ---------------------------------------------------------------------------
   // Helpers
   // ---------------------------------------------------------------------------
@@ -211,7 +232,9 @@ public class HttpServerVerticle extends AbstractVerticle {
 
   @SneakyThrows
   private static RootGraphqlModel loadModel() {
-    return getObjectMapper().readValue(new File("vertx.json"), ModelContainer.class).model;
+    return getObjectMapper()
+        .readValue(new File("vertx.json").getAbsoluteFile(), ModelContainer.class)
+        .model;
   }
 
   public static ObjectMapper getObjectMapper() {

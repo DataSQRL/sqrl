@@ -15,5 +15,8 @@
 # limitations under the License.
 #
 
-cd /opt/sqrl
-java -jar vertx-server.jar
+# Change to config directory (default WORKDIR)
+cd /opt/sqrl/config
+
+# Run the application jar from the app directory using SqrlLauncher to enable metrics
+java -cp /opt/sqrl/app/vertx-server.jar com.datasqrl.graphql.SqrlLauncher

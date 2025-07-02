@@ -8,11 +8,7 @@
           "pubSecKeys": [
             {
               "algorithm": "HS256",
-              "buffer": "dGVzdFNlY3JldA=="
-            },
-            {
-              "algorithm": "HS256",
-              "buffer": "dGVzdFNlY3JldA=="
+              "buffer": "dGVzdFNlY3JldFRoYXRJc0F0TGVhc3QyNTZCaXRzTG9uZzMyQ2hhcnM="
             }
           ],
           "jwtOptions": {

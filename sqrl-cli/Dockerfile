@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-ARG BASE_TAG
+ARG BASE_TAG=latest
 FROM datasqrl/base-sqrl:${BASE_TAG}
 
 COPY target/sqrl-cli.jar /opt/sqrl/sqrl-cli.jar

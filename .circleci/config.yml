@@ -211,44 +211,6 @@ commands:
               mvn -B versions:set -DnewVersion=$CIRCLE_TAG
             fi
 
-  run-docker-test:
-    description: >
-      Run a sqrl-test container:
-        • fail if an expected pattern is **missing**
-        • fail if any SLF4J / log4j warnings **appear**
-    parameters:
-      test_args:        { type: string }
-      working_dir:      { type: string }
-      expected_pattern: { type: string }
-    steps:
-      - run:
-          name: Run tests and assertions
-          working_directory: << parameters.working_dir >>
-          environment:
-            LOG_FILE: "/tmp/sqrl-test-logs-$$.txt"
-          command: |
-            set -o pipefail
-
-            # 1 ── run container and capture all output
-            docker run -i -v "$PWD:/build" sqrl-test \
-              << parameters.test_args >> 2>&1 | tee "$LOG_FILE"
-            DOCKER_EXIT=${PIPESTATUS[0]}
-
-            # 2 ──  slf4j / log4j warnings must NOT appear
-            if grep -qE '(log4j:WARN|SLF4J\(W\)|SLF4J:WARN)' "$LOG_FILE"; then
-              echo "❌  SLF4J / log4j warnings detected – failing the job." >&2
-              exit 1
-            fi
-
-            # 3 ──  the job-specific pattern MUST appear
-            if ! grep -q "<< parameters.expected_pattern >>" "$LOG_FILE"; then
-              echo "❌  Expected log entry “<< parameters.expected_pattern >>” not found – failing the job." >&2
-              exit 1
-            fi
-
-            # 4 ──  still propagate the container’s exit status
-            exit "$DOCKER_EXIT"
-
 jobs:
   download-maven-dependencies:
     docker:
@@ -273,7 +235,7 @@ jobs:
       - generate-settings
       - run:
           name: Run Unit Tests
-          command: mvn -U -T2 -B install -DskipITs -Pskip-shade-plugin
+          command: mvn -U -T2 -B install -DonlyUTs
       - save-test-results
 
   integration-tests:
@@ -299,10 +261,10 @@ jobs:
           command: echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
       - run:
           name: Run Integration Tests
-          command: mvn -U -T2 -B install -Dtest=skip -Dsurefire.failIfNoSpecifiedTests=false -Pskip-shade-plugin -Dmcp.inspector.version=$MCP_TAG
+          command: mvn -U -T2 -B install -DonlyITs -Dmcp.inspector.version=$MCP_TAG
       - save-test-results
 
-  build-test-image:
+  container-e2e-test:
     executor: default-machine
     steps:
       - checkout-and-version
@@ -312,34 +274,14 @@ jobs:
       - generate-settings
       - install-jdk
       - run:
-          name: Build shaded JAR
-          command: mvn -U clean -T1C -B install -DskipTests -DskipITs
-      - compute-base-tag
+          name: Build with Docker images
+          command: mvn -U clean -T1C -B package -DonlyImages -Ddocker.image.tag=${CIRCLE_SHA1}
       - run:
-          name: Pull base image
-          command: docker pull datasqrl/base-sqrl:$BASE_TAG
-      - run:
-          name: Build and push test images
+          name: Run container tests using TestContainers
           command: |
-            set -ex
-            echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-            echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
-
-            # ── cmd test image ────────────────────────────────────────────────
-            docker build \
-              --build-arg BASE_TAG=$BASE_TAG \
-              -t datasqrl/cmd-test-image:${CIRCLE_SHA1} \
-              ./sqrl-cli
-            docker push datasqrl/cmd-test-image:${CIRCLE_SHA1}
-
-            # ── sqrl-server test image ───────────────────────────────────────
-            docker build \
-              -t datasqrl/sqrl-server-test-image:${CIRCLE_SHA1} \
-              sqrl-server/sqrl-server-vertx
-            docker push datasqrl/sqrl-server-test-image:${CIRCLE_SHA1}
-
-            # wait for all images to be pushed
-            wait
+            mvn -B install -DonlyContainerE2E \
+              -pl :sqrl-container-testing \
+              -Ddocker.image.tag=${CIRCLE_SHA1}
 
   deploy:
     docker:
@@ -358,83 +300,7 @@ jobs:
             echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf
       - run:
           name: Build shaded JAR
-          command: mvn -U clean -T1C -B deploy -DskipTests -DskipITs ${CIRCLE_TAG:+-Prelease}
-
-  run-conference-tests: &disabled
-    executor: default-machine
-    steps:
-      - checkout
-      - run:
-          name: Pull test image
-          command: |
-            docker pull datasqrl/cmd-test-image:${CIRCLE_SHA1}
-            docker tag  datasqrl/cmd-test-image:${CIRCLE_SHA1} sqrl-test
-      - run-docker-test:
-          working_dir: ./sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/conference
-          test_args: test conference.sqrl conference.graphqls --snapshots snapshots-conference --tests tests-conference
-
-  run-connectors-tests:
-    executor: default-machine
-    steps:
-      - checkout
-      - run:
-          name: Pull test image
-          command: |
-            docker pull datasqrl/cmd-test-image:${CIRCLE_SHA1}
-            docker tag  datasqrl/cmd-test-image:${CIRCLE_SHA1} sqrl-test
-      - run-docker-test:
-          working_dir: ./sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/connectors-test
-          test_args: test connectors.sqrl
-          expected_pattern: 'WARN  org.apache.flink.metrics'
-
-  run-udf-tests:
-    executor: default-machine
-    steps:
-      - checkout
-      - run:
-          name: Pull test image
-          command: |
-            docker pull datasqrl/cmd-test-image:${CIRCLE_SHA1}
-            docker tag  datasqrl/cmd-test-image:${CIRCLE_SHA1} sqrl-test
-      - run-docker-test:
-          working_dir: ./sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/udf
-          test_args: test myudf.sqrl --snapshots snapshots-myudf --tests tests-myudf
-          expected_pattern: 'WARN  org.apache.flink.runtime.security.token.DefaultDelegationTokenManager'
-
-  run-vertx-tests:
-    executor: default-machine
-    steps:
-      - checkout
-      - run:
-          name: Pull test image
-          command: |
-            docker pull datasqrl/cmd-test-image:${CIRCLE_SHA1}
-            docker pull datasqrl/sqrl-server-test-image:${CIRCLE_SHA1}
-      - run:
-          working_directory: ./sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/udf
-          name: Launch sqrl-server and test if API is running
-          command: |
-            docker run -v "$PWD:/build" -e TZ="UTC" datasqrl/cmd-test-image:${CIRCLE_SHA1} compile myudf.sqrl
-            docker run -d --name sqrl-server -v $(pwd)/build/deploy/plan/vertx.json:/opt/sqrl/vertx.json \
-                                                  -v $(pwd)/build/deploy/plan/vertx-config.json:/opt/sqrl/vertx-config.json \
-                                                  -p 8888:8888 \
-                                                  datasqrl/sqrl-server-test-image:${CIRCLE_SHA1}
-            sleep 2s
-            docker logs sqrl-server
-            curl -s -X POST http://localhost:8888/graphql   -H 'Content-Type: application/json'   --data '{"query":"query { __typename }"}'
-
-  run-jwt-tests:
-    executor: default-machine
-    steps:
-      - checkout
-      - run:
-          name: Pull test image
-          command: |
-            docker pull datasqrl/cmd-test-image:${CIRCLE_SHA1}
-            docker pull datasqrl/sqrl-server-test-image:${CIRCLE_SHA1}
-      - run:
-          name: Run JWT tests
-          command: ./.circleci/run-jwt-tests.sh
+          command: mvn -U clean -T1C -B deploy -DonlyJars ${CIRCLE_TAG:+-Prelease}
 
   build-images:
     # use a full VM so we can run Docker / Buildx
@@ -450,7 +316,7 @@ jobs:
 
       - run:
           name: Build shaded JARs
-          command: mvn -U -T1C -B install -DskipTests -DskipITs
+          command: mvn -U -T1C -B install -DonlyJars
 
       - determine-version
       - compute-base-tag
@@ -580,7 +446,7 @@ workflows:
           <<: *job-defaults
       - download-maven-dependencies:
           <<: *job-defaults
-      - build-test-image:
+      - container-e2e-test:
           <<: *job-defaults
           filters:
             branches:
@@ -589,7 +455,6 @@ workflows:
               ignore: /.*/
           requires:
             - download-maven-dependencies
-            - docker-build-base-image
       - integration-tests:
           <<: *job-defaults
           filters:
@@ -622,40 +487,4 @@ workflows:
               ignore: /.*/
           requires:
             - download-maven-dependencies
-      - run-connectors-tests:
-          <<: *job-defaults
-          filters:
-            branches:
-              only: /.*/
-            tags:
-              ignore: /.*/
-          requires:
-            - build-test-image
-      - run-udf-tests:
-          <<: *job-defaults
-          filters:
-            branches:
-              only: /.*/
-            tags:
-              ignore: /.*/
-          requires:
-            - build-test-image
-      - run-vertx-tests:
-          <<: *job-defaults
-          filters:
-            branches:
-              only: /.*/
-            tags:
-              ignore: /.*/
-          requires:
-            - build-test-image
 
-      - run-jwt-tests:
-          <<: *job-defaults
-          filters:
-            branches:
-              only: /.*/
-            tags:
-              ignore: /.*/
-          requires:
-            - build-test-image

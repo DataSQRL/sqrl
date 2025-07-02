@@ -117,6 +117,7 @@
     <iceberg.version>1.9.1</iceberg.version>
     <hadoop.version>3.4.1</hadoop.version>
     <jacoco.version>0.8.13</jacoco.version>
+    <jjwt.version>0.12.6</jjwt.version>
     <assertj.version>3.27.3</assertj.version>
 
     <maven-javadoc-plugin.version>3.11.2</maven-javadoc-plugin.version>
@@ -125,6 +126,7 @@
     <license-maven-plugin.version>5.0.0</license-maven-plugin.version>
     <git-code-format-maven-plugin.version>5.3</git-code-format-maven-plugin.version>
     <sortpom.plugin.version>4.0.0</sortpom.plugin.version>
+    <dockerfile-maven-plugin.version>1.4.13</dockerfile-maven-plugin.version>
 
     <!-- params -->
     <snapshots.update>false</snapshots.update>
@@ -134,6 +136,7 @@
 
     <flinkrunner.version>0.7-SNAPSHOT</flinkrunner.version>
     <flinkrunner.image.repo>ghcr.io</flinkrunner.image.repo>
+    <docker.image.tag>local</docker.image.tag>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -868,6 +871,19 @@
           <artifactId>exec-maven-plugin</artifactId>
           <version>3.5.1</version>
         </plugin>
+        <plugin>
+          <groupId>com.spotify</groupId>
+          <artifactId>dockerfile-maven-plugin</artifactId>
+          <version>${dockerfile-maven-plugin.version}</version>
+          <configuration>
+            <repository>${docker.image.name}</repository>
+            <tag>${docker.image.tag}</tag>
+            <dockerfile>Dockerfile</dockerfile>
+            <contextDirectory>${project.basedir}</contextDirectory>
+            <useMavenSettingsForAuth>true</useMavenSettingsForAuth>
+            <pullNewerImage>false</pullNewerImage>
+          </configuration>
+        </plugin>
       </plugins>
     </pluginManagement>
     <plugins>
@@ -1110,9 +1126,20 @@
 
     <profile>
       <id>skip-shade-plugin</id>
-
+      <activation>
+        <property>
+          <name>skipFatjar</name>
+        </property>
+      </activation>
       <build>
         <plugins>
+          <plugin>
+            <groupId>io.reactiverse</groupId>
+            <artifactId>vertx-maven-plugin</artifactId>
+            <configuration>
+              <skip>true</skip>
+            </configuration>
+          </plugin>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-shade-plugin</artifactId>
@@ -1326,6 +1353,136 @@
         <maven.javadoc.skip>true</maven.javadoc.skip>
         <gcf.skip>true</gcf.skip>
         <license.skip>true</license.skip>
+      </properties>
+    </profile>
+    <profile>
+      <id>skip-dockerfile-plugin</id>
+      <activation>
+        <property>
+          <name>skipFatjar</name>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>com.spotify</groupId>
+            <artifactId>dockerfile-maven-plugin</artifactId>
+            <configuration>
+              <skip>true</skip>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <!-- "Only" profiles - activate specific job types and skip everything else -->
+    <profile>
+      <!-- skip all other tests, only run unit tests -->
+      <id>only-unit-tests</id>
+      <activation>
+        <property>
+          <name>onlyUTs</name>
+        </property>
+      </activation>
+      <properties>
+        <skipITs>true</skipITs>
+        <dockerfile.skip>true</dockerfile.skip>
+        <maven.test.excludeProjects>sqrl-container-testing</maven.test.excludeProjects>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>io.reactiverse</groupId>
+            <artifactId>vertx-maven-plugin</artifactId>
+            <configuration>
+              <skip>true</skip>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-shade-plugin</artifactId>
+            <configuration>
+              <skip>true</skip>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <!-- skip all other tests, only run integration tests -->
+      <id>only-integration-tests</id>
+      <activation>
+        <property>
+          <name>onlyITs</name>
+        </property>
+      </activation>
+      <properties>
+        <dockerfile.skip>true</dockerfile.skip>
+        <maven.test.excludeProjects>sqrl-container-testing</maven.test.excludeProjects>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+              <skip>true</skip>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>io.reactiverse</groupId>
+            <artifactId>vertx-maven-plugin</artifactId>
+            <configuration>
+              <skip>true</skip>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-shade-plugin</artifactId>
+            <configuration>
+              <skip>true</skip>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <!-- skip all other tests, only run container tests -->
+      <id>only-container-e2e</id>
+      <activation>
+        <property>
+          <name>onlyContainerE2E</name>
+        </property>
+      </activation>
+      <properties>
+        <skipTests>true</skipTests>
+        <skipITs>true</skipITs>
+      </properties>
+    </profile>
+    <profile>
+      <!-- builds docker images using maven -->
+      <id>only-images</id>
+      <activation>
+        <property>
+          <name>onlyImages</name>
+        </property>
+      </activation>
+      <properties>
+        <skipTests>true</skipTests>
+        <skipITs>true</skipITs>
+      </properties>
+    </profile>
+    <profile>
+      <!-- builds the shaded JARs, but not the images -->
+      <id>only-jars</id>
+      <activation>
+        <property>
+          <name>onlyJars</name>
+        </property>
+      </activation>
+      <properties>
+        <skipTests>true</skipTests>
+        <skipITs>true</skipITs>
+        <dockerfile.skip>true</dockerfile.skip>
       </properties>
     </profile>
   </profiles>
