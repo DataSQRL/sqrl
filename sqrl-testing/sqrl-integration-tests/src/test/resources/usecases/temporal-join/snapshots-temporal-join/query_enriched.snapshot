@@ -1,1 +1,17 @@
-{"data":{"EnrichedSensorReading":[{"sensorid":101,"temperature":23.5,"sensor_name":"Living Room Sensor"},{"sensorid":101,"temperature":33.5,"sensor_name":"Living Room Sensor"},{"sensorid":111,"temperature":13.5,"sensor_name":"Dining Room Sensor"}]}}
+{
+  "data" : {
+    "EnrichedSensorReading" : [ {
+      "sensorid" : 101,
+      "temperature" : 23.5,
+      "sensor_name" : "Living Room Sensor"
+    }, {
+      "sensorid" : 101,
+      "temperature" : 33.5,
+      "sensor_name" : "Living Room Sensor"
+    }, {
+      "sensorid" : 111,
+      "temperature" : 13.5,
+      "sensor_name" : "Dining Room Sensor"
+    } ]
+  }
+}

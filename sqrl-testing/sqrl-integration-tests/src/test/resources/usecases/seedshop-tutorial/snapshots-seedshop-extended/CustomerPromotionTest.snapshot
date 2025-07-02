@@ -1,1 +1,7 @@
-{"data":{"CustomerPromotionTest":[{"numPromotions":15}]}}
+{
+  "data" : {
+    "CustomerPromotionTest" : [ {
+      "numPromotions" : 15
+    } ]
+  }
+}

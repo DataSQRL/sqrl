@@ -1,1 +1,16 @@
-{"errors":[{"message":"Exception while fetching data (/AuthMyTable) : Parameter at position[0] with class = [java.lang.String] and value = [text] can not be coerced to the expected class = [java.lang.Number] for encoding.","locations":[{"line":2,"column":3}],"path":["AuthMyTable"],"extensions":{"classification":"DataFetchingException"}}],"data":{"AuthMyTable":null}}
+{
+  "errors" : [ {
+    "message" : "Exception while fetching data (/AuthMyTable) : Parameter at position[0] with class = [java.lang.String] and value = [text] can not be coerced to the expected class = [java.lang.Number] for encoding.",
+    "locations" : [ {
+      "line" : 2,
+      "column" : 3
+    } ],
+    "path" : [ "AuthMyTable" ],
+    "extensions" : {
+      "classification" : "DataFetchingException"
+    }
+  } ],
+  "data" : {
+    "AuthMyTable" : null
+  }
+}

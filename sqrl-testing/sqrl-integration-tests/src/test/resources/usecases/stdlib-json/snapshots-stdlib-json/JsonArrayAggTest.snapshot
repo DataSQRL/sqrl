@@ -1,1 +1,12 @@
-{"data":{"JsonArrayAggTest":[{"val":"val","json_array_agg_function":[{"a":1},{"a":1}]}]}}
+{
+  "data" : {
+    "JsonArrayAggTest" : [ {
+      "val" : "val",
+      "json_array_agg_function" : [ {
+        "a" : 1
+      }, {
+        "a" : 1
+      } ]
+    } ]
+  }
+}

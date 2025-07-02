@@ -1,1 +1,13 @@
-{"data":{"update1":{"sensorid":101},"update2":{"sensorid":111},"update3":{"sensorid":121}}}
+{
+  "data" : {
+    "update1" : {
+      "sensorid" : 101
+    },
+    "update2" : {
+      "sensorid" : 111
+    },
+    "update3" : {
+      "sensorid" : 121
+    }
+  }
+}

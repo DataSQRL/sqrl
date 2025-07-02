@@ -1,1 +1,16 @@
-{"errors":[{"message":"Exception while fetching data (/AuthMyTable) : Attribute 'val' is not present on authorization","locations":[{"line":2,"column":3}],"path":["AuthMyTable"],"extensions":{"classification":"DataFetchingException"}}],"data":{"AuthMyTable":null}}
+{
+  "errors" : [ {
+    "message" : "Exception while fetching data (/AuthMyTable) : Attribute 'val' is not present on authorization",
+    "locations" : [ {
+      "line" : 2,
+      "column" : 3
+    } ],
+    "path" : [ "AuthMyTable" ],
+    "extensions" : {
+      "classification" : "DataFetchingException"
+    }
+  } ],
+  "data" : {
+    "AuthMyTable" : null
+  }
+}

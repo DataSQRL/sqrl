@@ -1,1 +1,9 @@
-{"data":{"JsonExistsTest":[{"id":1,"json_exists_function":true,"json_not_exists_function":false}]}}
+{
+  "data" : {
+    "JsonExistsTest" : [ {
+      "id" : 1,
+      "json_exists_function" : true,
+      "json_not_exists_function" : false
+    } ]
+  }
+}

@@ -1,1 +1,7 @@
-{"data":{"DocumentSimilarityIndex":[{"doc_id":2}]}}
+{
+  "data" : {
+    "DocumentSimilarityIndex" : [ {
+      "doc_id" : 2
+    } ]
+  }
+}

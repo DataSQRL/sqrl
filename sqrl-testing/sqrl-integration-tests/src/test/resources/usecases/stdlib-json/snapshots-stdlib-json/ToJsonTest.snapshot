@@ -1,1 +1,10 @@
-{"data":{"ToJsonTest":[{"id":1,"to_json_function":{"a":1}}]}}
+{
+  "data" : {
+    "ToJsonTest" : [ {
+      "id" : 1,
+      "to_json_function" : {
+        "a" : 1
+      }
+    } ]
+  }
+}
