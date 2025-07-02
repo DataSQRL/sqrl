@@ -1,1 +1,45 @@
-{"data":{"CustomerPurchaseTest":[{"customerid":1,"productid":1,"num":1},{"customerid":1,"productid":5,"num":1},{"customerid":1,"productid":11,"num":1},{"customerid":1,"productid":16,"num":1},{"customerid":1,"productid":17,"num":1},{"customerid":1,"productid":24,"num":1},{"customerid":1,"productid":26,"num":1},{"customerid":1,"productid":36,"num":1},{"customerid":1,"productid":40,"num":1},{"customerid":1,"productid":49,"num":1}]}}
+{
+  "data" : {
+    "CustomerPurchaseTest" : [ {
+      "customerid" : 1,
+      "productid" : 1,
+      "num" : 1
+    }, {
+      "customerid" : 1,
+      "productid" : 5,
+      "num" : 1
+    }, {
+      "customerid" : 1,
+      "productid" : 11,
+      "num" : 1
+    }, {
+      "customerid" : 1,
+      "productid" : 16,
+      "num" : 1
+    }, {
+      "customerid" : 1,
+      "productid" : 17,
+      "num" : 1
+    }, {
+      "customerid" : 1,
+      "productid" : 24,
+      "num" : 1
+    }, {
+      "customerid" : 1,
+      "productid" : 26,
+      "num" : 1
+    }, {
+      "customerid" : 1,
+      "productid" : 36,
+      "num" : 1
+    }, {
+      "customerid" : 1,
+      "productid" : 40,
+      "num" : 1
+    }, {
+      "customerid" : 1,
+      "productid" : 49,
+      "num" : 1
+    } ]
+  }
+}

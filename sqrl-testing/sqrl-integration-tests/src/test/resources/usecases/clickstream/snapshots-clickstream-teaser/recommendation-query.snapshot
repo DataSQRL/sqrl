@@ -1,1 +1,8 @@
-{"data":{"Recommendation":[{"rec":"george_newnes/behold_the_man","frequency":1}]}}
+{
+  "data" : {
+    "Recommendation" : [ {
+      "rec" : "george_newnes/behold_the_man",
+      "frequency" : 1
+    } ]
+  }
+}

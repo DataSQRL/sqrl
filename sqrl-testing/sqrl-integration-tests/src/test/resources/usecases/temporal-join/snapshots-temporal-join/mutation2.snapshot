@@ -1,1 +1,16 @@
-{"data":{"add1":{"sensorid":101,"temperature":23.5},"add2":{"sensorid":101,"temperature":33.5},"add3":{"sensorid":111,"temperature":13.5}}}
+{
+  "data" : {
+    "add1" : {
+      "sensorid" : 101,
+      "temperature" : 23.5
+    },
+    "add2" : {
+      "sensorid" : 101,
+      "temperature" : 33.5
+    },
+    "add3" : {
+      "sensorid" : 111,
+      "temperature" : 13.5
+    }
+  }
+}

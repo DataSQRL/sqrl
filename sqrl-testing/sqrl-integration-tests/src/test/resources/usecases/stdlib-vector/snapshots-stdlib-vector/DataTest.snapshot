@@ -1,1 +1,17 @@
-{"data":{"DataTest":[{"doc_id":1,"category_id":10},{"doc_id":2,"category_id":10},{"doc_id":3,"category_id":5},{"doc_id":4,"category_id":5}]}}
+{
+  "data" : {
+    "DataTest" : [ {
+      "doc_id" : 1,
+      "category_id" : 10
+    }, {
+      "doc_id" : 2,
+      "category_id" : 10
+    }, {
+      "doc_id" : 3,
+      "category_id" : 5
+    }, {
+      "doc_id" : 4,
+      "category_id" : 5
+    } ]
+  }
+}

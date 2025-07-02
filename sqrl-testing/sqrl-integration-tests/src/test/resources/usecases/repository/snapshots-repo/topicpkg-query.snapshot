@@ -1,1 +1,29 @@
-{"data":{"TopicPackages":[{"topicName":"example","pkgName":"datasqrl.example.clickstream","numSubmissions":1,"latest":{"version":"0.1.0","variant":"dev"}},{"topicName":"example","pkgName":"datasqrl.example.sensors","numSubmissions":1,"latest":{"version":"0.1.0","variant":"dev"}},{"topicName":"example","pkgName":"datasqrl.seedshop","numSubmissions":1,"latest":{"version":"0.1.1","variant":"dev"}}]}}
+{
+  "data" : {
+    "TopicPackages" : [ {
+      "topicName" : "example",
+      "pkgName" : "datasqrl.example.clickstream",
+      "numSubmissions" : 1,
+      "latest" : {
+        "version" : "0.1.0",
+        "variant" : "dev"
+      }
+    }, {
+      "topicName" : "example",
+      "pkgName" : "datasqrl.example.sensors",
+      "numSubmissions" : 1,
+      "latest" : {
+        "version" : "0.1.0",
+        "variant" : "dev"
+      }
+    }, {
+      "topicName" : "example",
+      "pkgName" : "datasqrl.seedshop",
+      "numSubmissions" : 1,
+      "latest" : {
+        "version" : "0.1.1",
+        "variant" : "dev"
+      }
+    } ]
+  }
+}
