@@ -408,7 +408,7 @@ public class DatasqrlRun {
     return Optional.empty();
   }
 
-  private void applyInternalTestConfig() {
+  void applyInternalTestConfig() {
     if (testRun) {
       flinkConfig.set(DeploymentOptions.TARGET, "local");
       flinkConfig.removeConfig(CheckpointingOptions.CHECKPOINTS_DIRECTORY);

@@ -18,6 +18,8 @@ package com.datasqrl.cli;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.nio.file.Files;
@@ -26,9 +28,12 @@ import java.util.HashMap;
 import java.util.Map;
 import org.apache.flink.configuration.CheckpointingOptions;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.configuration.DeploymentOptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 class DatasqrlRunTest {
 
@@ -40,11 +45,11 @@ class DatasqrlRunTest {
   private DatasqrlRun underTest;
 
   @BeforeEach
-  void setUp() {
+  void setup() {
     flinkConfig = mock(Configuration.class);
     env = new HashMap<>();
 
-    underTest = new DatasqrlRun(tempDir.resolve("plan"), null, flinkConfig, env, true);
+    underTest = new DatasqrlRun(tempDir.resolve("plan"), null, flinkConfig, env, false);
   }
 
   @Test
@@ -111,5 +116,22 @@ class DatasqrlRunTest {
 
     assertThat(result).isPresent();
     assertThat(result.get()).endsWith("sp1");
+  }
+
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  void directoryOptionsRemovedOnTestRun(boolean testRun) {
+    underTest = new DatasqrlRun(tempDir.resolve("plan"), null, flinkConfig, env, testRun);
+
+    underTest.applyInternalTestConfig();
+
+    if (testRun) {
+      verify(flinkConfig).set(DeploymentOptions.TARGET, "local");
+      verify(flinkConfig).removeConfig(CheckpointingOptions.CHECKPOINTS_DIRECTORY);
+      verify(flinkConfig).removeConfig(CheckpointingOptions.SAVEPOINT_DIRECTORY);
+
+    } else {
+      verifyNoInteractions(flinkConfig);
+    }
   }
 }
