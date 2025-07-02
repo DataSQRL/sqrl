@@ -1375,6 +1375,7 @@
     </profile>
     <!-- "Only" profiles - activate specific job types and skip everything else -->
     <profile>
+      <!-- skip all other tests, only run unit tests -->
       <id>only-unit-tests</id>
       <activation>
         <property>
@@ -1406,6 +1407,7 @@
       </build>
     </profile>
     <profile>
+      <!-- skip all other tests, only run integration tests -->
       <id>only-integration-tests</id>
       <activation>
         <property>
@@ -1443,6 +1445,7 @@
       </build>
     </profile>
     <profile>
+      <!-- skip all other tests, only run container tests -->
       <id>only-container-e2e</id>
       <activation>
         <property>
@@ -1453,9 +1456,9 @@
         <skipTests>true</skipTests>
         <skipITs>true</skipITs>
       </properties>
-      <!-- Note: This profile skips tests globally, but sqrl-container-testing overrides this -->
     </profile>
     <profile>
+      <!-- builds docker images using maven -->
       <id>only-images</id>
       <activation>
         <property>
@@ -1466,9 +1469,9 @@
         <skipTests>true</skipTests>
         <skipITs>true</skipITs>
       </properties>
-      <!-- Note: This profile allows shade plugin for building images -->
     </profile>
     <profile>
+      <!-- builds the shaded JARs, but not the images -->
       <id>only-jars</id>
       <activation>
         <property>
@@ -1480,7 +1483,6 @@
         <skipITs>true</skipITs>
         <dockerfile.skip>true</dockerfile.skip>
       </properties>
-      <!-- Note: This profile allows shade plugin for deployment JARs -->
     </profile>
   </profiles>
 
