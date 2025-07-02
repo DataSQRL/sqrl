@@ -23,62 +23,32 @@ import java.time.Instant;
 import java.util.Date;
 import javax.crypto.spec.SecretKeySpec;
 import lombok.SneakyThrows;
-import org.apache.http.util.EntityUtils;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class JwtContainerIT extends SqrlContainerTestBase {
 
-  private static final Logger logger = LoggerFactory.getLogger(JwtContainerIT.class);
-
-  @AfterEach
-  void tearDown() {
-    cleanupContainers();
+  @Override
+  protected String getTestCaseName() {
+    return "jwt-authorized";
   }
 
   @Test
   @SneakyThrows
   void givenJwtEnabledScript_whenServerStarted_thenUnauthorizedRequestsReturn401() {
-    var testDir = itPath("jwt-authorized");
-
-    logger.info("Running JWT container test (unauthorized)");
-
-    compileSqrlScript("jwt-authorized.sqrl", testDir);
-
-    startGraphQLServer(testDir);
+    compileAndStartServer("jwt-authorized.sqrl", testDir);
 
     var response = executeGraphQLQuery("{\"query\":\"query { __typename }\"}");
 
     assertThat(response.getStatusLine().getStatusCode()).isEqualTo(401);
-
-    logger.info("JWT unauthorized test completed successfully");
   }
 
   @Test
   @SneakyThrows
   void givenJwtEnabledScript_whenServerStartedWithValidJwt_thenAuthorizedRequestsSucceed() {
-    var testDir = itPath("jwt-authorized");
-
-    logger.info("Running JWT container test (authorized)");
-
-    compileSqrlScript("jwt-authorized.sqrl", testDir);
-
-    startGraphQLServer(testDir);
+    compileAndStartServer("jwt-authorized.sqrl", testDir);
 
     var response = executeGraphQLQuery("{\"query\":\"query { __typename }\"}", generateJwtToken());
-
-    assertThat(response.getStatusLine().getStatusCode()).isEqualTo(200);
-
-    var responseBody = EntityUtils.toString(response.getEntity());
-    var jsonResponse = objectMapper.readTree(responseBody);
-
-    assertThat(jsonResponse.has("data")).isTrue();
-    assertThat(jsonResponse.get("data").has("__typename")).isTrue();
-    assertThat(jsonResponse.get("data").get("__typename").asText()).isEqualTo("Query");
-
-    logger.info("JWT authorized test completed successfully");
+    validateBasicGraphQLResponse(response);
   }
 
   private String generateJwtToken() {

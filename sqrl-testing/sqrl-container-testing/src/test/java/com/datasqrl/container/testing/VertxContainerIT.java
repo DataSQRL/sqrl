@@ -18,43 +18,21 @@ package com.datasqrl.container.testing;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import lombok.SneakyThrows;
-import org.apache.http.util.EntityUtils;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class VertxContainerIT extends SqrlContainerTestBase {
 
-  private static final Logger logger = LoggerFactory.getLogger(VertxContainerIT.class);
-
-  @AfterEach
-  void tearDown() {
-    cleanupContainers();
+  @Override
+  protected String getTestCaseName() {
+    return "udf";
   }
 
   @Test
   @SneakyThrows
   void givenUdfScript_whenCompiledAndServerStarted_thenApiRespondsCorrectly() {
-    var testDir = itPath("udf");
-
-    logger.info("Running Vert.x container test");
-
-    compileSqrlScript("myudf.sqrl", testDir);
-
-    startGraphQLServer(testDir);
+    compileAndStartServer("myudf.sqrl", testDir);
 
     var response = executeGraphQLQuery("{\"query\":\"query { __typename }\"}");
-
-    assertThat(response.getStatusLine().getStatusCode()).isEqualTo(200);
-
-    var responseBody = EntityUtils.toString(response.getEntity());
-    var jsonResponse = objectMapper.readTree(responseBody);
-
-    assertThat(jsonResponse.has("data")).isTrue();
-    assertThat(jsonResponse.get("data").has("__typename")).isTrue();
-    assertThat(jsonResponse.get("data").get("__typename").asText()).isEqualTo("Query");
-
-    logger.info("Vert.x container test completed successfully");
+    validateBasicGraphQLResponse(response);
   }
 }

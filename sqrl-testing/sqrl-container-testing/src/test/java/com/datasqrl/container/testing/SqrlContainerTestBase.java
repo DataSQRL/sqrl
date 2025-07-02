@@ -23,15 +23,19 @@ import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.regex.Pattern;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.BindMode;
@@ -43,9 +47,25 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
 @Testcontainers
+@Slf4j
 public abstract class SqrlContainerTestBase {
 
-  private static final Logger log = LoggerFactory.getLogger(SqrlContainerTestBase.class);
+  protected Path testDir;
+
+  protected abstract String getTestCaseName();
+
+  @BeforeEach
+  void setupBeforeEach() {
+    if (testDir == null) {
+      testDir = itPath(getTestCaseName());
+    }
+    cleanupBuildDirectory(testDir);
+  }
+
+  @AfterEach
+  protected void commonTearDown() {
+    cleanupContainers();
+  }
 
   protected static final String SQRL_CMD_IMAGE = "datasqrl/cmd";
   protected static final String SQRL_SERVER_IMAGE = "datasqrl/sqrl-server";
@@ -222,12 +242,51 @@ public abstract class SqrlContainerTestBase {
   }
 
   @SneakyThrows
-  protected Path itPath(String relativePath) {
+  protected static Path itPath(String relativePath) {
     var path =
         Paths.get("../sqrl-integration-tests/src/test/resources/usecases", relativePath)
             .toAbsolutePath();
     assertThat(path).exists().isDirectory();
     return path.toRealPath();
+  }
+
+  protected static void cleanupBuildDirectory(Path testDir) {
+    var buildPath = testDir.resolve("build");
+    if (buildPath.toFile().exists()) {
+      // Use static logger access for static method
+      LoggerFactory.getLogger(SqrlContainerTestBase.class).info("Cleaning up build directory: {}", buildPath);
+      try {
+        var network = Network.newNetwork();
+        var cleanupContainer = new GenericContainer<>(DockerImageName.parse("alpine:latest"))
+            .withNetwork(network)
+            .withCommand("sh", "-c", "rm -rf /testdir/build")
+            .withFileSystemBind(testDir.toString(), "/testdir", BindMode.READ_WRITE)
+            .withStartupCheckStrategy(new IndefiniteWaitOneShotStartupCheckStrategy());
+        
+        cleanupContainer.start();
+        cleanupContainer.stop();
+        network.close();
+        LoggerFactory.getLogger(SqrlContainerTestBase.class).info("Build directory cleanup completed");
+      } catch (Exception e) {
+        LoggerFactory.getLogger(SqrlContainerTestBase.class).warn("Failed to cleanup build directory: {}", e.getMessage());
+      }
+    }
+  }
+
+  protected void validateBasicGraphQLResponse(HttpResponse response) throws Exception {
+    assertThat(response.getStatusLine().getStatusCode()).isEqualTo(200);
+
+    var responseBody = EntityUtils.toString(response.getEntity());
+    var jsonResponse = objectMapper.readTree(responseBody);
+
+    assertThat(jsonResponse.has("data")).isTrue();
+    assertThat(jsonResponse.get("data").has("__typename")).isTrue();
+    assertThat(jsonResponse.get("data").get("__typename").asText()).isEqualTo("Query");
+  }
+
+  protected void compileAndStartServer(String scriptName, Path testDir) throws Exception {
+    compileSqrlScript(scriptName, testDir);
+    startGraphQLServer(testDir);
   }
 
   protected HttpResponse executeGraphQLQuery(String query) throws Exception {

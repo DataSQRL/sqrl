@@ -20,29 +20,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 import lombok.SneakyThrows;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.util.EntityUtils;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class MetricsContainerIT extends SqrlContainerTestBase {
 
-  private static final Logger logger = LoggerFactory.getLogger(MetricsContainerIT.class);
-
-  @AfterEach
-  void tearDown() {
-    cleanupContainers();
+  @Override
+  protected String getTestCaseName() {
+    return "udf";
   }
 
   @Test
   @SneakyThrows
   void givenRunningServer_whenAccessingMetricsEndpoint_thenReturnsMetrics() {
-    var testDir = itPath("udf");
-
-    logger.info("Running metrics container test - validating /metrics endpoint");
-
-    compileSqrlScript("myudf.sqrl", testDir);
-    startGraphQLServer(testDir);
+    compileAndStartServer("myudf.sqrl", testDir);
 
     var response =
         sharedHttpClient.execute(
@@ -62,26 +52,18 @@ public class MetricsContainerIT extends SqrlContainerTestBase {
           .contains("# HELP")
           .contains("# TYPE");
 
-      logger.info("Metrics endpoint is available and returning Prometheus metrics");
     } else {
       throw new AssertionError(
           "Unexpected status code for /metrics endpoint: "
               + statusCode
               + serverContainer.getLogs());
     }
-
-    logger.info("Metrics endpoint validation completed successfully");
   }
 
   @Test
   @SneakyThrows
   void givenRunningServer_whenAccessingHealthEndpoint_thenReturnsHealthStatus() {
-    var testDir = itPath("udf");
-
-    logger.info("Running health check container test - validating /health endpoint");
-
-    compileSqrlScript("myudf.sqrl", testDir);
-    startGraphQLServer(testDir);
+    compileAndStartServer("myudf.sqrl", testDir);
 
     var response =
         sharedHttpClient.execute(
@@ -101,13 +83,7 @@ public class MetricsContainerIT extends SqrlContainerTestBase {
 
       assertThat(jsonResponse.has("status")).isTrue();
       assertThat(jsonResponse.get("status").asText()).isEqualTo("UP");
-      logger.info("Health endpoint returned 200 with JSON status");
-    } else {
-      // 204 No Content indicates healthy server with no registered health checks
-      logger.info(
-          "Health endpoint returned 204 - server is healthy but no health checks registered");
     }
-
-    logger.info("Health endpoint validation completed successfully");
+    // 204 No Content indicates healthy server with no registered health checks
   }
 }
