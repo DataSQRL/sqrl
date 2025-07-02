@@ -116,6 +116,45 @@ This is a multi-module Maven project with the following key components:
 3. **Testing**: Run unit tests frequently, integration tests before commits
 4. **Code Quality**: All code uses Google Java Format and requires 70% test coverage
 
+## Maven Version Management
+
+### Version Properties Pattern
+All dependency versions should be centralized as properties in the root pom.xml (`/pom.xml`) to ensure consistency across all modules.
+
+**Root POM Properties Location**: `/pom.xml` - All version properties are defined in the `<properties>` section.
+
+**Key Principles**:
+- NEVER use hardcoded versions in child module pom.xml files
+- ALWAYS add new version properties to the root pom.xml when introducing new dependencies
+- Use consistent property naming: `<libraryname.version>X.Y.Z</libraryname.version>`
+
+**Examples of Existing Properties**:
+```xml
+<properties>
+  <jackson.version>2.19.1</jackson.version>
+  <vertx.version>5.0.1</vertx.version>
+  <kafka.version>3.4.0</kafka.version>
+  <flink.version>1.19.2</flink.version>
+  <httpcomponents.version>4.5.14</httpcomponents.version>
+  <jjwt.version>0.12.6</jjwt.version>
+  <testcontainers.version>1.21.3</testcontainers.version>
+</properties>
+```
+
+**Child Module Usage**:
+```xml
+<dependency>
+  <groupId>org.apache.httpcomponents</groupId>
+  <artifactId>httpclient</artifactId>
+  <version>${httpcomponents.version}</version>
+</dependency>
+```
+
+**When Adding New Dependencies**:
+1. First add the version property to root pom.xml
+2. Then reference the property in child module pom.xml files
+3. This ensures version consistency across all modules and makes version upgrades centralized
+
 ## Git Commits
 
 - **Commit Messages**: Use succinct single-line messages describing the most important change
