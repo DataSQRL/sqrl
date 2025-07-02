@@ -58,7 +58,7 @@ public abstract class SqrlContainerTestBase {
     if (testDir == null) {
       testDir = itPath(getTestCaseName());
     }
-    cleanupBuildDirectory(testDir);
+    assertBuildNotOwnedByRoot(testDir);
   }
 
   @AfterEach
@@ -255,26 +255,17 @@ public abstract class SqrlContainerTestBase {
     return path.toRealPath();
   }
 
-  protected static void cleanupBuildDirectory(Path testDir) {
+  protected static void assertBuildNotOwnedByRoot(Path testDir) {
     var buildPath = testDir.resolve("build");
     if (buildPath.toFile().exists()) {
-      // Use static logger access for static method
-      log.info("Cleaning up build directory: {}", buildPath);
       try {
-        var network = Network.newNetwork();
-        var cleanupContainer =
-            new GenericContainer<>(DockerImageName.parse("alpine:latest"))
-                .withNetwork(network)
-                .withCommand("sh", "-c", "rm -rf /testdir/build")
-                .withFileSystemBind(testDir.toString(), "/testdir", BindMode.READ_WRITE)
-                .withStartupCheckStrategy(new IndefiniteWaitOneShotStartupCheckStrategy());
-
-        cleanupContainer.start();
-        cleanupContainer.stop();
-        network.close();
-        log.info("Build directory cleanup completed");
+        var owner = java.nio.file.Files.getOwner(buildPath);
+        assertThat(owner.getName())
+            .as("Build directory should not be owned by root user")
+            .isNotEqualTo("root");
+        log.debug("Build directory {} is owned by: {}", buildPath, owner.getName());
       } catch (Exception e) {
-        log.warn("Failed to cleanup build directory: {}", e.getMessage());
+        log.warn("Failed to check build directory ownership: {}", e.getMessage());
       }
     }
   }
