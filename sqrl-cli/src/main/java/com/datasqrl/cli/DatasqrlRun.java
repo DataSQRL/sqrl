@@ -80,21 +80,27 @@ public class DatasqrlRun {
   private final PackageJson sqrlConfig;
   private final Configuration flinkConfig;
   private final Map<String, String> env;
+  private final boolean testRun;
   private final ObjectMapper objectMapper;
 
   private Vertx vertx;
   private TableResult execute;
 
   public DatasqrlRun(Path planPath, PackageJson sqrlConfig, Configuration flinkConfig) {
-    this(planPath, sqrlConfig, flinkConfig, System.getenv());
+    this(planPath, sqrlConfig, flinkConfig, System.getenv(), false);
   }
 
   public DatasqrlRun(
-      Path planPath, PackageJson sqrlConfig, Configuration flinkConfig, Map<String, String> env) {
+      Path planPath,
+      PackageJson sqrlConfig,
+      Configuration flinkConfig,
+      Map<String, String> env,
+      boolean testRun) {
     this.planPath = planPath;
     this.sqrlConfig = sqrlConfig;
     this.flinkConfig = flinkConfig;
     this.env = env;
+    this.testRun = testRun;
     build = planPath.getParent().getParent();
     objectMapper = SqrlObjectMapper.MAPPER;
   }
@@ -153,15 +159,6 @@ public class DatasqrlRun {
     if (vertx != null) {
       vertx.close();
     }
-  }
-
-  private TableResult run() {
-    initPostgres();
-    initKafka();
-
-    startVertx();
-
-    return runFlinkJob();
   }
 
   @SneakyThrows
@@ -334,6 +331,10 @@ public class DatasqrlRun {
 
   @SneakyThrows
   Optional<String> getLastSavepoint() {
+    if (testRun) {
+      return Optional.empty();
+    }
+
     var savepointDir = flinkConfig.get(CheckpointingOptions.SAVEPOINT_DIRECTORY);
     if (StringUtils.isNotBlank(savepointDir)) {
       log.debug("Using savepoint dir from Flink configuration YAML: {}", savepointDir);
@@ -408,8 +409,10 @@ public class DatasqrlRun {
   }
 
   private void applyInternalTestConfig() {
-    if (env.containsKey("INTERNAL_TEST_RUN")) {
+    if (testRun) {
       flinkConfig.set(DeploymentOptions.TARGET, "local");
+      flinkConfig.removeConfig(CheckpointingOptions.CHECKPOINTS_DIRECTORY);
+      flinkConfig.removeConfig(CheckpointingOptions.SAVEPOINT_DIRECTORY);
     }
 
     // Exposed for tests

@@ -179,10 +179,7 @@ public class Sqrl2FlinkSQLTranslator {
   @Getter private final TableAnalysisLookup tableLookup = new TableAnalysisLookup();
 
   public Sqrl2FlinkSQLTranslator(
-      BuildPath buildPath,
-      FlinkStreamEngine flink,
-      CompilerConfig compilerConfig,
-      boolean internalTestExec) {
+      BuildPath buildPath, FlinkStreamEngine flink, CompilerConfig compilerConfig) {
     this.executionMode = flink.getExecutionMode();
     this.compilePlan = compilerConfig.compilePlan();
     // Set up a StreamExecution Environment in Flink with configuration and access to jars
@@ -207,13 +204,10 @@ public class Sqrl2FlinkSQLTranslator {
 
     this.planBuilder = new Builder(config.clone());
     planBuilder.addInferredConfig(flink.getDeploymentConfig());
+    planBuilder.addInferredConfig(flink.getDirectoryConfig());
 
     if (executionMode == ExecutionMode.STREAMING) {
       planBuilder.addInferredConfig(flink.getStreamingSpecificConfig());
-    }
-
-    if (!internalTestExec) {
-      planBuilder.addInferredConfig(flink.getDirectoryConfig());
     }
 
     // Set up table environment

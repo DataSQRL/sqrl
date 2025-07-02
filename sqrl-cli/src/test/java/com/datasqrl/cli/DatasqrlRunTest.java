@@ -44,7 +44,7 @@ class DatasqrlRunTest {
     flinkConfig = mock(Configuration.class);
     env = new HashMap<>();
 
-    underTest = new DatasqrlRun(tempDir.resolve("plan"), null, flinkConfig, env);
+    underTest = new DatasqrlRun(tempDir.resolve("plan"), null, flinkConfig, env, true);
   }
 
   @Test

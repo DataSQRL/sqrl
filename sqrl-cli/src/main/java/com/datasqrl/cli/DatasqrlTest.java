@@ -78,7 +78,7 @@ public class DatasqrlTest {
   @SneakyThrows
   public int run() {
     // 1. Run the DataSQRL pipeline via {@link DatasqrlRun}
-    DatasqrlRun run = new DatasqrlRun(planPath, sqrlConfig, flinkConfig, env);
+    DatasqrlRun run = new DatasqrlRun(planPath, sqrlConfig, flinkConfig, env, true);
     Map compilerMap = (Map) run.getPackageJson().get("compiler");
     // Initialize snapshot directory
     String snapshotPathString = (String) compilerMap.get("snapshotPath");

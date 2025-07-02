@@ -55,15 +55,13 @@ public class CompilationProcess {
   private final ExecutionGoal executionGoal;
   private final ErrorCollector errors;
 
-  public Pair<PhysicalPlan, TestPlan> executeCompilation(
-      Optional<Path> testsPath, boolean internalTestExec) {
+  public Pair<PhysicalPlan, TestPlan> executeCompilation(Optional<Path> testsPath) {
 
     var environment =
         new Sqrl2FlinkSQLTranslator(
             buildPath,
             (FlinkStreamEngine) planner.getStreamStage().getEngine(),
-            config.getCompilerConfig(),
-            internalTestExec);
+            config.getCompilerConfig());
     planner.planMain(mainScript, environment);
     var dagBuilder = planner.getDagBuilder();
     var dag = dagPlanner.optimize(dagBuilder.getDag());

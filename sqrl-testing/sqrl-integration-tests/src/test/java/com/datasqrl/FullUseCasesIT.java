@@ -232,7 +232,6 @@ class FullUseCasesIT {
       Map<String, String> env = new HashMap<>();
       env.putAll(System.getenv());
       env.putAll(containerHook.getEnv());
-      env.put("INTERNAL_TEST_RUN", "true");
       env.put("DATA_PATH", rootDir.resolve("build/deploy/flink/data").toAbsolutePath().toString());
       env.put("UDF_PATH", rootDir.resolve("build/deploy/flink/lib").toAbsolutePath().toString());
 
@@ -261,7 +260,7 @@ class FullUseCasesIT {
         try {
           var planDir = context.getRootDir().resolve(SqrlConstants.PLAN_PATH);
           var flinkConfig = ConfigLoaderUtils.loadFlinkConfig(planDir);
-          run = new DatasqrlRun(planDir, packageJson, flinkConfig, context.getEnv());
+          run = new DatasqrlRun(planDir, packageJson, flinkConfig, context.getEnv(), true);
           TableResult result = run.run(false, false);
           long delaySec =
               packageJson
