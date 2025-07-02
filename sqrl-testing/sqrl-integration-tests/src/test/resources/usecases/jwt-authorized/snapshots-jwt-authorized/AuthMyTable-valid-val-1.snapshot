@@ -1,1 +1,7 @@
-{"data":{"AuthMyTable":[{"val":1}]}}
+{
+  "data" : {
+    "AuthMyTable" : [ {
+      "val" : 1
+    } ]
+  }
+}

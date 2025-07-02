@@ -1,1 +1,55 @@
-{"data":{"CustomerApplicationTest":[{"id":10,"email":"amywilson@email.com","num_applications":8,"total":1092288.75},{"id":9,"email":"christophermiller@email.com","num_applications":6,"total":1666348.2},{"id":5,"email":"davidjohnson@email.com","num_applications":11,"total":1669436.91},{"id":4,"email":"emilydavis@email.com","num_applications":16,"total":3175592.43},{"id":7,"email":"jamesjones@email.com","num_applications":11,"total":1708210.62},{"id":2,"email":"janesmith@email.com","num_applications":11,"total":2482943.17},{"id":8,"email":"jennifertaylor@email.com","num_applications":14,"total":753986.92},{"id":1,"email":"johndoe@email.com","num_applications":10,"total":2058085.16},{"id":3,"email":"michaelbrown@email.com","num_applications":5,"total":568584.4},{"id":6,"email":"sarahwilliams@email.com","num_applications":8,"total":510330.27}]}}
+{
+  "data" : {
+    "CustomerApplicationTest" : [ {
+      "id" : 10,
+      "email" : "amywilson@email.com",
+      "num_applications" : 8,
+      "total" : 1092288.75
+    }, {
+      "id" : 9,
+      "email" : "christophermiller@email.com",
+      "num_applications" : 6,
+      "total" : 1666348.2
+    }, {
+      "id" : 5,
+      "email" : "davidjohnson@email.com",
+      "num_applications" : 11,
+      "total" : 1669436.91
+    }, {
+      "id" : 4,
+      "email" : "emilydavis@email.com",
+      "num_applications" : 16,
+      "total" : 3175592.43
+    }, {
+      "id" : 7,
+      "email" : "jamesjones@email.com",
+      "num_applications" : 11,
+      "total" : 1708210.62
+    }, {
+      "id" : 2,
+      "email" : "janesmith@email.com",
+      "num_applications" : 11,
+      "total" : 2482943.17
+    }, {
+      "id" : 8,
+      "email" : "jennifertaylor@email.com",
+      "num_applications" : 14,
+      "total" : 753986.92
+    }, {
+      "id" : 1,
+      "email" : "johndoe@email.com",
+      "num_applications" : 10,
+      "total" : 2058085.16
+    }, {
+      "id" : 3,
+      "email" : "michaelbrown@email.com",
+      "num_applications" : 5,
+      "total" : 568584.4
+    }, {
+      "id" : 6,
+      "email" : "sarahwilliams@email.com",
+      "num_applications" : 8,
+      "total" : 510330.27
+    } ]
+  }
+}

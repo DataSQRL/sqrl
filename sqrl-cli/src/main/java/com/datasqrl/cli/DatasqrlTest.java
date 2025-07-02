@@ -18,7 +18,9 @@ package com.datasqrl.cli;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.util.FlinkOperatorStatusChecker;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -68,6 +70,7 @@ public class DatasqrlTest {
   private final Map<String, String> env;
   public String GRAPHQL_ENDPOINT = "http://localhost:8888/graphql";
   private final ObjectMapper objectMapper = new ObjectMapper();
+  private final ObjectWriter jsonWriter = objectMapper.writerWithDefaultPrettyPrinter();
 
   public DatasqrlTest(
       Path planPath, PackageJson sqrlConfig, Configuration flinkConfig, Map<String, String> env) {
@@ -351,19 +354,34 @@ public class DatasqrlTest {
 
   @SneakyThrows
   private void snapshot(
-      Path snapshotPath, String name, String currentResponse, List<Exception> exceptions) {
+      Path snapshotPath, String name, String rawJson, List<Exception> exceptions) {
+
+    var content = format(rawJson);
 
     // Existing snapshot logic
     if (Files.exists(snapshotPath)) {
       String existingSnapshot = new String(Files.readAllBytes(snapshotPath), "UTF-8");
-      if (!existingSnapshot.equals(currentResponse)) {
-        exceptions.add(new SnapshotMismatchException(name, existingSnapshot, currentResponse));
-      } else {
+      if (existingSnapshot.equals(content)) {
         exceptions.add(new SnapshotOkException(name));
+      } else if (format(existingSnapshot).equals(content)) {
+        Files.write(snapshotPath, content.getBytes("UTF-8"));
+        exceptions.add(new SnapshotOkException(name));
+      } else {
+        exceptions.add(new SnapshotMismatchException(name, existingSnapshot, content));
       }
     } else {
-      Files.write(snapshotPath, currentResponse.getBytes("UTF-8"));
+      Files.write(snapshotPath, content.getBytes("UTF-8"));
       exceptions.add(new SnapshotCreationException(name));
+    }
+  }
+
+  @SneakyThrows
+  private String format(String rawData) {
+    try {
+      var data = objectMapper.readValue(rawData, Object.class);
+      return jsonWriter.writeValueAsString(data);
+    } catch (JsonProcessingException e) {
+      return rawData;
     }
   }
 
