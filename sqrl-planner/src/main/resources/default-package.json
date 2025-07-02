@@ -4,6 +4,8 @@
   "engines" : {
     "flink" : {
       "config": {
+        "execution.target": "local",
+        "execution.attached": true,
         "rest.address": "localhost",
         "rest.port": 8081,
         "state.backend.type": "rocksdb",

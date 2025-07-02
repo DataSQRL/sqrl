@@ -39,7 +39,6 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.configuration.CheckpointingOptions;
 import org.apache.flink.configuration.Configuration;
-import org.apache.flink.configuration.DeploymentOptions;
 
 @Slf4j
 public class FlinkStreamEngine extends ExecutionEngine.Base implements StreamEngine {
@@ -71,14 +70,6 @@ public class FlinkStreamEngine extends ExecutionEngine.Base implements StreamEng
     Map<String, String> configMap = new HashMap<>();
     engineConfig.getConfig().forEach((key, value) -> configMap.put(key, String.valueOf(value)));
     return configMap;
-  }
-
-  public Configuration getDeploymentConfig() {
-    var conf = new Configuration();
-    conf.set(DeploymentOptions.TARGET, "local");
-    conf.set(DeploymentOptions.ATTACHED, true);
-
-    return conf;
   }
 
   public Configuration getDirectoryConfig() {

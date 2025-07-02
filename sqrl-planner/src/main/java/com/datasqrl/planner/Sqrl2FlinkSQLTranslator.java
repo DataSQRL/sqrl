@@ -203,7 +203,6 @@ public class Sqrl2FlinkSQLTranslator {
     }
 
     this.planBuilder = new Builder(config.clone());
-    planBuilder.addInferredConfig(flink.getDeploymentConfig());
     planBuilder.addInferredConfig(flink.getDirectoryConfig());
 
     if (executionMode == ExecutionMode.STREAMING) {
