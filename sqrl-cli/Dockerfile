@@ -17,6 +17,8 @@
 ARG BASE_TAG=latest
 FROM datasqrl/base-sqrl:${BASE_TAG}
 
+COPY postgres.conf /etc/postgresql/${POSTGRES_VERSION}/main/conf.d/postgres.conf
+COPY redpanda.yaml /etc/redpanda/redpanda.yaml
 COPY target/sqrl-cli.jar /opt/sqrl/sqrl-cli.jar
 COPY entrypoint.sh /opt/sqrl/entrypoint.sh
 
