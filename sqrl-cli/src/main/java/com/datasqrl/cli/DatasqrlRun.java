@@ -15,6 +15,8 @@
  */
 package com.datasqrl.cli;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.flinkrunner.EnvVarResolver;
 import com.datasqrl.flinkrunner.SqrlRunner;
@@ -32,14 +34,20 @@ import io.vertx.core.VertxOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.micrometer.MicrometerMetricsFactory;
 import java.io.File;
+import java.net.URI;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileTime;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.Statement;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -48,13 +56,17 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.api.common.JobStatus;
 import org.apache.flink.api.common.RuntimeExecutionMode;
+import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.configuration.CheckpointingOptions;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.configuration.DeploymentOptions;
 import org.apache.flink.configuration.ExecutionOptions;
-import org.apache.flink.configuration.RestOptions;
 import org.apache.flink.configuration.RestartStrategyOptions;
+import org.apache.flink.core.execution.SavepointFormatType;
+import org.apache.flink.runtime.jobgraph.SavepointConfigOptions;
 import org.apache.flink.table.api.TableResult;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
@@ -87,28 +99,55 @@ public class DatasqrlRun {
     objectMapper = SqrlObjectMapper.MAPPER;
   }
 
-  public TableResult run(boolean hold) {
+  public TableResult run(boolean hold, boolean shutdownHook) {
     initPostgres();
     initKafka();
 
     startVertx();
     execute = runFlinkJob();
+
+    if (shutdownHook) {
+      Runtime.getRuntime().addShutdownHook(new Thread(this::stop, "flink-shutdown"));
+    }
+
     if (hold) {
       execute.print();
     }
+
     return execute;
   }
 
   public void stop() {
+    log.info("Stopping with savepoint initiated");
+    closeCommon(
+        () -> {
+          var sp =
+              execute
+                  .getJobClient()
+                  .get()
+                  .stopWithSavepoint(false, null, SavepointFormatType.NATIVE);
+          try {
+            var spPath = sp.get();
+            log.info("Savepoint created at {}", spPath);
+          } catch (Exception e) {
+            log.error("Savepoint creation failed.", e);
+          }
+        });
+  }
+
+  public void cancel() {
+    closeCommon(() -> execute.getJobClient().get().cancel());
+  }
+
+  private void closeCommon(Runnable closeFlinkJob) {
     if (execute != null) {
       try {
         var status = execute.getJobClient().get().getJobStatus().get();
         if (status != JobStatus.FINISHED) {
-          execute.getJobClient().get().cancel();
+          closeFlinkJob.run();
         }
       } catch (Exception e) {
         // allow failure if job already ended
-        //        e.printStackTrace();
       }
     }
     if (vertx != null) {
@@ -116,23 +155,20 @@ public class DatasqrlRun {
     }
   }
 
+  private TableResult run() {
+    initPostgres();
+    initKafka();
+
+    startVertx();
+
+    return runFlinkJob();
+  }
+
   @SneakyThrows
-  public TableResult runFlinkJob() {
+  private TableResult runFlinkJob() {
+    applyInternalTestConfig();
     var execMode = flinkConfig.get(ExecutionOptions.RUNTIME_MODE);
     var isCompiledPlan = sqrlConfig.getCompilerConfig().compilePlan();
-
-    // TODO: not set these here hardcoded
-    flinkConfig.set(DeploymentOptions.TARGET, "local");
-    flinkConfig.set(DeploymentOptions.ATTACHED, true);
-    flinkConfig.set(RestOptions.PORT, 8081);
-
-    // Exposed for tests
-    if (env.get("FLINK_RESTART_STRATEGY") != null) {
-      flinkConfig.set(RestartStrategyOptions.RESTART_STRATEGY, "fixed-delay");
-      flinkConfig.set(RestartStrategyOptions.RESTART_STRATEGY_FIXED_DELAY_ATTEMPTS, 0);
-      flinkConfig.set(
-          RestartStrategyOptions.RESTART_STRATEGY_FIXED_DELAY_DELAY, Duration.ofSeconds(5));
-    }
 
     String sqlFile = null;
     String planFile = null;
@@ -145,6 +181,13 @@ public class DatasqrlRun {
     var resolver = new EnvVarResolver(env);
     var udfPath = env.get("UDF_PATH");
 
+    getLastSavepoint()
+        .ifPresent(
+            sp -> {
+              log.info("Trying to restore from savepoint: {}", sp);
+              flinkConfig.set(SavepointConfigOptions.SAVEPOINT_PATH, sp);
+            });
+
     SqrlRunner runner = new SqrlRunner(execMode, flinkConfig, resolver, sqlFile, planFile, udfPath);
 
     return runner.run();
@@ -156,7 +199,7 @@ public class DatasqrlRun {
   }
 
   @SneakyThrows
-  public void initKafka() {
+  private void initKafka() {
     if (!planPath.resolve("kafka.json").toFile().exists()) {
       return;
     }
@@ -205,7 +248,7 @@ public class DatasqrlRun {
   }
 
   @SneakyThrows
-  public void initPostgres() {
+  private void initPostgres() {
     File file = planPath.resolve("postgres.json").toFile();
     if (!file.exists()) {
       return;
@@ -234,7 +277,7 @@ public class DatasqrlRun {
   }
 
   @SneakyThrows
-  public void startVertx() {
+  private void startVertx() {
     if (!planPath.resolve("vertx.json").toFile().exists()) {
       return;
     }
@@ -282,11 +325,52 @@ public class DatasqrlRun {
         .onComplete(
             res -> {
               if (res.succeeded()) {
-                System.out.println("Deployment id is: " + res.result());
+                log.info("Vertx deplotment ID: {}", res.result());
               } else {
-                System.out.println("Deployment failed!");
+                log.warn("Vertx deplotment failed", res.cause());
               }
             });
+  }
+
+  @SneakyThrows
+  Optional<String> getLastSavepoint() {
+    var savepointDir = flinkConfig.get(CheckpointingOptions.SAVEPOINT_DIRECTORY);
+    if (StringUtils.isNotBlank(savepointDir)) {
+      log.debug("Using savepoint dir from Flink configuration YAML: {}", savepointDir);
+    } else {
+      savepointDir = env.get("FLINK_SP_DATA_PATH");
+    }
+
+    if (StringUtils.isNotBlank(savepointDir)) {
+      log.debug("Using savepoint dir from FLINK_SP_DATA_PATH env var: {}", savepointDir);
+    } else {
+      return Optional.empty();
+    }
+
+    Path savepointDirPath;
+    try {
+      savepointDirPath = Paths.get(URI.create(savepointDir));
+    } catch (IllegalArgumentException ignored) {
+      savepointDirPath = Paths.get(savepointDir);
+    }
+
+    checkArgument(
+        Files.isDirectory(savepointDirPath),
+        String.format("Savepoint dir '%s' does not exist", savepointDir));
+
+    return Files.list(savepointDirPath)
+        .filter(Files::isDirectory)
+        .map(this::attachCreationTime)
+        .max(Comparator.comparing(t -> t.f1))
+        .map(t -> t.f0)
+        .map(Path::toAbsolutePath)
+        .map(Path::toString);
+  }
+
+  @SneakyThrows
+  private Tuple2<Path, FileTime> attachCreationTime(Path path) {
+    BasicFileAttributes attrs = Files.readAttributes(path, BasicFileAttributes.class);
+    return Tuple2.of(path, attrs.creationTime());
   }
 
   @SuppressWarnings("unchecked")
@@ -310,7 +394,7 @@ public class DatasqrlRun {
     return (Map<String, Object>) config;
   }
 
-  public Optional<String> getSnowflakeUrl() {
+  private Optional<String> getSnowflakeUrl() {
     var engines = (Map) getPackageJson().get("engines");
     var snowflake = (Map) engines.get("snowflake");
     if (snowflake != null) {
@@ -321,6 +405,20 @@ public class DatasqrlRun {
     }
 
     return Optional.empty();
+  }
+
+  private void applyInternalTestConfig() {
+    if (env.containsKey("INTERNAL_TEST_RUN")) {
+      flinkConfig.set(DeploymentOptions.TARGET, "local");
+    }
+
+    // Exposed for tests
+    if (env.get("FLINK_RESTART_STRATEGY") != null) {
+      flinkConfig.set(RestartStrategyOptions.RESTART_STRATEGY, "fixed-delay");
+      flinkConfig.set(RestartStrategyOptions.RESTART_STRATEGY_FIXED_DELAY_ATTEMPTS, 0);
+      flinkConfig.set(
+          RestartStrategyOptions.RESTART_STRATEGY_FIXED_DELAY_DELAY, Duration.ofSeconds(5));
+    }
   }
 
   public static class ModelContainer {

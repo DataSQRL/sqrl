@@ -33,14 +33,14 @@ import org.apache.flink.configuration.GlobalConfiguration;
 public final class ConfigLoaderUtils {
 
   /**
-   * Loads SQRL {@code package.json} from an already comppiled project.
+   * Loads SQRL {@code package.json} from an already compiled project.
    *
    * @param deployDir deployment directory of a compiled SQRL project
    * @return the loaded {@link PackageJson}
    */
   public static PackageJson loadPackageJson(final Path deployDir) {
     checkArgument(
-        deployDir.toFile().exists() && deployDir.toFile().isDirectory(),
+        Files.isDirectory(deployDir),
         "Failed to load " + SqrlConstants.PACKAGE_JSON + ", deploy dir does not exist.");
 
     return SqrlConfig.fromFilesPackageJson(
@@ -57,8 +57,7 @@ public final class ConfigLoaderUtils {
    */
   public static Configuration loadFlinkConfig(final Path planDir) throws IOException {
     checkArgument(
-        planDir.toFile().exists() && planDir.toFile().isDirectory(),
-        "Failed to load Flink config, plan dir does not exist.");
+        Files.isDirectory(planDir), "Failed to load Flink config, plan dir does not exist.");
 
     var confFile = planDir.resolve("flink-config.yaml");
     checkArgument(

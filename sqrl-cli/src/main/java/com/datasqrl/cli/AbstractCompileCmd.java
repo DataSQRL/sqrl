@@ -92,7 +92,8 @@ public abstract class AbstractCompileCmd extends AbstractCmd {
     var compilationProcess = injector.getInstance(CompilationProcess.class);
     testsPath.ifPresent(this::validateTestPath);
 
-    Pair<PhysicalPlan, ? extends TestPlan> plan = compilationProcess.executeCompilation(testsPath);
+    Pair<PhysicalPlan, ? extends TestPlan> plan =
+        compilationProcess.executeCompilation(testsPath, cli.internalTestExec);
 
     if (errors.hasErrors()) {
       return;

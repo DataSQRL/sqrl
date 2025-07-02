@@ -16,7 +16,7 @@
 package com.datasqrl;
 
 import static org.assertj.core.api.Assertions.fail;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import static org.assertj.core.api.Assumptions.assumeThat;
 
 import com.datasqrl.cli.AssertStatusHook;
 import com.datasqrl.cli.DatasqrlRun;
@@ -50,7 +50,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.flink.table.api.TableResult;
 import org.apache.flink.test.junit5.MiniClusterExtension;
-import org.assertj.core.api.Assumptions;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -162,9 +161,7 @@ class FullUseCasesIT {
   void useCase(UseCaseTestParameter param) {
     if (disabledScripts.contains(new ScriptCriteria(param.getSqrlFileName(), param.getGoal()))) {
       log.warn("Skipping disabled test:" + param.getSqrlFileName());
-      Assumptions.assumeThat(false)
-          .as("Skipping disabled test: %s", param.getSqrlFileName())
-          .isTrue();
+      assumeThat(false).as("Skipping disabled test: %s", param.getSqrlFileName()).isTrue();
     }
 
     shard++;
@@ -175,7 +172,7 @@ class FullUseCasesIT {
           shard,
           testShardingTotal,
           testShardingIndex);
-      Assumptions.assumeThat(false)
+      assumeThat(false)
           .as(
               "Skipping due to test sharding %s.\n"
                   + "shard: %s testShardingTotal: %s testShardingIndex: %s",
@@ -235,6 +232,7 @@ class FullUseCasesIT {
       Map<String, String> env = new HashMap<>();
       env.putAll(System.getenv());
       env.putAll(containerHook.getEnv());
+      env.put("INTERNAL_TEST_RUN", "true");
       env.put("DATA_PATH", rootDir.resolve("build/deploy/flink/data").toAbsolutePath().toString());
       env.put("UDF_PATH", rootDir.resolve("build/deploy/flink/lib").toAbsolutePath().toString());
 
@@ -264,7 +262,7 @@ class FullUseCasesIT {
           var planDir = context.getRootDir().resolve(SqrlConstants.PLAN_PATH);
           var flinkConfig = ConfigLoaderUtils.loadFlinkConfig(planDir);
           run = new DatasqrlRun(planDir, packageJson, flinkConfig, context.getEnv());
-          TableResult result = run.run(false);
+          TableResult result = run.run(false, false);
           long delaySec =
               packageJson
                   .getTestConfig()
@@ -312,7 +310,7 @@ class FullUseCasesIT {
               param.getSqrlFileName() + ":" + param.goal, packageJson, rootDir, snapshot),
           context);
       if (run != null) {
-        run.stop();
+        run.cancel();
       }
     } finally {
       containerHook.clear();
@@ -335,7 +333,7 @@ class FullUseCasesIT {
     testNo++;
     System.out.println(testNo + ":" + param);
 
-    assumeTrue(testToExecute == testNo, "Not the test marked for execution.");
+    assumeThat(testToExecute).as("Not the test marked for execution.").isEqualTo(testNo);
 
     useCase(param);
   }
@@ -353,7 +351,7 @@ class FullUseCasesIT {
   public void runTestCaseByName() {
     var param =
         useCaseProvider().stream()
-            .filter(p -> p.sqrlFileName.equals("jwt-authorized.sqrl") && p.goal.equals("test"))
+            .filter(p -> p.sqrlFileName.equals("repo.sqrl") && p.goal.equals("run"))
             .collect(MoreCollectors.onlyElement());
     useCase(param);
   }

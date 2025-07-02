@@ -19,11 +19,8 @@ FROM datasqrl/base-sqrl:${BASE_TAG}
 
 COPY target/sqrl-cli.jar /opt/sqrl/sqrl-cli.jar
 COPY entrypoint.sh /opt/sqrl/entrypoint.sh
-COPY redpanda.yaml /etc/redpanda/redpanda.yaml
 
-VOLUME /data/redpanda
-
-env JAVA_TOOL_OPTIONS="--add-exports=java.base/sun.net.util=ALL-UNNAMED \
+ENV JAVA_TOOL_OPTIONS="--add-exports=java.base/sun.net.util=ALL-UNNAMED \
   --add-exports=java.rmi/sun.rmi.registry=ALL-UNNAMED \
   --add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED \
   --add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED \
