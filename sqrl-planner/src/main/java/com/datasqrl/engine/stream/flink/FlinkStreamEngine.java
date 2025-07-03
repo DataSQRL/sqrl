@@ -31,14 +31,13 @@ import com.google.inject.Inject;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Optional;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.flink.configuration.CheckpointingOptions;
+import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.configuration.ExecutionOptions;
 
 @Slf4j
 public class FlinkStreamEngine extends ExecutionEngine.Base implements StreamEngine {
@@ -66,16 +65,15 @@ public class FlinkStreamEngine extends ExecutionEngine.Base implements StreamEng
             .toUpperCase(Locale.ENGLISH));
   }
 
-  public Map<String, String> getBaseConfiguration() {
-    Map<String, String> configMap = new HashMap<>();
-    engineConfig.getConfig().forEach((key, value) -> configMap.put(key, String.valueOf(value)));
-    return configMap;
-  }
-
-  public Configuration getDirectoryConfig() {
+  public Configuration getBaseConfiguration() {
     var conf = new Configuration();
-    conf.set(CheckpointingOptions.CHECKPOINTS_DIRECTORY, "file:///data/flink/checkpoints");
-    conf.set(CheckpointingOptions.SAVEPOINT_DIRECTORY, "file:///data/flink/savepoints");
+    engineConfig.getConfig().forEach((key, value) -> conf.setString(key, String.valueOf(value)));
+
+    conf.set(
+        ExecutionOptions.RUNTIME_MODE,
+        getExecutionMode() == ExecutionMode.STREAMING
+            ? RuntimeExecutionMode.STREAMING
+            : RuntimeExecutionMode.BATCH);
 
     return conf;
   }

@@ -26,6 +26,7 @@ import static org.mockito.Mockito.mockStatic;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.plan.validate.ExecutionGoal;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -65,7 +66,7 @@ class ConfigLoaderUtilsTest {
         .thenReturn(expectedPackageJson);
 
     // Act
-    PackageJson result = ConfigLoaderUtils.loadPackageJson(deployDir);
+    PackageJson result = ConfigLoaderUtils.loadPackageJson(deployDir, ExecutionGoal.TEST);
 
     // Assert
     assertThat(result).isSameAs(expectedPackageJson);
@@ -77,7 +78,7 @@ class ConfigLoaderUtilsTest {
   void loadPackageJson_shouldThrow_whenDeployDirDoesNotExist() {
     Path invalidDir = tempDir.resolve("nonexistent");
 
-    assertThatThrownBy(() -> ConfigLoaderUtils.loadPackageJson(invalidDir))
+    assertThatThrownBy(() -> ConfigLoaderUtils.loadPackageJson(invalidDir, ExecutionGoal.TEST))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("deploy dir does not exist");
   }

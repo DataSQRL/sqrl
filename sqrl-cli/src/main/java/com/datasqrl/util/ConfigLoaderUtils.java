@@ -21,6 +21,7 @@ import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.plan.validate.ExecutionGoal;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -38,10 +39,16 @@ public final class ConfigLoaderUtils {
    * @param deployDir deployment directory of a compiled SQRL project
    * @return the loaded {@link PackageJson}
    */
-  public static PackageJson loadPackageJson(final Path deployDir) {
+  public static PackageJson loadPackageJson(Path deployDir, ExecutionGoal goal) {
     checkArgument(
         Files.isDirectory(deployDir),
         "Failed to load " + SqrlConstants.PACKAGE_JSON + ", deploy dir does not exist.");
+
+    if (goal == ExecutionGoal.RUN) {
+      return SqrlConfig.fromFilesPackageJsonWithRun(
+          ErrorCollector.root(),
+          List.of(deployDir.getParent().resolve(SqrlConstants.PACKAGE_JSON)));
+    }
 
     return SqrlConfig.fromFilesPackageJson(
         ErrorCollector.root(), List.of(deployDir.getParent().resolve(SqrlConstants.PACKAGE_JSON)));

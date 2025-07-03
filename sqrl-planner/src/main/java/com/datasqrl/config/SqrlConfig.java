@@ -43,6 +43,7 @@ import java.util.Optional;
 import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import javax.annotation.Nullable;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -54,6 +55,10 @@ import lombok.SneakyThrows;
 public class SqrlConfig {
   public static final int CURRENT_VERSION = 1;
   public static final String VERSION_KEY = "version";
+
+  private static final List<String> DEFAULT_CONFIG_FILES = List.of("/default-package.json");
+  private static final List<String> DEFAULT_RUN_CONFIG_FILES =
+      List.of("/default-package.json", "/default-run-package.json");
 
   private static final ObjectMapper MAPPER =
       new ObjectMapper()
@@ -93,6 +98,13 @@ public class SqrlConfig {
   /** Load and merge package JSON files with schema validation. */
   public static PackageJson fromFilesPackageJson(ErrorCollector errors, List<Path> files) {
     return new PackageJsonImpl(getPackageConfig(errors, "/jsonSchema/packageSchema.json", files));
+  }
+
+  /** */
+  public static PackageJson fromFilesPackageJsonWithRun(ErrorCollector errors, List<Path> files) {
+    return new PackageJsonImpl(
+        getPackageConfig(
+            errors, "/jsonSchema/packageSchema.json", files, DEFAULT_RUN_CONFIG_FILES));
   }
 
   /** Load and merge publish package JSON files with schema validation. */
@@ -141,18 +153,24 @@ public class SqrlConfig {
   /** Load multiple JSON files and default-package.json, validate and merge them. */
   static SqrlConfig getPackageConfig(
       ErrorCollector errors, String jsonSchemaResource, List<Path> files) {
+    return getPackageConfig(errors, jsonSchemaResource, files, null);
+  }
+
+  /** Load multiple JSON files and given defaults, validate and merge them. */
+  static SqrlConfig getPackageConfig(
+      ErrorCollector errors,
+      String jsonSchemaResource,
+      List<Path> files,
+      @Nullable List<String> defaults) {
+
+    var effectiveDefaults = defaults == null ? DEFAULT_CONFIG_FILES : defaults;
+
     var valid = true;
-    List<ObjectNode> jsons = new ArrayList<>();
+    List<ObjectNode> jsons;
 
     try {
-      var url = SqrlConfig.class.getResource("/default-package.json");
-      if (url == null) {
-        throw errors
-            .withConfig("/default-package.json")
-            .exception("Default configuration not found");
-      }
-      jsons.add((ObjectNode) MAPPER.readTree(url));
-    } catch (IOException e) {
+      jsons = new ArrayList<>(getDefaultPackageJsonUrls(errors, effectiveDefaults));
+    } catch (Exception e) {
       throw errors.withConfig("Error loading default configuration").handle(e);
     }
 
@@ -176,6 +194,23 @@ public class SqrlConfig {
     jsons.forEach(node -> JsonMergeUtils.merge(merged, node));
     var configName = files.isEmpty() ? "default-package.json" : files.get(0).toString();
     return new SqrlConfig(errors.withConfig(configName), merged, configName, "");
+  }
+
+  private static List<ObjectNode> getDefaultPackageJsonUrls(
+      ErrorCollector errors, List<String> defaults) throws IOException {
+
+    var defaultJsons = new ArrayList<ObjectNode>(defaults.size());
+
+    for (String resourceFile : defaults) {
+      var url = SqrlConfig.class.getResource(resourceFile);
+      if (url == null) {
+        throw errors.withConfig(resourceFile).exception("Default configuration not found");
+      }
+
+      defaultJsons.add((ObjectNode) MAPPER.readTree(url));
+    }
+
+    return defaultJsons;
   }
 
   /** Load configuration from a URL. */

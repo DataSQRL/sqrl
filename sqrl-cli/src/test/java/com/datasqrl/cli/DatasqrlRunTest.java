@@ -120,15 +120,13 @@ class DatasqrlRunTest {
 
   @ParameterizedTest
   @ValueSource(booleans = {true, false})
-  void directoryOptionsRemovedOnTestRun(boolean testRun) {
+  void configModificationsOnTestRun(boolean testRun) {
     underTest = new DatasqrlRun(tempDir.resolve("plan"), null, flinkConfig, env, testRun);
 
     underTest.applyInternalTestConfig();
 
     if (testRun) {
       verify(flinkConfig).set(DeploymentOptions.TARGET, "local");
-      verify(flinkConfig).removeConfig(CheckpointingOptions.CHECKPOINTS_DIRECTORY);
-      verify(flinkConfig).removeConfig(CheckpointingOptions.SAVEPOINT_DIRECTORY);
 
     } else {
       verifyNoInteractions(flinkConfig);

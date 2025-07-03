@@ -77,7 +77,7 @@ public class DatasqrlRun {
 
   private final Path planPath;
   private final Path build;
-  private final PackageJson sqrlConfig;
+  private final PackageJson.CompilerConfig compilerConfig;
   private final Configuration flinkConfig;
   private final Map<String, String> env;
   private final boolean testRun;
@@ -86,18 +86,19 @@ public class DatasqrlRun {
   private Vertx vertx;
   private TableResult execute;
 
-  public DatasqrlRun(Path planPath, PackageJson sqrlConfig, Configuration flinkConfig) {
-    this(planPath, sqrlConfig, flinkConfig, System.getenv(), false);
+  public DatasqrlRun(
+      Path planPath, PackageJson.CompilerConfig compilerConfig, Configuration flinkConfig) {
+    this(planPath, compilerConfig, flinkConfig, System.getenv(), false);
   }
 
   public DatasqrlRun(
       Path planPath,
-      PackageJson sqrlConfig,
+      PackageJson.CompilerConfig compilerConfig,
       Configuration flinkConfig,
       Map<String, String> env,
       boolean testRun) {
     this.planPath = planPath;
-    this.sqrlConfig = sqrlConfig;
+    this.compilerConfig = compilerConfig;
     this.flinkConfig = flinkConfig;
     this.env = env;
     this.testRun = testRun;
@@ -165,7 +166,7 @@ public class DatasqrlRun {
   private TableResult runFlinkJob() {
     applyInternalTestConfig();
     var execMode = flinkConfig.get(ExecutionOptions.RUNTIME_MODE);
-    var isCompiledPlan = sqrlConfig.getCompilerConfig().compilePlan();
+    var isCompiledPlan = compilerConfig.compilePlan();
 
     String sqlFile = null;
     String planFile = null;
@@ -411,16 +412,13 @@ public class DatasqrlRun {
   void applyInternalTestConfig() {
     if (testRun) {
       flinkConfig.set(DeploymentOptions.TARGET, "local");
-      flinkConfig.removeConfig(CheckpointingOptions.CHECKPOINTS_DIRECTORY);
-      flinkConfig.removeConfig(CheckpointingOptions.SAVEPOINT_DIRECTORY);
-    }
 
-    // Exposed for tests
-    if (env.get("FLINK_RESTART_STRATEGY") != null) {
-      flinkConfig.set(RestartStrategyOptions.RESTART_STRATEGY, "fixed-delay");
-      flinkConfig.set(RestartStrategyOptions.RESTART_STRATEGY_FIXED_DELAY_ATTEMPTS, 0);
-      flinkConfig.set(
-          RestartStrategyOptions.RESTART_STRATEGY_FIXED_DELAY_DELAY, Duration.ofSeconds(5));
+      if (env.get("FLINK_RESTART_STRATEGY") != null) {
+        flinkConfig.set(RestartStrategyOptions.RESTART_STRATEGY, "fixed-delay");
+        flinkConfig.set(RestartStrategyOptions.RESTART_STRATEGY_FIXED_DELAY_ATTEMPTS, 0);
+        flinkConfig.set(
+            RestartStrategyOptions.RESTART_STRATEGY_FIXED_DELAY_DELAY, Duration.ofSeconds(5));
+      }
     }
   }
 

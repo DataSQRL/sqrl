@@ -17,6 +17,7 @@ package com.datasqrl.cli;
 
 import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.plan.validate.ExecutionGoal;
 import com.datasqrl.util.ConfigLoaderUtils;
 import picocli.CommandLine;
 
@@ -29,10 +30,10 @@ public class ExecuteCmd extends AbstractCmd {
   protected void execute(ErrorCollector errors) throws Exception {
     var targetDir = getTargetDir();
     var planDir = targetDir.resolve(SqrlConstants.PLAN_DIR);
-    var sqrlConfig = ConfigLoaderUtils.loadPackageJson(targetDir);
+    var sqrlConfig = ConfigLoaderUtils.loadPackageJson(targetDir, ExecutionGoal.RUN);
     var flinkConfig = ConfigLoaderUtils.loadFlinkConfig(planDir);
 
-    var sqrlRun = new DatasqrlRun(planDir, sqrlConfig, flinkConfig);
+    var sqrlRun = new DatasqrlRun(planDir, sqrlConfig.getCompilerConfig(), flinkConfig);
     sqrlRun.run(true, true);
   }
 }

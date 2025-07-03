@@ -95,9 +95,6 @@ import org.apache.calcite.sql.SqlOrderBy;
 import org.apache.calcite.sql.SqlSyntax;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.validate.SqlNameMatchers;
-import org.apache.flink.api.common.RuntimeExecutionMode;
-import org.apache.flink.configuration.Configuration;
-import org.apache.flink.configuration.ExecutionOptions;
 import org.apache.flink.configuration.PipelineOptions;
 import org.apache.flink.sql.parser.ddl.SqlAlterViewAs;
 import org.apache.flink.sql.parser.ddl.SqlCreateTable;
@@ -189,12 +186,7 @@ public class Sqrl2FlinkSQLTranslator {
         new URLClassLoader(jarUrls.toArray(new URL[0]), getClass().getClassLoader());
 
     // Init Flink config
-    var config = Configuration.fromMap(flink.getBaseConfiguration());
-    config.set(
-        ExecutionOptions.RUNTIME_MODE,
-        executionMode == ExecutionMode.STREAMING
-            ? RuntimeExecutionMode.STREAMING
-            : RuntimeExecutionMode.BATCH);
+    var config = flink.getBaseConfiguration();
 
     if (!jarUrls.isEmpty()) {
       config.set(
@@ -203,7 +195,6 @@ public class Sqrl2FlinkSQLTranslator {
     }
 
     this.planBuilder = new Builder(config.clone());
-    planBuilder.addInferredConfig(flink.getDirectoryConfig());
 
     if (executionMode == ExecutionMode.STREAMING) {
       planBuilder.addInferredConfig(flink.getStreamingSpecificConfig());

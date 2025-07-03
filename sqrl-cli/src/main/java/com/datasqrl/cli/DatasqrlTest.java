@@ -61,16 +61,19 @@ public class DatasqrlTest {
   public static final int MUTATION_WAIT_SEC = 0;
 
   private final Path planPath;
-  private final PackageJson sqrlConfig;
+  private final PackageJson.CompilerConfig compilerConfig;
   private final Configuration flinkConfig;
   private final Map<String, String> env;
   public String GRAPHQL_ENDPOINT = "http://localhost:8888/graphql";
   private final ObjectMapper objectMapper = new ObjectMapper();
 
   public DatasqrlTest(
-      Path planPath, PackageJson sqrlConfig, Configuration flinkConfig, Map<String, String> env) {
+      Path planPath,
+      PackageJson.CompilerConfig compilerConfig,
+      Configuration flinkConfig,
+      Map<String, String> env) {
     this.planPath = planPath;
-    this.sqrlConfig = sqrlConfig;
+    this.compilerConfig = compilerConfig;
     this.flinkConfig = flinkConfig;
     this.env = env;
   }
@@ -78,7 +81,7 @@ public class DatasqrlTest {
   @SneakyThrows
   public int run() {
     // 1. Run the DataSQRL pipeline via {@link DatasqrlRun}
-    DatasqrlRun run = new DatasqrlRun(planPath, sqrlConfig, flinkConfig, env, true);
+    DatasqrlRun run = new DatasqrlRun(planPath, compilerConfig, flinkConfig, env, true);
     Map compilerMap = (Map) run.getPackageJson().get("compiler");
     // Initialize snapshot directory
     String snapshotPathString = (String) compilerMap.get("snapshotPath");

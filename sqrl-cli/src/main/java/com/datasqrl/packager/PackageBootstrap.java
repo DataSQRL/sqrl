@@ -41,7 +41,8 @@ public class PackageBootstrap {
   ErrorCollector errors;
 
   @SneakyThrows
-  public PackageJson bootstrap(Path rootDir, List<Path> packageFiles, Path[] files) {
+  public PackageJson bootstrap(
+      Path rootDir, List<Path> packageFiles, Path[] files, boolean withRun) {
     ErrorCollector errors = this.errors.withLocation(ErrorPrefix.CONFIG).resolve("package");
 
     // Create build dir to unpack resolved dependencies
@@ -59,7 +60,10 @@ public class PackageBootstrap {
     existingPackage.ifPresent(configFiles::addAll);
 
     // Could not find any package json
-    PackageJson packageJson = SqrlConfig.fromFilesPackageJson(errors, configFiles);
+    PackageJson packageJson =
+        withRun
+            ? SqrlConfig.fromFilesPackageJsonWithRun(errors, configFiles)
+            : SqrlConfig.fromFilesPackageJson(errors, configFiles);
 
     // Add dependencies of discovered profiles
     dependencies.forEach(

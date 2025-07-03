@@ -260,7 +260,9 @@ class FullUseCasesIT {
         try {
           var planDir = context.getRootDir().resolve(SqrlConstants.PLAN_PATH);
           var flinkConfig = ConfigLoaderUtils.loadFlinkConfig(planDir);
-          run = new DatasqrlRun(planDir, packageJson, flinkConfig, context.getEnv(), true);
+          run =
+              new DatasqrlRun(
+                  planDir, packageJson.getCompilerConfig(), flinkConfig, context.getEnv(), true);
           TableResult result = run.run(false, false);
           long delaySec =
               packageJson
@@ -350,7 +352,7 @@ class FullUseCasesIT {
   public void runTestCaseByName() {
     var param =
         useCaseProvider().stream()
-            .filter(p -> p.sqrlFileName.equals("repo.sqrl") && p.goal.equals("run"))
+            .filter(p -> p.sqrlFileName.equals("avro-schema.sqrl") && p.goal.equals("run"))
             .collect(MoreCollectors.onlyElement());
     useCase(param);
   }
