@@ -2,6 +2,7 @@ IMPORT loan-local.Customers AS CustomersStream;
 IMPORT loan-local.Applications AS ApplicationsStream;
 IMPORT loan-local.Loan_types AS LoanTypesStream;
 
+/*+insert(transaction) */
 CREATE TABLE ApplicationUpdates (
   _uuid STRING NOT NULL METADATA FROM 'uuid',
   loan_application_id BIGINT NOT NULL,
