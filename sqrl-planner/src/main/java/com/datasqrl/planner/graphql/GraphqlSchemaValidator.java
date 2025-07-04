@@ -43,7 +43,6 @@ import graphql.language.TypeName;
 import graphql.schema.GraphQLInputType;
 import graphql.schema.GraphQLNamedType;
 import graphql.schema.GraphQLNonNull;
-import graphql.schema.GraphQLType;
 import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.TypeDefinitionRegistry;
 import java.util.List;
