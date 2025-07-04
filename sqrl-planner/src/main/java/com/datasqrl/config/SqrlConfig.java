@@ -15,21 +15,18 @@
  */
 package com.datasqrl.config;
 
+import static com.datasqrl.util.ConfigLoaderUtils.MAPPER;
+
 import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorMessage;
-import com.datasqrl.error.ResourceFileUtil;
-import com.datasqrl.util.JsonMergeUtils;
+import com.datasqrl.util.ConfigLoaderUtils;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.networknt.schema.JsonSchemaFactory;
-import com.networknt.schema.SpecVersion.VersionFlag;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -56,21 +53,6 @@ public class SqrlConfig {
   public static final int CURRENT_VERSION = 1;
   public static final String VERSION_KEY = "version";
 
-  private static final List<String> DEFAULT_CONFIG_FILES = List.of("/default-package.json");
-  private static final List<String> DEFAULT_RUN_CONFIG_FILES =
-      List.of("/default-package.json", "/default-run-package.json");
-
-  private static final ObjectMapper MAPPER =
-      new ObjectMapper()
-          .setVisibility(
-              com.fasterxml.jackson.annotation.PropertyAccessor.FIELD,
-              com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY)
-          .configure(
-              com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES,
-              false)
-          .configure(
-              com.fasterxml.jackson.databind.SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
-
   private final ErrorCollector errors;
   private ObjectNode root;
   private final String configFilename;
@@ -83,158 +65,29 @@ public class SqrlConfig {
     this.prefix = prefix;
   }
 
+  public static PackageJson loadResolvedConfig(ErrorCollector errors, ObjectNode config) {
+    return loadResolvedConfig(errors, config, null);
+  }
+
+  public static PackageJson loadResolvedConfig(
+      ErrorCollector errors, ObjectNode config, @Nullable String jsonSchema) {
+
+    if (ConfigLoaderUtils.isValidJson(errors, config, jsonSchema)) {
+      return new PackageJsonImpl(new SqrlConfig(errors, config, SqrlConstants.PACKAGE_JSON, ""));
+    }
+
+    throw errors.exception(
+        errors
+            .getErrors()
+            .combineMessages(
+                ErrorMessage.Severity.FATAL, "Failed to load package configuration:\n\n", "\n"));
+  }
+
   /** Create a new empty configuration with given version. */
   public static SqrlConfig create(ErrorCollector errors, int version) {
     var root = MAPPER.createObjectNode();
     root.put(VERSION_KEY, version);
     return new SqrlConfig(errors, root, null, "");
-  }
-
-  /** Load configuration from a single JSON file. */
-  public static SqrlConfig fromFiles(ErrorCollector errors, Path firstFile) {
-    return getPackageConfig(errors, null, List.of(firstFile));
-  }
-
-  /** Load and merge package JSON files with schema validation. */
-  public static PackageJson fromFilesPackageJson(ErrorCollector errors, List<Path> files) {
-    return new PackageJsonImpl(getPackageConfig(errors, "/jsonSchema/packageSchema.json", files));
-  }
-
-  /** */
-  public static PackageJson fromFilesPackageJsonWithRun(ErrorCollector errors, List<Path> files) {
-    return new PackageJsonImpl(
-        getPackageConfig(
-            errors, "/jsonSchema/packageSchema.json", files, DEFAULT_RUN_CONFIG_FILES));
-  }
-
-  /** Load and merge publish package JSON files with schema validation. */
-  public static PackageJson fromFilesPublishPackageJson(ErrorCollector errors, List<Path> files) {
-    return new PackageJsonImpl(
-        getPackageConfig(errors, "/jsonSchema/publishPackageSchema.json", files));
-  }
-
-  public static PackageJson getDefaultPackageJson(ErrorCollector errors) {
-    return SqrlConfig.fromFilesPackageJson(errors, List.of());
-  }
-
-  /** Validate a JSON file against the given schema resource. */
-  static boolean validateJsonFile(
-      Path jsonFilePath, String schemaResourcePath, ErrorCollector errors) {
-    if (schemaResourcePath == null) {
-      return true;
-    }
-    var collector = errors.abortOnFatal(false);
-    JsonNode json;
-    try {
-      json = MAPPER.readTree(jsonFilePath.toFile());
-    } catch (IOException e) {
-      collector.fatal("Could not read json file [%s]: %s", jsonFilePath, e);
-      return false;
-    }
-    var schemaText = ResourceFileUtil.readResourceFileContents(schemaResourcePath);
-    JsonNode schemaNode;
-    try {
-      schemaNode = MAPPER.readTree(schemaText);
-    } catch (IOException e) {
-      collector.fatal("Could not parse json schema file [%s]: %s", schemaResourcePath, e);
-      return false;
-    }
-    var schema = JsonSchemaFactory.getInstance(VersionFlag.V202012).getSchema(schemaNode);
-    var messages =
-        schema.validate(json, ctx -> ctx.getExecutionConfig().setFormatAssertionsEnabled(true));
-    if (messages.isEmpty()) {
-      return true;
-    }
-    messages.forEach(
-        vm -> collector.fatal("%s at location [%s]", vm.getMessage(), vm.getInstanceLocation()));
-    return false;
-  }
-
-  /** Load multiple JSON files and default-package.json, validate and merge them. */
-  static SqrlConfig getPackageConfig(
-      ErrorCollector errors, String jsonSchemaResource, List<Path> files) {
-    return getPackageConfig(errors, jsonSchemaResource, files, null);
-  }
-
-  /** Load multiple JSON files and given defaults, validate and merge them. */
-  static SqrlConfig getPackageConfig(
-      ErrorCollector errors,
-      String jsonSchemaResource,
-      List<Path> files,
-      @Nullable List<String> defaults) {
-
-    var effectiveDefaults = defaults == null ? DEFAULT_CONFIG_FILES : defaults;
-
-    var valid = true;
-    List<ObjectNode> jsons;
-
-    try {
-      jsons = new ArrayList<>(getDefaultPackageJsonUrls(errors, effectiveDefaults));
-    } catch (Exception e) {
-      throw errors.withConfig("Error loading default configuration").handle(e);
-    }
-
-    for (Path file : files) {
-      var local = errors.withConfig(file.toString());
-      valid &= validateJsonFile(file, jsonSchemaResource, local);
-      try {
-        jsons.add((ObjectNode) MAPPER.readTree(file.toFile()));
-      } catch (IOException e) {
-        throw local.exception("Could not parse JSON file [%s]: %s", file, e.toString());
-      }
-    }
-    if (!valid) {
-      throw errors.exception(
-          errors
-              .getErrors()
-              .combineMessages(
-                  ErrorMessage.Severity.FATAL, "Failed to load package configuration:\n\n", "\n"));
-    }
-    var merged = MAPPER.createObjectNode();
-    jsons.forEach(node -> JsonMergeUtils.merge(merged, node));
-    var configName = files.isEmpty() ? "default-package.json" : files.get(0).toString();
-    return new SqrlConfig(errors.withConfig(configName), merged, configName, "");
-  }
-
-  private static List<ObjectNode> getDefaultPackageJsonUrls(
-      ErrorCollector errors, List<String> defaults) throws IOException {
-
-    var defaultJsons = new ArrayList<ObjectNode>(defaults.size());
-
-    for (String resourceFile : defaults) {
-      var url = SqrlConfig.class.getResource(resourceFile);
-      if (url == null) {
-        throw errors.withConfig(resourceFile).exception("Default configuration not found");
-      }
-
-      defaultJsons.add((ObjectNode) MAPPER.readTree(url));
-    }
-
-    return defaultJsons;
-  }
-
-  /** Load configuration from a URL. */
-  static SqrlConfig fromURL(ErrorCollector errors, URL url) {
-    JsonNode node;
-    try {
-      node = MAPPER.readTree(url);
-    } catch (IOException e) {
-      throw errors
-          .withConfig(url.toString())
-          .exception("Could not read JSON from URL [%s]: %s", url, e.toString());
-    }
-    return new SqrlConfig(errors.withConfig(url.toString()), (ObjectNode) node, url.toString(), "");
-  }
-
-  /** Load configuration from a raw JSON string. */
-  static SqrlConfig fromString(ErrorCollector errors, String string) {
-    JsonNode node;
-    try {
-      node = MAPPER.readTree(string);
-    } catch (IOException e) {
-      throw errors.withConfig("local").exception("Could not parse JSON string: %s", e.toString());
-    }
-    return new SqrlConfig(errors.withConfig("local"), (ObjectNode) node, "local", "");
   }
 
   private JsonNode node() {

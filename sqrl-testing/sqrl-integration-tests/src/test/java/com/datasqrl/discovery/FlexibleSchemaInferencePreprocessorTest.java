@@ -19,12 +19,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datasqrl.AbstractAssetSnapshotTest;
 import com.datasqrl.config.PackageJson;
-import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.discovery.preprocessor.FlexibleSchemaInferencePreprocessor;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrinter;
 import com.datasqrl.packager.preprocessor.Preprocessor.ProcessorContext;
 import com.datasqrl.plan.validate.ExecutionGoal;
+import com.datasqrl.util.ConfigLoaderUtils;
 import com.datasqrl.util.SnapshotTest.Snapshot;
 import com.datasqrl.util.SqrlInjector;
 import com.google.inject.Guice;
@@ -50,7 +50,7 @@ public class FlexibleSchemaInferencePreprocessorTest extends AbstractAssetSnapsh
   protected FlexibleSchemaInferencePreprocessorTest() {
     super(FILES_DIR.resolve("output"));
     try {
-      packageJson = SqrlConfig.getDefaultPackageJson(errors);
+      packageJson = ConfigLoaderUtils.loadDefaultConfig(errors);
     } catch (Exception e) {
       System.out.println(ErrorPrinter.prettyPrint(errors));
       throw e;

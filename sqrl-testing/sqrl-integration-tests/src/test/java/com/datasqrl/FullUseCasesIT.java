@@ -21,7 +21,6 @@ import static org.assertj.core.api.Assumptions.assumeThat;
 import com.datasqrl.cli.AssertStatusHook;
 import com.datasqrl.cli.DatasqrlRun;
 import com.datasqrl.config.PackageJson;
-import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.config.TestRunnerConfiguration;
 import com.datasqrl.engines.TestContainersForTestGoal;
@@ -221,10 +220,8 @@ class FullUseCasesIT {
     }
 
     PackageJson packageJson =
-        SqrlConfig.fromFilesPackageJson(
-            ErrorCollector.root(),
-            List.of(
-                rootDir.resolve(SqrlConstants.BUILD_DIR_NAME).resolve(SqrlConstants.PACKAGE_JSON)));
+        ConfigLoaderUtils.loadResolvedConfig(
+            ErrorCollector.root(), rootDir.resolve(SqrlConstants.BUILD_DIR_NAME));
 
     try {
       TestEngines engines = new EngineFactory().create(packageJson);
@@ -352,7 +349,7 @@ class FullUseCasesIT {
   public void runTestCaseByName() {
     var param =
         useCaseProvider().stream()
-            .filter(p -> p.sqrlFileName.equals("avro-schema.sqrl") && p.goal.equals("run"))
+            .filter(p -> p.sqrlFileName.equals("usertokens.sqrl") && p.goal.equals("test"))
             .collect(MoreCollectors.onlyElement());
     useCase(param);
   }

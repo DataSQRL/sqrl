@@ -18,6 +18,7 @@ package com.datasqrl.config;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.util.ConfigLoaderUtils;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -190,7 +191,7 @@ class PackageJsonImplTest {
   void
       givenTestFlinkConfig_whenReadFlinkConnectorsPrint_thenReturnsInheritedConnectorConfiguration() {
     var testConfigPath = Path.of("src/test/resources/config/test-flink-config.json");
-    var packageJson = SqrlConfig.fromFilesPackageJson(errors, List.of(testConfigPath));
+    var packageJson = ConfigLoaderUtils.loadResolvedConfigFromFile(errors, testConfigPath);
 
     var enginesConfig = packageJson.getEngines();
     var flinkConfig = enginesConfig.getEngineConfig("flink");

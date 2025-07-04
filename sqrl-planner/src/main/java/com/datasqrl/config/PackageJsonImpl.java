@@ -18,6 +18,7 @@ package com.datasqrl.config;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
+import lombok.Getter;
 
 public class PackageJsonImpl implements PackageJson {
 
@@ -32,7 +33,7 @@ public class PackageJsonImpl implements PackageJson {
   public static final String CONFIG_KEY = "config";
   public static final String TEST_RUNNER_KEY = "test-runner";
 
-  private SqrlConfig sqrlConfig;
+  @Getter private final SqrlConfig sqrlConfig;
 
   public PackageJsonImpl() {
     this(SqrlConfig.createCurrentVersion());
