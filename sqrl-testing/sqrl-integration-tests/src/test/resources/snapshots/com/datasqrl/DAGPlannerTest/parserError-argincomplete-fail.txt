@@ -13,4 +13,3 @@ For example:
 ```
 MyTableFunction(argument INT, arg2 STRING NOT NULL) := SELECT * FROM MyTable WHERE col1 = :arg2 AND col2 > :argument
 ```
-

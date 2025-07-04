@@ -37,12 +37,14 @@ import org.junit.jupiter.api.io.TempDir;
 class ConfigLoaderUtilsTest {
 
   private ErrorCollector errors;
+  private SqrlConfig config;
 
   @TempDir private Path tempDir;
 
   @BeforeEach
   void setup() {
     errors = ErrorCollector.root();
+    config = SqrlConfig.createCurrentVersion();
   }
 
   @Test
@@ -66,6 +68,47 @@ class ConfigLoaderUtilsTest {
     res = ConfigLoaderUtils.loadResolvedConfigFromFile(errors, tempFile2, null);
     var reloadedConfig = getSqrlConfig(res);
     testConfig1(reloadedConfig);
+  }
+
+  @Test
+  void givenNewConfig_whenSetPropertiesAndObjects_thenPersistsCorrectly() {
+    var newConf = SqrlConfig.createCurrentVersion();
+    newConf.setProperty("test", true);
+    var tc = new SqrlConfigTest.TestClass(9, "boat", List.of("x", "y", "z"));
+    newConf.getSubConfig("clazz").setProperties(tc);
+    assertThat(newConf.asBool("test").get()).isTrue();
+    assertThat(newConf.getSubConfig("clazz").allAs(SqrlConfigTest.TestClass.class).get().field3)
+        .isEqualTo(tc.field3);
+    var tempFile2 = createTempFile();
+    newConf.toFile(tempFile2, true);
+    var config2 =
+        ((PackageJsonImpl) ConfigLoaderUtils.loadResolvedConfigFromFile(errors, tempFile2, null))
+            .getSqrlConfig();
+    assertThat(config2.asBool("test").get()).isTrue();
+    var tc2 = config2.getSubConfig("clazz").allAs(SqrlConfigTest.TestClass.class).get();
+    assertThat(tc2.field1).isEqualTo(tc.field1);
+    assertThat(tc2.field2).isEqualTo(tc.field2);
+    assertThat(tc2.field3).isEqualTo(tc.field3);
+  }
+
+  @Test
+  @SneakyThrows
+  void givenConfigWithData_whenToFile_thenWritesAndLoadsCorrectly() {
+    config.setProperty("key1", "value1");
+    config.setProperty("key2", 42);
+    config.getSubConfig("nested").setProperty("key", "nestedValue");
+
+    var tempFile = createTempFile();
+    config.toFile(tempFile);
+
+    assertThat(tempFile).exists();
+
+    SqrlConfig loadedConfig =
+        ((PackageJsonImpl) ConfigLoaderUtils.loadResolvedConfigFromFile(errors, tempFile, null))
+            .getSqrlConfig();
+    assertThat(loadedConfig.asString("key1").get()).isEqualTo("value1");
+    assertThat(loadedConfig.asInt("key2").get()).isEqualTo(42);
+    assertThat(loadedConfig.getSubConfig("nested").asString("key").get()).isEqualTo("nestedValue");
   }
 
   @Test
@@ -109,6 +152,23 @@ class ConfigLoaderUtilsTest {
     assertThat(underTest.getEngines().getEngineConfig("flink")).isPresent();
     assertThat(underTest.getScriptConfig().getGraphql()).isEmpty();
     assertThat(underTest.getScriptConfig().getMainScript()).isEmpty();
+  }
+
+  @Test
+  void
+      givenTestFlinkConfig_whenReadFlinkConnectorsPrint_thenReturnsInheritedConnectorConfiguration() {
+    var testConfigPath = Path.of("src/test/resources/config/test-flink-config.json");
+    var packageJson = ConfigLoaderUtils.loadUnresolvedConfig(errors, List.of(testConfigPath));
+
+    var enginesConfig = packageJson.getEngines();
+    var flinkConfig = enginesConfig.getEngineConfig("flink");
+
+    assertThat(flinkConfig).isPresent();
+    var flinkConnectorsConfig = flinkConfig.get().getConnectors();
+    var printConnectorConfig = flinkConnectorsConfig.getConnectorConfigOrErr("print").toMap();
+
+    assertThat(printConnectorConfig.get("connector")).contains("print");
+    assertThat(printConnectorConfig.get("print-identifier")).contains("${sqrl:table-name}");
   }
 
   @Test

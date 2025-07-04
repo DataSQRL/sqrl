@@ -21,9 +21,7 @@ import static org.assertj.core.api.Assertions.fail;
 
 import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.error.ErrorPrefix;
 import com.datasqrl.error.ErrorPrinter;
-import com.datasqrl.util.ConfigLoaderUtils;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -38,13 +36,11 @@ import org.junit.jupiter.api.Test;
 
 public class SqrlConfigTest {
 
-  private ErrorCollector errors;
   private SqrlConfig config;
   private Path tempFile;
 
   @BeforeEach
   void setUp() {
-    errors = new ErrorCollector(ErrorPrefix.ROOT);
     config = SqrlConfig.createCurrentVersion();
   }
 
@@ -201,26 +197,6 @@ public class SqrlConfigTest {
 
   @Test
   @SneakyThrows
-  void givenConfigWithData_whenToFile_thenWritesAndLoadsCorrectly() {
-    config.setProperty("key1", "value1");
-    config.setProperty("key2", 42);
-    config.getSubConfig("nested").setProperty("key", "nestedValue");
-
-    tempFile = Files.createTempFile("config", ".json");
-    config.toFile(tempFile);
-
-    assertThat(tempFile).exists();
-
-    SqrlConfig loadedConfig =
-        ((PackageJsonImpl) ConfigLoaderUtils.loadResolvedConfigFromFile(errors, tempFile))
-            .getSqrlConfig();
-    assertThat(loadedConfig.asString("key1").get()).isEqualTo("value1");
-    assertThat(loadedConfig.asInt("key2").get()).isEqualTo(42);
-    assertThat(loadedConfig.getSubConfig("nested").asString("key").get()).isEqualTo("nestedValue");
-  }
-
-  @Test
-  @SneakyThrows
   void givenConfig_whenToFilePretty_thenWritesFormattedJson() {
     config.setProperty("key1", "value1");
     config.setProperty("key2", 42);
@@ -255,32 +231,6 @@ public class SqrlConfigTest {
     var newConfig = SqrlConfig.createCurrentVersion();
 
     assertThat(newConfig.getVersion()).isEqualTo(1);
-  }
-
-  @Test
-  void givenNewConfig_whenSetPropertiesAndObjects_thenPersistsCorrectly() {
-    var newConf = SqrlConfig.createCurrentVersion();
-    newConf.setProperty("test", true);
-    var tc = new TestClass(9, "boat", List.of("x", "y", "z"));
-    newConf.getSubConfig("clazz").setProperties(tc);
-    assertThat(newConf.asBool("test").get()).isTrue();
-    assertThat(newConf.getSubConfig("clazz").allAs(TestClass.class).get().field3)
-        .isEqualTo(tc.field3);
-    var tempFile2 = createTempFile();
-    newConf.toFile(tempFile2, true);
-    var config2 =
-        ((PackageJsonImpl) ConfigLoaderUtils.loadResolvedConfigFromFile(errors, tempFile2))
-            .getSqrlConfig();
-    assertThat(config2.asBool("test").get()).isTrue();
-    var tc2 = config2.getSubConfig("clazz").allAs(TestClass.class).get();
-    assertThat(tc2.field1).isEqualTo(tc.field1);
-    assertThat(tc2.field2).isEqualTo(tc.field2);
-    assertThat(tc2.field3).isEqualTo(tc.field3);
-  }
-
-  @SneakyThrows
-  private Path createTempFile() {
-    return Files.createTempFile("configuration", ".json");
   }
 
   public static class TestObject {

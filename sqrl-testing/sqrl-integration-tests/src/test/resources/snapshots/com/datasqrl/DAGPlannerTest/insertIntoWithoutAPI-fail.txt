@@ -1,3 +1,2 @@
 [FATAL] The SQRL script defines 0 functions and 0 mutations - cannot define an API
 A SQRL script needs to define at least one function or table endpoint that is exposed in the API (i.e. queryable and not hidden)
-

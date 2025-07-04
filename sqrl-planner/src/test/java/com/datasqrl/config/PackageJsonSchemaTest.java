@@ -21,6 +21,7 @@ import static org.assertj.core.api.Assertions.fail;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.util.ConfigLoaderUtils;
 import java.nio.file.Path;
+import java.util.List;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -43,7 +44,7 @@ class PackageJsonSchemaTest {
   void validConfigFile(String configFileName) {
     var errors = ErrorCollector.root();
     try {
-      ConfigLoaderUtils.loadResolvedConfigFromFile(errors, TEST_CASES.resolve(configFileName));
+      ConfigLoaderUtils.loadUnresolvedConfig(errors, List.of(TEST_CASES.resolve(configFileName)));
     } catch (Exception e) {
       fail("Unexpected error: " + errors.getErrors().toString());
     }
@@ -66,7 +67,7 @@ class PackageJsonSchemaTest {
   void invalidConfigFile(String configFileName) {
     testForErrors(
         errors ->
-            ConfigLoaderUtils.loadResolvedConfigFromFile(
-                errors, CONFIG_DIR.resolve(configFileName)));
+            ConfigLoaderUtils.loadUnresolvedConfig(
+                errors, List.of(CONFIG_DIR.resolve(configFileName))));
   }
 }
