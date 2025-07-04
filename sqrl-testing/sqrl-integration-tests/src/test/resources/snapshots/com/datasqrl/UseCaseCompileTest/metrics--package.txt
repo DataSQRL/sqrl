@@ -373,6 +373,7 @@ CREATE INDEX IF NOT EXISTS "SensorReading_hash_c0" ON "SensorReading" USING hash
         "computedColumns" : {
           "event_time" : "TIMESTAMP"
         },
+        "transactional" : false,
         "sinkConfig" : { }
       }
     ],

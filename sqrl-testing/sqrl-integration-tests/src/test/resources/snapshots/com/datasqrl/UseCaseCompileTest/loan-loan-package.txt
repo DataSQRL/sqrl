@@ -1141,6 +1141,7 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
           "_uuid" : "UUID",
           "event_time" : "TIMESTAMP"
         },
+        "transactional" : false,
         "sinkConfig" : { }
       },
       {
@@ -1151,6 +1152,7 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
           "_uuid" : "UUID",
           "event_time" : "TIMESTAMP"
         },
+        "transactional" : false,
         "sinkConfig" : { }
       }
     ],
@@ -1524,15 +1526,12 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
               },
               "context" : {
                 "type" : "object",
-                "parameters" : {
-                  "type" : "object",
-                  "properties" : {
-                    "customerid" : {
-                      "type" : "integer"
-                    }
-                  },
-                  "required" : [ ]
-                }
+                "properties" : {
+                  "customerid" : {
+                    "type" : "integer"
+                  }
+                },
+                "required" : [ ]
               },
               "content" : {
                 "type" : "string"

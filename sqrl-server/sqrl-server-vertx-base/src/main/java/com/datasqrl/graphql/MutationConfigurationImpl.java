@@ -19,6 +19,8 @@ import static org.apache.kafka.clients.consumer.ConsumerConfig.BOOTSTRAP_SERVERS
 import static org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG;
 import static org.apache.kafka.clients.producer.ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG;
 import static org.apache.kafka.clients.producer.ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG;
+import static org.apache.kafka.clients.producer.ProducerConfig.TRANSACTIONAL_ID_CONFIG;
+import static org.apache.kafka.clients.producer.ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG;
 
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.io.SinkProducer;
@@ -29,15 +31,11 @@ import com.datasqrl.graphql.server.MutationConfiguration;
 import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.graphql.server.RootGraphqlModel.KafkaMutationCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.MutationCoordsVisitor;
-import com.datasqrl.graphql.server.RootGraphqlModel.PostgresLogMutationCoords;
 import com.google.common.base.Preconditions;
 import graphql.schema.DataFetcher;
 import graphql.schema.DataFetchingEnvironment;
 import io.vertx.core.Vertx;
 import io.vertx.kafka.client.producer.KafkaProducer;
-import io.vertx.sqlclient.Tuple;
-import java.sql.Timestamp;
-import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
@@ -49,6 +47,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import io.vertx.core.Future;
 
 /**
  * Purpose: Configures data fetchers for GraphQL mutations and executes the mutations (kafka
@@ -68,7 +67,8 @@ public class MutationConfigurationImpl implements MutationConfiguration<DataFetc
     return new MutationCoordsVisitor<>() {
       @Override
       public DataFetcher<?> visit(KafkaMutationCoords coords, Context context) {
-        KafkaProducer<String, String> producer = KafkaProducer.create(vertx, getSinkConfig());
+        KafkaProducer<String, String> producer =
+            KafkaProducer.create(vertx, getSinkConfig(coords.isTransactional()));
         SinkProducer emitter = new KafkaSinkProducer<>(coords.getTopic(), producer);
         final List<String> uuidColumns =
             coords.getComputedColumns().entrySet().stream()
@@ -83,102 +83,110 @@ public class MutationConfigurationImpl implements MutationConfiguration<DataFetc
 
         Preconditions.checkNotNull(
             emitter, "Could not find sink for field: %s", coords.getFieldName());
-        DataFetcher<?> dataFetcher =
-            env -> {
-              var entry = getEntry(env, uuidColumns);
+        return env -> {
+          var entries = getEntries(env, uuidColumns);
+          var cf = new CompletableFuture<Object>();
 
-              var cf = new CompletableFuture<Object>();
-              emitter
-                  .send(entry)
-                  .onSuccess(
-                      sinkResult -> {
-                        // Add timestamp from sink to result
-                        var dateTime =
-                            ZonedDateTime.ofInstant(sinkResult.getSourceTime(), ZoneOffset.UTC);
-                        timestampColumns.forEach(
-                            colName -> entry.put(colName, dateTime.toOffsetDateTime()));
+          var futures = createSendFutures(entries, emitter, timestampColumns);
 
-                        cf.complete(entry);
-                      })
-                  .onFailure((m) -> cf.completeExceptionally(m));
+          Future<List<Object>> sendFuture =
+              coords.isTransactional()
+                  ? sendMessagesTransactionally(producer, futures)
+                  : sendMessagesNonTransactionally(futures);
 
-              return cf;
-            };
+          sendFuture
+              .onSuccess(results -> completeWithResults(cf, results))
+              .onFailure(cf::completeExceptionally);
 
-        return dataFetcher;
-      }
-
-      @Override
-      public DataFetcher<?> visit(PostgresLogMutationCoords coords, Context context) {
-        DataFetcher<?> dataFetcher =
-            env -> {
-              var entry = getEntry(env, List.of());
-              entry.put(
-                  "event_time", Timestamp.from(Instant.now())); // TODO: better to do it in the db
-
-              var paramObj = new Object[coords.getParameters().size()];
-              for (var i = 0; i < coords.getParameters().size(); i++) {
-                var param = coords.getParameters().get(i);
-                var o = entry.get(param);
-                if (o instanceof UUID iD) {
-                  o = iD.toString();
-                } else if (o instanceof Timestamp timestamp) {
-                  o = timestamp.toLocalDateTime().atOffset(ZoneOffset.UTC);
-                }
-                paramObj[i] = o;
-              }
-
-              var insertStatement = coords.getInsertStatement();
-
-              var preparedQuery =
-                  ((VertxJdbcClient) context.getClient())
-                      .getClients()
-                      .get("postgres")
-                      .preparedQuery(insertStatement);
-
-              var cf = new CompletableFuture<Object>();
-
-              preparedQuery
-                  .execute(Tuple.from(paramObj))
-                  .onComplete(e -> cf.complete(entry))
-                  .onFailure(
-                      e ->
-                          log.error(
-                              "An error happened while executing the query: " + insertStatement,
-                              e));
-
-              return cf;
-            };
-
-        return dataFetcher;
+          return cf;
+        };
       }
     };
   }
 
-  private Map getEntry(DataFetchingEnvironment env, List<String> uuidColumns) {
+  private List<Map> getEntries(DataFetchingEnvironment env, List<String> uuidColumns) {
     // Rules:
     // - Only one argument is allowed, it doesn't matter the name
     // - input argument cannot be null.
     var args = env.getArguments();
 
-    var entry = (Map) args.entrySet().stream().findFirst().map(Entry::getValue).get();
+    var argument = args.entrySet().stream().findFirst().map(Entry::getValue).get();
+
+    List<Map> entries;
+    if (argument instanceof List) {
+      entries = (List<Map>) argument;
+    } else {
+      entries = List.of((Map) argument);
+    }
 
     if (!uuidColumns.isEmpty()) {
       // Add UUID for event for the computed uuid columns
-      var uuid = UUID.randomUUID();
-      uuidColumns.forEach(colName -> entry.put(colName, uuid));
+      entries.forEach(
+          entry -> {
+            var uuid = UUID.randomUUID();
+            uuidColumns.forEach(colName -> entry.put(colName, uuid));
+          });
     }
-    return entry;
+    return entries;
+  }
+
+  private List<Future<Map>> createSendFutures(
+      List<Map> entries, SinkProducer emitter, List<String> timestampColumns) {
+    return entries.stream()
+        .map(
+            entry ->
+                emitter
+                    .send(entry)
+                    .map(
+                        sinkResult -> {
+                          // Add timestamp from sink to result
+                          var dateTime =
+                              ZonedDateTime.ofInstant(sinkResult.getSourceTime(), ZoneOffset.UTC);
+                          timestampColumns.forEach(
+                              colName -> entry.put(colName, dateTime.toOffsetDateTime()));
+                          return entry;
+                        }))
+        .collect(Collectors.toList());
+  }
+
+  private void completeWithResults(CompletableFuture<Object> cf, List<Object> results) {
+    // Return single entry if input was single, otherwise return list
+    if (results.size() == 1) {
+      cf.complete(results.get(0));
+    } else {
+      cf.complete(results);
+    }
+  }
+
+  private Future<List<Object>> sendMessagesTransactionally(
+      KafkaProducer<String, String> producer, List<Future<Map>> futures) {
+    return producer
+        .initTransactions()
+        .compose(v -> producer.beginTransaction())
+        .compose(v -> Future.join(futures))
+        .compose(compositeFuture -> producer.commitTransaction().map(v -> compositeFuture.list()))
+        .recover(
+            throwable -> producer.abortTransaction().compose(v -> Future.failedFuture(throwable)));
+  }
+
+  private Future<List<Object>> sendMessagesNonTransactionally(List<Future<Map>> futures) {
+    return Future.join(futures).map(compositeFuture -> compositeFuture.list());
   }
 
   // TODO: shouldn't it come from ServerConfig?
-  Map<String, String> getSinkConfig() {
+  Map<String, String> getSinkConfig(boolean transactional) {
+    String clientUUID = UUID.randomUUID().toString();
     Map<String, String> conf = new HashMap<>();
     conf.put(
         BOOTSTRAP_SERVERS_CONFIG, config.getEnvironmentVariable("PROPERTIES_BOOTSTRAP_SERVERS"));
-    conf.put(GROUP_ID_CONFIG, UUID.randomUUID().toString());
+    conf.put(GROUP_ID_CONFIG, clientUUID);
     conf.put(KEY_SERIALIZER_CLASS_CONFIG, "com.datasqrl.graphql.kafka.JsonSerializer");
     conf.put(VALUE_SERIALIZER_CLASS_CONFIG, "com.datasqrl.graphql.kafka.JsonSerializer");
+
+    if (transactional) {
+      conf.put(TRANSACTIONAL_ID_CONFIG, "sqrl-mutation-" + clientUUID);
+      conf.put(ENABLE_IDEMPOTENCE_CONFIG, "true");
+    }
 
     return conf;
   }

@@ -3,7 +3,7 @@
 ID:     default_catalog.default_database.MachineReading
 Type:   stream
 Stage:  flink
-Inputs: default_catalog.default_database._SensorReading, default_catalog.default_database._Sensors
+Inputs: default_catalog.default_database.Sensors, default_catalog.default_database._SensorReading
 Annotations:
  - stream-root: _SensorReading
 Primary Key: -
@@ -19,9 +19,9 @@ LogicalProject(sensorid=[$1], temperature=[$2], event_time=[$3], machineid=[$5])
     LogicalTableScan(table=[[default_catalog, default_database, _SensorReading]])
     LogicalFilter(condition=[=($cor1.sensorid, $0)])
       LogicalSnapshot(period=[$cor1.event_time])
-        LogicalTableScan(table=[[default_catalog, default_database, _Sensors]])
+        LogicalTableScan(table=[[default_catalog, default_database, Sensors]])
 SQL: CREATE VIEW MachineReading AS  SELECT r.sensorid, r.temperature, r.event_time, s.machineid
-                  FROM _SensorReading r JOIN _Sensors FOR SYSTEM_TIME AS OF r.event_time s ON r.sensorid = s.sensorid;
+                  FROM _SensorReading r JOIN Sensors FOR SYSTEM_TIME AS OF r.event_time s ON r.sensorid = s.sensorid;
 
 === MachineTempByHour
 ID:     default_catalog.default_database.MachineTempByHour
@@ -48,6 +48,25 @@ SQL: CREATE VIEW MachineTempByHour AS  SELECT machineid, window_time as time_hou
                      FROM TABLE(TUMBLE(TABLE MachineReading, DESCRIPTOR(event_time), INTERVAL '60' MINUTES))
                      GROUP BY machineid, window_start, window_end, window_time;
 
+=== Sensors
+ID:     default_catalog.default_database.Sensors
+Type:   state
+Stage:  flink
+Inputs: default_catalog.default_database.Sensors__base
+Primary Key: sensorid
+Timestamp  : updatedTime
+Schema:
+ - sensorid: INTEGER NOT NULL
+ - machineid: INTEGER
+ - updatedTime: TIMESTAMP_LTZ(3) *ROWTIME*
+Plan:
+LogicalWatermarkAssigner(rowtime=[updatedTime], watermark=[-($2, 0:INTERVAL SECOND)])
+  LogicalProject(sensorid=[$0], machineid=[$1], updatedTime=[CAST($2):TIMESTAMP_LTZ(3) *ROWTIME*])
+    LogicalTableScan(table=[[default_catalog, default_database, Sensors, metadata=[timestamp]]])
+SQL: CREATE VIEW `Sensors__view`
+AS
+SELECT `Sensors`.`sensorid`, `Sensors`.`machineid`, `Sensors`.`updatedTime`
+FROM `default_catalog`.`default_database`.`Sensors` AS `Sensors`
 === _SensorReading
 ID:     default_catalog.default_database._SensorReading
 Type:   stream
@@ -70,27 +89,8 @@ SQL: CREATE VIEW `_SensorReading__view`
 AS
 SELECT `_SensorReading`.`event_id`, `_SensorReading`.`sensorid`, `_SensorReading`.`temperature`, `_SensorReading`.`event_time`
 FROM `default_catalog`.`default_database`.`_SensorReading` AS `_SensorReading`
-=== _Sensors
-ID:     default_catalog.default_database._Sensors
-Type:   state
-Stage:  flink
-Inputs: default_catalog.default_database._Sensors__base
-Primary Key: sensorid
-Timestamp  : updatedTime
-Schema:
- - sensorid: INTEGER NOT NULL
- - machineid: INTEGER
- - updatedTime: TIMESTAMP_LTZ(3) *ROWTIME*
-Plan:
-LogicalWatermarkAssigner(rowtime=[updatedTime], watermark=[-($2, 0:INTERVAL SECOND)])
-  LogicalProject(sensorid=[$0], machineid=[$1], updatedTime=[CAST($2):TIMESTAMP_LTZ(3) *ROWTIME*])
-    LogicalTableScan(table=[[default_catalog, default_database, _Sensors, metadata=[timestamp]]])
-SQL: CREATE VIEW `_Sensors__view`
-AS
-SELECT `_Sensors`.`sensorid`, `_Sensors`.`machineid`, `_Sensors`.`updatedTime`
-FROM `default_catalog`.`default_database`.`_Sensors` AS `_Sensors`
 >>>flink-sql-no-functions.sql
-CREATE TABLE `_Sensors` (
+CREATE TABLE `Sensors` (
   `sensorid` INTEGER,
   `machineid` INTEGER,
   `updatedTime` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
@@ -103,7 +103,8 @@ CREATE TABLE `_Sensors` (
   'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${PROPERTIES_GROUP_ID}',
-  'topic' = 'kafka-mutation-_Sensors',
+  'properties.isolation.level' = 'read_committed',
+  'topic' = 'kafka-mutation-Sensors',
   'value.flexible-json.timestamp-format.standard' = 'ISO-8601',
   'value.format' = 'flexible-json'
 );
@@ -126,7 +127,7 @@ CREATE VIEW `MachineReading`
 AS
 SELECT `r`.`sensorid`, `r`.`temperature`, `r`.`event_time`, `s`.`machineid`
 FROM `_SensorReading` AS `r`
- INNER JOIN `_Sensors` FOR SYSTEM_TIME AS OF `r`.`event_time` AS `s` ON `r`.`sensorid` = `s`.`sensorid`;
+ INNER JOIN `Sensors` FOR SYSTEM_TIME AS OF `r`.`event_time` AS `s` ON `r`.`sensorid` = `s`.`sensorid`;
 CREATE VIEW `MachineTempByHour`
 AS
 SELECT `machineid`, `window_time` AS `time_hour`, AVG(`temperature`) AS `avg_temperature`
@@ -161,6 +162,19 @@ CREATE TABLE `MachineTempByHour_2` (
   'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
   'username' = '${JDBC_USERNAME}'
 );
+CREATE TABLE `Sensors_3` (
+  `sensorid` INTEGER NOT NULL,
+  `machineid` INTEGER,
+  `updatedTime` TIMESTAMP(3) WITH LOCAL TIME ZONE,
+  PRIMARY KEY (`sensorid`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${JDBC_PASSWORD}',
+  'table-name' = 'Sensors_3',
+  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
+  'username' = '${JDBC_USERNAME}'
+);
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`MachineReading_1`
 (SELECT `sensorid`, `temperature`, `event_time`, `machineid`, `hash_columns`(`sensorid`, `temperature`, `event_time`, `machineid`) AS `__pk_hash`
@@ -170,21 +184,25 @@ INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
  (SELECT `machineid`, `time_hour`, `avg_temperature`, `hash_columns`(`machineid`, `time_hour`, `avg_temperature`) AS `__pk_hash`
   FROM `default_catalog`.`default_database`.`MachineTempByHour`)
  ;
- END
+ INSERT INTO `default_catalog`.`default_database`.`Sensors_3`
+  (SELECT *
+   FROM `default_catalog`.`default_database`.`Sensors`)
+  ;
+  END
 >>>kafka.json
 {
   "topics" : [
     {
-      "topicName" : "kafka-mutation-_SensorReading",
-      "tableName" : "_SensorReading",
+      "topicName" : "kafka-mutation-Sensors",
+      "tableName" : "Sensors",
       "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 1,
       "config" : { }
     },
     {
-      "topicName" : "kafka-mutation-_Sensors",
-      "tableName" : "_Sensors",
+      "topicName" : "kafka-mutation-_SensorReading",
+      "tableName" : "_SensorReading",
       "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 1,
@@ -255,6 +273,28 @@ INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
       ]
     },
     {
+      "name" : "Sensors_3",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Sensors_3\" (\"sensorid\" INTEGER NOT NULL, \"machineid\" INTEGER , \"updatedTime\" TIMESTAMP WITH TIME ZONE  , PRIMARY KEY (\"sensorid\"))",
+      "fields" : [
+        {
+          "name" : "sensorid",
+          "type" : "INTEGER",
+          "nullable" : false
+        },
+        {
+          "name" : "machineid",
+          "type" : "INTEGER",
+          "nullable" : true
+        },
+        {
+          "name" : "updatedTime",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : true
+        }
+      ]
+    },
+    {
       "name" : "MachineReading",
       "type" : "VIEW",
       "sql" : "CREATE OR REPLACE VIEW \"MachineReading\"(\"sensorid\", \"temperature\", \"event_time\", \"machineid\") AS SELECT \"sensorid\", \"temperature\", \"event_time\", \"machineid\"\nFROM \"MachineReading_1\"",
@@ -299,6 +339,28 @@ INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
         {
           "name" : "avg_temperature",
           "type" : "FLOAT",
+          "nullable" : true
+        }
+      ]
+    },
+    {
+      "name" : "Sensors",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"Sensors\"(\"sensorid\", \"machineid\", \"updatedTime\") AS SELECT *\nFROM \"Sensors_3\"",
+      "fields" : [
+        {
+          "name" : "sensorid",
+          "type" : "INTEGER",
+          "nullable" : false
+        },
+        {
+          "name" : "machineid",
+          "type" : "INTEGER",
+          "nullable" : true
+        },
+        {
+          "name" : "updatedTime",
+          "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : true
         }
       ]
@@ -356,9 +418,43 @@ INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
             "database" : "POSTGRES"
           }
         }
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "Sensors",
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
+            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM \"Sensors_3\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
+          }
+        }
       }
     ],
     "mutations" : [
+      {
+        "type" : "kafka",
+        "fieldName" : "Sensors",
+        "topic" : "kafka-mutation-Sensors",
+        "computedColumns" : {
+          "updatedTime" : "TIMESTAMP"
+        },
+        "transactional" : true,
+        "sinkConfig" : { }
+      },
       {
         "type" : "kafka",
         "fieldName" : "_SensorReading",
@@ -366,16 +462,6 @@ INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
         "computedColumns" : {
           "event_id" : "UUID",
           "event_time" : "TIMESTAMP"
-        },
-        "transactional" : false,
-        "sinkConfig" : { }
-      },
-      {
-        "type" : "kafka",
-        "fieldName" : "_Sensors",
-        "topic" : "kafka-mutation-_Sensors",
-        "computedColumns" : {
-          "updatedTime" : "TIMESTAMP"
         },
         "transactional" : false,
         "sinkConfig" : { }
@@ -434,11 +520,76 @@ INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
         "mcpMethod" : "TOOL",
         "restMethod" : "GET",
         "uriTemplate" : "queries/MachineTempByHour{?offset,limit}"
+      },
+      {
+        "function" : {
+          "name" : "GetSensors",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query Sensors($limit: Int = 10, $offset: Int = 0) {\nSensors(limit: $limit, offset: $offset) {\nsensorid\nmachineid\nupdatedTime\n}\n\n}",
+          "queryName" : "Sensors",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/Sensors{?offset,limit}"
+      },
+      {
+        "function" : {
+          "name" : "AddSensors",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "event" : {
+                "type" : "array",
+                "items" : {
+                  "type" : "object",
+                  "properties" : {
+                    "machineid" : {
+                      "type" : "integer"
+                    },
+                    "sensorid" : {
+                      "type" : "integer"
+                    }
+                  },
+                  "required" : [
+                    "sensorid"
+                  ]
+                }
+              }
+            },
+            "required" : [
+              "event"
+            ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "mutation Sensors($event: [SensorsInput!]!) {\nSensors(event: $event) {\nsensorid\nmachineid\nupdatedTime\n}\n\n}",
+          "queryName" : "Sensors",
+          "operationType" : "MUTATION"
+        },
+        "mcpMethod" : "NONE",
+        "restMethod" : "POST",
+        "uriTemplate" : "mutations/Sensors"
       }
     ],
     "schema" : {
       "type" : "string",
-      "schema" : "\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype MachineReading {\n  sensorid: Int\n  temperature: Float\n  event_time: DateTime\n  machineid: Int\n}\n\ntype MachineTempByHour {\n  machineid: Int\n  time_hour: DateTime!\n  avg_temperature: Float\n}\n\ntype Mutation {\n  _SensorReading(event: _SensorReadingInput!): _SensorReadingResultOutput!\n  _Sensors(event: _SensorsInput!): _SensorsResultOutput!\n}\n\ntype Query {\n  MachineReading(limit: Int = 10, offset: Int = 0): [MachineReading!]\n  MachineTempByHour(limit: Int = 10, offset: Int = 0): [MachineTempByHour!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ninput _SensorReadingInput {\n  sensorid: Int\n  temperature: Float\n}\n\ntype _SensorReadingResultOutput {\n  event_id: String!\n  sensorid: Int\n  temperature: Float\n  event_time: DateTime\n}\n\ninput _SensorsInput {\n  sensorid: Int!\n  machineid: Int\n}\n\ntype _SensorsResultOutput {\n  sensorid: Int!\n  machineid: Int\n  updatedTime: DateTime\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      "schema" : "\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype MachineReading {\n  sensorid: Int\n  temperature: Float\n  event_time: DateTime\n  machineid: Int\n}\n\ntype MachineTempByHour {\n  machineid: Int\n  time_hour: DateTime!\n  avg_temperature: Float\n}\n\ntype Mutation {\n  Sensors(event: [SensorsInput!]!): [SensorsResultOutput!]!\n  _SensorReading(event: [_SensorReadingInput!]!): [_SensorReadingResultOutput!]!\n}\n\ntype Query {\n  MachineReading(limit: Int = 10, offset: Int = 0): [MachineReading!]\n  MachineTempByHour(limit: Int = 10, offset: Int = 0): [MachineTempByHour!]\n  Sensors(limit: Int = 10, offset: Int = 0): [Sensors!]\n}\n\ntype Sensors {\n  sensorid: Int!\n  machineid: Int\n  updatedTime: DateTime\n}\n\ninput SensorsInput {\n  sensorid: Int!\n  machineid: Int\n}\n\ntype SensorsResultOutput {\n  sensorid: Int!\n  machineid: Int\n  updatedTime: DateTime\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ninput _SensorReadingInput {\n  sensorid: Int\n  temperature: Float\n}\n\ntype _SensorReadingResultOutput {\n  event_id: String!\n  sensorid: Int\n  temperature: Float\n  event_time: DateTime\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
     }
   }
 }

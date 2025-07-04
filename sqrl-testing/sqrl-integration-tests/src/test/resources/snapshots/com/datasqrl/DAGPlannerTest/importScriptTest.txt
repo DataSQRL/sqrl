@@ -420,6 +420,7 @@ INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
           "event_id" : "UUID",
           "event_time" : "TIMESTAMP"
         },
+        "transactional" : false,
         "sinkConfig" : { }
       },
       {
@@ -429,6 +430,7 @@ INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
         "computedColumns" : {
           "updatedTime" : "TIMESTAMP"
         },
+        "transactional" : false,
         "sinkConfig" : { }
       }
     ],
@@ -516,60 +518,6 @@ INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
         "mcpMethod" : "TOOL",
         "restMethod" : "GET",
         "uriTemplate" : "queries/MachineTempHourlyById{?machineid,offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "Add_SensorReading",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "temperature" : {
-                "type" : "number"
-              },
-              "sensorid" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "mutation _SensorReading($sensorid: Int, $temperature: Float) {\n_SensorReading(event: { sensorid: $sensorid, temperature: $temperature }) {\nevent_id\nsensorid\ntemperature\nevent_time\n}\n\n}",
-          "queryName" : "_SensorReading",
-          "operationType" : "MUTATION"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "POST",
-        "uriTemplate" : "mutations/_SensorReading"
-      },
-      {
-        "function" : {
-          "name" : "Add_Sensors",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "machineid" : {
-                "type" : "integer"
-              },
-              "sensorid" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [
-              "sensorid"
-            ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "mutation _Sensors($sensorid: Int!, $machineid: Int) {\n_Sensors(event: { sensorid: $sensorid, machineid: $machineid }) {\nsensorid\nmachineid\nupdatedTime\n}\n\n}",
-          "queryName" : "_Sensors",
-          "operationType" : "MUTATION"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "POST",
-        "uriTemplate" : "mutations/_Sensors"
       }
     ],
     "schema" : {

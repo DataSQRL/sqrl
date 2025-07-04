@@ -30,6 +30,7 @@ import com.datasqrl.engine.database.EngineCreateTable;
 import com.datasqrl.engine.log.LogEngine;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.flinkrunner.format.json.FlexibleJsonFormat;
+import com.datasqrl.graphql.server.MutationInsertType;
 import com.datasqrl.io.tables.TableType;
 import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.dag.plan.MaterializationStagePlan;
@@ -89,8 +90,15 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
       String originalTableName,
       FlinkTableBuilder tableBuilder,
       RelDataType relDataType,
-      Optional<TableAnalysis> tableAnalysis) {
-    return createInternal(stage, originalTableName, tableBuilder, relDataType, tableAnalysis, true);
+      MutationInsertType insertType) {
+    return createInternal(
+        stage,
+        originalTableName,
+        tableBuilder,
+        relDataType,
+        Optional.empty(),
+        true,
+        insertType == MutationInsertType.TRANSACTION);
   }
 
   @Override
@@ -101,7 +109,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
       RelDataType relDataType,
       Optional<TableAnalysis> tableAnalysis) {
     return createInternal(
-        stage, originalTableName, tableBuilder, relDataType, tableAnalysis, false);
+        stage, originalTableName, tableBuilder, relDataType, tableAnalysis, false, false);
   }
 
   public EngineCreateTable createInternal(
@@ -110,7 +118,8 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
       FlinkTableBuilder tableBuilder,
       RelDataType relDataType,
       Optional<TableAnalysis> tableAnalysis,
-      boolean isMutation) {
+      boolean isMutation,
+      boolean isTransactional) {
     var ctxBuilder =
         Context.builder().tableName(originalTableName).tableId(tableBuilder.getTableName());
     var conf = isMutation ? mutationConnectorConf : streamConnectorConf;
@@ -176,6 +185,12 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
         connectorConfig.put("value." + entry.getKey(), entry.getValue());
         connectorConfig.put("key." + entry.getKey(), entry.getValue());
       }
+    }
+
+    if (isTransactional) {
+      Preconditions.checkArgument(
+          isMutation, "Only mutations can be used for transactions: %s", tableBuilder);
+      connectorConfig.put("properties.isolation.level", "read_committed");
     }
 
     tableBuilder.setConnectorOptions(connectorConfig);
