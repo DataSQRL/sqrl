@@ -4,6 +4,7 @@
   "engines" : {
     "flink" : {
       "config": {
+        "execution.runtime-mode": "STREAMING",
         "execution.target": "local",
         "execution.attached": true,
         "rest.address": "localhost",

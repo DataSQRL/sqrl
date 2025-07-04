@@ -15,11 +15,11 @@
  */
 package com.datasqrl.engine.stream;
 
-import com.datasqrl.config.ExecutionMode;
 import com.datasqrl.engine.ExecutionEngine;
 import java.io.Closeable;
+import org.apache.flink.api.common.RuntimeExecutionMode;
 
 public interface StreamEngine extends Closeable, ExecutionEngine {
 
-  public ExecutionMode getExecutionMode();
+  RuntimeExecutionMode getExecutionMode();
 }

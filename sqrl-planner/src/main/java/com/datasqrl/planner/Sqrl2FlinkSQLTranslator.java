@@ -20,7 +20,6 @@ import static org.apache.flink.table.planner.utils.ShortcutUtils.unwrapContext;
 
 import com.datasqrl.calcite.SqrlRexUtil;
 import com.datasqrl.config.BuildPath;
-import com.datasqrl.config.ExecutionMode;
 import com.datasqrl.config.PackageJson.CompilerConfig;
 import com.datasqrl.engine.stream.flink.FlinkStreamEngine;
 import com.datasqrl.engine.stream.flink.plan.FlinkSqlNodeFactory;
@@ -95,6 +94,7 @@ import org.apache.calcite.sql.SqlOrderBy;
 import org.apache.calcite.sql.SqlSyntax;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.validate.SqlNameMatchers;
+import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.configuration.PipelineOptions;
 import org.apache.flink.sql.parser.ddl.SqlAlterViewAs;
 import org.apache.flink.sql.parser.ddl.SqlCreateTable;
@@ -164,7 +164,7 @@ public class Sqrl2FlinkSQLTranslator {
 
   public static final String SCHEMA_SUFFIX = "__schema";
 
-  private final ExecutionMode executionMode;
+  private final RuntimeExecutionMode executionMode;
   private final boolean compilePlan;
   private final StreamTableEnvironmentImpl tEnv;
   private final Supplier<FlinkPlannerImpl> validatorSupplier;
@@ -196,7 +196,7 @@ public class Sqrl2FlinkSQLTranslator {
 
     this.planBuilder = new Builder(config.clone());
 
-    if (executionMode == ExecutionMode.STREAMING) {
+    if (executionMode == RuntimeExecutionMode.STREAMING) {
       planBuilder.addInferredConfig(flink.getStreamingSpecificConfig());
     }
 
@@ -274,7 +274,7 @@ public class Sqrl2FlinkSQLTranslator {
     var insert = toSqlString(execute);
     planBuilder.add(execute, insert);
     Optional<CompiledPlan> compiledPlan = Optional.empty();
-    if (executionMode == ExecutionMode.STREAMING && compilePlan) {
+    if (executionMode == RuntimeExecutionMode.STREAMING && compilePlan) {
       var parse = (StatementSetOperation) tEnv.getParser().parse(insert + ";").get(0);
       compiledPlan = Optional.of(tEnv.compilePlan(parse.getOperations()));
     }
