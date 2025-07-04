@@ -1,3 +1,4 @@
+/*+insert(batch) */
 CREATE TABLE SensorReading (
    sensorid INT NOT NULL,
    temperature decimal(8,2) NOT NULL,
