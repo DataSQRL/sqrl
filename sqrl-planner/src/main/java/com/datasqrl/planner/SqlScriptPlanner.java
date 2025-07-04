@@ -54,7 +54,7 @@ import com.datasqrl.planner.dag.nodes.TableFunctionNode;
 import com.datasqrl.planner.dag.nodes.TableNode;
 import com.datasqrl.planner.dag.plan.MutationComputedColumn;
 import com.datasqrl.planner.dag.plan.MutationQuery;
-import com.datasqrl.planner.hint.ExecHint;
+import com.datasqrl.planner.hint.EngineHint;
 import com.datasqrl.planner.hint.NoQueryHint;
 import com.datasqrl.planner.hint.PlannerHints;
 import com.datasqrl.planner.hint.QueryByAnyHint;
@@ -544,7 +544,7 @@ public class SqlScriptPlanner {
    */
   private List<ExecutionStage> determineStages(
       List<ExecutionStage> availableStages, PlannerHints hints) {
-    Optional<ExecHint> executionHint = hints.getHint(ExecHint.class);
+    Optional<EngineHint> executionHint = hints.getHint(EngineHint.class);
     if ((hints.isTest() && executionGoal == ExecutionGoal.TEST) || hints.isWorkload()) {
       // Tests and hints always get executed in the database
       availableStages =
