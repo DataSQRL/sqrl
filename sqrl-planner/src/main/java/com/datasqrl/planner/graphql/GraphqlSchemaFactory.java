@@ -211,10 +211,16 @@ public class GraphqlSchemaFactory {
     }
     var builder = GraphQLObjectType.newObject().name("Mutation");
     for (MutationQuery mutation : mutations) {
+      boolean isMultiple = mutation.getInsertType().isMultiple();
       var name = mutation.getName().getDisplay();
       var inputType =
           GraphqlSchemaUtil.getGraphQLInputType(
                   mutation.getInputDataType(), NamePath.of(name), extendedScalarTypes)
+              .map(
+                  type ->
+                      isMultiple
+                          ? GraphqlSchemaUtil.asInputType(GraphqlSchemaUtil.asList(type))
+                          : type)
               .orElseThrow(
                   () ->
                       new IllegalArgumentException(
@@ -230,7 +236,16 @@ public class GraphqlSchemaFactory {
                           mutation.getOutputDataType(),
                           NamePath.of(name.concat("Result")),
                           extendedScalarTypes)
-                      .get());
+                      .map(
+                          type ->
+                              isMultiple
+                                  ? GraphqlSchemaUtil.asOutputType(GraphqlSchemaUtil.asList(type))
+                                  : type)
+                      .orElseThrow(
+                          () ->
+                              new IllegalArgumentException(
+                                  "Could not create output type for mutation: "
+                                      + mutation.getName())));
       mutation.getDocumentation().ifPresent(mutationFieldBuilder::description);
       builder.field(mutationFieldBuilder.build());
     }

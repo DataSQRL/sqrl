@@ -1541,6 +1541,7 @@ FROM "ExternalOrders" AS "ExternalOrders0"
         "fieldName" : "Orders",
         "topic" : "Orders",
         "computedColumns" : { },
+        "transactional" : false,
         "sinkConfig" : { }
       }
     ],

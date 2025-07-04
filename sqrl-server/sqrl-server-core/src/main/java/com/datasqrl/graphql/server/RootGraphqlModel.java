@@ -109,10 +109,7 @@ public class RootGraphqlModel {
   }
 
   @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
-  @JsonSubTypes({
-    @Type(value = KafkaMutationCoords.class, name = KafkaMutationCoords.type),
-    @Type(value = PostgresLogMutationCoords.class, name = PostgresLogMutationCoords.type)
-  })
+  @JsonSubTypes({@Type(value = KafkaMutationCoords.class, name = KafkaMutationCoords.type)})
   public abstract static class MutationCoords {
     protected String type;
 
@@ -123,8 +120,6 @@ public class RootGraphqlModel {
 
   public interface MutationCoordsVisitor<R, C> {
     R visit(KafkaMutationCoords coords, C context);
-
-    R visit(PostgresLogMutationCoords coords, C c);
   }
 
   @Getter
@@ -136,42 +131,20 @@ public class RootGraphqlModel {
     protected String fieldName;
     protected String topic;
     protected Map<String, MutationComputedColumnType> computedColumns;
+    protected boolean transactional;
     protected Map<String, String> sinkConfig;
 
     public KafkaMutationCoords(
         String fieldName,
         String topic,
         Map<String, MutationComputedColumnType> computedColumns,
+        boolean transactional,
         Map<String, String> sinkConfig) {
       this.fieldName = fieldName;
       this.topic = topic;
       this.computedColumns = computedColumns;
+      this.transactional = transactional;
       this.sinkConfig = sinkConfig;
-    }
-
-    @Override
-    public <R, C> R accept(MutationCoordsVisitor<R, C> visitor, C context) {
-      return visitor.visit(this, context);
-    }
-  }
-
-  @Getter
-  @NoArgsConstructor
-  public static class PostgresLogMutationCoords extends MutationCoords {
-
-    private static final String type = "postgres_log";
-
-    protected String fieldName;
-    protected String tableName;
-    protected String insertStatement;
-    protected List<String> parameters;
-
-    public PostgresLogMutationCoords(
-        String fieldName, String tableName, String insertStatement, List<String> parameters) {
-      this.fieldName = fieldName;
-      this.tableName = tableName;
-      this.insertStatement = insertStatement;
-      this.parameters = parameters;
     }
 
     @Override

@@ -1,0 +1,22 @@
+/*+insert(transaction) */
+CREATE TABLE Sensors (
+    sensorid INT,
+    machineid INT,
+    updatedTime TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
+    PRIMARY KEY (sensorid) NOT ENFORCED
+);
+
+/*+insert(batch) */
+CREATE TABLE _SensorReading (
+     event_id STRING NOT NULL METADATA FROM 'uuid',
+     sensorid INT,
+     temperature FLOAT,
+     event_time TIMESTAMP_LTZ(3) METADATA FROM 'timestamp'
+);
+
+MachineReading := SELECT r.sensorid, r.temperature, r.event_time, s.machineid
+                  FROM _SensorReading r JOIN Sensors FOR SYSTEM_TIME AS OF r.event_time s ON r.sensorid = s.sensorid;
+
+MachineTempByHour := SELECT machineid, window_time as time_hour, AVG(temperature) AS avg_temperature
+                     FROM TABLE(TUMBLE(TABLE MachineReading, DESCRIPTOR(event_time), INTERVAL '60' MINUTES))
+                     GROUP BY machineid, window_start, window_end, window_time;

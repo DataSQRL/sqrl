@@ -246,8 +246,19 @@ public class GraphQLSchemaConverter {
         .flatMap(
             input -> {
               if (config.getOperationFilter().test(input.op(), input.fieldDefinition().getName())) {
-                return Stream.of(convert(input.op(), input.fieldDefinition(), config));
-              } // else filter out
+                try {
+                  ApiOperation op = convert(input.op(), input.fieldDefinition(), config);
+                  return Stream.of(op);
+                } catch (Exception e) {
+                  log.info(
+                      "Operation could not be converted and is removed: {}",
+                      input.fieldDefinition.getName(),
+                      e);
+                }
+              } else { // else filter out
+                log.info(
+                    "Operation matches filter and is removed: {}", input.fieldDefinition.getName());
+              }
               return Stream.of();
             })
         .forEach(functions::add);
@@ -375,11 +386,8 @@ public class GraphQLSchemaConverter {
           required.add(field.getName());
         }
       }
-      Parameters nestedParams = new Parameters();
-      nestedParams.setType("object");
-      nestedParams.setProperties(properties);
-      nestedParams.setRequired(required);
-      argument.setParameters(nestedParams);
+      argument.setRequired(required);
+      argument.setProperties(properties);
     } else {
       throw new UnsupportedOperationException("Unsupported type: " + graphQLInputType);
     }
@@ -427,6 +435,7 @@ public class GraphQLSchemaConverter {
         GraphQLArgument arg = args.next();
 
         UnwrappedType unwrappedType = convertRequired(arg.getType());
+        // We flatten out
         if (unwrappedType.type() instanceof GraphQLInputObjectType inputType) {
           queryBody.append(arg.getName()).append(": { ");
           for (Iterator<GraphQLInputObjectField> nestedFields =
@@ -515,6 +524,8 @@ public class GraphQLSchemaConverter {
     Argument argDef = convert(unwrappedType.type());
     argDef.setDescription(description);
     if (unwrappedType.required()) params.getRequired().add(argName);
+    Preconditions.checkArgument(
+        !params.getProperties().containsKey(argName), "Duplicate argument name [%s]", argName);
     params.getProperties().put(argName, argDef);
     argName = "$" + argName;
     queryBody.append(originalName).append(": ").append(argName);

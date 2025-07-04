@@ -308,6 +308,7 @@ CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" INTEGER NOT NULL, "temper
         "computedColumns" : {
           "event_time" : "TIMESTAMP"
         },
+        "transactional" : false,
         "sinkConfig" : { }
       }
     ],
