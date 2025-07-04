@@ -353,7 +353,7 @@ class FullUseCasesIT {
   public void runTestCaseByName() {
     var param =
         useCaseProvider().stream()
-            .filter(p -> p.sqrlFileName.equals("loan.sqrl") && p.goal.equals("test"))
+            .filter(p -> p.sqrlFileName.equals("sensors-mutation.sqrl") && p.goal.equals("test"))
             .collect(MoreCollectors.onlyElement());
     useCase(param);
   }
