@@ -238,7 +238,8 @@ INSERT INTO `default_catalog`.`default_database`.`Product_2`
             "sql" : "SELECT \"searchResult\", \"format\"\nFROM \"FunctionCalls_1\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -262,7 +263,8 @@ INSERT INTO `default_catalog`.`default_database`.`Product_2`
             "sql" : "SELECT *\nFROM \"Product_2\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       }

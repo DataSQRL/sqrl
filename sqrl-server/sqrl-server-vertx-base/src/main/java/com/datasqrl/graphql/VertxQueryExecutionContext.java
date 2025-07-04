@@ -21,7 +21,7 @@ import static com.datasqrl.graphql.jdbc.SchemaConstants.OFFSET;
 import com.datasqrl.graphql.VertxJdbcClient.PreparedSqrlQueryImpl;
 import com.datasqrl.graphql.jdbc.AbstractQueryExecutionContext;
 import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
-import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedSqlQuery;
+import com.datasqrl.graphql.server.query.ResolvedSqlQuery;
 import graphql.schema.DataFetchingEnvironment;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
@@ -51,6 +51,7 @@ public class VertxQueryExecutionContext extends AbstractQueryExecutionContext {
 
   @Override
   public CompletableFuture runQuery(ResolvedSqlQuery resolvedQuery, boolean isList) {
+    resolvedQuery = resolvedQuery.preprocess(this);
     var preparedQueryContainer = (PreparedSqrlQueryImpl) resolvedQuery.getPreparedQueryContainer();
     final var paramObj = getParamArguments(resolvedQuery.getQuery().getParameters());
     var query = resolvedQuery.getQuery();

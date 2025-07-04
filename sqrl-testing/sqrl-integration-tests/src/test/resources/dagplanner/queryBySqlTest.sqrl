@@ -1,0 +1,5 @@
+IMPORT ecommerceTs.Orders AS _Orders;
+
+/*+ query_by_sql(FILTER, whereClause) */
+OrderEntries := SELECT o.id, o.customerid, o.`time`, e.* FROM _Orders o CROSS JOIN UNNEST(entries) e;
+

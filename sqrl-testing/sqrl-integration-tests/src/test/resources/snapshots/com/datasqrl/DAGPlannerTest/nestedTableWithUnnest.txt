@@ -215,7 +215,8 @@ INSERT INTO `default_catalog`.`default_database`.`_OrdersTotals_2`
             "sql" : "SELECT *\nFROM \"Orders_1\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -244,7 +245,8 @@ INSERT INTO `default_catalog`.`default_database`.`_OrdersTotals_2`
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       }

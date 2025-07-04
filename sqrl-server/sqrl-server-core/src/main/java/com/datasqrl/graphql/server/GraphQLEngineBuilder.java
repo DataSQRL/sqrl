@@ -25,14 +25,16 @@ import com.datasqrl.graphql.server.RootGraphqlModel.MutationCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.QueryBaseVisitor;
 import com.datasqrl.graphql.server.RootGraphqlModel.QueryCoordVisitor;
 import com.datasqrl.graphql.server.RootGraphqlModel.QueryCoords;
-import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedQuery;
-import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedQueryVisitor;
-import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedSqlQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.RootVisitor;
 import com.datasqrl.graphql.server.RootGraphqlModel.SchemaVisitor;
 import com.datasqrl.graphql.server.RootGraphqlModel.SqlQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.StringSchema;
 import com.datasqrl.graphql.server.RootGraphqlModel.SubscriptionCoords;
+import com.datasqrl.graphql.server.query.ResolvedQuery;
+import com.datasqrl.graphql.server.query.ResolvedQuery.ResolvedQueryVisitor;
+import com.datasqrl.graphql.server.query.ResolvedSqlQuery;
+import com.datasqrl.graphql.server.query.SqlQueryModifier;
+import com.google.common.base.Preconditions;
 import graphql.GraphQL;
 import graphql.language.FieldDefinition;
 import graphql.language.InterfaceTypeDefinition;
@@ -53,6 +55,7 @@ import graphql.schema.idl.TypeDefinitionRegistry;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -195,6 +198,21 @@ public class GraphQLEngineBuilder
 
   @Override
   public ResolvedQuery visitSqlQuery(SqlQuery query, Context context) {
+    // Resolve preprocessors
+    Optional<SqlQueryModifier> preprocessor = Optional.empty();
+    for (SqlQueryModifier modifier : query.getModifiers()) {
+      if (modifier.isPreprocessor()) {
+        Preconditions.checkArgument(
+            preprocessor.isEmpty(),
+            "Only a single preprocessor is allowed, but found: %s",
+            query.getModifiers());
+        preprocessor = Optional.of(modifier);
+      } else {
+        throw new UnsupportedOperationException("Postprocessor are not yet supported: " + modifier);
+      }
+    }
+    if (preprocessor.isPresent())
+      return context.getClient().unpreparedQuery(query, preprocessor, context);
     // Add pagination to query
     switch (query.pagination) {
       case NONE:
@@ -203,7 +221,7 @@ public class GraphQLEngineBuilder
         // special case where database doesn't support binding for limit/offset => need to create
         // query dynamically and not prepare
         if (!query.getDatabase().supportsLimitOffsetBinding) {
-          return context.getClient().unpreparedQuery(query, context);
+          return context.getClient().unpreparedQuery(query, preprocessor, context);
         }
         if (query.getDatabase().supportsPositionalParameters) {
           var nextOffset = query.getParameters().size() + 1; // positional arguments are 1-based

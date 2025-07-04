@@ -254,7 +254,8 @@ INSERT INTO `default_catalog`.`default_database`.`SensorTempByHour_2`
             "sql" : "SELECT \"uuid\", \"sensorid\", \"epoch_timestamp\", \"temperature\", \"timestamp\"\nFROM \"SensorReading_1\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -278,7 +279,8 @@ INSERT INTO `default_catalog`.`default_database`.`SensorTempByHour_2`
             "sql" : "SELECT *\nFROM \"SensorTempByHour_2\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       }

@@ -403,7 +403,8 @@ CREATE TABLE IF NOT EXISTS "_LoanTypes" ("id" BIGINT NOT NULL, "name" TEXT NOT N
             "sql" : "SELECT \"t\".\"id\", \"t\".\"customer_id\", \"t\".\"loan_type_id\", \"t\".\"amount\", \"t\".\"duration\", \"t\".\"application_date\", \"t\".\"updated_at\", \"t0\".\"id\" AS \"id0\", \"t0\".\"name\", \"t0\".\"description\", \"t0\".\"interest_rate\", \"t0\".\"max_amount\", \"t0\".\"min_amount\", \"t0\".\"max_duration\", \"t0\".\"min_duration\", \"t0\".\"updated_at\" AS \"updated_at0\", \"t1\".\"id\" AS \"id2\"\nFROM (SELECT *\n  FROM \"iceberg_scan\"('/tmp/duckdb/default_database/_Applications', ALLOW_MOVED_PATHS = TRUE)) AS \"t\"\n INNER JOIN (SELECT *\n  FROM \"iceberg_scan\"('/tmp/duckdb/default_database/_LoanTypes', ALLOW_MOVED_PATHS = TRUE)) AS \"t0\" ON \"t\".\"loan_type_id\" = \"t0\".\"id\"\n LEFT JOIN (SELECT *\n  FROM \"iceberg_scan\"('/tmp/duckdb/default_database/_LoanTypes', ALLOW_MOVED_PATHS = TRUE)) AS \"t1\" ON \"t\".\"customer_id\" = \"t1\".\"id\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "DUCKDB"
+            "database" : "DUCKDB",
+            "modifiers" : [ ]
           }
         }
       },
@@ -427,7 +428,8 @@ CREATE TABLE IF NOT EXISTS "_LoanTypes" ("id" BIGINT NOT NULL, "name" TEXT NOT N
             "sql" : "SELECT \"status\", \"message\", \"event_time\", \"id\", \"customer_id\", \"loan_type_id\", \"amount\", \"duration\", \"max_amount\", \"min_amount\"\nFROM \"iceberg_scan\"('/tmp/duckdb/default_database/ApplicationStatus', ALLOW_MOVED_PATHS = TRUE)",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "DUCKDB"
+            "database" : "DUCKDB",
+            "modifiers" : [ ]
           }
         }
       }

@@ -13,15 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.graphql.jdbc;
+package com.datasqrl.graphql.server.query;
 
-import com.datasqrl.graphql.server.RootGraphqlModel.PreparedSqrlQuery;
-import java.sql.Connection;
-import lombok.Value;
+public interface SqlQueryModifier extends QueryModifier {
 
-@Value
-public class PreparedSqrlQueryImpl implements PreparedSqrlQuery<String> {
+  record UserSqlQuery(Type type, String tableName, String parameterName, String tableSchema)
+      implements SqlQueryModifier {
 
-  Connection connection;
-  String preparedQuery;
+    @Override
+    public boolean isPreprocessor() {
+      return true;
+    }
+
+    public enum Type {
+      FILTER,
+      TRANSFORM
+    }
+  }
 }

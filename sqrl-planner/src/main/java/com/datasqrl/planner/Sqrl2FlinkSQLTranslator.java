@@ -37,6 +37,8 @@ import com.datasqrl.planner.analyzer.SQRLLogicalPlanAnalyzer;
 import com.datasqrl.planner.analyzer.SQRLLogicalPlanAnalyzer.ViewAnalysis;
 import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.dag.plan.MutationQuery.MutationQueryBuilder;
+import com.datasqrl.planner.exec.FlinkExecFunction;
+import com.datasqrl.planner.exec.FlinkExecFunctionBuilder;
 import com.datasqrl.planner.hint.PlannerHints;
 import com.datasqrl.planner.parser.ParsePosUtil;
 import com.datasqrl.planner.parser.ParsePosUtil.MessageLocation;
@@ -50,6 +52,7 @@ import com.datasqrl.planner.tables.SourceSinkTableAnalysis;
 import com.datasqrl.planner.tables.SqrlFunctionParameter;
 import com.datasqrl.planner.tables.SqrlTableFunction;
 import com.datasqrl.util.CalciteUtil;
+import com.datasqrl.util.RelDataTypeBuilder;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -175,6 +178,7 @@ public class Sqrl2FlinkSQLTranslator {
   private final CatalogManager catalogManager;
   private final FlinkPhysicalPlan.Builder planBuilder;
   @Getter private final FlinkTypeFactory typeFactory;
+  @Getter private final FlinkExecFunctionBuilder execFunctionBuilder;
 
   @Getter private final TableAnalysisLookup tableLookup = new TableAnalysisLookup();
 
@@ -229,6 +233,8 @@ public class Sqrl2FlinkSQLTranslator {
 
     this.tEnv.getConfig().setPlannerConfig(calciteConfigBuilder.build());
     this.catalogManager = tEnv.getCatalogManager();
+
+    execFunctionBuilder = new FlinkExecFunctionBuilder(typeFactory, tEnv.getConfig());
 
     // Register SQRL standard library functions
     ServiceLoader<AutoRegisterSystemFunction> standardLibraryFunctions =
@@ -529,10 +535,12 @@ public class Sqrl2FlinkSQLTranslator {
       parameters.add(
           new SqrlFunctionParameter(
               parsedArg.getName().get(),
+              "",
               parsedArg.getIndex(),
               type,
               parsedArg.isParentField(),
-              parsedArg.getResolvedMetadata()));
+              parsedArg.getResolvedMetadata(),
+              parsedArg.getFunction()));
     }
     // Analyze Query
     var funcDef2 = parseSQL(originalSql);
@@ -915,35 +923,47 @@ public class Sqrl2FlinkSQLTranslator {
   }
 
   private List<RelDataTypeField> convertSchema2RelDataType(ResolvedSchema schema) {
-    return parseSchema(schema).stream().map(ParsedRelDataTypeResult::field).toList();
+    return parseSchema(schema, false).stream().map(ParsedRelDataTypeResult::field).toList();
   }
 
-  private List<ParsedRelDataTypeResult> parseSchema(ResolvedSchema schema) {
+  private List<ParsedRelDataTypeResult> parseSchema(
+      ResolvedSchema schema, boolean createFunctions) {
     List<ParsedRelDataTypeResult> fields = new ArrayList<>();
-    Function<Expression, ResolvedExpression> expressionResolver = null;
+    RelDataTypeBuilder typeBuilder = CalciteUtil.getRelTypeBuilder(typeFactory);
+    RelDataType physicalType = null;
     for (var i = 0; i < schema.getColumns().size(); i++) {
       var column = schema.getColumns().get(i);
       AbstractDataType type = null;
       Optional<String> metadata = Optional.empty();
-      Optional<RexNode> expression = Optional.empty();
+      Optional<FlinkExecFunction> function = Optional.empty();
+      Preconditions.checkArgument(
+          physicalType == null || column instanceof ComputedColumn,
+          "Physical column %s occurs after computed column. Computed columns must be last",
+          column.getName());
       if (column instanceof PhysicalColumn physicalColumn) {
         type = physicalColumn.getDataType();
       } else if (column instanceof MetadataColumn metadataColumn) {
         type = metadataColumn.getDataType();
         metadata = metadataColumn.getMetadataKey();
       } else if (column instanceof ComputedColumn computedColumn) {
+        if (physicalType == null) physicalType = typeBuilder.build();
         type = computedColumn.getDataType();
-        expression = Optional.of(((RexNodeExpression) computedColumn.getExpression()).getRexNode());
+        RexNodeExpression rexExp = (RexNodeExpression) computedColumn.getExpression();
+        if (createFunctions) {
+          function =
+              Optional.of(
+                  execFunctionBuilder.createFunction(
+                      rexExp.getRexNode(), rexExp.asSummaryString(), physicalType));
+        }
       }
       if (type instanceof DataType dataType) {
-        fields.add(
-            new ParsedRelDataTypeResult(
-                new RelDataTypeFieldImpl(
-                    column.getName(),
-                    i,
-                    typeFactory.createFieldTypeFromLogicalType(dataType.getLogicalType())),
-                metadata,
-                expression));
+        RelDataTypeField field =
+            new RelDataTypeFieldImpl(
+                column.getName(),
+                i,
+                typeFactory.createFieldTypeFromLogicalType(dataType.getLogicalType()));
+        fields.add(new ParsedRelDataTypeResult(field, metadata, function));
+        if (physicalType == null) typeBuilder.add(field);
       } else {
         throw new StatementParserException(
             ErrorLabel.GENERIC, new FileLocation(i, 1), "Invalid type: " + column);
@@ -953,7 +973,7 @@ public class Sqrl2FlinkSQLTranslator {
   }
 
   public record ParsedRelDataTypeResult(
-      RelDataTypeField field, Optional<String> metadata, Optional<RexNode> expression) {}
+      RelDataTypeField field, Optional<String> metadata, Optional<FlinkExecFunction> function) {}
 
   private static final String DATATYPE_PARSING_PREFIX =
       "CREATE TEMPORARY TABLE __sqrlinternal_types( ";
@@ -973,7 +993,7 @@ public class Sqrl2FlinkSQLTranslator {
     try {
       var op = (CreateTableOperation) getOperation(parseSQL(createTableStatement));
       var schema = ((ResolvedCatalogTable) op.getCatalogTable()).getResolvedSchema();
-      return parseSchema(schema);
+      return parseSchema(schema, true);
     } catch (Exception e) {
       var location = dataTypeDefinition.getFileLocation();
       var converted = ParsePosUtil.convertFlinkParserException(e);

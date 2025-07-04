@@ -28,6 +28,7 @@ import com.datasqrl.graphql.server.PaginationType;
 import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
 import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentLookupQueryCoords;
+import com.datasqrl.graphql.server.RootGraphqlModel.ComputedParameter;
 import com.datasqrl.graphql.server.RootGraphqlModel.FieldLookupQueryCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.KafkaMutationCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.KafkaSubscriptionCoords;
@@ -39,6 +40,7 @@ import com.datasqrl.graphql.server.RootGraphqlModel.QueryParameterHandler;
 import com.datasqrl.graphql.server.RootGraphqlModel.QueryWithArguments;
 import com.datasqrl.graphql.server.RootGraphqlModel.SqlQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.SubscriptionCoords;
+import com.datasqrl.graphql.server.query.SqlQueryModifier;
 import com.datasqrl.planner.dag.plan.MutationComputedColumn;
 import com.datasqrl.planner.dag.plan.MutationQuery;
 import com.datasqrl.planner.parser.AccessModifier;
@@ -163,16 +165,25 @@ public class GraphqlModelGenerator extends GraphqlSchemaWalker {
     for (FunctionParameter functionParameter : tableFunction.getParameters()) {
       final var parameter = (SqrlFunctionParameter) functionParameter;
       QueryParameterHandler queryParam;
-      if (parameter.isParentField()) {
-        queryParam = new ParentParameter(parameter.getName());
-      } else if (parameter.isMetadata()) {
+      if (parameter.isParentField()) queryParam = new ParentParameter(parameter.getName());
+      else if (parameter.isMetadata())
         queryParam = new MetadataParameter(parameter.getMetadata().get());
-      } else {
-        queryParam = new RootGraphqlModel.ArgumentParameter(parameter.getName());
-      }
+      else if (parameter.isFunction())
+        queryParam = new ComputedParameter(parameter.getFunction().get().getFunctionId());
+      else queryParam = new RootGraphqlModel.ArgumentParameter(parameter.getName());
       parameters.add(queryParam);
     }
     RootGraphqlModel.QueryBase queryBase;
+
+    List<SqlQueryModifier> modifiers =
+        tableFunction.getQueryModifiers().stream()
+            .map(
+                modifier -> {
+                  Preconditions.checkArgument(
+                      modifier instanceof SqlQueryModifier, "Unsupported modifier: %s", modifier);
+                  return (SqlQueryModifier) modifier;
+                })
+            .toList();
 
     var hasLimitOrOffset =
         atField.getInputValueDefinitions().stream()
@@ -184,7 +195,8 @@ public class GraphqlModelGenerator extends GraphqlSchemaWalker {
             executableJdbcReadQuery.getSql(),
             parameters,
             hasLimitOrOffset ? PaginationType.LIMIT_AND_OFFSET : PaginationType.NONE,
-            executableJdbcReadQuery.getDatabase());
+            executableJdbcReadQuery.getDatabase(),
+            modifiers);
     var coordsBuilder =
         ArgumentLookupQueryCoords.builder()
             .parentType(parentType.getName())

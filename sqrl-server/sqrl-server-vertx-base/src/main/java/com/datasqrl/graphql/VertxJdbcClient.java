@@ -17,11 +17,15 @@ package com.datasqrl.graphql;
 
 import com.datasqrl.graphql.jdbc.DatabaseType;
 import com.datasqrl.graphql.jdbc.JdbcClient;
+import com.datasqrl.graphql.query.UserSqlQueryPreprocessor;
 import com.datasqrl.graphql.server.Context;
-import com.datasqrl.graphql.server.RootGraphqlModel.PreparedSqrlQuery;
-import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedQuery;
-import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedSqlQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.SqlQuery;
+import com.datasqrl.graphql.server.query.ResolvedQuery;
+import com.datasqrl.graphql.server.query.ResolvedQuery.PreparedQueryContainer;
+import com.datasqrl.graphql.server.query.ResolvedQuery.Preprocessor;
+import com.datasqrl.graphql.server.query.ResolvedSqlQuery;
+import com.datasqrl.graphql.server.query.SqlQueryModifier;
+import com.datasqrl.graphql.server.query.SqlQueryModifier.UserSqlQuery;
 import io.vertx.core.Future;
 import io.vertx.sqlclient.PreparedQuery;
 import io.vertx.sqlclient.Row;
@@ -29,6 +33,7 @@ import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.SqlClient;
 import io.vertx.sqlclient.Tuple;
 import java.util.Map;
+import java.util.Optional;
 import lombok.Value;
 
 /**
@@ -48,12 +53,22 @@ public class VertxJdbcClient implements JdbcClient {
 
     var preparedQuery = sqlClient.preparedQuery(query.getSql());
 
-    return new ResolvedSqlQuery(query, new PreparedSqrlQueryImpl(preparedQuery));
+    return new ResolvedSqlQuery(query, new PreparedSqrlQueryImpl(preparedQuery), Optional.empty());
   }
 
   @Override
-  public ResolvedQuery unpreparedQuery(SqlQuery sqlQuery, Context context) {
-    return new ResolvedSqlQuery(sqlQuery, null);
+  public ResolvedQuery unpreparedQuery(
+      SqlQuery sqlQuery, Optional<SqlQueryModifier> preprocessor, Context context) {
+    Optional<Preprocessor> resolvedPreprocessor =
+        preprocessor.map(
+            pre -> {
+              if (pre instanceof UserSqlQuery userQuery) {
+                return new UserSqlQueryPreprocessor(userQuery);
+              } else {
+                throw new UnsupportedOperationException("Unsupported query modifier: " + pre);
+              }
+            });
+    return new ResolvedSqlQuery(sqlQuery, null, resolvedPreprocessor);
   }
 
   public Future<RowSet<Row>> execute(DatabaseType database, PreparedQuery query, Tuple tup) {
@@ -76,7 +91,7 @@ public class VertxJdbcClient implements JdbcClient {
 
   @Value
   public static class PreparedSqrlQueryImpl
-      implements PreparedSqrlQuery<PreparedQuery<RowSet<Row>>> {
+      implements PreparedQueryContainer<PreparedQuery<RowSet<Row>>> {
     PreparedQuery<RowSet<Row>> preparedQuery;
   }
 }

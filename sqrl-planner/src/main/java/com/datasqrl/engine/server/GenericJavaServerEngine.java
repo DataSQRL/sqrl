@@ -21,11 +21,14 @@ import static com.datasqrl.graphql.SqrlObjectMapper.MAPPER;
 import com.datasqrl.config.EngineType;
 import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.engine.EnginePhysicalPlan;
+import com.datasqrl.engine.EnginePhysicalPlan.ArtifactType;
 import com.datasqrl.engine.EnginePhysicalPlan.DeploymentArtifact;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.config.ServerConfigUtil;
+import com.datasqrl.planner.exec.FlinkExecFunction;
 import io.vertx.core.json.JsonObject;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -50,11 +53,16 @@ public abstract class GenericJavaServerEngine extends ExecutionEngine.Base imple
             fct -> {
               throw new IllegalStateException("Function has not been planned: " + fct);
             });
+    FlinkExecFunction.Plan execFunctionPlan = serverPlan.getExecFunctionBuilder().getPlan();
 
-    return new ServerPhysicalPlan(
-        serverPlan.getFunctions(),
-        serverPlan.getMutations(),
-        List.of(new DeploymentArtifact("-config.json", serverConfig())));
+    List<DeploymentArtifact> artifacts = new ArrayList<>();
+    artifacts.add(new DeploymentArtifact("-config.json", serverConfig()));
+    if (!execFunctionPlan.functions().isEmpty()) {
+      artifacts.add(new DeploymentArtifact("-exec-functions.ser", execFunctionPlan));
+      artifacts.add(
+          new DeploymentArtifact("-exec-functions.json", execFunctionPlan, ArtifactType.JSON));
+    }
+    return new ServerPhysicalPlan(serverPlan.getFunctions(), serverPlan.getMutations(), artifacts);
   }
 
   @SneakyThrows

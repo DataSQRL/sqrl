@@ -18,6 +18,7 @@ package com.datasqrl.graphql.jdbc;
 import com.datasqrl.graphql.server.QueryExecutionContext;
 import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
 import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentParameter;
+import com.datasqrl.graphql.server.RootGraphqlModel.ComputedParameter;
 import com.datasqrl.graphql.server.RootGraphqlModel.MetadataParameter;
 import com.datasqrl.graphql.server.RootGraphqlModel.ParameterHandlerVisitor;
 import com.datasqrl.graphql.server.RootGraphqlModel.ParentParameter;
@@ -52,6 +53,12 @@ public abstract class AbstractQueryExecutionContext
         .findFirst()
         .map(Argument::getValue)
         .orElse(null);
+  }
+
+  @Override
+  public Object visitComputedParameter(
+      ComputedParameter computedParameter, QueryExecutionContext context) {
+    throw new UnsupportedOperationException("Not implemented yet");
   }
 
   @Override
