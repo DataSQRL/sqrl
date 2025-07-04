@@ -36,7 +36,6 @@ class CompilerConfigImplTest {
     assertThat(compilerConfig.isExtendedScalarTypes()).isTrue();
     assertThat(compilerConfig.getLogger()).isEqualTo("print");
     assertThat(compilerConfig.compilePlan()).isTrue();
-    assertThat(compilerConfig.getSnapshotPath()).isEmpty();
   }
 
   @Test
@@ -44,23 +43,12 @@ class CompilerConfigImplTest {
     config.setProperty("extendedScalarTypes", false);
     config.setProperty("logger", "custom");
     config.setProperty("compilePlan", false);
-    config.setProperty("snapshotPath", "/path/to/snapshots");
 
     var compilerConfig = new CompilerConfigImpl(config);
 
     assertThat(compilerConfig.isExtendedScalarTypes()).isFalse();
     assertThat(compilerConfig.getLogger()).isEqualTo("custom");
     assertThat(compilerConfig.compilePlan()).isFalse();
-    assertThat(compilerConfig.getSnapshotPath()).contains("/path/to/snapshots");
-  }
-
-  @Test
-  void givenEmptyConfig_whenSetSnapshotPath_thenUpdatesPath() {
-    var compilerConfig = new CompilerConfigImpl(config);
-
-    compilerConfig.setSnapshotPath("/new/path");
-
-    assertThat(compilerConfig.getSnapshotPath()).contains("/new/path");
   }
 
   @Test

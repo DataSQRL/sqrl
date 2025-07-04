@@ -26,6 +26,7 @@
     }
   },
   "test-runner": {
+    "snapshot-dir": "snapshots-analytics-only",
     "delay-sec": -1,
     "required-checkpoints": 1
   }

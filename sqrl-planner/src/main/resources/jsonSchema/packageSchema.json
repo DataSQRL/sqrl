@@ -201,10 +201,16 @@
       "type": "object",
       "minProperties": 1,
       "properties": {
+        "snapshot-dir": {
+          "type": "string"
+        },
+        "test-dir": {
+          "type": "string"
+        },
         "delay-sec": {
           "type": "integer"
         },
-        "mutation-delay": {
+        "mutation-delay-sec": {
           "type": "integer"
         },
         "required-checkpoints": {

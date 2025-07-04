@@ -48,7 +48,7 @@ public interface PackageJson {
 
   boolean hasScriptKey();
 
-  Optional<TestRunnerConfiguration> getTestConfig();
+  TestRunnerConfiguration getTestConfig();
 
   interface CompilerConfig {
 
@@ -59,10 +59,6 @@ public interface PackageJson {
     ExplainConfig getExplain();
 
     CompilerApiConfig getApiConfig();
-
-    Optional<String> getSnapshotPath();
-
-    void setSnapshotPath(String string);
 
     String getLogger();
 

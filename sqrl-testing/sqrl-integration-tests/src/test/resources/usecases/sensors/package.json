@@ -1,11 +1,7 @@
 {
   "version": "1",
-  "values" : {
-    "flink-config": {
-      "table.exec.source.idle-timeout": "10000 ms"
-    }
-  },
   "test-runner": {
+    "snapshot-dir": "snapshots-sensors-teaser",
     "delay-sec": -1
   },
   "dependencies": {

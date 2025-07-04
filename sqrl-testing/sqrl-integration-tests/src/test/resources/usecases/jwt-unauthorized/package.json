@@ -1,5 +1,9 @@
 {
   "version": "1",
+  "test-runner": {
+    "snapshot-dir": "snapshots-jwt-unauthorized",
+    "test-dir": "tests-jwt-unauthorized"
+  },
   "engines" : {
     "vertx" : {
       "authKind": "JWT",

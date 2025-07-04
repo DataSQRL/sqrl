@@ -60,12 +60,8 @@ import org.apache.flink.table.api.TableResult;
  */
 public class DatasqrlTest {
 
-  // Number of seconds we wait for Flink job to process all the data
-  public static final int DEFAULT_DELAY_SEC = 30;
-  public static final int MUTATION_WAIT_SEC = 0;
-
   private final Path planPath;
-  private final PackageJson.CompilerConfig compilerConfig;
+  private final PackageJson sqrlConfig;
   private final Configuration flinkConfig;
   private final Map<String, String> env;
   public String GRAPHQL_ENDPOINT = "http://localhost:8888/graphql";
@@ -73,12 +69,9 @@ public class DatasqrlTest {
   private final ObjectWriter jsonWriter = objectMapper.writerWithDefaultPrettyPrinter();
 
   public DatasqrlTest(
-      Path planPath,
-      PackageJson.CompilerConfig compilerConfig,
-      Configuration flinkConfig,
-      Map<String, String> env) {
+      Path planPath, PackageJson sqrlConfig, Configuration flinkConfig, Map<String, String> env) {
     this.planPath = planPath;
-    this.compilerConfig = compilerConfig;
+    this.sqrlConfig = sqrlConfig;
     this.flinkConfig = flinkConfig;
     this.env = env;
   }
@@ -86,11 +79,13 @@ public class DatasqrlTest {
   @SneakyThrows
   public int run() {
     // 1. Run the DataSQRL pipeline via {@link DatasqrlRun}
-    DatasqrlRun run = new DatasqrlRun(planPath, compilerConfig, flinkConfig, env, true);
-    Map compilerMap = (Map) run.getPackageJson().get("compiler");
+    DatasqrlRun run =
+        new DatasqrlRun(planPath, sqrlConfig.getCompilerConfig(), flinkConfig, env, true);
+
+    var testConfig = sqrlConfig.getTestConfig();
+    var rootDir = planPath.getParent().getParent().getParent();
     // Initialize snapshot directory
-    String snapshotPathString = (String) compilerMap.get("snapshotPath");
-    Path snapshotDir = Path.of(snapshotPathString);
+    Path snapshotDir = testConfig.getSnapshotDir(rootDir);
     // Check if the directory exists, create it if it doesn’t
     if (!Files.exists(snapshotDir)) {
       Files.createDirectories(snapshotDir);
@@ -100,25 +95,9 @@ public class DatasqrlTest {
     // Retrieve test plan
     Optional<TestPlan> testPlanOpt = Optional.empty();
     // Read configuration
-    long delaySec = DEFAULT_DELAY_SEC;
-    long mutationWait = MUTATION_WAIT_SEC;
-    int requiredCheckpoints = 0;
-    // todo: fix inject PackageJson and retrieve through interface
-    Object testRunner = run.getPackageJson().get("test-runner");
-    if (testRunner instanceof Map testRunnerMap) {
-      Object o = testRunnerMap.get("delay-sec");
-      if (o instanceof Number number) {
-        delaySec = number.longValue();
-      }
-      Object c = testRunnerMap.get("required-checkpoints");
-      if (c instanceof Number number) {
-        requiredCheckpoints = number.intValue();
-      }
-      Object m = testRunnerMap.get("mutation-delay");
-      if (m instanceof Number number) {
-        mutationWait = number.intValue();
-      }
-    }
+    int delaySec = testConfig.getDelaySec();
+    int mutationWait = testConfig.getMutationDelaySec();
+    int requiredCheckpoints = testConfig.getRequiredCheckpoints();
 
     // It is possible that no test plan exists, such as no test queries.
     // We still run it for exports or other explicit tests the user created outside the test

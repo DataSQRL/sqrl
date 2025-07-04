@@ -18,23 +18,12 @@ package com.datasqrl.config;
 import com.datasqrl.planner.analyzer.cost.CostModel;
 import com.datasqrl.planner.analyzer.cost.SimpleCostAnalysisModel;
 import com.datasqrl.planner.analyzer.cost.SimpleCostAnalysisModel.Type;
-import java.util.Optional;
 import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
 public class CompilerConfigImpl implements PackageJson.CompilerConfig {
 
   SqrlConfig sqrlConfig;
-
-  @Override
-  public void setSnapshotPath(String path) {
-    sqrlConfig.setProperty("snapshotPath", path);
-  }
-
-  @Override
-  public Optional<String> getSnapshotPath() {
-    return sqrlConfig.asString("snapshotPath").getOptional();
-  }
 
   @Override
   public boolean isExtendedScalarTypes() {

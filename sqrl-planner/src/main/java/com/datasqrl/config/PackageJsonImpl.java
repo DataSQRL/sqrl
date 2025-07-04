@@ -17,7 +17,6 @@ package com.datasqrl.config;
 
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Optional;
 import lombok.Getter;
 
 public class PackageJsonImpl implements PackageJson {
@@ -95,11 +94,8 @@ public class PackageJsonImpl implements PackageJson {
   }
 
   @Override
-  public Optional<TestRunnerConfiguration> getTestConfig() {
-    if (sqrlConfig.hasSubConfig(TEST_RUNNER_KEY)) {
-      return Optional.of(new TestRunnerConfigImpl(sqrlConfig.getSubConfig(TEST_RUNNER_KEY)));
-    }
-    return Optional.empty();
+  public TestRunnerConfiguration getTestConfig() {
+    return new TestRunnerConfigImpl(sqrlConfig.getSubConfig(TEST_RUNNER_KEY));
   }
 
   @Override

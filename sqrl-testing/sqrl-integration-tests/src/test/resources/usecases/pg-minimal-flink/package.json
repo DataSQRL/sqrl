@@ -4,6 +4,7 @@
     "cost-model": "read"
   },
   "test-runner": {
+    "snapshot-dir": "snapshots-minimalFlink",
     "delay-sec": -1
   }
 }

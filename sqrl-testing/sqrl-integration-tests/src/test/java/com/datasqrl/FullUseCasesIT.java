@@ -22,7 +22,6 @@ import com.datasqrl.cli.AssertStatusHook;
 import com.datasqrl.cli.DatasqrlRun;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.SqrlConstants;
-import com.datasqrl.config.TestRunnerConfiguration;
 import com.datasqrl.engines.TestContainersForTestGoal;
 import com.datasqrl.engines.TestContainersForTestGoal.TestContainerHook;
 import com.datasqrl.engines.TestEngine.EngineFactory;
@@ -38,7 +37,6 @@ import com.datasqrl.util.SnapshotTest.Snapshot;
 import com.google.common.collect.MoreCollectors;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -261,18 +259,9 @@ class FullUseCasesIT {
               new DatasqrlRun(
                   planDir, packageJson.getCompilerConfig(), flinkConfig, context.getEnv(), true);
           TableResult result = run.run(false, false);
-          long delaySec =
-              packageJson
-                  .getTestConfig()
-                  .flatMap(TestRunnerConfiguration::getDelaySec)
-                  .map(Duration::getSeconds)
-                  .orElse((long) -1);
+          long delaySec = packageJson.getTestConfig().getDelaySec();
 
-          int requiredCheckpoints =
-              packageJson
-                  .getTestConfig()
-                  .flatMap(TestRunnerConfiguration::getRequiredCheckpoints)
-                  .orElse(0);
+          int requiredCheckpoints = packageJson.getTestConfig().getRequiredCheckpoints();
           if (delaySec == -1) {
             FlinkOperatorStatusChecker flinkOperatorStatusChecker =
                 new FlinkOperatorStatusChecker(
@@ -349,7 +338,8 @@ class FullUseCasesIT {
   public void runTestCaseByName() {
     var param =
         useCaseProvider().stream()
-            .filter(p -> p.sqrlFileName.equals("loan.sqrl") && p.goal.equals("test"))
+            .filter(
+                p -> p.sqrlFileName.startsWith("sensors-mutation.sqrl") && p.goal.equals("test"))
             .collect(MoreCollectors.onlyElement());
     useCase(param);
   }
