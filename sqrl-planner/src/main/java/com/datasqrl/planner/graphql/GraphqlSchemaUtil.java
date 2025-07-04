@@ -23,6 +23,9 @@ import com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType;
 import com.datasqrl.graphql.server.CustomScalars;
 import com.datasqrl.plan.table.Multiplicity;
 import graphql.Scalars;
+import graphql.language.ListType;
+import graphql.language.NonNullType;
+import graphql.language.Type;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLInputObjectField;
 import graphql.schema.GraphQLInputObjectType;
@@ -63,6 +66,13 @@ public class GraphqlSchemaUtil {
 
   public static boolean isValidGraphQLName(String name) {
     return !isSystemHidden(name) && Pattern.matches("[_A-Za-z][_0-9A-Za-z]*", name);
+  }
+
+  public static boolean isListType(Type type) {
+    if (type instanceof NonNullType) {
+      type = ((NonNullType) type).getType();
+    }
+    return type instanceof ListType;
   }
 
   public static GraphQLType asList(GraphQLType type) {

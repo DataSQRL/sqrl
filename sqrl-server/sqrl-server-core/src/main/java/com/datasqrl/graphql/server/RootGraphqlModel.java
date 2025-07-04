@@ -116,6 +116,8 @@ public class RootGraphqlModel {
     public abstract <R, C> R accept(MutationCoordsVisitor<R, C> visitor, C context);
 
     public abstract String getFieldName();
+
+    public abstract boolean isReturnList();
   }
 
   public interface MutationCoordsVisitor<R, C> {
@@ -129,6 +131,7 @@ public class RootGraphqlModel {
     private static final String type = "kafka";
 
     protected String fieldName;
+    protected boolean returnList;
     protected String topic;
     protected Map<String, MutationComputedColumnType> computedColumns;
     protected boolean transactional;
@@ -136,11 +139,13 @@ public class RootGraphqlModel {
 
     public KafkaMutationCoords(
         String fieldName,
+        boolean returnList,
         String topic,
         Map<String, MutationComputedColumnType> computedColumns,
         boolean transactional,
         Map<String, String> sinkConfig) {
       this.fieldName = fieldName;
+      this.returnList = returnList;
       this.topic = topic;
       this.computedColumns = computedColumns;
       this.transactional = transactional;

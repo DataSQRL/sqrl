@@ -17,10 +17,10 @@ package com.datasqrl.graphql;
 
 import static org.apache.kafka.clients.consumer.ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG;
 import static org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG;
-import static org.apache.kafka.clients.producer.ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG;
-import static org.apache.kafka.clients.producer.ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG;
-import static org.apache.kafka.clients.producer.ProducerConfig.TRANSACTIONAL_ID_CONFIG;
 import static org.apache.kafka.clients.producer.ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG;
+import static org.apache.kafka.clients.producer.ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG;
+import static org.apache.kafka.clients.producer.ProducerConfig.TRANSACTIONAL_ID_CONFIG;
+import static org.apache.kafka.clients.producer.ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG;
 
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.io.SinkProducer;
@@ -34,6 +34,7 @@ import com.datasqrl.graphql.server.RootGraphqlModel.MutationCoordsVisitor;
 import com.google.common.base.Preconditions;
 import graphql.schema.DataFetcher;
 import graphql.schema.DataFetchingEnvironment;
+import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.kafka.client.producer.KafkaProducer;
 import java.time.ZoneOffset;
@@ -47,7 +48,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import io.vertx.core.Future;
 
 /**
  * Purpose: Configures data fetchers for GraphQL mutations and executes the mutations (kafka
@@ -87,15 +87,14 @@ public class MutationConfigurationImpl implements MutationConfiguration<DataFetc
           var entries = getEntries(env, uuidColumns);
           var cf = new CompletableFuture<Object>();
 
-          var futures = createSendFutures(entries, emitter, timestampColumns);
-
           Future<List<Object>> sendFuture =
               coords.isTransactional()
-                  ? sendMessagesTransactionally(producer, futures)
-                  : sendMessagesNonTransactionally(futures);
+                  ? sendMessagesTransactionally(producer, entries, emitter, timestampColumns)
+                  : sendMessagesNonTransactionally(
+                      createSendFutures(entries, emitter, timestampColumns));
 
           sendFuture
-              .onSuccess(results -> completeWithResults(cf, results))
+              .onSuccess(results -> completeWithResults(cf, results, coords.isReturnList()))
               .onFailure(cf::completeExceptionally);
 
           return cf;
@@ -149,21 +148,29 @@ public class MutationConfigurationImpl implements MutationConfiguration<DataFetc
         .collect(Collectors.toList());
   }
 
-  private void completeWithResults(CompletableFuture<Object> cf, List<Object> results) {
-    // Return single entry if input was single, otherwise return list
-    if (results.size() == 1) {
-      cf.complete(results.get(0));
-    } else {
+  private void completeWithResults(
+      CompletableFuture<Object> cf, List<Object> results, boolean returnList) {
+    if (returnList) {
       cf.complete(results);
+    } else {
+      cf.complete(results.get(0));
     }
   }
 
   private Future<List<Object>> sendMessagesTransactionally(
-      KafkaProducer<String, String> producer, List<Future<Map>> futures) {
+      KafkaProducer<String, String> producer,
+      List<Map> entries,
+      SinkProducer emitter,
+      List<String> timestampColumns) {
     return producer
         .initTransactions()
         .compose(v -> producer.beginTransaction())
-        .compose(v -> Future.join(futures))
+        .compose(
+            v -> {
+              // Create send futures only after transaction is initialized and begun
+              var futures = createSendFutures(entries, emitter, timestampColumns);
+              return Future.join(futures);
+            })
         .compose(compositeFuture -> producer.commitTransaction().map(v -> compositeFuture.list()))
         .recover(
             throwable -> producer.abortTransaction().compose(v -> Future.failedFuture(throwable)));

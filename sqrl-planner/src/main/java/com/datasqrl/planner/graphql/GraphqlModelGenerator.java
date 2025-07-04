@@ -111,11 +111,13 @@ public class GraphqlModelGenerator extends GraphqlSchemaWalker {
             .collect(
                 Collectors.toMap(
                     MutationComputedColumn::getColumnName, MutationComputedColumn::getType));
+    boolean returnList = GraphqlSchemaUtil.isListType(atField.getType());
     if (mutation.getCreateTopic() instanceof NewTopic) {
       var newTopic = (NewTopic) mutation.getCreateTopic();
       mutationCoords =
           new KafkaMutationCoords(
               atField.getName(),
+              returnList,
               newTopic.getTopicName(),
               computedColumns,
               mutation.getInsertType() == MutationInsertType.TRANSACTION,
