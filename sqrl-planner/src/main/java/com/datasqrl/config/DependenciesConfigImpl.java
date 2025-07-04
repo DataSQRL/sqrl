@@ -46,6 +46,7 @@ public class DependenciesConfigImpl implements PackageJson.DependenciesConfig {
 
   @Override
   public Map<String, DependencyImpl> getDependencies() {
+
     return parentConfig.asMap(DEPENDENCIES_KEY, DependencyImpl.class).get();
   }
 
