@@ -2,6 +2,7 @@
   "version": "1",
   "enabled-engines": ["vertx", "postgres", "flink"],
   "test-runner": {
+    "snapshot-dir": "snapshots-banking-batch",
     "delay-sec": -1
   },
   "engines": {

@@ -118,7 +118,7 @@ class ConfigLoaderUtilsTest {
     assertThat(underTest).isNotNull();
     assertThat(underTest.getVersion()).isEqualTo(1);
     assertThat(underTest.getEnabledEngines()).contains("vertx", "postgres", "kafka", "flink");
-    assertThat(underTest.getTestConfig()).isPresent();
+    assertThat(underTest.getTestConfig()).isNotNull();
     assertThat(underTest.getEngines().getEngineConfig("flink")).isPresent();
     assertThat(underTest.getScriptConfig().getGraphql()).isEmpty();
     assertThat(underTest.getScriptConfig().getMainScript()).isEmpty();
@@ -131,7 +131,7 @@ class ConfigLoaderUtilsTest {
     assertThat(underTest).isNotNull();
     assertThat(underTest.getVersion()).isEqualTo(1);
     assertThat(underTest.getEnabledEngines()).contains("vertx", "postgres", "kafka", "flink");
-    assertThat(underTest.getTestConfig()).isPresent();
+    assertThat(underTest.getTestConfig()).isNotNull();
     assertThat(underTest.getEngines().getEngineConfig("flink")).isPresent();
     assertThat(underTest.getScriptConfig().getGraphql()).isEmpty();
     assertThat(underTest.getScriptConfig().getMainScript()).isEmpty();
@@ -148,7 +148,7 @@ class ConfigLoaderUtilsTest {
 
     assertThat(underTest.getEnabledEngines()).contains("test");
 
-    assertThat(underTest.getTestConfig()).isPresent();
+    assertThat(underTest.getTestConfig()).isNotNull();
     assertThat(underTest.getEngines().getEngineConfig("flink")).isPresent();
     assertThat(underTest.getScriptConfig().getGraphql()).isEmpty();
     assertThat(underTest.getScriptConfig().getMainScript()).isEmpty();

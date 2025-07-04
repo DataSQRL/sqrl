@@ -46,14 +46,6 @@ public class SqrlScriptExecutor {
     if (graphql != null && !graphql.isEmpty()) {
       argsList.add(graphql);
     }
-    if (goal.equals("test") && testSuffix != null) {
-      argsList.add("-s");
-      argsList.add("snapshots-" + testSuffix);
-    }
-    if (goal.equals("test") && testPath != null) {
-      argsList.add("--tests");
-      argsList.add("tests-" + testSuffix);
-    }
     if (additionalArgs != null && !additionalArgs.isEmpty()) {
       argsList.addAll(additionalArgs);
     }

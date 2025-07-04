@@ -83,7 +83,6 @@ Used as a *table-format* engine together with a query engine such as Flink or Sn
   "compiler": {
     "logger": "print",            // "print" | any configured log engine | "none"
     "extendedScalarTypes": true,  // expose extended scalar types in generated GraphQL
-    "snapshotPath": "snapshots",  // snapshots output directory written during test runs
     "compilePlan": true,          // compile physical plans where supported
 
     "explain": {                  // artifacts in build/pipeline_*.*
@@ -148,11 +147,13 @@ If only `name` is given the key acts as a **local folder alias**.
 
 ## Test-Runner (`test-runner`)
 
-| Key | Type | Default | Meaning |
-|-----|------|---------|---------|
-| `delay-sec` | **number** | `30` | Wait between data-load and snapshot. Set `-1` to disable. |
-| `required-checkpoints` | **number** | `0` | Minimum completed Flink checkpoints before assertions run (requires `delay-sec = -1`). |
-| `mutation-delay` | **number** | `0` | Pause (s) between mutation queries. |
+| Key                    | Type       | Default       | Meaning                                                                                |
+|------------------------|------------|---------------|----------------------------------------------------------------------------------------|
+| `snapshot-dir`         | **string** | `./snapshots` | Snapshots output directory.                                                            |
+| `test-dir`             | **string** | `./tests`     | Tests output directory.                                                                |
+| `delay-sec`            | **number** | `30`          | Wait between data-load and snapshot. Set `-1` to disable.                              |
+| `mutation-delay-sec`   | **number** | `0`           | Pause(s) between mutation queries.                                                     |
+| `required-checkpoints` | **number** | `0`           | Minimum completed Flink checkpoints before assertions run (requires `delay-sec = -1`). |
 
 ---
 
@@ -207,7 +208,7 @@ The built-in fallback (excerpt - full version [here](https://github.com/DataSQRL
   },
   "test-runner": {
     "delay-sec": 30,
-    "mutation-delay": 1,
+    "mutation-delay-sec": 1,
     "headers": {
       "Authorization": "Bearer token123",
       "Content-Type": "application/json"

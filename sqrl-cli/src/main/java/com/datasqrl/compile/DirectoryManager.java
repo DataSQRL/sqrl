@@ -32,4 +32,11 @@ public class DirectoryManager {
       Files.createDirectories(targetDir);
     }
   }
+
+  @SneakyThrows
+  public static void createDirectoriesIfNotExists(Path dir) {
+    if (!Files.isDirectory(dir)) {
+      Files.createDirectories(dir);
+    }
+  }
 }

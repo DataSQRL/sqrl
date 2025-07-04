@@ -4,7 +4,7 @@
     "compilePlan": false
   },
   "test-runner": {
-    "snapshot-dir": "snapshots-myudf",
-    "test-dir": "tests-myudf"
+    "snapshot-dir": "snapshots-stdlib-openai-async",
+    "delay-sec": -1
   }
 }
