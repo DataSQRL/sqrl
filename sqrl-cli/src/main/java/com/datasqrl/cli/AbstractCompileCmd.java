@@ -63,7 +63,12 @@ public abstract class AbstractCompileCmd extends AbstractCmd {
 
   protected void execute(ErrorCollector errors, Path snapshotPath, Optional<Path> testsPath) {
     var packageBootstrap = new PackageBootstrap(errors);
-    var sqrlConfig = packageBootstrap.bootstrap(cli.rootDir, this.cli.packageFiles, this.files);
+    var sqrlConfig =
+        packageBootstrap.bootstrap(
+            cli.rootDir,
+            this.cli.packageFiles,
+            this.files,
+            getGoal() == ExecutionGoal.RUN && !cli.internalTestExec);
 
     var snapshotPathConf = sqrlConfig.getCompilerConfig().getSnapshotPath();
     if (snapshotPathConf.isEmpty()) {

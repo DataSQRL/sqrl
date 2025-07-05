@@ -21,7 +21,6 @@ import static org.apache.flink.streaming.api.environment.ExecutionCheckpointingO
 import static org.apache.flink.table.api.config.ExecutionConfigOptions.TABLE_EXEC_SOURCE_IDLE_TIMEOUT;
 
 import com.datasqrl.config.EngineType;
-import com.datasqrl.config.ExecutionMode;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.engine.EngineFeature;
@@ -31,18 +30,14 @@ import com.google.inject.Inject;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Optional;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.configuration.ExecutionOptions;
 
 @Slf4j
 public class FlinkStreamEngine extends ExecutionEngine.Base implements StreamEngine {
-
-  public static final String MODE_KEY = "mode";
 
   public static final EnumSet<EngineFeature> FLINK_CAPABILITIES = STANDARD_STREAM;
 
@@ -58,17 +53,16 @@ public class FlinkStreamEngine extends ExecutionEngine.Base implements StreamEng
   public void close() throws IOException {}
 
   @Override
-  public ExecutionMode getExecutionMode() {
-    return ExecutionMode.valueOf(
-        engineConfig
-            .getSetting(MODE_KEY, Optional.of(ExecutionMode.STREAMING.name()))
-            .toUpperCase(Locale.ENGLISH));
+  public RuntimeExecutionMode getExecutionMode() {
+    return RuntimeExecutionMode.valueOf(
+        engineConfig.getConfig().get(ExecutionOptions.RUNTIME_MODE.key()).toString().toUpperCase());
   }
 
-  public Map<String, String> getBaseConfiguration() {
-    Map<String, String> configMap = new HashMap<>();
-    engineConfig.getConfig().forEach((key, value) -> configMap.put(key, String.valueOf(value)));
-    return configMap;
+  public Configuration getBaseConfiguration() {
+    var conf = new Configuration();
+    engineConfig.getConfig().forEach((key, value) -> conf.setString(key, String.valueOf(value)));
+
+    return conf;
   }
 
   public Configuration getStreamingSpecificConfig() {

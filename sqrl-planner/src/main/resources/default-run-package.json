@@ -1,0 +1,12 @@
+{
+  "version": "1",
+  "enabled-engines": ["flink"],
+  "engines" : {
+    "flink" : {
+      "config": {
+        "state.checkpoints.dir": "file:///data/flink/checkpoints",
+        "state.savepoints.dir": "file:///data/flink/savepoints"
+      }
+    }
+  }
+}

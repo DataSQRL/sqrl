@@ -6,7 +6,9 @@
   },
   "engines": {
     "flink" : {
-      "mode": "batch"
+      "config": {
+        "execution.runtime-mode": "batch"
+      }
     }
   }
 }

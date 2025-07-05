@@ -17,7 +17,6 @@ package com.datasqrl.cli;
 
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.util.FlinkOperatorStatusChecker;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -38,7 +37,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
-import lombok.Value;
 import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.common.JobStatus;
 import org.apache.flink.configuration.Configuration;
@@ -63,16 +61,19 @@ public class DatasqrlTest {
   public static final int MUTATION_WAIT_SEC = 0;
 
   private final Path planPath;
-  private final PackageJson sqrlConfig;
+  private final PackageJson.CompilerConfig compilerConfig;
   private final Configuration flinkConfig;
   private final Map<String, String> env;
   public String GRAPHQL_ENDPOINT = "http://localhost:8888/graphql";
   private final ObjectMapper objectMapper = new ObjectMapper();
 
   public DatasqrlTest(
-      Path planPath, PackageJson sqrlConfig, Configuration flinkConfig, Map<String, String> env) {
+      Path planPath,
+      PackageJson.CompilerConfig compilerConfig,
+      Configuration flinkConfig,
+      Map<String, String> env) {
     this.planPath = planPath;
-    this.sqrlConfig = sqrlConfig;
+    this.compilerConfig = compilerConfig;
     this.flinkConfig = flinkConfig;
     this.env = env;
   }
@@ -80,7 +81,7 @@ public class DatasqrlTest {
   @SneakyThrows
   public int run() {
     // 1. Run the DataSQRL pipeline via {@link DatasqrlRun}
-    DatasqrlRun run = new DatasqrlRun(planPath, sqrlConfig, flinkConfig, env);
+    DatasqrlRun run = new DatasqrlRun(planPath, compilerConfig, flinkConfig, env, true);
     Map compilerMap = (Map) run.getPackageJson().get("compiler");
     // Initialize snapshot directory
     String snapshotPathString = (String) compilerMap.get("snapshotPath");
@@ -124,7 +125,7 @@ public class DatasqrlTest {
     }
 
     try {
-      TableResult result = run.run(false);
+      TableResult result = run.run(false, false);
       // todo add file check instead of sleeping to make sure pipeline has started
       Thread.sleep(1000);
 
@@ -210,7 +211,7 @@ public class DatasqrlTest {
             Thread.sleep(1000);
           }
 
-        } catch (Exception e) {
+        } catch (Exception ignored) {
         }
       }
 
@@ -224,7 +225,7 @@ public class DatasqrlTest {
       } catch (ExecutionException e) {
         // try to catch the job failure if we can
         exceptions.add(new JobFailureException(e));
-      } catch (Exception e) {
+      } catch (Exception ignored) {
       }
 
       // 4. Run the queries against the API, finish subscriptions and snapshot the results
@@ -267,17 +268,11 @@ public class DatasqrlTest {
         }
 
         List<String> expectedSnapshotsQueries =
-            testPlan.getQueries().stream()
-                .map(f -> f.getName() + ".snapshot")
-                .collect(Collectors.toList());
+            testPlan.getQueries().stream().map(f -> f.getName() + ".snapshot").toList();
         List<String> expectedSnapshotsMutations =
-            testPlan.getMutations().stream()
-                .map(f -> f.getName() + ".snapshot")
-                .collect(Collectors.toList());
+            testPlan.getMutations().stream().map(f -> f.getName() + ".snapshot").toList();
         List<String> expectedSnapshotsSubscriptions =
-            testPlan.getSubscriptions().stream()
-                .map(f -> f.getName() + ".snapshot")
-                .collect(Collectors.toList());
+            testPlan.getSubscriptions().stream().map(f -> f.getName() + ".snapshot").toList();
         List<String> expectedSnapshots = new ArrayList<>();
         expectedSnapshots.addAll(expectedSnapshotsQueries);
         expectedSnapshots.addAll(expectedSnapshotsMutations);
@@ -295,7 +290,7 @@ public class DatasqrlTest {
         }
       }
     } finally {
-      run.stop();
+      run.cancel();
       Thread.sleep(1000); // wait for log lines to clear out
     }
 
@@ -355,14 +350,14 @@ public class DatasqrlTest {
 
     // Existing snapshot logic
     if (Files.exists(snapshotPath)) {
-      String existingSnapshot = new String(Files.readAllBytes(snapshotPath), "UTF-8");
+      String existingSnapshot = Files.readString(snapshotPath);
       if (!existingSnapshot.equals(currentResponse)) {
         exceptions.add(new SnapshotMismatchException(name, existingSnapshot, currentResponse));
       } else {
         exceptions.add(new SnapshotOkException(name));
       }
     } else {
-      Files.write(snapshotPath, currentResponse.getBytes("UTF-8"));
+      Files.writeString(snapshotPath, currentResponse);
       exceptions.add(new SnapshotCreationException(name));
     }
   }
@@ -394,21 +389,5 @@ public class DatasqrlTest {
     String name;
     String query;
     Map<String, String> headers;
-  }
-
-  @Value
-  public static class SubscriptionQuery {
-
-    @JsonIgnore String name;
-    Long id;
-    String type;
-    SubscriptionPayload payload;
-
-    @Value
-    public static class SubscriptionPayload {
-      String query;
-      Map<String, Object> variables;
-      String operationName;
-    }
   }
 }

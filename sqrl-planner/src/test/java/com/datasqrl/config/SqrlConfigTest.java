@@ -21,7 +21,6 @@ import static org.assertj.core.api.Assertions.fail;
 
 import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.error.ErrorPrefix;
 import com.datasqrl.error.ErrorPrinter;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -35,15 +34,13 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class SqrlConfigTest {
+public class SqrlConfigTest {
 
-  private ErrorCollector errors;
   private SqrlConfig config;
   private Path tempFile;
 
   @BeforeEach
   void setUp() {
-    errors = new ErrorCollector(ErrorPrefix.ROOT);
     config = SqrlConfig.createCurrentVersion();
   }
 
@@ -200,24 +197,6 @@ class SqrlConfigTest {
 
   @Test
   @SneakyThrows
-  void givenConfigWithData_whenToFile_thenWritesAndLoadsCorrectly() {
-    config.setProperty("key1", "value1");
-    config.setProperty("key2", 42);
-    config.getSubConfig("nested").setProperty("key", "nestedValue");
-
-    tempFile = Files.createTempFile("config", ".json");
-    config.toFile(tempFile);
-
-    assertThat(tempFile).exists();
-
-    SqrlConfig loadedConfig = SqrlConfig.fromFiles(errors, tempFile);
-    assertThat(loadedConfig.asString("key1").get()).isEqualTo("value1");
-    assertThat(loadedConfig.asInt("key2").get()).isEqualTo(42);
-    assertThat(loadedConfig.getSubConfig("nested").asString("key").get()).isEqualTo("nestedValue");
-  }
-
-  @Test
-  @SneakyThrows
   void givenConfig_whenToFilePretty_thenWritesFormattedJson() {
     config.setProperty("key1", "value1");
     config.setProperty("key2", 42);
@@ -254,137 +233,6 @@ class SqrlConfigTest {
     assertThat(newConfig.getVersion()).isEqualTo(1);
   }
 
-  @Test
-  void givenNoPaths_whenCreatingConfigFromPackageJson_thenReturnsDefaults() {
-    var underTest = SqrlConfig.fromFilesPackageJson(errors, List.of());
-
-    assertThat(underTest).isNotNull();
-    assertThat(underTest.getVersion()).isEqualTo(1);
-    assertThat(underTest.getEnabledEngines()).contains("vertx", "postgres", "kafka", "flink");
-    assertThat(underTest.getTestConfig()).isPresent();
-    assertThat(underTest.getEngines().getEngineConfig("flink")).isPresent();
-    assertThat(underTest.getScriptConfig().getGraphql()).isEmpty();
-    assertThat(underTest.getScriptConfig().getMainScript()).isEmpty();
-  }
-
-  @Test
-  void givenSinglePath_whenCreatingConfigFromPackageJson_thenOverridesDefaults() {
-    var underTest =
-        SqrlConfig.fromFilesPackageJson(
-            errors, List.of(Path.of("src/test/resources/config/test-package.json")));
-
-    assertThat(underTest).isNotNull();
-    assertThat(underTest.getVersion()).isEqualTo(1);
-
-    assertThat(underTest.getEnabledEngines()).contains("test");
-
-    assertThat(underTest.getTestConfig()).isPresent();
-    assertThat(underTest.getEngines().getEngineConfig("flink")).isPresent();
-    assertThat(underTest.getScriptConfig().getGraphql()).isEmpty();
-    assertThat(underTest.getScriptConfig().getMainScript()).isEmpty();
-  }
-
-  @Test
-  void givenJsonConfigFile_whenLoadViaCommons_thenParsesCorrectly() {
-    var config1 = SqrlConfig.fromFiles(errors, Path.of("src/test/resources/config/config1.json"));
-    testConfig1(config1);
-  }
-
-  @Test
-  void givenLoadedConfig_whenWriteToFile_thenLoadsIdentically() {
-    var loadedConfig =
-        SqrlConfig.fromFiles(errors, Path.of("src/test/resources/config/config1.json"));
-    var tempFile2 = createTempFile();
-    loadedConfig.toFile(tempFile2);
-    var reloadedConfig = SqrlConfig.fromFiles(errors, tempFile2);
-    testConfig1(reloadedConfig);
-  }
-
-  @Test
-  void givenSubConfig_whenWriteToFile_thenLoadsCorrectSubset() {
-    var loadedConfig =
-        SqrlConfig.fromFiles(errors, Path.of("src/test/resources/config/config1.json"));
-    var tempFile2 = createTempFile();
-    loadedConfig.getSubConfig("subConf").toFile(tempFile2, true);
-    var subConfig = SqrlConfig.fromFiles(errors, tempFile2);
-    testSubConf(subConfig);
-  }
-
-  @Test
-  void givenSourceConfig_whenCopy_thenCopiesConfiguration() {
-    var other =
-        SqrlConfig.fromFiles(errors, Path.of("src/test/resources/config/config1.json"))
-            .getSubConfig("subConf");
-    var newConf = SqrlConfig.createCurrentVersion();
-    newConf.copy(other);
-    testSubConf(newConf);
-  }
-
-  @Test
-  void givenNewConfig_whenSetPropertiesAndObjects_thenPersistsCorrectly() {
-    var newConf = SqrlConfig.createCurrentVersion();
-    newConf.setProperty("test", true);
-    var tc = new TestClass(9, "boat", List.of("x", "y", "z"));
-    newConf.getSubConfig("clazz").setProperties(tc);
-    assertThat(newConf.asBool("test").get()).isTrue();
-    assertThat(newConf.getSubConfig("clazz").allAs(TestClass.class).get().field3)
-        .isEqualTo(tc.field3);
-    var tempFile2 = createTempFile();
-    newConf.toFile(tempFile2, true);
-    var config2 = SqrlConfig.fromFiles(errors, tempFile2);
-    assertThat(config2.asBool("test").get()).isTrue();
-    var tc2 = config2.getSubConfig("clazz").allAs(TestClass.class).get();
-    assertThat(tc2.field1).isEqualTo(tc.field1);
-    assertThat(tc2.field2).isEqualTo(tc.field2);
-    assertThat(tc2.field3).isEqualTo(tc.field3);
-  }
-
-  private void testConfig1(SqrlConfig config) {
-    assertThat(config.asInt("key2").get()).isEqualTo(5);
-    assertThat(config.asLong("key2").get()).isEqualTo(5L);
-    assertThat(config.asString("key1").get()).isEqualTo("value1");
-    assertThat(config.asBool("key3").get()).isTrue();
-    assertThat(config.asList("list", String.class).get()).isEqualTo(List.of("a", "b", "c"));
-    var map = config.asMap("map", TestClass.class).get();
-    assertThat(map).hasSize(3);
-    assertThat(map.get("e2").field1).isEqualTo(7);
-    assertThat(map.get("e3").field2).isEqualTo("flip");
-    assertThat(map.get("e1").field3).isEqualTo(List.of("a", "b", "c"));
-    assertThat(config.getVersion()).isEqualTo(1);
-
-    var x1 = config.as("x1", ConstraintClass.class).get();
-    assertThat(x1.optInt).isEqualTo(2);
-    assertThat(x1.flag).isFalse();
-    assertThat(x1.optString).isEqualTo("hello world");
-
-    var x2 = config.as("x2", ConstraintClass.class).get();
-    assertThat(x2.optInt).isEqualTo(33);
-
-    assertThatThrownBy(() -> config.as("xf1", ConstraintClass.class).get())
-        .isInstanceOf(CollectedException.class)
-        .hasMessageContaining("is not valid");
-
-    assertThatThrownBy(() -> config.as("xf2", ConstraintClass.class).get())
-        .isInstanceOf(CollectedException.class)
-        .hasMessageContaining("Could not find key");
-
-    var nested = config.as("nested", NestedClass.class).get();
-    assertThat(nested.counter).isEqualTo(5);
-    assertThat(nested.obj.optInt).isEqualTo(33);
-    assertThat(nested.obj.flag).isTrue();
-  }
-
-  private void testSubConf(SqrlConfig config) {
-    assertThat(config.asString("delimited.config.option").get()).isEqualTo("that");
-    assertThat(config.asInt("one").get()).isEqualTo(1);
-    assertThat(config.asString("token").get()).isEqualTo("piff");
-  }
-
-  @SneakyThrows
-  private Path createTempFile() {
-    return Files.createTempFile("configuration", ".json");
-  }
-
   public static class TestObject {
     public String name;
     public int number;
@@ -403,30 +251,30 @@ class SqrlConfigTest {
   @NoArgsConstructor
   public static class TestClass {
 
-    int field1;
+    public int field1;
 
     @Constraints.MinLength(min = 3)
-    String field2;
+    public String field2;
 
-    List<String> field3;
+    public List<String> field3;
   }
 
   public static class ConstraintClass {
 
-    @Constraints.Default int optInt = 33;
+    @Constraints.Default public int optInt = 33;
 
     @Constraints.MinLength(min = 5)
     @Constraints.Default
-    String optString = "x";
+    public String optString = "x";
 
-    @Constraints.NotNull boolean flag = true;
+    @Constraints.NotNull public boolean flag = true;
   }
 
   public static class NestedClass {
 
-    int counter;
+    public int counter;
 
-    ConstraintClass obj;
+    public ConstraintClass obj;
   }
 
   public static void testForErrors(Consumer<ErrorCollector> failure) {

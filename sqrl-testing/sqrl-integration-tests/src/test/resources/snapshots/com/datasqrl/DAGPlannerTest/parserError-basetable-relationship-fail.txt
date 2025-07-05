@@ -8,4 +8,3 @@ When a table A has the same schema as the table B that it selects from, table B 
 base table for table A.
 
 Relationships can only be added to base tables.
-

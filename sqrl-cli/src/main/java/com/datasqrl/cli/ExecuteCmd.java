@@ -29,10 +29,10 @@ public class ExecuteCmd extends AbstractCmd {
   protected void execute(ErrorCollector errors) throws Exception {
     var targetDir = getTargetDir();
     var planDir = targetDir.resolve(SqrlConstants.PLAN_DIR);
-    var sqrlConfig = ConfigLoaderUtils.loadPackageJson(targetDir);
+    var sqrlConfig = ConfigLoaderUtils.loadResolvedConfig(errors, targetDir);
     var flinkConfig = ConfigLoaderUtils.loadFlinkConfig(planDir);
 
-    var sqrlRun = new DatasqrlRun(planDir, sqrlConfig, flinkConfig);
-    sqrlRun.run(true);
+    var sqrlRun = new DatasqrlRun(planDir, sqrlConfig.getCompilerConfig(), flinkConfig);
+    sqrlRun.run(true, true);
   }
 }

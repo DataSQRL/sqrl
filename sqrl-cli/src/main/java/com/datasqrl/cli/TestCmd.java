@@ -60,10 +60,11 @@ public class TestCmd extends AbstractCompileCmd {
     // Test
     var targetDir = getTargetDir();
     var planDir = targetDir.resolve(SqrlConstants.PLAN_DIR);
-    var sqrlConfig = ConfigLoaderUtils.loadPackageJson(targetDir);
+    var sqrlConfig = ConfigLoaderUtils.loadResolvedConfig(errors, targetDir);
     var flinkConfig = ConfigLoaderUtils.loadFlinkConfig(planDir);
 
-    var sqrlTest = new DatasqrlTest(planDir, sqrlConfig, flinkConfig, System.getenv());
+    var sqrlTest =
+        new DatasqrlTest(planDir, sqrlConfig.getCompilerConfig(), flinkConfig, System.getenv());
     sqrlTest.run();
   }
 

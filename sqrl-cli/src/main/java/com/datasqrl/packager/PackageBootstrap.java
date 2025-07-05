@@ -19,10 +19,10 @@ import com.datasqrl.config.Dependency;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.PackageJson.DependenciesConfig;
 import com.datasqrl.config.PackageJson.ScriptConfig;
-import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrefix;
+import com.datasqrl.util.ConfigLoaderUtils;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -41,7 +41,8 @@ public class PackageBootstrap {
   ErrorCollector errors;
 
   @SneakyThrows
-  public PackageJson bootstrap(Path rootDir, List<Path> packageFiles, Path[] files) {
+  public PackageJson bootstrap(
+      Path rootDir, List<Path> packageFiles, Path[] files, boolean withRun) {
     ErrorCollector errors = this.errors.withLocation(ErrorPrefix.CONFIG).resolve("package");
 
     // Create build dir to unpack resolved dependencies
@@ -59,7 +60,10 @@ public class PackageBootstrap {
     existingPackage.ifPresent(configFiles::addAll);
 
     // Could not find any package json
-    PackageJson packageJson = SqrlConfig.fromFilesPackageJson(errors, configFiles);
+    PackageJson packageJson =
+        withRun
+            ? ConfigLoaderUtils.loadUnresolvedRunConfig(errors, configFiles)
+            : ConfigLoaderUtils.loadUnresolvedConfig(errors, configFiles);
 
     // Add dependencies of discovered profiles
     dependencies.forEach(

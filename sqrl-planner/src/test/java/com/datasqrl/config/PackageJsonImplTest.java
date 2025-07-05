@@ -17,7 +17,6 @@ package com.datasqrl.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.datasqrl.error.ErrorCollector;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -28,13 +27,11 @@ import org.junit.jupiter.api.Test;
 
 class PackageJsonImplTest {
 
-  private ErrorCollector errors;
   private SqrlConfig config;
   private Path tempFile;
 
   @BeforeEach
   void setUp() {
-    errors = ErrorCollector.root();
     config = SqrlConfig.createCurrentVersion();
   }
 
@@ -184,22 +181,5 @@ class PackageJsonImplTest {
     var discoveryConfig = new DiscoveryConfigImpl(config.getSubConfig("discovery"));
 
     assertThat(discoveryConfig).isNotNull();
-  }
-
-  @Test
-  void
-      givenTestFlinkConfig_whenReadFlinkConnectorsPrint_thenReturnsInheritedConnectorConfiguration() {
-    var testConfigPath = Path.of("src/test/resources/config/test-flink-config.json");
-    var packageJson = SqrlConfig.fromFilesPackageJson(errors, List.of(testConfigPath));
-
-    var enginesConfig = packageJson.getEngines();
-    var flinkConfig = enginesConfig.getEngineConfig("flink");
-
-    assertThat(flinkConfig).isPresent();
-    var flinkConnectorsConfig = flinkConfig.get().getConnectors();
-    var printConnectorConfig = flinkConnectorsConfig.getConnectorConfigOrErr("print").toMap();
-
-    assertThat(printConnectorConfig.get("connector")).contains("print");
-    assertThat(printConnectorConfig.get("print-identifier")).contains("${sqrl:table-name}");
   }
 }
