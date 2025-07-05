@@ -15,6 +15,7 @@
  */
 package com.datasqrl.graphql.converter;
 
+import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.graphql.server.operation.ApiOperation;
 import com.datasqrl.graphql.server.operation.ApiProtocols;
 import com.datasqrl.graphql.server.operation.McpMethodType;
@@ -42,7 +43,9 @@ public class GraphQLSchemaConverterConfig {
           Operation.SUBSCRIPTION, "Listen");
 
   /** Filter for selecting which operations to convert */
-  @Builder.Default BiPredicate<Operation, String> operationFilter = (op, name) -> true;
+  @Builder.Default
+  BiPredicate<Operation, String> operationFilter =
+      (op, name) -> !name.trim().startsWith(Name.HIDDEN_PREFIX);
 
   /** The maximum depth of conversion for operations that have nested types */
   @Builder.Default int maxDepth = 3;

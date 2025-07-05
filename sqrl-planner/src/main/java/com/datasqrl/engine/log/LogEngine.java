@@ -20,9 +20,8 @@ import com.datasqrl.engine.database.EngineCreateTable;
 import com.datasqrl.engine.database.QueryEngine;
 import com.datasqrl.engine.export.ExportEngine;
 import com.datasqrl.engine.pipeline.ExecutionStage;
-import com.datasqrl.planner.analyzer.TableAnalysis;
+import com.datasqrl.graphql.server.MutationInsertType;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
-import java.util.Optional;
 import org.apache.calcite.rel.type.RelDataType;
 
 public interface LogEngine extends ExportEngine, DatabaseEngine {
@@ -32,7 +31,7 @@ public interface LogEngine extends ExportEngine, DatabaseEngine {
       String originalTableName,
       FlinkTableBuilder tableBuilder,
       RelDataType relDataType,
-      Optional<TableAnalysis> tableAnalysis) {
+      MutationInsertType insertType) {
     throw new UnsupportedOperationException("Does not support mutations");
   }
 

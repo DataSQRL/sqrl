@@ -56,7 +56,11 @@ public class FunctionDefinition {
 
     @JsonIgnore
     public boolean isNested() {
-      return properties.values().stream().anyMatch(arg -> arg.getParameters() != null);
+      return properties.values().stream()
+          .anyMatch(
+              arg ->
+                  arg.getProperties() != null
+                      || (arg.getItems() != null && arg.getItems().getProperties() != null));
     }
   }
 
@@ -66,7 +70,8 @@ public class FunctionDefinition {
     private String type;
     private String description;
     private Argument items;
-    private Parameters parameters;
+    private Map<String, Argument> properties;
+    private List<String> required;
 
     @JsonProperty("enum")
     private Set<?> enumValues;

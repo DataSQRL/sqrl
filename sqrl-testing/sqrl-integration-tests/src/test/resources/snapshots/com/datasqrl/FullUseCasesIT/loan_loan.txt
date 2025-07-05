@@ -1,4 +1,4 @@
 >>>applicationalert-subscription.graphql
 {"data":{"ApplicationAlert":[]}}
 >>>applicationupdate-mutation.graphql
-{"data":{"ApplicationUpdates":{"loan_application_id":101,"message":"The road goes ever on and on"}}}
+{"data":{"ApplicationUpdates":[{"loan_application_id":101,"message":"The road goes ever on and on"}]}}

@@ -23,6 +23,9 @@ import com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType;
 import com.datasqrl.graphql.server.CustomScalars;
 import com.datasqrl.plan.table.Multiplicity;
 import graphql.Scalars;
+import graphql.language.ListType;
+import graphql.language.NonNullType;
+import graphql.language.Type;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLInputObjectField;
 import graphql.schema.GraphQLInputObjectType;
@@ -65,17 +68,37 @@ public class GraphqlSchemaUtil {
     return !isSystemHidden(name) && Pattern.matches("[_A-Za-z][_0-9A-Za-z]*", name);
   }
 
+  public static boolean isListType(Type type) {
+    if (type instanceof NonNullType) {
+      type = ((NonNullType) type).getType();
+    }
+    return type instanceof ListType;
+  }
+
+  public static GraphQLType asList(GraphQLType type) {
+    return GraphQLNonNull.nonNull(GraphQLList.list(type));
+  }
+
+  public static GraphQLInputType asInputType(GraphQLType type) {
+    return (GraphQLInputType) type;
+  }
+
+  public static GraphQLOutputType asOutputType(GraphQLType type) {
+    return (GraphQLOutputType) type;
+  }
+
   public static Optional<GraphQLInputType> getGraphQLInputType(
       RelDataType type, NamePath namePath, boolean extendedScalarTypes) {
     return getGraphQLType(GraphQLMetaType.INPUT, type, namePath, extendedScalarTypes)
-        .map(f -> (GraphQLInputType) f)
-        .map(inputType -> (GraphQLInputType) wrapNullable(inputType, type));
+        .map(inputType -> wrapNullable(inputType, type))
+        .map(GraphqlSchemaUtil::asInputType);
   }
 
   public static Optional<GraphQLOutputType> getGraphQLOutputType(
       RelDataType type, NamePath namePath, boolean extendedScalarTypes) {
     return getGraphQLType(GraphQLMetaType.OUTPUT, type, namePath, extendedScalarTypes)
-        .map(t -> (GraphQLOutputType) wrapNullable(t, type));
+        .map(t -> wrapNullable(t, type))
+        .map(GraphqlSchemaUtil::asOutputType);
   }
 
   public static Optional<GraphQLType> getGraphQLType(

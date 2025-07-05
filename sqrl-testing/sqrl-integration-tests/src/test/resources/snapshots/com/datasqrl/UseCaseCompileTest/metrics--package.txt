@@ -369,10 +369,12 @@ CREATE INDEX IF NOT EXISTS "SensorReading_hash_c0" ON "SensorReading" USING hash
       {
         "type" : "kafka",
         "fieldName" : "SensorReading",
+        "returnList" : false,
         "topic" : "SensorReading",
         "computedColumns" : {
           "event_time" : "TIMESTAMP"
         },
+        "transactional" : false,
         "sinkConfig" : { }
       }
     ],

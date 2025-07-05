@@ -2346,8 +2346,10 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
       {
         "type" : "kafka",
         "fieldName" : "Orders",
+        "returnList" : false,
         "topic" : "kafka-mutation-Orders",
         "computedColumns" : { },
+        "transactional" : false,
         "sinkConfig" : { }
       }
     ],

@@ -402,10 +402,12 @@ CREATE INDEX IF NOT EXISTS "TotalOrgTokens_btree_c1" ON "TotalOrgTokens" USING b
       {
         "type" : "kafka",
         "fieldName" : "UserTokens",
+        "returnList" : false,
         "topic" : "UserTokens",
         "computedColumns" : {
           "request_time" : "TIMESTAMP"
         },
+        "transactional" : false,
         "sinkConfig" : { }
       }
     ],

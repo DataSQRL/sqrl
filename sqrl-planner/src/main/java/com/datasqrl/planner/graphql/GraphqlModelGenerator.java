@@ -24,6 +24,7 @@ import com.datasqrl.engine.log.kafka.NewTopic;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.jdbc.SchemaConstants;
 import com.datasqrl.graphql.server.MutationComputedColumnType;
+import com.datasqrl.graphql.server.MutationInsertType;
 import com.datasqrl.graphql.server.PaginationType;
 import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
@@ -110,11 +111,17 @@ public class GraphqlModelGenerator extends GraphqlSchemaWalker {
             .collect(
                 Collectors.toMap(
                     MutationComputedColumn::getColumnName, MutationComputedColumn::getType));
+    boolean returnList = GraphqlSchemaUtil.isListType(atField.getType());
     if (mutation.getCreateTopic() instanceof NewTopic) {
       var newTopic = (NewTopic) mutation.getCreateTopic();
       mutationCoords =
           new KafkaMutationCoords(
-              atField.getName(), newTopic.getTopicName(), computedColumns, Map.of());
+              atField.getName(),
+              returnList,
+              newTopic.getTopicName(),
+              computedColumns,
+              mutation.getInsertType() == MutationInsertType.TRANSACTION,
+              Map.of());
     } else {
       throw new RuntimeException("Unknown mutation implementation: " + mutation.getCreateTopic());
     }
