@@ -75,8 +75,7 @@ public class TestPlanner {
     List<GraphqlQuery> subscriptions = new ArrayList<>();
 
     // Get base headers from PackageJson
-    var baseHeaders =
-        packageJson.getTestConfig().map(config -> config.getHeaders()).orElse(Map.of());
+    var baseHeaders = packageJson.getTestConfig().getHeaders();
 
     testsPath.ifPresent(
         p -> {

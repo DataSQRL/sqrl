@@ -10,6 +10,6 @@
   },
   "test-runner": {
     "delay-sec": 30,
-    "mutation-delay": 1
+    "mutation-delay-sec": 1
   }
 }

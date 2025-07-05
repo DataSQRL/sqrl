@@ -15,8 +15,9 @@
  */
 package com.datasqrl.config;
 
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
@@ -27,20 +28,41 @@ public class TestRunnerConfigImpl implements TestRunnerConfiguration {
   SqrlConfig sqrlConfig;
 
   @Override
-  public Optional<Duration> getDelaySec() {
-    return sqrlConfig
-        .asLong("delay-sec")
-        .getOptional()
-        .map(sec -> Duration.of(sec, ChronoUnit.SECONDS));
+  public Path getSnapshotDir(Path rootDir) {
+    var snapshotDir = Paths.get(sqrlConfig.asString("snapshot-dir").get());
+
+    return combineWithRootIfRelative(rootDir, snapshotDir);
   }
 
   @Override
-  public Optional<Integer> getRequiredCheckpoints() {
-    return sqrlConfig.asInt("required-checkpoints").getOptional();
+  public Optional<Path> getTestDir(Path rootDir) {
+    var testDir = Paths.get(sqrlConfig.asString("test-dir").get());
+    testDir = combineWithRootIfRelative(rootDir, testDir);
+
+    return Files.isDirectory(testDir) ? Optional.of(testDir) : Optional.empty();
+  }
+
+  @Override
+  public int getDelaySec() {
+    return sqrlConfig.asInt("delay-sec").get();
+  }
+
+  @Override
+  public int getMutationDelaySec() {
+    return sqrlConfig.asInt("mutation-delay-sec").get();
+  }
+
+  @Override
+  public int getRequiredCheckpoints() {
+    return sqrlConfig.asInt("required-checkpoints").get();
   }
 
   @Override
   public Map<String, String> getHeaders() {
     return sqrlConfig.asMap("headers", String.class).getOptional().orElse(Map.of());
+  }
+
+  private Path combineWithRootIfRelative(Path rootDir, Path dir) {
+    return dir.isAbsolute() ? dir : rootDir.resolve(dir);
   }
 }

@@ -4,6 +4,7 @@
     "compilePlan": false
   },
   "test-runner": {
+    "snapshot-dir": "snapshots-stdlib-openai",
     "delay-sec": -1
   }
 }

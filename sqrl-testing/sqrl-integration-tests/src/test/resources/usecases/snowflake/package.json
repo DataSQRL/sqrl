@@ -35,6 +35,8 @@
     }
   },
   "test-runner": {
+    "snapshot-dir": "snapshots-snowflake",
+    "test-dir": "tests-snowflake",
     "delay-sec" : -1,
     "required-checkpoints" : 1
   }

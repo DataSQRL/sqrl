@@ -37,7 +37,6 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.tuple.Pair;
 import picocli.CommandLine;
@@ -58,10 +57,6 @@ public abstract class AbstractCompileCmd extends AbstractCmd {
 
   @Override
   protected void execute(ErrorCollector errors) throws Exception {
-    execute(errors, cli.rootDir.resolve("snapshots"), Optional.empty());
-  }
-
-  protected void execute(ErrorCollector errors, Path snapshotPath, Optional<Path> testsPath) {
     var packageBootstrap = new PackageBootstrap(errors);
     var sqrlConfig =
         packageBootstrap.bootstrap(
@@ -69,11 +64,7 @@ public abstract class AbstractCompileCmd extends AbstractCmd {
             this.cli.packageFiles,
             this.files,
             getGoal() == ExecutionGoal.RUN && !cli.internalTestExec);
-
-    var snapshotPathConf = sqrlConfig.getCompilerConfig().getSnapshotPath();
-    if (snapshotPathConf.isEmpty()) {
-      sqrlConfig.getCompilerConfig().setSnapshotPath(snapshotPath.toAbsolutePath().toString());
-    }
+    var testConfig = sqrlConfig.getTestConfig();
 
     var engines = getEngines();
     if (!engines.isEmpty()) {
@@ -95,9 +86,10 @@ public abstract class AbstractCompileCmd extends AbstractCmd {
     }
 
     var compilationProcess = injector.getInstance(CompilationProcess.class);
-    testsPath.ifPresent(this::validateTestPath);
+    var testDir = testConfig.getTestDir(cli.rootDir);
+    testDir.ifPresent(this::validateTestPath);
 
-    Pair<PhysicalPlan, ? extends TestPlan> plan = compilationProcess.executeCompilation(testsPath);
+    Pair<PhysicalPlan, ? extends TestPlan> plan = compilationProcess.executeCompilation(testDir);
 
     if (errors.hasErrors()) {
       return;

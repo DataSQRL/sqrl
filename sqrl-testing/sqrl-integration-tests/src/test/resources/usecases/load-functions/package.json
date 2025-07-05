@@ -1,0 +1,6 @@
+{
+  "version": "1",
+  "test-runner": {
+    "snapshot-dir": "snapshots-loadFunctions"
+  }
+}

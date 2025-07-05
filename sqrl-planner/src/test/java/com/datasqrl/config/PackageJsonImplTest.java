@@ -19,29 +19,22 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import lombok.SneakyThrows;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 class PackageJsonImplTest {
 
   private SqrlConfig config;
-  private Path tempFile;
+
+  @TempDir private Path tempDir;
 
   @BeforeEach
   void setUp() {
     config = SqrlConfig.createCurrentVersion();
-  }
-
-  @AfterEach
-  @SneakyThrows
-  void tearDown() {
-    if (tempFile != null) {
-      Files.deleteIfExists(tempFile);
-      tempFile = null;
-    }
   }
 
   @Test
@@ -88,11 +81,11 @@ class PackageJsonImplTest {
 
   @Test
   void givenPackageJson_whenGetTestConfig_thenReturnsTestConfiguration() {
-    config.getSubConfig("test-runner").setProperty("enabled", true);
+    config.getSubConfig("test-runner").setProperty("snapshot-dir", "/dummy");
 
     var packageJson = new PackageJsonImpl(config);
 
-    assertThat(packageJson.getTestConfig()).isPresent();
+    assertThat(packageJson.getTestConfig().getSnapshotDir(null)).isEqualTo(Paths.get("/dummy"));
   }
 
   @Test
@@ -103,7 +96,7 @@ class PackageJsonImplTest {
 
     PackageJsonImpl packageJson = new PackageJsonImpl(config);
 
-    tempFile = Files.createTempFile("package", ".json");
+    var tempFile = Files.createTempFile(tempDir, "package", ".json");
     packageJson.toFile(tempFile, true);
 
     assertThat(tempFile).exists();

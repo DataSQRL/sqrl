@@ -1,5 +1,7 @@
 {
   "test-runner" : {
+    "snapshot-dir": "snapshots-sensors-full",
+    "test-dir": "tests-sensors-full",
     "delay-sec" : -1,
     "required-checkpoints" : 1
   },
