@@ -304,6 +304,7 @@ CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" INTEGER NOT NULL, "temper
       {
         "type" : "kafka",
         "fieldName" : "SensorReading",
+        "returnList" : true,
         "topic" : "SensorReading",
         "computedColumns" : {
           "event_time" : "TIMESTAMP"

@@ -346,6 +346,7 @@ CREATE TABLE IF NOT EXISTS "SensorUpdates" ("sensorid" INTEGER NOT NULL, "sensor
       {
         "type" : "kafka",
         "fieldName" : "SensorReading",
+        "returnList" : false,
         "topic" : "SensorReading",
         "computedColumns" : {
           "event_time" : "TIMESTAMP"
@@ -356,6 +357,7 @@ CREATE TABLE IF NOT EXISTS "SensorUpdates" ("sensorid" INTEGER NOT NULL, "sensor
       {
         "type" : "kafka",
         "fieldName" : "SensorUpdates",
+        "returnList" : false,
         "topic" : "SensorUpdates",
         "computedColumns" : {
           "lastUpdated" : "TIMESTAMP"

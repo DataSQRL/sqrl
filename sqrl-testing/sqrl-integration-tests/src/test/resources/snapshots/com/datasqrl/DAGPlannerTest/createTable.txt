@@ -362,6 +362,7 @@ INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
       {
         "type" : "kafka",
         "fieldName" : "_SensorReading",
+        "returnList" : false,
         "topic" : "kafka-mutation-_SensorReading",
         "computedColumns" : {
           "event_id" : "UUID",
@@ -373,6 +374,7 @@ INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
       {
         "type" : "kafka",
         "fieldName" : "_Sensors",
+        "returnList" : false,
         "topic" : "kafka-mutation-_Sensors",
         "computedColumns" : {
           "updatedTime" : "TIMESTAMP"
