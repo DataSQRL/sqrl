@@ -1093,6 +1093,7 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2`
       {
         "type" : "kafka",
         "fieldName" : "SimpleOrders",
+        "returnList" : false,
         "topic" : "kafka-mutation-SimpleOrders",
         "computedColumns" : {
           "orderTime" : "TIMESTAMP",
