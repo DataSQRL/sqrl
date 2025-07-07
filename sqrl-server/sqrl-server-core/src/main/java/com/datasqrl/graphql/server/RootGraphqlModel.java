@@ -17,6 +17,7 @@ package com.datasqrl.graphql.server;
 
 import com.datasqrl.graphql.jdbc.DatabaseType;
 import com.datasqrl.graphql.server.operation.ApiOperation;
+import com.datasqrl.graphql.server.query.SqlQueryModifier;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
@@ -341,6 +342,7 @@ public class RootGraphqlModel {
     @Singular List<QueryParameterHandler> parameters;
     PaginationType pagination;
     DatabaseType database;
+    List<SqlQueryModifier> modifiers;
 
     public boolean requiresDynamicLimitOffset() {
       return pagination == PaginationType.LIMIT_AND_OFFSET && !database.supportsLimitOffsetBinding;
@@ -352,7 +354,7 @@ public class RootGraphqlModel {
     }
 
     public SqlQuery updateSQL(String newSQL) {
-      return new SqlQuery(newSQL, parameters, pagination, database);
+      return new SqlQuery(newSQL, parameters, pagination, database, modifiers);
     }
   }
 
@@ -439,6 +441,7 @@ public class RootGraphqlModel {
   @JsonSubTypes({
     @Type(value = ParentParameter.class, name = ParentParameter.type),
     @Type(value = ArgumentParameter.class, name = ArgumentParameter.type),
+    @Type(value = ComputedParameter.class, name = ComputedParameter.type),
     @Type(value = MetadataParameter.class, name = MetadataParameter.type)
   })
   public interface QueryParameterHandler {
@@ -451,6 +454,8 @@ public class RootGraphqlModel {
     R visitParentParameter(ParentParameter parentParameter, C context);
 
     R visitMetadataParameter(MetadataParameter metadataParameter, C context);
+
+    R visitComputedParameter(ComputedParameter computedParameter, C context);
 
     R visitArgumentParameter(ArgumentParameter argumentParameter, C context);
   }
@@ -505,34 +510,20 @@ public class RootGraphqlModel {
     }
   }
 
-  public interface ResolvedQueryVisitor<R, C> {
-
-    R visitResolvedSqlQuery(ResolvedSqlQuery query, C context);
-  }
-
-  public interface ResolvedQuery {
-
-    QueryBase getQuery();
-
-    public <R, C> R accept(ResolvedQueryVisitor<R, C> visitor, C context);
-  }
-
-  @AllArgsConstructor
+  /** Parameter is computed based on other input arguments */
   @Getter
+  @AllArgsConstructor
   @NoArgsConstructor
-  public static class ResolvedSqlQuery implements ResolvedQuery {
+  @Builder
+  @ToString
+  public static class ComputedParameter implements QueryParameterHandler {
 
-    SqlQuery query;
-    PreparedSqrlQuery preparedQueryContainer;
+    static final String type = "computed";
+    String functionUid;
 
     @Override
-    public <R, C> R accept(ResolvedQueryVisitor<R, C> visitor, C context) {
-      return visitor.visitResolvedSqlQuery(this, context);
+    public <R, C> R accept(ParameterHandlerVisitor<R, C> visitor, C context) {
+      return visitor.visitComputedParameter(this, context);
     }
-  }
-
-  public interface PreparedSqrlQuery<T> {
-
-    T getPreparedQuery();
   }
 }

@@ -341,7 +341,8 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerAgg3_2`
             "sql" : "SELECT *\nFROM \"CustomerAgg1_1\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -365,7 +366,8 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerAgg3_2`
             "sql" : "SELECT \"customerid\", COUNT(*) + 1 AS \"num\"\nFROM \"Orders_3\"\nGROUP BY \"customerid\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -389,7 +391,8 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerAgg3_2`
             "sql" : "SELECT *\nFROM \"CustomerAgg3_2\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -413,7 +416,8 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerAgg3_2`
             "sql" : "SELECT *\nFROM \"Orders_3\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       }

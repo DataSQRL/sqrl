@@ -414,7 +414,8 @@ INSERT INTO `default_catalog`.`default_database`.`CombinedStream_2`
             "sql" : "SELECT *\nFROM \"CombinedState_1\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -438,7 +439,8 @@ INSERT INTO `default_catalog`.`default_database`.`CombinedStream_2`
             "sql" : "SELECT \"customerid\"\nFROM \"CombinedStream_2\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -462,7 +464,8 @@ INSERT INTO `default_catalog`.`default_database`.`CombinedStream_2`
             "sql" : "SELECT *\nFROM \"Customer_3\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -486,7 +489,8 @@ INSERT INTO `default_catalog`.`default_database`.`CombinedStream_2`
             "sql" : "SELECT *\nFROM \"Orders_4\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       }

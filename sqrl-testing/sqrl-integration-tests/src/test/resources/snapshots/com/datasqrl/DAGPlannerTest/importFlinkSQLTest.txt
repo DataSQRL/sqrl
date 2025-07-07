@@ -248,7 +248,8 @@ INSERT INTO `default_catalog`.`default_database`.`CategoryDistinct_2`
             "sql" : "SELECT \"categoryid\", \"name\", \"description\", \"updateTime\"\nFROM \"Category_1\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -272,7 +273,8 @@ INSERT INTO `default_catalog`.`default_database`.`CategoryDistinct_2`
             "sql" : "SELECT *\nFROM \"CategoryDistinct_2\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       }

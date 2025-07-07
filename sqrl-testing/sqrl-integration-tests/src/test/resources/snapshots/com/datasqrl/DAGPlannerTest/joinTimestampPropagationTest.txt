@@ -366,7 +366,8 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
             "sql" : "SELECT *\nFROM \"Customer_1\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -390,7 +391,8 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
             "sql" : "SELECT \"Orders_20\".\"id\", \"Customer_10\".\"name\"\nFROM \"Orders_2\" AS \"Orders_20\"\n INNER JOIN \"Customer_1\" AS \"Customer_10\" ON \"Orders_20\".\"customerid\" = \"Customer_10\".\"customerid\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -414,7 +416,8 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
             "sql" : "SELECT \"Orders_20\".\"id\", \"Customer_10\".\"name\", \"GREATEST\"(\"Orders_20\".\"_ingest_time\", \"Customer_10\".\"_ingest_time\") AS \"timestamp\"\nFROM \"Orders_2\" AS \"Orders_20\"\n INNER JOIN \"Customer_1\" AS \"Customer_10\" ON \"Orders_20\".\"customerid\" = \"Customer_10\".\"customerid\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       },
@@ -438,7 +441,8 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
             "sql" : "SELECT *\nFROM \"Orders_2\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
-            "database" : "POSTGRES"
+            "database" : "POSTGRES",
+            "modifiers" : [ ]
           }
         }
       }

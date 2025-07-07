@@ -18,6 +18,7 @@ package com.datasqrl.planner.tables;
 import com.datasqrl.calcite.SqrlRexUtil;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.engine.ExecutableQuery;
+import com.datasqrl.graphql.server.query.QueryModifier;
 import com.datasqrl.io.tables.TableType;
 import com.datasqrl.plan.table.Multiplicity;
 import com.datasqrl.planner.analyzer.TableAnalysis;
@@ -79,6 +80,8 @@ public class SqrlTableFunction implements TableFunction, TableOrFunctionAnalysis
 
   /** The visibility of this function */
   private final AccessVisibility visibility;
+
+  @Default final List<QueryModifier> queryModifiers = List.of();
 
   /** After planning, this represents the executable query for this function */
   @Nullable @Default @Setter private ExecutableQuery executableQuery = null;
