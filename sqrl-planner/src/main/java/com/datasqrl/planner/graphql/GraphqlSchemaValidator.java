@@ -305,14 +305,13 @@ public class GraphqlSchemaValidator extends GraphqlSchemaWalker {
   }
 
   private static Type unwrapNullAndList(Type type) {
-    for (; ; ) {
-      if (type instanceof NonNullType nullType) {
-        type = nullType.getType();
-      } else if (type instanceof ListType listType) {
-        type = listType.getType();
-      } else break;
+    if (type instanceof NonNullType nullType) {
+      return unwrapNullAndList(nullType.getType());
+    } else if (type instanceof ListType listType) {
+      return unwrapNullAndList(listType.getType());
+    } else {
+      return type;
     }
-    return type;
   }
 
   private ObjectTypeDefinition getValidMutationOutputType(

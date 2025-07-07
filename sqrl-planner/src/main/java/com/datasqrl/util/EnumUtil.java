@@ -16,13 +16,17 @@
 package com.datasqrl.util;
 
 import java.util.Optional;
+import org.apache.commons.lang3.ObjectUtils;
 
 public class EnumUtil {
 
   public static <T extends Enum<T>> Optional<T> getByName(Class<T> enumClass, String name) {
+    if (ObjectUtils.isEmpty(name)) {
+      return Optional.empty();
+    }
     try {
       return Optional.of(Enum.valueOf(enumClass, name.trim().toUpperCase()));
-    } catch (IllegalArgumentException | NullPointerException e) {
+    } catch (IllegalArgumentException e) {
       return Optional.empty();
     }
   }
