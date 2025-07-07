@@ -9,18 +9,17 @@ Multiple files can be provided; they are merged **in order** – later files ove
 
 ## Top-Level Keys
 
-| Key | Type | Default | Purpose                                                        |
-|-----|------|---------|----------------------------------------------------------------|
-| `version` | **number** | **1** | Configuration schema version – must be `1`.                    |
-| `enabled-engines` | **string[]** | `["vertx","postgres","kafka","flink"]` | Ordered list of engines that form the runtime pipeline.        |
-| `engines` | **object** | – | Per-engine configuration (see below).                          |
-| `compiler` | **object** | see defaults | Controls compilation, logging, and generated artefacts.        |
-| `dependencies` | **object** | `{}` | Aliases for packages that can be `IMPORT`-ed from SQRL.        |
-| `discovery` | **object** | `{}` | Rules for automatic table discovery when importing data files. |
-| `script` | **object** | – | Points to the main SQRL script and GraphQL schema.             |
-| `package` | **object** | – | Optional metadata (name, description, etc.) for publishing.    |
-| `values` | **object** | `{}` | Arbitrary runtime values (e.g. `create-topics`).               |
-| `test-runner` | **object** | `{"delay-sec":30}` | Integration-test execution settings.                           |
+| Key               | Type         | Default                                  | Purpose                                                        |
+|-------------------|--------------|------------------------------------------|----------------------------------------------------------------|
+| `version`         | **number**   | `1`                                      | Configuration schema version – must be `1`.                    |
+| `enabled-engines` | **string[]** | `["vertx","postgres","kafka","flink"]`   | Ordered list of engines that form the runtime pipeline.        |
+| `engines`         | **object**   | –                                        | Per-engine configuration (see below).                          |
+| `compiler`        | **object**   | [see defaults](#compiler-compiler)       | Controls compilation, logging, and generated artefacts.        |
+| `dependencies`    | **object**   | `{}`                                     | Aliases for packages that can be `IMPORT`-ed from SQRL.        |
+| `discovery`       | **object**   | `{}`                                     | Rules for automatic table discovery when importing data files. |
+| `script`          | **object**   | –                                        | Points to the main SQRL script and GraphQL schema.             |
+| `package`         | **object**   | –                                        | Optional metadata (name, description, etc.) for publishing.    |
+| `test-runner`     | **object**   | [see defaults](#test-runner-test-runner) | Integration test execution settings.                           |
 
 ---
 
@@ -83,7 +82,7 @@ Used as a *table-format* engine together with a query engine such as Flink or Sn
   "compiler": {
     "logger": "print",            // "print" | any configured log engine | "none"
     "extendedScalarTypes": true,  // expose extended scalar types in generated GraphQL
-    "compilePlan": true,          // compile physical plans where supported
+    "compile-flink-plan": true,   // compile Flink physical plans where supported
 
     "explain": {                  // artifacts in build/pipeline_*.*
       "visual":   true,
@@ -147,24 +146,14 @@ If only `name` is given the key acts as a **local folder alias**.
 
 ## Test-Runner (`test-runner`)
 
-| Key                    | Type       | Default       | Meaning                                                                                |
-|------------------------|------------|---------------|----------------------------------------------------------------------------------------|
-| `snapshot-dir`         | **string** | `./snapshots` | Snapshots output directory.                                                            |
-| `test-dir`             | **string** | `./tests`     | Tests output directory.                                                                |
-| `delay-sec`            | **number** | `30`          | Wait between data-load and snapshot. Set `-1` to disable.                              |
-| `mutation-delay-sec`   | **number** | `0`           | Pause(s) between mutation queries.                                                     |
-| `required-checkpoints` | **number** | `0`           | Minimum completed Flink checkpoints before assertions run (requires `delay-sec = -1`). |
-
----
-
-## Values (`values`)
-
-Arbitrary key/value pairs that are exposed to the runtime launcher.  
-The **default launcher** recognises:
-
-| Key | Type | Description |
-|-----|------|-------------|
-| `create-topics` | **string[]** | Kafka topics to create before tests start. |
+| Key                    | Type         | Default       | Meaning                                                                                |
+|------------------------|--------------|---------------|----------------------------------------------------------------------------------------|
+| `snapshot-dir`         | **string**   | `./snapshots` | Snapshots output directory.                                                            |
+| `test-dir`             | **string**   | `./tests`     | Tests output directory.                                                                |
+| `delay-sec`            | **number**   | `30`          | Wait between data-load and snapshot. Set `-1` to disable.                              |
+| `mutation-delay-sec`   | **number**   | `0`           | Pause(s) between mutation queries.                                                     |
+| `required-checkpoints` | **number**   | `0`           | Minimum completed Flink checkpoints before assertions run (requires `delay-sec = -1`). |
+| `create-topics`        | **string[]** | -             | Kafka topics to create before tests start.                                             |
 
 ---
 

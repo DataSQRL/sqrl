@@ -6,15 +6,13 @@
     "duckdb",
     "vertx"
   ],
-  "values": {
-    "flink-config": {
-      "table.exec.source.idle-timeout": "1 ms",
-      "execution.checkpointing.interval": "6 s",
-      "execution.checkpointing.min-pause": "2 s"
-    }
-  },
   "engines": {
     "flink": {
+      "config": {
+        "table.exec.source.idle-timeout": "1 ms",
+        "execution.checkpointing.interval": "6 s",
+        "execution.checkpointing.min-pause": "2 s"
+      },
       "connectors" : {
         "iceberg" : {
           "write.parquet.page-size-bytes": 1000,

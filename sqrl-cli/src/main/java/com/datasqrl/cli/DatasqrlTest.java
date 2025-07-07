@@ -79,8 +79,7 @@ public class DatasqrlTest {
   @SneakyThrows
   public int run() {
     // 1. Run the DataSQRL pipeline via {@link DatasqrlRun}
-    DatasqrlRun run =
-        new DatasqrlRun(planPath, sqrlConfig.getCompilerConfig(), flinkConfig, env, true);
+    DatasqrlRun run = new DatasqrlRun(planPath, sqrlConfig, flinkConfig, env, true);
 
     var testConfig = sqrlConfig.getTestConfig();
     var rootDir = planPath.getParent().getParent().getParent();

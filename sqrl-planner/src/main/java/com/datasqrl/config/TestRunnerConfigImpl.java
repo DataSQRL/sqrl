@@ -18,6 +18,7 @@ package com.datasqrl.config;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
@@ -60,6 +61,11 @@ public class TestRunnerConfigImpl implements TestRunnerConfiguration {
   @Override
   public Map<String, String> getHeaders() {
     return sqrlConfig.asMap("headers", String.class).getOptional().orElse(Map.of());
+  }
+
+  @Override
+  public List<String> getCreateTopics() {
+    return sqrlConfig.asList("create-topics", String.class).get();
   }
 
   private Path combineWithRootIfRelative(Path rootDir, Path dir) {

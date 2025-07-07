@@ -35,20 +35,17 @@ class CompilerConfigImplTest {
 
     assertThat(compilerConfig.isExtendedScalarTypes()).isTrue();
     assertThat(compilerConfig.getLogger()).isEqualTo("print");
-    assertThat(compilerConfig.compilePlan()).isTrue();
   }
 
   @Test
   void givenCustomConfig_whenGetValues_thenReturnsCustomValues() {
     config.setProperty("extendedScalarTypes", false);
     config.setProperty("logger", "custom");
-    config.setProperty("compilePlan", false);
 
     var compilerConfig = new CompilerConfigImpl(config);
 
     assertThat(compilerConfig.isExtendedScalarTypes()).isFalse();
     assertThat(compilerConfig.getLogger()).isEqualTo("custom");
-    assertThat(compilerConfig.compilePlan()).isFalse();
   }
 
   @Test

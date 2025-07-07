@@ -1,7 +1,7 @@
 {
   "version": "1",
   "compiler": {
-    "compilePlan": false
+    "compile-flink-plan": false
   },
   "test-runner": {
     "snapshot-dir": "snapshots-stdlib-openai-async",

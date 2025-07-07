@@ -28,7 +28,7 @@
       "type": "object",
       "minProperties": 1,
       "properties": {
-        "compilePlan": {
+        "compile-flink-plan": {
           "type": "boolean"
         },
         "explain": {
@@ -145,33 +145,6 @@
         }
       }
     },
-    "values": {
-      "type": "object",
-      "minProperties": 1,
-      "properties": {
-        "flink-config": {
-          "type": "object",
-          "minProperties": 1,
-          "additionalProperties": true
-        },
-        "mountDir": {
-          "type": "string"
-        },
-        "create-topics": {
-          "oneOf": [
-            {
-              "type": "array",
-              "items": { "type": "string" },
-              "minItems": 1
-            },
-            {
-              "type": "string"
-            }
-          ]
-        }
-      },
-      "additionalProperties": true
-    },
     "dependencies": {
       "type": "object",
       "patternProperties": {
@@ -219,6 +192,11 @@
         "headers": {
           "type": "object",
           "minProperties": 1
+        },
+        "create-topics": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1
         }
       },
       "additionalProperties": false

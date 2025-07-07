@@ -317,7 +317,7 @@ public class DAGPlanner {
                 }
               }
             });
-    planBuilder.stagePlan(new PhysicalStagePlan(streamStage, sqrlEnv.compilePlan()));
+    planBuilder.stagePlan(new PhysicalStagePlan(streamStage, sqrlEnv.compileFlinkPlan()));
 
     // 2nd: for each materialization stage, find all cuts to server or sinks generate queries for
     // those

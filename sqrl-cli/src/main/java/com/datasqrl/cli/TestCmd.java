@@ -53,12 +53,12 @@ public class TestCmd extends AbstractCompileCmd {
   @Override
   protected List<String> getEngines() {
     return List.of(
-        EngineKeys.TEST,
-        EngineKeys.DATABASE,
-        EngineKeys.LOG,
-        EngineKeys.ICEBERG,
-        EngineKeys.DUCKDB,
-        EngineKeys.SERVER,
-        EngineKeys.STREAMS);
+        EngineIds.TEST,
+        EngineIds.DATABASE,
+        EngineIds.LOG,
+        EngineIds.ICEBERG,
+        EngineIds.DUCKDB,
+        EngineIds.SERVER,
+        EngineIds.STREAMS);
   }
 }

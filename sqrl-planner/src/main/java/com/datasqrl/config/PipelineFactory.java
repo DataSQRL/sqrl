@@ -15,7 +15,7 @@
  */
 package com.datasqrl.config;
 
-import com.datasqrl.cli.EngineKeys;
+import com.datasqrl.cli.EngineIds;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.IExecutionEngine;
 import com.datasqrl.engine.database.DatabaseEngine;
@@ -64,7 +64,7 @@ public class PipelineFactory {
     Set<String> allEngines = new HashSet<>(enabledEngines);
     allEngines.addAll(defaultEngines);
     for (String engineId : allEngines) {
-      if (engineId.equalsIgnoreCase(EngineKeys.TEST)) {
+      if (engineId.equalsIgnoreCase(EngineIds.TEST)) {
         continue;
       }
       var engineFactory =

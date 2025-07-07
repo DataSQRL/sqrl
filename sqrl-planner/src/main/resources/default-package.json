@@ -1,6 +1,9 @@
 {
   "version": "1",
   "enabled-engines": ["vertx", "postgres", "kafka", "flink"],
+  "compiler": {
+    "compile-flink-plan": true
+  },
   "engines" : {
     "flink" : {
       "config": {

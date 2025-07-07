@@ -36,8 +36,8 @@ public class CompilerConfigImpl implements PackageJson.CompilerConfig {
   }
 
   @Override
-  public boolean compilePlan() {
-    return sqrlConfig.asBool("compilePlan").withDefault(true).get();
+  public boolean compileFlinkPlan() {
+    return sqrlConfig.asBool("compile-flink-plan").get();
   }
 
   @Override

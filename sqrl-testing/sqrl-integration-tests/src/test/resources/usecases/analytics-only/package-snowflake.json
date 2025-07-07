@@ -5,13 +5,11 @@
     "iceberg",
     "snowflake"
   ],
-  "values": {
-    "flink-config": {
-      "table.exec.source.idle-timeout": "1 ms"
-    }
-  },
   "engines": {
     "flink": {
+      "config": {
+        "table.exec.source.idle-timeout": "1 ms"
+      },
       "connectors" : {
         "iceberg" : {
           "write.parquet.page-size-bytes": 1000,

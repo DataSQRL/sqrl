@@ -165,7 +165,7 @@ public class Sqrl2FlinkSQLTranslator {
   public static final String SCHEMA_SUFFIX = "__schema";
 
   private final RuntimeExecutionMode executionMode;
-  private final boolean compilePlan;
+  private final boolean compileFlinkPlan;
   private final StreamTableEnvironmentImpl tEnv;
   private final Supplier<FlinkPlannerImpl> validatorSupplier;
   private final SqrlFunctionCatalog sqrlFunctionCatalog;
@@ -178,7 +178,7 @@ public class Sqrl2FlinkSQLTranslator {
   public Sqrl2FlinkSQLTranslator(
       BuildPath buildPath, FlinkStreamEngine flink, CompilerConfig compilerConfig) {
     this.executionMode = flink.getExecutionMode();
-    this.compilePlan = compilerConfig.compilePlan();
+    this.compileFlinkPlan = compilerConfig.compileFlinkPlan();
     // Set up a StreamExecution Environment in Flink with configuration and access to jars
     var jarUrls = getUdfUrls(buildPath);
     // Create a UDF class loader and configure
@@ -268,13 +268,13 @@ public class Sqrl2FlinkSQLTranslator {
    *
    * @return
    */
-  public FlinkPhysicalPlan compilePlan() {
+  public FlinkPhysicalPlan compileFlinkPlan() {
     var execute = planBuilder.getExecuteStatement();
     // StatementSetOperation statmentSetOp = (StatementSetOperation) getOperation(execute);
     var insert = toSqlString(execute);
     planBuilder.add(execute, insert);
     Optional<CompiledPlan> compiledPlan = Optional.empty();
-    if (executionMode == RuntimeExecutionMode.STREAMING && compilePlan) {
+    if (executionMode == RuntimeExecutionMode.STREAMING && compileFlinkPlan) {
       var parse = (StatementSetOperation) tEnv.getParser().parse(insert + ";").get(0);
       compiledPlan = Optional.of(tEnv.compilePlan(parse.getOperations()));
     }

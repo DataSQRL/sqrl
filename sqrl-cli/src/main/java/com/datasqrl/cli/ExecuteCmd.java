@@ -32,7 +32,7 @@ public class ExecuteCmd extends AbstractCmd {
     var sqrlConfig = ConfigLoaderUtils.loadResolvedConfig(errors, getBuildDir());
     var flinkConfig = ConfigLoaderUtils.loadFlinkConfig(planDir);
 
-    var sqrlRun = new DatasqrlRun(planDir, sqrlConfig.getCompilerConfig(), flinkConfig);
+    var sqrlRun = new DatasqrlRun(planDir, sqrlConfig, flinkConfig);
     sqrlRun.run(true, true);
   }
 }

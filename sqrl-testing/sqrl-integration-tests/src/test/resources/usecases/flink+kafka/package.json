@@ -1,20 +1,19 @@
 {
   "version": "1",
-  "enabled-engines": [
-    "flink",
-    "kafka"
-  ],
-  "values": {
-    "flink-config": {
-      "table.exec.source.idle-timeout": "1 ms",
-      "execution.checkpointing.interval": "6 s",
-      "execution.checkpointing.min-pause": "2 s"
-    },
-    "create-topics": ["input_topic1", "input_topic2"]
+  "enabled-engines": ["flink", "kafka"],
+  "engines" : {
+    "flink" : {
+      "config": {
+        "table.exec.source.idle-timeout": "1 ms",
+        "execution.checkpointing.interval": "6 s",
+        "execution.checkpointing.min-pause": "2 s"
+      }
+    }
   },
   "test-runner": {
     "snapshot-dir": "snapshots-flink_kafka",
     "delay-sec": -1,
-    "required-checkpoints": 1
+    "required-checkpoints": 1,
+    "create-topics": ["input_topic1", "input_topic2"]
   }
 }

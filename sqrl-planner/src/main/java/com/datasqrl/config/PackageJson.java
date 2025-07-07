@@ -52,7 +52,7 @@ public interface PackageJson {
 
   interface CompilerConfig {
 
-    boolean compilePlan();
+    boolean compileFlinkPlan();
 
     CostModel getCostModel();
 
