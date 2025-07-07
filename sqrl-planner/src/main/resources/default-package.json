@@ -2,7 +2,18 @@
   "version": "1",
   "enabled-engines": ["vertx", "postgres", "kafka", "flink"],
   "compiler": {
-    "compile-flink-plan": true
+    "logger": "print",
+    "extended-scalar-types": true,
+    "compile-flink-plan": true,
+    "cost-model": "DEFAULT",
+    "explain": {
+      "text": true,
+      "sql": false,
+      "logical": true,
+      "physical": false,
+      "sorted": true,
+      "visual": true
+    }
   },
   "engines" : {
     "flink" : {

@@ -1,8 +1,5 @@
 {
   "version": "1",
-  "compiler": {
-    "extendedScalarTypes": true
-  },
   "test-runner": {
     "snapshot-dir": "snapshots-simple-with-bigint-support"
   }

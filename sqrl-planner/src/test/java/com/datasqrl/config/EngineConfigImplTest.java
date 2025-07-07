@@ -54,11 +54,11 @@ class EngineConfigImplTest {
 
   @Test
   void givenConfigWithCustomSetting_whenGetSetting_thenReturnsValue() {
-    config.setProperty("customSetting", "customValue");
+    config.setProperty("custom-setting", "customValue");
 
     var engineConfig = new EngineConfigImpl(config);
 
-    var value = engineConfig.getSetting("customSetting", Optional.empty());
+    var value = engineConfig.getSetting("custom-setting", Optional.empty());
     assertThat(value).isEqualTo("customValue");
   }
 
@@ -66,7 +66,7 @@ class EngineConfigImplTest {
   void givenConfigWithoutSetting_whenGetSettingWithDefault_thenReturnsDefault() {
     var engineConfig = new EngineConfigImpl(config);
 
-    var value = engineConfig.getSetting("missingSetting", Optional.of("default"));
+    var value = engineConfig.getSetting("missing-setting", Optional.of("default"));
 
     assertThat(value).isEqualTo("default");
   }

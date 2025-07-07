@@ -54,6 +54,7 @@ class ConfigLoaderUtilsTest {
             errors, Path.of("src/test/resources/config/config1.json"), null);
     var config1 = getSqrlConfig(res);
     testConfig1(config1);
+    testSubConf(config1.getSubConfig("sub-conf"));
   }
 
   @Test
@@ -68,6 +69,7 @@ class ConfigLoaderUtilsTest {
     res = ConfigLoaderUtils.loadResolvedConfigFromFile(errors, tempFile2, null);
     var reloadedConfig = getSqrlConfig(res);
     testConfig1(reloadedConfig);
+    testSubConf(reloadedConfig.getSubConfig("sub-conf"));
   }
 
   @Test
@@ -219,12 +221,12 @@ class ConfigLoaderUtilsTest {
     assertThat(config.getVersion()).isEqualTo(1);
 
     var x1 = config.as("x1", SqrlConfigTest.ConstraintClass.class).get();
-    assertThat(x1.optInt).isEqualTo(2);
+    assertThat(x1.integer).isEqualTo(2);
     assertThat(x1.flag).isFalse();
-    assertThat(x1.optString).isEqualTo("hello world");
+    assertThat(x1.string).isEqualTo("hello world");
 
     var x2 = config.as("x2", SqrlConfigTest.ConstraintClass.class).get();
-    assertThat(x2.optInt).isEqualTo(33);
+    assertThat(x2.integer).isEqualTo(33);
 
     assertThatThrownBy(() -> config.as("xf1", SqrlConfigTest.ConstraintClass.class).get())
         .isInstanceOf(CollectedException.class)
@@ -236,7 +238,7 @@ class ConfigLoaderUtilsTest {
 
     var nested = config.as("nested", SqrlConfigTest.NestedClass.class).get();
     assertThat(nested.counter).isEqualTo(5);
-    assertThat(nested.obj.optInt).isEqualTo(33);
+    assertThat(nested.obj.integer).isEqualTo(33);
     assertThat(nested.obj.flag).isTrue();
   }
 

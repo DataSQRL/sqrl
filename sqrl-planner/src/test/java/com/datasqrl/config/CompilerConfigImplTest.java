@@ -16,7 +16,9 @@
 package com.datasqrl.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.datasqrl.error.CollectedException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -30,16 +32,8 @@ class CompilerConfigImplTest {
   }
 
   @Test
-  void givenEmptyConfig_whenGetDefaults_thenReturnsDefaultValues() {
-    var compilerConfig = new CompilerConfigImpl(config);
-
-    assertThat(compilerConfig.isExtendedScalarTypes()).isTrue();
-    assertThat(compilerConfig.getLogger()).isEqualTo("print");
-  }
-
-  @Test
   void givenCustomConfig_whenGetValues_thenReturnsCustomValues() {
-    config.setProperty("extendedScalarTypes", false);
+    config.setProperty("extended-scalar-types", false);
     config.setProperty("logger", "custom");
 
     var compilerConfig = new CompilerConfigImpl(config);
@@ -49,11 +43,14 @@ class CompilerConfigImplTest {
   }
 
   @Test
-  void givenConfig_whenGetExplain_thenReturnsExplainConfig() {
+  void givenCostModel_whenInvalid_thenThrowsError() {
+    config.setProperty("cost-model", "asd");
+
     var compilerConfig = new CompilerConfigImpl(config);
 
-    var explainConfig = compilerConfig.getExplain();
-
-    assertThat(explainConfig).isNotNull();
+    assertThatThrownBy(compilerConfig::getCostModel)
+        .isInstanceOf(CollectedException.class)
+        .hasMessage(
+            "Value [asd] for key [cost-model] is not valid. Must be one of [DEFAULT, READ, WRITE]");
   }
 }

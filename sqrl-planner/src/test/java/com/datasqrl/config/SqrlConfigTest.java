@@ -94,28 +94,28 @@ public class SqrlConfigTest {
     SqrlConfig.Value invalidValue =
         config.asString("number").validate(s -> s.equals("99"), "Must be 99");
 
-    assertThatThrownBy(() -> invalidValue.get())
+    assertThatThrownBy(invalidValue::get)
         .isInstanceOf(CollectedException.class)
         .hasMessageContaining("Must be 99");
   }
 
   @Test
   void givenTypedValues_whenGetValues_thenReturnsCorrectTypes() {
-    config.setProperty("intValue", 123);
-    config.setProperty("longValue", 456L);
-    config.setProperty("boolValue", true);
-    config.setProperty("stringValue", "test");
-    config.setProperty("listValue", List.of("a", "b", "c"));
+    config.setProperty("int-value", 123);
+    config.setProperty("long-value", 456L);
+    config.setProperty("bool-value", true);
+    config.setProperty("string-value", "test");
+    config.setProperty("list-value", List.of("a", "b", "c"));
 
-    assertThat(config.asInt("intValue").get()).isEqualTo(123);
-    assertThat(config.asLong("longValue").get()).isEqualTo(456L);
-    assertThat(config.asBool("boolValue").get()).isTrue();
-    assertThat(config.asString("stringValue").get()).isEqualTo("test");
-    assertThat(config.asList("listValue", String.class).get()).containsExactly("a", "b", "c");
+    assertThat(config.asInt("int-value").get()).isEqualTo(123);
+    assertThat(config.asLong("long-value").get()).isEqualTo(456L);
+    assertThat(config.asBool("bool-value").get()).isTrue();
+    assertThat(config.asString("string-value").get()).isEqualTo("test");
+    assertThat(config.asList("list-value", String.class).get()).containsExactly("a", "b", "c");
   }
 
   @Test
-  void givenNestedProperties_whenGetSubConfig_thenReturnsNestedValues() {
+  void givenNestedProperties_whenGetSubConfig_thenReturnsNestedNalues() {
     var parentConfig = config.getSubConfig("parent");
     var childConfig = parentConfig.getSubConfig("child");
     childConfig.setProperty("value", "nested");
@@ -151,9 +151,9 @@ public class SqrlConfigTest {
   void givenObject_whenSetProperties_thenSetsAllObjectProperties() {
     var testObj = new TestObject("testName", 99, true);
 
-    config.getSubConfig("testObj").setProperties(testObj);
+    config.getSubConfig("test-obj").setProperties(testObj);
 
-    var testObjConfig = config.getSubConfig("testObj");
+    var testObjConfig = config.getSubConfig("test-obj");
     assertThat(testObjConfig.asString("name").get()).isEqualTo("testName");
     assertThat(testObjConfig.asInt("number").get()).isEqualTo(99);
     assertThat(testObjConfig.asBool("flag").get()).isTrue();
@@ -161,12 +161,12 @@ public class SqrlConfigTest {
 
   @Test
   void givenConfigWithObjectData_whenAllAs_thenReturnsObject() {
-    var testObjConfig = config.getSubConfig("testObj");
+    var testObjConfig = config.getSubConfig("test-obj");
     testObjConfig.setProperty("name", "testName");
     testObjConfig.setProperty("number", 99);
     testObjConfig.setProperty("flag", true);
 
-    var result = config.getSubConfig("testObj").allAs(TestObject.class).get();
+    var result = config.getSubConfig("test-obj").allAs(TestObject.class).get();
 
     assertThat(result.name).isEqualTo("testName");
     assertThat(result.number).isEqualTo(99);
@@ -261,11 +261,11 @@ public class SqrlConfigTest {
 
   public static class ConstraintClass {
 
-    @Constraints.Default public int optInt = 33;
+    @Constraints.Default public int integer = 33;
 
     @Constraints.MinLength(min = 5)
     @Constraints.Default
-    public String optString = "x";
+    public String string = "x";
 
     @Constraints.NotNull public boolean flag = true;
   }

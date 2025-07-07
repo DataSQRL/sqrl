@@ -1,7 +1,7 @@
 # DataSQRL Configuration (`package.json` file)
 
 DataSQRL projects are configured with one or more **JSON** files.  
-Unless a file is passed explicitly to `datasqrl compile -c …`, the compiler looks for a `package.json` in the working directory; if none is found the **built-in default** (shown [here](#default-configuration)) is applied.
+Unless a file is passed explicitly to `datasqrl compile -c ...`, the compiler looks for a `package.json` in the working directory; if none is found the **built-in default** (shown [here](#default-configuration)) is applied.
 
 Multiple files can be provided; they are merged **in order** – later files override earlier ones, objects are *deep-merged*, and array values are replaced wholesale.
 
@@ -31,20 +31,17 @@ Each sub-key below `engines` must match one of the IDs in **`enabled-engines`**.
 {
   "engines": {
     "<engine-id>": {
-      "type": "<engine-id>",        // optional; inferred from key if omitted
-      "config": { … },              // engine-specific knobs (Flink SQL options, etc.)
-      "connectors": { … }           // templates for table sources & sinks
+      "type": "<engine-id>", // optional; inferred from key if omitted
+      "config": { ... }      // engine-specific knobs (Flink SQL options, etc.)
     }
   }
 }
 ```
 
 ### Flink (`flink`)
-| Key | Type | Default | Notes |
-|-----|------|---------|-------|
-| `mode` | `"streaming"` \| `"batch"` | `"streaming"` | Execution mode used during plan compilation **and** job submission. |
-| `config` | object | `{}` | Copied verbatim into the generated Flink SQL job (e.g. `"table.exec.source.idle-timeout": "5 s"`). |
-| `connectors` | object | *see default list* | Connector templates (JDBC, Kafka, files, Iceberg…). Field values support variable interpolation (below). |
+| Key          | Type   | Default | Notes                                                                                              |
+|--------------|--------|---------|----------------------------------------------------------------------------------------------------|
+| `config`     | object | `{}`    | Copied verbatim into the generated Flink SQL job (e.g. `"table.exec.source.idle-timeout": "5 s"`). |
 
 > **Built-in connector templates**  
 > `postgres`, `postgres_log-source`, `postgres_log-sink`,  
@@ -80,17 +77,18 @@ Used as a *table-format* engine together with a query engine such as Flink or Sn
 ```jsonc
 {
   "compiler": {
-    "logger": "print",            // "print" | any configured log engine | "none"
-    "extendedScalarTypes": true,  // expose extended scalar types in generated GraphQL
-    "compile-flink-plan": true,   // compile Flink physical plans where supported
+    "logger": "print",             // "print" | any configured log engine | "none"
+    "extended-scalar-types": true, // expose extended scalar types in generated GraphQL
+    "compile-flink-plan": true,    // compile Flink physical plans where supported
+    "cost-model": "DEFAULT",       //
 
-    "explain": {                  // artifacts in build/pipeline_*.*
+    "explain": {                   // artifacts in build/pipeline_*.*
       "visual":   true,
       "text":     true,
       "sql":      false,
       "logical":  true,
       "physical": false,
-      "sorted":   true            // deterministic ordering (mostly for tests)
+      "sorted":   true             // deterministic ordering (mostly for tests)
     }
   }
 }
@@ -175,33 +173,39 @@ The built-in fallback (excerpt - full version [here](https://github.com/DataSQRL
 ```jsonc
 {
   "version": 1,
-  "enabled-engines": ["vertx","postgres","kafka","flink"],
+  "enabled-engines": ["vertx", "postgres", "kafka", "flink"],
   "engines": {
     "flink": {
-      "connectors": {
-        "postgres": { "connector": "jdbc-sqrl", … },
-        "kafka":   { "connector": "kafka", … },
-        "kafka-keyed": { … },
-        "kafka-upsert": { … },
-        "localfile": { … },
-        "iceberg": { … },
-        "print": { "connector": "print" }
+      "config": {
+        "execution.runtime-mode": "STREAMING",
+        "rest.address": "localhost",
+        "rest.port": 8081,
+        "state.backend.type": "rocksdb",
+        ...
       }
     },
     "snowflake": {
       "schema-type": "aws-glue",
       "catalog-name": "${SNOWFLAKE_CATALOG_NAME}",
       "external-volume": "${SNOWFLAKE_EXTERNAL_VOLUME}",
-      "url": "jdbc:snowflake://${SNOWFLAKE_ID}.snowflakecomputing.com/?…"
+      "url": "jdbc:snowflake://${SNOWFLAKE_ID}.snowflakecomputing.com/?..."
     }
   },
+  "connectors": {
+    "postgres": { "connector": "jdbc-sqrl", ... },
+    "kafka":   { "connector": "kafka", ... },
+    "kafka-keyed": { ... },
+    "kafka-upsert": { ... },
+    "localfile": { ... },
+    "iceberg": { ... },
+    "print": { "connector": "print" }
+  }
   "test-runner": {
+    "snapshot-dir": "./snapshots",
+    "test-dir": "./tests",
     "delay-sec": 30,
-    "mutation-delay-sec": 1,
-    "headers": {
-      "Authorization": "Bearer token123",
-      "Content-Type": "application/json"
-    }
+    "mutation-delay-sec": 0,
+    "required-checkpoints": 0
   }
 }
 ```

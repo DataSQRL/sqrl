@@ -28,8 +28,17 @@
       "type": "object",
       "minProperties": 1,
       "properties": {
+        "logger": {
+          "type": "string"
+        },
+        "extended-scalar-types": {
+          "type": "boolean"
+        },
         "compile-flink-plan": {
           "type": "boolean"
+        },
+        "cost-model": {
+          "type": "string"
         },
         "explain": {
           "type": "object",
@@ -54,15 +63,6 @@
               "type": "boolean"
             }
           }
-        },
-        "snapshotPath": {
-          "type": "string"
-        },
-        "logger": {
-          "type": "string"
-        },
-        "extendedScalarTypes": {
-          "type": "boolean"
         },
         "api": {
           "type": "object",
