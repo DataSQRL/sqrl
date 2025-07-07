@@ -1,1 +1,9 @@
-{"data":{"SensorAggregateTest":[{"sensorid":1,"maxTemp":29,"avgTemp":24.5}]}}
+{
+  "data" : {
+    "SensorAggregateTest" : [ {
+      "sensorid" : 1,
+      "maxTemp" : 29,
+      "avgTemp" : 24.5
+    } ]
+  }
+}

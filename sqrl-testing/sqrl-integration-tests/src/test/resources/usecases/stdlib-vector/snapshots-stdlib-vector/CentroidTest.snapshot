@@ -1,1 +1,11 @@
-{"data":{"CentroidTest":[{"category_id":5,"center_vector":[0.075,0.11,0.025,0.875,0.875]},{"category_id":10,"center_vector":[0.875,0.825,0.02,0.11,0.12]}]}}
+{
+  "data" : {
+    "CentroidTest" : [ {
+      "category_id" : 5,
+      "center_vector" : [ 0.075, 0.11, 0.025, 0.875, 0.875 ]
+    }, {
+      "category_id" : 10,
+      "center_vector" : [ 0.875, 0.825, 0.02, 0.11, 0.12 ]
+    } ]
+  }
+}

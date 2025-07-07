@@ -1,1 +1,25 @@
-{"data":{"SecReadingTest":[{"sensorid":9,"timeSec":"2024-05-09T07:08:19.999Z","temp":102.43826972},{"sensorid":2,"timeSec":"2024-05-09T07:08:19.999Z","temp":98.97829214},{"sensorid":1,"timeSec":"2024-05-09T07:08:19.999Z","temp":98.82523372},{"sensorid":15,"timeSec":"2024-05-09T07:08:19.999Z","temp":98.7222152},{"sensorid":12,"timeSec":"2024-05-09T07:08:19.999Z","temp":98.61149275}]}}
+{
+  "data" : {
+    "SecReadingTest" : [ {
+      "sensorid" : 9,
+      "timeSec" : "2024-05-09T07:08:19.999Z",
+      "temp" : 102.43826972
+    }, {
+      "sensorid" : 2,
+      "timeSec" : "2024-05-09T07:08:19.999Z",
+      "temp" : 98.97829214
+    }, {
+      "sensorid" : 1,
+      "timeSec" : "2024-05-09T07:08:19.999Z",
+      "temp" : 98.82523372
+    }, {
+      "sensorid" : 15,
+      "timeSec" : "2024-05-09T07:08:19.999Z",
+      "temp" : 98.7222152
+    }, {
+      "sensorid" : 12,
+      "timeSec" : "2024-05-09T07:08:19.999Z",
+      "temp" : 98.61149275
+    } ]
+  }
+}

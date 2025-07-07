@@ -1,1 +1,11 @@
-{"data":{"Package":[{"versions":[{"version":"0.1.1","file":"SIKfcBnr7bJCOldq_bp9Mryqsjw.zip","hash":"164b68a31a68a0329a2e93f796f47291"}]}]}}
+{
+  "data" : {
+    "Package" : [ {
+      "versions" : [ {
+        "version" : "0.1.1",
+        "file" : "SIKfcBnr7bJCOldq_bp9Mryqsjw.zip",
+        "hash" : "164b68a31a68a0329a2e93f796f47291"
+      } ]
+    } ]
+  }
+}

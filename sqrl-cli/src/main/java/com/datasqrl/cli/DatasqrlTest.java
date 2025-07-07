@@ -15,9 +15,13 @@
  */
 package com.datasqrl.cli;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.util.FlinkOperatorStatusChecker;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -66,6 +70,7 @@ public class DatasqrlTest {
   private final Map<String, String> env;
   public String GRAPHQL_ENDPOINT = "http://localhost:8888/graphql";
   private final ObjectMapper objectMapper = new ObjectMapper();
+  private final ObjectWriter jsonWriter = objectMapper.writerWithDefaultPrettyPrinter();
 
   public DatasqrlTest(
       Path planPath,
@@ -346,19 +351,34 @@ public class DatasqrlTest {
 
   @SneakyThrows
   private void snapshot(
-      Path snapshotPath, String name, String currentResponse, List<Exception> exceptions) {
+      Path snapshotPath, String name, String rawJson, List<Exception> exceptions) {
+
+    var content = format(rawJson);
 
     // Existing snapshot logic
     if (Files.exists(snapshotPath)) {
-      String existingSnapshot = Files.readString(snapshotPath);
-      if (!existingSnapshot.equals(currentResponse)) {
-        exceptions.add(new SnapshotMismatchException(name, existingSnapshot, currentResponse));
-      } else {
+      var existingSnapshot = Files.readString(snapshotPath, UTF_8);
+      if (existingSnapshot.equals(content)) {
         exceptions.add(new SnapshotOkException(name));
+      } else if (format(existingSnapshot).equals(content)) {
+        Files.writeString(snapshotPath, content, UTF_8);
+        exceptions.add(new SnapshotOkException(name));
+      } else {
+        exceptions.add(new SnapshotMismatchException(name, existingSnapshot, content));
       }
     } else {
-      Files.writeString(snapshotPath, currentResponse);
+      Files.writeString(snapshotPath, content, UTF_8);
       exceptions.add(new SnapshotCreationException(name));
+    }
+  }
+
+  @SneakyThrows
+  private String format(String rawData) {
+    try {
+      var data = objectMapper.readValue(rawData, Object.class);
+      return jsonWriter.writeValueAsString(data);
+    } catch (JsonProcessingException e) {
+      return rawData;
     }
   }
 
