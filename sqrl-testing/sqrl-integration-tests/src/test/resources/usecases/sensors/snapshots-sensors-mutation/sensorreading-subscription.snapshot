@@ -1,1 +1,92 @@
-[{"data":{"SensorReadingSubscription":{"sensorid":1,"temperature":12.7}}},{"data":{"SensorReadingSubscription":{"sensorid":1,"temperature":12.7}}},{"data":{"SensorReadingSubscription":{"sensorid":1,"temperature":12.7}}},{"data":{"SensorReadingSubscription":{"sensorid":1,"temperature":12.7}}},{"data":{"SensorReadingSubscription":{"sensorid":1,"temperature":13.5}}},{"data":{"SensorReadingSubscription":{"sensorid":1,"temperature":22.7}}},{"data":{"SensorReadingSubscription":{"sensorid":1,"temperature":43.5}}},{"data":{"SensorReadingSubscription":{"sensorid":2,"temperature":14.7}}},{"data":{"SensorReadingSubscription":{"sensorid":2,"temperature":15.1}}},{"data":{"SensorReadingSubscription":{"sensorid":2,"temperature":24.7}}},{"data":{"SensorReadingSubscription":{"sensorid":2,"temperature":55.1}}},{"data":{"SensorReadingSubscription":{"sensorid":3,"temperature":10.7}}},{"data":{"SensorReadingSubscription":{"sensorid":3,"temperature":50.7}}}]
+[ {
+  "data" : {
+    "SensorReadingSubscription" : {
+      "sensorid" : 1,
+      "temperature" : 12.7
+    }
+  }
+}, {
+  "data" : {
+    "SensorReadingSubscription" : {
+      "sensorid" : 1,
+      "temperature" : 12.7
+    }
+  }
+}, {
+  "data" : {
+    "SensorReadingSubscription" : {
+      "sensorid" : 1,
+      "temperature" : 12.7
+    }
+  }
+}, {
+  "data" : {
+    "SensorReadingSubscription" : {
+      "sensorid" : 1,
+      "temperature" : 12.7
+    }
+  }
+}, {
+  "data" : {
+    "SensorReadingSubscription" : {
+      "sensorid" : 1,
+      "temperature" : 13.5
+    }
+  }
+}, {
+  "data" : {
+    "SensorReadingSubscription" : {
+      "sensorid" : 1,
+      "temperature" : 22.7
+    }
+  }
+}, {
+  "data" : {
+    "SensorReadingSubscription" : {
+      "sensorid" : 1,
+      "temperature" : 43.5
+    }
+  }
+}, {
+  "data" : {
+    "SensorReadingSubscription" : {
+      "sensorid" : 2,
+      "temperature" : 14.7
+    }
+  }
+}, {
+  "data" : {
+    "SensorReadingSubscription" : {
+      "sensorid" : 2,
+      "temperature" : 15.1
+    }
+  }
+}, {
+  "data" : {
+    "SensorReadingSubscription" : {
+      "sensorid" : 2,
+      "temperature" : 24.7
+    }
+  }
+}, {
+  "data" : {
+    "SensorReadingSubscription" : {
+      "sensorid" : 2,
+      "temperature" : 55.1
+    }
+  }
+}, {
+  "data" : {
+    "SensorReadingSubscription" : {
+      "sensorid" : 3,
+      "temperature" : 10.7
+    }
+  }
+}, {
+  "data" : {
+    "SensorReadingSubscription" : {
+      "sensorid" : 3,
+      "temperature" : 50.7
+    }
+  }
+} ]
