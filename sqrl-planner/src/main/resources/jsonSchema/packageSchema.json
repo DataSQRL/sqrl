@@ -173,53 +173,25 @@
       "additionalProperties": true
     },
     "dependencies": {
-      "oneOf": [
-        {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "patternProperties": {
-              ".*": {
-                "type": "object",
-                "properties": {
-                  "name": {
-                    "type": "string"
-                  },
-                  "version": {
-                    "type": "string"
-                  },
-                  "variant": {
-                    "type": "string"
-                  }
-                },
-                "required": ["name", "version"],
-                "additionalProperties": false
-              }
-            }
-          }
-        },
-        {
+      "type": "object",
+      "patternProperties": {
+        ".*": {
           "type": "object",
-          "patternProperties": {
-            ".*": {
-              "type": "object",
-              "properties": {
-                "name": {
-                  "type": "string"
-                },
-                "version": {
-                  "type": "string"
-                },
-                "variant": {
-                  "type": "string"
-                }
-              },
-              "required": ["name", "version"],
-              "additionalProperties": false
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "version": {
+              "type": "string"
+            },
+            "variant": {
+              "type": "string"
             }
-          }
+          },
+          "required": ["name", "version"],
+          "additionalProperties": false
         }
-      ]
+      }
     },
     "package": {
       "type": "object",

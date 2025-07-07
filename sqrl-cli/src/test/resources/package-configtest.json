@@ -30,7 +30,7 @@
       }
     }
   },
-  "dependencies": [{
+  "dependencies": {
     "datasqrl.examples.Shared": {
       "version": "1.0.0",
       "variant": "dev"
@@ -38,5 +38,5 @@
     "datasqrl.examples.Basic": {
       "version": "1.0.0"
     }
-  }]
+  }
 }
