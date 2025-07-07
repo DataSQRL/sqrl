@@ -155,23 +155,6 @@ class ConfigLoaderUtilsTest {
   }
 
   @Test
-  void
-      givenTestFlinkConfig_whenReadFlinkConnectorsPrint_thenReturnsInheritedConnectorConfiguration() {
-    var testConfigPath = Path.of("src/test/resources/config/test-flink-config.json");
-    var packageJson = ConfigLoaderUtils.loadUnresolvedConfig(errors, List.of(testConfigPath));
-
-    var enginesConfig = packageJson.getEngines();
-    var flinkConfig = enginesConfig.getEngineConfig("flink");
-
-    assertThat(flinkConfig).isPresent();
-    var flinkConnectorsConfig = flinkConfig.get().getConnectors();
-    var printConnectorConfig = flinkConnectorsConfig.getConnectorConfigOrErr("print").toMap();
-
-    assertThat(printConnectorConfig.get("connector")).contains("print");
-    assertThat(printConnectorConfig.get("print-identifier")).contains("${sqrl:table-name}");
-  }
-
-  @Test
   void loadResolvedConfig_shouldThrow_whenDeployDirDoesNotExist() {
     Path invalidDir = tempDir.resolve("nonexistent");
 

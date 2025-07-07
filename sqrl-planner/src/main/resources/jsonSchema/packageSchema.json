@@ -114,10 +114,6 @@
           "type": "object",
           "minProperties": 1,
           "properties": {
-            "connectors": {
-              "type": "object",
-              "minProperties": 1
-            },
             "config": {
               "type": "object",
               "minProperties": 1
@@ -144,6 +140,10 @@
           "additionalProperties": false
         }
       }
+    },
+    "connectors": {
+      "type": "object",
+      "minProperties": 1
     },
     "dependencies": {
       "type": "object",

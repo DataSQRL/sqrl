@@ -1,31 +1,27 @@
 {
   "version": "1",
   "enabled-engines": ["postgres_log", "flink", "postgres","vertx"],
-  "engines" : {
-    "flink" : {
-      "connectors": {
-        "postgres_log-source": {
-          "connector": "postgres-cdc",
-          "hostname": "${PGHOST}",
-          "port": "${PGPORT}",
-          "username": "${JDBC_USERNAME}",
-          "password": "${JDBC_PASSWORD}",
-          "database-name": "datasqrl",
-          "schema-name": "public",
-          "table-name": "${sqrl:table}",
-          "slot.name": "flink_slot",
-          "decoding.plugin.name": "pgoutput",
-          "debezium.slot.drop_on_stop": "false"
-        },
-        "postgres_log-sink": {
-          "connector": "jdbc-sqrl",
-          "password": "${JDBC_PASSWORD}",
-          "driver": "org.postgresql.Driver",
-          "username": "${JDBC_USERNAME}",
-          "url": "${JDBC_URL}",
-          "table-name": "${sqrl:table}"
-        }
-      }
+  "connectors": {
+    "postgres_log-source": {
+      "connector": "postgres-cdc",
+      "hostname": "${PGHOST}",
+      "port": "${PGPORT}",
+      "username": "${JDBC_USERNAME}",
+      "password": "${JDBC_PASSWORD}",
+      "database-name": "datasqrl",
+      "schema-name": "public",
+      "table-name": "${sqrl:table}",
+      "slot.name": "flink_slot",
+      "decoding.plugin.name": "pgoutput",
+      "debezium.slot.drop_on_stop": "false"
+    },
+    "postgres_log-sink": {
+      "connector": "jdbc-sqrl",
+      "password": "${JDBC_PASSWORD}",
+      "driver": "org.postgresql.Driver",
+      "username": "${JDBC_USERNAME}",
+      "url": "${JDBC_URL}",
+      "table-name": "${sqrl:table}"
     }
   },
   "script": {

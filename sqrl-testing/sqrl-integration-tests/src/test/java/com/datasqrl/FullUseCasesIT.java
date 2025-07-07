@@ -336,7 +336,7 @@ class FullUseCasesIT {
   public void runTestCaseByName() {
     var param =
         useCaseProvider().stream()
-            .filter(p -> p.sqrlFileName.startsWith("usertokens.sqrl") && p.goal.equals("test"))
+            .filter(p -> p.sqrlFileName.startsWith("flink_kafka.sqrl") && p.goal.equals("test"))
             .collect(MoreCollectors.onlyElement());
     useCase(param);
   }

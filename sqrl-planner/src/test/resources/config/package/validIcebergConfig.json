@@ -1,17 +1,13 @@
 {
-  "engines": {
-    "flink": {
-      "connectors": {
-        "iceberg": {
-          "connector": "iceberg",
-          "warehouse": "s3://nsabonyi-iceberg-table-test",
-          "catalog-impl": "org.apache.iceberg.aws.glue.GlueCatalog",
-          "io-impl": "org.apache.iceberg.aws.s3.S3FileIO",
-          "catalog-name": "NSCatalog",
-          "catalog-database": "nsdatabase",
-          "write.upsert.enabled": "true"
-        }
-      }
+  "connectors": {
+    "iceberg": {
+      "connector": "iceberg",
+      "warehouse": "s3://nsabonyi-iceberg-table-test",
+      "catalog-impl": "org.apache.iceberg.aws.glue.GlueCatalog",
+      "io-impl": "org.apache.iceberg.aws.s3.S3FileIO",
+      "catalog-name": "NSCatalog",
+      "catalog-database": "nsdatabase",
+      "write.upsert.enabled": "true"
     }
   }
 }

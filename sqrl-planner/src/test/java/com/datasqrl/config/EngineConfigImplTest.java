@@ -70,18 +70,4 @@ class EngineConfigImplTest {
 
     assertThat(value).isEqualTo("default");
   }
-
-  @Test
-  void givenConfigWithConnectors_whenGetConnectors_thenReturnsConnectorsConfig() {
-    var connectorsSubConfig = config.getSubConfig("connectors");
-    connectorsSubConfig
-        .getSubConfig("jdbc")
-        .setProperty("url", "jdbc:postgresql://localhost:5432/db");
-
-    var engineConfig = new EngineConfigImpl(config);
-
-    var connectorsConfig = engineConfig.getConnectors();
-
-    assertThat(connectorsConfig).isNotNull();
-  }
 }

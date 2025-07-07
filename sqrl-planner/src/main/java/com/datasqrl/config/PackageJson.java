@@ -34,6 +34,8 @@ public interface PackageJson {
 
   EnginesConfig getEngines();
 
+  ConnectorsConfig getConnectors();
+
   DiscoveryConfig getDiscovery();
 
   DependenciesConfig getDependencies();
@@ -121,8 +123,6 @@ public interface PackageJson {
 
     String getSetting(String key, Optional<String> defaultValue);
 
-    ConnectorsConfig getConnectors();
-
     Map<String, Object> getConfig();
 
     boolean isEmpty();
@@ -130,7 +130,7 @@ public interface PackageJson {
 
   @AllArgsConstructor
   @Getter
-  static class EmptyEngineConfig implements EngineConfig {
+  class EmptyEngineConfig implements EngineConfig {
     String engineName;
 
     @Override
@@ -139,11 +139,6 @@ public interface PackageJson {
           () ->
               new IllegalArgumentException(
                   "Engine " + engineName + " does not have configuration options"));
-    }
-
-    @Override
-    public ConnectorsConfig getConnectors() {
-      return null;
     }
 
     @Override

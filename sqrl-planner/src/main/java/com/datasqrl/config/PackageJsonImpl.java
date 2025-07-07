@@ -58,6 +58,11 @@ public class PackageJsonImpl implements PackageJson {
   }
 
   @Override
+  public ConnectorsConfig getConnectors() {
+    return new ConnectorsConfigImpl(sqrlConfig.getSubConfig(CONNECTORS_KEY));
+  }
+
+  @Override
   public DiscoveryConfigImpl getDiscovery() {
     return new DiscoveryConfigImpl(sqrlConfig.getSubConfig(DISCOVERY_KEY));
   }

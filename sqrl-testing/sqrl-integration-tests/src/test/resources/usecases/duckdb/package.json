@@ -15,15 +15,15 @@
         "table.exec.source.idle-timeout": "1 ms",
         "execution.checkpointing.interval": "8 s",
         "execution.checkpointing.min-pause": "2 s"
-      },
-      "connectors" : {
-        "iceberg" : {
-          "write.parquet.page-size-bytes": 1000,
-          "warehouse":"/tmp/duckdb",
-          "catalog-type":"hadoop",
-          "catalog-name": "mydatabase"
-        }
       }
+    }
+  },
+  "connectors" : {
+    "iceberg" : {
+      "write.parquet.page-size-bytes": 1000,
+      "warehouse":"/tmp/duckdb",
+      "catalog-type":"hadoop",
+      "catalog-name": "mydatabase"
     }
   },
   "test-runner": {
