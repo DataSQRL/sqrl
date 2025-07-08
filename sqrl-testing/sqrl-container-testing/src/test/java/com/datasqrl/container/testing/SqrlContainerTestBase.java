@@ -16,6 +16,7 @@
 package com.datasqrl.container.testing;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 import static org.assertj.core.api.SoftAssertions.assertSoftly;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
