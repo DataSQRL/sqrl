@@ -78,13 +78,13 @@ class RunCmdTest {
     var mockSqrlConfig = mock(PackageJson.class);
     when(mockSqrlConfig.getCompilerConfig()).thenReturn(sqrlCompilerConfig);
 
-    Path rootDir = runCmd.cli.rootDir;
+    Path buildDir = runCmd.getBuildDir();
     Path planDir = runCmd.getTargetDir().resolve(SqrlConstants.PLAN_DIR);
 
     // Mock static methods and verify arguments
     try (MockedStatic<ConfigLoaderUtils> mocked = mockStatic(ConfigLoaderUtils.class)) {
       mocked
-          .when(() -> ConfigLoaderUtils.loadResolvedConfig(errors, rootDir))
+          .when(() -> ConfigLoaderUtils.loadResolvedConfig(errors, buildDir))
           .thenReturn(mockSqrlConfig);
 
       mocked.when(() -> ConfigLoaderUtils.loadFlinkConfig(planDir)).thenReturn(flinkConfig);
@@ -95,7 +95,7 @@ class RunCmdTest {
         runCmd.execute(errors);
 
         // Verify exact arguments
-        mocked.verify(() -> ConfigLoaderUtils.loadResolvedConfig(errors, rootDir));
+        mocked.verify(() -> ConfigLoaderUtils.loadResolvedConfig(errors, buildDir));
         mocked.verify(() -> ConfigLoaderUtils.loadFlinkConfig(planDir));
 
         DatasqrlRun constructed = datasqrlRunMocked.constructed().get(0);
