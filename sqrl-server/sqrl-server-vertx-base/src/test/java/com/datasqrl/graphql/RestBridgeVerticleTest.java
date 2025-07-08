@@ -20,9 +20,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.Collection;
-import java.util.concurrent.CompletableFuture;
-
 import com.datasqrl.graphql.HttpServerVerticle.ModelContainer;
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.config.ServletConfig;
@@ -47,6 +44,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
