@@ -157,18 +157,18 @@ public abstract class SqrlContainerTestBase {
 
     private static final long serialVersionUID = -2159257606710389109L;
 
-    private final Long existCode;
+    private final Long exitCode;
     private final String logs;
 
     public ContainerError(String message, Long exitCode, String logs, Throwable cause) {
       super(message, cause);
-      this.existCode = exitCode;
+      this.exitCode = exitCode;
       this.logs = logs;
     }
 
     public ContainerError(String message, Long exitCode, String logs) {
       super(message);
-      this.existCode = exitCode;
+      this.exitCode = exitCode;
       this.logs = logs;
     }
   }
