@@ -39,7 +39,7 @@ public class RunCmd extends AbstractCompileCmd {
     // Run
     var targetDir = getTargetDir();
     var planDir = targetDir.resolve(SqrlConstants.PLAN_DIR);
-    var sqrlConfig = ConfigLoaderUtils.loadResolvedConfig(errors, cli.rootDir);
+    var sqrlConfig = ConfigLoaderUtils.loadResolvedConfig(errors, cli.rootDir.resolve("build"));
     var flinkConfig = ConfigLoaderUtils.loadFlinkConfig(planDir);
 
     var sqrlRun = new DatasqrlRun(planDir, sqrlConfig.getCompilerConfig(), flinkConfig);

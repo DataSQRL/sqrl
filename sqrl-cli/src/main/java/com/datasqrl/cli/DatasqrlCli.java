@@ -58,7 +58,7 @@ public class DatasqrlCli implements Runnable {
   }
 
   public DatasqrlCli() {
-    this(Path.of(""));
+    this(Path.of("").toAbsolutePath());
   }
 
   public CommandLine getCmd() {
