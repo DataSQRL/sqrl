@@ -84,7 +84,6 @@ if [[ "$1" == "run" || "$1" == "test" || "$1" == "execute" ]]; then
     mkdir -p $FLINK_SP_DATA_PATH
 fi
 
-echo "Executing SQRL command: \"$1\" ..."
 # Get the UID/GID of the /build directory to ensure files are created with correct ownership
 BUILD_UID=$(stat -c '%u' /build)
 BUILD_GID=$(stat -c '%g' /build)
@@ -94,6 +93,7 @@ mkdir -p /build/build 2>/dev/null || true
 chown -R "$BUILD_UID:$BUILD_GID" /build/build 2>/dev/null || true
 
 # Run Java as root
+echo "Executing SQRL command: \"$1\" ..."
 java -jar /opt/sqrl/sqrl-cli.jar "${@}"
 EXIT_CODE=$?
 

@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.fail;
 import static org.assertj.core.api.SoftAssertions.assertSoftly;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
@@ -56,10 +57,7 @@ public abstract class SqrlContainerTestBase {
 
   @BeforeEach
   void setupBeforeEach() {
-    if (testDir == null) {
-      testDir = itPath(getTestCaseName());
-    }
-    assertBuildNotOwnedByRoot(testDir);
+    testDir = itPath(getTestCaseName());
   }
 
   @AfterEach
@@ -144,6 +142,7 @@ public abstract class SqrlContainerTestBase {
 
     log.info("SQRL script {} compiled successfully", Arrays.toString(command));
     validatePlan(workingDir, logs);
+    assertBuildNotOwnedByRoot(testDir, logs);
 
     return new ContainerResult(cmd, exitCode, logs);
   }
@@ -256,13 +255,13 @@ public abstract class SqrlContainerTestBase {
     return path.toRealPath();
   }
 
-  protected static void assertBuildNotOwnedByRoot(Path testDir) {
+  protected static void assertBuildNotOwnedByRoot(Path testDir, String logs) {
     var buildPath = testDir.resolve("build");
     if (buildPath.toFile().exists()) {
       try {
-        var owner = java.nio.file.Files.getOwner(buildPath);
+        var owner = Files.getOwner(buildPath);
         assertThat(owner.getName())
-            .as("Build directory should not be owned by root user")
+            .as("Build directory should not be owned by root user: %s\n%s", buildPath, logs)
             .isNotEqualTo("root");
         log.debug("Build directory {} is owned by: {}", buildPath, owner.getName());
       } catch (Exception e) {
