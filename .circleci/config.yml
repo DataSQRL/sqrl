@@ -324,11 +324,15 @@ jobs:
           builder_name: "sqrl-builder"
 
       - run:
-          name: Login to registries and pull base image
+          name: Pull base image
+          command: |
+            docker pull datasqrl/base-sqrl:$BASE_TAG
+
+      - run:
+          name: Login to registries
           command: |
             echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
             echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-            docker pull datasqrl/base-sqrl:$BASE_TAG
 
       - run:
           name: Build + push Docker images
