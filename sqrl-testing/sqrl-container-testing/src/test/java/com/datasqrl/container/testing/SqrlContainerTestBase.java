@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.regex.Pattern;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -123,11 +124,13 @@ public abstract class SqrlContainerTestBase {
   }
 
   protected void compileSqrlScript(String scriptName, Path workingDir) {
+    sqrlScript(workingDir, "compile", scriptName);
+  }
+
+  protected ContainerResult sqrlScript(Path workingDir, String... command) {
     log.info("Docker run command to reproduce:");
-    log.info(
-        getDockerRunCommand(
-            workingDir, SQRL_CMD_IMAGE, getImageTag(), false, "compile", scriptName));
-    cmd = createCmdContainer(workingDir).withCommand("compile", scriptName);
+    log.info(getDockerRunCommand(workingDir, SQRL_CMD_IMAGE, getImageTag(), false, command));
+    cmd = createCmdContainer(workingDir).withCommand(command);
 
     cmd.start();
 
@@ -138,9 +141,13 @@ public abstract class SqrlContainerTestBase {
       throw new RuntimeException("SQRL compilation failed with exit code " + exitCode);
     }
 
-    log.info("SQRL script {} compiled successfully", scriptName);
+    log.info("SQRL script {} compiled successfully", Arrays.toString(command));
     validatePlan(workingDir, logs);
+
+    return new ContainerResult(cmd, exitCode, logs);
   }
+
+  record ContainerResult(GenericContainer<?> cmd, Long exitCode, String logs) {}
 
   private void validatePlan(Path workingDir, String logs) {
     var planDir = workingDir.resolve("build/deploy/plan");
