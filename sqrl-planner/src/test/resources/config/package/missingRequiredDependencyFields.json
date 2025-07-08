@@ -1,9 +1,6 @@
 {
   "dependencies":
     {
-      "clickstream": {
-        "name": "clickstream-kafka",
-        "variant": "dev"
-      }
+      "clickstream": {}
     }
 }

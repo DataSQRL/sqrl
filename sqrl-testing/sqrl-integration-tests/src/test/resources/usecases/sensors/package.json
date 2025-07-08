@@ -6,9 +6,7 @@
   },
   "dependencies": {
     "sensor-local": {
-      "name": "sensor-testdata",
-      "version": "1",
-      "variant": "dev"
+      "name": "sensor-testdata"
     }
   }
 }

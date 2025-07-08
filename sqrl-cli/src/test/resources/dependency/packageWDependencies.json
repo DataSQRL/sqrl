@@ -24,6 +24,6 @@
   },
   "dependencies":
   {
-    "datasqrl.examples.Nutshop": { "version":  "0.1.0", "variant":  "dev" }
+    "datasqrl.examples.Nutshop": { "name":  "nutshop" }
   }
 }

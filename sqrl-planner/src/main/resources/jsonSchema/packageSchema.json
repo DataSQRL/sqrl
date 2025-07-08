@@ -161,7 +161,7 @@
               "type": "string"
             }
           },
-          "required": ["name", "version"],
+          "required": ["name"],
           "additionalProperties": false
         }
       }
