@@ -16,9 +16,11 @@
 package com.datasqrl.container.testing;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 import static org.assertj.core.api.SoftAssertions.assertSoftly;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
@@ -55,10 +57,7 @@ public abstract class SqrlContainerTestBase {
 
   @BeforeEach
   void setupBeforeEach() {
-    if (testDir == null) {
-      testDir = itPath(getTestCaseName());
-    }
-    cleanupBuildDirectory(testDir);
+    testDir = itPath(getTestCaseName());
   }
 
   @AfterEach
@@ -143,6 +142,7 @@ public abstract class SqrlContainerTestBase {
 
     log.info("SQRL script {} compiled successfully", Arrays.toString(command));
     validatePlan(workingDir, logs);
+    assertBuildNotOwnedByRoot(testDir, logs);
 
     return new ContainerResult(cmd, exitCode, logs);
   }
@@ -255,26 +255,17 @@ public abstract class SqrlContainerTestBase {
     return path.toRealPath();
   }
 
-  protected static void cleanupBuildDirectory(Path testDir) {
+  protected static void assertBuildNotOwnedByRoot(Path testDir, String logs) {
     var buildPath = testDir.resolve("build");
     if (buildPath.toFile().exists()) {
-      // Use static logger access for static method
-      log.info("Cleaning up build directory: {}", buildPath);
       try {
-        var network = Network.newNetwork();
-        var cleanupContainer =
-            new GenericContainer<>(DockerImageName.parse("alpine:latest"))
-                .withNetwork(network)
-                .withCommand("sh", "-c", "rm -rf /testdir/build")
-                .withFileSystemBind(testDir.toString(), "/testdir", BindMode.READ_WRITE)
-                .withStartupCheckStrategy(new IndefiniteWaitOneShotStartupCheckStrategy());
-
-        cleanupContainer.start();
-        cleanupContainer.stop();
-        network.close();
-        log.info("Build directory cleanup completed");
+        var owner = Files.getOwner(buildPath);
+        assertThat(owner.getName())
+            .as("Build directory should not be owned by root user: %s\n%s", buildPath, logs)
+            .isNotEqualTo("root");
+        log.debug("Build directory {} is owned by: {}", buildPath, owner.getName());
       } catch (Exception e) {
-        log.warn("Failed to cleanup build directory: {}", e.getMessage());
+        fail("Failed to check build directory ownership: " + e.getMessage(), e);
       }
     }
   }
