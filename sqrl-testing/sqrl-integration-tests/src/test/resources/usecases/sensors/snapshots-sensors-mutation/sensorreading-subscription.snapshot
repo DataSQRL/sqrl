@@ -9,6 +9,27 @@
   "data" : {
     "SensorReadingSubscription" : {
       "sensorid" : 1,
+      "temperature" : 12.7
+    }
+  }
+}, {
+  "data" : {
+    "SensorReadingSubscription" : {
+      "sensorid" : 1,
+      "temperature" : 12.7
+    }
+  }
+}, {
+  "data" : {
+    "SensorReadingSubscription" : {
+      "sensorid" : 1,
+      "temperature" : 12.7
+    }
+  }
+}, {
+  "data" : {
+    "SensorReadingSubscription" : {
+      "sensorid" : 1,
       "temperature" : 13.5
     }
   }

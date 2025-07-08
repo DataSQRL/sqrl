@@ -32,6 +32,7 @@ import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.error.ErrorLocation.FileLocation;
 import com.datasqrl.function.FlinkUdfNsObject;
 import com.datasqrl.graphql.server.MutationComputedColumnType;
+import com.datasqrl.graphql.server.MutationInsertType;
 import com.datasqrl.io.schema.flexible.converters.SchemaToRelDataTypeFactory;
 import com.datasqrl.loaders.FlinkTableNamespaceObject;
 import com.datasqrl.loaders.ModuleLoader;
@@ -54,7 +55,8 @@ import com.datasqrl.planner.dag.nodes.TableFunctionNode;
 import com.datasqrl.planner.dag.nodes.TableNode;
 import com.datasqrl.planner.dag.plan.MutationComputedColumn;
 import com.datasqrl.planner.dag.plan.MutationQuery;
-import com.datasqrl.planner.hint.ExecHint;
+import com.datasqrl.planner.hint.EngineHint;
+import com.datasqrl.planner.hint.MutationInsertHint;
 import com.datasqrl.planner.hint.NoQueryHint;
 import com.datasqrl.planner.hint.PlannerHints;
 import com.datasqrl.planner.hint.QueryByAnyHint;
@@ -544,7 +546,7 @@ public class SqlScriptPlanner {
    */
   private List<ExecutionStage> determineStages(
       List<ExecutionStage> availableStages, PlannerHints hints) {
-    Optional<ExecHint> executionHint = hints.getHint(ExecHint.class);
+    Optional<EngineHint> executionHint = hints.getHint(EngineHint.class);
     if ((hints.isTest() && executionGoal == ExecutionGoal.TEST) || hints.isWorkload()) {
       // Tests and hints always get executed in the database
       availableStages =
@@ -825,10 +827,17 @@ public class SqlScriptPlanner {
       var originalTableName = tableBuilder.getTableName();
       var mutationBuilder = MutationQuery.builder();
       mutationBuilder.stage(logStage.get());
+      MutationInsertType insertType =
+          hintsAndDocs
+              .getHints()
+              .getHint(MutationInsertHint.class)
+              .map(MutationInsertHint::getInsertType)
+              .orElse(MutationInsertType.SINGLE);
       mutationBuilder.createTopic(
           engine.createMutation(
-              logStage.get(), originalTableName, tableBuilder, datatype, Optional.empty()));
+              logStage.get(), originalTableName, tableBuilder, datatype, insertType));
       mutationBuilder.name(Name.system(originalTableName));
+      mutationBuilder.insertType(insertType);
       mutationBuilder.documentation(hintsAndDocs.documentation);
       tableBuilder
           .extractMetadataColumns(MutationComputedColumn.UUID_METADATA, true)

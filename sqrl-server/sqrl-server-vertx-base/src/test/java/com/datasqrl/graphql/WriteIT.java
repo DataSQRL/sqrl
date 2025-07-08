@@ -169,7 +169,8 @@ class WriteIT {
                                 DatabaseType.POSTGRES))
                         .build())
                 .build())
-        .mutation(new KafkaMutationCoords("addCustomer", topicName, Map.of(), Map.of()))
+        .mutation(
+            new KafkaMutationCoords("addCustomer", false, topicName, Map.of(), false, Map.of()))
         .build();
   }
 

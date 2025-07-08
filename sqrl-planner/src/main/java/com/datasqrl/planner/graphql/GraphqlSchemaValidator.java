@@ -284,12 +284,12 @@ public class GraphqlSchemaValidator extends GraphqlSchemaWalker {
             + "] "
             + inputValueDefinition.getName()
             + "Must be non-null.");
-    var nonNullType = (NonNullType) inputValueDefinition.getType();
+    var innerType = unwrapNullAndList(inputValueDefinition.getType());
     checkState(
-        nonNullType.getType() instanceof TypeName,
+        innerType instanceof TypeName,
         fieldDefinition.getSourceLocation(),
         "Must be a singular value");
-    var typeName = (TypeName) nonNullType.getType();
+    var typeName = (TypeName) innerType;
 
     var typeDef = registry.getType(typeName);
     checkState(
@@ -304,13 +304,20 @@ public class GraphqlSchemaValidator extends GraphqlSchemaWalker {
     return (InputObjectTypeDefinition) typeDef.get();
   }
 
+  private static Type unwrapNullAndList(Type type) {
+    if (type instanceof NonNullType nullType) {
+      return unwrapNullAndList(nullType.getType());
+    } else if (type instanceof ListType listType) {
+      return unwrapNullAndList(listType.getType());
+    } else {
+      return type;
+    }
+  }
+
   private ObjectTypeDefinition getValidMutationOutputType(
       FieldDefinition fieldDefinition, TypeDefinitionRegistry registry) {
     var type = fieldDefinition.getType();
-
-    if (type instanceof NonNullType nullType) {
-      type = nullType.getType();
-    }
+    type = unwrapNullAndList(type);
     checkState(
         type instanceof TypeName,
         type.getSourceLocation(),

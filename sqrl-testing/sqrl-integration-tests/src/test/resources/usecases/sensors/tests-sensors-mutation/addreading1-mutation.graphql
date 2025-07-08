@@ -1,17 +1,11 @@
 mutation {
-    AddReading1: SensorReading(event: {sensorid: 1, temperature: 43.5}) {
-        sensorid
-    }
-    AddReading2: SensorReading(event: {sensorid: 2, temperature: 55.1}) {
-        sensorid
-    }
-    AddReading3: SensorReading(event: {sensorid: 3, temperature: 50.7}) {
-        sensorid
-    }
-    AddReading4: SensorReading(event: {sensorid: 2, temperature: 24.7}) {
-        sensorid
-    }
-    AddReading5: SensorReading(event: {sensorid: 1, temperature: 22.7}) {
+    SensorReading(event: [
+        {sensorid: 1, temperature: 43.5},
+        {sensorid: 2, temperature: 55.1},
+        {sensorid: 3, temperature: 50.7},
+        {sensorid: 2, temperature: 24.7},
+        {sensorid: 1, temperature: 22.7}
+    ]) {
         sensorid
     }
 }

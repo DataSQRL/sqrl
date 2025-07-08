@@ -24,11 +24,12 @@ import java.util.List;
  * Execution hints allow the user to assign a stage to a table/function definition and the
  * corresponding node in the DAG.
  */
-public class ExecHint extends PlannerHint {
+public class EngineHint extends PlannerHint {
 
-  public static final String HINT_NAME = "exec";
+  public static final String HINT_NAME = "engine";
+  public static final String OLD_HINT_NAME = "exec";
 
-  protected ExecHint(ParsedObject<SqrlHint> source) {
+  protected EngineHint(ParsedObject<SqrlHint> source) {
     super(source, Type.DAG);
   }
 
@@ -41,7 +42,21 @@ public class ExecHint extends PlannerHint {
 
     @Override
     public PlannerHint create(ParsedObject<SqrlHint> source) {
-      return new ExecHint(source);
+      return new EngineHint(source);
+    }
+
+    @Override
+    public String getName() {
+      return OLD_HINT_NAME;
+    }
+  }
+
+  @AutoService(Factory.class)
+  public static class EngineHintFactory implements Factory {
+
+    @Override
+    public PlannerHint create(ParsedObject<SqrlHint> source) {
+      return new EngineHint(source);
     }
 
     @Override

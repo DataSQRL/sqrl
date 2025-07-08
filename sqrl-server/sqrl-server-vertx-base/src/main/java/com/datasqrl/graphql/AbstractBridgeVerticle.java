@@ -153,7 +153,8 @@ public abstract class AbstractBridgeVerticle extends AbstractVerticle {
     return Future.fromCompletionStage(graphQLEngine.executeAsync(execInput));
   }
 
-  protected Object getExecutionData(ExecutionResult executionResult, ApiOperation operation) {
+  protected static Object getExecutionData(
+      ExecutionResult executionResult, ApiOperation operation) {
     var result = executionResult.getData();
     if (result instanceof Map resultMap && operation.removeNesting()) {
       if (resultMap.size() == 1) {
@@ -163,7 +164,7 @@ public abstract class AbstractBridgeVerticle extends AbstractVerticle {
     return result;
   }
 
-  protected void extractGetParameters(
+  protected static void extractGetParameters(
       RoutingContext ctx, ApiOperation operation, Map<String, Object> variables) {
     var request = ctx.request();
     var functionParams = operation.getFunction().getParameters();
@@ -193,14 +194,15 @@ public abstract class AbstractBridgeVerticle extends AbstractVerticle {
     }
   }
 
-  protected void extractPostParameters(RoutingContext ctx, Map<String, Object> variables) {
+  protected static void extractPostParameters(RoutingContext ctx, Map<String, Object> variables) {
     JsonObject body = ctx.body().asJsonObject();
     if (body != null) {
       variables.putAll(body.getMap());
     }
   }
 
-  protected Object convertParameterValue(String value, FunctionDefinition.Argument argumentDef) {
+  protected static Object convertParameterValue(
+      String value, FunctionDefinition.Argument argumentDef) {
     if (argumentDef == null || argumentDef.getType() == null) {
       return value;
     }

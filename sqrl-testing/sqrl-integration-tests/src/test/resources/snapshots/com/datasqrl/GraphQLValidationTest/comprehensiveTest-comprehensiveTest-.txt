@@ -1539,8 +1539,10 @@ FROM "ExternalOrders" AS "ExternalOrders0"
       {
         "type" : "kafka",
         "fieldName" : "Orders",
+        "returnList" : false,
         "topic" : "Orders",
         "computedColumns" : { },
+        "transactional" : false,
         "sinkConfig" : { }
       }
     ],

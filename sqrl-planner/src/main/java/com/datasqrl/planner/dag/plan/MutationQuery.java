@@ -19,6 +19,7 @@ import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.engine.ExecutableQuery;
 import com.datasqrl.engine.database.EngineCreateTable;
 import com.datasqrl.engine.pipeline.ExecutionStage;
+import com.datasqrl.graphql.server.MutationInsertType;
 import com.datasqrl.planner.util.Documented;
 import java.util.List;
 import java.util.Optional;
@@ -55,5 +56,8 @@ public class MutationQuery implements ExecutableQuery, Documented {
   @Singular List<MutationComputedColumn> computedColumns;
 
   /** A documentation string that describes the mutation */
-  @Default private Optional<String> documentation = Optional.empty();
+  @Default Optional<String> documentation = Optional.empty();
+
+  /** How records are inserted into the topic for this mutation */
+  @Default MutationInsertType insertType = MutationInsertType.SINGLE;
 }
