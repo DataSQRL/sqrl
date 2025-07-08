@@ -61,6 +61,10 @@ public abstract class AbstractCmd implements Runnable, IExitCodeGenerator {
 
   protected abstract void execute(ErrorCollector errors) throws Exception;
 
+  protected Path getBuildDir() {
+    return cli.rootDir.resolve(SqrlConstants.BUILD_DIR_NAME);
+  }
+
   protected Path getTargetDir() {
     if (targetDir.isAbsolute()) {
       return targetDir;

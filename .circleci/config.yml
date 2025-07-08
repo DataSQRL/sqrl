@@ -324,11 +324,15 @@ jobs:
           builder_name: "sqrl-builder"
 
       - run:
-          name: Login to registries and pull base image
+          name: Pull base image
+          command: |
+            docker pull datasqrl/base-sqrl:$BASE_TAG
+
+      - run:
+          name: Login to registries
           command: |
             echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
             echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-            docker pull datasqrl/base-sqrl:$BASE_TAG
 
       - run:
           name: Build + push Docker images
@@ -366,11 +370,6 @@ jobs:
       - setup-buildx:
           builder_name: "base-builder"
       - run:
-          name: Login to Docker Hub
-          command: |
-            echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-
-      - run:
           name: Skip build if base already exists
           command: |
             set +e
@@ -385,6 +384,11 @@ jobs:
             else
               echo "Tag does not exist yet – will build base image."
             fi
+
+      - run:
+          name: Login to Docker Hub
+          command: |
+            echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
 
       - run:
           name: Build & push datasqrl/base-sqrl:$BASE_TAG
@@ -406,11 +410,6 @@ jobs:
       - setup-buildx:
           builder_name: "mcp-builder"
       - run:
-          name: Login to Docker Hub
-          command: |
-            echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-
-      - run:
           name: Skip build if MCP inspector already exists
           command: |
             set +e
@@ -425,6 +424,11 @@ jobs:
             else
               echo "Tag does not exist yet – will build MCP inspector image."
             fi
+
+      - run:
+          name: Login to Docker Hub
+          command: |
+            echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
 
       - run:
           name: Build & push datasqrl/mcp-inspector:$MCP_TAG
