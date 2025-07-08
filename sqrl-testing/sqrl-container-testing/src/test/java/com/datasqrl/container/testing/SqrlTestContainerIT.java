@@ -16,6 +16,7 @@
 package com.datasqrl.container.testing;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -43,5 +44,28 @@ public class SqrlTestContainerIT extends SqrlContainerTestBase {
         .contains("Snapshot OK for MySchema");
 
     log.info("All snapshot validations passed successfully");
+  }
+
+  @Test
+  @SneakyThrows
+  void givenAvroPackage_whenTestCommandExecuted_thenSnapshotsValidateSuccessfully() {
+    // Assert that the test command throws a RuntimeException and capture the exception
+    ContainerError exception =
+        (ContainerError)
+            assertThatThrownBy(
+                    () -> sqrlScript(testDir, "test -c complete-package.json".split(" ")))
+                .isInstanceOf(ContainerError.class)
+                .hasMessageContaining("SQRL compilation failed")
+                .actual();
+
+    var logs = exception.getLogs();
+    log.info("Container logs:\n{}", logs);
+
+    // Assert that the logs contain the expected error messages
+    assertThat(logs)
+        .contains("Snapshot OK for MySchema")
+        .contains("Snapshot on filesystem but not in result: MySchemaQuery.snapshot");
+
+    log.info("Test failed as expected with correct error messages");
   }
 }

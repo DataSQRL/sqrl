@@ -1,0 +1,12 @@
+{
+  "version": "1",
+  "script": {
+	"main": "avro-schema.sqrl"
+  },
+  "compiler": {
+    "snapshotPath": "snapshots-avro-schema"
+  },
+  "test-runner": {
+    "delay-sec": -1
+  }
+}

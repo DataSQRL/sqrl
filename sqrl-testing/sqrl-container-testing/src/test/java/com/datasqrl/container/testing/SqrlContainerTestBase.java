@@ -18,6 +18,7 @@ package com.datasqrl.container.testing;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.assertj.core.api.SoftAssertions.assertSoftly;
+import static org.awaitility.Awaitility.await;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.file.Files;
@@ -26,6 +27,7 @@ import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.regex.Pattern;
+import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
@@ -42,7 +44,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
-import org.testcontainers.containers.startupcheck.IndefiniteWaitOneShotStartupCheckStrategy;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
@@ -105,8 +106,7 @@ public abstract class SqrlContainerTestBase {
     return new GenericContainer<>(DockerImageName.parse(SQRL_CMD_IMAGE + ":" + getImageTag()))
         .withWorkingDirectory(BUILD_DIR)
         .withFileSystemBind(workingDir.toString(), BUILD_DIR, BindMode.READ_WRITE)
-        .withEnv("TZ", "America/Los_Angeles")
-        .withStartupCheckStrategy(new IndefiniteWaitOneShotStartupCheckStrategy());
+        .withEnv("TZ", "America/Los_Angeles");
   }
 
   protected GenericContainer<?> createServerContainer(Path workingDir) {
@@ -133,11 +133,14 @@ public abstract class SqrlContainerTestBase {
 
     cmd.start();
 
+    // Wait for the container to finish running
+    await().atMost(Duration.ofMinutes(5)).until(() -> !cmd.isRunning());
+
     var exitCode = cmd.getCurrentContainerInfo().getState().getExitCodeLong();
     var logs = cmd.getLogs();
     if (exitCode != 0) {
       log.error("SQRL compilation failed with exit code {}\n{}", exitCode, logs);
-      throw new RuntimeException("SQRL compilation failed with exit code " + exitCode);
+      throw new ContainerError("SQRL compilation failed", exitCode, logs);
     }
 
     log.info("SQRL script {} compiled successfully", Arrays.toString(command));
@@ -148,6 +151,27 @@ public abstract class SqrlContainerTestBase {
   }
 
   record ContainerResult(GenericContainer<?> cmd, Long exitCode, String logs) {}
+
+  @Getter
+  public class ContainerError extends RuntimeException {
+
+    private static final long serialVersionUID = -2159257606710389109L;
+
+    private final Long existCode;
+    private final String logs;
+
+    public ContainerError(String message, Long exitCode, String logs, Throwable cause) {
+      super(message, cause);
+      this.existCode = exitCode;
+      this.logs = logs;
+    }
+
+    public ContainerError(String message, Long exitCode, String logs) {
+      super(message);
+      this.existCode = exitCode;
+      this.logs = logs;
+    }
+  }
 
   private void validatePlan(Path workingDir, String logs) {
     var planDir = workingDir.resolve("build/deploy/plan");
