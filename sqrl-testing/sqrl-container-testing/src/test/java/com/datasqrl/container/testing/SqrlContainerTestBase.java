@@ -265,7 +265,7 @@ public abstract class SqrlContainerTestBase {
             .isNotEqualTo("root");
         log.debug("Build directory {} is owned by: {}", buildPath, owner.getName());
       } catch (Exception e) {
-        log.warn("Failed to check build directory ownership: {}", e.getMessage());
+        fail("Failed to check build directory ownership: " + e.getMessage(), e);
       }
     }
   }
