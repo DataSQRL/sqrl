@@ -106,7 +106,7 @@
     <antlr.version>4.13.2</antlr.version>
     <guava.version>33.4.8-jre</guava.version>
     <lombok.version>1.18.38</lombok.version>
-    <junit.jupiter.version>5.13.2</junit.jupiter.version>
+    <junit.jupiter.version>5.13.3</junit.jupiter.version>
     <calcite.version>1.27.0</calcite.version>
     <graphql-java.version>19.2</graphql-java.version>
     <graphql-java-extended-scalars.version>22.0</graphql-java-extended-scalars.version>
