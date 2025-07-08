@@ -75,8 +75,7 @@ import org.apache.kafka.clients.admin.NewTopic;
 @Slf4j
 public class DatasqrlRun {
 
-  private final Path planPath;
-  private final Path build;
+  private final Path planDir;
   private final PackageJson sqrlConfig;
   private final Configuration flinkConfig;
   private final Map<String, String> env;
@@ -86,22 +85,21 @@ public class DatasqrlRun {
   private Vertx vertx;
   private TableResult execute;
 
-  public DatasqrlRun(Path planPath, PackageJson sqrlConfig, Configuration flinkConfig) {
-    this(planPath, sqrlConfig, flinkConfig, System.getenv(), false);
+  public DatasqrlRun(Path planDir, PackageJson sqrlConfig, Configuration flinkConfig) {
+    this(planDir, sqrlConfig, flinkConfig, System.getenv(), false);
   }
 
   public DatasqrlRun(
-      Path planPath,
+      Path planDir,
       PackageJson sqrlConfig,
       Configuration flinkConfig,
       Map<String, String> env,
       boolean testRun) {
-    this.planPath = planPath;
+    this.planDir = planDir;
     this.sqrlConfig = sqrlConfig;
     this.flinkConfig = flinkConfig;
     this.env = env;
     this.testRun = testRun;
-    build = planPath.getParent().getParent();
     objectMapper = SqrlObjectMapper.MAPPER;
   }
 
@@ -170,9 +168,9 @@ public class DatasqrlRun {
     String sqlFile = null;
     String planFile = null;
     if (execMode == RuntimeExecutionMode.STREAMING && isCompiledPlan) {
-      planFile = planPath.resolve("flink-compiled-plan.json").toAbsolutePath().toString();
+      planFile = planDir.resolve("flink-compiled-plan.json").toAbsolutePath().toString();
     } else {
-      sqlFile = planPath.resolve("flink-sql.sql").toAbsolutePath().toString();
+      sqlFile = planDir.resolve("flink-sql.sql").toAbsolutePath().toString();
     }
 
     var resolver = new EnvVarResolver(env);
@@ -192,11 +190,11 @@ public class DatasqrlRun {
 
   @SneakyThrows
   private void initKafka() {
-    if (!planPath.resolve("kafka.json").toFile().exists()) {
+    if (!planDir.resolve("kafka.json").toFile().exists()) {
       return;
     }
     Map<String, Object> map =
-        objectMapper.readValue(planPath.resolve("kafka.json").toFile(), Map.class);
+        objectMapper.readValue(planDir.resolve("kafka.json").toFile(), Map.class);
     List<Map<String, Object>> topics = (List<Map<String, Object>>) map.get("topics");
 
     if (topics == null) {
@@ -233,7 +231,7 @@ public class DatasqrlRun {
 
   @SneakyThrows
   private void initPostgres() {
-    File file = planPath.resolve("postgres.json").toFile();
+    File file = planDir.resolve("postgres.json").toFile();
     if (!file.exists()) {
       return;
     }
@@ -262,11 +260,11 @@ public class DatasqrlRun {
 
   @SneakyThrows
   private void startVertx() {
-    if (!planPath.resolve("vertx.json").toFile().exists()) {
+    if (!planDir.resolve("vertx.json").toFile().exists()) {
       return;
     }
     RootGraphqlModel rootGraphqlModel =
-        objectMapper.readValue(planPath.resolve("vertx.json").toFile(), ModelContainer.class).model;
+        objectMapper.readValue(planDir.resolve("vertx.json").toFile(), ModelContainer.class).model;
     if (rootGraphqlModel == null) {
       return; // no graphql server queries
     }
@@ -284,7 +282,7 @@ public class DatasqrlRun {
         };
 
     // Set Postgres connection options from environment variables
-    if (planPath.resolve("postgres.json").toFile().exists()) {
+    if (planDir.resolve("postgres.json").toFile().exists()) {
       serverConfig
           .getPgConnectOptions()
           .setHost(getenv("PGHOST"))

@@ -60,7 +60,8 @@ import org.apache.flink.table.api.TableResult;
  */
 public class DatasqrlTest {
 
-  private final Path planPath;
+  private final Path rootDir;
+  private final Path planDir;
   private final PackageJson sqrlConfig;
   private final Configuration flinkConfig;
   private final Map<String, String> env;
@@ -69,8 +70,13 @@ public class DatasqrlTest {
   private final ObjectWriter jsonWriter = objectMapper.writerWithDefaultPrettyPrinter();
 
   public DatasqrlTest(
-      Path planPath, PackageJson sqrlConfig, Configuration flinkConfig, Map<String, String> env) {
-    this.planPath = planPath;
+      Path rootDir,
+      Path planDir,
+      PackageJson sqrlConfig,
+      Configuration flinkConfig,
+      Map<String, String> env) {
+    this.rootDir = rootDir;
+    this.planDir = planDir;
     this.sqrlConfig = sqrlConfig;
     this.flinkConfig = flinkConfig;
     this.env = env;
@@ -79,10 +85,9 @@ public class DatasqrlTest {
   @SneakyThrows
   public int run() {
     // 1. Run the DataSQRL pipeline via {@link DatasqrlRun}
-    DatasqrlRun run = new DatasqrlRun(planPath, sqrlConfig, flinkConfig, env, true);
+    DatasqrlRun run = new DatasqrlRun(planDir, sqrlConfig, flinkConfig, env, true);
 
     var testConfig = sqrlConfig.getTestConfig();
-    var rootDir = planPath.getParent().getParent().getParent();
     // Initialize snapshot directory
     Path snapshotDir = testConfig.getSnapshotDir(rootDir);
     // Check if the directory exists, create it if it doesn’t
@@ -101,10 +106,10 @@ public class DatasqrlTest {
     // It is possible that no test plan exists, such as no test queries.
     // We still run it for exports or other explicit tests the user created outside the test
     // framework
-    if (Files.exists(planPath.resolve("test.json"))) {
+    if (Files.exists(planDir.resolve("test.json"))) {
       testPlanOpt =
           Optional.of(
-              objectMapper.readValue(planPath.resolve("test.json").toFile(), TestPlan.class));
+              objectMapper.readValue(planDir.resolve("test.json").toFile(), TestPlan.class));
     }
 
     try {
