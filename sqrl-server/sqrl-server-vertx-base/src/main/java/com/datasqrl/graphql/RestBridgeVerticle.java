@@ -166,7 +166,8 @@ public class RestBridgeVerticle extends AbstractBridgeVerticle {
     return route;
   }
 
-  protected Map<String, Object> extractParameters(RoutingContext ctx, ApiOperation operation) {
+  protected static Map<String, Object> extractParameters(
+      RoutingContext ctx, ApiOperation operation) {
     Map<String, Object> variables = new HashMap<>();
 
     if (operation.getRestMethod() == RestMethodType.GET) {
