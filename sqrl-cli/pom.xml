@@ -204,10 +204,6 @@
           <artifactId>slf4j-reload4j</artifactId>
         </exclusion>
         <exclusion>
-          <groupId>org.slf4j</groupId>
-          <artifactId>slf4j-reload4j</artifactId>
-        </exclusion>
-        <exclusion>
           <groupId>org.apache.commons</groupId>
           <artifactId>commons-math3</artifactId>
         </exclusion>
@@ -256,6 +252,10 @@
         <exclusion>
           <groupId>log4j</groupId>
           <artifactId>log4j</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-reload4j</artifactId>
         </exclusion>
       </exclusions>
     </dependency>
