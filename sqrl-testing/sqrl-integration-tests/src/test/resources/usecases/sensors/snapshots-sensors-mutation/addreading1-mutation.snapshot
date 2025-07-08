@@ -1,19 +1,15 @@
 {
   "data" : {
-    "AddReading1" : {
+    "SensorReading" : [ {
       "sensorid" : 1
-    },
-    "AddReading2" : {
+    }, {
       "sensorid" : 2
-    },
-    "AddReading3" : {
+    }, {
       "sensorid" : 3
-    },
-    "AddReading4" : {
+    }, {
       "sensorid" : 2
-    },
-    "AddReading5" : {
+    }, {
       "sensorid" : 1
-    }
+    } ]
   }
 }
