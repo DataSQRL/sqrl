@@ -319,7 +319,7 @@ public class DatasqrlTest {
             .POST(HttpRequest.BodyPublishers.ofString(query));
 
     if (headers != null) {
-      headers.forEach((k, v) -> requestBuilder.header(k, v));
+      headers.forEach(requestBuilder::header);
     }
 
     var response = client.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofString());

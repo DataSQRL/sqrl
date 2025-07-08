@@ -36,7 +36,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class ExecuteCmdTest {
 
   @Mock private ErrorCollector errors;
-  @Mock private PackageJson.CompilerConfig sqrlCompilerConfig;
   @Mock private Configuration flinkConfig;
 
   private ExecuteCmd executeCmd;
@@ -49,17 +48,15 @@ class ExecuteCmdTest {
   }
 
   @Test
-  void execute_shouldLoadConfigsAndRunDatasqrlRun() throws Exception {
+  void runInternal_shouldLoadConfigsAndRunDatasqrlRun() throws Exception {
     executeCmd.cli = new DatasqrlCli(tempDir, StatusHook.NONE, false);
-
-    var mockSqrlConfig = mock(PackageJson.class);
-    when(mockSqrlConfig.getCompilerConfig()).thenReturn(sqrlCompilerConfig);
 
     Path buildDir = executeCmd.getBuildDir();
     Path planDir = executeCmd.getTargetDir().resolve(SqrlConstants.PLAN_DIR);
 
     // Mock static methods and verify arguments
     try (MockedStatic<ConfigLoaderUtils> mocked = mockStatic(ConfigLoaderUtils.class)) {
+      var mockSqrlConfig = mock(PackageJson.class);
       mocked
           .when(() -> ConfigLoaderUtils.loadResolvedConfig(errors, buildDir))
           .thenReturn(mockSqrlConfig);
@@ -69,7 +66,7 @@ class ExecuteCmdTest {
       try (MockedConstruction<DatasqrlRun> datasqrlRunMocked =
           mockConstruction(
               DatasqrlRun.class, (mock, context) -> when(mock.run(true, true)).thenReturn(null))) {
-        executeCmd.execute(errors);
+        executeCmd.runInternal(errors);
 
         // Verify exact arguments
         mocked.verify(() -> ConfigLoaderUtils.loadResolvedConfig(errors, buildDir));

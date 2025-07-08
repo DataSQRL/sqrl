@@ -55,8 +55,7 @@ public abstract class AbstractCompileCmd extends AbstractCmd {
 
   public abstract ExecutionGoal getGoal();
 
-  @Override
-  protected void execute(ErrorCollector errors) throws Exception {
+  protected void compile(ErrorCollector errors) {
     var packageBootstrap = new PackageBootstrap(errors);
     var sqrlConfig =
         packageBootstrap.bootstrap(
@@ -100,6 +99,16 @@ public abstract class AbstractCompileCmd extends AbstractCmd {
     }
 
     postprocess(packager, getTargetDir(), plan.getLeft(), plan.getRight());
+  }
+
+  protected void execute(ErrorCollector errors) throws Exception {
+    // Do nothing by default
+  }
+
+  @Override
+  protected void runInternal(ErrorCollector errors) throws Exception {
+    compile(errors);
+    execute(errors);
   }
 
   protected List<String> getEngines() {

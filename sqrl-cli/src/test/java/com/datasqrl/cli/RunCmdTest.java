@@ -16,8 +16,6 @@
 package com.datasqrl.cli;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockConstruction;
 import static org.mockito.Mockito.mockStatic;
@@ -46,7 +44,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class RunCmdTest {
 
   @Mock private ErrorCollector errors;
-  @Mock private PackageJson.CompilerConfig sqrlCompilerConfig;
   @Mock private Configuration flinkConfig;
 
   private RunCmd runCmd;
@@ -59,30 +56,25 @@ class RunCmdTest {
   }
 
   @Test
-  void execute_whenInternalTestExecIsTrue_shouldSkipRunPart() throws Exception {
-    doNothing().when(runCmd).execute(any(), any(), any());
+  void execute_whenInternalTestExecIsTrue_shouldSkipExecution() throws Exception {
     runCmd.cli = new DatasqrlCli(tempDir, StatusHook.NONE, true);
 
     runCmd.execute(errors);
 
-    // Should call super.execute but skip DatasqrlRun
     verify(runCmd).execute(errors);
     verify(runCmd, never()).getTargetDir();
   }
 
   @Test
   void execute_shouldLoadConfigsAndRunDatasqrlRun() throws Exception {
-    doNothing().when(runCmd).execute(any(), any(), any());
     runCmd.cli = new DatasqrlCli(tempDir, StatusHook.NONE, false);
-
-    var mockSqrlConfig = mock(PackageJson.class);
-    when(mockSqrlConfig.getCompilerConfig()).thenReturn(sqrlCompilerConfig);
 
     Path buildDir = runCmd.getBuildDir();
     Path planDir = runCmd.getTargetDir().resolve(SqrlConstants.PLAN_DIR);
 
     // Mock static methods and verify arguments
     try (MockedStatic<ConfigLoaderUtils> mocked = mockStatic(ConfigLoaderUtils.class)) {
+      var mockSqrlConfig = mock(PackageJson.class);
       mocked
           .when(() -> ConfigLoaderUtils.loadResolvedConfig(errors, buildDir))
           .thenReturn(mockSqrlConfig);

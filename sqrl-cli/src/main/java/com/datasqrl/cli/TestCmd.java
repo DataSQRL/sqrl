@@ -27,10 +27,7 @@ public class TestCmd extends AbstractCompileCmd {
 
   @Override
   protected void execute(ErrorCollector errors) throws Exception {
-    // Compile
-    super.execute(errors);
-
-    // Skip test part in case we call the CMD from a test class, as it will be executed manually.
+    // Skip execution in case we call the CMD from a test class, as it will be executed manually.
     if (cli.internalTestExec) {
       return;
     }
