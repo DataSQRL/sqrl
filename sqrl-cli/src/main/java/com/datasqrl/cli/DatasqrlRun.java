@@ -17,7 +17,7 @@ package com.datasqrl.cli;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import com.datasqrl.config.PackageJson;
+import com.datasqrl.config.PackageJson.CompilerConfig;
 import com.datasqrl.flinkrunner.EnvVarResolver;
 import com.datasqrl.flinkrunner.SqrlRunner;
 import com.datasqrl.graphql.HttpServerVerticle;
@@ -77,7 +77,7 @@ public class DatasqrlRun {
 
   private final Path planPath;
   private final Path build;
-  private final PackageJson.CompilerConfig compilerConfig;
+  private final CompilerConfig compilerConfig;
   private final Configuration flinkConfig;
   private final Map<String, String> env;
   private final boolean testRun;
@@ -86,14 +86,13 @@ public class DatasqrlRun {
   private Vertx vertx;
   private TableResult execute;
 
-  public DatasqrlRun(
-      Path planPath, PackageJson.CompilerConfig compilerConfig, Configuration flinkConfig) {
+  public DatasqrlRun(Path planPath, CompilerConfig compilerConfig, Configuration flinkConfig) {
     this(planPath, compilerConfig, flinkConfig, System.getenv(), false);
   }
 
   public DatasqrlRun(
       Path planPath,
-      PackageJson.CompilerConfig compilerConfig,
+      CompilerConfig compilerConfig,
       Configuration flinkConfig,
       Map<String, String> env,
       boolean testRun) {

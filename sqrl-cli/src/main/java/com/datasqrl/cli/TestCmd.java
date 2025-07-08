@@ -60,7 +60,7 @@ public class TestCmd extends AbstractCompileCmd {
     // Test
     var targetDir = getTargetDir();
     var planDir = targetDir.resolve(SqrlConstants.PLAN_DIR);
-    var sqrlConfig = ConfigLoaderUtils.loadResolvedConfig(errors, targetDir);
+    var sqrlConfig = ConfigLoaderUtils.loadResolvedConfig(errors, cli.rootDir);
     var flinkConfig = ConfigLoaderUtils.loadFlinkConfig(planDir);
 
     var sqrlTest =
