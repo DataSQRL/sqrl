@@ -75,9 +75,10 @@ class DatasqrlRunTest {
 
   @Test
   void usesSavepointDirFromEnvIfFlinkConfigBlank() throws Exception {
-    Files.createDirectory(tempDir.resolve("savepoint1"));
-
     env.put("FLINK_SP_DATA_PATH", tempDir.toUri().toString());
+    underTest = new DatasqrlRun(tempDir.resolve("plan"), null, flinkConfig, env, false);
+
+    Files.createDirectory(tempDir.resolve("savepoint1"));
 
     var result = underTest.getLastSavepoint();
 
@@ -87,8 +88,10 @@ class DatasqrlRunTest {
 
   @Test
   void returnsEmptyIfBothConfigsBlank() {
-    when(flinkConfig.get(CheckpointingOptions.SAVEPOINT_DIRECTORY)).thenReturn(" ");
     env.put("FLINK_SP_DATA_PATH", " ");
+    underTest = new DatasqrlRun(tempDir.resolve("plan"), null, flinkConfig, env, false);
+
+    when(flinkConfig.get(CheckpointingOptions.SAVEPOINT_DIRECTORY)).thenReturn(" ");
 
     assertThat(underTest.getLastSavepoint()).isEmpty();
   }
