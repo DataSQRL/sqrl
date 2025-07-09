@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 
-set -ex
+set -e
 cd /build
 
 # Todo: there is a target flag we need to parse and set
