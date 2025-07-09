@@ -15,6 +15,7 @@
  */
 package com.datasqrl.config;
 
+import com.datasqrl.util.FileUtil;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -32,13 +33,13 @@ public class TestRunnerConfigImpl implements TestRunnerConfiguration {
   public Path getSnapshotDir(Path rootDir) {
     var snapshotDir = Paths.get(sqrlConfig.asString("snapshot-dir").get());
 
-    return combineWithRootIfRelative(rootDir, snapshotDir);
+    return FileUtil.combineWithRootIfRelative(rootDir, snapshotDir);
   }
 
   @Override
   public Optional<Path> getTestDir(Path rootDir) {
     var testDir = Paths.get(sqrlConfig.asString("test-dir").get());
-    testDir = combineWithRootIfRelative(rootDir, testDir);
+    testDir = FileUtil.combineWithRootIfRelative(rootDir, testDir);
 
     return Files.isDirectory(testDir) ? Optional.of(testDir) : Optional.empty();
   }
@@ -66,9 +67,5 @@ public class TestRunnerConfigImpl implements TestRunnerConfiguration {
   @Override
   public List<String> getCreateTopics() {
     return sqrlConfig.asList("create-topics", String.class).get();
-  }
-
-  private Path combineWithRootIfRelative(Path rootDir, Path dir) {
-    return dir.isAbsolute() ? dir : rootDir.resolve(dir);
   }
 }

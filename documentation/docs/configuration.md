@@ -13,26 +13,27 @@ Multiple files can be provided; they are merged **in order** – later files ove
 |-------------------|--------------|------------------------------------------|----------------------------------------------------------------|
 | `version`         | **number**   | `1`                                      | Configuration schema version – must be `1`.                    |
 | `enabled-engines` | **string[]** | `["vertx","postgres","kafka","flink"]`   | Ordered list of engines that form the runtime pipeline.        |
-| `engines`         | **object**   | –                                        | Per-engine configuration (see below).                          |
-| `compiler`        | **object**   | [see defaults](#compiler-compiler)       | Controls compilation, logging, and generated artefacts.        |
+| `engines`         | **object**   | –                                        | Engine specific configuration (see below).                     |
+| `connectors`      | **object**   | [see defaults](#connectors-connectors)   | External system connectors configuration (see below).          |
+| `compiler`        | **object**   | [see defaults](#compiler-compiler)       | Controls compilation, logging, and generated artifacts.        |
 | `dependencies`    | **object**   | `{}`                                     | Aliases for packages that can be `IMPORT`-ed from SQRL.        |
 | `discovery`       | **object**   | `{}`                                     | Rules for automatic table discovery when importing data files. |
 | `script`          | **object**   | –                                        | Points to the main SQRL script and GraphQL schema.             |
 | `package`         | **object**   | –                                        | Optional metadata (name, description, etc.) for publishing.    |
-| `test-runner`     | **object**   | [see defaults](#test-runner-test-runner) | Integration test execution settings.                           |
+| `test-runner`     | **object**   | [see defaults](#test-runner-test-runner) | Integration test execution settings (see below).               |
 
 ---
 
-## 1. Engines (`engines`)
+## Engines (`engines`)
 
 Each sub-key below `engines` must match one of the IDs in **`enabled-engines`**.
 
-```
+```json5
 {
   "engines": {
     "<engine-id>": {
       "type": "<engine-id>", // optional; inferred from key if omitted
-      "config": { ... }      // engine-specific knobs (Flink SQL options, etc.)
+      "config": { /*...*/ }  // engine-specific knobs (Flink SQL options, etc.)
     }
   }
 }
@@ -72,23 +73,42 @@ Used as a *table-format* engine together with a query engine such as Flink or Sn
 
 ---
 
+## Connectors (`connectors`)
+
+```json5
+{
+  "connectors": {
+    "postgres": { "connector": "jdbc-sqrl",  /*...*/ },
+    "kafka-mutation": { "connector" : "kafka", /*...*/ },
+    "kafka": { "connector" : "kafka", /*...*/ },
+    "localfile": { "connector": "filesystem", /*...*/ },
+    "iceberg": { "connector": "iceberg", /*...*/ },
+    "postgres_log-source": { "connector": "postgres-cdc", /*...*/ },
+    "postgres_log-sink": { "connector": "jdbc-sqrl", /*...*/ },
+    "print": { "connector": "print", /*...*/ }
+  }
+}
+```
+
+---
+
 ## Compiler (`compiler`)
 
-```jsonc
+```json5
 {
   "compiler": {
     "logger": "print",             // "print" | any configured log engine | "none"
     "extended-scalar-types": true, // expose extended scalar types in generated GraphQL
     "compile-flink-plan": true,    // compile Flink physical plans where supported
-    "cost-model": "DEFAULT",       //
+    "cost-model": "DEFAULT",       // cost model to use for DAG optimization
 
     "explain": {                   // artifacts in build/pipeline_*.*
-      "visual":   true,
       "text":     true,
       "sql":      false,
       "logical":  true,
       "physical": false,
-      "sorted":   true             // deterministic ordering (mostly for tests)
+      "sorted":   true,            // deterministic ordering (mostly for tests)
+      "visual":   true
     }
   }
 }
@@ -96,14 +116,14 @@ Used as a *table-format* engine together with a query engine such as Flink or Sn
 
 ---
 
-## 3. Dependencies (`dependencies`)
+## Dependencies (`dependencies`)
 
 ```json
-"dependencies": {
-  "myalias": {
-    "name": "folder-name",
-    "version": "1",       // version identifier
-    "variant": "test"     // identifier for the source variant
+{
+  "dependencies": {
+    "myalias": {
+      "name": "folder-name"
+    }
   }
 }
 ```
@@ -170,7 +190,7 @@ Unresolved `${sqrl:*}` placeholders raise a validation error.
 
 The built-in fallback (excerpt - full version [here](https://github.com/DataSQRL/sqrl/blob/main/sqrl-tools/sqrl-config/src/main/resources/default-package.json)):
 
-```jsonc
+```json5
 {
   "version": 1,
   "enabled-engines": ["vertx", "postgres", "kafka", "flink"],
@@ -181,7 +201,7 @@ The built-in fallback (excerpt - full version [here](https://github.com/DataSQRL
         "rest.address": "localhost",
         "rest.port": 8081,
         "state.backend.type": "rocksdb",
-        ...
+        // ...
       }
     },
     "snowflake": {
@@ -191,15 +211,30 @@ The built-in fallback (excerpt - full version [here](https://github.com/DataSQRL
       "url": "jdbc:snowflake://${SNOWFLAKE_ID}.snowflakecomputing.com/?..."
     }
   },
+  "compiler": {
+    "logger": "print",
+    "extended-scalar-types": true,
+    "compile-flink-plan": true,
+    "cost-model": "DEFAULT",
+    "explain": {
+      "text": true,
+      "sql": false,
+      "logical": true,
+      "physical": false,
+      "sorted": true,
+      "visual": true
+    }
+  },
   "connectors": {
-    "postgres": { "connector": "jdbc-sqrl", ... },
-    "kafka":   { "connector": "kafka", ... },
-    "kafka-keyed": { ... },
-    "kafka-upsert": { ... },
-    "localfile": { ... },
-    "iceberg": { ... },
-    "print": { "connector": "print" }
-  }
+    "postgres": { "connector": "jdbc-sqrl",  /*...*/ },
+    "kafka-mutation": { "connector" : "kafka", /*...*/ },
+    "kafka": { "connector" : "kafka", /*...*/ },
+    "localfile": { "connector": "filesystem", /*...*/ },
+    "iceberg": { "connector": "iceberg", /*...*/ },
+    "postgres_log-source": { "connector": "postgres-cdc", /*...*/ },
+    "postgres_log-sink": { "connector": "jdbc-sqrl", /*...*/ },
+    "print": { "connector": "print", /*...*/ }
+  },
   "test-runner": {
     "snapshot-dir": "./snapshots",
     "test-dir": "./tests",

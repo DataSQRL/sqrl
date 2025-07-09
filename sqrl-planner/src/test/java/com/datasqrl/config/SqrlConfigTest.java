@@ -33,6 +33,8 @@ import lombok.SneakyThrows;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 public class SqrlConfigTest {
 
@@ -53,18 +55,29 @@ public class SqrlConfigTest {
     }
   }
 
+  @ParameterizedTest
+  @ValueSource(strings = {"camelCase", "invalid_separator", "trailing.-separators"})
+  void givenInvalidKeyName_whenAs_thenThrowsException(String invalidKey) {
+    assertThatThrownBy(() -> config.asString(invalidKey))
+        .isInstanceOf(CollectedException.class)
+        .hasMessage(
+            String.format(
+                "Invalid config key '%s'. A SQRL config key must only contain lowercase letters or digits, separated by dots or dashes.",
+                invalidKey));
+  }
+
   @Test
   void givenMissingKey_whenGetValue_thenThrowsException() {
-    SqrlConfig.Value value = config.asString("nonexistent");
+    SqrlConfig.Value<?> value = config.asString("nonexistent");
 
-    assertThatThrownBy(() -> value.get())
+    assertThatThrownBy(value::get)
         .isInstanceOf(CollectedException.class)
         .hasMessageContaining("Could not find key");
   }
 
   @Test
   void givenMissingKeyWithDefault_whenGetValue_thenReturnsDefault() {
-    SqrlConfig.Value value = config.asString("nonexistent").withDefault("defaultValue");
+    SqrlConfig.Value<?> value = config.asString("nonexistent").withDefault("defaultValue");
 
     assertThat(value.get()).isEqualTo("defaultValue");
   }
@@ -81,7 +94,7 @@ public class SqrlConfigTest {
   void givenValidValue_whenValidate_thenPasses() {
     config.setProperty("number", "42");
 
-    SqrlConfig.Value value =
+    SqrlConfig.Value<?> value =
         config.asString("number").validate(s -> s.matches("\\d+"), "Must be numeric");
 
     assertThat(value.get()).isEqualTo("42");
@@ -91,7 +104,7 @@ public class SqrlConfigTest {
   void givenInvalidValue_whenValidate_thenThrows() {
     config.setProperty("number", "42");
 
-    SqrlConfig.Value invalidValue =
+    SqrlConfig.Value<?> invalidValue =
         config.asString("number").validate(s -> s.equals("99"), "Must be 99");
 
     assertThatThrownBy(invalidValue::get)
