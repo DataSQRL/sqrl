@@ -15,15 +15,24 @@
  */
 package com.datasqrl.config;
 
-import java.time.Duration;
+import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 public interface TestRunnerConfiguration {
 
-  Optional<Duration> getDelaySec();
+  Path getSnapshotDir(Path rootDir);
 
-  Optional<Integer> getRequiredCheckpoints();
+  Optional<Path> getTestDir(Path rootDir);
+
+  int getDelaySec();
+
+  int getMutationDelaySec();
+
+  int getRequiredCheckpoints();
 
   Map<String, String> getHeaders();
+
+  List<String> getCreateTopics();
 }

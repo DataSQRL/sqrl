@@ -15,7 +15,7 @@
  */
 package com.datasqrl.cli;
 
-public class EngineKeys {
+public class EngineIds {
   public static final String LOG = "kafka";
   public static final String SERVER = "vertx";
   public static final String STREAMS = "flink";

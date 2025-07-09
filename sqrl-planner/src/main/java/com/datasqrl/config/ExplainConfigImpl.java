@@ -16,47 +16,39 @@
 package com.datasqrl.config;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Builder.Default;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 
-@NoArgsConstructor
-@Getter
-@Builder
 @AllArgsConstructor
 public class ExplainConfigImpl implements PackageJson.ExplainConfig {
 
-  /** Whether to produce a visual explanation */
-  @Default boolean visual = true;
+  private final SqrlConfig sqrlConfig;
 
-  /** Whether to produce a textual explanation */
-  @Default boolean text = true;
+  @Override
+  public boolean isText() {
+    return sqrlConfig.asBool("text").get();
+  }
 
-  /** Whether to print the SQL for the tables and queries as planned */
-  @Default boolean sql = false;
+  @Override
+  public boolean isSql() {
+    return sqrlConfig.asBool("sql").get();
+  }
 
-  /**
-   * Whether to print the logical plan for the tables and queries as a relational tree with hints
-   */
-  @Default boolean logical = true;
+  @Override
+  public boolean isLogical() {
+    return sqrlConfig.asBool("logical").get();
+  }
 
-  /** Whether to print the physical plan for the tables and queries */
-  @Default boolean physical = false;
+  @Override
+  public boolean isPhysical() {
+    return sqrlConfig.asBool("physical").get();
+  }
 
-  /**
-   * This setting is primarily used for testing to ensure that the output of explain is
-   * deterministic
-   */
-  @Default boolean sorted = true; // TODO: set to false and overwrite in test case injector
+  @Override
+  public boolean isSorted() {
+    return sqrlConfig.asBool("sorted").get();
+  }
 
-  public ExplainConfigImpl(SqrlConfig sqrlConfig) {
-    this(
-        sqrlConfig.asBool("visual").getOptional().orElse(true),
-        sqrlConfig.asBool("text").getOptional().orElse(true),
-        sqrlConfig.asBool("sql").getOptional().orElse(false),
-        sqrlConfig.asBool("logical").getOptional().orElse(true),
-        sqrlConfig.asBool("physical").getOptional().orElse(false),
-        sqrlConfig.asBool("sorted").getOptional().orElse(true));
+  @Override
+  public boolean isVisual() {
+    return sqrlConfig.asBool("visual").get();
   }
 }

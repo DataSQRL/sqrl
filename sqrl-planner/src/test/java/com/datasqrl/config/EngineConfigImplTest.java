@@ -54,11 +54,11 @@ class EngineConfigImplTest {
 
   @Test
   void givenConfigWithCustomSetting_whenGetSetting_thenReturnsValue() {
-    config.setProperty("customSetting", "customValue");
+    config.setProperty("custom-setting", "customValue");
 
     var engineConfig = new EngineConfigImpl(config);
 
-    var value = engineConfig.getSetting("customSetting", Optional.empty());
+    var value = engineConfig.getSetting("custom-setting", Optional.empty());
     assertThat(value).isEqualTo("customValue");
   }
 
@@ -66,22 +66,8 @@ class EngineConfigImplTest {
   void givenConfigWithoutSetting_whenGetSettingWithDefault_thenReturnsDefault() {
     var engineConfig = new EngineConfigImpl(config);
 
-    var value = engineConfig.getSetting("missingSetting", Optional.of("default"));
+    var value = engineConfig.getSetting("missing-setting", Optional.of("default"));
 
     assertThat(value).isEqualTo("default");
-  }
-
-  @Test
-  void givenConfigWithConnectors_whenGetConnectors_thenReturnsConnectorsConfig() {
-    var connectorsSubConfig = config.getSubConfig("connectors");
-    connectorsSubConfig
-        .getSubConfig("jdbc")
-        .setProperty("url", "jdbc:postgresql://localhost:5432/db");
-
-    var engineConfig = new EngineConfigImpl(config);
-
-    var connectorsConfig = engineConfig.getConnectors();
-
-    assertThat(connectorsConfig).isNotNull();
   }
 }

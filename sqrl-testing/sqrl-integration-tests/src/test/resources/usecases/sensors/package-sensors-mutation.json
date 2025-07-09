@@ -1,0 +1,13 @@
+{
+  "version": "1",
+  "test-runner": {
+    "snapshot-dir": "snapshots-sensors-mutation",
+    "test-dir": "tests-sensors-mutation",
+    "delay-sec": -1
+  },
+  "dependencies": {
+    "sensor-local": {
+      "name": "sensor-testdata"
+    }
+  }
+}

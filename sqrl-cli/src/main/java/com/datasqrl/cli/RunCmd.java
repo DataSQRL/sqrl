@@ -27,11 +27,8 @@ import picocli.CommandLine;
 public class RunCmd extends AbstractCompileCmd {
 
   @Override
-  public void execute(ErrorCollector errors) throws Exception {
-    // Compile
-    super.execute(errors);
-
-    // Skip run part in case we call the CMD from a test class, as it will be executed manually.
+  protected void execute(ErrorCollector errors) throws Exception {
+    // Skip execution in case we call the CMD from a test class, as it will be executed manually.
     if (cli.internalTestExec) {
       return;
     }
@@ -42,7 +39,7 @@ public class RunCmd extends AbstractCompileCmd {
     var sqrlConfig = ConfigLoaderUtils.loadResolvedConfig(errors, getBuildDir());
     var flinkConfig = ConfigLoaderUtils.loadFlinkConfig(planDir);
 
-    var sqrlRun = new DatasqrlRun(planDir, sqrlConfig.getCompilerConfig(), flinkConfig);
+    var sqrlRun = new DatasqrlRun(planDir, sqrlConfig, flinkConfig);
     sqrlRun.run(true, true);
   }
 

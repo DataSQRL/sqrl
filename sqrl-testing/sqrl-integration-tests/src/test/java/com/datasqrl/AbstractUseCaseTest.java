@@ -22,7 +22,6 @@ import com.datasqrl.util.SnapshotTest.Snapshot;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Predicate;
@@ -32,6 +31,7 @@ import lombok.AllArgsConstructor;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
+import org.junit.jupiter.params.support.ParameterDeclarations;
 
 public class AbstractUseCaseTest extends AbstractAssetSnapshotTest {
 
@@ -122,19 +122,20 @@ public class AbstractUseCaseTest extends AbstractAssetSnapshotTest {
     private final boolean includeFails;
 
     @Override
-    public Stream<? extends Arguments> provideArguments(ExtensionContext context) {
+    public Stream<? extends Arguments> provideArguments(
+        ParameterDeclarations parameters, ExtensionContext context) {
       // Look for all package jsons
       return getSQRLScripts(directory, includeFails)
           .sorted(Comparator.comparing(p -> p.toFile().getName()))
           .flatMap(
               path -> {
                 var pkgFiles = getPackageFiles(path.getParent());
-                Collections.sort(pkgFiles, Comparator.comparing(p -> p.toFile().getName()));
+                pkgFiles.sort(Comparator.comparing(p -> p.toFile().getName()));
                 if (pkgFiles.isEmpty()) {
                   pkgFiles.add(null);
                 }
                 var graphQLFiles = getScriptGraphQLFiles(path);
-                Collections.sort(graphQLFiles, Comparator.comparing(p -> p.toFile().getName()));
+                graphQLFiles.sort(Comparator.comparing(p -> p.toFile().getName()));
                 if (graphQLFiles.isEmpty()) {
                   graphQLFiles.add(null);
                 }

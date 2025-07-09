@@ -32,11 +32,7 @@ public class SqrlTestContainerIT extends SqrlContainerTestBase {
   @Test
   @SneakyThrows
   void givenAvroSchemaScript_whenTestCommandExecuted_thenSnapshotsValidateSuccessfully() {
-    var result =
-        sqrlScript(
-            testDir,
-            "test avro-schema.sqrl --snapshots snapshots-avro-schema --tests tests-avro-schema"
-                .split(" "));
+    var result = sqrlScript(testDir, "test avro-schema.sqrl".split(" "));
 
     log.info("SQRL test command executed successfully");
     log.info("Container logs:\n{}", result.logs());

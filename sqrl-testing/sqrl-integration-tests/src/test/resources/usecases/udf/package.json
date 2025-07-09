@@ -1,6 +1,10 @@
 {
   "version": "1",
   "compiler": {
-    "compilePlan": false
+    "compile-flink-plan": false
+  },
+  "test-runner": {
+    "snapshot-dir": "snapshots-myudf",
+    "test-dir": "tests-myudf"
   }
 }

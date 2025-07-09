@@ -28,8 +28,17 @@
       "type": "object",
       "minProperties": 1,
       "properties": {
-        "compilePlan": {
+        "logger": {
+          "type": "string"
+        },
+        "extended-scalar-types": {
           "type": "boolean"
+        },
+        "compile-flink-plan": {
+          "type": "boolean"
+        },
+        "cost-model": {
+          "type": "string"
         },
         "explain": {
           "type": "object",
@@ -54,15 +63,6 @@
               "type": "boolean"
             }
           }
-        },
-        "snapshotPath": {
-          "type": "string"
-        },
-        "logger": {
-          "type": "string"
-        },
-        "extendedScalarTypes": {
-          "type": "boolean"
         },
         "api": {
           "type": "object",
@@ -114,10 +114,6 @@
           "type": "object",
           "minProperties": 1,
           "properties": {
-            "connectors": {
-              "type": "object",
-              "minProperties": 1
-            },
             "config": {
               "type": "object",
               "minProperties": 1
@@ -145,32 +141,9 @@
         }
       }
     },
-    "values": {
+    "connectors": {
       "type": "object",
-      "minProperties": 1,
-      "properties": {
-        "flink-config": {
-          "type": "object",
-          "minProperties": 1,
-          "additionalProperties": true
-        },
-        "mountDir": {
-          "type": "string"
-        },
-        "create-topics": {
-          "oneOf": [
-            {
-              "type": "array",
-              "items": { "type": "string" },
-              "minItems": 1
-            },
-            {
-              "type": "string"
-            }
-          ]
-        }
-      },
-      "additionalProperties": true
+      "minProperties": 1
     },
     "dependencies": {
       "type": "object",
@@ -188,7 +161,7 @@
               "type": "string"
             }
           },
-          "required": ["name", "version"],
+          "required": ["name"],
           "additionalProperties": false
         }
       }
@@ -201,10 +174,16 @@
       "type": "object",
       "minProperties": 1,
       "properties": {
+        "snapshot-dir": {
+          "type": "string"
+        },
+        "test-dir": {
+          "type": "string"
+        },
         "delay-sec": {
           "type": "integer"
         },
-        "mutation-delay": {
+        "mutation-delay-sec": {
           "type": "integer"
         },
         "required-checkpoints": {
@@ -213,6 +192,11 @@
         "headers": {
           "type": "object",
           "minProperties": 1
+        },
+        "create-topics": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1
         }
       },
       "additionalProperties": false

@@ -17,7 +17,7 @@ package com.datasqrl.cli;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import com.datasqrl.config.PackageJson.CompilerConfig;
+import com.datasqrl.config.PackageJson;
 import com.datasqrl.flinkrunner.EnvVarResolver;
 import com.datasqrl.flinkrunner.SqrlRunner;
 import com.datasqrl.graphql.HttpServerVerticle;
@@ -75,9 +75,8 @@ import org.apache.kafka.clients.admin.NewTopic;
 @Slf4j
 public class DatasqrlRun {
 
-  private final Path planPath;
-  private final Path build;
-  private final CompilerConfig compilerConfig;
+  private final Path planDir;
+  private final PackageJson sqrlConfig;
   private final Configuration flinkConfig;
   private final Map<String, String> env;
   private final boolean testRun;
@@ -86,22 +85,21 @@ public class DatasqrlRun {
   private Vertx vertx;
   private TableResult execute;
 
-  public DatasqrlRun(Path planPath, CompilerConfig compilerConfig, Configuration flinkConfig) {
-    this(planPath, compilerConfig, flinkConfig, System.getenv(), false);
+  public DatasqrlRun(Path planDir, PackageJson sqrlConfig, Configuration flinkConfig) {
+    this(planDir, sqrlConfig, flinkConfig, System.getenv(), false);
   }
 
   public DatasqrlRun(
-      Path planPath,
-      CompilerConfig compilerConfig,
+      Path planDir,
+      PackageJson sqrlConfig,
       Configuration flinkConfig,
       Map<String, String> env,
       boolean testRun) {
-    this.planPath = planPath;
-    this.compilerConfig = compilerConfig;
+    this.planDir = planDir;
+    this.sqrlConfig = sqrlConfig;
     this.flinkConfig = flinkConfig;
     this.env = env;
     this.testRun = testRun;
-    build = planPath.getParent().getParent();
     objectMapper = SqrlObjectMapper.MAPPER;
   }
 
@@ -165,14 +163,14 @@ public class DatasqrlRun {
   private TableResult runFlinkJob() {
     applyInternalTestConfig();
     var execMode = flinkConfig.get(ExecutionOptions.RUNTIME_MODE);
-    var isCompiledPlan = compilerConfig.compilePlan();
+    var isCompiledPlan = sqrlConfig.getCompilerConfig().compileFlinkPlan();
 
     String sqlFile = null;
     String planFile = null;
     if (execMode == RuntimeExecutionMode.STREAMING && isCompiledPlan) {
-      planFile = planPath.resolve("flink-compiled-plan.json").toAbsolutePath().toString();
+      planFile = planDir.resolve("flink-compiled-plan.json").toAbsolutePath().toString();
     } else {
-      sqlFile = planPath.resolve("flink-sql.sql").toAbsolutePath().toString();
+      sqlFile = planDir.resolve("flink-sql.sql").toAbsolutePath().toString();
     }
 
     var resolver = new EnvVarResolver(env);
@@ -191,17 +189,12 @@ public class DatasqrlRun {
   }
 
   @SneakyThrows
-  protected Map getPackageJson() {
-    return objectMapper.readValue(build.resolve("package.json").toFile(), Map.class);
-  }
-
-  @SneakyThrows
   private void initKafka() {
-    if (!planPath.resolve("kafka.json").toFile().exists()) {
+    if (!planDir.resolve("kafka.json").toFile().exists()) {
       return;
     }
     Map<String, Object> map =
-        objectMapper.readValue(planPath.resolve("kafka.json").toFile(), Map.class);
+        objectMapper.readValue(planDir.resolve("kafka.json").toFile(), Map.class);
     List<Map<String, Object>> topics = (List<Map<String, Object>>) map.get("topics");
 
     if (topics == null) {
@@ -209,18 +202,10 @@ public class DatasqrlRun {
     }
 
     List<Map<String, Object>> mutableTopics = new ArrayList<>(topics);
-
-    Object o = getPackageJson().get("values");
-    if (o instanceof Map vals) {
-      Object o1 = vals.get("create-topics");
-      if (o1 instanceof List topicList) {
-        for (Object t : topicList) {
-          if (t instanceof String string) {
-            mutableTopics.add(Map.of("topicName", string));
-          }
-        }
-      }
-    }
+    sqrlConfig
+        .getTestConfig()
+        .getCreateTopics()
+        .forEach(topic -> mutableTopics.add(Map.of("topicName", topic)));
 
     Properties props = new Properties();
     if (getenv("PROPERTIES_BOOTSTRAP_SERVERS") == null) {
@@ -246,7 +231,7 @@ public class DatasqrlRun {
 
   @SneakyThrows
   private void initPostgres() {
-    File file = planPath.resolve("postgres.json").toFile();
+    File file = planDir.resolve("postgres.json").toFile();
     if (!file.exists()) {
       return;
     }
@@ -275,11 +260,11 @@ public class DatasqrlRun {
 
   @SneakyThrows
   private void startVertx() {
-    if (!planPath.resolve("vertx.json").toFile().exists()) {
+    if (!planDir.resolve("vertx.json").toFile().exists()) {
       return;
     }
     RootGraphqlModel rootGraphqlModel =
-        objectMapper.readValue(planPath.resolve("vertx.json").toFile(), ModelContainer.class).model;
+        objectMapper.readValue(planDir.resolve("vertx.json").toFile(), ModelContainer.class).model;
     if (rootGraphqlModel == null) {
       return; // no graphql server queries
     }
@@ -297,7 +282,7 @@ public class DatasqrlRun {
         };
 
     // Set Postgres connection options from environment variables
-    if (planPath.resolve("postgres.json").toFile().exists()) {
+    if (planDir.resolve("postgres.json").toFile().exists()) {
       serverConfig
           .getPgConnectOptions()
           .setHost(getenv("PGHOST"))
@@ -374,38 +359,12 @@ public class DatasqrlRun {
     return Tuple2.of(path, attrs.creationTime());
   }
 
-  @SuppressWarnings("unchecked")
   private Map<String, Object> vertxConfig() {
-    var packageJson = getPackageJson();
-    var engines = (Map) packageJson.get("engines");
-    if (engines == null) {
-      return null;
-    }
-
-    var vertx = (Map) engines.get("vertx");
-    if (vertx == null) {
-      return null;
-    }
-
-    var config = (Map) vertx.get("config");
-    if (config == null) {
-      return null;
-    }
-
-    return (Map<String, Object>) config;
-  }
-
-  private Optional<String> getSnowflakeUrl() {
-    var engines = (Map) getPackageJson().get("engines");
-    var snowflake = (Map) engines.get("snowflake");
-    if (snowflake != null) {
-      var url = snowflake.get("url");
-      if (url instanceof String string) {
-        return Optional.of(string);
-      }
-    }
-
-    return Optional.empty();
+    return sqrlConfig
+        .getEngines()
+        .getEngineConfig(EngineIds.SERVER)
+        .map(PackageJson.EngineConfig::getConfig)
+        .orElse(null);
   }
 
   void applyInternalTestConfig() {

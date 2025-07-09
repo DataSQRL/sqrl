@@ -44,7 +44,7 @@ public abstract class AbstractCmd implements Runnable, IExitCodeGenerator {
   public void run() {
     ErrorCollector collector = ErrorCollector.root();
     try {
-      execute(collector);
+      runInternal(collector);
       cli.statusHook.onSuccess(collector);
     } catch (CollectedException e) {
       if (e.isInternalError()) e.printStackTrace();
@@ -59,7 +59,7 @@ public abstract class AbstractCmd implements Runnable, IExitCodeGenerator {
     System.out.println(ErrorPrinter.prettyPrint(collector));
   }
 
-  protected abstract void execute(ErrorCollector errors) throws Exception;
+  protected abstract void runInternal(ErrorCollector errors) throws Exception;
 
   protected Path getBuildDir() {
     return cli.rootDir.resolve(SqrlConstants.BUILD_DIR_NAME);

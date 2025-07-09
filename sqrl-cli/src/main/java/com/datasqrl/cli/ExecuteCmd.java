@@ -26,13 +26,13 @@ import picocli.CommandLine;
 public class ExecuteCmd extends AbstractCmd {
 
   @Override
-  protected void execute(ErrorCollector errors) throws Exception {
+  protected void runInternal(ErrorCollector errors) throws Exception {
     var targetDir = getTargetDir();
     var planDir = targetDir.resolve(SqrlConstants.PLAN_DIR);
     var sqrlConfig = ConfigLoaderUtils.loadResolvedConfig(errors, getBuildDir());
     var flinkConfig = ConfigLoaderUtils.loadFlinkConfig(planDir);
 
-    var sqrlRun = new DatasqrlRun(planDir, sqrlConfig.getCompilerConfig(), flinkConfig);
+    var sqrlRun = new DatasqrlRun(planDir, sqrlConfig, flinkConfig);
     sqrlRun.run(true, true);
   }
 }

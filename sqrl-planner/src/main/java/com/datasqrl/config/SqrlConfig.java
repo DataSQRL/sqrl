@@ -50,8 +50,12 @@ import lombok.SneakyThrows;
 
 /** Jackson-based implementation of {@link SqrlConfig} with JSON Schema validation and merging. */
 public class SqrlConfig {
+
   public static final int CURRENT_VERSION = 1;
   public static final String VERSION_KEY = "version";
+
+  private static final String KEY_PATTERN =
+      "^[a-z0-9](?!.*[.-]{2})(?!.*[-\\.][\\.\\-])[a-z0-9.-]*[a-z0-9]$";
 
   private final ErrorCollector errors;
   private ObjectNode root;
@@ -118,6 +122,12 @@ public class SqrlConfig {
   }
 
   private String getFullKey(String key) {
+    errors.checkFatal(
+        key.matches(KEY_PATTERN),
+        String.format(
+            "Invalid config key '%s'. A SQRL config key must only contain lowercase letters or digits, separated by dots or dashes.",
+            key));
+
     return prefix.isEmpty() ? key : prefix + "." + key;
   }
 

@@ -2,6 +2,8 @@
   "version": "1",
   "enabled-engines": ["vertx", "postgres", "flink"],
   "test-runner": {
+    "snapshot-dir": "snapshots-clickstream-teaser",
+    "test-dir": "tests-clickstream-teaser",
     "delay-sec": -1
   }
 }

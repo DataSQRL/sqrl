@@ -27,13 +27,13 @@ public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
 
   @Override
   public ConnectorConf getConfig(String name) {
-    var connectors = packageJson.getEngines().getEngineConfigOrErr("flink").getConnectors();
+    var connectors = packageJson.getConnectors();
     return connectors.getConnectorConfigOrErr(name);
   }
 
   @Override
   public Optional<ConnectorConf> getOptionalConfig(String name) {
-    var connectors = packageJson.getEngines().getEngineConfigOrErr("flink").getConnectors();
+    var connectors = packageJson.getConnectors();
     return connectors.getConnectorConfig(name);
   }
 }

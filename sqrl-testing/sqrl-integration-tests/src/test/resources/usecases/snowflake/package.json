@@ -17,24 +17,24 @@
     }
   },
   "engines": {
-    "flink": {
-      "connectors" : {
-        "iceberg" : {
-          "warehouse":"s3://my-iceberg-table-test",
-          "catalog-impl":"org.apache.iceberg.aws.glue.GlueCatalog",
-          "io-impl":"org.apache.iceberg.aws.s3.S3FileIO",
-          "catalog-name": "mydatabase",
-          "catalog-database": "mydatabase"
-        }
-      }
-    },
     "snowflake" : {
       "catalog-name": "MyCatalog",
       "external-volume": "MyNewVolume",
       "url": "jdbc:snowflake://${SNOWFLAKE_ID}.snowflakecomputing.com/?user=${SNOWFLAKE_USER}&password=${SNOWFLAKE_PASSWORD}&warehouse=COMPUTE_WH&db=MYSNOWFLAKEDB&schema=public&disableSslHostnameVerification=true"
     }
   },
+  "connectors" : {
+    "iceberg" : {
+      "warehouse":"s3://my-iceberg-table-test",
+      "catalog-impl":"org.apache.iceberg.aws.glue.GlueCatalog",
+      "io-impl":"org.apache.iceberg.aws.s3.S3FileIO",
+      "catalog-name": "mydatabase",
+      "catalog-database": "mydatabase"
+    }
+  },
   "test-runner": {
+    "snapshot-dir": "snapshots-snowflake",
+    "test-dir": "tests-snowflake",
     "delay-sec" : -1,
     "required-checkpoints" : 1
   }

@@ -17,11 +17,21 @@ package com.datasqrl.error;
 
 import java.io.PrintStream;
 import java.io.PrintWriter;
+import java.util.Arrays;
 
 public class CollectedException extends RuntimeException {
 
   public CollectedException(Throwable cause) {
     super("Collected exception", cause);
+  }
+
+  // TODO: use this in ErrorCollector to pinpoint the actual error
+  public static CollectedException withTrimmedStackTrace(Throwable cause) {
+    var orig = cause.getStackTrace();
+    StackTraceElement[] trimmed = Arrays.copyOfRange(orig, 4, orig.length);
+    cause.setStackTrace(trimmed);
+
+    return new CollectedException(cause);
   }
 
   public boolean isInternalError() {

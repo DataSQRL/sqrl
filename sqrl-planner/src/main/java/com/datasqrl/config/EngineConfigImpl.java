@@ -16,7 +16,6 @@
 package com.datasqrl.config;
 
 import static com.datasqrl.config.PackageJsonImpl.CONFIG_KEY;
-import static com.datasqrl.config.PackageJsonImpl.CONNECTORS_KEY;
 
 import com.google.common.collect.Iterables;
 import java.util.Map;
@@ -43,12 +42,6 @@ public class EngineConfigImpl implements PackageJson.EngineConfig {
       result = result.withDefault(defaultValue.get());
     }
     return result.get();
-  }
-
-  // Todo move out to engine specific config
-  @Override
-  public ConnectorsConfig getConnectors() {
-    return new ConnectorsConfigImpl(sqrlConfig.getSubConfig(CONNECTORS_KEY));
   }
 
   @Override

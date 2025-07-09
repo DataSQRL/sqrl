@@ -18,7 +18,7 @@ package com.datasqrl.config;
 import com.datasqrl.planner.analyzer.cost.CostModel;
 import com.datasqrl.planner.analyzer.cost.SimpleCostAnalysisModel;
 import com.datasqrl.planner.analyzer.cost.SimpleCostAnalysisModel.Type;
-import java.util.Optional;
+import java.util.Arrays;
 import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
@@ -27,41 +27,31 @@ public class CompilerConfigImpl implements PackageJson.CompilerConfig {
   SqrlConfig sqrlConfig;
 
   @Override
-  public void setSnapshotPath(String path) {
-    sqrlConfig.setProperty("snapshotPath", path);
-  }
-
-  @Override
-  public Optional<String> getSnapshotPath() {
-    return sqrlConfig.asString("snapshotPath").getOptional();
-  }
-
-  @Override
   public boolean isExtendedScalarTypes() {
-    return sqrlConfig.asBool("extendedScalarTypes").getOptional().orElse(true);
+    return sqrlConfig.asBool("extended-scalar-types").get();
   }
 
   @Override
   public String getLogger() {
-    return sqrlConfig.hasKey("logger") ? sqrlConfig.asString("logger").get() : "print";
+    return sqrlConfig.asString("logger").get();
   }
 
   @Override
-  public boolean compilePlan() {
-    return sqrlConfig.asBool("compilePlan").withDefault(true).get();
+  public boolean compileFlinkPlan() {
+    return sqrlConfig.asBool("compile-flink-plan").get();
   }
 
   @Override
   public CostModel getCostModel() {
-    return new SimpleCostAnalysisModel(
+    var costModelStr =
         sqrlConfig
             .asString("cost-model")
             .validate(
                 str -> SimpleCostAnalysisModel.Type.fromString(str).isPresent(),
-                "Not a valid cost model, must be one of " + SimpleCostAnalysisModel.Type.values())
-            .getOptional()
-            .flatMap(SimpleCostAnalysisModel.Type::fromString)
-            .orElse(Type.DEFAULT));
+                "Must be one of " + Arrays.toString(Type.values()))
+            .get();
+
+    return new SimpleCostAnalysisModel(Type.valueOf(costModelStr.toUpperCase()));
   }
 
   @Override

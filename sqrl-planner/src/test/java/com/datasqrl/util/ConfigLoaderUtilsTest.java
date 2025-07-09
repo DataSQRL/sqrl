@@ -54,6 +54,7 @@ class ConfigLoaderUtilsTest {
             errors, Path.of("src/test/resources/config/config1.json"), null);
     var config1 = getSqrlConfig(res);
     testConfig1(config1);
+    testSubConf(config1.getSubConfig("sub-conf"));
   }
 
   @Test
@@ -68,6 +69,7 @@ class ConfigLoaderUtilsTest {
     res = ConfigLoaderUtils.loadResolvedConfigFromFile(errors, tempFile2, null);
     var reloadedConfig = getSqrlConfig(res);
     testConfig1(reloadedConfig);
+    testSubConf(reloadedConfig.getSubConfig("sub-conf"));
   }
 
   @Test
@@ -118,7 +120,7 @@ class ConfigLoaderUtilsTest {
     assertThat(underTest).isNotNull();
     assertThat(underTest.getVersion()).isEqualTo(1);
     assertThat(underTest.getEnabledEngines()).contains("vertx", "postgres", "kafka", "flink");
-    assertThat(underTest.getTestConfig()).isPresent();
+    assertThat(underTest.getTestConfig()).isNotNull();
     assertThat(underTest.getEngines().getEngineConfig("flink")).isPresent();
     assertThat(underTest.getScriptConfig().getGraphql()).isEmpty();
     assertThat(underTest.getScriptConfig().getMainScript()).isEmpty();
@@ -131,7 +133,7 @@ class ConfigLoaderUtilsTest {
     assertThat(underTest).isNotNull();
     assertThat(underTest.getVersion()).isEqualTo(1);
     assertThat(underTest.getEnabledEngines()).contains("vertx", "postgres", "kafka", "flink");
-    assertThat(underTest.getTestConfig()).isPresent();
+    assertThat(underTest.getTestConfig()).isNotNull();
     assertThat(underTest.getEngines().getEngineConfig("flink")).isPresent();
     assertThat(underTest.getScriptConfig().getGraphql()).isEmpty();
     assertThat(underTest.getScriptConfig().getMainScript()).isEmpty();
@@ -148,27 +150,10 @@ class ConfigLoaderUtilsTest {
 
     assertThat(underTest.getEnabledEngines()).contains("test");
 
-    assertThat(underTest.getTestConfig()).isPresent();
+    assertThat(underTest.getTestConfig()).isNotNull();
     assertThat(underTest.getEngines().getEngineConfig("flink")).isPresent();
     assertThat(underTest.getScriptConfig().getGraphql()).isEmpty();
     assertThat(underTest.getScriptConfig().getMainScript()).isEmpty();
-  }
-
-  @Test
-  void
-      givenTestFlinkConfig_whenReadFlinkConnectorsPrint_thenReturnsInheritedConnectorConfiguration() {
-    var testConfigPath = Path.of("src/test/resources/config/test-flink-config.json");
-    var packageJson = ConfigLoaderUtils.loadUnresolvedConfig(errors, List.of(testConfigPath));
-
-    var enginesConfig = packageJson.getEngines();
-    var flinkConfig = enginesConfig.getEngineConfig("flink");
-
-    assertThat(flinkConfig).isPresent();
-    var flinkConnectorsConfig = flinkConfig.get().getConnectors();
-    var printConnectorConfig = flinkConnectorsConfig.getConnectorConfigOrErr("print").toMap();
-
-    assertThat(printConnectorConfig.get("connector")).contains("print");
-    assertThat(printConnectorConfig.get("print-identifier")).contains("${sqrl:table-name}");
   }
 
   @Test
@@ -236,12 +221,12 @@ class ConfigLoaderUtilsTest {
     assertThat(config.getVersion()).isEqualTo(1);
 
     var x1 = config.as("x1", SqrlConfigTest.ConstraintClass.class).get();
-    assertThat(x1.optInt).isEqualTo(2);
+    assertThat(x1.integer).isEqualTo(2);
     assertThat(x1.flag).isFalse();
-    assertThat(x1.optString).isEqualTo("hello world");
+    assertThat(x1.string).isEqualTo("hello world");
 
     var x2 = config.as("x2", SqrlConfigTest.ConstraintClass.class).get();
-    assertThat(x2.optInt).isEqualTo(33);
+    assertThat(x2.integer).isEqualTo(33);
 
     assertThatThrownBy(() -> config.as("xf1", SqrlConfigTest.ConstraintClass.class).get())
         .isInstanceOf(CollectedException.class)
@@ -253,7 +238,7 @@ class ConfigLoaderUtilsTest {
 
     var nested = config.as("nested", SqrlConfigTest.NestedClass.class).get();
     assertThat(nested.counter).isEqualTo(5);
-    assertThat(nested.obj.optInt).isEqualTo(33);
+    assertThat(nested.obj.integer).isEqualTo(33);
     assertThat(nested.obj.flag).isTrue();
   }
 

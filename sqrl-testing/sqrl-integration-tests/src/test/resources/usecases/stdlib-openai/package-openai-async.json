@@ -1,0 +1,10 @@
+{
+  "version": "1",
+  "compiler": {
+    "compile-flink-plan": false
+  },
+  "test-runner": {
+    "snapshot-dir": "snapshots-stdlib-openai-async",
+    "delay-sec": -1
+  }
+}

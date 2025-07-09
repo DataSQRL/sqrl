@@ -1,6 +1,8 @@
 {
   "version": "1",
   "test-runner": {
+    "snapshot-dir": "snapshots-seedshop-extended",
+    "test-dir": "tests-seedshop-extended",
     "delay-sec": -1
   }
 }

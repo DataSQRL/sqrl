@@ -1,6 +1,4 @@
 {
-  "version": "1",
-  "enabled-engines": ["flink"],
   "engines" : {
     "flink" : {
       "config": {

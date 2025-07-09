@@ -240,7 +240,7 @@ public class TestExecutionEnv implements TestEngineVisitor<Void, TestEnvContext>
             .resolve(SqrlConstants.DEPLOY_DIR_NAME)
             .resolve(SqrlConstants.PLAN_DIR);
     var flinkConfig = ConfigLoaderUtils.loadFlinkConfig(planDir);
-    var test = new DatasqrlTest(planDir, packageJson.getCompilerConfig(), flinkConfig, context.env);
+    var test = new DatasqrlTest(context.rootDir, planDir, packageJson, flinkConfig, context.env);
     try {
       var run = test.run();
       if (run != 0) {

@@ -24,31 +24,31 @@
     }
   },
   "x1" : {
-    "optInt" : 2,
-    "optString" : "hello world",
+    "integer" : 2,
+    "string" : "hello world",
     "flag" : false
   },
   "x2" : {
-    "optString" : "hello world",
+    "string" : "hello world",
     "flag" : false
   },
   "xf1" : {
-    "optInt" : 2,
-    "optString" : "hel",
+    "integer" : 2,
+    "string" : "hel",
     "flag" : false
   },
   "xf2" : {
-    "optInt" : 2,
-    "optString" : "hello world"
+    "integer" : 2,
+    "string" : "hello world"
   },
   "nested" : {
     "counter" : 5,
     "obj" : {
-      "optString" : "hello world",
+      "string" : "hello world",
       "flag" : true
     }
   },
-  "subConf" : {
+  "sub-conf" : {
     "one" : 1,
     "token" : "piff",
     "delimited.config.option" : "that"
