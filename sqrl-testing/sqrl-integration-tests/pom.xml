@@ -31,13 +31,13 @@
       <dependency>
         <groupId>org.yaml</groupId>
         <artifactId>snakeyaml</artifactId>
-        <version>2.4</version>
+        <version>${snakeyaml.version}</version>
       </dependency>
 
       <dependency>
         <groupId>software.amazon.awssdk</groupId>
         <artifactId>bom</artifactId>
-        <version>2.31.77</version>
+        <version>${aws-sdk-bom.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -164,7 +164,7 @@
     <dependency>
       <groupId>com.theokanning.openai-gpt3-java</groupId>
       <artifactId>api</artifactId>
-      <version>0.18.2</version>
+      <version>${openai-gpt3-java.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -179,7 +179,7 @@
     <dependency>
       <groupId>org.apache.zookeeper</groupId>
       <artifactId>zookeeper</artifactId>
-      <version>3.9.3</version>
+      <version>${zookeeper.version}</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
@@ -190,13 +190,13 @@
     <dependency>
       <groupId>org.awaitility</groupId>
       <artifactId>awaitility</artifactId>
-      <version>4.3.0</version>
+      <version>${awaitility.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.nextbreakpoint</groupId>
       <artifactId>com.nextbreakpoint.flink.client</artifactId>
-      <version>1.1.4</version>
+      <version>${flink-client.version}</version>
       <scope>test</scope>
       <exclusions>
         <exclusion>

@@ -39,7 +39,7 @@ public class TestCmd extends AbstractCompileCmd {
     var flinkConfig = ConfigLoaderUtils.loadFlinkConfig(planDir);
 
     var sqrlTest = new DatasqrlTest(cli.rootDir, planDir, sqrlConfig, flinkConfig, System.getenv());
-    sqrlTest.run();
+    exitCode.set(sqrlTest.run());
   }
 
   @Override
