@@ -281,16 +281,20 @@ public abstract class SqrlContainerTestBase {
 
   protected static void assertBuildNotOwnedByRoot(Path testDir, String logs) {
     var buildPath = testDir.resolve("build");
-    if (buildPath.toFile().exists()) {
-      try {
-        var owner = Files.getOwner(buildPath);
-        assertThat(owner.getName())
-            .as("Build directory should not be owned by root user: %s\n%s", buildPath, logs)
-            .isNotEqualTo("root");
-        log.debug("Build directory {} is owned by: {}", buildPath, owner.getName());
-      } catch (Exception e) {
-        fail("Failed to check build directory ownership: " + e.getMessage(), e);
-      }
+    assertThat(buildPath).exists();
+
+    assertOwner(buildPath, logs);
+  }
+
+  protected static void assertOwner(Path path, String logs) {
+    try {
+      var owner = Files.getOwner(path);
+      assertThat(owner.getName())
+          .as("Build directory should not be owned by root user: %s\n%s", path, logs)
+          .isNotEqualTo("root");
+      log.debug("Build directory {} is owned by: {}", path, owner.getName());
+    } catch (Exception e) {
+      fail("Failed to check build directory ownership: " + e.getMessage(), e);
     }
   }
 

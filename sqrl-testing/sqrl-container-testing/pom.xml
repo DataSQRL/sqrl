@@ -92,6 +92,12 @@
       <artifactId>junit-jupiter</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>commons-io</groupId>
+      <artifactId>commons-io</artifactId>
+      <version>${commonsio.version}</version>
+      <scope>test</scope>
+    </dependency>
 
     <dependency>
       <groupId>com.datasqrl</groupId>

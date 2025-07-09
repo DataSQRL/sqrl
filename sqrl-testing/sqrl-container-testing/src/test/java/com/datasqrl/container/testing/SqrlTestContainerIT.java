@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
 
 @Slf4j
@@ -49,6 +50,9 @@ public class SqrlTestContainerIT extends SqrlContainerTestBase {
   @Test
   @SneakyThrows
   void givenAvroPackage_whenTestCommandExecuted_thenSnapshotsValidateSuccessfully() {
+    var snapshots = testDir.resolve("snapshots");
+    FileUtils.deleteDirectory(snapshots.toFile());
+
     // Assert that the test command throws a RuntimeException and capture the exception
     ContainerError exception =
         (ContainerError)
@@ -62,10 +66,9 @@ public class SqrlTestContainerIT extends SqrlContainerTestBase {
     log.info("Container logs:\n{}", logs);
 
     // Assert that the logs contain the expected error messages
-    assertThat(logs)
-        .contains("Snapshot OK for MySchema")
-        .contains("Snapshot on filesystem but not in result: MySchemaQuery.snapshot");
+    assertThat(logs).contains("Snapshot created for test: MySchema");
 
-    log.info("Test failed as expected with correct error messages");
+    assertOwner(snapshots, logs);
+    FileUtils.deleteDirectory(snapshots.toFile());
   }
 }
