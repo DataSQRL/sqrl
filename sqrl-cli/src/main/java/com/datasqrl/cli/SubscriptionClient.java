@@ -29,10 +29,15 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 
 // Simplified example WebSocket client code using Vert.x
 @RequiredArgsConstructor
+@Slf4j
 public class SubscriptionClient {
+  private static final int MAX_RETRIES = 3;
+  private static final long INITIAL_DELAY_MS = 100;
+
   private final String name;
   private final String query;
   private final Map<String, String> headers;
@@ -44,6 +49,34 @@ public class SubscriptionClient {
   private CompletableFuture<Void> connectedFuture = new CompletableFuture<>();
 
   public CompletableFuture<Void> start() {
+    attemptConnection(0);
+    return connectedFuture;
+  }
+
+  private void attemptConnection(int attempt) {
+    if (attempt >= MAX_RETRIES) {
+      log.error("Failed to connect after {} attempts for subscription: {}", MAX_RETRIES, name);
+      connectedFuture.completeExceptionally(
+          new RuntimeException("Failed to connect after " + MAX_RETRIES + " attempts"));
+      return;
+    }
+
+    long delay = INITIAL_DELAY_MS * (long) Math.pow(2, attempt);
+
+    if (attempt > 0) {
+      log.info(
+          "Attempting to reconnect (attempt {}/{}) for subscription: {} after {}ms delay",
+          attempt + 1,
+          MAX_RETRIES,
+          name,
+          delay);
+      vertx.setTimer(delay, id -> connectWebSocket(attempt));
+    } else {
+      connectWebSocket(attempt);
+    }
+  }
+
+  private void connectWebSocket(int attempt) {
     /* 1. Collect handshake headers */
     var headerMap = MultiMap.caseInsensitiveMultiMap();
     if (headers != null) {
@@ -66,7 +99,7 @@ public class SubscriptionClient {
         .onSuccess(
             ws -> {
               this.webSocket = ws;
-              System.out.println("WebSocket opened for subscription: " + name);
+              log.info("WebSocket opened for subscription: {}", name);
 
               // Set a message handler for incoming messages
               ws.handler(this::handleTextMessage);
@@ -78,12 +111,23 @@ public class SubscriptionClient {
             })
         .onFailure(
             throwable -> {
-              throwable.printStackTrace();
-              System.err.println("Failed to open WebSocket for subscription: " + name);
-              connectedFuture.completeExceptionally(throwable);
+              if (attempt < MAX_RETRIES - 1) {
+                log.warn(
+                    "Failed to open WebSocket for subscription: {} (attempt {}/{}), retrying...",
+                    name,
+                    attempt + 1,
+                    MAX_RETRIES,
+                    throwable);
+                attemptConnection(attempt + 1);
+              } else {
+                log.error(
+                    "Failed to open WebSocket for subscription: {} after {} attempts",
+                    name,
+                    MAX_RETRIES,
+                    throwable);
+                connectedFuture.completeExceptionally(throwable);
+              }
             });
-
-    return connectedFuture;
   }
 
   private Future<Void> sendConnectionInit() {
