@@ -124,9 +124,11 @@ All dependency versions should be centralized as properties in the root pom.xml 
 **Root POM Properties Location**: `/pom.xml` - All version properties are defined in the `<properties>` section.
 
 **Key Principles**:
-- NEVER use hardcoded versions in child module pom.xml files
-- ALWAYS add new version properties to the root pom.xml when introducing new dependencies
-- Use consistent property naming: `<libraryname.version>X.Y.Z</libraryname.version>`
+- **NEVER use hardcoded versions in child module pom.xml files** - This is a strict requirement
+- **ALWAYS add new version properties to the root pom.xml when introducing new dependencies** - No exceptions
+- **Use consistent property naming**: `<libraryname.version>X.Y.Z</libraryname.version>`
+- **All existing hardcoded versions must be migrated** to use centralized properties immediately
+- **Plugin versions must also follow this pattern** - Add plugin version properties to root POM
 
 **Examples of Existing Properties**:
 ```xml
@@ -151,9 +153,15 @@ All dependency versions should be centralized as properties in the root pom.xml 
 ```
 
 **When Adding New Dependencies**:
-1. First add the version property to root pom.xml
+1. **MANDATORY**: First add the version property to root pom.xml
 2. Then reference the property in child module pom.xml files
 3. This ensures version consistency across all modules and makes version upgrades centralized
+
+**Version Management Enforcement**:
+- **Code reviews must reject any hardcoded dependency versions** in child modules
+- **All new dependencies must use version properties** from the root POM
+- **When updating existing dependencies**, always ensure they use centralized version properties
+- **Plugin versions follow the same pattern** as dependency versions
 
 ## Git Commits
 
