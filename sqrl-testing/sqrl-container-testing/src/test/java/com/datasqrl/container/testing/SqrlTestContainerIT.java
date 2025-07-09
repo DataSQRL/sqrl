@@ -36,16 +36,17 @@ public class SqrlTestContainerIT extends SqrlContainerTestBase {
   void givenAvroSchemaScript_whenTestCommandExecuted_thenSnapshotsValidateSuccessfully() {
     var result = sqrlScript(testDir, "test avro-schema.sqrl".split(" "));
 
+    var logs = result.logs();
     log.info("SQRL test command executed successfully");
-    log.info("Container logs:\n{}", result.logs());
+    log.info("Container logs:\n{}", logs);
 
     // Verify the expected success messages are present in the logs
-    assertThat(result.logs())
+    assertThat(logs)
         .contains("Snapshot OK for MySchemaQuery")
         .contains("Snapshot OK for MySchema");
 
     // Validate log files are present and have content
-    validateLogFiles(testDir);
+	assertLogFiles(logs, testDir);
 
     log.info("All snapshot validations passed successfully");
   }

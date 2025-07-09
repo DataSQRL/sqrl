@@ -100,15 +100,18 @@ public abstract class SqrlContainerTestBase {
     }
   }
 
+  @SuppressWarnings("resource")
   protected GenericContainer<?> createCmdContainer(Path workingDir) {
     assertThat(workingDir).exists().isDirectory();
 
     return new GenericContainer<>(DockerImageName.parse(SQRL_CMD_IMAGE + ":" + getImageTag()))
         .withWorkingDirectory(BUILD_DIR)
         .withFileSystemBind(workingDir.toString(), BUILD_DIR, BindMode.READ_WRITE)
-        .withEnv("TZ", "America/Los_Angeles");
+        .withEnv("TZ", "America/Los_Angeles")
+        .withEnv("DEBUG", "1");
   }
 
+  @SuppressWarnings("resource")
   protected GenericContainer<?> createServerContainer(Path workingDir) {
     var deployPlanPath = workingDir.resolve("build/deploy/plan");
     assertThat(deployPlanPath).exists().isDirectory();
@@ -117,6 +120,7 @@ public abstract class SqrlContainerTestBase {
         .withNetwork(sharedNetwork)
         .withExposedPorts(GRAPHQL_PORT)
         .withFileSystemBind(deployPlanPath.toString(), "/opt/sqrl/config", BindMode.READ_ONLY)
+        .withEnv("DEBUG", "1")
         .waitingFor(
             Wait.forLogMessage(".*GraphQL verticle deployed successfully.*", 1)
                 .withStartupTimeout(Duration.ofSeconds(20)));
@@ -329,12 +333,12 @@ public abstract class SqrlContainerTestBase {
     return sharedHttpClient.execute(request);
   }
 
-  protected void validateLogFiles(Path testDir) {
+  protected void assertLogFiles(String logs, Path testDir) {
     var logsDir = testDir.resolve("build/logs");
-    assertThat(logsDir).as("Logs directory should exist").exists().isDirectory();
+    assertThat(logsDir).as("Logs directory should exist\n%s", logs).exists().isDirectory();
 
     var cliLogFile = logsDir.resolve("datasqrl-cli.log");
-    assertThat(cliLogFile).as("CLI log file should exist").exists().isRegularFile();
+    assertThat(cliLogFile).as("CLI log file should exist\n%s", logs).exists().isRegularFile();
 
     assertSoftly(
         softAssertions -> {
@@ -342,7 +346,7 @@ public abstract class SqrlContainerTestBase {
             var cliLogContent = Files.readString(cliLogFile);
             softAssertions
                 .assertThat(cliLogContent)
-                .as("CLI log file should contain content")
+                .as("CLI log file should contain content\n%s", logs)
                 .isNotEmpty();
 
             log.info("CLI log file size: {} bytes", cliLogFile.toFile().length());
@@ -356,7 +360,7 @@ public abstract class SqrlContainerTestBase {
             var cliLogOwner = Files.getOwner(cliLogFile);
             softAssertions
                 .assertThat(cliLogOwner.getName())
-                .as("CLI log file should not be owned by root")
+                .as("CLI log file should not be owned by root\n%s", logs)
                 .isNotEqualTo("root");
 
             // Check for service log files if they exist
@@ -365,14 +369,14 @@ public abstract class SqrlContainerTestBase {
               var redpandaLogContent = Files.readString(redpandaLogFile);
               softAssertions
                   .assertThat(redpandaLogContent)
-                  .as("Redpanda log file should contain content")
+                  .as("Redpanda log file should contain content\n%s", logs)
                   .isNotEmpty();
               log.info("Redpanda log file size: {} bytes", redpandaLogFile.toFile().length());
 
               var redpandaLogOwner = Files.getOwner(redpandaLogFile);
               softAssertions
                   .assertThat(redpandaLogOwner.getName())
-                  .as("Redpanda log file should not be owned by root")
+                  .as("Redpanda log file should not be owned by root\n%s", logs)
                   .isNotEqualTo("root");
             }
 
@@ -381,19 +385,19 @@ public abstract class SqrlContainerTestBase {
               var postgresLogContent = Files.readString(postgresLogFile);
               softAssertions
                   .assertThat(postgresLogContent)
-                  .as("Postgres log file should contain content")
+                  .as("Postgres log file should contain content\n%s", logs)
                   .isNotEmpty();
               log.info("Postgres log file size: {} bytes", postgresLogFile.toFile().length());
 
               var postgresLogOwner = Files.getOwner(postgresLogFile);
               softAssertions
                   .assertThat(postgresLogOwner.getName())
-                  .as("Postgres log file should not be owned by root")
+                  .as("Postgres log file should not be owned by root\n%s", logs)
                   .isNotEqualTo("root");
             }
 
           } catch (Exception e) {
-            softAssertions.fail("Failed to read log files: " + e.getMessage());
+            softAssertions.fail("Failed to read log files: " + e.getMessage() + "\n" + logs);
           }
         });
   }

@@ -18,10 +18,17 @@
 set -e
 set -o pipefail
 
+# Enable debug mode if DEBUG environment variable is set
+if [ "$DEBUG" = "1" ]; then
+    set -x
+fi
+
 cd /build
 
+rm -rf /build/build
+
 # Create logs directory for DataSQRL logging
-mkdir -p /build/logs
+mkdir -p /tmp/logs
 
 # Todo: there is a target flag we need to parse and set
 export DATA_PATH=/build/build/deploy/flink/data
@@ -37,7 +44,7 @@ if [[ "$1" == "run" || "$1" == "test" || "$1" == "execute" ]]; then
     if [[ -z "$KAFKA_HOST" ]]; then
         echo "Starting Redpanda..."
         mkdir -p $REDPANDA_DATA_PATH
-        rpk redpanda start --schema-registry-addr 0.0.0.0:8086 --overprovisioned --config /etc/redpanda/redpanda.yaml --smp 1 --memory 1G --reserve-memory 0M --node-id 0 --check=false >> /build/logs/redpanda.log 2>&1 &
+        rpk redpanda start --schema-registry-addr 0.0.0.0:8086 --overprovisioned --config /etc/redpanda/redpanda.yaml --smp 1 --memory 1G --reserve-memory 0M --node-id 0 --check=false >> /tmp/logs/redpanda.log 2>&1 &
 
         export KAFKA_HOST=localhost
         export KAFKA_PORT=9092
@@ -52,17 +59,17 @@ if [[ "$1" == "run" || "$1" == "test" || "$1" == "execute" ]]; then
 
     # Init Postgres if necessary
     if [[ -z "$(ls -A "$POSTGRES_DATA_PATH")" ]]; then
-      su - postgres -c "/usr/lib/postgresql/${POSTGRES_VERSION}/bin/initdb -D ${POSTGRES_DATA_PATH}" >> /build/logs/postgres.log 2>&1
+      su - postgres -c "/usr/lib/postgresql/${POSTGRES_VERSION}/bin/initdb -D ${POSTGRES_DATA_PATH}" >> /tmp/logs/postgres.log 2>&1
 
-      service postgresql start >> /build/logs/postgres.log 2>&1
-      su - postgres -c "psql -U postgres -c \"ALTER USER postgres WITH PASSWORD 'postgres';\"" >> /build/logs/postgres.log 2>&1
-      su - postgres -c "psql -U postgres -c \"CREATE DATABASE datasqrl;\"" >> /build/logs/postgres.log 2>&1
-      su - postgres -c "psql -U postgres -c \"CREATE EXTENSION vector;\"" >> /build/logs/postgres.log 2>&1
+      service postgresql start >> /tmp/logs/postgres.log 2>&1
+      su - postgres -c "psql -U postgres -c \"ALTER USER postgres WITH PASSWORD 'postgres';\"" >> /tmp/logs/postgres.log 2>&1
+      su - postgres -c "psql -U postgres -c \"CREATE DATABASE datasqrl;\"" >> /tmp/logs/postgres.log 2>&1
+      su - postgres -c "psql -U postgres -c \"CREATE EXTENSION vector;\"" >> /tmp/logs/postgres.log 2>&1
     fi
 
     # Start Postgres if POSTGRES_HOST is not set
     if [[ -z "$POSTGRES_HOST" ]]; then
-        service postgresql start >> /build/logs/postgres.log 2>&1
+        service postgresql start >> /tmp/logs/postgres.log 2>&1
         export POSTGRES_HOST=localhost
         export POSTGRES_PORT=5432
         export JDBC_URL="jdbc:postgresql://localhost:5432/datasqrl"
@@ -98,13 +105,15 @@ mkdir -p /build/build 2>/dev/null || true
 chown -R "$BUILD_UID:$BUILD_GID" /build/ 2>/dev/null || true
 
 # Ensure logs directory has proper ownership
-chown -R "$BUILD_UID:$BUILD_GID" /build/logs 2>/dev/null || true
+chown -R "$BUILD_UID:$BUILD_GID" /tmp/logs 2>/dev/null || true
 
 # Run Java as root
 echo "Executing SQRL command: \"$1\" ..."
 set +e
 java -jar /opt/sqrl/sqrl-cli.jar "${@}"
 EXIT_CODE=$?
+
+mv /tmp/logs /build/build/
 
 # After Java execution, fix ownership of any created files in entire /build directory
 chown -R "$BUILD_UID:$BUILD_GID" /build/ 2>/dev/null || true
