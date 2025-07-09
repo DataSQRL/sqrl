@@ -119,6 +119,7 @@
     <jacoco.version>0.8.13</jacoco.version>
     <jjwt.version>0.12.6</jjwt.version>
     <assertj.version>3.27.3</assertj.version>
+    <awaitility.version>4.3.0</awaitility.version>
 
     <maven-javadoc-plugin.version>3.11.2</maven-javadoc-plugin.version>
     <maven-source-plugin.version>3.3.1</maven-source-plugin.version>
