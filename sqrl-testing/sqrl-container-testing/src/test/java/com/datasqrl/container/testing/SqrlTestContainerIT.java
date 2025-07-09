@@ -44,6 +44,9 @@ public class SqrlTestContainerIT extends SqrlContainerTestBase {
         .contains("Snapshot OK for MySchemaQuery")
         .contains("Snapshot OK for MySchema");
 
+    // Validate log files are present and have content
+    validateLogFiles(testDir);
+
     log.info("All snapshot validations passed successfully");
   }
 

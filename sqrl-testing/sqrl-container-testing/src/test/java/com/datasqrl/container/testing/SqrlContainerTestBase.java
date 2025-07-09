@@ -329,6 +329,56 @@ public abstract class SqrlContainerTestBase {
     return sharedHttpClient.execute(request);
   }
 
+  protected void validateLogFiles(Path testDir) {
+    var logsDir = testDir.resolve("logs");
+    assertThat(logsDir).as("Logs directory should exist").exists().isDirectory();
+
+    var cliLogFile = logsDir.resolve("datasqrl-cli.log");
+    assertThat(cliLogFile).as("CLI log file should exist").exists().isRegularFile();
+
+    assertSoftly(
+        softAssertions -> {
+          try {
+            var cliLogContent = Files.readString(cliLogFile);
+            softAssertions
+                .assertThat(cliLogContent)
+                .as("CLI log file should contain content")
+                .isNotEmpty();
+
+            log.info("CLI log file size: {} bytes", cliLogFile.toFile().length());
+            log.debug(
+                "CLI log content preview:\n{}",
+                cliLogContent.length() > 500
+                    ? cliLogContent.substring(0, 500) + "..."
+                    : cliLogContent);
+
+            // Check for service log files if they exist
+            var redpandaLogFile = logsDir.resolve("redpanda.log");
+            if (Files.exists(redpandaLogFile)) {
+              var redpandaLogContent = Files.readString(redpandaLogFile);
+              softAssertions
+                  .assertThat(redpandaLogContent)
+                  .as("Redpanda log file should contain content")
+                  .isNotEmpty();
+              log.info("Redpanda log file size: {} bytes", redpandaLogFile.toFile().length());
+            }
+
+            var postgresLogFile = logsDir.resolve("postgres.log");
+            if (Files.exists(postgresLogFile)) {
+              var postgresLogContent = Files.readString(postgresLogFile);
+              softAssertions
+                  .assertThat(postgresLogContent)
+                  .as("Postgres log file should contain content")
+                  .isNotEmpty();
+              log.info("Postgres log file size: {} bytes", postgresLogFile.toFile().length());
+            }
+
+          } catch (Exception e) {
+            softAssertions.fail("Failed to read log files: " + e.getMessage());
+          }
+        });
+  }
+
   protected void cleanupContainers() {
     if (serverContainer != null && serverContainer.isRunning()) {
       serverContainer.stop();
