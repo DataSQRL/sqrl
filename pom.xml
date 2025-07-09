@@ -166,26 +166,6 @@
       <!-- SQRL deps, please keep this in order -->
       <dependency>
         <groupId>com.datasqrl</groupId>
-        <artifactId>sqrl-base</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.datasqrl</groupId>
-        <artifactId>sqrl-lib-common</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.datasqrl</groupId>
-        <artifactId>sqrl-name</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.datasqrl</groupId>
-        <artifactId>sqrl-errors</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.datasqrl</groupId>
         <artifactId>sqrl-server-core</artifactId>
         <version>${project.version}</version>
       </dependency>
@@ -199,62 +179,11 @@
         <artifactId>sqrl-server-vertx</artifactId>
         <version>${project.version}</version>
       </dependency>
-      <!-- examples-->
-      <dependency>
-        <groupId>com.datasqrl</groupId>
-        <artifactId>sqrl-examples</artifactId>
-        <version>${project.version}</version>
-      </dependency>
 
       <!-- planner -->
       <dependency>
         <groupId>com.datasqrl</groupId>
-        <artifactId>sqrl-calcite</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.datasqrl</groupId>
         <artifactId>sqrl-planner</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.datasqrl</groupId>
-        <artifactId>sqrl-config</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.datasqrl</groupId>
-        <artifactId>sqrl-json</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.datasqrl</groupId>
-        <artifactId>sqrl-secure</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.datasqrl</groupId>
-        <artifactId>sqrl-text</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.datasqrl</groupId>
-        <artifactId>sqrl-time</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.datasqrl</groupId>
-        <artifactId>sqrl-vector</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.datasqrl</groupId>
-        <artifactId>sqrl-flexible-json</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.datasqrl</groupId>
-        <artifactId>sqrl-flexible-csv</artifactId>
         <version>${project.version}</version>
       </dependency>
       <!-- tests -->
@@ -274,29 +203,7 @@
         <artifactId>sqrl-discovery</artifactId>
         <version>${project.version}</version>
       </dependency>
-      <dependency>
-        <groupId>com.datasqrl</groupId>
-        <artifactId>sqrl-packager</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.datasqrl</groupId>
-        <artifactId>sqrl-run</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.datasqrl</groupId>
-        <artifactId>sqrl-test</artifactId>
-        <version>${project.version}</version>
-      </dependency>
       <!-- sqrl test jars-->
-      <dependency>
-        <groupId>com.datasqrl</groupId>
-        <artifactId>sqrl-calcite</artifactId>
-        <version>${project.version}</version>
-        <type>test-jar</type>
-        <scope>test</scope>
-      </dependency>
       <dependency>
         <groupId>com.datasqrl</groupId>
         <artifactId>sqrl-cli</artifactId>
