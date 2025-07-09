@@ -330,7 +330,7 @@ public abstract class SqrlContainerTestBase {
   }
 
   protected void validateLogFiles(Path testDir) {
-    var logsDir = testDir.resolve("logs");
+    var logsDir = testDir.resolve("build/logs");
     assertThat(logsDir).as("Logs directory should exist").exists().isDirectory();
 
     var cliLogFile = logsDir.resolve("datasqrl-cli.log");
@@ -352,6 +352,13 @@ public abstract class SqrlContainerTestBase {
                     ? cliLogContent.substring(0, 500) + "..."
                     : cliLogContent);
 
+            // Validate that log files are not owned by root
+            var cliLogOwner = Files.getOwner(cliLogFile);
+            softAssertions
+                .assertThat(cliLogOwner.getName())
+                .as("CLI log file should not be owned by root")
+                .isNotEqualTo("root");
+
             // Check for service log files if they exist
             var redpandaLogFile = logsDir.resolve("redpanda.log");
             if (Files.exists(redpandaLogFile)) {
@@ -361,6 +368,12 @@ public abstract class SqrlContainerTestBase {
                   .as("Redpanda log file should contain content")
                   .isNotEmpty();
               log.info("Redpanda log file size: {} bytes", redpandaLogFile.toFile().length());
+
+              var redpandaLogOwner = Files.getOwner(redpandaLogFile);
+              softAssertions
+                  .assertThat(redpandaLogOwner.getName())
+                  .as("Redpanda log file should not be owned by root")
+                  .isNotEqualTo("root");
             }
 
             var postgresLogFile = logsDir.resolve("postgres.log");
@@ -371,6 +384,12 @@ public abstract class SqrlContainerTestBase {
                   .as("Postgres log file should contain content")
                   .isNotEmpty();
               log.info("Postgres log file size: {} bytes", postgresLogFile.toFile().length());
+
+              var postgresLogOwner = Files.getOwner(postgresLogFile);
+              softAssertions
+                  .assertThat(postgresLogOwner.getName())
+                  .as("Postgres log file should not be owned by root")
+                  .isNotEqualTo("root");
             }
 
           } catch (Exception e) {

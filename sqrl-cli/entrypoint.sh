@@ -16,6 +16,8 @@
 #
 
 set -e
+set -o pipefail
+
 cd /build
 
 # Create logs directory for DataSQRL logging
