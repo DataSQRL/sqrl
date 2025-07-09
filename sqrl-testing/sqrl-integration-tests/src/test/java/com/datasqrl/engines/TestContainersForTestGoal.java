@@ -33,7 +33,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.UUID;
 import lombok.AllArgsConstructor;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -143,11 +142,7 @@ public class TestContainersForTestGoal implements TestEngineVisitor<TestContaine
 
       @Override
       public Map<String, String> getEnv() {
-        return Map.of(
-            "PROPERTIES_BOOTSTRAP_SERVERS",
-            testKafka.getBootstrapServers(),
-            "PROPERTIES_GROUP_ID",
-            UUID.randomUUID().toString());
+        return Map.of("PROPERTIES_BOOTSTRAP_SERVERS", testKafka.getBootstrapServers());
       }
     };
   }
