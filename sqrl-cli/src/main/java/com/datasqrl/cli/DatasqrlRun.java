@@ -48,11 +48,13 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -98,7 +100,7 @@ public class DatasqrlRun {
     this.planDir = planDir;
     this.sqrlConfig = sqrlConfig;
     this.flinkConfig = flinkConfig;
-    this.env = env;
+    this.env = new HashMap<>(env); // we might need to mutate it
     this.testRun = testRun;
     objectMapper = SqrlObjectMapper.MAPPER;
   }
@@ -226,6 +228,12 @@ public class DatasqrlRun {
         NewTopic newTopic = new NewTopic(topicName, 1, (short) 1);
         adminClient.createTopics(Collections.singletonList(newTopic)).all().get();
       }
+    }
+
+    if (getenv("PROPERTIES_GROUP_ID") == null) {
+      log.warn(
+          "The 'PROPERTIES_GROUP_ID' environment variable is missing, will use a random UUID!");
+      env.put("PROPERTIES_GROUP_ID", UUID.randomUUID().toString());
     }
   }
 
