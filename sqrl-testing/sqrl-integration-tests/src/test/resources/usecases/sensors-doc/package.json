@@ -2,7 +2,8 @@
   "version": "1",
   "enabled-engines": ["vertx", "postgres", "kafka", "flink"],
   "script": {
-    "main": "metrics.sqrl"
+    "main": "metrics.sqrl",
+    "graphql": "metrics.graphqls"
   },
   "compiler": {
     "logger": "print"
