@@ -456,7 +456,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders1_2`
         },
         "format" : "JSON",
         "apiQuery" : {
-          "query" : "query Orders1($id: GraphQLBigInteger, $time: DateTime, $customerid: GraphQLBigInteger, $limit: Int = 10, $offset: Int = 0) {\nOrders1(id: $id, time: $time, customerid: $customerid, limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
+          "query" : "query Orders1($id: Long, $time: DateTime, $customerid: Long, $limit: Int = 10, $offset: Int = 0) {\nOrders1(id: $id, time: $time, customerid: $customerid, limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
           "queryName" : "Orders1",
           "operationType" : "QUERY"
         },
@@ -495,7 +495,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders1_2`
         },
         "format" : "JSON",
         "apiQuery" : {
-          "query" : "query Orders2($id: GraphQLBigInteger!, $time: DateTime!, $customerid: GraphQLBigInteger!, $limit: Int = 10, $offset: Int = 0) {\nOrders2(id: $id, time: $time, customerid: $customerid, limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
+          "query" : "query Orders2($id: Long!, $time: DateTime!, $customerid: Long!, $limit: Int = 10, $offset: Int = 0) {\nOrders2(id: $id, time: $time, customerid: $customerid, limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
           "queryName" : "Orders2",
           "operationType" : "QUERY"
         },
@@ -506,7 +506,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders1_2`
     ],
     "schema" : {
       "type" : "string",
-      "schema" : "\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Orders {\n  id: GraphQLBigInteger!\n  customerid: GraphQLBigInteger!\n  time: DateTime!\n  entries: [Orders_entriesOutput]!\n}\n\ntype Orders_entriesOutput {\n  productid: GraphQLBigInteger!\n  quantity: GraphQLBigInteger!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Query {\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n  Orders1(id: GraphQLBigInteger, time: DateTime, customerid: GraphQLBigInteger, limit: Int = 10, offset: Int = 0): [Orders!]\n  Orders2(id: GraphQLBigInteger!, time: DateTime!, customerid: GraphQLBigInteger!, limit: Int = 10, offset: Int = 0): [Orders!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Orders {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  entries: [Orders_entriesOutput]!\n}\n\ntype Orders_entriesOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Query {\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n  Orders1(id: Long, time: DateTime, customerid: Long, limit: Int = 10, offset: Int = 0): [Orders!]\n  Orders2(id: Long!, time: DateTime!, customerid: Long!, limit: Int = 10, offset: Int = 0): [Orders!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
     }
   }
 }

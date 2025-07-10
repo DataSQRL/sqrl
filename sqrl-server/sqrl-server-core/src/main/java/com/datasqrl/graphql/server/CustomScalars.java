@@ -22,10 +22,11 @@ import graphql.schema.Coercing;
 import graphql.schema.GraphQLScalarType;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.List;
 
 public class CustomScalars {
 
-  public static final GraphQLScalarType Double =
+  public static final GraphQLScalarType DOUBLE =
       GraphQLScalarType.newScalar()
           .name("Float")
           .description("A Float with rounding applied")
@@ -57,10 +58,14 @@ public class CustomScalars {
               })
           .build();
 
+  // Extended scalars
   public static final GraphQLScalarType DATETIME = DateTimeScalar.INSTANCE;
   public static final GraphQLScalarType DATE = ExtendedScalars.Date;
   public static final GraphQLScalarType TIME = ExtendedScalars.LocalTime;
   public static final GraphQLScalarType JSON = ExtendedScalars.Json;
-  public static final GraphQLScalarType GRAPHQL_BIGINTEGER =
-      ExtendedScalars.GraphQLBigInteger.transform(builder -> builder.name("GraphQLBigInteger"));
+  public static final GraphQLScalarType LONG = ExtendedScalars.GraphQLLong;
+
+  public static List<GraphQLScalarType> getExtendedScalars() {
+    return List.of(DATETIME, DATE, TIME, JSON, LONG);
+  }
 }

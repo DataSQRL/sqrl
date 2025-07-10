@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.planner.graphql;
+package com.datasqrl.graphql;
 
 import static com.datasqrl.graphql.jdbc.SchemaConstants.LIMIT;
 import static com.datasqrl.graphql.jdbc.SchemaConstants.OFFSET;
@@ -24,7 +24,7 @@ import static com.datasqrl.graphql.util.GraphqlCheckUtil.createThrowable;
 
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.graphql.APISource;
+import com.datasqrl.graphql.util.GraphqlSchemaUtil;
 import com.datasqrl.planner.dag.plan.MutationComputedColumn;
 import com.datasqrl.planner.dag.plan.MutationQuery;
 import com.datasqrl.planner.tables.SqrlFunctionParameter;
@@ -352,8 +352,7 @@ public class GraphqlSchemaValidator extends GraphqlSchemaWalker {
                     atField.getName()
                         + ". Possible scalars are ["
                         + r.getFieldNames().stream()
-                            .filter(
-                                com.datasqrl.graphql.generate.GraphqlSchemaUtil::isValidGraphQLName)
+                            .filter(GraphqlSchemaUtil::isValidGraphQLName)
                             .collect(Collectors.joining(", "))
                         + "]")
             .orElse(atField.getName()));

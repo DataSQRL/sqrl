@@ -1174,7 +1174,7 @@ FROM "ExternalOrders" AS "ExternalOrders0"
     ],
     "schema" : {
       "type" : "string",
-      "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Customer {\n    customerid: GraphQLBigInteger!\n    email: String!\n    name: String!\n    lastUpdated: GraphQLBigInteger!\n    timestamp: DateTime!\n    related(limit: Int = 10, offset: Int = 0): [Customer!]\n    relatedByLength(length: Int!, limit: Int = 10, offset: Int = 0): [Customer!]\n}\n\ntype Query {\n    TableFunctionCallsTblFct(arg2: Int!, arg1: Int!, limit: Int = 10, offset: Int = 0): [Customer!]\n}"
+      "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Customer {\n    customerid: Long!\n    email: String!\n    name: String!\n    lastUpdated: Long!\n    timestamp: DateTime!\n    related(limit: Int = 10, offset: Int = 0): [Customer!]\n    relatedByLength(length: Int!, limit: Int = 10, offset: Int = 0): [Customer!]\n}\n\ntype Query {\n    TableFunctionCallsTblFct(arg2: Int!, arg1: Int!, limit: Int = 10, offset: Int = 0): [Customer!]\n}\n"
     }
   }
 }

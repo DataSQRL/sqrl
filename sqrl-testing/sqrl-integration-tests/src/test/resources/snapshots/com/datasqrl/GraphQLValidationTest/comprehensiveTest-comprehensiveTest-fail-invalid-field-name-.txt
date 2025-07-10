@@ -20,10 +20,10 @@ CustomerTimeWindow := SELECT
 ^
 
 [FATAL] errors=[InvalidSyntaxError{ message=Invalid Syntax : token recognition error at: '~' at line 9 column 9 ,offendingToken=null ,locations=[SourceLocation{line=9, column=9}] ,sourcePreview=type Customer {
-    customerid: GraphQLBigInteger!
+    customerid: Long!
     email: String!
     name~: String!
-    lastUpdated: GraphQLBigInteger!
+    lastUpdated: Long!
     timestamp: DateTime
     related(limit: Int = 10, offset: Int = 0): [Customer!]
 }]

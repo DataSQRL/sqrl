@@ -201,7 +201,7 @@ CREATE TABLE IF NOT EXISTS "results" ("completions_result" TEXT , "extract_json_
     ],
     "schema" : {
       "type" : "string",
-      "schema" : "\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Query {\n  data(limit: Int = 10, offset: Int = 0): [data!]\n  results(limit: Int = 10, offset: Int = 0): [results!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ntype data {\n  val: Int!\n}\n\ntype results {\n  completions_result: String\n  extract_json_result_response: String\n  extract_json_result_with_schema_response: String\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  data(limit: Int = 10, offset: Int = 0): [data!]\n  results(limit: Int = 10, offset: Int = 0): [results!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ntype data {\n  val: Int!\n}\n\ntype results {\n  completions_result: String\n  extract_json_result_response: String\n  extract_json_result_with_schema_response: String\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
     }
   }
 }

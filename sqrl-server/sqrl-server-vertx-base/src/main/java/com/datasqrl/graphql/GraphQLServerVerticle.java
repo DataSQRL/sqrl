@@ -36,7 +36,6 @@ import io.vertx.ext.web.handler.graphql.GraphiQLHandler;
 import io.vertx.ext.web.handler.graphql.ws.GraphQLWSHandler;
 import io.vertx.micrometer.backends.BackendRegistries;
 import io.vertx.sqlclient.SqlClient;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -139,7 +138,7 @@ public class GraphQLServerVerticle extends AbstractVerticle {
                   .withSubscriptionConfiguration(
                       new SubscriptionConfigurationImpl(
                           model, vertx, config, startPromise, vertxJdbcClient))
-                  .withExtendedScalarTypes(List.of(CustomScalars.GRAPHQL_BIGINTEGER))
+                  .withExtendedScalarTypes(CustomScalars.getExtendedScalars())
                   .build(),
               new VertxContext(vertxJdbcClient, headerReaders));
       var meterRegistry = BackendRegistries.getDefaultNow();

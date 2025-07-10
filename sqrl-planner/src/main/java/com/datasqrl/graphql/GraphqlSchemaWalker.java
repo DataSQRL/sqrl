@@ -13,17 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.planner.graphql;
+package com.datasqrl.graphql;
 
 import static com.datasqrl.graphql.server.TypeDefinitionRegistryUtil.getQueryType;
 import static com.datasqrl.graphql.server.TypeDefinitionRegistryUtil.getSubscriptionType;
 import static com.datasqrl.graphql.util.GraphqlCheckUtil.checkState;
-import static com.datasqrl.planner.graphql.GraphqlSchemaUtil.isValidGraphQLName;
+import static com.datasqrl.graphql.util.GraphqlSchemaUtil.isValidGraphQLName;
 import static com.datasqrl.planner.util.SqrTableFunctionUtil.getTableFunctionFromPath;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.graphql.APISource;
 import com.datasqrl.graphql.server.TypeDefinitionRegistryUtil;
 import com.datasqrl.planner.dag.plan.MutationQuery;
 import com.datasqrl.planner.parser.AccessModifier;

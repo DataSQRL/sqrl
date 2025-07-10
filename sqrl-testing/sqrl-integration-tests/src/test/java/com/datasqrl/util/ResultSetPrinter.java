@@ -59,7 +59,7 @@ public class ResultSetPrinter {
         Object o = resultSet.getObject(i);
         if (o instanceof Double) {
           // We convert to string to strip some irrelevant double digits during the conversion
-          o = CustomScalars.Double.getCoercing().serialize(o);
+          o = CustomScalars.DOUBLE.getCoercing().serialize(o);
         }
         out.print(o);
       }
