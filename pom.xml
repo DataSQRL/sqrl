@@ -155,6 +155,7 @@
     <flinkrunner.image.repo>ghcr.io</flinkrunner.image.repo>
     <docker.image.tag>local</docker.image.tag>
   </properties>
+
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -547,6 +548,14 @@
         <groupId>com.h2database</groupId>
         <artifactId>h2</artifactId>
         <version>${h2.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>software.amazon.awssdk</groupId>
+        <artifactId>bom</artifactId>
+        <version>${aws-sdk-bom.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
       </dependency>
 
       <dependency>
