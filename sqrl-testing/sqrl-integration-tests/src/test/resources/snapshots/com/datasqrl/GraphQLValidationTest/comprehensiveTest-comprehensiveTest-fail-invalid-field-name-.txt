@@ -19,7 +19,7 @@ in script:comprehensivetest.sqrl [51:1]:
 CustomerTimeWindow := SELECT
 ^
 
-[FATAL] errors=[InvalidSyntaxError{ message=Invalid syntax with ANTLR error 'token recognition error at: '~'' at line 9 column 9 ,offendingToken=null ,locations=[SourceLocation{line=9, column=9}] ,sourcePreview=type Customer {
+[FATAL] errors=[InvalidSyntaxError{ message=Invalid Syntax : token recognition error at: '~' at line 9 column 9 ,offendingToken=null ,locations=[SourceLocation{line=9, column=9}] ,sourcePreview=type Customer {
     customerid: GraphQLBigInteger!
     email: String!
     name~: String!
