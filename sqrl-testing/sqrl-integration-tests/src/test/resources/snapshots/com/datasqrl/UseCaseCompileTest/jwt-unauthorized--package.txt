@@ -194,7 +194,7 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL , PRIMARY KEY ("val
     ],
     "schema" : {
       "type" : "string",
-      "schema" : "\"A 64-bit signed integer\"\nscalar Long\n\ntype MyTable {\n  val: Int!\n}\n\ntype Query {\n  MyTable(limit: Int = 10, offset: Int = 0): [MyTable!]\n  AuthMyTable(limit: Int = 10, offset: Int = 0): [MyTable!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype MyTable {\n  val: Int!\n}\n\ntype Query {\n  MyTable(limit: Int = 10, offset: Int = 0): [MyTable!]\n  AuthMyTable(limit: Int = 10, offset: Int = 0): [MyTable!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
     }
   }
 }

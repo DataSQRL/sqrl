@@ -20,10 +20,8 @@ import graphql.scalars.ExtendedScalars;
 import graphql.scalars.datetime.DateTimeScalar;
 import graphql.schema.Coercing;
 import graphql.schema.GraphQLScalarType;
-import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.Arrays;
 import java.util.List;
 
 public class CustomScalars {
@@ -60,6 +58,7 @@ public class CustomScalars {
               })
           .build();
 
+  // Extended scalars
   public static final GraphQLScalarType DATETIME = DateTimeScalar.INSTANCE;
   public static final GraphQLScalarType DATE = ExtendedScalars.Date;
   public static final GraphQLScalarType TIME = ExtendedScalars.LocalTime;
@@ -67,19 +66,6 @@ public class CustomScalars {
   public static final GraphQLScalarType LONG = ExtendedScalars.GraphQLLong;
 
   public static List<GraphQLScalarType> getExtendedScalars() {
-    return Arrays.stream(CustomScalars.class.getDeclaredFields())
-        .filter(field -> Modifier.isPublic(field.getModifiers()))
-        .filter(field -> Modifier.isStatic(field.getModifiers()))
-        .filter(field -> Modifier.isFinal(field.getModifiers()))
-        .filter(field -> field.getType() == GraphQLScalarType.class)
-        .map(
-            field -> {
-              try {
-                return (GraphQLScalarType) field.get(null);
-              } catch (IllegalAccessException e) {
-                throw new RuntimeException("Failed to access field: " + field.getName(), e);
-              }
-            })
-        .toList();
+    return List.of(DATETIME, DATE, TIME, JSON, LONG);
   }
 }

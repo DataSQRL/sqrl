@@ -181,7 +181,7 @@ public class GraphQLEngineBuilder
             .scalar(CustomScalars.TIME)
             .scalar(CustomScalars.JSON);
 
-    extendedScalarTypes.forEach(t -> wiring.scalar(t));
+    extendedScalarTypes.forEach(wiring::scalar);
 
     for (Map.Entry<String, TypeDefinition> typeEntry : registry.types().entrySet()) {
       if (typeEntry.getValue() instanceof InterfaceTypeDefinition) {
