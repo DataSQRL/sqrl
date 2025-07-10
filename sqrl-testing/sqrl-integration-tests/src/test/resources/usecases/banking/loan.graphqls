@@ -34,9 +34,9 @@ type AddChatMessage_contextOutput {
 }
 
 type ApplicationAlert {
-  id: GraphQLBigInteger!
-  customer_id: GraphQLBigInteger!
-  loan_type_id: GraphQLBigInteger!
+  id: Long!
+  customer_id: Long!
+  loan_type_id: Long!
   max_amount: Float!
   min_amount: Float!
   amount: Float!
@@ -46,17 +46,17 @@ type ApplicationStatus {
   status: String!
   message: String
   event_time: DateTime
-  id: GraphQLBigInteger!
-  customer_id: GraphQLBigInteger!
-  loan_type_id: GraphQLBigInteger!
+  id: Long!
+  customer_id: Long!
+  loan_type_id: Long!
   amount: Float!
-  duration: GraphQLBigInteger!
+  duration: Long!
   max_amount: Float!
   min_amount: Float!
 }
 
 type ApplicationUpdates {
-  loan_application_id: GraphQLBigInteger!
+  loan_application_id: Long!
   status: String!
   message: String
   event_time: DateTime
@@ -64,24 +64,24 @@ type ApplicationUpdates {
 }
 
 input ApplicationUpdatesInput {
-  loan_application_id: GraphQLBigInteger!
+  loan_application_id: Long!
   status: String!
   message: String
 }
 
 type ApplicationUpdatesResultOutput {
-  loan_application_id: GraphQLBigInteger!
+  loan_application_id: Long!
   status: String!
   message: String
   event_time: DateTime
 }
 
 type Applications {
-  id: GraphQLBigInteger!
-  customer_id: GraphQLBigInteger!
-  loan_type_id: GraphQLBigInteger!
+  id: Long!
+  customer_id: Long!
+  loan_type_id: Long!
   amount: Float!
-  duration: GraphQLBigInteger!
+  duration: Long!
   application_date: DateTime!
   updated_at: DateTime!
   loanType(limit: Int = 10, offset: Int = 0): [LoanTypes!]
@@ -89,11 +89,11 @@ type Applications {
 }
 
 type ApplicationsStream {
-  id: GraphQLBigInteger!
-  customer_id: GraphQLBigInteger!
-  loan_type_id: GraphQLBigInteger!
+  id: Long!
+  customer_id: Long!
+  loan_type_id: Long!
   amount: Float!
-  duration: GraphQLBigInteger!
+  duration: Long!
   application_date: DateTime!
   updated_at: DateTime!
 }
@@ -108,7 +108,7 @@ type CustomerChatMessage {
 }
 
 type Customers {
-  id: GraphQLBigInteger!
+  id: Long!
   first_name: String!
   last_name: String!
   email: String!
@@ -121,7 +121,7 @@ type Customers {
 }
 
 type CustomersStream {
-  id: GraphQLBigInteger!
+  id: Long!
   first_name: String!
   last_name: String!
   email: String!
@@ -132,38 +132,38 @@ type CustomersStream {
 }
 
 type Customers_overview {
-  loan_type_id: GraphQLBigInteger!
+  loan_type_id: Long!
   total_amount: Float!
-  total_loans: GraphQLBigInteger!
+  total_loans: Long!
 }
 
 "An RFC-3339 compliant DateTime Scalar"
 scalar DateTime
 
-"An arbitrary precision signed integer"
-scalar GraphQLBigInteger
+"A 64-bit signed integer"
+scalar Long
 
 type LoanTypes {
-  id: GraphQLBigInteger!
+  id: Long!
   name: String!
   description: String!
   interest_rate: Float!
   max_amount: Float!
   min_amount: Float!
-  max_duration: GraphQLBigInteger!
-  min_duration: GraphQLBigInteger!
+  max_duration: Long!
+  min_duration: Long!
   updated_at: DateTime!
 }
 
 type LoanTypesStream {
-  id: GraphQLBigInteger!
+  id: Long!
   name: String!
   description: String!
   interest_rate: Float!
   max_amount: Float!
   min_amount: Float!
-  max_duration: GraphQLBigInteger!
-  min_duration: GraphQLBigInteger!
+  max_duration: Long!
+  min_duration: Long!
   updated_at: DateTime!
 }
 

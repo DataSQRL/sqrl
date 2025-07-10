@@ -108,7 +108,7 @@ public class GraphqlSchemaUtil {
         return Optional.of(Scalars.GraphQLInt);
       case BIGINT:
         if (extendedScalarTypes) {
-          return Optional.of(CustomScalars.GRAPHQL_BIGINTEGER);
+          return Optional.of(CustomScalars.LONG);
         }
       case DECIMAL:
       case FLOAT:
@@ -241,7 +241,7 @@ public class GraphqlSchemaUtil {
         return Optional.of(Scalars.GraphQLInt);
       case BIGINT:
         if (extendedScalarTypes) {
-          return Optional.of(CustomScalars.GRAPHQL_BIGINTEGER);
+          return Optional.of(CustomScalars.LONG);
         }
       case FLOAT:
       case REAL:

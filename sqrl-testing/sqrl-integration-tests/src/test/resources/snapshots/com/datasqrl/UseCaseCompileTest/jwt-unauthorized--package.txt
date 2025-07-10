@@ -194,7 +194,7 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL , PRIMARY KEY ("val
     ],
     "schema" : {
       "type" : "string",
-      "schema" : "\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype MyTable {\n  val: Int!\n}\n\ntype Query {\n  MyTable(limit: Int = 10, offset: Int = 0): [MyTable!]\n  AuthMyTable(limit: Int = 10, offset: Int = 0): [MyTable!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      "schema" : "\"A 64-bit signed integer\"\nscalar Long\n\ntype MyTable {\n  val: Int!\n}\n\ntype Query {\n  MyTable(limit: Int = 10, offset: Int = 0): [MyTable!]\n  AuthMyTable(limit: Int = 10, offset: Int = 0): [MyTable!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
     }
   }
 }

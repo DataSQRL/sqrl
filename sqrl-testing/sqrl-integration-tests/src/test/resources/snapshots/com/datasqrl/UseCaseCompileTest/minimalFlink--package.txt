@@ -291,7 +291,7 @@ FROM (SELECT "sensorid", MAX("temperature") AS "maxTemp", AVG("temperature") AS 
     ],
     "schema" : {
       "type" : "string",
-      "schema" : "\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Query {\n  SensorAggregate(limit: Int = 10, offset: Int = 0): [SensorAggregate!]\n  SensorReading(limit: Int = 10, offset: Int = 0): [SensorReading!]\n  SensorReadingById(sensorid: Int!, limit: Int = 10, offset: Int = 0): [SensorReading!]\n}\n\ntype SensorAggregate {\n  sensorid: Int!\n  maxTemp: Float!\n  avgTemp: Float!\n}\n\ntype SensorReading {\n  sensorid: Int!\n  temperature: Float!\n  event_time: GraphQLBigInteger!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      "schema" : "\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  SensorAggregate(limit: Int = 10, offset: Int = 0): [SensorAggregate!]\n  SensorReading(limit: Int = 10, offset: Int = 0): [SensorReading!]\n  SensorReadingById(sensorid: Int!, limit: Int = 10, offset: Int = 0): [SensorReading!]\n}\n\ntype SensorAggregate {\n  sensorid: Int!\n  maxTemp: Float!\n  avgTemp: Float!\n}\n\ntype SensorReading {\n  sensorid: Int!\n  temperature: Float!\n  event_time: Long!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
     }
   }
 }

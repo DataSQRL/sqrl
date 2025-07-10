@@ -256,7 +256,7 @@ END
     ],
     "schema" : {
       "type" : "string",
-      "schema" : "\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype OrderEntryJoin {\n  id1: GraphQLBigInteger!\n  id2: GraphQLBigInteger!\n  multi: GraphQLBigInteger!\n}\n\ntype Query {\n  OrderEntryJoin(limit: Int = 10, offset: Int = 0): [OrderEntryJoin!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      "schema" : "\"A 64-bit signed integer\"\nscalar Long\n\ntype OrderEntryJoin {\n  id1: Long!\n  id2: Long!\n  multi: Long!\n}\n\ntype Query {\n  OrderEntryJoin(limit: Int = 10, offset: Int = 0): [OrderEntryJoin!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
     }
   }
 }

@@ -1,13 +1,13 @@
 "An RFC-3339 compliant DateTime Scalar"
 scalar DateTime
-"An arbitrary precision signed integer"
-scalar GraphQLBigInteger
+"A 64-bit signed integer"
+scalar Long
 
 type Customer {
-    customerid: GraphQLBigInteger!
+    customerid: Long!
     email: String!
     name: String!
-    lastUpdated: GraphQLBigInteger!
+    lastUpdated: Long!
     timestamp: DateTime
     related(limit: Int = 10, offset: Int = 0): [Customer!]
     relatedByLength(length: Int!, limit: Int = 10, offset: Int = 0): [Customer!]

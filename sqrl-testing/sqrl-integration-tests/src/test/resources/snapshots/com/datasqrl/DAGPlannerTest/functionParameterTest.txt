@@ -500,7 +500,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByNothing_2`
         },
         "format" : "JSON",
         "apiQuery" : {
-          "query" : "query CustomerByEmail($email: String!, $id: GraphQLBigInteger, $limit: Int = 10, $offset: Int = 0) {\nCustomerByEmail(email: $email, id: $id, limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+          "query" : "query CustomerByEmail($email: String!, $id: Long, $limit: Int = 10, $offset: Int = 0) {\nCustomerByEmail(email: $email, id: $id, limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
           "queryName" : "CustomerByEmail",
           "operationType" : "QUERY"
         },
@@ -534,7 +534,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByNothing_2`
         },
         "format" : "JSON",
         "apiQuery" : {
-          "query" : "query CustomerByIds($ids: [GraphQLBigInteger]!, $limit: Int = 10, $offset: Int = 0) {\nCustomerByIds(ids: $ids, limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+          "query" : "query CustomerByIds($ids: [Long]!, $limit: Int = 10, $offset: Int = 0) {\nCustomerByIds(ids: $ids, limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
           "queryName" : "CustomerByIds",
           "operationType" : "QUERY"
         },
@@ -569,7 +569,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByNothing_2`
         },
         "format" : "JSON",
         "apiQuery" : {
-          "query" : "query CustomersByTime($customerid: GraphQLBigInteger!, $fromTime: DateTime!, $limit: Int = 10, $offset: Int = 0) {\nCustomersByTime(customerid: $customerid, fromTime: $fromTime, limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+          "query" : "query CustomersByTime($customerid: Long!, $fromTime: DateTime!, $limit: Int = 10, $offset: Int = 0) {\nCustomersByTime(customerid: $customerid, fromTime: $fromTime, limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
           "queryName" : "CustomersByTime",
           "operationType" : "QUERY"
         },
@@ -598,7 +598,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByNothing_2`
         },
         "format" : "JSON",
         "apiQuery" : {
-          "query" : "query SelectCustomer($id: GraphQLBigInteger, $limit: Int = 10, $offset: Int = 0) {\nSelectCustomer(id: $id, limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+          "query" : "query SelectCustomer($id: Long, $limit: Int = 10, $offset: Int = 0) {\nSelectCustomer(id: $id, limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
           "queryName" : "SelectCustomer",
           "operationType" : "QUERY"
         },
@@ -609,7 +609,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByNothing_2`
     ],
     "schema" : {
       "type" : "string",
-      "schema" : "type Customer {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n}\n\n\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerByEmail(email: String!, id: GraphQLBigInteger, limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerByIds(ids: [GraphQLBigInteger]!, limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomersByTime(customerid: GraphQLBigInteger!, fromTime: DateTime!, limit: Int = 10, offset: Int = 0): [Customer!]\n  SelectCustomer(id: GraphQLBigInteger, limit: Int = 10, offset: Int = 0): [Customer!]\n}\n\ntype Subscription {\n  CustomerByNothing: Customer\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      "schema" : "type Customer {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\n\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerByEmail(email: String!, id: Long, limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerByIds(ids: [Long]!, limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomersByTime(customerid: Long!, fromTime: DateTime!, limit: Int = 10, offset: Int = 0): [Customer!]\n  SelectCustomer(id: Long, limit: Int = 10, offset: Int = 0): [Customer!]\n}\n\ntype Subscription {\n  CustomerByNothing: Customer\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
     }
   }
 }

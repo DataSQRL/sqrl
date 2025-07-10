@@ -113,7 +113,7 @@ CREATE TABLE IF NOT EXISTS "FunctionApplied" ("id" INTEGER NOT NULL, "fct_result
     ],
     "schema" : {
       "type" : "string",
-      "schema" : "type FunctionApplied {\n  id: Int!\n  fct_result: Boolean\n}\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Query {\n  FunctionApplied(limit: Int = 10, offset: Int = 0): [FunctionApplied!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      "schema" : "type FunctionApplied {\n  id: Int!\n  fct_result: Boolean\n}\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  FunctionApplied(limit: Int = 10, offset: Int = 0): [FunctionApplied!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
     }
   }
 }

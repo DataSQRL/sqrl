@@ -1,8 +1,8 @@
 "An RFC-3339 compliant DateTime Scalar"
 scalar DateTime
 
-"An arbitrary precision signed integer"
-scalar GraphQLBigInteger
+"A 64-bit signed integer"
+scalar Long
 
 type Mutation {
   UserTokens(event: UserTokensInput!): UserTokensResultOutput!
@@ -10,8 +10,8 @@ type Mutation {
 
 type Query {
   TotalOrgTokens(limit: Int = 10, offset: Int = 0): [TotalOrgTokens!]
-  TotalUserTokens(userid: GraphQLBigInteger!, limit: Int = 10, offset: Int = 0): [TotalUserTokens!]
-  TotalOrgTokensByRange(minTokens: GraphQLBigInteger!, maxTokens: GraphQLBigInteger!, limit: Int = 10, offset: Int = 0): [TotalOrgTokens!]
+  TotalUserTokens(userid: Long!, limit: Int = 10, offset: Int = 0): [TotalUserTokens!]
+  TotalOrgTokensByRange(minTokens: Long!, maxTokens: Long!, limit: Int = 10, offset: Int = 0): [TotalOrgTokens!]
 }
 
 type Subscription {
@@ -19,30 +19,30 @@ type Subscription {
 }
 
 type TotalOrgTokens {
-  orgid: GraphQLBigInteger!
-  total_tokens: GraphQLBigInteger!
-  total_requests: GraphQLBigInteger!
+  orgid: Long!
+  total_tokens: Long!
+  total_requests: Long!
 }
 
 type TotalUserTokens {
-  userid: GraphQLBigInteger!
-  total_tokens: GraphQLBigInteger!
-  total_requests: GraphQLBigInteger!
+  userid: Long!
+  total_tokens: Long!
+  total_requests: Long!
 }
 
 type UserTokens {
-  userid: GraphQLBigInteger!
-  tokens: GraphQLBigInteger!
+  userid: Long!
+  tokens: Long!
   request_time: DateTime!
 }
 
 input UserTokensInput {
-  userid: GraphQLBigInteger!
-  tokens: GraphQLBigInteger!
+  userid: Long!
+  tokens: Long!
 }
 
 type UserTokensResultOutput {
-  userid: GraphQLBigInteger!
-  tokens: GraphQLBigInteger!
+  userid: Long!
+  tokens: Long!
   request_time: DateTime!
 }

@@ -325,7 +325,7 @@ INSERT INTO `default_catalog`.`default_database`.`Product_2`
     ],
     "schema" : {
       "type" : "string",
-      "schema" : "type FunctionCalls {\n  searchResult: Float!\n  format: String!\n}\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Product {\n  productid: GraphQLBigInteger!\n  name: String!\n  description: String!\n  category: String!\n}\n\ntype Query {\n  FunctionCalls(limit: Int = 10, offset: Int = 0): [FunctionCalls!]\n  Product(limit: Int = 10, offset: Int = 0): [Product!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      "schema" : "type FunctionCalls {\n  searchResult: Float!\n  format: String!\n}\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Product {\n  productid: Long!\n  name: String!\n  description: String!\n  category: String!\n}\n\ntype Query {\n  FunctionCalls(limit: Int = 10, offset: Int = 0): [FunctionCalls!]\n  Product(limit: Int = 10, offset: Int = 0): [Product!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
     }
   }
 }

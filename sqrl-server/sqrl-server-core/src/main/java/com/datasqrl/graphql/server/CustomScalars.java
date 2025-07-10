@@ -61,6 +61,5 @@ public class CustomScalars {
   public static final GraphQLScalarType DATE = ExtendedScalars.Date;
   public static final GraphQLScalarType TIME = ExtendedScalars.LocalTime;
   public static final GraphQLScalarType JSON = ExtendedScalars.Json;
-  public static final GraphQLScalarType GRAPHQL_BIGINTEGER =
-      ExtendedScalars.GraphQLBigInteger.transform(builder -> builder.name("GraphQLBigInteger"));
+  public static final GraphQLScalarType LONG = ExtendedScalars.GraphQLLong;
 }

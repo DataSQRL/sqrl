@@ -139,7 +139,7 @@ public class GraphQLServerVerticle extends AbstractVerticle {
                   .withSubscriptionConfiguration(
                       new SubscriptionConfigurationImpl(
                           model, vertx, config, startPromise, vertxJdbcClient))
-                  .withExtendedScalarTypes(List.of(CustomScalars.GRAPHQL_BIGINTEGER))
+                  .withExtendedScalarTypes(List.of(CustomScalars.LONG))
                   .build(),
               new VertxContext(vertxJdbcClient, headerReaders));
       var meterRegistry = BackendRegistries.getDefaultNow();

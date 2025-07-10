@@ -81,7 +81,7 @@ public class GraphqlSchemaFactory {
     if (extendedScalarTypes) { // use the plural parameter name in place of only bigInteger to avoid
       // having a conf parameter of each special type mapping feature in
       // the future
-      graphQLSchemaBuilder.additionalTypes(Set.of(CustomScalars.GRAPHQL_BIGINTEGER));
+      graphQLSchemaBuilder.additionalTypes(Set.of(CustomScalars.LONG));
     }
     /*process table functions that are not accessible but their type might be referenced by queries or subscriptions,
      so we want to create the types but not an endpoint (i.e. we ignore the returned GraphQLObjectType)

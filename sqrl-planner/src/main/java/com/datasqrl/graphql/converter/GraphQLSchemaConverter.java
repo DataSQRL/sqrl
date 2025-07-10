@@ -634,9 +634,7 @@ public class GraphQLSchemaConverter {
     TypeDefinitionRegistry typeRegistry = new SchemaParser().parse(schemaString);
     RuntimeWiring.Builder runtimeWiringBuilder = RuntimeWiring.newRuntimeWiring();
     getExtendedScalars().forEach(runtimeWiringBuilder::scalar);
-    // custom name for bigInteger on sqrl
-    runtimeWiringBuilder.scalar(
-        ExtendedScalars.GraphQLBigInteger.transform(builder -> builder.name("GraphQLBigInteger")));
+
     return new SchemaGenerator().makeExecutableSchema(typeRegistry, runtimeWiringBuilder.build());
   }
 

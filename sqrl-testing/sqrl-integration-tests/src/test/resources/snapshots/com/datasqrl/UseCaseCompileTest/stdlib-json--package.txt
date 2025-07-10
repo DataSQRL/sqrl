@@ -258,7 +258,7 @@ CREATE TABLE IF NOT EXISTS "UnmodifiedJsonData" ("id" BIGINT NOT NULL, "val" TEX
     ],
     "schema" : {
       "type" : "string",
-      "schema" : "\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\n\"A JSON scalar\"\nscalar JSON\n\ntype Json {\n  id: GraphQLBigInteger!\n  val: String!\n  timestamp: DateTime!\n}\n\ntype Query {\n  Json(limit: Int = 10, offset: Int = 0): [Json!]\n  UnmodifiedJsonData(limit: Int = 10, offset: Int = 0): [UnmodifiedJsonData!]\n}\n\ntype UnmodifiedJsonData {\n  id: GraphQLBigInteger!\n  val: String!\n  json_col: JSON\n  json_col_2: JSON\n  json_col_3: JSON\n  json_col_4: JSON\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      "schema" : "\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\ntype Json {\n  id: Long!\n  val: String!\n  timestamp: DateTime!\n}\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  Json(limit: Int = 10, offset: Int = 0): [Json!]\n  UnmodifiedJsonData(limit: Int = 10, offset: Int = 0): [UnmodifiedJsonData!]\n}\n\ntype UnmodifiedJsonData {\n  id: Long!\n  val: String!\n  json_col: JSON\n  json_col_2: JSON\n  json_col_3: JSON\n  json_col_4: JSON\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
     }
   }
 }

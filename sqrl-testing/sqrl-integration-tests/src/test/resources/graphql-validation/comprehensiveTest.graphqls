@@ -1,94 +1,94 @@
 type AnotherCustomer {
-    customerid: GraphQLBigInteger!
+    customerid: Long!
     email: String!
-    lastUpdated: GraphQLBigInteger!
+    lastUpdated: Long!
 }
 
 type Customer {
-    customerid: GraphQLBigInteger!
+    customerid: Long!
     email: String!
     name: String!
-    lastUpdated: GraphQLBigInteger!
+    lastUpdated: Long!
     timestamp: DateTime
     related(limit: Int = 10, offset: Int = 0): [Customer!]
     relatedByLength(length: Int, limit: Int = 10, offset: Int = 0): [Customer!]
 }
 
 type CustomerByMultipleTime {
-    customerid: GraphQLBigInteger!
+    customerid: Long!
     email: String!
     name: String!
-    lastUpdated: GraphQLBigInteger!
+    lastUpdated: Long!
     timestamp: DateTime
 }
 
 type CustomerByTime2 {
-    customerid: GraphQLBigInteger!
+    customerid: Long!
     email: String!
     name: String!
-    lastUpdated: GraphQLBigInteger!
+    lastUpdated: Long!
     timestamp: DateTime
 }
 
 type CustomerFilteredDistinct {
-    customerid: GraphQLBigInteger!
+    customerid: Long!
     email: String!
     name: String!
-    lastUpdated: GraphQLBigInteger!
+    lastUpdated: Long!
     timestamp: DateTime
 }
 
 type CustomerTimeWindow {
     window_start: DateTime!
     window_end: DateTime!
-    unique_email_count: GraphQLBigInteger!
+    unique_email_count: Long!
 }
 
 "An RFC-3339 compliant DateTime Scalar"
 scalar DateTime
 
 type ExplicitDistinct {
-    customerid: GraphQLBigInteger!
+    customerid: Long!
     timestamp: DateTime
     name: String!
 }
 
 type ExternalOrders {
-    id: GraphQLBigInteger!
-    customerid: GraphQLBigInteger!
+    id: Long!
+    customerid: Long!
     time: DateTime!
     entries: [ExternalOrders_entriesOutput]!
 }
 
 type ExternalOrders_entriesOutput {
-    productid: GraphQLBigInteger!
-    quantity: GraphQLBigInteger!
+    productid: Long!
+    quantity: Long!
     unit_price: Float!
     discount: Float
 }
 
-"An arbitrary precision signed integer"
-scalar GraphQLBigInteger
+"A 64-bit signed integer"
+scalar Long
 
 type InvalidDistinct {
-    customerid: GraphQLBigInteger!
+    customerid: Long!
     timestamp: DateTime
     namee: String!
 }
 
 type MissedTemporalJoin {
-    id: GraphQLBigInteger!
-    customerid: GraphQLBigInteger!
+    id: Long!
+    customerid: Long!
     time: DateTime!
     entries: [MissedTemporalJoin_entriesOutput]!
-    customerid0: GraphQLBigInteger!
+    customerid0: Long!
     timestamp: DateTime
     name: String!
 }
 
 type MissedTemporalJoin_entriesOutput {
-    productid: GraphQLBigInteger!
-    quantity: GraphQLBigInteger!
+    productid: Long!
+    quantity: Long!
     unit_price: Float!
     discount: Float
 }
@@ -132,7 +132,7 @@ type Query {
     TemporalJoin(limit: Int = 10, offset: Int = 0): [TemporalJoin!]
     UnnestOrders(limit: Int = 10, offset: Int = 0): [UnnestOrders!]
     CustomerById(minId: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
-    CustomerQuery(id: GraphQLBigInteger!, limit: Int = 10, offset: Int = 0): [AnotherCustomer!]
+    CustomerQuery(id: Long!, limit: Int = 10, offset: Int = 0): [AnotherCustomer!]
     TableFunctionCallsTblFct(arg1: Int, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
 }
 
@@ -142,28 +142,28 @@ type Subscription {
 }
 
 type TemporalJoin {
-    id: GraphQLBigInteger!
-    customerid: GraphQLBigInteger!
+    id: Long!
+    customerid: Long!
     time: DateTime!
     entries: [TemporalJoin_entriesOutput]!
-    customerid0: GraphQLBigInteger!
+    customerid0: Long!
     timestamp: DateTime
     name: String!
 }
 
 type TemporalJoin_entriesOutput {
-    productid: GraphQLBigInteger!
-    quantity: GraphQLBigInteger!
+    productid: Long!
+    quantity: Long!
     unit_price: Float!
     discount: Float
 }
 
 type UnnestOrders {
-    id: GraphQLBigInteger!
-    customerid: GraphQLBigInteger!
+    id: Long!
+    customerid: Long!
     time: DateTime!
-    productid: GraphQLBigInteger!
-    quantity: GraphQLBigInteger!
+    productid: Long!
+    quantity: Long!
     discount: Float
-    newId: GraphQLBigInteger!
+    newId: Long!
 }

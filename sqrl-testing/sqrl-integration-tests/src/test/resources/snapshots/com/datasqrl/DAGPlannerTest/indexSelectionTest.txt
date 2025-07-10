@@ -717,7 +717,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
         },
         "format" : "JSON",
         "apiQuery" : {
-          "query" : "query Orders($time: DateTime!, $customerid: GraphQLBigInteger!, $limit: Int = 10, $offset: Int = 0) {\nOrders(time: $time, customerid: $customerid, limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
+          "query" : "query Orders($time: DateTime!, $customerid: Long!, $limit: Int = 10, $offset: Int = 0) {\nOrders(time: $time, customerid: $customerid, limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
           "queryName" : "Orders",
           "operationType" : "QUERY"
         },
@@ -786,7 +786,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
         },
         "format" : "JSON",
         "apiQuery" : {
-          "query" : "query OrdersById($id: GraphQLBigInteger!, $limit: Int = 10, $offset: Int = 0) {\nOrdersById(id: $id, limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
+          "query" : "query OrdersById($id: Long!, $limit: Int = 10, $offset: Int = 0) {\nOrdersById(id: $id, limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
           "queryName" : "OrdersById",
           "operationType" : "QUERY"
         },
@@ -821,7 +821,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
         },
         "format" : "JSON",
         "apiQuery" : {
-          "query" : "query OrdersByTime($time: DateTime!, $customerid: GraphQLBigInteger!, $limit: Int = 10, $offset: Int = 0) {\nOrdersByTime(time: $time, customerid: $customerid, limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
+          "query" : "query OrdersByTime($time: DateTime!, $customerid: Long!, $limit: Int = 10, $offset: Int = 0) {\nOrdersByTime(time: $time, customerid: $customerid, limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
           "queryName" : "OrdersByTime",
           "operationType" : "QUERY"
         },
@@ -832,7 +832,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
     ],
     "schema" : {
       "type" : "string",
-      "schema" : "type Customer {\n  customerid: GraphQLBigInteger!\n  email: String!\n  name: String!\n  lastUpdated: GraphQLBigInteger!\n  timestamp: DateTime!\n  orders(limit: Int = 10, offset: Int = 0): [Orders!]\n}\n\n\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Orders {\n  id: GraphQLBigInteger!\n  customerid: GraphQLBigInteger!\n  time: DateTime!\n  entries: [Orders_entriesOutput]!\n}\n\ntype Orders_entriesOutput {\n  productid: GraphQLBigInteger!\n  quantity: GraphQLBigInteger!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Product {\n  productid: GraphQLBigInteger!\n  name: String!\n  description: String!\n  category: String!\n}\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  Orders(time: DateTime!, customerid: GraphQLBigInteger!, limit: Int = 10, offset: Int = 0): [Orders!]\n  Product(name: String, description: String, category: String, _ingest_time: DateTime, limit: Int = 10, offset: Int = 0): [Product!]\n  OrdersById(id: GraphQLBigInteger!, limit: Int = 10, offset: Int = 0): [Orders!]\n  OrdersByTime(time: DateTime!, customerid: GraphQLBigInteger!, limit: Int = 10, offset: Int = 0): [Orders!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      "schema" : "type Customer {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n  orders(limit: Int = 10, offset: Int = 0): [Orders!]\n}\n\n\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Orders {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  entries: [Orders_entriesOutput]!\n}\n\ntype Orders_entriesOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Product {\n  productid: Long!\n  name: String!\n  description: String!\n  category: String!\n}\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  Orders(time: DateTime!, customerid: Long!, limit: Int = 10, offset: Int = 0): [Orders!]\n  Product(name: String, description: String, category: String, _ingest_time: DateTime, limit: Int = 10, offset: Int = 0): [Product!]\n  OrdersById(id: Long!, limit: Int = 10, offset: Int = 0): [Orders!]\n  OrdersByTime(time: DateTime!, customerid: Long!, limit: Int = 10, offset: Int = 0): [Orders!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
     }
   }
 }

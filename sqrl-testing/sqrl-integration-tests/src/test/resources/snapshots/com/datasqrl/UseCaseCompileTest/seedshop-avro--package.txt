@@ -231,7 +231,7 @@ CREATE TABLE IF NOT EXISTS "Orders" ("id" BIGINT NOT NULL, "customerid" BIGINT N
     ],
     "schema" : {
       "type" : "string",
-      "schema" : "\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype OrderCount {\n  id: GraphQLBigInteger!\n  number: GraphQLBigInteger!\n  volume: Int!\n}\n\ntype Orders {\n  id: GraphQLBigInteger!\n  customerid: GraphQLBigInteger!\n  time: String!\n  items: [Orders_itemsOutput]!\n}\n\ntype Orders_itemsOutput {\n  productid: Int!\n  quantity: Int!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Query {\n  OrderCount(limit: Int = 10, offset: Int = 0): [OrderCount!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      "schema" : "\"A 64-bit signed integer\"\nscalar Long\n\ntype OrderCount {\n  id: Long!\n  number: Long!\n  volume: Int!\n}\n\ntype Orders {\n  id: Long!\n  customerid: Long!\n  time: String!\n  items: [Orders_itemsOutput]!\n}\n\ntype Orders_itemsOutput {\n  productid: Int!\n  quantity: Int!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Query {\n  OrderCount(limit: Int = 10, offset: Int = 0): [OrderCount!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
     }
   }
 }

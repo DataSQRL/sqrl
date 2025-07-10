@@ -167,7 +167,7 @@ CREATE TABLE IF NOT EXISTS "MathFunctions" ("d" NUMERIC NOT NULL, "b" INTEGER NO
     ],
     "schema" : {
       "type" : "string",
-      "schema" : "\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype MathFunctions {\n  d: Float!\n  b: Int!\n  cbrt: Float\n  copy_sign: Float\n  expm1: Float\n  hypot: Float\n  log1p: Float\n  next_after: Float\n  scalb: Float\n  ulp: Float\n  binomial_distribution: Float\n  exponential_distribution: Float\n  normal_distribution: Float\n  poisson_distribution: Float\n}\n\ntype Query {\n  MathFunctions(limit: Int = 10, offset: Int = 0): [MathFunctions!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      "schema" : "\"A 64-bit signed integer\"\nscalar Long\n\ntype MathFunctions {\n  d: Float!\n  b: Int!\n  cbrt: Float\n  copy_sign: Float\n  expm1: Float\n  hypot: Float\n  log1p: Float\n  next_after: Float\n  scalb: Float\n  ulp: Float\n  binomial_distribution: Float\n  exponential_distribution: Float\n  normal_distribution: Float\n  poisson_distribution: Float\n}\n\ntype Query {\n  MathFunctions(limit: Int = 10, offset: Int = 0): [MathFunctions!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
     }
   }
 }

@@ -1,8 +1,8 @@
 "A slightly refined version of RFC-3339 compliant DateTime Scalar"
 scalar DateTime
 
-"An arbitrary precision signed integer"
-scalar GraphQLBigInteger
+"A 64-bit signed integer"
+scalar Long
 
 type Mutation {
   SensorReading(event: SensorReadingInput!): SensorReadingResultOutput!

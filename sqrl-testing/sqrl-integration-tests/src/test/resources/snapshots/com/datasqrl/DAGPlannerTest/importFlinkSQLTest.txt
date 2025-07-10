@@ -335,7 +335,7 @@ INSERT INTO `default_catalog`.`default_database`.`CategoryDistinct_2`
     ],
     "schema" : {
       "type" : "string",
-      "schema" : "type Category {\n  categoryid: Int!\n  name: String!\n  description: String\n  updateTime: DateTime!\n}\n\ntype CategoryDistinct {\n  categoryid: Int!\n  name: String!\n  description: String\n  updateTime: DateTime!\n}\n\n\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Query {\n  Category(limit: Int = 10, offset: Int = 0): [Category!]\n  CategoryDistinct(limit: Int = 10, offset: Int = 0): [CategoryDistinct!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      "schema" : "type Category {\n  categoryid: Int!\n  name: String!\n  description: String\n  updateTime: DateTime!\n}\n\ntype CategoryDistinct {\n  categoryid: Int!\n  name: String!\n  description: String\n  updateTime: DateTime!\n}\n\n\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  Category(limit: Int = 10, offset: Int = 0): [Category!]\n  CategoryDistinct(limit: Int = 10, offset: Int = 0): [CategoryDistinct!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
     }
   }
 }
