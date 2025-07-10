@@ -172,20 +172,10 @@
       <artifactId>service</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-run</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>org.apache.zookeeper</groupId>
       <artifactId>zookeeper</artifactId>
       <version>${zookeeper.version}</version>
       <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-test</artifactId>
-      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.awaitility</groupId>

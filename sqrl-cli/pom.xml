@@ -34,10 +34,6 @@
     <!-- SQRL dependencies -->
     <dependency>
       <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-packager</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-planner</artifactId>
     </dependency>
     <dependency>
