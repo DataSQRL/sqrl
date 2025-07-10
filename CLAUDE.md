@@ -136,7 +136,7 @@ All dependency versions should be centralized as properties in the root pom.xml 
   <jackson.version>2.19.1</jackson.version>
   <vertx.version>5.0.1</vertx.version>
   <kafka.version>3.4.0</kafka.version>
-  <flink.version>1.19.2</flink.version>
+  <flink.version>1.19.3</flink.version>
   <httpcomponents.version>4.5.14</httpcomponents.version>
   <jjwt.version>0.12.6</jjwt.version>
   <testcontainers.version>1.21.3</testcontainers.version>
