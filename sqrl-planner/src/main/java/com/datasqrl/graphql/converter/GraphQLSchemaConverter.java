@@ -17,6 +17,7 @@ package com.datasqrl.graphql.converter;
 
 import static graphql.Scalars.GraphQLString;
 
+import com.datasqrl.graphql.server.CustomScalars;
 import com.datasqrl.graphql.server.operation.ApiOperation;
 import com.datasqrl.graphql.server.operation.FunctionDefinition;
 import com.datasqrl.graphql.server.operation.FunctionDefinition.Argument;
@@ -43,7 +44,6 @@ import graphql.language.TypeName;
 import graphql.language.Value;
 import graphql.language.VariableDefinition;
 import graphql.parser.Parser;
-import graphql.scalars.ExtendedScalars;
 import graphql.schema.GraphQLArgument;
 import graphql.schema.GraphQLDirective;
 import graphql.schema.GraphQLEnumType;
@@ -64,8 +64,6 @@ import graphql.schema.idl.SchemaGenerator;
 import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.SchemaPrinter;
 import graphql.schema.idl.TypeDefinitionRegistry;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -633,27 +631,8 @@ public class GraphQLSchemaConverter {
   public GraphQLSchema getSchema(String schemaString) {
     TypeDefinitionRegistry typeRegistry = new SchemaParser().parse(schemaString);
     RuntimeWiring.Builder runtimeWiringBuilder = RuntimeWiring.newRuntimeWiring();
-    getExtendedScalars().forEach(runtimeWiringBuilder::scalar);
+    CustomScalars.getExtendedScalars().forEach(runtimeWiringBuilder::scalar);
 
     return new SchemaGenerator().makeExecutableSchema(typeRegistry, runtimeWiringBuilder.build());
-  }
-
-  private List<GraphQLScalarType> getExtendedScalars() {
-    List<GraphQLScalarType> scalars = new ArrayList<>();
-
-    Field[] fields = ExtendedScalars.class.getFields();
-    for (Field field : fields) {
-      if (Modifier.isPublic(field.getModifiers())
-          && Modifier.isStatic(field.getModifiers())
-          && GraphQLScalarType.class.isAssignableFrom(field.getType())) {
-        try {
-          scalars.add((GraphQLScalarType) field.get(null));
-        } catch (IllegalAccessException e) {
-          throw new RuntimeException(e);
-        }
-      }
-    }
-
-    return scalars;
   }
 }

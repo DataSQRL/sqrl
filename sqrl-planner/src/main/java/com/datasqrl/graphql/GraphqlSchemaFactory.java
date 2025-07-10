@@ -13,21 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.planner.graphql;
+package com.datasqrl.graphql;
 
 import static com.datasqrl.canonicalizer.Name.HIDDEN_PREFIX;
 import static com.datasqrl.canonicalizer.Name.isHiddenString;
 import static com.datasqrl.graphql.jdbc.SchemaConstants.LIMIT;
 import static com.datasqrl.graphql.jdbc.SchemaConstants.OFFSET;
-import static com.datasqrl.planner.graphql.GraphqlSchemaUtil.getGraphQLOutputType;
-import static com.datasqrl.planner.graphql.GraphqlSchemaUtil.isValidGraphQLName;
-import static com.datasqrl.planner.graphql.GraphqlSchemaUtil.uniquifyNameForPath;
-import static com.datasqrl.planner.graphql.GraphqlSchemaUtil.wrapMultiplicity;
+import static com.datasqrl.graphql.util.GraphqlSchemaUtil.getGraphQLOutputType;
+import static com.datasqrl.graphql.util.GraphqlSchemaUtil.isValidGraphQLName;
+import static com.datasqrl.graphql.util.GraphqlSchemaUtil.uniquifyNameForPath;
+import static com.datasqrl.graphql.util.GraphqlSchemaUtil.wrapMultiplicity;
 
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.PackageJson.CompilerConfig;
 import com.datasqrl.engine.server.ServerPhysicalPlan;
 import com.datasqrl.graphql.server.CustomScalars;
+import com.datasqrl.graphql.util.GraphqlSchemaUtil;
 import com.datasqrl.plan.table.Multiplicity;
 import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.dag.plan.MutationQuery;
@@ -81,7 +82,7 @@ public class GraphqlSchemaFactory {
     if (extendedScalarTypes) { // use the plural parameter name in place of only bigInteger to avoid
       // having a conf parameter of each special type mapping feature in
       // the future
-      graphQLSchemaBuilder.additionalTypes(Set.of(CustomScalars.LONG));
+      CustomScalars.getExtendedScalars().forEach(graphQLSchemaBuilder::additionalType);
     }
     /*process table functions that are not accessible but their type might be referenced by queries or subscriptions,
      so we want to create the types but not an endpoint (i.e. we ignore the returned GraphQLObjectType)
@@ -125,7 +126,7 @@ public class GraphqlSchemaFactory {
     final List<SqrlTableFunction> tableFunctions =
         serverPlan.getFunctions().stream()
             .filter(function -> function.getVisibility().getAccess() == tableFunctionsType)
-            .collect(Collectors.toList());
+            .toList();
 
     // group table functions by their parent path
     Map<NamePath, List<SqrlTableFunction>> tableFunctionsByTheirParentPath =
@@ -164,8 +165,8 @@ public class GraphqlSchemaFactory {
         tableFunctions.stream()
             .filter(tableFunction -> !tableFunction.isRelationship())
             .collect(Collectors.toList());
-    var rootObjectType = createRootType(rootTableFunctions, tableFunctionsType);
-    return rootObjectType;
+
+    return createRootType(rootTableFunctions, tableFunctionsType);
   }
 
   private Optional<GraphQLObjectType> createTableResultType(
@@ -347,7 +348,7 @@ public class GraphqlSchemaFactory {
     List<FunctionParameter> parameters =
         tableFunction.getParameters().stream()
             .filter(parameter -> ((SqrlFunctionParameter) parameter).isExternalArgument())
-            .collect(Collectors.toList());
+            .toList();
 
     final List<GraphQLArgument> parametersArguments =
         parameters.stream()

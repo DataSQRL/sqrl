@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.planner.graphql;
+package com.datasqrl.graphql.util;
 
 import static com.datasqrl.canonicalizer.Name.isSystemHidden;
 
@@ -23,6 +23,7 @@ import com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType;
 import com.datasqrl.graphql.server.CustomScalars;
 import com.datasqrl.plan.table.Multiplicity;
 import graphql.Scalars;
+import graphql.language.FieldDefinition;
 import graphql.language.ListType;
 import graphql.language.NonNullType;
 import graphql.language.Type;
@@ -60,8 +61,12 @@ public class GraphqlSchemaUtil {
       case ZERO_ONE -> type;
       case ONE -> GraphQLNonNull.nonNull(type);
       case MANY -> GraphQLList.list(GraphQLNonNull.nonNull(type));
-      default -> GraphQLList.list(GraphQLNonNull.nonNull(type));
     };
+  }
+
+  /** Checks if the graphql schema has a different case than the graphql schema */
+  public static boolean hasVaryingCase(FieldDefinition field, RelDataTypeField relDataTypeField) {
+    return !field.getName().equals(relDataTypeField.getName());
   }
 
   public static boolean isValidGraphQLName(String name) {

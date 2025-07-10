@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.planner.graphql;
+package com.datasqrl.graphql;
 
-import static com.datasqrl.graphql.generate.GraphqlSchemaUtil.hasVaryingCase;
 import static com.datasqrl.graphql.util.GraphqlCheckUtil.checkState;
+import static com.datasqrl.graphql.util.GraphqlSchemaUtil.hasVaryingCase;
 
 import com.datasqrl.engine.database.relational.ExecutableJdbcReadQuery;
 import com.datasqrl.engine.log.kafka.KafkaQuery;
@@ -40,6 +40,7 @@ import com.datasqrl.graphql.server.RootGraphqlModel.QueryParameterHandler;
 import com.datasqrl.graphql.server.RootGraphqlModel.QueryWithArguments;
 import com.datasqrl.graphql.server.RootGraphqlModel.SqlQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.SubscriptionCoords;
+import com.datasqrl.graphql.util.GraphqlSchemaUtil;
 import com.datasqrl.planner.dag.plan.MutationComputedColumn;
 import com.datasqrl.planner.dag.plan.MutationQuery;
 import com.datasqrl.planner.parser.AccessModifier;
@@ -112,8 +113,7 @@ public class GraphqlModelGenerator extends GraphqlSchemaWalker {
                 Collectors.toMap(
                     MutationComputedColumn::getColumnName, MutationComputedColumn::getType));
     boolean returnList = GraphqlSchemaUtil.isListType(atField.getType());
-    if (mutation.getCreateTopic() instanceof NewTopic) {
-      var newTopic = (NewTopic) mutation.getCreateTopic();
+    if (mutation.getCreateTopic() instanceof NewTopic newTopic) {
       mutationCoords =
           new KafkaMutationCoords(
               atField.getName(),
@@ -205,15 +205,13 @@ public class GraphqlModelGenerator extends GraphqlSchemaWalker {
 
   private static Set<Argument> createArguments(FieldDefinition field) {
     // create the arguements as they used to be created in QueryBuilderHelper
-    Set<Argument> argumentSet =
-        field.getInputValueDefinitions().stream()
-            .map(
-                input ->
-                    RootGraphqlModel.VariableArgument.builder()
-                        .path(input.getName())
-                        .value(null)
-                        .build())
-            .collect(Collectors.toSet());
-    return argumentSet;
+    return field.getInputValueDefinitions().stream()
+        .map(
+            input ->
+                RootGraphqlModel.VariableArgument.builder()
+                    .path(input.getName())
+                    .value(null)
+                    .build())
+        .collect(Collectors.toSet());
   }
 }
