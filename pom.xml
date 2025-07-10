@@ -109,7 +109,7 @@
     <junit.jupiter.version>5.13.3</junit.jupiter.version>
     <calcite.version>1.27.0</calcite.version>
     <graphql-java.version>19.2</graphql-java.version>
-    <graphql-java-extended-scalars.version>22.0</graphql-java-extended-scalars.version>
+    <graphql-java-extended-scalars.version>24.0</graphql-java-extended-scalars.version>
     <projectreactor.version>3.7.7</projectreactor.version>
     <avro.version>1.12.0</avro.version>
     <freemarker.version>2.3.34</freemarker.version>
