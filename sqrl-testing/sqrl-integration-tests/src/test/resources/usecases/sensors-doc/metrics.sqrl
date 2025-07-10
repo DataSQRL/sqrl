@@ -1,5 +1,6 @@
 /*+no_query */
 CREATE TABLE SensorReading (
+    uuid STRING NOT NULL METADATA FROM 'uuid',
     sensorid INT NOT NULL,
     temperature FLOAT NOT NULL,
     event_time TIMESTAMP_LTZ(3) METADATA FROM 'timestamp'

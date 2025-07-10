@@ -31,7 +31,7 @@
     <dependency>
       <groupId>org.reflections</groupId>
       <artifactId>reflections</artifactId>
-      <version>0.10.2</version>
+      <version>${reflections.version}</version>
     </dependency>
 
     <dependency>
@@ -49,7 +49,7 @@
     <dependency>
       <groupId>jakarta.annotation</groupId>
       <artifactId>jakarta.annotation-api</artifactId>
-      <version>3.0.0</version>
+      <version>${jakarta.annotation.version}</version>
     </dependency>
     <dependency>
       <groupId>org.glassfish</groupId>
@@ -65,7 +65,7 @@
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-csv</artifactId>
-      <version>1.9.0</version>
+      <version>${commons-csv.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.commons</groupId>
@@ -171,12 +171,12 @@
     <dependency>
       <groupId>com.google.inject</groupId>
       <artifactId>guice</artifactId>
-      <version>7.0.0</version>
+      <version>${guice.version}</version>
     </dependency>
     <dependency>
       <groupId>com.google.inject.extensions</groupId>
       <artifactId>guice-multibindings</artifactId>
-      <version>4.2.3</version>
+      <version>${guice-multibindings.version}</version>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.datatype</groupId>

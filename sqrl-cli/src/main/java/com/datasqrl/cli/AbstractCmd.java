@@ -37,7 +37,7 @@ public abstract class AbstractCmd implements Runnable, IExitCodeGenerator {
       description = "Target directory for deployment artifacts and plans")
   protected Path targetDir = DEFAULT_TARGET_DIR;
 
-  private final AtomicInteger exitCode = new AtomicInteger(0);
+  protected final AtomicInteger exitCode = new AtomicInteger(0);
 
   @Override
   @SneakyThrows

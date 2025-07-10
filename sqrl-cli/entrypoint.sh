@@ -90,14 +90,16 @@ BUILD_GID=$(stat -c '%g' /build)
 
 # Pre-create the build directory with proper ownership to avoid permission errors
 mkdir -p /build/build 2>/dev/null || true
-chown -R "$BUILD_UID:$BUILD_GID" /build/build 2>/dev/null || true
+chown -R "$BUILD_UID:$BUILD_GID" /build/ 2>/dev/null || true
 
 # Run Java as root
 echo "Executing SQRL command: \"$1\" ..."
+set +e
 java -jar /opt/sqrl/sqrl-cli.jar "${@}"
 EXIT_CODE=$?
 
 # After Java execution, fix ownership of any created files
-chown -R "$BUILD_UID:$BUILD_GID" /build/build 2>/dev/null || true
+chown -R "$BUILD_UID:$BUILD_GID" /build/ 2>/dev/null || true
 
+set -e
 exit $EXIT_CODE
