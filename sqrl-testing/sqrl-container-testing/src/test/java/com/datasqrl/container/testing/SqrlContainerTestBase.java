@@ -102,13 +102,23 @@ public abstract class SqrlContainerTestBase {
 
   @SuppressWarnings("resource")
   protected GenericContainer<?> createCmdContainer(Path workingDir) {
+    return createCmdContainer(workingDir, true);
+  }
+
+  protected GenericContainer<?> createCmdContainer(Path workingDir, boolean debug) {
     assertThat(workingDir).exists().isDirectory();
 
-    return new GenericContainer<>(DockerImageName.parse(SQRL_CMD_IMAGE + ":" + getImageTag()))
-        .withWorkingDirectory(BUILD_DIR)
-        .withFileSystemBind(workingDir.toString(), BUILD_DIR, BindMode.READ_WRITE)
-        .withEnv("TZ", "America/Los_Angeles")
-        .withEnv("DEBUG", "1");
+    var container =
+        new GenericContainer<>(DockerImageName.parse(SQRL_CMD_IMAGE + ":" + getImageTag()))
+            .withWorkingDirectory(BUILD_DIR)
+            .withFileSystemBind(workingDir.toString(), BUILD_DIR, BindMode.READ_WRITE)
+            .withEnv("TZ", "America/Los_Angeles");
+
+    if (debug) {
+      container = container.withEnv("DEBUG", "1");
+    }
+
+    return container;
   }
 
   @SuppressWarnings("resource")
@@ -131,9 +141,13 @@ public abstract class SqrlContainerTestBase {
   }
 
   protected ContainerResult sqrlScript(Path workingDir, String... command) {
+    return sqrlScript(workingDir, true, command);
+  }
+
+  protected ContainerResult sqrlScript(Path workingDir, boolean debug, String... command) {
     log.info("Docker run command to reproduce:");
     log.info(getDockerRunCommand(workingDir, SQRL_CMD_IMAGE, getImageTag(), false, command));
-    cmd = createCmdContainer(workingDir).withCommand(command);
+    cmd = createCmdContainer(workingDir, debug).withCommand(command);
 
     cmd.start();
 

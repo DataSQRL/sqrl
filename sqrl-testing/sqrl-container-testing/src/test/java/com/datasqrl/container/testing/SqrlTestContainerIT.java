@@ -41,12 +41,16 @@ public class SqrlTestContainerIT extends SqrlContainerTestBase {
     log.info("Container logs:\n{}", logs);
 
     // Verify the expected success messages are present in the logs
+    assertThat(logs).contains("Snapshot OK for MySchemaQuery").contains("Snapshot OK for MySchema");
+
+    // Assert no SLF4J warnings are present in the logs
     assertThat(logs)
-        .contains("Snapshot OK for MySchemaQuery")
-        .contains("Snapshot OK for MySchema");
+        .doesNotContain("SLF4J: Failed to load class")
+        .doesNotContain("SLF4J: Defaulting to no-operation")
+        .doesNotContain("SLF4J: See http://www.slf4j.org/codes.html");
 
     // Validate log files are present and have content
-	assertLogFiles(logs, testDir);
+    assertLogFiles(logs, testDir);
 
     log.info("All snapshot validations passed successfully");
   }
@@ -74,5 +78,30 @@ public class SqrlTestContainerIT extends SqrlContainerTestBase {
 
     assertOwner(snapshots, logs);
     FileUtils.deleteDirectory(snapshots.toFile());
+  }
+
+  @Test
+  @SneakyThrows
+  void givenAvroSchemaScript_whenTestCommandExecutedWithoutDebug_thenNoBashDebugLogsPresent() {
+    var result = sqrlScript(testDir, false, "test avro-schema.sqrl".split(" "));
+
+    var logs = result.logs();
+    log.info("SQRL test command executed without DEBUG=1");
+    log.info("Container logs:\n{}", logs);
+
+    // Verify the expected success messages are present in the logs
+    assertThat(logs).contains("Snapshot OK for MySchemaQuery").contains("Snapshot OK for MySchema");
+
+    // Assert no bash debug logs are present (no DEBUG=1 output)
+    assertThat(logs)
+        .doesNotContain("+ ")
+        .doesNotContain("++ ")
+        .doesNotContain("set -x")
+        .doesNotContain("set +x");
+
+    // Validate log files are present and have content
+    assertLogFiles(logs, testDir);
+
+    log.info("Test completed successfully without bash debug logs");
   }
 }
