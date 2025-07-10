@@ -23,7 +23,6 @@ import static com.datasqrl.graphql.util.GraphqlCheckUtil.checkState;
 import static com.datasqrl.graphql.util.GraphqlCheckUtil.createThrowable;
 
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.canonicalizer.ReservedName;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.APISource;
 import com.datasqrl.planner.dag.plan.MutationComputedColumn;
