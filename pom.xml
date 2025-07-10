@@ -109,7 +109,7 @@
     <junit.jupiter.version>5.13.3</junit.jupiter.version>
     <calcite.version>1.27.0</calcite.version>
     <graphql-java.version>19.2</graphql-java.version>
-    <graphql-java-extended-scalars.version>22.0</graphql-java-extended-scalars.version>
+    <graphql-java-extended-scalars.version>24.0</graphql-java-extended-scalars.version>
     <projectreactor.version>3.7.7</projectreactor.version>
     <avro.version>1.12.0</avro.version>
     <freemarker.version>2.3.34</freemarker.version>
@@ -937,7 +937,6 @@
           <environmentVariables>
             <TZ>America/Los_Angeles</TZ>
           </environmentVariables>
-          <failIfNoSpecifiedTests>false</failIfNoSpecifiedTests>
         </configuration>
       </plugin>
       <plugin>
@@ -955,7 +954,6 @@
             <flinkrunner.image.repo>${flinkrunner.image.repo}</flinkrunner.image.repo>
             <flinkrunner.version>${flinkrunner.version}</flinkrunner.version>
           </systemPropertyVariables>
-          <failIfNoSpecifiedTests>false</failIfNoSpecifiedTests>
         </configuration>
         <executions>
           <execution>
@@ -1281,6 +1279,22 @@
                 <phase>initialize</phase>
               </execution>
             </executions>
+          </plugin>
+
+          <plugin>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+              <failIfNoSpecifiedTests>false</failIfNoSpecifiedTests>
+              <redirectTestOutputToFile>true</redirectTestOutputToFile>
+            </configuration>
+          </plugin>
+          <plugin>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <configuration>
+              <failIfNoSpecifiedTests>false</failIfNoSpecifiedTests>
+              <redirectTestOutputToFile>true</redirectTestOutputToFile>
+              <rerunFailingTestsCount>1</rerunFailingTestsCount>
+            </configuration>
           </plugin>
         </plugins>
       </build>
