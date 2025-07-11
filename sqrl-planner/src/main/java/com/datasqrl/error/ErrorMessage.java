@@ -41,7 +41,7 @@ public interface ErrorMessage {
 
   default String toStringNoSeverity() {
     var loc = getLocation().toString();
-    if (loc == null || loc.trim().isEmpty()) {
+    if (loc != null && !loc.trim().isEmpty()) {
       loc += ": ";
     }
     return loc + getMessage();
