@@ -4,7 +4,7 @@
     "compile-flink-plan": false
   },
   "test-runner": {
-    "snapshot-dir": "snapshots-myudf",
-    "test-dir": "tests-myudf"
+    "snapshot-folder": "snapshots-myudf",
+    "test-folder": "tests-myudf"
   }
 }

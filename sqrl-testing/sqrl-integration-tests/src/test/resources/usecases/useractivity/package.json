@@ -1,7 +1,7 @@
 {
   "version": "1",
   "test-runner": {
-    "snapshot-dir": "snapshots-usertokens",
-    "test-dir": "tests-usertokens"
+    "snapshot-folder": "snapshots-usertokens",
+    "test-folder": "tests-usertokens"
   }
 }

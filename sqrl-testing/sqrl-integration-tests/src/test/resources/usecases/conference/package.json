@@ -7,8 +7,8 @@
     }
   },
   "test-runner": {
-    "snapshot-dir": "snapshots-conference",
-    "test-dir": "tests-conference",
+    "snapshot-folder": "snapshots-conference",
+    "test-folder": "tests-conference",
     "delay-sec" : -1,
     "required-checkpoints" : 1
   }

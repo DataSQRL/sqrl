@@ -1,8 +1,8 @@
 {
   "version": "1",
   "test-runner": {
-    "snapshot-dir": "snapshots-sensors-full",
-    "test-dir": "tests-sensors-full",
+    "snapshot-folder": "snapshots-sensors-full",
+    "test-folder": "tests-sensors-full",
     "delay-sec": -1
   },
   "dependencies": {

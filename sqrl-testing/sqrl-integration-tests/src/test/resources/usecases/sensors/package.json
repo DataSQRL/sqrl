@@ -1,7 +1,7 @@
 {
   "version": "1",
   "test-runner": {
-    "snapshot-dir": "snapshots-sensors-teaser",
+    "snapshot-folder": "snapshots-sensors-teaser",
     "delay-sec": -1
   },
   "dependencies": {

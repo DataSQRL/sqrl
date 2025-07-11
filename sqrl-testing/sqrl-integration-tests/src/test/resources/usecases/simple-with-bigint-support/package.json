@@ -1,6 +1,6 @@
 {
   "version": "1",
   "test-runner": {
-    "snapshot-dir": "snapshots-simple-with-bigint-support"
+    "snapshot-folder": "snapshots-simple-with-bigint-support"
   }
 }

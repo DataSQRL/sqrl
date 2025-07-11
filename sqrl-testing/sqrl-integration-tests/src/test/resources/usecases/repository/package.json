@@ -2,8 +2,8 @@
   "version": "1",
   "enabled-engines": ["vertx", "postgres", "flink"],
   "test-runner": {
-    "snapshot-dir": "snapshots-repo",
-    "test-dir": "tests-repo",
+    "snapshot-folder": "snapshots-repo",
+    "test-folder": "tests-repo",
     "delay-sec": -1
   }
 }

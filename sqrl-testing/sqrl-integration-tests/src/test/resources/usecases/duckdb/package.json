@@ -27,8 +27,8 @@
     }
   },
   "test-runner": {
-    "snapshot-dir": "snapshots-duckdb",
-    "test-dir": "tests-duckdb",
+    "snapshot-folder": "snapshots-duckdb",
+    "test-folder": "tests-duckdb",
     "delay-sec" : -1,
     "required-checkpoints" : 1
   }

@@ -1,6 +1,6 @@
 {
   "version": "1",
   "test-runner": {
-    "snapshot-dir": "snapshots-stdlib-json"
+    "snapshot-folder": "snapshots-stdlib-json"
   }
 }
