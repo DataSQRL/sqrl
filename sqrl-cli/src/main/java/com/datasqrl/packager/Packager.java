@@ -234,9 +234,9 @@ public class Packager {
         dependency,
         targetPath);
 
-    // Determine the directory in the root that corresponds to the dependency's name
-    var depName = dependency.getName();
-    var sourcePath = namepath2Path(rootDir, NamePath.parse(depName));
+    // Determine the directory in the root that corresponds to the dependency's folder
+    var depFolder = dependency.getFolder();
+    var sourcePath = namepath2Path(rootDir, NamePath.parse(depFolder));
 
     // Check if the source directory exists and is indeed a directory
     if (Files.isDirectory(sourcePath)) {

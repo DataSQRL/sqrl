@@ -17,47 +17,55 @@ package com.datasqrl.config;
 
 import com.datasqrl.error.ErrorCollector;
 import com.google.common.base.Strings;
-import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@Getter
+@NoArgsConstructor
 @EqualsAndHashCode
-@Setter
-@AllArgsConstructor
 public class DependencyImpl implements Dependency {
-  //
-  @Constraints.Default String name = null;
 
-  public DependencyImpl() {}
+  @Constraints.Default @Setter private String folder = null;
+
+  // For now, keep "name" as a backup to not break existing configs.
+  @Deprecated @Constraints.Default private String name = null;
+
+  public DependencyImpl(String folder) {
+    this.folder = folder;
+  }
 
   public DependencyImpl(SqrlConfig sqrlConfig) {
+    folder = sqrlConfig.asString("folder").getOptional().orElse(null);
     name = sqrlConfig.asString("name").getOptional().orElse(null);
   }
 
   @Override
+  public String getFolder() {
+    return folder != null ? folder : name;
+  }
+
+  @Override
   public String toString() {
-    return getName();
+    return this.getFolder();
   }
 
   /**
-   * Normalizes a dependency and uses the dependency package name as the name unless it is
+   * Normalizes a dependency and uses the dependency package name as the folder unless it is
    * explicitly specified.
    *
-   * @param defaultName
-   * @return
+   * @param defaultFolder dependency package name
+   * @return the normalized {@link Dependency}
    */
   @Override
-  public Dependency normalize(String defaultName, ErrorCollector errors) {
+  public Dependency normalize(String defaultFolder, ErrorCollector errors) {
     errors.checkFatal(
-        !Strings.isNullOrEmpty(defaultName), "Invalid dependency name: %s", defaultName);
-    String name;
-    if (Strings.isNullOrEmpty(this.getName())) {
-      name = defaultName;
+        !Strings.isNullOrEmpty(defaultFolder), "Invalid dependency folder: %s", defaultFolder);
+    String folder;
+    if (Strings.isNullOrEmpty(this.getFolder())) {
+      folder = defaultFolder;
     } else {
-      name = this.getName();
+      folder = this.getFolder();
     }
-    return new DependencyImpl(name);
+    return new DependencyImpl(folder);
   }
 }

@@ -6,7 +6,7 @@
   },
   "dependencies": {
     "sensor-local": {
-      "name": "sensor-testdata"
+      "folder": "sensor-testdata"
     }
   }
 }
