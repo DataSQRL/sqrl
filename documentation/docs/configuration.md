@@ -1,9 +1,10 @@
 # DataSQRL Configuration (`package.json` file)
 
 DataSQRL projects are configured with one or more **JSON** files.  
-Unless a file is passed explicitly to `datasqrl compile -c ...`, the compiler looks for a `package.json` in the working directory; if none is found the **built-in default** (shown [here](#default-configuration)) is applied.
+Unless a file is passed explicitly to `datasqrl compile -c ...`, the compiler looks for a `package.json`
+in the working directory; if none is found the **built-in default** (shown [here](#default-configuration)) is applied.
 
-Multiple files can be provided; they are merged **in order** – later files override earlier ones, objects are *deep-merged*, and array values are replaced wholesale.
+Multiple files can be provided; they are merged **in order** – latter files override earlier ones, objects are *deep-merged*, and array values are replaced wholesale.
 
 ---
 
@@ -40,9 +41,25 @@ Each sub-key below `engines` must match one of the IDs in **`enabled-engines`**.
 ```
 
 ### Flink (`flink`)
-| Key          | Type   | Default | Notes                                                                                              |
-|--------------|--------|---------|----------------------------------------------------------------------------------------------------|
-| `config`     | object | `{}`    | Copied verbatim into the generated Flink SQL job (e.g. `"table.exec.source.idle-timeout": "5 s"`). |
+
+| Key          | Type   | Default   | Notes                                                                                              |
+|--------------|--------|-----------|----------------------------------------------------------------------------------------------------|
+| `config`     | object | see below | Copied verbatim into the generated Flink SQL job (e.g. `"table.exec.source.idle-timeout": "5 s"`). |
+
+```json
+{
+  "config": {
+    "execution.runtime-mode": "STREAMING",
+    "execution.target": "local",
+    "execution.attached": true,
+    "rest.address": "localhost",
+    "rest.port": 8081,
+    "state.backend.type": "rocksdb",
+    "table.exec.resource.default-parallelism": 1,
+    "taskmanager.memory.network.max": "800m"
+  }
+}
+```
 
 > **Built-in connector templates**  
 > `postgres`, `postgres_log-source`, `postgres_log-sink`,  
@@ -50,26 +67,31 @@ Each sub-key below `engines` must match one of the IDs in **`enabled-engines`**.
 > `iceberg`, `localfile`, `print`.
 
 ### Kafka (`kafka`)
+
 The default configuration only declares the engine; topic definitions are injected at **plan** time.  
 Additional keys (e.g. `bootstrap.servers`) may be added under `config`.
 
 ### Vert.x (`vertx`)
+
 A GraphQL server that routes queries to the backing database/log engines.  
 No mandatory keys; connection pools are generated from the overall plan.
 
 ### Postgres (`postgres`)
+
 No mandatory keys. Physical DDL (tables, indexes, views) is produced automatically.
 
 ### Iceberg (`iceberg`)
+
 Used as a *table-format* engine together with a query engine such as Flink or Snowflake.
 
 ### Snowflake (`snowflake`)
-| Key | Type | Default | Description |
-|-----|------|---------|-------------|
-| `schema-type` | `"aws-glue"` | – | External catalog implementation. |
-| `catalog-name` | string | – | Glue catalog. |
-| `external-volume` | string | – | Snowflake external volume name. |
-| `url` | string | – | Full JDBC URL including auth params. |
+
+| Key               | Type         | Default | Description                          |
+|-------------------|--------------|---------|--------------------------------------|
+| `schema-type`     | `"aws-glue"` | –       | External catalog implementation.     |
+| `catalog-name`    | string       | –       | Glue catalog.                        |
+| `external-volume` | string       | –       | Snowflake external volume name.      |
+| `url`             | string       | –       | Full JDBC URL including auth params. |
 
 ---
 
@@ -121,44 +143,44 @@ Used as a *table-format* engine together with a query engine such as Flink or Sn
 ```json
 {
   "dependencies": {
-    "myalias": {
-      "name": "folder-name"
+    "my-alias": {
+      "folder": "folder-name"
     }
   }
 }
 ```
 
-If only `name` is given the key acts as a **local folder alias**.
+If only `folder` is given the dependency key (`my-alias` in the above example) acts as a **local folder alias**.
 
 ---
 
 ## Discovery (`discovery`)
 
-| Key | Type | Default | Purpose |
-|-----|------|---------|---------|
-| `pattern` | **string (regex)** | `null` | Filters which external tables are automatically exposed in `IMPORT …` statements. Example: `"^public\\..*"` |
+| Key       | Type               | Default | Purpose                                                                                                     |
+|-----------|--------------------|---------|-------------------------------------------------------------------------------------------------------------|
+| `pattern` | **string (regex)** | `null`  | Filters which external tables are automatically exposed in `IMPORT …` statements. Example: `"^public\\..*"` |
 
 ---
 
 ## Script (`script`)
 
-| Key | Type | Description |
-|-----|------|-------------|
-| `main` | **string** | Path to the main `.sqrl` file. |
+| Key       | Type       | Description                                                   |
+|-----------|------------|---------------------------------------------------------------|
+| `main`    | **string** | Path to the main `.sqrl` file.                                |
 | `graphql` | **string** | Optional GraphQL schema file (defaults to `schema.graphqls`). |
 
 ---
 
 ## Package Metadata (`package`)
 
-| Key | Required | Description |
-|-----|----------|-------------|
-| `name` | **yes** | Reverse-DNS style identifier (`org.project.module`). |
-| `description` | no | Short summary. |
-| `license` | no | SPDX license id or free-text. |
-| `homepage` | no | Web site. |
-| `documentation` | no | Docs link. |
-| `topics` | no | String array of tags/keywords. |
+| Key             | Required | Description                                          |
+|-----------------|----------|------------------------------------------------------|
+| `name`          | **yes**  | Reverse-DNS style identifier (`org.project.module`). |
+| `description`   | no       | Short summary.                                       |
+| `license`       | no       | SPDX license id or free-text.                        |
+| `homepage`      | no       | Web site.                                            |
+| `documentation` | no       | Docs link.                                           |
+| `topics`        | no       | String array of tags/keywords.                       |
 
 ---
 
@@ -188,7 +210,7 @@ Unresolved `${sqrl:*}` placeholders raise a validation error.
 
 ## Default Configuration
 
-The built-in fallback (excerpt - full version [here](https://github.com/DataSQRL/sqrl/blob/main/sqrl-tools/sqrl-config/src/main/resources/default-package.json)):
+The built-in fallback (excerpt - full version [here](https://raw.githubusercontent.com/DataSQRL/sqrl/refs/heads/main/sqrl-planner/src/main/resources/default-package.json)):
 
 ```json5
 {
@@ -198,10 +220,13 @@ The built-in fallback (excerpt - full version [here](https://github.com/DataSQRL
     "flink": {
       "config": {
         "execution.runtime-mode": "STREAMING",
+        "execution.target": "local",
+        "execution.attached": true,
         "rest.address": "localhost",
         "rest.port": 8081,
         "state.backend.type": "rocksdb",
-        // ...
+        "table.exec.resource.default-parallelism": 1,
+        "taskmanager.memory.network.max": "800m"
       }
     },
     "snowflake": {

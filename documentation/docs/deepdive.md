@@ -142,9 +142,15 @@ The physical plan assets produced depend on the engine:
 Physical planning can contain additional optimization such as selecting optimal index
 structures for database tables.
 
-An important step in generating the physical plan is generating the connector configuration between engines. When two adjacent nodes in the DAG are assigned to different engines for execution, we consider this a "cut" in the DAG since it cuts the DAG into multiple sub-graphs -- one for each engine. To move data between engines at the cut points (i.e. the edges that connect the respective nodes), a connection needs to be established.
+An important step in generating the physical plan is generating the connector configuration between engines.
+When two adjacent nodes in the DAG are assigned to different engines for execution,
+we consider this a "cut" in the DAG since it cuts the DAG into multiple sub-graphs -- one for each engine.
+To move data between engines at the cut points (i.e. the edges that connect the respective nodes), a connection needs to be established.
 
-Connector configuration is generated for the stream processing engine (Apache Flink) and the server engine (Vert.x) to connect to the database, filesystem, streaming platform, etc. The connector configuration is determined by the physical planner based on the logical plan analysis above and instantiated in connector templates that are configured in the [configuration file](configuration.md).
+Connector configuration is generated for the stream processing engine (Apache Flink)
+and the server engine (Vert.x) to connect to the database, filesystem, streaming platform, etc.
+The connector configuration is determined by the physical planner based on the logical plan analysis above
+and instantiated in connector templates that are configured in the [configuration file](configuration.md).
 
 The physical planner is also responsible for generating the API schemas (e.g. GraphQL schema)
 for the exposed API if the pipeline contains a server engine. Optionally, the user may
