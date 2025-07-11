@@ -16,7 +16,7 @@
 #
 
 # Enable debug mode if DEBUG environment variable is set
-if [ "$DEBUG" = "1" ]; then
+if [[ -n "${DEBUG+x}" && -n "$DEBUG" ]]; then
     set -x
 fi
 
