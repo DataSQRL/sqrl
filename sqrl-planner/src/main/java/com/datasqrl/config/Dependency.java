@@ -19,9 +19,9 @@ import com.datasqrl.error.ErrorCollector;
 
 public interface Dependency {
 
-  String getName();
+  String getFolder();
 
-  void setName(String name);
+  void setFolder(String folder);
 
   Dependency normalize(String defaultName, ErrorCollector errors);
 }
