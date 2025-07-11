@@ -206,7 +206,7 @@ public class ErrorCollector implements Iterable<ErrorMessage>, Serializable {
     ErrorMessage errorMessage =
         new Implementation(label, ErrorMessage.getMessage(msg, args), location, Severity.FATAL);
     addInternal(errorMessage);
-    return new CollectedException(errorMessage.asException());
+    return CollectedException.withTrimmedStackTrace(errorMessage.asException());
   }
 
   public void checkFatal(boolean condition, String msg, Object... args) {
