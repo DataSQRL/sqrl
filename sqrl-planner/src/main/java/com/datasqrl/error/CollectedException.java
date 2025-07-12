@@ -25,10 +25,25 @@ public class CollectedException extends RuntimeException {
     super("Collected exception", cause);
   }
 
-  // TODO: use this in ErrorCollector to pinpoint the actual error
+  /**
+   * Trims the {@code com.datasqrl.error} elements from the top of the stack trace, so the thrown or
+   * printed error will actually point to the root cause.
+   *
+   * @param cause original error
+   * @return error with the trimmed stack trace
+   */
   public static CollectedException withTrimmedStackTrace(Throwable cause) {
     var orig = cause.getStackTrace();
-    StackTraceElement[] trimmed = Arrays.copyOfRange(orig, 4, orig.length);
+
+    var elemsToTrim = 0;
+    for (var stackTraceElement : orig) {
+      if (!stackTraceElement.getClassName().startsWith(CollectedException.class.getPackageName())) {
+        break;
+      }
+      elemsToTrim++;
+    }
+
+    var trimmed = Arrays.copyOfRange(orig, elemsToTrim, orig.length);
     cause.setStackTrace(trimmed);
 
     return new CollectedException(cause);
