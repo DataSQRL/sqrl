@@ -18,23 +18,33 @@ project-root/
 └── mainscript_package_test.json   <-- configuration for testing
 ```
 
-* Create one folder for each collection of data sources. Sources that represent the same type of data but different environments (test vs prod) have the same prefix.
-* Create one package.json [configuration file](configuration.md) for each environment that references the same main script but maps the data sources differently in the `dependencies` section of the configuration and (optionally) uses different engines and configurations.
-* By default, DataSQRL uses `tests` and `snapshots` directories. If you have multiple test suites or run the same tests with different sources, append a distinguishing suffix (e.g. `-api` or `-regression`) to both directory names and specify them explicitly in the configuration file or via [compiler flags](compiler.md#test-command).
+* Create one folder for each collection of data sources.
+  Sources that represent the same type of data but different environments (test vs prod) have the same prefix.
+* Create one separate `package.json` [configuration file](configuration.md) for each environment that references the same main script,
+  but maps the data sources differently in the `dependencies` section of the configuration, and (optionally) uses different engines and configurations.
+* By default, DataSQRL uses `tests` and `snapshots` directories. If you have multiple test suites or run the same tests with different sources,
+  append a distinguishing suffix (e.g. `-api` or `-regression`) to both directory names and setup specific `package.json` files
+  (e.g. `api-package.json` or `regression-package.json`) that refers those directories in their [`test-runner`](configuration.md#test-runner-test-runner) section.
 
 ## Testing
 
-DataSQRL supports [running automated tests](compiler#test-command) for your SQRL pipeline by annotating test cases with the `/*+test */` hint or placing test queries in the `tests` folder (or any other folder that's passed via the `--tests` command option).
+DataSQRL supports [running automated tests](compiler#test-command) for your SQRL pipeline by annotating test cases with the `/*+test */` hint
+or placing test queries in the `tests` folder (or any other folder that's set in the `test-runner` configuration).
 
-The best practice for writing test cases is to [modularize](connectors#connector-management) your sources so that you dynamically link different sources for local development, testing, and production. In many cases, you can use the same sources for testing and local development in a single folder.
+The best practice for writing test cases is to [modularize](connectors#connector-management) your sources
+so that you dynamically link different sources for local development, testing, and production.
+In many cases, you can use the same sources for testing and local development in a single folder.
 
-That data should contain explicit event timestamps for all records. That enables completely deterministic test cases. It also supports reproducing failure scenarios that you experienced in production as local test cases by using the data that caused the failure with the original timestamp. That way, you don't have to externally simulate certain sequences of events that caused the failure in the first place.
+That data should contain explicit event timestamps for all records. That enables completely deterministic test cases.
+It also supports reproducing failure scenarios that you experienced in production as local test cases by using the data that caused the failure with the original timesta
+That way, you don't have to externally simulate certain sequences of events that caused the failure in the first place.
 
 In addition, it allows you to build up a repository of failures and edge cases that gets executed automatically to spot regressions.
 
 ## Script Imports
 
-If your main script gets too big, or you want to reuse table definitions across multiple scripts, move the definitions to a separate SQRL script and import it into the main script.
+If your main script gets too big, or you want to reuse table definitions across multiple scripts,
+move the definitions to a separate SQRL script and import it into the main script.
 
 ### Inline Script Imports
 
@@ -48,23 +58,24 @@ This statement imports all tables and functions from a SQRL script called `myscr
 
 ## Data Discovery
 
-DataSQRL automatically generates table definitions with connector configuration and schemas for json-line files (with extension `.jsonl`) and csv files (with extension `.csv`) within the project directory. This makes it easy to import data from such files into a SQRL project.
+DataSQRL automatically generates table definitions with connector configuration and schemas for json-line files (with extension `.jsonl`)
+and csv files (with extension `.csv`) within the project directory.
+This makes it easy to import data from such files into a SQRL project.
 
 For example, to import data from a file `orders.jsonl` in the folder `mydata` you write:
 ```sql
 IMPORT mydata.orders;
 ```
 
-When you run the compiler, it will create the table configuration file `orders.table.sql` which you can then import like any other source. The compiler reads the file and auto-discovers the schema.
+When you run the compiler, it will create the table configuration file `orders.table.sql` which you can then import like any other source.
+The compiler reads the file and auto-discovers the schema.
 
 To disable automatic discovery of data for a directory, place a file called `.nodiscovery` into that directory.
 
 ## Manual Subgraph Elimination with Noop Function
 
-Sometimes the Flink optimizer is too smart for its own good and will push down predicates that make common subgraph identification impossible. That can result in much larger job graphs and poor performance or high state maintenance.
+Sometimes the Flink optimizer is too smart for its own good and will push down predicates that make common subgraph identification impossible.
+That can result in much larger job graphs and poor performance or high state maintenance.
 
 To inhibit predicate pushdown, SQRL uses the `noop` function that takes an arbitrary list of argument and always returns true.
 As such, the function serves no purpose other than making it impossible for the optimizer to push down predicates.
-
-
-
