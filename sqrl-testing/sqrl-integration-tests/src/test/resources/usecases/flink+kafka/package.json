@@ -2,7 +2,7 @@
   "version": "1",
   "enabled-engines": ["flink", "kafka"],
   "test-runner": {
-    "snapshot-dir": "snapshots-flink_kafka",
+    "snapshot-folder": "snapshots-flink_kafka",
     "delay-sec": -1,
     "required-checkpoints": 1,
     "create-topics": ["input_topic1", "input_topic2"]

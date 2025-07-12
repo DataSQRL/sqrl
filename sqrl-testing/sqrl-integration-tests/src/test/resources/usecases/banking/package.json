@@ -9,8 +9,8 @@
     }
   },
   "test-runner": {
-    "snapshot-dir": "snapshots-loan",
-    "test-dir": "tests-loan",
+    "snapshot-folder": "snapshots-loan",
+    "test-folder": "tests-loan",
     "delay-sec": -1
   },
   "script": {

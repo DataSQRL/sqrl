@@ -4,7 +4,7 @@
     "compile-flink-plan": false
   },
   "test-runner": {
-    "snapshot-dir": "snapshots-stdlib-openai",
+    "snapshot-folder": "snapshots-stdlib-openai",
     "delay-sec": -1
   }
 }

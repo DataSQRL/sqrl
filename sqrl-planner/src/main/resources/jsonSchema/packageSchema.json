@@ -180,10 +180,10 @@
       "type": "object",
       "minProperties": 1,
       "properties": {
-        "snapshot-dir": {
+        "snapshot-folder": {
           "type": "string"
         },
-        "test-dir": {
+        "test-folder": {
           "type": "string"
         },
         "delay-sec": {

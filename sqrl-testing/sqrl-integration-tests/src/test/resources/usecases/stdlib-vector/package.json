@@ -1,7 +1,7 @@
 {
   "version": "1",
   "test-runner": {
-    "snapshot-dir": "snapshots-stdlib-vector",
-    "test-dir": "tests-stdlib-vector"
+    "snapshot-folder": "snapshots-stdlib-vector",
+    "test-folder": "tests-stdlib-vector"
   }
 }

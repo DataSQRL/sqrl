@@ -1,8 +1,8 @@
 {
   "version": "1",
   "test-runner": {
-    "snapshot-dir": "snapshots-sensors-mutation",
-    "test-dir": "tests-sensors-mutation",
+    "snapshot-folder": "snapshots-sensors-mutation",
+    "test-folder": "tests-sensors-mutation",
     "delay-sec": -1
   },
   "dependencies": {

@@ -1,8 +1,8 @@
 {
   "version": "1",
   "test-runner": {
-    "snapshot-dir": "snapshots-avro-schema",
-    "test-dir": "tests-avro-schema",
+    "snapshot-folder": "snapshots-avro-schema",
+    "test-folder": "tests-avro-schema",
     "delay-sec": -1
   }
 }

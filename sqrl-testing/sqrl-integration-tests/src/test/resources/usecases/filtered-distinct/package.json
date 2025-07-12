@@ -1,6 +1,6 @@
 {
   "version": "1",
   "test-runner": {
-    "snapshot-dir": "snapshots-filtered-distinct"
+    "snapshot-folder": "snapshots-filtered-distinct"
   }
 }

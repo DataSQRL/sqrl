@@ -164,14 +164,14 @@ If only `name` is given the key acts as a **local folder alias**.
 
 ## Test-Runner (`test-runner`)
 
-| Key                    | Type         | Default       | Meaning                                                                                |
-|------------------------|--------------|---------------|----------------------------------------------------------------------------------------|
-| `snapshot-dir`         | **string**   | `./snapshots` | Snapshots output directory.                                                            |
-| `test-dir`             | **string**   | `./tests`     | Tests output directory.                                                                |
-| `delay-sec`            | **number**   | `30`          | Wait between data-load and snapshot. Set `-1` to disable.                              |
-| `mutation-delay-sec`   | **number**   | `0`           | Pause(s) between mutation queries.                                                     |
-| `required-checkpoints` | **number**   | `0`           | Minimum completed Flink checkpoints before assertions run (requires `delay-sec = -1`). |
-| `create-topics`        | **string[]** | -             | Kafka topics to create before tests start.                                             |
+| Key                     | Type         | Default       | Meaning                                                                                |
+|-------------------------|--------------|---------------|----------------------------------------------------------------------------------------|
+| `snapshot-folder`       | **string**   | `./snapshots` | Snapshots output directory.                                                            |
+| `test-folder`           | **string**   | `./tests`     | Tests output directory.                                                                |
+| `delay-sec`             | **number**   | `30`          | Wait between data-load and snapshot. Set `-1` to disable.                              |
+| `mutation-delay-sec`    | **number**   | `0`           | Pause(s) between mutation queries.                                                     |
+| `required-checkpoints`  | **number**   | `0`           | Minimum completed Flink checkpoints before assertions run (requires `delay-sec = -1`). |
+| `create-topics`         | **string[]** | -             | Kafka topics to create before tests start.                                             |
 
 ---
 
@@ -236,8 +236,8 @@ The built-in fallback (excerpt - full version [here](https://github.com/DataSQRL
     "print": { "connector": "print", /*...*/ }
   },
   "test-runner": {
-    "snapshot-dir": "./snapshots",
-    "test-dir": "./tests",
+    "snapshot-folder": "./snapshots",
+    "test-folder": "./tests",
     "delay-sec": 30,
     "mutation-delay-sec": 0,
     "required-checkpoints": 0

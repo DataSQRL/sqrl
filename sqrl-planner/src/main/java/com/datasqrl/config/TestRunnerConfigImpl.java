@@ -31,14 +31,14 @@ public class TestRunnerConfigImpl implements TestRunnerConfiguration {
 
   @Override
   public Path getSnapshotDir(Path rootDir) {
-    var snapshotDir = Paths.get(sqrlConfig.asString("snapshot-dir").get());
+    var snapshotDir = Paths.get(sqrlConfig.asString("snapshot-folder").get());
 
     return FileUtil.combineWithRootIfRelative(rootDir, snapshotDir);
   }
 
   @Override
   public Optional<Path> getTestDir(Path rootDir) {
-    var testDir = Paths.get(sqrlConfig.asString("test-dir").get());
+    var testDir = Paths.get(sqrlConfig.asString("test-folder").get());
     testDir = FileUtil.combineWithRootIfRelative(rootDir, testDir);
 
     return Files.isDirectory(testDir) ? Optional.of(testDir) : Optional.empty();

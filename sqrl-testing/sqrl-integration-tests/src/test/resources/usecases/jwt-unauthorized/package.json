@@ -1,8 +1,8 @@
 {
   "version": "1",
   "test-runner": {
-    "snapshot-dir": "snapshots-jwt-unauthorized",
-    "test-dir": "tests-jwt-unauthorized"
+    "snapshot-folder": "snapshots-jwt-unauthorized",
+    "test-folder": "tests-jwt-unauthorized"
   },
   "engines" : {
     "vertx" : {

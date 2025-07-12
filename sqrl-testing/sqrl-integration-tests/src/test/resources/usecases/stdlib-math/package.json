@@ -1,7 +1,7 @@
 {
   "version": "1",
   "test-runner": {
-    "snapshot-dir": "snapshots-stdlib-math",
+    "snapshot-folder": "snapshots-stdlib-math",
     "delay-sec": -1
   }
 }

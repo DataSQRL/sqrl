@@ -81,7 +81,7 @@ class PackageJsonImplTest {
 
   @Test
   void givenPackageJson_whenGetTestConfig_thenReturnsTestConfiguration() {
-    config.getSubConfig("test-runner").setProperty("snapshot-dir", "/dummy");
+    config.getSubConfig("test-runner").setProperty("snapshot-folder", "/dummy");
 
     var packageJson = new PackageJsonImpl(config);
 
