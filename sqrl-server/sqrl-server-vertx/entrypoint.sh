@@ -15,6 +15,11 @@
 # limitations under the License.
 #
 
+# Enable debug mode if DEBUG environment variable is set
+if [[ -n "${DEBUG+x}" && -n "$DEBUG" ]]; then
+    set -x
+fi
+
 # Change to config directory (default WORKDIR)
 cd /opt/sqrl/config
 

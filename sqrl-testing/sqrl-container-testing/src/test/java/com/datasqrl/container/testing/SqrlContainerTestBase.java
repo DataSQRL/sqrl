@@ -100,15 +100,28 @@ public abstract class SqrlContainerTestBase {
     }
   }
 
+  @SuppressWarnings("resource")
   protected GenericContainer<?> createCmdContainer(Path workingDir) {
-    assertThat(workingDir).exists().isDirectory();
-
-    return new GenericContainer<>(DockerImageName.parse(SQRL_CMD_IMAGE + ":" + getImageTag()))
-        .withWorkingDirectory(BUILD_DIR)
-        .withFileSystemBind(workingDir.toString(), BUILD_DIR, BindMode.READ_WRITE)
-        .withEnv("TZ", "America/Los_Angeles");
+    return createCmdContainer(workingDir, true);
   }
 
+  protected GenericContainer<?> createCmdContainer(Path workingDir, boolean debug) {
+    assertThat(workingDir).exists().isDirectory();
+
+    var container =
+        new GenericContainer<>(DockerImageName.parse(SQRL_CMD_IMAGE + ":" + getImageTag()))
+            .withWorkingDirectory(BUILD_DIR)
+            .withFileSystemBind(workingDir.toString(), BUILD_DIR, BindMode.READ_WRITE)
+            .withEnv("TZ", "America/Los_Angeles");
+
+    if (debug) {
+      container = container.withEnv("DEBUG", "1");
+    }
+
+    return container;
+  }
+
+  @SuppressWarnings("resource")
   protected GenericContainer<?> createServerContainer(Path workingDir) {
     var deployPlanPath = workingDir.resolve("build/deploy/plan");
     assertThat(deployPlanPath).exists().isDirectory();
@@ -117,6 +130,7 @@ public abstract class SqrlContainerTestBase {
         .withNetwork(sharedNetwork)
         .withExposedPorts(GRAPHQL_PORT)
         .withFileSystemBind(deployPlanPath.toString(), "/opt/sqrl/config", BindMode.READ_ONLY)
+        .withEnv("DEBUG", "1")
         .waitingFor(
             Wait.forLogMessage(".*GraphQL verticle deployed successfully.*", 1)
                 .withStartupTimeout(Duration.ofSeconds(20)));
@@ -127,9 +141,13 @@ public abstract class SqrlContainerTestBase {
   }
 
   protected ContainerResult sqrlScript(Path workingDir, String... command) {
+    return sqrlScript(workingDir, true, command);
+  }
+
+  protected ContainerResult sqrlScript(Path workingDir, boolean debug, String... command) {
     log.info("Docker run command to reproduce:");
     log.info(getDockerRunCommand(workingDir, SQRL_CMD_IMAGE, getImageTag(), false, command));
-    cmd = createCmdContainer(workingDir).withCommand(command);
+    cmd = createCmdContainer(workingDir, debug).withCommand(command);
 
     cmd.start();
 
@@ -327,6 +345,75 @@ public abstract class SqrlContainerTestBase {
     }
 
     return sharedHttpClient.execute(request);
+  }
+
+  protected void assertLogFiles(String logs, Path testDir) {
+    var logsDir = testDir.resolve("build/logs");
+    assertThat(logsDir).as("Logs directory should exist\n%s", logs).exists().isDirectory();
+
+    var cliLogFile = logsDir.resolve("datasqrl-cli.log");
+    assertThat(cliLogFile).as("CLI log file should exist\n%s", logs).exists().isRegularFile();
+
+    assertSoftly(
+        softAssertions -> {
+          try {
+            var cliLogContent = Files.readString(cliLogFile);
+            softAssertions
+                .assertThat(cliLogContent)
+                .as("CLI log file should contain content\n%s", logs)
+                .isNotEmpty();
+
+            log.info("CLI log file size: {} bytes", cliLogFile.toFile().length());
+            log.debug(
+                "CLI log content preview:\n{}",
+                cliLogContent.length() > 500
+                    ? cliLogContent.substring(0, 500) + "..."
+                    : cliLogContent);
+
+            // Validate that log files are not owned by root
+            var cliLogOwner = Files.getOwner(cliLogFile);
+            softAssertions
+                .assertThat(cliLogOwner.getName())
+                .as("CLI log file should not be owned by root\n%s", logs)
+                .isNotEqualTo("root");
+
+            // Check for service log files if they exist
+            var redpandaLogFile = logsDir.resolve("redpanda.log");
+            if (Files.exists(redpandaLogFile)) {
+              var redpandaLogContent = Files.readString(redpandaLogFile);
+              softAssertions
+                  .assertThat(redpandaLogContent)
+                  .as("Redpanda log file should contain content\n%s", logs)
+                  .isNotEmpty();
+              log.info("Redpanda log file size: {} bytes", redpandaLogFile.toFile().length());
+
+              var redpandaLogOwner = Files.getOwner(redpandaLogFile);
+              softAssertions
+                  .assertThat(redpandaLogOwner.getName())
+                  .as("Redpanda log file should not be owned by root\n%s", logs)
+                  .isNotEqualTo("root");
+            }
+
+            var postgresLogFile = logsDir.resolve("postgres.log");
+            if (Files.exists(postgresLogFile)) {
+              var postgresLogContent = Files.readString(postgresLogFile);
+              softAssertions
+                  .assertThat(postgresLogContent)
+                  .as("Postgres log file should contain content\n%s", logs)
+                  .isNotEmpty();
+              log.info("Postgres log file size: {} bytes", postgresLogFile.toFile().length());
+
+              var postgresLogOwner = Files.getOwner(postgresLogFile);
+              softAssertions
+                  .assertThat(postgresLogOwner.getName())
+                  .as("Postgres log file should not be owned by root\n%s", logs)
+                  .isNotEqualTo("root");
+            }
+
+          } catch (Exception e) {
+            softAssertions.fail("Failed to read log files: " + e.getMessage() + "\n" + logs);
+          }
+        });
   }
 
   protected void cleanupContainers() {
