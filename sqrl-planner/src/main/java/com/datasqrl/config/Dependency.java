@@ -16,10 +16,11 @@
 package com.datasqrl.config;
 
 import com.datasqrl.error.ErrorCollector;
+import javax.annotation.Nullable;
 
 public interface Dependency {
 
-  String getFolder();
+  String getFolder(@Nullable ErrorCollector errors);
 
   void setFolder(String folder);
 

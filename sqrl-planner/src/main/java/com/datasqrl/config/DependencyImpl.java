@@ -17,6 +17,7 @@ package com.datasqrl.config;
 
 import com.datasqrl.error.ErrorCollector;
 import com.google.common.base.Strings;
+import javax.annotation.Nullable;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -40,13 +41,22 @@ public class DependencyImpl implements Dependency {
   }
 
   @Override
-  public String getFolder() {
-    return folder != null ? folder : name;
+  public String getFolder(@Nullable ErrorCollector errors) {
+    if (folder == null) {
+      if (errors != null) {
+        errors.warn(
+            "The \"name\" key is deprecated in \"dependencies\" and it will be removed in an upcoming release. Use the \"folder\" key instead.");
+      }
+
+      return name;
+    }
+
+    return folder;
   }
 
   @Override
   public String toString() {
-    return this.getFolder();
+    return this.getFolder(null);
   }
 
   /**
@@ -61,10 +71,10 @@ public class DependencyImpl implements Dependency {
     errors.checkFatal(
         !Strings.isNullOrEmpty(defaultFolder), "Invalid dependency folder: %s", defaultFolder);
     String folder;
-    if (Strings.isNullOrEmpty(this.getFolder())) {
+    if (Strings.isNullOrEmpty(this.getFolder(null))) {
       folder = defaultFolder;
     } else {
-      folder = this.getFolder();
+      folder = this.getFolder(errors);
     }
     return new DependencyImpl(folder);
   }
