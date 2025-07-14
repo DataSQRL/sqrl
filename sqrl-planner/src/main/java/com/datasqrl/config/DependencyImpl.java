@@ -46,7 +46,7 @@ public class DependencyImpl implements Dependency {
 
   @Override
   public String toString() {
-    return this.getFolder();
+    return getFolder();
   }
 
   /**
@@ -60,12 +60,20 @@ public class DependencyImpl implements Dependency {
   public Dependency normalize(String defaultFolder, ErrorCollector errors) {
     errors.checkFatal(
         !Strings.isNullOrEmpty(defaultFolder), "Invalid dependency folder: %s", defaultFolder);
-    String folder;
-    if (Strings.isNullOrEmpty(this.getFolder())) {
-      folder = defaultFolder;
+
+    String finalFolder;
+    if (folder != null) {
+      finalFolder = folder;
     } else {
-      folder = this.getFolder();
+      errors.warn(
+          "The \"name\" key is deprecated in \"dependencies\" and it will be removed in an upcoming release. Use the \"folder\" key instead.");
+      finalFolder = name;
     }
-    return new DependencyImpl(folder);
+
+    if (Strings.isNullOrEmpty(finalFolder)) {
+      return new DependencyImpl(defaultFolder);
+    }
+
+    return new DependencyImpl(finalFolder);
   }
 }

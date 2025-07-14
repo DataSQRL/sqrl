@@ -33,6 +33,15 @@ class DependencyImplTest {
   }
 
   @Test
+  void givenConfigWithFolder_whenCreateFromConfig_thenSetsName() {
+    config.setProperty("folder", "test-dependency");
+
+    var dependency = new DependencyImpl(config);
+
+    assertThat(dependency.getFolder()).isEqualTo("test-dependency");
+  }
+
+  @Test
   void givenConfigWithName_whenCreateFromConfig_thenSetsName() {
     config.setProperty("name", "test-dependency");
 
