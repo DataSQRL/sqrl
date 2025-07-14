@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://www.googletagmanager.com">
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-Y4XLW4QZYX"></script>
 <script>function gtag(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],gtag("js",new Date),gtag("config","G-Y4XLW4QZYX",{})</script><link rel="stylesheet" href="/assets/css/styles.2682f415.css">
-<script src="/assets/js/runtime~main.246dc48c.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.7e719f94.js" defer="defer"></script>
 <script src="/assets/js/main.b89d8944.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
@@ -146,8 +146,14 @@ configured to execute that stage.</p>
 </ul>
 <p>Physical planning can contain additional optimization such as selecting optimal index
 structures for database tables.</p>
-<p>An important step in generating the physical plan is generating the connector configuration between engines. When two adjacent nodes in the DAG are assigned to different engines for execution, we consider this a &quot;cut&quot; in the DAG since it cuts the DAG into multiple sub-graphs -- one for each engine. To move data between engines at the cut points (i.e. the edges that connect the respective nodes), a connection needs to be established.</p>
-<p>Connector configuration is generated for the stream processing engine (Apache Flink) and the server engine (Vert.x) to connect to the database, filesystem, streaming platform, etc. The connector configuration is determined by the physical planner based on the logical plan analysis above and instantiated in connector templates that are configured in the <a href="/docs/configuration">configuration file</a>.</p>
+<p>An important step in generating the physical plan is generating the connector configuration between engines.
+When two adjacent nodes in the DAG are assigned to different engines for execution,
+we consider this a &quot;cut&quot; in the DAG since it cuts the DAG into multiple sub-graphs -- one for each engine.
+To move data between engines at the cut points (i.e. the edges that connect the respective nodes), a connection needs to be established.</p>
+<p>Connector configuration is generated for the stream processing engine (Apache Flink)
+and the server engine (Vert.x) to connect to the database, filesystem, streaming platform, etc.
+The connector configuration is determined by the physical planner based on the logical plan analysis above
+and instantiated in connector templates that are configured in the <a href="/docs/configuration">configuration file</a>.</p>
 <p>The physical planner is also responsible for generating the API schemas (e.g. GraphQL schema)
 for the exposed API if the pipeline contains a server engine. Optionally, the user may
 provide the API schema in which case the physical planner validates the schema and maps it
