@@ -164,10 +164,11 @@ If only `folder` is given the dependency key (`my-alias` in the above example) a
 
 ## Script (`script`)
 
-| Key       | Type       | Description                                                   |
-|-----------|------------|---------------------------------------------------------------|
-| `main`    | **string** | Path to the main `.sqrl` file.                                |
-| `graphql` | **string** | Optional GraphQL schema file (defaults to `schema.graphqls`). |
+| Key          | Type         | Description                                                   |
+|--------------|--------------|---------------------------------------------------------------|
+| `main`       | **string**   | Path to the main `.sqrl` file.                                |
+| `graphql`    | **string**   | Optional GraphQL schema file (defaults to `schema.graphqls`). |
+| `operations` | **string[]** | Optional GraphQL operation definitions.                       |
 
 ---
 

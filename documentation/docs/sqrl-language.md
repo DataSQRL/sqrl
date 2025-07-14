@@ -14,10 +14,10 @@ Only one statement is allowed per line, but a statement may span multiple lines.
 Typical order of statements:
 
 ```text
-IMPORT …        -- import sources from external definitions
-CREATE TABLE …  -- define internal & external sources
-other statements (definitions, hints, inserts, exports…)
-EXPORT …        -- explicit sinks
+IMPORT ...        -- import sources from external definitions
+CREATE TABLE ...  -- define internal & external sources
+other statements (definitions, hints, inserts, exports...)
+EXPORT ...        -- explicit sinks
 ```
 
 At compile time the statements form a *directed-acyclic graph* (DAG).  
@@ -29,9 +29,9 @@ SQRL inherits full FlinkSQL grammar for
 
 * `CREATE {TABLE | VIEW | FUNCTION | CATALOG | DATABASE}`
 * `SELECT` queries inside any of the above
-* `USE …`
+* `USE ...`
 
-…with the caveat that SQRL currently tracks **Flink 1.19**; later features may not parse.
+...with the caveat that SQRL currently tracks **Flink 1.19**; later features may not parse.
 
 Refer to the [FlinkSQL documentation](https://nightlies.apache.org/flink/flink-docs-release-1.19/docs/dev/table/sql/overview/) for a detailed specification.
 
@@ -72,13 +72,13 @@ Wild-card imports with aliases *prefix* the alias to all imported table names.
 
 SQRL understands the complete FlinkSQL `CREATE TABLE` syntax, but distinguishes between **internal** and **external** source tables. External source tables are standard FlinkSQL tables that connect to an internal data source. Internal tables connect to a data source that is managed by SQRL (depending on the configured `log` engine, e.g. a Kafka topic) and exposed for inserts in the interface.
 
-| Feature                     | Internal source (managed by SQRL)                               | External Source (connector) |
-|-----------------------------|-----------------------------------------------------------------|-----------------------------|
-| Connector clause `WITH (…)` | **omitted**                                                     | **required**                |
-| Computed columns            | Evaluated **on insert**                                         | Delegated to connector      |
-| Metadata columns            | `METADATA FROM 'uuid'`, `'timestamp'` are recognised by planner | Passed through              |
-| Watermark spec              | Optional                                                        | Passed through              |
-| Primary key                 | *Unenforced* upsert semantics                                   | Same as Flink               |
+| Feature                       | Internal source (managed by SQRL)                               | External Source (connector) |
+|-------------------------------|-----------------------------------------------------------------|-----------------------------|
+| Connector clause `WITH (...)` | **omitted**                                                     | **required**                |
+| Computed columns              | Evaluated **on insert**                                         | Delegated to connector      |
+| Metadata columns              | `METADATA FROM 'uuid'`, `'timestamp'` are recognised by planner | Passed through              |
+| Watermark spec                | Optional                                                        | Passed through              |
+| Primary key                   | *Unenforced* upsert semantics                                   | Same as Flink               |
 
 Example (internal):
 
@@ -110,7 +110,7 @@ CREATE TABLE kafka_json_table (
 ### Table definition
 
 ```
-TableName := SELECT … ;
+TableName := SELECT ... ;
 ```
 
 Equivalent to a `CREATE VIEW` in SQL.
@@ -123,12 +123,12 @@ ValidCustomer := SELECT * FROM Customer WHERE customerid > 0 AND email IS NOT NU
 
 ```
 DistinctTbl := DISTINCT SourceTbl
-               ON pk_col [, …]
+               ON pk_col [, ...]
                ORDER BY ts_col [ASC|DESC] [NULLS LAST] ;
 ```
 
 * Deduplicates a **STREAM** of changelog data into a **VERSIONED_STATE** table.
-* Hint `/*+filtered_distinct_order*/` (see [hints](#-8-hint-catalogue)) may precede the statement to push filters before deduplication for optimization.
+* Hint `/*+filtered_distinct_order*/` (see [hints](#hints)) may precede the statement to push filters before deduplication for optimization.
 
 ```sql
 DistinctProducts := DISTINCT Products ON id ORDER BY updated DESC;
@@ -137,8 +137,8 @@ DistinctProducts := DISTINCT Products ON id ORDER BY updated DESC;
 ### Function definition
 
 ```
-FuncName(arg1 TYPE [NOT NULL] [, …]) :=
-  SELECT … WHERE col = :arg1 ;
+FuncName(arg1 TYPE [NOT NULL] [, ...]) :=
+  SELECT ... WHERE col = :arg1 ;
 ```
 
 Arguments are referenced with `:name` in the `SELECT` query. Argument definitions are identical to column definitions in `CREATE TABLE` statements.
@@ -150,11 +150,11 @@ CustomerByEmail(email STRING) := SELECT * FROM Customer WHERE email = :email;
 ### Relationship definition
 
 ```
-ParentTable.RelName(arg TYPE, …) :=
-  SELECT …
+ParentTable.RelName(arg TYPE, ...) :=
+  SELECT ...
   FROM Child c
   WHERE this.id = c.parent_id
-  [AND c.col = :arg …] ;
+  [AND c.col = :arg ...] ;
 ```
 
 `this.` is the alias for the parent table to reference columns from the parent row.
@@ -174,7 +174,7 @@ Must appear **immediately after** the table it extends, and may reference previo
 
 ## Interfaces
 
-The tables and functions defined in a SQRL script are exposed through an interface. The term "interface" is used generically to describe a means by which a client, user, or external system can access the processed data. The interface depends on the [configured engines](configuration.md#engines): API endpoints for servers, queries and views for databases, and topics for logs. An interface is a sink in the data processing DAG that's defined by a SQRL script.
+The tables and functions defined in a SQRL script are exposed through an interface. The term "interface" is used generically to describe a means by which a client, user, or external system can access the processed data. The interface depends on the [configured engines](configuration.md#engines-engines): API endpoints for servers, queries and views for databases, and topics for logs. An interface is a sink in the data processing DAG that's defined by a SQRL script.
 
 How a table or function is exposed in the interface depends on the access type. The access type is one of the following:
 
@@ -193,7 +193,7 @@ HighTempAlert := SUBSCRIBE
 
 ### CREATE TABLE
 
-CREATE TABLE statements that define an [internal data source](#create-table-interfaces) are exposed as topics in the log, or GraphQL mutations in the server.
+CREATE TABLE statements that define an [internal data source](#create-table-internal-vs-external) are exposed as topics in the log, or GraphQL mutations in the server.
 The input type is defined by mapping all column types to native data types of the interface schema. Computed and metadata columns are not included in the input type since those are computed on insert.
 
 ## EXPORT statement
@@ -215,27 +215,28 @@ EXPORT MyAlerts          TO log.AlertStream;
 
 ## Hints
 
-Hints live in a `/*+ … */` comment placed **immediately before** the definition they apply to.
+Hints live in a `/*+ ... */` comment placed **immediately before** the definition they apply to.
 
-| Hint                        | Form                                                                   | Applies to     | Effect                                                                                                                                                       |
-|-----------------------------|------------------------------------------------------------------------|----------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **primary_key**             | `primary_key(col, …)`                                                  | table          | declare PK when optimiser cannot infer                                                                                                                       |
-| **index**                   | `index(type, col, …)` <br/> Multiple `index(…)` can be comma-separated | table          | override automatic index selection. `type` ∈ `HASH`, `BTREE`, `TEXT`, `VECTOR_COSINE`, `VECTOR_EUCLID`. <br />`index` *alone* disables all automatic indexes |
-| **partition_key**           | `partition_key(col, …)`                                                | table          | define partition columns for sinks that support partitioning                                                                                                 |
-| **vector_dim**              | `vector_dim(col, 1536)`                                                | table          | declare fixed vector length. This is required when using vector indexes.                                                                                     |
-| **query_by_all**            | `query_by_all(col, …)`                                                 | table          | generate interface with *required* filter arguments                                                                                                          |
-| **query_by_any**            | `query_by_any(col, …)`                                                 | table          | generate interface with *optional* filter arguments                                                                                                          |
-| **no_query**                | `no_query`                                                             | table          | hide from interface                                                                                                                                          |
-| **filtered_distinct_order** | flag                                                                   | DISTINCT table | eliminate updates on order column only before dedup                                                                                                          |
-| **exec**                    | `exec(engine)`                                                         | table          | pin execution engine (`streams`, `database`, `flink`, …)                                                                                                     |
-| **test**                    | `test`                                                                 | table          | marks test case, only executed with [`test` command](compiler#test-command).                                                                                 |
-| **workload**                | `workload`                                                             | table          | retained as sink for DAG optimization but hidden from interface                                                                                              |
+| Hint                        | Form                                                                       | Applies to     | Effect                                                                                                                                                       |
+|-----------------------------|----------------------------------------------------------------------------|----------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **primary_key**             | `primary_key(col, ...)`                                                    | table          | declare PK when optimiser cannot infer                                                                                                                       |
+| **index**                   | `index(type, col, ...)` <br/> Multiple `index(...)` can be comma-separated | table          | override automatic index selection. `type` ∈ `HASH`, `BTREE`, `TEXT`, `VECTOR_COSINE`, `VECTOR_EUCLID`. <br />`index` *alone* disables all automatic indexes |
+| **partition_key**           | `partition_key(col, ...)`                                                  | table          | define partition columns for sinks that support partitioning                                                                                                 |
+| **vector_dim**              | `vector_dim(col, 1536)`                                                    | table          | declare fixed vector length. This is required when using vector indexes.                                                                                     |
+| **query_by_all**            | `query_by_all(col, ...)`                                                   | table          | generate interface with *required* filter arguments                                                                                                          |
+| **query_by_any**            | `query_by_any(col, ...)`                                                   | table          | generate interface with *optional* filter arguments                                                                                                          |
+| **no_query**                | `no_query`                                                                 | table          | hide from interface                                                                                                                                          |
+| **insert**                  | `insert(type)`                                                             | table          | controls the way how mutations will be written to their target sink. `type` ∈ `SINGLE` (default), `BATCH`, `TRANSACTION`                                     |
+| **filtered_distinct_order** | flag                                                                       | DISTINCT table | eliminate updates on order column only before dedup                                                                                                          |
+| **engine**                  | `enigne(engine_id)`                                                        | table          | pin execution engine (`streams`, `database`, `flink`, ...)                                                                                                   |
+| **test**                    | `test`                                                                     | table          | marks test case, only executed with [`test` command](compiler#test-command).                                                                                 |
+| **workload**                | `workload`                                                                 | table          | retained as sink for DAG optimization but hidden from interface                                                                                              |
 
 Example:
 
 ```sql
 /*+primary_key(sensorid, time_hour), index(VECTOR_COSINE, embedding) */
-SensorTempByHour := SELECT … ;
+SensorTempByHour := SELECT ... ;
 ```
 
 ---
@@ -243,8 +244,8 @@ SensorTempByHour := SELECT … ;
 ## Comments & Doc-strings
 
 * `--` single-line comment
-* `/* … */` multi-line comment
-* `/** … */` **doc-string**: attached to the next definition and propagated to generated API docs.
+* `/* ... */` multi-line comment
+* `/** ... */` **doc-string**: attached to the next definition and propagated to generated API docs.
 
 ---
 
@@ -263,20 +264,20 @@ The following produce compile time errors:
 
 ## Cheat Sheet
 
-| Construct      | Example                                                               |
-|----------------|-----------------------------------------------------------------------|
-| Import package | `IMPORT ecommerceTs.* ;`                                              |
-| Hidden import  | `IMPORT ecommerceTs.* AS _ ;`                                         |
-| Internal table | `CREATE TABLE Orders ( … );`                                          |
-| External table | `CREATE TABLE kafka_table (…) WITH ('connector'='kafka');`            |
-| Table def.     | `BigOrders := SELECT * FROM Orders WHERE amount > 100;`               |
-| Distinct       | `Dedup := DISTINCT Events ON id ORDER BY ts DESC;`                    |
-| Function       | `OrdersById(id BIGINT) := SELECT * FROM Orders WHERE id = :id;`       |
-| Relationship   | `Customer.orders := SELECT * FROM Orders WHERE this.id = customerid;` |
-| Column add     | `Orders.total := quantity * price;`                                   |
-| Subscription   | `Alerts := SUBSCRIBE SELECT * FROM Dedup WHERE level='WARN';`         |
-| Export         | `EXPORT Alerts TO logger.Warnings;`                                   |
-| Hint           | `/*+index(hash,id)*/`                                                 |
+| Construct      | Example                                                                |
+|----------------|------------------------------------------------------------------------|
+| Import package | `IMPORT ecommerceTs.* ;`                                               |
+| Hidden import  | `IMPORT ecommerceTs.* AS _ ;`                                          |
+| Internal table | `CREATE TABLE Orders ( ... );`                                         |
+| External table | `CREATE TABLE kafka_table (...) WITH ('connector'='kafka');`           |
+| Table def.     | `BigOrders := SELECT * FROM Orders WHERE amount > 100;`                |
+| Distinct       | `Dedup := DISTINCT Events ON id ORDER BY ts DESC;`                     |
+| Function       | `OrdersById(id BIGINT) := SELECT * FROM Orders WHERE id = :id;`        |
+| Relationship   | `Customer.orders := SELECT * FROM Orders WHERE this.id = customerid;`  |
+| Column add     | `Orders.total := quantity * price;`                                    |
+| Subscription   | `Alerts := SUBSCRIBE SELECT * FROM Dedup WHERE level='WARN';`          |
+| Export         | `EXPORT Alerts TO logger.Warnings;`                                    |
+| Hint           | `/*+index(hash,id)*/`                                                  |
 
 ## API Mapping
 
