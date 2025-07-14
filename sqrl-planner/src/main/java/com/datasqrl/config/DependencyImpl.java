@@ -17,7 +17,6 @@ package com.datasqrl.config;
 
 import com.datasqrl.error.ErrorCollector;
 import com.google.common.base.Strings;
-import javax.annotation.Nullable;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -41,22 +40,13 @@ public class DependencyImpl implements Dependency {
   }
 
   @Override
-  public String getFolder(@Nullable ErrorCollector errors) {
-    if (folder == null) {
-      if (errors != null) {
-        errors.warn(
-            "The \"name\" key is deprecated in \"dependencies\" and it will be removed in an upcoming release. Use the \"folder\" key instead.");
-      }
-
-      return name;
-    }
-
-    return folder;
+  public String getFolder() {
+    return folder != null ? folder : name;
   }
 
   @Override
   public String toString() {
-    return this.getFolder(null);
+    return getFolder();
   }
 
   /**
@@ -70,12 +60,20 @@ public class DependencyImpl implements Dependency {
   public Dependency normalize(String defaultFolder, ErrorCollector errors) {
     errors.checkFatal(
         !Strings.isNullOrEmpty(defaultFolder), "Invalid dependency folder: %s", defaultFolder);
-    String folder;
-    if (Strings.isNullOrEmpty(this.getFolder(null))) {
-      folder = defaultFolder;
+
+    String finalFolder;
+    if (folder != null) {
+      finalFolder = folder;
     } else {
-      folder = this.getFolder(errors);
+      errors.warn(
+          "The \"name\" key is deprecated in \"dependencies\" and it will be removed in an upcoming release. Use the \"folder\" key instead.");
+      finalFolder = name;
     }
-    return new DependencyImpl(folder);
+
+    if (Strings.isNullOrEmpty(finalFolder)) {
+      return new DependencyImpl(defaultFolder);
+    }
+
+    return new DependencyImpl(finalFolder);
   }
 }

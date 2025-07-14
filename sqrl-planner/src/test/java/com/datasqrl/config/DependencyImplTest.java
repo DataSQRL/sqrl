@@ -38,7 +38,7 @@ class DependencyImplTest {
 
     var dependency = new DependencyImpl(config);
 
-    assertThat(dependency.getFolder(null)).isEqualTo("test-dependency");
+    assertThat(dependency.getFolder()).isEqualTo("test-dependency");
   }
 
   @Test
@@ -47,28 +47,28 @@ class DependencyImplTest {
 
     var dependency = new DependencyImpl(config);
 
-    assertThat(dependency.getFolder(null)).isEqualTo("test-dependency");
+    assertThat(dependency.getFolder()).isEqualTo("test-dependency");
   }
 
   @Test
   void givenEmptyConfig_whenCreateFromConfig_thenNameIsNull() {
     var dependency = new DependencyImpl(config);
 
-    assertThat(dependency.getFolder(null)).isNull();
+    assertThat(dependency.getFolder()).isNull();
   }
 
   @Test
   void givenNoArgs_whenCreateDependency_thenNameIsNull() {
     var dependency = new DependencyImpl();
 
-    assertThat(dependency.getFolder(null)).isNull();
+    assertThat(dependency.getFolder()).isNull();
   }
 
   @Test
   void givenName_whenCreateDependency_thenSetsName() {
     var dependency = new DependencyImpl("named-dep");
 
-    assertThat(dependency.getFolder(null)).isEqualTo("named-dep");
+    assertThat(dependency.getFolder()).isEqualTo("named-dep");
   }
 
   @Test
@@ -77,7 +77,7 @@ class DependencyImplTest {
 
     var normalized = dependency.normalize("default-name", errors);
 
-    assertThat(normalized.getFolder(null)).isEqualTo("default-name");
+    assertThat(normalized.getFolder()).isEqualTo("default-name");
   }
 
   @Test
@@ -86,7 +86,7 @@ class DependencyImplTest {
 
     var normalized = dependency.normalize("default-name", errors);
 
-    assertThat(normalized.getFolder(null)).isEqualTo("explicit-name");
+    assertThat(normalized.getFolder()).isEqualTo("explicit-name");
   }
 
   @Test
