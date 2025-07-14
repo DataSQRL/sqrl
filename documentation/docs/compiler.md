@@ -64,7 +64,9 @@ docker run -it -p 8888:8888 -p 8081:8081 -p 9092:9092 --rm -v $PWD:/build datasq
 ```
 
 Note, the additional port mappings to access the individual data systems that are running the pipeline.
-Additionally, `run` loads [configuration settings](#run-specific-default-configuration) that are applicable exclusively during runtime. 
+Additionally, `run` loads [configuration settings](https://raw.githubusercontent.com/DataSQRL/sqrl/refs/heads/main/sqrl-planner/src/main/resources/default-run-package.json)
+that are applicable exclusively during runtime. These `run`-specific configuration options will also be replaced if
+they are defined in any custom `package.json` that is given via the [`-c` compiler config option](#global-options).
 
 The run command uses the following engines:
 * Flink as the stream engine: The Flink cluster is accessible through the WebUI at [http://localhost:8081/](http://localhost:8081/).
@@ -105,25 +107,6 @@ For large-scale deployments, we recommend that you run the generated pipeline in
 If you prefer a managed service, you can use [DataSQRL Cloud](https://www.datasqrl.com/) for automated and optimized deployments.
 Alternatively, you can deploy the generated deployment artifacts in the `build/plan` directory using available managed
 services by your preferred cloud provider.
-
-### Run-specific Default Configuration
-
-The following configuration are only applied for the `run` command.
-It is important to note, that these configuration options will also be replaced if they are defined in any
-custom `package.json` that is given via the [`-c` compiler config option](#global-options).
-
-```json
-{
-  "engines" : {
-    "flink" : {
-      "config": {
-        "state.checkpoints.dir": "file:///data/flink/checkpoints",
-        "state.savepoints.dir": "file:///data/flink/savepoints"
-      }
-    }
-  }
-}
-```
 
 ## Test Command
 
