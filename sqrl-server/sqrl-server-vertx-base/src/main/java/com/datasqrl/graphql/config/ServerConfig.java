@@ -45,6 +45,7 @@ public class ServerConfig {
   PoolOptions poolOptions;
   CorsHandlerOptions corsHandlerOptions;
   JWTAuthOptions jwtAuth;
+  SwaggerConfig swaggerConfig;
 
   // I moved it here as I believe it belongs to the server configuration.
   // The method itself is needed for easier mocking.
