@@ -42,21 +42,25 @@ Each sub-key below `engines` must match one of the IDs in **`enabled-engines`**.
 
 ### Flink (`flink`)
 
-| Key          | Type   | Default   | Notes                                                                                              |
-|--------------|--------|-----------|----------------------------------------------------------------------------------------------------|
-| `config`     | object | see below | Copied verbatim into the generated Flink SQL job (e.g. `"table.exec.source.idle-timeout": "5 s"`). |
+| Key          | Type       | Default   | Notes                                                                                              |
+|--------------|------------|-----------|----------------------------------------------------------------------------------------------------|
+| `config`     | **object** | see below | Copied verbatim into the generated Flink SQL job (e.g. `"table.exec.source.idle-timeout": "5 s"`). |
 
 ```json
 {
-  "config": {
-    "execution.runtime-mode": "STREAMING",
-    "execution.target": "local",
-    "execution.attached": true,
-    "rest.address": "localhost",
-    "rest.port": 8081,
-    "state.backend.type": "rocksdb",
-    "table.exec.resource.default-parallelism": 1,
-    "taskmanager.memory.network.max": "800m"
+  "engines": {
+    "flink": {
+      "config": {
+        "execution.runtime-mode": "STREAMING",
+        "execution.target": "local",
+        "execution.attached": true,
+        "rest.address": "localhost",
+        "rest.port": 8081,
+        "state.backend.type": "rocksdb",
+        "table.exec.resource.default-parallelism": 1,
+        "taskmanager.memory.network.max": "800m"
+      }
+    }
   }
 }
 ```
@@ -75,6 +79,37 @@ Additional keys (e.g. `bootstrap.servers`) may be added under `config`.
 
 A GraphQL server that routes queries to the backing database/log engines.  
 No mandatory keys; connection pools are generated from the overall plan.
+In terms of security, we support JWT auth, that can be specified under the `config` section.
+
+| Key          | Type       | Default   | Notes                     |
+|--------------|------------|-----------|---------------------------|
+| `config`     | **object** | see below | Vert.x JWT configuration. |
+
+```json
+{
+  "engines": {
+    "vertx" : {
+      "authKind": "JWT",
+      "config": {
+        "jwtAuth": {
+          "pubSecKeys": [
+            {
+              "algorithm": "HS256",
+              "buffer": "<auth-secret>"
+            }
+          ],
+          "jwtOptions": {
+            "issuer": "<jwt-issuer>",
+            "audience": ["<jwt-audience>"],
+            "expiresInSeconds": "3600",
+            "leeway": "60"
+          }
+        }
+      }
+    }
+  }
+}
+```
 
 ### Postgres (`postgres`)
 
@@ -187,14 +222,15 @@ If only `folder` is given the dependency key (`my-alias` in the above example) a
 
 ## Test-Runner (`test-runner`)
 
-| Key                     | Type         | Default       | Meaning                                                                                |
-|-------------------------|--------------|---------------|----------------------------------------------------------------------------------------|
-| `snapshot-folder`       | **string**   | `./snapshots` | Snapshots output directory.                                                            |
-| `test-folder`           | **string**   | `./tests`     | Tests output directory.                                                                |
-| `delay-sec`             | **number**   | `30`          | Wait between data-load and snapshot. Set `-1` to disable.                              |
-| `mutation-delay-sec`    | **number**   | `0`           | Pause(s) between mutation queries.                                                     |
-| `required-checkpoints`  | **number**   | `0`           | Minimum completed Flink checkpoints before assertions run (requires `delay-sec = -1`). |
-| `create-topics`         | **string[]** | -             | Kafka topics to create before tests start.                                             |
+| Key                    | Type         | Default       | Meaning                                                                                |
+|------------------------|--------------|---------------|----------------------------------------------------------------------------------------|
+| `snapshot-folder`      | **string**   | `./snapshots` | Snapshots output directory.                                                            |
+| `test-folder`          | **string**   | `./tests`     | Tests output directory.                                                                |
+| `delay-sec`            | **number**   | `30`          | Wait between data-load and snapshot. Set `-1` to disable.                              |
+| `mutation-delay-sec`   | **number**   | `0`           | Pause(s) between mutation queries.                                                     |
+| `required-checkpoints` | **number**   | `0`           | Minimum completed Flink checkpoints before assertions run (requires `delay-sec = -1`). |
+| `create-topics`        | **string[]** | -             | Kafka topics to create before tests start.                                             |
+| `headers`              | **object**   | -             | Any HTTP headers to add during the test execution. For example, JWT auth header.       |
 
 ---
 

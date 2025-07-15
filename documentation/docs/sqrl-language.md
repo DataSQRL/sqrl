@@ -147,13 +147,26 @@ Arguments are referenced with `:name` in the `SELECT` query. Argument definition
 CustomerByEmail(email STRING) := SELECT * FROM Customer WHERE email = :email;
 ```
 
+#### Accessing JWT payload
+
+To access the JWT payload included in the Authorization HTTP header, you can use the `METADATA` expression within the
+function definition. The JWT payload is available via the auth object, and nested fields can be accessed directly.
+In the example below, the JWT payload contains a val field, which is an integer.
+
+```sql
+AuthFilter(mySecretId BIGINT NOT NULL METADATA FROM 'auth.val') :=
+  SELECT c.* 
+  FROM Customer c 
+  WHERE c.customerId = :mySecretId;
+```
+
 ### Relationship definition
 
 ```
 ParentTable.RelName(arg TYPE, ...) :=
   SELECT ...
   FROM Child c
-  WHERE this.id = c.parent_id
+  WHERE this.id = c.parentId
   [AND c.col = :arg ...] ;
 ```
 
