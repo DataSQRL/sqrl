@@ -138,6 +138,20 @@
             }
           },
           "additionalProperties": false
+        },
+        "vertx": {
+          "type": "object",
+          "properties": {
+            "authKind": {
+              "type": "string",
+              "enum": ["NONE", "JWT"]
+            },
+            "config": {
+              "type": "object",
+              "minProperties": 1
+            }
+          },
+          "additionalProperties": false
         }
       }
     },
