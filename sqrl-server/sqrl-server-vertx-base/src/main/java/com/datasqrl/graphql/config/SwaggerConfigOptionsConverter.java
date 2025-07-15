@@ -24,61 +24,54 @@ import io.vertx.core.json.JsonObject;
 public class SwaggerConfigOptionsConverter {
 
   public static void fromJson(JsonObject json, SwaggerConfig obj) {
+    SwaggerConfig.SwaggerConfigBuilder builder = SwaggerConfig.builder();
+
     if (json.getValue("enabled") instanceof Boolean) {
-      obj.setEnabled((Boolean) json.getValue("enabled"));
-    } else {
-      obj.setEnabled(true);
+      builder.enabled((Boolean) json.getValue("enabled"));
     }
     if (json.getValue("endpoint") instanceof String) {
-      obj.setEndpoint((String) json.getValue("endpoint"));
-    } else {
-      obj.setEndpoint("/swagger");
+      builder.endpoint((String) json.getValue("endpoint"));
     }
     if (json.getValue("uiEndpoint") instanceof String) {
-      obj.setUiEndpoint((String) json.getValue("uiEndpoint"));
-    } else {
-      obj.setUiEndpoint("/swagger-ui");
+      builder.uiEndpoint((String) json.getValue("uiEndpoint"));
     }
     if (json.getValue("title") instanceof String) {
-      obj.setTitle((String) json.getValue("title"));
-    } else {
-      obj.setTitle("DataSQRL REST API");
+      builder.title((String) json.getValue("title"));
     }
     if (json.getValue("description") instanceof String) {
-      obj.setDescription((String) json.getValue("description"));
-    } else {
-      obj.setDescription("Auto-generated REST API documentation for DataSQRL endpoints");
+      builder.description((String) json.getValue("description"));
     }
     if (json.getValue("version") instanceof String) {
-      obj.setVersion((String) json.getValue("version"));
-    } else {
-      obj.setVersion("1.0.0");
+      builder.version((String) json.getValue("version"));
     }
     if (json.getValue("contact") instanceof String) {
-      obj.setContact((String) json.getValue("contact"));
-    } else {
-      obj.setContact("DataSQRL");
+      builder.contact((String) json.getValue("contact"));
     }
     if (json.getValue("contactUrl") instanceof String) {
-      obj.setContactUrl((String) json.getValue("contactUrl"));
-    } else {
-      obj.setContactUrl("https://datasqrl.com");
+      builder.contactUrl((String) json.getValue("contactUrl"));
     }
     if (json.getValue("contactEmail") instanceof String) {
-      obj.setContactEmail((String) json.getValue("contactEmail"));
-    } else {
-      obj.setContactEmail("contact@datasqrl.com");
+      builder.contactEmail((String) json.getValue("contactEmail"));
     }
     if (json.getValue("license") instanceof String) {
-      obj.setLicense((String) json.getValue("license"));
-    } else {
-      obj.setLicense("Apache License 2.0");
+      builder.license((String) json.getValue("license"));
     }
     if (json.getValue("licenseUrl") instanceof String) {
-      obj.setLicenseUrl((String) json.getValue("licenseUrl"));
-    } else {
-      obj.setLicenseUrl("https://www.apache.org/licenses/LICENSE-2.0");
+      builder.licenseUrl((String) json.getValue("licenseUrl"));
     }
+
+    SwaggerConfig built = builder.build();
+    obj.setEnabled(built.isEnabled());
+    obj.setEndpoint(built.getEndpoint());
+    obj.setUiEndpoint(built.getUiEndpoint());
+    obj.setTitle(built.getTitle());
+    obj.setDescription(built.getDescription());
+    obj.setVersion(built.getVersion());
+    obj.setContact(built.getContact());
+    obj.setContactUrl(built.getContactUrl());
+    obj.setContactEmail(built.getContactEmail());
+    obj.setLicense(built.getLicense());
+    obj.setLicenseUrl(built.getLicenseUrl());
   }
 
   public static void toJson(SwaggerConfig obj, JsonObject json) {
