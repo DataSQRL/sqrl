@@ -106,7 +106,7 @@ commands:
       - run:
           name: Download dependencies
           command: |
-            mvn -B \
+            mvn -B -Pdev \
               org.apache.maven.plugins:maven-dependency-plugin:3.8.1:go-offline \
               de.qaware.maven:go-offline-maven-plugin:1.2.8:resolve-dependencies \
               -T3
@@ -275,7 +275,7 @@ jobs:
       - install-jdk
       - run:
           name: Build with Docker images
-          command: mvn -U clean -T1C -B package -DonlyImages -Ddocker.image.tag=${CIRCLE_SHA1}
+          command: mvn -U clean -T1C -B install -DonlyImages -Ddocker.image.tag=${CIRCLE_SHA1}
       - run:
           name: Run container tests using TestContainers
           command: |
