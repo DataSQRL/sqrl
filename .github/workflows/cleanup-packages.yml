@@ -65,20 +65,40 @@ jobs:
         run: |
           echo "Discovering Container packages..."
           
-          # Get all Container packages for the organization (with pagination)
-          packages=$(gh api "/orgs/DataSQRL/packages?package_type=container&per_page=100" --paginate --jq '.[].name' 2>/dev/null || gh api "/user/packages?package_type=container&per_page=100" --paginate --jq '.[].name' 2>/dev/null || echo "")
+          # Function to get container packages from an endpoint
+          get_container_packages() {
+            local endpoint=$1
+            echo "Trying to get container packages from: $endpoint"
+            
+            # Try to get packages and filter out error responses
+            response=$(gh api "$endpoint/packages?package_type=container&per_page=100" --paginate 2>/dev/null || echo "")
+            
+            if [ -n "$response" ] && echo "$response" | jq -e 'type == "array"' >/dev/null 2>&1; then
+              echo "$response" | jq -r '.[].name' 2>/dev/null || echo ""
+            else
+              echo ""
+            fi
+          }
+          
+          # Try different endpoints to find container packages
+          packages=""
+          for endpoint in "/orgs/DataSQRL" "/user"; do
+            packages=$(get_container_packages "$endpoint")
+            if [ -n "$packages" ]; then
+              echo "Found container packages from $endpoint:"
+              echo "$packages"
+              break
+            fi
+          done
           
           if [ -z "$packages" ]; then
             echo "No Container packages found or insufficient permissions"
             exit 0
           fi
           
-          echo "Found Container packages:"
-          echo "$packages"
-          
           # Clean up each package
           echo "$packages" | while read -r package_name; do
-            if [ -n "$package_name" ]; then
+            if [ -n "$package_name" ] && [ "$package_name" != "null" ]; then
               echo "Cleaning up Container package: $package_name"
               
               # Try org packages first, then user packages
