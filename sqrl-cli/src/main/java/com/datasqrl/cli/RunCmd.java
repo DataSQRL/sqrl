@@ -33,13 +33,18 @@ public class RunCmd extends AbstractCompileCmd {
       return;
     }
 
+    // Start services before running
+    var serviceManager = new DependentServiceManager(System.getenv());
+    serviceManager.startServices();
+
     // Run
+    var env = getSystemProperties();
     var targetDir = getTargetDir();
     var planDir = targetDir.resolve(SqrlConstants.PLAN_DIR);
     var sqrlConfig = ConfigLoaderUtils.loadResolvedConfig(errors, getBuildDir());
     var flinkConfig = ConfigLoaderUtils.loadFlinkConfig(planDir);
 
-    var sqrlRun = new DatasqrlRun(planDir, sqrlConfig, flinkConfig);
+    var sqrlRun = new DatasqrlRun(planDir, sqrlConfig, flinkConfig, env, false);
     sqrlRun.run(true, true);
   }
 

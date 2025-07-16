@@ -53,6 +53,7 @@ public class GraphQLServerVerticle extends AbstractVerticle {
   private final ServerConfig config;
   private final RootGraphqlModel model;
   private final Optional<JWTAuth> authProvider;
+
   private GraphQL graphQLEngine;
 
   @Override

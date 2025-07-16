@@ -32,13 +32,18 @@ public class TestCmd extends AbstractCompileCmd {
       return;
     }
 
+    // Start services before testing
+    var serviceManager = new DependentServiceManager(System.getenv());
+    serviceManager.startServices();
+
     // Test
+    var env = getSystemProperties();
     var targetDir = getTargetDir();
     var planDir = targetDir.resolve(SqrlConstants.PLAN_DIR);
     var sqrlConfig = ConfigLoaderUtils.loadResolvedConfig(errors, getBuildDir());
     var flinkConfig = ConfigLoaderUtils.loadFlinkConfig(planDir);
 
-    var sqrlTest = new DatasqrlTest(cli.rootDir, planDir, sqrlConfig, flinkConfig, System.getenv());
+    var sqrlTest = new DatasqrlTest(cli.rootDir, planDir, sqrlConfig, flinkConfig, env);
     exitCode.set(sqrlTest.run());
   }
 

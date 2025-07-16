@@ -15,6 +15,7 @@
  */
 package com.datasqrl.cli;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 import com.datasqrl.config.PackageJson;
@@ -48,7 +49,7 @@ class ExecuteCmdTest {
   }
 
   @Test
-  void runInternal_shouldLoadConfigsAndRunDatasqrlRun() throws Exception {
+  void runInternal_shouldStartServicesAndRunDatasqrlRun() throws Exception {
     executeCmd.cli = new DatasqrlCli(tempDir, StatusHook.NONE, false);
 
     Path buildDir = executeCmd.getBuildDir();
@@ -56,6 +57,7 @@ class ExecuteCmdTest {
 
     // Mock static methods and verify arguments
     try (MockedStatic<ConfigLoaderUtils> mocked = mockStatic(ConfigLoaderUtils.class)) {
+
       var mockSqrlConfig = mock(PackageJson.class);
       mocked
           .when(() -> ConfigLoaderUtils.loadResolvedConfig(errors, buildDir))
@@ -63,10 +65,19 @@ class ExecuteCmdTest {
 
       mocked.when(() -> ConfigLoaderUtils.loadFlinkConfig(planDir)).thenReturn(flinkConfig);
 
-      try (MockedConstruction<DatasqrlRun> datasqrlRunMocked =
-          mockConstruction(
-              DatasqrlRun.class, (mock, context) -> when(mock.run(true, true)).thenReturn(null))) {
+      try (MockedConstruction<DependentServiceManager> serviceManagerMocked =
+              mockConstruction(DependentServiceManager.class);
+          MockedConstruction<DatasqrlRun> datasqrlRunMocked =
+              mockConstruction(
+                  DatasqrlRun.class,
+                  (mock, context) -> when(mock.run(true, true)).thenReturn(null))) {
+
         executeCmd.runInternal(errors);
+
+        // Verify service manager was created and started
+        assertThat(serviceManagerMocked.constructed()).hasSize(1);
+        DependentServiceManager serviceManager = serviceManagerMocked.constructed().get(0);
+        verify(serviceManager).startServices();
 
         // Verify exact arguments
         mocked.verify(() -> ConfigLoaderUtils.loadResolvedConfig(errors, buildDir));

@@ -106,8 +106,7 @@ public class SubscriptionConfigurationImpl implements SubscriptionConfiguration<
   // TODO: shouldn't it come from ServerConfig all together?
   public Map<String, String> getSourceConfig() {
     Map<String, String> conf = new HashMap<>();
-    conf.put(
-        BOOTSTRAP_SERVERS_CONFIG, config.getEnvironmentVariable("PROPERTIES_BOOTSTRAP_SERVERS"));
+    conf.put(BOOTSTRAP_SERVERS_CONFIG, config.getSystemProperty("PROPERTIES_BOOTSTRAP_SERVERS"));
     conf.put(GROUP_ID_CONFIG, UUID.randomUUID().toString());
     conf.put(KEY_DESERIALIZER_CLASS_CONFIG, "com.datasqrl.graphql.kafka.JsonDeserializer");
     conf.put(VALUE_DESERIALIZER_CLASS_CONFIG, "com.datasqrl.graphql.kafka.JsonDeserializer");

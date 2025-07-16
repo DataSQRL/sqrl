@@ -66,7 +66,7 @@ class RunCmdTest {
   }
 
   @Test
-  void execute_shouldLoadConfigsAndRunDatasqrlRun() throws Exception {
+  void execute_shouldStartServicesAndRunDatasqrlRun() throws Exception {
     runCmd.cli = new DatasqrlCli(tempDir, StatusHook.NONE, false);
 
     Path buildDir = runCmd.getBuildDir();
@@ -74,6 +74,7 @@ class RunCmdTest {
 
     // Mock static methods and verify arguments
     try (MockedStatic<ConfigLoaderUtils> mocked = mockStatic(ConfigLoaderUtils.class)) {
+
       var mockSqrlConfig = mock(PackageJson.class);
       mocked
           .when(() -> ConfigLoaderUtils.loadResolvedConfig(errors, buildDir))
@@ -81,10 +82,19 @@ class RunCmdTest {
 
       mocked.when(() -> ConfigLoaderUtils.loadFlinkConfig(planDir)).thenReturn(flinkConfig);
 
-      try (MockedConstruction<DatasqrlRun> datasqrlRunMocked =
-          mockConstruction(
-              DatasqrlRun.class, (mock, context) -> when(mock.run(true, true)).thenReturn(null))) {
+      try (MockedConstruction<DependentServiceManager> serviceManagerMocked =
+              mockConstruction(DependentServiceManager.class);
+          MockedConstruction<DatasqrlRun> datasqrlRunMocked =
+              mockConstruction(
+                  DatasqrlRun.class,
+                  (mock, context) -> when(mock.run(true, true)).thenReturn(null))) {
+
         runCmd.execute(errors);
+
+        // Verify service manager was created and started
+        assertThat(serviceManagerMocked.constructed()).hasSize(1);
+        DependentServiceManager serviceManager = serviceManagerMocked.constructed().get(0);
+        verify(serviceManager).startServices();
 
         // Verify exact arguments
         mocked.verify(() -> ConfigLoaderUtils.loadResolvedConfig(errors, buildDir));
