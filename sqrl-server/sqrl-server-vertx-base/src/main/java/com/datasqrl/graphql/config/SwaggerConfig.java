@@ -17,32 +17,42 @@ package com.datasqrl.graphql.config;
 
 import io.vertx.core.json.JsonObject;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Builder.Default;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-@Builder
 @AllArgsConstructor
 public class SwaggerConfig {
 
-  public SwaggerConfig() {}
+  public SwaggerConfig() {
+    this.enabled = true;
+    this.endpoint = "/swagger";
+    this.uiEndpoint = "/swagger-ui";
+    this.title = "DataSQRL REST API";
+    this.description = "Auto-generated REST API documentation for DataSQRL endpoints";
+    this.version = "1.0.0";
+    this.contact = "DataSQRL";
+    this.contactUrl = "https://datasqrl.com";
+    this.contactEmail = "contact@datasqrl.com";
+    this.license = "Apache License 2.0";
+    this.licenseUrl = "https://www.apache.org/licenses/LICENSE-2.0";
+  }
 
   public SwaggerConfig(JsonObject json) {
+    this(); // Initialize with defaults
     SwaggerConfigOptionsConverter.fromJson(json, this);
   }
 
-  @Default boolean enabled = true;
-  @Default String endpoint = "/swagger";
-  @Default String uiEndpoint = "/swagger-ui";
-  @Default String title = "DataSQRL REST API";
-  @Default String description = "Auto-generated REST API documentation for DataSQRL endpoints";
-  @Default String version = "1.0.0";
-  @Default String contact = "DataSQRL";
-  @Default String contactUrl = "https://datasqrl.com";
-  @Default String contactEmail = "contact@datasqrl.com";
-  @Default String license = "Apache License 2.0";
-  @Default String licenseUrl = "https://www.apache.org/licenses/LICENSE-2.0";
+  boolean enabled;
+  String endpoint;
+  String uiEndpoint;
+  String title;
+  String description;
+  String version;
+  String contact;
+  String contactUrl;
+  String contactEmail;
+  String license;
+  String licenseUrl;
 }

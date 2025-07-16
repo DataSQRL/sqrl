@@ -24,54 +24,39 @@ import io.vertx.core.json.JsonObject;
 public class SwaggerConfigOptionsConverter {
 
   public static void fromJson(JsonObject json, SwaggerConfig obj) {
-    SwaggerConfig.SwaggerConfigBuilder builder = SwaggerConfig.builder();
-
     if (json.getValue("enabled") instanceof Boolean) {
-      builder.enabled((Boolean) json.getValue("enabled"));
+      obj.setEnabled((Boolean) json.getValue("enabled"));
     }
     if (json.getValue("endpoint") instanceof String) {
-      builder.endpoint((String) json.getValue("endpoint"));
+      obj.setEndpoint((String) json.getValue("endpoint"));
     }
     if (json.getValue("uiEndpoint") instanceof String) {
-      builder.uiEndpoint((String) json.getValue("uiEndpoint"));
+      obj.setUiEndpoint((String) json.getValue("uiEndpoint"));
     }
     if (json.getValue("title") instanceof String) {
-      builder.title((String) json.getValue("title"));
+      obj.setTitle((String) json.getValue("title"));
     }
     if (json.getValue("description") instanceof String) {
-      builder.description((String) json.getValue("description"));
+      obj.setDescription((String) json.getValue("description"));
     }
     if (json.getValue("version") instanceof String) {
-      builder.version((String) json.getValue("version"));
+      obj.setVersion((String) json.getValue("version"));
     }
     if (json.getValue("contact") instanceof String) {
-      builder.contact((String) json.getValue("contact"));
+      obj.setContact((String) json.getValue("contact"));
     }
     if (json.getValue("contactUrl") instanceof String) {
-      builder.contactUrl((String) json.getValue("contactUrl"));
+      obj.setContactUrl((String) json.getValue("contactUrl"));
     }
     if (json.getValue("contactEmail") instanceof String) {
-      builder.contactEmail((String) json.getValue("contactEmail"));
+      obj.setContactEmail((String) json.getValue("contactEmail"));
     }
     if (json.getValue("license") instanceof String) {
-      builder.license((String) json.getValue("license"));
+      obj.setLicense((String) json.getValue("license"));
     }
     if (json.getValue("licenseUrl") instanceof String) {
-      builder.licenseUrl((String) json.getValue("licenseUrl"));
+      obj.setLicenseUrl((String) json.getValue("licenseUrl"));
     }
-
-    SwaggerConfig built = builder.build();
-    obj.setEnabled(built.isEnabled());
-    obj.setEndpoint(built.getEndpoint());
-    obj.setUiEndpoint(built.getUiEndpoint());
-    obj.setTitle(built.getTitle());
-    obj.setDescription(built.getDescription());
-    obj.setVersion(built.getVersion());
-    obj.setContact(built.getContact());
-    obj.setContactUrl(built.getContactUrl());
-    obj.setContactEmail(built.getContactEmail());
-    obj.setLicense(built.getLicense());
-    obj.setLicenseUrl(built.getLicenseUrl());
   }
 
   public static void toJson(SwaggerConfig obj, JsonObject json) {
