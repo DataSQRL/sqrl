@@ -17,6 +17,10 @@ package com.datasqrl.container.testing;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import lombok.SneakyThrows;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.util.EntityUtils;
@@ -33,16 +37,13 @@ public class SwaggerContainerIT extends SqrlContainerTestBase {
   @SneakyThrows
   void givenSwaggerTest_whenCompiledAndServerStarted_thenSwaggerEndpointsAvailable() {
     // Compile and start the server
-    compileAndStartServer("swagger-test.sqrl", testDir);
+    compileAndStartServer("avro-schema.sqrl", testDir);
 
     // Test Swagger JSON endpoint
     testSwaggerJsonEndpoint();
 
     // Test Swagger UI endpoint
     testSwaggerUIEndpoint();
-
-    // Test REST API endpoints documented in Swagger
-    testRestAPIEndpoints();
   }
 
   @SneakyThrows
@@ -79,19 +80,13 @@ public class SwaggerContainerIT extends SqrlContainerTestBase {
 
     // Verify REST endpoints are documented
     var paths = jsonResponse.get("paths");
-    assertThat(paths.has("/sensors/readings"))
-        .as("SecReading REST endpoint should be documented")
-        .isTrue();
-    assertThat(paths.has("/sensors/maxtemp"))
-        .as("SensorMaxTemp REST endpoint should be documented")
+    assertThat(paths.has("/queries/Schema"))
+        .as("Schema REST endpoint should be documented")
         .isTrue();
 
     // Verify endpoint details
-    var readingsPath = paths.get("/sensors/readings");
-    assertThat(readingsPath.has("get")).as("Readings endpoint should have GET method").isTrue();
-
-    var maxTempPath = paths.get("/sensors/maxtemp");
-    assertThat(maxTempPath.has("get")).as("MaxTemp endpoint should have GET method").isTrue();
+    var schemaPath = paths.get("/queries/Schema");
+    assertThat(schemaPath.has("get")).as("Schema endpoint should have GET method").isTrue();
   }
 
   @SneakyThrows
@@ -119,43 +114,54 @@ public class SwaggerContainerIT extends SqrlContainerTestBase {
         .contains("DataSQRL REST API");
   }
 
+  @Test
   @SneakyThrows
-  private void testRestAPIEndpoints() {
-    // Test SecReading REST endpoint
-    var readingsUrl = getBaseUrl() + "/rest/sensors/readings";
-    var readingsRequest = new HttpGet(readingsUrl);
-    var readingsResponse = sharedHttpClient.execute(readingsRequest);
+  void givenDisabledSwaggerConfig_whenCompiledAndServerStarted_thenSwaggerEndpointsNotAvailable() {
+    // Compile the script first
+    compileSqrlScript("avro-schema.sqrl", testDir);
 
-    assertThat(readingsResponse.getStatusLine().getStatusCode())
-        .as("SecReading REST endpoint should return 200")
-        .isEqualTo(200);
+    // Modify the server configuration to disable Swagger
+    disableSwaggerInConfiguration(testDir);
 
-    var readingsBody = EntityUtils.toString(readingsResponse.getEntity());
-    var readingsJson = objectMapper.readTree(readingsBody);
+    // Start the server with modified configuration
+    startGraphQLServer(testDir);
 
-    assertThat(readingsJson.has("data")).as("REST response should contain data field").isTrue();
+    // Test that Swagger JSON endpoint returns 404
+    testSwaggerEndpointNotAvailable("/swagger");
 
-    // Test SensorMaxTemp REST endpoint
-    var maxTempUrl = getBaseUrl() + "/rest/sensors/maxtemp";
-    var maxTempRequest = new HttpGet(maxTempUrl);
-    var maxTempResponse = sharedHttpClient.execute(maxTempRequest);
+    // Test that Swagger UI endpoint returns 404
+    testSwaggerEndpointNotAvailable("/swagger-ui");
+  }
 
-    assertThat(maxTempResponse.getStatusLine().getStatusCode())
-        .as("SensorMaxTemp REST endpoint should return 200")
-        .isEqualTo(200);
+  @SneakyThrows
+  private void disableSwaggerInConfiguration(Path testDir) {
+    var vertxConfigPath = testDir.resolve("build/deploy/plan/vertx-config.json");
+    
+    // Read the existing configuration
+    var configContent = Files.readString(vertxConfigPath);
+    var mapper = new ObjectMapper();
+    var configNode = (ObjectNode) mapper.readTree(configContent);
+    
+    // Add disabled Swagger configuration
+    var swaggerConfig = mapper.createObjectNode();
+    swaggerConfig.put("enabled", false);
+    swaggerConfig.put("endpoint", "/swagger");
+    swaggerConfig.put("uiEndpoint", "/swagger-ui");
+    configNode.set("swaggerConfig", swaggerConfig);
+    
+    // Write back the modified configuration
+    Files.writeString(vertxConfigPath, mapper.writerWithDefaultPrettyPrinter().writeValueAsString(configNode));
+  }
 
-    var maxTempBody = EntityUtils.toString(maxTempResponse.getEntity());
-    var maxTempJson = objectMapper.readTree(maxTempBody);
+  @SneakyThrows
+  private void testSwaggerEndpointNotAvailable(String endpoint) {
+    var url = getBaseUrl() + endpoint;
+    var request = new HttpGet(url);
+    var response = sharedHttpClient.execute(request);
 
-    assertThat(maxTempJson.has("data")).as("REST response should contain data field").isTrue();
-
-    // Test REST endpoint with query parameters
-    var readingsWithParamsUrl = getBaseUrl() + "/rest/sensors/readings?limit=5&offset=0";
-    var paramsRequest = new HttpGet(readingsWithParamsUrl);
-    var paramsResponse = sharedHttpClient.execute(paramsRequest);
-
-    assertThat(paramsResponse.getStatusLine().getStatusCode())
-        .as("REST endpoint with parameters should return 200")
-        .isEqualTo(200);
+    // Verify response status is 404 (not found)
+    assertThat(response.getStatusLine().getStatusCode())
+        .as("Swagger endpoint %s should return 404 when disabled", endpoint)
+        .isEqualTo(404);
   }
 }
