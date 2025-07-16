@@ -158,11 +158,4 @@ public class SwaggerContainerIT extends SqrlContainerTestBase {
         .as("REST endpoint with parameters should return 200")
         .isEqualTo(200);
   }
-
-  private String getBaseUrl() {
-    if (serverContainer == null || !serverContainer.isRunning()) {
-      throw new IllegalStateException("Server container is not running");
-    }
-    return "http://localhost:" + serverContainer.getMappedPort(GRAPHQL_PORT);
-  }
 }

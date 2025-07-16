@@ -69,7 +69,7 @@ public abstract class SqrlContainerTestBase {
   protected static final String SQRL_CMD_IMAGE = "datasqrl/cmd";
   protected static final String SQRL_SERVER_IMAGE = "datasqrl/sqrl-server";
   protected static final String BUILD_DIR = "/build";
-  protected static final int GRAPHQL_PORT = 8888;
+  protected static final int HTTP_SERVER_PORT = 8888;
 
   protected static Network sharedNetwork;
   protected static CloseableHttpClient sharedHttpClient;
@@ -128,7 +128,7 @@ public abstract class SqrlContainerTestBase {
 
     return new GenericContainer<>(DockerImageName.parse(SQRL_SERVER_IMAGE + ":" + getImageTag()))
         .withNetwork(sharedNetwork)
-        .withExposedPorts(GRAPHQL_PORT)
+        .withExposedPorts(HTTP_SERVER_PORT)
         .withFileSystemBind(deployPlanPath.toString(), "/opt/sqrl/config", BindMode.READ_ONLY)
         .withEnv("DEBUG", "1")
         .waitingFor(
@@ -212,7 +212,7 @@ public abstract class SqrlContainerTestBase {
 
     try {
       serverContainer.start();
-      log.info("GraphQL server started on port {}", serverContainer.getMappedPort(GRAPHQL_PORT));
+      log.info("HTTP server started on port {}", serverContainer.getMappedPort(HTTP_SERVER_PORT));
     } catch (Exception e) {
       log.error("Failed to start GraphQL server container:");
       log.error("Container image: {}", SQRL_SERVER_IMAGE + ":" + getImageTag());
@@ -236,11 +236,23 @@ public abstract class SqrlContainerTestBase {
     }
   }
 
-  protected String getGraphQLEndpoint() {
+  protected String getBaseUrl() {
     if (serverContainer == null || !serverContainer.isRunning()) {
       throw new IllegalStateException("Server container is not running");
     }
-    return "http://localhost:" + serverContainer.getMappedPort(GRAPHQL_PORT) + "/graphql";
+    return "http://localhost:" + serverContainer.getMappedPort(HTTP_SERVER_PORT);
+  }
+
+  protected String getGraphQLEndpoint() {
+    return getBaseUrl() + "/graphql";
+  }
+
+  protected String getMetricsEndpoint() {
+    return getBaseUrl() + "/metrics";
+  }
+
+  protected String getHealthEndpoint() {
+    return getBaseUrl() + "/health";
   }
 
   protected void verifyNoSlfWarnings(GenericContainer<?> container) {
@@ -271,7 +283,7 @@ public abstract class SqrlContainerTestBase {
 
     if (isServer) {
       var deployPlanPath = workingDir.resolve("build/deploy/plan").toString();
-      sb.append(" -p ").append(GRAPHQL_PORT).append(":").append(GRAPHQL_PORT);
+      sb.append(" -p ").append(HTTP_SERVER_PORT).append(":").append(HTTP_SERVER_PORT);
       sb.append(" -v \"").append(deployPlanPath).append(":/opt/sqrl/config\"");
     } else {
       sb.append(" -v \"").append(workingDir).append(":").append(BUILD_DIR).append("\"");

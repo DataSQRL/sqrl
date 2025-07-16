@@ -70,7 +70,7 @@ class McpValidationIT extends SqrlContainerTestBase {
     serverContainer = createServerContainer(testDir);
     serverContainer.withNetworkAliases(serverAlias);
     serverContainer.start();
-    log.info("GraphQL server started on port {}", serverContainer.getMappedPort(GRAPHQL_PORT));
+    log.info("HTTP server started on port {}", serverContainer.getMappedPort(HTTP_SERVER_PORT));
 
     var mcpUrl = String.format("http://%s:8888/mcp", serverAlias);
     log.info("Testing MCP endpoint: {}", mcpUrl);
@@ -134,7 +134,7 @@ class McpValidationIT extends SqrlContainerTestBase {
     serverContainer = createServerContainer(testDir);
     serverContainer.withNetworkAliases(serverAlias);
     serverContainer.start();
-    log.info("GraphQL server started on port {}", serverContainer.getMappedPort(GRAPHQL_PORT));
+    log.info("HTTP server started on port {}", serverContainer.getMappedPort(HTTP_SERVER_PORT));
 
     var mcpUrl = String.format("http://%s:8888/mcp", serverAlias);
 
