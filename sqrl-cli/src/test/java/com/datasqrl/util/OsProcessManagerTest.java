@@ -442,6 +442,7 @@ class OsProcessManagerTest {
     when(mockBuildDir.resolve("logs")).thenReturn(mockTargetDir);
     when(mockBuildDir.toAbsolutePath()).thenReturn(mockBuildDir);
     when(mockBuildDir.toString()).thenReturn("/build/dir");
+    when(mockBuildDir.getParent()).thenReturn(mockBuildDir);
 
     env.put("BUILD_UID", "1000");
     env.put("BUILD_GID", "1000");

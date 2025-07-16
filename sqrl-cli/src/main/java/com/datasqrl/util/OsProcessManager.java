@@ -75,7 +75,7 @@ public class OsProcessManager {
   public void teardown(Path buildDir) throws Exception {
     Path target = buildDir.resolve("logs");
     FileUtils.moveDirectory(Paths.get(LOGS_PATH).toFile(), target.toFile());
-    setOwnerForDir(buildDir);
+    setOwnerForDir(buildDir.getParent());
   }
 
   public void setOwnerForDir(Path dir) throws IOException, InterruptedException {
