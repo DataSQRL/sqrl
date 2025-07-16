@@ -13,11 +13,18 @@ jobs:
       packages: write
       contents: read
 
+    strategy:
+      matrix:
+        package-name:
+          - 'com.datasqrl.sqrl-root'
+          - 'com.datasqrl.sqrl-tools'
+          - 'com.datasqrl.sqrl-cli'
+
     steps:
-      - name: Delete old Maven package versions
+      - name: Delete old Maven package versions for ${{ matrix.package-name }}
         uses: actions/delete-package-versions@v5
         with:
-          package-name: 'com.datasqrl.sqrl'
+          package-name: ${{ matrix.package-name }}
           package-type: 'maven'
           min-versions-to-keep: 10
           delete-only-pre-release-versions: true
@@ -29,17 +36,11 @@ jobs:
       packages: write
       contents: read
 
-    strategy:
-      matrix:
-        package-name: 
-          - 'datasqrl-cmd'
-          - 'sqrl-server'
-
     steps:
-      - name: Delete old Docker package versions for ${{ matrix.package-name }}
+      - name: Delete old Docker package versions for cmd
         uses: actions/delete-package-versions@v5
         with:
-          package-name: ${{ matrix.package-name }}
+          package-name: 'cmd'
           package-type: 'container'
           min-versions-to-keep: 10
           delete-only-untagged-versions: true
