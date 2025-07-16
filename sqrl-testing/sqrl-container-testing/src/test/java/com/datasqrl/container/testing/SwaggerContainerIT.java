@@ -136,21 +136,22 @@ public class SwaggerContainerIT extends SqrlContainerTestBase {
   @SneakyThrows
   private void disableSwaggerInConfiguration(Path testDir) {
     var vertxConfigPath = testDir.resolve("build/deploy/plan/vertx-config.json");
-    
+
     // Read the existing configuration
     var configContent = Files.readString(vertxConfigPath);
     var mapper = new ObjectMapper();
     var configNode = (ObjectNode) mapper.readTree(configContent);
-    
+
     // Add disabled Swagger configuration
     var swaggerConfig = mapper.createObjectNode();
     swaggerConfig.put("enabled", false);
     swaggerConfig.put("endpoint", "/swagger");
     swaggerConfig.put("uiEndpoint", "/swagger-ui");
     configNode.set("swaggerConfig", swaggerConfig);
-    
+
     // Write back the modified configuration
-    Files.writeString(vertxConfigPath, mapper.writerWithDefaultPrettyPrinter().writeValueAsString(configNode));
+    Files.writeString(
+        vertxConfigPath, mapper.writerWithDefaultPrettyPrinter().writeValueAsString(configNode));
   }
 
   @SneakyThrows
