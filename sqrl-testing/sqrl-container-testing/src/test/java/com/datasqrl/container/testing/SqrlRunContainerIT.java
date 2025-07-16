@@ -20,7 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.Duration;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -88,12 +87,10 @@ public class SqrlRunContainerIT extends SqrlContainerTestBase {
     }
   }
 
-  private HttpResponse executeGraphQLQueryToRunContainer(
-      String endpoint, String query) throws Exception {
+  private HttpResponse executeGraphQLQueryToRunContainer(String endpoint, String query)
+      throws Exception {
     var request = new HttpPost(endpoint);
-    request.setEntity(
-        new StringEntity(
-            query, ContentType.APPLICATION_JSON));
+    request.setEntity(new StringEntity(query, ContentType.APPLICATION_JSON));
     return sharedHttpClient.execute(request);
   }
 
