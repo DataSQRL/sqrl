@@ -20,8 +20,8 @@ jobs:
         run: |
           echo "Discovering Maven packages..."
           
-          # Get all Maven packages for the organization
-          packages=$(gh api "/orgs/DataSQRL/packages?package_type=maven" --jq '.[].name' 2>/dev/null || echo "")
+          # Get all Maven packages for the organization (with pagination)
+          packages=$(gh api "/orgs/DataSQRL/packages?package_type=maven&per_page=100" --paginate --jq '.[].name' 2>/dev/null || echo "")
           
           if [ -z "$packages" ]; then
             echo "No Maven packages found or insufficient permissions"
@@ -66,8 +66,8 @@ jobs:
         run: |
           echo "Discovering Container packages..."
           
-          # Get all Container packages for the organization
-          packages=$(gh api "/orgs/DataSQRL/packages?package_type=container" --jq '.[].name' 2>/dev/null || echo "")
+          # Get all Container packages for the organization (with pagination)
+          packages=$(gh api "/orgs/DataSQRL/packages?package_type=container&per_page=100" --paginate --jq '.[].name' 2>/dev/null || echo "")
           
           if [ -z "$packages" ]; then
             echo "No Container packages found or insufficient permissions"
