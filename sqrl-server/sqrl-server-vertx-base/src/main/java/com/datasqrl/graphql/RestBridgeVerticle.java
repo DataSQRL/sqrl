@@ -19,6 +19,7 @@ import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.graphql.server.operation.ApiOperation;
 import com.datasqrl.graphql.server.operation.RestMethodType;
+import com.datasqrl.graphql.swagger.SwaggerService;
 import graphql.ExecutionResult;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
@@ -48,6 +49,8 @@ public class RestBridgeVerticle extends AbstractBridgeVerticle {
   // Pattern for RFC 6570 URI template path parameters: {param}
   private static final Pattern PATH_PARAMS_PATTERN = Pattern.compile("\\{([^}?]+)\\}");
 
+  private SwaggerService swaggerService;
+
   public RestBridgeVerticle(
       Router router,
       ServerConfig config,
@@ -61,6 +64,7 @@ public class RestBridgeVerticle extends AbstractBridgeVerticle {
   public void start(Promise<Void> startPromise) {
     try {
       setupRestEndpoints();
+      setupSwaggerEndpoints();
       startPromise.complete();
     } catch (Exception e) {
       log.error("Could not setup REST endpoints", e);
@@ -75,6 +79,58 @@ public class RestBridgeVerticle extends AbstractBridgeVerticle {
         createRestEndpoint(operation);
       }
     }
+  }
+
+  private void setupSwaggerEndpoints() {
+    if (config.getSwaggerConfig() == null || !config.getSwaggerConfig().isEnabled()) {
+      log.info("Swagger is disabled, skipping Swagger endpoints setup");
+      return;
+    }
+
+    // Initialize Swagger service
+    String serverBaseUrl =
+        String.format("http://localhost:%d", config.getHttpServerOptions().getPort());
+    swaggerService = new SwaggerService(config.getSwaggerConfig(), model, serverBaseUrl);
+
+    // Setup Swagger JSON endpoint
+    String swaggerJsonEndpoint = config.getSwaggerConfig().getEndpoint();
+    router
+        .get(swaggerJsonEndpoint)
+        .handler(
+            ctx -> {
+              try {
+                String swaggerJson = swaggerService.generateSwaggerJson();
+                ctx.response().putHeader("content-type", "application/json").end(swaggerJson);
+              } catch (Exception e) {
+                log.error("Failed to generate Swagger JSON", e);
+                ctx.response()
+                    .setStatusCode(500)
+                    .putHeader("content-type", "application/json")
+                    .end("{\"error\": \"Failed to generate Swagger documentation\"}");
+              }
+            });
+
+    // Setup Swagger UI endpoint
+    String swaggerUIEndpoint = config.getSwaggerConfig().getUiEndpoint();
+    router
+        .get(swaggerUIEndpoint)
+        .handler(
+            ctx -> {
+              try {
+                String swaggerUIHtml = swaggerService.generateSwaggerUI();
+                ctx.response().putHeader("content-type", "text/html").end(swaggerUIHtml);
+              } catch (Exception e) {
+                log.error("Failed to generate Swagger UI", e);
+                ctx.response()
+                    .setStatusCode(500)
+                    .putHeader("content-type", "text/html")
+                    .end("<html><body><h1>Error: Failed to generate Swagger UI</h1></body></html>");
+              }
+            });
+
+    log.info("Swagger endpoints setup completed:");
+    log.info("  Swagger JSON: {}", swaggerJsonEndpoint);
+    log.info("  Swagger UI: {}", swaggerUIEndpoint);
   }
 
   private void createRestEndpoint(ApiOperation operation) {

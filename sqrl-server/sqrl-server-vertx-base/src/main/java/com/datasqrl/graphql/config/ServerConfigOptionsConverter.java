@@ -64,5 +64,10 @@ public class ServerConfigOptionsConverter {
         json.getJsonObject("jwtAuth") == null
             ? null
             : new JWTAuthOptions(json.getJsonObject("jwtAuth")));
+    serverConfig.setSwaggerConfig(
+        new SwaggerConfig(
+            json.getJsonObject("swaggerConfig") == null
+                ? new JsonObject()
+                : json.getJsonObject("swaggerConfig")));
   }
 }

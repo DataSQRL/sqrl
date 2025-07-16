@@ -171,5 +171,18 @@
     "allowedHeaders" : [ ],
     "exposedHeaders" : [ ]
   },
-  "jwtAuth" : null
+  "jwtAuth" : null,
+  "swaggerConfig" : {
+    "enabled" : true,
+    "endpoint" : "/swagger",
+    "uiEndpoint" : "/swagger-ui",
+    "title" : "DataSQRL REST API",
+    "description" : "Auto-generated REST API documentation for DataSQRL endpoints",
+    "version" : "1.0.0",
+    "contact" : "DataSQRL",
+    "contactUrl" : "https://datasqrl.com",
+    "contactEmail" : "contact@datasqrl.com",
+    "license" : "Apache License 2.0",
+    "licenseUrl" : "https://www.apache.org/licenses/LICENSE-2.0"
+  }
 }

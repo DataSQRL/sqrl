@@ -34,10 +34,7 @@ public class MetricsContainerIT extends SqrlContainerTestBase {
   void givenRunningServer_whenAccessingMetricsEndpoint_thenReturnsMetrics() {
     compileAndStartServer("myudf.sqrl", testDir);
 
-    var response =
-        sharedHttpClient.execute(
-            new HttpGet(
-                "http://localhost:" + serverContainer.getMappedPort(GRAPHQL_PORT) + "/metrics"));
+    var response = sharedHttpClient.execute(new HttpGet(getMetricsEndpoint()));
 
     var statusCode = response.getStatusLine().getStatusCode();
 
@@ -65,10 +62,7 @@ public class MetricsContainerIT extends SqrlContainerTestBase {
   void givenRunningServer_whenAccessingHealthEndpoint_thenReturnsHealthStatus() {
     compileAndStartServer("myudf.sqrl", testDir);
 
-    var response =
-        sharedHttpClient.execute(
-            new HttpGet(
-                "http://localhost:" + serverContainer.getMappedPort(GRAPHQL_PORT) + "/health"));
+    var response = sharedHttpClient.execute(new HttpGet(getHealthEndpoint()));
 
     var statusCode = response.getStatusLine().getStatusCode();
 

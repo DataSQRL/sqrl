@@ -233,6 +233,23 @@
       <groupId>com.networknt</groupId>
       <artifactId>json-schema-validator</artifactId>
     </dependency>
+
+    <!-- Swagger OpenAPI dependencies -->
+    <dependency>
+      <groupId>io.swagger.core.v3</groupId>
+      <artifactId>swagger-core</artifactId>
+      <version>${swagger-core.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.swagger.core.v3</groupId>
+      <artifactId>swagger-models</artifactId>
+      <version>${swagger-core.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.swagger.core.v3</groupId>
+      <artifactId>swagger-annotations</artifactId>
+      <version>${swagger-core.version}</version>
+    </dependency>
   </dependencies>
 
   <build>
