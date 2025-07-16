@@ -26,7 +26,7 @@ public class SwaggerContainerIT extends SqrlContainerTestBase {
 
   @Override
   protected String getTestCaseName() {
-    return "swagger-test";
+    return "avro-schema";
   }
 
   @Test
