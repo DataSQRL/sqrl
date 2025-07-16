@@ -1,0 +1,17 @@
+---
+name: "sensors"
+schema_version: "1"
+partial_schema: false
+columns:
+- name: "id"
+  type: "BIGINT"
+  tests:
+  - "not_null"
+- name: "machineId"
+  type: "BIGINT"
+  tests:
+  - "not_null"
+- name: "placed"
+  type: "BIGINT"
+  tests:
+  - "not_null"

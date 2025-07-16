@@ -1,0 +1,29 @@
+type SecReading {
+  sensorid: Long!
+  timeSec: DateTime!
+  temp: Float!
+}
+
+type SensorMaxTemp {
+  sensorid: Long!
+  maxTemp: Float!
+}
+
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+
+"A 64-bit signed integer"
+scalar Long
+
+type Query {
+  SecReading(limit: Int = 10, offset: Int = 0): [SecReading!] @api(rest: GET, uri: "sensors/readings{?limit,offset}")
+  SensorMaxTemp(limit: Int = 10, offset: Int = 0): [SensorMaxTemp!] @api(rest: GET, uri: "sensors/maxtemp{?limit,offset}")
+}
+
+enum _McpMethodType { NONE, TOOL, RESOURCE }
+enum _RestMethodType { NONE, GET, POST }
+directive @api(
+  mcp: _McpMethodType,
+  rest: _RestMethodType,
+  uri: String
+) on FIELD_DEFINITION | QUERY | MUTATION
