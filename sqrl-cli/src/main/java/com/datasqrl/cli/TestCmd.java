@@ -33,8 +33,7 @@ public class TestCmd extends AbstractCompileCmd {
     }
 
     // Start services before testing
-    var serviceManager = new DependentServiceManager(System.getenv());
-    serviceManager.startServices();
+    getOsProcessManager().startDependentServices();
 
     // Test
     var env = getSystemProperties();

@@ -34,8 +34,7 @@ public class RunCmd extends AbstractCompileCmd {
     }
 
     // Start services before running
-    var serviceManager = new DependentServiceManager(System.getenv());
-    serviceManager.startServices();
+    getOsProcessManager().startDependentServices();
 
     // Run
     var env = getSystemProperties();

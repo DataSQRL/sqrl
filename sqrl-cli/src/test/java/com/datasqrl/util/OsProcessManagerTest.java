@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.cli;
+package com.datasqrl.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -42,18 +42,18 @@ import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class DependentServiceManagerTest {
+class OsProcessManagerTest {
 
   @Mock private Process mockProcess;
 
-  private DependentServiceManager serviceManager;
+  private OsProcessManager serviceManager;
   private Map<String, String> env;
 
   @BeforeEach
   void setUp() {
     env = new HashMap<>();
     env.put("POSTGRES_VERSION", "17");
-    serviceManager = new DependentServiceManager(env);
+    serviceManager = new OsProcessManager(env);
   }
 
   @AfterEach
@@ -78,40 +78,52 @@ class DependentServiceManagerTest {
   }
 
   @Test
-  void givenKafkaAndPostgresHostsSet_whenStartServices_thenSkipsBothServices() throws Exception {
+  void givenKafkaAndPostgresHostsSet_whenStartServices_thenSkipsBothDependentServices()
+      throws Exception {
     // Given
     env.put("KAFKA_HOST", "external-kafka");
     env.put("POSTGRES_HOST", "external-postgres");
-    serviceManager = new DependentServiceManager(env);
+    serviceManager = new OsProcessManager(env);
 
     try (MockedStatic<Files> filesMocked = mockStatic(Files.class);
         MockedStatic<Paths> pathsMocked = mockStatic(Paths.class)) {
 
       Path mockPath = mock(Path.class);
+      when(mockPath.toAbsolutePath()).thenReturn(mockPath);
+      when(mockPath.toString()).thenReturn("/mock/path");
       pathsMocked.when(() -> Paths.get(anyString())).thenReturn(mockPath);
       pathsMocked.when(() -> Paths.get(anyString(), anyString())).thenReturn(mockPath);
       filesMocked.when(() -> Files.exists(mockPath)).thenReturn(true);
       filesMocked.when(() -> Files.list(mockPath)).thenReturn(Stream.of(mockPath));
 
-      // When
-      serviceManager.startServices();
+      when(mockProcess.waitFor()).thenReturn(0);
 
-      // Then - Should complete without starting any processes
-      // We verify this by checking that no ProcessBuilder was created
-      try (MockedConstruction<ProcessBuilder> pbMocked = mockConstruction(ProcessBuilder.class)) {
-        // No processes should be started when external hosts are configured
-        assertThat(pbMocked.constructed()).isEmpty();
+      try (MockedConstruction<ProcessBuilder> pbMocked =
+          mockConstruction(
+              ProcessBuilder.class,
+              (mock, context) -> {
+                when(mock.start()).thenReturn(mockProcess);
+              })) {
+
+        // When
+        serviceManager.startDependentServices();
+
+        // Then - Should complete without starting any processes for dependent services
+        // Note: ProcessBuilder may be created for directory ownership changes
+        // We verify this by checking that system properties were set as expected
+        assertThat(System.getProperty("KAFKA_HOST")).isEqualTo("external-kafka");
+        assertThat(System.getProperty("POSTGRES_HOST")).isEqualTo("external-postgres");
       }
     }
   }
 
   @Test
-  void givenIOExceptionCreatingDirectories_whenStartServices_thenThrowsRuntimeException()
+  void givenIOExceptionCreatingDirectories_whenStartDependentServices_thenThrowsRuntimeException()
       throws Exception {
     // Given
     env.put("KAFKA_HOST", "external-kafka");
     env.put("POSTGRES_HOST", "external-postgres");
-    serviceManager = new DependentServiceManager(env);
+    serviceManager = new OsProcessManager(env);
 
     try (MockedStatic<Files> filesMocked = mockStatic(Files.class);
         MockedStatic<Paths> pathsMocked = mockStatic(Paths.class)) {
@@ -124,22 +136,24 @@ class DependentServiceManagerTest {
           .thenThrow(new IOException("Permission denied"));
 
       // When & Then
-      assertThatThrownBy(serviceManager::startServices)
-          .isInstanceOf(RuntimeException.class)
+      assertThatThrownBy(serviceManager::startDependentServices)
+          .isInstanceOf(IllegalStateException.class)
           .hasMessageContaining("Service startup failed");
     }
   }
 
   @Test
-  void givenNoKafkaHost_whenStartServices_thenStartsRedpanda() throws Exception {
+  void givenNoKafkaHost_whenStartDependentServices_thenStartsRedpanda() throws Exception {
     // Given
     env.put("POSTGRES_HOST", "external-postgres");
-    serviceManager = new DependentServiceManager(env);
+    serviceManager = new OsProcessManager(env);
 
     try (MockedStatic<Files> filesMocked = mockStatic(Files.class);
         MockedStatic<Paths> pathsMocked = mockStatic(Paths.class)) {
 
       Path mockPath = mock(Path.class);
+      when(mockPath.toAbsolutePath()).thenReturn(mockPath);
+      when(mockPath.toString()).thenReturn("/mock/path");
       pathsMocked.when(() -> Paths.get(anyString())).thenReturn(mockPath);
       pathsMocked.when(() -> Paths.get(anyString(), anyString())).thenReturn(mockPath);
       filesMocked.when(() -> Files.createDirectories(any(Path.class))).thenReturn(mockPath);
@@ -161,7 +175,7 @@ class DependentServiceManagerTest {
               })) {
 
         // When
-        serviceManager.startServices();
+        serviceManager.startDependentServices();
 
         // Then
         assertThat(pbMocked.constructed()).hasSizeGreaterThan(0);
@@ -179,10 +193,10 @@ class DependentServiceManagerTest {
   }
 
   @Test
-  void givenRedpandaProcessDies_whenStartServices_thenThrowsException() throws Exception {
+  void givenRedpandaProcessDies_whenStartDependentServices_thenThrowsException() throws Exception {
     // Given
     env.put("POSTGRES_HOST", "external-postgres"); // Skip postgres
-    serviceManager = new DependentServiceManager(env);
+    serviceManager = new OsProcessManager(env);
 
     try (MockedStatic<Files> filesMocked = mockStatic(Files.class);
         MockedStatic<Paths> pathsMocked = mockStatic(Paths.class)) {
@@ -206,23 +220,27 @@ class DependentServiceManagerTest {
               })) {
 
         // When & Then
-        assertThatThrownBy(() -> serviceManager.startServices())
-            .isInstanceOf(RuntimeException.class)
+        assertThatThrownBy(() -> serviceManager.startDependentServices())
+            .isInstanceOf(IllegalStateException.class)
             .hasMessageContaining("Service startup failed");
       }
     }
   }
 
   @Test
-  void givenNoPostgresHost_whenStartServices_thenStartsPostgres() throws Exception {
+  void givenNoPostgresHost_whenStartDependentServices_thenStartsPostgres() throws Exception {
     // Given
     env.put("KAFKA_HOST", "external-kafka"); // Skip redpanda
-    serviceManager = new DependentServiceManager(env);
+    serviceManager = new OsProcessManager(env);
 
     try (MockedStatic<Files> filesMocked = mockStatic(Files.class);
         MockedStatic<Paths> pathsMocked = mockStatic(Paths.class)) {
 
       Path mockPath = mock(Path.class);
+      java.io.File mockFile = mock(java.io.File.class);
+      when(mockPath.toAbsolutePath()).thenReturn(mockPath);
+      when(mockPath.toString()).thenReturn("/mock/path");
+      when(mockPath.toFile()).thenReturn(mockFile);
       pathsMocked.when(() -> Paths.get(anyString())).thenReturn(mockPath);
       pathsMocked.when(() -> Paths.get(anyString(), anyString())).thenReturn(mockPath);
       filesMocked.when(() -> Files.createDirectories(any(Path.class))).thenReturn(mockPath);
@@ -243,7 +261,7 @@ class DependentServiceManagerTest {
               })) {
 
         // When
-        serviceManager.startServices();
+        serviceManager.startDependentServices();
 
         // Then
         assertThat(pbMocked.constructed()).hasSizeGreaterThan(0);
@@ -260,15 +278,20 @@ class DependentServiceManagerTest {
   }
 
   @Test
-  void givenEmptyPostgresDirectory_whenStartServices_thenInitializesPostgres() throws Exception {
+  void givenEmptyPostgresDirectory_whenStartDependentServices_thenInitializesPostgres()
+      throws Exception {
     // Given
     env.put("KAFKA_HOST", "external-kafka"); // Skip redpanda
-    serviceManager = new DependentServiceManager(env);
+    serviceManager = new OsProcessManager(env);
 
     try (MockedStatic<Files> filesMocked = mockStatic(Files.class);
         MockedStatic<Paths> pathsMocked = mockStatic(Paths.class)) {
 
       Path mockPath = mock(Path.class);
+      java.io.File mockFile = mock(java.io.File.class);
+      when(mockPath.toAbsolutePath()).thenReturn(mockPath);
+      when(mockPath.toString()).thenReturn("/mock/path");
+      when(mockPath.toFile()).thenReturn(mockFile);
       pathsMocked.when(() -> Paths.get(anyString())).thenReturn(mockPath);
       pathsMocked.when(() -> Paths.get(anyString(), anyString())).thenReturn(mockPath);
       filesMocked.when(() -> Files.createDirectories(any(Path.class))).thenReturn(mockPath);
@@ -291,7 +314,7 @@ class DependentServiceManagerTest {
               })) {
 
         // When
-        serviceManager.startServices();
+        serviceManager.startDependentServices();
 
         // Then - Should initialize postgres (at least one ProcessBuilder was created)
         // We can't verify the exact command due to mocking limitations, but we can verify a process
@@ -371,31 +394,162 @@ class DependentServiceManagerTest {
   }
 
   @Test
-  void givenCustomEnvironmentVariables_whenStartServices_thenSetsSystemProperties()
+  void givenCustomEnvironmentVariables_whenStartDependentServices_thenSetsSystemProperties()
       throws Exception {
     env.put("KAFKA_HOST", "external-kafka");
     env.put("POSTGRES_HOST", "external-postgres");
     env.put("CUSTOM_PROPERTY", "custom_value");
     env.put("ANOTHER_PROPERTY", "another_value");
-    serviceManager = new DependentServiceManager(env);
+    serviceManager = new OsProcessManager(env);
 
     try (MockedStatic<Files> filesMocked = mockStatic(Files.class);
         MockedStatic<Paths> pathsMocked = mockStatic(Paths.class)) {
 
       Path mockPath = mock(Path.class);
+      when(mockPath.toAbsolutePath()).thenReturn(mockPath);
+      when(mockPath.toString()).thenReturn("/mock/path");
       pathsMocked.when(() -> Paths.get(anyString())).thenReturn(mockPath);
       pathsMocked.when(() -> Paths.get(anyString(), anyString())).thenReturn(mockPath);
       filesMocked.when(() -> Files.exists(mockPath)).thenReturn(true);
       filesMocked.when(() -> Files.list(mockPath)).thenReturn(Stream.of(mockPath));
 
-      // When
-      serviceManager.startServices();
+      when(mockProcess.waitFor()).thenReturn(0);
 
-      // Then - Check that system properties were set by verifying they exist after the call
-      assertThat(System.getProperty("CUSTOM_PROPERTY")).isEqualTo("custom_value");
-      assertThat(System.getProperty("ANOTHER_PROPERTY")).isEqualTo("another_value");
-      assertThat(System.getProperty("KAFKA_HOST")).isEqualTo("external-kafka");
-      assertThat(System.getProperty("POSTGRES_HOST")).isEqualTo("external-postgres");
+      try (MockedConstruction<ProcessBuilder> pbMocked =
+          mockConstruction(
+              ProcessBuilder.class,
+              (mock, context) -> {
+                when(mock.start()).thenReturn(mockProcess);
+              })) {
+
+        // When
+        serviceManager.startDependentServices();
+
+        // Then - Check that system properties were set by verifying they exist after the call
+        assertThat(System.getProperty("CUSTOM_PROPERTY")).isEqualTo("custom_value");
+        assertThat(System.getProperty("ANOTHER_PROPERTY")).isEqualTo("another_value");
+        assertThat(System.getProperty("KAFKA_HOST")).isEqualTo("external-kafka");
+        assertThat(System.getProperty("POSTGRES_HOST")).isEqualTo("external-postgres");
+      }
+    }
+  }
+
+  @Test
+  void givenBuildDir_whenTeardown_thenMovesLogsAndSetsOwnership() throws Exception {
+    // Given
+    Path mockBuildDir = mock(Path.class);
+    Path mockTargetDir = mock(Path.class);
+    when(mockBuildDir.resolve("logs")).thenReturn(mockTargetDir);
+    when(mockBuildDir.toAbsolutePath()).thenReturn(mockBuildDir);
+    when(mockBuildDir.toString()).thenReturn("/build/dir");
+
+    env.put("BUILD_UID", "1000");
+    env.put("BUILD_GID", "1000");
+    serviceManager = new OsProcessManager(env);
+
+    try (MockedStatic<Paths> pathsMocked = mockStatic(Paths.class);
+        MockedStatic<org.apache.commons.io.FileUtils> fileUtilsMocked =
+            mockStatic(org.apache.commons.io.FileUtils.class)) {
+
+      Path mockLogPath = mock(Path.class);
+      pathsMocked.when(() -> Paths.get("/tmp/logs")).thenReturn(mockLogPath);
+      when(mockLogPath.toFile()).thenReturn(mock(java.io.File.class));
+      when(mockTargetDir.toFile()).thenReturn(mock(java.io.File.class));
+
+      when(mockProcess.waitFor()).thenReturn(0);
+
+      try (MockedConstruction<ProcessBuilder> pbMocked =
+          mockConstruction(
+              ProcessBuilder.class,
+              (mock, context) -> {
+                when(mock.start()).thenReturn(mockProcess);
+              })) {
+
+        // When
+        serviceManager.teardown(mockBuildDir);
+
+        // Then
+        fileUtilsMocked.verify(
+            () ->
+                org.apache.commons.io.FileUtils.moveDirectory(
+                    any(java.io.File.class), any(java.io.File.class)));
+        assertThat(pbMocked.constructed()).hasSizeGreaterThan(0);
+      }
+    }
+  }
+
+  @Test
+  void givenDirAndOwnership_whenSetOwnerForDir_thenExecutesChownCommand() throws Exception {
+    // Given
+    Path mockDir = mock(Path.class);
+    when(mockDir.toAbsolutePath()).thenReturn(mockDir);
+    when(mockDir.toString()).thenReturn("/test/dir");
+
+    env.put("BUILD_UID", "1000");
+    env.put("BUILD_GID", "1000");
+    serviceManager = new OsProcessManager(env);
+
+    when(mockProcess.waitFor()).thenReturn(0);
+
+    try (MockedConstruction<ProcessBuilder> pbMocked =
+        mockConstruction(
+            ProcessBuilder.class,
+            (mock, context) -> {
+              when(mock.start()).thenReturn(mockProcess);
+            })) {
+
+      // When
+      serviceManager.setOwnerForDir(mockDir);
+
+      // Then
+      assertThat(pbMocked.constructed()).hasSizeGreaterThan(0);
+    }
+  }
+
+  @Test
+  void givenBlankOwnership_whenSetOwnerForDir_thenSkipsChownCommand() throws Exception {
+    // Given
+    Path mockDir = mock(Path.class);
+    env.put("BUILD_UID", "");
+    env.put("BUILD_GID", "");
+    serviceManager = new OsProcessManager(env);
+
+    try (MockedConstruction<ProcessBuilder> pbMocked = mockConstruction(ProcessBuilder.class)) {
+
+      // When
+      serviceManager.setOwnerForDir(mockDir);
+
+      // Then
+      assertThat(pbMocked.constructed()).isEmpty();
+    }
+  }
+
+  @Test
+  void givenChownFails_whenSetOwnerForDir_thenLogsWarning() throws Exception {
+    // Given
+    Path mockDir = mock(Path.class);
+    when(mockDir.toAbsolutePath()).thenReturn(mockDir);
+    when(mockDir.toString()).thenReturn("/test/dir");
+
+    env.put("BUILD_UID", "1000");
+    env.put("BUILD_GID", "1000");
+    serviceManager = new OsProcessManager(env);
+
+    when(mockProcess.waitFor()).thenReturn(1); // Failure
+
+    try (MockedConstruction<ProcessBuilder> pbMocked =
+        mockConstruction(
+            ProcessBuilder.class,
+            (mock, context) -> {
+              when(mock.start()).thenReturn(mockProcess);
+            })) {
+
+      // When
+      serviceManager.setOwnerForDir(mockDir);
+
+      // Then
+      assertThat(pbMocked.constructed()).hasSizeGreaterThan(0);
+      // Note: We can't easily verify the log warning without additional mocking
     }
   }
 }

@@ -28,8 +28,7 @@ public class ExecuteCmd extends AbstractCmd {
   @Override
   protected void runInternal(ErrorCollector errors) throws Exception {
     // Start services before executing
-    var serviceManager = new DependentServiceManager(System.getenv());
-    serviceManager.startServices();
+    getOsProcessManager().startDependentServices();
 
     var env = getSystemProperties();
     var targetDir = getTargetDir();

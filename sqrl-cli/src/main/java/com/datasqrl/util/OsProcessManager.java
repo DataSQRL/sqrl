@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.cli;
+package com.datasqrl.util;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -23,13 +23,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 
-/**
- * Manages the startup of dependent services (PostgreSQL and Redpanda) for DataSQRL CLI commands.
- * This class handles service initialization, configuration, and environment variable management.
- */
+/** Manages operating system process interactions for the CLI. */
 @Slf4j
-public class DependentServiceManager {
+public class OsProcessManager {
 
   private static final String DEFAULT_POSTGRES_VERSION = "17";
   private static final int SERVICE_TIMEOUT_IN_SEC = 15;
@@ -41,16 +40,20 @@ public class DependentServiceManager {
   private static final String LOGS_PATH = "/tmp/logs";
 
   private final Map<String, String> env;
+  private final String ownerUser;
+  private final String ownerGroup;
 
-  public DependentServiceManager(Map<String, String> env) {
+  public OsProcessManager(Map<String, String> env) {
     this.env = new HashMap<>(env);
+    ownerUser = env.getOrDefault("BUILD_UID", "root");
+    ownerGroup = env.getOrDefault("BUILD_GID", "root");
   }
 
   /**
-   * Starts all required services for DataSQRL execution. This includes PostgreSQL, Redpanda, and
+   * Starts all required services for DataSQRL execution. This includes Postgres, Redpanda, and
    * creates necessary directories.
    */
-  public void startServices() {
+  public void startDependentServices() {
     try {
       startRedpanda();
       startPostgres();
@@ -62,16 +65,43 @@ public class DependentServiceManager {
       log.info("All necessary services are up");
     } catch (Exception e) {
       log.error("Failed to start services", e);
-      throw new RuntimeException("Service startup failed", e);
+      throw new IllegalStateException("Service startup failed", e);
     }
   }
 
-  private void createDirectories() throws IOException {
-    log.debug("Creating necessary Flink directories");
+  /**
+   * @param buildDir
+   */
+  public void teardown(Path buildDir) throws Exception {
+    Path target = buildDir.resolve("logs");
+    FileUtils.moveDirectory(Paths.get(LOGS_PATH).toFile(), target.toFile());
+    setOwnerForDir(buildDir);
+  }
 
-    Files.createDirectories(Paths.get(LOGS_PATH));
+  public void setOwnerForDir(Path dir) throws IOException, InterruptedException {
+    if (StringUtils.isNoneBlank(ownerUser, ownerUser)) {
+      var owner = ownerUser + ':' + ownerGroup;
+      var absPath = dir.toAbsolutePath().toString();
+      var pb = initProcessBuilder("chown", "-R", owner, absPath);
+      var proc = pb.start();
+      if (proc.waitFor() != 0) {
+        log.warn("Failed to set owner '{}' for directory: {}", owner, absPath);
+      }
+    }
+  }
+
+  private void createDirectories() throws IOException, InterruptedException {
+    log.debug("Creating necessary directories ...");
+
+    createDirectoryWithPermission(Paths.get(LOGS_PATH));
+
     Files.createDirectories(Paths.get(FLINK_CP_DATA_PATH));
     Files.createDirectories(Paths.get(FLINK_SP_DATA_PATH));
+  }
+
+  private void createDirectoryWithPermission(Path dir) throws IOException, InterruptedException {
+    Files.createDirectories(dir);
+    setOwnerForDir(dir);
   }
 
   private void startRedpanda() throws IOException, InterruptedException {
@@ -141,14 +171,14 @@ public class DependentServiceManager {
     // Create Postgres dir if necessary
     if (!Files.exists(postgresDataPath)) {
       Files.createDirectories(postgresDataPath);
-      executeCommand("chown", "-R", "postgres:postgres", POSTGRES_DATA_PATH);
+      executePostgresCommand("chown", "-R", "postgres:postgres", POSTGRES_DATA_PATH);
     }
 
     if (isDirectoryEmpty(postgresDataPath)) {
-      log.info("Initializing PostgreSQL database ...");
+      log.info("Initializing Postgres database ...");
 
       var postgresVersion = env.getOrDefault("POSTGRES_VERSION", DEFAULT_POSTGRES_VERSION);
-      executeCommand(
+      executePostgresCommand(
           "su",
           "-",
           "postgres",
@@ -160,22 +190,22 @@ public class DependentServiceManager {
       started = true;
 
       // Create user and database
-      executeCommand(
+      executePostgresCommand(
           "su",
           "-",
           "postgres",
           "-c",
           "psql -U postgres -c \"ALTER USER postgres WITH PASSWORD 'postgres';\"");
-      executeCommand(
+      executePostgresCommand(
           "su", "-", "postgres", "-c", "psql -U postgres -c \"CREATE DATABASE datasqrl;\"");
-      executeCommand(
+      executePostgresCommand(
           "su", "-", "postgres", "-c", "psql -U postgres -c \"CREATE EXTENSION vector;\"");
     }
 
     // Start Postgres if POSTGRES_HOST is not set
     if (env.get("POSTGRES_HOST") == null) {
       if (!started) {
-        log.info("Starting PostgreSQL service ...");
+        log.info("Starting Postgres service ...");
         startPostgresService();
       }
 
@@ -193,11 +223,11 @@ public class DependentServiceManager {
       setSystemProperty("PGDATABASE", "datasqrl");
     }
 
-    log.info("PostgreSQL started successfully");
+    log.info("Postgres started successfully");
   }
 
   private void startPostgresService() throws IOException, InterruptedException {
-    executeCommand("service", "postgresql", "start");
+    executePostgresCommand("service", "postgresql", "start");
     waitForPostgres("localhost", 5432);
   }
 
@@ -210,61 +240,43 @@ public class DependentServiceManager {
     }
   }
 
-  private void executeCommand(String... command) throws IOException, InterruptedException {
+  private void executePostgresCommand(String... command) throws IOException, InterruptedException {
     var pb = new ProcessBuilder(command);
-    pb.redirectOutput(Paths.get(LOGS_PATH, "postgres.log").toFile());
+    pb.redirectOutput(
+        ProcessBuilder.Redirect.appendTo(Paths.get(LOGS_PATH, "postgres.log").toFile()));
     pb.redirectErrorStream(true);
 
     var process = pb.start();
     int exitCode = process.waitFor();
 
     if (exitCode != 0) {
-      throw new RuntimeException(
+      throw new IllegalStateException(
           "Command failed with exit code " + exitCode + ": " + String.join(" ", command));
     }
   }
 
   private void waitForPostgres(String host, int port) {
-    waitForService(
-        "PostgreSQL",
-        host,
-        port,
-        () -> {
-          try {
-            var pb = new ProcessBuilder("pg_isready", "-h", host, "-p", String.valueOf(port));
-            pb.redirectOutput(ProcessBuilder.Redirect.DISCARD);
-            pb.redirectError(ProcessBuilder.Redirect.DISCARD);
-            var process = pb.start();
-            return process.waitFor() == 0;
-
-          } catch (Exception e) {
-            return false;
-          }
-        });
+    waitForService("Postgres", host, port, "pg_isready", "-h", host, "-p", String.valueOf(port));
   }
 
   private void waitForRedpanda(String host, int port) {
-    waitForService(
-        "Redpanda",
-        host,
-        port,
+    waitForService("Redpanda", host, port, "rpk", "cluster", "health");
+  }
+
+  private void waitForService(String serviceName, String host, int port, String... checkCommand) {
+    log.info("Waiting for {} to be ready at {}:{} ...", serviceName, host, port);
+
+    ServiceHealthChecker healthChecker =
         () -> {
           try {
-            var pb = new ProcessBuilder("rpk", "cluster", "health");
-            pb.redirectOutput(ProcessBuilder.Redirect.DISCARD);
-            pb.redirectError(ProcessBuilder.Redirect.DISCARD);
-            var process = pb.start();
-            return process.waitFor() == 0;
+            var pb = initProcessBuilder(checkCommand);
+            var proc = pb.start();
+            return proc.waitFor() == 0;
 
           } catch (Exception e) {
             return false;
           }
-        });
-  }
-
-  void waitForService(
-      String serviceName, String host, int port, ServiceHealthChecker healthChecker) {
-    log.info("Waiting for {} to be ready at {}:{} ...", serviceName, host, port);
+        };
 
     long startTime = System.currentTimeMillis();
     long timeoutMs = TimeUnit.SECONDS.toMillis(SERVICE_TIMEOUT_IN_SEC);
@@ -285,6 +297,14 @@ public class DependentServiceManager {
     }
 
     throw new IllegalStateException(serviceName + " did not become ready within timeout");
+  }
+
+  private ProcessBuilder initProcessBuilder(String... command) {
+    var pb = new ProcessBuilder(command);
+    pb.redirectOutput(ProcessBuilder.Redirect.DISCARD);
+    pb.redirectError(ProcessBuilder.Redirect.DISCARD);
+
+    return pb;
   }
 
   private void setSystemProperty(String key, String value) {
@@ -310,7 +330,7 @@ public class DependentServiceManager {
   }
 
   @FunctionalInterface
-  interface ServiceHealthChecker {
+  private interface ServiceHealthChecker {
     boolean isHealthy();
   }
 }
