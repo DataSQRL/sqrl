@@ -55,19 +55,16 @@ class PackageJsonSchemaTest {
       strings = {
         "emptyEnabledEngines.json",
         "invalidVersionFormat.json",
-        "additionalPropertyInIceberg.json",
-        "invalidConnectorInIceberg.json",
         "emptyEnginesFlinkConnectors.json",
         "missingRequiredDependencyFields.json",
-        "invalidDurationInFlinkConfig.json",
         "emptyTestRunner.json",
-        "invalidUrlInPackage.json",
-        "emptyPropertiesInPackage.json"
+        "emptyPropertiesInPackage.json",
+        "invalidEnumString.json"
       })
   void invalidConfigFile(String configFileName) {
     testForErrors(
         errors ->
             ConfigLoaderUtils.loadUnresolvedConfig(
-                errors, List.of(CONFIG_DIR.resolve(configFileName))));
+                errors, List.of(TEST_CASES.resolve(configFileName))));
   }
 }

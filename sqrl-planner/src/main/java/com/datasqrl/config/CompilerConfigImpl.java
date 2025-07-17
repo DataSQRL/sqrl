@@ -42,9 +42,9 @@ public class CompilerConfigImpl implements PackageJson.CompilerConfig {
 
   @Override
   public CostModel getCostModel() {
-    var costModelStr = sqrlConfig.asString("cost-model").get();
+    var costModel = sqrlConfig.as("cost-model", Type.class).get();
 
-    return new SimpleCostAnalysisModel(Type.valueOf(costModelStr.toUpperCase()));
+    return new SimpleCostAnalysisModel(costModel);
   }
 
   @Override

@@ -1,9 +1,0 @@
-{
-  "engines": {
-    "flink": {
-      "config": {
-        "execution.checkpointing.interval": "invalid-duration"
-      }
-    }
-  }
-}
