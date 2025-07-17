@@ -85,7 +85,7 @@ In terms of security, we support JWT auth, that can be specified under the `conf
 |--------------|------------|-----------|---------------------------|
 | `config`     | **object** | see below | Vert.x JWT configuration. |
 
-```json
+```json5
 {
   "engines": {
     "vertx" : {
@@ -95,7 +95,7 @@ In terms of security, we support JWT auth, that can be specified under the `conf
           "pubSecKeys": [
             {
               "algorithm": "HS256",
-              "buffer": "<auth-secret>"
+              "buffer": "<signer-secret>"   // Base64 encoded signer secret string
             }
           ],
           "jwtOptions": {
