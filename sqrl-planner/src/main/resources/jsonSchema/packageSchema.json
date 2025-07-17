@@ -38,7 +38,9 @@
           "type": "boolean"
         },
         "cost-model": {
-          "type": "string"
+          "type": "string",
+          "enum": ["DEFAULT", "READ", "WRITE"],
+          "pattern": "^[A-Z]+$"
         },
         "explain": {
           "type": "object",
@@ -71,17 +73,19 @@
               "type": "array",
               "items": {
                 "type": "string",
-                "enum": ["GRAPHQL", "REST", "MCP"]
+                "enum": ["GRAPHQL", "REST", "MCP"],
+                "pattern": "^[A-Z]+$"
               }
             },
             "endpoints": {
               "type": "string",
-              "enum": ["OPS_ONLY", "GRAPHQL", "FULL"]
+              "enum": ["OPS_ONLY", "GRAPHQL", "FULL"],
+              "pattern": "^[A-Z]+$"
             },
             "add-prefix": {
               "type": "boolean"
             },
-            "result-depth": {
+            "max-result-depth": {
               "type": "integer"
             }
           },

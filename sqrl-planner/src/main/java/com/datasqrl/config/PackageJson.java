@@ -16,7 +16,7 @@
 package com.datasqrl.config;
 
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.graphql.server.operation.ApiProtocols;
+import com.datasqrl.graphql.server.operation.ApiProtocol;
 import com.datasqrl.planner.analyzer.cost.CostModel;
 import java.nio.file.Path;
 import java.util.EnumSet;
@@ -69,7 +69,7 @@ public interface PackageJson {
 
   interface CompilerApiConfig {
 
-    EnumSet<ApiProtocols> getProtocols();
+    EnumSet<ApiProtocol> getProtocols();
 
     boolean isGraphQLProtocolOnly();
 

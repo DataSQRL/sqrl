@@ -1,7 +1,7 @@
 {
   "version": "1",
   "compiler": {
-    "cost-model": "read"
+    "cost-model": "READ"
   },
   "test-runner": {
     "snapshot-folder": "snapshots-minimalFlink",

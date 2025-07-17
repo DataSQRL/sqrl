@@ -233,6 +233,7 @@ public class SqrlConfig {
 
   private boolean isBasicClass(Class<?> clazz) {
     return clazz.isArray()
+        || clazz.isEnum()
         || clazz.isPrimitive()
         || String.class.isAssignableFrom(clazz)
         || Number.class.isAssignableFrom(clazz)
