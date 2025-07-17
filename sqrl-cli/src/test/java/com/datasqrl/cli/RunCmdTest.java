@@ -29,6 +29,7 @@ import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.validate.ExecutionGoal;
 import com.datasqrl.util.ConfigLoaderUtils;
+import com.datasqrl.util.OsProcessManager;
 import java.nio.file.Path;
 import org.apache.flink.configuration.Configuration;
 import org.junit.jupiter.api.BeforeEach;
@@ -66,7 +67,7 @@ class RunCmdTest {
   }
 
   @Test
-  void execute_shouldLoadConfigsAndRunDatasqrlRun() throws Exception {
+  void execute_shouldStartServicesAndRunDatasqrlRun() throws Exception {
     runCmd.cli = new DatasqrlCli(tempDir, StatusHook.NONE, false);
 
     Path buildDir = runCmd.getBuildDir();
@@ -74,6 +75,7 @@ class RunCmdTest {
 
     // Mock static methods and verify arguments
     try (MockedStatic<ConfigLoaderUtils> mocked = mockStatic(ConfigLoaderUtils.class)) {
+
       var mockSqrlConfig = mock(PackageJson.class);
       mocked
           .when(() -> ConfigLoaderUtils.loadResolvedConfig(errors, buildDir))
@@ -81,10 +83,19 @@ class RunCmdTest {
 
       mocked.when(() -> ConfigLoaderUtils.loadFlinkConfig(planDir)).thenReturn(flinkConfig);
 
-      try (MockedConstruction<DatasqrlRun> datasqrlRunMocked =
-          mockConstruction(
-              DatasqrlRun.class, (mock, context) -> when(mock.run(true, true)).thenReturn(null))) {
+      try (MockedConstruction<OsProcessManager> serviceManagerMocked =
+              mockConstruction(OsProcessManager.class);
+          MockedConstruction<DatasqrlRun> datasqrlRunMocked =
+              mockConstruction(
+                  DatasqrlRun.class,
+                  (mock, context) -> when(mock.run(true, true)).thenReturn(null))) {
+
         runCmd.execute(errors);
+
+        // Verify service manager was created and started
+        assertThat(serviceManagerMocked.constructed()).hasSize(1);
+        OsProcessManager serviceManager = serviceManagerMocked.constructed().get(0);
+        verify(serviceManager).startDependentServices();
 
         // Verify exact arguments
         mocked.verify(() -> ConfigLoaderUtils.loadResolvedConfig(errors, buildDir));

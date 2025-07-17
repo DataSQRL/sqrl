@@ -50,7 +50,7 @@ public class ServerConfig {
   // I moved it here as I believe it belongs to the server configuration.
   // The method itself is needed for easier mocking.
   // We can consider moving it to real server configuration later.
-  public String getEnvironmentVariable(String envVar) {
-    return System.getenv(envVar);
+  public String getSystemProperty(String envVar) {
+    return System.getProperty(envVar);
   }
 }

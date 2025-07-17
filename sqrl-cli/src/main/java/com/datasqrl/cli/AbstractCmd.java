@@ -19,8 +19,11 @@ import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrinter;
+import com.datasqrl.util.OsProcessManager;
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 import picocli.CommandLine;
 import picocli.CommandLine.IExitCodeGenerator;
@@ -55,11 +58,23 @@ public abstract class AbstractCmd implements Runnable, IExitCodeGenerator {
       e.printStackTrace();
       cli.statusHook.onFailure(e, collector);
     }
-    if (collector.hasErrors()) exitCode.set(1);
+
+    if (collector.hasErrors()) {
+      exitCode.set(1);
+    }
+
+    if (!cli.internalTestExec) {
+      getOsProcessManager().teardown(getBuildDir());
+    }
+
     System.out.println(ErrorPrinter.prettyPrint(collector));
   }
 
   protected abstract void runInternal(ErrorCollector errors) throws Exception;
+
+  protected OsProcessManager getOsProcessManager() {
+    return new OsProcessManager(System.getenv());
+  }
 
   protected Path getBuildDir() {
     return cli.rootDir.resolve(SqrlConstants.BUILD_DIR_NAME);
@@ -71,6 +86,11 @@ public abstract class AbstractCmd implements Runnable, IExitCodeGenerator {
     }
 
     return cli.rootDir.resolve(targetDir);
+  }
+
+  protected Map<String, String> getSystemProperties() {
+    return System.getProperties().entrySet().stream()
+        .collect(Collectors.toMap(e -> e.getKey().toString(), e -> e.getValue().toString()));
   }
 
   @Override

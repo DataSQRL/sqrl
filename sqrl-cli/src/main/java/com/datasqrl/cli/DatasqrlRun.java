@@ -87,10 +87,6 @@ public class DatasqrlRun {
   private Vertx vertx;
   private TableResult execute;
 
-  public DatasqrlRun(Path planDir, PackageJson sqrlConfig, Configuration flinkConfig) {
-    this(planDir, sqrlConfig, flinkConfig, System.getenv(), false);
-  }
-
   public DatasqrlRun(
       Path planDir,
       PackageJson sqrlConfig,
@@ -284,7 +280,7 @@ public class DatasqrlRun {
     ServerConfig serverConfig =
         new ServerConfig(config) {
           @Override
-          public String getEnvironmentVariable(String envVar) {
+          public String getSystemProperty(String envVar) {
             return getenv(envVar);
           }
         };

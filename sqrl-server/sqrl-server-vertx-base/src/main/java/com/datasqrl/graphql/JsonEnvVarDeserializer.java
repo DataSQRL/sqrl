@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /** Custom deserializer to replace environment variables in JSON strings. */
 public class JsonEnvVarDeserializer extends JsonDeserializer<String> {
@@ -29,7 +30,9 @@ public class JsonEnvVarDeserializer extends JsonDeserializer<String> {
   private Map<String, String> env;
 
   public JsonEnvVarDeserializer() {
-    env = System.getenv();
+    env =
+        System.getProperties().entrySet().stream()
+            .collect(Collectors.toMap(e -> e.getKey().toString(), e -> e.getValue().toString()));
   }
 
   public JsonEnvVarDeserializer(Map<String, String> env) {

@@ -16,7 +16,6 @@
 package com.datasqrl.graphql;
 
 import static org.apache.kafka.clients.consumer.ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG;
-import static org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG;
 import static org.apache.kafka.clients.producer.ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG;
 import static org.apache.kafka.clients.producer.ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG;
 import static org.apache.kafka.clients.producer.ProducerConfig.TRANSACTIONAL_ID_CONFIG;
@@ -34,6 +33,7 @@ import com.datasqrl.graphql.server.RootGraphqlModel.MutationCoordsVisitor;
 import com.google.common.base.Preconditions;
 import graphql.schema.DataFetcher;
 import graphql.schema.DataFetchingEnvironment;
+import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.kafka.client.producer.KafkaProducer;
@@ -177,16 +177,14 @@ public class MutationConfigurationImpl implements MutationConfiguration<DataFetc
   }
 
   private Future<List<Object>> sendMessagesNonTransactionally(List<Future<Map>> futures) {
-    return Future.join(futures).map(compositeFuture -> compositeFuture.list());
+    return Future.join(futures).map(CompositeFuture::list);
   }
 
   // TODO: shouldn't it come from ServerConfig?
   Map<String, String> getSinkConfig(boolean transactional) {
     String clientUUID = UUID.randomUUID().toString();
     Map<String, String> conf = new HashMap<>();
-    conf.put(
-        BOOTSTRAP_SERVERS_CONFIG, config.getEnvironmentVariable("PROPERTIES_BOOTSTRAP_SERVERS"));
-    conf.put(GROUP_ID_CONFIG, clientUUID);
+    conf.put(BOOTSTRAP_SERVERS_CONFIG, config.getSystemProperty("PROPERTIES_BOOTSTRAP_SERVERS"));
     conf.put(KEY_SERIALIZER_CLASS_CONFIG, "com.datasqrl.graphql.kafka.JsonSerializer");
     conf.put(VALUE_SERIALIZER_CLASS_CONFIG, "com.datasqrl.graphql.kafka.JsonSerializer");
 

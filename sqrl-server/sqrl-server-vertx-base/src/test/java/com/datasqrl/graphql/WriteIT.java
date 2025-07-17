@@ -106,7 +106,7 @@ class WriteIT {
 
     config = mock(ServerConfig.class);
     when(config.getPgConnectOptions()).thenReturn(options);
-    when(config.getEnvironmentVariable(any())).thenReturn(CLUSTER.bootstrapServers());
+    when(config.getSystemProperty(any())).thenReturn(CLUSTER.bootstrapServers());
 
     var client =
         PgBuilder.client().with(new PoolOptions()).connectingTo(options).using(vertx).build();
