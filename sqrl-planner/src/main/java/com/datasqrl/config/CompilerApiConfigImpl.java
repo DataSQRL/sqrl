@@ -16,58 +16,40 @@
 package com.datasqrl.config;
 
 import com.datasqrl.config.PackageJson.CompilerApiConfig;
-import com.datasqrl.graphql.server.operation.ApiProtocols;
+import com.datasqrl.graphql.server.operation.ApiProtocol;
 import java.util.EnumSet;
-import java.util.List;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Builder.Default;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 
-@NoArgsConstructor
-@Getter
-@Builder
 @AllArgsConstructor
 public class CompilerApiConfigImpl implements CompilerApiConfig {
 
-  /** The protocols that are being exposed by the server and generated from SQRL */
-  @Default EnumSet<ApiProtocols> protocols = EnumSet.allOf(ApiProtocols.class);
+  private final SqrlConfig sqrlConfig;
 
-  /** How to generate the endpoints */
-  @Default Endpoints endpoints = Endpoints.FULL;
-
-  /** This suffix it appended to all table names (before the uid) */
-  @Default boolean addOperationsPrefix = true;
-
-  /** The maximum depth of graph traversal when generating operations from schema */
-  @Default int maxResultDepth = 3;
-
-  public static CompilerApiConfigImpl from(SqrlConfig config) {
-    var builder = builder();
-
-    List<ApiProtocols> protocols =
-        config.asList("protocols", String.class).get().stream()
-            .map(str -> ApiProtocols.valueOf(str.toUpperCase()))
-            .toList();
-    if (!protocols.isEmpty()) builder.protocols(EnumSet.copyOf(protocols));
-    config
-        .asString("endpoints")
-        .getOptional()
-        .map(str -> Endpoints.valueOf(str.toUpperCase()))
-        .ifPresent(builder::endpoints);
-    config.asBool("add-prefix").getOptional().ifPresent(builder::addOperationsPrefix);
-    config.asInt("result-depth").getOptional().ifPresent(builder::maxResultDepth);
-    return builder.build();
+  @Override
+  public EnumSet<ApiProtocol> getProtocols() {
+    return EnumSet.copyOf(sqrlConfig.asList("protocols", ApiProtocol.class).get());
   }
 
   @Override
   public boolean isGraphQLProtocolOnly() {
-    return protocols.contains(ApiProtocols.GRAPHQL) && protocols.size() == 1;
+    var protocols = getProtocols();
+
+    return protocols.contains(ApiProtocol.GRAPHQL) && protocols.size() == 1;
   }
 
+  @Override
   public boolean generateOperations() {
-    return endpoints == Endpoints.FULL;
+    return sqrlConfig.as("endpoints", Endpoints.class).get() == Endpoints.FULL;
+  }
+
+  @Override
+  public boolean isAddOperationsPrefix() {
+    return sqrlConfig.asBool("add-prefix").get();
+  }
+
+  @Override
+  public int getMaxResultDepth() {
+    return sqrlConfig.asInt("max-result-depth").get();
   }
 
   public enum Endpoints {

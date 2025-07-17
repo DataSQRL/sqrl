@@ -13,6 +13,12 @@
       "physical": false,
       "sorted": true,
       "visual": true
+    },
+    "api": {
+      "protocols": ["GRAPHQL", "REST", "MCP"],
+      "endpoints": "FULL",
+      "add-prefix": true,
+      "max-result-depth": 3
     }
   },
   "engines" : {

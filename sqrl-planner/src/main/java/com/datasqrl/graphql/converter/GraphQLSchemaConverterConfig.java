@@ -17,7 +17,7 @@ package com.datasqrl.graphql.converter;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.graphql.server.operation.ApiOperation;
-import com.datasqrl.graphql.server.operation.ApiProtocols;
+import com.datasqrl.graphql.server.operation.ApiProtocol;
 import com.datasqrl.graphql.server.operation.McpMethodType;
 import com.datasqrl.graphql.server.operation.RestMethodType;
 import graphql.language.OperationDefinition.Operation;
@@ -56,7 +56,7 @@ public class GraphQLSchemaConverterConfig {
   /** Whether to do a top level field alias for the result */
   @Builder.Default String topLevelAlias = null;
 
-  @Builder.Default EnumSet<ApiProtocols> protocols = EnumSet.allOf(ApiProtocols.class);
+  @Builder.Default EnumSet<ApiProtocol> protocols = EnumSet.allOf(ApiProtocol.class);
 
   /**
    * Returns an operations filter that filters out all operations which start with the given list of
@@ -85,7 +85,7 @@ public class GraphQLSchemaConverterConfig {
   }
 
   public void setProtocolSupport(ApiOperation.ApiOperationBuilder apiBuilder) {
-    if (!protocols.contains(ApiProtocols.MCP)) apiBuilder.mcpMethod(McpMethodType.NONE);
-    if (!protocols.contains(ApiProtocols.REST)) apiBuilder.restMethod(RestMethodType.NONE);
+    if (!protocols.contains(ApiProtocol.MCP)) apiBuilder.mcpMethod(McpMethodType.NONE);
+    if (!protocols.contains(ApiProtocol.REST)) apiBuilder.restMethod(RestMethodType.NONE);
   }
 }

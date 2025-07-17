@@ -21,7 +21,6 @@ import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.analyzer.cost.ComputeCost.Simple;
 import java.util.List;
-import java.util.Optional;
 import lombok.NonNull;
 
 public record SimpleCostAnalysisModel(@NonNull Type type) implements CostModel {
@@ -29,16 +28,7 @@ public record SimpleCostAnalysisModel(@NonNull Type type) implements CostModel {
   public enum Type {
     DEFAULT,
     READ,
-    WRITE;
-
-    public static Optional<Type> fromString(String value) {
-      for (Type type : Type.values()) {
-        if (type.name().equalsIgnoreCase(value)) {
-          return Optional.of(type);
-        }
-      }
-      return Optional.empty();
-    }
+    WRITE
   }
 
   public Simple getSourceSinkCost() {

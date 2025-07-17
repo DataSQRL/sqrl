@@ -18,7 +18,6 @@ package com.datasqrl.config;
 import com.datasqrl.planner.analyzer.cost.CostModel;
 import com.datasqrl.planner.analyzer.cost.SimpleCostAnalysisModel;
 import com.datasqrl.planner.analyzer.cost.SimpleCostAnalysisModel.Type;
-import java.util.Arrays;
 import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
@@ -43,15 +42,9 @@ public class CompilerConfigImpl implements PackageJson.CompilerConfig {
 
   @Override
   public CostModel getCostModel() {
-    var costModelStr =
-        sqrlConfig
-            .asString("cost-model")
-            .validate(
-                str -> SimpleCostAnalysisModel.Type.fromString(str).isPresent(),
-                "Must be one of " + Arrays.toString(Type.values()))
-            .get();
+    var costModel = sqrlConfig.as("cost-model", Type.class).get();
 
-    return new SimpleCostAnalysisModel(Type.valueOf(costModelStr.toUpperCase()));
+    return new SimpleCostAnalysisModel(costModel);
   }
 
   @Override
@@ -61,6 +54,6 @@ public class CompilerConfigImpl implements PackageJson.CompilerConfig {
 
   @Override
   public CompilerApiConfigImpl getApiConfig() {
-    return CompilerApiConfigImpl.from(sqrlConfig.getSubConfig("api"));
+    return new CompilerApiConfigImpl(sqrlConfig.getSubConfig("api"));
   }
 }

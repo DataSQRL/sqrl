@@ -15,7 +15,7 @@
  */
 package com.datasqrl.graphql.server.operation;
 
-public enum ApiProtocols {
+public enum ApiProtocol {
   GRAPHQL,
   REST,
   MCP;

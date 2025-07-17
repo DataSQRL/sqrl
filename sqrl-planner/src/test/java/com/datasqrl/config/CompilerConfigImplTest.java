@@ -50,7 +50,19 @@ class CompilerConfigImplTest {
 
     assertThatThrownBy(compilerConfig::getCostModel)
         .isInstanceOf(CollectedException.class)
-        .hasMessage(
-            "Value [asd] for key [cost-model] is not valid. Must be one of [DEFAULT, READ, WRITE]");
+        .hasMessageContaining(
+            "String \"asd\": not one of the values accepted for Enum class: [DEFAULT, READ, WRITE]");
+  }
+
+  @Test
+  void givenCostModel_whenLowercase_thenThrowsError() {
+    config.setProperty("cost-model", "read");
+
+    var compilerConfig = new CompilerConfigImpl(config);
+
+    assertThatThrownBy(compilerConfig::getCostModel)
+        .isInstanceOf(CollectedException.class)
+        .hasMessageContaining(
+            "String \"read\": not one of the values accepted for Enum class: [DEFAULT, READ, WRITE]");
   }
 }
