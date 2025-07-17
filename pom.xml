@@ -115,7 +115,7 @@
     <avro.version>1.12.0</avro.version>
     <freemarker.version>2.3.34</freemarker.version>
     <jsonschema.version>1.5.8</jsonschema.version>
-    <iceberg.version>1.9.1</iceberg.version>
+    <iceberg.version>1.9.2</iceberg.version>
     <hadoop.version>3.4.1</hadoop.version>
     <jacoco.version>0.8.13</jacoco.version>
     <jjwt.version>0.12.6</jjwt.version>
