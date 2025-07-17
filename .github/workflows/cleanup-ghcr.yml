@@ -1,0 +1,55 @@
+name: Cleanup GHCR Images
+
+on:
+  workflow_dispatch: # Allows manual triggering
+  schedule:
+    - cron: '0 2 * * 0' # Runs every Sunday at 2:00 AM UTC
+
+jobs:
+  cleanup-images:
+    name: Cleanup GHCR Images
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get all container packages in the organization
+        id: get-packages
+        run: |
+          package_names=$(gh api /orgs/DataSQRL/packages?package_type=container --jq '.[].name')
+          echo "packages=$package_names" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Delete untagged and pr- tagged images
+        run: |
+          for pkg in ${{ steps.get-packages.outputs.packages }}; do
+            echo "--- Processing package: $pkg ---"
+
+            # Delete untagged images
+            echo "Fetching untagged images for $pkg..."
+            untagged_ids=$(gh api --paginate "/orgs/DataSQRL/packages/container/$pkg/versions" | jq '.[] | select(.metadata.container.tags | length == 0) | .id')
+            if [ -n "$untagged_ids" ]; then
+              echo "Deleting untagged images for $pkg:"
+              echo "$untagged_ids" | xargs -I {} gh api --method DELETE "/orgs/DataSQRL/packages/container/$pkg/versions/{}" --silent || echo "Could not delete some untagged images for $pkg. This might be due to download counts or other restrictions."
+            else
+              echo "No untagged images found for $pkg."
+            fi
+
+            # Delete images with tags starting with pr-
+            echo "Fetching images with 'pr-' tags for $pkg..."
+            pr_tagged_ids=$(gh api --paginate "/orgs/DataSQRL/packages/container/$pkg/versions" | jq '.[] | select(.metadata.container.tags[]? | startswith("pr-")) | .id')
+            if [ -n "$pr_tagged_ids" ]; then
+              echo "Deleting 'pr-' tagged images for $pkg:"
+              echo "$pr_tagged_ids" | xargs -I {} gh api --method DELETE "/orgs/DataSQRL/packages/container/$pkg/versions/{}" --silent || echo "Could not delete some 'pr-' tagged images for $pkg. This might be due to download counts or other restrictions."
+            else
+              echo "No images with 'pr-' tags found for $pkg."
+            fi
+            echo "--- Finished processing $pkg ---"
+          done
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
