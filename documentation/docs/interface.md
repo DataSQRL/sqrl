@@ -7,7 +7,7 @@ Based on the SQRL script, DataSQRL generates the interface for the compiled data
 * REST (GET and POST)
 * Data Product (Data Lake and Database Views)
 
-The first 3 are APIs that can be invoked programmatically. The generated APIs interfaces are configured by the `enabled-apis` [compiler configuration](configuration.md#compiler-compiler).
+The first 3 are APIs that can be invoked programmatically. The generated APIs interfaces are configured by the `protocols` [compiler configuration](configuration.md#compiler-compiler).
 
 For data products, DataSQRL generates view definitions as deployment assets in `build/deploy/plan` which can be queried directly.
 
@@ -35,5 +35,34 @@ You can customize the GraphQL schema by:
 
 Note, that changes must be compatible with the underlying data as defined in the SQRL script and the [API mapping](sqrl-language.md#api-mapping).
 
+To use a customized GraphQL schema, configure the schema explicitly in the [script configuration](configuration.md#script-script) or by providing it as a [command argument](compiler.md).
+
 ### MCP and REST
 
+DataSQRL generates a list of operations from the GraphQL schema: one for each query and mutation endpoint. 
+Queries are mapped to MCP tools with a `Get` prefix and REST endpoints under `rest/queries`. If the arguments are simple scalars, the REST endpoint is GET with URL parameters, otherwise POST with the arguments as payload.
+Mutations are mapped to MCP tools with a `Add` prefix and REST POST endpoints under `rest/mutations`.
+For the result set, DataSQRL follows relationship fields up to a configured depth (and without loops).
+
+You can control the default operation generation with the [compiler configuration](configuration.md#compiler-compiler).
+
+For complete control over the exposed MCP tools and resources as well as REST endpoints, you can define the operations explicitly in a separate GraphQL file (or multiple files).
+
+The GraphQL file defining the operations contains one or multiple query or mutation queries.
+The name of the operation is the name of the MCP tool and REST endpoint.
+
+The `@api` directive controls how the operation is exposed:
+* `rest`: `NONE`, `GET`, or `POST` to configure the HTTP method or not expose as REST endpoint.
+* `mcp`: `NONE`, `TOOL`, or `RESOURCE` to configure how the query is exposed in MCP.
+* `uri`: AN RFC 6570 template to configure the REST path and MCP resource path. Any operation arguments that are not defined in the uri template are considered part of the payload for REST (and the method must be POST).
+
+```graphql
+query GetPersonByAge($age: Int!) @api(rest: GET, mcp: TOOL, uri: "/queries/personByAge/{age}") {
+    Person(age: $age, limit: 10, offset: 0) {
+        name
+        email
+    }
+}
+```
+
+This defines an operation `GetPersonByAge` which is the name of the MCP tool and REST endpoint with the path `/queries/personByAge/{age}` using GET method.
