@@ -35,7 +35,7 @@ public class JwtContainerIT extends SqrlContainerTestBase {
   @Test
   @SneakyThrows
   void givenJwtEnabledScript_whenServerStarted_thenUnauthorizedRequestsReturn401() {
-    compileAndStartServer("jwt-authorized.sqrl", testDir);
+    compileAndStartServer("jwt-authorized.sqrl");
 
     var response = executeGraphQLQuery("{\"query\":\"query { __typename }\"}");
 
@@ -45,7 +45,7 @@ public class JwtContainerIT extends SqrlContainerTestBase {
   @Test
   @SneakyThrows
   void givenJwtEnabledScript_whenServerStartedWithValidJwt_thenAuthorizedRequestsSucceed() {
-    compileAndStartServer("jwt-authorized.sqrl", testDir);
+    compileAndStartServer("jwt-authorized.sqrl");
 
     var response = executeGraphQLQuery("{\"query\":\"query { __typename }\"}", generateJwtToken());
     validateBasicGraphQLResponse(response);

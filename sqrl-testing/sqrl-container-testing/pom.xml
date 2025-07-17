@@ -98,6 +98,12 @@
       <version>${commonsio.version}</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>javax.annotation</groupId>
+      <artifactId>javax.annotation-api</artifactId>
+      <version>1.3.2</version>
+      <scope>test</scope>
+    </dependency>
 
     <dependency>
       <groupId>com.datasqrl</groupId>
@@ -140,6 +146,57 @@
             <log4j2.configurationFile>log4j2-test.xml</log4j2.configurationFile>
           </systemPropertyVariables>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.assertj</groupId>
+        <artifactId>assertj-assertions-generator-maven-plugin</artifactId>
+        <version>${assertj-assertions-generator.version}</version>
+        <configuration>
+          <classes>
+            <class>com.datasqrl.container.testing.ContainerExecutionResult</class>
+            <class>org.apache.http.HttpResponse</class>
+            <class>org.apache.http.StatusLine</class>
+            <class>org.testcontainers.containers.GenericContainer</class>
+          </classes>
+          <excludes>
+            <exclude>.*Test.*</exclude>
+            <exclude>.*IT.*</exclude>
+          </excludes>
+          <targetDir>${project.build.directory}/generated-test-sources/assertj-assertions</targetDir>
+          <generateAssertions>true</generateAssertions>
+          <generateBddAssertions>true</generateBddAssertions>
+          <generateSoftAssertions>true</generateSoftAssertions>
+          <generateJUnitSoftAssertions>true</generateJUnitSoftAssertions>
+          <entryPointClassPackage>com.datasqrl.container.testing.assertions</entryPointClassPackage>
+        </configuration>
+        <executions>
+          <execution>
+            <id>generate-assertions</id>
+            <phase>generate-test-sources</phase>
+            <goals>
+              <goal>generate-assertions</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>${build-helper-maven-plugin.version}</version>
+        <executions>
+          <execution>
+            <id>add-test-source</id>
+            <phase>generate-test-sources</phase>
+            <goals>
+              <goal>add-test-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>${project.basedir}/target/generated-test-sources/assertj-assertions</source>
+              </sources>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>

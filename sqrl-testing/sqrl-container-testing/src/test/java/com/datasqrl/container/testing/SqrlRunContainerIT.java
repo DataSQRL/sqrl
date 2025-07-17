@@ -20,11 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.Duration;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
@@ -42,11 +37,8 @@ public class SqrlRunContainerIT extends SqrlContainerTestBase {
   @Test
   @SneakyThrows
   void givenAvroSchemaScript_whenRunCommandExecuted_thenServerStartsAndRespondsToGraphQL() {
-    // Start the run container which compiles and runs the server all in one
     runContainer =
-        createCmdContainer(testDir)
-            .withCommand("run", "avro-schema.sqrl")
-            .withExposedPorts(HTTP_SERVER_PORT)
+        createRunContainer("avro-schema.sqrl")
             .waitingFor(
                 Wait.forHttp("/health")
                     .forPort(HTTP_SERVER_PORT)
@@ -59,23 +51,28 @@ public class SqrlRunContainerIT extends SqrlContainerTestBase {
     log.info("SQRL run command executed successfully");
     log.info("Container logs:\n{}", logs);
 
-    // Verify server started successfully
     assertThat(logs).contains("GraphQL verticle deployed successfully");
 
-    // Test GraphQL endpoint
+    testGraphQLEndpoint();
+    testHealthEndpoint();
+
+    log.info("All endpoint validations passed successfully");
+  }
+
+  private void testGraphQLEndpoint() throws Exception {
     var baseUrl = "http://localhost:" + runContainer.getMappedPort(HTTP_SERVER_PORT);
     var graphqlEndpoint = baseUrl + "/graphql";
 
-    var response =
-        executeGraphQLQueryToRunContainer(graphqlEndpoint, "{\"query\":\"query { __typename }\"}");
+    var response = executePostRequest(graphqlEndpoint, "{\"query\":\"query { __typename }\"}");
     validateBasicGraphQLResponse(response);
+  }
 
-    // Verify health endpoint
+  private void testHealthEndpoint() throws Exception {
+    var baseUrl = "http://localhost:" + runContainer.getMappedPort(HTTP_SERVER_PORT);
     var healthEndpoint = baseUrl + "/health";
-    var healthResponse = executeHealthCheck(healthEndpoint);
-    assertThat(healthResponse.getStatusLine().getStatusCode()).isEqualTo(204);
 
-    log.info("All endpoint validations passed successfully");
+    var response = executeGetRequest(healthEndpoint);
+    assertThat(response.getStatusLine().getStatusCode()).isEqualTo(204);
   }
 
   @Override
@@ -85,17 +82,5 @@ public class SqrlRunContainerIT extends SqrlContainerTestBase {
       runContainer.stop();
       runContainer = null;
     }
-  }
-
-  private HttpResponse executeGraphQLQueryToRunContainer(String endpoint, String query)
-      throws Exception {
-    var request = new HttpPost(endpoint);
-    request.setEntity(new StringEntity(query, ContentType.APPLICATION_JSON));
-    return sharedHttpClient.execute(request);
-  }
-
-  private HttpResponse executeHealthCheck(String endpoint) throws Exception {
-    var request = new HttpGet(endpoint);
-    return sharedHttpClient.execute(request);
   }
 }

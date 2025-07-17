@@ -15,22 +15,19 @@
  */
 package com.datasqrl.container.testing;
 
-import lombok.SneakyThrows;
-import org.junit.jupiter.api.Test;
-
-public class VertxContainerIT extends SqrlContainerTestBase {
-
-  @Override
-  protected String getTestCaseName() {
-    return "udf";
+public record ContainerExecutionResult(
+    String name,
+    int port,
+    boolean running,
+    String logs,
+    Long exitCode
+) {
+  
+  public boolean isSuccessful() {
+    return exitCode != null && exitCode == 0;
   }
-
-  @Test
-  @SneakyThrows
-  void givenUdfScript_whenCompiledAndServerStarted_thenApiRespondsCorrectly() {
-    compileAndStartServer("myudf.sqrl");
-
-    var response = executeGraphQLQuery("{\"query\":\"query { __typename }\"}");
-    validateBasicGraphQLResponse(response);
+  
+  public boolean hasLogs() {
+    return logs != null && !logs.isEmpty();
   }
 }

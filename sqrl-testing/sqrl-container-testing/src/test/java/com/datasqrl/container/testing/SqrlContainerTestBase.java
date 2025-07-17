@@ -16,6 +16,7 @@
 package com.datasqrl.container.testing;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static com.datasqrl.container.testing.assertions.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.assertj.core.api.SoftAssertions.assertSoftly;
 import static org.awaitility.Awaitility.await;
@@ -31,6 +32,7 @@ import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
@@ -329,7 +331,7 @@ public abstract class SqrlContainerTestBase {
   }
 
   protected void validateBasicGraphQLResponse(HttpResponse response) throws Exception {
-    assertThat(response.getStatusLine().getStatusCode()).isEqualTo(200);
+    assertSuccessfulResponse(response);
 
     var responseBody = EntityUtils.toString(response.getEntity());
     var jsonResponse = objectMapper.readTree(responseBody);
@@ -339,9 +341,34 @@ public abstract class SqrlContainerTestBase {
     assertThat(jsonResponse.get("data").get("__typename").asText()).isEqualTo("Query");
   }
 
+  protected void validateJsonResponse(HttpResponse response, String expectedContentType)
+      throws Exception {
+    assertSuccessfulResponse(response);
+    assertThat(response.getEntity().getContentType().getValue()).isEqualTo(expectedContentType);
+  }
+
+  protected void validateHtmlResponse(HttpResponse response) throws Exception {
+    assertSuccessfulResponse(response);
+    assertThat(response.getEntity().getContentType().getValue()).isEqualTo("text/html");
+  }
+
   protected void compileAndStartServer(String scriptName, Path testDir) throws Exception {
     compileSqrlScript(scriptName, testDir);
     startGraphQLServer(testDir);
+  }
+
+  protected void compileAndStartServer(String scriptName) throws Exception {
+    compileAndStartServer(scriptName, testDir);
+  }
+
+  protected GenericContainer<?> createRunContainer(String scriptName, Path workingDir) {
+    return createCmdContainer(workingDir)
+        .withCommand("run", scriptName)
+        .withExposedPorts(HTTP_SERVER_PORT);
+  }
+
+  protected GenericContainer<?> createRunContainer(String scriptName) {
+    return createRunContainer(scriptName, testDir);
   }
 
   protected HttpResponse executeGraphQLQuery(String query) throws Exception {
@@ -357,6 +384,33 @@ public abstract class SqrlContainerTestBase {
     }
 
     return sharedHttpClient.execute(request);
+  }
+
+  protected HttpResponse executeGetRequest(String url) throws Exception {
+    var request = new HttpGet(url);
+    return sharedHttpClient.execute(request);
+  }
+
+  protected HttpResponse executePostRequest(String url, String body) throws Exception {
+    var request = new HttpPost(url);
+    request.setEntity(new StringEntity(body, ContentType.APPLICATION_JSON));
+    return sharedHttpClient.execute(request);
+  }
+
+  protected String getSwaggerEndpoint() {
+    return getBaseUrl() + "/swagger";
+  }
+
+  protected String getSwaggerUIEndpoint() {
+    return getBaseUrl() + "/swagger-ui";
+  }
+
+  protected void assertSuccessfulResponse(HttpResponse response) throws Exception {
+    assertThat(response.getStatusLine()).hasStatusCode(200);
+  }
+
+  protected void assertNotFoundResponse(HttpResponse response) {
+    assertThat(response.getStatusLine()).hasStatusCode(404);
   }
 
   protected void assertLogFiles(String logs, Path testDir) {

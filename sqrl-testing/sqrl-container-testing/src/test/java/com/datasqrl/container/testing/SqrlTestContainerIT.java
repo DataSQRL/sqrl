@@ -40,19 +40,22 @@ public class SqrlTestContainerIT extends SqrlContainerTestBase {
     log.info("SQRL test command executed successfully");
     log.info("Container logs:\n{}", logs);
 
-    // Verify the expected success messages are present in the logs
-    assertThat(logs).contains("Snapshot OK for MySchemaQuery").contains("Snapshot OK for MySchema");
+    validateSnapshotSuccess(logs);
+    validateNoSlfWarnings(logs);
+    assertLogFiles(logs, testDir);
 
-    // Assert no SLF4J warnings are present in the logs
+    log.info("All snapshot validations passed successfully");
+  }
+
+  private void validateSnapshotSuccess(String logs) {
+    assertThat(logs).contains("Snapshot OK for MySchemaQuery").contains("Snapshot OK for MySchema");
+  }
+
+  private void validateNoSlfWarnings(String logs) {
     assertThat(logs)
         .doesNotContain("SLF4J: Failed to load class")
         .doesNotContain("SLF4J: Defaulting to no-operation")
         .doesNotContain("SLF4J: See http://www.slf4j.org/codes.html");
-
-    // Validate log files are present and have content
-    assertLogFiles(logs, testDir);
-
-    log.info("All snapshot validations passed successfully");
   }
 
   @Test
@@ -89,19 +92,18 @@ public class SqrlTestContainerIT extends SqrlContainerTestBase {
     log.info("SQRL test command executed without DEBUG=1");
     log.info("Container logs:\n{}", logs);
 
-    // Verify the expected success messages are present in the logs
-    assertThat(logs).contains("Snapshot OK for MySchemaQuery").contains("Snapshot OK for MySchema");
+    validateSnapshotSuccess(logs);
+    validateNoBashDebugLogs(logs);
+    assertLogFiles(logs, testDir);
 
-    // Assert no bash debug logs are present (no DEBUG=1 output)
+    log.info("Test completed successfully without bash debug logs");
+  }
+
+  private void validateNoBashDebugLogs(String logs) {
     assertThat(logs)
         .doesNotContain("+ ")
         .doesNotContain("++ ")
         .doesNotContain("set -x")
         .doesNotContain("set +x");
-
-    // Validate log files are present and have content
-    assertLogFiles(logs, testDir);
-
-    log.info("Test completed successfully without bash debug logs");
   }
 }

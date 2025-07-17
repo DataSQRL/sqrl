@@ -62,11 +62,17 @@ class McpValidationIT extends SqrlContainerTestBase {
   @Test
   void givenUdfTestCase_whenMcpServerStarted_thenMcpInspectorValidatesSuccessfully()
       throws Exception {
-    // Compile first
+    var serverAlias = "sqrl-server";
+    var mcpUrl = setupMcpServer(serverAlias);
+
+    var mcpInspector = createMcpInspectorForValidation(mcpUrl);
+
+    runMcpValidation(mcpInspector, this::assertMcpValidationResults);
+  }
+
+  private String setupMcpServer(String serverAlias) throws Exception {
     compileSqrlScript("myudf.sqrl", testDir);
 
-    // Create server container with network alias
-    var serverAlias = "sqrl-server";
     serverContainer = createServerContainer(testDir);
     serverContainer.withNetworkAliases(serverAlias);
     serverContainer.start();
@@ -74,118 +80,102 @@ class McpValidationIT extends SqrlContainerTestBase {
 
     var mcpUrl = String.format("http://%s:8888/mcp", serverAlias);
     log.info("Testing MCP endpoint: {}", mcpUrl);
+    return mcpUrl;
+  }
 
-    var mcpInspector =
-        createMcpInspectorContainer(getMcpInspectorImage())
-            .withNetwork(sharedNetwork)
-            .withCommand(
-                "sh",
-                "-c",
-                String.format(
-                    """
-            echo "Starting MCP validation for %s..." &&
-            sleep 5 &&
-            echo "Testing tools/list..." &&
-            npx @modelcontextprotocol/inspector --cli %s --method tools/list &&
-            echo "Testing resources/list..." &&
-            npx @modelcontextprotocol/inspector --cli %s --method resources/list &&
-            echo "All MCP validations completed successfully"
-            """,
-                    mcpUrl, mcpUrl, mcpUrl))
-            .withLogConsumer(
-                new Slf4jLogConsumer(org.slf4j.LoggerFactory.getLogger("mcp-inspector")))
-            .waitingFor(
-                Wait.forLogMessage(".*All MCP validations completed successfully.*", 1)
-                    .withStartupTimeout(Duration.ofMinutes(2)));
+  private GenericContainer<?> createMcpInspectorForValidation(String mcpUrl) {
+    return createMcpInspectorContainer(getMcpInspectorImage())
+        .withNetwork(sharedNetwork)
+        .withCommand(
+            "sh",
+            "-c",
+            String.format(
+                """
+        echo "Starting MCP validation for %s..." &&
+        sleep 5 &&
+        echo "Testing tools/list..." &&
+        npx @modelcontextprotocol/inspector --cli %s --method tools/list &&
+        echo "Testing resources/list..." &&
+        npx @modelcontextprotocol/inspector --cli %s --method resources/list &&
+        echo "All MCP validations completed successfully"
+        """,
+                mcpUrl, mcpUrl, mcpUrl))
+        .withLogConsumer(new Slf4jLogConsumer(org.slf4j.LoggerFactory.getLogger("mcp-inspector")))
+        .waitingFor(
+            Wait.forLogMessage(".*All MCP validations completed successfully.*", 1)
+                .withStartupTimeout(Duration.ofMinutes(2)));
+  }
 
+  private GenericContainer<?> createMcpInspectorForDetailedValidation(String mcpUrl) {
+    return createMcpInspectorContainer(getMcpInspectorImage())
+        .withNetwork(sharedNetwork)
+        .withCommand(
+            "sh",
+            "-c",
+            String.format(
+                """
+        echo "Starting detailed MCP validation..." &&
+        sleep 5 &&
+        echo "=== Testing tools/list ===" &&
+        npx @modelcontextprotocol/inspector --cli %s --method tools/list > /tmp/tools_result.txt 2>&1 &&
+        cat /tmp/tools_result.txt &&
+        echo "=== Testing resources/list ===" &&
+        npx @modelcontextprotocol/inspector --cli %s --method resources/list > /tmp/resources_result.txt 2>&1 &&
+        cat /tmp/resources_result.txt &&
+        echo "All detailed validations completed"
+        """,
+                mcpUrl, mcpUrl))
+        .withLogConsumer(
+            new Slf4jLogConsumer(org.slf4j.LoggerFactory.getLogger("mcp-detailed-validator")))
+        .waitingFor(
+            Wait.forLogMessage(".*All detailed validations completed.*", 1)
+                .withStartupTimeout(Duration.ofMinutes(2)));
+  }
+
+  private void runMcpValidation(
+      GenericContainer<?> inspector, java.util.function.Consumer<String> validator)
+      throws Exception {
     try {
-      mcpInspector.start();
-      var logs = mcpInspector.getLogs();
+      inspector.start();
+      var logs = inspector.getLogs();
       log.info("MCP Inspector Output:");
       log.info(logs);
-      assertMcpValidationResults(logs);
-
+      validator.accept(logs);
     } catch (Exception e) {
-      try {
-        log.error("=== MCP INSPECTOR CONTAINER LOGS (due to test failure) ===");
-        log.error(mcpInspector.getLogs());
-        log.error("=== END CONTAINER LOGS ===");
-      } catch (Exception logException) {
-        log.error("Failed to retrieve container logs: {}", logException.getMessage());
-      }
+      logContainerError(inspector, e);
       throw e;
     } finally {
-      try {
-        mcpInspector.stop();
-      } catch (Exception stopException) {
-        log.error("Failed to stop container: {}", stopException.getMessage());
-      }
+      stopContainer(inspector);
+    }
+  }
+
+  private void logContainerError(GenericContainer<?> container, Exception e) {
+    try {
+      log.error("=== CONTAINER LOGS (due to test failure) ===");
+      log.error(container.getLogs());
+      log.error("=== END CONTAINER LOGS ===");
+    } catch (Exception logException) {
+      log.error("Failed to retrieve container logs: {}", logException.getMessage());
+    }
+  }
+
+  private void stopContainer(GenericContainer<?> container) {
+    try {
+      container.stop();
+    } catch (Exception stopException) {
+      log.error("Failed to stop container: {}", stopException.getMessage());
     }
   }
 
   @Test
   void givenUdfTestCase_whenMcpServerStarted_thenDetailedProtocolValidationPasses()
       throws Exception {
-    // Compile first
-    compileSqrlScript("myudf.sqrl", testDir);
-
-    // Create server container with network alias
     var serverAlias = "sqrl-server";
-    serverContainer = createServerContainer(testDir);
-    serverContainer.withNetworkAliases(serverAlias);
-    serverContainer.start();
-    log.info("HTTP server started on port {}", serverContainer.getMappedPort(HTTP_SERVER_PORT));
+    var mcpUrl = setupMcpServer(serverAlias);
 
-    var mcpUrl = String.format("http://%s:8888/mcp", serverAlias);
+    var validatorContainer = createMcpInspectorForDetailedValidation(mcpUrl);
 
-    var validatorContainer =
-        createMcpInspectorContainer(getMcpInspectorImage())
-            .withNetwork(sharedNetwork)
-            .withCommand(
-                "sh",
-                "-c",
-                String.format(
-                    """
-            echo "Starting detailed MCP validation..." &&
-            sleep 5 &&
-            echo "=== Testing tools/list ===" &&
-            npx @modelcontextprotocol/inspector --cli %s --method tools/list > /tmp/tools_result.txt 2>&1 &&
-            cat /tmp/tools_result.txt &&
-            echo "=== Testing resources/list ===" &&
-            npx @modelcontextprotocol/inspector --cli %s --method resources/list > /tmp/resources_result.txt 2>&1 &&
-            cat /tmp/resources_result.txt &&
-            echo "All detailed validations completed"
-            """,
-                    mcpUrl, mcpUrl))
-            .withLogConsumer(
-                new Slf4jLogConsumer(org.slf4j.LoggerFactory.getLogger("mcp-detailed-validator")))
-            .waitingFor(
-                Wait.forLogMessage(".*All detailed validations completed.*", 1)
-                    .withStartupTimeout(Duration.ofMinutes(2)));
-
-    try {
-      validatorContainer.start();
-      var logs = validatorContainer.getLogs();
-      log.info("Detailed MCP Validation Results:");
-      log.info(logs);
-      validateMcpProtocolCompliance(logs);
-
-    } catch (Exception e) {
-      try {
-        log.error("=== MCP DETAILED VALIDATOR CONTAINER LOGS (due to test failure) ===");
-        log.error(validatorContainer.getLogs());
-        log.error("=== END CONTAINER LOGS ===");
-      } catch (Exception logException) {
-        log.error("Failed to retrieve container logs: {}", logException.getMessage());
-      }
-      throw e;
-    } finally {
-      try {
-        validatorContainer.stop();
-      } catch (Exception stopException) {
-        log.error("Failed to stop container: {}", stopException.getMessage());
-      }
-    }
+    runMcpValidation(validatorContainer, this::validateMcpProtocolCompliance);
   }
 
   private void assertMcpValidationResults(String logs) {
