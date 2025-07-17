@@ -166,6 +166,17 @@ Used as a *table-format* engine together with a query engine such as Flink or Sn
       "physical": false,
       "sorted":   true,            // deterministic ordering (mostly for tests)
       "visual":   true
+    },
+
+    "api": {
+      "protocols": [               // protocols that are being exposed by the server
+        "GRAPHQL",
+        "REST",
+        "MCP"
+      ],
+      "endpoints": "FULL",         // endpoint generation strategy (FULL, GRAPHQL, OPS_ONLY)
+      "add-prefix": true,          // add an operation-type prefix before function names
+      "max-result-depth": 3        // maximum depth of graph traversal when generating operations from a schema
     }
   }
 }
@@ -307,6 +318,12 @@ The built-in fallback (excerpt - full version [here](https://raw.githubuserconte
       "physical": false,
       "sorted": true,
       "visual": true
+    },
+    "api": {
+      "protocols": ["GRAPHQL", "REST", "MCP"],
+      "endpoints": "FULL",
+      "add-prefix": true,
+      "max-result-depth": 3
     }
   },
   "connectors": {
