@@ -982,6 +982,7 @@
                 <exclude>src/test/resources/**</exclude>
                 <exclude>**/m2e-target/**</exclude>
                 <exclude>bin/**</exclude>
+                <exclude>documentation/**/index_features_list.txt</exclude>
               </excludes>
             </licenseSet>
           </licenseSets>
