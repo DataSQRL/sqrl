@@ -26,6 +26,7 @@
 
   <artifactId>sqrl-testing</artifactId>
   <packaging>pom</packaging>
+  <name>sqrl-testing</name>
 
   <modules>
     <module>sqrl-integration-tests</module>

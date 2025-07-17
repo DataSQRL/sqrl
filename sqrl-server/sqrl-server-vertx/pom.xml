@@ -25,6 +25,7 @@
   </parent>
 
   <artifactId>sqrl-server-vertx</artifactId>
+  <name>sqrl-server-vertx</name>
 
   <properties>
     <vertx.verticle>com.datasqrl.graphql.HttpServerVerticle</vertx.verticle>

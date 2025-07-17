@@ -25,6 +25,7 @@
   </parent>
 
   <artifactId>sqrl-server-vertx-base</artifactId>
+  <name>sqrl-server-vertx-base</name>
 
   <dependencies>
     <!-- Vertx -->

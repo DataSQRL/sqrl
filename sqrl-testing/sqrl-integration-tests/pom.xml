@@ -25,6 +25,7 @@
   </parent>
 
   <artifactId>sqrl-integration-tests</artifactId>
+  <name>sqrl-integration-tests</name>
 
   <dependencies>
     <dependency>

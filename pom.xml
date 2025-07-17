@@ -23,6 +23,7 @@
   <artifactId>sqrl-root</artifactId>
   <version>0.7.0-SNAPSHOT</version>
   <packaging>pom</packaging>
+  <name>sqrl-root</name>
   <description>DataSQRL is a data streaming framework for incremental and real-time data processing applications. Ingest, transform, store, and serve data as iceberg views, data APIs, or LLM tooling with the simplicity of SQL.</description>
 
   <url>https://www.datasqrl.com/docs/intro/</url>

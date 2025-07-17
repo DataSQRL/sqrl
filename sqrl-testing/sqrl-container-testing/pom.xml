@@ -25,6 +25,7 @@
   </parent>
 
   <artifactId>sqrl-container-testing</artifactId>
+  <name>sqrl-container-testing</name>
 
   <dependencies>
     <dependency>

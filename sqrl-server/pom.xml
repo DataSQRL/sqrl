@@ -26,6 +26,7 @@
 
   <artifactId>sqrl-server</artifactId>
   <packaging>pom</packaging>
+  <name>sqrl-server</name>
 
   <modules>
     <module>sqrl-server-core</module>
