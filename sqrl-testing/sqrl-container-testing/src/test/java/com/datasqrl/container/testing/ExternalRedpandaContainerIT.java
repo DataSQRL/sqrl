@@ -70,7 +70,8 @@ public class ExternalRedpandaContainerIT extends SqrlContainerTestBase {
 
     log.info("Starting compilation with external Redpanda container");
     log.info(
-        "DataSQRL container environment: KAFKA_HOST={}, KAFKA_PORT={}, PROPERTIES_BOOTSTRAP_SERVERS={}",
+        "DataSQRL container environment: KAFKA_HOST={}, KAFKA_PORT={},"
+            + " PROPERTIES_BOOTSTRAP_SERVERS={}",
         REDPANDA_CONTAINER_NAME,
         REDPANDA_PORT,
         REDPANDA_CONTAINER_NAME + ":" + REDPANDA_PORT);
