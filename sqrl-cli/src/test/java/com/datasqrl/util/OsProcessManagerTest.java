@@ -24,6 +24,7 @@ import static org.mockito.Mockito.mockConstruction;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
+import com.datasqrl.env.GlobalEnvironmentStore;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -58,23 +59,8 @@ class OsProcessManagerTest {
 
   @AfterEach
   void tearDown() {
-    // Clear system properties that might have been set during tests
-    System.clearProperty("KAFKA_HOST");
-    System.clearProperty("KAFKA_PORT");
-    System.clearProperty("PROPERTIES_BOOTSTRAP_SERVERS");
-    System.clearProperty("POSTGRES_HOST");
-    System.clearProperty("POSTGRES_PORT");
-    System.clearProperty("JDBC_URL");
-    System.clearProperty("JDBC_AUTHORITY");
-    System.clearProperty("PGHOST");
-    System.clearProperty("PGUSER");
-    System.clearProperty("JDBC_USERNAME");
-    System.clearProperty("JDBC_PASSWORD");
-    System.clearProperty("PGPORT");
-    System.clearProperty("PGPASSWORD");
-    System.clearProperty("PGDATABASE");
-    System.clearProperty("CUSTOM_PROPERTY");
-    System.clearProperty("ANOTHER_PROPERTY");
+    // Clear global environment store that might have been set during tests
+    GlobalEnvironmentStore.clear();
   }
 
   @Test
@@ -110,9 +96,9 @@ class OsProcessManagerTest {
 
         // Then - Should complete without starting any processes for dependent services
         // Note: ProcessBuilder may be created for directory ownership changes
-        // We verify this by checking that system properties were set as expected
-        assertThat(System.getProperty("KAFKA_HOST")).isEqualTo("external-kafka");
-        assertThat(System.getProperty("POSTGRES_HOST")).isEqualTo("external-postgres");
+        // We verify this by checking that environment variables were set as expected
+        assertThat(GlobalEnvironmentStore.get("KAFKA_HOST")).isEqualTo("external-kafka");
+        assertThat(GlobalEnvironmentStore.get("POSTGRES_HOST")).isEqualTo("external-postgres");
       }
     }
   }
@@ -184,10 +170,11 @@ class OsProcessManagerTest {
         // We can't verify the exact command due to mocking limitations, but we can verify a process
         // was started
 
-        // Verify that system properties were set by checking they exist after the call
-        assertThat(System.getProperty("KAFKA_HOST")).isEqualTo("localhost");
-        assertThat(System.getProperty("KAFKA_PORT")).isEqualTo("9092");
-        assertThat(System.getProperty("PROPERTIES_BOOTSTRAP_SERVERS")).isEqualTo("localhost:9092");
+        // Verify that environment variables were set by checking they exist after the call
+        assertThat(GlobalEnvironmentStore.get("KAFKA_HOST")).isEqualTo("localhost");
+        assertThat(GlobalEnvironmentStore.get("KAFKA_PORT")).isEqualTo("9092");
+        assertThat(GlobalEnvironmentStore.get("PROPERTIES_BOOTSTRAP_SERVERS"))
+            .isEqualTo("localhost:9092");
       }
     }
   }
@@ -267,12 +254,12 @@ class OsProcessManagerTest {
         assertThat(pbMocked.constructed()).hasSizeGreaterThan(0);
 
         // Verify postgres environment variables are set by checking they exist after the call
-        assertThat(System.getProperty("POSTGRES_HOST")).isEqualTo("localhost");
-        assertThat(System.getProperty("POSTGRES_PORT")).isEqualTo("5432");
-        assertThat(System.getProperty("PGHOST")).isEqualTo("localhost");
-        assertThat(System.getProperty("PGUSER")).isEqualTo("postgres");
-        assertThat(System.getProperty("PGPASSWORD")).isEqualTo("postgres");
-        assertThat(System.getProperty("PGDATABASE")).isEqualTo("datasqrl");
+        assertThat(GlobalEnvironmentStore.get("POSTGRES_HOST")).isEqualTo("localhost");
+        assertThat(GlobalEnvironmentStore.get("POSTGRES_PORT")).isEqualTo("5432");
+        assertThat(GlobalEnvironmentStore.get("PGHOST")).isEqualTo("localhost");
+        assertThat(GlobalEnvironmentStore.get("PGUSER")).isEqualTo("postgres");
+        assertThat(GlobalEnvironmentStore.get("PGPASSWORD")).isEqualTo("postgres");
+        assertThat(GlobalEnvironmentStore.get("PGDATABASE")).isEqualTo("datasqrl");
       }
     }
   }
@@ -425,11 +412,11 @@ class OsProcessManagerTest {
         // When
         serviceManager.startDependentServices();
 
-        // Then - Check that system properties were set by verifying they exist after the call
-        assertThat(System.getProperty("CUSTOM_PROPERTY")).isEqualTo("custom_value");
-        assertThat(System.getProperty("ANOTHER_PROPERTY")).isEqualTo("another_value");
-        assertThat(System.getProperty("KAFKA_HOST")).isEqualTo("external-kafka");
-        assertThat(System.getProperty("POSTGRES_HOST")).isEqualTo("external-postgres");
+        // Then - Check that environment variables were set by verifying they exist after the call
+        assertThat(GlobalEnvironmentStore.get("CUSTOM_PROPERTY")).isEqualTo("custom_value");
+        assertThat(GlobalEnvironmentStore.get("ANOTHER_PROPERTY")).isEqualTo("another_value");
+        assertThat(GlobalEnvironmentStore.get("KAFKA_HOST")).isEqualTo("external-kafka");
+        assertThat(GlobalEnvironmentStore.get("POSTGRES_HOST")).isEqualTo("external-postgres");
       }
     }
   }

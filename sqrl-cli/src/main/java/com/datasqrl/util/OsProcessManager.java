@@ -15,6 +15,7 @@
  */
 package com.datasqrl.util;
 
+import com.datasqrl.env.GlobalEnvironmentStore;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -59,8 +60,8 @@ public class OsProcessManager {
       startPostgres();
       createDirectories();
 
-      // Add every registered env entry to sys properties
-      env.forEach(System::setProperty);
+      // Add every registered env entry to global environment store
+      GlobalEnvironmentStore.putAll(env);
 
       log.info("All necessary services are up");
     } catch (Exception e) {
@@ -157,9 +158,9 @@ public class OsProcessManager {
     waitForRedpanda("localhost", 9092);
 
     // Set environment variables
-    setSystemProperty("KAFKA_HOST", "localhost");
-    setSystemProperty("KAFKA_PORT", "9092");
-    setSystemProperty("PROPERTIES_BOOTSTRAP_SERVERS", "localhost:9092");
+    setEnvironmentVariable("KAFKA_HOST", "localhost");
+    setEnvironmentVariable("KAFKA_PORT", "9092");
+    setEnvironmentVariable("PROPERTIES_BOOTSTRAP_SERVERS", "localhost:9092");
 
     log.info("Redpanda started successfully");
   }
@@ -210,17 +211,17 @@ public class OsProcessManager {
       }
 
       // Set environment variables
-      setSystemProperty("POSTGRES_HOST", "localhost");
-      setSystemProperty("POSTGRES_PORT", "5432");
-      setSystemProperty("JDBC_URL", "jdbc:postgresql://localhost:5432/datasqrl");
-      setSystemProperty("JDBC_AUTHORITY", "localhost:5432/datasqrl");
-      setSystemProperty("PGHOST", "localhost");
-      setSystemProperty("PGUSER", "postgres");
-      setSystemProperty("JDBC_USERNAME", "postgres");
-      setSystemProperty("JDBC_PASSWORD", "postgres");
-      setSystemProperty("PGPORT", "5432");
-      setSystemProperty("PGPASSWORD", "postgres");
-      setSystemProperty("PGDATABASE", "datasqrl");
+      setEnvironmentVariable("POSTGRES_HOST", "localhost");
+      setEnvironmentVariable("POSTGRES_PORT", "5432");
+      setEnvironmentVariable("JDBC_URL", "jdbc:postgresql://localhost:5432/datasqrl");
+      setEnvironmentVariable("JDBC_AUTHORITY", "localhost:5432/datasqrl");
+      setEnvironmentVariable("PGHOST", "localhost");
+      setEnvironmentVariable("PGUSER", "postgres");
+      setEnvironmentVariable("JDBC_USERNAME", "postgres");
+      setEnvironmentVariable("JDBC_PASSWORD", "postgres");
+      setEnvironmentVariable("PGPORT", "5432");
+      setEnvironmentVariable("PGPASSWORD", "postgres");
+      setEnvironmentVariable("PGDATABASE", "datasqrl");
     }
 
     log.info("Postgres started successfully");
@@ -307,8 +308,8 @@ public class OsProcessManager {
     return pb;
   }
 
-  private void setSystemProperty(String key, String value) {
-    System.setProperty(key, value);
+  private void setEnvironmentVariable(String key, String value) {
+    GlobalEnvironmentStore.put(key, value);
   }
 
   String readServiceLogFile(String serviceName) {

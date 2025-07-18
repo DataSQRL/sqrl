@@ -15,6 +15,7 @@
  */
 package com.datasqrl.graphql.config;
 
+import com.datasqrl.env.GlobalEnvironmentStore;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.jwt.JWTAuthOptions;
@@ -25,10 +26,12 @@ import io.vertx.sqlclient.PoolOptions;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 
 @Getter
 @Setter
 @AllArgsConstructor
+@Slf4j
 public class ServerConfig {
 
   public ServerConfig() {}
@@ -50,7 +53,7 @@ public class ServerConfig {
   // I moved it here as I believe it belongs to the server configuration.
   // The method itself is needed for easier mocking.
   // We can consider moving it to real server configuration later.
-  public String getSystemProperty(String envVar) {
-    return System.getProperty(envVar);
+  public String getEnvironmentVariable(String envVar) {
+    return GlobalEnvironmentStore.get(envVar);
   }
 }
