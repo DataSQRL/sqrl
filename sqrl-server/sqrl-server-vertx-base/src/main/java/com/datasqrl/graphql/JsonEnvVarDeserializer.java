@@ -15,6 +15,7 @@
  */
 package com.datasqrl.graphql;
 
+import com.datasqrl.env.GlobalEnvironmentStore;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
@@ -22,7 +23,6 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /** Custom deserializer to replace environment variables in JSON strings. */
 public class JsonEnvVarDeserializer extends JsonDeserializer<String> {
@@ -30,9 +30,7 @@ public class JsonEnvVarDeserializer extends JsonDeserializer<String> {
   private Map<String, String> env;
 
   public JsonEnvVarDeserializer() {
-    env =
-        System.getProperties().entrySet().stream()
-            .collect(Collectors.toMap(e -> e.getKey().toString(), e -> e.getValue().toString()));
+    env = GlobalEnvironmentStore.getAll();
   }
 
   public JsonEnvVarDeserializer(Map<String, String> env) {
