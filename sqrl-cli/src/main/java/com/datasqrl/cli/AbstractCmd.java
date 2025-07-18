@@ -21,9 +21,7 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrinter;
 import com.datasqrl.util.OsProcessManager;
 import java.nio.file.Path;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 import picocli.CommandLine;
 import picocli.CommandLine.IExitCodeGenerator;
@@ -86,11 +84,6 @@ public abstract class AbstractCmd implements Runnable, IExitCodeGenerator {
     }
 
     return cli.rootDir.resolve(targetDir);
-  }
-
-  protected Map<String, String> getSystemProperties() {
-    return System.getProperties().entrySet().stream()
-        .collect(Collectors.toMap(e -> e.getKey().toString(), e -> e.getValue().toString()));
   }
 
   @Override

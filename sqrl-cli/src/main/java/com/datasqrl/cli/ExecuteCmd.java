@@ -16,6 +16,7 @@
 package com.datasqrl.cli;
 
 import com.datasqrl.config.SqrlConstants;
+import com.datasqrl.env.GlobalEnvironmentStore;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.util.ConfigLoaderUtils;
 import picocli.CommandLine;
@@ -30,7 +31,7 @@ public class ExecuteCmd extends AbstractCmd {
     // Start services before executing
     getOsProcessManager().startDependentServices();
 
-    var env = getSystemProperties();
+    var env = GlobalEnvironmentStore.getAll();
     var targetDir = getTargetDir();
     var planDir = targetDir.resolve(SqrlConstants.PLAN_DIR);
     var sqrlConfig = ConfigLoaderUtils.loadResolvedConfig(errors, getBuildDir());
