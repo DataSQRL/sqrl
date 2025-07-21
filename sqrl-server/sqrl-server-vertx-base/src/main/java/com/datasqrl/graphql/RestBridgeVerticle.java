@@ -187,6 +187,7 @@ public class RestBridgeVerticle extends AbstractBridgeVerticle {
                                             .put("path", err.getPath())
                                             .put("extensions", err.getExtensions()))
                                 .toList());
+                        ctx.end(json.encode());
                       } else {
                         Object result = getExecutionData(executionResult, operation);
                         ctx.end(new JsonObject().put(RESULT_DATA_KEY, result).encode());
