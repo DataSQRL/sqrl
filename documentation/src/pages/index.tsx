@@ -22,7 +22,7 @@ const header: HomepageHeaderProps = {
       </>
   ),
   buttonLink: 'docs/getting-started',
-  buttonText: 'Build Robust Data Pipelines in 10 min',
+  buttonText: 'Build Data Pipelines without the Glue Code',
   image: "/img/diagrams/architecture_overview.png"
 };
 
@@ -44,16 +44,16 @@ IMPORT banking-data.*;
 
 -- Enrich transactions with account and holder information
 SpendingTransactions := SELECT t.*, h.name, h.type
-    FROM Transactions t JOIN Accounts FOR SYSTEM_TIME AS OF t.tx_time a ON t.credit_account_id=a.account_id
-                        JOIN AccountHolders FOR SYSTEM_TIME AS OF t.tx_time h ON a.holder_id = h.holder_id;
+    FROM Transactions t JOIN Accounts a ON t.credit_account_id=a.account_id
+                        JOIN AccountHolders h ON a.holder_id = h.holder_id;
 
 -- Create MCP tooling endpoint with description for agentic retrieval
 /** Retrieve spending transactions within the given time-range.
   fromTime (inclusive) and toTime (exclusive) must be RFC-3339 compliant.*/
-SpendingTransactionsByTime(account_id STRING NOT NULL,
-    fromTime TIMESTAMP NOT NULL, toTime TIMESTAMP NOT NULL) :=
-        SELECT * FROM SpendingTransactions WHERE account_id = :account_id
-        AND :fromTime <= tx_time AND :toTime > tx_time ORDER BY tx_time DESC;`}
+TransactionsByTime(account_id STRING NOT NULL,
+        fromTime TIMESTAMP NOT NULL, toTime TIMESTAMP NOT NULL) :=
+    SELECT * FROM SpendingTransactions WHERE account_id = :account_id
+    AND :fromTime <= tx_time AND :toTime > tx_time ORDER BY tx_time DESC;`}
                   </CodeBlock>
                 </div>
                 <div className="col col--5 text--left">
@@ -64,32 +64,34 @@ SpendingTransactionsByTime(account_id STRING NOT NULL,
                   <p className="hero__subtitle">
                     Combine data across sources for customized tooling that is tailored to agents.
                   </p>
+                  <p className="hero__subtitle">
+                    DataSQRL handles the data plumbing.
+                  </p>
                 </div>
               </div>
               <div className="row margin-bottom--xl margin-top--lg">
                 <div className="col col--6">
                   <CodeBlock language="sql">
-                    {`-- Time window aggregation to compute weekly spending profile
-SpendingTimeWindow := SELECT account_id, type, window_start AS week,
-        SUM(amount) AS total_spending, COUNT(*) AS transaction_count
-   FROM TABLE(CUMULATE(TABLE SpendingTransactions, DESCRIPTOR(tx_time),
-                 INTERVAL '1' HOUR, INTERVAL '7' DAY))
-   GROUP BY debit_account_id, type, window_start, window_end;
--- REST endpoint to retrieve spending profile as context
-/*+query_by_all(account_id) */
-SpendingByWeek := DISTINCT SpendingTimeWindow ON account_id, type, week ORDER BY window_time;`}
+                    {`--Enrich transactions with account information for BI
+TransactionWithAccounts := SELECT t.*, 
+      ac.holder_id AS credit_holder_id, ac.balance AS credit_account_balance, 
+      ad.holder_id AS debit_holder_id, ad.balance AS debit_account_balance
+    FROM Transactions t JOIN Accounts FOR SYSTEM_TIME AS OF t.tx_time ac 
+                             ON t.credit_account_id=ac.account_id
+                        JOIN Accounts FOR SYSTEM_TIME AS OF t.tx_time ad 
+                             ON t.debit_account_id=ad.account_id;`}
                   </CodeBlock>
                 </div>
                 <div className="col col--5 text--left">
-                  <h2>Build Context Retrieval in One SQL Script</h2>
+                  <h2>Build Data Products in One SQL Script</h2>
                   <p className="hero__subtitle">
-                    Fill pre-processed data into your prompt template with a single API call.</p>
+                    Create dynamic Iceberg tables and catalog views for your lakehouse.</p>
                   <p className="hero__subtitle">
-                    Define the processing in SQL and DataSQRL generates the API.
+                    If you know SQL, you know DataSQRL.
                   </p>
                 </div>
               </div>
-              <div className="row margin-bottom--xl margin-top--lg">
+              <div className="row margin-top--lg">
                 <div className="col col--6">
                   <CodeBlock language="sql">
                     {`-- Create a relationship between holder and accounts
@@ -98,10 +100,9 @@ AccountHolders.accounts(status STRING) := SELECT * FROM Accounts a
     ORDER BY a.account_type ASC;
 
 -- Link accounts with spending transactions
-Accounts.spendingTransactions(fromTime TIMESTAMP NOT NULL, toTime TIMESTAMP NOT NULL) :=
+Accounts.spendingTransactions(since TIMESTAMP NOT NULL) :=
     SELECT * FROM SpendingTransactions t
-    WHERE t.debit_account_id = this.account_id
-          AND :fromTime <= tx_time AND :toTime > tx_time 
+    WHERE t.debit_account_id = this.account_id AND :since <= tx_time
     ORDER BY tx_time DESC;`}
                   </CodeBlock>
                 </div>
@@ -109,13 +110,14 @@ Accounts.spendingTransactions(fromTime TIMESTAMP NOT NULL, toTime TIMESTAMP NOT 
                   <h2>Build GraphQL APIs in One SQL Script</h2>
                   <p className="hero__subtitle">
                     Define relationships and data structures in SQL, DataSQRL generates a
-                    fast GraphQL API for you.</p>
+                    flexible GraphQL API for you.</p>
                   <p className="hero__subtitle">
-                    Build flexible data APIs quickly.
-                  </p>
+                    Build in hours what used to take weeks.</p>
+                  <p className="text--center">
                   <Link className="button button--primary button--lg" to="https://github.com/DataSQRL/datasqrl-examples">
                     See more Examples
                   </Link>
+                  </p>
                 </div>
               </div>
               <div className="row margin-bottom--xl margin-top--lg">
@@ -337,7 +339,8 @@ SpendingByWeek := SELECT account_id, type, window_start AS week,
                   <h2>Focus on what Matters</h2>
                   <p className="hero__subtitle">
                     Express time-window aggregations, deduplication, time-consistent joins, and other complex transformations
-                  succinctly in SQL. Express what you need and let the compiler handle low-level optimizations.</p>
+                  succinctly in SQL. <br />
+                    Express what you need and let the compiler handle low-level optimizations.</p>
                   <p className="hero__subtitle">
                     Import custom functions when SQL alone is not enough.
                   </p>
