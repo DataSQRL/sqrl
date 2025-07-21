@@ -308,6 +308,17 @@ jobs:
 
     steps:
       - checkout-and-version
+      - determine-version
+      - run:
+          name: Skip image generation
+          command: |
+            set -x
+            
+            # Skip publishing images if REGISTRY != datasqrl OR TAG_SUFFIX == CIRCLE_BRANCH
+            if [[ "$REGISTRY" != "datasqrl" ]] || [[ "$TAG_SUFFIX" == "$CIRCLE_BRANCH" ]]; then
+              echo "Skipping image publishing for REGISTRY=$REGISTRY, TAG_SUFFIX=$TAG_SUFFIX, CIRCLE_BRANCH=$CIRCLE_BRANCH"
+              circleci step halt
+            fi
       - restore_cache:
           keys:
             - m2-{{ checksum "pom.xml" }}
@@ -338,6 +349,7 @@ jobs:
           name: Build + push Docker images
           command: |
             set -x
+            
             build_and_push() {
               local repo="$1" ; shift
               local dir="$1"  ; shift
