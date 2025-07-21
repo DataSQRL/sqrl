@@ -37,11 +37,13 @@ import com.datasqrl.util.SnapshotTest.Snapshot;
 import com.google.common.collect.MoreCollectors;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import javax.annotation.Nullable;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
@@ -194,7 +196,7 @@ class FullUseCasesIT {
     TestExtension testExtension = testExtensions.create(param.getTestName());
     testExtension.setup();
 
-    Path rootDir = USE_CASES.resolve(param.getUseCaseName());
+    Path rootDir = param.getRootDir();
 
     SqrlScriptExecutor executor =
         SqrlScriptExecutor.builder()
@@ -334,64 +336,70 @@ class FullUseCasesIT {
   @Test
   @Disabled
   public void runTestCaseByName() {
+    // Set it to any project outside the repo if necessary
+    String projectDir = null;
+    var sqrlScriptPrefix = "edc-datapoints-enrich.sqrl";
+    var goal = "run";
+
     var param =
-        useCaseProvider().stream()
-            .filter(p -> p.sqrlFileName.startsWith("batch-teaser.sqrl") && p.goal.equals("test"))
+        useCaseProvider(projectDir).stream()
+            .filter(p -> p.sqrlFileName.startsWith(sqrlScriptPrefix) && p.goal.equals(goal))
             .collect(MoreCollectors.onlyElement());
     useCase(param);
   }
 
-  @SneakyThrows
   static Set<UseCaseTestParameter> useCaseProvider() {
-    var useCasesDir = USE_CASES.toAbsolutePath();
+    return useCaseProvider(null);
+  }
+
+  @SneakyThrows
+  static Set<UseCaseTestParameter> useCaseProvider(@Nullable String useCasePath) {
+    var rootDir = useCasePath != null ? Paths.get(useCasePath) : USE_CASES;
+    var useCasesDir = rootDir.toAbsolutePath();
     Set<UseCaseTestParameter> params = new TreeSet<>();
 
-    Files.list(useCasesDir)
-        .filter(Files::isDirectory)
-        .forEach(
-            dir -> {
-              var useCaseName = dir.getFileName().toString();
+    if (useCasePath != null) {
+      addParamsInDir(useCasesDir, params);
+      return params;
+    }
 
-              try (var stream = Files.newDirectoryStream(dir)) {
-                for (Path file : stream) {
-                  var fileName = file.getFileName().toString();
-
-                  if (!fileName.endsWith(".sqrl")) {
-                    continue;
-                  }
-
-                  var testName = fileName.substring(0, fileName.length() - 5);
-                  var graphql = testName + ".graphqls";
-                  var packageJson = "package-" + testName + ".json";
-                  var testPath = "tests-" + testName;
-                  if (!file.getParent().resolve(graphql).toFile().exists()) {
-                    graphql = null;
-                  }
-                  if (!file.getParent().resolve(packageJson).toFile().exists()) {
-                    packageJson = null;
-                  }
-                  if (!file.getParent().resolve(testPath).toFile().exists()) {
-                    testPath = null;
-                  }
-                  var useCaseTestParameter =
-                      new UseCaseTestParameter(
-                          "usecases",
-                          "test",
-                          useCaseName,
-                          fileName,
-                          graphql,
-                          testName,
-                          testPath,
-                          null,
-                          packageJson);
-                  params.add(useCaseTestParameter);
-                  params.add(useCaseTestParameter.cloneWithGoal("run"));
-                }
-              } catch (Exception e) {
-                fail("Unable to process use case: " + useCaseName, e);
-              }
-            });
+    Files.list(useCasesDir).filter(Files::isDirectory).forEach(dir -> addParamsInDir(dir, params));
 
     return params;
+  }
+
+  private static void addParamsInDir(Path dir, Set<UseCaseTestParameter> params) {
+    var useCaseName = dir.getFileName().toString();
+
+    try (var stream = Files.newDirectoryStream(dir)) {
+      for (Path file : stream) {
+        var fileName = file.getFileName().toString();
+
+        if (!fileName.endsWith(".sqrl")) {
+          continue;
+        }
+
+        var testName = fileName.substring(0, fileName.length() - 5);
+        var graphql = testName + ".graphqls";
+        var packageJson = "package-" + testName + ".json";
+        var testPath = "tests-" + testName;
+        if (!file.getParent().resolve(graphql).toFile().exists()) {
+          graphql = null;
+        }
+        if (!file.getParent().resolve(packageJson).toFile().exists()) {
+          packageJson = null;
+        }
+        if (!file.getParent().resolve(testPath).toFile().exists()) {
+          testPath = null;
+        }
+        var useCaseTestParameter =
+            new UseCaseTestParameter(
+                dir, "test", useCaseName, fileName, graphql, testName, testPath, null, packageJson);
+        params.add(useCaseTestParameter);
+        params.add(useCaseTestParameter.cloneWithGoal("run"));
+      }
+    } catch (Exception e) {
+      fail("Unable to process use case: " + useCaseName, e);
+    }
   }
 }

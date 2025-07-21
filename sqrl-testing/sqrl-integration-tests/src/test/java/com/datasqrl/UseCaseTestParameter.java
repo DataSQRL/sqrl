@@ -15,6 +15,7 @@
  */
 package com.datasqrl;
 
+import java.nio.file.Path;
 import java.util.Comparator;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -25,7 +26,7 @@ import lombok.ToString;
 @ToString
 public class UseCaseTestParameter implements Comparable<UseCaseTestParameter> {
 
-  String parentDirectory;
+  Path rootDir;
   String goal;
 
   @ToString.Include(rank = 0)
@@ -42,7 +43,7 @@ public class UseCaseTestParameter implements Comparable<UseCaseTestParameter> {
 
   public UseCaseTestParameter cloneWithGoal(String goal) {
     return new UseCaseTestParameter(
-        parentDirectory,
+        rootDir,
         goal,
         useCaseName,
         sqrlFileName,
