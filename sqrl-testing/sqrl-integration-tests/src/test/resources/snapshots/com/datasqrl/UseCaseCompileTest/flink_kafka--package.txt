@@ -109,6 +109,26 @@ SQL: CREATE VIEW `_ApplicationsStream__view`
 AS
 SELECT `_ApplicationsStream`.`id`, `_ApplicationsStream`.`customer_id`, `_ApplicationsStream`.`loan_type_id`, `_ApplicationsStream`.`amount`, `_ApplicationsStream`.`duration`, `_ApplicationsStream`.`application_date`, `_ApplicationsStream`.`updated_at`
 FROM `default_catalog`.`default_database`.`_ApplicationsStream` AS `_ApplicationsStream`
+=== _FakeStreamJoin
+ID:     default_catalog.default_database._FakeStreamJoin
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database._ApplicationUpdates, default_catalog.default_database._ApplicationsStream
+Primary Key: -
+Timestamp  : event_time
+Schema:
+ - id: BIGINT NOT NULL
+ - status: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - message: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Plan:
+LogicalProject(id=[$4], status=[$1], message=[$2], event_time=[$3])
+  LogicalJoin(condition=[=($6, $0)], joinType=[inner])
+    LogicalTableScan(table=[[default_catalog, default_database, _ApplicationUpdates]])
+    LogicalTableScan(table=[[default_catalog, default_database, _ApplicationsStream]])
+SQL: CREATE VIEW _FakeStreamJoin AS  SELECT a.id, u.status, u.message, u.event_time
+                     FROM _ApplicationUpdates u JOIN _ApplicationsStream a ON a.loan_type_id = u.loan_application_id;
+
 === _LoanTypes
 ID:     default_catalog.default_database._LoanTypes
 Type:   state
@@ -166,6 +186,12 @@ SQL: CREATE VIEW `_LoanTypesStream__view`
 AS
 SELECT `_LoanTypesStream`.`id`, `_LoanTypesStream`.`name`, `_LoanTypesStream`.`description`, `_LoanTypesStream`.`interest_rate`, `_LoanTypesStream`.`max_amount`, `_LoanTypesStream`.`min_amount`, `_LoanTypesStream`.`max_duration`, `_LoanTypesStream`.`min_duration`, `_LoanTypesStream`.`updated_at`
 FROM `default_catalog`.`default_database`.`_LoanTypesStream` AS `_LoanTypesStream`
+=== StreamJoin
+ID:     logger.StreamJoin
+Type:   export
+Stage:  flink
+Inputs: default_catalog.default_database._FakeStreamJoin
+
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `_ApplicationsStream__schema` (
   `id` BIGINT NOT NULL,
@@ -250,6 +276,11 @@ CREATE VIEW `ApplicationStatusTest`
 AS
 SELECT COUNT(*) AS `total_count`, CAST(SUM(`amount`) AS INTEGER) AS `total_amount`
 FROM `ApplicationStatus`;
+CREATE VIEW `_FakeStreamJoin`
+AS
+SELECT `a`.`id`, `u`.`status`, `u`.`message`, `u`.`event_time`
+FROM `_ApplicationUpdates` AS `u`
+ INNER JOIN `_ApplicationsStream` AS `a` ON `a`.`loan_type_id` = `u`.`loan_application_id`;
 CREATE TABLE `ApplicationStatus_1` (
   `status` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `message` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -269,12 +300,25 @@ CREATE TABLE `ApplicationStatus_1` (
   'properties.group.id' = '${PROPERTIES_GROUP_ID}',
   'topic' = 'ApplicationStatus'
 );
+CREATE TABLE `StreamJoin_2` (
+  `id` BIGINT NOT NULL,
+  `status` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `message` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+) WITH (
+  'connector' = 'print',
+  'print-identifier' = 'StreamJoin'
+);
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`ApplicationStatus_1`
 (SELECT *
  FROM `default_catalog`.`default_database`.`ApplicationStatus`)
 ;
-END
+INSERT INTO `default_catalog`.`default_database`.`StreamJoin_2`
+ (SELECT *
+  FROM `default_catalog`.`default_database`.`_FakeStreamJoin`)
+ ;
+ END
 >>>kafka.json
 {
   "topics" : [

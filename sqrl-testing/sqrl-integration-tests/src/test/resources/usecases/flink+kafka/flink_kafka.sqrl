@@ -12,3 +12,9 @@ ApplicationStatus := SUBSCRIBE SELECT u.status, u.message, u.event_time, a.id, a
 
 /*+test */
 ApplicationStatusTest := SELECT COUNT(*) as total_count, CAST(SUM(amount) AS INT) as total_amount FROM ApplicationStatus;
+
+-- The following tests are just to test the stage assignment model in the absence of a database engine
+
+_FakeStreamJoin := SELECT a.id, u.status, u.message, u.event_time
+                     FROM _ApplicationUpdates u JOIN _ApplicationsStream a ON a.loan_type_id = u.loan_application_id;
+EXPORT _FakeStreamJoin TO logger.StreamJoin;

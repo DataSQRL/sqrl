@@ -169,7 +169,9 @@ public class SqlScriptPlanner {
      */
     this.tableStages =
         pipeline.getStages().stream()
-            .filter(stage -> stage.getType().isDataStore() || stage.getType() == EngineType.STREAMS)
+            .filter(
+                stage ->
+                    stage.getType() == EngineType.DATABASE || stage.getType() == EngineType.STREAMS)
             .collect(Collectors.toList());
     this.queryStages =
         pipeline.getStages().stream()

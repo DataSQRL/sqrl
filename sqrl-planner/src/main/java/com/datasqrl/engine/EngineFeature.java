@@ -85,7 +85,5 @@ public enum EngineFeature {
   public static EnumSet<EngineFeature> STANDARD_QUERY =
       EnumSet.of(NOW, GLOBAL_SORT, MULTI_RANK, TABLE_FUNCTION_SCAN, RELATIONS);
 
-  public static EnumSet<EngineFeature> STANDARD_LOG = EnumSet.noneOf(EngineFeature.class);
-
   public static EnumSet<EngineFeature> NO_CAPABILITIES = EnumSet.noneOf(EngineFeature.class);
 }
