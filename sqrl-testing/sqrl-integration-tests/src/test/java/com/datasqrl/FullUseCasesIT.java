@@ -43,6 +43,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.Predicate;
 import javax.annotation.Nullable;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -336,16 +337,34 @@ class FullUseCasesIT {
   @Test
   @Disabled
   public void runTestCaseByName() {
-    // Set it to any project outside the repo if necessary
-    String projectDir = null;
-    var sqrlScriptPrefix = "edc-datapoints-enrich.sqrl";
-    var goal = "run";
-
     var param =
-        useCaseProvider(projectDir).stream()
-            .filter(p -> p.sqrlFileName.startsWith(sqrlScriptPrefix) && p.goal.equals(goal))
-            .collect(MoreCollectors.onlyElement());
+        getSpecificUseCase(
+            p -> p.sqrlFileName.startsWith("batch-teaser.sqrl") && p.goal.equals("test"));
+
     useCase(param);
+  }
+
+  @Test
+  @Disabled
+  void runOutsideProject() {
+    // Set projectDir to any path outside the repo
+    String projectDir = null;
+    var param =
+        getSpecificUseCase(
+            projectDir, p -> p.sqrlFileName.startsWith("script.sqrl") && p.goal.equals("run"));
+
+    useCase(param);
+  }
+
+  static UseCaseTestParameter getSpecificUseCase(Predicate<UseCaseTestParameter> paramFilter) {
+    return useCaseProvider().stream().filter(paramFilter).collect(MoreCollectors.onlyElement());
+  }
+
+  static UseCaseTestParameter getSpecificUseCase(
+      String useCasePath, Predicate<UseCaseTestParameter> paramFilter) {
+    return useCaseProvider(useCasePath).stream()
+        .filter(paramFilter)
+        .collect(MoreCollectors.onlyElement());
   }
 
   static Set<UseCaseTestParameter> useCaseProvider() {
