@@ -17,6 +17,7 @@ package com.datasqrl.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
+import static org.junit.Assert.assertEquals;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -138,19 +139,20 @@ public class SnapshotTest {
         fail("Creating snapshots: " + "file://" + path.toFile().getAbsolutePath());
       } else {
         String expected = Files.readString(path);
-        /*
-        Intellij works much better with JUNIT based assertions, but on the build server
-        the assertThat output is easier to analyze.
-        */
+
         if (JUNIT_SNAPSHOTS != null) {
-          assertThat(content)
-              .as(
-                  "Mismatched snapshots: "
-                      + fileName
-                      + " "
-                      + "file://"
-                      + path.toFile().getAbsolutePath())
-              .isEqualTo(expected);
+          /*
+          Intellij works much better with JUNIT based assertions, but on the build server
+          the assertThat output is easier to analyze.
+          */
+          assertEquals(
+              "Mismatched snapshots: "
+                  + fileName
+                  + " "
+                  + "file://"
+                  + path.toFile().getAbsolutePath(),
+              expected,
+              content);
         } else {
           var result = path.getParent().resolve("build").resolve(path.getFileName());
           Files.createDirectories(result.getParent());
