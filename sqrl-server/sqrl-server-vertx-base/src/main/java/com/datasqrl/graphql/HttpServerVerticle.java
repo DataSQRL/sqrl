@@ -123,7 +123,7 @@ public class HttpServerVerticle extends AbstractVerticle {
     root.route().handler(BodyHandler.create());
 
     // Use detailed tracing if enabled, otherwise use standard logging (must be after BodyHandler)
-    if (Boolean.parseBoolean(System.getenv().getOrDefault("DATASQRL_TRACE_REQUESTS", "false"))) {
+    if (Boolean.parseBoolean(System.getenv().getOrDefault("SQRL_TRACE_REQUESTS", "false"))) {
       root.route().handler(DetailedRequestTracer.create());
     } else {
       root.route().handler(LoggerHandler.create());
