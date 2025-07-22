@@ -44,9 +44,9 @@ public class DetailedRequestTracer implements Handler<RoutingContext> {
 
     // Capture request body
     var body = context.body();
-    log.debug("DEBUG [{}] - context.body() returned: {}", requestId, body);
+    log.debug("[{}] - context.body() returned: {}", requestId, body);
     if (body != null) {
-      log.debug("DEBUG [{}] - body.buffer() returned: {}", requestId, body.buffer());
+      log.debug("[{}] - body.buffer() returned: {}", requestId, body.buffer());
     }
     logRequestBody(body != null ? body.buffer() : null, requestId);
 
