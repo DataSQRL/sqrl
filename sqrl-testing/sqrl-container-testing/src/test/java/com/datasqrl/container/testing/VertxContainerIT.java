@@ -17,14 +17,13 @@ package com.datasqrl.container.testing;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import lombok.SneakyThrows;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
 import org.junit.jupiter.api.Test;
-
-import lombok.SneakyThrows;
 
 public class VertxContainerIT extends SqrlContainerTestBase {
 
@@ -82,7 +81,7 @@ public class VertxContainerIT extends SqrlContainerTestBase {
         .contains("REQUEST BODY")
         .contains(testBody)
         .contains(randomPath);
-        
+
     var graphiqlResponse = sharedHttpClient.execute(new HttpGet(getBaseUrl() + "/graphiql/"));
 
     assertThat(graphiqlResponse.getStatusLine().getStatusCode()).isEqualTo(200);
@@ -102,7 +101,7 @@ public class VertxContainerIT extends SqrlContainerTestBase {
         .contains("static/js/main.")
         .contains("static/css/main.")
         .contains("<div id=\"root\"></div>");
-        
+
     assertThat(serverContainer.getLogs())
         .contains("INCOMING REQUEST")
         .contains("Method: GET")

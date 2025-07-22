@@ -145,9 +145,10 @@ public abstract class SqrlContainerTestBase {
   }
 
   protected ContainerResult sqrlScript(Path workingDir, boolean debug, String... command) {
-    log.info("Docker run command to reproduce:");
-    log.info(getDockerRunCommand(workingDir, SQRL_CMD_IMAGE, getImageTag(), false, command));
     cmd = createCmdContainer(workingDir, debug).withCommand(command);
+
+    log.info("Docker run command to reproduce:");
+    log.info(getDockerRunCommand(cmd, workingDir));
 
     cmd.start();
 
@@ -211,11 +212,12 @@ public abstract class SqrlContainerTestBase {
 
   protected void startGraphQLServer(
       Path workingDir, Consumer<GenericContainer<?>> containerCustomizer) {
-    log.info("Docker run command to reproduce:");
-    log.info(getDockerRunCommand(workingDir, SQRL_SERVER_IMAGE, getImageTag(), true));
     serverContainer = createServerContainer(workingDir);
 
     containerCustomizer.accept(serverContainer);
+
+    log.info("Docker run command to reproduce:");
+    log.info(getDockerRunCommand(serverContainer, workingDir));
 
     try {
       serverContainer.start();
@@ -283,25 +285,62 @@ public abstract class SqrlContainerTestBase {
     return System.getProperty("docker.image.tag", "local");
   }
 
-  private String getDockerRunCommand(
-      Path workingDir, String imageName, String imageTag, boolean isServer, String... commands) {
+  protected String getDockerRunCommand(GenericContainer<?> container, Path workingDir) {
     var sb = new StringBuilder();
     sb.append("docker run -it --rm");
 
-    if (isServer) {
-      var deployPlanPath = workingDir.resolve("build/deploy/plan").toString();
-      sb.append(" -p ").append(HTTP_SERVER_PORT).append(":").append(HTTP_SERVER_PORT);
-      sb.append(" -v \"").append(deployPlanPath).append(":/opt/sqrl/config\"");
-    } else {
-      sb.append(" -v \"").append(workingDir).append(":").append(BUILD_DIR).append("\"");
-      sb.append(" -w ").append(BUILD_DIR);
-      sb.append(" -e TZ=America/Los_Angeles");
+    // Extract ports
+    var exposedPorts = container.getExposedPorts();
+    if (exposedPorts != null && !exposedPorts.isEmpty()) {
+      for (var port : exposedPorts) {
+        sb.append(" -p ").append(port).append(":").append(port);
+      }
     }
 
-    sb.append(" ").append(imageName).append(":").append(imageTag);
+    // Extract volume binds
+    var binds = container.getBinds();
+    if (binds != null && !binds.isEmpty()) {
+      for (var bind : binds) {
+        // Parse the bind string which should be in format "hostPath:containerPath" or
+        // "hostPath:containerPath:mode"
+        var bindString = bind.getPath();
+        var parts = bindString.split(":");
+        if (parts.length >= 2) {
+          sb.append(" -v \"").append(parts[0]).append(":").append(parts[1]);
+          if (parts.length > 2) {
+            sb.append(":").append(parts[2]);
+          }
+          sb.append("\"");
+        } else {
+          sb.append(" -v \"").append(bindString).append("\"");
+        }
+      }
+    }
 
-    for (String command : commands) {
-      sb.append(" ").append(command);
+    // Extract environment variables
+    var env = container.getEnvMap();
+    if (env != null && !env.isEmpty()) {
+      for (var entry : env.entrySet()) {
+        sb.append(" -e ").append(entry.getKey()).append("=").append(entry.getValue());
+      }
+    }
+
+    // Extract network
+    var network = container.getNetwork();
+    if (network != null) {
+      sb.append(" --network ").append(network.getId());
+    }
+
+    // Extract image name
+    var dockerImageName = container.getDockerImageName();
+    sb.append(" ").append(dockerImageName);
+
+    // Extract command
+    var command = container.getCommandParts();
+    if (command != null && command.length > 0) {
+      for (String part : command) {
+        sb.append(" ").append(part);
+      }
     }
 
     return sb.toString();

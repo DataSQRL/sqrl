@@ -71,6 +71,7 @@ public class ExternalRedpandaContainerIT extends SqrlContainerTestBase {
     cmd = cmdContainer.withCommand("test", "flink_kafka.sqrl");
 
     log.info("Starting compilation with external Redpanda container");
+    log.info(getDockerRunCommand(cmd, testDir));
     log.info(
         "DataSQRL container environment: KAFKA_HOST={}, KAFKA_PORT={},"
             + " PROPERTIES_BOOTSTRAP_SERVERS={}",

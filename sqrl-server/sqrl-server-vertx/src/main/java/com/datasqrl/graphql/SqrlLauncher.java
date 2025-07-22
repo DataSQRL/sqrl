@@ -15,6 +15,7 @@
  */
 package com.datasqrl.graphql;
 
+import com.datasqrl.env.GlobalEnvironmentStore;
 import io.micrometer.prometheusmetrics.PrometheusConfig;
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
 import io.vertx.launcher.application.HookContext;
@@ -26,6 +27,8 @@ import io.vertx.micrometer.MicrometerMetricsFactory;
 public class SqrlLauncher implements VertxApplicationHooks {
 
   public static void main(String[] args) {
+    GlobalEnvironmentStore.putAll(System.getenv());
+
     if (args == null || args.length == 0) {
       args = new String[] {HttpServerVerticle.class.getName()};
     }
