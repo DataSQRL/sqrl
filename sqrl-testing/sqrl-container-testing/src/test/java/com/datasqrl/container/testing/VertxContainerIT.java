@@ -15,6 +15,8 @@
  */
 package com.datasqrl.container.testing;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import lombok.SneakyThrows;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
@@ -47,7 +49,7 @@ public class VertxContainerIT extends SqrlContainerTestBase {
     var response = executeGraphQLQuery(testQuery);
     validateBasicGraphQLResponse(response);
 
-    verifyLogContains(serverContainer, "REQUEST BODY");
+    assertThat(serverContainer.getLogs()).contains("REQUEST BODY");
   }
 
   @Test
@@ -64,7 +66,8 @@ public class VertxContainerIT extends SqrlContainerTestBase {
 
     sharedHttpClient.execute(request);
 
-    verifyLogContains(serverContainer, "REQUEST BODY");
-    verifyLogContains(serverContainer, randomPath);
+    assertThat(serverContainer.getLogs()).contains("REQUEST BODY")
+    .contains(testBody)
+    .contains(randomPath);
   }
 }
