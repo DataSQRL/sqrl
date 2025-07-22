@@ -18,9 +18,11 @@ package com.datasqrl.container.testing;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Duration;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.http.util.EntityUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -103,7 +105,38 @@ public class ExternalRedpandaContainerIT extends SqrlContainerTestBase {
     assertLogFiles(logs, testDir);
     assertBuildNotOwnedByRoot(testDir, logs);
 
-    log.info("External Redpanda integration test completed successfully");
+    // Start GraphQL server with external Kafka configuration and test connectivity
+    var bootstrapServers = REDPANDA_CONTAINER_NAME + ":" + REDPANDA_PORT;
+    log.info("Starting GraphQL server with external Kafka: {}", bootstrapServers);
+
+    startGraphQLServer(
+        testDir,
+        container ->
+            container
+                .withEnv("PROPERTIES_BOOTSTRAP_SERVERS", bootstrapServers)
+                .withNetwork(sharedNetwork));
+
+    // Verify server is running and can execute GraphQL queries
+    assertThat(serverContainer.isRunning()).isTrue();
+
+    // Execute a GraphQL query to test server functionality with external Kafka
+    var response =
+        executeGraphQLQuery(
+            "{\"query\":\"query { ApplicationStatusTest(limit: 5) { total_count total_amount } }\"}");
+    assertThat(response.getStatusLine().getStatusCode()).isEqualTo(200);
+
+    var responseBody = EntityUtils.toString(response.getEntity());
+    var jsonResponse = new ObjectMapper().readTree(responseBody);
+
+    assertThat(jsonResponse.has("data")).isTrue();
+    assertThat(jsonResponse.get("data").has("ApplicationStatusTest")).isTrue();
+
+    // Verify server logs mention Kafka bootstrap servers
+    var serverLogs = serverContainer.getLogs();
+    assertThat(serverLogs).contains(bootstrapServers);
+
+    log.info(
+        "External Redpanda integration test completed successfully - including GraphQL server connectivity");
   }
 
   private void startRedpandaContainer() {

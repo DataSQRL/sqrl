@@ -352,9 +352,7 @@ public abstract class SqrlContainerTestBase {
   }
 
   protected void compileAndStartServer(
-      String scriptName,
-      Path testDir,
-      java.util.function.Consumer<GenericContainer<?>> containerCustomizer)
+      String scriptName, Path testDir, Consumer<GenericContainer<?>> containerCustomizer)
       throws Exception {
     compileSqrlScript(scriptName, testDir);
     startGraphQLServer(testDir, containerCustomizer);
