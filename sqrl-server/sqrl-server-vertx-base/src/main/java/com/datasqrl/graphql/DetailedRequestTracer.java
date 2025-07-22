@@ -42,11 +42,9 @@ public class DetailedRequestTracer implements Handler<RoutingContext> {
     // Log incoming request details
     logIncomingRequest(request, requestId);
 
-    // Capture request body if present
+    // Capture request body
     var body = context.body();
-    if (body != null && body.length() > 0) {
-      logRequestBody(body.buffer(), requestId);
-    }
+    logRequestBody(body != null ? body.buffer() : null, requestId);
 
     // Hook into response end to log final details
     response.endHandler(
@@ -83,7 +81,17 @@ public class DetailedRequestTracer implements Handler<RoutingContext> {
   }
 
   private void logRequestBody(Buffer body, String requestId) {
+    if (body == null) {
+      log.info("REQUEST BODY [{}] - No body", requestId);
+      return;
+    }
+
     var bodyStr = body.toString();
+    if (bodyStr.isEmpty()) {
+      log.info("REQUEST BODY [{}] - Size: 0 bytes, Content: [EMPTY]", requestId);
+      return;
+    }
+
     // Limit body size in logs to prevent overwhelming output
     var truncatedBody =
         bodyStr.length() > 2000 ? bodyStr.substring(0, 2000) + "... [TRUNCATED]" : bodyStr;
