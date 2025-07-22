@@ -255,13 +255,9 @@ jobs:
             - m2-{{ checksum "pom.xml" }}
       - generate-settings
       - install-jdk
-      - compute-mcp-tag
-      - run:
-          name: Auth ghcr
-          command: echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
       - run:
           name: Run Integration Tests
-          command: mvn -U -T2 -B install -DonlyITs -Dmcp.inspector.version=$MCP_TAG
+          command: mvn -U -T2 -B install -DonlyITs
       - save-test-results
 
   container-e2e-test:
@@ -273,15 +269,20 @@ jobs:
             - m2-{{ checksum "pom.xml" }}
       - generate-settings
       - install-jdk
+      - compute-mcp-tag
+      - run:
+          name: Auth ghcr
+          command: echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
       - run:
           name: Build with Docker images
-          command: mvn -U clean -T1C -B install -DonlyImages -Ddocker.image.tag=${CIRCLE_SHA1}
+          command: mvn -U clean -T1C -B install -DonlyImages -Ddocker.image.tag=local-${CIRCLE_SHA1}
       - run:
           name: Run container tests using TestContainers
           command: |
             mvn -B install -DonlyContainerE2E \
               -pl :sqrl-container-testing \
-              -Ddocker.image.tag=${CIRCLE_SHA1}
+              -Ddocker.image.tag=local-${CIRCLE_SHA1} \
+              -Dmcp.inspector.version=$MCP_TAG
 
   deploy:
     docker:
@@ -471,6 +472,7 @@ workflows:
               ignore: /.*/
           requires:
             - download-maven-dependencies
+            - docker-build-mcp-inspector
       - integration-tests:
           <<: *job-defaults
           filters:
@@ -484,7 +486,6 @@ workflows:
               test_sharding_index: [0, 1]
           requires:
             - download-maven-dependencies
-            - docker-build-mcp-inspector
       - build-images:
           <<: *job-defaults
           requires:
