@@ -71,7 +71,11 @@ public class SubscriptionConfigurationImpl implements SubscriptionConfiguration<
         KafkaConsumer<String, String> consumer = KafkaConsumer.create(vertx, getSourceConfig());
         consumer
             .subscribe(coords.getTopic())
-            .onSuccess(v -> log.info("Subscribed to topic: {}", coords.getTopic()))
+            .onSuccess(
+                v -> {
+                  log.info("Subscribed to topic: {}", coords.getTopic());
+                  startPromise.tryComplete();
+                })
             .onFailure(
                 err -> {
                   log.error("Failed to subscribe to topic: {}", coords.getTopic(), err);
@@ -98,6 +102,7 @@ public class SubscriptionConfigurationImpl implements SubscriptionConfiguration<
 
           subscriptions.put(pgSub.getFieldName(), pgSinkConsumer);
         }
+        startPromise.tryComplete();
         return PostgresDataFetcherFactory.create(subscriptions, coords);
       }
     };

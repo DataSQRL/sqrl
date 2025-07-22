@@ -129,7 +129,6 @@ public class HttpServerVerticle extends AbstractVerticle {
     // ── Deploy protocol-specific verticles ───────────────────────────────────
     DeploymentOptions childOpts = new DeploymentOptions().setInstances(1);
 
-    // inside bootstrap() in HttpServerVerticle
     var jwtOpt =
         Optional.ofNullable(config.getJwtAuth()).map(authCfg -> JWTAuth.create(vertx, authCfg));
 
@@ -137,43 +136,50 @@ public class HttpServerVerticle extends AbstractVerticle {
     GraphQLServerVerticle graphQLVerticle = new GraphQLServerVerticle(root, config, model, jwtOpt);
     boolean hasMcp = model.getOperations().stream().anyMatch(ApiOperation::isMcpEndpoint);
     boolean hasRest = model.getOperations().stream().anyMatch(ApiOperation::isRestEndpoint);
-    vertx
-        .deployVerticle(graphQLVerticle, childOpts)
-        .onSuccess(
-            graphQLDeploymentId -> {
-              log.info("GraphQL verticle deployed successfully: {}", graphQLDeploymentId);
+
+    Future<String> graphQLDeployment = vertx.deployVerticle(graphQLVerticle, childOpts);
+
+    graphQLDeployment
+        .compose(
+            deploymentId -> {
+              log.info("GraphQL verticle deployed successfully: {}", deploymentId);
               if (hasMcp) {
-                // Deploy MCP bridge verticle with access to GraphQL engine
                 McpBridgeVerticle mcpBridgeVerticle =
                     new McpBridgeVerticle(root, config, model, jwtOpt, graphQLVerticle);
-                vertx
+                return vertx
                     .deployVerticle(mcpBridgeVerticle, childOpts)
                     .onSuccess(
                         mcpDeploymentId ->
                             log.info(
                                 "MCP bridge verticle deployed successfully: {}", mcpDeploymentId))
                     .onFailure(err -> log.error("Failed to deploy MCP bridge verticle", err));
+              } else {
+                return Future.succeededFuture();
               }
+            })
+        .compose(
+            deploymentId -> {
               if (hasRest) {
-                // Deploy REST bridge verticle with access to GraphQL engine
                 RestBridgeVerticle restBridgeVerticle =
                     new RestBridgeVerticle(root, config, model, jwtOpt, graphQLVerticle);
-                vertx
+                return vertx
                     .deployVerticle(restBridgeVerticle, childOpts)
                     .onSuccess(
                         restDeploymentId ->
                             log.info(
                                 "REST bridge verticle deployed successfully: {}", restDeploymentId))
                     .onFailure(err -> log.error("Failed to deploy REST bridge verticle", err));
+              } else {
+                return Future.succeededFuture();
               }
             })
-        .onFailure(err -> log.error("Failed to deploy GraphQL verticle", err));
-
-    // ── Start the HTTP server ────────────────────────────────────────────────
-    vertx
-        .createHttpServer(config.getHttpServerOptions())
-        .requestHandler(root)
-        .listen(config.getHttpServerOptions().getPort())
+        .compose(
+            deploymentId -> {
+              return vertx
+                  .createHttpServer(config.getHttpServerOptions())
+                  .requestHandler(root)
+                  .listen(config.getHttpServerOptions().getPort());
+            })
         .onSuccess(
             srv -> {
               log.info("HTTP server listening on port {}", srv.actualPort());

@@ -104,7 +104,9 @@ public class GraphQLServerVerticle extends AbstractVerticle {
         .handler(GraphQLWSHandler.create(this.graphQLEngine))
         .handler(GraphQLHandler.create(this.graphQLEngine, this.config.getGraphQLHandlerOptions()));
 
-    startPromise.complete();
+    if (model.getSubscriptions().isEmpty()) {
+      startPromise.complete();
+    }
   }
 
   private Map<MetadataType, MetadataReader> createMetadataReaders() {
