@@ -75,7 +75,7 @@
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
     <mockito.version>4.8.0</mockito.version>
-    <jackson.version>2.19.1</jackson.version>
+    <jackson.version>2.19.2</jackson.version>
     <vertx.version>5.0.1</vertx.version>
     <agroal.version>2.7.1</agroal.version>
     <kafka.version>3.4.0</kafka.version>
