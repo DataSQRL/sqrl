@@ -112,7 +112,7 @@ class GraphQLJwtHandlerIT {
     serverConfig =
         new ServerConfig() {
           @Override
-          public String getSystemProperty(String envVar) {
+          public String getEnvironmentVariable(String envVar) {
             return CLUSTER.bootstrapServers();
           }
         };

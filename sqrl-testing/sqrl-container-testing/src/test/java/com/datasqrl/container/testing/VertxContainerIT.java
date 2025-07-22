@@ -15,7 +15,14 @@
  */
 package com.datasqrl.container.testing;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import lombok.SneakyThrows;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.util.EntityUtils;
 import org.junit.jupiter.api.Test;
 
 public class VertxContainerIT extends SqrlContainerTestBase {
@@ -32,5 +39,72 @@ public class VertxContainerIT extends SqrlContainerTestBase {
 
     var response = executeGraphQLQuery("{\"query\":\"query { __typename }\"}");
     validateBasicGraphQLResponse(response);
+  }
+
+  @Test
+  @SneakyThrows
+  void givenTraceRequestsEnabled_whenGraphQLRequestSent_thenRequestBodyLoggedInServerLogs() {
+    compileAndStartServer(
+        "myudf.sqrl", testDir, container -> container.withEnv("SQRL_TRACE_REQUESTS", "true"));
+
+    var testQuery = "{\"query\":\"query { __typename }\"}";
+    var response = executeGraphQLQuery(testQuery);
+    validateBasicGraphQLResponse(response);
+
+    assertThat(serverContainer.getLogs()).contains("REQUEST BODY");
+  }
+
+  @Test
+  @SneakyThrows
+  void givenTraceRequestsEnabled_whenHttpRequestsMade_thenLogPathAndBody() {
+    compileAndStartServer(
+        "myudf.sqrl", testDir, container -> container.withEnv("SQRL_TRACE_REQUESTS", "true"));
+
+    var testQuery = "{\"query\":\"query { __typename }\"}";
+    var response = executeGraphQLQuery(testQuery);
+    validateBasicGraphQLResponse(response);
+
+    assertThat(serverContainer.getLogs())
+        .contains("REQUEST BODY")
+        .contains(testQuery)
+        .contains("/graphql");
+
+    var randomPath = "/random/test/path/12345";
+    var testBody = "{\"test\":\"data\",\"random\":\"content\"}";
+
+    var randomRequest = new HttpPost(getBaseUrl() + randomPath);
+    randomRequest.setEntity(new StringEntity(testBody, ContentType.APPLICATION_JSON));
+
+    sharedHttpClient.execute(randomRequest);
+
+    assertThat(serverContainer.getLogs())
+        .contains("REQUEST BODY")
+        .contains(testBody)
+        .contains(randomPath);
+
+    var graphiqlResponse = sharedHttpClient.execute(new HttpGet(getBaseUrl() + "/graphiql/"));
+
+    assertThat(graphiqlResponse.getStatusLine().getStatusCode()).isEqualTo(200);
+    assertThat(graphiqlResponse.getFirstHeader("Content-Type").getValue()).contains("text/html");
+
+    var graphiql = EntityUtils.toString(graphiqlResponse.getEntity());
+
+    assertThat(graphiql)
+        .contains("<!doctype html>")
+        .contains("<html lang=\"en\">")
+        .contains("<title>GraphiQL</title>")
+        .contains("window.VERTX_GRAPHIQL_CONFIG")
+        .contains("\"httpEnabled\":true")
+        .contains("\"graphQLUri\":\"/graphql\"")
+        .contains("\"graphQLWSEnabled\":true")
+        .contains("\"graphQLWSUri\":\"/graphql\"")
+        .contains("static/js/main.")
+        .contains("static/css/main.")
+        .contains("<div id=\"root\"></div>");
+
+    assertThat(serverContainer.getLogs())
+        .contains("INCOMING REQUEST")
+        .contains("Method: GET")
+        .contains("URI: /graphiql/");
   }
 }
