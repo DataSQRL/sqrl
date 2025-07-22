@@ -26,6 +26,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.function.Consumer;
 import java.util.regex.Pattern;
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -205,9 +206,16 @@ public abstract class SqrlContainerTestBase {
   }
 
   protected void startGraphQLServer(Path workingDir) {
+    startGraphQLServer(workingDir, c -> {});
+  }
+
+  protected void startGraphQLServer(
+      Path workingDir, Consumer<GenericContainer<?>> containerCustomizer) {
     log.info("Docker run command to reproduce:");
     log.info(getDockerRunCommand(workingDir, SQRL_SERVER_IMAGE, getImageTag(), true));
     serverContainer = createServerContainer(workingDir);
+
+    containerCustomizer.accept(serverContainer);
 
     try {
       serverContainer.start();
@@ -341,6 +349,15 @@ public abstract class SqrlContainerTestBase {
   protected void compileAndStartServer(String scriptName, Path testDir) throws Exception {
     compileSqrlScript(scriptName, testDir);
     startGraphQLServer(testDir);
+  }
+
+  protected void compileAndStartServer(
+      String scriptName,
+      Path testDir,
+      java.util.function.Consumer<GenericContainer<?>> containerCustomizer)
+      throws Exception {
+    compileSqrlScript(scriptName, testDir);
+    startGraphQLServer(testDir, containerCustomizer);
   }
 
   protected HttpResponse executeGraphQLQuery(String query) throws Exception {

@@ -16,6 +16,9 @@
 package com.datasqrl.container.testing;
 
 import lombok.SneakyThrows;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
 import org.junit.jupiter.api.Test;
 
 public class VertxContainerIT extends SqrlContainerTestBase {
@@ -32,5 +35,36 @@ public class VertxContainerIT extends SqrlContainerTestBase {
 
     var response = executeGraphQLQuery("{\"query\":\"query { __typename }\"}");
     validateBasicGraphQLResponse(response);
+  }
+
+  @Test
+  @SneakyThrows
+  void givenTraceRequestsEnabled_whenGraphQLRequestSent_thenRequestBodyLoggedInServerLogs() {
+    compileAndStartServer(
+        "myudf.sqrl", testDir, container -> container.withEnv("DATASQRL_TRACE_REQUESTS", "true"));
+
+    var testQuery = "{\"query\":\"query { __typename }\"}";
+    var response = executeGraphQLQuery(testQuery);
+    validateBasicGraphQLResponse(response);
+
+    verifyLogContains(serverContainer, "REQUEST BODY");
+  }
+
+  @Test
+  @SneakyThrows
+  void givenTraceRequestsEnabled_whenPostToRandomPath_thenPathAndBodyLoggedInServerLogs() {
+    compileAndStartServer(
+        "myudf.sqrl", testDir, container -> container.withEnv("DATASQRL_TRACE_REQUESTS", "true"));
+
+    var randomPath = "/random/test/path/12345";
+    var testBody = "{\"test\":\"data\",\"random\":\"content\"}";
+
+    var request = new HttpPost(getBaseUrl() + randomPath);
+    request.setEntity(new StringEntity(testBody, ContentType.APPLICATION_JSON));
+
+    sharedHttpClient.execute(request);
+
+    verifyLogContains(serverContainer, "REQUEST BODY");
+    verifyLogContains(serverContainer, randomPath);
   }
 }
