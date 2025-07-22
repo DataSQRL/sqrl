@@ -108,13 +108,6 @@ public class HttpServerVerticle extends AbstractVerticle {
   private void bootstrap(Promise<Void> startPromise) {
     Router root = Router.router(vertx);
 
-    // Use detailed tracing if enabled, otherwise use standard logging
-    if (Boolean.parseBoolean(System.getenv().getOrDefault("DATASQRL_TRACE_REQUESTS", "false"))) {
-      root.route().handler(DetailedRequestTracer.create());
-    } else {
-      root.route().handler(LoggerHandler.create());
-    }
-
     // ── Metrics ───────────────────────────────────────────────────────────────
     var meterRegistry = findMeterRegistry();
     meterRegistry.ifPresent(
@@ -128,6 +121,13 @@ public class HttpServerVerticle extends AbstractVerticle {
     // ── Global handlers (CORS, body, etc.) ────────────────────────────────────
     root.route().handler(toCorsHandler(config.getCorsHandlerOptions()));
     root.route().handler(BodyHandler.create());
+
+    // Use detailed tracing if enabled, otherwise use standard logging (must be after BodyHandler)
+    if (Boolean.parseBoolean(System.getenv().getOrDefault("DATASQRL_TRACE_REQUESTS", "false"))) {
+      root.route().handler(DetailedRequestTracer.create());
+    } else {
+      root.route().handler(LoggerHandler.create());
+    }
 
     // ── Health checks ────────────────────────────────────────────────────────
     root.get("/health*").handler(HealthCheckHandler.create(vertx));

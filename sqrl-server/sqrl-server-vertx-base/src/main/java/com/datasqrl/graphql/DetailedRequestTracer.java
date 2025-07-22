@@ -44,6 +44,10 @@ public class DetailedRequestTracer implements Handler<RoutingContext> {
 
     // Capture request body
     var body = context.body();
+    log.debug("DEBUG [{}] - context.body() returned: {}", requestId, body);
+    if (body != null) {
+      log.debug("DEBUG [{}] - body.buffer() returned: {}", requestId, body.buffer());
+    }
     logRequestBody(body != null ? body.buffer() : null, requestId);
 
     // Hook into response end to log final details
@@ -82,13 +86,13 @@ public class DetailedRequestTracer implements Handler<RoutingContext> {
 
   private void logRequestBody(Buffer body, String requestId) {
     if (body == null) {
-      log.info("REQUEST BODY [{}] - No body", requestId);
+      log.info("REQUEST BODY [{}] - No body (null)", requestId);
       return;
     }
 
     var bodyStr = body.toString();
     if (bodyStr.isEmpty()) {
-      log.info("REQUEST BODY [{}] - Size: 0 bytes, Content: [EMPTY]", requestId);
+      log.info("REQUEST BODY [{}] - Size: {} bytes, Content: [EMPTY]", requestId, body.length());
       return;
     }
 
