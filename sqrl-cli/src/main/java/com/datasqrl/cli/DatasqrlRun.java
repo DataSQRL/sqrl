@@ -280,7 +280,7 @@ public class DatasqrlRun {
     ServerConfig serverConfig =
         new ServerConfig(config) {
           @Override
-          public String getSystemProperty(String envVar) {
+          public String getEnvironmentVariable(String envVar) {
             return getenv(envVar);
           }
         };

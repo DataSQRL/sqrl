@@ -100,7 +100,6 @@ public abstract class SqrlContainerTestBase {
     }
   }
 
-  @SuppressWarnings("resource")
   protected GenericContainer<?> createCmdContainer(Path workingDir) {
     return createCmdContainer(workingDir, true);
   }
@@ -168,10 +167,10 @@ public abstract class SqrlContainerTestBase {
     return new ContainerResult(cmd, exitCode, logs);
   }
 
-  record ContainerResult(GenericContainer<?> cmd, Long exitCode, String logs) {}
+  protected record ContainerResult(GenericContainer<?> cmd, Long exitCode, String logs) {}
 
   @Getter
-  public class ContainerError extends RuntimeException {
+  public static class ContainerError extends RuntimeException {
 
     private static final long serialVersionUID = -2159257606710389109L;
 
