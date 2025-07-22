@@ -107,7 +107,13 @@ public class HttpServerVerticle extends AbstractVerticle {
 
   private void bootstrap(Promise<Void> startPromise) {
     Router root = Router.router(vertx);
-    root.route().handler(LoggerHandler.create());
+
+    // Use detailed tracing if enabled, otherwise use standard logging
+    if (Boolean.parseBoolean(System.getenv().getOrDefault("DATASQRL_TRACE_REQUESTS", "false"))) {
+      root.route().handler(DetailedRequestTracer.create());
+    } else {
+      root.route().handler(LoggerHandler.create());
+    }
 
     // ── Metrics ───────────────────────────────────────────────────────────────
     var meterRegistry = findMeterRegistry();
