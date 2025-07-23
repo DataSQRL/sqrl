@@ -183,7 +183,9 @@ public class DatasqrlRun {
         objectMapper.readValue(planDir.resolve("kafka.json").toFile(), Map.class);
     List<Map<String, Object>> topics = (List<Map<String, Object>>) map.get("topics");
 
-    if (topics == null) {
+    if (topics == null || topics.isEmpty()) {
+      log.warn(
+          "The Kafka physical plan does not contain any topics, 'test-runner' topics will be ignored");
       return;
     }
 
@@ -193,13 +195,19 @@ public class DatasqrlRun {
         .getCreateTopics()
         .forEach(topic -> mutableTopics.add(Map.of("topicName", topic)));
 
-    if (getenv("SQRL_RUN_KAFKA_BOOTSTRAP_SERVERS") == null) {
-      throw new IllegalStateException("${SQRL_RUN_KAFKA_BOOTSTRAP_SERVERS} is not set");
+    var bootstrapServers = getenv("SQRL_RUN_KAFKA_BOOTSTRAP_SERVERS");
+    if (bootstrapServers == null) {
+      // Fallback for externally Kafka
+      bootstrapServers = getenv("KAFKA_BOOTSTRAP_SERVERS");
+    }
+
+    if (bootstrapServers == null) {
+      throw new IllegalStateException(
+          "Failed to get Kafka 'bootstrap.servers', both SQRL_RUN_KAFKA_BOOTSTRAP_SERVERS and KAFKA_BOOTSTRAP_SERVERS were null");
     }
 
     Properties props = new Properties();
-    props.put(
-        AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, getenv("SQRL_RUN_KAFKA_BOOTSTRAP_SERVERS"));
+    props.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
     try (AdminClient adminClient = AdminClient.create(props)) {
       Set<String> existingTopics = adminClient.listTopics().names().get();
 

@@ -116,6 +116,19 @@ public class OsProcessManager {
   }
 
   private void startRedpanda(PhysicalPlan plan) throws IOException, InterruptedException {
+    if (env.get("KAFKA_BOOTSTRAP_SERVERS") != null) {
+      log.info(
+          "Skip starting Redpanda, because KAFKA_BOOTSTRAP_SERVERS={} is provided",
+          env.get("KAFKA_BOOTSTRAP_SERVERS"));
+
+      if (env.get("KAFKA_GROUP_ID") == null) {
+        log.info("The 'KAFKA_GROUP_ID' environment variable is missing, will use a random UUID!");
+        setEnvironmentVariable("KAFKA_GROUP_ID", UUID.randomUUID().toString());
+      }
+
+      return;
+    }
+
     var kafkaPlanned =
         plan.getPlans(KafkaPhysicalPlan.class)
             .findFirst()
@@ -170,7 +183,7 @@ public class OsProcessManager {
               exitCode, errorDetails));
     }
 
-    waitForService("Redpanda", RP_PORT, RP_PORT, "rpk", "cluster", "health");
+    waitForService("Redpanda", RP_PORT, "rpk", "cluster", "health");
 
     // Set environment variables
     setEnvironmentVariable("SQRL_RUN_KAFKA_BOOTSTRAP_SERVERS", LOCALHOST + ':' + RP_PORT);
@@ -246,7 +259,7 @@ public class OsProcessManager {
 
   private void startPostgresService() throws IOException, InterruptedException {
     executePostgresCommand("service", "postgresql", "start");
-    waitForService("Postgres", PG_PORT, PG_PORT, "pg_isready", "-h", LOCALHOST, "-p", PG_PORT);
+    waitForService("Postgres", PG_PORT, "pg_isready", "-h", LOCALHOST, "-p", PG_PORT);
   }
 
   private boolean isDirectoryEmpty(Path path) throws IOException {

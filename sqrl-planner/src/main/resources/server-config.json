@@ -127,7 +127,7 @@
     "reconnectInterval": 1000,
     "hostnameVerificationAlgorithm": "",
     "host": "${SQRL_RUN_POSTGRES_HOST}",
-    "port": "${SQRL_RUN_POSTGRES_PORT}",
+    "port": 5432,
     "user": "${SQRL_RUN_POSTGRES_USERNAME}",
     "password": "${SQRL_RUN_POSTGRES_PASSWORD}",
     "database": "${SQRL_RUN_POSTGRES_DATABASE}",
