@@ -322,7 +322,7 @@ CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" BIGINT NOT NULL, "time" B
                 "type" : "integer"
               },
               "sensorid" : {
-                "type" : "string"
+                "type" : "integer"
               }
             },
             "required" : [
@@ -354,7 +354,7 @@ CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" BIGINT NOT NULL, "time" B
                 "type" : "integer"
               },
               "sensorid" : {
-                "type" : "string"
+                "type" : "integer"
               }
             },
             "required" : [ ]

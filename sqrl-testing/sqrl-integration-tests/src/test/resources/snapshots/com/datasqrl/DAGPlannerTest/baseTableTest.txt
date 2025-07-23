@@ -879,7 +879,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerWithEmail_2`
                 "type" : "integer"
               },
               "id" : {
-                "type" : "string"
+                "type" : "integer"
               }
             },
             "required" : [
@@ -910,7 +910,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerWithEmail_2`
                 "type" : "integer"
               },
               "id" : {
-                "type" : "string"
+                "type" : "integer"
               }
             },
             "required" : [

@@ -439,13 +439,13 @@ INSERT INTO `default_catalog`.`default_database`.`Orders1_2`
                 "type" : "integer"
               },
               "customerid" : {
-                "type" : "string"
+                "type" : "integer"
               },
               "limit" : {
                 "type" : "integer"
               },
               "id" : {
-                "type" : "string"
+                "type" : "integer"
               },
               "time" : {
                 "type" : "string"
@@ -474,13 +474,13 @@ INSERT INTO `default_catalog`.`default_database`.`Orders1_2`
                 "type" : "integer"
               },
               "customerid" : {
-                "type" : "string"
+                "type" : "integer"
               },
               "limit" : {
                 "type" : "integer"
               },
               "id" : {
-                "type" : "string"
+                "type" : "integer"
               },
               "time" : {
                 "type" : "string"
