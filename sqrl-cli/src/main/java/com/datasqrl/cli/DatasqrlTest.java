@@ -85,7 +85,7 @@ public class DatasqrlTest {
   @SneakyThrows
   public int run() {
     // 1. Run the DataSQRL pipeline via {@link DatasqrlRun}
-    DatasqrlRun run = new DatasqrlRun(planDir, sqrlConfig, flinkConfig, env, true);
+    DatasqrlRun run = new DatasqrlRun(planDir, sqrlConfig, flinkConfig, env);
 
     var testConfig = sqrlConfig.getTestConfig();
     // Initialize snapshot directory

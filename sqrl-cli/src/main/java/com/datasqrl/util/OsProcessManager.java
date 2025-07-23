@@ -22,6 +22,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -39,6 +40,12 @@ public class OsProcessManager {
   private static final String FLINK_CP_DATA_PATH = "/data/flink/checkpoints";
   private static final String FLINK_SP_DATA_PATH = "/data/flink/savepoints";
   private static final String LOGS_PATH = "/tmp/logs";
+
+  private static final String LOCALHOST = "localhost";
+  private static final String RP_PORT = "9092";
+  private static final String PG_PORT = "5432";
+  private static final String PG_DB = "datasqrl";
+  private static final String PG_AUTHORITY = LOCALHOST + ':' + PG_PORT + '/' + PG_DB;
 
   private final Map<String, String> env;
   private final String ownerUser;
@@ -106,11 +113,7 @@ public class OsProcessManager {
   }
 
   private void startRedpanda() throws IOException, InterruptedException {
-    // Start Redpanda if KAFKA_HOST is not set
-    if (env.get("KAFKA_HOST") != null) {
-      return;
-    }
-
+    // TODO: Only start Redpanda if the job pipeline has Kafka tables
     log.info("Starting Redpanda ...");
 
     var redpandaDataPath = Paths.get(REDPANDA_DATA_PATH);
@@ -155,17 +158,17 @@ public class OsProcessManager {
               exitCode, errorDetails));
     }
 
-    waitForRedpanda("localhost", 9092);
+    waitForService("Redpanda", RP_PORT, RP_PORT, "rpk", "cluster", "health");
 
     // Set environment variables
-    setEnvironmentVariable("KAFKA_HOST", "localhost");
-    setEnvironmentVariable("KAFKA_PORT", "9092");
-    setEnvironmentVariable("PROPERTIES_BOOTSTRAP_SERVERS", "localhost:9092");
+    setEnvironmentVariable("SQRL_RUN_KAFKA_BOOTSTRAP_SERVERS", LOCALHOST + ':' + RP_PORT);
+    setEnvironmentVariable("SQRL_RUN_KAFKA_GROUP_ID", UUID.randomUUID().toString());
 
     log.info("Redpanda started successfully");
   }
 
   private void startPostgres() throws IOException, InterruptedException {
+    // TODO: Only start Redpanda if the job pipeline has Kafka tables
     var postgresDataPath = Paths.get(POSTGRES_DATA_PATH);
     var started = false;
 
@@ -203,33 +206,26 @@ public class OsProcessManager {
           "su", "-", "postgres", "-c", "psql -U postgres -c \"CREATE EXTENSION vector;\"");
     }
 
-    // Start Postgres if POSTGRES_HOST is not set
-    if (env.get("POSTGRES_HOST") == null) {
-      if (!started) {
-        log.info("Starting Postgres service ...");
-        startPostgresService();
-      }
-
-      // Set environment variables
-      setEnvironmentVariable("POSTGRES_HOST", "localhost");
-      setEnvironmentVariable("POSTGRES_PORT", "5432");
-      setEnvironmentVariable("JDBC_URL", "jdbc:postgresql://localhost:5432/datasqrl");
-      setEnvironmentVariable("JDBC_AUTHORITY", "localhost:5432/datasqrl");
-      setEnvironmentVariable("PGHOST", "localhost");
-      setEnvironmentVariable("PGUSER", "postgres");
-      setEnvironmentVariable("JDBC_USERNAME", "postgres");
-      setEnvironmentVariable("JDBC_PASSWORD", "postgres");
-      setEnvironmentVariable("PGPORT", "5432");
-      setEnvironmentVariable("PGPASSWORD", "postgres");
-      setEnvironmentVariable("PGDATABASE", "datasqrl");
+    if (!started) {
+      log.info("Starting Postgres service ...");
+      startPostgresService();
     }
+
+    // Set environment variables
+    setEnvironmentVariable("SQRL_RUN_POSTGRES_HOST", LOCALHOST);
+    setEnvironmentVariable("SQRL_RUN_POSTGRES_PORT", PG_PORT);
+    setEnvironmentVariable("SQRL_RUN_POSTGRES_DATABASE", PG_DB);
+    setEnvironmentVariable("SQRL_RUN_POSTGRES_AUTHORITY", PG_AUTHORITY);
+    setEnvironmentVariable("SQRL_RUN_POSTGRES_JDBC_URL", "jdbc:postgresql://" + PG_AUTHORITY);
+    setEnvironmentVariable("SQRL_RUN_POSTGRES_USERNAME", "postgres");
+    setEnvironmentVariable("SQRL_RUN_POSTGRES_PASSWORD", "postgres");
 
     log.info("Postgres started successfully");
   }
 
   private void startPostgresService() throws IOException, InterruptedException {
     executePostgresCommand("service", "postgresql", "start");
-    waitForPostgres("localhost", 5432);
+    waitForService("Postgres", PG_PORT, PG_PORT, "pg_isready", "-h", LOCALHOST, "-p", PG_PORT);
   }
 
   private boolean isDirectoryEmpty(Path path) throws IOException {
@@ -256,16 +252,8 @@ public class OsProcessManager {
     }
   }
 
-  private void waitForPostgres(String host, int port) {
-    waitForService("Postgres", host, port, "pg_isready", "-h", host, "-p", String.valueOf(port));
-  }
-
-  private void waitForRedpanda(String host, int port) {
-    waitForService("Redpanda", host, port, "rpk", "cluster", "health");
-  }
-
-  private void waitForService(String serviceName, String host, int port, String... checkCommand) {
-    log.info("Waiting for {} to be ready at {}:{} ...", serviceName, host, port);
+  private void waitForService(String serviceName, String port, String... checkCommand) {
+    log.info("Waiting for {} to be ready at {}:{} ...", serviceName, LOCALHOST, port);
 
     ServiceHealthChecker healthChecker =
         () -> {

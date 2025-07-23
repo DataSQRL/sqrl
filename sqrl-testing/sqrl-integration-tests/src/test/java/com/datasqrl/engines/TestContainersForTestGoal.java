@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -90,16 +91,15 @@ public class TestContainersForTestGoal implements TestEngineVisitor<TestContaine
       @Override
       public Map<String, String> getEnv() {
         Map<String, String> env = new HashMap<>(8);
-        env.put("JDBC_URL", testDatabase.getJdbcUrl());
-        env.put("JDBC_AUTHORITY", testDatabase.getJdbcUrl().split("://")[1]);
-        env.put("PGHOST", testDatabase.getHost());
-        env.put("PGUSER", testDatabase.getUsername());
-        env.put("JDBC_USERNAME", testDatabase.getUsername());
-        env.put("JDBC_PASSWORD", testDatabase.getPassword());
+        env.put("SQRL_RUN_POSTGRES_JDBC_URL", testDatabase.getJdbcUrl());
+        env.put("SQRL_RUN_POSTGRES_AUTHORITY", testDatabase.getJdbcUrl().split("://")[1]);
+        env.put("SQRL_RUN_POSTGRES_HOST", testDatabase.getHost());
         env.put(
-            "PGPORT", testDatabase.getMappedPort(PostgreSQLContainer.POSTGRESQL_PORT).toString());
-        env.put("PGPASSWORD", testDatabase.getPassword());
-        env.put("PGDATABASE", testDatabase.getDatabaseName());
+            "SQRL_RUN_POSTGRES_PORT",
+            testDatabase.getMappedPort(PostgreSQLContainer.POSTGRESQL_PORT).toString());
+        env.put("SQRL_RUN_POSTGRES_USERNAME", testDatabase.getUsername());
+        env.put("SQRL_RUN_POSTGRES_PASSWORD", testDatabase.getPassword());
+        env.put("SQRL_RUN_POSTGRES_DATABASE", testDatabase.getDatabaseName());
         return env;
       }
     };
@@ -142,7 +142,11 @@ public class TestContainersForTestGoal implements TestEngineVisitor<TestContaine
 
       @Override
       public Map<String, String> getEnv() {
-        return Map.of("PROPERTIES_BOOTSTRAP_SERVERS", testKafka.getBootstrapServers());
+        return Map.of(
+            "SQRL_RUN_KAFKA_BOOTSTRAP_SERVERS",
+            testKafka.getBootstrapServers(),
+            "SQRL_RUN_KAFKA_GROUP_ID",
+            UUID.randomUUID().toString());
       }
     };
   }

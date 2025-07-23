@@ -165,8 +165,8 @@ CREATE TABLE `UserTokens` (
   'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
   'properties.auto.offset.reset' = 'earliest',
-  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
-  'properties.group.id' = '${PROPERTIES_GROUP_ID}',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
   'topic' = 'UserTokens'
 );
 CREATE VIEW `TotalUserTokens`
@@ -223,10 +223,10 @@ CREATE TABLE `TotalOrgTokens_1` (
 ) WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
-  'password' = '${JDBC_PASSWORD}',
+  'password' = '${POSTGRES_PASSWORD}',
   'table-name' = 'TotalOrgTokens',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'username' = '${JDBC_USERNAME}'
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
 );
 CREATE TABLE `TotalUserTokens_2` (
   `userid` BIGINT NOT NULL,
@@ -236,10 +236,10 @@ CREATE TABLE `TotalUserTokens_2` (
 ) WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
-  'password' = '${JDBC_PASSWORD}',
+  'password' = '${POSTGRES_PASSWORD}',
   'table-name' = 'TotalUserTokens',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'username' = '${JDBC_USERNAME}'
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
 );
 CREATE TABLE `UsageAlert_3` (
   `userid` BIGINT NOT NULL,
@@ -249,8 +249,8 @@ CREATE TABLE `UsageAlert_3` (
   'connector' = 'kafka',
   'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
-  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
-  'properties.group.id' = '${PROPERTIES_GROUP_ID}',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
   'topic' = 'UsageAlert'
 );
 EXECUTE STATEMENT SET BEGIN

@@ -221,10 +221,10 @@ CREATE TABLE `Customer_1` (
 ) WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
-  'password' = '${JDBC_PASSWORD}',
+  'password' = '${POSTGRES_PASSWORD}',
   'table-name' = 'Customer_1',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'username' = '${JDBC_USERNAME}'
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
 );
 CREATE TABLE `CustomerWithEmail_2` (
   `customerid` BIGINT NOT NULL,
@@ -236,10 +236,10 @@ CREATE TABLE `CustomerWithEmail_2` (
 ) WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
-  'password' = '${JDBC_PASSWORD}',
+  'password' = '${POSTGRES_PASSWORD}',
   'table-name' = 'CustomerWithEmail_2',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'username' = '${JDBC_USERNAME}'
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
 );
 CREATE TABLE `DistinctCustomer_3` (
   `customerid` BIGINT NOT NULL,
@@ -251,10 +251,10 @@ CREATE TABLE `DistinctCustomer_3` (
 ) WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
-  'password' = '${JDBC_PASSWORD}',
+  'password' = '${POSTGRES_PASSWORD}',
   'table-name' = 'DistinctCustomer_3',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'username' = '${JDBC_USERNAME}'
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
 );
 CREATE TABLE `Product_4` (
   `productid` BIGINT NOT NULL,
@@ -266,10 +266,10 @@ CREATE TABLE `Product_4` (
 ) WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
-  'password' = '${JDBC_PASSWORD}',
+  'password' = '${POSTGRES_PASSWORD}',
   'table-name' = 'Product_4',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'username' = '${JDBC_USERNAME}'
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Customer_1`

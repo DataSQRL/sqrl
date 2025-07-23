@@ -119,11 +119,11 @@
     "fileRegionEnabled" : true
   },
   "pgConnectOptions" : {
-    "host" : "${PGHOST}",
-    "port" : 5432,
-    "user" : "${PGUSER}",
-    "password" : "${PGPASSWORD}",
-    "database" : "${PGDATABASE}",
+    "host": "${SQRL_RUN_POSTGRES_HOST}",
+    "port": "${SQRL_RUN_POSTGRES_PORT}",
+    "user": "${SQRL_RUN_POSTGRES_USERNAME}",
+    "password": "${SQRL_RUN_POSTGRES_PASSWORD}",
+    "database": "${SQRL_RUN_POSTGRES_DATABASE}",
     "cachePreparedStatements" : false,
     "preparedStatementCacheMaxSize" : 256,
     "preparedStatementCacheSqlFilter" : { },

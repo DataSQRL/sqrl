@@ -181,10 +181,10 @@ CREATE TABLE `iceberg_parquet_table_1` (
 ) WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
-  'password' = '${JDBC_PASSWORD}',
+  'password' = '${POSTGRES_PASSWORD}',
   'table-name' = 'iceberg_parquet_table',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'username' = '${JDBC_USERNAME}'
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
 );
 CREATE TABLE `kafka_avro_table_2` (
   `user_id` INTEGER,
@@ -194,10 +194,10 @@ CREATE TABLE `kafka_avro_table_2` (
 ) WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
-  'password' = '${JDBC_PASSWORD}',
+  'password' = '${POSTGRES_PASSWORD}',
   'table-name' = 'kafka_avro_table',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'username' = '${JDBC_USERNAME}'
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
 );
 CREATE TABLE `kafka_debezium_table_3` (
   `user_id` INTEGER,
@@ -207,10 +207,10 @@ CREATE TABLE `kafka_debezium_table_3` (
 ) WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
-  'password' = '${JDBC_PASSWORD}',
+  'password' = '${POSTGRES_PASSWORD}',
   'table-name' = 'kafka_debezium_table',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'username' = '${JDBC_USERNAME}'
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
 );
 CREATE TABLE `kafka_safe_csv_table_4` (
   `user_id` INTEGER,
@@ -220,10 +220,10 @@ CREATE TABLE `kafka_safe_csv_table_4` (
 ) WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
-  'password' = '${JDBC_PASSWORD}',
+  'password' = '${POSTGRES_PASSWORD}',
   'table-name' = 'kafka_safe_csv_table',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'username' = '${JDBC_USERNAME}'
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
 );
 CREATE TABLE `kafka_safe_json_table_5` (
   `user_id` INTEGER,
@@ -233,10 +233,10 @@ CREATE TABLE `kafka_safe_json_table_5` (
 ) WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
-  'password' = '${JDBC_PASSWORD}',
+  'password' = '${POSTGRES_PASSWORD}',
   'table-name' = 'kafka_safe_json_table',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'username' = '${JDBC_USERNAME}'
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
 );
 CREATE TABLE `upsert_kafka_confluent_avro_6` (
   `user_id` INTEGER NOT NULL,
@@ -245,10 +245,10 @@ CREATE TABLE `upsert_kafka_confluent_avro_6` (
 ) WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
-  'password' = '${JDBC_PASSWORD}',
+  'password' = '${POSTGRES_PASSWORD}',
   'table-name' = 'upsert_kafka_confluent_avro',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'username' = '${JDBC_USERNAME}'
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`iceberg_parquet_table_1`

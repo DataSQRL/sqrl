@@ -115,8 +115,8 @@ CREATE TABLE `SensorReading` (
   'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
   'properties.auto.offset.reset' = 'earliest',
-  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
-  'properties.group.id' = '${PROPERTIES_GROUP_ID}',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
   'topic' = 'SensorReading'
 );
 CREATE TABLE `SensorUpdates` (
@@ -129,8 +129,8 @@ CREATE TABLE `SensorUpdates` (
   'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
   'properties.auto.offset.reset' = 'earliest',
-  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
-  'properties.group.id' = '${PROPERTIES_GROUP_ID}',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
   'topic' = 'SensorUpdates'
 );
 CREATE VIEW `_SensorDistinct`
@@ -163,10 +163,10 @@ CREATE TABLE `EnrichedSensorReading_2` (
 ) WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
-  'password' = '${JDBC_PASSWORD}',
+  'password' = '${POSTGRES_PASSWORD}',
   'table-name' = 'EnrichedSensorReading',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'username' = '${JDBC_USERNAME}'
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
 );
 CREATE TABLE `SensorReading_3` (
   `sensorid` INTEGER NOT NULL,
@@ -185,10 +185,10 @@ CREATE TABLE `SensorReading_4` (
 ) WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
-  'password' = '${JDBC_PASSWORD}',
+  'password' = '${POSTGRES_PASSWORD}',
   'table-name' = 'SensorReading',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'username' = '${JDBC_USERNAME}'
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
 );
 CREATE TABLE `SensorUpdates_5` (
   `sensorid` INTEGER NOT NULL,
@@ -207,10 +207,10 @@ CREATE TABLE `SensorUpdates_6` (
 ) WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
-  'password' = '${JDBC_PASSWORD}',
+  'password' = '${POSTGRES_PASSWORD}',
   'table-name' = 'SensorUpdates',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'username' = '${JDBC_USERNAME}'
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Result_1`

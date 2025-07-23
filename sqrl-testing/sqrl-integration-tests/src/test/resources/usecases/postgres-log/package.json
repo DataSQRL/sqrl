@@ -4,10 +4,10 @@
   "connectors": {
     "postgres_log-source": {
       "connector": "postgres-cdc",
-      "hostname": "${PGHOST}",
+      "hostname": "${POSTGRES_HOST}",
       "port": "${PGPORT}",
-      "username": "${JDBC_USERNAME}",
-      "password": "${JDBC_PASSWORD}",
+      "username": "${POSTGRES_USERNAME}",
+      "password": "${POSTGRES_PASSWORD}",
       "database-name": "datasqrl",
       "schema-name": "public",
       "table-name": "${sqrl:table}",
@@ -17,9 +17,9 @@
     },
     "postgres_log-sink": {
       "connector": "jdbc-sqrl",
-      "password": "${JDBC_PASSWORD}",
+      "password": "${POSTGRES_PASSWORD}",
       "driver": "org.postgresql.Driver",
-      "username": "${JDBC_USERNAME}",
+      "username": "${POSTGRES_USERNAME}",
       "url": "${JDBC_URL}",
       "table-name": "${sqrl:table}"
     }

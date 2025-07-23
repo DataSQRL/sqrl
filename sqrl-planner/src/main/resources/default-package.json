@@ -21,8 +21,8 @@
       "max-result-depth": 3
     }
   },
-  "engines" : {
-    "flink" : {
+  "engines": {
+    "flink": {
       "config": {
         "execution.runtime-mode": "STREAMING",
         "execution.target": "local",
@@ -34,7 +34,7 @@
         "taskmanager.memory.network.max": "800m"
       }
     },
-    "snowflake" : {
+    "snowflake": {
       "schema-type": "aws-glue",
       "catalog-name": "${SNOWFLAKE_CATALOG_NAME}",
       "external-volume": "${SNOWFLAKE_EXTERNAL_VOLUME}",
@@ -42,47 +42,47 @@
     }
   },
   "connectors": {
-    "postgres": {
-      "connector": "jdbc-sqrl",
-      "password": "${JDBC_PASSWORD}",
-      "driver": "org.postgresql.Driver",
-      "username": "${JDBC_USERNAME}",
-      "url": "jdbc:postgresql://${JDBC_AUTHORITY}",
-      "table-name": "${sqrl:table-name}"
-    },
     "kafka-mutation": {
-      "connector" : "kafka",
-      "format" : "flexible-json",
+      "connector": "kafka",
+      "format": "flexible-json",
       "flexible-json.timestamp-format.standard": "ISO-8601",
-      "properties.bootstrap.servers": "${PROPERTIES_BOOTSTRAP_SERVERS}",
-      "properties.group.id": "${PROPERTIES_GROUP_ID}",
+      "properties.bootstrap.servers": "${KAFKA_BOOTSTRAP_SERVERS}",
+      "properties.group.id": "${KAFKA_GROUP_ID}",
       "properties.auto.offset.reset": "earliest",
-      "topic" : "${sqrl:table-name}"
+      "topic": "${sqrl:table-name}"
     },
     "kafka": {
-      "connector" : "kafka",
-      "format" : "flexible-json",
+      "connector": "kafka",
+      "format": "flexible-json",
       "flexible-json.timestamp-format.standard": "ISO-8601",
-      "properties.bootstrap.servers": "${PROPERTIES_BOOTSTRAP_SERVERS}",
-      "properties.group.id": "${PROPERTIES_GROUP_ID}",
-      "topic" : "${sqrl:table-name}"
+      "properties.bootstrap.servers": "${KAFKA_BOOTSTRAP_SERVERS}",
+      "properties.group.id": "${KAFKA_GROUP_ID}",
+      "topic": "${sqrl:table-name}"
     },
     "localfile": {
       "connector": "filesystem",
       "format": "${sqrl:format}",
       "path": "${DATA_PATH}/${sqrl:filename}",
-      "source.monitor-interval" : "10 sec"
+      "source.monitor-interval": "10 sec"
     },
     "iceberg": {
       "connector": "iceberg",
       "catalog-table": "${sqrl:table-name}"
     },
+    "postgres": {
+      "connector": "jdbc-sqrl",
+      "username": "${POSTGRES_USERNAME}",
+      "password": "${POSTGRES_PASSWORD}",
+      "url": "jdbc:postgresql://${POSTGRES_AUTHORITY}",
+      "driver": "org.postgresql.Driver",
+      "table-name": "${sqrl:table-name}"
+    },
     "postgres_log-source": {
       "connector": "postgres-cdc",
-      "hostname": "${PGHOST}",
+      "hostname": "${POSTGRES_HOST}",
       "port": "5432",
-      "username": "${JDBC_USERNAME}",
-      "password": "${JDBC_PASSWORD}",
+      "username": "${POSTGRES_USERNAME}",
+      "password": "${POSTGRES_PASSWORD}",
       "database-name": "datasqrl",
       "schema-name": "public",
       "table-name": "${sqrl:table-name}",
@@ -92,10 +92,10 @@
     },
     "postgres_log-sink": {
       "connector": "jdbc-sqrl",
-      "password": "${JDBC_PASSWORD}",
+      "password": "${POSTGRES_PASSWORD}",
       "driver": "org.postgresql.Driver",
-      "username": "${JDBC_USERNAME}",
-      "url": "jdbc:postgresql://${JDBC_AUTHORITY}",
+      "username": "${POSTGRES_USERNAME}",
+      "url": "jdbc:postgresql://${POSTGRES_AUTHORITY}",
       "table-name": "${sqrl:table-name}"
     },
     "print": {

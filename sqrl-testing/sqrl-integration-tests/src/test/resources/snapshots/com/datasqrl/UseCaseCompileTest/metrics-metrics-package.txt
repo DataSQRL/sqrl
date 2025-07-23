@@ -158,8 +158,8 @@ CREATE TABLE `SensorReading` (
   'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
   'properties.auto.offset.reset' = 'earliest',
-  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
-  'properties.group.id' = '${PROPERTIES_GROUP_ID}',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
   'topic' = 'SensorReading'
 );
 CREATE VIEW `HighTempAlert`
@@ -192,8 +192,8 @@ CREATE TABLE `HighTempAlert_1` (
   'connector' = 'kafka',
   'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
-  'properties.bootstrap.servers' = '${PROPERTIES_BOOTSTRAP_SERVERS}',
-  'properties.group.id' = '${PROPERTIES_GROUP_ID}',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
   'topic' = 'HighTempAlert'
 );
 CREATE TABLE `SensorAnalysis_2` (
@@ -204,10 +204,10 @@ CREATE TABLE `SensorAnalysis_2` (
 ) WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
-  'password' = '${JDBC_PASSWORD}',
+  'password' = '${POSTGRES_PASSWORD}',
   'table-name' = 'SensorAnalysis',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'username' = '${JDBC_USERNAME}'
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
 );
 CREATE TABLE `SensorMaxTempLastMin_3` (
   `sensorid` INTEGER NOT NULL,
@@ -217,10 +217,10 @@ CREATE TABLE `SensorMaxTempLastMin_3` (
 ) WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
-  'password' = '${JDBC_PASSWORD}',
+  'password' = '${POSTGRES_PASSWORD}',
   'table-name' = 'SensorMaxTempLastMin',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'username' = '${JDBC_USERNAME}'
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
 );
 CREATE TABLE `SensorReading_4` (
   `uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -231,10 +231,10 @@ CREATE TABLE `SensorReading_4` (
 ) WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
-  'password' = '${JDBC_PASSWORD}',
+  'password' = '${POSTGRES_PASSWORD}',
   'table-name' = 'SensorReading',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'username' = '${JDBC_USERNAME}'
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`HighTempAlert_1`

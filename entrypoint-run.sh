@@ -41,7 +41,7 @@ if [ "$1" == "run" ] || [ "$1" == "test" ]; then
         rpk redpanda start --schema-registry-addr 0.0.0.0:8086 --overprovisioned --smp 1 --memory 1G --reserve-memory 0M --node-id 0 --check=false &
         export KAFKA_HOST=localhost
         export KAFKA_PORT=9092
-        export PROPERTIES_BOOTSTRAP_SERVERS=localhost:9092
+        export KAFKA_BOOTSTRAP_SERVERS=localhost:9092
     fi
 
     # Start Postgres if POSTGRES_HOST is not set
@@ -51,11 +51,11 @@ if [ "$1" == "run" ] || [ "$1" == "test" ]; then
         export POSTGRES_HOST=localhost
         export POSTGRES_PORT=5432
         export JDBC_URL="jdbc:postgresql://localhost:5432/datasqrl"
-        export JDBC_AUTHORITY="localhost:5432/datasqrl"
-        export PGHOST="localhost"
+        export POSTGRES_AUTHORITY="localhost:5432/datasqrl"
+        export POSTGRES_HOST="localhost"
         export PGUSER="postgres"
-        export JDBC_USERNAME="postgres"
-        export JDBC_PASSWORD="postgres"
+        export POSTGRES_USERNAME="postgres"
+        export POSTGRES_PASSWORD="postgres"
         export PGPORT=5432
         export PGPASSWORD="postgres"
         export PGDATABASE="datasqrl"

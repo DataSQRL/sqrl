@@ -1,10 +1,37 @@
 {
-  "engines" : {
-    "flink" : {
+  "engines": {
+    "flink": {
       "config": {
         "state.checkpoints.dir": "file:///data/flink/checkpoints",
         "state.savepoints.dir": "file:///data/flink/savepoints"
       }
+    }
+  },
+  "connectors": {
+    "kafka-mutation": {
+      "properties.bootstrap.servers": "${SQRL_RUN_KAFKA_BOOTSTRAP_SERVERS}",
+      "properties.group.id": "${SQRL_RUN_KAFKA_GROUP_ID}"
+    },
+    "kafka": {
+      "properties.bootstrap.servers": "${SQRL_RUN_KAFKA_BOOTSTRAP_SERVERS}",
+      "properties.group.id": "${SQRL_RUN_KAFKA_GROUP_ID}"
+    },
+    "postgres": {
+      "username": "${SQRL_RUN_POSTGRES_USERNAME}",
+      "password": "${SQRL_RUN_POSTGRES_PASSWORD}",
+      "url": "jdbc:postgresql://${SQRL_RUN_POSTGRES_AUTHORITY}"
+    },
+    "postgres_log-source": {
+      "hostname": "${SQRL_RUN_POSTGRES_HOST}",
+      "port": "${SQRL_RUN_POSTGRES_HOST}",
+      "username": "${SQRL_RUN_POSTGRES_USERNAME}",
+      "password": "${SQRL_RUN_POSTGRES_PASSWORD}",
+      "database-name": "${SQRL_RUN_POSTGRES_DATABASE}"
+    },
+    "postgres_log-sink": {
+      "username": "${SQRL_RUN_POSTGRES_USERNAME}",
+      "password": "${SQRL_RUN_POSTGRES_PASSWORD}",
+      "url": "jdbc:postgresql://${SQRL_RUN_POSTGRES_AUTHORITY}"
     }
   }
 }

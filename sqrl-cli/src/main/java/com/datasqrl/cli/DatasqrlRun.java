@@ -44,17 +44,14 @@ import java.nio.file.attribute.FileTime;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.Statement;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -64,9 +61,7 @@ import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.configuration.CheckpointingOptions;
 import org.apache.flink.configuration.Configuration;
-import org.apache.flink.configuration.DeploymentOptions;
 import org.apache.flink.configuration.ExecutionOptions;
-import org.apache.flink.configuration.RestartStrategyOptions;
 import org.apache.flink.core.execution.SavepointFormatType;
 import org.apache.flink.runtime.jobgraph.SavepointConfigOptions;
 import org.apache.flink.table.api.TableResult;
@@ -81,23 +76,17 @@ public class DatasqrlRun {
   private final PackageJson sqrlConfig;
   private final Configuration flinkConfig;
   private final Map<String, String> env;
-  private final boolean testRun;
   private final ObjectMapper objectMapper;
 
   private Vertx vertx;
   private TableResult execute;
 
   public DatasqrlRun(
-      Path planDir,
-      PackageJson sqrlConfig,
-      Configuration flinkConfig,
-      Map<String, String> env,
-      boolean testRun) {
+      Path planDir, PackageJson sqrlConfig, Configuration flinkConfig, Map<String, String> env) {
     this.planDir = planDir;
     this.sqrlConfig = sqrlConfig;
     this.flinkConfig = flinkConfig;
-    this.env = new HashMap<>(env); // we might need to mutate it
-    this.testRun = testRun;
+    this.env = env;
     objectMapper = SqrlObjectMapper.MAPPER;
   }
 
@@ -159,7 +148,6 @@ public class DatasqrlRun {
 
   @SneakyThrows
   private TableResult runFlinkJob() {
-    applyInternalTestConfig();
     var execMode = flinkConfig.get(ExecutionOptions.RUNTIME_MODE);
     var isCompiledPlan = sqrlConfig.getCompilerConfig().compileFlinkPlan();
 
@@ -205,11 +193,13 @@ public class DatasqrlRun {
         .getCreateTopics()
         .forEach(topic -> mutableTopics.add(Map.of("topicName", topic)));
 
-    Properties props = new Properties();
-    if (getenv("PROPERTIES_BOOTSTRAP_SERVERS") == null) {
-      throw new RuntimeException("${PROPERTIES_BOOTSTRAP_SERVERS} is not set");
+    if (getenv("SQRL_RUN_KAFKA_BOOTSTRAP_SERVERS") == null) {
+      throw new IllegalStateException("${SQRL_RUN_KAFKA_BOOTSTRAP_SERVERS} is not set");
     }
-    props.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, getenv("PROPERTIES_BOOTSTRAP_SERVERS"));
+
+    Properties props = new Properties();
+    props.put(
+        AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, getenv("SQRL_RUN_KAFKA_BOOTSTRAP_SERVERS"));
     try (AdminClient adminClient = AdminClient.create(props)) {
       Set<String> existingTopics = adminClient.listTopics().names().get();
 
@@ -225,12 +215,6 @@ public class DatasqrlRun {
         adminClient.createTopics(Collections.singletonList(newTopic)).all().get();
       }
     }
-
-    if (getenv("PROPERTIES_GROUP_ID") == null) {
-      log.warn(
-          "The 'PROPERTIES_GROUP_ID' environment variable is missing, will use a random UUID!");
-      env.put("PROPERTIES_GROUP_ID", UUID.randomUUID().toString());
-    }
   }
 
   @SneakyThrows
@@ -241,11 +225,11 @@ public class DatasqrlRun {
     }
     Map plan = objectMapper.readValue(file, Map.class);
 
-    String fullPostgresJDBCUrl =
-        "jdbc:postgresql://%s:%s/%s"
-            .formatted(getenv("PGHOST"), getenv("PGPORT"), getenv("PGDATABASE"));
     try (Connection connection =
-        DriverManager.getConnection(fullPostgresJDBCUrl, getenv("PGUSER"), getenv("PGPASSWORD"))) {
+        DriverManager.getConnection(
+            getenv("SQRL_RUN_POSTGRES_JDBC_URL"),
+            getenv("SQRL_RUN_POSTGRES_USERNAME"),
+            getenv("SQRL_RUN_POSTGRES_PASSWORD"))) {
       for (Map statement : (List<Map>) plan.get("statements")) {
         log.info("Executing statement {} of type {}", statement.get("name"), statement.get("type"));
         try (Statement stmt = connection.createStatement()) {
@@ -289,11 +273,11 @@ public class DatasqrlRun {
     if (planDir.resolve("postgres.json").toFile().exists()) {
       serverConfig
           .getPgConnectOptions()
-          .setHost(getenv("PGHOST"))
-          .setPort(Integer.parseInt(getenv("PGPORT")))
-          .setUser(getenv("PGUSER"))
-          .setPassword(getenv("PGPASSWORD"))
-          .setDatabase(getenv("PGDATABASE"));
+          .setHost(getenv("SQRL_RUN_POSTGRES_HOST"))
+          .setPort(Integer.parseInt(getenv("SQRL_RUN_POSTGRES_PORT")))
+          .setUser(getenv("SQRL_RUN_POSTGRES_USERNAME"))
+          .setPassword(getenv("SQRL_RUN_POSTGRES_PASSWORD"))
+          .setDatabase(getenv("SQRL_RUN_POSTGRES_DATABASE"));
     }
 
     serverConfig = ServerConfigUtil.mergeConfigs(serverConfig, vertxConfig());
@@ -320,10 +304,6 @@ public class DatasqrlRun {
 
   @SneakyThrows
   Optional<String> getLastSavepoint() {
-    if (testRun) {
-      return Optional.empty();
-    }
-
     var savepointDir = flinkConfig.get(CheckpointingOptions.SAVEPOINT_DIRECTORY);
     if (StringUtils.isNotBlank(savepointDir)) {
       log.debug("Using savepoint dir from Flink configuration YAML: {}", savepointDir);
@@ -369,19 +349,6 @@ public class DatasqrlRun {
         .getEngineConfig(EngineIds.SERVER)
         .map(PackageJson.EngineConfig::getConfig)
         .orElse(null);
-  }
-
-  void applyInternalTestConfig() {
-    if (testRun) {
-      flinkConfig.set(DeploymentOptions.TARGET, "local");
-
-      if (env.get("FLINK_RESTART_STRATEGY") != null) {
-        flinkConfig.set(RestartStrategyOptions.RESTART_STRATEGY, "fixed-delay");
-        flinkConfig.set(RestartStrategyOptions.RESTART_STRATEGY_FIXED_DELAY_ATTEMPTS, 0);
-        flinkConfig.set(
-            RestartStrategyOptions.RESTART_STRATEGY_FIXED_DELAY_DELAY, Duration.ofSeconds(5));
-      }
-    }
   }
 
   public static class ModelContainer {

@@ -184,8 +184,7 @@ public class MutationConfigurationImpl implements MutationConfiguration<DataFetc
   Map<String, String> getSinkConfig(boolean transactional) {
     String clientUUID = UUID.randomUUID().toString();
     Map<String, String> conf = new HashMap<>();
-    conf.put(
-        BOOTSTRAP_SERVERS_CONFIG, config.getEnvironmentVariable("PROPERTIES_BOOTSTRAP_SERVERS"));
+    conf.put(BOOTSTRAP_SERVERS_CONFIG, config.getEnvironmentVariable("KAFKA_BOOTSTRAP_SERVERS"));
     conf.put(KEY_SERIALIZER_CLASS_CONFIG, "com.datasqrl.graphql.kafka.JsonSerializer");
     conf.put(VALUE_SERIALIZER_CLASS_CONFIG, "com.datasqrl.graphql.kafka.JsonSerializer");
 

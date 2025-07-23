@@ -62,7 +62,7 @@ public abstract class AbstractCompileCmd extends AbstractCmd {
             cli.rootDir,
             this.cli.packageFiles,
             this.files,
-            getGoal() == ExecutionGoal.RUN && !cli.internalTestExec);
+            getGoal() == ExecutionGoal.RUN || getGoal() == ExecutionGoal.TEST);
     var testConfig = sqrlConfig.getTestConfig();
 
     var engines = getEngines();

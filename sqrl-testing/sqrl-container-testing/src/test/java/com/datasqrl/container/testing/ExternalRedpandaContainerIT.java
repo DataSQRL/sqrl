@@ -73,8 +73,7 @@ public class ExternalRedpandaContainerIT extends SqrlContainerTestBase {
     log.info("Starting compilation with external Redpanda container");
     log.info(getDockerRunCommand(cmd, testDir));
     log.info(
-        "DataSQRL container environment: KAFKA_HOST={}, KAFKA_PORT={},"
-            + " PROPERTIES_BOOTSTRAP_SERVERS={}",
+        "DataSQRL container environment: KAFKA_HOST={}, KAFKA_PORT={}, KAFKA_BOOTSTRAP_SERVERS={}",
         REDPANDA_CONTAINER_NAME,
         REDPANDA_PORT,
         REDPANDA_CONTAINER_NAME + ":" + REDPANDA_PORT);
@@ -191,7 +190,7 @@ public class ExternalRedpandaContainerIT extends SqrlContainerTestBase {
             .withNetwork(sharedNetwork)
             .withEnv("KAFKA_HOST", REDPANDA_CONTAINER_NAME)
             .withEnv("KAFKA_PORT", String.valueOf(REDPANDA_PORT))
-            .withEnv("PROPERTIES_BOOTSTRAP_SERVERS", REDPANDA_CONTAINER_NAME + ":" + REDPANDA_PORT);
+            .withEnv("KAFKA_BOOTSTRAP_SERVERS", REDPANDA_CONTAINER_NAME + ":" + REDPANDA_PORT);
 
     // Add additional mount to resolve the symlink
     // flink+kafka/loan-local -> ../banking/loan-local
