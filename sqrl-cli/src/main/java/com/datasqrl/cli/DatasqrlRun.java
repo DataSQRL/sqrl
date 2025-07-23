@@ -282,9 +282,9 @@ public class DatasqrlRun {
         .onComplete(
             res -> {
               if (res.succeeded()) {
-                log.info("Vertx deplotment ID: {}", res.result());
+                log.info("Vertx deployment ID: {}", res.result());
               } else {
-                log.warn("Vertx deplotment failed", res.cause());
+                log.warn("Vertx deployment failed", res.cause());
               }
             });
   }
