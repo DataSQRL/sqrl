@@ -20,6 +20,8 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.ext.web.RoutingContext;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 
@@ -44,18 +46,18 @@ public class DetailedRequestTracer implements Handler<RoutingContext> {
 
     // Capture request body
     var body = context.body();
-    log.debug("[{}] - context.body() returned: {}", requestId, body);
-    if (body != null) {
-      log.debug("[{}] - body.buffer() returned: {}", requestId, body.buffer());
-    }
     logRequestBody(body != null ? body.buffer() : null, requestId);
+
+    // Wrap response to capture body data
+    var responseBodyCapture = new ArrayList<Buffer>();
+    wrapResponse(response, responseBodyCapture);
 
     // Hook into response end to log final details
     response.endHandler(
         v -> {
           var endTime = System.currentTimeMillis();
           var duration = endTime - startTime;
-          logOutgoingResponse(response, requestId, duration);
+          logOutgoingResponse(response, requestId, duration, responseBodyCapture);
         });
 
     context.next();
@@ -75,7 +77,7 @@ public class DetailedRequestTracer implements Handler<RoutingContext> {
             .collect(Collectors.joining("&"));
 
     log.debug(
-        "INCOMING REQUEST [{}] - Method: {}, URI: {}, Headers: [{}], Params: [{}], RemoteAddress: {}",
+        "[{}] INCOMING REQUEST - Method: {}, URI: {}, Headers: [{}], Params: [{}], RemoteAddress: {}",
         requestId,
         request.method(),
         request.uri(),
@@ -86,36 +88,37 @@ public class DetailedRequestTracer implements Handler<RoutingContext> {
 
   private void logRequestBody(Buffer body, String requestId) {
     if (body == null) {
-      log.debug("REQUEST BODY [{}] - No body (null)", requestId);
+      log.debug("[{}] REQUEST BODY - No body (null)", requestId);
       return;
     }
 
     var bodyStr = body.toString();
     if (bodyStr.isEmpty()) {
-      log.debug("REQUEST BODY [{}] - Size: {} bytes, Content: [EMPTY]", requestId, body.length());
+      log.debug("[{}] REQUEST BODY - Size: {} bytes, Content: [EMPTY]", requestId, body.length());
       return;
     }
 
-    // Limit body size in logs to prevent overwhelming output
-    var truncatedBody =
-        bodyStr.length() > 2000 ? bodyStr.substring(0, 2000) + "... [TRUNCATED]" : bodyStr;
-
-    log.debug(
-        "REQUEST BODY [{}] - Size: {} bytes, Content: {}", requestId, body.length(), truncatedBody);
+    log.debug("[{}] REQUEST BODY - Size: {} bytes, Content: {}", requestId, body.length(), bodyStr);
   }
 
-  private void logOutgoingResponse(HttpServerResponse response, String requestId, long durationMs) {
+  private void logOutgoingResponse(
+      HttpServerResponse response,
+      String requestId,
+      long durationMs,
+      List<Buffer> responseBodyCapture) {
     var headers =
         response.headers().entries().stream()
             .map(entry -> entry.getKey() + ": " + entry.getValue())
             .collect(Collectors.joining(", "));
 
     log.debug(
-        "OUTGOING RESPONSE [{}] - Status: {}, Headers: [{}], Duration: {}ms",
+        "[{}] OUTGOING RESPONSE - Status: {}, Headers: [{}], Duration: {}ms",
         requestId,
         response.getStatusCode(),
         headers.isEmpty() ? "none" : headers,
         durationMs);
+
+    logResponseBody(responseBodyCapture, requestId);
   }
 
   private String maskSensitiveHeader(String headerName, String value) {
@@ -131,6 +134,35 @@ public class DetailedRequestTracer implements Handler<RoutingContext> {
 
   private String generateRequestId() {
     return "REQ-" + System.nanoTime() + "-" + Thread.currentThread().getId();
+  }
+
+  private void wrapResponse(HttpServerResponse response, List<Buffer> responseBodyCapture) {
+    // Response body logging is complex in Vert.x due to the streaming nature
+    // For now, we'll log that response body capture is not yet implemented
+    // Future enhancement could use a custom HttpServerResponse wrapper
+    log.trace(
+        "Response body capture initialized (requires custom response wrapper for full implementation)");
+  }
+
+  private void logResponseBody(List<Buffer> responseBodyCapture, String requestId) {
+    if (responseBodyCapture.isEmpty()) {
+      log.debug(
+          "[{}] RESPONSE BODY - No body data captured (requires response wrapping enhancement)",
+          requestId);
+      return;
+    }
+
+    var totalSize = responseBodyCapture.stream().mapToInt(Buffer::length).sum();
+    var combinedBody = Buffer.buffer();
+    responseBodyCapture.forEach(combinedBody::appendBuffer);
+
+    var bodyStr = combinedBody.toString();
+    if (bodyStr.length() > 10000) {
+      // Truncate very large responses
+      bodyStr = bodyStr.substring(0, 10000) + "... [TRUNCATED]";
+    }
+
+    log.debug("[{}] RESPONSE BODY - Size: {} bytes, Content: {}", requestId, totalSize, bodyStr);
   }
 
   public static DetailedRequestTracer create() {
