@@ -18,6 +18,7 @@ package com.datasqrl.container.testing;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Duration;
+import java.util.regex.Pattern;
 import lombok.SneakyThrows;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -101,6 +102,22 @@ public class VertxContainerIT extends SqrlContainerTestBase {
     assertTraceLogContains("INCOMING REQUEST", "Method: GET", "URI: /graphiql/");
   }
 
+  @Test
+  @SneakyThrows
+  void givenTraceRequestsEnabled_whenRequestsMade_thenLogsContainRequestPrefix() {
+    compileAndStartServer(
+        "myudf.sqrl", testDir, container -> container.withEnv("SQRL_TRACE_REQUESTS", "true"));
+
+    var testQuery = "{\"query\":\"query { __typename }\"}";
+    var response = executeGraphQLQuery(testQuery);
+    validateBasicGraphQLResponse(response);
+
+    // Verify that log entries contain request ID prefix in the expected format [REQ-...]
+    assertTraceLogMatchesPattern("\\[REQ-\\d+-\\d+\\] INCOMING REQUEST");
+    assertTraceLogMatchesPattern("\\[REQ-\\d+-\\d+\\] REQUEST BODY");
+    assertTraceLogMatchesPattern("\\[REQ-\\d+-\\d+\\] OUTGOING RESPONSE");
+  }
+
   @SneakyThrows
   private void assertTraceLogContains(String... expectedPatterns) {
     // Wait for log file to be created and populated with expected content
@@ -110,6 +127,22 @@ public class VertxContainerIT extends SqrlContainerTestBase {
         .untilAsserted(
             () -> {
               assertThat(traceLogs()).contains(expectedPatterns);
+            });
+  }
+
+  @SneakyThrows
+  private void assertTraceLogMatchesPattern(String regexPattern) {
+    // Wait for log file to be created and populated with expected pattern
+    Awaitility.await()
+        .atMost(Duration.ofSeconds(10))
+        .pollInterval(Duration.ofMillis(500))
+        .untilAsserted(
+            () -> {
+              var logs = traceLogs();
+              var pattern = Pattern.compile(regexPattern);
+              assertThat(pattern.matcher(logs).find())
+                  .as("Expected log pattern '%s' not found in logs", regexPattern)
+                  .isTrue();
             });
   }
 
