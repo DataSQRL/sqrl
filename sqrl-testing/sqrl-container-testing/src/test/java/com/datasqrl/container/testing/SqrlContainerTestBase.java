@@ -347,7 +347,7 @@ public abstract class SqrlContainerTestBase {
   }
 
   @SneakyThrows
-  protected Path itPath(String relativePath) {
+  protected static Path itPath(String relativePath) {
     var path =
         Paths.get("../sqrl-integration-tests/src/test/resources/usecases", relativePath)
             .toAbsolutePath();

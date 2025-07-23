@@ -116,89 +116,82 @@ public class OsProcessManager {
   }
 
   private void startRedpanda(PhysicalPlan plan) throws IOException, InterruptedException {
-    if (env.get("KAFKA_BOOTSTRAP_SERVERS") != null) {
+    String bootstrapServers;
+
+    var externalBootstrapServers = env.get("KAFKA_BOOTSTRAP_SERVERS");
+    if (externalBootstrapServers != null) {
       log.info(
           "Skip starting Redpanda, because KAFKA_BOOTSTRAP_SERVERS={} is provided",
-          env.get("KAFKA_BOOTSTRAP_SERVERS"));
+          externalBootstrapServers);
+      bootstrapServers = externalBootstrapServers;
 
-      if (env.get("KAFKA_GROUP_ID") == null) {
-        log.info("The 'KAFKA_GROUP_ID' environment variable is missing, will use a random UUID!");
-        setEnvironmentVariable("KAFKA_GROUP_ID", UUID.randomUUID().toString());
-      }
-
-      return;
-    }
-
-    var kafkaPlanned =
-        plan.getPlans(KafkaPhysicalPlan.class)
-            .findFirst()
-            .map(p -> p.getTopics() != null && !p.getTopics().isEmpty())
-            .orElse(false);
-    if (!kafkaPlanned) {
+    } else if (!isKafkaPlanned(plan)) {
       log.debug("Skip starting Redpanda, as plan has no relevant Kafka parts");
       return;
+
+    } else {
+      log.info("Starting Redpanda ...");
+
+      var redpandaDataPath = Paths.get(REDPANDA_DATA_PATH);
+      Files.createDirectories(redpandaDataPath);
+
+      // Start Redpanda process
+      ProcessBuilder pb =
+          new ProcessBuilder(
+              "rpk",
+              "redpanda",
+              "start",
+              "--schema-registry-addr",
+              "0.0.0.0:8086",
+              "--overprovisioned",
+              "--config",
+              "/etc/redpanda/redpanda.yaml",
+              "--smp",
+              "1",
+              "--memory",
+              "1G",
+              "--reserve-memory",
+              "0M",
+              "--node-id",
+              "0",
+              "--check=false");
+
+      pb.redirectOutput(Paths.get(LOGS_PATH, "redpanda.log").toFile());
+      pb.redirectErrorStream(true);
+
+      var redpandaProcess = pb.start();
+
+      // Wait a moment for the process to initialize
+      Thread.sleep(2000);
+
+      // Check if the process is still alive
+      if (!redpandaProcess.isAlive()) {
+        var exitCode = redpandaProcess.exitValue();
+        var errorDetails = readServiceLogFile("Redpanda");
+        throw new IllegalStateException(
+            String.format(
+                "Redpanda process failed to start (exit code: %d). Error details: %s",
+                exitCode, errorDetails));
+      }
+
+      waitForService("Redpanda", RP_PORT, "rpk", "cluster", "health");
+
+      bootstrapServers = LOCALHOST + ':' + RP_PORT;
+      log.info("Redpanda started successfully");
     }
-
-    log.info("Starting Redpanda ...");
-
-    var redpandaDataPath = Paths.get(REDPANDA_DATA_PATH);
-    Files.createDirectories(redpandaDataPath);
-
-    // Start Redpanda process
-    ProcessBuilder pb =
-        new ProcessBuilder(
-            "rpk",
-            "redpanda",
-            "start",
-            "--schema-registry-addr",
-            "0.0.0.0:8086",
-            "--overprovisioned",
-            "--config",
-            "/etc/redpanda/redpanda.yaml",
-            "--smp",
-            "1",
-            "--memory",
-            "1G",
-            "--reserve-memory",
-            "0M",
-            "--node-id",
-            "0",
-            "--check=false");
-
-    pb.redirectOutput(Paths.get(LOGS_PATH, "redpanda.log").toFile());
-    pb.redirectErrorStream(true);
-
-    var redpandaProcess = pb.start();
-
-    // Wait a moment for the process to initialize
-    Thread.sleep(2000);
-
-    // Check if the process is still alive
-    if (!redpandaProcess.isAlive()) {
-      var exitCode = redpandaProcess.exitValue();
-      var errorDetails = readServiceLogFile("Redpanda");
-      throw new IllegalStateException(
-          String.format(
-              "Redpanda process failed to start (exit code: %d). Error details: %s",
-              exitCode, errorDetails));
-    }
-
-    waitForService("Redpanda", RP_PORT, "rpk", "cluster", "health");
 
     // Set environment variables
-    setEnvironmentVariable("SQRL_RUN_KAFKA_BOOTSTRAP_SERVERS", LOCALHOST + ':' + RP_PORT);
+    setEnvironmentVariable("SQRL_RUN_KAFKA_BOOTSTRAP_SERVERS", bootstrapServers);
     setEnvironmentVariable("SQRL_RUN_KAFKA_GROUP_ID", UUID.randomUUID().toString());
-
-    log.info("Redpanda started successfully");
   }
 
   private void startPostgres(PhysicalPlan plan) throws IOException, InterruptedException {
-    var kafkaPlanned =
+    var postgresPlanned =
         plan.getPlans(JdbcPhysicalPlan.class)
             .findFirst()
             .map(p -> p.getStatements() != null && !p.getStatements().isEmpty())
             .orElse(false);
-    if (!kafkaPlanned) {
+    if (!postgresPlanned) {
       log.debug("Skip starting Postgres, as plan has no relevant JDBC parts");
       return;
     }
@@ -255,6 +248,13 @@ public class OsProcessManager {
     setEnvironmentVariable("SQRL_RUN_POSTGRES_PASSWORD", "postgres");
 
     log.info("Postgres started successfully");
+  }
+
+  private boolean isKafkaPlanned(PhysicalPlan plan) {
+    return plan.getPlans(KafkaPhysicalPlan.class)
+        .findFirst()
+        .map(p -> p.getTopics() != null && !p.getTopics().isEmpty())
+        .orElse(false);
   }
 
   private void startPostgresService() throws IOException, InterruptedException {

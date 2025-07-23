@@ -19,8 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Duration;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +26,7 @@ import org.apache.http.util.EntityUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.DockerImageName;
@@ -43,7 +42,7 @@ public class ExternalRedpandaContainerIT extends SqrlContainerTestBase {
 
   @Override
   protected String getTestCaseName() {
-    return "external-kafka";
+    return "flink+kafka";
   }
 
   @BeforeEach
@@ -69,7 +68,7 @@ public class ExternalRedpandaContainerIT extends SqrlContainerTestBase {
 
     // When - Compile SQRL script with external Kafka configuration
     var cmdContainer = createCmdContainerWithExternalKafka();
-    cmd = cmdContainer.withCommand("test", "flink-kafka.sqrl");
+    cmd = cmdContainer.withCommand("test", "flink_kafka.sqrl");
 
     log.info("Starting compilation with external Redpanda container");
     log.info(getDockerRunCommand(cmd, testDir));
@@ -138,14 +137,6 @@ public class ExternalRedpandaContainerIT extends SqrlContainerTestBase {
         "External Redpanda integration test completed successfully - including GraphQL server connectivity");
   }
 
-  @Override
-  @SneakyThrows
-  protected Path itPath(String relativePath) {
-    var path = Paths.get("src/test/resources/usecases", relativePath).toAbsolutePath();
-    assertThat(path).exists().isDirectory();
-    return path.toRealPath();
-  }
-
   private void startRedpandaContainer() {
     log.info("Starting external Redpanda container on port {}", REDPANDA_PORT);
 
@@ -192,8 +183,22 @@ public class ExternalRedpandaContainerIT extends SqrlContainerTestBase {
   }
 
   private GenericContainer<?> createCmdContainerWithExternalKafka() {
-    return createCmdContainer(testDir)
-        .withNetwork(sharedNetwork)
-        .withEnv("KAFKA_BOOTSTRAP_SERVERS", REDPANDA_CONTAINER_NAME + ":" + REDPANDA_PORT);
+    var container =
+            createCmdContainer(testDir, true)
+                    .withNetwork(sharedNetwork)
+                    .withEnv("KAFKA_BOOTSTRAP_SERVERS", REDPANDA_CONTAINER_NAME + ":" + REDPANDA_PORT);
+
+    // Add additional mount to resolve the symlink
+    // flink+kafka/loan-local -> ../banking/loan-local
+    var bankingDir = testDir.getParent().resolve("banking");
+
+    if (bankingDir.toFile().exists()) {
+      container =
+              container.withFileSystemBind(
+                      bankingDir.toString(), BUILD_DIR + "/../banking", BindMode.READ_ONLY);
+      log.info("Mounted banking directory: {} -> {}", bankingDir, BUILD_DIR + "/../banking");
+    }
+
+    return container;
   }
 }

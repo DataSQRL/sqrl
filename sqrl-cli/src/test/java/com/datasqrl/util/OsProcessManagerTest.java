@@ -558,4 +558,51 @@ class OsProcessManagerTest {
       // Note: We can't easily verify the log warning without additional mocking
     }
   }
+
+  @Test
+  void givenExternalKafkaBootstrapServers_whenStartDependentServices_thenSkipsRedpandaStartup()
+      throws Exception {
+    // Given
+    env.put("KAFKA_BOOTSTRAP_SERVERS", "external-kafka:9092");
+    serviceManager = new OsProcessManager(env);
+
+    try (MockedStatic<Files> filesMocked = mockStatic(Files.class);
+        MockedStatic<Paths> pathsMocked = mockStatic(Paths.class)) {
+
+      Path mockPath = mock(Path.class);
+      when(mockPath.toAbsolutePath()).thenReturn(mockPath);
+      when(mockPath.toString()).thenReturn("/mock/path");
+      pathsMocked.when(() -> Paths.get(anyString())).thenReturn(mockPath);
+      pathsMocked.when(() -> Paths.get(anyString(), anyString())).thenReturn(mockPath);
+      filesMocked.when(() -> Files.createDirectories(any(Path.class))).thenReturn(mockPath);
+
+      when(mockProcess.waitFor()).thenReturn(0);
+
+      try (MockedConstruction<ProcessBuilder> pbMocked =
+          mockConstruction(
+              ProcessBuilder.class,
+              (mock, context) -> {
+                when(mock.start()).thenReturn(mockProcess);
+                when(mock.redirectOutput(any(ProcessBuilder.Redirect.class))).thenReturn(mock);
+                when(mock.redirectError(any(ProcessBuilder.Redirect.class))).thenReturn(mock);
+              })) {
+
+        // When
+        serviceManager.startDependentServices(mockPhysicalPlan);
+
+        // Then
+        // Verify that external bootstrap servers are used
+        assertThat(GlobalEnvironmentStore.get("SQRL_RUN_KAFKA_BOOTSTRAP_SERVERS"))
+            .isEqualTo("external-kafka:9092");
+        assertThat(GlobalEnvironmentStore.get("SQRL_RUN_KAFKA_GROUP_ID")).isNotNull();
+
+        // Should not have started any redpanda processes (only chown processes for directories)
+        var constructedBuilders = pbMocked.constructed();
+        // Verify no redpanda command was executed by checking that constructed processes are
+        // minimal
+        // (only for directory ownership changes)
+        assertThat(constructedBuilders.size()).isLessThanOrEqualTo(2); // At most chown commands
+      }
+    }
+  }
 }
