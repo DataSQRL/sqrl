@@ -15,10 +15,7 @@
  */
 package com.datasqrl.cli;
 
-import com.datasqrl.config.SqrlConstants;
-import com.datasqrl.env.GlobalEnvironmentStore;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.util.ConfigLoaderUtils;
 import picocli.CommandLine;
 
 @CommandLine.Command(
@@ -29,15 +26,15 @@ public class ExecuteCmd extends AbstractCmd {
   @Override
   protected void runInternal(ErrorCollector errors) throws Exception {
     // Start services before executing
-    getOsProcessManager().startDependentServices();
-
-    var env = GlobalEnvironmentStore.getAll();
-    var targetDir = getTargetDir();
-    var planDir = targetDir.resolve(SqrlConstants.PLAN_DIR);
-    var sqrlConfig = ConfigLoaderUtils.loadResolvedConfig(errors, getBuildDir());
-    var flinkConfig = ConfigLoaderUtils.loadFlinkConfig(planDir);
-
-    var sqrlRun = new DatasqrlRun(planDir, sqrlConfig, flinkConfig, env);
-    sqrlRun.run(true, true);
+    //    getOsProcessManager().startDependentServices();
+    //
+    //    var env = GlobalEnvironmentStore.getAll();
+    //    var targetDir = getTargetDir();
+    //    var planDir = targetDir.resolve(SqrlConstants.PLAN_DIR);
+    //    var sqrlConfig = ConfigLoaderUtils.loadResolvedConfig(errors, getBuildDir());
+    //    var flinkConfig = ConfigLoaderUtils.loadFlinkConfig(planDir);
+    //
+    //    var sqrlRun = new DatasqrlRun(planDir, sqrlConfig, flinkConfig, env);
+    //    sqrlRun.run(true, true);
   }
 }

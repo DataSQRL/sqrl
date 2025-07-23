@@ -15,6 +15,9 @@
  */
 package com.datasqrl.util;
 
+import com.datasqrl.engine.PhysicalPlan;
+import com.datasqrl.engine.database.relational.JdbcPhysicalPlan;
+import com.datasqrl.engine.log.kafka.KafkaPhysicalPlan;
 import com.datasqrl.env.GlobalEnvironmentStore;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -61,10 +64,10 @@ public class OsProcessManager {
    * Starts all required services for DataSQRL execution. This includes Postgres, Redpanda, and
    * creates necessary directories.
    */
-  public void startDependentServices() {
+  public void startDependentServices(PhysicalPlan plan) {
     try {
-      startRedpanda();
-      startPostgres();
+      startRedpanda(plan);
+      startPostgres(plan);
       createDirectories();
 
       // Add every registered env entry to global environment store
@@ -112,8 +115,17 @@ public class OsProcessManager {
     setOwnerForDir(dir);
   }
 
-  private void startRedpanda() throws IOException, InterruptedException {
-    // TODO: Only start Redpanda if the job pipeline has Kafka tables
+  private void startRedpanda(PhysicalPlan plan) throws IOException, InterruptedException {
+    var kafkaPlanned =
+        plan.getPlans(KafkaPhysicalPlan.class)
+            .findFirst()
+            .map(p -> p.getTopics() != null && !p.getTopics().isEmpty())
+            .orElse(false);
+    if (!kafkaPlanned) {
+      log.debug("Skip starting Redpanda, as plan has no relevant Kafka parts");
+      return;
+    }
+
     log.info("Starting Redpanda ...");
 
     var redpandaDataPath = Paths.get(REDPANDA_DATA_PATH);
@@ -167,8 +179,17 @@ public class OsProcessManager {
     log.info("Redpanda started successfully");
   }
 
-  private void startPostgres() throws IOException, InterruptedException {
-    // TODO: Only start Redpanda if the job pipeline has Kafka tables
+  private void startPostgres(PhysicalPlan plan) throws IOException, InterruptedException {
+    var kafkaPlanned =
+        plan.getPlans(JdbcPhysicalPlan.class)
+            .findFirst()
+            .map(p -> p.getStatements() != null && !p.getStatements().isEmpty())
+            .orElse(false);
+    if (!kafkaPlanned) {
+      log.debug("Skip starting Postgres, as plan has no relevant JDBC parts");
+      return;
+    }
+
     var postgresDataPath = Paths.get(POSTGRES_DATA_PATH);
     var started = false;
 

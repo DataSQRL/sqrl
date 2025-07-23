@@ -26,6 +26,7 @@ import static org.mockito.Mockito.when;
 
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.SqrlConstants;
+import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.validate.ExecutionGoal;
 import com.datasqrl.util.ConfigLoaderUtils;
@@ -45,6 +46,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class RunCmdTest {
 
   @Mock private ErrorCollector errors;
+  @Mock private PhysicalPlan plan;
   @Mock private Configuration flinkConfig;
 
   private RunCmd runCmd;
@@ -60,9 +62,9 @@ class RunCmdTest {
   void execute_whenInternalTestExecIsTrue_shouldSkipExecution() throws Exception {
     runCmd.cli = new DatasqrlCli(tempDir, StatusHook.NONE, true);
 
-    runCmd.execute(errors);
+    runCmd.execute(errors, plan);
 
-    verify(runCmd).execute(errors);
+    verify(runCmd).execute(errors, plan);
     verify(runCmd, never()).getTargetDir();
   }
 
@@ -90,12 +92,12 @@ class RunCmdTest {
                   DatasqrlRun.class,
                   (mock, context) -> when(mock.run(true, true)).thenReturn(null))) {
 
-        runCmd.execute(errors);
+        runCmd.execute(errors, plan);
 
         // Verify service manager was created and started
         assertThat(serviceManagerMocked.constructed()).hasSize(1);
         OsProcessManager serviceManager = serviceManagerMocked.constructed().get(0);
-        verify(serviceManager).startDependentServices();
+        verify(serviceManager).startDependentServices(plan);
 
         // Verify exact arguments
         mocked.verify(() -> ConfigLoaderUtils.loadResolvedConfig(errors, buildDir));
