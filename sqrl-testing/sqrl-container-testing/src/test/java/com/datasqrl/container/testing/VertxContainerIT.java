@@ -17,12 +17,14 @@ package com.datasqrl.container.testing;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.Duration;
 import lombok.SneakyThrows;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
+import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Test;
 
 public class VertxContainerIT extends SqrlContainerTestBase {
@@ -51,7 +53,7 @@ public class VertxContainerIT extends SqrlContainerTestBase {
     var response = executeGraphQLQuery(testQuery);
     validateBasicGraphQLResponse(response);
 
-    assertThat(serverContainer.getLogs()).contains("REQUEST BODY");
+    assertTraceLogContains("REQUEST BODY");
   }
 
   @Test
@@ -64,10 +66,7 @@ public class VertxContainerIT extends SqrlContainerTestBase {
     var response = executeGraphQLQuery(testQuery);
     validateBasicGraphQLResponse(response);
 
-    assertThat(serverContainer.getLogs())
-        .contains("REQUEST BODY")
-        .contains(testQuery)
-        .contains("/graphql");
+    assertTraceLogContains("REQUEST BODY", testQuery, "/graphql");
 
     var randomPath = "/random/test/path/12345";
     var testBody = "{\"test\":\"data\",\"random\":\"content\"}";
@@ -77,10 +76,7 @@ public class VertxContainerIT extends SqrlContainerTestBase {
 
     sharedHttpClient.execute(randomRequest);
 
-    assertThat(serverContainer.getLogs())
-        .contains("REQUEST BODY")
-        .contains(testBody)
-        .contains(randomPath);
+    assertTraceLogContains("REQUEST BODY", testBody, randomPath);
 
     var graphiqlResponse = sharedHttpClient.execute(new HttpGet(getBaseUrl() + "/graphiql/"));
 
@@ -102,9 +98,32 @@ public class VertxContainerIT extends SqrlContainerTestBase {
         .contains("static/css/main.")
         .contains("<div id=\"root\"></div>");
 
-    assertThat(serverContainer.getLogs())
-        .contains("INCOMING REQUEST")
-        .contains("Method: GET")
-        .contains("URI: /graphiql/");
+    assertTraceLogContains("INCOMING REQUEST", "Method: GET", "URI: /graphiql/");
+  }
+
+  @SneakyThrows
+  private void assertTraceLogContains(String... expectedPatterns) {
+    // Wait for log file to be created and populated with expected content
+    Awaitility.await()
+        .atMost(Duration.ofSeconds(10))
+        .pollInterval(Duration.ofMillis(500))
+        .untilAsserted(
+            () -> {
+              assertThat(traceLogs()).contains(expectedPatterns);
+            });
+  }
+
+  @SneakyThrows
+  private String traceLogs() {
+    // Get the log file from the container
+    var logPath = "/opt/sqrl/logs/request-trace.log";
+
+    // Copy log file from container to temp location and read it
+    var result = serverContainer.execInContainer("cat", logPath);
+    if (result.getExitCode() != 0) {
+      throw new RuntimeException("Failed to read request trace log: " + result.getStderr());
+    }
+
+    return result.getStdout();
   }
 }

@@ -74,7 +74,7 @@ public class DetailedRequestTracer implements Handler<RoutingContext> {
             .map(entry -> entry.getKey() + "=" + entry.getValue())
             .collect(Collectors.joining("&"));
 
-    log.info(
+    log.debug(
         "INCOMING REQUEST [{}] - Method: {}, URI: {}, Headers: [{}], Params: [{}], RemoteAddress: {}",
         requestId,
         request.method(),
@@ -86,13 +86,13 @@ public class DetailedRequestTracer implements Handler<RoutingContext> {
 
   private void logRequestBody(Buffer body, String requestId) {
     if (body == null) {
-      log.info("REQUEST BODY [{}] - No body (null)", requestId);
+      log.debug("REQUEST BODY [{}] - No body (null)", requestId);
       return;
     }
 
     var bodyStr = body.toString();
     if (bodyStr.isEmpty()) {
-      log.info("REQUEST BODY [{}] - Size: {} bytes, Content: [EMPTY]", requestId, body.length());
+      log.debug("REQUEST BODY [{}] - Size: {} bytes, Content: [EMPTY]", requestId, body.length());
       return;
     }
 
@@ -100,7 +100,7 @@ public class DetailedRequestTracer implements Handler<RoutingContext> {
     var truncatedBody =
         bodyStr.length() > 2000 ? bodyStr.substring(0, 2000) + "... [TRUNCATED]" : bodyStr;
 
-    log.info(
+    log.debug(
         "REQUEST BODY [{}] - Size: {} bytes, Content: {}", requestId, body.length(), truncatedBody);
   }
 
@@ -110,7 +110,7 @@ public class DetailedRequestTracer implements Handler<RoutingContext> {
             .map(entry -> entry.getKey() + ": " + entry.getValue())
             .collect(Collectors.joining(", "));
 
-    log.info(
+    log.debug(
         "OUTGOING RESPONSE [{}] - Status: {}, Headers: [{}], Duration: {}ms",
         requestId,
         response.getStatusCode(),

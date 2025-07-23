@@ -16,8 +16,8 @@
 
 FROM eclipse-temurin:17
 
-# Create directories for application and configuration
-RUN mkdir -p /opt/sqrl/app /opt/sqrl/config
+# Create directories for application, configuration, and logs
+RUN mkdir -p /opt/sqrl/app /opt/sqrl/config /opt/sqrl/logs
 
 # Copy application jar to separate directory
 COPY target/vertx-server.jar /opt/sqrl/app/vertx-server.jar
