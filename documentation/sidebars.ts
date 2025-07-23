@@ -67,6 +67,11 @@ const sidebars = {
           label: '⚙️ Configuration',
         },
         {
+          type: 'doc',
+          id: 'interface',
+          label: '🔗 Interface',
+        },
+        {
           type: 'category',
           label: '🔢 Functions',
           link: {
