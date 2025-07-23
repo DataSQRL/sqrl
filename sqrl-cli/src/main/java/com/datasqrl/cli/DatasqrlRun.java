@@ -25,6 +25,8 @@ import com.datasqrl.graphql.SqrlObjectMapper;
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.config.ServerConfigUtil;
 import com.datasqrl.graphql.server.RootGraphqlModel;
+import com.datasqrl.util.ConfigLoaderUtils;
+import com.datasqrl.util.ConfigLoaderUtils.StatementInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.Resources;
 import io.micrometer.prometheusmetrics.PrometheusConfig;
@@ -33,7 +35,6 @@ import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.micrometer.MicrometerMetricsFactory;
-import java.io.File;
 import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
@@ -44,18 +45,13 @@ import java.nio.file.attribute.FileTime;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.Statement;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -64,9 +60,7 @@ import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.configuration.CheckpointingOptions;
 import org.apache.flink.configuration.Configuration;
-import org.apache.flink.configuration.DeploymentOptions;
 import org.apache.flink.configuration.ExecutionOptions;
-import org.apache.flink.configuration.RestartStrategyOptions;
 import org.apache.flink.core.execution.SavepointFormatType;
 import org.apache.flink.runtime.jobgraph.SavepointConfigOptions;
 import org.apache.flink.table.api.TableResult;
@@ -81,23 +75,17 @@ public class DatasqrlRun {
   private final PackageJson sqrlConfig;
   private final Configuration flinkConfig;
   private final Map<String, String> env;
-  private final boolean testRun;
   private final ObjectMapper objectMapper;
 
   private Vertx vertx;
   private TableResult execute;
 
   public DatasqrlRun(
-      Path planDir,
-      PackageJson sqrlConfig,
-      Configuration flinkConfig,
-      Map<String, String> env,
-      boolean testRun) {
+      Path planDir, PackageJson sqrlConfig, Configuration flinkConfig, Map<String, String> env) {
     this.planDir = planDir;
     this.sqrlConfig = sqrlConfig;
     this.flinkConfig = flinkConfig;
-    this.env = new HashMap<>(env); // we might need to mutate it
-    this.testRun = testRun;
+    this.env = env;
     objectMapper = SqrlObjectMapper.MAPPER;
   }
 
@@ -159,7 +147,6 @@ public class DatasqrlRun {
 
   @SneakyThrows
   private TableResult runFlinkJob() {
-    applyInternalTestConfig();
     var execMode = flinkConfig.get(ExecutionOptions.RUNTIME_MODE);
     var isCompiledPlan = sqrlConfig.getCompilerConfig().compileFlinkPlan();
 
@@ -188,36 +175,27 @@ public class DatasqrlRun {
 
   @SneakyThrows
   private void initKafka() {
-    if (!planDir.resolve("kafka.json").toFile().exists()) {
-      return;
-    }
-    Map<String, Object> map =
-        objectMapper.readValue(planDir.resolve("kafka.json").toFile(), Map.class);
-    List<Map<String, Object>> topics = (List<Map<String, Object>>) map.get("topics");
-
-    if (topics == null) {
+    var topics = ConfigLoaderUtils.loadKafkaTopics(planDir);
+    if (topics.isEmpty()) {
+      log.warn(
+          "The Kafka physical plan does not contain any topics, 'test-runner' topics will be ignored");
       return;
     }
 
-    List<Map<String, Object>> mutableTopics = new ArrayList<>(topics);
-    sqrlConfig
-        .getTestConfig()
-        .getCreateTopics()
-        .forEach(topic -> mutableTopics.add(Map.of("topicName", topic)));
+    var mutableTopics = new ArrayList<>(topics);
+    mutableTopics.addAll(sqrlConfig.getTestConfig().getCreateTopics());
+
+    var bootstrapServers = getenv("KAFKA_BOOTSTRAP_SERVERS");
+    if (bootstrapServers == null) {
+      throw new IllegalStateException(
+          "Failed to get Kafka 'bootstrap.servers', KAFKA_BOOTSTRAP_SERVERS is not set");
+    }
 
     Properties props = new Properties();
-    if (getenv("PROPERTIES_BOOTSTRAP_SERVERS") == null) {
-      throw new RuntimeException("${PROPERTIES_BOOTSTRAP_SERVERS} is not set");
-    }
-    props.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, getenv("PROPERTIES_BOOTSTRAP_SERVERS"));
+    props.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
     try (AdminClient adminClient = AdminClient.create(props)) {
       Set<String> existingTopics = adminClient.listTopics().names().get();
-
-      Set<String> requiredTopics =
-          mutableTopics.stream()
-              .map(topic -> (String) topic.get("topicName"))
-              .collect(Collectors.toSet());
-      for (String topicName : requiredTopics) {
+      for (String topicName : mutableTopics) {
         if (existingTopics.contains(topicName)) {
           continue;
         }
@@ -225,31 +203,24 @@ public class DatasqrlRun {
         adminClient.createTopics(Collections.singletonList(newTopic)).all().get();
       }
     }
-
-    if (getenv("PROPERTIES_GROUP_ID") == null) {
-      log.warn(
-          "The 'PROPERTIES_GROUP_ID' environment variable is missing, will use a random UUID!");
-      env.put("PROPERTIES_GROUP_ID", UUID.randomUUID().toString());
-    }
   }
 
   @SneakyThrows
   private void initPostgres() {
-    File file = planDir.resolve("postgres.json").toFile();
-    if (!file.exists()) {
+    var statements = ConfigLoaderUtils.loadPostgresStatements(planDir);
+    if (statements.isEmpty()) {
       return;
     }
-    Map plan = objectMapper.readValue(file, Map.class);
 
-    String fullPostgresJDBCUrl =
-        "jdbc:postgresql://%s:%s/%s"
-            .formatted(getenv("PGHOST"), getenv("PGPORT"), getenv("PGDATABASE"));
     try (Connection connection =
-        DriverManager.getConnection(fullPostgresJDBCUrl, getenv("PGUSER"), getenv("PGPASSWORD"))) {
-      for (Map statement : (List<Map>) plan.get("statements")) {
-        log.info("Executing statement {} of type {}", statement.get("name"), statement.get("type"));
+        DriverManager.getConnection(
+            getenv("POSTGRES_JDBC_URL"),
+            getenv("POSTGRES_USERNAME"),
+            getenv("POSTGRES_PASSWORD"))) {
+      for (StatementInfo statement : statements) {
+        log.info("Executing statement {} of type {}", statement.name(), statement.type());
         try (Statement stmt = connection.createStatement()) {
-          stmt.execute((String) statement.get("sql"));
+          stmt.execute(statement.sql());
         } catch (Exception e) {
           e.printStackTrace();
           assert false : e.getMessage();
@@ -289,11 +260,11 @@ public class DatasqrlRun {
     if (planDir.resolve("postgres.json").toFile().exists()) {
       serverConfig
           .getPgConnectOptions()
-          .setHost(getenv("PGHOST"))
-          .setPort(Integer.parseInt(getenv("PGPORT")))
-          .setUser(getenv("PGUSER"))
-          .setPassword(getenv("PGPASSWORD"))
-          .setDatabase(getenv("PGDATABASE"));
+          .setHost(getenv("POSTGRES_HOST"))
+          .setPort(Integer.parseInt(getenv("POSTGRES_PORT")))
+          .setUser(getenv("POSTGRES_USERNAME"))
+          .setPassword(getenv("POSTGRES_PASSWORD"))
+          .setDatabase(getenv("POSTGRES_DATABASE"));
     }
 
     serverConfig = ServerConfigUtil.mergeConfigs(serverConfig, vertxConfig());
@@ -320,10 +291,6 @@ public class DatasqrlRun {
 
   @SneakyThrows
   Optional<String> getLastSavepoint() {
-    if (testRun) {
-      return Optional.empty();
-    }
-
     var savepointDir = flinkConfig.get(CheckpointingOptions.SAVEPOINT_DIRECTORY);
     if (StringUtils.isNotBlank(savepointDir)) {
       log.debug("Using savepoint dir from Flink configuration YAML: {}", savepointDir);
@@ -369,19 +336,6 @@ public class DatasqrlRun {
         .getEngineConfig(EngineIds.SERVER)
         .map(PackageJson.EngineConfig::getConfig)
         .orElse(null);
-  }
-
-  void applyInternalTestConfig() {
-    if (testRun) {
-      flinkConfig.set(DeploymentOptions.TARGET, "local");
-
-      if (env.get("FLINK_RESTART_STRATEGY") != null) {
-        flinkConfig.set(RestartStrategyOptions.RESTART_STRATEGY, "fixed-delay");
-        flinkConfig.set(RestartStrategyOptions.RESTART_STRATEGY_FIXED_DELAY_ATTEMPTS, 0);
-        flinkConfig.set(
-            RestartStrategyOptions.RESTART_STRATEGY_FIXED_DELAY_DELAY, Duration.ofSeconds(5));
-      }
-    }
   }
 
   public static class ModelContainer {

@@ -237,7 +237,7 @@ If only `folder` is given the dependency key (`my-alias` in the above example) a
 ## Template & Environment Variables
 
 * **Environment variables** use `${VAR_NAME}` — resolved by the DataSQRL launcher at runtime.  
-  Example: `${JDBC_PASSWORD}`.
+  Example: `${POSTGRES_PASSWORD}`.
 * **SQRL variables** use `${sqrl:<identifier>}` and are filled automatically by the compiler, mostly inside connector templates.  
   Common identifiers include `table-name`, `original-table-name`, `filename`, `format`, and `kafka-key`.
 

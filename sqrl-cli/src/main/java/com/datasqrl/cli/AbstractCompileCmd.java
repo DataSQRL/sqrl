@@ -55,14 +55,14 @@ public abstract class AbstractCompileCmd extends AbstractCmd {
 
   public abstract ExecutionGoal getGoal();
 
-  protected void compile(ErrorCollector errors) {
+  protected Pair<PhysicalPlan, ? extends TestPlan> compile(ErrorCollector errors) {
     var packageBootstrap = new PackageBootstrap(errors);
     var sqrlConfig =
         packageBootstrap.bootstrap(
             cli.rootDir,
             this.cli.packageFiles,
             this.files,
-            getGoal() == ExecutionGoal.RUN && !cli.internalTestExec);
+            getGoal() == ExecutionGoal.RUN || getGoal() == ExecutionGoal.TEST);
     var testConfig = sqrlConfig.getTestConfig();
 
     var engines = getEngines();
@@ -81,7 +81,7 @@ public abstract class AbstractCompileCmd extends AbstractCmd {
     var packager = injector.getInstance(Packager.class);
     packager.preprocess(errors.withLocation(ErrorPrefix.CONFIG.resolve(PACKAGE_JSON)));
     if (errors.hasErrors()) {
-      return;
+      return null;
     }
 
     var compilationProcess = injector.getInstance(CompilationProcess.class);
@@ -91,7 +91,7 @@ public abstract class AbstractCompileCmd extends AbstractCmd {
     Pair<PhysicalPlan, ? extends TestPlan> plan = compilationProcess.executeCompilation(testDir);
 
     if (errors.hasErrors()) {
-      return;
+      return null;
     }
 
     if (isGenerateGraphql()) {
@@ -99,16 +99,21 @@ public abstract class AbstractCompileCmd extends AbstractCmd {
     }
 
     postprocess(packager, getTargetDir(), plan.getLeft(), plan.getRight());
+
+    return plan;
   }
 
-  protected void execute(ErrorCollector errors) throws Exception {
+  protected void execute(ErrorCollector errors, PhysicalPlan plan) throws Exception {
     // Do nothing by default
   }
 
   @Override
   protected void runInternal(ErrorCollector errors) throws Exception {
-    compile(errors);
-    execute(errors);
+    var plan = compile(errors);
+
+    if (!errors.hasErrors()) {
+      execute(errors, plan.getLeft());
+    }
   }
 
   protected List<String> getEngines() {

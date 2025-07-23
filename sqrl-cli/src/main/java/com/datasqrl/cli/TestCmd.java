@@ -16,6 +16,7 @@
 package com.datasqrl.cli;
 
 import com.datasqrl.config.SqrlConstants;
+import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.env.GlobalEnvironmentStore;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.validate.ExecutionGoal;
@@ -27,14 +28,14 @@ import picocli.CommandLine;
 public class TestCmd extends AbstractCompileCmd {
 
   @Override
-  protected void execute(ErrorCollector errors) throws Exception {
+  protected void execute(ErrorCollector errors, PhysicalPlan plan) throws Exception {
     // Skip execution in case we call the CMD from a test class, as it will be executed manually.
     if (cli.internalTestExec) {
       return;
     }
 
     // Start services before testing
-    getOsProcessManager().startDependentServices();
+    getOsProcessManager().startDependentServices(plan);
 
     // Test
     var env = GlobalEnvironmentStore.getAll();

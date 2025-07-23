@@ -23,6 +23,7 @@ import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorMessage;
 import com.datasqrl.error.ResourceFileUtil;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -34,15 +35,19 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.configuration.GlobalConfiguration;
 import org.apache.flink.types.Either;
 
 /** Utility class to load different kind of configurations during CLI process execution. */
+@Slf4j
 public final class ConfigLoaderUtils {
 
   public static final String PACKAGE_SCHEMA_PATH = "/jsonSchema/packageSchema.json";
@@ -179,8 +184,7 @@ public final class ConfigLoaderUtils {
    * @throws IOException if any internal file operation fails
    */
   public static Configuration loadFlinkConfig(Path planDir) throws IOException {
-    checkArgument(
-        Files.isDirectory(planDir), "Failed to load Flink config, plan dir does not exist.");
+    validatePlanDir(planDir);
 
     var confFile = planDir.resolve("flink-config.yaml");
     checkArgument(
@@ -195,6 +199,49 @@ public final class ConfigLoaderUtils {
       return GlobalConfiguration.loadConfiguration(tempDir.toString());
     } finally {
       FileUtils.forceDelete(tempDir.toFile());
+    }
+  }
+
+  public static List<String> loadKafkaTopics(Path planDir) {
+    validatePlanDir(planDir);
+
+    var topics = new ArrayList<String>();
+
+    var kafkaFile = planDir.resolve("kafka.json").toFile();
+    if (kafkaFile.exists()) {
+      try {
+        JsonNode root = MAPPER.readTree(kafkaFile);
+        JsonNode topicsNode = root.get("topics");
+
+        StreamSupport.stream(topicsNode.spliterator(), false)
+            .map(node -> node.get("topicName").asText())
+            .forEach(topics::add);
+
+      } catch (Exception ex) {
+        log.warn("Failed to load '{}', will ignore topics", kafkaFile);
+      }
+    }
+
+    return Collections.unmodifiableList(topics);
+  }
+
+  public static List<StatementInfo> loadPostgresStatements(Path planDir) {
+    validatePlanDir(planDir);
+
+    var postgresFile = planDir.resolve("postgres.json").toFile();
+    if (!postgresFile.exists()) {
+      return List.of();
+    }
+
+    try {
+      JsonNode root = MAPPER.readTree(postgresFile);
+
+      return MAPPER
+          .readerFor(new TypeReference<List<StatementInfo>>() {})
+          .readValue(root.get("statements"));
+
+    } catch (Exception ex) {
+      throw new IllegalStateException(String.format("Failed to load '%s'", postgresFile));
     }
   }
 
@@ -237,6 +284,11 @@ public final class ConfigLoaderUtils {
     return SqrlConfig.loadResolvedConfig(errors, merged);
   }
 
+  private static void validatePlanDir(Path planDir) {
+    checkArgument(
+        Files.isDirectory(planDir), "Failed to load Flink config, plan dir does not exist.");
+  }
+
   private static ObjectNode convertFileToObjectNode(ErrorCollector errors, Either<Path, URL> file) {
     var local = errors.withConfig(file.isLeft() ? file.left().toString() : file.right().toString());
     try {
@@ -248,4 +300,6 @@ public final class ConfigLoaderUtils {
       throw local.exception("Could not parse JSON file [%s]: %s", file, e.toString());
     }
   }
+
+  public record StatementInfo(String name, String type, String sql) {}
 }

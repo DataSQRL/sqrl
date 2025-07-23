@@ -48,6 +48,7 @@ import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -57,6 +58,10 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.SneakyThrows;
+import org.apache.flink.configuration.CheckpointingOptions;
+import org.apache.flink.configuration.Configuration;
+import org.apache.flink.configuration.DeploymentOptions;
+import org.apache.flink.configuration.RestartStrategyOptions;
 
 @AllArgsConstructor
 public class TestExecutionEnv implements TestEngineVisitor<Void, TestEnvContext> {
@@ -81,10 +86,9 @@ public class TestExecutionEnv implements TestEngineVisitor<Void, TestEnvContext>
     Map postgresPlan =
         new ObjectMapper()
             .readValue(rootDir.resolve("build/deploy/plan/postgres.json").toFile(), Map.class);
-    List<Map<String, Object>> view = (List<Map<String, Object>>) postgresPlan.get("views");
-    String url = context.env.get("JDBC_URL");
-    String username = context.env.get("PGUSER");
-    String password = context.env.get("PGPASSWORD");
+    String url = context.env.get("POSTGRES_JDBC_URL");
+    String username = context.env.get("POSTGRES_USERNAME");
+    String password = context.env.get("POSTGRES_PASSWORD");
     try (Connection conn = DriverManager.getConnection(url, username, password)) {
       for (Map statement : (List<Map>) postgresPlan.get("statements")) {
         if (statement.get("type").toString().equalsIgnoreCase("view")) {
@@ -230,7 +234,6 @@ public class TestExecutionEnv implements TestEngineVisitor<Void, TestEnvContext>
     return null;
   }
 
-  @SneakyThrows
   @Override
   public Void visit(TestTestEngine engine, TestEnvContext context) {
     var planDir =
@@ -239,7 +242,7 @@ public class TestExecutionEnv implements TestEngineVisitor<Void, TestEnvContext>
             .resolve(SqrlConstants.BUILD_DIR_NAME)
             .resolve(SqrlConstants.DEPLOY_DIR_NAME)
             .resolve(SqrlConstants.PLAN_DIR);
-    var flinkConfig = ConfigLoaderUtils.loadFlinkConfig(planDir);
+    var flinkConfig = loadInternalTestFlinkConfig(planDir, context.env);
     var test = new DatasqrlTest(context.rootDir, planDir, packageJson, flinkConfig, context.env);
     try {
       var run = test.run();
@@ -260,6 +263,24 @@ public class TestExecutionEnv implements TestEngineVisitor<Void, TestEnvContext>
 
   private boolean hasServerEngine() {
     return packageJson.getEnabledEngines().contains("vertx");
+  }
+
+  @SneakyThrows
+  public static Configuration loadInternalTestFlinkConfig(Path planDir, Map<String, String> env) {
+    var flinkConfig = ConfigLoaderUtils.loadFlinkConfig(planDir);
+
+    flinkConfig.set(DeploymentOptions.TARGET, "local");
+    if (env.get("FLINK_RESTART_STRATEGY") != null) {
+      flinkConfig.set(RestartStrategyOptions.RESTART_STRATEGY, "fixed-delay");
+      flinkConfig.set(RestartStrategyOptions.RESTART_STRATEGY_FIXED_DELAY_ATTEMPTS, 0);
+      flinkConfig.set(
+          RestartStrategyOptions.RESTART_STRATEGY_FIXED_DELAY_DELAY, Duration.ofSeconds(5));
+    }
+
+    flinkConfig.removeConfig(CheckpointingOptions.CHECKPOINTS_DIRECTORY);
+    flinkConfig.removeConfig(CheckpointingOptions.SAVEPOINT_DIRECTORY);
+
+    return flinkConfig;
   }
 
   @Builder

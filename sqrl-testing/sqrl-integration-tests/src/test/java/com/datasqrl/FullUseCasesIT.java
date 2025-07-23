@@ -257,8 +257,8 @@ class FullUseCasesIT {
       if (param.getGoal().equals("run")) {
         try {
           var planDir = context.getRootDir().resolve(SqrlConstants.PLAN_PATH);
-          var flinkConfig = ConfigLoaderUtils.loadFlinkConfig(planDir);
-          run = new DatasqrlRun(planDir, packageJson, flinkConfig, context.getEnv(), true);
+          var flinkConfig = TestExecutionEnv.loadInternalTestFlinkConfig(planDir, context.getEnv());
+          run = new DatasqrlRun(planDir, packageJson, flinkConfig, context.getEnv());
           TableResult result = run.run(false, false);
           long delaySec = packageJson.getTestConfig().getDelaySec();
 
@@ -339,7 +339,7 @@ class FullUseCasesIT {
   public void runTestCaseByName() {
     var param =
         getSpecificUseCase(
-            p -> p.sqrlFileName.startsWith("batch-teaser.sqrl") && p.goal.equals("test"));
+            p -> p.sqrlFileName.startsWith("flink_kafka.sqrl") && p.goal.equals("test"));
 
     useCase(param);
   }

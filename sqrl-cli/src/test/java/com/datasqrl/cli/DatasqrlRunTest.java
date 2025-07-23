@@ -18,8 +18,6 @@ package com.datasqrl.cli;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.nio.file.Files;
@@ -28,12 +26,9 @@ import java.util.HashMap;
 import java.util.Map;
 import org.apache.flink.configuration.CheckpointingOptions;
 import org.apache.flink.configuration.Configuration;
-import org.apache.flink.configuration.DeploymentOptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 
 class DatasqrlRunTest {
 
@@ -49,7 +44,7 @@ class DatasqrlRunTest {
     flinkConfig = mock(Configuration.class);
     env = new HashMap<>();
 
-    underTest = new DatasqrlRun(tempDir.resolve("plan"), null, flinkConfig, env, false);
+    underTest = new DatasqrlRun(tempDir.resolve("plan"), null, flinkConfig, env);
   }
 
   @Test
@@ -76,7 +71,7 @@ class DatasqrlRunTest {
   @Test
   void usesSavepointDirFromEnvIfFlinkConfigBlank() throws Exception {
     env.put("FLINK_SP_DATA_PATH", tempDir.toUri().toString());
-    underTest = new DatasqrlRun(tempDir.resolve("plan"), null, flinkConfig, env, false);
+    underTest = new DatasqrlRun(tempDir.resolve("plan"), null, flinkConfig, env);
 
     Files.createDirectory(tempDir.resolve("savepoint1"));
 
@@ -89,7 +84,7 @@ class DatasqrlRunTest {
   @Test
   void returnsEmptyIfBothConfigsBlank() {
     env.put("FLINK_SP_DATA_PATH", " ");
-    underTest = new DatasqrlRun(tempDir.resolve("plan"), null, flinkConfig, env, false);
+    underTest = new DatasqrlRun(tempDir.resolve("plan"), null, flinkConfig, env);
 
     when(flinkConfig.get(CheckpointingOptions.SAVEPOINT_DIRECTORY)).thenReturn(" ");
 
@@ -119,20 +114,5 @@ class DatasqrlRunTest {
 
     assertThat(result).isPresent();
     assertThat(result.get()).endsWith("sp1");
-  }
-
-  @ParameterizedTest
-  @ValueSource(booleans = {true, false})
-  void configModificationsOnTestRun(boolean testRun) {
-    underTest = new DatasqrlRun(tempDir.resolve("plan"), null, flinkConfig, env, testRun);
-
-    underTest.applyInternalTestConfig();
-
-    if (testRun) {
-      verify(flinkConfig).set(DeploymentOptions.TARGET, "local");
-
-    } else {
-      verifyNoInteractions(flinkConfig);
-    }
   }
 }
