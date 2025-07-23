@@ -16,7 +16,6 @@
 package com.datasqrl.cli;
 
 import com.datasqrl.config.SqrlConstants;
-import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.env.GlobalEnvironmentStore;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.validate.ExecutionGoal;
@@ -29,19 +28,20 @@ import picocli.CommandLine;
 public class RunCmd extends AbstractCompileCmd {
 
   @Override
-  protected void execute(ErrorCollector errors, PhysicalPlan plan) throws Exception {
+  protected void execute(ErrorCollector errors) throws Exception {
     // Skip execution in case we call the CMD from a test class, as it will be executed manually.
     if (cli.internalTestExec) {
       return;
     }
 
+    var targetDir = getTargetDir();
+    var planDir = targetDir.resolve(SqrlConstants.PLAN_DIR);
+
     // Start services before running
-    getOsProcessManager().startDependentServices(plan);
+    getOsProcessManager().startDependentServices(planDir);
 
     // Run
     var env = GlobalEnvironmentStore.getAll();
-    var targetDir = getTargetDir();
-    var planDir = targetDir.resolve(SqrlConstants.PLAN_DIR);
     var sqrlConfig = ConfigLoaderUtils.loadResolvedConfig(errors, getBuildDir());
     var flinkConfig = ConfigLoaderUtils.loadFlinkConfig(planDir);
 

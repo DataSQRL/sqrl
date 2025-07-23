@@ -202,6 +202,15 @@ public final class ConfigLoaderUtils {
     }
   }
 
+  /**
+   * Loads Kafka topic names from the plan directory by parsing the {@code kafka.json} configuration
+   * file.
+   *
+   * @param planDir the plan directory containing the {@code kafka.json} file
+   * @return an unmodifiable list of topic names found in the configuration, or an empty list if no
+   *     {@code kafka.json} file exists or if parsing fails
+   * @throws IllegalArgumentException if the plan directory is null or does not exist
+   */
   public static List<String> loadKafkaTopics(Path planDir) {
     validatePlanDir(planDir);
 
@@ -225,6 +234,16 @@ public final class ConfigLoaderUtils {
     return Collections.unmodifiableList(topics);
   }
 
+  /**
+   * Loads PostgreSQL statement information from the plan directory by parsing the {@code
+   * postgres.json} configuration file.
+   *
+   * @param planDir the plan directory containing the {@code postgres.json} file
+   * @return a list of {@link StatementInfo} objects containing statement details, or an empty list
+   *     if no {@code postgres.json} file exists
+   * @throws IllegalArgumentException if the plan directory is null or does not exist
+   * @throws IllegalStateException if the {@code postgres.json} file exists but cannot be parsed
+   */
   public static List<StatementInfo> loadPostgresStatements(Path planDir) {
     validatePlanDir(planDir);
 

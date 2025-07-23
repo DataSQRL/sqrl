@@ -55,7 +55,7 @@ public abstract class AbstractCompileCmd extends AbstractCmd {
 
   public abstract ExecutionGoal getGoal();
 
-  protected Pair<PhysicalPlan, ? extends TestPlan> compile(ErrorCollector errors) {
+  protected void compile(ErrorCollector errors) {
     var packageBootstrap = new PackageBootstrap(errors);
     var sqrlConfig =
         packageBootstrap.bootstrap(
@@ -81,7 +81,7 @@ public abstract class AbstractCompileCmd extends AbstractCmd {
     var packager = injector.getInstance(Packager.class);
     packager.preprocess(errors.withLocation(ErrorPrefix.CONFIG.resolve(PACKAGE_JSON)));
     if (errors.hasErrors()) {
-      return null;
+      return;
     }
 
     var compilationProcess = injector.getInstance(CompilationProcess.class);
@@ -91,7 +91,7 @@ public abstract class AbstractCompileCmd extends AbstractCmd {
     Pair<PhysicalPlan, ? extends TestPlan> plan = compilationProcess.executeCompilation(testDir);
 
     if (errors.hasErrors()) {
-      return null;
+      return;
     }
 
     if (isGenerateGraphql()) {
@@ -99,20 +99,18 @@ public abstract class AbstractCompileCmd extends AbstractCmd {
     }
 
     postprocess(packager, getTargetDir(), plan.getLeft(), plan.getRight());
-
-    return plan;
   }
 
-  protected void execute(ErrorCollector errors, PhysicalPlan plan) throws Exception {
+  protected void execute(ErrorCollector errors) throws Exception {
     // Do nothing by default
   }
 
   @Override
   protected void runInternal(ErrorCollector errors) throws Exception {
-    var plan = compile(errors);
+    compile(errors);
 
     if (!errors.hasErrors()) {
-      execute(errors, plan.getLeft());
+      execute(errors);
     }
   }
 

@@ -15,9 +15,6 @@
  */
 package com.datasqrl.util;
 
-import com.datasqrl.engine.PhysicalPlan;
-import com.datasqrl.engine.database.relational.JdbcPhysicalPlan;
-import com.datasqrl.engine.log.kafka.KafkaPhysicalPlan;
 import com.datasqrl.env.GlobalEnvironmentStore;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -60,25 +57,21 @@ public class OsProcessManager {
     ownerGroup = env.getOrDefault("BUILD_GID", "root");
   }
 
-  public void startDependentServices(PhysicalPlan plan) {
-    var kafkaPlanned = isKafkaPlanned(plan);
-    var postgresPlanned = isPostgresPlanned(plan);
-
-    startDependentServices(kafkaPlanned, postgresPlanned);
-  }
-
+  /**
+   * Analyzes the execution plan directory and starts only the dependent services that are actually
+   * required for the DataSQRL execution. This method dynamically determines whether Kafka (via
+   * Redpanda) and/or PostgreSQL services need to be started based on the presence of relevant
+   * configurations in the plan directory.
+   *
+   * @param planDir the path to the directory containing the execution plan artifacts, including
+   *     Kafka topic configurations and PostgreSQL statements
+   * @throws IllegalStateException if any required service fails to start within the timeout period
+   *     or encounters initialization errors
+   */
   public void startDependentServices(Path planDir) {
     var kafkaPlanned = isKafkaPlanned(planDir);
     var postgresPlanned = isPostgresPlanned(planDir);
 
-    startDependentServices(kafkaPlanned, postgresPlanned);
-  }
-
-  /**
-   * Starts all required services for DataSQRL execution. This includes Postgres, Redpanda, and
-   * creates necessary directories.
-   */
-  void startDependentServices(boolean kafkaPlanned, boolean postgresPlanned) {
     try {
       startRedpanda(kafkaPlanned);
       startPostgres(postgresPlanned);
@@ -95,7 +88,11 @@ public class OsProcessManager {
   }
 
   /**
-   * @param buildDir
+   * Performs cleanup operations after DataSQRL execution, including moving log files to the build
+   * directory and setting proper file ownership.
+   *
+   * @param buildDir the build directory where logs should be moved and ownership should be set
+   * @throws Exception if log file movement fails or ownership setting encounters errors
    */
   public void teardown(Path buildDir) throws Exception {
     Path target = buildDir.resolve("logs");
@@ -103,6 +100,19 @@ public class OsProcessManager {
     setOwnerForDir(buildDir.getParent());
   }
 
+  /**
+   * Sets the ownership of a directory and all its contents recursively using the configured
+   * BUILD_UID and BUILD_GID environment variables.
+   *
+   * <p>If the BUILD_UID or BUILD_GID environment variables are not set or are blank, this method
+   * performs no operation. If the {@code chown} command fails, a warning is logged but no exception
+   * is thrown.
+   *
+   * @param dir the directory whose ownership should be set recursively
+   * @throws IOException if there's an error starting the {@code chown} process
+   * @throws InterruptedException if the current thread is interrupted while waiting for the chown
+   *     process to complete
+   */
   public void setOwnerForDir(Path dir) throws IOException, InterruptedException {
     if (StringUtils.isNoneBlank(ownerUser, ownerUser)) {
       var owner = ownerUser + ':' + ownerGroup;
@@ -263,22 +273,8 @@ public class OsProcessManager {
     return !ConfigLoaderUtils.loadKafkaTopics(planDir).isEmpty();
   }
 
-  private boolean isKafkaPlanned(PhysicalPlan plan) {
-    return plan.getPlans(KafkaPhysicalPlan.class)
-        .findFirst()
-        .map(p -> p.getTopics() != null && !p.getTopics().isEmpty())
-        .orElse(false);
-  }
-
   private boolean isPostgresPlanned(Path planDir) {
     return !ConfigLoaderUtils.loadPostgresStatements(planDir).isEmpty();
-  }
-
-  private boolean isPostgresPlanned(PhysicalPlan plan) {
-    return plan.getPlans(JdbcPhysicalPlan.class)
-        .findFirst()
-        .map(p -> p.getStatements() != null && !p.getStatements().isEmpty())
-        .orElse(false);
   }
 
   private void startPostgresService() throws IOException, InterruptedException {
