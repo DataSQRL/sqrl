@@ -16,11 +16,17 @@
 package com.datasqrl.converter;
 
 import static com.datasqrl.graphql.converter.GraphQLSchemaConverterConfig.ignorePrefix;
+import static graphql.Scalars.GraphQLBoolean;
+import static graphql.Scalars.GraphQLFloat;
+import static graphql.Scalars.GraphQLID;
+import static graphql.Scalars.GraphQLInt;
+import static graphql.Scalars.GraphQLString;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
 import com.datasqrl.graphql.converter.GraphQLSchemaConverter;
 import com.datasqrl.graphql.converter.GraphQLSchemaConverterConfig;
+import com.datasqrl.graphql.server.CustomScalars;
 import com.datasqrl.graphql.server.operation.ApiOperation;
 import com.datasqrl.util.FileUtil;
 import com.datasqrl.util.SnapshotTest;
@@ -29,13 +35,18 @@ import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import graphql.parser.Parser;
+import graphql.schema.GraphQLScalarType;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.stream.Stream;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 public class GraphQLSchemaConverterTest {
 
@@ -149,6 +160,27 @@ public class GraphQLSchemaConverterTest {
     assertThat(episodes.getFunction().getParameters().getProperties())
         .doesNotContainKey("customerid");
     snapshot(functions, "rick-morty");
+  }
+
+  @ParameterizedTest
+  @MethodSource("scalarTypeToJsonTypeProvider")
+  void givenScalarType_whenConvertToJsonType_thenReturnsExpectedJsonType(
+      GraphQLScalarType scalarType, String expectedJsonType) {
+    // When
+    var result = underTest.convertScalarTypeToJsonType(scalarType);
+
+    // Then
+    assertThat(result).isEqualTo(expectedJsonType);
+  }
+
+  static Stream<Arguments> scalarTypeToJsonTypeProvider() {
+    return Stream.of(
+        Arguments.of(GraphQLInt, "integer"),
+        Arguments.of(CustomScalars.LONG, "integer"),
+        Arguments.of(GraphQLFloat, "number"),
+        Arguments.of(GraphQLString, "string"),
+        Arguments.of(GraphQLBoolean, "boolean"),
+        Arguments.of(GraphQLID, "string"));
   }
 
   @SneakyThrows

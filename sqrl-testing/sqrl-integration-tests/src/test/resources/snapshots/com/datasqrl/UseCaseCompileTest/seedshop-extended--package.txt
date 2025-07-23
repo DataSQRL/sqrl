@@ -1149,7 +1149,7 @@ CREATE INDEX IF NOT EXISTS "Products_text_c1c5" ON "Products" USING GIN (to_tsve
                 "type" : "integer"
               },
               "id" : {
-                "type" : "string"
+                "type" : "integer"
               },
               "email" : {
                 "type" : "string"
@@ -1240,7 +1240,7 @@ CREATE INDEX IF NOT EXISTS "Products_text_c1c5" ON "Products" USING GIN (to_tsve
                 "type" : "integer"
               },
               "id" : {
-                "type" : "string"
+                "type" : "integer"
               }
             },
             "required" : [
@@ -1265,7 +1265,7 @@ CREATE INDEX IF NOT EXISTS "Products_text_c1c5" ON "Products" USING GIN (to_tsve
             "type" : "object",
             "properties" : {
               "productid" : {
-                "type" : "string"
+                "type" : "integer"
               },
               "offset" : {
                 "type" : "integer"

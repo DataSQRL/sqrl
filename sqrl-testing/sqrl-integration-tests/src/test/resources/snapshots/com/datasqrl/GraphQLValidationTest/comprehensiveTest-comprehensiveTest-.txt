@@ -1974,7 +1974,7 @@ FROM "ExternalOrders" AS "ExternalOrders0"
                 "type" : "integer"
               },
               "id" : {
-                "type" : "string"
+                "type" : "integer"
               }
             },
             "required" : [

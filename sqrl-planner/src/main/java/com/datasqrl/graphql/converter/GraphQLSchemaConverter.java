@@ -395,6 +395,7 @@ public class GraphQLSchemaConverter {
   public String convertScalarTypeToJsonType(GraphQLScalarType scalarType) {
     return switch (scalarType.getName()) {
       case "Int" -> "integer";
+      case "Long" -> "integer";
       case "Float" -> "number";
       case "String" -> "string";
       case "Boolean" -> "boolean";

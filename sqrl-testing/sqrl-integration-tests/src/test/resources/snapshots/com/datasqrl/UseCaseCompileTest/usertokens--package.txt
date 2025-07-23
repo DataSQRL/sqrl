@@ -460,7 +460,7 @@ CREATE INDEX IF NOT EXISTS "TotalOrgTokens_btree_c1" ON "TotalOrgTokens" USING b
                 "type" : "integer"
               },
               "userid" : {
-                "type" : "string"
+                "type" : "integer"
               }
             },
             "required" : [
@@ -488,13 +488,13 @@ CREATE INDEX IF NOT EXISTS "TotalOrgTokens_btree_c1" ON "TotalOrgTokens" USING b
                 "type" : "integer"
               },
               "maxTokens" : {
-                "type" : "string"
+                "type" : "integer"
               },
               "limit" : {
                 "type" : "integer"
               },
               "minTokens" : {
-                "type" : "string"
+                "type" : "integer"
               }
             },
             "required" : [
@@ -520,10 +520,10 @@ CREATE INDEX IF NOT EXISTS "TotalOrgTokens_btree_c1" ON "TotalOrgTokens" USING b
             "type" : "object",
             "properties" : {
               "tokens" : {
-                "type" : "string"
+                "type" : "integer"
               },
               "userid" : {
-                "type" : "string"
+                "type" : "integer"
               }
             },
             "required" : [

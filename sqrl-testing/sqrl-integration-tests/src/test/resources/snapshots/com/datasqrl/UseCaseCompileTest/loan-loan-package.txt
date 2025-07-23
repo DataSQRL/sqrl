@@ -1569,7 +1569,7 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
                   "type" : "object",
                   "properties" : {
                     "loan_application_id" : {
-                      "type" : "string"
+                      "type" : "integer"
                     },
                     "message" : {
                       "type" : "string"
