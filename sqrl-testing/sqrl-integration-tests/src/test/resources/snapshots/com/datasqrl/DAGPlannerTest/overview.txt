@@ -440,7 +440,8 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2`
       "replicationFactor" : 1,
       "config" : { }
     }
-  ]
+  ],
+  "testRunnerTopics" : [ ]
 }
 >>>postgres.json
 {

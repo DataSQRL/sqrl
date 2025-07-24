@@ -246,7 +246,8 @@ INSERT INTO `default_catalog`.`default_database`.`OrderCustomer1_2`
     END
 >>>kafka.json
 {
-  "topics" : [ ]
+  "topics" : [ ],
+  "testRunnerTopics" : [ ]
 }
 >>>postgres.json
 {

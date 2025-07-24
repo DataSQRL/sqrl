@@ -113,7 +113,8 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
  END
 >>>kafka.json
 {
-  "topics" : [ ]
+  "topics" : [ ],
+  "testRunnerTopics" : [ ]
 }
 >>>postgres-schema.sql
 CREATE TABLE IF NOT EXISTS "OrderCount" ("id" BIGINT NOT NULL, "number" BIGINT NOT NULL, "volume" INTEGER NOT NULL , PRIMARY KEY ("id"));

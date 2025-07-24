@@ -16,6 +16,7 @@
 package com.datasqrl.engine.log.kafka;
 
 import com.datasqrl.engine.EnginePhysicalPlan;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.List;
 import java.util.Set;
 import lombok.Value;
@@ -26,6 +27,7 @@ public class KafkaPhysicalPlan implements EnginePhysicalPlan {
   List<NewTopic> topics;
   Set<String> testRunnerTopics;
 
+  @JsonIgnore
   public boolean isEmpty() {
     return topics.isEmpty() && testRunnerTopics.isEmpty();
   }

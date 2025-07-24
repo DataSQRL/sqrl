@@ -83,7 +83,8 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_1`
 END
 >>>kafka.json
 {
-  "topics" : [ ]
+  "topics" : [ ],
+  "testRunnerTopics" : [ ]
 }
 >>>postgres.json
 {

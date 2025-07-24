@@ -106,7 +106,8 @@ INSERT INTO `default_catalog`.`default_database`.`SensorReading_1`
 END
 >>>kafka.json
 {
-  "topics" : [ ]
+  "topics" : [ ],
+  "testRunnerTopics" : [ ]
 }
 >>>postgres-schema.sql
 CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" INTEGER NOT NULL, "temperature" FLOAT NOT NULL, "event_time" BIGINT NOT NULL , PRIMARY KEY ("sensorid","event_time"))

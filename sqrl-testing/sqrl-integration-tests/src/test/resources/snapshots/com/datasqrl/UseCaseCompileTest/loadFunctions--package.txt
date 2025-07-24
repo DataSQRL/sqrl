@@ -46,7 +46,8 @@ INSERT INTO `default_catalog`.`default_database`.`FunctionApplied_1`
 END
 >>>kafka.json
 {
-  "topics" : [ ]
+  "topics" : [ ],
+  "testRunnerTopics" : [ ]
 }
 >>>postgres-schema.sql
 CREATE TABLE IF NOT EXISTS "FunctionApplied" ("id" INTEGER NOT NULL, "fct_result" BOOLEAN  , PRIMARY KEY ("id"))

@@ -278,7 +278,8 @@ INSERT INTO `default_catalog`.`default_database`.`kafka_avro_table_2`
      END
 >>>kafka.json
 {
-  "topics" : [ ]
+  "topics" : [ ],
+  "testRunnerTopics" : [ ]
 }
 >>>postgres-schema.sql
 CREATE TABLE IF NOT EXISTS "iceberg_parquet_table" ("user_id" INTEGER , "name" TEXT , "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));

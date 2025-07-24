@@ -134,7 +134,8 @@ INSERT INTO `default_catalog`.`default_database`.`OrderAgg2_2`
   END
 >>>kafka.json
 {
-  "topics" : [ ]
+  "topics" : [ ],
+  "testRunnerTopics" : [ ]
 }
 >>>postgres.json
 {

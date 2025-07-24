@@ -257,7 +257,8 @@ INSERT INTO `default_catalog`.`default_database`.`EnrichedSensorReading_2`
       "replicationFactor" : 1,
       "config" : { }
     }
-  ]
+  ],
+  "testRunnerTopics" : [ ]
 }
 >>>postgres-schema.sql
 CREATE TABLE IF NOT EXISTS "EnrichedSensorReading" ("sensorid" INTEGER NOT NULL, "temperature" FLOAT NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE NOT NULL, "sensor_name" TEXT , "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));

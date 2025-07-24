@@ -273,7 +273,8 @@ INSERT INTO `default_catalog`.`default_database`.`SensorAnalysis_2`
       "replicationFactor" : 1,
       "config" : { }
     }
-  ]
+  ],
+  "testRunnerTopics" : [ ]
 }
 >>>postgres-schema.sql
 CREATE TABLE IF NOT EXISTS "SensorAnalysis" ("sensorid" INTEGER NOT NULL, "avg_temperatures" FLOAT NOT NULL, "max_temperature" FLOAT NOT NULL , PRIMARY KEY ("sensorid"));

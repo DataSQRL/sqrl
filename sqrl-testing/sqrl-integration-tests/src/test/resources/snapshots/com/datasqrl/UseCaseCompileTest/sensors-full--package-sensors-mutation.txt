@@ -424,7 +424,8 @@ INSERT INTO `default_catalog`.`default_database`.`Machine_2`
       END
 >>>kafka.json
 {
-  "topics" : [ ]
+  "topics" : [ ],
+  "testRunnerTopics" : [ ]
 }
 >>>postgres-schema.sql
 CREATE TABLE IF NOT EXISTS "HighTemp" ("machineId" BIGINT NOT NULL, "sensorid" BIGINT NOT NULL, "temp" DOUBLE PRECISION NOT NULL, "timeSec" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("sensorid","timeSec"));

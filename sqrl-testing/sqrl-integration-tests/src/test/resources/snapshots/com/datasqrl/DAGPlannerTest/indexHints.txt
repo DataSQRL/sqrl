@@ -259,7 +259,8 @@ INSERT INTO `default_catalog`.`default_database`.`MyOrdersIndexHash_2`
     END
 >>>kafka.json
 {
-  "topics" : [ ]
+  "topics" : [ ],
+  "testRunnerTopics" : [ ]
 }
 >>>postgres.json
 {
