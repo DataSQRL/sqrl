@@ -22,6 +22,7 @@ import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.PackageJsonImpl;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.config.SqrlConfigTest;
+import com.datasqrl.engine.log.kafka.KafkaPhysicalPlan;
 import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCollector;
 import java.io.IOException;
@@ -246,6 +247,251 @@ class ConfigLoaderUtilsTest {
     assertThat(config.asString("delimited.config.option").get()).isEqualTo("that");
     assertThat(config.asInt("one").get()).isEqualTo(1);
     assertThat(config.asString("token").get()).isEqualTo("piff");
+  }
+
+  @Test
+  void givenNonExistentPlanDir_whenLoadKafkaPhysicalPlan_thenThrowsIllegalArgumentException() {
+    // Given
+    Path nonExistentDir = tempDir.resolve("nonexistent");
+
+    // When & Then
+    assertThatThrownBy(() -> ConfigLoaderUtils.loadKafkaPhysicalPlan(nonExistentDir))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("plan dir does not exist");
+  }
+
+  @Test
+  void givenPlanDirWithoutKafkaJson_whenLoadKafkaPhysicalPlan_thenReturnsEmptyPlan()
+      throws IOException {
+    // Given
+    Path planDir = tempDir.resolve("plan");
+    Files.createDirectories(planDir);
+
+    // When
+    KafkaPhysicalPlan result = ConfigLoaderUtils.loadKafkaPhysicalPlan(planDir);
+
+    // Then
+    assertThat(result.getTopics()).isEmpty();
+    assertThat(result.getTestRunnerTopics()).isEmpty();
+    assertThat(result.isEmpty()).isTrue();
+  }
+
+  @Test
+  void givenPlanDirWithValidKafkaJson_whenLoadKafkaPhysicalPlan_thenReturnsPopulatedPlan()
+      throws IOException {
+    // Given
+    Path planDir = tempDir.resolve("plan");
+    Files.createDirectories(planDir);
+
+    String kafkaJsonContent =
+        """
+        {
+          "topics": [
+            {
+              "topicName": "orders",
+              "numPartitions": 3,
+              "replicationFactor": 1
+            },
+            {
+              "topicName": "customers",
+              "numPartitions": 1,
+              "replicationFactor": 1
+            }
+          ],
+          "testRunnerTopics": ["test-topic-1", "test-topic-2"]
+        }
+        """;
+
+    Path kafkaJsonFile = planDir.resolve("kafka.json");
+    Files.writeString(kafkaJsonFile, kafkaJsonContent);
+
+    // When
+    KafkaPhysicalPlan result = ConfigLoaderUtils.loadKafkaPhysicalPlan(planDir);
+
+    // Then
+    assertThat(result.getTopics()).hasSize(2);
+    assertThat(result.getTopics().get(0).getTopicName()).isEqualTo("orders");
+    assertThat(result.getTopics().get(0).getNumPartitions()).isEqualTo(3);
+    assertThat(result.getTopics().get(1).getTopicName()).isEqualTo("customers");
+    assertThat(result.getTopics().get(1).getNumPartitions()).isEqualTo(1);
+
+    assertThat(result.getTestRunnerTopics())
+        .containsExactlyInAnyOrder("test-topic-1", "test-topic-2");
+    assertThat(result.isEmpty()).isFalse();
+  }
+
+  @Test
+  void givenPlanDirWithMalformedKafkaJson_whenLoadKafkaPhysicalPlan_thenReturnsEmptyPlan()
+      throws IOException {
+    // Given
+    Path planDir = tempDir.resolve("plan");
+    Files.createDirectories(planDir);
+
+    String malformedKafkaJson = "{ invalid json }";
+    Path kafkaJsonFile = planDir.resolve("kafka.json");
+    Files.writeString(kafkaJsonFile, malformedKafkaJson);
+
+    // When
+    KafkaPhysicalPlan result = ConfigLoaderUtils.loadKafkaPhysicalPlan(planDir);
+
+    // Then
+    assertThat(result.getTopics()).isEmpty();
+    assertThat(result.getTestRunnerTopics()).isEmpty();
+    assertThat(result.isEmpty()).isTrue();
+  }
+
+  @Test
+  void givenPlanDirWithPartialKafkaJson_whenLoadKafkaPhysicalPlan_thenReturnsPartialPlan()
+      throws IOException {
+    // Given
+    Path planDir = tempDir.resolve("plan");
+    Files.createDirectories(planDir);
+
+    String partialKafkaJson =
+        """
+        {
+          "topics": [
+            {
+              "topicName": "events",
+              "numPartitions": 2,
+              "replicationFactor": 1
+            }
+          ]
+        }
+        """;
+
+    Path kafkaJsonFile = planDir.resolve("kafka.json");
+    Files.writeString(kafkaJsonFile, partialKafkaJson);
+
+    // When
+    KafkaPhysicalPlan result = ConfigLoaderUtils.loadKafkaPhysicalPlan(planDir);
+
+    // Then
+    assertThat(result.getTopics()).hasSize(1);
+    assertThat(result.getTopics().get(0).getTopicName()).isEqualTo("events");
+    assertThat(result.getTestRunnerTopics()).isEmpty();
+    assertThat(result.isEmpty()).isFalse();
+  }
+
+  @Test
+  void givenNonExistentPlanDir_whenLoadPostgresStatements_thenThrowsIllegalArgumentException() {
+    // Given
+    Path nonExistentDir = tempDir.resolve("nonexistent");
+
+    // When & Then
+    assertThatThrownBy(() -> ConfigLoaderUtils.loadPostgresStatements(nonExistentDir))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("plan dir does not exist");
+  }
+
+  @Test
+  void givenPlanDirWithoutPostgresJson_whenLoadPostgresStatements_thenReturnsEmptyList()
+      throws IOException {
+    // Given
+    Path planDir = tempDir.resolve("plan");
+    Files.createDirectories(planDir);
+
+    // When
+    List<ConfigLoaderUtils.StatementInfo> result =
+        ConfigLoaderUtils.loadPostgresStatements(planDir);
+
+    // Then
+    assertThat(result).isEmpty();
+  }
+
+  @Test
+  void givenPlanDirWithValidPostgresJson_whenLoadPostgresStatements_thenReturnsStatements()
+      throws IOException {
+    // Given
+    Path planDir = tempDir.resolve("plan");
+    Files.createDirectories(planDir);
+
+    String postgresJsonContent =
+        """
+        {
+          "statements": [
+            {
+              "name": "create_users_table",
+              "type": "DDL",
+              "sql": "CREATE TABLE users (id INT PRIMARY KEY, name VARCHAR(100))"
+            },
+            {
+              "name": "create_orders_table",
+              "type": "DDL",
+              "sql": "CREATE TABLE orders (id INT PRIMARY KEY, user_id INT, amount DECIMAL(10,2))"
+            },
+            {
+              "name": "create_index",
+              "type": "INDEX",
+              "sql": "CREATE INDEX idx_user_id ON orders(user_id)"
+            }
+          ]
+        }
+        """;
+
+    Path postgresJsonFile = planDir.resolve("postgres.json");
+    Files.writeString(postgresJsonFile, postgresJsonContent);
+
+    // When
+    List<ConfigLoaderUtils.StatementInfo> result =
+        ConfigLoaderUtils.loadPostgresStatements(planDir);
+
+    // Then
+    assertThat(result).hasSize(3);
+
+    assertThat(result.get(0).name()).isEqualTo("create_users_table");
+    assertThat(result.get(0).type()).isEqualTo("DDL");
+    assertThat(result.get(0).sql()).contains("CREATE TABLE users");
+
+    assertThat(result.get(1).name()).isEqualTo("create_orders_table");
+    assertThat(result.get(1).type()).isEqualTo("DDL");
+    assertThat(result.get(1).sql()).contains("CREATE TABLE orders");
+
+    assertThat(result.get(2).name()).isEqualTo("create_index");
+    assertThat(result.get(2).type()).isEqualTo("INDEX");
+    assertThat(result.get(2).sql()).contains("CREATE INDEX");
+  }
+
+  @Test
+  void
+      givenPlanDirWithMalformedPostgresJson_whenLoadPostgresStatements_thenThrowsIllegalStateException()
+          throws IOException {
+    // Given
+    Path planDir = tempDir.resolve("plan");
+    Files.createDirectories(planDir);
+
+    String malformedPostgresJson = "{ invalid json }";
+    Path postgresJsonFile = planDir.resolve("postgres.json");
+    Files.writeString(postgresJsonFile, malformedPostgresJson);
+
+    // When & Then
+    assertThatThrownBy(() -> ConfigLoaderUtils.loadPostgresStatements(planDir))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining("Failed to load");
+  }
+
+  @Test
+  void givenPlanDirWithEmptyPostgresStatements_whenLoadPostgresStatements_thenReturnsEmptyList()
+      throws IOException {
+    // Given
+    Path planDir = tempDir.resolve("plan");
+    Files.createDirectories(planDir);
+
+    String emptyPostgresJson = """
+        {
+          "statements": []
+        }
+        """;
+
+    Path postgresJsonFile = planDir.resolve("postgres.json");
+    Files.writeString(postgresJsonFile, emptyPostgresJson);
+
+    // When
+    List<ConfigLoaderUtils.StatementInfo> result =
+        ConfigLoaderUtils.loadPostgresStatements(planDir);
+
+    // Then
+    assertThat(result).isEmpty();
   }
 
   @SneakyThrows

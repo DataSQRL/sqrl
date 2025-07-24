@@ -21,6 +21,7 @@ import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.EngineType;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.PackageJson.EngineConfig;
+import com.datasqrl.config.TestRunnerConfiguration;
 import com.datasqrl.datatype.DataTypeMapping;
 import com.datasqrl.datatype.flink.json.FlexibleJsonFlinkFormatTypeMapper;
 import com.datasqrl.engine.EngineFeature;
@@ -44,6 +45,7 @@ import com.google.common.collect.Streams;
 import com.google.inject.Inject;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -72,6 +74,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
   public static final EnumSet<EngineFeature> KAFKA_FEATURES = EnumSet.of(EngineFeature.MUTATIONS);
 
   @Getter private final EngineConfig engineConfig;
+  private final TestRunnerConfiguration testRunnerConfig;
   private final ConnectorConf streamConnectorConf;
   private final ConnectorConf mutationConnectorConf;
 
@@ -79,6 +82,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
   public KafkaLogEngine(PackageJson json, ConnectorFactoryFactory connectorFactory) {
     super(KafkaLogEngineFactory.ENGINE_NAME, EngineType.LOG, KAFKA_FEATURES);
     this.engineConfig = json.getEngines().getEngineConfigOrEmpty(KafkaLogEngineFactory.ENGINE_NAME);
+    this.testRunnerConfig = json.getTestConfig();
     this.streamConnectorConf = connectorFactory.getConfig(KafkaLogEngineFactory.ENGINE_NAME);
     this.mutationConnectorConf =
         connectorFactory.getConfig(KafkaLogEngineFactory.ENGINE_NAME + "-mutation");
@@ -267,9 +271,12 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
           .setExecutableQuery(new KafkaQuery(stagePlan.getStage(), topicName, filterColumns));
     }
     // Plan topic creation
-    return new KafkaPhysicalPlan(
+    var topics =
         Streams.concat(stagePlan.getTables().stream(), stagePlan.getMutations().stream())
             .map(NewTopic.class::cast)
-            .collect(Collectors.toList()));
+            .toList();
+    var testRunnerTopics = new HashSet<>(testRunnerConfig.getCreateTopics());
+
+    return new KafkaPhysicalPlan(topics, testRunnerTopics);
   }
 }

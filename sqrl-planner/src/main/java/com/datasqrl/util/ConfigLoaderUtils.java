@@ -20,6 +20,8 @@ import static com.google.common.base.Preconditions.checkArgument;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.config.SqrlConstants;
+import com.datasqrl.engine.log.kafka.KafkaPhysicalPlan;
+import com.datasqrl.engine.log.kafka.NewTopic;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorMessage;
 import com.datasqrl.error.ResourceFileUtil;
@@ -35,10 +37,10 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -203,35 +205,48 @@ public final class ConfigLoaderUtils {
   }
 
   /**
-   * Loads Kafka topic names from the plan directory by parsing the {@code kafka.json} configuration
-   * file.
+   * Loads the Kafka physical plan from the plan directory by parsing the {@code kafka.json}
+   * configuration file. This method constructs a complete {@link KafkaPhysicalPlan} containing both
+   * regular topics and test runner topics.
    *
    * @param planDir the plan directory containing the {@code kafka.json} file
-   * @return an unmodifiable list of topic names found in the configuration, or an empty list if no
-   *     {@code kafka.json} file exists or if parsing fails
+   * @return a {@link KafkaPhysicalPlan} containing topics and test runner topics, or an empty plan
+   *     if no {@code kafka.json} file exists or if parsing fails
    * @throws IllegalArgumentException if the plan directory is null or does not exist
    */
-  public static List<String> loadKafkaTopics(Path planDir) {
+  public static KafkaPhysicalPlan loadKafkaPhysicalPlan(Path planDir) {
     validatePlanDir(planDir);
 
-    var topics = new ArrayList<String>();
+    List<NewTopic> topics = List.of();
+    Set<String> testRunnerTopics = Set.of();
 
     var kafkaFile = planDir.resolve("kafka.json").toFile();
     if (kafkaFile.exists()) {
       try {
         JsonNode root = MAPPER.readTree(kafkaFile);
-        JsonNode topicsNode = root.get("topics");
 
-        StreamSupport.stream(topicsNode.spliterator(), false)
-            .map(node -> node.get("topicName").asText())
-            .forEach(topics::add);
+        topics =
+            readJsonNodeWithFailWarn(
+                    root.get("topics"),
+                    new TypeReference<List<NewTopic>>() {},
+                    "Failed to load 'topics' from '{}', content will be ignored",
+                    kafkaFile)
+                .orElse(List.of());
+
+        testRunnerTopics =
+            readJsonNodeWithFailWarn(
+                    root.get("testRunnerTopics"),
+                    new TypeReference<Set<String>>() {},
+                    "Failed to load 'testRunnerTopics' from '{}', content will be ignored",
+                    kafkaFile)
+                .orElse(Set.of());
 
       } catch (Exception ex) {
-        log.warn("Failed to load '{}', will ignore topics", kafkaFile);
+        log.warn("Failed to load '{}', will ignore any Kafka topic to create", kafkaFile);
       }
     }
 
-    return Collections.unmodifiableList(topics);
+    return new KafkaPhysicalPlan(topics, testRunnerTopics);
   }
 
   /**
@@ -318,6 +333,18 @@ public final class ConfigLoaderUtils {
     } catch (IOException e) {
       throw local.exception("Could not parse JSON file [%s]: %s", file, e.toString());
     }
+  }
+
+  private static <T> Optional<T> readJsonNodeWithFailWarn(
+      JsonNode node, TypeReference<T> typeRef, String errorMsg, Object... errorMsgValues) {
+    try {
+      return Optional.of(MAPPER.readValue(node.traverse(), typeRef));
+    } catch (Exception ex) {
+      log.warn(errorMsg, errorMsgValues);
+      log.debug("JSON parse error:", ex);
+    }
+
+    return Optional.empty();
   }
 
   public record StatementInfo(String name, String type, String sql) {}

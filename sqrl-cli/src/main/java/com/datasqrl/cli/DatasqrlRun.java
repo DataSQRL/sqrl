@@ -15,7 +15,13 @@
  */
 package com.datasqrl.cli;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import static com.datasqrl.env.EnvVariableNames.KAFKA_BOOTSTRAP_SERVERS;
+import static com.datasqrl.env.EnvVariableNames.POSTGRES_DATABASE;
+import static com.datasqrl.env.EnvVariableNames.POSTGRES_HOST;
+import static com.datasqrl.env.EnvVariableNames.POSTGRES_JDBC_URL;
+import static com.datasqrl.env.EnvVariableNames.POSTGRES_PASSWORD;
+import static com.datasqrl.env.EnvVariableNames.POSTGRES_PORT;
+import static com.datasqrl.env.EnvVariableNames.POSTGRES_USERNAME;
 
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.flinkrunner.EnvVarResolver;
@@ -45,9 +51,9 @@ import java.nio.file.attribute.FileTime;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.Statement;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
@@ -175,17 +181,18 @@ public class DatasqrlRun {
 
   @SneakyThrows
   private void initKafka() {
-    var topics = ConfigLoaderUtils.loadKafkaTopics(planDir);
-    if (topics.isEmpty()) {
-      log.warn(
-          "The Kafka physical plan does not contain any topics, 'test-runner' topics will be ignored");
+    var kafkaPlan = ConfigLoaderUtils.loadKafkaPhysicalPlan(planDir);
+    if (kafkaPlan.isEmpty()) {
+      log.debug("The Kafka physical plan is empty, skip init");
       return;
     }
 
-    var mutableTopics = new ArrayList<>(topics);
-    mutableTopics.addAll(sqrlConfig.getTestConfig().getCreateTopics());
+    var topicsToCreate = new HashSet<>(kafkaPlan.getTestRunnerTopics());
+    kafkaPlan.getTopics().stream()
+        .map(com.datasqrl.engine.log.kafka.NewTopic::getTopicName)
+        .forEach(topicsToCreate::add);
 
-    var bootstrapServers = getenv("KAFKA_BOOTSTRAP_SERVERS");
+    var bootstrapServers = getenv(KAFKA_BOOTSTRAP_SERVERS);
     if (bootstrapServers == null) {
       throw new IllegalStateException(
           "Failed to get Kafka 'bootstrap.servers', KAFKA_BOOTSTRAP_SERVERS is not set");
@@ -195,7 +202,7 @@ public class DatasqrlRun {
     props.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
     try (AdminClient adminClient = AdminClient.create(props)) {
       Set<String> existingTopics = adminClient.listTopics().names().get();
-      for (String topicName : mutableTopics) {
+      for (String topicName : topicsToCreate) {
         if (existingTopics.contains(topicName)) {
           continue;
         }
@@ -214,9 +221,7 @@ public class DatasqrlRun {
 
     try (Connection connection =
         DriverManager.getConnection(
-            getenv("POSTGRES_JDBC_URL"),
-            getenv("POSTGRES_USERNAME"),
-            getenv("POSTGRES_PASSWORD"))) {
+            getenv(POSTGRES_JDBC_URL), getenv(POSTGRES_USERNAME), getenv(POSTGRES_PASSWORD))) {
       for (StatementInfo statement : statements) {
         log.info("Executing statement {} of type {}", statement.name(), statement.type());
         try (Statement stmt = connection.createStatement()) {
@@ -260,11 +265,11 @@ public class DatasqrlRun {
     if (planDir.resolve("postgres.json").toFile().exists()) {
       serverConfig
           .getPgConnectOptions()
-          .setHost(getenv("POSTGRES_HOST"))
-          .setPort(Integer.parseInt(getenv("POSTGRES_PORT")))
-          .setUser(getenv("POSTGRES_USERNAME"))
-          .setPassword(getenv("POSTGRES_PASSWORD"))
-          .setDatabase(getenv("POSTGRES_DATABASE"));
+          .setHost(getenv(POSTGRES_HOST))
+          .setPort(Integer.parseInt(getenv(POSTGRES_PORT)))
+          .setUser(getenv(POSTGRES_USERNAME))
+          .setPassword(getenv(POSTGRES_PASSWORD))
+          .setDatabase(getenv(POSTGRES_DATABASE));
     }
 
     serverConfig = ServerConfigUtil.mergeConfigs(serverConfig, vertxConfig());
@@ -292,18 +297,11 @@ public class DatasqrlRun {
   @SneakyThrows
   Optional<String> getLastSavepoint() {
     var savepointDir = flinkConfig.get(CheckpointingOptions.SAVEPOINT_DIRECTORY);
-    if (StringUtils.isNotBlank(savepointDir)) {
-      log.debug("Using savepoint dir from Flink configuration YAML: {}", savepointDir);
-    } else {
-      savepointDir = env.get("FLINK_SP_DATA_PATH");
-    }
-
-    if (StringUtils.isNotBlank(savepointDir)) {
-      log.debug("Using savepoint dir from FLINK_SP_DATA_PATH env var: {}", savepointDir);
-    } else {
+    if (StringUtils.isBlank(savepointDir)) {
       return Optional.empty();
     }
 
+    log.debug("Using savepoint dir from Flink configuration YAML: {}", savepointDir);
     Path savepointDirPath;
     try {
       savepointDirPath = Paths.get(URI.create(savepointDir));
@@ -311,17 +309,21 @@ public class DatasqrlRun {
       savepointDirPath = Paths.get(savepointDir);
     }
 
-    checkArgument(
-        Files.isDirectory(savepointDirPath),
-        String.format("Savepoint dir '%s' does not exist", savepointDir));
+    if (!Files.isDirectory(savepointDirPath)) {
+      log.warn(
+          "Savepoint dir '%s' was provided in the Flink config, but it does not exist, will ignore.");
+      return Optional.empty();
+    }
 
-    return Files.list(savepointDirPath)
-        .filter(Files::isDirectory)
-        .map(this::attachCreationTime)
-        .max(Comparator.comparing(t -> t.f1))
-        .map(t -> t.f0)
-        .map(Path::toAbsolutePath)
-        .map(Path::toString);
+    try (var files = Files.list(savepointDirPath)) {
+      return files
+          .filter(Files::isDirectory)
+          .map(this::attachCreationTime)
+          .max(Comparator.comparing(t -> t.f1))
+          .map(t -> t.f0)
+          .map(Path::toAbsolutePath)
+          .map(Path::toString);
+    }
   }
 
   @SneakyThrows

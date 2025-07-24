@@ -23,6 +23,8 @@ import static org.mockito.Mockito.mockConstruction;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
+import com.datasqrl.engine.log.kafka.KafkaPhysicalPlan;
+import com.datasqrl.engine.log.kafka.NewTopic;
 import com.datasqrl.env.GlobalEnvironmentStore;
 import java.io.File;
 import java.io.IOException;
@@ -32,6 +34,7 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -153,7 +156,9 @@ class OsProcessManagerTest {
       filesMocked.when(() -> Files.createDirectories(any(Path.class))).thenReturn(mockPath);
 
       // Mock that no services are needed
-      configMocked.when(() -> ConfigLoaderUtils.loadKafkaTopics(mockPlanDir)).thenReturn(List.of());
+      configMocked
+          .when(() -> ConfigLoaderUtils.loadKafkaPhysicalPlan(mockPlanDir))
+          .thenReturn(new KafkaPhysicalPlan(List.of(), Set.of()));
       configMocked
           .when(() -> ConfigLoaderUtils.loadPostgresStatements(mockPlanDir))
           .thenReturn(List.of());
@@ -315,7 +320,9 @@ class OsProcessManagerTest {
       filesMocked.when(() -> Files.createDirectories(any(Path.class))).thenReturn(mockPath);
 
       // Mock that no Kafka topics or Postgres statements are found
-      configMocked.when(() -> ConfigLoaderUtils.loadKafkaTopics(mockPlanDir)).thenReturn(List.of());
+      configMocked
+          .when(() -> ConfigLoaderUtils.loadKafkaPhysicalPlan(mockPlanDir))
+          .thenReturn(new KafkaPhysicalPlan(List.of(), Set.of()));
       configMocked
           .when(() -> ConfigLoaderUtils.loadPostgresStatements(mockPlanDir))
           .thenReturn(List.of());
@@ -359,9 +366,10 @@ class OsProcessManagerTest {
       filesMocked.when(() -> Files.list(mockPath)).thenReturn(Stream.of(mockPath));
 
       // Mock that Kafka topics are found but no Postgres statements
+      var mockTopic = mock(NewTopic.class);
       configMocked
-          .when(() -> ConfigLoaderUtils.loadKafkaTopics(mockPlanDir))
-          .thenReturn(List.of("topic1"));
+          .when(() -> ConfigLoaderUtils.loadKafkaPhysicalPlan(mockPlanDir))
+          .thenReturn(new KafkaPhysicalPlan(List.of(mockTopic), Set.of()));
       configMocked
           .when(() -> ConfigLoaderUtils.loadPostgresStatements(mockPlanDir))
           .thenReturn(List.of());
@@ -415,10 +423,13 @@ class OsProcessManagerTest {
       filesMocked.when(() -> Files.list(any(Path.class))).thenReturn(Stream.of(mockPath));
 
       // Mock that Postgres statements are found but no Kafka topics
-      configMocked.when(() -> ConfigLoaderUtils.loadKafkaTopics(mockPlanDir)).thenReturn(List.of());
+      configMocked
+          .when(() -> ConfigLoaderUtils.loadKafkaPhysicalPlan(mockPlanDir))
+          .thenReturn(new KafkaPhysicalPlan(List.of(), Set.of()));
       configMocked
           .when(() -> ConfigLoaderUtils.loadPostgresStatements(mockPlanDir))
-          .thenReturn(List.of("CREATE TABLE test"));
+          .thenReturn(
+              List.of(new ConfigLoaderUtils.StatementInfo("test", "DDL", "CREATE TABLE test")));
 
       when(mockProcess.waitFor()).thenReturn(0);
 
@@ -467,12 +478,14 @@ class OsProcessManagerTest {
       filesMocked.when(() -> Files.list(any(Path.class))).thenReturn(Stream.of(mockPath));
 
       // Mock that both Kafka topics and Postgres statements are found
+      var mockTopic = mock(NewTopic.class);
       configMocked
-          .when(() -> ConfigLoaderUtils.loadKafkaTopics(mockPlanDir))
-          .thenReturn(List.of("topic1"));
+          .when(() -> ConfigLoaderUtils.loadKafkaPhysicalPlan(mockPlanDir))
+          .thenReturn(new KafkaPhysicalPlan(List.of(mockTopic), Set.of()));
       configMocked
           .when(() -> ConfigLoaderUtils.loadPostgresStatements(mockPlanDir))
-          .thenReturn(List.of("CREATE TABLE test"));
+          .thenReturn(
+              List.of(new ConfigLoaderUtils.StatementInfo("test", "DDL", "CREATE TABLE test")));
 
       when(mockProcess.isAlive()).thenReturn(true);
       when(mockProcess.waitFor()).thenReturn(0);

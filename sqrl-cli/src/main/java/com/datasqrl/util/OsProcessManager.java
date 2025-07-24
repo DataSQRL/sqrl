@@ -15,6 +15,17 @@
  */
 package com.datasqrl.util;
 
+import static com.datasqrl.env.EnvVariableNames.KAFKA_BOOTSTRAP_SERVERS;
+import static com.datasqrl.env.EnvVariableNames.KAFKA_GROUP_ID;
+import static com.datasqrl.env.EnvVariableNames.POSTGRES_AUTHORITY;
+import static com.datasqrl.env.EnvVariableNames.POSTGRES_DATABASE;
+import static com.datasqrl.env.EnvVariableNames.POSTGRES_HOST;
+import static com.datasqrl.env.EnvVariableNames.POSTGRES_JDBC_URL;
+import static com.datasqrl.env.EnvVariableNames.POSTGRES_PASSWORD;
+import static com.datasqrl.env.EnvVariableNames.POSTGRES_PORT;
+import static com.datasqrl.env.EnvVariableNames.POSTGRES_USERNAME;
+import static com.datasqrl.env.EnvVariableNames.POSTGRES_VERSION;
+
 import com.datasqrl.env.GlobalEnvironmentStore;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -146,10 +157,11 @@ public class OsProcessManager {
     }
 
     String bootstrapServers;
-    var externalBootstrapServers = env.get("KAFKA_BOOTSTRAP_SERVERS");
+    var externalBootstrapServers = env.get(KAFKA_BOOTSTRAP_SERVERS);
     if (externalBootstrapServers != null) {
       log.info(
-          "Skip starting Redpanda, because KAFKA_BOOTSTRAP_SERVERS={} is provided",
+          "Skip starting Redpanda, because {}={} is provided",
+          KAFKA_BOOTSTRAP_SERVERS,
           externalBootstrapServers);
       bootstrapServers = externalBootstrapServers;
 
@@ -205,8 +217,8 @@ public class OsProcessManager {
     }
 
     // Set environment variables
-    setEnvironmentVariable("KAFKA_BOOTSTRAP_SERVERS", bootstrapServers);
-    setEnvironmentVariable("KAFKA_GROUP_ID", UUID.randomUUID().toString());
+    setEnvironmentVariable(KAFKA_BOOTSTRAP_SERVERS, bootstrapServers);
+    setEnvironmentVariable(KAFKA_GROUP_ID, UUID.randomUUID().toString());
   }
 
   private void startPostgres(boolean postgresPlanned) throws IOException, InterruptedException {
@@ -227,7 +239,7 @@ public class OsProcessManager {
     if (isDirectoryEmpty(postgresDataPath)) {
       log.info("Initializing Postgres database ...");
 
-      var postgresVersion = env.getOrDefault("POSTGRES_VERSION", DEFAULT_POSTGRES_VERSION);
+      var postgresVersion = env.getOrDefault(POSTGRES_VERSION, DEFAULT_POSTGRES_VERSION);
       executePostgresCommand(
           "su",
           "-",
@@ -258,19 +270,21 @@ public class OsProcessManager {
     }
 
     // Set environment variables
-    setEnvironmentVariable("POSTGRES_HOST", LOCALHOST);
-    setEnvironmentVariable("POSTGRES_PORT", PG_PORT);
-    setEnvironmentVariable("POSTGRES_DATABASE", PG_DB);
-    setEnvironmentVariable("POSTGRES_AUTHORITY", PG_AUTHORITY);
-    setEnvironmentVariable("POSTGRES_JDBC_URL", "jdbc:postgresql://" + PG_AUTHORITY);
-    setEnvironmentVariable("POSTGRES_USERNAME", "postgres");
-    setEnvironmentVariable("POSTGRES_PASSWORD", "postgres");
+    setEnvironmentVariable(POSTGRES_HOST, LOCALHOST);
+    setEnvironmentVariable(POSTGRES_PORT, PG_PORT);
+    setEnvironmentVariable(POSTGRES_DATABASE, PG_DB);
+    setEnvironmentVariable(POSTGRES_AUTHORITY, PG_AUTHORITY);
+    setEnvironmentVariable(POSTGRES_JDBC_URL, "jdbc:postgresql://" + PG_AUTHORITY);
+    setEnvironmentVariable(POSTGRES_USERNAME, "postgres");
+    setEnvironmentVariable(POSTGRES_PASSWORD, "postgres");
 
     log.info("Postgres started successfully");
   }
 
   private boolean isKafkaPlanned(Path planDir) {
-    return !ConfigLoaderUtils.loadKafkaTopics(planDir).isEmpty();
+    var kafkaPlan = ConfigLoaderUtils.loadKafkaPhysicalPlan(planDir);
+
+    return !kafkaPlan.isEmpty();
   }
 
   private boolean isPostgresPlanned(Path planDir) {

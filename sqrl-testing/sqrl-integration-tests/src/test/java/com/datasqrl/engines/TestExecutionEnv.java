@@ -15,6 +15,9 @@
  */
 package com.datasqrl.engines;
 
+import static com.datasqrl.env.EnvVariableNames.POSTGRES_JDBC_URL;
+import static com.datasqrl.env.EnvVariableNames.POSTGRES_PASSWORD;
+import static com.datasqrl.env.EnvVariableNames.POSTGRES_USERNAME;
 import static org.assertj.core.api.Assertions.fail;
 
 import com.datasqrl.UseCaseTestParameter;
@@ -86,9 +89,9 @@ public class TestExecutionEnv implements TestEngineVisitor<Void, TestEnvContext>
     Map postgresPlan =
         new ObjectMapper()
             .readValue(rootDir.resolve("build/deploy/plan/postgres.json").toFile(), Map.class);
-    String url = context.env.get("POSTGRES_JDBC_URL");
-    String username = context.env.get("POSTGRES_USERNAME");
-    String password = context.env.get("POSTGRES_PASSWORD");
+    String url = context.env.get(POSTGRES_JDBC_URL);
+    String username = context.env.get(POSTGRES_USERNAME);
+    String password = context.env.get(POSTGRES_PASSWORD);
     try (Connection conn = DriverManager.getConnection(url, username, password)) {
       for (Map statement : (List<Map>) postgresPlan.get("statements")) {
         if (statement.get("type").toString().equalsIgnoreCase("view")) {

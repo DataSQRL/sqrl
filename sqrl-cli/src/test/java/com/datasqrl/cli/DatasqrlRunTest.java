@@ -16,7 +16,6 @@
 package com.datasqrl.cli;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -69,20 +68,7 @@ class DatasqrlRunTest {
   }
 
   @Test
-  void usesSavepointDirFromEnvIfFlinkConfigBlank() throws Exception {
-    env.put("FLINK_SP_DATA_PATH", tempDir.toUri().toString());
-    underTest = new DatasqrlRun(tempDir.resolve("plan"), null, flinkConfig, env);
-
-    Files.createDirectory(tempDir.resolve("savepoint1"));
-
-    var result = underTest.getLastSavepoint();
-
-    assertThat(result).isPresent();
-    assertThat(result.get()).endsWith("savepoint1");
-  }
-
-  @Test
-  void returnsEmptyIfBothConfigsBlank() {
+  void returnsEmptyIfSavepointDirConfigBlank() {
     env.put("FLINK_SP_DATA_PATH", " ");
     underTest = new DatasqrlRun(tempDir.resolve("plan"), null, flinkConfig, env);
 
@@ -92,13 +78,11 @@ class DatasqrlRunTest {
   }
 
   @Test
-  void throwsIfDirectoryDoesNotExist() {
+  void returnsEmptyIfDirectoryDoesNotExist() {
     when(flinkConfig.get(CheckpointingOptions.SAVEPOINT_DIRECTORY))
         .thenReturn("file:///nonexistent-dir");
 
-    assertThatThrownBy(() -> underTest.getLastSavepoint())
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("does not exist");
+    assertThat(underTest.getLastSavepoint()).isEmpty();
   }
 
   @Test

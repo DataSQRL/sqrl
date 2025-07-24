@@ -15,6 +15,16 @@
  */
 package com.datasqrl.engines;
 
+import static com.datasqrl.env.EnvVariableNames.KAFKA_BOOTSTRAP_SERVERS;
+import static com.datasqrl.env.EnvVariableNames.KAFKA_GROUP_ID;
+import static com.datasqrl.env.EnvVariableNames.POSTGRES_AUTHORITY;
+import static com.datasqrl.env.EnvVariableNames.POSTGRES_DATABASE;
+import static com.datasqrl.env.EnvVariableNames.POSTGRES_HOST;
+import static com.datasqrl.env.EnvVariableNames.POSTGRES_JDBC_URL;
+import static com.datasqrl.env.EnvVariableNames.POSTGRES_PASSWORD;
+import static com.datasqrl.env.EnvVariableNames.POSTGRES_PORT;
+import static com.datasqrl.env.EnvVariableNames.POSTGRES_USERNAME;
+
 import com.datasqrl.engines.TestContainersForTestGoal.TestContainerHook;
 import com.datasqrl.engines.TestEngine.DuckdbTestEngine;
 import com.datasqrl.engines.TestEngine.FlinkTestEngine;
@@ -36,6 +46,7 @@ import java.util.Properties;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.redpanda.RedpandaContainer;
 import org.testcontainers.utility.DockerImageName;
@@ -91,15 +102,15 @@ public class TestContainersForTestGoal implements TestEngineVisitor<TestContaine
       @Override
       public Map<String, String> getEnv() {
         Map<String, String> env = new HashMap<>(8);
-        env.put("POSTGRES_JDBC_URL", testDatabase.getJdbcUrl());
-        env.put("POSTGRES_AUTHORITY", testDatabase.getJdbcUrl().split("://")[1]);
-        env.put("POSTGRES_HOST", testDatabase.getHost());
+        env.put(POSTGRES_JDBC_URL, testDatabase.getJdbcUrl());
+        env.put(POSTGRES_AUTHORITY, testDatabase.getJdbcUrl().split("://")[1]);
+        env.put(POSTGRES_HOST, testDatabase.getHost());
         env.put(
-            "POSTGRES_PORT",
+            POSTGRES_PORT,
             testDatabase.getMappedPort(PostgreSQLContainer.POSTGRESQL_PORT).toString());
-        env.put("POSTGRES_USERNAME", testDatabase.getUsername());
-        env.put("POSTGRES_PASSWORD", testDatabase.getPassword());
-        env.put("POSTGRES_DATABASE", testDatabase.getDatabaseName());
+        env.put(POSTGRES_USERNAME, testDatabase.getUsername());
+        env.put(POSTGRES_PASSWORD, testDatabase.getPassword());
+        env.put(POSTGRES_DATABASE, testDatabase.getDatabaseName());
         return env;
       }
     };
@@ -124,7 +135,7 @@ public class TestContainersForTestGoal implements TestEngineVisitor<TestContaine
       @Override
       public void clear() {
         var props = new Properties();
-        props.put("bootstrap.servers", testKafka.getBootstrapServers());
+        props.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, testKafka.getBootstrapServers());
         try (var admin = AdminClient.create(props)) {
           // List all topics
           List<String> topics = new ArrayList<>(admin.listTopics().names().get());
@@ -143,9 +154,9 @@ public class TestContainersForTestGoal implements TestEngineVisitor<TestContaine
       @Override
       public Map<String, String> getEnv() {
         return Map.of(
-            "KAFKA_BOOTSTRAP_SERVERS",
+            KAFKA_BOOTSTRAP_SERVERS,
             testKafka.getBootstrapServers(),
-            "KAFKA_GROUP_ID",
+            KAFKA_GROUP_ID,
             UUID.randomUUID().toString());
       }
     };
