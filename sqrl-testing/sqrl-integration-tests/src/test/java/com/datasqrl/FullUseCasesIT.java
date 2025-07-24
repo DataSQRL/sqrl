@@ -34,17 +34,15 @@ import com.datasqrl.tests.UseCaseTestExtensions;
 import com.datasqrl.util.ConfigLoaderUtils;
 import com.datasqrl.util.FlinkOperatorStatusChecker;
 import com.datasqrl.util.SnapshotTest.Snapshot;
-import com.google.common.collect.MoreCollectors;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.function.Predicate;
-import javax.annotation.Nullable;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
@@ -53,8 +51,6 @@ import org.apache.flink.test.junit5.MiniClusterExtension;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -69,10 +65,12 @@ import org.junit.jupiter.params.provider.MethodSource;
 @Slf4j
 @ExtendWith(MiniClusterExtension.class)
 class FullUseCasesIT {
-  private static final Path RESOURCES = Path.of("src/test/resources");
-  private static final Path USE_CASES = RESOURCES.resolve("usecases");
 
-  private Snapshot snapshot;
+  private static final Path USE_CASES = Path.of("src/test/resources/usecases");
+
+  private static Integer totalShards;
+  private static int shardIdx;
+  private static int shard;
 
   record ScriptCriteria(String name, String goal) {}
 
@@ -114,20 +112,26 @@ class FullUseCasesIT {
 
   boolean executed = false;
 
-  @AfterEach
-  void tearDown() throws Exception {
-    if (containerHook != null && executed) {
-      containerHook.clear();
-      executed = false;
-    }
-  }
-
   @BeforeAll
   static void before() {
     var engines = new EngineFactory().createAll();
 
     containerHook = engines.accept(new TestContainersForTestGoal(), null);
     containerHook.start();
+  }
+
+  @BeforeAll
+  static void initTestShading() {
+    var total = System.getenv("TEST_SHARDING_TOTAL");
+    if (ObjectUtils.isEmpty(total)) {
+      log.warn("No test sharding");
+      return;
+    }
+
+    totalShards = Integer.parseInt(total);
+    shardIdx = Integer.parseInt(System.getenv("TEST_SHARDING_INDEX"));
+
+    log.warn("Enabled test sharding: total: {} index: {}", totalShards, shardIdx);
   }
 
   @AfterAll
@@ -137,77 +141,52 @@ class FullUseCasesIT {
     }
   }
 
-  static int shard;
-  static Integer testShardingTotal;
-  static int testShardingIndex;
-
-  @BeforeAll
-  static void initTestShading() throws Exception {
-    var total = System.getenv("TEST_SHARDING_TOTAL");
-    if (ObjectUtils.isEmpty(total)) {
-      log.warn("No test sharding");
-      return;
+  @AfterEach
+  void tearDown() {
+    if (containerHook != null && executed) {
+      containerHook.clear();
+      executed = false;
     }
-
-    testShardingTotal = Integer.parseInt(total);
-    testShardingIndex = Integer.parseInt(System.getenv("TEST_SHARDING_INDEX"));
-
-    log.warn("Enabled test sharding: total: {} index: {}", testShardingTotal, testShardingIndex);
   }
 
-  @SneakyThrows
   @ParameterizedTest
-  @MethodSource("useCaseProvider")
-  void useCase(UseCaseTestParameter param) {
-    if (disabledScripts.contains(new ScriptCriteria(param.getSqrlFileName(), param.getGoal()))) {
-      log.warn("Skipping disabled test:" + param.getSqrlFileName());
-      assumeThat(false).as("Skipping disabled test: %s", param.getSqrlFileName()).isTrue();
-    }
+  @MethodSource("dummyPackageJsonProvider")
+  void useCase(UseCaseParam param) {
+    assumeThat(disabledScripts.contains(new ScriptCriteria(param.getUseCaseName(), param.goal())))
+        .as("Skipping disabled test: %s", param.getUseCaseName())
+        .isFalse();
 
     shard++;
-    if (testShardingTotal != null && shard % testShardingTotal != testShardingIndex) {
-      log.warn(
-          "Skipping due to test sharding {} shard: {} testShardingTotal: {} testShardingIndex: {}",
-          param.sqrlFileName,
-          shard,
-          testShardingTotal,
-          testShardingIndex);
-      assumeThat(false)
-          .as(
-              "Skipping due to test sharding %s.\n"
-                  + "shard: %s testShardingTotal: %s testShardingIndex: %s",
-              param, shard, testShardingTotal, testShardingIndex)
-          .isTrue();
-    } else {
-      log.warn(
-          "Testing sharding {} shard: {} testShardingTotal: {} testShardingIndex: {}",
-          param.sqrlFileName,
-          shard,
-          testShardingTotal,
-          testShardingIndex);
-    }
+    assumeThat(totalShards == null || shard % totalShards == shardIdx)
+        .as(
+            "Skipping due to test sharding %s.\n"
+                + "shard: %s testShardingTotal: %s testShardingIndex: %s",
+            param, shard, totalShards, shardIdx)
+        .isTrue();
 
     executed = true;
+    log.info(
+        "Testing {} shard: {} testShardingTotal: {} testShardingIndex: {}",
+        param.getPackageJsonName(),
+        shard,
+        totalShards,
+        shardIdx);
 
-    this.snapshot =
+    var snapshot =
         Snapshot.of(
             FullUseCasesIT.class,
-            param.testName,
-            param.getSqrlFileName().substring(0, param.getSqrlFileName().length() - 5));
-    TestExtension testExtension = testExtensions.create(param.getTestName());
+            param.getUseCaseName(),
+            param.getPackageJsonName().substring(0, param.getPackageJsonName().length() - 5));
+
+    TestExtension testExtension = testExtensions.create(param.getUseCaseName());
     testExtension.setup();
 
-    Path rootDir = param.getRootDir();
+    Path rootDir = param.packageJsonPath().getParent();
 
     SqrlScriptExecutor executor =
         SqrlScriptExecutor.builder()
-            .rootDir(rootDir)
-            .goal(param.getGoal())
-            .script(param.getSqrlFileName())
-            .graphql(param.getGraphqlFileName())
-            .testSuffix(param.getTestName())
-            .testPath(param.getTestPath())
-            .packageJsonPath(param.getPackageJsonPath())
+            .goal(param.goal())
+            .packageJsonPath(param.packageJsonPath())
             .build();
 
     AssertStatusHook hook = new AssertStatusHook();
@@ -233,28 +212,23 @@ class FullUseCasesIT {
       env.put("DATA_PATH", rootDir.resolve("build/deploy/flink/data").toAbsolutePath().toString());
       env.put("UDF_PATH", rootDir.resolve("build/deploy/flink/lib").toAbsolutePath().toString());
 
-      // Log test run
       log.info(
-          "The test parameters\n"
-              + "Test name: "
-              + param.getTestName()
-              + "\n"
-              + "Test path: "
-              + rootDir
-              + "\n"
-              + "Test sqrl file: "
-              + param.getSqrlFileName()
-              + "\n"
-              + "Test graphql file: "
-              + param.getGraphqlFileName()
-              + "\n");
+          """
+        The test parameters
+        Test name: {}
+        Test path: {}
+        Test package file: {}
+        """,
+          param.getUseCaseName(),
+          rootDir,
+          param.getPackageJsonName());
 
       // Run the test
       TestEnvContext context =
           TestEnvContext.builder().env(env).rootDir(rootDir).param(param).build();
       // test goal is accomplished by above, but run goal needs extra setup
       DatasqrlRun run = null;
-      if (param.getGoal().equals("run")) {
+      if (param.goal().equals("run")) {
         try {
           var planDir = context.getRootDir().resolve(SqrlConstants.PLAN_PATH);
           var flinkConfig = TestExecutionEnv.loadInternalTestFlinkConfig(planDir, context.getEnv());
@@ -295,7 +269,7 @@ class FullUseCasesIT {
 
       engines.accept(
           new TestExecutionEnv(
-              param.getSqrlFileName() + ":" + param.goal, packageJson, rootDir, snapshot),
+              param.getPackageJsonName() + ":" + param.goal(), packageJson, rootDir, snapshot),
           context);
       if (run != null) {
         run.cancel();
@@ -311,114 +285,39 @@ class FullUseCasesIT {
     }
   }
 
-  static int testNo = 0;
-
-  @ParameterizedTest
-  @MethodSource("useCaseProvider")
-  @Disabled
-  void runTestNumber(UseCaseTestParameter param) {
-    var testToExecute = 45;
-    testNo++;
-    System.out.println(testNo + ":" + param);
-
-    assumeThat(testToExecute).as("Not the test marked for execution.").isEqualTo(testNo);
-
-    useCase(param);
-  }
-
-  @ParameterizedTest
-  @MethodSource("useCaseProvider")
-  @Disabled
-  void printUseCaseNumbers(UseCaseTestParameter param) {
-    testNo++;
-    System.out.println(testNo + ":" + param);
-  }
-
-  @Test
-  @Disabled
-  public void runTestCaseByName() {
-    var param =
-        getSpecificUseCase(
-            p -> p.sqrlFileName.startsWith("jwt-authorized.sqrl") && p.goal.equals("test"));
-
-    useCase(param);
-  }
-
-  @Test
-  @Disabled
-  void runOutsideProject() {
-    // Set projectDir to any path outside the repo
-    String projectDir = null;
-    var param =
-        getSpecificUseCase(
-            projectDir, p -> p.sqrlFileName.startsWith("script.sqrl") && p.goal.equals("run"));
-
-    useCase(param);
-  }
-
-  static UseCaseTestParameter getSpecificUseCase(Predicate<UseCaseTestParameter> paramFilter) {
-    return useCaseProvider().stream().filter(paramFilter).collect(MoreCollectors.onlyElement());
-  }
-
-  static UseCaseTestParameter getSpecificUseCase(
-      String useCasePath, Predicate<UseCaseTestParameter> paramFilter) {
-    return useCaseProvider(useCasePath).stream()
-        .filter(paramFilter)
-        .collect(MoreCollectors.onlyElement());
-  }
-
-  static Set<UseCaseTestParameter> useCaseProvider() {
-    return useCaseProvider(null);
+  // FIXME: this is just a temporary method to restrict the execution for 1 migrated usecase
+  static Set<UseCaseParam> dummyPackageJsonProvider() {
+    var repoPkg = USE_CASES.resolve("repository").resolve("package.json");
+    return Set.of(new UseCaseParam(repoPkg, "run"), new UseCaseParam(repoPkg, "test"));
   }
 
   @SneakyThrows
-  static Set<UseCaseTestParameter> useCaseProvider(@Nullable String useCasePath) {
-    var rootDir = useCasePath != null ? Paths.get(useCasePath) : USE_CASES;
-    var useCasesDir = rootDir.toAbsolutePath();
-    Set<UseCaseTestParameter> params = new TreeSet<>();
+  static Set<UseCaseParam> packageJsonProvider() {
+    var useCasesDir = USE_CASES.toAbsolutePath();
 
-    if (useCasePath != null) {
-      addParamsInDir(useCasesDir, params);
-      return params;
+    try (var useCaseStream = Files.list(useCasesDir)) {
+
+      return useCaseStream
+          .filter(Files::isDirectory)
+          .flatMap(FullUseCasesIT::collectPackageJsonFiles)
+          .flatMap(p -> Stream.of(new UseCaseParam(p, "run"), new UseCaseParam(p, "test")))
+          .collect(Collectors.toCollection(TreeSet::new));
     }
-
-    Files.list(useCasesDir).filter(Files::isDirectory).forEach(dir -> addParamsInDir(dir, params));
-
-    return params;
   }
 
-  private static void addParamsInDir(Path dir, Set<UseCaseTestParameter> params) {
-    var useCaseName = dir.getFileName().toString();
-
-    try (var stream = Files.newDirectoryStream(dir)) {
-      for (Path file : stream) {
-        var fileName = file.getFileName().toString();
-
-        if (!fileName.endsWith(".sqrl")) {
-          continue;
-        }
-
-        var testName = fileName.substring(0, fileName.length() - 5);
-        var graphql = testName + ".graphqls";
-        var packageJson = "package-" + testName + ".json";
-        var testPath = "tests-" + testName;
-        if (!file.getParent().resolve(graphql).toFile().exists()) {
-          graphql = null;
-        }
-        if (!file.getParent().resolve(packageJson).toFile().exists()) {
-          packageJson = null;
-        }
-        if (!file.getParent().resolve(testPath).toFile().exists()) {
-          testPath = null;
-        }
-        var useCaseTestParameter =
-            new UseCaseTestParameter(
-                dir, "test", useCaseName, fileName, graphql, testName, testPath, null, packageJson);
-        params.add(useCaseTestParameter);
-        params.add(useCaseTestParameter.cloneWithGoal("run"));
-      }
-    } catch (Exception e) {
-      fail("Unable to process use case: " + useCaseName, e);
+  /** Collect files that match the {@code package*.json} pattern from a given use case dir. */
+  @SneakyThrows
+  static Stream<Path> collectPackageJsonFiles(Path useCaseDir) {
+    try (var stream = Files.list(useCaseDir)) {
+      return stream
+          .filter(Files::isRegularFile)
+          .filter(
+              p -> {
+                String n = p.getFileName().toString();
+                return n.startsWith("package") && n.endsWith(".json");
+              })
+          .toList()
+          .stream();
     }
   }
 }
