@@ -234,14 +234,36 @@ If only `folder` is given the dependency key (`my-alias` in the above example) a
 
 ---
 
-## Template & Environment Variables
+## Templating & Variable Resolution
 
-* **Environment variables** use `${VAR_NAME}` — resolved by the DataSQRL launcher at runtime.  
-  Example: `${POSTGRES_PASSWORD}`.
+The DataSQRL launcher supports dynamic resolution of variable placeholders at runtime.
+
+* **Environment variables**: use `${VAR_NAME}` as a placeholder. Example: `${POSTGRES_PASSWORD}`.
 * **SQRL variables** use `${sqrl:<identifier>}` and are filled automatically by the compiler, mostly inside connector templates.  
   Common identifiers include `table-name`, `original-table-name`, `filename`, `format`, and `kafka-key`.
 
+:::warning
 Unresolved `${sqrl:*}` placeholders raise a validation error.
+:::
+
+---
+
+## Internal Environment Variables
+
+For dependent services, DataSQRL creates and uses the following environment variables inside the Docker container:
+
+* **Kafka**
+  * `KAFKA_BOOTSTRAP_SERVERS`
+  * `KAFKA_GROUP_ID`
+* **PostgreSQL**
+  * `POSTGRES_VERSION`
+  * `POSTGRES_HOST`
+  * `POSTGRES_PORT`
+  * `POSTGRES_DATABASE`
+  * `POSTGRES_AUTHORITY`
+  * `POSTGRES_JDBC_URL`
+  * `POSTGRES_USERNAME`
+  * `POSTGRES_PASSWORD`
 
 ---
 
