@@ -1,6 +1,10 @@
 {
   "version": "1",
   "enabled-engines": ["vertx", "postgres", "flink"],
+  "script": {
+    "main": "repo.sqrl",
+    "graphql": "repo.graphqls"
+  },
   "test-runner": {
     "snapshot-folder": "snapshots-repo",
     "test-folder": "tests-repo",
