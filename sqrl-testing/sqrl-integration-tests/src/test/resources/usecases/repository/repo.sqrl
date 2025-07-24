@@ -14,12 +14,17 @@ Package.versions(version String, variant String) := SELECT * FROM  Submission s 
 SubmissionTopics := SELECT s.name AS pkgName, k.name AS topicName, s.submissionTime
                     FROM Submission s CROSS JOIN UNNEST(keywords) k(name);
 
-/*+query_by_all(topicName) */
-TopicPackages := SELECT pkgName, topicName, COUNT(1) AS numSubmissions, MAX(submissionTime) AS lastSubmission
+/*+no_query */
+TopicPackagesA := SELECT pkgName, topicName, COUNT(1) AS numSubmissions, MAX(submissionTime) AS lastSubmission
                  FROM SubmissionTopics
                  GROUP BY pkgName, topicName ORDER BY numSubmissions DESC, pkgName ASC;
 
-TopicPackages.latest := SELECT * FROM  Submission s WHERE this.pkgName = s.name AND s.latest = TRUE ORDER BY s.submissionTime DESC LIMIT 1;
+TopicPackagesA.latest := SELECT * FROM  Submission s WHERE this.pkgName = s.name AND s.latest = TRUE ORDER BY s.submissionTime DESC LIMIT 1;
+
+TopicPackages(topicName STRING NOT NULL) := 
+		SELECT *
+		FROM TopicPackagesA
+		WHERE topicName = :topicName;
 
 /*+query_by_any(topicName) */
 TopicSearch := SELECT topicName, COUNT(DISTINCT pkgName) AS numPackages

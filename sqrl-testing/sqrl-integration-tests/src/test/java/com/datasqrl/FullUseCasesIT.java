@@ -335,11 +335,9 @@ class FullUseCasesIT {
   }
 
   @Test
-  @Disabled
   public void runTestCaseByName() {
     var param =
-        getSpecificUseCase(
-            p -> p.sqrlFileName.startsWith("flink_kafka.sqrl") && p.goal.equals("test"));
+        getSpecificUseCase(p -> p.sqrlFileName.startsWith("repo.sqrl") && p.goal.equals("run"));
 
     useCase(param);
   }
