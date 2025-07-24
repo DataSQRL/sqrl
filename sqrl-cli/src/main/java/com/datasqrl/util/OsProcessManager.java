@@ -284,11 +284,12 @@ public class OsProcessManager {
   private boolean isKafkaPlanned(Path planDir) {
     var kafkaPlan = ConfigLoaderUtils.loadKafkaPhysicalPlan(planDir);
 
-    return !kafkaPlan.isEmpty();
+    return kafkaPlan.isPresent() && !kafkaPlan.get().isEmpty();
   }
 
   private boolean isPostgresPlanned(Path planDir) {
-    return !ConfigLoaderUtils.loadPostgresStatements(planDir).isEmpty();
+    var jdbcPlan = ConfigLoaderUtils.loadPostgresStatements(planDir);
+    return jdbcPlan.isPresent() && !jdbcPlan.get().statements().isEmpty();
   }
 
   private void startPostgresService() throws IOException, InterruptedException {

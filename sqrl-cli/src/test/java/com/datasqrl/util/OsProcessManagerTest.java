@@ -23,6 +23,8 @@ import static org.mockito.Mockito.mockConstruction;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
+import com.datasqrl.engine.database.relational.JdbcPhysicalPlan;
+import com.datasqrl.engine.database.relational.JdbcStatement;
 import com.datasqrl.engine.log.kafka.KafkaPhysicalPlan;
 import com.datasqrl.engine.log.kafka.NewTopic;
 import com.datasqrl.env.GlobalEnvironmentStore;
@@ -34,7 +36,7 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.Optional;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -158,10 +160,10 @@ class OsProcessManagerTest {
       // Mock that no services are needed
       configMocked
           .when(() -> ConfigLoaderUtils.loadKafkaPhysicalPlan(mockPlanDir))
-          .thenReturn(new KafkaPhysicalPlan(List.of(), Set.of()));
+          .thenReturn(Optional.of(new KafkaPhysicalPlan(List.of(), List.of())));
       configMocked
           .when(() -> ConfigLoaderUtils.loadPostgresStatements(mockPlanDir))
-          .thenReturn(List.of());
+          .thenReturn(Optional.empty());
 
       when(mockProcess.waitFor()).thenReturn(0);
 
@@ -322,10 +324,10 @@ class OsProcessManagerTest {
       // Mock that no Kafka topics or Postgres statements are found
       configMocked
           .when(() -> ConfigLoaderUtils.loadKafkaPhysicalPlan(mockPlanDir))
-          .thenReturn(new KafkaPhysicalPlan(List.of(), Set.of()));
+          .thenReturn(Optional.empty());
       configMocked
           .when(() -> ConfigLoaderUtils.loadPostgresStatements(mockPlanDir))
-          .thenReturn(List.of());
+          .thenReturn(Optional.empty());
 
       when(mockProcess.waitFor()).thenReturn(0);
 
@@ -369,10 +371,10 @@ class OsProcessManagerTest {
       var mockTopic = mock(NewTopic.class);
       configMocked
           .when(() -> ConfigLoaderUtils.loadKafkaPhysicalPlan(mockPlanDir))
-          .thenReturn(new KafkaPhysicalPlan(List.of(mockTopic), Set.of()));
+          .thenReturn(Optional.of(new KafkaPhysicalPlan(List.of(mockTopic), List.of())));
       configMocked
           .when(() -> ConfigLoaderUtils.loadPostgresStatements(mockPlanDir))
-          .thenReturn(List.of());
+          .thenReturn(Optional.empty());
 
       when(mockProcess.isAlive()).thenReturn(true);
       when(mockProcess.waitFor()).thenReturn(0);
@@ -425,11 +427,12 @@ class OsProcessManagerTest {
       // Mock that Postgres statements are found but no Kafka topics
       configMocked
           .when(() -> ConfigLoaderUtils.loadKafkaPhysicalPlan(mockPlanDir))
-          .thenReturn(new KafkaPhysicalPlan(List.of(), Set.of()));
+          .thenReturn(Optional.empty());
+      var mockStatement = new JdbcStatement("test", JdbcStatement.Type.TABLE, "CREATE TABLE test");
+      var mockJdbcPlan = JdbcPhysicalPlan.builder().statement(mockStatement).build();
       configMocked
           .when(() -> ConfigLoaderUtils.loadPostgresStatements(mockPlanDir))
-          .thenReturn(
-              List.of(new ConfigLoaderUtils.StatementInfo("test", "DDL", "CREATE TABLE test")));
+          .thenReturn(Optional.of(mockJdbcPlan));
 
       when(mockProcess.waitFor()).thenReturn(0);
 
@@ -481,11 +484,12 @@ class OsProcessManagerTest {
       var mockTopic = mock(NewTopic.class);
       configMocked
           .when(() -> ConfigLoaderUtils.loadKafkaPhysicalPlan(mockPlanDir))
-          .thenReturn(new KafkaPhysicalPlan(List.of(mockTopic), Set.of()));
+          .thenReturn(Optional.of(new KafkaPhysicalPlan(List.of(mockTopic), List.of())));
+      var mockStatement = new JdbcStatement("test", JdbcStatement.Type.TABLE, "CREATE TABLE test");
+      var mockJdbcPlan = JdbcPhysicalPlan.builder().statement(mockStatement).build();
       configMocked
           .when(() -> ConfigLoaderUtils.loadPostgresStatements(mockPlanDir))
-          .thenReturn(
-              List.of(new ConfigLoaderUtils.StatementInfo("test", "DDL", "CREATE TABLE test")));
+          .thenReturn(Optional.of(mockJdbcPlan));
 
       when(mockProcess.isAlive()).thenReturn(true);
       when(mockProcess.waitFor()).thenReturn(0);

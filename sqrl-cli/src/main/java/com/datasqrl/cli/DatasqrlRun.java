@@ -32,7 +32,6 @@ import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.config.ServerConfigUtil;
 import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.util.ConfigLoaderUtils;
-import com.datasqrl.util.ConfigLoaderUtils.StatementInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.Resources;
 import io.micrometer.prometheusmetrics.PrometheusConfig;
@@ -58,6 +57,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
+import java.util.stream.Stream;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -181,14 +181,16 @@ public class DatasqrlRun {
 
   @SneakyThrows
   private void initKafka() {
-    var kafkaPlan = ConfigLoaderUtils.loadKafkaPhysicalPlan(planDir);
-    if (kafkaPlan.isEmpty()) {
+    var kafkaPlanOpt = ConfigLoaderUtils.loadKafkaPhysicalPlan(planDir);
+    if (kafkaPlanOpt.isEmpty() || kafkaPlanOpt.get().isEmpty()) {
       log.debug("The Kafka physical plan is empty, skip init");
       return;
     }
 
-    var topicsToCreate = new HashSet<>(kafkaPlan.getTestRunnerTopics());
-    kafkaPlan.getTopics().stream()
+    var kafkaPlan = kafkaPlanOpt.get();
+    var topicsToCreate = new HashSet<String>();
+
+    Stream.concat(kafkaPlan.topics().stream(), kafkaPlan.testRunnerTopics().stream())
         .map(com.datasqrl.engine.log.kafka.NewTopic::getTopicName)
         .forEach(topicsToCreate::add);
 
@@ -214,18 +216,20 @@ public class DatasqrlRun {
 
   @SneakyThrows
   private void initPostgres() {
-    var statements = ConfigLoaderUtils.loadPostgresStatements(planDir);
-    if (statements.isEmpty()) {
+    var postgresPlanOpt = ConfigLoaderUtils.loadPostgresStatements(planDir);
+    if (postgresPlanOpt.isEmpty() || postgresPlanOpt.get().statements().isEmpty()) {
+      log.debug("The Postgres physical plan is empty, skip init");
       return;
     }
 
+    var statements = postgresPlanOpt.get().statements();
     try (Connection connection =
         DriverManager.getConnection(
             getenv(POSTGRES_JDBC_URL), getenv(POSTGRES_USERNAME), getenv(POSTGRES_PASSWORD))) {
-      for (StatementInfo statement : statements) {
-        log.info("Executing statement {} of type {}", statement.name(), statement.type());
+      for (var jdbcStmt : statements) {
+        log.info("Executing statement {} of type {}", jdbcStmt.getName(), jdbcStmt.getType());
         try (Statement stmt = connection.createStatement()) {
-          stmt.execute(statement.sql());
+          stmt.execute(jdbcStmt.getSql());
         } catch (Exception e) {
           e.printStackTrace();
           assert false : e.getMessage();

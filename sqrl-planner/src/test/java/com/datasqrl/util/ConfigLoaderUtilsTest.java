@@ -22,7 +22,8 @@ import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.PackageJsonImpl;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.config.SqrlConfigTest;
-import com.datasqrl.engine.log.kafka.KafkaPhysicalPlan;
+import com.datasqrl.engine.database.relational.JdbcStatement;
+import com.datasqrl.engine.log.kafka.NewTopic;
 import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCollector;
 import java.io.IOException;
@@ -261,19 +262,17 @@ class ConfigLoaderUtilsTest {
   }
 
   @Test
-  void givenPlanDirWithoutKafkaJson_whenLoadKafkaPhysicalPlan_thenReturnsEmptyPlan()
+  void givenPlanDirWithoutKafkaJson_whenLoadKafkaPhysicalPlan_thenReturnsEmpty()
       throws IOException {
     // Given
     Path planDir = tempDir.resolve("plan");
     Files.createDirectories(planDir);
 
     // When
-    KafkaPhysicalPlan result = ConfigLoaderUtils.loadKafkaPhysicalPlan(planDir);
+    var result = ConfigLoaderUtils.loadKafkaPhysicalPlan(planDir);
 
     // Then
-    assertThat(result.getTopics()).isEmpty();
-    assertThat(result.getTestRunnerTopics()).isEmpty();
-    assertThat(result.isEmpty()).isTrue();
+    assertThat(result).isEmpty();
   }
 
   @Test
@@ -298,7 +297,18 @@ class ConfigLoaderUtilsTest {
               "replicationFactor": 1
             }
           ],
-          "testRunnerTopics": ["test-topic-1", "test-topic-2"]
+          "testRunnerTopics": [
+            {
+              "topicName": "test-topic-1",
+              "numPartitions": 1,
+              "replicationFactor": 1
+            },
+            {
+              "topicName": "test-topic-2",
+              "numPartitions": 1,
+              "replicationFactor": 1
+            }
+          ]
         }
         """;
 
@@ -306,23 +316,26 @@ class ConfigLoaderUtilsTest {
     Files.writeString(kafkaJsonFile, kafkaJsonContent);
 
     // When
-    KafkaPhysicalPlan result = ConfigLoaderUtils.loadKafkaPhysicalPlan(planDir);
+    var result = ConfigLoaderUtils.loadKafkaPhysicalPlan(planDir);
 
     // Then
-    assertThat(result.getTopics()).hasSize(2);
-    assertThat(result.getTopics().get(0).getTopicName()).isEqualTo("orders");
-    assertThat(result.getTopics().get(0).getNumPartitions()).isEqualTo(3);
-    assertThat(result.getTopics().get(1).getTopicName()).isEqualTo("customers");
-    assertThat(result.getTopics().get(1).getNumPartitions()).isEqualTo(1);
+    assertThat(result).isPresent();
+    var kafkaPlan = result.get();
+    assertThat(kafkaPlan.topics()).hasSize(2);
+    assertThat(kafkaPlan.topics().get(0).getTopicName()).isEqualTo("orders");
+    assertThat(kafkaPlan.topics().get(0).getNumPartitions()).isEqualTo(3);
+    assertThat(kafkaPlan.topics().get(1).getTopicName()).isEqualTo("customers");
+    assertThat(kafkaPlan.topics().get(1).getNumPartitions()).isEqualTo(1);
 
-    assertThat(result.getTestRunnerTopics())
+    assertThat(kafkaPlan.testRunnerTopics().stream().map(NewTopic::getTopicName))
         .containsExactlyInAnyOrder("test-topic-1", "test-topic-2");
-    assertThat(result.isEmpty()).isFalse();
+    assertThat(kafkaPlan.isEmpty()).isFalse();
   }
 
   @Test
-  void givenPlanDirWithMalformedKafkaJson_whenLoadKafkaPhysicalPlan_thenReturnsEmptyPlan()
-      throws IOException {
+  void
+      givenPlanDirWithMalformedKafkaJson_whenLoadKafkaPhysicalPlan_thenThrowsIllegalStateException()
+          throws IOException {
     // Given
     Path planDir = tempDir.resolve("plan");
     Files.createDirectories(planDir);
@@ -331,46 +344,10 @@ class ConfigLoaderUtilsTest {
     Path kafkaJsonFile = planDir.resolve("kafka.json");
     Files.writeString(kafkaJsonFile, malformedKafkaJson);
 
-    // When
-    KafkaPhysicalPlan result = ConfigLoaderUtils.loadKafkaPhysicalPlan(planDir);
-
-    // Then
-    assertThat(result.getTopics()).isEmpty();
-    assertThat(result.getTestRunnerTopics()).isEmpty();
-    assertThat(result.isEmpty()).isTrue();
-  }
-
-  @Test
-  void givenPlanDirWithPartialKafkaJson_whenLoadKafkaPhysicalPlan_thenReturnsPartialPlan()
-      throws IOException {
-    // Given
-    Path planDir = tempDir.resolve("plan");
-    Files.createDirectories(planDir);
-
-    String partialKafkaJson =
-        """
-        {
-          "topics": [
-            {
-              "topicName": "events",
-              "numPartitions": 2,
-              "replicationFactor": 1
-            }
-          ]
-        }
-        """;
-
-    Path kafkaJsonFile = planDir.resolve("kafka.json");
-    Files.writeString(kafkaJsonFile, partialKafkaJson);
-
-    // When
-    KafkaPhysicalPlan result = ConfigLoaderUtils.loadKafkaPhysicalPlan(planDir);
-
-    // Then
-    assertThat(result.getTopics()).hasSize(1);
-    assertThat(result.getTopics().get(0).getTopicName()).isEqualTo("events");
-    assertThat(result.getTestRunnerTopics()).isEmpty();
-    assertThat(result.isEmpty()).isFalse();
+    // When & Then
+    assertThatThrownBy(() -> ConfigLoaderUtils.loadKafkaPhysicalPlan(planDir))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining("Failed to load");
   }
 
   @Test
@@ -385,22 +362,21 @@ class ConfigLoaderUtilsTest {
   }
 
   @Test
-  void givenPlanDirWithoutPostgresJson_whenLoadPostgresStatements_thenReturnsEmptyList()
+  void givenPlanDirWithoutPostgresJson_whenLoadPostgresStatements_thenReturnsEmpty()
       throws IOException {
     // Given
     Path planDir = tempDir.resolve("plan");
     Files.createDirectories(planDir);
 
     // When
-    List<ConfigLoaderUtils.StatementInfo> result =
-        ConfigLoaderUtils.loadPostgresStatements(planDir);
+    var result = ConfigLoaderUtils.loadPostgresStatements(planDir);
 
     // Then
     assertThat(result).isEmpty();
   }
 
   @Test
-  void givenPlanDirWithValidPostgresJson_whenLoadPostgresStatements_thenReturnsStatements()
+  void givenPlanDirWithValidPostgresJson_whenLoadPostgresStatements_thenReturnsJdbcPlan()
       throws IOException {
     // Given
     Path planDir = tempDir.resolve("plan");
@@ -412,12 +388,12 @@ class ConfigLoaderUtilsTest {
           "statements": [
             {
               "name": "create_users_table",
-              "type": "DDL",
+              "type": "TABLE",
               "sql": "CREATE TABLE users (id INT PRIMARY KEY, name VARCHAR(100))"
             },
             {
               "name": "create_orders_table",
-              "type": "DDL",
+              "type": "TABLE",
               "sql": "CREATE TABLE orders (id INT PRIMARY KEY, user_id INT, amount DECIMAL(10,2))"
             },
             {
@@ -433,23 +409,25 @@ class ConfigLoaderUtilsTest {
     Files.writeString(postgresJsonFile, postgresJsonContent);
 
     // When
-    List<ConfigLoaderUtils.StatementInfo> result =
-        ConfigLoaderUtils.loadPostgresStatements(planDir);
+    var result = ConfigLoaderUtils.loadPostgresStatements(planDir);
 
     // Then
-    assertThat(result).hasSize(3);
+    assertThat(result).isPresent();
+    var jdbcPlan = result.get();
+    assertThat(jdbcPlan.statements()).hasSize(3);
 
-    assertThat(result.get(0).name()).isEqualTo("create_users_table");
-    assertThat(result.get(0).type()).isEqualTo("DDL");
-    assertThat(result.get(0).sql()).contains("CREATE TABLE users");
+    var statements = jdbcPlan.statements();
+    assertThat(statements.get(0).getName()).isEqualTo("create_users_table");
+    assertThat(statements.get(0).getType()).isEqualTo(JdbcStatement.Type.TABLE);
+    assertThat(statements.get(0).getSql()).contains("CREATE TABLE users");
 
-    assertThat(result.get(1).name()).isEqualTo("create_orders_table");
-    assertThat(result.get(1).type()).isEqualTo("DDL");
-    assertThat(result.get(1).sql()).contains("CREATE TABLE orders");
+    assertThat(statements.get(1).getName()).isEqualTo("create_orders_table");
+    assertThat(statements.get(1).getType()).isEqualTo(JdbcStatement.Type.TABLE);
+    assertThat(statements.get(1).getSql()).contains("CREATE TABLE orders");
 
-    assertThat(result.get(2).name()).isEqualTo("create_index");
-    assertThat(result.get(2).type()).isEqualTo("INDEX");
-    assertThat(result.get(2).sql()).contains("CREATE INDEX");
+    assertThat(statements.get(2).getName()).isEqualTo("create_index");
+    assertThat(statements.get(2).getType()).isEqualTo(JdbcStatement.Type.INDEX);
+    assertThat(statements.get(2).getSql()).contains("CREATE INDEX");
   }
 
   @Test
@@ -471,7 +449,7 @@ class ConfigLoaderUtilsTest {
   }
 
   @Test
-  void givenPlanDirWithEmptyPostgresStatements_whenLoadPostgresStatements_thenReturnsEmptyList()
+  void givenPlanDirWithEmptyPostgresStatements_whenLoadPostgresStatements_thenReturnsEmptyPlan()
       throws IOException {
     // Given
     Path planDir = tempDir.resolve("plan");
@@ -487,11 +465,11 @@ class ConfigLoaderUtilsTest {
     Files.writeString(postgresJsonFile, emptyPostgresJson);
 
     // When
-    List<ConfigLoaderUtils.StatementInfo> result =
-        ConfigLoaderUtils.loadPostgresStatements(planDir);
+    var result = ConfigLoaderUtils.loadPostgresStatements(planDir);
 
     // Then
-    assertThat(result).isEmpty();
+    assertThat(result).isPresent();
+    assertThat(result.get().statements()).isEmpty();
   }
 
   @SneakyThrows

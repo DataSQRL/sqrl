@@ -45,7 +45,6 @@ import com.google.common.collect.Streams;
 import com.google.inject.Inject;
 import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -275,7 +274,11 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
         Streams.concat(stagePlan.getTables().stream(), stagePlan.getMutations().stream())
             .map(NewTopic.class::cast)
             .toList();
-    var testRunnerTopics = new HashSet<>(testRunnerConfig.getCreateTopics());
+
+    var testRunnerTopics =
+        testRunnerConfig.getCreateTopics().stream()
+            .map(topicName -> new NewTopic(topicName, topicName, null))
+            .toList();
 
     return new KafkaPhysicalPlan(topics, testRunnerTopics);
   }

@@ -19,6 +19,7 @@ import com.datasqrl.engine.database.DatabasePhysicalPlan;
 import com.datasqrl.engine.database.relational.JdbcStatement.Type;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
@@ -26,31 +27,22 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.Builder;
 import lombok.Singular;
-import lombok.Value;
 import org.apache.calcite.rel.RelNode;
 
-@Value
+/**
+ * @param queries Queries that are used for index selection
+ * @param tableIdMap The original {@link JdbcEngineCreateTable} definitions so we can extract the
+ *     mappings from table names and ids
+ */
 @Builder(toBuilder = true)
-public class JdbcPhysicalPlan implements DatabasePhysicalPlan {
+public record JdbcPhysicalPlan(
+    @JsonIgnore ExecutionStage stage,
+    @JsonProperty @Singular List<JdbcStatement> statements,
+    @JsonIgnore @Singular List<RelNode> queries,
+    @JsonIgnore Map<String, JdbcEngineCreateTable> tableIdMap)
+    implements DatabasePhysicalPlan {
 
-  @JsonIgnore ExecutionStage stage;
-  @Singular List<JdbcStatement> statements;
-
-  /**
-   * Queries that are used for index selection
-   *
-   * @param type
-   * @return
-   */
-  @JsonIgnore @Singular List<RelNode> queries;
-
-  /**
-   * The original {@link JdbcEngineCreateTable} definitions so we can extract the mappings from
-   * table names and ids
-   */
-  @JsonIgnore Map<String, JdbcEngineCreateTable> tableIdMap;
-
-  public List<JdbcStatement> getStatementsForType(JdbcStatement.Type type) {
+  public List<JdbcStatement> getStatementsForType(Type type) {
     return statements.stream().filter(s -> s.getType() == type).collect(Collectors.toList());
   }
 

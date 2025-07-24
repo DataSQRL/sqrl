@@ -20,12 +20,11 @@ import static com.google.common.base.Preconditions.checkArgument;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.config.SqrlConstants;
+import com.datasqrl.engine.database.relational.JdbcPhysicalPlan;
 import com.datasqrl.engine.log.kafka.KafkaPhysicalPlan;
-import com.datasqrl.engine.log.kafka.NewTopic;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorMessage;
 import com.datasqrl.error.ResourceFileUtil;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -39,7 +38,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
@@ -210,72 +208,54 @@ public final class ConfigLoaderUtils {
    * regular topics and test runner topics.
    *
    * @param planDir the plan directory containing the {@code kafka.json} file
-   * @return a {@link KafkaPhysicalPlan} containing topics and test runner topics, or an empty plan
-   *     if no {@code kafka.json} file exists or if parsing fails
+   * @return an {@link Optional} containing a {@link KafkaPhysicalPlan} with topics and test runner
+   *     topics, or empty if no {@code kafka.json} file exists
    * @throws IllegalArgumentException if the plan directory is null or does not exist
+   * @throws IllegalStateException if the {@code kafka.json} file exists but cannot be parsed
    */
-  public static KafkaPhysicalPlan loadKafkaPhysicalPlan(Path planDir) {
+  public static Optional<KafkaPhysicalPlan> loadKafkaPhysicalPlan(Path planDir) {
     validatePlanDir(planDir);
-
-    List<NewTopic> topics = List.of();
-    Set<String> testRunnerTopics = Set.of();
 
     var kafkaFile = planDir.resolve("kafka.json").toFile();
     if (kafkaFile.exists()) {
+
       try {
-        JsonNode root = MAPPER.readTree(kafkaFile);
-
-        topics =
-            readJsonNodeWithFailWarn(
-                    root.get("topics"),
-                    new TypeReference<List<NewTopic>>() {},
-                    "Failed to load 'topics' from '{}', content will be ignored",
-                    kafkaFile)
-                .orElse(List.of());
-
-        testRunnerTopics =
-            readJsonNodeWithFailWarn(
-                    root.get("testRunnerTopics"),
-                    new TypeReference<Set<String>>() {},
-                    "Failed to load 'testRunnerTopics' from '{}', content will be ignored",
-                    kafkaFile)
-                .orElse(Set.of());
+        var kafkaPlan = MAPPER.readValue(kafkaFile, KafkaPhysicalPlan.class);
+        return Optional.of(kafkaPlan);
 
       } catch (Exception ex) {
-        log.warn("Failed to load '{}', will ignore any Kafka topic to create", kafkaFile);
+        throw new IllegalStateException(String.format("Failed to load '%s'", kafkaFile), ex);
       }
     }
 
-    return new KafkaPhysicalPlan(topics, testRunnerTopics);
+    return Optional.empty();
   }
 
   /**
-   * Loads PostgreSQL statement information from the plan directory by parsing the {@code
-   * postgres.json} configuration file.
+   * Loads PostgreSQL physical plan from the plan directory by parsing the {@code postgres.json}
+   * configuration file. This method constructs a complete {@link JdbcPhysicalPlan} containing
+   * database statements for schema creation, views, indexes, and other database artifacts.
    *
    * @param planDir the plan directory containing the {@code postgres.json} file
-   * @return a list of {@link StatementInfo} objects containing statement details, or an empty list
-   *     if no {@code postgres.json} file exists
+   * @return an {@link Optional} containing a {@link JdbcPhysicalPlan} with database statements, or
+   *     empty if no {@code postgres.json} file exists
    * @throws IllegalArgumentException if the plan directory is null or does not exist
    * @throws IllegalStateException if the {@code postgres.json} file exists but cannot be parsed
    */
-  public static List<StatementInfo> loadPostgresStatements(Path planDir) {
+  public static Optional<JdbcPhysicalPlan> loadPostgresStatements(Path planDir) {
     validatePlanDir(planDir);
 
     var postgresFile = planDir.resolve("postgres.json").toFile();
     if (!postgresFile.exists()) {
-      return List.of();
+      return Optional.empty();
     }
 
     try {
-      JsonNode root = MAPPER.readTree(postgresFile);
-
-      return MAPPER
-          .readerFor(new TypeReference<List<StatementInfo>>() {})
-          .readValue(root.get("statements"));
+      var jdbcPlan = MAPPER.readValue(postgresFile, JdbcPhysicalPlan.class);
+      return Optional.of(jdbcPlan);
 
     } catch (Exception ex) {
-      throw new IllegalStateException(String.format("Failed to load '%s'", postgresFile));
+      throw new IllegalStateException(String.format("Failed to load '%s'", postgresFile), ex);
     }
   }
 
@@ -334,18 +314,4 @@ public final class ConfigLoaderUtils {
       throw local.exception("Could not parse JSON file [%s]: %s", file, e.toString());
     }
   }
-
-  private static <T> Optional<T> readJsonNodeWithFailWarn(
-      JsonNode node, TypeReference<T> typeRef, String errorMsg, Object... errorMsgValues) {
-    try {
-      return Optional.of(MAPPER.readValue(node.traverse(), typeRef));
-    } catch (Exception ex) {
-      log.warn(errorMsg, errorMsgValues);
-      log.debug("JSON parse error:", ex);
-    }
-
-    return Optional.empty();
-  }
-
-  public record StatementInfo(String name, String type, String sql) {}
 }
