@@ -20,8 +20,6 @@ import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.graphql.server.operation.ApiOperation;
 import com.datasqrl.graphql.server.operation.RestMethodType;
 import com.datasqrl.graphql.swagger.SwaggerService;
-import graphql.ExecutionResult;
-import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.jwt.JWTAuth;
@@ -88,18 +86,20 @@ public class RestBridgeVerticle extends AbstractBridgeVerticle {
     }
 
     // Initialize Swagger service
-    String serverBaseUrl =
-        String.format("http://localhost:%d", config.getHttpServerOptions().getPort());
-    swaggerService = new SwaggerService(config.getSwaggerConfig(), model, serverBaseUrl);
+    swaggerService =
+        new SwaggerService(
+            config.getSwaggerConfig(), model, config.getServletConfig().getRestEndpoint());
 
     // Setup Swagger JSON endpoint
-    String swaggerJsonEndpoint = config.getSwaggerConfig().getEndpoint();
+    var swaggerJsonEndpoint = config.getSwaggerConfig().getEndpoint();
     router
         .get(swaggerJsonEndpoint)
         .handler(
             ctx -> {
               try {
-                String swaggerJson = swaggerService.generateSwaggerJson();
+                // Extract request host and port for dynamic server URL
+                var requestHost = getRequestBaseUrl(ctx);
+                var swaggerJson = swaggerService.generateSwaggerJson(requestHost);
                 ctx.response().putHeader("content-type", "application/json").end(swaggerJson);
               } catch (Exception e) {
                 log.error("Failed to generate Swagger JSON", e);
@@ -111,13 +111,13 @@ public class RestBridgeVerticle extends AbstractBridgeVerticle {
             });
 
     // Setup Swagger UI endpoint
-    String swaggerUIEndpoint = config.getSwaggerConfig().getUiEndpoint();
+    var swaggerUIEndpoint = config.getSwaggerConfig().getUiEndpoint();
     router
         .get(swaggerUIEndpoint)
         .handler(
             ctx -> {
               try {
-                String swaggerUIHtml = swaggerService.generateSwaggerUI();
+                var swaggerUIHtml = swaggerService.generateSwaggerUI();
                 ctx.response().putHeader("content-type", "text/html").end(swaggerUIHtml);
               } catch (Exception e) {
                 log.error("Failed to generate Swagger UI", e);
@@ -134,8 +134,8 @@ public class RestBridgeVerticle extends AbstractBridgeVerticle {
   }
 
   private void createRestEndpoint(ApiOperation operation) {
-    String uriTemplate = operation.getUriTemplate();
-    RestMethodType httpMethod = operation.getRestMethod();
+    var uriTemplate = operation.getUriTemplate();
+    var httpMethod = operation.getRestMethod();
 
     if (uriTemplate == null || httpMethod == null) {
       log.warn(
@@ -145,7 +145,7 @@ public class RestBridgeVerticle extends AbstractBridgeVerticle {
     }
 
     // Convert URI template to Vert.x route pattern
-    String routePattern = convertUriTemplateToRoute(uriTemplate);
+    var routePattern = convertUriTemplateToRoute(uriTemplate);
 
     log.info(
         "Creating REST endpoint: {} {} -> GraphQL {}",
@@ -167,16 +167,16 @@ public class RestBridgeVerticle extends AbstractBridgeVerticle {
     // Add the REST handler
     route.handler(
         ctx -> {
-          Map<String, Object> variables = extractParameters(ctx, operation);
+          var variables = extractParameters(ctx, operation);
           try {
-            Future<ExecutionResult> fut = bridgeRequestToGraphQL(ctx, operation, variables);
+            var fut = bridgeRequestToGraphQL(ctx, operation, variables);
             fut.onSuccess(
                     executionResult -> {
                       ctx.response()
                           .setStatusCode(executionResult.getErrors().isEmpty() ? 200 : 400)
                           .putHeader("content-type", "application/json");
                       if (!executionResult.getErrors().isEmpty()) {
-                        JsonObject json = new JsonObject();
+                        var json = new JsonObject();
                         json.put(
                             "errors",
                             executionResult.getErrors().stream()
@@ -189,7 +189,7 @@ public class RestBridgeVerticle extends AbstractBridgeVerticle {
                                 .toList());
                         ctx.end(json.encode());
                       } else {
-                        Object result = getExecutionData(executionResult, operation);
+                        var result = getExecutionData(executionResult, operation);
                         ctx.end(new JsonObject().put(RESULT_DATA_KEY, result).encode());
                       }
                     })
@@ -209,7 +209,7 @@ public class RestBridgeVerticle extends AbstractBridgeVerticle {
    */
   private String convertUriTemplateToRoute(String uriTemplate) {
     // Remove query parameters pattern {?param1,param2}
-    String route = QUERY_PARAMS_PATTERN.matcher(uriTemplate).replaceAll("");
+    var route = QUERY_PARAMS_PATTERN.matcher(uriTemplate).replaceAll("");
 
     // Convert path parameters {param} to :param
     route = PATH_PARAMS_PATTERN.matcher(route).replaceAll(":$1");
@@ -225,7 +225,7 @@ public class RestBridgeVerticle extends AbstractBridgeVerticle {
 
   protected static Map<String, Object> extractParameters(
       RoutingContext ctx, ApiOperation operation) {
-    Map<String, Object> variables = new HashMap<>();
+    var variables = new HashMap<String, Object>();
 
     if (operation.getRestMethod() == RestMethodType.GET) {
       // For GET requests, extract parameters from URL query parameters and path parameters
@@ -236,5 +236,20 @@ public class RestBridgeVerticle extends AbstractBridgeVerticle {
     }
 
     return variables;
+  }
+
+  /** Extract the base URL from the current request including scheme, host, and port */
+  private String getRequestBaseUrl(RoutingContext ctx) {
+    var scheme = ctx.request().isSSL() ? "https" : "http";
+    var host = ctx.request().getHeader("Host");
+
+    // If host header includes port, use it as-is
+    if (host != null && host.contains(":")) {
+      return scheme + "://" + host;
+    } else {
+      // Use the actual server port from the request
+      var port = ctx.request().localAddress().port();
+      return scheme + "://" + (host != null ? host : "localhost") + ":" + port;
+    }
   }
 }
