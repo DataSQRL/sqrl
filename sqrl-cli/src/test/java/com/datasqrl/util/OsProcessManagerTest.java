@@ -162,7 +162,7 @@ class OsProcessManagerTest {
           .when(() -> ConfigLoaderUtils.loadKafkaPhysicalPlan(mockPlanDir))
           .thenReturn(Optional.of(new KafkaPhysicalPlan(List.of(), List.of())));
       configMocked
-          .when(() -> ConfigLoaderUtils.loadPostgresStatements(mockPlanDir))
+          .when(() -> ConfigLoaderUtils.loadPostgresPhysicalPlan(mockPlanDir))
           .thenReturn(Optional.empty());
 
       when(mockProcess.waitFor()).thenReturn(0);
@@ -326,7 +326,7 @@ class OsProcessManagerTest {
           .when(() -> ConfigLoaderUtils.loadKafkaPhysicalPlan(mockPlanDir))
           .thenReturn(Optional.empty());
       configMocked
-          .when(() -> ConfigLoaderUtils.loadPostgresStatements(mockPlanDir))
+          .when(() -> ConfigLoaderUtils.loadPostgresPhysicalPlan(mockPlanDir))
           .thenReturn(Optional.empty());
 
       when(mockProcess.waitFor()).thenReturn(0);
@@ -373,7 +373,7 @@ class OsProcessManagerTest {
           .when(() -> ConfigLoaderUtils.loadKafkaPhysicalPlan(mockPlanDir))
           .thenReturn(Optional.of(new KafkaPhysicalPlan(List.of(mockTopic), List.of())));
       configMocked
-          .when(() -> ConfigLoaderUtils.loadPostgresStatements(mockPlanDir))
+          .when(() -> ConfigLoaderUtils.loadPostgresPhysicalPlan(mockPlanDir))
           .thenReturn(Optional.empty());
 
       when(mockProcess.isAlive()).thenReturn(true);
@@ -431,7 +431,7 @@ class OsProcessManagerTest {
       var mockStatement = new JdbcStatement("test", JdbcStatement.Type.TABLE, "CREATE TABLE test");
       var mockJdbcPlan = JdbcPhysicalPlan.builder().statement(mockStatement).build();
       configMocked
-          .when(() -> ConfigLoaderUtils.loadPostgresStatements(mockPlanDir))
+          .when(() -> ConfigLoaderUtils.loadPostgresPhysicalPlan(mockPlanDir))
           .thenReturn(Optional.of(mockJdbcPlan));
 
       when(mockProcess.waitFor()).thenReturn(0);
@@ -488,7 +488,7 @@ class OsProcessManagerTest {
       var mockStatement = new JdbcStatement("test", JdbcStatement.Type.TABLE, "CREATE TABLE test");
       var mockJdbcPlan = JdbcPhysicalPlan.builder().statement(mockStatement).build();
       configMocked
-          .when(() -> ConfigLoaderUtils.loadPostgresStatements(mockPlanDir))
+          .when(() -> ConfigLoaderUtils.loadPostgresPhysicalPlan(mockPlanDir))
           .thenReturn(Optional.of(mockJdbcPlan));
 
       when(mockProcess.isAlive()).thenReturn(true);

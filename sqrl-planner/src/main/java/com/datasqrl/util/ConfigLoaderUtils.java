@@ -242,7 +242,7 @@ public final class ConfigLoaderUtils {
    * @throws IllegalArgumentException if the plan directory is null or does not exist
    * @throws IllegalStateException if the {@code postgres.json} file exists but cannot be parsed
    */
-  public static Optional<JdbcPhysicalPlan> loadPostgresStatements(Path planDir) {
+  public static Optional<JdbcPhysicalPlan> loadPostgresPhysicalPlan(Path planDir) {
     validatePlanDir(planDir);
 
     var postgresFile = planDir.resolve("postgres.json").toFile();

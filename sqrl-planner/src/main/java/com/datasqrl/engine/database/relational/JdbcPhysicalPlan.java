@@ -18,8 +18,10 @@ package com.datasqrl.engine.database.relational;
 import com.datasqrl.engine.database.DatabasePhysicalPlan;
 import com.datasqrl.engine.database.relational.JdbcStatement.Type;
 import com.datasqrl.engine.pipeline.ExecutionStage;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
@@ -37,10 +39,16 @@ import org.apache.calcite.rel.RelNode;
 @Builder(toBuilder = true)
 public record JdbcPhysicalPlan(
     @JsonIgnore ExecutionStage stage,
-    @JsonProperty @Singular List<JdbcStatement> statements,
+    @Singular List<JdbcStatement> statements,
     @JsonIgnore @Singular List<RelNode> queries,
     @JsonIgnore Map<String, JdbcEngineCreateTable> tableIdMap)
     implements DatabasePhysicalPlan {
+
+  @SuppressWarnings("unused")
+  @JsonCreator
+  public JdbcPhysicalPlan(@JsonProperty("statements") List<JdbcStatement> statements) {
+    this(null, new ArrayList<>(statements), List.of(), Map.of());
+  }
 
   public List<JdbcStatement> getStatementsForType(Type type) {
     return statements.stream().filter(s -> s.getType() == type).collect(Collectors.toList());

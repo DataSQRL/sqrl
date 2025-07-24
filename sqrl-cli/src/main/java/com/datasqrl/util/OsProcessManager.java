@@ -288,7 +288,7 @@ public class OsProcessManager {
   }
 
   private boolean isPostgresPlanned(Path planDir) {
-    var jdbcPlan = ConfigLoaderUtils.loadPostgresStatements(planDir);
+    var jdbcPlan = ConfigLoaderUtils.loadPostgresPhysicalPlan(planDir);
     return jdbcPlan.isPresent() && !jdbcPlan.get().statements().isEmpty();
   }
 

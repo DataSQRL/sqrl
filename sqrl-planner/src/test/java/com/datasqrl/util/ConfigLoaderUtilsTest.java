@@ -351,32 +351,32 @@ class ConfigLoaderUtilsTest {
   }
 
   @Test
-  void givenNonExistentPlanDir_whenLoadPostgresStatements_thenThrowsIllegalArgumentException() {
+  void givenNonExistentPlanDir_whenLoadPostgresPhysicalPlan_thenThrowsIllegalArgumentException() {
     // Given
     Path nonExistentDir = tempDir.resolve("nonexistent");
 
     // When & Then
-    assertThatThrownBy(() -> ConfigLoaderUtils.loadPostgresStatements(nonExistentDir))
+    assertThatThrownBy(() -> ConfigLoaderUtils.loadPostgresPhysicalPlan(nonExistentDir))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("plan dir does not exist");
   }
 
   @Test
-  void givenPlanDirWithoutPostgresJson_whenLoadPostgresStatements_thenReturnsEmpty()
+  void givenPlanDirWithoutPostgresJson_whenLoadPostgresPhysicalPlan_thenReturnsEmpty()
       throws IOException {
     // Given
     Path planDir = tempDir.resolve("plan");
     Files.createDirectories(planDir);
 
     // When
-    var result = ConfigLoaderUtils.loadPostgresStatements(planDir);
+    var result = ConfigLoaderUtils.loadPostgresPhysicalPlan(planDir);
 
     // Then
     assertThat(result).isEmpty();
   }
 
   @Test
-  void givenPlanDirWithValidPostgresJson_whenLoadPostgresStatements_thenReturnsJdbcPlan()
+  void givenPlanDirWithValidPostgresJson_whenLoadPostgresPhysicalPlan_thenReturnsJdbcPlan()
       throws IOException {
     // Given
     Path planDir = tempDir.resolve("plan");
@@ -409,7 +409,7 @@ class ConfigLoaderUtilsTest {
     Files.writeString(postgresJsonFile, postgresJsonContent);
 
     // When
-    var result = ConfigLoaderUtils.loadPostgresStatements(planDir);
+    var result = ConfigLoaderUtils.loadPostgresPhysicalPlan(planDir);
 
     // Then
     assertThat(result).isPresent();
@@ -432,7 +432,7 @@ class ConfigLoaderUtilsTest {
 
   @Test
   void
-      givenPlanDirWithMalformedPostgresJson_whenLoadPostgresStatements_thenThrowsIllegalStateException()
+      givenPlanDirWithMalformedPostgresJson_whenLoadPostgresPhysicalPlan_thenThrowsIllegalStateException()
           throws IOException {
     // Given
     Path planDir = tempDir.resolve("plan");
@@ -443,13 +443,13 @@ class ConfigLoaderUtilsTest {
     Files.writeString(postgresJsonFile, malformedPostgresJson);
 
     // When & Then
-    assertThatThrownBy(() -> ConfigLoaderUtils.loadPostgresStatements(planDir))
+    assertThatThrownBy(() -> ConfigLoaderUtils.loadPostgresPhysicalPlan(planDir))
         .isInstanceOf(IllegalStateException.class)
         .hasMessageContaining("Failed to load");
   }
 
   @Test
-  void givenPlanDirWithEmptyPostgresStatements_whenLoadPostgresStatements_thenReturnsEmptyPlan()
+  void givenPlanDirWithEmptyPostgresStatements_whenLoadPostgresPhysicalPlan_thenReturnsEmptyPlan()
       throws IOException {
     // Given
     Path planDir = tempDir.resolve("plan");
@@ -465,7 +465,7 @@ class ConfigLoaderUtilsTest {
     Files.writeString(postgresJsonFile, emptyPostgresJson);
 
     // When
-    var result = ConfigLoaderUtils.loadPostgresStatements(planDir);
+    var result = ConfigLoaderUtils.loadPostgresPhysicalPlan(planDir);
 
     // Then
     assertThat(result).isPresent();

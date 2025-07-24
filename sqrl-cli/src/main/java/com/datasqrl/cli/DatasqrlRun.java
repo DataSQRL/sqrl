@@ -216,7 +216,7 @@ public class DatasqrlRun {
 
   @SneakyThrows
   private void initPostgres() {
-    var postgresPlanOpt = ConfigLoaderUtils.loadPostgresStatements(planDir);
+    var postgresPlanOpt = ConfigLoaderUtils.loadPostgresPhysicalPlan(planDir);
     if (postgresPlanOpt.isEmpty() || postgresPlanOpt.get().statements().isEmpty()) {
       log.debug("The Postgres physical plan is empty, skip init");
       return;
