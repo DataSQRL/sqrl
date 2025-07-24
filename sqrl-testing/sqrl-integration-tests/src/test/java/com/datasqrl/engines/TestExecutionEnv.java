@@ -17,7 +17,7 @@ package com.datasqrl.engines;
 
 import static org.assertj.core.api.Assertions.fail;
 
-import com.datasqrl.UseCaseTestParameter;
+import com.datasqrl.UseCaseParam;
 import com.datasqrl.cli.DatasqrlTest;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.SqrlConstants;
@@ -78,6 +78,7 @@ public class TestExecutionEnv implements TestEngineVisitor<Void, TestEnvContext>
     }
 
     // Snapshot views
+    // TODO ferenc: use ConfigLoaderUtils
     Map postgresPlan =
         new ObjectMapper()
             .readValue(rootDir.resolve("build/deploy/plan/postgres.json").toFile(), Map.class);
@@ -132,10 +133,10 @@ public class TestExecutionEnv implements TestEngineVisitor<Void, TestEnvContext>
       return null;
     }
 
-    if (context.getParam().getTestPath() != null) {
-      Path testPath = context.rootDir.resolve(context.getParam().getTestPath());
+    var testPath = packageJson.getTestConfig().getTestDir(rootDir);
+    if (testPath.isPresent()) {
       try (DirectoryStream<Path> directoryStream =
-          Files.newDirectoryStream(testPath, "*.graphql")) {
+          Files.newDirectoryStream(testPath.get(), "*.graphql")) {
         List<Path> paths = new ArrayList<>();
         directoryStream.forEach(paths::add);
 
@@ -267,6 +268,6 @@ public class TestExecutionEnv implements TestEngineVisitor<Void, TestEnvContext>
   public static class TestEnvContext {
     Path rootDir;
     Map<String, String> env;
-    UseCaseTestParameter param;
+    UseCaseParam param;
   }
 }
