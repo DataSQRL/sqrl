@@ -18,7 +18,6 @@ package com.datasqrl.graphql.swagger;
 import com.datasqrl.graphql.config.SwaggerConfig;
 import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.graphql.server.operation.ApiOperation;
-import com.datasqrl.graphql.server.operation.RestMethodType;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.core.util.Json;
@@ -38,7 +37,6 @@ import io.swagger.v3.oas.models.responses.ApiResponses;
 import io.swagger.v3.oas.models.servers.Server;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 
@@ -51,17 +49,17 @@ public class SwaggerService {
 
   private final SwaggerConfig swaggerConfig;
   private final RootGraphqlModel model;
-  private final String serverBaseUrl;
+  private final String restEndpoint;
 
-  public SwaggerService(SwaggerConfig swaggerConfig, RootGraphqlModel model, String serverBaseUrl) {
+  public SwaggerService(SwaggerConfig swaggerConfig, RootGraphqlModel model, String restEndpoint) {
     this.swaggerConfig = swaggerConfig;
     this.model = model;
-    this.serverBaseUrl = serverBaseUrl;
+    this.restEndpoint = restEndpoint;
   }
 
-  public String generateSwaggerJson() {
+  public String generateSwaggerJson(String requestHost) {
     try {
-      OpenAPI openAPI = createOpenAPI();
+      var openAPI = createOpenAPI(requestHost);
       return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(openAPI);
     } catch (JsonProcessingException e) {
       log.error("Failed to generate Swagger JSON", e);
@@ -69,18 +67,18 @@ public class SwaggerService {
     }
   }
 
-  private OpenAPI createOpenAPI() {
-    OpenAPI openAPI = new OpenAPI();
+  private OpenAPI createOpenAPI(String requestHost) {
+    var openAPI = new OpenAPI();
 
     // Set API info
-    Info info =
+    var info =
         new Info()
             .title(swaggerConfig.getTitle())
             .description(swaggerConfig.getDescription())
             .version(swaggerConfig.getVersion());
 
     if (swaggerConfig.getContact() != null) {
-      Contact contact =
+      var contact =
           new Contact()
               .name(swaggerConfig.getContact())
               .url(swaggerConfig.getContactUrl())
@@ -89,19 +87,20 @@ public class SwaggerService {
     }
 
     if (swaggerConfig.getLicense() != null) {
-      License license =
+      var license =
           new License().name(swaggerConfig.getLicense()).url(swaggerConfig.getLicenseUrl());
       info.license(license);
     }
 
     openAPI.info(info);
 
-    // Add server
-    Server server = new Server().url(serverBaseUrl).description("DataSQRL API Server");
+    // Add server based on request host
+    var serverUrl = requestHost != null ? requestHost : "http://localhost:8888";
+    var server = new Server().url(serverUrl).description("DataSQRL API Server");
     openAPI.addServersItem(server);
 
     // Generate paths from REST operations
-    Paths paths = new Paths();
+    var paths = new Paths();
     for (ApiOperation operation : model.getOperations()) {
       if (operation.isRestEndpoint()) {
         addOperationToPath(paths, operation);
@@ -113,23 +112,23 @@ public class SwaggerService {
   }
 
   private void addOperationToPath(Paths paths, ApiOperation operation) {
-    String uriTemplate = operation.getUriTemplate();
-    RestMethodType httpMethod = operation.getRestMethod();
+    var uriTemplate = operation.getUriTemplate();
+    var httpMethod = operation.getRestMethod();
 
     if (uriTemplate == null || httpMethod == null) {
       return;
     }
 
     // Convert URI template to OpenAPI path
-    String pathPattern = convertUriTemplateToOpenApiPath(uriTemplate);
+    var pathPattern = convertUriTemplateToOpenApiPath(uriTemplate);
 
-    PathItem pathItem = paths.get(pathPattern);
+    var pathItem = paths.get(pathPattern);
     if (pathItem == null) {
       pathItem = new PathItem();
       paths.put(pathPattern, pathItem);
     }
 
-    Operation swaggerOperation = createSwaggerOperation(operation, uriTemplate);
+    var swaggerOperation = createSwaggerOperation(operation, uriTemplate);
 
     switch (httpMethod) {
       case GET -> pathItem.get(swaggerOperation);
@@ -140,7 +139,7 @@ public class SwaggerService {
 
   private String convertUriTemplateToOpenApiPath(String uriTemplate) {
     // Remove query parameters pattern {?param1,param2}
-    String path = QUERY_PARAMS_PATTERN.matcher(uriTemplate).replaceAll("");
+    var path = QUERY_PARAMS_PATTERN.matcher(uriTemplate).replaceAll("");
 
     // Convert path parameters {param} to {param} (same format)
     // No change needed for OpenAPI format
@@ -150,27 +149,30 @@ public class SwaggerService {
       path = "/" + path;
     }
 
+    // Add REST endpoint prefix to match actual server routes
+    path = restEndpoint + path;
+
     return path;
   }
 
   private Operation createSwaggerOperation(ApiOperation operation, String uriTemplate) {
-    Operation swaggerOperation =
+    var swaggerOperation =
         new Operation()
             .operationId(operation.getName())
             .summary(operation.getName())
-            .description("Auto-generated REST endpoint for " + operation.getName());
+            .description(operation.getFunction().getDescription());
 
     // Add parameters
-    List<Parameter> parameters = extractParameters(uriTemplate);
+    var parameters = extractParameters(uriTemplate);
     if (!parameters.isEmpty()) {
       swaggerOperation.parameters(parameters);
     }
 
     // Add responses
-    ApiResponses responses = new ApiResponses();
+    var responses = new ApiResponses();
 
     // Success response
-    ApiResponse successResponse =
+    var successResponse =
         new ApiResponse()
             .description("Successful operation")
             .content(
@@ -189,7 +191,7 @@ public class SwaggerService {
     responses.addApiResponse("200", successResponse);
 
     // Error response
-    ApiResponse errorResponse =
+    var errorResponse =
         new ApiResponse()
             .description("Error response")
             .content(
@@ -216,11 +218,11 @@ public class SwaggerService {
     List<Parameter> parameters = new ArrayList<>();
 
     // Extract path parameters
-    Matcher pathMatcher = PATH_PARAMS_PATTERN.matcher(uriTemplate);
+    var pathMatcher = PATH_PARAMS_PATTERN.matcher(uriTemplate);
     while (pathMatcher.find()) {
-      String paramName = pathMatcher.group(1);
+      var paramName = pathMatcher.group(1);
       if (!paramName.contains("?")) { // Skip query parameter syntax
-        Parameter parameter =
+        var parameter =
             new Parameter()
                 .name(paramName)
                 .in("path")
@@ -231,12 +233,12 @@ public class SwaggerService {
     }
 
     // Extract query parameters
-    Matcher queryMatcher = QUERY_PARAMS_PATTERN.matcher(uriTemplate);
+    var queryMatcher = QUERY_PARAMS_PATTERN.matcher(uriTemplate);
     while (queryMatcher.find()) {
-      String queryParams = queryMatcher.group(1);
-      String[] paramNames = queryParams.split(",");
+      var queryParams = queryMatcher.group(1);
+      var paramNames = queryParams.split(",");
       for (String paramName : paramNames) {
-        Parameter parameter =
+        var parameter =
             new Parameter()
                 .name(paramName.trim())
                 .in("query")
@@ -250,7 +252,7 @@ public class SwaggerService {
   }
 
   public String generateSwaggerUI() {
-    String swaggerUIHtml =
+    var swaggerUIHtml =
         """
         <!DOCTYPE html>
         <html>
