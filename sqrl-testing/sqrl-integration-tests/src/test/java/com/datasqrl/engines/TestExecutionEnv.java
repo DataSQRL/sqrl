@@ -58,8 +58,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
 import lombok.SneakyThrows;
 import org.apache.flink.configuration.CheckpointingOptions;
 import org.apache.flink.configuration.Configuration;
@@ -193,10 +191,10 @@ public class TestExecutionEnv implements TestEngineVisitor<Void, TestEnvContext>
 
     ObjectMapper mapper = new ObjectMapper();
     SimpleModule module = new SimpleModule();
-    module.addDeserializer(String.class, new JsonEnvVarDeserializer(context.getEnv()));
+    module.addDeserializer(String.class, new JsonEnvVarDeserializer(context.env()));
     mapper.registerModule(module);
 
-    Path schema = context.getRootDir().resolve("build/plan/iceberg.json");
+    Path schema = context.rootDir().resolve("build/plan/iceberg.json");
     Map map = mapper.readValue(schema.toFile(), Map.class);
     Map<String, List<Map<String, String>>> snowflake =
         (Map<String, List<Map<String, String>>>) ((Map) map.get("engines")).get("snowflake");
@@ -287,11 +285,5 @@ public class TestExecutionEnv implements TestEngineVisitor<Void, TestEnvContext>
     return flinkConfig;
   }
 
-  @Builder
-  @Getter
-  public static class TestEnvContext {
-    Path rootDir;
-    Map<String, String> env;
-    UseCaseParam param;
-  }
+  public record TestEnvContext(Path rootDir, Map<String, String> env, UseCaseParam param) {}
 }

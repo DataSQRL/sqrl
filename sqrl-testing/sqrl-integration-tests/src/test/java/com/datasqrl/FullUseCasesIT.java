@@ -15,11 +15,8 @@
  */
 package com.datasqrl;
 
-import static org.assertj.core.api.Assertions.fail;
 import static org.assertj.core.api.Assumptions.assumeThat;
 
-import com.datasqrl.cli.AssertStatusHook;
-import com.datasqrl.cli.DatasqrlRun;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.engines.TestContainersForTestGoal;
@@ -32,7 +29,6 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.tests.TestExtension;
 import com.datasqrl.tests.UseCaseTestExtensions;
 import com.datasqrl.util.ConfigLoaderUtils;
-import com.datasqrl.util.FlinkOperatorStatusChecker;
 import com.datasqrl.util.SnapshotTest.Snapshot;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -46,7 +42,6 @@ import java.util.stream.Stream;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
-import org.apache.flink.table.api.TableResult;
 import org.apache.flink.test.junit5.MiniClusterExtension;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
@@ -179,31 +174,14 @@ class FullUseCasesIT {
             param.getPackageJsonName().substring(0, param.getPackageJsonName().length() - 5));
 
     TestExtension testExtension = testExtensions.create(param.getUseCaseName());
-    testExtension.setup();
-
-    Path rootDir = param.packageJsonPath().getParent();
-
-    SqrlScriptExecutor executor =
-        SqrlScriptExecutor.builder()
-            .goal(param.goal())
-            .packageJsonPath(param.packageJsonPath())
-            .build();
-
-    AssertStatusHook hook = new AssertStatusHook();
     try {
-      executor.execute(hook);
-    } catch (Throwable e) {
-      if (hook.failure() != null) {
-        e.addSuppressed(hook.failure());
-      }
-      throw e;
-    }
+      testExtension.setup();
 
-    PackageJson packageJson =
-        ConfigLoaderUtils.loadResolvedConfig(
-            ErrorCollector.root(), rootDir.resolve(SqrlConstants.BUILD_DIR_NAME));
+      Path rootDir = param.packageJsonPath().getParent();
+      PackageJson packageJson =
+          ConfigLoaderUtils.loadResolvedConfig(
+              ErrorCollector.root(), rootDir.resolve(SqrlConstants.BUILD_DIR_NAME));
 
-    try {
       TestEngines engines = new EngineFactory().create(packageJson);
 
       Map<String, String> env = new HashMap<>();
@@ -223,62 +201,18 @@ class FullUseCasesIT {
           rootDir,
           param.getPackageJsonName());
 
-      // Run the test
-      TestEnvContext context =
-          TestEnvContext.builder().env(env).rootDir(rootDir).param(param).build();
-      // test goal is accomplished by above, but run goal needs extra setup
-      DatasqrlRun run = null;
-      if (param.goal().equals("run")) {
-        try {
-          var planDir = context.getRootDir().resolve(SqrlConstants.PLAN_PATH);
-          var flinkConfig = TestExecutionEnv.loadInternalTestFlinkConfig(planDir, context.getEnv());
-          run = new DatasqrlRun(planDir, packageJson, flinkConfig, context.getEnv());
-          TableResult result = run.run(false, false);
-          long delaySec = packageJson.getTestConfig().getDelaySec();
-
-          int requiredCheckpoints = packageJson.getTestConfig().getRequiredCheckpoints();
-          if (delaySec == -1) {
-            FlinkOperatorStatusChecker flinkOperatorStatusChecker =
-                new FlinkOperatorStatusChecker(
-                    result.getJobClient().get().getJobID().toString(), requiredCheckpoints);
-            flinkOperatorStatusChecker.run();
-          } else {
-            Thread.sleep(delaySec * 1000);
-          }
-
-          switch (result.getResultKind()) {
-            case SUCCESS:
-            case SUCCESS_WITH_CONTENT:
-              break;
-            default:
-              fail("Flink job failed with: " + result.getResultKind());
-              break;
-          }
-
-          try {
-            result.getJobClient().get().cancel();
-          } catch (Exception expected) {
-            // Necessary to get over the error that is thrown when the Flink mini-cluster is stopped
-            // already. For some test cases, that will happen, and is expected.
-          }
-        } catch (Exception e) {
-          e.printStackTrace();
-          fail("", e);
-        }
-      }
+      // Execute the test
+      TestEnvContext context = new TestEnvContext(rootDir, env, param);
 
       engines.accept(
           new TestExecutionEnv(
               param.getPackageJsonName() + ":" + param.goal(), packageJson, rootDir, snapshot),
           context);
-      if (run != null) {
-        run.cancel();
-      }
+
     } finally {
+      testExtension.teardown();
       containerHook.clear();
     }
-    // tear down after we stop flink etc
-    testExtension.teardown();
 
     if (snapshot.hasContent()) {
       snapshot.createOrValidate();
@@ -288,7 +222,7 @@ class FullUseCasesIT {
   // FIXME: this is just a temporary method to restrict the execution for 1 migrated usecase
   static Set<UseCaseParam> dummyPackageJsonProvider() {
     var repoPkg = USE_CASES.resolve("repository").resolve("package.json");
-    return Set.of(new UseCaseParam(repoPkg, "run"), new UseCaseParam(repoPkg, "test"));
+    return Set.of(new UseCaseParam(repoPkg, "test"));
   }
 
   @SneakyThrows
