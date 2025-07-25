@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://www.googletagmanager.com">
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-Y4XLW4QZYX"></script>
 <script>function gtag(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],gtag("js",new Date),gtag("config","G-Y4XLW4QZYX",{})</script><link rel="stylesheet" href="/assets/css/styles.2682f415.css">
-<script src="/assets/js/runtime~main.af99161c.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.7ca9634e.js" defer="defer"></script>
 <script src="/assets/js/main.b89d8944.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
@@ -59,7 +59,7 @@ they are defined in any custom <code>package.json</code> that is given via the <
 <p>DataSQRL runs up the data systems listed above and maps your local directories for data access.
 To access this data in your DataSQRL jobs during local execution use:</p>
 <ul>
-<li><code>${PROPERTIES_BOOTSTRAP_SERVERS}</code> to connect to the Redpanda Kafka cluster</li>
+<li><code>${KAFKA_BOOTSTRAP_SERVERS}</code> to connect to the Redpanda Kafka cluster</li>
 <li><code>${DATA_PATH}/</code> to reference <code>.jsonl</code> or <code>.csv</code> data in your project.</li>
 </ul>
 <p>This allows DataSQRL to map connectors correctly and also applies to <a href="#test-command">testing</a>.</p>
