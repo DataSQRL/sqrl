@@ -32,7 +32,6 @@ import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.config.ServerConfigUtil;
 import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.util.ConfigLoaderUtils;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.Resources;
 import io.micrometer.prometheusmetrics.PrometheusConfig;
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
@@ -57,7 +56,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 import java.util.stream.Stream;
+import javax.annotation.Nullable;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -81,44 +82,65 @@ public class DatasqrlRun {
   private final PackageJson sqrlConfig;
   private final Configuration flinkConfig;
   private final Map<String, String> env;
-  private final ObjectMapper objectMapper;
+  private final boolean blocking;
+  @Nullable private final CountDownLatch shutdownLatch;
 
   private Vertx vertx;
-  private TableResult execute;
+  private TableResult tableResult;
 
-  public DatasqrlRun(
-      Path planDir, PackageJson sqrlConfig, Configuration flinkConfig, Map<String, String> env) {
+  private DatasqrlRun(
+      Path planDir,
+      PackageJson sqrlConfig,
+      Configuration flinkConfig,
+      Map<String, String> env,
+      boolean blocking) {
     this.planDir = planDir;
     this.sqrlConfig = sqrlConfig;
     this.flinkConfig = flinkConfig;
     this.env = env;
-    objectMapper = SqrlObjectMapper.MAPPER;
+    this.blocking = blocking;
+    shutdownLatch = blocking ? new CountDownLatch(1) : null;
   }
 
-  public TableResult run(boolean hold, boolean shutdownHook) {
+  public static DatasqrlRun nonBlocking(
+      Path planDir, PackageJson sqrlConfig, Configuration flinkConfig, Map<String, String> env) {
+    return new DatasqrlRun(planDir, sqrlConfig, flinkConfig, env, false);
+  }
+
+  public static DatasqrlRun blocking(
+      Path planDir, PackageJson sqrlConfig, Configuration flinkConfig, Map<String, String> env) {
+    return new DatasqrlRun(planDir, sqrlConfig, flinkConfig, env, true);
+  }
+
+  public TableResult run() {
     initPostgres();
     initKafka();
 
     startVertx();
-    execute = runFlinkJob();
+    tableResult = runFlinkJob();
 
-    if (shutdownHook) {
+    if (blocking) {
       Runtime.getRuntime().addShutdownHook(new Thread(this::stop, "flink-shutdown"));
+      tableResult.print();
+
+      try {
+        log.info("Flink job completed. Waiting for shutdown signal to stop containers...");
+        shutdownLatch.await();
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        log.info("Interrupted while waiting for shutdown signal");
+      }
     }
 
-    if (hold) {
-      execute.print();
-    }
-
-    return execute;
+    return tableResult;
   }
 
   public void stop() {
-    log.info("Stopping with savepoint initiated");
+    log.debug("Flink stop initiated");
     closeCommon(
         () -> {
           var sp =
-              execute
+              tableResult
                   .getJobClient()
                   .get()
                   .stopWithSavepoint(false, null, SavepointFormatType.NATIVE);
@@ -132,13 +154,14 @@ public class DatasqrlRun {
   }
 
   public void cancel() {
-    closeCommon(() -> execute.getJobClient().get().cancel());
+    log.debug("Flink cancel initiated...");
+    closeCommon(() -> tableResult.getJobClient().get().cancel());
   }
 
   private void closeCommon(Runnable closeFlinkJob) {
-    if (execute != null) {
+    if (tableResult != null) {
       try {
-        var status = execute.getJobClient().get().getJobStatus().get();
+        var status = tableResult.getJobClient().get().getJobStatus().get();
         if (status != JobStatus.FINISHED) {
           closeFlinkJob.run();
         }
@@ -148,6 +171,11 @@ public class DatasqrlRun {
     }
     if (vertx != null) {
       vertx.close();
+    }
+
+    // Signal shutdown to release the hold
+    if (shutdownLatch != null) {
+      shutdownLatch.countDown();
     }
   }
 
@@ -248,13 +276,15 @@ public class DatasqrlRun {
       return;
     }
     RootGraphqlModel rootGraphqlModel =
-        objectMapper.readValue(planDir.resolve("vertx.json").toFile(), ModelContainer.class).model;
+        SqrlObjectMapper.MAPPER.readValue(
+                planDir.resolve("vertx.json").toFile(), ModelContainer.class)
+            .model;
     if (rootGraphqlModel == null) {
       return; // no graphql server queries
     }
 
     URL resource = Resources.getResource("server-config.json");
-    Map<String, Object> json = objectMapper.readValue(resource, Map.class);
+    Map<String, Object> json = SqrlObjectMapper.MAPPER.readValue(resource, Map.class);
     JsonObject config = new JsonObject(json);
 
     ServerConfig serverConfig =
