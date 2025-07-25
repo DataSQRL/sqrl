@@ -70,8 +70,7 @@ class ExecuteCmdTest {
               mockConstruction(OsProcessManager.class);
           MockedConstruction<DatasqrlRun> datasqrlRunMocked =
               mockConstruction(
-                  DatasqrlRun.class,
-                  (mock, context) -> when(mock.run(true, true)).thenReturn(null))) {
+                  DatasqrlRun.class, (mock, context) -> when(mock.run()).thenReturn(null))) {
 
         executeCmd.runInternal(errors);
 
@@ -85,7 +84,7 @@ class ExecuteCmdTest {
         mocked.verify(() -> ConfigLoaderUtils.loadFlinkConfig(planDir));
 
         DatasqrlRun constructed = datasqrlRunMocked.constructed().get(0);
-        verify(constructed).run(true, true);
+        verify(constructed).run();
       }
     }
   }

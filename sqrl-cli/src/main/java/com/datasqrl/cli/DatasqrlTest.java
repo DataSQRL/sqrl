@@ -85,7 +85,7 @@ public class DatasqrlTest {
   @SneakyThrows
   public int run() {
     // 1. Run the DataSQRL pipeline via {@link DatasqrlRun}
-    DatasqrlRun run = new DatasqrlRun(planDir, sqrlConfig, flinkConfig, env);
+    DatasqrlRun run = DatasqrlRun.nonBlocking(planDir, sqrlConfig, flinkConfig, env);
 
     var testConfig = sqrlConfig.getTestConfig();
     // Initialize snapshot directory
@@ -113,7 +113,7 @@ public class DatasqrlTest {
     }
 
     try {
-      TableResult result = run.run(false, false);
+      TableResult result = run.run();
       // todo add file check instead of sleeping to make sure pipeline has started
       Thread.sleep(1000);
 

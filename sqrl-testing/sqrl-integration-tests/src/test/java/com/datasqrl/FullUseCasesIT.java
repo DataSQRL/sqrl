@@ -258,8 +258,8 @@ class FullUseCasesIT {
         try {
           var planDir = context.getRootDir().resolve(SqrlConstants.PLAN_PATH);
           var flinkConfig = TestExecutionEnv.loadInternalTestFlinkConfig(planDir, context.getEnv());
-          run = new DatasqrlRun(planDir, packageJson, flinkConfig, context.getEnv());
-          TableResult result = run.run(false, false);
+          run = DatasqrlRun.nonBlocking(planDir, packageJson, flinkConfig, context.getEnv());
+          TableResult result = run.run();
           long delaySec = packageJson.getTestConfig().getDelaySec();
 
           int requiredCheckpoints = packageJson.getTestConfig().getRequiredCheckpoints();

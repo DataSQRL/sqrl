@@ -43,7 +43,7 @@ class DatasqrlRunTest {
     flinkConfig = mock(Configuration.class);
     env = new HashMap<>();
 
-    underTest = new DatasqrlRun(tempDir.resolve("plan"), null, flinkConfig, env);
+    underTest = DatasqrlRun.nonBlocking(tempDir.resolve("plan"), null, flinkConfig, env);
   }
 
   @Test
@@ -69,8 +69,7 @@ class DatasqrlRunTest {
 
   @Test
   void returnsEmptyIfSavepointDirConfigBlank() {
-    env.put("FLINK_SP_DATA_PATH", " ");
-    underTest = new DatasqrlRun(tempDir.resolve("plan"), null, flinkConfig, env);
+    underTest = DatasqrlRun.nonBlocking(tempDir.resolve("plan"), null, flinkConfig, env);
 
     when(flinkConfig.get(CheckpointingOptions.SAVEPOINT_DIRECTORY)).thenReturn(" ");
 
