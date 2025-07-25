@@ -172,8 +172,16 @@ commands:
             fi
             
             # Fetch the latest version of @modelcontextprotocol/inspector
-            MCP_TAG=$(npm view @modelcontextprotocol/inspector version)
-            echo "Latest MCP inspector version: ${MCP_TAG}"
+            MCP_VERSION=$(npm view @modelcontextprotocol/inspector version)
+            echo "Latest MCP inspector version: ${MCP_VERSION}"
+            
+            # Compute hash of Dockerfile.mcp-inspector
+            DOCKERFILE_HASH=$(sha1sum Dockerfile.mcp-inspector | cut -c1-12)
+            echo "Dockerfile.mcp-inspector hash: ${DOCKERFILE_HASH}"
+            
+            # Combine version and dockerfile hash for the tag
+            MCP_TAG="${MCP_VERSION}-${DOCKERFILE_HASH}"
+            echo "Combined MCP_TAG: ${MCP_TAG}"
             echo "export MCP_TAG=${MCP_TAG}" >> "$BASH_ENV"
 
   setup-buildx:
