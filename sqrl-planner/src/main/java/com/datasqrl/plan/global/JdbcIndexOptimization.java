@@ -33,25 +33,25 @@ public class JdbcIndexOptimization implements PhysicalPlanRewriter {
   @Override
   public boolean appliesTo(EnginePhysicalPlan plan) {
     return plan instanceof JdbcPhysicalPlan jpp
-        && ((JdbcPhysicalPlan) plan).getStage().getEngine() instanceof AbstractJDBCDatabaseEngine;
+        && ((JdbcPhysicalPlan) plan).stage().getEngine() instanceof AbstractJDBCDatabaseEngine;
   }
 
   @Override
   public JdbcPhysicalPlan rewrite(EnginePhysicalPlan plan, Sqrl2FlinkSQLTranslator sqrlEnv) {
     var jdbcPlan = (JdbcPhysicalPlan) plan;
-    var engine = (AbstractJDBCDatabaseEngine) jdbcPlan.getStage().getEngine();
+    var engine = (AbstractJDBCDatabaseEngine) jdbcPlan.stage().getEngine();
     var indexSelectorConfig = engine.getIndexSelectorConfig();
-    var indexSelector = new IndexSelector(sqrlEnv, indexSelectorConfig, jdbcPlan.getTableIdMap());
+    var indexSelector = new IndexSelector(sqrlEnv, indexSelectorConfig, jdbcPlan.tableIdMap());
 
     Collection<QueryIndexSummary> queryIndexSummaries =
-        jdbcPlan.getQueries().stream()
+        jdbcPlan.queries().stream()
             .map(indexSelector::getIndexSelection)
             .flatMap(List::stream)
             .collect(Collectors.toList());
     List<IndexDefinition> indexDefinitions =
         new ArrayList<>(indexSelector.optimizeIndexes(queryIndexSummaries).keySet());
     jdbcPlan
-        .getTableIdMap()
+        .tableIdMap()
         .values()
         .forEach(
             createTable -> {

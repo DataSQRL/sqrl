@@ -201,10 +201,10 @@ CREATE TABLE `Schema_1` (
 ) WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
-  'password' = '${JDBC_PASSWORD}',
+  'password' = '${POSTGRES_PASSWORD}',
   'table-name' = 'Schema',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'username' = '${JDBC_USERNAME}'
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Schema_1`
@@ -214,7 +214,8 @@ INSERT INTO `default_catalog`.`default_database`.`Schema_1`
 END
 >>>kafka.json
 {
-  "topics" : [ ]
+  "topics" : [ ],
+  "testRunnerTopics" : [ ]
 }
 >>>postgres-schema.sql
 CREATE TABLE IF NOT EXISTS "Schema" ("uuidField" TEXT NOT NULL, "timestampMillisField" TIMESTAMP WITH TIME ZONE NOT NULL, "nullableTimestampMillisField" TIMESTAMP WITH TIME ZONE , "timestampMicrosField" TIMESTAMP WITH TIME ZONE NOT NULL, "nullableTimestampMicrosField" TIMESTAMP WITH TIME ZONE , "dateField" DATE NOT NULL, "nullableDateField" DATE , "timeMillisField" TIME WITHOUT TIME ZONE NOT NULL, "nullableTimeMillisField" TIME WITHOUT TIME ZONE , "timeMicrosField" TIME WITHOUT TIME ZONE NOT NULL, "nullableTimeMicrosField" TIME WITHOUT TIME ZONE , "complexArrayField" JSONB , "nullableComplexArrayField" JSONB , "multiNestedRecord" JSONB , "stringField" TEXT NOT NULL, "nullableStringField" TEXT , "intField" INTEGER NOT NULL, "nullableIntField" INTEGER , "longField" BIGINT NOT NULL, "nullableLongField" BIGINT , "floatField" FLOAT NOT NULL, "nullableFloatField" FLOAT , "doubleField" DOUBLE PRECISION NOT NULL, "nullableDoubleField" DOUBLE PRECISION , "booleanField" BOOLEAN NOT NULL, "nullableBooleanField" BOOLEAN , "enumField" TEXT NOT NULL, "nullableEnumField" TEXT , "arrayField" JSONB , "nullableArrayField" JSONB , "nestedRecord" JSONB , "nullableNestedRecord" JSONB , "decimalField" NUMERIC NOT NULL, "mapField" JSONB , "nullableMapField" JSONB  , PRIMARY KEY ("uuidField","timestampMillisField"))

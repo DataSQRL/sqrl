@@ -113,10 +113,10 @@ CREATE TABLE `DistinctOrders_1` (
 ) WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
-  'password' = '${JDBC_PASSWORD}',
+  'password' = '${POSTGRES_PASSWORD}',
   'table-name' = 'DistinctOrders',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'username' = '${JDBC_USERNAME}'
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
 );
 CREATE TABLE `Orders_2` (
   `id` BIGINT NOT NULL,
@@ -131,10 +131,10 @@ CREATE TABLE `Orders_2` (
 ) WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
-  'password' = '${JDBC_PASSWORD}',
+  'password' = '${POSTGRES_PASSWORD}',
   'table-name' = 'Orders',
-  'url' = 'jdbc:postgresql://${JDBC_AUTHORITY}',
-  'username' = '${JDBC_USERNAME}'
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`DistinctOrders_1`
@@ -148,7 +148,8 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
  END
 >>>kafka.json
 {
-  "topics" : [ ]
+  "topics" : [ ],
+  "testRunnerTopics" : [ ]
 }
 >>>postgres-schema.sql
 CREATE TABLE IF NOT EXISTS "DistinctOrders" ("id" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "time" TIMESTAMP WITH TIME ZONE NOT NULL, "productid" BIGINT NOT NULL, "quantity" BIGINT NOT NULL, "unit_price" DOUBLE PRECISION , "discount" DOUBLE PRECISION , "_ingest_time" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));

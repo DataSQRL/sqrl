@@ -15,6 +15,17 @@
  */
 package com.datasqrl.util;
 
+import static com.datasqrl.env.EnvVariableNames.KAFKA_BOOTSTRAP_SERVERS;
+import static com.datasqrl.env.EnvVariableNames.KAFKA_GROUP_ID;
+import static com.datasqrl.env.EnvVariableNames.POSTGRES_AUTHORITY;
+import static com.datasqrl.env.EnvVariableNames.POSTGRES_DATABASE;
+import static com.datasqrl.env.EnvVariableNames.POSTGRES_HOST;
+import static com.datasqrl.env.EnvVariableNames.POSTGRES_JDBC_URL;
+import static com.datasqrl.env.EnvVariableNames.POSTGRES_PASSWORD;
+import static com.datasqrl.env.EnvVariableNames.POSTGRES_PORT;
+import static com.datasqrl.env.EnvVariableNames.POSTGRES_USERNAME;
+import static com.datasqrl.env.EnvVariableNames.POSTGRES_VERSION;
+
 import com.datasqrl.env.GlobalEnvironmentStore;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -22,6 +33,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -40,6 +52,12 @@ public class OsProcessManager {
   private static final String FLINK_SP_DATA_PATH = "/data/flink/savepoints";
   private static final String LOGS_PATH = "/tmp/logs";
 
+  private static final String LOCALHOST = "localhost";
+  private static final String RP_PORT = "9092";
+  private static final String PG_PORT = "5432";
+  private static final String PG_DB = "datasqrl";
+  private static final String PG_AUTHORITY = LOCALHOST + ':' + PG_PORT + '/' + PG_DB;
+
   private final Map<String, String> env;
   private final String ownerUser;
   private final String ownerGroup;
@@ -51,13 +69,23 @@ public class OsProcessManager {
   }
 
   /**
-   * Starts all required services for DataSQRL execution. This includes Postgres, Redpanda, and
-   * creates necessary directories.
+   * Analyzes the execution plan directory and starts only the dependent services that are actually
+   * required for the DataSQRL execution. This method dynamically determines whether Kafka (via
+   * Redpanda) and/or PostgreSQL services need to be started based on the presence of relevant
+   * configurations in the plan directory.
+   *
+   * @param planDir the path to the directory containing the execution plan artifacts, including
+   *     Kafka topic configurations and PostgreSQL statements
+   * @throws IllegalStateException if any required service fails to start within the timeout period
+   *     or encounters initialization errors
    */
-  public void startDependentServices() {
+  public void startDependentServices(Path planDir) {
+    var kafkaPlanned = isKafkaPlanned(planDir);
+    var postgresPlanned = isPostgresPlanned(planDir);
+
     try {
-      startRedpanda();
-      startPostgres();
+      startRedpanda(kafkaPlanned);
+      startPostgres(postgresPlanned);
       createDirectories();
 
       // Add every registered env entry to global environment store
@@ -71,7 +99,11 @@ public class OsProcessManager {
   }
 
   /**
-   * @param buildDir
+   * Performs cleanup operations after DataSQRL execution, including moving log files to the build
+   * directory and setting proper file ownership.
+   *
+   * @param buildDir the build directory where logs should be moved and ownership should be set
+   * @throws Exception if log file movement fails or ownership setting encounters errors
    */
   public void teardown(Path buildDir) throws Exception {
     Path target = buildDir.resolve("logs");
@@ -79,6 +111,19 @@ public class OsProcessManager {
     setOwnerForDir(buildDir.getParent());
   }
 
+  /**
+   * Sets the ownership of a directory and all its contents recursively using the configured
+   * BUILD_UID and BUILD_GID environment variables.
+   *
+   * <p>If the BUILD_UID or BUILD_GID environment variables are not set or are blank, this method
+   * performs no operation. If the {@code chown} command fails, a warning is logged but no exception
+   * is thrown.
+   *
+   * @param dir the directory whose ownership should be set recursively
+   * @throws IOException if there's an error starting the {@code chown} process
+   * @throws InterruptedException if the current thread is interrupted while waiting for the chown
+   *     process to complete
+   */
   public void setOwnerForDir(Path dir) throws IOException, InterruptedException {
     if (StringUtils.isNoneBlank(ownerUser, ownerUser)) {
       var owner = ownerUser + ':' + ownerGroup;
@@ -105,67 +150,83 @@ public class OsProcessManager {
     setOwnerForDir(dir);
   }
 
-  private void startRedpanda() throws IOException, InterruptedException {
-    // Start Redpanda if KAFKA_HOST is not set
-    if (env.get("KAFKA_HOST") != null) {
+  private void startRedpanda(boolean kafkaPlanned) throws IOException, InterruptedException {
+    if (!kafkaPlanned) {
+      log.debug("Skip starting Redpanda, as plan has no relevant Kafka parts");
       return;
     }
 
-    log.info("Starting Redpanda ...");
+    String bootstrapServers;
+    var externalBootstrapServers = env.get(KAFKA_BOOTSTRAP_SERVERS);
+    if (externalBootstrapServers != null) {
+      log.info(
+          "Skip starting Redpanda, because {}={} is provided",
+          KAFKA_BOOTSTRAP_SERVERS,
+          externalBootstrapServers);
+      bootstrapServers = externalBootstrapServers;
 
-    var redpandaDataPath = Paths.get(REDPANDA_DATA_PATH);
-    Files.createDirectories(redpandaDataPath);
+    } else {
+      log.info("Starting Redpanda ...");
 
-    // Start Redpanda process
-    ProcessBuilder pb =
-        new ProcessBuilder(
-            "rpk",
-            "redpanda",
-            "start",
-            "--schema-registry-addr",
-            "0.0.0.0:8086",
-            "--overprovisioned",
-            "--config",
-            "/etc/redpanda/redpanda.yaml",
-            "--smp",
-            "1",
-            "--memory",
-            "1G",
-            "--reserve-memory",
-            "0M",
-            "--node-id",
-            "0",
-            "--check=false");
+      var redpandaDataPath = Paths.get(REDPANDA_DATA_PATH);
+      Files.createDirectories(redpandaDataPath);
 
-    pb.redirectOutput(Paths.get(LOGS_PATH, "redpanda.log").toFile());
-    pb.redirectErrorStream(true);
+      // Start Redpanda process
+      ProcessBuilder pb =
+          new ProcessBuilder(
+              "rpk",
+              "redpanda",
+              "start",
+              "--schema-registry-addr",
+              "0.0.0.0:8086",
+              "--overprovisioned",
+              "--config",
+              "/etc/redpanda/redpanda.yaml",
+              "--smp",
+              "1",
+              "--memory",
+              "1G",
+              "--reserve-memory",
+              "0M",
+              "--node-id",
+              "0",
+              "--check=false");
 
-    var redpandaProcess = pb.start();
+      pb.redirectOutput(Paths.get(LOGS_PATH, "redpanda.log").toFile());
+      pb.redirectErrorStream(true);
 
-    // Wait a moment for the process to initialize
-    Thread.sleep(2000);
+      var redpandaProcess = pb.start();
 
-    // Check if the process is still alive
-    if (!redpandaProcess.isAlive()) {
-      var exitCode = redpandaProcess.exitValue();
-      var errorDetails = readServiceLogFile("Redpanda");
-      throw new IllegalStateException(
-          String.format(
-              "Redpanda process failed to start (exit code: %d). Error details: %s",
-              exitCode, errorDetails));
+      // Wait a moment for the process to initialize
+      Thread.sleep(2000);
+
+      // Check if the process is still alive
+      if (!redpandaProcess.isAlive()) {
+        var exitCode = redpandaProcess.exitValue();
+        var errorDetails = readServiceLogFile("Redpanda");
+        throw new IllegalStateException(
+            String.format(
+                "Redpanda process failed to start (exit code: %d). Error details: %s",
+                exitCode, errorDetails));
+      }
+
+      waitForService("Redpanda", RP_PORT, "rpk", "cluster", "health");
+
+      bootstrapServers = LOCALHOST + ':' + RP_PORT;
+      log.info("Redpanda started successfully");
     }
 
-    waitForRedpanda("localhost", 9092);
-
     // Set environment variables
-    setEnvironmentVariable("KAFKA_HOST", "localhost");
-    setEnvironmentVariable("KAFKA_PORT", "9092");
-    setEnvironmentVariable("PROPERTIES_BOOTSTRAP_SERVERS", "localhost:9092");
-
-    log.info("Redpanda started successfully");
+    setEnvironmentVariable(KAFKA_BOOTSTRAP_SERVERS, bootstrapServers);
+    setEnvironmentVariable(KAFKA_GROUP_ID, UUID.randomUUID().toString());
   }
 
-  private void startPostgres() throws IOException, InterruptedException {
+  private void startPostgres(boolean postgresPlanned) throws IOException, InterruptedException {
+    if (!postgresPlanned) {
+      log.debug("Skip starting Postgres, as plan has no relevant JDBC parts");
+      return;
+    }
+
     var postgresDataPath = Paths.get(POSTGRES_DATA_PATH);
     var started = false;
 
@@ -178,7 +239,7 @@ public class OsProcessManager {
     if (isDirectoryEmpty(postgresDataPath)) {
       log.info("Initializing Postgres database ...");
 
-      var postgresVersion = env.getOrDefault("POSTGRES_VERSION", DEFAULT_POSTGRES_VERSION);
+      var postgresVersion = env.getOrDefault(POSTGRES_VERSION, DEFAULT_POSTGRES_VERSION);
       executePostgresCommand(
           "su",
           "-",
@@ -203,33 +264,37 @@ public class OsProcessManager {
           "su", "-", "postgres", "-c", "psql -U postgres -c \"CREATE EXTENSION vector;\"");
     }
 
-    // Start Postgres if POSTGRES_HOST is not set
-    if (env.get("POSTGRES_HOST") == null) {
-      if (!started) {
-        log.info("Starting Postgres service ...");
-        startPostgresService();
-      }
-
-      // Set environment variables
-      setEnvironmentVariable("POSTGRES_HOST", "localhost");
-      setEnvironmentVariable("POSTGRES_PORT", "5432");
-      setEnvironmentVariable("JDBC_URL", "jdbc:postgresql://localhost:5432/datasqrl");
-      setEnvironmentVariable("JDBC_AUTHORITY", "localhost:5432/datasqrl");
-      setEnvironmentVariable("PGHOST", "localhost");
-      setEnvironmentVariable("PGUSER", "postgres");
-      setEnvironmentVariable("JDBC_USERNAME", "postgres");
-      setEnvironmentVariable("JDBC_PASSWORD", "postgres");
-      setEnvironmentVariable("PGPORT", "5432");
-      setEnvironmentVariable("PGPASSWORD", "postgres");
-      setEnvironmentVariable("PGDATABASE", "datasqrl");
+    if (!started) {
+      log.info("Starting Postgres service ...");
+      startPostgresService();
     }
+
+    // Set environment variables
+    setEnvironmentVariable(POSTGRES_HOST, LOCALHOST);
+    setEnvironmentVariable(POSTGRES_PORT, PG_PORT);
+    setEnvironmentVariable(POSTGRES_DATABASE, PG_DB);
+    setEnvironmentVariable(POSTGRES_AUTHORITY, PG_AUTHORITY);
+    setEnvironmentVariable(POSTGRES_JDBC_URL, "jdbc:postgresql://" + PG_AUTHORITY);
+    setEnvironmentVariable(POSTGRES_USERNAME, "postgres");
+    setEnvironmentVariable(POSTGRES_PASSWORD, "postgres");
 
     log.info("Postgres started successfully");
   }
 
+  private boolean isKafkaPlanned(Path planDir) {
+    var kafkaPlan = ConfigLoaderUtils.loadKafkaPhysicalPlan(planDir);
+
+    return kafkaPlan.isPresent() && !kafkaPlan.get().isEmpty();
+  }
+
+  private boolean isPostgresPlanned(Path planDir) {
+    var jdbcPlan = ConfigLoaderUtils.loadPostgresPhysicalPlan(planDir);
+    return jdbcPlan.isPresent() && !jdbcPlan.get().statements().isEmpty();
+  }
+
   private void startPostgresService() throws IOException, InterruptedException {
     executePostgresCommand("service", "postgresql", "start");
-    waitForPostgres("localhost", 5432);
+    waitForService("Postgres", PG_PORT, "pg_isready", "-h", LOCALHOST, "-p", PG_PORT);
   }
 
   private boolean isDirectoryEmpty(Path path) throws IOException {
@@ -256,16 +321,8 @@ public class OsProcessManager {
     }
   }
 
-  private void waitForPostgres(String host, int port) {
-    waitForService("Postgres", host, port, "pg_isready", "-h", host, "-p", String.valueOf(port));
-  }
-
-  private void waitForRedpanda(String host, int port) {
-    waitForService("Redpanda", host, port, "rpk", "cluster", "health");
-  }
-
-  private void waitForService(String serviceName, String host, int port, String... checkCommand) {
-    log.info("Waiting for {} to be ready at {}:{} ...", serviceName, host, port);
+  private void waitForService(String serviceName, String port, String... checkCommand) {
+    log.info("Waiting for {} to be ready at {}:{} ...", serviceName, LOCALHOST, port);
 
     ServiceHealthChecker healthChecker =
         () -> {

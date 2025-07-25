@@ -20,6 +20,8 @@ import static com.google.common.base.Preconditions.checkArgument;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.config.SqrlConstants;
+import com.datasqrl.engine.database.relational.JdbcPhysicalPlan;
+import com.datasqrl.engine.log.kafka.KafkaPhysicalPlan;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorMessage;
 import com.datasqrl.error.ResourceFileUtil;
@@ -35,14 +37,17 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.configuration.GlobalConfiguration;
 import org.apache.flink.types.Either;
 
 /** Utility class to load different kind of configurations during CLI process execution. */
+@Slf4j
 public final class ConfigLoaderUtils {
 
   public static final String PACKAGE_SCHEMA_PATH = "/jsonSchema/packageSchema.json";
@@ -179,8 +184,7 @@ public final class ConfigLoaderUtils {
    * @throws IOException if any internal file operation fails
    */
   public static Configuration loadFlinkConfig(Path planDir) throws IOException {
-    checkArgument(
-        Files.isDirectory(planDir), "Failed to load Flink config, plan dir does not exist.");
+    validatePlanDir(planDir);
 
     var confFile = planDir.resolve("flink-config.yaml");
     checkArgument(
@@ -195,6 +199,63 @@ public final class ConfigLoaderUtils {
       return GlobalConfiguration.loadConfiguration(tempDir.toString());
     } finally {
       FileUtils.forceDelete(tempDir.toFile());
+    }
+  }
+
+  /**
+   * Loads the Kafka physical plan from the plan directory by parsing the {@code kafka.json}
+   * configuration file. This method constructs a complete {@link KafkaPhysicalPlan} containing both
+   * regular topics and test runner topics.
+   *
+   * @param planDir the plan directory containing the {@code kafka.json} file
+   * @return an {@link Optional} containing a {@link KafkaPhysicalPlan} with topics and test runner
+   *     topics, or empty if no {@code kafka.json} file exists
+   * @throws IllegalArgumentException if the plan directory is null or does not exist
+   * @throws IllegalStateException if the {@code kafka.json} file exists but cannot be parsed
+   */
+  public static Optional<KafkaPhysicalPlan> loadKafkaPhysicalPlan(Path planDir) {
+    validatePlanDir(planDir);
+
+    var kafkaFile = planDir.resolve("kafka.json").toFile();
+    if (kafkaFile.exists()) {
+
+      try {
+        var kafkaPlan = MAPPER.readValue(kafkaFile, KafkaPhysicalPlan.class);
+        return Optional.of(kafkaPlan);
+
+      } catch (Exception ex) {
+        throw new IllegalStateException(String.format("Failed to load '%s'", kafkaFile), ex);
+      }
+    }
+
+    return Optional.empty();
+  }
+
+  /**
+   * Loads PostgreSQL physical plan from the plan directory by parsing the {@code postgres.json}
+   * configuration file. This method constructs a complete {@link JdbcPhysicalPlan} containing
+   * database statements for schema creation, views, indexes, and other database artifacts.
+   *
+   * @param planDir the plan directory containing the {@code postgres.json} file
+   * @return an {@link Optional} containing a {@link JdbcPhysicalPlan} with database statements, or
+   *     empty if no {@code postgres.json} file exists
+   * @throws IllegalArgumentException if the plan directory is null or does not exist
+   * @throws IllegalStateException if the {@code postgres.json} file exists but cannot be parsed
+   */
+  public static Optional<JdbcPhysicalPlan> loadPostgresPhysicalPlan(Path planDir) {
+    validatePlanDir(planDir);
+
+    var postgresFile = planDir.resolve("postgres.json").toFile();
+    if (!postgresFile.exists()) {
+      return Optional.empty();
+    }
+
+    try {
+      var jdbcPlan = MAPPER.readValue(postgresFile, JdbcPhysicalPlan.class);
+      return Optional.of(jdbcPlan);
+
+    } catch (Exception ex) {
+      throw new IllegalStateException(String.format("Failed to load '%s'", postgresFile), ex);
     }
   }
 
@@ -235,6 +296,11 @@ public final class ConfigLoaderUtils {
     jsons.forEach(node -> JsonMergeUtils.merge(merged, node));
 
     return SqrlConfig.loadResolvedConfig(errors, merged);
+  }
+
+  private static void validatePlanDir(Path planDir) {
+    checkArgument(
+        Files.isDirectory(planDir), "Failed to load Flink config, plan dir does not exist.");
   }
 
   private static ObjectNode convertFileToObjectNode(ErrorCollector errors, Either<Path, URL> file) {

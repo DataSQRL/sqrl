@@ -15,7 +15,9 @@
  */
 package com.datasqrl.engine.database.relational;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
@@ -50,6 +52,15 @@ public class JdbcStatement {
     this(name, type, sql, null, null);
   }
 
+  @JsonCreator
+  public JdbcStatement(
+      @JsonProperty("name") String name,
+      @JsonProperty("type") Type type,
+      @JsonProperty("sql") String sql,
+      @JsonProperty("fields") List<Field> fields) {
+    this(name, type, sql, null, fields);
+  }
+
   public JdbcStatement(
       String name, Type type, String sql, RelDataType dataType, List<Field> fields) {
     this.name = name;
@@ -59,10 +70,5 @@ public class JdbcStatement {
     this.fields = fields;
   }
 
-  @Value
-  public static class Field {
-    String name;
-    String type;
-    boolean isNullable;
-  }
+  public record Field(String name, String type, boolean nullable) {}
 }

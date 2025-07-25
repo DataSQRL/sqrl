@@ -95,7 +95,7 @@ class RunCmdTest {
         // Verify service manager was created and started
         assertThat(serviceManagerMocked.constructed()).hasSize(1);
         OsProcessManager serviceManager = serviceManagerMocked.constructed().get(0);
-        verify(serviceManager).startDependentServices();
+        verify(serviceManager).startDependentServices(planDir);
 
         // Verify exact arguments
         mocked.verify(() -> ConfigLoaderUtils.loadResolvedConfig(errors, buildDir));

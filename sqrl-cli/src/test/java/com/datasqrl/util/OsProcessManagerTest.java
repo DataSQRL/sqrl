@@ -16,7 +16,6 @@
 package com.datasqrl.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -24,6 +23,10 @@ import static org.mockito.Mockito.mockConstruction;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
+import com.datasqrl.engine.database.relational.JdbcPhysicalPlan;
+import com.datasqrl.engine.database.relational.JdbcStatement;
+import com.datasqrl.engine.log.kafka.KafkaPhysicalPlan;
+import com.datasqrl.engine.log.kafka.NewTopic;
 import com.datasqrl.env.GlobalEnvironmentStore;
 import java.io.File;
 import java.io.IOException;
@@ -31,7 +34,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -61,254 +66,6 @@ class OsProcessManagerTest {
   void tearDown() {
     // Clear global environment store that might have been set during tests
     GlobalEnvironmentStore.clear();
-  }
-
-  @Test
-  void givenKafkaAndPostgresHostsSet_whenStartServices_thenSkipsBothDependentServices()
-      throws Exception {
-    // Given
-    env.put("KAFKA_HOST", "external-kafka");
-    env.put("POSTGRES_HOST", "external-postgres");
-    serviceManager = new OsProcessManager(env);
-
-    try (MockedStatic<Files> filesMocked = mockStatic(Files.class);
-        MockedStatic<Paths> pathsMocked = mockStatic(Paths.class)) {
-
-      Path mockPath = mock(Path.class);
-      when(mockPath.toAbsolutePath()).thenReturn(mockPath);
-      when(mockPath.toString()).thenReturn("/mock/path");
-      pathsMocked.when(() -> Paths.get(anyString())).thenReturn(mockPath);
-      pathsMocked.when(() -> Paths.get(anyString(), anyString())).thenReturn(mockPath);
-      filesMocked.when(() -> Files.exists(mockPath)).thenReturn(true);
-      filesMocked.when(() -> Files.list(mockPath)).thenReturn(Stream.of(mockPath));
-
-      when(mockProcess.waitFor()).thenReturn(0);
-
-      try (MockedConstruction<ProcessBuilder> pbMocked =
-          mockConstruction(
-              ProcessBuilder.class,
-              (mock, context) -> {
-                when(mock.start()).thenReturn(mockProcess);
-              })) {
-
-        // When
-        serviceManager.startDependentServices();
-
-        // Then - Should complete without starting any processes for dependent services
-        // Note: ProcessBuilder may be created for directory ownership changes
-        // We verify this by checking that environment variables were set as expected
-        assertThat(GlobalEnvironmentStore.get("KAFKA_HOST")).isEqualTo("external-kafka");
-        assertThat(GlobalEnvironmentStore.get("POSTGRES_HOST")).isEqualTo("external-postgres");
-      }
-    }
-  }
-
-  @Test
-  void givenIOExceptionCreatingDirectories_whenStartDependentServices_thenThrowsRuntimeException()
-      throws Exception {
-    // Given
-    env.put("KAFKA_HOST", "external-kafka");
-    env.put("POSTGRES_HOST", "external-postgres");
-    serviceManager = new OsProcessManager(env);
-
-    try (MockedStatic<Files> filesMocked = mockStatic(Files.class);
-        MockedStatic<Paths> pathsMocked = mockStatic(Paths.class)) {
-
-      Path mockPath = mock(Path.class);
-      pathsMocked.when(() -> Paths.get(anyString())).thenReturn(mockPath);
-      pathsMocked.when(() -> Paths.get(anyString(), anyString())).thenReturn(mockPath);
-      filesMocked
-          .when(() -> Files.createDirectories(any(Path.class)))
-          .thenThrow(new IOException("Permission denied"));
-
-      // When & Then
-      assertThatThrownBy(serviceManager::startDependentServices)
-          .isInstanceOf(IllegalStateException.class)
-          .hasMessageContaining("Service startup failed");
-    }
-  }
-
-  @Test
-  void givenNoKafkaHost_whenStartDependentServices_thenStartsRedpanda() throws Exception {
-    // Given
-    env.put("POSTGRES_HOST", "external-postgres");
-    serviceManager = new OsProcessManager(env);
-
-    try (MockedStatic<Files> filesMocked = mockStatic(Files.class);
-        MockedStatic<Paths> pathsMocked = mockStatic(Paths.class)) {
-
-      Path mockPath = mock(Path.class);
-      when(mockPath.toAbsolutePath()).thenReturn(mockPath);
-      when(mockPath.toString()).thenReturn("/mock/path");
-      pathsMocked.when(() -> Paths.get(anyString())).thenReturn(mockPath);
-      pathsMocked.when(() -> Paths.get(anyString(), anyString())).thenReturn(mockPath);
-      filesMocked.when(() -> Files.createDirectories(any(Path.class))).thenReturn(mockPath);
-      filesMocked.when(() -> Files.exists(mockPath)).thenReturn(true);
-      filesMocked.when(() -> Files.list(mockPath)).thenReturn(Stream.of(mockPath));
-
-      when(mockProcess.isAlive()).thenReturn(true);
-      when(mockProcess.waitFor()).thenReturn(0);
-
-      try (MockedConstruction<ProcessBuilder> pbMocked =
-          mockConstruction(
-              ProcessBuilder.class,
-              (mock, context) -> {
-                when(mock.start()).thenReturn(mockProcess);
-                when(mock.redirectOutput(any(File.class))).thenReturn(mock);
-                when(mock.redirectErrorStream(any(Boolean.class))).thenReturn(mock);
-                when(mock.redirectOutput(any(ProcessBuilder.Redirect.class))).thenReturn(mock);
-                when(mock.redirectError(any(ProcessBuilder.Redirect.class))).thenReturn(mock);
-              })) {
-
-        // When
-        serviceManager.startDependentServices();
-
-        // Then
-        assertThat(pbMocked.constructed()).hasSizeGreaterThan(0);
-
-        // Verify redpanda process was started (at least one ProcessBuilder was created)
-        // We can't verify the exact command due to mocking limitations, but we can verify a process
-        // was started
-
-        // Verify that environment variables were set by checking they exist after the call
-        assertThat(GlobalEnvironmentStore.get("KAFKA_HOST")).isEqualTo("localhost");
-        assertThat(GlobalEnvironmentStore.get("KAFKA_PORT")).isEqualTo("9092");
-        assertThat(GlobalEnvironmentStore.get("PROPERTIES_BOOTSTRAP_SERVERS"))
-            .isEqualTo("localhost:9092");
-      }
-    }
-  }
-
-  @Test
-  void givenRedpandaProcessDies_whenStartDependentServices_thenThrowsException() throws Exception {
-    // Given
-    env.put("POSTGRES_HOST", "external-postgres"); // Skip postgres
-    serviceManager = new OsProcessManager(env);
-
-    try (MockedStatic<Files> filesMocked = mockStatic(Files.class);
-        MockedStatic<Paths> pathsMocked = mockStatic(Paths.class)) {
-
-      Path mockPath = mock(Path.class);
-      pathsMocked.when(() -> Paths.get(anyString())).thenReturn(mockPath);
-      pathsMocked.when(() -> Paths.get(anyString(), anyString())).thenReturn(mockPath);
-      filesMocked.when(() -> Files.createDirectories(any(Path.class))).thenReturn(mockPath);
-      filesMocked.when(() -> Files.exists(any(Path.class))).thenReturn(true);
-      filesMocked
-          .when(() -> Files.readAllLines(any(Path.class)))
-          .thenReturn(java.util.List.of("Error starting redpanda"));
-
-      try (MockedConstruction<ProcessBuilder> pbMocked =
-          mockConstruction(
-              ProcessBuilder.class,
-              (mock, context) -> {
-                when(mock.start()).thenReturn(mockProcess);
-                when(mock.redirectOutput(any(File.class))).thenReturn(mock);
-                when(mock.redirectErrorStream(any(Boolean.class))).thenReturn(mock);
-              })) {
-
-        // When & Then
-        assertThatThrownBy(() -> serviceManager.startDependentServices())
-            .isInstanceOf(IllegalStateException.class)
-            .hasMessageContaining("Service startup failed");
-      }
-    }
-  }
-
-  @Test
-  void givenNoPostgresHost_whenStartDependentServices_thenStartsPostgres() throws Exception {
-    // Given
-    env.put("KAFKA_HOST", "external-kafka"); // Skip redpanda
-    serviceManager = new OsProcessManager(env);
-
-    try (MockedStatic<Files> filesMocked = mockStatic(Files.class);
-        MockedStatic<Paths> pathsMocked = mockStatic(Paths.class)) {
-
-      Path mockPath = mock(Path.class);
-      java.io.File mockFile = mock(java.io.File.class);
-      when(mockPath.toAbsolutePath()).thenReturn(mockPath);
-      when(mockPath.toString()).thenReturn("/mock/path");
-      when(mockPath.toFile()).thenReturn(mockFile);
-      pathsMocked.when(() -> Paths.get(anyString())).thenReturn(mockPath);
-      pathsMocked.when(() -> Paths.get(anyString(), anyString())).thenReturn(mockPath);
-      filesMocked.when(() -> Files.createDirectories(any(Path.class))).thenReturn(mockPath);
-      filesMocked.when(() -> Files.exists(any(Path.class))).thenReturn(true);
-      filesMocked.when(() -> Files.list(any(Path.class))).thenReturn(Stream.of(mockPath));
-
-      when(mockProcess.waitFor()).thenReturn(0);
-
-      try (MockedConstruction<ProcessBuilder> pbMocked =
-          mockConstruction(
-              ProcessBuilder.class,
-              (mock, context) -> {
-                when(mock.start()).thenReturn(mockProcess);
-                when(mock.redirectOutput(any(File.class))).thenReturn(mock);
-                when(mock.redirectErrorStream(any(Boolean.class))).thenReturn(mock);
-                when(mock.redirectOutput(any(ProcessBuilder.Redirect.class))).thenReturn(mock);
-                when(mock.redirectError(any(ProcessBuilder.Redirect.class))).thenReturn(mock);
-              })) {
-
-        // When
-        serviceManager.startDependentServices();
-
-        // Then
-        assertThat(pbMocked.constructed()).hasSizeGreaterThan(0);
-
-        // Verify postgres environment variables are set by checking they exist after the call
-        assertThat(GlobalEnvironmentStore.get("POSTGRES_HOST")).isEqualTo("localhost");
-        assertThat(GlobalEnvironmentStore.get("POSTGRES_PORT")).isEqualTo("5432");
-        assertThat(GlobalEnvironmentStore.get("PGHOST")).isEqualTo("localhost");
-        assertThat(GlobalEnvironmentStore.get("PGUSER")).isEqualTo("postgres");
-        assertThat(GlobalEnvironmentStore.get("PGPASSWORD")).isEqualTo("postgres");
-        assertThat(GlobalEnvironmentStore.get("PGDATABASE")).isEqualTo("datasqrl");
-      }
-    }
-  }
-
-  @Test
-  void givenEmptyPostgresDirectory_whenStartDependentServices_thenInitializesPostgres()
-      throws Exception {
-    // Given
-    env.put("KAFKA_HOST", "external-kafka"); // Skip redpanda
-    serviceManager = new OsProcessManager(env);
-
-    try (MockedStatic<Files> filesMocked = mockStatic(Files.class);
-        MockedStatic<Paths> pathsMocked = mockStatic(Paths.class)) {
-
-      Path mockPath = mock(Path.class);
-      java.io.File mockFile = mock(java.io.File.class);
-      when(mockPath.toAbsolutePath()).thenReturn(mockPath);
-      when(mockPath.toString()).thenReturn("/mock/path");
-      when(mockPath.toFile()).thenReturn(mockFile);
-      pathsMocked.when(() -> Paths.get(anyString())).thenReturn(mockPath);
-      pathsMocked.when(() -> Paths.get(anyString(), anyString())).thenReturn(mockPath);
-      filesMocked.when(() -> Files.createDirectories(any(Path.class))).thenReturn(mockPath);
-      filesMocked.when(() -> Files.exists(any(Path.class))).thenReturn(true);
-      filesMocked
-          .when(() -> Files.list(any(Path.class)))
-          .thenReturn(Stream.empty()); // Empty directory
-
-      when(mockProcess.waitFor()).thenReturn(0);
-
-      try (MockedConstruction<ProcessBuilder> pbMocked =
-          mockConstruction(
-              ProcessBuilder.class,
-              (mock, context) -> {
-                when(mock.start()).thenReturn(mockProcess);
-                when(mock.redirectOutput(any(File.class))).thenReturn(mock);
-                when(mock.redirectErrorStream(any(Boolean.class))).thenReturn(mock);
-                when(mock.redirectOutput(any(ProcessBuilder.Redirect.class))).thenReturn(mock);
-                when(mock.redirectError(any(ProcessBuilder.Redirect.class))).thenReturn(mock);
-              })) {
-
-        // When
-        serviceManager.startDependentServices();
-
-        // Then - Should initialize postgres (at least one ProcessBuilder was created)
-        // We can't verify the exact command due to mocking limitations, but we can verify a process
-        // was started
-        assertThat(pbMocked.constructed()).hasSizeGreaterThan(0);
-      }
-    }
   }
 
   @Test
@@ -383,22 +140,30 @@ class OsProcessManagerTest {
   @Test
   void givenCustomEnvironmentVariables_whenStartDependentServices_thenSetsSystemProperties()
       throws Exception {
-    env.put("KAFKA_HOST", "external-kafka");
-    env.put("POSTGRES_HOST", "external-postgres");
     env.put("CUSTOM_PROPERTY", "custom_value");
     env.put("ANOTHER_PROPERTY", "another_value");
     serviceManager = new OsProcessManager(env);
 
+    Path mockPlanDir = mock(Path.class);
+
     try (MockedStatic<Files> filesMocked = mockStatic(Files.class);
-        MockedStatic<Paths> pathsMocked = mockStatic(Paths.class)) {
+        MockedStatic<Paths> pathsMocked = mockStatic(Paths.class);
+        MockedStatic<ConfigLoaderUtils> configMocked = mockStatic(ConfigLoaderUtils.class)) {
 
       Path mockPath = mock(Path.class);
       when(mockPath.toAbsolutePath()).thenReturn(mockPath);
       when(mockPath.toString()).thenReturn("/mock/path");
       pathsMocked.when(() -> Paths.get(anyString())).thenReturn(mockPath);
       pathsMocked.when(() -> Paths.get(anyString(), anyString())).thenReturn(mockPath);
-      filesMocked.when(() -> Files.exists(mockPath)).thenReturn(true);
-      filesMocked.when(() -> Files.list(mockPath)).thenReturn(Stream.of(mockPath));
+      filesMocked.when(() -> Files.createDirectories(any(Path.class))).thenReturn(mockPath);
+
+      // Mock that no services are needed
+      configMocked
+          .when(() -> ConfigLoaderUtils.loadKafkaPhysicalPlan(mockPlanDir))
+          .thenReturn(Optional.of(new KafkaPhysicalPlan(List.of(), List.of())));
+      configMocked
+          .when(() -> ConfigLoaderUtils.loadPostgresPhysicalPlan(mockPlanDir))
+          .thenReturn(Optional.empty());
 
       when(mockProcess.waitFor()).thenReturn(0);
 
@@ -410,13 +175,11 @@ class OsProcessManagerTest {
               })) {
 
         // When
-        serviceManager.startDependentServices();
+        serviceManager.startDependentServices(mockPlanDir);
 
         // Then - Check that environment variables were set by verifying they exist after the call
         assertThat(GlobalEnvironmentStore.get("CUSTOM_PROPERTY")).isEqualTo("custom_value");
         assertThat(GlobalEnvironmentStore.get("ANOTHER_PROPERTY")).isEqualTo("another_value");
-        assertThat(GlobalEnvironmentStore.get("KAFKA_HOST")).isEqualTo("external-kafka");
-        assertThat(GlobalEnvironmentStore.get("POSTGRES_HOST")).isEqualTo("external-postgres");
       }
     }
   }
@@ -538,6 +301,221 @@ class OsProcessManagerTest {
       // Then
       assertThat(pbMocked.constructed()).hasSizeGreaterThan(0);
       // Note: We can't easily verify the log warning without additional mocking
+    }
+  }
+
+  @Test
+  void givenPlanDirWithNoServices_whenStartDependentServices_thenUsesConfigLoaderUtils()
+      throws Exception {
+    // Given
+    Path mockPlanDir = mock(Path.class);
+
+    try (MockedStatic<Files> filesMocked = mockStatic(Files.class);
+        MockedStatic<Paths> pathsMocked = mockStatic(Paths.class);
+        MockedStatic<ConfigLoaderUtils> configMocked = mockStatic(ConfigLoaderUtils.class)) {
+
+      Path mockPath = mock(Path.class);
+      when(mockPath.toAbsolutePath()).thenReturn(mockPath);
+      when(mockPath.toString()).thenReturn("/mock/path");
+      pathsMocked.when(() -> Paths.get(anyString())).thenReturn(mockPath);
+      pathsMocked.when(() -> Paths.get(anyString(), anyString())).thenReturn(mockPath);
+      filesMocked.when(() -> Files.createDirectories(any(Path.class))).thenReturn(mockPath);
+
+      // Mock that no Kafka topics or Postgres statements are found
+      configMocked
+          .when(() -> ConfigLoaderUtils.loadKafkaPhysicalPlan(mockPlanDir))
+          .thenReturn(Optional.empty());
+      configMocked
+          .when(() -> ConfigLoaderUtils.loadPostgresPhysicalPlan(mockPlanDir))
+          .thenReturn(Optional.empty());
+
+      when(mockProcess.waitFor()).thenReturn(0);
+
+      try (MockedConstruction<ProcessBuilder> pbMocked =
+          mockConstruction(
+              ProcessBuilder.class,
+              (mock, context) -> {
+                when(mock.start()).thenReturn(mockProcess);
+              })) {
+
+        // When
+        serviceManager.startDependentServices(mockPlanDir);
+
+        // Then - Should complete without starting any services
+        assertThat(GlobalEnvironmentStore.contains("KAFKA_BOOTSTRAP_SERVERS")).isFalse();
+        assertThat(GlobalEnvironmentStore.contains("POSTGRES_HOST")).isFalse();
+      }
+    }
+  }
+
+  @Test
+  void givenPlanDirWithKafkaTopics_whenStartDependentServices_thenStartsRedpanda()
+      throws Exception {
+    // Given
+    Path mockPlanDir = mock(Path.class);
+
+    try (MockedStatic<Files> filesMocked = mockStatic(Files.class);
+        MockedStatic<Paths> pathsMocked = mockStatic(Paths.class);
+        MockedStatic<ConfigLoaderUtils> configMocked = mockStatic(ConfigLoaderUtils.class)) {
+
+      Path mockPath = mock(Path.class);
+      when(mockPath.toAbsolutePath()).thenReturn(mockPath);
+      when(mockPath.toString()).thenReturn("/mock/path");
+      pathsMocked.when(() -> Paths.get(anyString())).thenReturn(mockPath);
+      pathsMocked.when(() -> Paths.get(anyString(), anyString())).thenReturn(mockPath);
+      filesMocked.when(() -> Files.createDirectories(any(Path.class))).thenReturn(mockPath);
+      filesMocked.when(() -> Files.exists(mockPath)).thenReturn(true);
+      filesMocked.when(() -> Files.list(mockPath)).thenReturn(Stream.of(mockPath));
+
+      // Mock that Kafka topics are found but no Postgres statements
+      var mockTopic = mock(NewTopic.class);
+      configMocked
+          .when(() -> ConfigLoaderUtils.loadKafkaPhysicalPlan(mockPlanDir))
+          .thenReturn(Optional.of(new KafkaPhysicalPlan(List.of(mockTopic), List.of())));
+      configMocked
+          .when(() -> ConfigLoaderUtils.loadPostgresPhysicalPlan(mockPlanDir))
+          .thenReturn(Optional.empty());
+
+      when(mockProcess.isAlive()).thenReturn(true);
+      when(mockProcess.waitFor()).thenReturn(0);
+
+      try (MockedConstruction<ProcessBuilder> pbMocked =
+          mockConstruction(
+              ProcessBuilder.class,
+              (mock, context) -> {
+                when(mock.start()).thenReturn(mockProcess);
+                when(mock.redirectOutput(any(File.class))).thenReturn(mock);
+                when(mock.redirectErrorStream(any(Boolean.class))).thenReturn(mock);
+                when(mock.redirectOutput(any(ProcessBuilder.Redirect.class))).thenReturn(mock);
+                when(mock.redirectError(any(ProcessBuilder.Redirect.class))).thenReturn(mock);
+              })) {
+
+        // When
+        serviceManager.startDependentServices(mockPlanDir);
+
+        // Then
+        assertThat(pbMocked.constructed()).hasSizeGreaterThan(0);
+        assertThat(GlobalEnvironmentStore.get("KAFKA_BOOTSTRAP_SERVERS"))
+            .isEqualTo("localhost:9092");
+        assertThat(GlobalEnvironmentStore.get("KAFKA_GROUP_ID")).isNotNull();
+        assertThat(GlobalEnvironmentStore.contains("POSTGRES_HOST")).isFalse();
+      }
+    }
+  }
+
+  @Test
+  void givenPlanDirWithPostgresStatements_whenStartDependentServices_thenStartsPostgres()
+      throws Exception {
+    // Given
+    Path mockPlanDir = mock(Path.class);
+
+    try (MockedStatic<Files> filesMocked = mockStatic(Files.class);
+        MockedStatic<Paths> pathsMocked = mockStatic(Paths.class);
+        MockedStatic<ConfigLoaderUtils> configMocked = mockStatic(ConfigLoaderUtils.class)) {
+
+      Path mockPath = mock(Path.class);
+      java.io.File mockFile = mock(java.io.File.class);
+      when(mockPath.toAbsolutePath()).thenReturn(mockPath);
+      when(mockPath.toString()).thenReturn("/mock/path");
+      when(mockPath.toFile()).thenReturn(mockFile);
+      pathsMocked.when(() -> Paths.get(anyString())).thenReturn(mockPath);
+      pathsMocked.when(() -> Paths.get(anyString(), anyString())).thenReturn(mockPath);
+      filesMocked.when(() -> Files.createDirectories(any(Path.class))).thenReturn(mockPath);
+      filesMocked.when(() -> Files.exists(any(Path.class))).thenReturn(true);
+      filesMocked.when(() -> Files.list(any(Path.class))).thenReturn(Stream.of(mockPath));
+
+      // Mock that Postgres statements are found but no Kafka topics
+      configMocked
+          .when(() -> ConfigLoaderUtils.loadKafkaPhysicalPlan(mockPlanDir))
+          .thenReturn(Optional.empty());
+      var mockStatement = new JdbcStatement("test", JdbcStatement.Type.TABLE, "CREATE TABLE test");
+      var mockJdbcPlan = JdbcPhysicalPlan.builder().statement(mockStatement).build();
+      configMocked
+          .when(() -> ConfigLoaderUtils.loadPostgresPhysicalPlan(mockPlanDir))
+          .thenReturn(Optional.of(mockJdbcPlan));
+
+      when(mockProcess.waitFor()).thenReturn(0);
+
+      try (MockedConstruction<ProcessBuilder> pbMocked =
+          mockConstruction(
+              ProcessBuilder.class,
+              (mock, context) -> {
+                when(mock.start()).thenReturn(mockProcess);
+                when(mock.redirectOutput(any(File.class))).thenReturn(mock);
+                when(mock.redirectErrorStream(any(Boolean.class))).thenReturn(mock);
+                when(mock.redirectOutput(any(ProcessBuilder.Redirect.class))).thenReturn(mock);
+                when(mock.redirectError(any(ProcessBuilder.Redirect.class))).thenReturn(mock);
+              })) {
+
+        // When
+        serviceManager.startDependentServices(mockPlanDir);
+
+        // Then
+        assertThat(pbMocked.constructed()).hasSizeGreaterThan(0);
+        assertThat(GlobalEnvironmentStore.get("POSTGRES_HOST")).isEqualTo("localhost");
+        assertThat(GlobalEnvironmentStore.get("POSTGRES_PORT")).isEqualTo("5432");
+        assertThat(GlobalEnvironmentStore.contains("KAFKA_BOOTSTRAP_SERVERS")).isFalse();
+      }
+    }
+  }
+
+  @Test
+  void givenPlanDirWithBothServices_whenStartDependentServices_thenStartsBothServices()
+      throws Exception {
+    // Given
+    Path mockPlanDir = mock(Path.class);
+
+    try (MockedStatic<Files> filesMocked = mockStatic(Files.class);
+        MockedStatic<Paths> pathsMocked = mockStatic(Paths.class);
+        MockedStatic<ConfigLoaderUtils> configMocked = mockStatic(ConfigLoaderUtils.class)) {
+
+      Path mockPath = mock(Path.class);
+      java.io.File mockFile = mock(java.io.File.class);
+      when(mockPath.toAbsolutePath()).thenReturn(mockPath);
+      when(mockPath.toString()).thenReturn("/mock/path");
+      when(mockPath.toFile()).thenReturn(mockFile);
+      pathsMocked.when(() -> Paths.get(anyString())).thenReturn(mockPath);
+      pathsMocked.when(() -> Paths.get(anyString(), anyString())).thenReturn(mockPath);
+      filesMocked.when(() -> Files.createDirectories(any(Path.class))).thenReturn(mockPath);
+      filesMocked.when(() -> Files.exists(any(Path.class))).thenReturn(true);
+      filesMocked.when(() -> Files.list(any(Path.class))).thenReturn(Stream.of(mockPath));
+
+      // Mock that both Kafka topics and Postgres statements are found
+      var mockTopic = mock(NewTopic.class);
+      configMocked
+          .when(() -> ConfigLoaderUtils.loadKafkaPhysicalPlan(mockPlanDir))
+          .thenReturn(Optional.of(new KafkaPhysicalPlan(List.of(mockTopic), List.of())));
+      var mockStatement = new JdbcStatement("test", JdbcStatement.Type.TABLE, "CREATE TABLE test");
+      var mockJdbcPlan = JdbcPhysicalPlan.builder().statement(mockStatement).build();
+      configMocked
+          .when(() -> ConfigLoaderUtils.loadPostgresPhysicalPlan(mockPlanDir))
+          .thenReturn(Optional.of(mockJdbcPlan));
+
+      when(mockProcess.isAlive()).thenReturn(true);
+      when(mockProcess.waitFor()).thenReturn(0);
+
+      try (MockedConstruction<ProcessBuilder> pbMocked =
+          mockConstruction(
+              ProcessBuilder.class,
+              (mock, context) -> {
+                when(mock.start()).thenReturn(mockProcess);
+                when(mock.redirectOutput(any(File.class))).thenReturn(mock);
+                when(mock.redirectErrorStream(any(Boolean.class))).thenReturn(mock);
+                when(mock.redirectOutput(any(ProcessBuilder.Redirect.class))).thenReturn(mock);
+                when(mock.redirectError(any(ProcessBuilder.Redirect.class))).thenReturn(mock);
+              })) {
+
+        // When
+        serviceManager.startDependentServices(mockPlanDir);
+
+        // Then
+        assertThat(pbMocked.constructed()).hasSizeGreaterThan(0);
+        assertThat(GlobalEnvironmentStore.get("KAFKA_BOOTSTRAP_SERVERS"))
+            .isEqualTo("localhost:9092");
+        assertThat(GlobalEnvironmentStore.get("KAFKA_GROUP_ID")).isNotNull();
+        assertThat(GlobalEnvironmentStore.get("POSTGRES_HOST")).isEqualTo("localhost");
+        assertThat(GlobalEnvironmentStore.get("POSTGRES_PORT")).isEqualTo("5432");
+      }
     }
   }
 }

@@ -15,6 +15,7 @@
  */
 package com.datasqrl.graphql;
 
+import static com.datasqrl.env.EnvVariableNames.KAFKA_BOOTSTRAP_SERVERS;
 import static org.apache.kafka.clients.consumer.ConsumerConfig.AUTO_OFFSET_RESET_CONFIG;
 import static org.apache.kafka.clients.consumer.ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG;
 import static org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG;
@@ -106,8 +107,7 @@ public class SubscriptionConfigurationImpl implements SubscriptionConfiguration<
   // TODO: shouldn't it come from ServerConfig all together?
   public Map<String, String> getSourceConfig() {
     Map<String, String> conf = new HashMap<>();
-    conf.put(
-        BOOTSTRAP_SERVERS_CONFIG, config.getEnvironmentVariable("PROPERTIES_BOOTSTRAP_SERVERS"));
+    conf.put(BOOTSTRAP_SERVERS_CONFIG, config.getEnvironmentVariable(KAFKA_BOOTSTRAP_SERVERS));
     conf.put(GROUP_ID_CONFIG, UUID.randomUUID().toString());
     conf.put(KEY_DESERIALIZER_CLASS_CONFIG, "com.datasqrl.graphql.kafka.JsonDeserializer");
     conf.put(VALUE_DESERIALIZER_CLASS_CONFIG, "com.datasqrl.graphql.kafka.JsonDeserializer");

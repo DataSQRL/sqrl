@@ -79,7 +79,7 @@ The run command uses the following engines:
 
 DataSQRL runs up the data systems listed above and maps your local directories for data access.
 To access this data in your DataSQRL jobs during local execution use:
-* `${PROPERTIES_BOOTSTRAP_SERVERS}` to connect to the Redpanda Kafka cluster
+* `${KAFKA_BOOTSTRAP_SERVERS}` to connect to the Redpanda Kafka cluster
 * `${DATA_PATH}/` to reference `.jsonl` or `.csv` data in your project.
 
 This allows DataSQRL to map connectors correctly and also applies to [testing](#test-command).

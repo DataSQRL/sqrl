@@ -28,16 +28,17 @@ public class ExecuteCmd extends AbstractCmd {
 
   @Override
   protected void runInternal(ErrorCollector errors) throws Exception {
-    // Start services before executing
-    getOsProcessManager().startDependentServices();
-
-    var env = GlobalEnvironmentStore.getAll();
     var targetDir = getTargetDir();
     var planDir = targetDir.resolve(SqrlConstants.PLAN_DIR);
+
+    // Start services before executing
+    getOsProcessManager().startDependentServices(planDir);
+
+    var env = GlobalEnvironmentStore.getAll();
     var sqrlConfig = ConfigLoaderUtils.loadResolvedConfig(errors, getBuildDir());
     var flinkConfig = ConfigLoaderUtils.loadFlinkConfig(planDir);
 
-    var sqrlRun = new DatasqrlRun(planDir, sqrlConfig, flinkConfig, env, false);
+    var sqrlRun = new DatasqrlRun(planDir, sqrlConfig, flinkConfig, env);
     sqrlRun.run(true, true);
   }
 }

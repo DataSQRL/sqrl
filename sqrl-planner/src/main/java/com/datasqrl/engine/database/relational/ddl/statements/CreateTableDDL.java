@@ -50,13 +50,8 @@ public class CreateTableDDL implements SqlDDLStatement {
 
   private static String fieldToSql(JdbcStatement.Field field) {
     var sql = new StringBuilder();
-    sql.append("\"")
-        .append(field.getName())
-        .append("\"")
-        .append(" ")
-        .append(field.getType())
-        .append(" ");
-    if (!field.isNullable()) {
+    sql.append("\"").append(field.name()).append("\"").append(" ").append(field.type()).append(" ");
+    if (!field.nullable()) {
       sql.append("NOT NULL");
     }
     return sql.toString();

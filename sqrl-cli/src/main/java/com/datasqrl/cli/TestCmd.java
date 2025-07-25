@@ -33,13 +33,14 @@ public class TestCmd extends AbstractCompileCmd {
       return;
     }
 
+    var targetDir = getTargetDir();
+    var planDir = targetDir.resolve(SqrlConstants.PLAN_DIR);
+
     // Start services before testing
-    getOsProcessManager().startDependentServices();
+    getOsProcessManager().startDependentServices(planDir);
 
     // Test
     var env = GlobalEnvironmentStore.getAll();
-    var targetDir = getTargetDir();
-    var planDir = targetDir.resolve(SqrlConstants.PLAN_DIR);
     var sqrlConfig = ConfigLoaderUtils.loadResolvedConfig(errors, getBuildDir());
     var flinkConfig = ConfigLoaderUtils.loadFlinkConfig(planDir);
 
