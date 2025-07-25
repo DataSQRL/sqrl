@@ -3,7 +3,7 @@ Thanks for your interest in DataSQRL.
 
 # Contributions
 
-DataSQRL welcomes contributions from anyone. Check out the [Developer Documentation](DEVELOPER_DOCS.md)
+DataSQRL welcomes contributions from anyone. Check out the [Developer Documentation](CLAUDE.md)
 for more information on the project and the structure of this repository.
 
 Submit a pull request and it will be reviewed by a contributor or committer in the project. The 
