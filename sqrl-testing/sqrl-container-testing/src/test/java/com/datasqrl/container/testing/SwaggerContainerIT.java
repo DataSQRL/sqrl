@@ -80,12 +80,12 @@ public class SwaggerContainerIT extends SqrlContainerTestBase {
 
     // Verify REST endpoints are documented
     var paths = jsonResponse.get("paths");
-    assertThat(paths.has("/queries/Schema"))
+    assertThat(paths.has("/rest/queries/Schema"))
         .as("Schema REST endpoint should be documented")
         .isTrue();
 
     // Verify endpoint details
-    var schemaPath = paths.get("/queries/Schema");
+    var schemaPath = paths.get("/rest/queries/Schema");
     assertThat(schemaPath.has("get")).as("Schema endpoint should have GET method").isTrue();
   }
 
