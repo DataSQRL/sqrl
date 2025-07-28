@@ -7,13 +7,16 @@
 [![Docker Image Version](https://img.shields.io/docker/v/datasqrl/cmd?sort=semver)](https://hub.docker.com/r/datasqrl/cmd/tags)
 [![Maven Central](https://img.shields.io/maven-central/v/com.datasqrl/sqrl-root)](https://repo1.maven.org/maven2/com/datasqrl/sqrl-root/)
 
-DataSQRL is an open-source framework for building data pipelines in SQL: Build MCP servers, RAG pipelines, data APIs (GraphQL & REST), feature stores, and data products. Ingest, process, store, and serve data with a single SQL script.  
-
-DataSQRL automates the construction of data pipelines from multiple sources of data with guaranteed consistency and reliability. DataSQRL eliminates data plumbing and empowers your team to focus on data enrichment instead of infrastructure and glue code.
+DataSQRL is an open-source framework for building consistent and reliable data pipelines with SQL that can be automated with LLMs.
+Build MCP servers, RAG pipelines, data APIs (GraphQL & REST), feature stores, and data products. Ingest, process, store, and serve data with a single SQL script with built-in testing, observability, and operational tooling.
 
 Define the data processing and interface in SQL and DataSQRL generates an integrated data pipeline that runs on your existing infrastructure with Docker, Kubernetes, or cloud-managed services.
 
 ![DataSQRL Pipeline Architecture](/documentation/static/img/diagrams/architecture_overview.png)
+
+DataSQRL automates the construction of data pipelines from multiple sources of data with guaranteed consistency and reliability. DataSQRL generates the glue code between processing steps and systems. DataSQRL also provides in-depth verification and analysis of declarative pipeline definitions which can be used in a feedback loop with LLM generation for complete pipeline automation with quality guarantees.
+
+![DataSQRL Pipeline Automation](/documentation/static/img/diagrams/sql_generation.png)
 
 
 ## DataSQRL Features
@@ -175,15 +178,19 @@ Read the [documentation](https://docs.datasqrl.com/) to learn how to configure t
 
 ## Why DataSQRL?
 
-Building data pipelines that power MCP servers, RAG, data APIs and data products requires implementing and maintaining lots of tedious glue code. Making sure those data pipelines are robust, consistent, and governed requires diligent engineering work that delays project delivery and balloons cost. Updating data pipelines is error-prone, slowing iteration velocity. 
+Building data pipelines requires implementing and maintaining lots of tedious glue code. Making sure those data pipelines are robust, consistent, and governed requires diligent engineering work that delays project delivery and balloons cost. Updating data pipelines is error-prone, slowing iteration velocity.
 
-DataSQRL automates this distracting busywork with a principled SQL-based abstraction layer so you can focus on what matters: enriching your data and delivering to the customer.
+We started DataSQRL to automate data pipeline busywork and let teams focus on their data. There are two components to DataSQRL: 
+* An abstraction layer in SQL that can express entire data pipelines from ingestion to data serving
+* A verification and analysis module that inspects data pipelines for non-functional requirements like data consistency, fault tolerance, scalability, and lineage.
+
+The abstraction layer automates glue code while the verification and analysis layer provides feedback for data engineers and automatic code generation tools.
 
 ## How DataSQRL Works
 
 ![Example Data Processing DAG](documentation/static/img/screenshots/dag_example.png)
 
-DataSQRL compiles the SQL scripts and data source/sink definitions into a data processing DAG (Directed Acyclic Graph) according to the configuration. The cost-based optimizer cuts the DAG into segments executed by different engines (e.g. Flink, Kafka, Postgres, Vert.x), generating the necessary physical plans, schemas, and connectors for a fully integrated, reliable, and consistent data pipeline. These deployment assets are then executed in Docker, Kubernetes, or by a managed cloud service.
+DataSQRL compiles the SQL scripts and data source/sink definitions into a data processing DAG (Directed Acyclic Graph) according to the configuration. The analyzer traverses the DAG to detect potential data inconsistencies, performance, or scalability issues. The cost-based optimizer cuts the DAG into segments executed by different engines (e.g. Flink, Kafka, Postgres, Vert.x), generating the necessary physical plans, schemas, and connectors for a fully integrated, reliable, and consistent data pipeline. These deployment assets are then executed in Docker, Kubernetes, or by a managed cloud service.
 
 DataSQRL gives you full visibility and control over the generated data pipeline and uses proven open-source technologies to execute the generated deployment assets. You can use your existing infrastructure or cloud services for runtime, DataSQRL is only used at compile time. 
 
