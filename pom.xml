@@ -93,7 +93,7 @@
     <httpcomponents.version>4.5.14</httpcomponents.version>
     <commons-bean.version>1.11.0</commons-bean.version>
     <h2.version>2.3.232</h2.version>
-    <opencsv.version>5.11.2</opencsv.version>
+    <opencsv.version>5.12.0</opencsv.version>
     <javax.validation.version>2.0.1.Final</javax.validation.version>
     <glassfish.version>3.0.0</glassfish.version>
     <reactive-streams.version>1.0.4</reactive-streams.version>
