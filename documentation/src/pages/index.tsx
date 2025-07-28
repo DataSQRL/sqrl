@@ -13,54 +13,18 @@ import CodeBlock from "@theme/CodeBlock";
 
 
 const header: HomepageHeaderProps = {
-  title: 'DataSQRL - Data Platform Framework',
-  tagLine: 'Data Platform Framework',
+  title: 'DataSQRL - Data Pipeline Automation Framework',
+  tagLine: 'Data Pipeline Automation',
   text: (
       <>
-        Build consistent and reliable data APIs, MCP servers,
-        and lakehouse views with SQL.
+        DataSQRL is a framework for building consistent and reliable data pipelines with SQL that can be automated with LLMs.<br />
+        Build data APIs, MCP, RAG, or Apache Iceberg views.
       </>
   ),
   buttonLink: 'docs/getting-started',
-  buttonText: 'Build Robust Data Apps in 10 min',
-  image: "/img/diagrams/streaming_summary.png"
+  buttonText: 'Automate Your Data Pipelines',
+  image: "/img/diagrams/architecture_overview.png"
 };
-
-const WhyDataSQRLList = [
-  {
-    title: 'Automate Data Plumbing',
-    image: '/img/undraw/code.svg',
-    description: (
-        <>
-          DataSQRL allows you to focus on your data by automating the busywork:
-          data mapping, connector management, schema alignment, data serving,
-          SQL dialect translation, API generation, and configuration management.
-        </>
-    ),
-  },
-  {
-    title: 'Easy to Use',
-    image: '/img/undraw/programming.svg',
-    description: (
-        <>
-          Implement your data applications with the SQL you already know.
-          DataSQRL allows you to focus on the "what" and worry less about the "how".
-          Develop locally, iterate quickly, and deploy with confidence.
-        </>
-    ),
-  },
-  {
-    title: 'Production Grade',
-    image: '/img/undraw/secure.svg',
-    description: (
-        <>
-          DataSQRL compiles efficient data architectures that run on proven open-source
-          technologies. Out of the box data consistency, high availability, scalability,
-          and observability.
-        </>
-    ),
-  },
-];
 
 export default function Home() {
   const {siteConfig} = useDocusaurusContext();
@@ -75,50 +39,220 @@ export default function Home() {
               <div className="row margin-bottom--xl margin-top--lg">
                 <div className="col col--6">
                   <CodeBlock language="sql">
-                    {`CREATE TABLE UserTokens (
-  userid INT NOT NULL,
-  tokens BIGINT NOT NULL,
-  request_time TIMESTAMP_LTZ(3) METADATA FROM 'timestamp'
-);
+                    {`-- Ingest data from connected systems
+IMPORT banking-data.*;
 
-/*+query_by_all(userid) */
-TotalUserTokens := SELECT userid, sum(tokens) as tokens,
-  count(tokens) as requests FROM UserTokens GROUP BY userid;
+-- Enrich debit transactions with creditor information using time-consistent join
+SpendingTransactions :=
+    SELECT
+        t.*,
+        h.name AS creditor_name,
+        h.type AS creditor_type
+    FROM Transactions t
+             JOIN Accounts FOR SYSTEM_TIME AS OF t.tx_time a
+                  ON t.credit_account_id = a.account_id
+             JOIN AccountHolders FOR SYSTEM_TIME AS OF t.tx_time h
+                  ON a.holder_id = h.holder_id;
 
-UsageAlert := SUBSCRIBE SELECT * FROM UserTokens 
-                                 WHERE tokens > 100000;
-
-/** Returns all requests for the given user since fromTime 
-  (inclusive) and until toTime (exclusive) */
-PotentialRewards(userid BIGINT, fromTime TIMESTAMP, toTime TIMESTAMP) :=
-   SELECT * FROM UserTokens WHERE userid = :userid
-    AND :fromTime <= request_time AND :toTime > request_time;`}
+-- Create secure MCP tooling endpoint with description for agentic retrieval
+/** Retrieve spending transactions within the given time-range.
+  fromTime (inclusive) and toTime (exclusive) must be RFC-3339 compliant date time.
+*/
+SpendingTransactionsByTime(
+  account_id STRING NOT NULL METADATA FROM 'auth.accountId',
+  fromTime TIMESTAMP NOT NULL,
+  toTime TIMESTAMP NOT NULL
+) :=
+    SELECT * FROM SpendingTransactions
+    WHERE debit_account_id = :account_id
+      AND :fromTime <= tx_time
+      AND :toTime > tx_time
+    ORDER BY tx_time DESC;`}
                   </CodeBlock>
                 </div>
                 <div className="col col--5 text--left">
-                  <h2>Complete Pipeline in 1 SQL Script</h2>
+                  <h2>Data Pipeline in a Single SQL Script</h2>
                   <p className="hero__subtitle">
-                    Implement the entire data pipeline in SQL to ingest, process, analyze,
-                    store, and serve your data.
+                    DataSQRL compiles declarative SQL into production-ready data pipelines that
+                    ingest, process, store, and serve data with built-in testing, observability, and operational tooling.
                   </p>
                   <p className="hero__subtitle">
-                    Eliminate the glue code with guaranteed consistency and high reliability.
+                    All in a single SQL script. <br />
+                    DataSQRL automates the data plumbing.
+                  </p>
+                </div>
+              </div>
+              <div className="row margin-bottom--lg margin-top--lg">
+                <div className="col col--6 text--center">
+                  <img src={useBaseUrl("/img/diagrams/sql_generation.png")}
+                       alt="DataSQRL compiles consistent data pipelines"/>
+                </div>
+                <div className="col col--5 text--left">
+                  <h2>End-to-End Automation with Understanding</h2>
+                  <p className="hero__subtitle">
+                    SQL can be generated by most LLMs and read by data engineers.</p>
+                  <p className="hero__subtitle">
+                    DataSQRL provides the analysis LLMs need to generate quality pipelines iteratively.
+                  </p>
+                </div>
+              </div>
+              <div className="row margin-bottom--xl">
+                <div className="col col--6 text--center">
+                  <img src={useBaseUrl("/img/diagrams/architecture_components.png")}
+                       alt="DataSQRL compiles consistent data pipelines"/>
+                </div>
+                <div className="col col--5 text--left">
+                  <h2>Data Consistency and Integrity</h2>
+                  <p className="hero__subtitle">
+                    DataSQRL compiles SQL to a consistent data pipeline with at-least-once or exactly-once
+                    processing guarantees and data integrity validation.
+                  </p>
+                  <p className="hero__subtitle">
+                    DataSQRL provides complete transparency into the data pipeline artifacts and
+                    compile-time verification for results you can trust.
+                  </p>
+                  <p className="text--center">
+                    <Link className="button button--primary button--lg" to="https://github.com/DataSQRL/datasqrl-examples">
+                      See more Examples
+                    </Link>
+                  </p>
+                </div>
+              </div>
+              <div className="row margin-bottom--xl margin-top--lg">
+                <div className="col col--6">
+                  <CodeBlock language="sql">
+                    {`/*+test */
+EnrichedTransactionsTest := 
+    SELECT debit_holder_name, 
+           COUNT(*) AS debit_tx_count, 
+           SUM(amount) AS total_debit_amount
+    FROM EnrichedTransactions
+    GROUP BY debit_holder_name ORDER BY debit_holder_name ASC;`}
+                  </CodeBlock>
+                </div>
+                <div className="col col--5 text--left">
+                  <h2>Ensure Correctness with Tests</h2>
+                  <p className="hero__subtitle">
+                    Snapshot tests and assertions ensure correctness and
+                  spot regressions in CI/CD.</p>
+                  <p className="hero__subtitle">
+                    DataSQRL generates tests with 100% reproducibility.
                   </p>
                 </div>
               </div>
               <div className="row margin-bottom--xl margin-top--lg">
                 <div className="col col--6 text--center">
-                  <img src={useBaseUrl("/img/diagrams/streaming_architecture.png")}
-                       alt="DataSQRL unlocks the value of your data"/>
+                  <img src={useBaseUrl("/img/screenshots/banking_dag.png")}
+                       alt="DataSQRL builds the processing DAG"/>
                 </div>
                 <div className="col col--5 text--left">
-                  <h2>Compiler Validation and Consistency</h2>
+                  <h2>Pipeline Generation and Optimization</h2>
                   <p className="hero__subtitle">
-                    DataSQRL compiles SQL to an integrated data architecture that runs on mature
-                    open-source technologies.
+                    DataSQRL optimizes the allocation of pipeline steps to execution engines and
+                    generates the integration code with data mappings and schema alignment.
                   </p>
                   <p className="hero__subtitle">
-                    Deploy with Docker, Kubernetes, or cloud-managed services.
+                    That's a lot of glue code you don't have to write.
+                  </p>
+                </div>
+              </div>
+              <div className="row margin-bottom--xl margin-top--lg">
+                <div className="col col--6">
+                  <CodeBlock language="sql">
+                    {`IMPORT stdlib.openai.*;
+
+ContentEmbedding := 
+    SELECT 
+      vector_embedd(text, 'text-embedding-3-small') AS embedding,
+      completions(concat('Summarize:', text), 'gpt-4o') AS summary
+    FROM Content;
+`}
+                  </CodeBlock>
+                </div>
+                <div className="col col--5 text--left">
+                  <h2>AI-Native Features</h2>
+                  <p className="hero__subtitle">
+                    Built-in support for vector embeddings, LLM invocation, and ML model inference.
+                  </p>
+                  <p className="hero__subtitle">
+                    Use AI features for advanced data processing.
+                  </p>
+                </div>
+              </div>
+              <div className="row margin-bottom--xl margin-top--lg">
+                <div className="col col--6 text--center">
+                  <img src={useBaseUrl("/img/diagrams/architecture_proven_oss.png")}
+                       alt="DataSQRL uses proven open-source technologies"/>
+                </div>
+                <div className="col col--5 text--left">
+                  <h2>Robust and Scalable</h2>
+                  <p className="hero__subtitle">
+                    DataSQRL handles partitioning and compiles to proven open-source technologies
+                    for runtime execution like Apache Flink, Kafka, and Iceberg that support HA
+                    and scale out as needed.
+                  </p>
+                  <p className="hero__subtitle">
+                    Get operational peace-of-mind and scale when you need to.
+                  </p>
+                </div>
+              </div>
+              <div className="row margin-top--lg">
+                <div className="col col--6">
+                  <CodeBlock language="sql">
+                    {`-- Create a relationship between holder and accounts
+AccountHolders.accounts(status STRING) := 
+    SELECT * FROM Accounts a 
+    WHERE a.holder_id = this.holder_id AND a.status = :status 
+    ORDER BY a.account_type ASC;
+
+-- Link accounts with spending transactions
+Accounts.spendingTransactions(since TIMESTAMP NOT NULL) :=
+    SELECT * FROM SpendingTransactions t
+    WHERE t.debit_account_id = this.account_id AND :since <= tx_time
+    ORDER BY tx_time DESC;`}
+                  </CodeBlock>
+                </div>
+                <div className="col col--5 text--left">
+                  <h2>Flexible API Design</h2>
+                  <p className="hero__subtitle">
+                    Support for table functions and relationships in SQL enable flexible
+                  API design for GraphQL, REST, and MCP.</p>
+                  <p className="hero__subtitle">
+                    Define data access in SQL and refine the API in GraphQL schema.
+                  </p>
+                </div>
+              </div>
+              <div className="row margin-bottom--xl margin-top--lg">
+                <div className="col col--6">
+                  <CodeBlock language="sql">
+                    {`Transactions(account_id STRING METADATA FROM 'auth.acct_id') :=
+    SELECT * FROM SpendingTransactions 
+    WHERE debit_account_id = :account_id
+    ORDER BY tx_time DESC;`}
+                  </CodeBlock>
+                </div>
+                <div className="col col--5 text--left">
+                  <h2>Secure</h2>
+                  <p className="hero__subtitle">
+                    Use JWT for authentication and fine-grained authorization of data access.
+                  </p>
+                  <p className="hero__subtitle">
+                    DataSQRL defends against injection attacks.
+                  </p>
+                </div>
+              </div>
+              <div className="row margin-bottom--xl margin-top--lg">
+                <div className="col col--6 text--center">
+                  <img src={useBaseUrl("/img/screenshots/banking_dag_expanded.png")}
+                       alt="DataSQRL uses proven open-source technologies"/>
+                </div>
+                <div className="col col--5 text--left">
+                  <h2>Data Lineage</h2>
+                  <p className="hero__subtitle">
+                    DataSQRL analyzes the data pipeline and tracks data lineage for full visibility.
+                  </p>
+                  <p className="hero__subtitle">
+                    Know where the data is coming from and where it's going.
                   </p>
                 </div>
               </div>
@@ -137,24 +271,155 @@ docker run --rm -v $PWD:/build \\
 # See compiled plan, schemas, indexes, etc
 (cd build/deploy/plan; ls)`}
                   </CodeBlock>
-
                 </div>
                 <div className="col col--5 text--left">
                   <h2>Developer Tooling</h2>
                   <p className="hero__subtitle">
                     Local development, automated tests, CI/CD support, pipeline optimization,
-                    introspection, debugging - DataSQRL brings software engineering best
-                    practices to data engineers.
+                    introspection, debugging.<br />
+                    DataSQRL automates data pipelines within your workflow.
+                  </p>
+                </div>
+              </div>
+              <div className="row margin-bottom--xl margin-top--lg">
+                <div className="col col--6 text--center">
+                  <img src={useBaseUrl("/img/screenshots/deployment_options.png")}
+                       alt="DataSQRL uses proven open-source technologies"
+                       style={{ height: '300px' }} />
+                </div>
+                <div className="col col--5 text--left">
+                  <h2>Flexible Deployment</h2>
+                  <p className="hero__subtitle">
+                    Run locally, in containerized environments (Docker, Kubernetes) and using
+                    cloud-managed services.
+                  </p>
+                  <p className="hero__subtitle">
+                    DataSQRL uses your existing data infrastructure.
+                  </p>
+                </div>
+              </div>
+              <div className="row margin-bottom--xl margin-top--lg">
+                <div className="col col--6">
+                  <CodeBlock language="sql">
+                    {`CREATE TABLE Transactions (
+  \`timestamp\` TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
+  WATERMARK FOR \`timestamp\` AS \`timestamp\`
+) WITH (
+  'connector' = 'kafka',
+  'topic' = 'indicators',
+  'properties.bootstrap.servers' = '\${BOOTSTRAP_SERVERS}',
+  'properties.group.id' = 'mygroup',
+  'scan.startup.mode' = 'earliest-offset',
+  'format' = 'flexible-json'
+);
+`}
+                  </CodeBlock>
+                </div>
+                <div className="col col--5 text--left">
+                  <h2>Connect to Your Data Systems</h2>
+                  <p className="hero__subtitle">
+                    Connect directly to existing data systems like streaming platforms,
+                    databases, or data lakes. Or ingest data through APIs.
+                  </p>
+                  <p className="hero__subtitle">
+                    DataSQRL simplifies data integration through connector configuration.
+                  </p>
+                </div>
+              </div>
+              <div className="row margin-bottom--xl margin-top--lg">
+                <div className="col col--6 text--center">
+                  <img src={useBaseUrl("/img/screenshots/open_source_technologies.png")}
+                       alt="DataSQRL uses proven open-source technologies"
+                       style={{ height: '250px' }} />
+                </div>
+                <div className="col col--5 text--left">
+                  <h2>Open Source</h2>
+                  <p className="hero__subtitle">
+                    DataSQRL is licensed under Apache 2 and builds on popular
+                    open-source technologies.
+                  </p>
+                  <p className="hero__subtitle">
+                    Build automation on top of community-driven innovation.
+                  </p>
+                </div>
+              </div>
+              <div className="row margin-bottom--xl margin-top--lg">
+                <div className="col col--6">
+                  <CodeBlock language="sql">
+                    {`-- Deduplicate an update stream to a stateful table
+Accounts := DISTINCT AccountsCDC ON account_id ORDER BY update_time DESC;
+
+-- Join transactions with accounts at the time of the transaction consistently
+SpendingTransactions := 
+    SELECT t.*, 
+           h.name AS creditor_name,
+    FROM Transactions t JOIN Accounts FOR SYSTEM_TIME AS OF t.tx_time a 
+                        ON t.credit_account_id=a.account_id;
+
+-- Aggregate over tumbling time windows
+SpendingByWeek := SELECT 
+      account_id, 
+      type, 
+      window_start AS week,
+      SUM(amount) AS total_spending
+   FROM TABLE(TUMBLE(
+                TABLE SpendingTransactions, 
+                DESCRIPTOR(tx_time),
+                INTERVAL '1' DAY
+              ))
+   GROUP BY debit_account_id, type, window_start, window_end;`}
+                  </CodeBlock>
+                </div>
+                <div className="col col--5 text--left">
+                  <h2>Focus on what Matters</h2>
+                  <p className="hero__subtitle">
+                    DataSQRL supports time-window aggregations, deduplication, time-consistent joins, and other complex transformations
+                  succinctly in SQL. <br />
+                    DataSQRL handles low-level optimizations.</p>
+                  <p className="hero__subtitle">
+                    Import custom functions when SQL alone is not enough.
+                  </p>
+                </div>
+              </div>
+              <div className="row margin-bottom--xl margin-top--lg">
+                <div className="col col--6">
+                  <CodeBlock language="sql">
+                    {`-- Compute enriched transaction to Iceberg with partition
+/*+engine(iceberg), partition_key(credit_holder_type) */
+EnrichedTransactions := SELECT 
+      t.*, 
+      hc.name AS credit_holder_name,                                 
+    FROM Transactions t JOIN AccountHolders hc 
+                        ON t.credit_holder_id = hc.holder_id;`}
+                  </CodeBlock>
+                </div>
+                <div className="col col--5 text--left">
+                  <h2>Full Control</h2>
+                  <p className="hero__subtitle">
+                    Direct the DataSQRL compiler with hints and configuration for control over
+                    pipeline design and execution.
+                  </p>
+                </div>
+              </div>
+              <div className="row margin-bottom--xl margin-top--lg">
+                <div className="col col--6 text--center">
+
+                </div>
+                <div className="col col--5 text--left">
+                  <h2>Developer Workflow</h2>
+                  <p className="hero__subtitle">
+                    DataSQRL integrates into your developer workflow and enables
+                    quick iterations. <br/>
+                    {/*Watch the video to see for yourself.*/}
                   </p>
                   <Link className="button button--primary button--lg"
-                      to="/docs/getting-started">Get Started</Link>
+                        to="/docs/getting-started">Get Started</Link>
                   <Link className="button button--primary button--lg"
                         to="/docs/intro">Learn More</Link>
                 </div>
               </div>
             </div>
           </section>
-          <HomepageFeatures FeatureList={WhyDataSQRLList}/>
 
         </main>
       </Layout>
