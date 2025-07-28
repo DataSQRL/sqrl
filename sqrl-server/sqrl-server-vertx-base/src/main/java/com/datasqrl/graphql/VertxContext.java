@@ -26,6 +26,7 @@ import com.datasqrl.graphql.server.QueryExecutionContext;
 import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.VariableArgument;
+import com.datasqrl.graphql.util.RequestContext;
 import graphql.schema.DataFetcher;
 import graphql.schema.DataFetchingEnvironment;
 import graphql.schema.PropertyDataFetcher;
@@ -93,18 +94,53 @@ public class VertxContext implements Context {
 
     DataFetcher<?> dataFetcher =
         env -> {
+          var requestId = RequestContext.getRequestId();
+          log.debug(
+              "[{}] Creating argument lookup fetcher for field: {}",
+              requestId,
+              env.getField().getName());
+
           Set<Argument> argumentSet =
               env.getArguments().entrySet().stream()
                   .map(argument -> new VariableArgument(argument.getKey(), argument.getValue()))
                   .collect(Collectors.toSet());
+
+          var argsString =
+              argumentSet.stream()
+                  .map(
+                      arg -> {
+                        if (arg instanceof VariableArgument varArg) {
+                          return varArg.getPath() + "=" + varArg.getValue();
+                        }
+                        return arg.toString();
+                      })
+                  .collect(Collectors.joining(", "));
+          log.trace("[{}] Arguments: {}", requestId, argsString);
 
           var cf = new CompletableFuture<Object>();
 
           // Execute
           QueryExecutionContext context =
               new VertxQueryExecutionContext(this, env, argumentSet, cf);
+
+          log.debug("[{}] Executing resolved query", requestId);
           resolvedQuery.accept(server, context);
-          return cf;
+
+          return cf.whenComplete(
+              (result, throwable) -> {
+                if (throwable != null) {
+                  log.error(
+                      "[{}] Query execution failed for field: {}",
+                      requestId,
+                      env.getField().getName(),
+                      throwable);
+                } else {
+                  log.debug(
+                      "[{}] Query execution completed for field: {}",
+                      requestId,
+                      env.getField().getName());
+                }
+              });
         };
 
     return dataFetcher;

@@ -118,6 +118,21 @@ public class VertxContainerIT extends SqrlContainerTestBase {
     assertTraceLogMatchesPattern("\\[REQ-\\d+-\\d+\\] OUTGOING RESPONSE");
   }
 
+  @Test
+  @SneakyThrows
+  void givenNewTraceLoggingEnabled_whenGraphQLRequestSent_thenSqrlTraceLogContainsRequestIds() {
+    compileAndStartServer("myudf.sqrl", testDir);
+
+    var testQuery = "{\"query\":\"query { __typename }\"}";
+    var response = executeGraphQLQuery(testQuery);
+    validateBasicGraphQLResponse(response);
+
+    // Verify that the container logs contain trace logs with request IDs in the expected format [7-char hex]
+    assertSqrlTraceLogMatchesPattern("\\[[A-F0-9]{7}\\] Incoming request: POST /graphql");
+    assertSqrlTraceLogMatchesPattern("\\[[A-F0-9]{7}\\] Creating argument lookup fetcher");
+    assertSqrlTraceLogMatchesPattern("\\[[A-F0-9]{7}\\] Request completed: status=200");
+  }
+
   @SneakyThrows
   private void assertTraceLogContains(String... expectedPatterns) {
     // Wait for log file to be created and populated with expected content
@@ -147,6 +162,22 @@ public class VertxContainerIT extends SqrlContainerTestBase {
   }
 
   @SneakyThrows
+  private void assertSqrlTraceLogMatchesPattern(String regexPattern) {
+    // Wait for SQRL trace log file to be created and populated with expected pattern
+    Awaitility.await()
+        .atMost(Duration.ofSeconds(10))
+        .pollInterval(Duration.ofMillis(500))
+        .untilAsserted(
+            () -> {
+              var logs = sqrlTraceLogs();
+              var pattern = Pattern.compile(regexPattern);
+              assertThat(pattern.matcher(logs).find())
+                  .as("Expected SQRL trace log pattern '%s' not found in logs", regexPattern)
+                  .isTrue();
+            });
+  }
+
+  @SneakyThrows
   private String traceLogs() {
     // Get the log file from the container
     var logPath = "/opt/sqrl/logs/request-trace.log";
@@ -158,5 +189,11 @@ public class VertxContainerIT extends SqrlContainerTestBase {
     }
 
     return result.getStdout();
+  }
+
+  @SneakyThrows
+  private String sqrlTraceLogs() {
+    // Get the SQRL trace logs from container logs (now using SLF4J)
+    return serverContainer.getLogs();
   }
 }

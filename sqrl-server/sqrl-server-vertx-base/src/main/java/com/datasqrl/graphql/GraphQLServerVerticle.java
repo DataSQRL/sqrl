@@ -23,6 +23,8 @@ import com.datasqrl.graphql.server.GraphQLEngineBuilder;
 import com.datasqrl.graphql.server.MetadataReader;
 import com.datasqrl.graphql.server.MetadataType;
 import com.datasqrl.graphql.server.RootGraphqlModel;
+import com.datasqrl.graphql.util.RequestContext;
+import com.datasqrl.graphql.util.RequestId;
 import com.google.common.collect.ImmutableMap;
 import com.symbaloo.graphqlmicrometer.MicrometerInstrumentation;
 import graphql.GraphQL;
@@ -58,10 +60,14 @@ public class GraphQLServerVerticle extends AbstractVerticle {
 
   @Override
   public void start(Promise<Void> startPromise) {
+    var requestId = RequestId.generate();
+    RequestContext.setRequestId(requestId);
+    log.info("[{}] Starting GraphQLServerVerticle", requestId);
+
     try {
       setupGraphQLRoutes(startPromise);
     } catch (Exception e) {
-      log.error("Could not setup GraphQL routes", e);
+      log.error("[{}] Could not setup GraphQL routes", requestId, e);
       startPromise.fail(e);
     }
   }
@@ -73,8 +79,12 @@ public class GraphQLServerVerticle extends AbstractVerticle {
    * @param startPromise the promise to complete when setup is finished
    */
   protected void setupGraphQLRoutes(Promise<Void> startPromise) {
+    var requestId = RequestContext.getRequestId();
+    log.debug("[{}] Setting up GraphQL routes", requestId);
+
     // Setup GraphiQL handler if configured
     if (this.config.getGraphiQLHandlerOptions() != null) {
+      log.debug("[{}] Setting up GraphiQL handler", requestId);
       var graphiQlHandlerBuilder =
           GraphiQLHandler.builder(vertx).with(this.config.getGraphiQLHandlerOptions());
 
@@ -85,25 +95,30 @@ public class GraphQLServerVerticle extends AbstractVerticle {
     }
 
     // Setup database clients
+    log.debug("[{}] Setting up database clients", requestId);
     JdbcClientsConfig jdbcConfig = new JdbcClientsConfig(vertx, config);
     Map<DatabaseType, SqlClient> clients = jdbcConfig.createClients();
 
     // Setup GraphQL endpoint with auth if configured
+    log.debug("[{}] Setting up GraphQL endpoint", requestId);
     var handler = router.route(this.config.getServletConfig().getGraphQLEndpoint());
     authProvider.ifPresent(
         (auth) -> {
+          log.debug("[{}] Setting up JWT authentication", requestId);
           // Required for adding auth on ws handler
           System.setProperty("io.vertx.web.router.setup.lenient", "true");
           handler.handler(JWTAuthHandler.create(auth));
         });
 
     // Create GraphQL engine
+    log.debug("[{}] Creating GraphQL engine", requestId);
     this.graphQLEngine = createGraphQL(clients, startPromise, createMetadataReaders());
 
     handler
         .handler(GraphQLWSHandler.create(this.graphQLEngine))
         .handler(GraphQLHandler.create(this.graphQLEngine, this.config.getGraphQLHandlerOptions()));
 
+    log.info("[{}] GraphQL routes setup completed", requestId);
     startPromise.complete();
   }
 
@@ -130,8 +145,13 @@ public class GraphQLServerVerticle extends AbstractVerticle {
       Map<DatabaseType, SqlClient> client,
       Promise<Void> startPromise,
       Map<MetadataType, MetadataReader> headerReaders) {
+    var requestId = RequestContext.getRequestId();
+    log.debug("[{}] Creating GraphQL engine with {} database clients", requestId, client.size());
+
     try {
       var vertxJdbcClient = new VertxJdbcClient(client);
+      log.debug("[{}] Building GraphQL engine", requestId);
+
       var graphQL =
           model.accept(
               new GraphQLEngineBuilder.Builder()
@@ -142,14 +162,18 @@ public class GraphQLServerVerticle extends AbstractVerticle {
                   .withExtendedScalarTypes(CustomScalars.getExtendedScalars())
                   .build(),
               new VertxContext(vertxJdbcClient, headerReaders));
+
       var meterRegistry = BackendRegistries.getDefaultNow();
       if (meterRegistry != null) {
+        log.debug("[{}] Adding Micrometer instrumentation", requestId);
         graphQL.instrumentation(new MicrometerInstrumentation(meterRegistry));
       }
+
+      log.info("[{}] GraphQL engine created successfully", requestId);
       return graphQL.build();
     } catch (Exception e) {
+      log.error("[{}] Unable to create GraphQL engine", requestId, e);
       startPromise.fail(e.getMessage());
-      log.error("Unable to create GraphQL", e);
       throw e;
     }
   }

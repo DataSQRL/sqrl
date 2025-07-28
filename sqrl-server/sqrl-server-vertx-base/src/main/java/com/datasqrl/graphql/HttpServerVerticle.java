@@ -19,6 +19,8 @@ import com.datasqrl.graphql.config.CorsHandlerOptions;
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.graphql.server.operation.ApiOperation;
+import com.datasqrl.graphql.util.RequestContext;
+import com.datasqrl.graphql.util.RequestId;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.google.common.collect.MoreCollectors;
@@ -71,10 +73,16 @@ public class HttpServerVerticle extends AbstractVerticle {
 
   @Override
   public void start(Promise<Void> startPromise) {
+    var requestId = RequestId.generate();
+    RequestContext.setRequestId(requestId);
+    log.info("[{}] Starting HttpServerVerticle", requestId);
+
     if (this.model == null) {
       try {
         this.model = loadModel();
+        log.debug("[{}] Model loaded successfully", requestId);
       } catch (Exception e) {
+        log.error("[{}] Failed to load model", requestId, e);
         startPromise.fail(e);
         return;
       }
@@ -82,20 +90,31 @@ public class HttpServerVerticle extends AbstractVerticle {
 
     if (this.config == null) {
       loadConfig()
-          .onFailure(startPromise::fail)
+          .onFailure(
+              err -> {
+                log.error("[{}] Failed to load config", requestId, err);
+                startPromise.fail(err);
+              })
           .onSuccess(
               raw -> {
-                this.config = new ServerConfig(raw);
-                try {
-                  bootstrap(startPromise);
-                } catch (Exception e) {
-                  startPromise.fail(e);
-                }
+                RequestContext.withRequestId(
+                    requestId,
+                    () -> {
+                      this.config = new ServerConfig(raw);
+                      log.debug("[{}] Config loaded successfully", requestId);
+                      try {
+                        bootstrap(startPromise);
+                      } catch (Exception e) {
+                        log.error("[{}] Failed to bootstrap server", requestId, e);
+                        startPromise.fail(e);
+                      }
+                    });
               });
     } else {
       try {
         bootstrap(startPromise);
       } catch (Exception e) {
+        log.error("[{}] Failed to bootstrap server", requestId, e);
         startPromise.fail(e);
       }
     }
@@ -106,7 +125,33 @@ public class HttpServerVerticle extends AbstractVerticle {
   // ---------------------------------------------------------------------------
 
   private void bootstrap(Promise<Void> startPromise) {
+    var bootRequestId = RequestContext.getRequestId();
+    log.info("[{}] Bootstrapping HTTP server", bootRequestId);
+
     Router root = Router.router(vertx);
+
+    // ── Request ID handler (must be first) ────────────────────────────────────
+    root.route()
+        .handler(
+            ctx -> {
+              var requestId = RequestId.generate();
+              RequestContext.setRequestId(requestId);
+              ctx.put("requestId", requestId);
+              log.trace(
+                  "[{}] Incoming request: {} {}",
+                  requestId,
+                  ctx.request().method(),
+                  ctx.request().uri());
+              ctx.addHeadersEndHandler(
+                  v -> {
+                    log.trace(
+                        "[{}] Request completed: status={}",
+                        requestId,
+                        ctx.response().getStatusCode());
+                    RequestContext.clear();
+                  });
+              ctx.next();
+            });
 
     // ── Metrics ───────────────────────────────────────────────────────────────
     var meterRegistry = findMeterRegistry();
@@ -115,6 +160,8 @@ public class HttpServerVerticle extends AbstractVerticle {
             root.route("/metrics")
                 .handler(
                     ctx -> {
+                      var requestId = RequestContext.getRequestId();
+                      log.debug("[{}] Serving metrics endpoint", requestId);
                       ctx.response().putHeader("content-type", "text/plain").end(registry.scrape());
                     }));
 
@@ -130,10 +177,17 @@ public class HttpServerVerticle extends AbstractVerticle {
     }
 
     // ── Health checks ────────────────────────────────────────────────────────
-    root.get("/health*").handler(HealthCheckHandler.create(vertx));
+    root.get("/health*")
+        .handler(
+            ctx -> {
+              var requestId = RequestContext.getRequestId();
+              log.debug("[{}] Health check requested", requestId);
+              HealthCheckHandler.create(vertx).handle(ctx);
+            });
 
     // ── Deploy protocol-specific verticles ───────────────────────────────────
     DeploymentOptions childOpts = new DeploymentOptions().setInstances(1);
+    log.info("[{}] Deploying child verticles", bootRequestId);
 
     // inside bootstrap() in HttpServerVerticle
     var jwtOpt =
@@ -147,7 +201,10 @@ public class HttpServerVerticle extends AbstractVerticle {
         .deployVerticle(graphQLVerticle, childOpts)
         .onSuccess(
             graphQLDeploymentId -> {
-              log.info("GraphQL verticle deployed successfully: {}", graphQLDeploymentId);
+              log.info(
+                  "[{}] GraphQL verticle deployed successfully: {}",
+                  bootRequestId,
+                  graphQLDeploymentId);
               if (hasMcp) {
                 // Deploy MCP bridge verticle with access to GraphQL engine
                 McpBridgeVerticle mcpBridgeVerticle =
@@ -157,8 +214,13 @@ public class HttpServerVerticle extends AbstractVerticle {
                     .onSuccess(
                         mcpDeploymentId ->
                             log.info(
-                                "MCP bridge verticle deployed successfully: {}", mcpDeploymentId))
-                    .onFailure(err -> log.error("Failed to deploy MCP bridge verticle", err));
+                                "[{}] MCP bridge verticle deployed successfully: {}",
+                                bootRequestId,
+                                mcpDeploymentId))
+                    .onFailure(
+                        err ->
+                            log.error(
+                                "[{}] Failed to deploy MCP bridge verticle", bootRequestId, err));
               }
               if (hasRest) {
                 // Deploy REST bridge verticle with access to GraphQL engine
@@ -169,11 +231,16 @@ public class HttpServerVerticle extends AbstractVerticle {
                     .onSuccess(
                         restDeploymentId ->
                             log.info(
-                                "REST bridge verticle deployed successfully: {}", restDeploymentId))
-                    .onFailure(err -> log.error("Failed to deploy REST bridge verticle", err));
+                                "[{}] REST bridge verticle deployed successfully: {}",
+                                bootRequestId,
+                                restDeploymentId))
+                    .onFailure(
+                        err ->
+                            log.error(
+                                "[{}] Failed to deploy REST bridge verticle", bootRequestId, err));
               }
             })
-        .onFailure(err -> log.error("Failed to deploy GraphQL verticle", err));
+        .onFailure(err -> log.error("[{}] Failed to deploy GraphQL verticle", bootRequestId, err));
 
     // ── Start the HTTP server ────────────────────────────────────────────────
     vertx
