@@ -2,11 +2,93 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://docs.datasqrl.com/blog</id>
     <title>DataSQRL Blog</title>
-    <updated>2025-06-09T00:00:00.000Z</updated>
+    <updated>2025-07-27T00:00:00.000Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://docs.datasqrl.com/blog"/>
     <subtitle>DataSQRL Blog</subtitle>
     <icon>https://docs.datasqrl.com/img/favicon.ico</icon>
+    <entry>
+        <title type="html"><![CDATA[DataSQRL 0.7 Release: The Data Delivery Interface]]></title>
+        <id>https://docs.datasqrl.com/blog/datasqrl-0.7-release</id>
+        <link href="https://docs.datasqrl.com/blog/datasqrl-0.7-release"/>
+        <updated>2025-07-27T00:00:00.000Z</updated>
+        <summary type="html"><![CDATA[|" width="40%"/>]]></summary>
+        <content type="html"><![CDATA[
+<img src="https://docs.datasqrl.com/img/blog/release_0.7.0.png" alt="DataSQRL 0.7.0 Release >|" width="40%">
+<p>DataSQRL 0.7 marks a major milestone in our journey to automate data pipelines, thanks to significant improvements to the serving layer:</p>
+<ul>
+<li>Support for the Model Context Protocol (MCP) for tooling and resource access</li>
+<li>REST API support</li>
+<li>JWT-based authentication and authorization</li>
+</ul>
+<p>These features enable developers to build a wide range of production-ready data interfaces.
+This release also includes performance and configuration improvements to the serving layer of DataSQRL-generated pipelines.</p>
+<p>You can find the full release notes and source code on our <a href="https://github.com/DataSQRL/sqrl/releases/tag/0.7.0" target="_blank" rel="noopener noreferrer">GitHub release page</a>.
+To update your local installation of DataSQRL, simply pull the latest Docker image:</p>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#F8F8F2;--prism-background-color:#282A36"><div class="codeBlockContent_biex"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#F8F8F2;background-color:#282A36"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#F8F8F2"><span class="token plain">docker pull datasqrl/cmd:0.7.0</span><br></span></code></pre><div class="buttonGroup__atx"><button type="button" aria-label="Copy code to clipboard" title="Copy" class="clean-btn"><span class="copyButtonIcons_eSgA" aria-hidden="true"><svg viewBox="0 0 24 24" class="copyButtonIcon_y97N"><path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"></path></svg><svg viewBox="0 0 24 24" class="copyButtonSuccessIcon_LjdS"><path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"></path></svg></span></button></div></div></div>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="the-last-mile-data-delivery">The Last Mile: Data Delivery<a href="https://docs.datasqrl.com/blog/datasqrl-0.7-release#the-last-mile-data-delivery" class="hash-link" aria-label="Direct link to The Last Mile: Data Delivery" title="Direct link to The Last Mile: Data Delivery">​</a></h2>
+<p>Data delivery is the final and most visible stage of any data pipeline. It's how users, applications, and AI agents actually access and consume data. Most enterprise data interactions happen through APIs, making the delivery interface a critical component. At DataSQRL, we've invested heavily in automating the upstream parts of the pipeline: from Flink-powered data processing to Postgres-backed storage. With version 0.7, we turn our focus to the serving layer: introducing support for the Model Context Protocol (MCP) and REST APIs, as well as JWT-based authentication and authorization. These additions ensure seamless integration with most authentication providers and enable secure, token-based data access, with fine-grained authorization logic enforced directly in the SQRL script. This completes our vision of end-to-end pipeline automation, where consumption patterns inform data storage and processing—closing the loop between data production and usage.</p>
+<p>Check out the <a href="https://docs.datasqrl.com/docs/interface">interface documentation</a> for more information.</p>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="major-contributions">Major Contributions<a href="https://docs.datasqrl.com/blog/datasqrl-0.7-release#major-contributions" class="hash-link" aria-label="Direct link to Major Contributions" title="Direct link to Major Contributions">​</a></h2>
+<p>In addition to the flagship features—MCP, REST, and JWT support—which we’ll discuss in more detail in future blog posts, the 0.7.0 release contains a number of additional features and improvements.</p>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="configuration--cli-improvements">Configuration &amp; CLI Improvements<a href="https://docs.datasqrl.com/blog/datasqrl-0.7-release#configuration--cli-improvements" class="hash-link" aria-label="Direct link to Configuration &amp; CLI Improvements" title="Direct link to Configuration &amp; CLI Improvements">​</a></h3>
+<ul>
+<li>Refactored CLI and Flink configuration logic.</li>
+<li>Improved error messages during package config validation.</li>
+<li>Enforced predictable ordering and sorting of config keys.</li>
+<li>Migrated deprecated config key naming (<code>-dir</code> → <code>-folder</code>), now with compile-time warnings.</li>
+<li>Standardized configuration schema and structured logging to <code>/build/logs</code>.</li>
+</ul>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="testing-infrastructure-enhancements">Testing Infrastructure Enhancements<a href="https://docs.datasqrl.com/blog/datasqrl-0.7-release#testing-infrastructure-enhancements" class="hash-link" aria-label="Direct link to Testing Infrastructure Enhancements" title="Direct link to Testing Infrastructure Enhancements">​</a></h3>
+<ul>
+<li>Added new <code>sqrl-container-testing</code> module.</li>
+<li>Converted tests to use AssertJ.</li>
+<li>Increased test coverage for <code>SqrlConfig</code> and dependency mapping.</li>
+<li>Fixed test runner error reporting and exit code handling.</li>
+<li>Reworked dependent service startup to trigger post-compilation.</li>
+</ul>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="flink-sql-runner-integration">Flink-SQL Runner Integration<a href="https://docs.datasqrl.com/blog/datasqrl-0.7-release#flink-sql-runner-integration" class="hash-link" aria-label="Direct link to Flink-SQL Runner Integration" title="Direct link to Flink-SQL Runner Integration">​</a></h3>
+<ul>
+<li>Integrated <code>flink-sql-runner</code> into <code>DatasqrlRun</code>.</li>
+<li>Temporarily merged <code>sqrl-test</code> module into <code>sqrl-run</code>.</li>
+<li>Simplified Docker image setup (public <code>ghcr.io</code> images).</li>
+<li>Updated submodule paths and version to <code>0.7.0</code>.</li>
+</ul>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="authentication--api-enhancements">Authentication &amp; API Enhancements<a href="https://docs.datasqrl.com/blog/datasqrl-0.7-release#authentication--api-enhancements" class="hash-link" aria-label="Direct link to Authentication &amp; API Enhancements" title="Direct link to Authentication &amp; API Enhancements">​</a></h3>
+<ul>
+<li>Added initial JWT-based authentication support.</li>
+<li>Published documentation for JWT and Swagger-based OpenAPI specs for REST endpoints.</li>
+<li>Added batch GraphQL mutation support with transactional semantics.</li>
+<li>Replaced <code>GraphQLBigInteger</code> with native <code>Long</code> handling.</li>
+</ul>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="kafka--runtime-improvements">Kafka &amp; Runtime Improvements<a href="https://docs.datasqrl.com/blog/datasqrl-0.7-release#kafka--runtime-improvements" class="hash-link" aria-label="Direct link to Kafka &amp; Runtime Improvements" title="Direct link to Kafka &amp; Runtime Improvements">​</a></h3>
+<ul>
+<li>Kafka topic names now support templating.</li>
+<li>Added an async OpenAI test use case and resolved snapshot issues.</li>
+<li>Fixed intermittent WebSocket failures in <code>SubscriptionClient</code>.</li>
+</ul>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="project-structure-and-ci-pipeline">Project Structure and CI Pipeline<a href="https://docs.datasqrl.com/blog/datasqrl-0.7-release#project-structure-and-ci-pipeline" class="hash-link" aria-label="Direct link to Project Structure and CI Pipeline" title="Direct link to Project Structure and CI Pipeline">​</a></h3>
+<ul>
+<li>Simplified project structure and removed outdated dependency declarations.</li>
+<li>Refactored CI pipeline and added automated GitHub package cleanup workflow.</li>
+</ul>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="updated-dependencies">Updated Dependencies<a href="https://docs.datasqrl.com/blog/datasqrl-0.7-release#updated-dependencies" class="hash-link" aria-label="Direct link to Updated Dependencies" title="Direct link to Updated Dependencies">​</a></h3>
+<p>Upgraded versions for the following dependencies and patched critical vulnerabilities:</p>
+<ul>
+<li>Apache Flink and Flink connectors (e.g., Postgres CDC)</li>
+<li>Vert.x and related plugins</li>
+<li>Apache Iceberg, DuckDB, PostgreSQL JDBC</li>
+<li>AWS SDK BOM</li>
+<li>JSON Schema Validator, Netty, OpenCSV</li>
+<li>Micrometer, Log4j, Reactor, Immutables, Testcontainers</li>
+<li>Maven plugins: Enforcer, GPG, Build-helper</li>
+</ul>]]></content>
+        <author>
+            <name>Matthias Broecheler</name>
+            <uri>https://github.com/mbroecheler</uri>
+        </author>
+        <category label="Release" term="Release"/>
+    </entry>
     <entry>
         <title type="html"><![CDATA[Flink SQL Runner: Run Flink SQL Without JARs or Glue Code]]></title>
         <id>https://docs.datasqrl.com/blog/flinkrunner-announcement</id>
