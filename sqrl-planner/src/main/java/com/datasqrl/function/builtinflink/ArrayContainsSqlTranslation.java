@@ -46,6 +46,7 @@ public class ArrayContainsSqlTranslation extends PostgresSqlTranslation {
         .unparse(writer, leftPrec, rightPrec);
   }
 
+  // FIXME: Remove unwrapCast method
   private SqlNode unwrapCast(SqlNode node) {
     if (node instanceof SqlBasicCall) {
       SqlBasicCall call = (SqlBasicCall) node;
