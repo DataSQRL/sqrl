@@ -54,12 +54,11 @@ import java.sql.ResultSet;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
 import lombok.SneakyThrows;
 import org.apache.flink.configuration.CheckpointingOptions;
 import org.apache.flink.configuration.Configuration;
@@ -193,10 +192,10 @@ public class TestExecutionEnv implements TestEngineVisitor<Void, TestEnvContext>
 
     ObjectMapper mapper = new ObjectMapper();
     SimpleModule module = new SimpleModule();
-    module.addDeserializer(String.class, new JsonEnvVarDeserializer(context.getEnv()));
+    module.addDeserializer(String.class, new JsonEnvVarDeserializer(context.env()));
     mapper.registerModule(module);
 
-    Path schema = context.getRootDir().resolve("build/plan/iceberg.json");
+    Path schema = context.rootDir().resolve("build/plan/iceberg.json");
     Map map = mapper.readValue(schema.toFile(), Map.class);
     Map<String, List<Map<String, String>>> snowflake =
         (Map<String, List<Map<String, String>>>) ((Map) map.get("engines")).get("snowflake");
@@ -240,14 +239,19 @@ public class TestExecutionEnv implements TestEngineVisitor<Void, TestEnvContext>
 
   @Override
   public Void visit(TestTestEngine engine, TestEnvContext context) {
+    var env = new HashMap<>(context.env);
+    env.putAll(System.getenv());
+    env.put("DATA_PATH", rootDir.resolve("build/deploy/flink/data").toAbsolutePath().toString());
+    env.put("UDF_PATH", rootDir.resolve("build/deploy/flink/lib").toAbsolutePath().toString());
+
     var planDir =
         context
             .rootDir
             .resolve(SqrlConstants.BUILD_DIR_NAME)
             .resolve(SqrlConstants.DEPLOY_DIR_NAME)
             .resolve(SqrlConstants.PLAN_DIR);
-    var flinkConfig = loadInternalTestFlinkConfig(planDir, context.env);
-    var test = new DatasqrlTest(context.rootDir, planDir, packageJson, flinkConfig, context.env);
+    var flinkConfig = loadInternalTestFlinkConfig(planDir, env);
+    var test = new DatasqrlTest(context.rootDir, planDir, packageJson, flinkConfig, env);
     try {
       var run = test.run();
       if (run != 0) {
@@ -287,11 +291,5 @@ public class TestExecutionEnv implements TestEngineVisitor<Void, TestEnvContext>
     return flinkConfig;
   }
 
-  @Builder
-  @Getter
-  public static class TestEnvContext {
-    Path rootDir;
-    Map<String, String> env;
-    UseCaseParam param;
-  }
+  public record TestEnvContext(Path rootDir, Map<String, String> env, UseCaseParam param) {}
 }

@@ -17,7 +17,8 @@ package com.datasqrl;
 
 import java.nio.file.Path;
 
-public record UseCaseParam(Path packageJsonPath, String goal) implements Comparable<UseCaseParam> {
+public record UseCaseParam(Path packageJsonPath, String goal, int index)
+    implements Comparable<UseCaseParam> {
 
   public String getPackageJsonName() {
     return packageJsonPath.getFileName().toString();

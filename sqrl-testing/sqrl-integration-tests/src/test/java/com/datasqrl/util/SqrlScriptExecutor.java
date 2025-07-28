@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl;
+package com.datasqrl.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
@@ -21,15 +21,8 @@ import static org.assertj.core.api.Assertions.fail;
 import com.datasqrl.cli.AssertStatusHook;
 import com.datasqrl.cli.DatasqrlCli;
 import java.nio.file.Path;
-import lombok.Builder;
-import lombok.Getter;
 
-@Getter
-@Builder
-public class SqrlScriptExecutor {
-
-  private Path packageJsonPath;
-  private String goal;
+public record SqrlScriptExecutor(Path packageJsonPath, String goal) {
 
   public void execute(AssertStatusHook hook) {
     assertThat(packageJsonPath).as("Package JSON must be provided").exists();
