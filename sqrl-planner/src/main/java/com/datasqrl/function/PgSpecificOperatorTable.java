@@ -18,8 +18,10 @@ package com.datasqrl.function;
 import static com.datasqrl.function.CalciteFunctionUtil.lightweightOp;
 
 import org.apache.calcite.sql.SqlBinaryOperator;
+import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlUnresolvedFunction;
+import org.apache.calcite.sql.SqlWriter;
 import org.apache.calcite.sql.type.ReturnTypes;
 import org.apache.calcite.sql.type.SqlTypeName;
 
@@ -67,4 +69,27 @@ public class PgSpecificOperatorTable {
           ReturnTypes.explicit(SqlTypeName.ANY),
           null,
           null);
+
+  public static final SqlBinaryOperator EqualsAny =
+      new SqlBinaryOperator(
+          "= ANY",
+          SqlKind.OTHER_FUNCTION,
+          22,
+          true,
+          ReturnTypes.explicit(SqlTypeName.BOOLEAN),
+          null,
+          null) {
+
+        @Override
+        public void unparse(SqlWriter writer, SqlCall call, int leftPrec, int rightPrec) {
+          var left = call.operand(0);
+          var right = call.operand(1);
+
+          left.unparse(writer, leftPrec, getLeftPrec());
+          writer.keyword("= ANY");
+          writer.print("(");
+          right.unparse(writer, getRightPrec(), rightPrec);
+          writer.print(")");
+        }
+      };
 }

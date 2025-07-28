@@ -19,6 +19,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.datasqrl.graphql.server.MetadataReader;
 import graphql.schema.DataFetchingEnvironment;
+import io.vertx.core.json.JsonArray;
 import io.vertx.ext.web.RoutingContext;
 import lombok.extern.slf4j.Slf4j;
 
@@ -47,6 +48,11 @@ public class AuthMetadataReader implements MetadataReader {
 
     if (isRequired) {
       checkNotNull(value, "Claim '%s' must not be null", name);
+    }
+
+    if (value instanceof JsonArray array) {
+      // Unwrap JsonArray to plain Java array to avoid pgclient treating it as JSONB
+      return array.getList().toArray(new Object[0]);
     }
 
     return value;

@@ -1,0 +1,9 @@
+{
+  "data" : {
+    "AuthMyTableValues" : [ {
+      "val" : 1
+    }, {
+      "val" : 2
+    } ]
+  }
+}
