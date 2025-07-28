@@ -1,12 +1,10 @@
 {
   "version": "1",
   "script": {
-    "main": "minimal-flink.sqrl"
-  },
-  "compiler": {
-    "cost-model": "READ"
+    "main": "avro-schema.sqrl"
   },
   "test-runner": {
+    "snapshot-folder": "snapshots-tmp",
     "delay-sec": -1
   }
 }

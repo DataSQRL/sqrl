@@ -15,10 +15,11 @@
  */
 package com.datasqrl;
 
+import static com.datasqrl.config.SqrlConstants.BUILD_DIR_NAME;
+import static com.datasqrl.config.SqrlConstants.PACKAGE_JSON;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datasqrl.config.PackageJson;
-import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.engines.TestContainersForTestGoal;
 import com.datasqrl.engines.TestContainersForTestGoal.TestContainerHook;
 import com.datasqrl.engines.TestEngine.EngineFactory;
@@ -67,18 +68,18 @@ public class FullUseCasesIT {
 
   private static final Path USE_CASES = Path.of("src/test/resources/usecases");
 
-  private static final Set<String> DISABLED_USE_CASES =
+  private static final Set<String> DISABLED_USE_CASE_PATHS =
       Set.of(
-          "package-flink-only.json", // not a full test case
-          "package-flink-functions.json", // not a full test case
-          "package-conference.json", // fails in build server
-          "package-iceberg-export.json", // fails in build server
-          "package-duckdb.json", // fails in build server
-          "package-snowflake.json", // fails in build server
-          "package-sensors-full.json", // flaky (too much data)
-          "package-analytics-only.json",
-          "package-postgres-log.json",
-          "package-connectors.json" // should not be executed
+          "flink-only", // not a full test case
+          "flink-functions", // not a full test case
+          "conference", // fails in build server
+          "iceberg-export", // fails in build server
+          "duckdb", // fails in build server
+          "snowflake", // fails in build server
+          "sensors-full", // flaky (too much data)
+          "analytics-only",
+          "postgres-log",
+          "connectors" // should not be executed
           );
 
   private static TestContainerHook containerHook;
@@ -120,8 +121,7 @@ public class FullUseCasesIT {
   private static Stream<UseCaseParam> specificUseCaseProvider() {
     var useCaseFolderName = "clickstream";
 
-    var packageFileName = getPackageFileName(useCaseFolderName);
-    var pkg = USE_CASES.resolve(useCaseFolderName).resolve(packageFileName);
+    var pkg = USE_CASES.resolve(useCaseFolderName).resolve("package.json");
     assertThat(pkg).isRegularFile();
 
     return Stream.of(new UseCaseParam(pkg, "test", -1));
@@ -146,7 +146,7 @@ public class FullUseCasesIT {
       Path rootDir = param.packageJsonPath().getParent();
       PackageJson packageJson =
           ConfigLoaderUtils.loadResolvedConfig(
-              ErrorCollector.root(), rootDir.resolve(SqrlConstants.BUILD_DIR_NAME));
+              ErrorCollector.root(), rootDir.resolve(BUILD_DIR_NAME));
 
       TestEngines engines = new EngineFactory().create(packageJson);
 
@@ -184,7 +184,6 @@ public class FullUseCasesIT {
     var useCasesDir = USE_CASES.toAbsolutePath();
 
     try (var useCaseStream = Files.list(useCasesDir)) {
-      // First collect and sort all paths to ensure deterministic ordering
       var sortedPaths =
           useCaseStream
               .filter(Files::isDirectory)
@@ -200,24 +199,26 @@ public class FullUseCasesIT {
   }
 
   /**
-   * Collect files that match the {@code package-<use-case-name>.json} pattern from a given use case
-   * dir that are not listed in {@code DISABLED_USE_CASES}.
+   * Collect files that match the {@code package.json} pattern from a given use case dir recursively
+   * that are not listed in {@code DISABLED_USE_CASE_PATHS}.
    */
   @SneakyThrows
   private static Stream<Path> collectPackageJsonFiles(Path useCaseDir) {
     var useCaseName = useCaseDir.getFileName().toString();
 
-    try (var stream = Files.list(useCaseDir)) {
+    // Skip disabled use cases entirely
+    if (DISABLED_USE_CASE_PATHS.contains(useCaseName)) {
+      return Stream.empty();
+    }
+
+    try (var stream = Files.walk(useCaseDir, 2)) {
       return stream
           .filter(Files::isRegularFile)
-          .filter(p -> p.getFileName().toString().equals(getPackageFileName(useCaseName)))
-          .filter(p -> !DISABLED_USE_CASES.contains(p.getFileName().toString()))
+          .filter(p -> !DISABLED_USE_CASE_PATHS.contains(p.getParent().getFileName().toString()))
+          .filter(p -> !BUILD_DIR_NAME.equals(p.getParent().getFileName().toString()))
+          .filter(p -> PACKAGE_JSON.equals(p.getFileName().toString()))
           .toList()
           .stream();
     }
-  }
-
-  private static String getPackageFileName(String useCaseName) {
-    return String.format("package-%s.json", useCaseName);
   }
 }

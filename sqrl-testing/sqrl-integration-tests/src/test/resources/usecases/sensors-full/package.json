@@ -1,8 +1,9 @@
 {
   "version": "1",
+  "script": {
+    "main": "sensors-full.sqrl"
+  },
   "test-runner": {
-    "snapshot-folder": "snapshots-sensors-full",
-    "test-folder": "tests-sensors-full",
     "delay-sec": -1
   },
   "dependencies": {

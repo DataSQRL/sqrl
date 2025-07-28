@@ -1,8 +1,9 @@
 {
   "version": "1",
-  "enabled-engines": [
-    "flink"
-  ],
+  "enabled-engines": ["flink"],
+  "script": {
+    "main": "flink-only.sqrl"
+  },
   "engines": {
     "flink": {
       "config": {

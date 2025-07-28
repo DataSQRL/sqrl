@@ -1,7 +1,9 @@
 {
   "version": "1",
+  "script": {
+    "main": "sensors-teaser.sqrl"
+  },
   "test-runner": {
-    "snapshot-folder": "snapshots-sensors-teaser",
     "delay-sec": -1
   },
   "dependencies": {

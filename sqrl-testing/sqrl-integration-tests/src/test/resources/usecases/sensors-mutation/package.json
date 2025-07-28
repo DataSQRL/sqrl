@@ -1,8 +1,9 @@
 {
   "version": "1",
+  "script": {
+    "main": "sensors-mutation.sqrl"
+  },
   "test-runner": {
-    "snapshot-folder": "snapshots-sensors-mutation",
-    "test-folder": "tests-sensors-mutation",
     "delay-sec": -1
   },
   "dependencies": {

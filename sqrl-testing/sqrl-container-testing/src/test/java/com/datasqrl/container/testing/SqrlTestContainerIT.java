@@ -58,14 +58,14 @@ public class SqrlTestContainerIT extends SqrlContainerTestBase {
   @Test
   @SneakyThrows
   void givenAvroPackage_whenTestCommandExecuted_thenSnapshotsValidateSuccessfully() {
-    var snapshots = testDir.resolve("snapshots");
+    var snapshots = testDir.resolve("snapshots-tmp");
     FileUtils.deleteDirectory(snapshots.toFile());
 
     // Assert that the test command throws a RuntimeException and capture the exception
     ContainerError exception =
         (ContainerError)
             assertThatThrownBy(
-                    () -> sqrlScript(testDir, "test -c complete-package.json".split(" ")))
+                    () -> sqrlScript(testDir, "test -c package-no-snapshots.json".split(" ")))
                 .isInstanceOf(ContainerError.class)
                 .hasMessageContaining("SQRL compilation failed")
                 .actual();

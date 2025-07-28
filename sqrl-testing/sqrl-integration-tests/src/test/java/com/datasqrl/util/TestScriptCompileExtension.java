@@ -18,7 +18,6 @@ package com.datasqrl.util;
 import com.datasqrl.UseCaseParam;
 import com.datasqrl.cli.AssertStatusHook;
 import java.lang.reflect.Method;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.InvocationInterceptor;
 import org.junit.jupiter.api.extension.ReflectiveInvocationContext;
@@ -42,7 +41,6 @@ import org.junit.jupiter.api.extension.ReflectiveInvocationContext;
  * }
  * </pre>
  */
-@Slf4j
 public class TestScriptCompileExtension implements InvocationInterceptor {
 
   @Override
@@ -60,8 +58,6 @@ public class TestScriptCompileExtension implements InvocationInterceptor {
       return;
     }
 
-    log.debug("Executing script compilation for {}", param.getPackageJsonName());
-
     // Execute the script compilation
     executeScript(param);
 
@@ -78,7 +74,7 @@ public class TestScriptCompileExtension implements InvocationInterceptor {
       if (hook.failure() != null) {
         e.addSuppressed(hook.failure());
       }
-      throw e;
+      throw new RuntimeException("Failed to compile use case: " + param.getUseCaseName());
     }
   }
 }

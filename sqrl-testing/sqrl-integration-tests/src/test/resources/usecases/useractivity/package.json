@@ -1,7 +1,7 @@
 {
   "version": "1",
-  "test-runner": {
-    "snapshot-folder": "snapshots-usertokens",
-    "test-folder": "tests-usertokens"
+  "script": {
+    "main": "usertokens.sqrl",
+    "graphql": "schema.graphqls"
   }
 }

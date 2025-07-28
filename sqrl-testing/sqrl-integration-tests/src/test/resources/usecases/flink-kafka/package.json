@@ -1,8 +1,10 @@
 {
   "version": "1",
   "enabled-engines": ["flink", "kafka"],
+  "script": {
+    "main": "flink-kafka.sqrl"
+  },
   "test-runner": {
-    "snapshot-folder": "snapshots-flink_kafka",
     "delay-sec": -1,
     "required-checkpoints": 1,
     "create-topics": ["input_topic1", "input_topic2"]

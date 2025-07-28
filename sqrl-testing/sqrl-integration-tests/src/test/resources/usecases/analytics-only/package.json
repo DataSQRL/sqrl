@@ -1,10 +1,9 @@
 {
   "version": "1",
-  "enabled-engines": [
-    "flink",
-    "iceberg",
-    "snowflake"
-  ],
+  "enabled-engines": ["flink", "iceberg", "snowflake"],
+  "script": {
+    "main": "analytics-only.sqrl"
+  },
   "engines": {
     "flink": {
       "config": {

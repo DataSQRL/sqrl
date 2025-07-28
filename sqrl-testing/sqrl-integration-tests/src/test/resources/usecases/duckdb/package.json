@@ -8,6 +8,9 @@
     "kafka",
     "vertx"
   ],
+  "script": {
+    "main": "duckdb.sqrl"
+  },
   "engines": {
     "flink": {
       "config": {
