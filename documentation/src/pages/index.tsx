@@ -42,18 +42,32 @@ export default function Home() {
                     {`-- Ingest data from connected systems
 IMPORT banking-data.*;
 
--- Enrich transactions with account and holder information
-SpendingTransactions := SELECT t.*, h.name, h.type
-    FROM Transactions t JOIN Accounts a ON t.credit_account_id=a.account_id
-                        JOIN AccountHolders h ON a.holder_id = h.holder_id;
+-- Enrich debit transactions with creditor information using time-consistent join
+SpendingTransactions :=
+    SELECT
+        t.*,
+        h.name AS creditor_name,
+        h.type AS creditor_type
+    FROM Transactions t
+             JOIN Accounts FOR SYSTEM_TIME AS OF t.tx_time a
+                  ON t.credit_account_id = a.account_id
+             JOIN AccountHolders FOR SYSTEM_TIME AS OF t.tx_time h
+                  ON a.holder_id = h.holder_id;
 
--- Create MCP tooling endpoint with description for agentic retrieval
+-- Create secure MCP tooling endpoint with description for agentic retrieval
 /** Retrieve spending transactions within the given time-range.
-  fromTime (inclusive) and toTime (exclusive) must be RFC-3339 compliant.*/
-TransactionsByTime(account_id STRING NOT NULL,
-        fromTime TIMESTAMP NOT NULL, toTime TIMESTAMP NOT NULL) :=
-    SELECT * FROM SpendingTransactions WHERE account_id = :account_id
-    AND :fromTime <= tx_time AND :toTime > tx_time ORDER BY tx_time DESC;`}
+  fromTime (inclusive) and toTime (exclusive) must be RFC-3339 compliant date time.
+*/
+SpendingTransactionsByTime(
+  account_id STRING NOT NULL METADATA FROM 'auth.accountId',
+  fromTime TIMESTAMP NOT NULL,
+  toTime TIMESTAMP NOT NULL
+) :=
+    SELECT * FROM SpendingTransactions
+    WHERE debit_account_id = :account_id
+      AND :fromTime <= tx_time
+      AND :toTime > tx_time
+    ORDER BY tx_time DESC;`}
                   </CodeBlock>
                 </div>
                 <div className="col col--5 text--left">
@@ -108,11 +122,12 @@ TransactionsByTime(account_id STRING NOT NULL,
                 <div className="col col--6">
                   <CodeBlock language="sql">
                     {`/*+test */
-EnrichedTransactionsTest := SELECT debit_holder_name, 
-                                   COUNT(*) AS debit_tx_count, 
-                                   SUM(amount) AS total_debit_amount
-          FROM EnrichedTransactions
-          GROUP BY debit_holder_name ORDER BY debit_holder_name ASC;`}
+EnrichedTransactionsTest := 
+    SELECT debit_holder_name, 
+           COUNT(*) AS debit_tx_count, 
+           SUM(amount) AS total_debit_amount
+    FROM EnrichedTransactions
+    GROUP BY debit_holder_name ORDER BY debit_holder_name ASC;`}
                   </CodeBlock>
                 </div>
                 <div className="col col--5 text--left">
@@ -146,9 +161,10 @@ EnrichedTransactionsTest := SELECT debit_holder_name,
                   <CodeBlock language="sql">
                     {`IMPORT stdlib.openai.*;
 
-ContentEmbedding := SELECT *, 
-    vector_embedd(text, 'text-embedding-3-small') AS embedding,
-    completions(concat('Summarize:', text), 'gpt-4o') AS summary
+ContentEmbedding := 
+    SELECT 
+      vector_embedd(text, 'text-embedding-3-small') AS embedding,
+      completions(concat('Summarize:', text), 'gpt-4o') AS summary
     FROM Content;
 `}
                   </CodeBlock>
@@ -184,7 +200,8 @@ ContentEmbedding := SELECT *,
                 <div className="col col--6">
                   <CodeBlock language="sql">
                     {`-- Create a relationship between holder and accounts
-AccountHolders.accounts(status STRING) := SELECT * FROM Accounts a 
+AccountHolders.accounts(status STRING) := 
+    SELECT * FROM Accounts a 
     WHERE a.holder_id = this.holder_id AND a.status = :status 
     ORDER BY a.account_type ASC;
 
@@ -209,9 +226,9 @@ Accounts.spendingTransactions(since TIMESTAMP NOT NULL) :=
                 <div className="col col--6">
                   <CodeBlock language="sql">
                     {`Transactions(account_id STRING METADATA FROM 'auth.acct_id') :=
-        SELECT * FROM SpendingTransactions 
-                 WHERE debit_account_id = :account_id
-                 ORDER BY tx_time DESC;`}
+    SELECT * FROM SpendingTransactions 
+    WHERE debit_account_id = :account_id
+    ORDER BY tx_time DESC;`}
                   </CodeBlock>
                 </div>
                 <div className="col col--5 text--left">
@@ -285,16 +302,16 @@ docker run --rm -v $PWD:/build \\
                 <div className="col col--6">
                   <CodeBlock language="sql">
                     {`CREATE TABLE Transactions (
-    \`timestamp\` TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
-    WATERMARK FOR \`timestamp\` AS \`timestamp\`
+  \`timestamp\` TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
+  WATERMARK FOR \`timestamp\` AS \`timestamp\`
 ) WITH (
-      'connector' = 'kafka',
-      'topic' = 'indicators',
-      'properties.bootstrap.servers' = '\${BOOTSTRAP_SERVERS}',
-      'properties.group.id' = 'mygroup',
-      'scan.startup.mode' = 'earliest-offset',
-      'format' = 'flexible-json'
-      );
+  'connector' = 'kafka',
+  'topic' = 'indicators',
+  'properties.bootstrap.servers' = '\${BOOTSTRAP_SERVERS}',
+  'properties.group.id' = 'mygroup',
+  'scan.startup.mode' = 'earliest-offset',
+  'format' = 'flexible-json'
+);
 `}
                   </CodeBlock>
                 </div>
@@ -333,14 +350,23 @@ docker run --rm -v $PWD:/build \\
 Accounts := DISTINCT AccountsCDC ON account_id ORDER BY update_time DESC;
 
 -- Join transactions with accounts at the time of the transaction consistently
-SpendingTransactions := SELECT t.*, h.name AS creditor_name, h.type AS creditor_type
-    FROM Transactions t JOIN Accounts FOR SYSTEM_TIME AS OF t.tx_time a ON t.credit_account_id=a.account_id;
+SpendingTransactions := 
+    SELECT t.*, 
+           h.name AS creditor_name,
+    FROM Transactions t JOIN Accounts FOR SYSTEM_TIME AS OF t.tx_time a 
+                        ON t.credit_account_id=a.account_id;
 
 -- Aggregate over tumbling time windows
-SpendingByWeek := SELECT account_id, type, window_start AS week,
-        SUM(amount) AS total_spending, COUNT(*) AS transaction_count
-   FROM TABLE(TUMBLE(TABLE SpendingTransactions, DESCRIPTOR(tx_time),
-                 INTERVAL '1' DAY))
+SpendingByWeek := SELECT 
+      account_id, 
+      type, 
+      window_start AS week,
+      SUM(amount) AS total_spending
+   FROM TABLE(TUMBLE(
+                TABLE SpendingTransactions, 
+                DESCRIPTOR(tx_time),
+                INTERVAL '1' DAY
+              ))
    GROUP BY debit_account_id, type, window_start, window_end;`}
                   </CodeBlock>
                 </div>
@@ -360,10 +386,11 @@ SpendingByWeek := SELECT account_id, type, window_start AS week,
                   <CodeBlock language="sql">
                     {`-- Compute enriched transaction to Iceberg with partition
 /*+engine(iceberg), partition_key(credit_holder_type) */
-EnrichedTransactions := SELECT t.*, hc.name AS credit_holder_name, 
-                                hc.type AS credit_holder_type,
+EnrichedTransactions := SELECT 
+      t.*, 
+      hc.name AS credit_holder_name,                                 
     FROM Transactions t JOIN AccountHolders hc 
-                            ON t.credit_holder_id = hc.holder_id;`}
+                        ON t.credit_holder_id = hc.holder_id;`}
                   </CodeBlock>
                 </div>
                 <div className="col col--5 text--left">

@@ -7,7 +7,7 @@ Based on the SQRL script, DataSQRL generates the interface for the compiled data
 * REST (GET and POST)
 * Data Product (Data Lake and Database Views)
 
-The first 3 are APIs that can be invoked programmatically. The generated APIs interfaces are configured by the `protocols` [compiler configuration](configuration.md#compiler-compiler).
+The first three are APIs that can be invoked programmatically. These generated API interfaces are configured by the `protocols` [compiler configuration](configuration.md#compiler-compiler).
 
 For data products, DataSQRL generates view definitions as deployment assets in `build/deploy/plan` which can be queried directly.
 
@@ -15,7 +15,7 @@ For data products, DataSQRL generates view definitions as deployment assets in `
 
 For data products, each visible table defined in the SQRL script is exposed as a view or physical table depending on the pipeline optimization. The mapping between visible tables in the SQRL script and exposed tables in the interface is 1-to-1.
 
-We recommend generating unique table names for the physical tables by configuring a table-name suffix in the [connector configuration](configuration.md). This separates views from physical tables to provide modularity and support updates without impacting downstream consumers. 
+We recommend generating unique table names for the physical tables by configuring a table-name suffix in the [connector configuration](configuration#connectors-connectors), e.g. by configuring the `table-name` for `postgres` or the `catalog-name` for `iceberg` to `${sqrl:table-name}_MY_SUFFIX` . This separates views from physical tables to provide modularity and support updates without impacting downstream consumers. 
 
 ## APIs
 
@@ -33,7 +33,9 @@ You can customize the GraphQL schema by:
 * Adding enums
 * Adding interfaces and structuring types with interfaces
 
-Note, that changes must be compatible with the underlying data as defined in the SQRL script and the [API mapping](sqrl-language.md#api-mapping).
+:::warning
+Changes must be compatible with the underlying data as defined in the SQRL script and the [API mapping](sqrl-language.md#api-mapping).
+:::
 
 To use a customized GraphQL schema, configure the schema explicitly in the [script configuration](configuration.md#script-script) or by providing it as a [command argument](compiler.md).
 
@@ -41,7 +43,7 @@ To use a customized GraphQL schema, configure the schema explicitly in the [scri
 
 DataSQRL generates a list of operations from the GraphQL schema: one for each query and mutation endpoint. 
 Queries are mapped to MCP tools with a `Get` prefix and REST endpoints under `rest/queries`. If the arguments are simple scalars, the REST endpoint is GET with URL parameters, otherwise POST with the arguments as payload.
-Mutations are mapped to MCP tools with a `Add` prefix and REST POST endpoints under `rest/mutations`.
+Mutations are mapped to MCP tools with an `Add` prefix and REST POST endpoints under `rest/mutations`.
 For the result set, DataSQRL follows relationship fields up to a configured depth (and without loops).
 
 You can control the default operation generation with the [compiler configuration](configuration.md#compiler-compiler).

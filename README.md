@@ -22,7 +22,7 @@ DataSQRL automates the construction of data pipelines from multiple sources of d
 ## DataSQRL Features
 
 * 🛡️ **Data Consistency Guarantees:** Exactly-once processing, data consistency across all outputs, schema alignment, data lineage tracking, and comprehensive testing framework.
-* 🔒 **Production-grade Reliability:** Robust, highly available, scalable, secure (JWT) and observable data pipelines executed by trusted OSS technologies (Kafka, Flink, Postgres, Apache Iceberg).
+* 🔒 **Production-grade Reliability:** Robust, highly available, scalable, secure (JWT) and observable data pipelines executed by trusted OSS technologies (Apache Kafka, Flink, Iceberg, and PostgreSQL).
 * 🤖 **Data Enrichment with AI:**  Joins across data sources, data cleansing, time-based processing, vector embeddings, LLM completions, ML model inference, complex aggregations, and custom functions.
 * 🔗 **Realtime, Incremental, or Batch:** Flexibility to run realtime (millisecond), incremental (second to minutes), or batch updates without code changes. 
 * 🚀 **Developer Workflow:** Local development, quick iteration with feedback, CI/CD support, logging framework, reusable components, and composable architecture for reliable pipeline management.
@@ -39,23 +39,40 @@ This DataSQRL script enriches transactions to provide an MCP tool for retrieving
 
 ```sql
 -- Ingest data from connected systems
-IMPORT banking-data.AccountHoldersCDC; --CDC stream from masterdata
-IMPORT banking-data.AccountsCDC;       --CDC stream from database
-IMPORT banking-data.Transactions;      --Kafka topic for transactions
+IMPORT banking-data.AccountHoldersCDC; -- CDC stream from masterdata
+IMPORT banking-data.AccountsCDC;       -- CDC stream from database
+IMPORT banking-data.Transactions;      -- Kafka topic for transactions
+
 -- Convert the CDC stream of updates to the most recent version
 Accounts := DISTINCT AccountsCDC ON account_id ORDER BY update_time DESC;
 AccountHolders := DISTINCT AccountHoldersCDC ON holder_id ORDER BY update_time DESC;
+
 -- Enrich debit transactions with creditor information using time-consistent join
-SpendingTransactions := SELECT t.*, h.name AS creditor_name, h.type AS creditor_type
-    FROM Transactions t JOIN Accounts FOR SYSTEM_TIME AS OF t.tx_time a ON t.credit_account_id=a.account_id
-                        JOIN AccountHolders FOR SYSTEM_TIME AS OF t.tx_time h ON a.holder_id = h.holder_id;
+SpendingTransactions :=
+SELECT
+    t.*,
+    h.name AS creditor_name,
+    h.type AS creditor_type
+FROM Transactions t
+         JOIN Accounts FOR SYSTEM_TIME AS OF t.tx_time a
+              ON t.credit_account_id = a.account_id
+         JOIN AccountHolders FOR SYSTEM_TIME AS OF t.tx_time h
+              ON a.holder_id = h.holder_id;
+
 -- Create secure MCP tooling endpoint with description for agentic retrieval
 /** Retrieve spending transactions within the given time-range.
-  fromTime (inclusive) and toTime (exclusive) must be RFC-3339 compliant date time.*/
-SpendingTransactionsByTime(account_id STRING NOT NULL METADATA FROM 'auth.accountId',
-    fromTime TIMESTAMP NOT NULL, toTime TIMESTAMP NOT NULL) :=
-        SELECT * FROM SpendingTransactions WHERE debit_account_id = :account_id
-        AND :fromTime <= tx_time AND :toTime > tx_time ORDER BY tx_time DESC;
+  fromTime (inclusive) and toTime (exclusive) must be RFC-3339 compliant date time.
+*/
+SpendingTransactionsByTime(
+  account_id STRING NOT NULL METADATA FROM 'auth.accountId',
+  fromTime TIMESTAMP NOT NULL,
+  toTime TIMESTAMP NOT NULL
+) :=
+SELECT * FROM SpendingTransactions
+WHERE debit_account_id = :account_id
+  AND :fromTime <= tx_time
+  AND :toTime > tx_time
+ORDER BY tx_time DESC;
 ```
 
 This example defines a `SpendingTransactionsByTime` tool that is exposed through the MCP protocol and secured by JWT authentication.
@@ -68,15 +85,31 @@ This DataSQRL script extends the one above to aggregate transactions and build c
 -- Define retrieval endpoint for holder's accounts
 /*+query_by_all(holder_id) */
 ActiveAccounts := SELECT * FROM Accounts WHERE status = 'active';
+
 -- Aggregate spending by type for weeklong time windows that update every hour
-_SpendingTimeWindow := SELECT debit_account_id AS account_id, creditor_type, window_start AS week,
-                         window_time, SUM(amount) AS total_spending, COUNT(*) AS transaction_count
-         FROM TABLE(CUMULATE(TABLE SpendingTransactions, DESCRIPTOR(tx_time),
-                 INTERVAL '1' HOUR, INTERVAL '7' DAY))
-         GROUP BY debit_account_id, creditor_type, window_start, window_end, window_time;
+_SpendingTimeWindow :=
+SELECT debit_account_id AS account_id,
+       creditor_type,
+       window_start AS week,
+       window_time,
+       SUM(amount) AS total_spending,
+       COUNT(*) AS transaction_count
+FROM TABLE(
+        CUMULATE(
+            TABLE SpendingTransactions,
+            DESCRIPTOR(tx_time),
+                INTERVAL '1' HOUR, INTERVAL '7' DAY
+        )
+     )
+GROUP BY debit_account_id,
+         creditor_type,
+         window_start,
+         window_end, window_time;
+
 -- Provide access point to query spending summary for account
 /*+query_by_all(account_id) */
-SpendingByAccountTypeWeek := DISTINCT _SpendingTimeWindow ON account_id, creditor_type, week ORDER BY window_time;
+SpendingByAccountTypeWeek :=
+  DISTINCT _SpendingTimeWindow ON account_id, creditor_type, week ORDER BY window_time;
 ```
 
 This exposes two REST endpoints for `ActiveAccounts` and `SpendingByAccountTypeWeek` that are invoked to populate the context for financial chatbots and agents.
@@ -87,16 +120,25 @@ This DataSQRL script adds relationship definitions to define the structure of a 
 
 ```sql
 -- Create a relationship between holder and accounts
-AccountHolders.accounts(status STRING) := SELECT * FROM Accounts a WHERE a.holder_id = this.holder_id
-                                          AND a.status = :status ORDER BY a.account_type ASC;
+AccountHolders.accounts(status STRING) :=
+SELECT * FROM Accounts a
+WHERE a.holder_id = this.holder_id
+  AND a.status = :status
+ORDER BY a.account_type ASC;
+
 -- Relate accounts to spending summary by week
-Accounts.spendingByWeek := SELECT * FROM SpendingByAccountTypeWeek s
-                           WHERE s.account_id = this.account_id ORDER BY week DESC, creditor_type ASC;
+Accounts.spendingByWeek :=
+SELECT * FROM SpendingByAccountTypeWeek s
+WHERE s.account_id = this.account_id
+ORDER BY week DESC, creditor_type ASC;
+
 -- Link accounts with spending transactions
 Accounts.spendingTransactions(fromTime TIMESTAMP NOT NULL, toTime TIMESTAMP NOT NULL) :=
-                           SELECT * FROM SpendingTransactions t
-                           WHERE t.debit_account_id = this.account_id
-                           AND :fromTime <= tx_time AND :toTime > tx_time ORDER BY tx_time DESC;
+SELECT * FROM SpendingTransactions t
+WHERE t.debit_account_id = this.account_id
+  AND :fromTime <= tx_time
+  AND :toTime > tx_time
+ORDER BY tx_time DESC;
 ```
 
 This exposes a flexible `graphql/` API for the frontend to query.
@@ -107,22 +149,39 @@ This script enriches transactions with debitor and creditor account and holder i
 
 ```sql
 -- Enrich transactions with account information at the time of the transaction (e.g. balance)
-_TransactionWithAccounts := SELECT t.*, ac.holder_id AS credit_holder_id, ac.account_type AS credit_account_type,
-        ac.balance AS credit_account_balance, ad.holder_id AS debit_holder_id, ad.account_type AS debit_account_type,
-                                   ad.balance AS debit_account_balance
-    FROM Transactions t JOIN Accounts FOR SYSTEM_TIME AS OF t.tx_time ac ON t.credit_account_id=ac.account_id
-                        JOIN Accounts FOR SYSTEM_TIME AS OF t.tx_time ad ON t.debit_account_id=ad.account_id;
+_TransactionWithAccounts :=
+SELECT t.*,
+       ac.holder_id AS credit_holder_id,
+       ac.account_type AS credit_account_type,
+       ac.balance AS credit_account_balance,
+       ad.holder_id AS debit_holder_id,
+       ad.account_type AS debit_account_type,
+       ad.balance AS debit_account_balance
+FROM Transactions t
+         JOIN Accounts FOR SYSTEM_TIME AS OF t.tx_time ac
+              ON t.credit_account_id = ac.account_id
+         JOIN Accounts FOR SYSTEM_TIME AS OF t.tx_time ad
+              ON t.debit_account_id = ad.account_id;
+
 -- Further enrich transactions with current account holder information and designate execution engine
 /*+engine(iceberg) */
-EnrichedTransactions := SELECT t.*, hc.name AS credit_holder_name, hc.type AS credit_holder_type,
-                               hd.name AS debit_holder_name, hd.type AS debit_holder_type
-    FROM _TransactionWithAccounts t JOIN AccountHolders hc ON t.credit_holder_id = hc.holder_id
-                                    JOIN AccountHolders hd ON t.debit_holder_id = hd.holder_id;
+EnrichedTransactions :=
+SELECT t.*,
+       hc.name AS credit_holder_name,
+       hc.type AS credit_holder_type,
+       hd.name AS debit_holder_name,
+       hd.type AS debit_holder_type
+FROM _TransactionWithAccounts t
+         JOIN AccountHolders hc ON t.credit_holder_id = hc.holder_id
+         JOIN AccountHolders hd ON t.debit_holder_id = hd.holder_id;
+
 -- Add a test case to validate the logic and avoid regressions
 /*+test */
-EnrichedTransactionsTest := SELECT debit_holder_name, COUNT(*) AS debit_tx_count, SUM(amount) AS total_debit_amount
-                            FROM EnrichedTransactions
-                            GROUP BY debit_holder_name ORDER BY debit_holder_name ASC;
+EnrichedTransactionsTest :=
+SELECT debit_holder_name, COUNT(*) AS debit_tx_count, SUM(amount) AS total_debit_amount
+FROM EnrichedTransactions
+GROUP BY debit_holder_name
+ORDER BY debit_holder_name ASC;
 ```
 
 The Iceberg view can be queried by data scientists and analysts in Spark, Trino, Snowflake, etc.
