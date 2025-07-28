@@ -10,3 +10,9 @@ AuthMyTable(val BIGINT NOT NULL METADATA FROM 'auth.val') :=
       FROM MyTable t 
      WHERE t.val = :val
      ORDER BY t.val ASC;
+
+AuthMyTableValues(vals ARRAY<BIGINT> NOT NULL METADATA FROM 'auth.values') :=
+    SELECT t.* 
+      FROM MyTable t 
+     WHERE array_contains(cast(:vals as ARRAY<BIGINT>), t.val)
+     ORDER BY t.val ASC;

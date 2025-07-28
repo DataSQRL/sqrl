@@ -18,6 +18,25 @@ SQL: CREATE VIEW AuthMyTable AS
      WHERE t.val = ?   
      ORDER BY t.val ASC;
 
+=== AuthMyTableValues
+ID:     default_catalog.default_database.AuthMyTableValues
+Type:   query
+Stage:  postgres
+Inputs: default_catalog.default_database.MyTable
+Annotations:
+ - parameters: vals
+ - base-table: MyTable
+Plan:
+LogicalSort(sort0=[$0], dir0=[ASC-nulls-first])
+  LogicalProject(val=[$0])
+    LogicalFilter(condition=[array_contains(CAST(?0):BIGINT ARRAY, CAST($0):BIGINT)])
+      LogicalTableScan(table=[[default_catalog, default_database, MyTable]])
+SQL: CREATE VIEW AuthMyTableValues AS 
+    SELECT t.* 
+      FROM MyTable t 
+     WHERE array_contains(cast(?     as ARRAY<BIGINT>), t.val)
+     ORDER BY t.val ASC;
+
 === MyTable
 ID:     default_catalog.default_database.MyTable
 Type:   state
@@ -139,6 +158,39 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL , PRIMARY KEY ("val
             "database" : "POSTGRES"
           }
         }
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "AuthMyTableValues",
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
+            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM (SELECT \"val\"\n  FROM \"MyTable\"\n  ORDER BY \"val\" NULLS FIRST) AS \"t\"\nWHERE (CAST(\"val\" AS BIGINT) = ANY ($1))\nORDER BY \"val\" NULLS FIRST",
+            "parameters" : [
+              {
+                "type" : "metadata",
+                "metadata" : {
+                  "metadataType" : "AUTH",
+                  "name" : "values",
+                  "isRequired" : true
+                }
+              }
+            ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
+          }
+        }
       }
     ],
     "mutations" : [ ],
@@ -195,11 +247,37 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL , PRIMARY KEY ("val
         "mcpMethod" : "TOOL",
         "restMethod" : "GET",
         "uriTemplate" : "queries/AuthMyTable{?offset,limit}"
+      },
+      {
+        "function" : {
+          "name" : "GetAuthMyTableValues",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query AuthMyTableValues($limit: Int = 10, $offset: Int = 0) {\nAuthMyTableValues(limit: $limit, offset: $offset) {\nval\n}\n\n}",
+          "queryName" : "AuthMyTableValues",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/AuthMyTableValues{?offset,limit}"
       }
     ],
     "schema" : {
       "type" : "string",
-      "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype MyTable {\n  val: Int!\n}\n\ntype Query {\n  MyTable(limit: Int = 10, offset: Int = 0): [MyTable!]\n  AuthMyTable(limit: Int = 10, offset: Int = 0): [MyTable!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype MyTable {\n  val: Int!\n}\n\ntype Query {\n  MyTable(limit: Int = 10, offset: Int = 0): [MyTable!]\n  AuthMyTable(limit: Int = 10, offset: Int = 0): [MyTable!]\n  AuthMyTableValues(limit: Int = 10, offset: Int = 0): [MyTable!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
     }
   }
 }

@@ -339,7 +339,7 @@ class FullUseCasesIT {
   public void runTestCaseByName() {
     var param =
         getSpecificUseCase(
-            p -> p.sqrlFileName.startsWith("flink_kafka.sqrl") && p.goal.equals("test"));
+            p -> p.sqrlFileName.startsWith("jwt-authorized.sqrl") && p.goal.equals("test"));
 
     useCase(param);
   }
