@@ -5,7 +5,7 @@
     "postgres_log-source": {
       "connector": "postgres-cdc",
       "hostname": "${POSTGRES_HOST}",
-      "port": "${PGPORT}",
+      "port": "${POSTGRES_PORT}",
       "username": "${POSTGRES_USERNAME}",
       "password": "${POSTGRES_PASSWORD}",
       "database-name": "datasqrl",
@@ -20,7 +20,7 @@
       "password": "${POSTGRES_PASSWORD}",
       "driver": "org.postgresql.Driver",
       "username": "${POSTGRES_USERNAME}",
-      "url": "${JDBC_URL}",
+      "url": "${POSTGRES_JDBC_URL}",
       "table-name": "${sqrl:table}"
     }
   },

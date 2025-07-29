@@ -1,11 +1,7 @@
 {
   "version": "1",
-  "test-runner" : {
-    "snapshot-folder": "snapshots-jwt-authorized",
-    "test-folder": "tests-jwt-authorized",
-    "headers": {
-      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJteS10ZXN0LWlzc3VlciIsImF1ZCI6WyJteS10ZXN0LWF1ZGllbmNlIl0sImV4cCI6OTk5OTk5OTk5OSwidmFsIjoxfQ.cvgte5Lfhrsr2OPoRM9ecJbxehBQzwHaghANY6MvhqE"
-    }
+  "script": {
+    "main": "jwt-authorized.sqrl"
   },
   "engines" : {
     "vertx" : {
@@ -26,6 +22,13 @@
           }
         }
       }
+    }
+  },
+  "test-runner" : {
+    "snapshot-folder": "snapshots-jwt-authorized",
+    "test-folder": "tests-jwt-authorized",
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJteS10ZXN0LWlzc3VlciIsImF1ZCI6WyJteS10ZXN0LWF1ZGllbmNlIl0sImV4cCI6OTk5OTk5OTk5OSwidmFsIjoxfQ.cvgte5Lfhrsr2OPoRM9ecJbxehBQzwHaghANY6MvhqE"
     }
   }
 }

@@ -42,7 +42,7 @@ public class ExternalRedpandaContainerIT extends SqrlContainerTestBase {
 
   @Override
   protected String getTestCaseName() {
-    return "flink+kafka";
+    return "flink-kafka";
   }
 
   @BeforeEach
@@ -68,7 +68,7 @@ public class ExternalRedpandaContainerIT extends SqrlContainerTestBase {
 
     // When - Compile SQRL script with external Kafka configuration
     var cmdContainer = createCmdContainerWithExternalKafka();
-    cmd = cmdContainer.withCommand("test", "flink_kafka.sqrl");
+    cmd = cmdContainer.withCommand("test", "flink-kafka.sqrl");
 
     log.info("Starting compilation with external Redpanda container");
     log.info(getDockerRunCommand(cmd, testDir));
@@ -189,7 +189,7 @@ public class ExternalRedpandaContainerIT extends SqrlContainerTestBase {
             .withEnv("KAFKA_BOOTSTRAP_SERVERS", REDPANDA_CONTAINER_NAME + ":" + REDPANDA_PORT);
 
     // Add additional mount to resolve the symlink
-    // flink+kafka/loan-local -> ../banking/loan-local
+    // flink-kafka/loan-local -> ../banking/loan-local
     var bankingDir = testDir.getParent().resolve("banking");
 
     if (bankingDir.toFile().exists()) {

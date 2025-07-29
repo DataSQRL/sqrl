@@ -15,13 +15,11 @@
  */
 package com.datasqrl;
 
-import static org.assertj.core.api.Assertions.fail;
-import static org.assertj.core.api.Assumptions.assumeThat;
+import static com.datasqrl.config.SqrlConstants.BUILD_DIR_NAME;
+import static com.datasqrl.config.SqrlConstants.PACKAGE_JSON;
+import static org.assertj.core.api.Assertions.assertThat;
 
-import com.datasqrl.cli.AssertStatusHook;
-import com.datasqrl.cli.DatasqrlRun;
 import com.datasqrl.config.PackageJson;
-import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.engines.TestContainersForTestGoal;
 import com.datasqrl.engines.TestContainersForTestGoal.TestContainerHook;
 import com.datasqrl.engines.TestEngine.EngineFactory;
@@ -32,29 +30,23 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.tests.TestExtension;
 import com.datasqrl.tests.UseCaseTestExtensions;
 import com.datasqrl.util.ConfigLoaderUtils;
-import com.datasqrl.util.FlinkOperatorStatusChecker;
 import com.datasqrl.util.SnapshotTest.Snapshot;
-import com.google.common.collect.MoreCollectors;
+import com.datasqrl.util.TestScriptCompileExtension;
+import com.datasqrl.util.TestShardingExtension;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.function.Predicate;
-import javax.annotation.Nullable;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ObjectUtils;
-import org.apache.flink.table.api.TableResult;
 import org.apache.flink.test.junit5.MiniClusterExtension;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -67,63 +59,35 @@ import org.junit.jupiter.params.provider.MethodSource;
  * <p>Note, that this test is resource intensive and slow.
  */
 @Slf4j
-@ExtendWith(MiniClusterExtension.class)
-class FullUseCasesIT {
-  private static final Path RESOURCES = Path.of("src/test/resources");
-  private static final Path USE_CASES = RESOURCES.resolve("usecases");
+@ExtendWith({
+  MiniClusterExtension.class,
+  TestShardingExtension.class,
+  TestScriptCompileExtension.class
+})
+public class FullUseCasesIT {
 
-  private Snapshot snapshot;
+  private static final Path USE_CASES = Path.of("src/test/resources/usecases");
 
-  record ScriptCriteria(String name, String goal) {}
-
-  List<ScriptCriteria> disabledScripts =
-      List.of(
-          new ScriptCriteria("flink-only.sqrl", "test"), // not a full test case
-          new ScriptCriteria("flink-functions.sqrl", "test"), // not a full test case
-          new ScriptCriteria("flink-functions.sqrl", "run"), // not a full test case
-          new ScriptCriteria("conference-disabled.sqrl", "test"), // fails in build server
-          new ScriptCriteria("conference-disabled.sqrl", "run"), // fails in build server
-          new ScriptCriteria("iceberg-export.sqrl", "test"), // fails in build server
-          new ScriptCriteria("iceberg-export.sqrl", "run"), // fails in build server
-          new ScriptCriteria("duckdb.sqrl", "test"), // fails in build server
-          new ScriptCriteria("duckdb.sqrl", "run"), // fails in build server
-          new ScriptCriteria("snowflake-disabled.sqrl", "test"), // fails in build server
-          new ScriptCriteria("snowflake-disabled.sqrl", "run"), // fails in build server
-          new ScriptCriteria("sensors-mutation.sqrl", "run"), // flaky see sqrl script
-          new ScriptCriteria("sensors-full.sqrl", "test"), // flaky (too much data)
-          new ScriptCriteria("sensors-full.sqrl", "run"), // flaky (too much data)
-          new ScriptCriteria("analytics-only.sqrl", "test"),
-          new ScriptCriteria("analytics-only.sqrl", "run"),
-          new ScriptCriteria("postgres-log-disabled.sqrl", "test"),
-          new ScriptCriteria("postgres-log-disabled.sqrl", "run"),
-          new ScriptCriteria("connectors.sqrl", "test"), // should not be executed
-          new ScriptCriteria("flink_kafka.sqrl", "run"), // does not expose an API
-          new ScriptCriteria("minimalFlink.sqrl", "run"), // only want to test this
-          // only want to test this, no way to authenticate on runs
-          new ScriptCriteria("jwt-authorized.sqrl", "run"),
-          new ScriptCriteria("jwt-unauthorized.sqrl", "run"),
-          new ScriptCriteria(
-              "temporal-join.sqrl",
-              "run") // TODO: only 'run' when there are no tests (i.e. snapshot dir) - there is no
-          // benefit to also running, it's wasteful
+  private static final Set<String> DISABLED_USE_CASE_PATHS =
+      Set.of(
+          "flink-only", // not a full test case
+          "flink-functions", // not a full test case
+          "conference", // fails in build server
+          "iceberg-export", // fails in build server
+          "duckdb", // fails in build server
+          "snowflake", // fails in build server
+          "sensors-full", // flaky (too much data)
+          "analytics-only",
+          "postgres-log",
+          "connectors" // should not be executed
           );
 
   private static TestContainerHook containerHook;
 
   UseCaseTestExtensions testExtensions = new UseCaseTestExtensions();
 
-  boolean executed = false;
-
-  @AfterEach
-  void tearDown() throws Exception {
-    if (containerHook != null && executed) {
-      containerHook.clear();
-      executed = false;
-    }
-  }
-
   @BeforeAll
-  static void before() {
+  static void beforeAll() {
     var engines = new EngineFactory().createAll();
 
     containerHook = engines.accept(new TestContainersForTestGoal(), null);
@@ -131,294 +95,130 @@ class FullUseCasesIT {
   }
 
   @AfterAll
-  static void after() {
+  static void afterAll() {
     if (containerHook != null) {
       containerHook.teardown();
     }
   }
 
-  static int shard;
-  static Integer testShardingTotal;
-  static int testShardingIndex;
-
-  @BeforeAll
-  static void initTestShading() throws Exception {
-    var total = System.getenv("TEST_SHARDING_TOTAL");
-    if (ObjectUtils.isEmpty(total)) {
-      log.warn("No test sharding");
-      return;
+  @AfterEach
+  void afterEach() {
+    if (containerHook != null) {
+      containerHook.clear();
     }
-
-    testShardingTotal = Integer.parseInt(total);
-    testShardingIndex = Integer.parseInt(System.getenv("TEST_SHARDING_INDEX"));
-
-    log.warn("Enabled test sharding: total: {} index: {}", testShardingTotal, testShardingIndex);
   }
 
-  @SneakyThrows
+  @Disabled("Intended for manual usage")
   @ParameterizedTest
-  @MethodSource("useCaseProvider")
-  void useCase(UseCaseTestParameter param) {
-    if (disabledScripts.contains(new ScriptCriteria(param.getSqrlFileName(), param.getGoal()))) {
-      log.warn("Skipping disabled test:" + param.getSqrlFileName());
-      assumeThat(false).as("Skipping disabled test: %s", param.getSqrlFileName()).isTrue();
-    }
+  @MethodSource("specificUseCaseProvider")
+  void specificUseCase(UseCaseParam param) {
+    useCase(param);
+  }
 
-    shard++;
-    if (testShardingTotal != null && shard % testShardingTotal != testShardingIndex) {
-      log.warn(
-          "Skipping due to test sharding {} shard: {} testShardingTotal: {} testShardingIndex: {}",
-          param.sqrlFileName,
-          shard,
-          testShardingTotal,
-          testShardingIndex);
-      assumeThat(false)
-          .as(
-              "Skipping due to test sharding %s.\n"
-                  + "shard: %s testShardingTotal: %s testShardingIndex: %s",
-              param, shard, testShardingTotal, testShardingIndex)
-          .isTrue();
-    } else {
-      log.warn(
-          "Testing sharding {} shard: {} testShardingTotal: {} testShardingIndex: {}",
-          param.sqrlFileName,
-          shard,
-          testShardingTotal,
-          testShardingIndex);
-    }
+  //////////////////////////////////////////////////////////////////
+  ////////////// MODIFY THIS TO RUN SPECIFIC USE CASE //////////////
+  //////////////////////////////////////////////////////////////////
+  private static Stream<UseCaseParam> specificUseCaseProvider() {
+    var useCaseFolderName = "clickstream";
 
-    executed = true;
+    var pkg = USE_CASES.resolve(useCaseFolderName).resolve("package.json");
+    assertThat(pkg).isRegularFile();
 
-    this.snapshot =
+    return Stream.of(new UseCaseParam(pkg, "test", -1));
+  }
+
+  @ParameterizedTest
+  @MethodSource("nonDisabledUseCaseProvider")
+  void useCase(UseCaseParam param) {
+    log.info("Testing {}", param.getPackageJsonName());
+
+    var snapshot =
         Snapshot.of(
             FullUseCasesIT.class,
-            param.testName,
-            param.getSqrlFileName().substring(0, param.getSqrlFileName().length() - 5));
-    TestExtension testExtension = testExtensions.create(param.getTestName());
-    testExtension.setup();
+            param.getUseCaseName(),
+            param.getPackageJsonName().substring(0, param.getPackageJsonName().length() - 5));
 
-    Path rootDir = param.getRootDir();
-
-    SqrlScriptExecutor executor =
-        SqrlScriptExecutor.builder()
-            .rootDir(rootDir)
-            .goal(param.getGoal())
-            .script(param.getSqrlFileName())
-            .graphql(param.getGraphqlFileName())
-            .testSuffix(param.getTestName())
-            .testPath(param.getTestPath())
-            .packageJsonPath(param.getPackageJsonPath())
-            .build();
-
-    AssertStatusHook hook = new AssertStatusHook();
+    TestExtension testExtension = testExtensions.create(param.getUseCaseName());
     try {
-      executor.execute(hook);
-    } catch (Throwable e) {
-      if (hook.failure() != null) {
-        e.addSuppressed(hook.failure());
-      }
-      throw e;
-    }
+      testExtension.setup();
 
-    PackageJson packageJson =
-        ConfigLoaderUtils.loadResolvedConfig(
-            ErrorCollector.root(), rootDir.resolve(SqrlConstants.BUILD_DIR_NAME));
+      // TODO: move this to test env setup
+      Path rootDir = param.packageJsonPath().getParent();
+      PackageJson packageJson =
+          ConfigLoaderUtils.loadResolvedConfig(
+              ErrorCollector.root(), rootDir.resolve(BUILD_DIR_NAME));
 
-    try {
       TestEngines engines = new EngineFactory().create(packageJson);
 
-      Map<String, String> env = new HashMap<>();
-      env.putAll(System.getenv());
-      env.putAll(containerHook.getEnv());
-      env.put("DATA_PATH", rootDir.resolve("build/deploy/flink/data").toAbsolutePath().toString());
-      env.put("UDF_PATH", rootDir.resolve("build/deploy/flink/lib").toAbsolutePath().toString());
-
-      // Log test run
       log.info(
-          "The test parameters\n"
-              + "Test name: "
-              + param.getTestName()
-              + "\n"
-              + "Test path: "
-              + rootDir
-              + "\n"
-              + "Test sqrl file: "
-              + param.getSqrlFileName()
-              + "\n"
-              + "Test graphql file: "
-              + param.getGraphqlFileName()
-              + "\n");
+          """
+        The test parameters
+        Test name: {}
+        Test path: {}
+        Test package file: {}
+        """,
+          param.getUseCaseName(),
+          rootDir,
+          param.getPackageJsonName());
 
-      // Run the test
-      TestEnvContext context =
-          TestEnvContext.builder().env(env).rootDir(rootDir).param(param).build();
-      // test goal is accomplished by above, but run goal needs extra setup
-      DatasqrlRun run = null;
-      if (param.getGoal().equals("run")) {
-        try {
-          var planDir = context.getRootDir().resolve(SqrlConstants.PLAN_PATH);
-          var flinkConfig = TestExecutionEnv.loadInternalTestFlinkConfig(planDir, context.getEnv());
-          run = DatasqrlRun.nonBlocking(planDir, packageJson, flinkConfig, context.getEnv());
-          TableResult result = run.run();
-          long delaySec = packageJson.getTestConfig().getDelaySec();
-
-          int requiredCheckpoints = packageJson.getTestConfig().getRequiredCheckpoints();
-          if (delaySec == -1) {
-            FlinkOperatorStatusChecker flinkOperatorStatusChecker =
-                new FlinkOperatorStatusChecker(
-                    result.getJobClient().get().getJobID().toString(), requiredCheckpoints);
-            flinkOperatorStatusChecker.run();
-          } else {
-            Thread.sleep(delaySec * 1000);
-          }
-
-          switch (result.getResultKind()) {
-            case SUCCESS:
-            case SUCCESS_WITH_CONTENT:
-              break;
-            default:
-              fail("Flink job failed with: " + result.getResultKind());
-              break;
-          }
-
-          try {
-            result.getJobClient().get().cancel();
-          } catch (Exception expected) {
-            // Necessary to get over the error that is thrown when the Flink mini-cluster is stopped
-            // already. For some test cases, that will happen, and is expected.
-          }
-        } catch (Exception e) {
-          e.printStackTrace();
-          fail("", e);
-        }
-      }
+      // Execute the test
+      TestEnvContext context = new TestEnvContext(rootDir, containerHook.getEnv(), param);
 
       engines.accept(
           new TestExecutionEnv(
-              param.getSqrlFileName() + ":" + param.goal, packageJson, rootDir, snapshot),
+              param.getPackageJsonName() + ":" + param.goal(), packageJson, rootDir, snapshot),
           context);
-      if (run != null) {
-        run.cancel();
-      }
+
     } finally {
+      testExtension.teardown();
       containerHook.clear();
     }
-    // tear down after we stop flink etc
-    testExtension.teardown();
 
     if (snapshot.hasContent()) {
       snapshot.createOrValidate();
     }
   }
 
-  static int testNo = 0;
-
-  @ParameterizedTest
-  @MethodSource("useCaseProvider")
-  @Disabled
-  void runTestNumber(UseCaseTestParameter param) {
-    var testToExecute = 45;
-    testNo++;
-    System.out.println(testNo + ":" + param);
-
-    assumeThat(testToExecute).as("Not the test marked for execution.").isEqualTo(testNo);
-
-    useCase(param);
-  }
-
-  @ParameterizedTest
-  @MethodSource("useCaseProvider")
-  @Disabled
-  void printUseCaseNumbers(UseCaseTestParameter param) {
-    testNo++;
-    System.out.println(testNo + ":" + param);
-  }
-
-  @Test
-  @Disabled
-  public void runTestCaseByName() {
-    var param =
-        getSpecificUseCase(
-            p -> p.sqrlFileName.startsWith("jwt-authorized.sqrl") && p.goal.equals("test"));
-
-    useCase(param);
-  }
-
-  @Test
-  @Disabled
-  void runOutsideProject() {
-    // Set projectDir to any path outside the repo
-    String projectDir = null;
-    var param =
-        getSpecificUseCase(
-            projectDir, p -> p.sqrlFileName.startsWith("script.sqrl") && p.goal.equals("run"));
-
-    useCase(param);
-  }
-
-  static UseCaseTestParameter getSpecificUseCase(Predicate<UseCaseTestParameter> paramFilter) {
-    return useCaseProvider().stream().filter(paramFilter).collect(MoreCollectors.onlyElement());
-  }
-
-  static UseCaseTestParameter getSpecificUseCase(
-      String useCasePath, Predicate<UseCaseTestParameter> paramFilter) {
-    return useCaseProvider(useCasePath).stream()
-        .filter(paramFilter)
-        .collect(MoreCollectors.onlyElement());
-  }
-
-  static Set<UseCaseTestParameter> useCaseProvider() {
-    return useCaseProvider(null);
-  }
-
   @SneakyThrows
-  static Set<UseCaseTestParameter> useCaseProvider(@Nullable String useCasePath) {
-    var rootDir = useCasePath != null ? Paths.get(useCasePath) : USE_CASES;
-    var useCasesDir = rootDir.toAbsolutePath();
-    Set<UseCaseTestParameter> params = new TreeSet<>();
+  private static Set<UseCaseParam> nonDisabledUseCaseProvider() {
+    var useCasesDir = USE_CASES.toAbsolutePath();
 
-    if (useCasePath != null) {
-      addParamsInDir(useCasesDir, params);
-      return params;
+    try (var useCaseStream = Files.list(useCasesDir)) {
+      var sortedPaths =
+          useCaseStream
+              .filter(Files::isDirectory)
+              .flatMap(FullUseCasesIT::collectPackageJsonFiles)
+              .sorted() // Ensure consistent ordering for index assignment
+              .toList();
+
+      // Assign sequential indices and create UseCaseParam objects
+      return IntStream.range(0, sortedPaths.size())
+          .mapToObj(i -> new UseCaseParam(sortedPaths.get(i), "test", i))
+          .collect(Collectors.toCollection(TreeSet::new));
+    }
+  }
+
+  /**
+   * Collect files that match the {@code package.json} pattern from a given use case dir recursively
+   * that are not listed in {@code DISABLED_USE_CASE_PATHS}.
+   */
+  @SneakyThrows
+  private static Stream<Path> collectPackageJsonFiles(Path useCaseDir) {
+    var useCaseName = useCaseDir.getFileName().toString();
+
+    // Skip disabled use cases entirely
+    if (DISABLED_USE_CASE_PATHS.contains(useCaseName)) {
+      return Stream.empty();
     }
 
-    Files.list(useCasesDir).filter(Files::isDirectory).forEach(dir -> addParamsInDir(dir, params));
-
-    return params;
-  }
-
-  private static void addParamsInDir(Path dir, Set<UseCaseTestParameter> params) {
-    var useCaseName = dir.getFileName().toString();
-
-    try (var stream = Files.newDirectoryStream(dir)) {
-      for (Path file : stream) {
-        var fileName = file.getFileName().toString();
-
-        if (!fileName.endsWith(".sqrl")) {
-          continue;
-        }
-
-        var testName = fileName.substring(0, fileName.length() - 5);
-        var graphql = testName + ".graphqls";
-        var packageJson = "package-" + testName + ".json";
-        var testPath = "tests-" + testName;
-        if (!file.getParent().resolve(graphql).toFile().exists()) {
-          graphql = null;
-        }
-        if (!file.getParent().resolve(packageJson).toFile().exists()) {
-          packageJson = null;
-        }
-        if (!file.getParent().resolve(testPath).toFile().exists()) {
-          testPath = null;
-        }
-        var useCaseTestParameter =
-            new UseCaseTestParameter(
-                dir, "test", useCaseName, fileName, graphql, testName, testPath, null, packageJson);
-        params.add(useCaseTestParameter);
-        params.add(useCaseTestParameter.cloneWithGoal("run"));
-      }
-    } catch (Exception e) {
-      fail("Unable to process use case: " + useCaseName, e);
+    try (var stream = Files.walk(useCaseDir, 2)) {
+      return stream
+          .filter(Files::isRegularFile)
+          .filter(p -> !DISABLED_USE_CASE_PATHS.contains(p.getParent().getFileName().toString()))
+          .filter(p -> !BUILD_DIR_NAME.equals(p.getParent().getFileName().toString()))
+          .filter(p -> PACKAGE_JSON.equals(p.getFileName().toString()))
+          .toList()
+          .stream();
     }
   }
 }

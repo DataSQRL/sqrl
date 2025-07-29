@@ -1,6 +1,6 @@
 {
   "version": "1",
-  "test-runner": {
-    "snapshot-folder": "snapshots-stdlib-json"
+  "script": {
+    "main": "stdlib-json.sqrl"
   }
 }

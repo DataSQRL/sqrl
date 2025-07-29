@@ -9,15 +9,15 @@
     "snowflake",
     "vertx"
   ],
-  "values": {
-    "flink-config": {
-      "table.exec.source.idle-timeout": "1 ms",
-      "execution.checkpointing.min-pause": "2 s",
-      "execution.checkpointing.interval": "8 s"
-    }
-  },
   "engines": {
-    "snowflake" : {
+    "flink": {
+      "config": {
+        "table.exec.source.idle-timeout": "1 ms",
+        "execution.checkpointing.min-pause": "2 s",
+        "execution.checkpointing.interval": "8 s"
+      }
+    },
+    "snowflake": {
       "catalog-name": "MyCatalog",
       "external-volume": "MyNewVolume",
       "url": "jdbc:snowflake://${SNOWFLAKE_ID}.snowflakecomputing.com/?user=${SNOWFLAKE_USER}&password=${SNOWFLAKE_PASSWORD}&warehouse=COMPUTE_WH&db=MYSNOWFLAKEDB&schema=public&disableSslHostnameVerification=true"

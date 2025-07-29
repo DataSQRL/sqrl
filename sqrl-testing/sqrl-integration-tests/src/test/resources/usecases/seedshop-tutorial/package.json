@@ -1,8 +1,9 @@
 {
   "version": "1",
+  "script": {
+    "main": "seedshop-extended.sqrl"
+  },
   "test-runner": {
-    "snapshot-folder": "snapshots-seedshop-extended",
-    "test-folder": "tests-seedshop-extended",
     "delay-sec": -1
   }
 }

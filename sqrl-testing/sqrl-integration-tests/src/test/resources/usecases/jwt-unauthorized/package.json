@@ -1,8 +1,7 @@
 {
   "version": "1",
-  "test-runner": {
-    "snapshot-folder": "snapshots-jwt-unauthorized",
-    "test-folder": "tests-jwt-unauthorized"
+  "script": {
+    "main": "jwt-unauthorized.sqrl"
   },
   "engines" : {
     "vertx" : {
@@ -24,5 +23,9 @@
         }
       }
     }
+  },
+  "test-runner": {
+    "snapshot-folder": "snapshots-jwt-unauthorized",
+    "test-folder": "tests-jwt-unauthorized"
   }
 }

@@ -1,9 +1,9 @@
 {
   "version": "1",
-  "enabled-engines": [
-    "flink",
-    "iceberg"
-  ],
+  "enabled-engines": ["flink", "iceberg"],
+  "script": {
+    "main": "iceberg-export.sqrl"
+  },
   "engines": {
     "flink": {
       "config": {

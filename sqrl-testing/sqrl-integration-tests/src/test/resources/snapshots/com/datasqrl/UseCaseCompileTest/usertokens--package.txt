@@ -154,6 +154,56 @@ SQL: CREATE VIEW `_UserInfo__view`
 AS
 SELECT `_UserInfo`.`userid`, `_UserInfo`.`orgid`, `_UserInfo`.`last_updated`, `_UserInfo`.`event_time`
 FROM `default_catalog`.`default_database`.`_UserInfo` AS `_UserInfo`
+>>>schema.graphqls
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+
+"A 64-bit signed integer"
+scalar Long
+
+type Mutation {
+  UserTokens(event: UserTokensInput!): UserTokensResultOutput!
+}
+
+type Query {
+  TotalOrgTokens(limit: Int = 10, offset: Int = 0): [TotalOrgTokens!]
+  TotalUserTokens(userid: Long!, limit: Int = 10, offset: Int = 0): [TotalUserTokens!]
+  TotalOrgTokensByRange(minTokens: Long!, maxTokens: Long!, limit: Int = 10, offset: Int = 0): [TotalOrgTokens!]
+}
+
+type Subscription {
+  UsageAlert: UserTokens
+}
+
+type TotalOrgTokens {
+  orgid: Long!
+  total_tokens: Long!
+  total_requests: Long!
+}
+
+type TotalUserTokens {
+  userid: Long!
+  total_tokens: Long!
+  total_requests: Long!
+}
+
+type UserTokens {
+  userid: Long!
+  tokens: Long!
+  request_time: DateTime!
+}
+
+input UserTokensInput {
+  userid: Long!
+  tokens: Long!
+}
+
+type UserTokensResultOutput {
+  userid: Long!
+  tokens: Long!
+  request_time: DateTime!
+}
+
 >>>flink-sql-no-functions.sql
 CREATE TABLE `UserTokens` (
   `userid` BIGINT NOT NULL,
@@ -546,7 +596,7 @@ CREATE INDEX IF NOT EXISTS "TotalOrgTokens_btree_c1" ON "TotalOrgTokens" USING b
     ],
     "schema" : {
       "type" : "string",
-      "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Mutation {\n  UserTokens(event: UserTokensInput!): UserTokensResultOutput!\n}\n\ntype Query {\n  TotalOrgTokens(limit: Int = 10, offset: Int = 0): [TotalOrgTokens!]\n  TotalUserTokens(userid: Long!, limit: Int = 10, offset: Int = 0): [TotalUserTokens!]\n  TotalOrgTokensByRange(minTokens: Long!, maxTokens: Long!, limit: Int = 10, offset: Int = 0): [TotalOrgTokens!]\n}\n\ntype Subscription {\n  UsageAlert: UserTokens\n}\n\ntype TotalOrgTokens {\n  orgid: Long!\n  total_tokens: Long!\n  total_requests: Long!\n}\n\ntype TotalUserTokens {\n  userid: Long!\n  total_tokens: Long!\n  total_requests: Long!\n}\n\ntype UserTokens {\n  userid: Long!\n  tokens: Long!\n  request_time: DateTime!\n}\n\ninput UserTokensInput {\n  userid: Long!\n  tokens: Long!\n}\n\ntype UserTokensResultOutput {\n  userid: Long!\n  tokens: Long!\n  request_time: DateTime!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Mutation {\n  UserTokens(event: UserTokensInput!): UserTokensResultOutput!\n}\n\ntype Query {\n  TotalOrgTokens(limit: Int = 10, offset: Int = 0): [TotalOrgTokens!]\n  TotalUserTokens(userid: Long!, limit: Int = 10, offset: Int = 0): [TotalUserTokens!]\n  TotalOrgTokensByRange(minTokens: Long!, maxTokens: Long!, limit: Int = 10, offset: Int = 0): [TotalOrgTokens!]\n}\n\ntype Subscription {\n  UsageAlert: UserTokens\n}\n\ntype TotalOrgTokens {\n  orgid: Long!\n  total_tokens: Long!\n  total_requests: Long!\n}\n\ntype TotalUserTokens {\n  userid: Long!\n  total_tokens: Long!\n  total_requests: Long!\n}\n\ntype UserTokens {\n  userid: Long!\n  tokens: Long!\n  request_time: DateTime!\n}\n\ninput UserTokensInput {\n  userid: Long!\n  tokens: Long!\n}\n\ntype UserTokensResultOutput {\n  userid: Long!\n  tokens: Long!\n  request_time: DateTime!\n}\n"
     }
   }
 }

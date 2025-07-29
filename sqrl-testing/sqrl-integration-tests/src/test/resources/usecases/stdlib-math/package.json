@@ -1,7 +1,9 @@
 {
   "version": "1",
+  "script": {
+    "main": "stdlib-math.sqrl"
+  },
   "test-runner": {
-    "snapshot-folder": "snapshots-stdlib-math",
     "delay-sec": -1
   }
 }

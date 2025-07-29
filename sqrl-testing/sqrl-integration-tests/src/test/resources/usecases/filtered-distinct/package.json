@@ -1,5 +1,8 @@
 {
   "version": "1",
+  "script": {
+    "main": "filtered-distinct.sqrl"
+  },
   "test-runner": {
     "snapshot-folder": "snapshots-filtered-distinct"
   }

@@ -1,6 +1,9 @@
 {
   "version": "1",
   "enabled-engines": ["vertx", "postgres", "flink"],
+  "script": {
+    "main": "clickstream-teaser.sqrl"
+  },
   "test-runner": {
     "snapshot-folder": "snapshots-clickstream-teaser",
     "test-folder": "tests-clickstream-teaser",

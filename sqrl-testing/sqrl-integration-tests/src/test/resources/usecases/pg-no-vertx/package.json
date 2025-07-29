@@ -1,6 +1,9 @@
 {
   "version": "1",
   "enabled-engines": ["postgres", "flink"],
+  "script": {
+    "main": "views.sqrl"
+  },
   "test-runner": {
     "delay-sec": -1
   }

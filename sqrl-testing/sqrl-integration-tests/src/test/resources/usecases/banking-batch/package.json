@@ -1,9 +1,8 @@
 {
   "version": "1",
   "enabled-engines": ["vertx", "postgres", "flink"],
-  "test-runner": {
-    "snapshot-folder": "snapshots-banking-batch",
-    "delay-sec": -1
+  "script": {
+    "main": "banking-batch.sqrl"
   },
   "engines": {
     "flink" : {
@@ -11,5 +10,9 @@
         "execution.runtime-mode": "batch"
       }
     }
+  },
+  "test-runner": {
+    "snapshot-folder": "snapshots-banking-batch",
+    "delay-sec": -1
   }
 }

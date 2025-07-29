@@ -1,5 +1,8 @@
 {
   "version": "1",
+  "script": {
+    "main": "seedshop-avro.sqrl"
+  },
   "test-runner": {
     "delay-sec": -1
   }

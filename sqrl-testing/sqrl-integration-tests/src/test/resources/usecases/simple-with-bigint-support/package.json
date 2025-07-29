@@ -1,6 +1,6 @@
 {
   "version": "1",
-  "test-runner": {
-    "snapshot-folder": "snapshots-simple-with-bigint-support"
+  "script": {
+    "main": "simple-with-bigint-support.sqrl"
   }
 }

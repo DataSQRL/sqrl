@@ -1,6 +1,9 @@
 {
   "version": "1",
   "enabled-engines": ["vertx", "postgres", "kafka", "flink"],
+  "script": {
+    "main": "temporal-join.sqrl"
+  },
   "engines": {
     "flink" : {
       "config" : {

@@ -1,10 +1,10 @@
 {
   "version": "1",
   "script": {
-	"main": "avro-schema.sqrl"
+    "main": "stdlib-openai-async.sqrl"
   },
   "compiler": {
-    "snapshotPath": "snapshots-avro-schema"
+    "compile-flink-plan": false
   },
   "test-runner": {
     "delay-sec": -1
