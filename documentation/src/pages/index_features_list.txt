@@ -1,0 +1,107 @@
+* Local Developer Workflow (video)
+
+Suggested improvements:
+
+  Content & Messaging Improvements
+
+  • Lead with concrete pain points - Start with "Stop writing data pipeline glue code" or "Build data pipelines without the infrastructure headaches" instead of generic
+  taglines
+  • Add specific time/effort savings - Replace vague "10 min" with "Build what used to take weeks in hours" with concrete examples
+  • Emphasize SQL familiarity - Highlight "If you know SQL, you already know DataSQRL" more prominently
+  • Add real performance metrics - Include actual throughput numbers, latency improvements, or lines of code reduction
+  • Show before/after comparisons - Demonstrate traditional approach vs DataSQRL approach side-by-side
+
+  Technical Credibility Enhancements
+
+  • Add architecture complexity comparison - Show the 10+ services/tools needed traditionally vs single DataSQRL script
+  • Include error handling examples - Show how DataSQRL handles failures, retries, and data consistency automatically
+  • Demonstrate operational benefits - Add monitoring, alerting, and debugging capabilities that come built-in
+  ==>• Show schema evolution - Example of how DataSQRL handles breaking changes and migrations
+  • Add performance optimization examples - Show how compiler automatically optimizes queries and data flow
+
+  Developer Experience Improvements
+
+  • Interactive code examples - Make code blocks editable or add "Try it" buttons
+  • Add IDE/tooling screenshots - Show actual development experience with syntax highlighting, debugging
+  • Include CI/CD integration examples - Show GitHub Actions, Jenkins, or similar integration snippets
+  • Add troubleshooting section - Common issues and solutions engineers will encounter
+  • Show testing workflow - More detailed examples of snapshot testing and validation
+
+  ==> Social Proof & Trust Signals
+
+  • Add adoption metrics - GitHub stars, Docker pulls, or community size if significant
+  • Include use case diversity - Show different industries/scales where DataSQRL is used
+  • Add community testimonials - Brief quotes from actual users about specific benefits
+  • Show enterprise readiness - Security, compliance, and scalability features
+  • Include roadmap highlights - Key upcoming features that show active development
+
+  Technical Differentiation
+
+  • Compare to specific alternatives - Brief, factual comparisons to Kafka Streams, dbt, Airflow
+  • Highlight unique features - Temporal joins, exactly-once processing, automatic API generation
+  • Show integration capabilities - How DataSQRL works with existing data stack
+  • Add migration path - How to gradually adopt DataSQRL in existing infrastructure
+  • Demonstrate vendor lock-in avoidance - Emphasis on open-source runtime components
+
+
+
+May want to include:
+* Rich Function Library and Custom Functions
+* Automatic Database Indexing: Smart index selection for database tables including vector indexes for embeddings
+* Automatic API Generation: with customization
+* Structured and Unstructured Data
+* Realtime, Mini-Batch, and Batch
+* Multi-Engine Architecture - Integrates Apache Flink, PostgreSQL, Kafka, GraphQL APIs into coherent data stacks, PostgreSQL, DuckDB, Snowflake, Yugabyte, Iceberg with native optimizations
+* Observable: Metrics and UI's across engines
+* GraphQL Subscriptions
+
+Included:
+* Full Control (Hints)
+* Connectors (stream, cdc, lakehouse): Support for Kafka, Kinesis, filesystem, PostgreSQL, Iceberg, and more via Flink connectors
+* Run Anywhere (Docker, K8s, cloud)
+* AI-native: Built-in support for vector embeddings, LLM invocation, and ML model inference
+* Data Lineage
+* Local Developer Workflow (video): quick iteration
+* JWT Authorization
+* Fault Tolerant and Scalable
+* DevOps: CI/CD, quick iteration, regression testing, performance testing
+* Optimized DAG Planning - Intelligent query optimization and execution plan generation across multiple engines, Built-in cost model for optimal resource allocation and performance
+* Automated Code Generation - Compiler automatically generates glue code, schemas, mappings, and deployment artifacts
+* Proven Open-Source (get artifacts)
+* Testing Framework: Built-in test execution with snapshot testing and automated regression detection
+* Guaranteed Consistency: Exactly-once processing and consistent data across pipeline steps.
+* SQL is All you need: Use familiar SQL syntax instead of complex code for building complete data pipelines, low learning curve, quick results.
+* SQL is All you need: Complex Transformations, Time-based Processing: windows, temporal joins
+* REST API
+* Semantic Annotations for MCP
+
+
+OLD
+
+Context Retrieval:
+              <div className="row margin-bottom--xl margin-top--lg">
+                <div className="col col--6">
+                  <CodeBlock language="sql">
+                    {`-- Time window aggregation to compute weekly spending profile
+SpendingTimeWindow := SELECT account_id, type, window_start AS week,
+        SUM(amount) AS total_spending, COUNT(*) AS transaction_count
+   FROM TABLE(CUMULATE(TABLE SpendingTransactions, DESCRIPTOR(tx_time),
+                 INTERVAL '1' HOUR, INTERVAL '7' DAY))
+   GROUP BY debit_account_id, type, window_start, window_end;
+-- REST endpoint to retrieve spending profile as context
+/*+query_by_all(account_id) */
+SpendingByWeek := DISTINCT SpendingTimeWindow ON account_id, type, week
+                           ORDER BY window_time;`}
+                  </CodeBlock>
+                </div>
+                <div className="col col--5 text--left">
+                  <h2>Build Context Retrieval in One SQL Script</h2>
+                  <p className="hero__subtitle">
+                    Fill pre-processed data into your prompt template with a single API call.</p>
+                  <p className="hero__subtitle">
+                    Define the processing in SQL and DataSQRL generates the API.
+                  </p>
+                </div>
+              </div>
+
+
