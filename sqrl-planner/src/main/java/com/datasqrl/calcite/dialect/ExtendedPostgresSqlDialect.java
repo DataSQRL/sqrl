@@ -34,6 +34,7 @@ import org.apache.calcite.sql.SqlDialect;
 import org.apache.calcite.sql.SqlWriter;
 import org.apache.calcite.sql.dialect.PostgresqlSqlDialect;
 import org.apache.calcite.sql.parser.SqlParserPos;
+import org.apache.calcite.sql.type.ArraySqlType;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.validate.SqlConformance;
 import org.apache.flink.table.planner.plan.schema.RawRelDataType;
@@ -71,8 +72,14 @@ public class ExtendedPostgresSqlDialect extends PostgresqlSqlDialect {
   @Override
   public SqlDataTypeSpec getCastSpec(RelDataType type) {
     String castSpec;
+
     if (type.getComponentType() instanceof RelRecordType) {
       castSpec = "jsonb";
+
+    } else if (type instanceof ArraySqlType) {
+      var componentSpec = getCastSpec(type.getComponentType());
+      castSpec = componentSpec + " ARRAY";
+
     } else if (type instanceof RawRelDataType rawRelDataType) {
       Class<?> originatingClass = rawRelDataType.getRawType().getOriginatingClass();
       if (originatingClass.equals(FlinkVectorType.class)) {
@@ -105,9 +112,6 @@ public class ExtendedPostgresSqlDialect extends PostgresqlSqlDialect {
           break;
         case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
           castSpec = "TIMESTAMP WITH TIME ZONE";
-          break;
-        case ARRAY:
-          castSpec = "jsonb";
           break;
         case BINARY:
         case VARBINARY:
