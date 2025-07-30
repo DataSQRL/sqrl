@@ -402,6 +402,10 @@
               </filters>
               <relocations>
                 <relocation>
+                  <pattern>com.datasqrl.flinkrunner.</pattern>
+                  <shadedPattern>sqrl.flinkrunner.</shadedPattern>
+                </relocation>
+                <relocation>
                   <pattern>org.objectweb.asm.</pattern>
                   <shadedPattern>sqrl.asm.</shadedPattern>
                 </relocation>
