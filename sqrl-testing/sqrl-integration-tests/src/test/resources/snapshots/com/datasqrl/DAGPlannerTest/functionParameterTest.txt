@@ -351,7 +351,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByNothing_2`
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Customer_1\"\nWHERE (\"customerid\" = ANY ($1))",
+            "sql" : "SELECT *\nFROM \"Customer_1\"\nWHERE (\"customerid\" = ANY (CAST($1 AS BIGINT ARRAY)))",
             "parameters" : [
               {
                 "type" : "arg",

@@ -20,9 +20,7 @@ import com.datasqrl.function.PgSpecificOperatorTable;
 import com.datasqrl.function.translations.PostgresSqlTranslation;
 import com.datasqrl.function.translations.SqlTranslation;
 import com.google.auto.service.AutoService;
-import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlCall;
-import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlWriter;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.flink.table.functions.BuiltInFunctionDefinitions;
@@ -36,24 +34,11 @@ public class ArrayContainsSqlTranslation extends PostgresSqlTranslation {
 
   @Override
   public void unparse(SqlCall call, SqlWriter writer, int leftPrec, int rightPrec) {
-    var rawArray = call.getOperandList().get(0);
+    var array = call.getOperandList().get(0);
     var value = call.getOperandList().get(1);
-
-    var array = unwrapCast(rawArray);
 
     // Emit: value = ANY(array)
     PgSpecificOperatorTable.EqualsAny.createCall(SqlParserPos.ZERO, value, array)
         .unparse(writer, leftPrec, rightPrec);
-  }
-
-  // FIXME: Remove unwrapCast method
-  private SqlNode unwrapCast(SqlNode node) {
-    if (node instanceof SqlBasicCall) {
-      SqlBasicCall call = (SqlBasicCall) node;
-      if (call.getOperator().getName().equalsIgnoreCase("CAST")) {
-        return call.getOperandList().get(0);
-      }
-    }
-    return node;
   }
 }

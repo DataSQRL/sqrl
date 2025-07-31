@@ -119,7 +119,7 @@ public class FullUseCasesIT {
   ////////////// MODIFY THIS TO RUN SPECIFIC USE CASE //////////////
   //////////////////////////////////////////////////////////////////
   private static Stream<UseCaseParam> specificUseCaseProvider() {
-    var useCaseFolderName = "clickstream";
+    var useCaseFolderName = "jwt-authorized";
 
     var pkg = USE_CASES.resolve(useCaseFolderName).resolve("package.json");
     assertThat(pkg).isRegularFile();
