@@ -158,9 +158,10 @@ public class FlexibleSchemaInferencePreprocessor implements DiscoveryPreprocesso
         return;
       }
       var schemaHolder = new FlexibleTableSchemaHolder(schema);
-      // 4. Infer primary key
       var rowType =
-          SchemaToRelDataTypeFactory.load(schemaHolder).map(schemaHolder, tableName, errors);
+          SchemaToRelDataTypeFactory.load(schemaHolder)
+              .map(schemaHolder, tableName.getDisplay(), errors);
+      // 4. Infer primary key
       // We use a conservative method where each simple column is a primary key column
       var primaryKey =
           rowType.getFieldList().stream()

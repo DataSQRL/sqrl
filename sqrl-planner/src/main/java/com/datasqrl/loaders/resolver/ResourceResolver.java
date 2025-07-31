@@ -13,26 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.module;
+package com.datasqrl.loaders.resolver;
 
-import com.datasqrl.canonicalizer.Name;
-import org.apache.calcite.schema.Table;
+import com.datasqrl.canonicalizer.NamePath;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Optional;
 
-/** Represents a {@link NamespaceObject} for a table. */
-public interface TableNamespaceObject<T> extends NamespaceObject {
+public interface ResourceResolver {
 
-  /**
-   * Returns the name of the table.
-   *
-   * @return the name of the table
-   */
-  @Override
-  Name getName();
+  List<Path> loadPath(NamePath namePath);
 
-  /**
-   * Returns the {@link Table} of the table.
-   *
-   * @return the {@link Table} of the table
-   */
-  T getTable();
+  Optional<Path> resolveFile(NamePath namePath);
+
+  Optional<Path> resolveFile(Path relativePath);
+
+  ResourceResolver getNested(Path subPath);
+
+  static String getFileName(Path path) {
+    return path.getFileName().toString();
+  }
 }

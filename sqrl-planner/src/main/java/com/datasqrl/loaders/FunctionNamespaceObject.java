@@ -13,15 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.module;
+package com.datasqrl.loaders;
 
 import com.datasqrl.canonicalizer.Name;
-import java.util.List;
+import java.net.URL;
 import java.util.Optional;
 
-public interface SqrlModule {
+/** Represents a {@link NamespaceObject} for a function. */
+public interface FunctionNamespaceObject<T> extends NamespaceObject {
 
-  Optional<NamespaceObject> getNamespaceObject(Name name);
+  @Override
+  Name getName();
 
-  List<NamespaceObject> getNamespaceObjects();
+  T getFunction();
+
+  Optional<URL> getJarUrl();
 }

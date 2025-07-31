@@ -23,10 +23,10 @@
 // import com.datasqrl.functions.text.StdTextLibraryImpl;
 // import com.datasqrl.functions.time.StdTimeLibraryImpl;
 // import com.datasqrl.serializer.Deserializer;
-// import com.datasqrl.module.SqrlModule;
+// import com.datasqrl.loaders.SqrlModule;
 // import com.datasqrl.function.CalciteFunctionNsObject;
-// import com.datasqrl.module.FunctionNamespaceObject;
-// import com.datasqrl.module.NamespaceObject;
+// import com.datasqrl.loaders.FunctionNamespaceObject;
+// import com.datasqrl.loaders.NamespaceObject;
 // import com.datasqrl.functions.vector.StdVectorLibraryImpl;
 // import com.datasqrl.time.TimeTumbleWindowFunction;
 // import com.google.common.base.Preconditions;

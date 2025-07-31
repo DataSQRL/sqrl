@@ -16,7 +16,7 @@
 package com.datasqrl.function;
 
 import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.module.FunctionNamespaceObject;
+import com.datasqrl.loaders.FunctionNamespaceObject;
 import java.net.URL;
 import java.util.Optional;
 import lombok.Value;

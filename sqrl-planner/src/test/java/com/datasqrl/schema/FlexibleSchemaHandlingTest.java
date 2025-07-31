@@ -74,12 +74,13 @@ public class FlexibleSchemaHandlingTest {
           var errors = ErrorCollector.root();
           var tableSchema = new FlexibleTableSchemaHolder(table);
           var dataType =
-              SchemaToRelDataTypeFactory.load(tableSchema).map(tableSchema, tableName, errors);
+              SchemaToRelDataTypeFactory.load(tableSchema)
+                  .map(tableSchema, tableName.getDisplay(), errors);
           assertThat(errors.hasErrors()).as(errors.toString()).isFalse();
           if (alias.isPresent()) {
             continue;
           }
-          var resultSchema = visitorTest.schemaConverter.convertSchema(dataType);
+          var resultSchema = visitorTest.schemaConverter.convertSchema(dataType.type());
           assertThat(resultSchema).isNotNull();
           var caseName = getCaseName(table.getName().getDisplay(), hasSourceTimestamp);
           snapshot.addContent(resultSchema.toString(), caseName);

@@ -19,13 +19,14 @@ import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableSchema;
 import com.datasqrl.util.ServiceLoaderDiscovery;
+import java.util.Map;
 import org.apache.calcite.rel.type.RelDataType;
 
 public interface SchemaToRelDataTypeFactory {
 
   String getSchemaType();
 
-  RelDataType map(TableSchema schema, Name tableName, ErrorCollector errors);
+  SchemaResult map(TableSchema schema, String tableName, ErrorCollector errors);
 
   static SchemaToRelDataTypeFactory load(TableSchema schema) {
     return ServiceLoaderDiscovery.get(
@@ -33,4 +34,6 @@ public interface SchemaToRelDataTypeFactory {
         SchemaToRelDataTypeFactory::getSchemaType,
         schema.getSchemaType());
   }
+
+  public record SchemaResult(RelDataType type, Map<String, String> connectorOptions) {}
 }

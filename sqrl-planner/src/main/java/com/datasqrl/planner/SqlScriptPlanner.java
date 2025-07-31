@@ -34,10 +34,12 @@ import com.datasqrl.function.FlinkUdfNsObject;
 import com.datasqrl.graphql.server.MutationComputedColumnType;
 import com.datasqrl.graphql.server.MutationInsertType;
 import com.datasqrl.io.schema.flexible.converters.SchemaToRelDataTypeFactory;
+import com.datasqrl.io.schema.flexible.converters.SchemaToRelDataTypeFactory.SchemaResult;
 import com.datasqrl.loaders.FlinkTableNamespaceObject;
 import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.loaders.ScriptSqrlModule.ScriptNamespaceObject;
-import com.datasqrl.module.NamespaceObject;
+import com.datasqrl.loaders.NamespaceObject;
+import com.datasqrl.loaders.schema.SchemaLoader;
 import com.datasqrl.plan.MainScript;
 import com.datasqrl.plan.global.StageAnalysis;
 import com.datasqrl.plan.global.StageAnalysis.Cost;
@@ -781,7 +783,7 @@ public class SqlScriptPlanner {
             sqrlEnv.createTableWithSchema(
                 flinkTable.tableName.getDisplay(),
                 flinkTable.sqlCreateTable,
-                flinkTable.schema,
+                flinkTable.getSchemaLoader(),
                 getLogEngineBuilder(hintsAndDocs));
         hintsAndDocs.getHints().updateColumnNamesHints(tableAnalysis::getField);
         addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv);
@@ -945,10 +947,16 @@ public class SqlScriptPlanner {
       var flinkTable =
           ExternalFlinkTable.fromNamespaceObject(
               sinkTable, Optional.of(sinkName.getDisplay()), errorCollector);
-      var schema =
-          flinkTable.schema.or(() -> Optional.of(inputNode.getTableAnalysis().getRowType()));
+      SchemaLoader schemaLoader =
+          (tableName, schemaReference) -> {
+            if (schemaReference.equalsIgnoreCase("."))
+              return Optional.of(
+                  new SchemaResult(inputNode.getTableAnalysis().getRowType(), Map.of()));
+            return flinkTable.schemaLoader.loadSchema(tableName, schemaReference);
+          };
       try {
-        var tableId = sqrlEnv.addExternalExport(exportTableId, flinkTable.sqlCreateTable, schema);
+        var tableId =
+            sqrlEnv.addExternalExport(exportTableId, flinkTable.sqlCreateTable, schemaLoader);
         exportNode =
             new ExportNode(stageAnalysis, sinkPath, Optional.empty(), Optional.of(tableId));
       } catch (Throwable e) {
@@ -969,7 +977,7 @@ public class SqlScriptPlanner {
 
     Name tableName;
     String sqlCreateTable;
-    Optional<RelDataType> schema;
+    SchemaLoader schemaLoader;
     ErrorCollector errorCollector;
 
     public static ExternalFlinkTable fromNamespaceObject(
@@ -982,21 +990,7 @@ public class SqlScriptPlanner {
       var tableError = errorCollector.withScript(flinkTable.getFlinkSqlFile(), tableSql);
       tableSql = SqlScriptStatementSplitter.formatEndOfSqlFile(tableSql);
 
-      // Schema conversion
-      Optional<RelDataType> schema =
-          flinkTable
-              .getSchema()
-              .map(
-                  tableSchema -> {
-                    if (tableSchema instanceof RelDataTypeTableSchema typeTableSchema) {
-                      return typeTableSchema.getRelDataType();
-                    } else {
-                      return SchemaToRelDataTypeFactory.load(tableSchema)
-                          .map(tableSchema, tableName, errorCollector);
-                    }
-                  });
-
-      return new ExternalFlinkTable(tableName, tableSql, schema, tableError);
+      return new ExternalFlinkTable(tableName, tableSql, nsObject.getSchemaLoader(), tableError);
     }
   }
 }

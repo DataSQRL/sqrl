@@ -13,11 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.module;
+package com.datasqrl.loaders;
 
 import com.datasqrl.canonicalizer.Name;
+import org.apache.calcite.schema.Table;
 
-public interface NamespaceObject {
+/** Represents a {@link NamespaceObject} for a table. */
+public interface TableNamespaceObject<T> extends NamespaceObject {
 
+  /**
+   * Returns the name of the table.
+   *
+   * @return the name of the table
+   */
+  @Override
   Name getName();
+
+  /**
+   * Returns the {@link Table} of the table.
+   *
+   * @return the {@link Table} of the table
+   */
+  T getTable();
 }

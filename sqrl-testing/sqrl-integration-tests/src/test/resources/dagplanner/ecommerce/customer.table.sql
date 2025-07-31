@@ -6,4 +6,5 @@ CREATE TABLE Customer (
       'path' = 'file:/mock',
       'source.monitor-interval' = '10 sec',
       'connector' = 'filesystem'
-      );
+      )
+LIKE `ecommerce.folder.subfolder.customer.schema.yml`;

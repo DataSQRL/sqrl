@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.module.resolver;
+package com.datasqrl.loaders.resolver;
 
 import static com.datasqrl.util.NameUtil.namepath2Path;
 
@@ -68,5 +68,12 @@ public class FileResourceResolver implements ResourceResolver {
       return Optional.empty();
     }
     return Optional.of(path);
+  }
+
+  @Override
+  public ResourceResolver getNested(Path subPath) {
+    Preconditions.checkArgument(
+        subPath.startsWith(baseDir), "Not a sub-path: %s of %s", subPath, baseDir);
+    return new FileResourceResolver(subPath);
   }
 }

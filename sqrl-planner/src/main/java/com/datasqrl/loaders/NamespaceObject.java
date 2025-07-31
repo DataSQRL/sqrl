@@ -15,11 +15,9 @@
  */
 package com.datasqrl.loaders;
 
-import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.module.SqrlModule;
-import java.util.Optional;
+import com.datasqrl.canonicalizer.Name;
 
-public interface ObjectLoader {
+public interface NamespaceObject {
 
-  Optional<SqrlModule> load(NamePath namePath);
+  Name getName();
 }

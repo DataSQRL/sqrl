@@ -23,6 +23,7 @@ import com.datasqrl.io.schema.flexible.FlexibleTableSchemaHolder;
 import com.datasqrl.io.tables.TableSchema;
 import com.google.auto.service.AutoService;
 import com.google.common.base.Preconditions;
+import java.util.Map;
 import org.apache.calcite.rel.type.RelDataType;
 
 @AutoService(SchemaToRelDataTypeFactory.class)
@@ -34,11 +35,11 @@ public class FlexibleSchemaToRelDataTypeFactory implements SchemaToRelDataTypeFa
   }
 
   @Override
-  public RelDataType map(TableSchema schema, Name tableName, ErrorCollector errors) {
+  public SchemaResult map(TableSchema schema, String tableName, ErrorCollector errors) {
     Preconditions.checkArgument(schema instanceof FlexibleTableSchemaHolder);
     var holder = (FlexibleTableSchemaHolder) schema;
-    var converter = new FlexibleTableConverter(holder.getSchema(), tableName);
+    var converter = new FlexibleTableConverter(holder.getSchema(), Name.system(tableName));
     var relDataTypeConverter = new FlexibleTable2RelDataTypeConverter();
-    return converter.apply(relDataTypeConverter);
+    return new SchemaResult(converter.apply(relDataTypeConverter), Map.of());
   }
 }

@@ -17,8 +17,6 @@ package com.datasqrl.loaders;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.module.NamespaceObject;
-import com.datasqrl.module.SqrlModule;
 import com.datasqrl.plan.MainScript;
 import java.nio.file.Path;
 import java.util.List;
@@ -33,6 +31,7 @@ public class ScriptSqrlModule implements SqrlModule {
   private final String scriptContent;
   private final Path scriptPath;
   private final NamePath namePath;
+  private final ModuleLoader moduleLoader;
 
   private final AtomicBoolean planned = new AtomicBoolean(false);
 

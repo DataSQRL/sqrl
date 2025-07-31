@@ -18,7 +18,10 @@ package com.datasqrl.io.tables;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.util.ServiceLoaderDiscovery;
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public interface TableSchemaFactory {
 
@@ -36,5 +39,10 @@ public interface TableSchemaFactory {
   static Optional<TableSchemaFactory> loadByExtension(String extension) {
     return ServiceLoaderDiscovery.findFirst(
         TableSchemaFactory.class, TableSchemaFactory::getExtension, extension);
+  }
+
+  static Map<String, TableSchemaFactory> factoriesByExtension() {
+    return ServiceLoaderDiscovery.getAll(TableSchemaFactory.class).stream()
+        .collect(Collectors.toMap(TableSchemaFactory::getExtension, Function.identity()));
   }
 }

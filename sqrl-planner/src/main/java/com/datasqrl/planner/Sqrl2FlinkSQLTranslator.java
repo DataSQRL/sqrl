@@ -30,6 +30,8 @@ import com.datasqrl.error.ErrorLocation.FileLocation;
 import com.datasqrl.flinkrunner.stdlib.utils.AutoRegisterSystemFunction;
 import com.datasqrl.function.FlinkUdfNsObject;
 import com.datasqrl.graphql.server.MutationComputedColumnType;
+import com.datasqrl.io.schema.flexible.converters.SchemaToRelDataTypeFactory.SchemaResult;
+import com.datasqrl.loaders.schema.SchemaLoader;
 import com.datasqrl.plan.util.PrimaryKeyMap;
 import com.datasqrl.planner.FlinkPhysicalPlan.Builder;
 import com.datasqrl.planner.analyzer.SQRLLogicalPlanAnalyzer;
@@ -650,19 +652,19 @@ public class Sqrl2FlinkSQLTranslator {
   public TableAnalysis createTableWithSchema(
       String tableName,
       String tableDefinition,
-      Optional<RelDataType> schema,
+      SchemaLoader schemaLoader,
       MutationBuilder logEngineBuilder) {
     return addSourceTable(
-        addTable(Optional.of(tableName), tableDefinition, schema, logEngineBuilder));
+        addTable(Optional.of(tableName), tableDefinition, schemaLoader, logEngineBuilder));
   }
 
   public ObjectIdentifier addExternalExport(
-      String tableName, String tableDefinition, Optional<RelDataType> schema) {
+      String tableName, String tableDefinition, SchemaLoader schemaLoader) {
     var result =
         addTable(
             Optional.of(tableName),
             tableDefinition,
-            schema,
+            schemaLoader,
             (x, y) -> {
               throw new UnsupportedOperationException(
                   "Export tables require connector configuration");
@@ -672,7 +674,7 @@ public class Sqrl2FlinkSQLTranslator {
 
   public Optional<TableAnalysis> createTable(
       String tableDefinition, MutationBuilder logEngineBuilder) {
-    var result = addTable(Optional.empty(), tableDefinition, Optional.empty(), logEngineBuilder);
+    var result = addTable(Optional.empty(), tableDefinition, SchemaLoader.NONE, logEngineBuilder);
     if (result.isSourceTable()) return Optional.of(addSourceTable(result));
     else return Optional.empty();
   }
@@ -722,14 +724,14 @@ public class Sqrl2FlinkSQLTranslator {
    *
    * @param tableName
    * @param createTableSql
-   * @param schema
+   * @param schemaLoader
    * @param mutationBuilder
    * @return
    */
   private AddTableResult addTable(
       Optional<String> tableName,
       String createTableSql,
-      Optional<RelDataType> schema,
+      SchemaLoader schemaLoader,
       MutationBuilder mutationBuilder) {
     var tableSqlNode = parseSQL(createTableSql);
     Preconditions.checkArgument(
@@ -737,16 +739,28 @@ public class Sqrl2FlinkSQLTranslator {
     var tableDefinition = (SqlCreateTable) tableSqlNode;
     var fullTable = tableDefinition;
     final var finalTableName = tableName.orElse(tableDefinition.getTableName().getSimple());
-    if (schema.isPresent()) {
-      // Use LIKE to merge schema with table definition
-      var schemaTableName = finalTableName + SCHEMA_SUFFIX;
-      // This should be a temporary table
-      var schemaTable = FlinkSqlNodeFactory.createTable(schemaTableName, schema.get(), true);
-      executeSqlNode(schemaTable);
+    if (fullTable instanceof SqlCreateTableLike) {
+      // Check if the LIKE clause is referencing an external schema
+      SqlTableLike likeClause = ((SqlCreateTableLike) fullTable).getTableLike();
+      var likeTableName = likeClause.getSourceTable().toString();
+      Optional<SchemaResult> schema = schemaLoader.loadSchema(finalTableName, likeTableName);
+      if (schema.isPresent()) {
+        // Use LIKE to merge schema with table definition
+        var schemaTableName = finalTableName + SCHEMA_SUFFIX;
+        // This should be a temporary table
+        var connectorOptions = Map.of("connector", "datagen");
+        if (!schema.get().connectorOptions().isEmpty()) {
+          connectorOptions = schema.get().connectorOptions();
+        }
+        var schemaTable =
+            FlinkSqlNodeFactory.createTable(
+                schemaTableName, schema.get().type(), connectorOptions, true);
+        executeSqlNode(schemaTable);
 
-      var likeClause =
-          new SqlTableLike(
-              SqlParserPos.ZERO, FlinkSqlNodeFactory.identifier(schemaTableName), List.of());
+        likeClause =
+            new SqlTableLike(
+                SqlParserPos.ZERO, FlinkSqlNodeFactory.identifier(schemaTableName), List.of());
+      }
       fullTable =
           new SqlCreateTableLike(
               tableDefinition.getParserPosition(),
@@ -761,7 +775,7 @@ public class Sqrl2FlinkSQLTranslator {
               likeClause,
               tableDefinition.isTemporary(),
               tableDefinition.ifNotExists);
-    } else {
+    } else if (tableName.isPresent()) {
       // Replace name but leave everything else
       fullTable =
           new SqlCreateTable(

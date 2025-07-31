@@ -21,6 +21,7 @@ import com.datasqrl.io.schema.flexible.converters.SchemaToRelDataTypeFactory;
 import com.datasqrl.io.tables.TableSchema;
 import com.google.auto.service.AutoService;
 import com.google.common.base.Preconditions;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.rel.type.RelDataType;
 
@@ -34,14 +35,14 @@ public class AvroSchemaToRelDataTypeFactory implements SchemaToRelDataTypeFactor
   }
 
   @Override
-  public RelDataType map(TableSchema schema, Name tableName, ErrorCollector errors) {
+  public SchemaResult map(TableSchema schema, String tableName, ErrorCollector errors) {
     Preconditions.checkArgument(schema instanceof AvroSchemaHolder);
     var avroSchema = ((AvroSchemaHolder) schema).getSchema();
 
     var legacyTimestampMapping = getLegacyTimestampMapping();
 
     var converter = new AvroToRelDataTypeConverter(errors, legacyTimestampMapping);
-    return converter.convert(avroSchema);
+    return new SchemaResult(converter.convert(avroSchema), Map.of());
   }
 
   private boolean getLegacyTimestampMapping() {

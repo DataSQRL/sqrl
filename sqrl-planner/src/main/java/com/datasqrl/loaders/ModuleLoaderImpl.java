@@ -15,30 +15,62 @@
  */
 package com.datasqrl.loaders;
 
+import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.module.SqrlModule;
-import com.datasqrl.module.resolver.ResourceResolver;
+import com.datasqrl.function.FlinkUdfNsObject;
+import com.datasqrl.loaders.FlinkTableNamespaceObject.FlinkTable;
+import com.datasqrl.loaders.resolver.ResourceResolver;
+import com.datasqrl.loaders.schema.SchemaLoaderImpl;
+import com.datasqrl.serializer.Deserializer;
+import com.datasqrl.util.StringUtil;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.base.Preconditions;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.google.inject.Inject;
-import java.util.HashMap;
-import java.util.Map;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.SneakyThrows;
+import org.apache.flink.table.functions.UserDefinedFunction;
 
-@AllArgsConstructor(onConstructor_ = @Inject)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class ModuleLoaderImpl implements ModuleLoader {
 
-  final ClasspathFunctionLoader classpathFunctionLoader = new ClasspathFunctionLoader();
+  public static final String FUNCTION_JSON_EXTENSION = ".function.json";
+  public static final String SQRL_FILE_EXTENSION = ".sqrl";
+  static final Deserializer SERIALIZER = Deserializer.INSTANCE;
+
+  private final ClasspathFunctionLoader classpathFunctionLoader;
   private final ResourceResolver resourceResolver;
   private final ErrorCollector errors;
+  private final Cache<NamePath, SqrlModule> cache =
+      CacheBuilder.newBuilder().maximumSize(1000).build();
+  ;
 
-  // Required to reduce the cost of script imports
-  private final Map<NamePath, SqrlModule> cache = new HashMap<>();
+  @Inject
+  public ModuleLoaderImpl(ResourceResolver resourceResolver, ErrorCollector errors) {
+    this.classpathFunctionLoader = new ClasspathFunctionLoader();
+    this.resourceResolver = resourceResolver;
+    this.errors = errors;
+  }
+
+  private ModuleLoaderImpl withResourceResolver(ResourceResolver resourceResolver) {
+    return new ModuleLoaderImpl(classpathFunctionLoader, resourceResolver, errors);
+  }
 
   @Override
   public Optional<SqrlModule> getModule(NamePath namePath) {
-    if (cache.containsKey(namePath)) {
-      return Optional.of(cache.get(namePath));
+    var cached = cache.getIfPresent(namePath);
+    if (cached != null) {
+      return Optional.of(cached);
     }
 
     var module = getModuleOpt(namePath);
@@ -47,7 +79,7 @@ public class ModuleLoaderImpl implements ModuleLoader {
     return module;
   }
 
-  public Optional<SqrlModule> getModuleOpt(NamePath namePath) {
+  private Optional<SqrlModule> getModuleOpt(NamePath namePath) {
     // Load modules from file system first
     var module = loadFromFileSystem(namePath);
     if (module.isEmpty()) { // if it's not local, try to load it from classpath
@@ -64,12 +96,96 @@ public class ModuleLoaderImpl implements ModuleLoader {
     return Optional.of(new SqrlDirectoryModule(lib));
   }
 
-  private Optional<SqrlModule> loadFromFileSystem(NamePath namePath) {
-    return new ObjectLoaderImpl(resourceResolver, errors).load(namePath);
+  private Optional<SqrlModule> loadFromFileSystem(NamePath directory) {
+    // Folders take precedence
+    var allItems = resourceResolver.loadPath(directory);
+
+    // Check for sqrl scripts
+    if (allItems.isEmpty()) {
+      var sqrlFile =
+          getFile(
+              directory.popLast(),
+              Name.system(directory.getLast().toString() + SQRL_FILE_EXTENSION));
+      if (sqrlFile.isPresent()) {
+        return Optional.of(loadScript(directory, sqrlFile.get()));
+      }
+    }
+
+    List<NamespaceObject> items =
+        allItems.stream()
+            .flatMap(url -> load(url, directory).stream())
+            .collect(Collectors.toList());
+    if (items.isEmpty()) {
+      return Optional.empty();
+    }
+    return Optional.of(new SqrlDirectoryModule(items));
+  }
+
+  private Optional<Path> getFile(NamePath directory, Name name) {
+    return resourceResolver.resolveFile(directory.concat(name));
+  }
+
+  private List<? extends NamespaceObject> load(Path path, NamePath directory) {
+    if (path.toString().endsWith(DataSource.TABLE_FILE_SUFFIX)) {
+      return loadTable(path, directory);
+    } else if (path.toString().endsWith(FUNCTION_JSON_EXTENSION)) {
+      return loadFunction(path, directory);
+    }
+    return List.of();
+  }
+
+  @SneakyThrows
+  private SqrlModule loadScript(NamePath namePath, Path path) {
+    return new ScriptSqrlModule(
+        Files.readString(path),
+        path,
+        namePath,
+        withResourceResolver(resourceResolver.getNested(path.getParent())));
+  }
+
+  @SneakyThrows
+  private List<TableNamespaceObject> loadTable(Path path, NamePath basePath) {
+    String tableName =
+        StringUtil.removeFromEnd(ResourceResolver.getFileName(path), DataSource.TABLE_FILE_SUFFIX);
+    errors.checkFatal(Name.validName(tableName), "Not a valid table name: %s", tableName);
+    String tableSQL = Files.readString(path);
+    return List.of(
+        new FlinkTableNamespaceObject(
+            new FlinkTable(Name.system(tableName), tableSQL, path),
+            new SchemaLoaderImpl(resourceResolver.getNested(path.getParent()), errors)));
+  }
+
+  public static final Class<?> UDF_FUNCTION_CLASS = UserDefinedFunction.class;
+
+  @SneakyThrows
+  private List<NamespaceObject> loadFunction(Path path, NamePath namePath) {
+    ObjectNode json = SERIALIZER.mapJsonFile(path, ObjectNode.class);
+    String jarPath = json.get("jarPath").asText();
+    String functionClassName = json.get("functionClass").asText();
+    Optional<Path> path1 = resourceResolver.resolveFile(namePath.concat(Name.system(jarPath)));
+    URL jarUrl = path1.get().toUri().toURL();
+    Class<?> functionClass = loadClass(jarUrl, functionClassName);
+    Preconditions.checkArgument(
+        UDF_FUNCTION_CLASS.isAssignableFrom(functionClass), "Class is not a UserDefinedFunction");
+
+    UserDefinedFunction udf =
+        (UserDefinedFunction) functionClass.getDeclaredConstructor().newInstance();
+
+    // Return a namespace object containing the created function
+    String functionName = FlinkUdfNsObject.getFunctionName(udf);
+    return List.of(new FlinkUdfNsObject(functionName, udf, functionName, Optional.of(jarUrl)));
+  }
+
+  @SneakyThrows
+  private Class<?> loadClass(URL jarPath, String functionClassName) {
+    URL[] urls = {jarPath};
+    URLClassLoader classLoader =
+        new URLClassLoader(urls, Thread.currentThread().getContextClassLoader());
+    return Class.forName(functionClassName, true, classLoader);
   }
 
   @Override
   public String toString() {
-    return new ObjectLoaderImpl(resourceResolver, errors).toString();
+    return resourceResolver.toString();
   }
 }
