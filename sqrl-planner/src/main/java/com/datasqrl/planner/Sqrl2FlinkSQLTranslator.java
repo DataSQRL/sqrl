@@ -774,7 +774,9 @@ public class Sqrl2FlinkSQLTranslator {
 
         likeClause =
             new SqlTableLike(
-                SqlParserPos.ZERO, FlinkSqlNodeFactory.identifier(schemaTableName), List.of());
+                likeClause.getParserPosition(),
+                FlinkSqlNodeFactory.identifier(schemaTableName),
+                likeClause.getOptions());
       }
       fullTable =
           new SqlCreateTableLike(
