@@ -30,6 +30,8 @@ import com.datasqrl.error.ErrorLocation.FileLocation;
 import com.datasqrl.flinkrunner.stdlib.utils.AutoRegisterSystemFunction;
 import com.datasqrl.function.FlinkUdfNsObject;
 import com.datasqrl.graphql.server.MutationComputedColumnType;
+import com.datasqrl.io.schema.SchemaConversionResult;
+import com.datasqrl.loaders.schema.SchemaLoader;
 import com.datasqrl.plan.util.PrimaryKeyMap;
 import com.datasqrl.planner.FlinkPhysicalPlan.Builder;
 import com.datasqrl.planner.analyzer.SQRLLogicalPlanAnalyzer;
@@ -57,6 +59,7 @@ import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -163,6 +166,7 @@ import org.apache.flink.table.types.DataType;
 public class Sqrl2FlinkSQLTranslator {
 
   public static final String SCHEMA_SUFFIX = "__schema";
+  public static final String DEFAULT_CATALOG_NAME = "default_catalog";
 
   private final RuntimeExecutionMode executionMode;
   private final boolean compileFlinkPlan;
@@ -384,6 +388,18 @@ public class Sqrl2FlinkSQLTranslator {
         .getOrCreateSqlValidator()
         .getCatalogReader()
         .unwrap(CalciteCatalogReader.class);
+  }
+
+  private final HashSet<String> createdDatabases = new HashSet<>();
+
+  public void setDatabase(String databaseName, boolean withCatalog) {
+    if (withCatalog) {
+      executeSQL("USE CATALOG `%s`;".formatted(DEFAULT_CATALOG_NAME));
+    }
+    if (createdDatabases.add(databaseName)) {
+      executeSQL("CREATE DATABASE IF NOT EXISTS `%s`;".formatted(databaseName));
+    }
+    executeSQL("USE `%s`;".formatted(databaseName));
   }
 
   public FlinkRelBuilder getTableScan(ObjectIdentifier identifier) {
@@ -650,19 +666,19 @@ public class Sqrl2FlinkSQLTranslator {
   public TableAnalysis createTableWithSchema(
       String tableName,
       String tableDefinition,
-      Optional<RelDataType> schema,
+      SchemaLoader schemaLoader,
       MutationBuilder logEngineBuilder) {
     return addSourceTable(
-        addTable(Optional.of(tableName), tableDefinition, schema, logEngineBuilder));
+        addTable(Optional.of(tableName), tableDefinition, schemaLoader, logEngineBuilder));
   }
 
   public ObjectIdentifier addExternalExport(
-      String tableName, String tableDefinition, Optional<RelDataType> schema) {
+      String tableName, String tableDefinition, SchemaLoader schemaLoader) {
     var result =
         addTable(
             Optional.of(tableName),
             tableDefinition,
-            schema,
+            schemaLoader,
             (x, y) -> {
               throw new UnsupportedOperationException(
                   "Export tables require connector configuration");
@@ -671,8 +687,8 @@ public class Sqrl2FlinkSQLTranslator {
   }
 
   public Optional<TableAnalysis> createTable(
-      String tableDefinition, MutationBuilder logEngineBuilder) {
-    var result = addTable(Optional.empty(), tableDefinition, Optional.empty(), logEngineBuilder);
+      String tableDefinition, MutationBuilder logEngineBuilder, SchemaLoader schemaLoader) {
+    var result = addTable(Optional.empty(), tableDefinition, schemaLoader, logEngineBuilder);
     if (result.isSourceTable()) return Optional.of(addSourceTable(result));
     else return Optional.empty();
   }
@@ -722,14 +738,14 @@ public class Sqrl2FlinkSQLTranslator {
    *
    * @param tableName
    * @param createTableSql
-   * @param schema
+   * @param schemaLoader
    * @param mutationBuilder
    * @return
    */
   private AddTableResult addTable(
       Optional<String> tableName,
       String createTableSql,
-      Optional<RelDataType> schema,
+      SchemaLoader schemaLoader,
       MutationBuilder mutationBuilder) {
     var tableSqlNode = parseSQL(createTableSql);
     Preconditions.checkArgument(
@@ -737,16 +753,31 @@ public class Sqrl2FlinkSQLTranslator {
     var tableDefinition = (SqlCreateTable) tableSqlNode;
     var fullTable = tableDefinition;
     final var finalTableName = tableName.orElse(tableDefinition.getTableName().getSimple());
-    if (schema.isPresent()) {
-      // Use LIKE to merge schema with table definition
-      var schemaTableName = finalTableName + SCHEMA_SUFFIX;
-      // This should be a temporary table
-      var schemaTable = FlinkSqlNodeFactory.createTable(schemaTableName, schema.get(), true);
-      executeSqlNode(schemaTable);
+    if (fullTable instanceof SqlCreateTableLike) {
+      // Check if the LIKE clause is referencing an external schema
+      SqlTableLike likeClause = ((SqlCreateTableLike) fullTable).getTableLike();
+      var likeTableName = likeClause.getSourceTable().toString();
+      Optional<SchemaConversionResult> schema =
+          schemaLoader.loadSchema(finalTableName, likeTableName);
+      if (schema.isPresent()) {
+        // Use LIKE to merge schema with table definition
+        var schemaTableName = finalTableName + SCHEMA_SUFFIX;
+        // This should be a temporary table
+        var connectorOptions = Map.of("connector", "datagen");
+        if (!schema.get().connectorOptions().isEmpty()) {
+          connectorOptions = schema.get().connectorOptions();
+        }
+        var schemaTable =
+            FlinkSqlNodeFactory.createTable(
+                schemaTableName, schema.get().type(), connectorOptions, true);
+        executeSqlNode(schemaTable);
 
-      var likeClause =
-          new SqlTableLike(
-              SqlParserPos.ZERO, FlinkSqlNodeFactory.identifier(schemaTableName), List.of());
+        likeClause =
+            new SqlTableLike(
+                likeClause.getParserPosition(),
+                FlinkSqlNodeFactory.identifier(schemaTableName),
+                likeClause.getOptions());
+      }
       fullTable =
           new SqlCreateTableLike(
               tableDefinition.getParserPosition(),
@@ -761,7 +792,7 @@ public class Sqrl2FlinkSQLTranslator {
               likeClause,
               tableDefinition.isTemporary(),
               tableDefinition.ifNotExists);
-    } else {
+    } else if (tableName.isPresent()) {
       // Replace name but leave everything else
       fullTable =
           new SqlCreateTable(

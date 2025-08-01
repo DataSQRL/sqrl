@@ -1,0 +1,4 @@
+>>>type
+RecordType(BIGINT NOT NULL sensorid, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL time, DOUBLE NOT NULL temperature, DOUBLE NOT NULL humidity) NOT NULL
+>>>connector
+{connector=filesystem, format=csv, path=${DATA_PATH}/sensorreading.csv.gz}

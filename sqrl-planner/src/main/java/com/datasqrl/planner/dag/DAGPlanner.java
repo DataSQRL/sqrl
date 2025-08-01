@@ -195,7 +195,7 @@ public class DAGPlanner {
           .forEach(
               mut -> {
                 planBuilder.mutation(mut.getCreateTopic());
-                serverPlan.mutation(mut);
+                if (mut.isGenerateAccess()) serverPlan.mutation(mut);
               });
     }
 

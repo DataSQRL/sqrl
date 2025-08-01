@@ -17,21 +17,16 @@ package com.datasqrl.packager.preprocess;
 
 import static com.datasqrl.packager.LambdaUtil.rethrowCall;
 
-import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.loaders.ClasspathFunctionLoader;
-import com.datasqrl.packager.preprocessor.Preprocessor;
+import com.datasqrl.packager.PreprocessorOrchestrator;
 import com.datasqrl.util.SqrlObjectMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -41,7 +36,7 @@ import org.apache.commons.io.IOUtils;
  * Reads a jar and creates sqrl manifest entries in the build directory
  */
 @Slf4j
-public class JarPreprocessor implements Preprocessor {
+public class JarPreprocessor implements NewPreprocessor {
 
   public static final ObjectMapper mapper = SqrlObjectMapper.INSTANCE;
 
@@ -51,22 +46,18 @@ public class JarPreprocessor implements Preprocessor {
           .map(Class::getCanonicalName)
           .collect(Collectors.toSet());
 
-  @Override
-  public Pattern getPattern() {
-    return Pattern.compile(".*\\.jar$");
-  }
-
   @SneakyThrows
   @Override
-  public void processFile(Path path, ProcessorContext processorContext, ErrorCollector errors) {
+  public void process(Path path, PreprocessorOrchestrator.Context context) {
+    if (!path.getFileName().toString().endsWith(".jar")) return;
     try (java.util.jar.JarFile file = new java.util.jar.JarFile(path.toFile())) {
       file.stream()
           .filter(this::isValidEntry)
           .filter(entry -> flinkUdfs.contains(getClassName(entry)))
-          .forEach(
-              entry -> rethrowCall(() -> processJarEntry(entry, file, processorContext, path)));
+          .forEach(entry -> rethrowCall(() -> processJarEntry(entry, file, context, path)));
+      context.copy2lib(path);
     } catch (Exception e) {
-      log.warn("Could not jar in path:" + path, e);
+      log.warn("Could not read jar in path:" + path, e);
     }
   }
 
@@ -77,7 +68,7 @@ public class JarPreprocessor implements Preprocessor {
 
   /** Processes a single jar entry */
   private Void processJarEntry(
-      JarEntry entry, JarFile file, ProcessorContext processorContext, Path path)
+      JarEntry entry, JarFile file, PreprocessorOrchestrator.Context processorContext, Path path)
       throws IOException {
     var input = file.getInputStream(entry);
     var classes = IOUtils.readLines(input, Charset.defaultCharset());
@@ -90,10 +81,9 @@ public class JarPreprocessor implements Preprocessor {
 
       // Create a file in a temporary directory
       var functionName = clazz.substring(clazz.lastIndexOf('.') + 1);
-      var toFile = createTempFile(obj, functionName);
-      processorContext.addDependency(path);
-      processorContext.addDependency(toFile.toPath());
-      processorContext.addLibrary(path);
+      var functionPath =
+          processorContext.createNewBuildFile(Path.of(functionName + ".function.json"));
+      mapper.writeValue(functionPath.toFile(), obj);
     }
 
     return null;
@@ -102,13 +92,5 @@ public class JarPreprocessor implements Preprocessor {
   /** Checks if the jar entry is valid */
   private boolean isValidEntry(java.util.jar.JarEntry entry) {
     return entry.getName().startsWith(SERVICES_PATH) && !entry.getName().endsWith("/");
-  }
-
-  /** Creates a temporary file and writes the given object to it */
-  private File createTempFile(ObjectNode obj, String functionName) throws IOException {
-    var functionPath = Files.createTempDirectory("fnc").resolve(functionName + ".function.json");
-
-    mapper.writeValue(functionPath.toFile(), obj);
-    return functionPath.toFile();
   }
 }

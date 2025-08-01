@@ -1,5 +1,5 @@
 [FATAL] Table (or view) default_database.Customer already exists in Catalog default_catalog.
-in script:parsererror-duplicatetable-fail.sqrl [3:1]:
+in script:parserError-duplicateTable-fail.sqrl [3:1]:
 IMPORT ecommerceTs.Customer;
 
 Customer := SELECT COUNT(*) AS num_customers FROM Customer;

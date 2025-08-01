@@ -15,7 +15,6 @@
  */
 package com.datasqrl.serializer;
 
-import com.datasqrl.module.resolver.ResourceResolver;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
@@ -24,7 +23,6 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.vertx.core.json.jackson.VertxModule;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.Path;
 import lombok.Getter;
 
@@ -53,16 +51,8 @@ public class Deserializer {
         .setSerializationInclusion(JsonInclude.Include.NON_NULL);
   }
 
-  public <T> T mapJsonFile(URI path, Class<T> clazz) {
-    return mapFile(jsonMapper, path, clazz);
-  }
-
   public <T> T mapJsonFile(Path path, Class<T> clazz) {
     return mapFile(jsonMapper, path, clazz);
-  }
-
-  public <T> T mapYAMLFile(URI uri, Class<T> clazz) {
-    return mapFile(yamlMapper, uri, clazz);
   }
 
   public <T> T mapYAML(String yamlContent, Class<T> clazz) {
@@ -71,14 +61,6 @@ public class Deserializer {
 
   public <T> T mapYAMLFile(Path path, Class<T> clazz) {
     return mapFile(yamlMapper, path, clazz);
-  }
-
-  public static <T> T mapFile(ObjectMapper mapper, URI uri, Class<T> clazz) {
-    try {
-      return mapper.readValue(ResourceResolver.toURL(uri), clazz);
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
   }
 
   public static <T> T map(ObjectMapper mapper, String content, Class<T> clazz) {

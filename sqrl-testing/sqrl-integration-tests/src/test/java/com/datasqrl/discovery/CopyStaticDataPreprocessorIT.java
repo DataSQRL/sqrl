@@ -18,42 +18,59 @@ package com.datasqrl.discovery;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datasqrl.AbstractAssetSnapshotTest;
-import com.datasqrl.config.SqrlConstants;
-import com.datasqrl.discovery.FlexibleSchemaInferencePreprocessorTest.DataFiles;
+import com.datasqrl.config.BuildPath;
+import com.datasqrl.config.PackageJson;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.packager.preprocess.CopyStaticDataPreprocessor;
-import com.datasqrl.packager.preprocessor.Preprocessor.ProcessorContext;
-import com.datasqrl.util.FileHash;
-import com.datasqrl.util.SnapshotTest.Snapshot;
+import com.datasqrl.packager.PreprocessorOrchestrator;
+import com.datasqrl.util.ConfigLoaderUtils;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import lombok.SneakyThrows;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ArgumentsSource;
+import org.junit.Test;
 
 public class CopyStaticDataPreprocessorIT extends AbstractAssetSnapshotTest {
 
   public static final Path FILES_DIR = getResourcesDirectory("discoveryfiles");
 
-  CopyStaticDataPreprocessor preprocessor = new CopyStaticDataPreprocessor();
+  PackageJson packageJson;
+  ErrorCollector errorCollector = ErrorCollector.root();
 
-  protected CopyStaticDataPreprocessorIT() {
-    super(FILES_DIR.resolve("output"));
+  public CopyStaticDataPreprocessorIT() {
+    super(FILES_DIR.resolve("build"));
     super.buildDir = super.outputDir;
+    packageJson = ConfigLoaderUtils.loadDefaultConfig(errorCollector);
   }
 
-  @ParameterizedTest
-  @ArgumentsSource(DataFiles.class)
+  @Test
   @SneakyThrows
-  void scripts(Path file) {
-    assertThat(file).exists();
-    String filename = file.getFileName().toString();
-    assertThat(filename).matches(preprocessor.getPattern());
-    this.snapshot = Snapshot.of(getDisplayName(file), getClass());
-    preprocessor.processFile(
-        file, new ProcessorContext(outputDir, buildDir, null), ErrorCollector.root());
-    Path copyFile = outputDir.resolve(SqrlConstants.DATA_DIR).resolve(filename);
-    assertThat(copyFile).exists().isRegularFile();
-    snapshot.addContent(FileHash.getFor(copyFile), filename);
-    snapshot.createOrValidate();
+  public void copyStaticData() {
+    var buildPath = new BuildPath(outputDir, outputDir);
+    PreprocessorOrchestrator preprocessorOrchestrator =
+        new PreprocessorOrchestrator(packageJson, buildPath);
+    preprocessorOrchestrator.preprocessDirectory(FILES_DIR, errorCollector);
+
+    Path dataDir = buildPath.getDataPath();
+
+    long dataFilesCount = countFilesRecursively(dataDir);
+
+    long buildFilesCount = countFilesRecursively(outputDir);
+
+    long sourceFilesCount = countFiles(FILES_DIR);
+
+    assertThat(dataFilesCount).isEqualTo(sourceFilesCount);
+    // We expect another copy of the data in the build directory
+    assertThat(buildFilesCount).isEqualTo(2 * sourceFilesCount);
+  }
+
+  @SneakyThrows
+  public static long countFilesRecursively(Path path) {
+    if (!Files.exists(path) || !Files.isDirectory(path)) return 0;
+    return Files.walk(path).filter(Files::isRegularFile).count();
+  }
+
+  @SneakyThrows
+  public static long countFiles(Path path) {
+    if (!Files.exists(path) || !Files.isDirectory(path)) return 0;
+    return Files.list(path).filter(Files::isRegularFile).count();
   }
 }

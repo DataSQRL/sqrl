@@ -60,4 +60,7 @@ public class MutationQuery implements ExecutableQuery, Documented {
 
   /** How records are inserted into the topic for this mutation */
   @Default MutationInsertType insertType = MutationInsertType.SINGLE;
+
+  /** Whether this mutation should be exposed in the interface */
+  boolean generateAccess;
 }

@@ -16,22 +16,19 @@
 package com.datasqrl.loaders;
 
 import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.io.tables.TableSchema;
 import com.datasqrl.loaders.FlinkTableNamespaceObject.FlinkTable;
-import com.datasqrl.module.TableNamespaceObject;
+import com.datasqrl.loaders.schema.SchemaLoader;
 import java.nio.file.Path;
-import java.util.Optional;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Value;
 
+@AllArgsConstructor
 @Getter
 public class FlinkTableNamespaceObject implements TableNamespaceObject<FlinkTable> {
 
   private final FlinkTable table;
-
-  public FlinkTableNamespaceObject(FlinkTable table) {
-    this.table = table;
-  }
+  private final SchemaLoader schemaLoader;
 
   @Override
   public Name getName() {
@@ -43,6 +40,5 @@ public class FlinkTableNamespaceObject implements TableNamespaceObject<FlinkTabl
     Name name;
     String flinkSQL;
     Path flinkSqlFile;
-    Optional<TableSchema> schema;
   }
 }
