@@ -147,6 +147,17 @@
     },
     "usingDomainSocket" : false
   },
+  "kafkaSubscriptionConfig": {
+    "bootstrap.servers": "${KAFKA_BOOTSTRAP_SERVERS}",
+    "key.deserializer": "com.datasqrl.graphql.kafka.JsonDeserializer",
+    "value.deserializer": "com.datasqrl.graphql.kafka.JsonDeserializer",
+    "auto.offset.reset": "latest"
+  },
+  "kafkaMutationConfig": {
+    "bootstrap.servers": "${KAFKA_BOOTSTRAP_SERVERS}",
+    "key.serializer": "com.datasqrl.graphql.kafka.JsonSerializer",
+    "value.serializer": "com.datasqrl.graphql.kafka.JsonSerializer"
+  },
   "poolOptions" : {
     "maxSize" : 4,
     "maxWaitQueueSize" : -1,

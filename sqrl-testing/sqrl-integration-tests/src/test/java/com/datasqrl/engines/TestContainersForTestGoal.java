@@ -36,6 +36,7 @@ import com.datasqrl.engines.TestEngine.SnowflakeTestEngine;
 import com.datasqrl.engines.TestEngine.TestEngineVisitor;
 import com.datasqrl.engines.TestEngine.TestTestEngine;
 import com.datasqrl.engines.TestEngine.VertxTestEngine;
+import com.datasqrl.env.GlobalEnvironmentStore;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -77,6 +78,15 @@ public class TestContainersForTestGoal implements TestEngineVisitor<TestContaine
       @Override
       public void start() {
         testDatabase.start();
+        GlobalEnvironmentStore.put(POSTGRES_JDBC_URL, testDatabase.getJdbcUrl());
+        GlobalEnvironmentStore.put(POSTGRES_AUTHORITY, testDatabase.getJdbcUrl().split("://")[1]);
+        GlobalEnvironmentStore.put(POSTGRES_HOST, testDatabase.getHost());
+        GlobalEnvironmentStore.put(
+            POSTGRES_PORT,
+            testDatabase.getMappedPort(PostgreSQLContainer.POSTGRESQL_PORT).toString());
+        GlobalEnvironmentStore.put(POSTGRES_USERNAME, testDatabase.getUsername());
+        GlobalEnvironmentStore.put(POSTGRES_PASSWORD, testDatabase.getPassword());
+        GlobalEnvironmentStore.put(POSTGRES_DATABASE, testDatabase.getDatabaseName());
       }
 
       @Override
@@ -98,21 +108,6 @@ public class TestContainersForTestGoal implements TestEngineVisitor<TestContaine
       public void teardown() {
         testDatabase.stop();
       }
-
-      @Override
-      public Map<String, String> getEnv() {
-        Map<String, String> env = new HashMap<>(8);
-        env.put(POSTGRES_JDBC_URL, testDatabase.getJdbcUrl());
-        env.put(POSTGRES_AUTHORITY, testDatabase.getJdbcUrl().split("://")[1]);
-        env.put(POSTGRES_HOST, testDatabase.getHost());
-        env.put(
-            POSTGRES_PORT,
-            testDatabase.getMappedPort(PostgreSQLContainer.POSTGRESQL_PORT).toString());
-        env.put(POSTGRES_USERNAME, testDatabase.getUsername());
-        env.put(POSTGRES_PASSWORD, testDatabase.getPassword());
-        env.put(POSTGRES_DATABASE, testDatabase.getDatabaseName());
-        return env;
-      }
     };
   }
 
@@ -130,6 +125,8 @@ public class TestContainersForTestGoal implements TestEngineVisitor<TestContaine
       @Override
       public void start() {
         testKafka.start();
+        GlobalEnvironmentStore.put(KAFKA_BOOTSTRAP_SERVERS, testKafka.getBootstrapServers());
+        GlobalEnvironmentStore.put(KAFKA_GROUP_ID, UUID.randomUUID().toString());
       }
 
       @Override
@@ -149,15 +146,6 @@ public class TestContainersForTestGoal implements TestEngineVisitor<TestContaine
       @Override
       public void teardown() {
         testKafka.stop();
-      }
-
-      @Override
-      public Map<String, String> getEnv() {
-        return Map.of(
-            KAFKA_BOOTSTRAP_SERVERS,
-            testKafka.getBootstrapServers(),
-            KAFKA_GROUP_ID,
-            UUID.randomUUID().toString());
       }
     };
   }
@@ -242,7 +230,10 @@ public class TestContainersForTestGoal implements TestEngineVisitor<TestContaine
 
     void teardown();
 
-    Map<String, String> getEnv();
+    default Map<String, String> getEnv() {
+      return Map.of();
+    }
+    ;
   }
 
   public static class NoopTestContainerHook implements TestContainerHook {
@@ -256,11 +247,6 @@ public class TestContainersForTestGoal implements TestEngineVisitor<TestContaine
 
     @Override
     public void teardown() {}
-
-    @Override
-    public Map<String, String> getEnv() {
-      return Map.of();
-    }
   }
 
   @AllArgsConstructor
