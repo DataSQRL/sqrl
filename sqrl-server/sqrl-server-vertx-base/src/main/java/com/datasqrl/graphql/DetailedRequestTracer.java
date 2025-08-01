@@ -66,9 +66,7 @@ public class DetailedRequestTracer implements Handler<RoutingContext> {
   private void logIncomingRequest(HttpServerRequest request, String requestId) {
     var headers =
         request.headers().entries().stream()
-            .map(
-                entry ->
-                    entry.getKey() + ": " + maskSensitiveHeader(entry.getKey(), entry.getValue()))
+            .map(entry -> entry.getKey() + ": " + entry.getValue())
             .collect(Collectors.joining(", "));
 
     var params =
@@ -119,17 +117,6 @@ public class DetailedRequestTracer implements Handler<RoutingContext> {
         durationMs);
 
     logResponseBody(responseBodyCapture, requestId);
-  }
-
-  private String maskSensitiveHeader(String headerName, String value) {
-    var lowerName = headerName.toLowerCase();
-    if (lowerName.contains("authorization")
-        || lowerName.contains("cookie")
-        || lowerName.contains("x-api-key")
-        || lowerName.contains("bearer")) {
-      return "[MASKED]";
-    }
-    return value;
   }
 
   private String generateRequestId() {
