@@ -68,7 +68,7 @@ public class FlexibleSchemaDiscoveryTest {
     @Override
     public Stream<? extends Arguments> provideArguments(ExtensionContext extensionContext)
         throws Exception {
-      return Files.list(FILES_DIR).map(Arguments::of);
+      return Files.list(FILES_DIR).filter(Files::isRegularFile).map(Arguments::of);
     }
   }
 }
