@@ -31,7 +31,6 @@ public class FileResourceResolver implements ResourceResolver {
   Path baseDir;
 
   public FileResourceResolver(Path baseDir) {
-    Preconditions.checkState(Files.isDirectory(baseDir));
     this.baseDir = baseDir;
   }
 

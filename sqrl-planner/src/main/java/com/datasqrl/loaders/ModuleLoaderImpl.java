@@ -21,6 +21,7 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.function.FlinkUdfNsObject;
 import com.datasqrl.loaders.FlinkTableNamespaceObject.FlinkTable;
 import com.datasqrl.loaders.resolver.ResourceResolver;
+import com.datasqrl.loaders.schema.SchemaLoader;
 import com.datasqrl.loaders.schema.SchemaLoaderImpl;
 import com.datasqrl.serializer.Deserializer;
 import com.datasqrl.util.StringUtil;
@@ -162,6 +163,11 @@ public class ModuleLoaderImpl implements ModuleLoader {
         new FlinkTableNamespaceObject(
             new FlinkTable(Name.system(tableName), tableSQL, path),
             new SchemaLoaderImpl(resourceResolver.getNested(path.getParent()), errors)));
+  }
+
+  @Override
+  public SchemaLoader getSchemaLoader() {
+    return new SchemaLoaderImpl(resourceResolver, errors);
   }
 
   public static final Class<?> UDF_FUNCTION_CLASS = UserDefinedFunction.class;

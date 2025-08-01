@@ -295,7 +295,10 @@ public class SqlScriptPlanner {
       addExport(statement, sqrlEnv);
     } else if (stmt instanceof SqrlCreateTableStatement statement) {
       sqrlEnv
-          .createTable(statement.toSql(), getLogEngineBuilder(hintsAndDocs))
+          .createTable(
+              statement.toSql(),
+              getLogEngineBuilder(hintsAndDocs),
+              scriptContext.moduleLoader().getSchemaLoader())
           .ifPresent(tableAnalysis -> addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv));
     } else if (stmt instanceof SqrlDefinition sqrlDef) {
       var access = sqrlDef.getAccess();
@@ -462,7 +465,10 @@ public class SqlScriptPlanner {
             sqrlEnv);
       } else if (node instanceof SqlCreateTable) {
         sqrlEnv
-            .createTable(flinkStmt.getSql().get(), getLogEngineBuilder(hintsAndDocs))
+            .createTable(
+                flinkStmt.getSql().get(),
+                getLogEngineBuilder(hintsAndDocs),
+                scriptContext.moduleLoader().getSchemaLoader())
             .ifPresent(tableAnalysis -> addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv));
       } else if (node instanceof RichSqlInsert insert) {
         /*TODO: We are not currently adding these to the DAG (and hence no analysis/visualization based on the DAG)

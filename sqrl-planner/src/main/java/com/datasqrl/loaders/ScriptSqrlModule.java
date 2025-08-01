@@ -44,11 +44,11 @@ public class ScriptSqrlModule implements SqrlModule {
   // Planning all tables. Return a single planning ns object and add all tables
   @Override
   public List<NamespaceObject> getNamespaceObjects() {
-    return List.of(new ScriptNamespaceObject(false));
+    return List.of(new ScriptNamespaceObject(true));
   }
 
   public NamespaceObject asNamespaceObject() {
-    return new ScriptNamespaceObject(true);
+    return new ScriptNamespaceObject(false);
   }
 
   @AllArgsConstructor

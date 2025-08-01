@@ -687,8 +687,8 @@ public class Sqrl2FlinkSQLTranslator {
   }
 
   public Optional<TableAnalysis> createTable(
-      String tableDefinition, MutationBuilder logEngineBuilder) {
-    var result = addTable(Optional.empty(), tableDefinition, SchemaLoader.NONE, logEngineBuilder);
+      String tableDefinition, MutationBuilder logEngineBuilder, SchemaLoader schemaLoader) {
+    var result = addTable(Optional.empty(), tableDefinition, schemaLoader, logEngineBuilder);
     if (result.isSourceTable()) return Optional.of(addSourceTable(result));
     else return Optional.empty();
   }

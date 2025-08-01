@@ -7,4 +7,5 @@ CREATE TABLE Customer (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec',
   'connector' = 'filesystem'
-);
+)
+LIKE `customer.schema.yml`;

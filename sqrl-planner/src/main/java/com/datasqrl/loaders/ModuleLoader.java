@@ -16,8 +16,11 @@
 package com.datasqrl.loaders;
 
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.loaders.schema.SchemaLoader;
 import java.util.Optional;
 
 public interface ModuleLoader {
   Optional<SqrlModule> getModule(NamePath namePath);
+
+  SchemaLoader getSchemaLoader();
 }
