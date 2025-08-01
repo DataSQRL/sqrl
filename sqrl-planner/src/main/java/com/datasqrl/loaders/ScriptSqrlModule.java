@@ -21,7 +21,6 @@ import com.datasqrl.plan.MainScript;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 

@@ -1,17 +1,32 @@
+/*
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.datasqrl.discovery.preprocessor;
 
 import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.util.FileCompression;
-import com.datasqrl.util.FilenameAnalyzer;
 import com.datasqrl.discovery.file.RecordReader;
 import com.datasqrl.discovery.stats.DefaultSchemaGenerator;
 import com.datasqrl.discovery.stats.SourceTableStatistics;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.schema.SchemaConversionResult;
+import com.datasqrl.io.schema.TableSchemaFactory;
 import com.datasqrl.io.schema.flexible.FlexibleTableSchemaFactory;
 import com.datasqrl.io.schema.flexible.input.FlexibleTableSchema;
 import com.datasqrl.io.schema.flexible.input.SchemaAdjustmentSettings;
-import com.datasqrl.io.schema.TableSchemaFactory;
+import com.datasqrl.util.FileCompression;
+import com.datasqrl.util.FilenameAnalyzer;
 import com.datasqrl.util.ServiceLoaderDiscovery;
 import java.io.FileInputStream;
 import java.io.IOException;

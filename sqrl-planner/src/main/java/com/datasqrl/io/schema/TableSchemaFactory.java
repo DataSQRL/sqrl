@@ -17,7 +17,6 @@ package com.datasqrl.io.schema;
 
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.util.ServiceLoaderDiscovery;
-import com.datasqrl.util.StreamUtil;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;

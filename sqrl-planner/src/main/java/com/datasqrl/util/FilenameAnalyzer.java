@@ -17,16 +17,13 @@ package com.datasqrl.util;
 
 import static com.datasqrl.util.FileCompression.SUPPORTED_COMPRESSION_EXTENSIONS;
 
-import com.google.common.base.Preconditions;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import lombok.Value;
-import org.apache.commons.lang3.StringUtils;
 
 @Value
 public class FilenameAnalyzer {
