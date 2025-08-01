@@ -18,10 +18,10 @@ package com.datasqrl.graphql;
 import static org.apache.kafka.clients.producer.ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG;
 import static org.apache.kafka.clients.producer.ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.datasqrl.graphql.config.KafkaConfig;
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.jdbc.DatabaseType;
 import com.datasqrl.graphql.server.GraphQLEngineBuilder;
@@ -44,6 +44,7 @@ import io.vertx.sqlclient.PoolOptions;
 import io.vertx.sqlclient.SqlClient;
 import java.time.Duration;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -106,7 +107,8 @@ class WriteIT {
 
     config = mock(ServerConfig.class);
     when(config.getPgConnectOptions()).thenReturn(options);
-    when(config.getEnvironmentVariable(any())).thenReturn(CLUSTER.bootstrapServers());
+    when(config.getKafkaMutationConfig())
+        .thenReturn(new KafkaConfig.KafkaMutationConfig(getKafkaConfig()));
 
     var client =
         PgBuilder.client().with(new PoolOptions()).connectingTo(options).using(vertx).build();
@@ -115,8 +117,8 @@ class WriteIT {
     this.model = getCustomerModel();
   }
 
-  private Properties getKafkaProps() {
-    var props = new Properties();
+  private Map<String, String> getKafkaConfig() {
+    var props = new HashMap<String, String>();
     props.put("bootstrap.servers", CLUSTER.bootstrapServers());
     props.put(ConsumerConfig.GROUP_ID_CONFIG, "kafka-test-listener");
     props.put(
@@ -182,11 +184,11 @@ class WriteIT {
   @SneakyThrows
   @Test
   void test() {
-
-    KafkaConsumer<String, String> consumer = new KafkaConsumer<>(getKafkaProps());
-
     CLUSTER.createTopic(topicName);
 
+    var props = new Properties();
+    props.putAll(getKafkaConfig());
+    var consumer = new KafkaConsumer<String, String>(props);
     consumer.subscribe(Collections.singletonList(topicName));
 
     GraphQL graphQL =

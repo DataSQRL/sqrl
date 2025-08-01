@@ -15,12 +15,7 @@
  */
 package com.datasqrl.graphql;
 
-import static com.datasqrl.env.EnvVariableNames.KAFKA_BOOTSTRAP_SERVERS;
-import static org.apache.kafka.clients.consumer.ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG;
-import static org.apache.kafka.clients.producer.ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG;
-import static org.apache.kafka.clients.producer.ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG;
-import static org.apache.kafka.clients.producer.ProducerConfig.TRANSACTIONAL_ID_CONFIG;
-import static org.apache.kafka.clients.producer.ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.io.SinkProducer;
@@ -29,9 +24,7 @@ import com.datasqrl.graphql.server.Context;
 import com.datasqrl.graphql.server.MutationComputedColumnType;
 import com.datasqrl.graphql.server.MutationConfiguration;
 import com.datasqrl.graphql.server.RootGraphqlModel;
-import com.datasqrl.graphql.server.RootGraphqlModel.KafkaMutationCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.MutationCoordsVisitor;
-import com.google.common.base.Preconditions;
 import graphql.schema.DataFetcher;
 import graphql.schema.DataFetchingEnvironment;
 import io.vertx.core.CompositeFuture;
@@ -40,7 +33,6 @@ import io.vertx.core.Vertx;
 import io.vertx.kafka.client.producer.KafkaProducer;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -65,42 +57,39 @@ public class MutationConfigurationImpl implements MutationConfiguration<DataFetc
 
   @Override
   public MutationCoordsVisitor<DataFetcher<?>, Context> createSinkFetcherVisitor() {
-    return new MutationCoordsVisitor<>() {
-      @Override
-      public DataFetcher<?> visit(KafkaMutationCoords coords, Context context) {
-        KafkaProducer<String, String> producer =
-            KafkaProducer.create(vertx, getSinkConfig(coords.isTransactional()));
-        SinkProducer emitter = new KafkaSinkProducer<>(coords.getTopic(), producer);
-        final List<String> uuidColumns =
-            coords.getComputedColumns().entrySet().stream()
-                .filter(e -> e.getValue() == MutationComputedColumnType.UUID)
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toList());
-        final List<String> timestampColumns =
-            coords.getComputedColumns().entrySet().stream()
-                .filter(e -> e.getValue() == MutationComputedColumnType.TIMESTAMP)
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toList());
+    return (coords, context) -> {
+      KafkaProducer<String, String> producer =
+          KafkaProducer.create(
+              vertx, config.getKafkaMutationConfig().asMap(coords.isTransactional()));
+      SinkProducer emitter = new KafkaSinkProducer<>(coords.getTopic(), producer);
+      final List<String> uuidColumns =
+          coords.getComputedColumns().entrySet().stream()
+              .filter(e -> e.getValue() == MutationComputedColumnType.UUID)
+              .map(Entry::getKey)
+              .collect(Collectors.toList());
+      final List<String> timestampColumns =
+          coords.getComputedColumns().entrySet().stream()
+              .filter(e -> e.getValue() == MutationComputedColumnType.TIMESTAMP)
+              .map(Entry::getKey)
+              .collect(Collectors.toList());
 
-        Preconditions.checkNotNull(
-            emitter, "Could not find sink for field: %s", coords.getFieldName());
-        return env -> {
-          var entries = getEntries(env, uuidColumns);
-          var cf = new CompletableFuture<Object>();
+      checkNotNull(emitter, "Could not find sink for field: %s", coords.getFieldName());
+      return env -> {
+        var entries = getEntries(env, uuidColumns);
+        var cf = new CompletableFuture<Object>();
 
-          Future<List<Object>> sendFuture =
-              coords.isTransactional()
-                  ? sendMessagesTransactionally(producer, entries, emitter, timestampColumns)
-                  : sendMessagesNonTransactionally(
-                      createSendFutures(entries, emitter, timestampColumns));
+        Future<List<Object>> sendFuture =
+            coords.isTransactional()
+                ? sendMessagesTransactionally(producer, entries, emitter, timestampColumns)
+                : sendMessagesNonTransactionally(
+                    createSendFutures(entries, emitter, timestampColumns));
 
-          sendFuture
-              .onSuccess(results -> completeWithResults(cf, results, coords.isReturnList()))
-              .onFailure(cf::completeExceptionally);
+        sendFuture
+            .onSuccess(results -> completeWithResults(cf, results, coords.isReturnList()))
+            .onFailure(cf::completeExceptionally);
 
-          return cf;
-        };
-      }
+        return cf;
+      };
     };
   }
 
@@ -179,21 +168,5 @@ public class MutationConfigurationImpl implements MutationConfiguration<DataFetc
 
   private Future<List<Object>> sendMessagesNonTransactionally(List<Future<Map>> futures) {
     return Future.join(futures).map(CompositeFuture::list);
-  }
-
-  // TODO: shouldn't it come from ServerConfig?
-  Map<String, String> getSinkConfig(boolean transactional) {
-    String clientUUID = UUID.randomUUID().toString();
-    Map<String, String> conf = new HashMap<>();
-    conf.put(BOOTSTRAP_SERVERS_CONFIG, config.getEnvironmentVariable(KAFKA_BOOTSTRAP_SERVERS));
-    conf.put(KEY_SERIALIZER_CLASS_CONFIG, "com.datasqrl.graphql.kafka.JsonSerializer");
-    conf.put(VALUE_SERIALIZER_CLASS_CONFIG, "com.datasqrl.graphql.kafka.JsonSerializer");
-
-    if (transactional) {
-      conf.put(TRANSACTIONAL_ID_CONFIG, "sqrl-mutation-" + clientUUID);
-      conf.put(ENABLE_IDEMPOTENCE_CONFIG, "true");
-    }
-
-    return conf;
   }
 }

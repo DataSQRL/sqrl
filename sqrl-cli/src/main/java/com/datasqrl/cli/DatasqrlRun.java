@@ -16,11 +16,8 @@
 package com.datasqrl.cli;
 
 import static com.datasqrl.env.EnvVariableNames.KAFKA_BOOTSTRAP_SERVERS;
-import static com.datasqrl.env.EnvVariableNames.POSTGRES_DATABASE;
-import static com.datasqrl.env.EnvVariableNames.POSTGRES_HOST;
 import static com.datasqrl.env.EnvVariableNames.POSTGRES_JDBC_URL;
 import static com.datasqrl.env.EnvVariableNames.POSTGRES_PASSWORD;
-import static com.datasqrl.env.EnvVariableNames.POSTGRES_PORT;
 import static com.datasqrl.env.EnvVariableNames.POSTGRES_USERNAME;
 
 import com.datasqrl.config.PackageJson;
@@ -32,7 +29,7 @@ import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.config.ServerConfigUtil;
 import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.util.ConfigLoaderUtils;
-import com.google.common.io.Resources;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.prometheusmetrics.PrometheusConfig;
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
 import io.vertx.core.Vertx;
@@ -40,7 +37,6 @@ import io.vertx.core.VertxOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.micrometer.MicrometerMetricsFactory;
 import java.net.URI;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -83,6 +79,7 @@ public class DatasqrlRun {
   private final Configuration flinkConfig;
   private final Map<String, String> env;
   private final boolean blocking;
+  private final ObjectMapper mapper;
   @Nullable private final CountDownLatch shutdownLatch;
 
   private Vertx vertx;
@@ -99,6 +96,7 @@ public class DatasqrlRun {
     this.flinkConfig = flinkConfig;
     this.env = env;
     this.blocking = blocking;
+    mapper = SqrlObjectMapper.getMapperWithEnvVarResolver(env);
     shutdownLatch = blocking ? new CountDownLatch(1) : null;
   }
 
@@ -283,41 +281,24 @@ public class DatasqrlRun {
       return; // no graphql server queries
     }
 
-    URL resource = Resources.getResource("server-config.json");
-    Map<String, Object> json = SqrlObjectMapper.MAPPER.readValue(resource, Map.class);
-    JsonObject config = new JsonObject(json);
-
-    ServerConfig serverConfig =
-        new ServerConfig(config) {
-          @Override
-          public String getEnvironmentVariable(String envVar) {
-            return getenv(envVar);
-          }
-        };
-
-    // Set Postgres connection options from environment variables
-    if (planDir.resolve("postgres.json").toFile().exists()) {
-      serverConfig
-          .getPgConnectOptions()
-          .setHost(getenv(POSTGRES_HOST))
-          .setPort(Integer.parseInt(getenv(POSTGRES_PORT)))
-          .setUser(getenv(POSTGRES_USERNAME))
-          .setPassword(getenv(POSTGRES_PASSWORD))
-          .setDatabase(getenv(POSTGRES_DATABASE));
+    var vertxConfigFile = planDir.resolve("vertx-config.json").toFile();
+    if (!vertxConfigFile.exists()) {
+      throw new IllegalStateException(
+          "Server config JSON '%s' does not exist".formatted(vertxConfigFile));
     }
 
-    serverConfig = ServerConfigUtil.mergeConfigs(serverConfig, vertxConfig());
+    Map<String, Object> json = mapper.readValue(vertxConfigFile, Map.class);
+    var baseServerConfig = new ServerConfig(new JsonObject(json));
 
-    var server = new HttpServerVerticle(serverConfig, rootGraphqlModel);
-
+    var serverConfig = ServerConfigUtil.mergeConfigs(baseServerConfig, vertxConfig());
+    var serverVerticle = new HttpServerVerticle(serverConfig, rootGraphqlModel);
     var prometheusMeterRegistry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
     var metricsOptions =
         new MicrometerMetricsFactory(prometheusMeterRegistry).newOptions().setEnabled(true);
 
     vertx = Vertx.vertx(new VertxOptions().setMetricsOptions(metricsOptions));
-
     vertx
-        .deployVerticle(server)
+        .deployVerticle(serverVerticle)
         .onComplete(
             res -> {
               if (res.succeeded()) {

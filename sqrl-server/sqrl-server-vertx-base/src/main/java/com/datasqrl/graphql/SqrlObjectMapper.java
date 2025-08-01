@@ -17,8 +17,11 @@ package com.datasqrl.graphql;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.vertx.core.json.jackson.VertxModule;
+import jakarta.annotation.Nullable;
+import java.util.Map;
 
 /** Configures a Jackson ObjectMapper for JSON serialization/deserialization. */
 public class SqrlObjectMapper {
@@ -29,5 +32,14 @@ public class SqrlObjectMapper {
     MAPPER.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     MAPPER.registerModule(new JavaTimeModule());
     MAPPER.registerModule(new VertxModule());
+  }
+
+  public static ObjectMapper getMapperWithEnvVarResolver(@Nullable Map<String, String> env) {
+    var mapper = SqrlObjectMapper.MAPPER.copy();
+    var module = new SimpleModule();
+    module.addDeserializer(String.class, new JsonEnvVarDeserializer(env));
+    mapper.registerModule(module);
+
+    return mapper;
   }
 }

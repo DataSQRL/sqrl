@@ -16,8 +16,11 @@
 package com.datasqrl.graphql;
 
 import static org.apache.kafka.clients.admin.AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG;
+import static org.apache.kafka.clients.consumer.ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG;
+import static org.apache.kafka.clients.consumer.ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG;
 
 import com.datasqrl.graphql.config.CorsHandlerOptions;
+import com.datasqrl.graphql.config.KafkaConfig;
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.config.ServletConfig;
 import com.datasqrl.graphql.server.RootGraphqlModel;
@@ -109,19 +112,22 @@ class GraphQLJwtHandlerIT {
             .build();
 
     // Create server config with JWT auth and Kafka settings
-    serverConfig =
-        new ServerConfig() {
-          @Override
-          public String getEnvironmentVariable(String envVar) {
-            return CLUSTER.bootstrapServers();
-          }
-        };
+    serverConfig = new ServerConfig();
     serverConfig.setJwtAuth(
         new JWTAuthOptions()
             .addPubSecKey(new PubSecKeyOptions().setAlgorithm("HS256").setBuffer("dGVzdA==")));
     serverConfig.setPoolOptions(new PoolOptions());
     serverConfig.setServletConfig(new ServletConfig());
     serverConfig.setCorsHandlerOptions(new CorsHandlerOptions());
+    serverConfig.setKafkaSubscriptionConfig(
+        new KafkaConfig.KafkaSubscriptionConfig(
+            Map.of(
+                BOOTSTRAP_SERVERS_CONFIG,
+                CLUSTER.bootstrapServers(),
+                KEY_DESERIALIZER_CLASS_CONFIG,
+                "com.datasqrl.graphql.kafka.JsonDeserializer",
+                VALUE_DESERIALIZER_CLASS_CONFIG,
+                "com.datasqrl.graphql.kafka.JsonDeserializer")));
 
     // Configure PostgreSQL connection
     PgConnectOptions pgOptions = new PgConnectOptions();
