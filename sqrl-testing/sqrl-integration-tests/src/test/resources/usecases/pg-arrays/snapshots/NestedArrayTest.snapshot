@@ -1,0 +1,11 @@
+{
+  "data" : {
+    "NestedArrayTest" : [ {
+      "id" : 1,
+      "nested_array" : [ [ "a", "b" ], [ "c", "d" ] ]
+    }, {
+      "id" : 2,
+      "nested_array" : [ [ "x", "y" ], [ "z" ] ]
+    } ]
+  }
+}

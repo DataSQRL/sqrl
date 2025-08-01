@@ -54,8 +54,7 @@ public class UseCaseCompileTest extends AbstractUseCaseTest {
   @ArgumentsSource(UseCaseFiles.class)
   @Disabled
   void runTestCaseByName(Path script, Path graphQlFile, Path packageFile) {
-    assumeTrue(
-        script.toString().endsWith("minimalFlink.sqrl"), "Not the test marked for execution.");
+    assumeTrue(script.toString().endsWith("pg-arrays.sqrl"), "Not the test marked for execution.");
 
     super.testUsecase(script, graphQlFile, packageFile);
   }

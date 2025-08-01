@@ -1,0 +1,17 @@
+{
+  "data" : {
+    "StringArrayTest" : [ {
+      "id" : 1,
+      "string_array" : [ "a", "b" ]
+    }, {
+      "id" : 2,
+      "string_array" : [ "c" ]
+    }, {
+      "id" : 3,
+      "string_array" : [ "d" ]
+    }, {
+      "id" : 4,
+      "string_array" : [ "e", "f" ]
+    } ]
+  }
+}

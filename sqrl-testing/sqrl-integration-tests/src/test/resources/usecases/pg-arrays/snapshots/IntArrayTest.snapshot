@@ -1,0 +1,17 @@
+{
+  "data" : {
+    "IntArrayTest" : [ {
+      "id" : 1,
+      "int_array" : [ 1, 2 ]
+    }, {
+      "id" : 2,
+      "int_array" : [ 3 ]
+    }, {
+      "id" : 3,
+      "int_array" : [ 4 ]
+    }, {
+      "id" : 4,
+      "int_array" : [ 5, 6 ]
+    } ]
+  }
+}

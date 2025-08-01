@@ -1,0 +1,10 @@
+{
+  "version": "1",
+  "enabled-engines": ["flink", "postgres"],
+  "script": {
+    "main": "pg-arrays.sqrl"
+  },
+  "test-runner": {
+    "delay-sec": -1
+  }
+}
