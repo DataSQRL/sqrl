@@ -18,6 +18,7 @@ package com.datasqrl.config;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.server.operation.ApiProtocol;
 import com.datasqrl.planner.analyzer.cost.CostModel;
+import com.fasterxml.jackson.databind.JsonNode;
 import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.List;
@@ -102,6 +103,8 @@ public interface PackageJson {
     Optional<String> getGraphql();
 
     List<String> getOperations();
+
+    Map<String, Object> getConfig();
 
     void setMainScript(String script);
 

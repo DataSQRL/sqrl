@@ -16,18 +16,9 @@
 package com.datasqrl.loaders;
 
 import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.io.tables.TableSchema;
-import com.datasqrl.io.tables.TableSchemaFactory;
 import com.datasqrl.loaders.FlinkTableNamespaceObject.FlinkTable;
-import com.datasqrl.loaders.resolver.ResourceResolver;
 import com.datasqrl.loaders.schema.SchemaLoader;
-import com.datasqrl.util.BaseFileUtil;
-import com.datasqrl.util.StringUtil;
 import java.nio.file.Path;
-import java.util.Map;
-import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Value;

@@ -15,6 +15,7 @@
  */
 package com.datasqrl.discovery;
 
+import static com.datasqrl.discovery.CopyStaticDataPreprocessorIT.countFilesRecursively;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datasqrl.AbstractAssetSnapshotTest;
@@ -28,14 +29,14 @@ import java.nio.file.Path;
 import lombok.SneakyThrows;
 import org.junit.Test;
 
-public class CopyStaticDataPreprocessorIT extends AbstractAssetSnapshotTest {
+public class PreprocessorIT extends AbstractAssetSnapshotTest {
 
-  public static final Path FILES_DIR = getResourcesDirectory("discoveryfiles");
+  public static final Path FILES_DIR = getResourcesDirectory("preprocessor_testproject");
 
   PackageJson packageJson;
   ErrorCollector errorCollector = ErrorCollector.root();
 
-  public CopyStaticDataPreprocessorIT() {
+  public PreprocessorIT() {
     super(FILES_DIR.resolve("build"));
     super.buildDir = super.outputDir;
     packageJson = ConfigLoaderUtils.loadDefaultConfig(errorCollector);
@@ -49,28 +50,11 @@ public class CopyStaticDataPreprocessorIT extends AbstractAssetSnapshotTest {
         new PreprocessorOrchestrator(packageJson, buildPath);
     preprocessorOrchestrator.preprocessDirectory(FILES_DIR, errorCollector);
 
-    Path dataDir = buildPath.getDataPath();
-
-    long dataFilesCount = countFilesRecursively(dataDir);
-
     long buildFilesCount = countFilesRecursively(outputDir);
 
-    long sourceFilesCount = countFiles(FILES_DIR);
-
-    assertThat(dataFilesCount).isEqualTo(sourceFilesCount);
+    assertThat(countFilesRecursively(buildPath.getUdfPath())).isEqualTo(1);
+    assertThat(countFilesRecursively(buildPath.getDataPath())).isEqualTo(0);
     // We expect another copy of the data in the build directory
-    assertThat(buildFilesCount).isEqualTo(2 * sourceFilesCount);
-  }
-
-  @SneakyThrows
-  public static long countFilesRecursively(Path path) {
-    if (!Files.exists(path) || !Files.isDirectory(path)) return 0;
-    return Files.walk(path).filter(Files::isRegularFile).count();
-  }
-
-  @SneakyThrows
-  public static long countFiles(Path path) {
-    if (!Files.exists(path) || !Files.isDirectory(path)) return 0;
-    return Files.list(path).filter(Files::isRegularFile).count();
+    assertThat(buildFilesCount).isEqualTo(6);
   }
 }

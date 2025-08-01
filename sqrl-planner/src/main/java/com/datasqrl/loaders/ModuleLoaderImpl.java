@@ -44,6 +44,7 @@ import org.apache.flink.table.functions.UserDefinedFunction;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class ModuleLoaderImpl implements ModuleLoader {
 
+  public static final String TABLE_FILE_SUFFIX = ".table.sql";
   public static final String FUNCTION_JSON_EXTENSION = ".function.json";
   public static final String SQRL_FILE_EXTENSION = ".sqrl";
   static final Deserializer SERIALIZER = Deserializer.INSTANCE;
@@ -126,16 +127,24 @@ public class ModuleLoaderImpl implements ModuleLoader {
   }
 
   private List<? extends NamespaceObject> load(Path path, NamePath directory) {
-    if (path.toString().endsWith(DataSource.TABLE_FILE_SUFFIX)) {
+    String filename = path.getFileName().toString();
+    if (filename.endsWith(TABLE_FILE_SUFFIX)) {
       return loadTable(path, directory);
-    } else if (path.toString().endsWith(FUNCTION_JSON_EXTENSION)) {
+    } else if (filename.endsWith(SQRL_FILE_EXTENSION)) {
+      return List.of(
+          loadScript(
+                  directory.concat(
+                      Name.system(StringUtil.removeFromEnd(filename, SQRL_FILE_EXTENSION))),
+                  path)
+              .asNamespaceObject());
+    } else if (filename.endsWith(FUNCTION_JSON_EXTENSION)) {
       return loadFunction(path, directory);
     }
     return List.of();
   }
 
   @SneakyThrows
-  private SqrlModule loadScript(NamePath namePath, Path path) {
+  private ScriptSqrlModule loadScript(NamePath namePath, Path path) {
     return new ScriptSqrlModule(
         Files.readString(path),
         path,
@@ -146,7 +155,7 @@ public class ModuleLoaderImpl implements ModuleLoader {
   @SneakyThrows
   private List<TableNamespaceObject> loadTable(Path path, NamePath basePath) {
     String tableName =
-        StringUtil.removeFromEnd(ResourceResolver.getFileName(path), DataSource.TABLE_FILE_SUFFIX);
+        StringUtil.removeFromEnd(ResourceResolver.getFileName(path), TABLE_FILE_SUFFIX);
     errors.checkFatal(Name.validName(tableName), "Not a valid table name: %s", tableName);
     String tableSQL = Files.readString(path);
     return List.of(

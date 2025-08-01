@@ -1,0 +1,4 @@
+>>>type
+RecordType(BIGINT NOT NULL id, BIGINT NOT NULL customerid, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL time, RecordType(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL items) NOT NULL
+>>>connector
+{connector=filesystem, format=flexible-json, path=${DATA_PATH}/orderitems.jsonl}

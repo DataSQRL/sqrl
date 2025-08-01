@@ -33,28 +33,36 @@ public class ScriptSqrlModule implements SqrlModule {
   private final NamePath namePath;
   private final ModuleLoader moduleLoader;
 
-  private final AtomicBoolean planned = new AtomicBoolean(false);
-
-  // Planning a single table. Return a planning ns object and then only add that table
   @Override
   public Optional<NamespaceObject> getNamespaceObject(Name name) {
-    return Optional.of(new ScriptNamespaceObject(Optional.of(name)));
+    throw new UnsupportedOperationException(
+        "Cannot import an individual table from SQRL script. "
+            + "Use `%s;` to import entire script in a separate database or `%s.*;` to import script inline."
+                .formatted(namePath, namePath));
   }
 
   // Planning all tables. Return a single planning ns object and add all tables
   @Override
   public List<NamespaceObject> getNamespaceObjects() {
-    return List.of(new ScriptNamespaceObject(Optional.empty()));
+    return List.of(new ScriptNamespaceObject(false));
+  }
+
+  public NamespaceObject asNamespaceObject() {
+    return new ScriptNamespaceObject(true);
   }
 
   @AllArgsConstructor
   public class ScriptNamespaceObject implements NamespaceObject {
 
-    @Getter Optional<Name> tableName; // specific table name to import, empty for all
+    @Getter boolean inline;
 
     @Override
     public Name getName() {
       return namePath.getLast();
+    }
+
+    public ModuleLoader getModuleLoader() {
+      return moduleLoader;
     }
 
     public MainScript getScript() {

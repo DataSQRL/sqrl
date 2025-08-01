@@ -16,6 +16,7 @@
 package com.datasqrl.io.schema.flexible.converters;
 
 import com.datasqrl.calcite.type.TypeFactory;
+import com.datasqrl.io.schema.SqrlTypeConverter;
 import com.datasqrl.io.schema.flexible.type.ArrayType;
 import com.datasqrl.io.schema.flexible.type.Type;
 import com.datasqrl.io.schema.flexible.type.basic.AbstractBasicType;

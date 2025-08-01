@@ -30,7 +30,7 @@ import com.datasqrl.error.ErrorLocation.FileLocation;
 import com.datasqrl.flinkrunner.stdlib.utils.AutoRegisterSystemFunction;
 import com.datasqrl.function.FlinkUdfNsObject;
 import com.datasqrl.graphql.server.MutationComputedColumnType;
-import com.datasqrl.io.schema.flexible.converters.SchemaToRelDataTypeFactory.SchemaResult;
+import com.datasqrl.io.schema.SchemaConversionResult;
 import com.datasqrl.loaders.schema.SchemaLoader;
 import com.datasqrl.plan.util.PrimaryKeyMap;
 import com.datasqrl.planner.FlinkPhysicalPlan.Builder;
@@ -59,6 +59,7 @@ import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -165,6 +166,7 @@ import org.apache.flink.table.types.DataType;
 public class Sqrl2FlinkSQLTranslator {
 
   public static final String SCHEMA_SUFFIX = "__schema";
+  public static final String DEFAULT_CATALOG_NAME = "default_catalog";
 
   private final RuntimeExecutionMode executionMode;
   private final boolean compileFlinkPlan;
@@ -386,6 +388,18 @@ public class Sqrl2FlinkSQLTranslator {
         .getOrCreateSqlValidator()
         .getCatalogReader()
         .unwrap(CalciteCatalogReader.class);
+  }
+
+  private final HashSet<String> createdDatabases = new HashSet<>();
+
+  public void setDatabase(String databaseName, boolean withCatalog) {
+    if (withCatalog) {
+      executeSQL("USE CATALOG `%s`;".formatted(DEFAULT_CATALOG_NAME));
+    }
+    if (createdDatabases.add(databaseName)) {
+      executeSQL("CREATE DATABASE IF NOT EXISTS `%s`;".formatted(databaseName));
+    }
+    executeSQL("USE `%s`;".formatted(databaseName));
   }
 
   public FlinkRelBuilder getTableScan(ObjectIdentifier identifier) {
@@ -743,7 +757,8 @@ public class Sqrl2FlinkSQLTranslator {
       // Check if the LIKE clause is referencing an external schema
       SqlTableLike likeClause = ((SqlCreateTableLike) fullTable).getTableLike();
       var likeTableName = likeClause.getSourceTable().toString();
-      Optional<SchemaResult> schema = schemaLoader.loadSchema(finalTableName, likeTableName);
+      Optional<SchemaConversionResult> schema =
+          schemaLoader.loadSchema(finalTableName, likeTableName);
       if (schema.isPresent()) {
         // Use LIKE to merge schema with table definition
         var schemaTableName = finalTableName + SCHEMA_SUFFIX;
