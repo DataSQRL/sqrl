@@ -19,6 +19,7 @@ import com.datasqrl.env.GlobalEnvironmentStore;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
+import jakarta.annotation.Nullable;
 import java.io.IOException;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -27,14 +28,14 @@ import java.util.regex.Pattern;
 /** Custom deserializer to replace environment variables in JSON strings. */
 public class JsonEnvVarDeserializer extends JsonDeserializer<String> {
 
-  private Map<String, String> env;
+  private final Map<String, String> env;
 
   public JsonEnvVarDeserializer() {
-    env = GlobalEnvironmentStore.getAll();
+    this(null);
   }
 
-  public JsonEnvVarDeserializer(Map<String, String> env) {
-    this.env = env;
+  public JsonEnvVarDeserializer(@Nullable Map<String, String> env) {
+    this.env = env != null ? env : GlobalEnvironmentStore.getAll();
   }
 
   @Override
