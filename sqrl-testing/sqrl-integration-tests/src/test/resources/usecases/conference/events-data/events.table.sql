@@ -6,4 +6,5 @@ CREATE TABLE Events (
       'path' = '${DATA_PATH}/events.jsonl',
       'source.monitor-interval' = '1 sec',
       'connector' = 'filesystem'
-      );
+      )
+LIKE `events.schema.yml`;

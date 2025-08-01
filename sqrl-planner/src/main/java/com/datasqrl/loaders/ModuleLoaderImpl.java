@@ -17,6 +17,7 @@ package com.datasqrl.loaders;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.config.BuildPath;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.function.FlinkUdfNsObject;
 import com.datasqrl.loaders.FlinkTableNamespaceObject.FlinkTable;
@@ -51,6 +52,7 @@ public class ModuleLoaderImpl implements ModuleLoader {
   static final Deserializer SERIALIZER = Deserializer.INSTANCE;
 
   private final ClasspathFunctionLoader classpathFunctionLoader;
+  private final BuildPath buildPath;
   private final ResourceResolver resourceResolver;
   private final ErrorCollector errors;
   private final Cache<NamePath, SqrlModule> cache =
@@ -58,14 +60,16 @@ public class ModuleLoaderImpl implements ModuleLoader {
   ;
 
   @Inject
-  public ModuleLoaderImpl(ResourceResolver resourceResolver, ErrorCollector errors) {
+  public ModuleLoaderImpl(
+      ResourceResolver resourceResolver, BuildPath buildPath, ErrorCollector errors) {
     this.classpathFunctionLoader = new ClasspathFunctionLoader();
+    this.buildPath = buildPath;
     this.resourceResolver = resourceResolver;
     this.errors = errors;
   }
 
   private ModuleLoaderImpl withResourceResolver(ResourceResolver resourceResolver) {
-    return new ModuleLoaderImpl(classpathFunctionLoader, resourceResolver, errors);
+    return new ModuleLoaderImpl(classpathFunctionLoader, buildPath, resourceResolver, errors);
   }
 
   @Override
@@ -177,8 +181,8 @@ public class ModuleLoaderImpl implements ModuleLoader {
     ObjectNode json = SERIALIZER.mapJsonFile(path, ObjectNode.class);
     String jarPath = json.get("jarPath").asText();
     String functionClassName = json.get("functionClass").asText();
-    Optional<Path> path1 = resourceResolver.resolveFile(namePath.concat(Name.system(jarPath)));
-    URL jarUrl = path1.get().toUri().toURL();
+    Path resolvedJarPath = buildPath.getUdfPath().resolve(jarPath);
+    URL jarUrl = resolvedJarPath.toUri().toURL();
     Class<?> functionClass = loadClass(jarUrl, functionClassName);
     Preconditions.checkArgument(
         UDF_FUNCTION_CLASS.isAssignableFrom(functionClass), "Class is not a UserDefinedFunction");

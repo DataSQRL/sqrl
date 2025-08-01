@@ -6,4 +6,5 @@ CREATE TABLE Likes (
       'path' = '${DATA_PATH}/likes.jsonl',
       'source.monitor-interval' = '1 sec',
       'connector' = 'filesystem'
-      );
+      )
+LIKE `likes.schema.yml`;

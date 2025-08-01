@@ -120,10 +120,7 @@ public class PreprocessorOrchestrator {
     @SneakyThrows
     public Path createNewBuildFile(Path relativeFilePath) {
       Path result = buildDir.resolve(relativeFilePath);
-      Path toDir = result.getParent();
-      if (!Files.isDirectory(toDir)) {
-        Files.createDirectories(toDir);
-      }
+      ensureDirectoryExists(result.getParent());
       return result;
     }
 
@@ -142,7 +139,9 @@ public class PreprocessorOrchestrator {
     }
 
     public Path createNewDataFile(Path file) {
-      return dataDir.resolve(file.getFileName());
+      Path result = dataDir.resolve(file.getFileName());
+      ensureDirectoryExists(result.getParent());
+      return result;
     }
 
     public void copy2data(Path file) {
@@ -157,10 +156,15 @@ public class PreprocessorOrchestrator {
     private void copy(Path file, Path toDir) {
       Path copyPath = toDir.resolve(file.getFileName());
       copyPath = canonicalizePath(copyPath);
-      if (!Files.isDirectory(toDir)) {
-        Files.createDirectories(copyPath.getParent());
-      }
+      ensureDirectoryExists(toDir);
       Files.copy(file, copyPath, StandardCopyOption.REPLACE_EXISTING);
+    }
+
+    @SneakyThrows
+    private void ensureDirectoryExists(Path dir) {
+      if (!Files.isDirectory(dir)) {
+        Files.createDirectories(dir);
+      }
     }
   }
   ;
