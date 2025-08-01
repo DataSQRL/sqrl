@@ -119,11 +119,11 @@
     "fileRegionEnabled" : true
   },
   "pgConnectOptions" : {
-    "host": "${POSTGRES_HOST}",
-    "port": 5432,
-    "user": "${POSTGRES_USERNAME}",
-    "password": "${POSTGRES_PASSWORD}",
-    "database": "${POSTGRES_DATABASE}",
+    "host" : "${POSTGRES_HOST}",
+    "port" : 5432,
+    "user" : "${POSTGRES_USERNAME}",
+    "password" : "${POSTGRES_PASSWORD}",
+    "database" : "${POSTGRES_DATABASE}",
     "cachePreparedStatements" : false,
     "preparedStatementCacheMaxSize" : 256,
     "preparedStatementCacheSqlFilter" : { },
