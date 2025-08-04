@@ -270,24 +270,23 @@ public class DatasqrlRun {
 
   @SneakyThrows
   private void startVertx() {
-    if (!planDir.resolve("vertx.json").toFile().exists()) {
+    var vertxJson = planDir.resolve("vertx.json").toFile();
+    if (!vertxJson.exists()) {
       return;
     }
-    RootGraphqlModel rootGraphqlModel =
-        SqrlObjectMapper.MAPPER.readValue(
-                planDir.resolve("vertx.json").toFile(), ModelContainer.class)
-            .model;
+
+    RootGraphqlModel rootGraphqlModel = mapper.readValue(vertxJson, ModelContainer.class).model;
     if (rootGraphqlModel == null) {
       return; // no graphql server queries
     }
 
-    var vertxConfigFile = planDir.resolve("vertx-config.json").toFile();
-    if (!vertxConfigFile.exists()) {
+    var vertxConfigJson = planDir.resolve("vertx-config.json").toFile();
+    if (!vertxConfigJson.exists()) {
       throw new IllegalStateException(
-          "Server config JSON '%s' does not exist".formatted(vertxConfigFile));
+          "Server config JSON '%s' does not exist".formatted(vertxConfigJson));
     }
 
-    Map<String, Object> json = mapper.readValue(vertxConfigFile, Map.class);
+    Map<String, Object> json = mapper.readValue(vertxConfigJson, Map.class);
     var baseServerConfig = new ServerConfig(new JsonObject(json));
 
     var serverConfig = ServerConfigUtil.mergeConfigs(baseServerConfig, vertxConfig());
