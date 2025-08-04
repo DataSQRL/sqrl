@@ -44,9 +44,5 @@ public interface PackageConfiguration {
 
   List<String> getTopics();
 
-  void checkInitialized();
-
-  Dependency asDependency();
-
   Map<String, Object> toMap();
 }

@@ -17,7 +17,7 @@ package com.datasqrl.config;
 
 import com.datasqrl.graphql.APISource;
 import com.datasqrl.graphql.ScriptFiles;
-import com.datasqrl.module.resolver.ResourceResolver;
+import com.datasqrl.loaders.resolver.ResourceResolver;
 import com.google.inject.Inject;
 import java.nio.file.Files;
 import java.nio.file.Path;

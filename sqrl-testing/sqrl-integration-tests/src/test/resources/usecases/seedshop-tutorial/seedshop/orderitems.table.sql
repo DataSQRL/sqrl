@@ -5,4 +5,5 @@ CREATE TABLE OrderItems (
       'format' = 'flexible-json',
       'path' = '${DATA_PATH}/orderitems.jsonl',
       'connector' = 'filesystem'
-      );
+      )
+LIKE `orderitems.schema.yml`;

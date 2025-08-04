@@ -33,18 +33,18 @@ import com.datasqrl.error.ErrorLocation.FileLocation;
 import com.datasqrl.function.FlinkUdfNsObject;
 import com.datasqrl.graphql.server.MutationComputedColumnType;
 import com.datasqrl.graphql.server.MutationInsertType;
-import com.datasqrl.io.schema.flexible.converters.SchemaToRelDataTypeFactory;
+import com.datasqrl.io.schema.SchemaConversionResult;
 import com.datasqrl.loaders.FlinkTableNamespaceObject;
 import com.datasqrl.loaders.ModuleLoader;
+import com.datasqrl.loaders.NamespaceObject;
 import com.datasqrl.loaders.ScriptSqrlModule.ScriptNamespaceObject;
-import com.datasqrl.module.NamespaceObject;
+import com.datasqrl.loaders.schema.SchemaLoader;
 import com.datasqrl.plan.MainScript;
 import com.datasqrl.plan.global.StageAnalysis;
 import com.datasqrl.plan.global.StageAnalysis.Cost;
 import com.datasqrl.plan.global.StageAnalysis.MissingCapability;
 import com.datasqrl.plan.rules.EngineCapability;
 import com.datasqrl.plan.rules.EngineCapability.Feature;
-import com.datasqrl.plan.table.RelDataTypeTableSchema;
 import com.datasqrl.plan.validate.ExecutionGoal;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator.MutationBuilder;
 import com.datasqrl.planner.analyzer.TableAnalysis;
@@ -95,7 +95,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import lombok.Getter;
 import lombok.Value;
-import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.sql.parser.SqlParseException;
@@ -125,7 +124,6 @@ public class SqlScriptPlanner {
 
   private final ErrorCollector errorCollector;
 
-  private final ModuleLoader moduleLoader;
   private final SqrlStatementParser sqrlParser;
   private final PackageJson packageJson;
   private final ExecutionPipeline pipeline;
@@ -139,8 +137,8 @@ public class SqlScriptPlanner {
   private final List<ExecutionStage> subscriptionStages;
   private final AtomicInteger exportTableCounter = new AtomicInteger(0);
 
-  // TODO: set this to false when processing a script import to another database
-  private boolean generateAccessFunctions = true;
+  /** Manages the context of the script that is processed, adjusted for imports */
+  private ScriptContext scriptContext;
 
   @Inject
   public SqlScriptPlanner(
@@ -151,7 +149,7 @@ public class SqlScriptPlanner {
       ExecutionPipeline pipeline,
       ExecutionGoal executionGoal) {
     this.errorCollector = errorCollector;
-    this.moduleLoader = moduleLoader;
+    this.scriptContext = new ScriptContext(moduleLoader, "default_database", true);
     this.sqrlParser = sqrlParser;
     this.packageJson = packageJson;
     this.pipeline = pipeline;
@@ -181,6 +179,22 @@ public class SqlScriptPlanner {
         pipeline.getStages().stream()
             .filter(stage -> stage.getType() == EngineType.LOG)
             .collect(Collectors.toList());
+  }
+
+  private record ScriptContext(
+      ModuleLoader moduleLoader, String databaseName, boolean generateAccess) {
+
+    ScriptContext fromImport(ModuleLoader moduleLoader, boolean isInline, String databaseName) {
+      if (isInline) {
+        return new ScriptContext(moduleLoader, this.databaseName, generateAccess);
+      } else {
+        return new ScriptContext(moduleLoader, databaseName, false);
+      }
+    }
+
+    boolean hasSameDatabase(ScriptContext other) {
+      return this.databaseName.equals(other.databaseName);
+    }
   }
 
   /**
@@ -281,7 +295,10 @@ public class SqlScriptPlanner {
       addExport(statement, sqrlEnv);
     } else if (stmt instanceof SqrlCreateTableStatement statement) {
       sqrlEnv
-          .createTable(statement.toSql(), getLogEngineBuilder(hintsAndDocs))
+          .createTable(
+              statement.toSql(),
+              getLogEngineBuilder(hintsAndDocs),
+              scriptContext.moduleLoader().getSchemaLoader())
           .ifPresent(tableAnalysis -> addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv));
     } else if (stmt instanceof SqrlDefinition sqrlDef) {
       var access = sqrlDef.getAccess();
@@ -448,7 +465,10 @@ public class SqlScriptPlanner {
             sqrlEnv);
       } else if (node instanceof SqlCreateTable) {
         sqrlEnv
-            .createTable(flinkStmt.getSql().get(), getLogEngineBuilder(hintsAndDocs))
+            .createTable(
+                flinkStmt.getSql().get(),
+                getLogEngineBuilder(hintsAndDocs),
+                scriptContext.moduleLoader().getSchemaLoader())
             .ifPresent(tableAnalysis -> addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv));
       } else if (node instanceof RichSqlInsert insert) {
         /*TODO: We are not currently adding these to the DAG (and hence no analysis/visualization based on the DAG)
@@ -487,7 +507,8 @@ public class SqlScriptPlanner {
    */
   private AccessModifier adjustAccess(AccessModifier access) {
     Preconditions.checkArgument(access != AccessModifier.INHERIT);
-    if (!generateAccessFunctions || (access == AccessModifier.QUERY && queryStages.isEmpty())) {
+    if (!scriptContext.generateAccess
+        || (access == AccessModifier.QUERY && queryStages.isEmpty())) {
       return AccessModifier.NONE;
     }
     if (access == AccessModifier.SUBSCRIPTION && subscriptionStages.isEmpty()) {
@@ -725,7 +746,7 @@ public class SqlScriptPlanner {
       alias = Optional.of(aliasPath.getFirst());
     }
 
-    var module = moduleLoader.getModule(path.popLast()).orElse(null);
+    var module = scriptContext.moduleLoader.getModule(path.popLast()).orElse(null);
     checkFatal(
         module != null,
         importStmt.getPackageIdentifier().getFileLocation(),
@@ -781,7 +802,7 @@ public class SqlScriptPlanner {
             sqrlEnv.createTableWithSchema(
                 flinkTable.tableName.getDisplay(),
                 flinkTable.sqlCreateTable,
-                flinkTable.schema,
+                flinkTable.getSchemaLoader(),
                 getLogEngineBuilder(hintsAndDocs));
         hintsAndDocs.getHints().updateColumnNamesHints(tableAnalysis::getField);
         addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv);
@@ -797,12 +818,18 @@ public class SqlScriptPlanner {
           alias.orElseGet(() -> FlinkUdfNsObject.getFunctionNameFromClass(udfClass).getDisplay());
       sqrlEnv.addUserDefinedFunction(name, udfClass.getName(), false);
     } else if (nsObject instanceof ScriptNamespaceObject scriptObject) {
-      checkFatal(
-          scriptObject.getTableName().isEmpty(),
-          ErrorLabel.GENERIC,
-          "Cannot import an individual table from SQRL script. Use * to import entire script: %s",
-          scriptObject.getName());
+      final ScriptContext priorContext = scriptContext;
+      scriptContext =
+          priorContext.fromImport(
+              scriptObject.getModuleLoader(),
+              scriptObject.isInline(),
+              alias.orElse(scriptObject.getName().getDisplay()));
+      if (!priorContext.hasSameDatabase(scriptContext))
+        sqrlEnv.setDatabase(scriptContext.databaseName(), false);
       planMain(scriptObject.getScript(), sqrlEnv);
+      if (!priorContext.hasSameDatabase(scriptContext))
+        sqrlEnv.setDatabase(priorContext.databaseName(), true);
+      scriptContext = priorContext;
     } else {
       throw new UnsupportedOperationException("Unexpected object imported: " + nsObject);
     }
@@ -828,6 +855,7 @@ public class SqlScriptPlanner {
     return (tableBuilder, datatype) -> {
       var originalTableName = tableBuilder.getTableName();
       var mutationBuilder = MutationQuery.builder();
+      mutationBuilder.generateAccess(scriptContext.generateAccess);
       mutationBuilder.stage(logStage.get());
       MutationInsertType insertType =
           hintsAndDocs
@@ -916,7 +944,7 @@ public class SqlScriptPlanner {
       exportNode =
           new ExportNode(stageAnalysis, sinkPath, Optional.of(exportStage), Optional.empty());
     } else { // the export is to a user-defined sink: load it
-      var module = moduleLoader.getModule(sinkPath.popLast()).orElse(null);
+      var module = scriptContext.moduleLoader.getModule(sinkPath.popLast()).orElse(null);
       checkFatal(
           module != null,
           exportStmt.getPackageIdentifier().getFileLocation(),
@@ -945,10 +973,16 @@ public class SqlScriptPlanner {
       var flinkTable =
           ExternalFlinkTable.fromNamespaceObject(
               sinkTable, Optional.of(sinkName.getDisplay()), errorCollector);
-      var schema =
-          flinkTable.schema.or(() -> Optional.of(inputNode.getTableAnalysis().getRowType()));
+      SchemaLoader schemaLoader =
+          (tableName, schemaReference) -> {
+            if (schemaReference.equalsIgnoreCase("."))
+              return Optional.of(
+                  new SchemaConversionResult(inputNode.getTableAnalysis().getRowType(), Map.of()));
+            return flinkTable.schemaLoader.loadSchema(tableName, schemaReference);
+          };
       try {
-        var tableId = sqrlEnv.addExternalExport(exportTableId, flinkTable.sqlCreateTable, schema);
+        var tableId =
+            sqrlEnv.addExternalExport(exportTableId, flinkTable.sqlCreateTable, schemaLoader);
         exportNode =
             new ExportNode(stageAnalysis, sinkPath, Optional.empty(), Optional.of(tableId));
       } catch (Throwable e) {
@@ -969,7 +1003,7 @@ public class SqlScriptPlanner {
 
     Name tableName;
     String sqlCreateTable;
-    Optional<RelDataType> schema;
+    SchemaLoader schemaLoader;
     ErrorCollector errorCollector;
 
     public static ExternalFlinkTable fromNamespaceObject(
@@ -982,21 +1016,7 @@ public class SqlScriptPlanner {
       var tableError = errorCollector.withScript(flinkTable.getFlinkSqlFile(), tableSql);
       tableSql = SqlScriptStatementSplitter.formatEndOfSqlFile(tableSql);
 
-      // Schema conversion
-      Optional<RelDataType> schema =
-          flinkTable
-              .getSchema()
-              .map(
-                  tableSchema -> {
-                    if (tableSchema instanceof RelDataTypeTableSchema typeTableSchema) {
-                      return typeTableSchema.getRelDataType();
-                    } else {
-                      return SchemaToRelDataTypeFactory.load(tableSchema)
-                          .map(tableSchema, tableName, errorCollector);
-                    }
-                  });
-
-      return new ExternalFlinkTable(tableName, tableSql, schema, tableError);
+      return new ExternalFlinkTable(tableName, tableSql, nsObject.getSchemaLoader(), tableError);
     }
   }
 }

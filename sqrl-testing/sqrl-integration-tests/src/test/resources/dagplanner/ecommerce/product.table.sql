@@ -1,4 +1,4 @@
-CREATE TABLE Customer (
+CREATE TABLE Product (
   `_ingest_time` AS PROCTIME(),
   PRIMARY KEY (productid, name, description, category) NOT ENFORCED
 ) WITH (
@@ -6,4 +6,5 @@ CREATE TABLE Customer (
       'path' = 'file:/mock',
       'source.monitor-interval' = '10 sec',
       'connector' = 'filesystem'
-      );
+      )
+LIKE `product.schema.yml`;

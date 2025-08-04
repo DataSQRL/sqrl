@@ -6,4 +6,5 @@ CREATE TABLE AddInterest (
       'path' = '${DATA_PATH}/addinterest.jsonl',
       'source.monitor-interval' = '1',
       'connector' = 'filesystem'
-      );
+      )
+LIKE `addinterest.schema.yml`;

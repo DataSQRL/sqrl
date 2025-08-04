@@ -16,8 +16,6 @@
 package com.datasqrl.loaders;
 
 import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.module.NamespaceObject;
-import com.datasqrl.module.SqrlModule;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
