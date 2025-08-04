@@ -7,8 +7,8 @@
 [![Docker Image Version](https://img.shields.io/docker/v/datasqrl/cmd?sort=semver)](https://hub.docker.com/r/datasqrl/cmd/tags)
 [![Maven Central](https://img.shields.io/maven-central/v/com.datasqrl/sqrl-root)](https://repo1.maven.org/maven2/com/datasqrl/sqrl-root/)
 
-DataSQRL is an open-source framework for building consistent and reliable data pipelines with SQL that can be automated with LLMs.
-Build MCP servers, RAG pipelines, data APIs (GraphQL & REST), feature stores, and data products. Ingest, process, store, and serve data with a single SQL script with built-in testing, observability, and operational tooling.
+DataSQRL is an open-source framework for building reliable data pipelines in SQL that automates data plumbing with compile-time verification.
+Build MCP servers, RAG pipelines, data APIs (GraphQL & REST), feature stores, and data products. Ingest, process, store, and serve data in a single SQL script with built-in testing, observability, and data integrity guarantees.
 
 Define the data processing and interface in SQL and DataSQRL generates an integrated data pipeline that runs on your existing infrastructure with Docker, Kubernetes, or cloud-managed services.
 

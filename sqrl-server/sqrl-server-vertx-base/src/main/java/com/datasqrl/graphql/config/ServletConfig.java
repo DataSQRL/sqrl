@@ -16,25 +16,50 @@
 package com.datasqrl.graphql.config;
 
 import io.vertx.core.json.JsonObject;
-import lombok.AllArgsConstructor;
-import lombok.Builder.Default;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
 @Setter
-@AllArgsConstructor
+@NoArgsConstructor
 public class ServletConfig {
 
-  public ServletConfig() {}
+  private String graphiQLEndpoint = "/graphiql*";
+  private String graphQLEndpoint = "/graphql";
+  private String restEndpoint = "/rest";
+  private String mcpEndpoint = "/mcp";
+  private boolean usePgPool = true;
 
   public ServletConfig(JsonObject json) {
-    ServletConfigOptionsConverter.fromJson(json, this);
+    for (java.util.Map.Entry<String, Object> member : json) {
+      switch (member.getKey()) {
+        case "graphiQLEndpoint":
+          if (member.getValue() instanceof String) {
+            this.graphiQLEndpoint = (String) member.getValue();
+          }
+          break;
+        case "graphQLEndpoint":
+          if (member.getValue() instanceof String) {
+            this.graphQLEndpoint = (String) member.getValue();
+          }
+          break;
+        case "restEndpoint":
+          if (member.getValue() instanceof String) {
+            this.restEndpoint = (String) member.getValue();
+          }
+          break;
+        case "mcpEndpoint":
+          if (member.getValue() instanceof String) {
+            this.mcpEndpoint = (String) member.getValue();
+          }
+          break;
+        case "usePgPool":
+          if (member.getValue() instanceof Boolean) {
+            this.usePgPool = (Boolean) member.getValue();
+          }
+          break;
+      }
+    }
   }
-
-  @Default String graphiQLEndpoint = "/graphiql*";
-  @Default String graphQLEndpoint = "/graphql";
-  @Default String restEndpoint = "/rest";
-  @Default String mcpEndpoint = "/mcp";
-  @Default boolean usePgPool = true;
 }

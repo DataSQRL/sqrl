@@ -20,6 +20,10 @@ import java.nio.file.Path;
 public record UseCaseParam(Path packageJsonPath, String goal, int index)
     implements Comparable<UseCaseParam> {
 
+  public UseCaseParam(Path packageJsonPath) {
+    this(packageJsonPath, "test", -1);
+  }
+
   public String getPackageJsonName() {
     return packageJsonPath.getFileName().toString();
   }

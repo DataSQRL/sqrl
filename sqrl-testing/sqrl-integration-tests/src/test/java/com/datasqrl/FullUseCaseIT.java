@@ -17,21 +17,7 @@ package com.datasqrl;
 
 import static com.datasqrl.config.SqrlConstants.BUILD_DIR_NAME;
 import static com.datasqrl.config.SqrlConstants.PACKAGE_JSON;
-import static org.assertj.core.api.Assertions.assertThat;
 
-import com.datasqrl.config.PackageJson;
-import com.datasqrl.engines.TestContainersForTestGoal;
-import com.datasqrl.engines.TestContainersForTestGoal.TestContainerHook;
-import com.datasqrl.engines.TestEngine.EngineFactory;
-import com.datasqrl.engines.TestEngines;
-import com.datasqrl.engines.TestExecutionEnv;
-import com.datasqrl.engines.TestExecutionEnv.TestEnvContext;
-import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.tests.TestExtension;
-import com.datasqrl.tests.UseCaseTestExtensions;
-import com.datasqrl.util.ConfigLoaderUtils;
-import com.datasqrl.util.SnapshotTest.Snapshot;
-import com.datasqrl.util.TestScriptCompileExtension;
 import com.datasqrl.util.TestShardingExtension;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -43,10 +29,8 @@ import java.util.stream.Stream;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.test.junit5.MiniClusterExtension;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -59,12 +43,8 @@ import org.junit.jupiter.params.provider.MethodSource;
  * <p>Note, that this test is resource intensive and slow.
  */
 @Slf4j
-@ExtendWith({
-  MiniClusterExtension.class,
-  TestShardingExtension.class,
-  TestScriptCompileExtension.class
-})
-public class FullUseCasesIT {
+@ExtendWith({MiniClusterExtension.class, TestShardingExtension.class})
+public class FullUseCaseIT extends AbstractFullUseCaseTest {
 
   private static final Path USE_CASES = Path.of("src/test/resources/usecases");
 
@@ -82,101 +62,19 @@ public class FullUseCasesIT {
           "connectors" // should not be executed
           );
 
-  private static TestContainerHook containerHook;
-
-  UseCaseTestExtensions testExtensions = new UseCaseTestExtensions();
-
-  @BeforeAll
-  static void beforeAll() {
-    var engines = new EngineFactory().createAll();
-
-    containerHook = engines.accept(new TestContainersForTestGoal(), null);
-    containerHook.start();
-  }
-
-  @AfterAll
-  static void afterAll() {
-    if (containerHook != null) {
-      containerHook.teardown();
-    }
-  }
-
-  @AfterEach
-  void afterEach() {
-    if (containerHook != null) {
-      containerHook.clear();
-    }
-  }
-
   @Disabled("Intended for manual usage")
-  @ParameterizedTest
-  @MethodSource("specificUseCaseProvider")
-  void specificUseCase(UseCaseParam param) {
-    useCase(param);
-  }
+  @Test
+  void specificUseCase() {
+    var pkg = USE_CASES.resolve("repository").resolve("package.json");
 
-  //////////////////////////////////////////////////////////////////
-  ////////////// MODIFY THIS TO RUN SPECIFIC USE CASE //////////////
-  //////////////////////////////////////////////////////////////////
-  private static Stream<UseCaseParam> specificUseCaseProvider() {
-    var useCaseFolderName = "clickstream";
-
-    var pkg = USE_CASES.resolve(useCaseFolderName).resolve("package.json");
-    assertThat(pkg).isRegularFile();
-
-    return Stream.of(new UseCaseParam(pkg, "test", -1));
+    var param = new UseCaseParam(pkg);
+    fullUseCaseTest(param);
   }
 
   @ParameterizedTest
   @MethodSource("nonDisabledUseCaseProvider")
   void useCase(UseCaseParam param) {
-    log.info("Testing {}", param.getPackageJsonName());
-
-    var snapshot =
-        Snapshot.of(
-            FullUseCasesIT.class,
-            param.getUseCaseName(),
-            param.getPackageJsonName().substring(0, param.getPackageJsonName().length() - 5));
-
-    TestExtension testExtension = testExtensions.create(param.getUseCaseName());
-    try {
-      testExtension.setup();
-
-      // TODO: move this to test env setup
-      Path rootDir = param.packageJsonPath().getParent();
-      PackageJson packageJson =
-          ConfigLoaderUtils.loadResolvedConfig(
-              ErrorCollector.root(), rootDir.resolve(BUILD_DIR_NAME));
-
-      TestEngines engines = new EngineFactory().create(packageJson);
-
-      log.info(
-          """
-        The test parameters
-        Test name: {}
-        Test path: {}
-        Test package file: {}
-        """,
-          param.getUseCaseName(),
-          rootDir,
-          param.getPackageJsonName());
-
-      // Execute the test
-      TestEnvContext context = new TestEnvContext(rootDir, containerHook.getEnv(), param);
-
-      engines.accept(
-          new TestExecutionEnv(
-              param.getPackageJsonName() + ":" + param.goal(), packageJson, rootDir, snapshot),
-          context);
-
-    } finally {
-      testExtension.teardown();
-      containerHook.clear();
-    }
-
-    if (snapshot.hasContent()) {
-      snapshot.createOrValidate();
-    }
+    fullUseCaseTest(param);
   }
 
   @SneakyThrows
@@ -187,7 +85,7 @@ public class FullUseCasesIT {
       var sortedPaths =
           useCaseStream
               .filter(Files::isDirectory)
-              .flatMap(FullUseCasesIT::collectPackageJsonFiles)
+              .flatMap(FullUseCaseIT::collectPackageJsonFiles)
               .sorted() // Ensure consistent ordering for index assignment
               .toList();
 
