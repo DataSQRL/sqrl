@@ -137,7 +137,16 @@ public class HttpServerVerticle extends AbstractVerticle {
 
     // inside bootstrap() in HttpServerVerticle
     var jwtOpt =
-        Optional.ofNullable(config.getJwtAuth()).map(authCfg -> JWTAuth.create(vertx, authCfg));
+        Optional.ofNullable(config.getJwtAuth())
+            .map(
+                authCfg -> {
+                  log.info("JWT authentication enabled");
+                  return JWTAuth.create(vertx, authCfg);
+                });
+
+    if (jwtOpt.isEmpty()) {
+      log.info("JWT authentication disabled - no JWT configuration found");
+    }
 
     // Deploy GraphQL verticle first
     GraphQLServerVerticle graphQLVerticle = new GraphQLServerVerticle(root, config, model, jwtOpt);

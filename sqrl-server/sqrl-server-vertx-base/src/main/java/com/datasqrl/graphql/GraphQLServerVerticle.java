@@ -92,6 +92,9 @@ public class GraphQLServerVerticle extends AbstractVerticle {
     var handler = router.route(this.config.getServletConfig().getGraphQLEndpoint());
     authProvider.ifPresent(
         (auth) -> {
+          log.info(
+              "Applying JWT authentication to GraphQL endpoint: {}",
+              this.config.getServletConfig().getGraphQLEndpoint());
           // Required for adding auth on ws handler
           System.setProperty("io.vertx.web.router.setup.lenient", "true");
           handler.handler(JWTAuthHandler.create(auth));
@@ -111,6 +114,7 @@ public class GraphQLServerVerticle extends AbstractVerticle {
     var readers = ImmutableMap.<MetadataType, MetadataReader>builder();
     authProvider.ifPresent(
         (auth) -> {
+          log.debug("Configuring JWT authentication metadata reader");
           readers.put(MetadataType.AUTH, new AuthMetadataReader());
         });
 
