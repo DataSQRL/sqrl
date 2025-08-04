@@ -19,34 +19,80 @@ import io.vertx.core.json.JsonObject;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-import lombok.AllArgsConstructor;
-import lombok.Builder.Default;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
 @Setter
-@AllArgsConstructor
+@NoArgsConstructor
 public class CorsHandlerOptions {
 
-  public CorsHandlerOptions() {}
+  private String allowedOrigin;
+  private List<String> allowedOrigins;
+  private boolean allowCredentials = false;
+  private Integer maxAgeSeconds = -1;
+  private boolean allowPrivateNetwork = false;
+  private Set<String> allowedMethods = new LinkedHashSet<>();
+  private Set<String> allowedHeaders = new LinkedHashSet<>();
+  private Set<String> exposedHeaders = new LinkedHashSet<>();
 
   public CorsHandlerOptions(JsonObject json) {
-    CorsHandlerOptionsConverter.fromJson(json, this);
+    for (java.util.Map.Entry<String, Object> member : json) {
+      switch (member.getKey()) {
+        case "allowedOrigin":
+          if (member.getValue() instanceof String) {
+            this.allowedOrigin = (String) member.getValue();
+          }
+          break;
+        case "allowedOrigins":
+          if (member.getValue() instanceof Iterable c) {
+            this.allowedOrigins = toList(c);
+          }
+          break;
+        case "allowCredentials":
+          if (member.getValue() instanceof Boolean) {
+            this.allowCredentials = (Boolean) member.getValue();
+          }
+          break;
+        case "maxAgeSeconds":
+          if (member.getValue() instanceof Integer) {
+            this.maxAgeSeconds = (Integer) member.getValue();
+          }
+          break;
+        case "allowPrivateNetwork":
+          if (member.getValue() instanceof Boolean) {
+            this.allowPrivateNetwork = (Boolean) member.getValue();
+          }
+          break;
+        case "allowedMethods":
+          if (member.getValue() instanceof Iterable c) {
+            this.allowedMethods = toSet(c);
+          }
+          break;
+        case "allowedHeaders":
+          if (member.getValue() instanceof Iterable c) {
+            this.allowedHeaders = toSet(c);
+          }
+          break;
+        case "exposedHeaders":
+          if (member.getValue() instanceof Iterable c) {
+            this.exposedHeaders = toSet(c);
+          }
+          break;
+      }
+    }
   }
 
-  private String allowedOrigin;
-  @Default private List<String> allowedOrigins;
-  @Default private boolean allowCredentials = false;
-  @Default private Integer maxAgeSeconds = -1;
-  @Default private boolean allowPrivateNetwork = false;
-  @Default private Set<String> allowedMethods = new LinkedHashSet<>();
-  @Default private Set<String> allowedHeaders = new LinkedHashSet<>();
-  @Default private Set<String> exposedHeaders = new LinkedHashSet<>();
+  private static List<String> toList(Iterable<?> c) {
+    return StreamSupport.stream(c.spliterator(), false).map(String.class::cast).toList();
+  }
 
-  public JsonObject toJson() {
-    var json = new JsonObject();
-    CorsHandlerOptionsConverter.toJson(this, json);
-    return json;
+  private static Set<String> toSet(Iterable<?> c) {
+    return StreamSupport.stream(c.spliterator(), false)
+        .map(String.class::cast)
+        .collect(Collectors.toCollection(LinkedHashSet::new));
   }
 }

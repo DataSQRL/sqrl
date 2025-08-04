@@ -25,6 +25,7 @@ import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.engines.TestContainersForTestGoal;
 import com.datasqrl.engines.TestContainersForTestGoal.TestContainerHook;
 import com.datasqrl.engines.TestEngine.EngineFactory;
+import com.datasqrl.env.GlobalEnvironmentStore;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.tests.TestExtension;
 import com.datasqrl.tests.UseCaseTestExtensions;
@@ -120,6 +121,7 @@ abstract class AbstractFullUseCaseTest {
 
       var env = new HashMap<>(containerHook.getEnv());
       env.putAll(System.getenv());
+      env.putAll(GlobalEnvironmentStore.getAll());
       env.put("DATA_PATH", rootDir.resolve("build/deploy/flink/data").toAbsolutePath().toString());
       env.put("UDF_PATH", rootDir.resolve("build/deploy/flink/lib").toAbsolutePath().toString());
 
