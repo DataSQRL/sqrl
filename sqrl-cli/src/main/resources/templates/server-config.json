@@ -108,15 +108,15 @@
     "http2RstFloodWindowDuration" : 30,
     "http2RstFloodWindowDurationTimeUnit" : "SECONDS",
     "strictThreadMode" : false,
-    "useAlpn" : false,
+    "enabledSecureTransportProtocols" : [ "TLSv1", "TLSv1.1", "TLSv1.2" ],
     "keyCertOptions" : null,
     "trustOptions" : null,
     "clientAuth" : "NONE",
-    "enabledSecureTransportProtocols" : [ "TLSv1", "TLSv1.1", "TLSv1.2" ],
     "sslHandshakeTimeout" : 10,
     "sslHandshakeTimeoutUnit" : "SECONDS",
-    "sni" : false,
-    "fileRegionEnabled" : true
+    "fileRegionEnabled" : true,
+    "useAlpn" : false,
+    "sni" : false
   },
   "pgConnectOptions" : {
     "host" : "${POSTGRES_HOST}",
@@ -146,17 +146,6 @@
       "domainSocket" : false
     },
     "usingDomainSocket" : false
-  },
-  "kafkaSubscriptionConfig": {
-    "bootstrap.servers": "${KAFKA_BOOTSTRAP_SERVERS}",
-    "key.deserializer": "com.datasqrl.graphql.kafka.JsonDeserializer",
-    "value.deserializer": "com.datasqrl.graphql.kafka.JsonDeserializer",
-    "auto.offset.reset": "latest"
-  },
-  "kafkaMutationConfig": {
-    "bootstrap.servers": "${KAFKA_BOOTSTRAP_SERVERS}",
-    "key.serializer": "com.datasqrl.graphql.kafka.JsonSerializer",
-    "value.serializer": "com.datasqrl.graphql.kafka.JsonSerializer"
   },
   "poolOptions" : {
     "maxSize" : 4,
@@ -195,5 +184,16 @@
     "contactEmail" : "contact@datasqrl.com",
     "license" : "Apache License 2.0",
     "licenseUrl" : "https://www.apache.org/licenses/LICENSE-2.0"
+  },
+  "kafkaMutationConfig" : {
+    "value.serializer" : "com.datasqrl.graphql.kafka.JsonSerializer",
+    "bootstrap.servers" : "${KAFKA_BOOTSTRAP_SERVERS}",
+    "key.serializer" : "com.datasqrl.graphql.kafka.JsonSerializer"
+  },
+  "kafkaSubscriptionConfig" : {
+    "key.deserializer" : "com.datasqrl.graphql.kafka.JsonDeserializer",
+    "value.deserializer" : "com.datasqrl.graphql.kafka.JsonDeserializer",
+    "bootstrap.servers" : "${KAFKA_BOOTSTRAP_SERVERS}",
+    "auto.offset.reset" : "latest"
   }
 }
