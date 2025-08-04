@@ -1,0 +1,11 @@
+{
+  "data" : {
+    "AuthStringMyTableValues" : [ {
+      "val" : "a"
+    }, {
+      "val" : "b"
+    }, {
+      "val" : "c"
+    } ]
+  }
+}

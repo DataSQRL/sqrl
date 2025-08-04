@@ -1,0 +1,72 @@
+/*+primary_key(id)*/
+IntArray :=
+  SELECT id, int_array
+  FROM (VALUES
+    (1, ARRAY[1, 2]),
+    (2, ARRAY[3]),
+    (3, ARRAY[4]),
+    (4, ARRAY[5, 6])
+  ) AS T(id, int_array);
+
+/*+primary_key(id)*/
+StringArray :=
+  SELECT id, string_array
+  FROM (VALUES
+    (1, ARRAY['a', 'b']),
+    (2, ARRAY['c']),
+    (3, ARRAY['d']),
+    (4, ARRAY['e', 'f'])
+  ) AS T(id, string_array);
+
+/*+primary_key(id)*/
+NestedArray :=
+  SELECT id, nested_array
+  FROM (VALUES
+    (
+      1,
+      ARRAY[
+        ARRAY['a', 'b'],
+        ARRAY['c', 'd']
+      ]
+    ),
+    (
+      2,
+      ARRAY[
+        ARRAY['x', 'y'],
+        ARRAY['z']
+      ]
+    )
+  ) AS T(id, nested_array);
+
+-- FIXME: GraphQL schema mapping does not work
+/*+no_query*/
+ArrayOfRows :=
+  SELECT id, array_of_rows
+  FROM (VALUES
+    (
+      1,
+      ARRAY[
+        ROW('a', 'group1', 1),
+        ROW('b', 'group1', 2),
+        ROW('c', 'group2', 3),
+        ROW('d', 'group2', 4)
+      ]
+    ),
+    (
+      2,
+      ARRAY[
+        ROW('x', 'groupX', 1),
+        ROW('y', 'groupX', 2),
+        ROW('z', 'groupY', 3)
+      ]
+    )
+  ) AS T(id, array_of_rows);
+
+/*+test*/
+IntArrayTest := SELECT * FROM IntArray ORDER BY id;
+
+/*+test*/
+StringArrayTest := SELECT * FROM StringArray ORDER BY id;
+
+/*+test*/
+NestedArrayTest := SELECT * FROM NestedArray ORDER BY id;

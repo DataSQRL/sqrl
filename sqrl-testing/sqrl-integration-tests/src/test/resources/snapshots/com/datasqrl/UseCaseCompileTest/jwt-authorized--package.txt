@@ -37,6 +37,40 @@ SQL: CREATE VIEW AuthMyTableValues AS
      WHERE array_contains(cast(?     as ARRAY<BIGINT>), t.val)
      ORDER BY t.val ASC;
 
+=== AuthStringMyTableValues
+ID:     default_catalog.default_database.AuthStringMyTableValues
+Type:   query
+Stage:  postgres
+Inputs: default_catalog.default_database.MyStringTable
+Annotations:
+ - parameters: vals
+ - base-table: MyStringTable
+Plan:
+LogicalSort(sort0=[$0], dir0=[ASC-nulls-first])
+  LogicalProject(val=[$0])
+    LogicalFilter(condition=[array_contains(CAST(?0):VARCHAR(2147483647) CHARACTER SET "UTF-16LE" ARRAY, CAST($0):VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL)])
+      LogicalTableScan(table=[[default_catalog, default_database, MyStringTable]])
+SQL: CREATE VIEW AuthStringMyTableValues AS 
+    SELECT t.*
+      FROM MyStringTable t
+     WHERE array_contains(CAST(?     AS ARRAY<STRING>), CAST(t.val AS STRING))
+     ORDER BY t.val ASC;
+
+=== MyStringTable
+ID:     default_catalog.default_database.MyStringTable
+Type:   state
+Stage:  flink
+Annotations:
+ - sort: [0 ASC-nulls-first]
+Primary Key: val
+Timestamp  : -
+Schema:
+ - val: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL
+Plan:
+LogicalProject(val=[$0])
+  LogicalValues(tuples=[[{ 'a' }, { 'b' }, { 'c' }, { 'd' }]])
+SQL: CREATE VIEW MyStringTable AS  SELECT val FROM (VALUES 'a', 'b', 'c', 'd') AS t(val) ORDER BY val;
+
 === MyTable
 ID:     default_catalog.default_database.MyTable
 Type:   state
@@ -68,11 +102,33 @@ FROM (VALUES ROW(1),
    ROW(8),
    ROW(9),
    ROW(10)) AS `t` (`val`);
+CREATE VIEW `MyStringTable`
+AS
+SELECT `val`
+FROM (VALUES ROW('a'),
+   ROW('b'),
+   ROW('c'),
+   ROW('d')) AS `t` (`val`);
 CREATE VIEW `MyTableTest`
 AS
 SELECT *
 FROM `MyTable`;
-CREATE TABLE `MyTable_1` (
+CREATE VIEW `MyStringTableTest`
+AS
+SELECT *
+FROM `MyStringTable`;
+CREATE TABLE `MyStringTable_1` (
+  `val` CHAR(1) CHARACTER SET `UTF-16LE` NOT NULL,
+  PRIMARY KEY (`val`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = 'MyStringTable',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `MyTable_2` (
   `val` INTEGER NOT NULL,
   PRIMARY KEY (`val`) NOT ENFORCED
 ) WITH (
@@ -84,17 +140,22 @@ CREATE TABLE `MyTable_1` (
   'username' = '${POSTGRES_USERNAME}'
 );
 EXECUTE STATEMENT SET BEGIN
-INSERT INTO `default_catalog`.`default_database`.`MyTable_1`
+INSERT INTO `default_catalog`.`default_database`.`MyStringTable_1`
 (SELECT *
- FROM `default_catalog`.`default_database`.`MyTable`)
+ FROM `default_catalog`.`default_database`.`MyStringTable`)
 ;
-END
+INSERT INTO `default_catalog`.`default_database`.`MyTable_2`
+ (SELECT *
+  FROM `default_catalog`.`default_database`.`MyTable`)
+ ;
+ END
 >>>kafka.json
 {
   "topics" : [ ],
   "testRunnerTopics" : [ ]
 }
 >>>postgres-schema.sql
+CREATE TABLE IF NOT EXISTS "MyStringTable" ("val" TEXT NOT NULL , PRIMARY KEY ("val"));
 CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL , PRIMARY KEY ("val"))
 >>>postgres-views.sql
 
@@ -102,6 +163,30 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL , PRIMARY KEY ("val
 {
   "model" : {
     "queries" : [
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "MyStringTable",
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
+            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM (SELECT \"val\"\n  FROM \"MyStringTable\"\n  ORDER BY \"val\" NULLS FIRST) AS \"t\"",
+            "parameters" : [ ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
+          }
+        }
+      },
       {
         "type" : "args",
         "parentType" : "Query",
@@ -176,7 +261,40 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL , PRIMARY KEY ("val
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM (SELECT \"val\"\n  FROM \"MyTable\"\n  ORDER BY \"val\" NULLS FIRST) AS \"t\"\nWHERE (CAST(\"val\" AS BIGINT) = ANY ($1))\nORDER BY \"val\" NULLS FIRST",
+            "sql" : "SELECT *\nFROM (SELECT \"val\"\n  FROM \"MyTable\"\n  ORDER BY \"val\" NULLS FIRST) AS \"t\"\nWHERE (CAST(\"val\" AS BIGINT) = ANY (CAST($1 AS BIGINT ARRAY)))\nORDER BY \"val\" NULLS FIRST",
+            "parameters" : [
+              {
+                "type" : "metadata",
+                "metadata" : {
+                  "metadataType" : "AUTH",
+                  "name" : "values",
+                  "isRequired" : true
+                }
+              }
+            ],
+            "pagination" : "LIMIT_AND_OFFSET",
+            "database" : "POSTGRES"
+          }
+        }
+      },
+      {
+        "type" : "args",
+        "parentType" : "Query",
+        "fieldName" : "AuthStringMyTableValues",
+        "exec" : {
+          "arguments" : [
+            {
+              "type" : "variable",
+              "path" : "offset"
+            },
+            {
+              "type" : "variable",
+              "path" : "limit"
+            }
+          ],
+          "query" : {
+            "type" : "SqlQuery",
+            "sql" : "SELECT *\nFROM (SELECT \"val\"\n  FROM \"MyStringTable\"\n  ORDER BY \"val\" NULLS FIRST) AS \"t\"\nWHERE (CAST(\"val\" AS TEXT) = ANY (CAST($1 AS TEXT ARRAY)))\nORDER BY \"val\" NULLS FIRST",
             "parameters" : [
               {
                 "type" : "metadata",
@@ -196,6 +314,32 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL , PRIMARY KEY ("val
     "mutations" : [ ],
     "subscriptions" : [ ],
     "operations" : [
+      {
+        "function" : {
+          "name" : "GetMyStringTable",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query MyStringTable($limit: Int = 10, $offset: Int = 0) {\nMyStringTable(limit: $limit, offset: $offset) {\nval\n}\n\n}",
+          "queryName" : "MyStringTable",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/MyStringTable{?offset,limit}"
+      },
       {
         "function" : {
           "name" : "GetMyTable",
@@ -273,11 +417,37 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL , PRIMARY KEY ("val
         "mcpMethod" : "TOOL",
         "restMethod" : "GET",
         "uriTemplate" : "queries/AuthMyTableValues{?offset,limit}"
+      },
+      {
+        "function" : {
+          "name" : "GetAuthStringMyTableValues",
+          "parameters" : {
+            "type" : "object",
+            "properties" : {
+              "offset" : {
+                "type" : "integer"
+              },
+              "limit" : {
+                "type" : "integer"
+              }
+            },
+            "required" : [ ]
+          }
+        },
+        "format" : "JSON",
+        "apiQuery" : {
+          "query" : "query AuthStringMyTableValues($limit: Int = 10, $offset: Int = 0) {\nAuthStringMyTableValues(limit: $limit, offset: $offset) {\nval\n}\n\n}",
+          "queryName" : "AuthStringMyTableValues",
+          "operationType" : "QUERY"
+        },
+        "mcpMethod" : "TOOL",
+        "restMethod" : "GET",
+        "uriTemplate" : "queries/AuthStringMyTableValues{?offset,limit}"
       }
     ],
     "schema" : {
       "type" : "string",
-      "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype MyTable {\n  val: Int!\n}\n\ntype Query {\n  MyTable(limit: Int = 10, offset: Int = 0): [MyTable!]\n  AuthMyTable(limit: Int = 10, offset: Int = 0): [MyTable!]\n  AuthMyTableValues(limit: Int = 10, offset: Int = 0): [MyTable!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype MyStringTable {\n  val: String!\n}\n\ntype MyTable {\n  val: Int!\n}\n\ntype Query {\n  MyStringTable(limit: Int = 10, offset: Int = 0): [MyStringTable!]\n  MyTable(limit: Int = 10, offset: Int = 0): [MyTable!]\n  AuthMyTable(limit: Int = 10, offset: Int = 0): [MyTable!]\n  AuthMyTableValues(limit: Int = 10, offset: Int = 0): [MyTable!]\n  AuthStringMyTableValues(limit: Int = 10, offset: Int = 0): [MyStringTable!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
     }
   }
 }

@@ -1,0 +1,190 @@
+>>>pipeline_explain.txt
+=== IntArray
+ID:     default_catalog.default_database.IntArray
+Type:   state
+Stage:  flink
+Primary Key: id
+Timestamp  : -
+Schema:
+ - id: INTEGER NOT NULL
+ - int_array: INTEGER NOT NULL ARRAY NOT NULL
+Plan:
+LogicalProject(id=[$0], int_array=[$1])
+  LogicalProject(id=[$0], int_array=[$1])
+    LogicalUnion(all=[true])
+      LogicalProject(EXPR$0=[1], EXPR$1=[ARRAY(1, 2)])
+        LogicalValues(tuples=[[{ 0 }]])
+      LogicalProject(EXPR$0=[2], EXPR$1=[ARRAY(3)])
+        LogicalValues(tuples=[[{ 0 }]])
+      LogicalProject(EXPR$0=[3], EXPR$1=[ARRAY(4)])
+        LogicalValues(tuples=[[{ 0 }]])
+      LogicalProject(EXPR$0=[4], EXPR$1=[ARRAY(5, 6)])
+        LogicalValues(tuples=[[{ 0 }]])
+SQL: CREATE VIEW IntArray AS 
+  SELECT id, int_array
+  FROM (VALUES
+    (1, ARRAY[1, 2]),
+    (2, ARRAY[3]),
+    (3, ARRAY[4]),
+    (4, ARRAY[5, 6])
+  ) AS T(id, int_array);
+
+=== NestedArray
+ID:     default_catalog.default_database.NestedArray
+Type:   state
+Stage:  flink
+Primary Key: id
+Timestamp  : -
+Schema:
+ - id: INTEGER NOT NULL
+ - nested_array: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL ARRAY NOT NULL ARRAY NOT NULL
+Plan:
+LogicalProject(id=[$0], nested_array=[$1])
+  LogicalProject(id=[$0], nested_array=[$1])
+    LogicalUnion(all=[true])
+      LogicalProject(EXPR$0=[1], EXPR$1=[ARRAY(ARRAY('a', 'b'), ARRAY('c', 'd'))])
+        LogicalValues(tuples=[[{ 0 }]])
+      LogicalProject(EXPR$0=[2], EXPR$1=[ARRAY(ARRAY('x', 'y'), ARRAY('z'))])
+        LogicalValues(tuples=[[{ 0 }]])
+SQL: CREATE VIEW NestedArray AS 
+  SELECT id, nested_array
+  FROM (VALUES
+    (
+      1,
+      ARRAY[
+        ARRAY['a', 'b'],
+        ARRAY['c', 'd']
+      ]
+    ),
+    (
+      2,
+      ARRAY[
+        ARRAY['x', 'y'],
+        ARRAY['z']
+      ]
+    )
+  ) AS T(id, nested_array);
+
+=== StringArray
+ID:     default_catalog.default_database.StringArray
+Type:   state
+Stage:  flink
+Primary Key: id
+Timestamp  : -
+Schema:
+ - id: INTEGER NOT NULL
+ - string_array: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL ARRAY NOT NULL
+Plan:
+LogicalProject(id=[$0], string_array=[$1])
+  LogicalProject(id=[$0], string_array=[$1])
+    LogicalUnion(all=[true])
+      LogicalProject(EXPR$0=[1], EXPR$1=[ARRAY('a', 'b')])
+        LogicalValues(tuples=[[{ 0 }]])
+      LogicalProject(EXPR$0=[2], EXPR$1=[ARRAY('c')])
+        LogicalValues(tuples=[[{ 0 }]])
+      LogicalProject(EXPR$0=[3], EXPR$1=[ARRAY('d')])
+        LogicalValues(tuples=[[{ 0 }]])
+      LogicalProject(EXPR$0=[4], EXPR$1=[ARRAY('e', 'f')])
+        LogicalValues(tuples=[[{ 0 }]])
+SQL: CREATE VIEW StringArray AS 
+  SELECT id, string_array
+  FROM (VALUES
+    (1, ARRAY['a', 'b']),
+    (2, ARRAY['c']),
+    (3, ARRAY['d']),
+    (4, ARRAY['e', 'f'])
+  ) AS T(id, string_array);
+
+>>>flink-sql-no-functions.sql
+CREATE VIEW `IntArray`
+AS
+SELECT `id`, `int_array`
+FROM (VALUES ROW(1, ARRAY[1, 2]),
+   ROW(2, ARRAY[3]),
+   ROW(3, ARRAY[4]),
+   ROW(4, ARRAY[5, 6])) AS `T` (`id`, `int_array`);
+CREATE VIEW `StringArray`
+AS
+SELECT `id`, `string_array`
+FROM (VALUES ROW(1, ARRAY['a', 'b']),
+   ROW(2, ARRAY['c']),
+   ROW(3, ARRAY['d']),
+   ROW(4, ARRAY['e', 'f'])) AS `T` (`id`, `string_array`);
+CREATE VIEW `NestedArray`
+AS
+SELECT `id`, `nested_array`
+FROM (VALUES ROW(1, ARRAY[ARRAY['a', 'b'], ARRAY['c', 'd']]),
+   ROW(2, ARRAY[ARRAY['x', 'y'], ARRAY['z']])) AS `T` (`id`, `nested_array`);
+CREATE VIEW `ArrayOfRows`
+AS
+SELECT `id`, `array_of_rows`
+FROM (VALUES ROW(1, ARRAY[ROW('a', 'group1', 1), ROW('b', 'group1', 2), ROW('c', 'group2', 3), ROW('d', 'group2', 4)]),
+   ROW(2, ARRAY[ROW('x', 'groupX', 1), ROW('y', 'groupX', 2), ROW('z', 'groupY', 3)])) AS `T` (`id`, `array_of_rows`);
+CREATE VIEW `IntArrayTest`
+AS
+SELECT *
+FROM `IntArray`;
+CREATE VIEW `StringArrayTest`
+AS
+SELECT *
+FROM `StringArray`;
+CREATE VIEW `NestedArrayTest`
+AS
+SELECT *
+FROM `NestedArray`;
+CREATE TABLE `IntArray_1` (
+  `id` INTEGER NOT NULL,
+  `int_array` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
+  PRIMARY KEY (`id`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = 'IntArray',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `NestedArray_2` (
+  `id` INTEGER NOT NULL,
+  `nested_array` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
+  PRIMARY KEY (`id`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = 'NestedArray',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `StringArray_3` (
+  `id` INTEGER NOT NULL,
+  `string_array` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
+  PRIMARY KEY (`id`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = 'StringArray',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`IntArray_1`
+(SELECT `id`, `to_jsonb`(`int_array`) AS `int_array`
+ FROM `default_catalog`.`default_database`.`IntArray`)
+;
+INSERT INTO `default_catalog`.`default_database`.`NestedArray_2`
+ (SELECT `id`, `to_jsonb`(`nested_array`) AS `nested_array`
+  FROM `default_catalog`.`default_database`.`NestedArray`)
+ ;
+ INSERT INTO `default_catalog`.`default_database`.`StringArray_3`
+  (SELECT `id`, `to_jsonb`(`string_array`) AS `string_array`
+   FROM `default_catalog`.`default_database`.`StringArray`)
+  ;
+  END
+>>>postgres-schema.sql
+CREATE TABLE IF NOT EXISTS "IntArray" ("id" INTEGER NOT NULL, "int_array" JSONB  , PRIMARY KEY ("id"));
+CREATE TABLE IF NOT EXISTS "NestedArray" ("id" INTEGER NOT NULL, "nested_array" JSONB  , PRIMARY KEY ("id"));
+CREATE TABLE IF NOT EXISTS "StringArray" ("id" INTEGER NOT NULL, "string_array" JSONB  , PRIMARY KEY ("id"))
+>>>postgres-views.sql
+
