@@ -275,7 +275,10 @@ For dependent services, DataSQRL creates and uses the following environment vari
   * `POSTGRES_JDBC_URL`
   * `POSTGRES_USERNAME`
   * `POSTGRES_PASSWORD`
-
+* **Snowflake**
+  * `SNOWFLAKE_JDBC_URL`
+  * `SNOWFLAKE_EXTERNAL_VOLUME`
+  * `SNOWFLAKE_CATALOG_NAME`
 ---
 
 ## Default Configuration
