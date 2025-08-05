@@ -62,13 +62,7 @@ public class ServerConfigUtil {
     if (fieldValue == null) {
       return defaultVal.get();
     }
-    try {
-      return ctor.apply(fieldValue);
-    } catch (Exception e) {
-      log.warn(
-          "Failed to parse configuration field '{}', using default: {}", fieldName, e.getMessage());
-      return defaultVal.get();
-    }
+    return ctor.apply(fieldValue);
   }
 
   /**
