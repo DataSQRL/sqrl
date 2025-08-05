@@ -38,13 +38,12 @@ import lombok.extern.slf4j.Slf4j;
 public abstract class GenericJavaServerEngine extends ExecutionEngine.Base implements ServerEngine {
 
   private final EngineConfig engineConfig;
-  private final PackageJson packageJson;
+  private final List<String> enabledEngines;
 
-  public GenericJavaServerEngine(
-      String engineName, EngineConfig engineConfig, PackageJson packageJson) {
+  public GenericJavaServerEngine(String engineName, PackageJson packageJson) {
     super(engineName, EngineType.SERVER, NO_CAPABILITIES);
-    this.engineConfig = engineConfig;
-    this.packageJson = packageJson;
+    engineConfig = packageJson.getEngines().getEngineConfigOrEmpty(engineName);
+    enabledEngines = packageJson.getEnabledEngines();
   }
 
   @Override
@@ -83,7 +82,7 @@ public abstract class GenericJavaServerEngine extends ExecutionEngine.Base imple
   }
 
   private void disableConfigIfNeeded(JsonObject json, String engineName, String configName) {
-    if (!packageJson.getEnabledEngines().contains(engineName)) {
+    if (!enabledEngines.contains(engineName)) {
       json.putNull(configName);
     }
   }

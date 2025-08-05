@@ -60,9 +60,11 @@ public class JdbcClientsConfig {
       return Optional.empty();
     }
 
+    // No need for Class.forName() - Snowflake JDBC driver auto-registers via JDBC 4.0+
+    // ServiceLoader
     var url = snowflakeConf.getUrl();
     url += "?CLIENT_SESSION_KEEP_ALIVE=true";
-    var pool = initJdbcPool(snowflakeConf.getDriver(), url);
+    var pool = initJdbcPool(url);
 
     return Optional.of(pool);
   }
@@ -74,8 +76,9 @@ public class JdbcClientsConfig {
       return Optional.empty();
     }
 
+    // No need for Class.forName() - DuckDB JDBC driver auto-registers via JDBC 4.0+ ServiceLoader
     var url = duckDbConf.getUrl();
-    var pool = initJdbcPool(duckDbConf.getDriver(), url);
+    var pool = initJdbcPool(url);
 
     return Optional.of(pool);
   }
@@ -87,8 +90,7 @@ public class JdbcClientsConfig {
   }
 
   @SneakyThrows
-  private Pool initJdbcPool(String driver, String url) {
-    Class.forName(driver);
+  private Pool initJdbcPool(String url) {
     var connectOptions = new JDBCConnectOptions().setJdbcUrl(url);
 
     return JDBCPool.pool(vertx, connectOptions, new PoolOptions());
