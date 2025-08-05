@@ -47,29 +47,32 @@ public class ServerConfig {
   SwaggerConfig swaggerConfig;
   KafkaConfig.KafkaMutationConfig kafkaMutationConfig;
   KafkaConfig.KafkaSubscriptionConfig kafkaSubscriptionConfig;
+  JdbcConfig duckDbConfig;
+  JdbcConfig snowflakeConfig;
 
   public ServerConfig(JsonObject json) {
     // Empty default mappings
-    this.servletConfig = mapFieldWithEmptyDefault(json, "servletConfig", ServletConfig::new);
-    this.graphQLHandlerOptions =
+    servletConfig = mapFieldWithEmptyDefault(json, "servletConfig", ServletConfig::new);
+    graphQLHandlerOptions =
         mapFieldWithEmptyDefault(json, "graphQLHandlerOptions", GraphQLHandlerOptions::new);
-    this.httpServerOptions =
-        mapFieldWithEmptyDefault(json, "httpServerOptions", HttpServerOptions::new);
-    this.pgConnectOptions = loadPgConnectOptions(json);
-    this.poolOptions = mapFieldWithEmptyDefault(json, "poolOptions", PoolOptions::new);
-    this.corsHandlerOptions =
+    httpServerOptions = mapFieldWithEmptyDefault(json, "httpServerOptions", HttpServerOptions::new);
+    pgConnectOptions = loadPgConnectOptions(json);
+    poolOptions = mapFieldWithEmptyDefault(json, "poolOptions", PoolOptions::new);
+    corsHandlerOptions =
         mapFieldWithEmptyDefault(json, "corsHandlerOptions", CorsHandlerOptions::new);
-    this.swaggerConfig = mapFieldWithEmptyDefault(json, "swaggerConfig", SwaggerConfig::new);
+    swaggerConfig = mapFieldWithEmptyDefault(json, "swaggerConfig", SwaggerConfig::new);
 
     // Null default mappings
-    this.graphiQLHandlerOptions =
+    graphiQLHandlerOptions =
         mapFieldWithNullDefault(json, "graphiQLHandlerOptions", GraphiQLHandlerOptions::new);
-    this.jwtAuth = mapFieldWithNullDefault(json, "jwtAuth", JWTAuthOptions::new);
-    this.kafkaMutationConfig =
+    jwtAuth = mapFieldWithNullDefault(json, "jwtAuth", JWTAuthOptions::new);
+    kafkaMutationConfig =
         mapFieldWithNullDefault(json, "kafkaMutationConfig", KafkaConfig.KafkaMutationConfig::new);
-    this.kafkaSubscriptionConfig =
+    kafkaSubscriptionConfig =
         mapFieldWithNullDefault(
             json, "kafkaSubscriptionConfig", KafkaConfig.KafkaSubscriptionConfig::new);
+    duckDbConfig = mapFieldWithNullDefault(json, "duckDbConfig", JdbcConfig::new);
+    snowflakeConfig = mapFieldWithNullDefault(json, "snowflakeConfig", JdbcConfig::new);
   }
 
   private PgConnectOptions loadPgConnectOptions(JsonObject json) {

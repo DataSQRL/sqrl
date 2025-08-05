@@ -511,6 +511,6 @@ public class RootGraphqlModel {
 
   public interface PreparedSqrlQuery<T> {
 
-    T getPreparedQuery();
+    T preparedQuery();
   }
 }

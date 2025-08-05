@@ -104,7 +104,7 @@ public class PostgresListenNotifyConsumer {
     //  handle the notifications. This is the accepted way of running queries in the codebase
     //  however in case on notifications we are forced to use PGConnection since that's the
     //  only way currently to listen to notifications.
-    var preparedQuery = sqlClient.getClients().get("postgres").preparedQuery(onNotifyQuery);
+    var preparedQuery = sqlClient.clients().get("postgres").preparedQuery(onNotifyQuery);
 
     preparedQuery
         .execute(Tuple.from(paramObj))

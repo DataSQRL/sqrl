@@ -303,7 +303,7 @@ The built-in fallback (excerpt - full version [here](https://raw.githubuserconte
       "schema-type": "aws-glue",
       "catalog-name": "${SNOWFLAKE_CATALOG_NAME}",
       "external-volume": "${SNOWFLAKE_EXTERNAL_VOLUME}",
-      "url": "jdbc:snowflake://${SNOWFLAKE_ID}.snowflakecomputing.com/?..."
+      "url": "${SNOWFLAKE_JDBC_URL}"
     }
   },
   "compiler": {

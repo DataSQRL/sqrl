@@ -195,5 +195,13 @@
     "value.deserializer" : "com.datasqrl.graphql.kafka.JsonDeserializer",
     "bootstrap.servers" : "${KAFKA_BOOTSTRAP_SERVERS}",
     "auto.offset.reset" : "latest"
+  },
+  "duckDbConfig": {
+    "driver": "org.duckdb.DuckDBDriver",
+    "url": "jdbc:duckdb:"
+  },
+  "snowflakeConfig": {
+    "driver": "net.snowflake.client.jdbc.SnowflakeDriver",
+    "url": "${SNOWFLAKE_URL}"
   }
 }

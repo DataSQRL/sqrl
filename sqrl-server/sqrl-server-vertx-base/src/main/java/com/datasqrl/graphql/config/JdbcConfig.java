@@ -13,10 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.graphql.jdbc;
+package com.datasqrl.graphql.config;
 
-import com.datasqrl.graphql.server.RootGraphqlModel.PreparedSqrlQuery;
-import java.sql.Connection;
+import io.vertx.core.json.JsonObject;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-public record PreparedSqrlQueryImpl(Connection connection, String preparedQuery)
-    implements PreparedSqrlQuery<String> {}
+@Getter
+@Setter
+@NoArgsConstructor
+public class JdbcConfig {
+
+  private String url;
+  private String driver;
+
+  public JdbcConfig(JsonObject json) {
+    url = json.getString("url");
+    driver = json.getString("driver");
+  }
+}

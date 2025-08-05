@@ -40,7 +40,7 @@ public class VertxEngineFactory extends GenericJavaServerEngineFactory {
 
     @Inject
     public VertxEngine(PackageJson packageJson) {
-      super(ENGINE_NAME, packageJson.getEngines().getEngineConfigOrEmpty(ENGINE_NAME));
+      super(ENGINE_NAME, packageJson.getEngines().getEngineConfigOrEmpty(ENGINE_NAME), packageJson);
     }
   }
 }
