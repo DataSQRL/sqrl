@@ -19,10 +19,13 @@ import static com.datasqrl.engine.EngineFeature.NO_CAPABILITIES;
 import static com.datasqrl.graphql.SqrlObjectMapper.MAPPER;
 
 import com.datasqrl.config.EngineType;
+import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.EnginePhysicalPlan.DeploymentArtifact;
 import com.datasqrl.engine.ExecutionEngine;
+import com.datasqrl.engine.database.relational.DuckDBEngineFactory;
+import com.datasqrl.engine.database.relational.SnowflakeEngineFactory;
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.config.ServerConfigUtil;
 import io.vertx.core.json.JsonObject;
@@ -35,10 +38,12 @@ import lombok.extern.slf4j.Slf4j;
 public abstract class GenericJavaServerEngine extends ExecutionEngine.Base implements ServerEngine {
 
   private final EngineConfig engineConfig;
+  private final List<String> enabledEngines;
 
-  public GenericJavaServerEngine(String engineName, EngineConfig engineConfig) {
+  public GenericJavaServerEngine(String engineName, PackageJson packageJson) {
     super(engineName, EngineType.SERVER, NO_CAPABILITIES);
-    this.engineConfig = engineConfig;
+    engineConfig = packageJson.getEngines().getEngineConfigOrEmpty(engineName);
+    enabledEngines = packageJson.getEnabledEngines();
   }
 
   @Override
@@ -68,8 +73,17 @@ public abstract class GenericJavaServerEngine extends ExecutionEngine.Base imple
     ServerConfig serverConfig;
     try (var input = getClass().getResourceAsStream("/templates/server-config.json")) {
       var json = MAPPER.readValue(input, JsonObject.class);
+      disableConfigIfNeeded(json, DuckDBEngineFactory.ENGINE_NAME, "duckDbConfig");
+      disableConfigIfNeeded(json, SnowflakeEngineFactory.ENGINE_NAME, "snowflakeConfig");
+
       serverConfig = new ServerConfig(json);
     }
     return serverConfig;
+  }
+
+  private void disableConfigIfNeeded(JsonObject json, String engineName, String configName) {
+    if (!enabledEngines.contains(engineName)) {
+      json.putNull(configName);
+    }
   }
 }

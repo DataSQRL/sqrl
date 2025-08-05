@@ -38,7 +38,7 @@
       "schema-type": "aws-glue",
       "catalog-name": "${SNOWFLAKE_CATALOG_NAME}",
       "external-volume": "${SNOWFLAKE_EXTERNAL_VOLUME}",
-      "url": "jdbc:snowflake://${SNOWFLAKE_ID}.snowflakecomputing.com/?user=${SNOWFLAKE_USER}&password=${SNOWFLAKE_PASSWORD}&warehouse=COMPUTE_WH&db=MYSNOWFLAKEDB&schema=public&disableSslHostnameVerification=true"
+      "url": "${SNOWFLAKE_JDBC_URL}"
     }
   },
   "connectors": {

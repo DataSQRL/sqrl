@@ -20,7 +20,7 @@
     "snowflake": {
       "catalog-name": "MyCatalog",
       "external-volume": "MyNewVolume",
-      "url": "jdbc:snowflake://${SNOWFLAKE_ID}.snowflakecomputing.com/?user=${SNOWFLAKE_USER}&password=${SNOWFLAKE_PASSWORD}&warehouse=COMPUTE_WH&db=MYSNOWFLAKEDB&schema=public&disableSslHostnameVerification=true"
+      "url": "${SOWFLAKE_JDBC_URL}"
     }
   },
   "connectors" : {

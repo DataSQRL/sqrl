@@ -29,16 +29,12 @@ import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.SqlClient;
 import io.vertx.sqlclient.Tuple;
 import java.util.Map;
-import lombok.Value;
 
 /**
  * Purpose: Manages SQL clients and executes queries. Collaboration: Used by {@link VertxContext} to
  * prepare and execute SQL queries.
  */
-@Value
-public class VertxJdbcClient implements JdbcClient {
-  Map<DatabaseType, SqlClient> clients;
-
+public record VertxJdbcClient(Map<DatabaseType, SqlClient> clients) implements JdbcClient {
   @Override
   public ResolvedQuery prepareQuery(SqlQuery query, Context context) {
     var sqlClient = clients.get(query.getDatabase());
@@ -56,7 +52,8 @@ public class VertxJdbcClient implements JdbcClient {
     return new ResolvedSqlQuery(sqlQuery, null);
   }
 
-  public Future<RowSet<Row>> execute(DatabaseType database, PreparedQuery query, Tuple tup) {
+  public Future<RowSet<Row>> execute(
+      DatabaseType database, PreparedQuery<RowSet<Row>> query, Tuple tup) {
     var sqlClient = clients.get(database);
 
     if (database == DatabaseType.DUCKDB) {
@@ -74,9 +71,6 @@ public class VertxJdbcClient implements JdbcClient {
     return execute(database, sqlClient.preparedQuery(query), tup);
   }
 
-  @Value
-  public static class PreparedSqrlQueryImpl
-      implements PreparedSqrlQuery<PreparedQuery<RowSet<Row>>> {
-    PreparedQuery<RowSet<Row>> preparedQuery;
-  }
+  public record PreparedSqrlQueryImpl(PreparedQuery<RowSet<Row>> preparedQuery)
+      implements PreparedSqrlQuery<PreparedQuery<RowSet<Row>>> {}
 }

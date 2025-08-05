@@ -275,7 +275,10 @@ For dependent services, DataSQRL creates and uses the following environment vari
   * `POSTGRES_JDBC_URL`
   * `POSTGRES_USERNAME`
   * `POSTGRES_PASSWORD`
-
+* **Snowflake**
+  * `SNOWFLAKE_JDBC_URL`
+  * `SNOWFLAKE_EXTERNAL_VOLUME`
+  * `SNOWFLAKE_CATALOG_NAME`
 ---
 
 ## Default Configuration
@@ -303,7 +306,7 @@ The built-in fallback (excerpt - full version [here](https://raw.githubuserconte
       "schema-type": "aws-glue",
       "catalog-name": "${SNOWFLAKE_CATALOG_NAME}",
       "external-volume": "${SNOWFLAKE_EXTERNAL_VOLUME}",
-      "url": "jdbc:snowflake://${SNOWFLAKE_ID}.snowflakecomputing.com/?..."
+      "url": "${SNOWFLAKE_JDBC_URL}"
     }
   },
   "compiler": {

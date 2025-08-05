@@ -17,94 +17,82 @@ package com.datasqrl.graphql;
 
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.jdbc.DatabaseType;
-import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMap;
 import io.vertx.core.Vertx;
 import io.vertx.jdbcclient.JDBCConnectOptions;
 import io.vertx.jdbcclient.JDBCPool;
 import io.vertx.sqlclient.Pool;
 import io.vertx.sqlclient.PoolOptions;
 import io.vertx.sqlclient.SqlClient;
-import java.io.File;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.duckdb.DuckDBDriver;
 
 /**
  * Configuration class responsible for creating and managing database clients for different database
  * types (PostgreSQL, DuckDB, Snowflake).
  */
+@RequiredArgsConstructor
 @Slf4j
 public class JdbcClientsConfig {
 
   private final Vertx vertx;
   private final ServerConfig config;
-  private final Optional<String> snowflakeUrl;
-
-  public JdbcClientsConfig(Vertx vertx, ServerConfig config) {
-    this.vertx = vertx;
-    this.config = config;
-    this.snowflakeUrl = readSnowflakeUrl();
-  }
 
   /** Creates a map of database clients for all configured database types. */
   public Map<DatabaseType, SqlClient> createClients() {
-    var clients = new HashMap<DatabaseType, SqlClient>();
-    clients.put(DatabaseType.POSTGRES, createPostgresSqlClient());
-    clients.put(DatabaseType.DUCKDB, createDuckdbSqlClient());
-    snowflakeUrl.ifPresent(url -> clients.put(DatabaseType.SNOWFLAKE, createSnowflakeClient(url)));
-    return clients;
+    var builder =
+        ImmutableMap.<DatabaseType, SqlClient>builder()
+            .put(DatabaseType.POSTGRES, initPostgresSqlClient());
+
+    initDuckdbSqlClient().ifPresent(client -> builder.put(DatabaseType.DUCKDB, client));
+    initSnowflakeClient().ifPresent(client -> builder.put(DatabaseType.SNOWFLAKE, client));
+
+    return builder.build();
   }
 
   @SneakyThrows
-  private static Optional<String> readSnowflakeUrl() {
-    File snowflakeConfig = new File("snowflake-config.json");
-    Map map = null;
-    if (snowflakeConfig.exists()) {
-      map = HttpServerVerticle.getObjectMapper().readValue(snowflakeConfig, Map.class);
-      if (map.isEmpty()) {
-        return Optional.empty();
-      }
-    } else {
+  private Optional<SqlClient> initSnowflakeClient() {
+    var snowflakeConf = config.getSnowflakeConfig();
+    if (snowflakeConf == null) {
       return Optional.empty();
     }
 
-    var url = (String) map.get("url");
-    if (Strings.isNullOrEmpty(url)) {
-      log.warn("Url must be specified in the snowflake engine");
+    // No need for Class.forName() - Snowflake JDBC driver auto-registers via JDBC 4.0+
+    // ServiceLoader
+    var url = snowflakeConf.getUrl();
+    url += "?CLIENT_SESSION_KEEP_ALIVE=true";
+    var pool = initJdbcPool(url);
+
+    return Optional.of(pool);
+  }
+
+  @SneakyThrows
+  private Optional<SqlClient> initDuckdbSqlClient() {
+    var duckDbConf = config.getDuckDbConfig();
+    if (duckDbConf == null) {
       return Optional.empty();
     }
-    return Optional.of(url);
+
+    // No need for Class.forName() - DuckDB JDBC driver auto-registers via JDBC 4.0+ ServiceLoader
+    var url = duckDbConf.getUrl();
+    var pool = initJdbcPool(url);
+
+    return Optional.of(pool);
   }
 
-  @SneakyThrows
-  private SqlClient createSnowflakeClient(String url) {
-    Class.forName("net.snowflake.client.jdbc.SnowflakeDriver");
-
-    var connectOptions =
-        new JDBCConnectOptions().setJdbcUrl(url + "?CLIENT_SESSION_KEEP_ALIVE=true");
-
-    return JDBCPool.pool(vertx, connectOptions, new PoolOptions());
-  }
-
-  @SneakyThrows
-  private SqlClient createDuckdbSqlClient() {
-    // In-memory DuckDB instance or you can specify a file path for persistence
-    var url = "jdbc:duckdb:";
-
-    Class.forName("org.duckdb.DuckDBDriver");
-
-    var connectOptions =
-        new JDBCConnectOptions().setJdbcUrl(url + "?" + DuckDBDriver.JDBC_STREAM_RESULTS + "=true");
-
-    return JDBCPool.pool(vertx, connectOptions, new PoolOptions());
-  }
-
-  private SqlClient createPostgresSqlClient() {
+  private SqlClient initPostgresSqlClient() {
     var poolOptions = new PoolOptions(this.config.getPoolOptions());
     // Note: setPipelined() method was removed in Vert.x 5, pipelining is now always enabled
     return Pool.pool(vertx, this.config.getPgConnectOptions(), poolOptions);
+  }
+
+  @SneakyThrows
+  private Pool initJdbcPool(String url) {
+    var connectOptions = new JDBCConnectOptions().setJdbcUrl(url);
+
+    return JDBCPool.pool(vertx, connectOptions, new PoolOptions());
   }
 }

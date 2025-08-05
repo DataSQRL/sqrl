@@ -109,14 +109,14 @@
     "http2RstFloodWindowDurationTimeUnit" : "SECONDS",
     "strictThreadMode" : false,
     "enabledSecureTransportProtocols" : [ "TLSv1", "TLSv1.1", "TLSv1.2" ],
+    "useAlpn" : false,
+    "sni" : false,
     "keyCertOptions" : null,
     "trustOptions" : null,
     "clientAuth" : "NONE",
     "sslHandshakeTimeout" : 10,
     "sslHandshakeTimeoutUnit" : "SECONDS",
-    "fileRegionEnabled" : true,
-    "useAlpn" : false,
-    "sni" : false
+    "fileRegionEnabled" : true
   },
   "pgConnectOptions" : {
     "host" : "${POSTGRES_HOST}",
@@ -195,5 +195,13 @@
     "value.deserializer" : "com.datasqrl.graphql.kafka.JsonDeserializer",
     "bootstrap.servers" : "${KAFKA_BOOTSTRAP_SERVERS}",
     "auto.offset.reset" : "latest"
+  },
+  "duckDbConfig" : {
+    "url" : "jdbc:duckdb:",
+    "driver" : null
+  },
+  "snowflakeConfig" : {
+    "url" : "${SNOWFLAKE_URL}",
+    "driver" : null
   }
 }

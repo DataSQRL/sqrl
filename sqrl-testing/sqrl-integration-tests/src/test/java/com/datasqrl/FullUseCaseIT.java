@@ -54,7 +54,6 @@ public class FullUseCaseIT extends AbstractFullUseCaseTest {
           "flink-functions", // not a full test case
           "conference", // fails in build server
           "iceberg-export", // fails in build server
-          "duckdb", // fails in build server
           "snowflake", // fails in build server
           "sensors-full", // flaky (too much data)
           "analytics-only",
@@ -65,7 +64,7 @@ public class FullUseCaseIT extends AbstractFullUseCaseTest {
   @Disabled("Intended for manual usage")
   @Test
   void specificUseCase() {
-    var pkg = USE_CASES.resolve("pg-arrays").resolve("package.json");
+    var pkg = USE_CASES.resolve("duckdb").resolve("package.json");
 
     var param = new UseCaseParam(pkg);
     fullUseCaseTest(param);

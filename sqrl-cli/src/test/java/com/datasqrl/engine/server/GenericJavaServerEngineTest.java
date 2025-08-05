@@ -18,7 +18,7 @@ package com.datasqrl.engine.server;
 import static com.datasqrl.graphql.SqrlObjectMapper.MAPPER;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.datasqrl.config.PackageJson.EmptyEngineConfig;
+import com.datasqrl.config.PackageJsonImpl;
 import com.datasqrl.graphql.config.ServerConfigUtil;
 import com.fasterxml.jackson.databind.JsonNode;
 import java.util.List;
@@ -28,7 +28,7 @@ import org.junit.jupiter.api.Test;
 
 class GenericJavaServerEngineTest {
 
-  GenericJavaServerEngine underTest = new GenericJavaServerEngine("", new EmptyEngineConfig("")) {};
+  GenericJavaServerEngine underTest = new GenericJavaServerEngine("", new PackageJsonImpl()) {};
 
   @Test
   void test() {

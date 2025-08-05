@@ -79,14 +79,12 @@ public class JdbcExecutionContext extends AbstractQueryExecutionContext {
     if (preparedQueryContainer != null) {
       return CompletableFuture.supplyAsync(
           () -> {
-            try (PreparedStatement statement =
-                preparedQueryContainer
-                    .getConnection()
-                    .prepareStatement(preparedQueryContainer.getPreparedQuery())) {
+            try (final var conn = preparedQueryContainer.connection();
+                final var stmt = conn.prepareStatement(preparedQueryContainer.preparedQuery())) {
               for (int i = 0; i < paramObj.size(); i++) {
-                statement.setObject(i + 1, paramObj.get(i));
+                stmt.setObject(i + 1, paramObj.get(i));
               }
-              ResultSet resultSet = statement.executeQuery();
+              var resultSet = stmt.executeQuery();
 
               return unboxList(resultSetToList(resultSet), isList);
             } catch (SQLException e) {

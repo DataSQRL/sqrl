@@ -89,7 +89,7 @@ public class VertxQueryExecutionContext extends AbstractQueryExecutionContext {
               .getSqlClient()
               .execute(resolvedQuery.getQuery().getDatabase(), unpreparedSqlQuery, parameters);
     } else {
-      var preparedQuery = preparedQueryContainer.getPreparedQuery();
+      var preparedQuery = preparedQueryContainer.preparedQuery();
       future =
           this.context
               .getSqlClient()
