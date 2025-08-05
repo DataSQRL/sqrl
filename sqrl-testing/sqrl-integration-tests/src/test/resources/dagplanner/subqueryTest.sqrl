@@ -1,0 +1,14 @@
+IMPORT ecommerceTs.Orders;
+IMPORT ecommerceTs.Customer;
+
+CustomerWithOrders := SELECT * FROM Customer c
+WHERE EXISTS (SELECT o.id FROM Orders o WHERE c.customerid = o.customerid);
+
+CustomerOrderCount(customerid BIGINT NOT NULL) :=
+SELECT c.name, coalesce((SELECT COUNT(*) FROM Orders o WHERE o.customerid = :customerid) -1, 0) AS num_orders
+FROM Customer c WHERE c.customerid = :customerid;
+
+-- Disabled because it doesn't resolve the correlate variable correctly when converting relnode to SQL
+-- CustomerOrderCount(name STRING NOT NULL) :=
+--  SELECT c.customerid, coalesce((SELECT COUNT(*) FROM Orders o WHERE o.customerid = c.customerid) -1, 0) AS num_orders
+--  FROM Customer c WHERE c.name = :name;
