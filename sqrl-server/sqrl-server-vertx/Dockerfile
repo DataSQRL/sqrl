@@ -21,6 +21,7 @@ RUN mkdir -p /opt/sqrl/app /opt/sqrl/config /opt/sqrl/logs
 
 # Copy application jar to separate directory
 COPY target/vertx-server.jar /opt/sqrl/app/vertx-server.jar
+COPY src/main/resources/log4j2-debug.properties /opt/sqrl/app/log4j2-debug.properties
 COPY entrypoint.sh /entrypoint.sh
 
 RUN chmod +x /entrypoint.sh
