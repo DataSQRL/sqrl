@@ -288,7 +288,7 @@ jobs:
           name: Run container tests using TestContainers
           command: |
             mvn -B install -DonlyContainerE2E \
-              -pl :sqrl-container-testing \
+              -pl :sqrl-testing-container \
               -Ddocker.image.tag=local-${CIRCLE_SHA1} \
               -Dmcp.inspector.version=$MCP_TAG
 
