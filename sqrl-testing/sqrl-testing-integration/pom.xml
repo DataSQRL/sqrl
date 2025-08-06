@@ -21,11 +21,11 @@
   <parent>
     <groupId>com.datasqrl</groupId>
     <artifactId>sqrl-testing</artifactId>
-    <version>0.7.0-SNAPSHOT</version>
+    <version>0.8-SNAPSHOT</version>
   </parent>
 
-  <artifactId>sqrl-integration-tests</artifactId>
-  <name>sqrl-integration-tests</name>
+  <artifactId>sqrl-testing-integration</artifactId>
+  <name>SQRL :: Testing :: Integration</name>
 
   <dependencies>
     <dependency>

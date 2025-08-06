@@ -112,7 +112,7 @@ public class MockSqrlInjector extends AbstractModule {
   public ResourceResolver provideResourceResolver() {
     if (rootDir == null) {
       return new FileResourceResolver(
-          Path.of("../sqrl-testing/sqrl-integration-tests/src/test/resources/dagplanner"));
+          Path.of("../sqrl-testing/sqrl-testing-integration/src/test/resources/dagplanner"));
     }
     return new FileResourceResolver(rootDir);
   }

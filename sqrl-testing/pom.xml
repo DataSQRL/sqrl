@@ -21,15 +21,15 @@
   <parent>
     <groupId>com.datasqrl</groupId>
     <artifactId>sqrl-root</artifactId>
-    <version>0.7.0-SNAPSHOT</version>
+    <version>0.8-SNAPSHOT</version>
   </parent>
 
   <artifactId>sqrl-testing</artifactId>
   <packaging>pom</packaging>
-  <name>sqrl-testing</name>
+  <name>SQRL :: Testing</name>
 
   <modules>
-    <module>sqrl-integration-tests</module>
+    <module>sqrl-testing-integration</module>
   </modules>
 
   <profiles>
@@ -41,14 +41,14 @@
         </property>
       </activation>
       <modules>
-        <module>sqrl-container-testing</module>
+        <module>sqrl-testing-container</module>
       </modules>
     </profile>
 
     <profile>
       <id>dev</id>
       <modules>
-        <module>sqrl-container-testing</module>
+        <module>sqrl-testing-container</module>
       </modules>
     </profile>
   </profiles>

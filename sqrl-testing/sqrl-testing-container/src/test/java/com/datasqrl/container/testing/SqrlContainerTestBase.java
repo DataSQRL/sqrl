@@ -337,7 +337,7 @@ public abstract class SqrlContainerTestBase {
 
     // Extract command
     var command = container.getCommandParts();
-    if (command != null && command.length > 0) {
+    if (command != null) {
       for (String part : command) {
         sb.append(" ").append(part);
       }
@@ -349,7 +349,7 @@ public abstract class SqrlContainerTestBase {
   @SneakyThrows
   protected static Path itPath(String relativePath) {
     var path =
-        Paths.get("../sqrl-integration-tests/src/test/resources/usecases", relativePath)
+        Paths.get("../sqrl-testing-integration/src/test/resources/usecases", relativePath)
             .toAbsolutePath();
     assertThat(path).exists().isDirectory();
     return path.toRealPath();

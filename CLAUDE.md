@@ -54,7 +54,7 @@ mvn test -pl sqrl-planner -Deasyjacoco.skip
 mvn test -pl sqrl-tools/sqrl-config -Dtest=TestClassName#testMethodName -Deasyjacoco.skip
 
 # Container tests (requires Docker images to be built)
-mvn -B install -DonlyContainerE2E -pl :sqrl-container-testing -Dit.test=TestClassName
+mvn -B install -DonlyContainerE2E -pl :sqrl-testing-container -Dit.test=TestClassName
 
 # Container tests with dev profile (recommended)
 mvn -B install -Pdev -Dit.test=TestClassName
@@ -196,7 +196,7 @@ All dependency versions should be centralized as properties in the root pom.xml 
 
 ### Container Testing
 
-Container tests in `sqrl-container-testing` validate the end-to-end functionality of DataSQRL Docker images:
+Container tests in `sqrl-testing-container` validate the end-to-end functionality of DataSQRL Docker images:
 
 - **Purpose**: Test the complete Docker image deployment including compilation and server startup
 - **Requirements**: Docker must be running and DataSQRL images must be built (`datasqrl/cmd:local`, `datasqrl/sqrl-server:local`)
@@ -206,7 +206,7 @@ Container tests in `sqrl-container-testing` validate the end-to-end functionalit
   - `/health` - Health check endpoint (returns 204 No Content when healthy)
   - `/metrics` - Prometheus metrics endpoint (availability depends on configuration)
 - **Common Patterns**: Compile SQRL script → Start server container → Execute HTTP requests → Validate responses
-- **Test Data**: Uses test cases from `sqrl-integration-tests/src/test/resources/usecases/`
+- **Test Data**: Uses test cases from `sqrl-testing-integration/src/test/resources/usecases/`
 
 ## Code Style Guidelines
 
@@ -233,7 +233,7 @@ Container tests in `sqrl-container-testing` validate the end-to-end functionalit
 
 ### Snapshot Files
 
-Snapshot files are located in `sqrl-testing/sqrl-integration-tests/src/test/resources/snapshots/com/datasqrl/` and contain expected outputs for integration tests. These `.txt` files capture the complete compiled output of SQRL scripts, including:
+Snapshot files are located in `sqrl-testing/sqrl-testing-integration/src/test/resources/snapshots/com/datasqrl/` and contain expected outputs for integration tests. These `.txt` files capture the complete compiled output of SQRL scripts, including:
 
 - **Flink SQL DDL**: Stream processing table definitions and queries
 - **Kafka Configuration**: Topic and serialization settings

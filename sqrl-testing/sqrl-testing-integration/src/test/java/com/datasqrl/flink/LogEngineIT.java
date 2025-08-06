@@ -45,7 +45,7 @@
 //  public void test() {
 //    Path projectRoot = getProjectRootPath();
 //    Path testRoot =
-// projectRoot.resolve("sqrl-testing/sqrl-integration-tests/src/test/resources/usecases/postgres-log");
+// projectRoot.resolve("sqrl-testing/sqrl-testing-integration/src/test/resources/usecases/postgres-log");
 //    Path profilePath = projectRoot.resolve("profiles/default");
 //    SqrlCompiler compiler = new SqrlCompiler();
 //    compiler.execute(testRoot, "compile", "--profile", profilePath.toString());
