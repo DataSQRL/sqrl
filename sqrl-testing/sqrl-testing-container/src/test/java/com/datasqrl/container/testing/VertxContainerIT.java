@@ -47,8 +47,7 @@ public class VertxContainerIT extends SqrlContainerTestBase {
   @Test
   @SneakyThrows
   void givenTraceRequestsEnabled_whenGraphQLRequestSent_thenRequestBodyLoggedInServerLogs() {
-    compileAndStartServer(
-        "myudf.sqrl", testDir, container -> container.withEnv("SQRL_TRACE_REQUESTS", "true"));
+    compileAndStartServer("myudf.sqrl", testDir);
 
     var testQuery = "{\"query\":\"query { __typename }\"}";
     var response = executeGraphQLQuery(testQuery);
@@ -60,8 +59,7 @@ public class VertxContainerIT extends SqrlContainerTestBase {
   @Test
   @SneakyThrows
   void givenTraceRequestsEnabled_whenHttpRequestsMade_thenLogPathAndBody() {
-    compileAndStartServer(
-        "myudf.sqrl", testDir, container -> container.withEnv("SQRL_TRACE_REQUESTS", "true"));
+    compileAndStartServer("myudf.sqrl", testDir);
 
     var testQuery = "{\"query\":\"query { __typename }\"}";
     var response = executeGraphQLQuery(testQuery);
@@ -105,8 +103,7 @@ public class VertxContainerIT extends SqrlContainerTestBase {
   @Test
   @SneakyThrows
   void givenTraceRequestsEnabled_whenRequestsMade_thenLogsContainRequestPrefix() {
-    compileAndStartServer(
-        "myudf.sqrl", testDir, container -> container.withEnv("SQRL_TRACE_REQUESTS", "true"));
+    compileAndStartServer("myudf.sqrl", testDir);
 
     var testQuery = "{\"query\":\"query { __typename }\"}";
     var response = executeGraphQLQuery(testQuery);

@@ -92,7 +92,7 @@ public class SqrlTestContainerIT extends SqrlContainerTestBase {
     // Verify the expected success messages are present in the logs
     assertThat(logs).contains("Snapshot OK for MySchemaQuery").contains("Snapshot OK for MySchema");
 
-    // Assert no bash debug logs are present (no DEBUG=1 output)
+    // Assert no bash debug logs are present (no SQRL_DEBUG=1 output)
     assertThat(logs)
         .doesNotContain("+ ")
         .doesNotContain("++ ")

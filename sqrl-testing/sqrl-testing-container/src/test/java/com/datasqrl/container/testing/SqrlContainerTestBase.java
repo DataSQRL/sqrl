@@ -115,7 +115,7 @@ public abstract class SqrlContainerTestBase {
             .withEnv("TZ", "America/Los_Angeles");
 
     if (debug) {
-      container = container.withEnv("DEBUG", "1");
+      container = container.withEnv("SQRL_DEBUG", "1");
     }
 
     return container;
@@ -130,7 +130,7 @@ public abstract class SqrlContainerTestBase {
         .withNetwork(sharedNetwork)
         .withExposedPorts(HTTP_SERVER_PORT)
         .withFileSystemBind(deployPlanPath.toString(), "/opt/sqrl/config", BindMode.READ_ONLY)
-        .withEnv("DEBUG", "1")
+        .withEnv("SQRL_DEBUG", "1")
         .waitingFor(
             Wait.forLogMessage(".*GraphQL verticle deployed successfully.*", 1)
                 .withStartupTimeout(Duration.ofSeconds(20)));
@@ -385,14 +385,13 @@ public abstract class SqrlContainerTestBase {
     assertThat(jsonResponse.get("data").get("__typename").asText()).isEqualTo("Query");
   }
 
-  protected void compileAndStartServer(String scriptName, Path testDir) throws Exception {
+  protected void compileAndStartServer(String scriptName, Path testDir) {
     compileSqrlScript(scriptName, testDir);
     startGraphQLServer(testDir);
   }
 
   protected void compileAndStartServer(
-      String scriptName, Path testDir, Consumer<GenericContainer<?>> containerCustomizer)
-      throws Exception {
+      String scriptName, Path testDir, Consumer<GenericContainer<?>> containerCustomizer) {
     compileSqrlScript(scriptName, testDir);
     startGraphQLServer(testDir, containerCustomizer);
   }
