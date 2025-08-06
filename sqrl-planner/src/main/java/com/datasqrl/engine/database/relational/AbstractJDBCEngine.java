@@ -30,11 +30,15 @@ import com.datasqrl.graphql.jdbc.DatabaseType;
 import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.dag.plan.MaterializationStagePlan;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
+import com.google.common.base.Preconditions;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NonNull;
@@ -81,6 +85,25 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
             () ->
                 new IllegalArgumentException(
                     "Missing Flink connector configuration for engine: " + getName()));
+
+    if (!supports(EngineFeature.ACCESS_WITHOUT_PARTITION)) {
+      var pkOpt = tableBuilder.getPrimaryKey();
+      Preconditions.checkArgument(pkOpt.isPresent(), "Missing primary key: " + originalTableName);
+      var partitionKey = tableBuilder.getPartition();
+      for (String partitionCol : partitionKey) {
+        if (!pkOpt.get().contains(partitionCol)) {
+          throw new IllegalArgumentException(
+              "%s engine requires that the partition key column [%s] is part of the primary key %s for table: %s"
+                  .formatted(getName(), partitionCol, pkOpt.get(), originalTableName));
+        }
+      }
+    }
+
+    if (!supports(EngineFeature.PARTITIONED_WRITES)) {
+      // Need to remove partitions from
+      tableBuilder.setPartition(List.of());
+    }
+
     tableBuilder.setConnectorOptions(
         connect.toMapWithSubstitution(
             Context.builder().tableName(originalTableName).tableId(tableId).build()));
@@ -102,17 +125,20 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
     Set<String> tableNames = new HashSet<>();
     var jdbcCreateTables =
         stagePlan.getTables().stream().map(JdbcEngineCreateTable.class::cast).toList();
+    Map<String, CreateTableJdbcStatement> tableIdMap = new HashMap<>();
+    Map<String, JdbcEngineCreateTable> tableId2Create =
+        jdbcCreateTables.stream()
+            .collect(Collectors.toMap(tbl -> tbl.getTable().getTableName(), Function.identity()));
     jdbcCreateTables.stream()
         .map(stmtFactory::createTable)
         .forEach(
             stmt -> {
               planBuilder.statement(stmt);
               tableNames.add(stmt.getName());
+              if (stmt instanceof CreateTableJdbcStatement createTbl) {
+                tableIdMap.put(createTbl.getEngineTable().getTable().getTableName(), createTbl);
+              }
             });
-    Map<String, JdbcEngineCreateTable> tableIdMap =
-        jdbcCreateTables.stream()
-            .collect(
-                Collectors.toMap(createTable -> createTable.getTable().getTableName(), f -> f));
     planBuilder.tableIdMap(tableIdMap);
     // Create executable queries & views
     if (stmtFactory.supportsQueries()) {
@@ -122,11 +148,13 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
               query -> {
                 planBuilder.query(query.getRelNode());
                 var function = query.getFunction();
-                var result = stmtFactory.createQuery(query, !function.hasParameters(), tableIdMap);
+                var result =
+                    stmtFactory.createQuery(query, !function.hasParameters(), tableId2Create);
                 if (result.getExecQueryBuilder() != null && function.getExecutableQuery() == null) {
                   function.setExecutableQuery(
                       result
                           .getExecQueryBuilder()
+                          .cacheDuration(function.getCacheDuration())
                           .database(getDatabaseType())
                           .stage(stagePlan.getStage())
                           .build());

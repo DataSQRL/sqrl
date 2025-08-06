@@ -307,7 +307,15 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
-      ]
+      ],
+      "primaryKey" : [
+        "customerid",
+        "lastUpdated"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "Customer_2",
@@ -339,7 +347,15 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
-      ]
+      ],
+      "primaryKey" : [
+        "customerid",
+        "lastUpdated"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "FinalCustomer_3",
@@ -356,7 +372,15 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
           "type" : "BIGINT",
           "nullable" : false
         }
-      ]
+      ],
+      "primaryKey" : [
+        "customerid",
+        "lastUpdated"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "AnotherCustomer",
@@ -465,6 +489,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
             "sql" : "SELECT *\nFROM \"AnotherCustomer_1\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -489,6 +514,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
             "sql" : "SELECT *\nFROM \"Customer_2\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -513,6 +539,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
             "sql" : "SELECT *\nFROM \"FinalCustomer_3\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }

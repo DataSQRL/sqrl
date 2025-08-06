@@ -140,7 +140,14 @@ INSERT INTO `default_catalog`.`default_database`.`CategoryDistinct_2`
           "type" : "TEXT",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "CategoryDistinct_2",
@@ -167,7 +174,14 @@ INSERT INTO `default_catalog`.`default_database`.`CategoryDistinct_2`
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
-      ]
+      ],
+      "primaryKey" : [
+        "categoryid"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "Category",
@@ -249,6 +263,7 @@ INSERT INTO `default_catalog`.`default_database`.`CategoryDistinct_2`
             "sql" : "SELECT \"categoryid\", \"name\", \"description\", \"updateTime\"\nFROM \"Category_1\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -273,6 +288,7 @@ INSERT INTO `default_catalog`.`default_database`.`CategoryDistinct_2`
             "sql" : "SELECT *\nFROM \"CategoryDistinct_2\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }

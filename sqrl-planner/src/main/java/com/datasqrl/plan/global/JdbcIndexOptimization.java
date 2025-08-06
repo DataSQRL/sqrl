@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import lombok.Value;
 
+/** Determines optimal index structure and primary key order */
 @Value
 @AutoService(PhysicalPlanRewriter.class)
 public class JdbcIndexOptimization implements PhysicalPlanRewriter {
@@ -40,6 +41,11 @@ public class JdbcIndexOptimization implements PhysicalPlanRewriter {
   public JdbcPhysicalPlan rewrite(EnginePhysicalPlan plan, Sqrl2FlinkSQLTranslator sqrlEnv) {
     var jdbcPlan = (JdbcPhysicalPlan) plan;
     var engine = (AbstractJDBCDatabaseEngine) jdbcPlan.stage().getEngine();
+    /*TODO: optimize the order of primary key columns (unless primary key is explicitly defined by hint)
+       - partition keys come first
+       - remaining keys are sorted based on access patterns (use indexselector)
+       use CreateTableJdbcStatement#updatePrimaryKey
+    */
     var indexSelectorConfig = engine.getIndexSelectorConfig();
     var indexSelector = new IndexSelector(sqrlEnv, indexSelectorConfig, jdbcPlan.tableIdMap());
 
@@ -54,7 +60,8 @@ public class JdbcIndexOptimization implements PhysicalPlanRewriter {
         .tableIdMap()
         .values()
         .forEach(
-            createTable -> {
+            stmt -> {
+              var createTable = stmt.getEngineTable();
               var tableName = createTable.getTableName();
               var table = createTable.getTableAnalysis();
               indexSelector

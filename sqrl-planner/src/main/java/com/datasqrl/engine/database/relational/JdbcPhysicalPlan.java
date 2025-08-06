@@ -41,7 +41,7 @@ public record JdbcPhysicalPlan(
     @JsonIgnore ExecutionStage stage,
     @Singular List<JdbcStatement> statements,
     @JsonIgnore @Singular List<RelNode> queries,
-    @JsonIgnore Map<String, JdbcEngineCreateTable> tableIdMap)
+    @JsonIgnore Map<String, CreateTableJdbcStatement> tableIdMap)
     implements DatabasePhysicalPlan {
 
   @SuppressWarnings("unused")

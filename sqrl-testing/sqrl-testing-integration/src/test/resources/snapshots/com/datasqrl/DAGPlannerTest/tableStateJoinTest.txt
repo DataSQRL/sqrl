@@ -496,7 +496,14 @@ INSERT INTO `default_catalog`.`default_database`.`OrderCustomer_2`
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
-      ]
+      ],
+      "primaryKey" : [
+        "customerid"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "OrderCustomer_2",
@@ -523,7 +530,14 @@ INSERT INTO `default_catalog`.`default_database`.`OrderCustomer_2`
           "type" : "BIGINT",
           "nullable" : false
         }
-      ]
+      ],
+      "primaryKey" : [
+        "id"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "OrderCustomerConstant_3",
@@ -550,7 +564,14 @@ INSERT INTO `default_catalog`.`default_database`.`OrderCustomer_2`
           "type" : "BIGINT",
           "nullable" : false
         }
-      ]
+      ],
+      "primaryKey" : [
+        "id"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "OrderCustomerLeft_4",
@@ -577,7 +598,14 @@ INSERT INTO `default_catalog`.`default_database`.`OrderCustomer_2`
           "type" : "BIGINT",
           "nullable" : false
         }
-      ]
+      ],
+      "primaryKey" : [
+        "id"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "OrderCustomerLeftExcluded_5",
@@ -599,7 +627,14 @@ INSERT INTO `default_catalog`.`default_database`.`OrderCustomer_2`
           "type" : "BIGINT",
           "nullable" : false
         }
-      ]
+      ],
+      "primaryKey" : [
+        "id"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "OrderCustomerRight_6",
@@ -626,7 +661,14 @@ INSERT INTO `default_catalog`.`default_database`.`OrderCustomer_2`
           "type" : "BIGINT",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "ouuid"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "OrderCustomerRightExcluded_7",
@@ -653,7 +695,14 @@ INSERT INTO `default_catalog`.`default_database`.`OrderCustomer_2`
           "type" : "INTEGER",
           "nullable" : false
         }
-      ]
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "Orders_8",
@@ -680,7 +729,14 @@ INSERT INTO `default_catalog`.`default_database`.`OrderCustomer_2`
           "type" : "JSONB",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "id"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "Customer",
@@ -919,6 +975,7 @@ INSERT INTO `default_catalog`.`default_database`.`OrderCustomer_2`
             "sql" : "SELECT *\nFROM \"Customer_1\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -943,6 +1000,7 @@ INSERT INTO `default_catalog`.`default_database`.`OrderCustomer_2`
             "sql" : "SELECT *\nFROM \"OrderCustomer_2\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -967,6 +1025,7 @@ INSERT INTO `default_catalog`.`default_database`.`OrderCustomer_2`
             "sql" : "SELECT *\nFROM \"OrderCustomerConstant_3\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -991,6 +1050,7 @@ INSERT INTO `default_catalog`.`default_database`.`OrderCustomer_2`
             "sql" : "SELECT *\nFROM \"OrderCustomerLeft_4\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1015,6 +1075,7 @@ INSERT INTO `default_catalog`.`default_database`.`OrderCustomer_2`
             "sql" : "SELECT *\nFROM \"OrderCustomerLeftExcluded_5\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1039,6 +1100,7 @@ INSERT INTO `default_catalog`.`default_database`.`OrderCustomer_2`
             "sql" : "SELECT *\nFROM \"OrderCustomerRight_6\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1063,6 +1125,7 @@ INSERT INTO `default_catalog`.`default_database`.`OrderCustomer_2`
             "sql" : "SELECT \"lastUpdated\", \"customerid\", \"name\"\nFROM \"OrderCustomerRightExcluded_7\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1087,6 +1150,7 @@ INSERT INTO `default_catalog`.`default_database`.`OrderCustomer_2`
             "sql" : "SELECT *\nFROM \"Orders_8\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }

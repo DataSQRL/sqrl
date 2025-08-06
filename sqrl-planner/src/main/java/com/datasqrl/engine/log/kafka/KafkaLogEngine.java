@@ -43,6 +43,7 @@ import com.datasqrl.util.StreamUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Streams;
 import com.google.inject.Inject;
+import java.time.Duration;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
@@ -63,6 +64,7 @@ import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.flink.sql.parser.ddl.SqlTableColumn;
+import org.apache.flink.util.TimeUtils;
 
 @Slf4j
 public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
@@ -70,12 +72,15 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
   public static final String CONNECTOR_TOPIC_KEY = "topic";
   public static final String UPSERT_FORMAT = "upsert-%s";
 
+  public static final String DEFAULT_TTL_KEY = "retention";
+
   public static final EnumSet<EngineFeature> KAFKA_FEATURES = EnumSet.of(EngineFeature.MUTATIONS);
 
   @Getter private final EngineConfig engineConfig;
   private final TestRunnerConfiguration testRunnerConfig;
   private final ConnectorConf streamConnectorConf;
   private final ConnectorConf mutationConnectorConf;
+  private final Optional<Duration> defaultTTL;
 
   @Inject
   public KafkaLogEngine(PackageJson json, ConnectorFactoryFactory connectorFactory) {
@@ -85,6 +90,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
     this.streamConnectorConf = connectorFactory.getConfig(KafkaLogEngineFactory.ENGINE_NAME);
     this.mutationConnectorConf =
         connectorFactory.getConfig(KafkaLogEngineFactory.ENGINE_NAME + "-mutation");
+    defaultTTL = engineConfig.getSettingOptional(DEFAULT_TTL_KEY).map(TimeUtils::parseDuration);
   }
 
   @Override
@@ -93,13 +99,15 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
       String originalTableName,
       FlinkTableBuilder tableBuilder,
       RelDataType relDataType,
-      MutationInsertType insertType) {
+      MutationInsertType insertType,
+      Optional<Duration> ttl) {
     return createInternal(
         stage,
         originalTableName,
         tableBuilder,
         relDataType,
         Optional.empty(),
+        ttl,
         true,
         insertType == MutationInsertType.TRANSACTION);
   }
@@ -112,7 +120,14 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
       RelDataType relDataType,
       Optional<TableAnalysis> tableAnalysis) {
     return createInternal(
-        stage, originalTableName, tableBuilder, relDataType, tableAnalysis, false, false);
+        stage,
+        originalTableName,
+        tableBuilder,
+        relDataType,
+        tableAnalysis,
+        defaultTTL,
+        false,
+        false);
   }
 
   public EngineCreateTable createInternal(
@@ -121,6 +136,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
       FlinkTableBuilder tableBuilder,
       RelDataType relDataType,
       Optional<TableAnalysis> tableAnalysis,
+      Optional<Duration> ttl,
       boolean isMutation,
       boolean isTransactional) {
     var ctxBuilder =
@@ -128,6 +144,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
     var conf = isMutation ? mutationConnectorConf : streamConnectorConf;
     boolean isUpsert = false;
     List<String> messageKey = List.of();
+    Map<String, String> topicConfig = new HashMap<>();
     if (tableBuilder.hasPartition()) {
       messageKey = tableBuilder.getPartition();
     }
@@ -195,11 +212,12 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
           isMutation, "Only mutations can be used for transactions: %s", tableBuilder);
       connectorConfig.put("properties.isolation.level", "read_committed");
     }
+    ttl.ifPresent(duration -> topicConfig.put("retention.ms", String.valueOf(duration.toMillis())));
 
     tableBuilder.setConnectorOptions(connectorConfig);
     String topicName = connectorConfig.get(CONNECTOR_TOPIC_KEY);
     // TODO: Add schema based on reldatatype
-    return new NewTopic(topicName, tableBuilder.getTableName(), format);
+    return new NewTopic(topicName, tableBuilder.getTableName(), format, 1, (short) 1, topicConfig);
   }
 
   @Override

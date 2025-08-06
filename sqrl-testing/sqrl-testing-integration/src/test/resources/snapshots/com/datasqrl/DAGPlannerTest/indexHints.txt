@@ -290,7 +290,15 @@ INSERT INTO `default_catalog`.`default_database`.`MyOrdersIndexHash_2`
           "type" : "JSONB",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "id",
+        "time"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "MyOrdersIndexHash_2",
@@ -317,7 +325,15 @@ INSERT INTO `default_catalog`.`default_database`.`MyOrdersIndexHash_2`
           "type" : "JSONB",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "id",
+        "time"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "MyOrdersNoHint_3",
@@ -344,7 +360,15 @@ INSERT INTO `default_catalog`.`default_database`.`MyOrdersIndexHash_2`
           "type" : "JSONB",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "id",
+        "time"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "MyOrdersNoIndex_4",
@@ -371,7 +395,15 @@ INSERT INTO `default_catalog`.`default_database`.`MyOrdersIndexHash_2`
           "type" : "JSONB",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "id",
+        "time"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "MyOrdersTwoIndex_5",
@@ -398,7 +430,15 @@ INSERT INTO `default_catalog`.`default_database`.`MyOrdersIndexHash_2`
           "type" : "JSONB",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "id",
+        "time"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "MyOrdersIndexBtree",
@@ -581,6 +621,7 @@ INSERT INTO `default_catalog`.`default_database`.`MyOrdersIndexHash_2`
             "sql" : "SELECT *\nFROM \"MyOrdersIndexBtree_1\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -605,6 +646,7 @@ INSERT INTO `default_catalog`.`default_database`.`MyOrdersIndexHash_2`
             "sql" : "SELECT *\nFROM \"MyOrdersIndexHash_2\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -629,6 +671,7 @@ INSERT INTO `default_catalog`.`default_database`.`MyOrdersIndexHash_2`
             "sql" : "SELECT *\nFROM \"MyOrdersNoHint_3\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -653,6 +696,7 @@ INSERT INTO `default_catalog`.`default_database`.`MyOrdersIndexHash_2`
             "sql" : "SELECT *\nFROM \"MyOrdersNoIndex_4\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -677,6 +721,7 @@ INSERT INTO `default_catalog`.`default_database`.`MyOrdersIndexHash_2`
             "sql" : "SELECT *\nFROM \"MyOrdersTwoIndex_5\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }

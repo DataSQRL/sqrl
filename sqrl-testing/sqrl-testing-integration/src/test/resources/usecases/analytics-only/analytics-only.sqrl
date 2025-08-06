@@ -4,7 +4,6 @@ IMPORT loan-local.ApplicationUpdates AS _ApplicationUpdates;
 
 /*+partition_key(loan_type_id) */
 _Applications := DISTINCT _ApplicationsStream ON id ORDER BY updated_at DESC;
-/*+partition_key */
 _LoanTypes := DISTINCT _LoanTypesStream ON id ORDER BY updated_at DESC;
 
 /*+partition_key(customer_id) */

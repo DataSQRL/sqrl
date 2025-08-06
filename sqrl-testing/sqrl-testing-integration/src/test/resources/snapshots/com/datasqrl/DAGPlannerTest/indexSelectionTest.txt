@@ -296,7 +296,15 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
-      ]
+      ],
+      "primaryKey" : [
+        "customerid",
+        "lastUpdated"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "Orders_2",
@@ -323,7 +331,15 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
           "type" : "JSONB",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "id",
+        "time"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "Product_3",
@@ -355,7 +371,17 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
-      ]
+      ],
+      "primaryKey" : [
+        "productid",
+        "name",
+        "description",
+        "category"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "Customer",
@@ -450,6 +476,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
             "sql" : "SELECT *\nFROM \"Customer_1\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -479,6 +506,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -520,6 +548,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -577,6 +606,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -610,6 +640,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -651,6 +682,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }

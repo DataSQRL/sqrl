@@ -221,6 +221,7 @@ CREATE TABLE IF NOT EXISTS "VisitAfter" ("beforeURL" TEXT NOT NULL, "afterURL" T
             "sql" : "SELECT *\nFROM \"Click\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -254,6 +255,7 @@ CREATE TABLE IF NOT EXISTS "VisitAfter" ("beforeURL" TEXT NOT NULL, "afterURL" T
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -278,6 +280,7 @@ CREATE TABLE IF NOT EXISTS "VisitAfter" ("beforeURL" TEXT NOT NULL, "afterURL" T
             "sql" : "SELECT *\nFROM (SELECT \"url\", \"total\"\n  FROM \"Trending\"\n  ORDER BY \"total\" DESC NULLS LAST, \"url\" NULLS FIRST) AS \"t\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -302,6 +305,7 @@ CREATE TABLE IF NOT EXISTS "VisitAfter" ("beforeURL" TEXT NOT NULL, "afterURL" T
             "sql" : "SELECT \"beforeURL\", \"afterURL\", \"timestamp\"\nFROM \"VisitAfter\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }

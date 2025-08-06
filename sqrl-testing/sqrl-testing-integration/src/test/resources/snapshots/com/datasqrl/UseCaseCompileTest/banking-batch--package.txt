@@ -335,6 +335,7 @@ CREATE TABLE IF NOT EXISTS "Customers" ("id" BIGINT NOT NULL, "first_name" TEXT 
             "sql" : "SELECT *\nFROM \"ApplicationUpdates\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -359,6 +360,7 @@ CREATE TABLE IF NOT EXISTS "Customers" ("id" BIGINT NOT NULL, "first_name" TEXT 
             "sql" : "SELECT *\nFROM \"Applications\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -383,6 +385,7 @@ CREATE TABLE IF NOT EXISTS "Customers" ("id" BIGINT NOT NULL, "first_name" TEXT 
             "sql" : "SELECT *\nFROM \"CustomerUpdates\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -407,6 +410,7 @@ CREATE TABLE IF NOT EXISTS "Customers" ("id" BIGINT NOT NULL, "first_name" TEXT 
             "sql" : "SELECT *\nFROM \"Customers\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }

@@ -25,6 +25,7 @@ import com.datasqrl.calcite.dialect.ExtendedPostgresSqlDialect;
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.config.PackageJson.EngineConfig;
+import com.datasqrl.engine.database.relational.ddl.statements.GenericCreateTableDdlFactory;
 import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.planner.dag.plan.MaterializationStagePlan.Query;
 import com.datasqrl.planner.hint.DataTypeHint;
@@ -50,7 +51,8 @@ public class DuckDbStatementFactory extends AbstractJdbcStatementFactory {
     super(
         new OperatorRuleTransformer(Dialect.POSTGRES),
         new PostgresRelToSqlNode(),
-        new PostgresSqlNodeToString()); // Iceberg does not support queries
+        new PostgresSqlNodeToString(),
+        new GenericCreateTableDdlFactory()); // Iceberg does not support queries
     this.engineConfig = engineConfig;
   }
 

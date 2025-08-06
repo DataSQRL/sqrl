@@ -119,7 +119,15 @@ END
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
-      ]
+      ],
+      "primaryKey" : [
+        "customerid",
+        "lastUpdated"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "Customer",
@@ -184,6 +192,7 @@ END
             "sql" : "SELECT *\nFROM \"Customer_1\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -225,6 +234,7 @@ END
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }

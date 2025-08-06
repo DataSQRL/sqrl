@@ -476,7 +476,14 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2`
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
-      ]
+      ],
+      "primaryKey" : [
+        "customerid"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "CustomerImport_2",
@@ -508,7 +515,15 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2`
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
-      ]
+      ],
+      "primaryKey" : [
+        "customerid",
+        "lastUpdated"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "LargeOrders_3",
@@ -540,7 +555,14 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2`
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "_uuid"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "Orders_5",
@@ -567,7 +589,15 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2`
           "type" : "JSONB",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "id",
+        "time"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "SimpleOrders_6",
@@ -599,7 +629,14 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2`
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "_uuid"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "UnnestOrders_8",
@@ -641,7 +678,14 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2`
           "type" : "TEXT",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "Customer",
@@ -866,6 +910,7 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2`
             "sql" : "SELECT *\nFROM \"Customer_1\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -903,6 +948,7 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2`
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -932,6 +978,7 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2`
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -956,6 +1003,7 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2`
             "sql" : "SELECT *\nFROM \"CustomerImport_2\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -980,6 +1028,7 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2`
             "sql" : "SELECT *\nFROM \"LargeOrders_3\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1004,6 +1053,7 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2`
             "sql" : "SELECT *\nFROM \"Orders_5\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1028,6 +1078,7 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2`
             "sql" : "SELECT *\nFROM \"SimpleOrders_6\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1052,6 +1103,7 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2`
             "sql" : "SELECT \"id\", \"customerid\", \"time\", \"productid\", \"quantity\", \"discount\"\nFROM \"UnnestOrders_8\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1085,6 +1137,7 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2`
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }

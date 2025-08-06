@@ -218,7 +218,14 @@ INSERT INTO `default_catalog`.`default_database`.`CombinedStream_2`
           "type" : "BIGINT",
           "nullable" : false
         }
-      ]
+      ],
+      "primaryKey" : [
+        "customerid"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "CombinedStream_2",
@@ -235,7 +242,14 @@ INSERT INTO `default_catalog`.`default_database`.`CombinedStream_2`
           "type" : "TEXT",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "Customer_3",
@@ -267,7 +281,15 @@ INSERT INTO `default_catalog`.`default_database`.`CombinedStream_2`
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
-      ]
+      ],
+      "primaryKey" : [
+        "customerid",
+        "lastUpdated"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "Orders_4",
@@ -299,7 +321,15 @@ INSERT INTO `default_catalog`.`default_database`.`CombinedStream_2`
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
-      ]
+      ],
+      "primaryKey" : [
+        "id",
+        "time"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "CombinedState",
@@ -415,6 +445,7 @@ INSERT INTO `default_catalog`.`default_database`.`CombinedStream_2`
             "sql" : "SELECT *\nFROM \"CombinedState_1\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -439,6 +470,7 @@ INSERT INTO `default_catalog`.`default_database`.`CombinedStream_2`
             "sql" : "SELECT \"customerid\"\nFROM \"CombinedStream_2\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -463,6 +495,7 @@ INSERT INTO `default_catalog`.`default_database`.`CombinedStream_2`
             "sql" : "SELECT *\nFROM \"Customer_3\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -487,6 +520,7 @@ INSERT INTO `default_catalog`.`default_database`.`CombinedStream_2`
             "sql" : "SELECT *\nFROM \"Orders_4\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }

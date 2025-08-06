@@ -49,13 +49,14 @@ public enum EngineFeature {
   MATERIALIZE_ON_KEY,
   // Engine supports relations (i.e. no primary key)
   RELATIONS,
-  // Engine supports partitioning by key on write
+  // Engine supports partitioning of data
   PARTITIONING,
+  // Engine supports partitioned writing of data
+  PARTITIONED_WRITES,
   // Engine requires that the primary key is not null
   REQUIRES_NOT_NULL_PRIMARY_KEY,
-
-  // Engine supports data monitoring
-  DATA_MONITORING;
+  // Datastore engine support access to data without partition key
+  ACCESS_WITHOUT_PARTITION;
 
   public static EnumSet<EngineFeature> STANDARD_STREAM =
       EnumSet.of(
@@ -65,8 +66,7 @@ public enum EngineFeature {
           STREAM_WINDOW_AGGREGATION,
           EXTENDED_FUNCTIONS,
           CUSTOM_FUNCTIONS,
-          EXPORT,
-          DATA_MONITORING);
+          EXPORT);
 
   public static EnumSet<EngineFeature> STANDARD_DATABASE =
       EnumSet.of(
@@ -77,10 +77,16 @@ public enum EngineFeature {
           TABLE_FUNCTION_SCAN,
           RELATIONS,
           DENORMALIZE,
+          PARTITIONING,
           REQUIRES_NOT_NULL_PRIMARY_KEY);
 
   public static EnumSet<EngineFeature> STANDARD_TABLE_FORMAT =
-      EnumSet.of(MATERIALIZE_ON_KEY, DENORMALIZE, PARTITIONING);
+      EnumSet.of(
+          MATERIALIZE_ON_KEY,
+          DENORMALIZE,
+          PARTITIONING,
+          PARTITIONED_WRITES,
+          ACCESS_WITHOUT_PARTITION);
 
   public static EnumSet<EngineFeature> STANDARD_QUERY =
       EnumSet.of(NOW, GLOBAL_SORT, MULTI_RANK, TABLE_FUNCTION_SCAN, RELATIONS);

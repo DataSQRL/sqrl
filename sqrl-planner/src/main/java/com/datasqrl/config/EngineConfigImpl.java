@@ -45,6 +45,12 @@ public class EngineConfigImpl implements PackageJson.EngineConfig {
   }
 
   @Override
+  public Optional<String> getSettingOptional(String key) {
+    var result = sqrlConfig.asString(key);
+    return result.getOptional();
+  }
+
+  @Override
   public Map<String, Object> getConfig() {
     return sqrlConfig.getSubConfig(CONFIG_KEY).toMap();
   }
