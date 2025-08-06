@@ -15,10 +15,10 @@
 # limitations under the License.
 #
 
-SQRL_JVM_ARGS=
+set -e
 
 # Enable debug mode if DEBUG environment variable is set
-if [[ -n "${DEBUG+x}" && -n "$DEBUG" ]]; then
+if [[ -n "${SQRL_DEBUG+x}" && -n "$SQRL_DEBUG" ]]; then
     SQRL_JVM_ARGS="-Dlog4j2.configurationFile=/opt/sqrl/app/log4j2-debug.properties"
     set -x
 fi

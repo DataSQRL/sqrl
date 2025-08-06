@@ -17,8 +17,8 @@
 
 set -e
 
-# Enable debug mode if DEBUG environment variable is set
-if [[ -n "${DEBUG+x}" && -n "$DEBUG" ]]; then
+# Enable debug mode if SQRL_DEBUG environment variable is set
+if [[ -n "${SQRL_DEBUG+x}" && -n "$SQRL_DEBUG" ]]; then
   set -x
 fi
 
@@ -33,4 +33,4 @@ export BUILD_UID=$(stat -c '%u' /build)
 export BUILD_GID=$(stat -c '%g' /build)
 
 echo "Executing SQRL command: \"$1\" ..."
-exec java -jar /opt/sqrl/sqrl-cli.jar "${@}"
+exec java $SQRL_JVM_ARGS -jar /opt/sqrl/sqrl-cli.jar "${@}"
