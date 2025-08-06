@@ -1,0 +1,5 @@
+mutation {
+  MutateOnJwt(event:[{sensorid: 1, temperature: 31.2, vaca: "tatu"}]) {
+    temperature
+  }
+}

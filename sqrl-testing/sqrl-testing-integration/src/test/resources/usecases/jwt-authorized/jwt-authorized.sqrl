@@ -27,3 +27,10 @@ AuthStringMyTableValues(vals ARRAY<STRING> NOT NULL METADATA FROM 'auth.values')
       FROM MyStringTable t
      WHERE array_contains(CAST(:vals AS ARRAY<STRING>), CAST(t.val AS STRING))
      ORDER BY t.val ASC;
+
+/*+insert(batch) */
+CREATE TABLE MutateOnJwt (
+   sensorid INT NOT NULL,
+   temperature decimal(8,2) NOT NULL,
+   event_time TIMESTAMP_LTZ(3) METADATA FROM 'timestamp'
+);

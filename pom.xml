@@ -25,10 +25,8 @@
   <packaging>pom</packaging>
 
   <name>SQRL</name>
-  <description>
-    DataSQRL is a data streaming framework for incremental and real-time data processing applications.
-    Ingest, transform, store, and serve data as iceberg views, data APIs, or LLM tooling with the simplicity of SQL.
-  </description>
+  <description>DataSQRL is a data streaming framework for incremental and real-time data processing applications.
+    Ingest, transform, store, and serve data as iceberg views, data APIs, or LLM tooling with the simplicity of SQL.</description>
   <url>https://docs.datasqrl.com/</url>
 
   <inceptionYear>2021</inceptionYear>
@@ -984,8 +982,7 @@
             --add-opens=java.base/java.lang=ALL-UNNAMED
             --add-opens=java.base/java.io=ALL-UNNAMED
             --add-opens=java.base/java.nio=ALL-UNNAMED
-            --add-opens=java.base/java.net=ALL-UNNAMED
-          </argLine>
+            --add-opens=java.base/java.net=ALL-UNNAMED</argLine>
         </configuration>
         <executions>
           <execution>

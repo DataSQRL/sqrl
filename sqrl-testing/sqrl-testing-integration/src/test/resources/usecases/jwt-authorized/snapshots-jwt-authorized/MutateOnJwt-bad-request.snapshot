@@ -1,0 +1,13 @@
+{
+  "errors" : [ {
+    "message" : "Validation error (WrongType@[MutateOnJwt]) : argument 'event[0]' with value 
+    'ArrayValue{values=[ObjectValue{objectFields=[ObjectField{name='vaca', value=StringValue{value='tatu'}}]}]}' is missing required fields '[sensorid, temperature]'",
+    "locations" : [ {
+      "line" : 2,
+      "column" : 15
+    } ],
+    "extensions" : {
+      "classification" : "ValidationError"
+    }
+  } ]
+}

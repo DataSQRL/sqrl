@@ -29,7 +29,6 @@ import java.util.stream.Stream;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.test.junit5.MiniClusterExtension;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -61,10 +60,9 @@ public class FullUseCaseIT extends AbstractFullUseCaseTest {
           "connectors" // should not be executed
           );
 
-  @Disabled("Intended for manual usage")
   @Test
   void specificUseCase() {
-    var pkg = USE_CASES.resolve("duckdb").resolve("package.json");
+    var pkg = USE_CASES.resolve("jwt-authorized").resolve("package.json");
 
     var param = new UseCaseParam(pkg);
     fullUseCaseTest(param);

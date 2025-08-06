@@ -1,0 +1,6 @@
+query {
+  AuthMyTable {
+    val
+    invalid
+  }
+}

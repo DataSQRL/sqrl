@@ -179,4 +179,21 @@
       </exclusions>
     </dependency>
   </dependencies>
+
+  <profiles>
+    <profile>
+      <!-- helper profile to proper configure eclipse -->
+      <id>m2e</id>
+      <activation>
+        <property>
+          <name>m2e.version</name>
+        </property>
+      </activation>
+
+      <properties>
+        <argLine></argLine>
+      </properties>
+
+    </profile>
+  </profiles>
 </project>

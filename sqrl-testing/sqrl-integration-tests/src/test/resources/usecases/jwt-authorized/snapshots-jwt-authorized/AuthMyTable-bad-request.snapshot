@@ -1,0 +1,9 @@
+{
+    "errors": [
+        {
+            "message": "The variables input contains a field name 'namespace' that is not defined for input object type 'ClusterEventsInput' ",
+            "path": null,
+            "extensions": null
+        }
+    ]
+}
