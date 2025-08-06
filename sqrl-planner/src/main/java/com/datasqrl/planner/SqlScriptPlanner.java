@@ -55,12 +55,14 @@ import com.datasqrl.planner.dag.nodes.TableFunctionNode;
 import com.datasqrl.planner.dag.nodes.TableNode;
 import com.datasqrl.planner.dag.plan.MutationComputedColumn;
 import com.datasqrl.planner.dag.plan.MutationQuery;
+import com.datasqrl.planner.hint.CacheHint;
 import com.datasqrl.planner.hint.EngineHint;
 import com.datasqrl.planner.hint.MutationInsertHint;
 import com.datasqrl.planner.hint.NoQueryHint;
 import com.datasqrl.planner.hint.PlannerHints;
 import com.datasqrl.planner.hint.QueryByAnyHint;
 import com.datasqrl.planner.hint.TestHint;
+import com.datasqrl.planner.hint.TtlHint;
 import com.datasqrl.planner.parser.AccessModifier;
 import com.datasqrl.planner.parser.FlinkSQLStatement;
 import com.datasqrl.planner.parser.ParsePosUtil;
@@ -84,6 +86,7 @@ import com.datasqrl.planner.tables.SqrlTableFunction;
 import com.datasqrl.util.SqlNameUtil;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -419,6 +422,7 @@ public class SqlScriptPlanner {
             new AccessVisibility(access, hints.isTest(), tblFctStmt.isRelationship(), isHidden);
         fctBuilder.visibility(visibility);
         fctBuilder.documentation(documentation);
+        fctBuilder.cacheDuration(getCacheDuration(hintsAndDocs));
         var fct = fctBuilder.build();
         errors.checkFatal(
             dagBuilder.getNode(fct.getIdentifier()).isEmpty(),
@@ -663,15 +667,16 @@ public class SqlScriptPlanner {
       // TODO: should we add a default sort if the user didn't specify one to have predictable
       // result sets for testing?
       var tableName = tableAnalysis.getObjectIdentifier().getObjectName();
-      var fctName = tableName + ACCESS_FUNCTION_SUFFIX;
-      var fctBuilder =
+      var fnName = tableName + ACCESS_FUNCTION_SUFFIX;
+      var fnBuilder =
           sqrlEnv.addSqrlTableFunction(
-              SqlNameUtil.toIdentifier(fctName), relBuilder.build(), parameters, tableAnalysis);
-      fctBuilder.fullPath(NamePath.of(tableName));
-      fctBuilder.visibility(visibility);
-      fctBuilder.documentation(hintsAndDocs.documentation());
+              SqlNameUtil.toIdentifier(fnName), relBuilder.build(), parameters, tableAnalysis);
+      fnBuilder.fullPath(NamePath.of(tableName));
+      fnBuilder.visibility(visibility);
+      fnBuilder.documentation(hintsAndDocs.documentation());
+      fnBuilder.cacheDuration(getCacheDuration(hintsAndDocs));
       addFunctionToDag(
-          fctBuilder.build(), HintsAndDocs.EMPTY); // hints don't apply to the function access
+          fnBuilder.build(), HintsAndDocs.EMPTY); // hints don't apply to the function access
     } else if (queryByHint.isPresent()) {
       throw new StatementParserException(
           ErrorLabel.GENERIC,
@@ -687,6 +692,14 @@ public class SqlScriptPlanner {
     dagBuilder.add(
         new TableFunctionNode(
             function, getStageAnalysis(function.getFunctionAnalysis(), availableStages)));
+  }
+
+  private static Duration getCacheDuration(HintsAndDocs hintsAndDocs) {
+    return hintsAndDocs
+        .hints()
+        .getHint(CacheHint.class)
+        .map(CacheHint::getDuration)
+        .orElse(Duration.ZERO);
   }
 
   /**
@@ -828,7 +841,12 @@ public class SqlScriptPlanner {
               .orElse(MutationInsertType.SINGLE);
       mutationBuilder.createTopic(
           engine.createMutation(
-              logStage.get(), originalTableName, tableBuilder, datatype, insertType));
+              logStage.get(),
+              originalTableName,
+              tableBuilder,
+              datatype,
+              insertType,
+              hintsAndDocs.hints().getHint(TtlHint.class).flatMap(TtlHint::getTtl)));
       mutationBuilder.name(Name.system(originalTableName));
       mutationBuilder.insertType(insertType);
       mutationBuilder.documentation(hintsAndDocs.documentation());
@@ -991,7 +1009,7 @@ public class SqlScriptPlanner {
     }
   }
 
-  static record HintsAndDocs(PlannerHints hints, Optional<String> documentation) {
+  record HintsAndDocs(PlannerHints hints, Optional<String> documentation) {
 
     public static final HintsAndDocs EMPTY = new HintsAndDocs(PlannerHints.EMPTY, Optional.empty());
   }

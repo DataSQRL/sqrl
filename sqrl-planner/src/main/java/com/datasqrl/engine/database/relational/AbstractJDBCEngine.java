@@ -15,6 +15,8 @@
  */
 package com.datasqrl.engine.database.relational;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import com.datasqrl.config.ConnectorConf;
 import com.datasqrl.config.ConnectorConf.Context;
 import com.datasqrl.config.ConnectorFactoryFactory;
@@ -32,9 +34,12 @@ import com.datasqrl.planner.dag.plan.MaterializationStagePlan;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NonNull;
@@ -80,6 +85,25 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
       RelDataType relDataType,
       Optional<TableAnalysis> tableAnalysis) {
 
+    if (!supports(EngineFeature.ACCESS_WITHOUT_PARTITION)) {
+      var pk = tableBuilder.getPrimaryKey();
+      checkArgument(pk.isPresent(), "Missing primary key: " + originalTableName);
+
+      var partitionKey = tableBuilder.getPartition();
+      for (String partitionCol : partitionKey) {
+        if (!pk.get().contains(partitionCol)) {
+          throw new IllegalArgumentException(
+              "%s engine requires that the partition key column [%s] is part of the primary key %s for table: %s"
+                  .formatted(getName(), partitionCol, pk.get(), originalTableName));
+        }
+      }
+    }
+
+    if (!supports(EngineFeature.PARTITIONED_WRITES)) {
+      // Need to remove partitions
+      tableBuilder.setPartition(List.of());
+    }
+
     var connectorOptions = getConnectorOptions(originalTableName, tableBuilder.getTableName());
     tableBuilder.setConnectorOptions(connectorOptions);
 
@@ -98,10 +122,18 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
     var duplicateTableNames = new ArrayList<String>();
     var jdbcCreateTables =
         stagePlan.getTables().stream().map(JdbcEngineCreateTable.class::cast).toList();
-
+    var tableIdMap = new HashMap<String, CreateTableJdbcStatement>();
+    var tableId2Create =
+        jdbcCreateTables.stream()
+            .collect(Collectors.toMap(tbl -> tbl.table().getTableName(), Function.identity()));
     for (JdbcEngineCreateTable jdbcCreateTable : jdbcCreateTables) {
       var stmt = stmtFactory.createTable(jdbcCreateTable);
       planBuilder.statement(stmt);
+
+      if (stmt instanceof CreateTableJdbcStatement createTbl) {
+        tableIdMap.put(createTbl.getEngineTable().table().getTableName(), createTbl);
+      }
+
       if (!tableNames.add(stmt.getName())) {
         duplicateTableNames.add(stmt.getName());
       }
@@ -109,16 +141,13 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
 
     if (!duplicateTableNames.isEmpty()) {
       throw new IllegalStateException(
-          ("Duplicate table(s) detected: %s."
-                  + " This most likely occurs with AWS Glue tables, which are automatically lowercased."
-                  + " For AWS Glue, ensure that the SQRL script does not use table names that differ only by case.")
+          """
+              Duplicate table(s) detected: %s.\
+               This most likely occurs with AWS Glue tables, which are automatically lowercased."\
+               For AWS Glue, ensure that the SQRL script does not use table names that differ only by case."""
               .formatted(duplicateTableNames));
     }
 
-    Map<String, JdbcEngineCreateTable> tableIdMap =
-        jdbcCreateTables.stream()
-            .collect(
-                Collectors.toMap(createTable -> createTable.getTable().getTableName(), f -> f));
     planBuilder.tableIdMap(tableIdMap);
     // Create executable queries & views
     if (stmtFactory.supportsQueries()) {
@@ -128,11 +157,13 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
               query -> {
                 planBuilder.query(query.getRelNode());
                 var function = query.getFunction();
-                var result = stmtFactory.createQuery(query, !function.hasParameters(), tableIdMap);
+                var result =
+                    stmtFactory.createQuery(query, !function.hasParameters(), tableId2Create);
                 if (result.getExecQueryBuilder() != null && function.getExecutableQuery() == null) {
                   function.setExecutableQuery(
                       result
                           .getExecQueryBuilder()
+                          .cacheDuration(function.getCacheDuration())
                           .database(getDatabaseType())
                           .stage(stagePlan.getStage())
                           .build());

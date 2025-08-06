@@ -18,18 +18,12 @@ package com.datasqrl.engine.database.relational;
 import com.datasqrl.engine.database.EngineCreateTable;
 import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
-import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
 
 /**
  * For the JDBC database engines, we just keep track of the schema data so we can plan them later in
  * the plan method.
  */
-@Value
-public class JdbcEngineCreateTable implements EngineCreateTable {
-
-  String tableName;
-  FlinkTableBuilder table;
-  RelDataType datatype;
-  TableAnalysis tableAnalysis;
-}
+public record JdbcEngineCreateTable(
+    String tableName, FlinkTableBuilder table, RelDataType datatype, TableAnalysis tableAnalysis)
+    implements EngineCreateTable {}

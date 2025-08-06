@@ -15,40 +15,39 @@
  */
 package com.datasqrl.engine.database.relational.ddl.statements;
 
-import com.datasqrl.engine.database.relational.JdbcStatement;
+import static com.datasqrl.engine.database.relational.AbstractJdbcStatementFactory.quoteIdentifier;
+import static com.datasqrl.engine.database.relational.AbstractJdbcStatementFactory.quoteIdentifiers;
+
+import com.datasqrl.engine.database.relational.CreateTableJdbcStatement;
+import com.datasqrl.engine.database.relational.CreateTableJdbcStatement.CreateTableDdlFactory;
 import com.datasqrl.engine.database.relational.JdbcStatement.Field;
-import com.datasqrl.sql.SqlDDLStatement;
 import java.util.List;
 import java.util.stream.Collectors;
-import lombok.Value;
 
-/**
- * TODO: Convert this to SQL node, similar to {@link org.apache.flink.sql.parser.ddl.SqlCreateTable}
- */
-@Value
-public class CreateTableDDL implements SqlDDLStatement {
-
-  String name;
-  List<Field> columns;
-  List<String> primaryKeys;
+public class GenericCreateTableDdlFactory implements CreateTableDdlFactory {
 
   @Override
-  public String getSql() {
+  public String createTableDdl(CreateTableJdbcStatement stmt) {
     var primaryKeyStr = "";
-    if (!primaryKeys.isEmpty()) {
-      primaryKeyStr = " , PRIMARY KEY (%s)".formatted(String.join(",", primaryKeys));
+    if (!stmt.getPrimaryKey().isEmpty()) {
+      primaryKeyStr = " , PRIMARY KEY (%s)".formatted(listToSql(stmt.getPrimaryKey()));
     }
     var createTable = "CREATE TABLE IF NOT EXISTS %s (%s%s)";
     var sql =
         createTable.formatted(
-            name,
-            columns.stream().map(CreateTableDDL::fieldToSql).collect(Collectors.joining(", ")),
+            quoteIdentifier(stmt.getName()),
+            stmt.getFields().stream()
+                .map(GenericCreateTableDdlFactory::fieldToSql)
+                .collect(Collectors.joining(", ")),
             primaryKeyStr);
-
     return sql;
   }
 
-  private static String fieldToSql(JdbcStatement.Field field) {
+  public static String listToSql(List<String> columns) {
+    return String.join(",", quoteIdentifiers(columns));
+  }
+
+  public static String fieldToSql(Field field) {
     var sql = new StringBuilder();
     sql.append("\"").append(field.name()).append("\"").append(" ").append(field.type()).append(" ");
     if (!field.nullable()) {

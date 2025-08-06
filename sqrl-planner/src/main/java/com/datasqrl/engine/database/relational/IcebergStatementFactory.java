@@ -19,6 +19,7 @@ import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.OperatorRuleTransformer;
 import com.datasqrl.calcite.dialect.ExtendedPostgresSqlDialect;
 import com.datasqrl.config.JdbcDialect;
+import com.datasqrl.engine.database.relational.ddl.statements.IcebergCreateTableDdlFactory;
 import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.planner.hint.DataTypeHint;
 import java.util.Optional;
@@ -31,7 +32,8 @@ public class IcebergStatementFactory extends AbstractJdbcStatementFactory {
     super(
         new OperatorRuleTransformer(Dialect.POSTGRES),
         null,
-        null); // Iceberg does not support queries
+        null,
+        new IcebergCreateTableDdlFactory()); // Iceberg does not support queries
   }
 
   @Override

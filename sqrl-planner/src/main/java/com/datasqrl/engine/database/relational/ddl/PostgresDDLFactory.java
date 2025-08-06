@@ -15,6 +15,8 @@
  */
 package com.datasqrl.engine.database.relational.ddl;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.OperatorRuleTransformer;
 import com.datasqrl.calcite.convert.PostgresRelToSqlNode;
@@ -22,11 +24,15 @@ import com.datasqrl.calcite.convert.PostgresSqlNodeToString;
 import com.datasqrl.calcite.dialect.ExtendedPostgresSqlDialect;
 import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.engine.database.relational.AbstractJdbcStatementFactory;
+import com.datasqrl.engine.database.relational.CreateTableJdbcStatement.PartitionType;
+import com.datasqrl.engine.database.relational.GenericJdbcStatement;
+import com.datasqrl.engine.database.relational.JdbcEngineCreateTable;
 import com.datasqrl.engine.database.relational.JdbcStatement;
 import com.datasqrl.engine.database.relational.JdbcStatement.Type;
 import com.datasqrl.engine.database.relational.JdbcStatementFactory;
 import com.datasqrl.engine.database.relational.ddl.statements.CreateIndexDDL;
 import com.datasqrl.engine.database.relational.ddl.statements.InsertStatement;
+import com.datasqrl.engine.database.relational.ddl.statements.PostgresCreateTableDdlFactory;
 import com.datasqrl.engine.database.relational.ddl.statements.notify.CreateNotifyTriggerDDL;
 import com.datasqrl.function.vector.VectorPgExtension;
 import com.datasqrl.plan.global.IndexDefinition;
@@ -34,6 +40,7 @@ import com.datasqrl.planner.dag.plan.MaterializationStagePlan.Query;
 import com.datasqrl.planner.hint.DataTypeHint;
 import com.datasqrl.planner.hint.VectorDimensionHint;
 import com.datasqrl.sql.DatabaseExtension;
+import com.datasqrl.util.CalciteUtil;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -51,7 +58,8 @@ public class PostgresDDLFactory extends AbstractJdbcStatementFactory
     super(
         new OperatorRuleTransformer(Dialect.POSTGRES),
         new PostgresRelToSqlNode(),
-        new PostgresSqlNodeToString());
+        new PostgresSqlNodeToString(),
+        new PostgresCreateTableDdlFactory(true));
   }
 
   @Override
@@ -77,11 +85,31 @@ public class PostgresDDLFactory extends AbstractJdbcStatementFactory
   }
 
   @Override
+  protected PartitionType getPartitionType(
+      JdbcEngineCreateTable createTable, List<String> partitionKey) {
+    if (partitionKey.isEmpty()) {
+      return PartitionType.NONE;
+    }
+
+    checkArgument(
+        partitionKey.size() == 1,
+        "Postgres only supports partitions for a single column on table %s. Combine these columns into one: %s",
+        createTable.tableName(),
+        partitionKey);
+
+    String partitionCol = partitionKey.get(0);
+    var colType = createTable.tableAnalysis().getRowType().getField(partitionCol, false, false);
+
+    // Look up field reldatatype to determine partition type
+    return CalciteUtil.isTimestamp(colType.getType()) ? PartitionType.RANGE : PartitionType.HASH;
+  }
+
+  @Override
   public List<JdbcStatement> extractExtensions(List<Query> queries) {
     return extractTypeExtensions(queries.stream().map(Query::getRelNode), EXTENSIONS).stream()
         .map(
             ext ->
-                new JdbcStatement(
+                new GenericJdbcStatement(
                     ext.getClass().getSimpleName(), Type.EXTENSION, ext.getExtensionDdl()))
         .collect(Collectors.toList());
   }
@@ -91,7 +119,7 @@ public class PostgresDDLFactory extends AbstractJdbcStatementFactory
     var ddl =
         new CreateIndexDDL(
             index.getName(), index.getTableName(), index.getColumnNames(), index.getType());
-    return new JdbcStatement(ddl.getIndexName(), Type.INDEX, ddl.getSql());
+    return new GenericJdbcStatement(ddl.getIndexName(), Type.INDEX, ddl.getSql());
   }
 
   /*

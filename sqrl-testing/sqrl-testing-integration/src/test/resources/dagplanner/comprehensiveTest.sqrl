@@ -45,6 +45,7 @@ UnnestOrders.newId := id + productid;
 /**
     Newly placed orders
  */
+/*+ ttl(36 hours) */
 CREATE TABLE Orders (
                         orderid INT,
                         amount FLOAT,
@@ -63,6 +64,7 @@ CustomerTimeWindow := SELECT
 /*+ test, workload */
 CustomerTimeWindowTest := SELECT * FROM CustomerTimeWindow ORDER BY window_end DESC;
 
+/*+ cache(5 min) */
 CustomerQuery(id BIGINT NOT NULL) := SELECT * FROM AnotherCustomer WHERE customerid = :id;
 
 EXPORT CustomerTimeWindow TO print.TimeWindow;

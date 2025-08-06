@@ -168,6 +168,7 @@ class WriteIT {
                                 "SELECT customerid FROM Customer",
                                 List.of(),
                                 PaginationType.NONE,
+                                0,
                                 DatabaseType.POSTGRES))
                         .build())
                 .build())

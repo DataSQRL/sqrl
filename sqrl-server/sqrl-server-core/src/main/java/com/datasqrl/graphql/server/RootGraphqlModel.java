@@ -315,9 +315,19 @@ public class RootGraphqlModel {
   @NoArgsConstructor
   public static class SqlQuery implements QueryBase {
 
+    /** The SQL query to execute */
     String sql;
+
+    /** The list of parameters to substitute at query time */
     @Singular List<QueryParameterHandler> parameters;
+
+    /** How query results are paginated */
     PaginationType pagination;
+
+    /** For how long the results of this query can be cached. 0 to disable caching */
+    long cacheTime;
+
+    /** The database the query is executed against */
     DatabaseType database;
 
     public boolean requiresDynamicLimitOffset() {
@@ -330,7 +340,7 @@ public class RootGraphqlModel {
     }
 
     public SqlQuery updateSQL(String newSQL) {
-      return new SqlQuery(newSQL, parameters, pagination, database);
+      return new SqlQuery(newSQL, parameters, pagination, cacheTime, database);
     }
   }
 

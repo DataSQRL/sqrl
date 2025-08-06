@@ -191,6 +191,7 @@ public class GraphqlModelGenerator extends GraphqlSchemaWalker {
             executableJdbcReadQuery.getSql(),
             parameters,
             hasLimitOrOffset ? PaginationType.LIMIT_AND_OFFSET : PaginationType.NONE,
+            executableJdbcReadQuery.getCacheDuration().toMillis(),
             executableJdbcReadQuery.getDatabase());
     var coordsBuilder =
         ArgumentLookupQueryCoords.builder()
