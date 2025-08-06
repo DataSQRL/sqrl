@@ -17,6 +17,7 @@ package com.datasqrl.cli;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+import com.datasqrl.compile.TestPlan;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.util.FlinkOperatorStatusChecker;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -37,9 +38,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
 import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.common.JobStatus;
@@ -132,7 +130,7 @@ public class DatasqrlTest {
         subscriptionClients = new ArrayList<>();
         List<CompletableFuture<Void>> subscriptionFutures = new ArrayList<>();
 
-        for (GraphqlQuery subscription : testPlan.getSubscriptions()) {
+        for (TestPlan.GraphqlQuery subscription : testPlan.getSubscriptions()) {
           SubscriptionClient client =
               new SubscriptionClient(
                   subscription.getName(),
@@ -155,7 +153,7 @@ public class DatasqrlTest {
         }
 
         // Execute mutations
-        for (GraphqlQuery mutationQuery : testPlan.getMutations()) {
+        for (TestPlan.GraphqlQuery mutationQuery : testPlan.getMutations()) {
           // Execute mutation queries
           String data =
               executeQuery(
@@ -219,7 +217,7 @@ public class DatasqrlTest {
       // 4. Run the queries against the API, finish subscriptions and snapshot the results
       if (testPlanOpt.isPresent()) {
         TestPlan testPlan = testPlanOpt.get();
-        for (GraphqlQuery query : testPlan.getQueries()) {
+        for (TestPlan.GraphqlQuery query : testPlan.getQueries()) {
           // Execute queries
           String data =
               executeQuery(
@@ -371,26 +369,5 @@ public class DatasqrlTest {
 
   private void logRed(String line) {
     System.out.println("\u001B[31m" + line + "\u001B[0m");
-  }
-
-  // Todo: Unify with other testplan
-  @AllArgsConstructor
-  @NoArgsConstructor
-  @Getter
-  public static class TestPlan {
-
-    List<GraphqlQuery> queries;
-    List<GraphqlQuery> mutations;
-    List<GraphqlQuery> subscriptions;
-  }
-
-  @AllArgsConstructor
-  @NoArgsConstructor
-  @Getter
-  public static class GraphqlQuery {
-
-    String name;
-    String query;
-    Map<String, String> headers;
   }
 }
