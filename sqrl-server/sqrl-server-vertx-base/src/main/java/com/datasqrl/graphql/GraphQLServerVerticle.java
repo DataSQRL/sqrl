@@ -16,6 +16,7 @@
 package com.datasqrl.graphql;
 
 import com.datasqrl.graphql.auth.AuthMetadataReader;
+import com.datasqrl.graphql.auth.JwtFailureHandler;
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.jdbc.DatabaseType;
 import com.datasqrl.graphql.server.CustomScalars;
@@ -98,6 +99,7 @@ public class GraphQLServerVerticle extends AbstractVerticle {
           // Required for adding auth on ws handler
           System.setProperty("io.vertx.web.router.setup.lenient", "true");
           handler.handler(JWTAuthHandler.create(auth));
+          handler.failureHandler(new JwtFailureHandler());
         });
 
     // Create GraphQL engine
