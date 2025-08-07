@@ -100,6 +100,7 @@ public class SqrlStatementParser {
   public static final String SELECT_KEYWORD = "select";
   public static final String DISTINCT_KEYWORD = "distinct";
   public static final String SUBSCRIBE_KEYWORD = "subscribe";
+  public static final String WITH_KEYWORD = "with";
 
   public static final String SELF_REFERENCE_KEYWORD = "this";
 
@@ -211,7 +212,9 @@ public class SqrlStatementParser {
         keywordEnd = keywordMatcher.end(1);
       }
       SqrlDefinition definition = null;
-      if (keyword.equalsIgnoreCase(SELECT_KEYWORD) || keyword.equalsIgnoreCase(SUBSCRIBE_KEYWORD)) {
+      if (keyword.equalsIgnoreCase(SELECT_KEYWORD)
+          || keyword.equalsIgnoreCase(WITH_KEYWORD)
+          || keyword.equalsIgnoreCase(SUBSCRIBE_KEYWORD)) {
         if (keyword.equalsIgnoreCase(
             SUBSCRIBE_KEYWORD)) { // Remove the keyword from definition body
           checkFatal(
@@ -228,7 +231,8 @@ public class SqrlStatementParser {
           definition = new SqrlTableDefinition(tableName, definitionBody, access, comment);
         } else {
           // Extract and replace argument and this references
-          var processedBody = replaceTableFunctionVariables(definitionBody, isRelationship);
+          var processedBody =
+              replaceTableFunctionVariables(definitionBody, isRelationship, returnType.isPresent());
           definitionBody = definitionBody.map(x -> processedBody.getKey());
           if (returnType.isPresent()) {
             definition =
@@ -317,7 +321,7 @@ public class SqrlStatementParser {
    * @return
    */
   public static Pair<String, List<ParsedArgument>> replaceTableFunctionVariables(
-      ParsedObject<String> body, boolean isRelationship) {
+      ParsedObject<String> body, boolean isRelationship, boolean positionalArguments) {
     List<ParsedArgument> argumentIndexes = new ArrayList<>();
     var matcher = VARIABLE_PARSER.matcher(body.get());
     var processedQuery = new StringBuilder();
@@ -346,15 +350,24 @@ public class SqrlStatementParser {
           new ParsedObject<String>(
               matchedVariable,
               body.getFileLocation().add(computeFileLocation(body.get(), startPos)));
-      var replacement =
-          matcher.group("prefix") + "?" + " ".repeat(matcher.end() - matcher.start() - 2);
-      matcher.appendReplacement(processedQuery, replacement);
-      var arg = new ParsedArgument(variable, isParentField, argumentIndexes.size());
+      var indexPos = argumentIndexes.size();
+
+      String replacement = matcher.group("prefix");
+      if (positionalArguments) {
+        replacement += POSITIONAL_ARGUMENT_PREFIX + indexPos;
+      } else {
+        replacement += "?" + " ".repeat(matcher.end() - matcher.start() - 2);
+      }
+
+      matcher.appendReplacement(processedQuery, Matcher.quoteReplacement(replacement));
+      var arg = new ParsedArgument(variable, isParentField, indexPos);
       argumentIndexes.add(arg);
     }
     matcher.appendTail(processedQuery);
     return Pair.of(processedQuery.toString(), argumentIndexes);
   }
+
+  public static final String POSITIONAL_ARGUMENT_PREFIX = "$?$";
 
   static FileLocation relativeLocation(ParsedObject<String> base, int charOffset) {
     return base.getFileLocation().add(computeFileLocation(base.get(), charOffset));

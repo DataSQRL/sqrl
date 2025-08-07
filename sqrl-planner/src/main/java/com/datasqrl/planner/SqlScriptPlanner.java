@@ -412,6 +412,12 @@ public class SqlScriptPlanner {
         boolean isNativeFunction = false;
         if (tblFctStmt instanceof SqrlPassThroughTableFunctionStatement nativeStmt) {
           originalSql = removeStatementDelimiter(nativeStmt.getDefinitionBody().get().trim());
+          for (Map.Entry<Integer, Integer> mapping : argumentIndexMap.entrySet()) {
+            originalSql =
+                originalSql.replace(
+                    SqrlStatementParser.POSITIONAL_ARGUMENT_PREFIX + mapping.getKey(),
+                    SqrlStatementParser.POSITIONAL_ARGUMENT_PREFIX + mapping.getValue());
+          }
           // extract from tables using simple-regex
           Set<String> fromTableNames = SqlTableNameExtractor.findTableNames(originalSql);
           List<TableOrFunctionAnalysis> fromTables =

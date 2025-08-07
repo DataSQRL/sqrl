@@ -6,4 +6,4 @@ PassThroughTable RETURNS (id BIGINT NOT NULL, updateTime TIMESTAMP_LTZ(3) NOT NU
                  SELECT id, `time` AS updateTime FROM FilteredOrders;
 
 PassThroughFunction(customerid BIGINT NOT NULL) RETURNS (id BIGINT NOT NULL) :=
-                   SELECT id FROM FilteredOrders WHERE customerid = $1;
+                   SELECT id FROM FilteredOrders WHERE customerid = :customerid;

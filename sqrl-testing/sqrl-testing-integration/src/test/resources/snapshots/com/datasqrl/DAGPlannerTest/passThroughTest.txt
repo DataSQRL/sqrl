@@ -51,7 +51,7 @@ Annotations:
  - base-table: PassThroughFunction
 Plan:
 LogicalValues(tuples=[[]])
-SQL: SELECT id FROM FilteredOrders WHERE customerid = $1
+SQL: SELECT id FROM FilteredOrders WHERE customerid = $?$0
 === PassThroughTable
 ID:     default_catalog.default_database.PassThroughTable
 Type:   query

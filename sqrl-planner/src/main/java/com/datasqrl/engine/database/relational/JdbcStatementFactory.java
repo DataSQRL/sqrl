@@ -39,6 +39,8 @@ public interface JdbcStatementFactory {
   QueryResult createQuery(
       Query query, boolean withView, Map<String, JdbcEngineCreateTable> tableIdMap);
 
+  ExecutableJdbcReadQuery.ExecutableJdbcReadQueryBuilder prepareQuery(String passThroughQuerySQL);
+
   JdbcStatement addIndex(IndexDefinition indexDefinition);
 
   @Value

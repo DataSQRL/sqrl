@@ -94,11 +94,7 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
   public abstract JdbcStatementFactory getStatementFactory();
 
   public ExecutableQuery planQuery(ExecutionStage stage, String sql) {
-    return ExecutableJdbcReadQuery.builder()
-        .sql(sql)
-        .database(getDatabaseType())
-        .stage(stage)
-        .build();
+    return getStatementFactory().prepareQuery(sql).database(getDatabaseType()).stage(stage).build();
   }
 
   public EnginePhysicalPlan plan(MaterializationStagePlan stagePlan) {

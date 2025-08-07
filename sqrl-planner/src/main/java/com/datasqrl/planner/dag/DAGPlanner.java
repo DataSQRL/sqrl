@@ -355,9 +355,8 @@ public class DAGPlanner {
                   }
                 }
                 if (function != null) {
-                  if (!function
-                      .hasExecutableQuery()) { // functions that already have a query are
-                                               // pass-through to server
+                  if (!function.hasExecutableQuery()) { // functions that already have a query are
+                    // pass-through to server
                     var originalRelnode = function.getFunctionAnalysis().getRelNode();
                     var plannedRelNode =
                         originalRelnode.accept(
