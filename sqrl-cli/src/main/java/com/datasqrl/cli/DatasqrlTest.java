@@ -17,9 +17,9 @@ package com.datasqrl.cli;
 
 import com.datasqrl.compile.TestPlan;
 import com.datasqrl.config.PackageJson;
+import com.datasqrl.graphql.SqrlObjectMapper;
 import com.datasqrl.util.FlinkOperatorStatusChecker;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -52,7 +52,6 @@ import org.apache.flink.core.execution.JobClient;
 public class DatasqrlTest {
 
   private static final String GRAPHQL_ENDPOINT = "http://localhost:8888/graphql";
-  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
   private final Path rootDir;
   private final Path planDir;
@@ -99,7 +98,7 @@ public class DatasqrlTest {
     // framework
     var testJson = planDir.resolve("test.json").toFile();
     if (testJson.exists()) {
-      testPlan = OBJECT_MAPPER.readValue(testJson, TestPlan.class);
+      testPlan = SqrlObjectMapper.MAPPER.readValue(testJson, TestPlan.class);
     }
 
     try {
@@ -341,8 +340,8 @@ public class DatasqrlTest {
   @SneakyThrows
   private String format(String rawData) {
     try {
-      var data = OBJECT_MAPPER.readValue(rawData, Object.class);
-      return OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(data);
+      var data = SqrlObjectMapper.MAPPER.readValue(rawData, Object.class);
+      return SqrlObjectMapper.MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(data);
     } catch (JsonProcessingException e) {
       return rawData;
     }
