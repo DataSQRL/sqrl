@@ -17,6 +17,7 @@ package com.datasqrl.compile;
 
 import com.datasqrl.compile.TestPlan.GraphqlQuery;
 import com.datasqrl.config.PackageJson;
+import com.datasqrl.engine.database.relational.JdbcStatement;
 import com.datasqrl.graphql.APISource;
 import com.datasqrl.util.FileUtil;
 import graphql.language.AstPrinter;
@@ -35,6 +36,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 
@@ -44,12 +46,13 @@ public class TestPlanner {
 
   private final PackageJson packageJson;
   private final GqlGenerator gqlGenerator;
+  private final List<JdbcStatement> jdbcViews;
 
   public TestPlan generateTestPlan(APISource source, Optional<Path> testsPath) {
     var parser = new Parser();
-    List<GraphqlQuery> queries = new ArrayList<>();
-    List<GraphqlQuery> mutations = new ArrayList<>();
-    List<GraphqlQuery> subscriptions = new ArrayList<>();
+    var queries = new ArrayList<GraphqlQuery>();
+    var mutations = new ArrayList<GraphqlQuery>();
+    var subscriptions = new ArrayList<GraphqlQuery>();
 
     // Get base headers from PackageJson
     var baseHeaders = packageJson.getTestConfig().getHeaders();
@@ -63,7 +66,7 @@ public class TestPlanner {
                 .sorted(Comparator.comparing(path -> path.getFileName().toString().toLowerCase()))
                 .forEach(
                     file -> {
-                      String content = null;
+                      String content;
                       try {
                         content = new String(Files.readAllBytes(file));
                       } catch (IOException e) {
@@ -71,7 +74,6 @@ public class TestPlanner {
                       }
                       var document = parser.parseDocument(content);
                       var prefix = FileUtil.separateExtension(file).getLeft();
-                      // TODO extract subscriptions from .graphql files
                       extractQueriesAndMutations(
                           document,
                           queries,
@@ -87,12 +89,17 @@ public class TestPlanner {
 
     var document = parser.parseDocument(source.getDefinition());
     var queryNodes = gqlGenerator.visitDocument(document, null);
-    for (Node definition : queryNodes) {
+    for (Node<?> definition : queryNodes) {
       var definition1 = (OperationDefinition) definition;
       queries.add(
           new GraphqlQuery(definition1.getName(), AstPrinter.printAst(definition1), baseHeaders));
     }
-    return new TestPlan(queries, mutations, subscriptions);
+
+    var queryNames = queries.stream().map(GraphqlQuery::getName).collect(Collectors.toSet());
+    var nonQueryViews =
+        jdbcViews.stream().filter(view -> !queryNames.contains(view.getName())).toList();
+
+    return new TestPlan(nonQueryViews, queries, mutations, subscriptions);
   }
 
   @SneakyThrows
@@ -138,7 +145,8 @@ public class TestPlanner {
       List<GraphqlQuery> subscriptions,
       String prefix,
       Map<String, String> headers) {
-    for (Definition definition : document.getDefinitions()) {
+
+    for (Definition<?> definition : document.getDefinitions()) {
       if (definition instanceof OperationDefinition operationDefinition) {
         var query = new GraphqlQuery(prefix, AstPrinter.printAst(operationDefinition), headers);
         switch (operationDefinition.getOperation()) {

@@ -19,6 +19,8 @@ import com.datasqrl.config.BuildPath;
 import com.datasqrl.config.GraphqlSourceFactory;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.engine.PhysicalPlan;
+import com.datasqrl.engine.database.relational.JdbcPhysicalPlan;
+import com.datasqrl.engine.database.relational.JdbcStatement;
 import com.datasqrl.engine.server.ServerPhysicalPlan;
 import com.datasqrl.engine.stream.flink.FlinkStreamEngine;
 import com.datasqrl.error.ErrorCode;
@@ -98,10 +100,18 @@ public class CompilationProcess {
       // create test artifact
       if (executionGoal == ExecutionGoal.TEST) {
         var gqlGenerator = new GqlGenerator(serverPlanOpt.get().getFunctions());
-        var testPlanner = new TestPlanner(config, gqlGenerator);
+        var jdbcViews =
+            physicalPlan
+                .getPlans(JdbcPhysicalPlan.class)
+                .map(p -> p.getStatementsForType(JdbcStatement.Type.VIEW))
+                .findFirst()
+                .orElse(List.of());
+
+        var testPlanner = new TestPlanner(config, gqlGenerator, jdbcViews);
         testPlan = testPlanner.generateTestPlan(apiSource.get(), testsPath);
       }
     }
+
     return Pair.of(physicalPlan, testPlan);
   }
 }

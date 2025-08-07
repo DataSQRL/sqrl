@@ -17,8 +17,10 @@ package com.datasqrl.cli;
 
 import com.datasqrl.compile.TestPlan;
 import com.datasqrl.config.PackageJson;
+import com.datasqrl.engine.database.relational.JdbcStatement;
 import com.datasqrl.graphql.SqrlObjectMapper;
 import com.datasqrl.util.FlinkOperatorStatusChecker;
+import com.datasqrl.util.ResultSetPrinter;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -26,6 +28,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.sql.DriverManager;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +36,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.SneakyThrows;
 import org.apache.flink.api.common.JobStatus;
 import org.apache.flink.configuration.Configuration;
@@ -52,6 +56,7 @@ import org.apache.flink.core.execution.JobClient;
 public class DatasqrlTest {
 
   private static final String GRAPHQL_ENDPOINT = "http://localhost:8888/graphql";
+  private static final String SNAPSHOT_EXT = ".snapshot";
 
   private final Path rootDir;
   private final Path planDir;
@@ -74,7 +79,7 @@ public class DatasqrlTest {
 
   @SneakyThrows
   public int run() {
-    // 1. Run the DataSQRL pipeline via {@link DatasqrlRun}
+    // 1. Init DatasqrlRun
     var run = DatasqrlRun.nonBlocking(planDir, sqrlConfig, flinkConfig, env);
 
     var testConfig = sqrlConfig.getTestConfig();
@@ -101,12 +106,13 @@ public class DatasqrlTest {
       testPlan = SqrlObjectMapper.MAPPER.readValue(testJson, TestPlan.class);
     }
 
+    // 2. Run the DataSQRL pipeline
     try {
       var result = run.run();
       Thread.sleep(1000);
 
       var subscriptionClients = new ArrayList<SubscriptionClient>();
-      // 2. Execute subscription & mutation queries against the API and snapshot results
+      // 3. Execute subscription & mutation operations against the API and snapshot results
       if (testPlan != null) {
         // 1. add the graphql subscriptions to the test plan
         // 2. connect a websocket to the graphql server hosted in vertx
@@ -141,7 +147,7 @@ public class DatasqrlTest {
         exceptions.addAll(exList);
       }
 
-      // 3. Wait for the Flink job to finish or the configured delay
+      // 4. Wait for the Flink job to finish or the configured delay
       if (delaySec == -1) {
         var flinkOperatorStatusChecker =
             new FlinkOperatorStatusChecker(
@@ -187,10 +193,13 @@ public class DatasqrlTest {
       } catch (Exception ignored) {
       }
 
-      // 4. Run the queries against the API, finish subscriptions and snapshot the results
+      // 5. Run the queries against JDBC & API, finish subscriptions and snapshot the results
       if (testPlan != null) {
-        var exList = executeAndSnapshotGraphqlQueries(testPlan.getQueries(), snapshotDir, 0);
-        exceptions.addAll(exList);
+        var jdbcExList = queryAndSnapshotJdbcViews(testPlan.getJdbcViews(), snapshotDir);
+        exceptions.addAll(jdbcExList);
+
+        var gqlExList = executeAndSnapshotGraphqlQueries(testPlan.getQueries(), snapshotDir, 0);
+        exceptions.addAll(gqlExList);
 
         // Stop subscriptions
         for (var client : subscriptionClients) {
@@ -209,21 +218,21 @@ public class DatasqrlTest {
                   // contents
                   .sorted()
                   .collect(Collectors.joining(",", "[", "]"));
-          var snapshotPath = snapshotDir.resolve(client.getName() + ".snapshot");
-          snapshot(snapshotPath, client.getName(), data, exceptions);
+
+          snapshot(snapshotDir, client.getName(), data, exceptions);
         }
 
-        var expectedSnapshotsQueries = collectGraphqlQueryNames(testPlan.getQueries());
-        var expectedSnapshotsMutations = collectGraphqlQueryNames(testPlan.getMutations());
-        var expectedSnapshotsSubscriptions = collectGraphqlQueryNames(testPlan.getSubscriptions());
-
-        var expectedSnapshots = new ArrayList<String>();
-        expectedSnapshots.addAll(expectedSnapshotsQueries);
-        expectedSnapshots.addAll(expectedSnapshotsMutations);
-        expectedSnapshots.addAll(expectedSnapshotsSubscriptions);
+        var expectedSnapshots =
+            Stream.of(
+                    testPlan.getJdbcViews().stream().map(f -> f.getName() + SNAPSHOT_EXT),
+                    collectGraphqlQueryNames(testPlan.getQueries()).stream(),
+                    collectGraphqlQueryNames(testPlan.getMutations()).stream(),
+                    collectGraphqlQueryNames(testPlan.getSubscriptions()).stream())
+                .flatMap(stream -> stream)
+                .collect(Collectors.toSet());
 
         // Check all snapshots in the directory
-        try (var directoryStream = Files.newDirectoryStream(snapshotDir, "*.snapshot")) {
+        try (var directoryStream = Files.newDirectoryStream(snapshotDir, "*" + SNAPSHOT_EXT)) {
           for (var path : directoryStream) {
             var snapshotFileName = path.getFileName().toString();
             if (!expectedSnapshots.contains(snapshotFileName)) {
@@ -238,7 +247,7 @@ public class DatasqrlTest {
       Thread.sleep(1000); // wait for log lines to clear out
     }
 
-    // 5. Print the test results on the command line
+    // 6. Print the test results on the command line
     int exitCode = 0;
     if (!exceptions.isEmpty()) {
       for (var e : exceptions) {
@@ -269,6 +278,32 @@ public class DatasqrlTest {
     return exitCode;
   }
 
+  private List<Exception> queryAndSnapshotJdbcViews(
+      List<JdbcStatement> jdbcViews, Path snapshotDir) {
+    var exceptions = new ArrayList<Exception>();
+
+    var url = env.get("POSTGRES_JDBC_URL");
+    var username = env.get("POSTGRES_USERNAME");
+    var password = env.get("POSTGRES_PASSWORD");
+    try (var conn = DriverManager.getConnection(url, username, password)) {
+
+      for (var view : jdbcViews) {
+        var viewName = view.getName();
+
+        try (var stmt = conn.createStatement()) {
+          var resultSet = stmt.executeQuery("SELECT * FROM \"%s\" LIMIT 10".formatted(viewName));
+          var data = ResultSetPrinter.toString(resultSet);
+
+          snapshot(snapshotDir, viewName, data, exceptions);
+        }
+      }
+    } catch (Exception ex) {
+      exceptions.add(ex);
+    }
+
+    return exceptions;
+  }
+
   @SneakyThrows
   private List<Exception> executeAndSnapshotGraphqlQueries(
       List<TestPlan.GraphqlQuery> queries, Path snapshotDir, int mutationWait) {
@@ -279,8 +314,7 @@ public class DatasqrlTest {
       var data = executeQuery(query.getQuery(), query.getHeaders());
 
       // Snapshot result
-      var snapshotPath = snapshotDir.resolve(query.getName() + ".snapshot");
-      snapshot(snapshotPath, query.getName(), data, exceptions);
+      snapshot(snapshotDir, query.getName(), data, exceptions);
 
       // Wait before next mutation
       if (mutationWait > 0) {
@@ -292,7 +326,7 @@ public class DatasqrlTest {
   }
 
   private List<String> collectGraphqlQueryNames(List<TestPlan.GraphqlQuery> queries) {
-    return queries.stream().map(f -> f.getName() + ".snapshot").toList();
+    return queries.stream().map(f -> f.getName() + SNAPSHOT_EXT).toList();
   }
 
   @SneakyThrows
@@ -315,9 +349,9 @@ public class DatasqrlTest {
   }
 
   @SneakyThrows
-  private void snapshot(
-      Path snapshotPath, String name, String rawJson, List<Exception> exceptions) {
+  private void snapshot(Path snapshotDir, String name, String rawJson, List<Exception> exceptions) {
 
+    var snapshotPath = snapshotDir.resolve(name + SNAPSHOT_EXT);
     var content = format(rawJson);
 
     // Existing snapshot logic
