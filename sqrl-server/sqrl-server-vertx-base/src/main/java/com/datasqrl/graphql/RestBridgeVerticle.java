@@ -15,6 +15,7 @@
  */
 package com.datasqrl.graphql;
 
+import com.datasqrl.graphql.auth.JwtFailureHandler;
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.graphql.server.operation.ApiOperation;
@@ -162,7 +163,11 @@ public class RestBridgeVerticle extends AbstractBridgeVerticle {
         };
 
     // Add JWT auth if configured
-    jwtAuth.ifPresent(auth -> route.handler(JWTAuthHandler.create(auth)));
+    jwtAuth.ifPresent(
+        auth -> {
+          route.handler(JWTAuthHandler.create(auth));
+          route.failureHandler(new JwtFailureHandler());
+        });
 
     // Add the REST handler
     route.handler(
