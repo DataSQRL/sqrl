@@ -355,17 +355,21 @@ public class DAGPlanner {
                   }
                 }
                 if (function != null) {
-                  var originalRelnode = function.getFunctionAnalysis().getRelNode();
-                  var plannedRelNode =
-                      originalRelnode.accept(
-                          new QueryExpansionRelShuttle(
-                              id -> streamTableMapping.get(new InputTableKey(dataStoreStage, id)),
-                              sqrlEnv,
-                              dbEngine.getTypeMapping(),
-                              true));
-                  dbPlan.query(
-                      new Query(
-                          function, plannedRelNode, function.getFunctionAnalysis().getErrors()));
+                  if (!function
+                      .hasExecutableQuery()) { // functions that already have a query are
+                                               // pass-through to server
+                    var originalRelnode = function.getFunctionAnalysis().getRelNode();
+                    var plannedRelNode =
+                        originalRelnode.accept(
+                            new QueryExpansionRelShuttle(
+                                id -> streamTableMapping.get(new InputTableKey(dataStoreStage, id)),
+                                sqrlEnv,
+                                dbEngine.getTypeMapping(),
+                                true));
+                    dbPlan.query(
+                        new Query(
+                            function, plannedRelNode, function.getFunctionAnalysis().getErrors()));
+                  }
                   if (function.getVisibility().isQueryable()) {
                     serverPlan.function(function);
                   }

@@ -15,6 +15,7 @@
  */
 package com.datasqrl.planner;
 
+import static com.datasqrl.planner.parser.SqlScriptStatementSplitter.removeStatementDelimiter;
 import static com.datasqrl.planner.parser.StatementParserException.checkFatal;
 
 import com.datasqrl.canonicalizer.Name;
@@ -22,6 +23,7 @@ import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.EngineType;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.SystemBuiltInConnectors;
+import com.datasqrl.engine.database.relational.AbstractJDBCEngine;
 import com.datasqrl.engine.log.LogEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
@@ -48,6 +50,7 @@ import com.datasqrl.plan.table.RelDataTypeTableSchema;
 import com.datasqrl.plan.validate.ExecutionGoal;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator.MutationBuilder;
 import com.datasqrl.planner.analyzer.TableAnalysis;
+import com.datasqrl.planner.analyzer.TableOrFunctionAnalysis;
 import com.datasqrl.planner.analyzer.cost.CostModel;
 import com.datasqrl.planner.dag.DAGBuilder;
 import com.datasqrl.planner.dag.nodes.ExportNode;
@@ -72,6 +75,7 @@ import com.datasqrl.planner.parser.SqrlCreateTableStatement;
 import com.datasqrl.planner.parser.SqrlDefinition;
 import com.datasqrl.planner.parser.SqrlExportStatement;
 import com.datasqrl.planner.parser.SqrlImportStatement;
+import com.datasqrl.planner.parser.SqrlPassThroughTableFunctionStatement;
 import com.datasqrl.planner.parser.SqrlStatement;
 import com.datasqrl.planner.parser.SqrlStatementParser;
 import com.datasqrl.planner.parser.SqrlTableDefinition;
@@ -81,6 +85,7 @@ import com.datasqrl.planner.parser.StackableStatement;
 import com.datasqrl.planner.parser.StatementParserException;
 import com.datasqrl.planner.tables.AccessVisibility;
 import com.datasqrl.planner.tables.SqrlTableFunction;
+import com.datasqrl.planner.util.SqlTableNameExtractor;
 import com.datasqrl.util.SqlNameUtil;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
@@ -90,6 +95,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -314,12 +320,8 @@ public class SqlScriptPlanner {
       var originalSql = sqrlDef.toSql(sqrlEnv, statementStack);
       // Relationships and Table functions require special handling
       if (sqrlDef instanceof SqrlTableFunctionStatement tblFctStmt) {
-        var identifier =
-            SqlNameUtil.toIdentifier(
-                tblFctStmt
-                    .getPath()
-                    .getFirst()); // TODO: this should be resolved against the current catalog and
-        // database
+        // TODO: should be resolved against the current catalog and database
+        var identifier = SqlNameUtil.toIdentifier(tblFctStmt.getPath().getFirst());
         final var arguments = new LinkedHashMap<Name, ParsedArgument>();
         if (!tblFctStmt.getSignature().isEmpty()) {
           var parsedArgs = sqrlEnv.parse2RelDataType(tblFctStmt.getSignature());
@@ -406,17 +408,62 @@ public class SqlScriptPlanner {
           argumentIndexMap.put(argIndex.getIndex(), signatureArg.getIndex());
         }
 
-        var fctBuilder =
-            sqrlEnv.resolveSqrlTableFunction(
-                identifier,
-                originalSql,
-                new ArrayList<>(arguments.values()),
-                argumentIndexMap,
-                hints,
-                errors);
+        SqrlTableFunction.SqrlTableFunctionBuilder fctBuilder;
+        boolean isNativeFunction = false;
+        if (tblFctStmt instanceof SqrlPassThroughTableFunctionStatement nativeStmt) {
+          originalSql = removeStatementDelimiter(nativeStmt.getDefinitionBody().get().trim());
+          // extract from tables using simple-regex
+          Set<String> fromTableNames = SqlTableNameExtractor.findTableNames(originalSql);
+          List<TableOrFunctionAnalysis> fromTables =
+              fromTableNames.stream()
+                  .map(
+                      tblName -> {
+                        var node = dagBuilder.getNode(SqlNameUtil.toIdentifier(tblName));
+                        errors.checkFatal(
+                            node.isPresent(),
+                            "Could not find table %s referenced in query",
+                            tblName);
+                        errors.checkFatal(
+                            node.get() instanceof TableNode, "Referenced table %s is", tblName);
+                        return (TableOrFunctionAnalysis)
+                            ((TableNode) node.get()).getTableAnalysis();
+                      })
+                  .toList();
+          fctBuilder =
+              sqrlEnv.resolveSqrlNativeTableFunction(
+                  identifier,
+                  originalSql,
+                  new ArrayList<>(arguments.values()),
+                  nativeStmt.getReturnType(),
+                  fromTables,
+                  hints,
+                  errors);
+          List<ExecutionStage> dbStages = determineStages(this.queryStages, hints);
+          errors.checkFatal(
+              dbStages.size() == 1,
+              "Could not determine which database engine should " + "execute the query. Found: %s",
+              dbStages);
+          ExecutionStage dbStage = dbStages.get(0);
+          errors.checkFatal(
+              dbStage.getEngine() instanceof AbstractJDBCEngine,
+              "Expected database stage but found %s",
+              dbStage);
+          fctBuilder.executableQuery(
+              ((AbstractJDBCEngine) dbStage.getEngine()).planQuery(dbStage, originalSql));
+        } else {
+          fctBuilder =
+              sqrlEnv.resolveSqrlTableFunction(
+                  identifier,
+                  originalSql,
+                  new ArrayList<>(arguments.values()),
+                  argumentIndexMap,
+                  hints,
+                  errors);
+        }
         fctBuilder.fullPath(tblFctStmt.getPath());
         var visibility =
-            new AccessVisibility(access, hints.isTest(), tblFctStmt.isRelationship(), isHidden);
+            new AccessVisibility(
+                access, hints.isTest(), tblFctStmt.isRelationship() || isNativeFunction, isHidden);
         fctBuilder.visibility(visibility);
         fctBuilder.documentation(documentation);
         var fct = fctBuilder.build();

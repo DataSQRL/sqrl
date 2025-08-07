@@ -61,7 +61,7 @@ public class SqrlStatementParser {
       BEGINNING_COMMENT
           + "(?<fullmatch>(?<tablename>"
           + IDENTIFIER_REGEX
-          + ")\\s*(\\((?<arguments>.*?)\\))?\\s*:=)";
+          + ")\\s*(\\((?<arguments>.*?)\\))?\\s*(?:RETURNS\\s*\\((?<returntype>.*?)\\)\\s*)?:=)";
   public static final String CREATE_TABLE_REGEX =
       BEGINNING_COMMENT + "(?<fullmatch>create\\s+(temporary\\s+)?table)";
 
@@ -199,6 +199,8 @@ public class SqrlStatementParser {
 
       ParsedObject<String> arguments =
           parse(sqrlDefinition, "arguments", statement).map(str -> str.isBlank() ? null : str);
+      ParsedObject<String> returnType =
+          parse(sqrlDefinition, "returntype", statement).map(str -> str.isBlank() ? null : str);
       // Identify SQL keyword
       var sqlKeywordPattern = Pattern.compile("^\\s*(\\w+)");
       var keywordMatcher = sqlKeywordPattern.matcher(definitionBody.get());
@@ -222,19 +224,36 @@ public class SqrlStatementParser {
           definitionBody =
               parse(statement.substring(newDefinitionStart), statement, newDefinitionStart);
         }
-        if (arguments.isEmpty() && !isRelationship) {
+        if (arguments.isEmpty() && returnType.isEmpty() && !isRelationship) {
           definition = new SqrlTableDefinition(tableName, definitionBody, access, comment);
         } else {
           // Extract and replace argument and this references
           var processedBody = replaceTableFunctionVariables(definitionBody, isRelationship);
           definitionBody = definitionBody.map(x -> processedBody.getKey());
-          definition =
-              new SqrlTableFunctionStatement(
-                  tableName, definitionBody, access, comment, arguments, processedBody.getRight());
+          if (returnType.isPresent()) {
+            definition =
+                new SqrlPassThroughTableFunctionStatement(
+                    tableName,
+                    definitionBody,
+                    access,
+                    comment,
+                    arguments,
+                    processedBody.getRight(),
+                    returnType);
+          } else {
+            definition =
+                new SqrlTableFunctionStatement(
+                    tableName,
+                    definitionBody,
+                    access,
+                    comment,
+                    arguments,
+                    processedBody.getRight());
+          }
         }
       } else if (keyword.equalsIgnoreCase(DISTINCT_KEYWORD)) { // SQRL's special DISTINCT statement
         checkFatal(
-            arguments.isEmpty(),
+            arguments.isEmpty() && returnType.isEmpty(),
             ErrorCode.INVALID_SQRL_DEFINITION,
             "Table function not supported for operation");
         var distinctMatcher = DISTINCT_PARSER.matcher(definitionBody.get());
@@ -252,7 +271,7 @@ public class SqrlStatementParser {
             new SqrlDistinctStatement(tableName, comment, access, from, columns, remaining);
       } else { // otherwise, we assume it's a column expression
         checkFatal(
-            arguments.isEmpty(),
+            arguments.isEmpty() && returnType.isEmpty(),
             ErrorCode.INVALID_SQRL_DEFINITION,
             "Column definitions do not support arguments");
         definition = new SqrlAddColumnStatement(tableName, definitionBody, comment);
