@@ -21,7 +21,6 @@ import com.datasqrl.planner.dag.plan.MaterializationStagePlan.Query;
 import java.util.List;
 import java.util.Map;
 import lombok.Value;
-import org.apache.calcite.rel.type.RelDataType;
 
 public interface JdbcStatementFactory {
 

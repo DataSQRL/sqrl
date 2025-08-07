@@ -166,5 +166,4 @@ public class SqrlTableFunction implements TableFunction, TableOrFunctionAnalysis
   public boolean isSourceOrSink() {
     return false;
   }
-
 }
