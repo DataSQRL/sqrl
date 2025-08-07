@@ -1,7 +1,7 @@
 {
   "version": "1",
   "script": {
-    "main": "hierarchy.sqrl"
+    "main": "sensors-mutation.sqrl"
   },
   "test-runner": {
     "delay-sec": -1
