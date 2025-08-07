@@ -64,7 +64,7 @@ public class FullUseCaseIT extends AbstractFullUseCaseTest {
   @Disabled("Intended for manual usage")
   @Test
   void specificUseCase() {
-    var pkg = USE_CASES.resolve("jwt-unauthorized").resolve("package.json");
+    var pkg = USE_CASES.resolve("jwt-authorized").resolve("package.json");
 
     var param = new UseCaseParam(pkg);
     fullUseCaseTest(param);

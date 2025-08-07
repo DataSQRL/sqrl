@@ -1,0 +1,4 @@
+{
+  "error" : "JWT auth failed",
+  "cause" : "NoSuchKeyIdException: algorithm [RS256]: <null>"
+}

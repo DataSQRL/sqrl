@@ -1,0 +1,4 @@
+{
+  "error" : "JWT auth failed",
+  "cause" : "SignatureException: Signature verification failed"
+}
