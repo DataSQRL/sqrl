@@ -30,11 +30,13 @@ import com.datasqrl.error.ErrorLocation.FileLocation;
 import com.datasqrl.flinkrunner.stdlib.utils.AutoRegisterSystemFunction;
 import com.datasqrl.function.FlinkUdfNsObject;
 import com.datasqrl.graphql.server.MutationComputedColumnType;
+import com.datasqrl.plan.table.Multiplicity;
 import com.datasqrl.plan.util.PrimaryKeyMap;
 import com.datasqrl.planner.FlinkPhysicalPlan.Builder;
 import com.datasqrl.planner.analyzer.SQRLLogicalPlanAnalyzer;
 import com.datasqrl.planner.analyzer.SQRLLogicalPlanAnalyzer.ViewAnalysis;
 import com.datasqrl.planner.analyzer.TableAnalysis;
+import com.datasqrl.planner.analyzer.TableOrFunctionAnalysis;
 import com.datasqrl.planner.dag.plan.MutationQuery.MutationQueryBuilder;
 import com.datasqrl.planner.hint.PlannerHints;
 import com.datasqrl.planner.parser.ParsePosUtil;
@@ -68,6 +70,7 @@ import java.util.stream.IntStream;
 import javax.annotation.Nullable;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.Value;
 import org.apache.calcite.prepare.CalciteCatalogReader;
@@ -515,18 +518,7 @@ public class Sqrl2FlinkSQLTranslator {
       Map<Integer, Integer> argumentIndexMap,
       PlannerHints hints,
       ErrorCollector errors) {
-    List<FunctionParameter> parameters = new ArrayList<>();
-    for (var i = 0; i < arguments.size(); i++) {
-      var parsedArg = arguments.get(i);
-      var type = parsedArg.getResolvedRelDataType();
-      parameters.add(
-          new SqrlFunctionParameter(
-              parsedArg.getName().get(),
-              parsedArg.getIndex(),
-              type,
-              parsedArg.isParentField(),
-              parsedArg.getResolvedMetadata()));
-    }
+    List<FunctionParameter> parameters = getFunctionParameters(arguments);
     // Analyze Query
     var funcDef2 = parseSQL(originalSql);
     var viewAnalysis = analyzeView(funcDef2, false, hints, errors);
@@ -546,6 +538,59 @@ public class Sqrl2FlinkSQLTranslator {
             .parameters(parameters)
             .multiplicity(SqrlTableFunction.getMultiplicity(updateParameters));
     return fctBuilder;
+  }
+
+  public SqrlTableFunction.SqrlTableFunctionBuilder resolveSqrlNativeTableFunction(
+      ObjectIdentifier identifier,
+      String originalSql,
+      List<ParsedArgument> arguments,
+      ParsedObject<String> returnType,
+      List<TableOrFunctionAnalysis> fromTables,
+      PlannerHints hints,
+      ErrorCollector errors) {
+    List<FunctionParameter> parameters = getFunctionParameters(arguments);
+
+    List<ParsedRelDataTypeResult> parsedReturnType = parse2RelDataType(returnType);
+    RelDataType returnDataType =
+        CalciteUtil.getRelTypeBuilder(typeFactory)
+            .addAll(parsedReturnType.stream().map(ParsedRelDataTypeResult::field).toList())
+            .build();
+    // use values relnode from returntype
+    RelNode values = getRelBuilder(null).values(returnDataType).build();
+    TableAnalysis tableAnalysis =
+        TableAnalysis.builder()
+            .objectIdentifier(identifier)
+            .originalSql(originalSql)
+            .originalRelnode(values)
+            .collapsedRelnode(values)
+            .hints(hints)
+            .errors(errors)
+            .fromTables(fromTables)
+            .build();
+
+    var fctBuilder =
+        SqrlTableFunction.builder()
+            .functionAnalysis(tableAnalysis)
+            .parameters(parameters)
+            .multiplicity(Multiplicity.MANY);
+    return fctBuilder;
+  }
+
+  private static @NonNull List<FunctionParameter> getFunctionParameters(
+      List<ParsedArgument> arguments) {
+    List<FunctionParameter> parameters = new ArrayList<>();
+    for (var i = 0; i < arguments.size(); i++) {
+      var parsedArg = arguments.get(i);
+      var type = parsedArg.getResolvedRelDataType();
+      parameters.add(
+          new SqrlFunctionParameter(
+              parsedArg.getName().get(),
+              parsedArg.getIndex(),
+              type,
+              parsedArg.isParentField(),
+              parsedArg.getResolvedMetadata()));
+    }
+    return parameters;
   }
 
   /**

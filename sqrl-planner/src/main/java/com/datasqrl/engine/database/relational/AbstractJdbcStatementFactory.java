@@ -26,14 +26,18 @@ import com.datasqrl.engine.database.relational.ddl.statements.CreateTableDDL;
 import com.datasqrl.planner.dag.plan.MaterializationStagePlan.Query;
 import com.datasqrl.planner.hint.DataTypeHint;
 import com.datasqrl.planner.hint.PlannerHints;
+import com.datasqrl.planner.parser.SqrlStatementParser;
 import com.datasqrl.sql.DatabaseExtension;
 import com.datasqrl.util.CalciteUtil;
+import com.google.common.base.Preconditions;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
@@ -72,6 +76,25 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
       Map<String, JdbcEngineCreateTable> tableIdMap) {
     return tableIdMap.entrySet().stream()
         .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getTableName()));
+  }
+
+  @Override
+  public ExecutableJdbcReadQuery.ExecutableJdbcReadQueryBuilder prepareQuery(
+      String passThroughQuerySQL) {
+    // Replace all argument references
+    Pattern pattern =
+        Pattern.compile(Pattern.quote(SqrlStatementParser.POSITIONAL_ARGUMENT_PREFIX) + "(\\d+)");
+    Matcher matcher = pattern.matcher(passThroughQuerySQL);
+    StringBuilder result = new StringBuilder();
+    while (matcher.find()) {
+      int number = Integer.parseInt(matcher.group(1));
+      Preconditions.checkArgument(
+          number >= 0, "Invalid index: %s [%s]", number, passThroughQuerySQL);
+      matcher.appendReplacement(result, "\\$" + (number + 1));
+    }
+    matcher.appendTail(result);
+
+    return ExecutableJdbcReadQuery.builder().sql(result.toString());
   }
 
   public QueryResult createQuery(

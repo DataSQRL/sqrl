@@ -23,6 +23,7 @@ import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.engine.EngineFeature;
 import com.datasqrl.engine.EnginePhysicalPlan;
+import com.datasqrl.engine.ExecutableQuery;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.database.EngineCreateTable;
 import com.datasqrl.engine.pipeline.ExecutionStage;
@@ -91,6 +92,10 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
   public abstract String getConnectorTableName(FlinkTableBuilder tableBuilder);
 
   public abstract JdbcStatementFactory getStatementFactory();
+
+  public ExecutableQuery planQuery(ExecutionStage stage, String sql) {
+    return getStatementFactory().prepareQuery(sql).database(getDatabaseType()).stage(stage).build();
+  }
 
   public EnginePhysicalPlan plan(MaterializationStagePlan stagePlan) {
     var stmtFactory = getStatementFactory();
