@@ -23,9 +23,5 @@
         }
       }
     }
-  },
-  "test-runner": {
-    "snapshot-folder": "snapshots-jwt-unauthorized",
-    "test-folder": "tests-jwt-unauthorized"
   }
 }
