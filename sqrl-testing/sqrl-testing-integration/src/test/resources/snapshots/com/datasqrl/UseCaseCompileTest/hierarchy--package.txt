@@ -162,11 +162,6 @@ INSERT INTO `default_catalog`.`default_database`.`Reporting_2`
   FROM `default_catalog`.`default_database`.`_reporting`)
  ;
  END
->>>kafka.json
-{
-  "topics" : [ ],
-  "testRunnerTopics" : [ ]
-}
 >>>postgres-schema.sql
 CREATE TABLE IF NOT EXISTS "Employees" ("employeeid" BIGINT NOT NULL, "name" TEXT NOT NULL, "email" TEXT NOT NULL, "updatedDate" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("employeeid"));
 CREATE TABLE IF NOT EXISTS "Reporting" ("employeeid" BIGINT NOT NULL, "managerid" BIGINT NOT NULL, "updatedDate" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("employeeid","managerid"));
@@ -237,7 +232,7 @@ CREATE INDEX IF NOT EXISTS "Reporting_hash_c1" ON "Reporting" USING hash ("manag
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "WITH RECURSIVE employee_hierarchy AS (\n    SELECT r.employeeid, r.managerid, 1 as level\n    FROM Reporting r\n    WHERE r.managerid = $1\n    UNION ALL\n    SELECT r.employeeid, r.managerid, eh.level + 1 as level\n    FROM Reporting r\n    INNER JOIN employee_hierarchy eh ON r.managerid = eh.employeeid\n  )\n  SELECT e.employeeid, e.name, eh.level\n  FROM employee_hierarchy eh\n  JOIN Employees e ON eh.employeeid = e.employeeid\n  ORDER BY eh.level, e.employeeid",
+            "sql" : "WITH RECURSIVE employee_hierarchy AS (\n    SELECT r.employeeid, r.managerid, 1 as level\n    FROM \"Reporting\" r\n    WHERE r.managerid = $1\n    UNION ALL\n    SELECT r.employeeid, r.managerid, eh.level + 1 as level\n    FROM \"Reporting\" r\n    INNER JOIN employee_hierarchy eh ON r.managerid = eh.employeeid\n  )\n  SELECT e.employeeid, e.name, eh.level\n  FROM employee_hierarchy eh\n  JOIN \"Employees\" e ON eh.employeeid = e.employeeid\n  ORDER BY eh.level, e.employeeid",
             "parameters" : [
               {
                 "type" : "source",
