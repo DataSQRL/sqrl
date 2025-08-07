@@ -78,7 +78,6 @@ public class DatasqrlRun {
   private final PackageJson sqrlConfig;
   private final Configuration flinkConfig;
   private final Map<String, String> env;
-  private final boolean blocking;
   private final ObjectMapper mapper;
   @Nullable private final CountDownLatch shutdownLatch;
 
@@ -95,7 +94,6 @@ public class DatasqrlRun {
     this.sqrlConfig = sqrlConfig;
     this.flinkConfig = flinkConfig;
     this.env = env;
-    this.blocking = blocking;
     mapper = SqrlObjectMapper.getMapperWithEnvVarResolver(env);
     shutdownLatch = blocking ? new CountDownLatch(1) : null;
   }
@@ -117,7 +115,7 @@ public class DatasqrlRun {
     startVertx();
     tableResult = runFlinkJob();
 
-    if (blocking) {
+    if (shutdownLatch != null) {
       Runtime.getRuntime().addShutdownHook(new Thread(this::stop, "flink-shutdown"));
       tableResult.print();
 
