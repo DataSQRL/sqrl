@@ -51,7 +51,7 @@ Annotations:
  - base-table: PassThroughFunction
 Plan:
 LogicalValues(tuples=[[]])
-SQL: SELECT id FROM FilteredOrders WHERE customerid = $?$0
+SQL: SELECT id FROM "FilteredOrders" WHERE customerid = $?$0
 === PassThroughTable
 ID:     default_catalog.default_database.PassThroughTable
 Type:   query
@@ -61,7 +61,7 @@ Annotations:
  - base-table: PassThroughTable
 Plan:
 LogicalValues(tuples=[[]])
-SQL: SELECT id, `time` AS updateTime FROM FilteredOrders
+SQL: SELECT id, time AS updateTime FROM "FilteredOrders"
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `Orders__schema` (
   `id` BIGINT NOT NULL,
@@ -239,6 +239,23 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
           "nullable" : true
         }
       ]
+    },
+    {
+      "name" : "PassThroughTable",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"PassThroughTable\" (\"id\", \"updateTime\") AS SELECT id, time AS updateTime FROM \"FilteredOrders\"",
+      "fields" : [
+        {
+          "name" : "id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "updateTime",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ]
     }
   ]
 }
@@ -315,7 +332,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT id FROM FilteredOrders WHERE customerid = $1",
+            "sql" : "SELECT id FROM \"FilteredOrders\" WHERE customerid = $1",
             "parameters" : [
               {
                 "type" : "arg",
@@ -344,7 +361,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT id, `time` AS updateTime FROM FilteredOrders",
+            "sql" : "SELECT id, time AS updateTime FROM \"FilteredOrders\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
             "database" : "POSTGRES"

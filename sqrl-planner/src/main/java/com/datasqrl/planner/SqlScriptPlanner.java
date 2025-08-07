@@ -410,8 +410,8 @@ public class SqlScriptPlanner {
 
         SqrlTableFunction.SqrlTableFunctionBuilder fctBuilder;
         boolean isNativeFunction = false;
-        if (tblFctStmt instanceof SqrlPassThroughTableFunctionStatement nativeStmt) {
-          originalSql = removeStatementDelimiter(nativeStmt.getDefinitionBody().get().trim());
+        if (tblFctStmt instanceof SqrlPassThroughTableFunctionStatement passThroughStmt) {
+          originalSql = removeStatementDelimiter(passThroughStmt.getDefinitionBody().get().trim());
           for (Map.Entry<Integer, Integer> mapping : argumentIndexMap.entrySet()) {
             originalSql =
                 originalSql.replace(
@@ -436,26 +436,14 @@ public class SqlScriptPlanner {
                       })
                   .toList();
           fctBuilder =
-              sqrlEnv.resolveSqrlNativeTableFunction(
+              sqrlEnv.resolveSqrlPassThroughTableFunction(
                   identifier,
                   originalSql,
                   new ArrayList<>(arguments.values()),
-                  nativeStmt.getReturnType(),
+                  passThroughStmt.getReturnType(),
                   fromTables,
                   hints,
                   errors);
-          List<ExecutionStage> dbStages = determineStages(this.queryStages, hints);
-          errors.checkFatal(
-              dbStages.size() == 1,
-              "Could not determine which database engine should " + "execute the query. Found: %s",
-              dbStages);
-          ExecutionStage dbStage = dbStages.get(0);
-          errors.checkFatal(
-              dbStage.getEngine() instanceof AbstractJDBCEngine,
-              "Expected database stage but found %s",
-              dbStage);
-          fctBuilder.executableQuery(
-              ((AbstractJDBCEngine) dbStage.getEngine()).planQuery(dbStage, originalSql));
         } else {
           fctBuilder =
               sqrlEnv.resolveSqrlTableFunction(

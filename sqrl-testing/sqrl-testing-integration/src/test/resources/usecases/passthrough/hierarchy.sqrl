@@ -8,7 +8,6 @@ Reporting := DISTINCT _reporting ON employeeid, managerid ORDER BY updatedDate D
 Employees.directReports := SELECT e.* FROM Reporting r JOIN Employees e ON r.employeeid = e.employeeid
                            WHERE r.managerid = this.employeeid ORDER BY e.employeeid;
 
-/*+engine(postgres) */
 Employees.allReports RETURNS (employeeid BIGINT NOT NULL, name STRING NOT NULL, level INT NOT NULL) :=
   WITH RECURSIVE employee_hierarchy AS (
     -- Base case: direct reports

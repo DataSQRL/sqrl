@@ -17,12 +17,14 @@ package com.datasqrl.engine.database.relational;
 
 import com.datasqrl.calcite.OperatorRuleTransformer;
 import com.datasqrl.calcite.convert.RelToSqlNode;
+import com.datasqrl.calcite.convert.RelToSqlNode.SqlNodes;
 import com.datasqrl.calcite.convert.SqlNodeToString;
 import com.datasqrl.calcite.dialect.postgres.SqlCreatePostgresView;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.engine.database.relational.JdbcStatement.Field;
 import com.datasqrl.engine.database.relational.JdbcStatement.Type;
 import com.datasqrl.engine.database.relational.ddl.statements.CreateTableDDL;
+import com.datasqrl.engine.database.relational.ddl.statements.GenericCreateViewDdlFactory;
 import com.datasqrl.planner.dag.plan.MaterializationStagePlan.Query;
 import com.datasqrl.planner.hint.DataTypeHint;
 import com.datasqrl.planner.hint.PlannerHints;
@@ -41,6 +43,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
+import lombok.NonNull;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
@@ -79,8 +82,8 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
   }
 
   @Override
-  public ExecutableJdbcReadQuery.ExecutableJdbcReadQueryBuilder prepareQuery(
-      String passThroughQuerySQL) {
+  public QueryResult createPassThroughQuery(Query query, boolean withView) {
+    String passThroughQuerySQL = query.getFunction().getFunctionAnalysis().getOriginalSql();
     // Replace all argument references
     Pattern pattern =
         Pattern.compile(Pattern.quote(SqrlStatementParser.POSITIONAL_ARGUMENT_PREFIX) + "(\\d+)");
@@ -94,7 +97,23 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
     }
     matcher.appendTail(result);
 
-    return ExecutableJdbcReadQuery.builder().sql(result.toString());
+    var qBuilder = ExecutableJdbcReadQuery.builder().sql(result.toString());
+    JdbcStatement view = null;
+    if (withView) {
+      String viewName = query.getFunction().getSimpleName();
+      var rowType = query.getRelNode().getRowType();
+      var viewSql =
+          new GenericCreateViewDdlFactory()
+              .createView(viewName, rowType.getFieldNames(), passThroughQuerySQL);
+      view =
+          new JdbcStatement(
+              viewName,
+              Type.VIEW,
+              viewSql,
+              rowType,
+              getColumns(rowType.getFieldList(), PlannerHints.EMPTY));
+    }
+    return new QueryResult(qBuilder, view);
   }
 
   public QueryResult createQuery(
@@ -107,24 +126,30 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
 
     JdbcStatement view = null;
     if (withView) {
-      var viewNameIdentifier = new SqlIdentifier(viewName, SqlParserPos.ZERO);
-      var columnList =
-          new SqlNodeList(
-              relNode.getRowType().getFieldList().stream()
-                  .map(f -> new SqlIdentifier(f.getName(), SqlParserPos.ZERO))
-                  .collect(Collectors.toList()),
-              SqlParserPos.ZERO);
-      var viewSql = createView(viewNameIdentifier, columnList, sqlNodes.getSqlNode());
-      var datatype = relNode.getRowType();
-      view =
-          new JdbcStatement(
-              viewName,
-              Type.VIEW,
-              viewSql,
-              datatype,
-              getColumns(datatype.getFieldList(), PlannerHints.EMPTY));
+      view = getViewStatement(viewName, relNode.getRowType(), sqlNodes);
     }
     return new JdbcStatementFactory.QueryResult(qBuilder, view);
+  }
+
+  private @NonNull JdbcStatement getViewStatement(
+      String viewName, RelDataType rowType, SqlNodes sqlNodes) {
+    JdbcStatement view;
+    var viewNameIdentifier = new SqlIdentifier(viewName, SqlParserPos.ZERO);
+    var columnList =
+        new SqlNodeList(
+            rowType.getFieldList().stream()
+                .map(f -> new SqlIdentifier(f.getName(), SqlParserPos.ZERO))
+                .collect(Collectors.toList()),
+            SqlParserPos.ZERO);
+    var viewSql = createView(viewNameIdentifier, columnList, sqlNodes.getSqlNode());
+    view =
+        new JdbcStatement(
+            viewName,
+            Type.VIEW,
+            viewSql,
+            rowType,
+            getColumns(rowType.getFieldList(), PlannerHints.EMPTY));
+    return view;
   }
 
   @Override

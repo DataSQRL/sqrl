@@ -21,6 +21,7 @@ import com.datasqrl.planner.dag.plan.MaterializationStagePlan.Query;
 import java.util.List;
 import java.util.Map;
 import lombok.Value;
+import org.apache.calcite.rel.type.RelDataType;
 
 public interface JdbcStatementFactory {
 
@@ -39,7 +40,7 @@ public interface JdbcStatementFactory {
   QueryResult createQuery(
       Query query, boolean withView, Map<String, JdbcEngineCreateTable> tableIdMap);
 
-  ExecutableJdbcReadQuery.ExecutableJdbcReadQueryBuilder prepareQuery(String passThroughQuerySQL);
+  QueryResult createPassThroughQuery(Query query, boolean withView);
 
   JdbcStatement addIndex(IndexDefinition indexDefinition);
 

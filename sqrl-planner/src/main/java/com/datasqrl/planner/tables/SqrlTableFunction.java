@@ -86,6 +86,12 @@ public class SqrlTableFunction implements TableFunction, TableOrFunctionAnalysis
   /** A documentation string that describes the function */
   @Default private Optional<String> documentation = Optional.empty();
 
+  /**
+   * Whether this is a pass-through function where the SQL gets executed directly against the engine
+   * without analysis/translation
+   */
+  @Default private boolean passThrough = false;
+
   @Override
   public RelDataType getRowType(
       RelDataTypeFactory relDataTypeFactory, List<? extends Object> list) {
@@ -161,7 +167,4 @@ public class SqrlTableFunction implements TableFunction, TableOrFunctionAnalysis
     return false;
   }
 
-  public boolean hasExecutableQuery() {
-    return executableQuery != null;
-  }
 }

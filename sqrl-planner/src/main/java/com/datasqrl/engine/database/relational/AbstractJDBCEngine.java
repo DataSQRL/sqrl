@@ -26,6 +26,7 @@ import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutableQuery;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.database.EngineCreateTable;
+import com.datasqrl.engine.database.relational.JdbcStatementFactory.QueryResult;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.graphql.jdbc.DatabaseType;
 import com.datasqrl.planner.analyzer.TableAnalysis;
@@ -93,10 +94,6 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
 
   public abstract JdbcStatementFactory getStatementFactory();
 
-  public ExecutableQuery planQuery(ExecutionStage stage, String sql) {
-    return getStatementFactory().prepareQuery(sql).database(getDatabaseType()).stage(stage).build();
-  }
-
   public EnginePhysicalPlan plan(MaterializationStagePlan stagePlan) {
     var stmtFactory = getStatementFactory();
     var planBuilder = JdbcPhysicalPlan.builder();
@@ -127,7 +124,12 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
               query -> {
                 planBuilder.query(query.getRelNode());
                 var function = query.getFunction();
-                var result = stmtFactory.createQuery(query, !function.hasParameters(), tableIdMap);
+                QueryResult result;
+                if (function.isPassThrough()) {
+                  result = stmtFactory.createPassThroughQuery(query, !function.hasParameters());
+                } else {
+                  result = stmtFactory.createQuery(query, !function.hasParameters(), tableIdMap);
+                }
                 if (result.getExecQueryBuilder() != null && function.getExecutableQuery() == null) {
                   function.setExecutableQuery(
                       result

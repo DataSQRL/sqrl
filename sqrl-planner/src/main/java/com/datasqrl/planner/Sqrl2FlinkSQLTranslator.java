@@ -540,7 +540,7 @@ public class Sqrl2FlinkSQLTranslator {
     return fctBuilder;
   }
 
-  public SqrlTableFunction.SqrlTableFunctionBuilder resolveSqrlNativeTableFunction(
+  public SqrlTableFunction.SqrlTableFunctionBuilder resolveSqrlPassThroughTableFunction(
       ObjectIdentifier identifier,
       String originalSql,
       List<ParsedArgument> arguments,
@@ -572,6 +572,7 @@ public class Sqrl2FlinkSQLTranslator {
         SqrlTableFunction.builder()
             .functionAnalysis(tableAnalysis)
             .parameters(parameters)
+            .passThrough(true)
             .multiplicity(Multiplicity.MANY);
     return fctBuilder;
   }
