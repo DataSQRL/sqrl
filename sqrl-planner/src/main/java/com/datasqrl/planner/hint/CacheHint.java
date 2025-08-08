@@ -20,9 +20,8 @@ import static com.datasqrl.planner.hint.TtlHint.parseDuration;
 import com.datasqrl.planner.parser.ParsedObject;
 import com.datasqrl.planner.parser.SqrlHint;
 import com.google.auto.service.AutoService;
-import lombok.Getter;
-
 import java.time.Duration;
+import lombok.Getter;
 
 @Getter
 public class CacheHint extends PlannerHint {

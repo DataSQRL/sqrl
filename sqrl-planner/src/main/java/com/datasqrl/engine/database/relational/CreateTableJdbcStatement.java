@@ -133,9 +133,10 @@ public class CreateTableJdbcStatement implements JdbcStatement {
     RANGE
   }
 
-  @FunctionalInterface
   public interface CreateTableDdlFactory {
 
     String createTableDdl(CreateTableJdbcStatement stmt);
+
+    default void validatePartitionType(PartitionType partitionType) {}
   }
 }

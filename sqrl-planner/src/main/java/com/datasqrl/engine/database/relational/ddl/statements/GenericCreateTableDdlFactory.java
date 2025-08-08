@@ -22,37 +22,38 @@ import com.datasqrl.engine.database.relational.CreateTableJdbcStatement;
 import com.datasqrl.engine.database.relational.CreateTableJdbcStatement.CreateTableDdlFactory;
 import com.datasqrl.engine.database.relational.JdbcStatement.Field;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.StringJoiner;
 
 public class GenericCreateTableDdlFactory implements CreateTableDdlFactory {
 
+  private static final String CREATE_TABLE_TEMPLATE = "CREATE TABLE IF NOT EXISTS %s (%s)";
+
   @Override
   public String createTableDdl(CreateTableJdbcStatement stmt) {
-    var primaryKeyStr = "";
+    validatePartitionType(stmt.getPartitionType());
+    var tableElements = new StringJoiner(", ");
+
+    // Add field definitions
+    stmt.getFields().stream()
+        .map(GenericCreateTableDdlFactory::fieldToSql)
+        .forEach(tableElements::add);
+
+    // Add primary key constraint if present
     if (!stmt.getPrimaryKey().isEmpty()) {
-      primaryKeyStr = " , PRIMARY KEY (%s)".formatted(listToSql(stmt.getPrimaryKey()));
+      tableElements.add("PRIMARY KEY (%s)".formatted(listToSql(stmt.getPrimaryKey())));
     }
-    var createTable = "CREATE TABLE IF NOT EXISTS %s (%s%s)";
-    var sql =
-        createTable.formatted(
-            quoteIdentifier(stmt.getName()),
-            stmt.getFields().stream()
-                .map(GenericCreateTableDdlFactory::fieldToSql)
-                .collect(Collectors.joining(", ")),
-            primaryKeyStr);
-    return sql;
+
+    return CREATE_TABLE_TEMPLATE.formatted(
+        quoteIdentifier(stmt.getName()), tableElements.toString());
   }
 
-  public static String listToSql(List<String> columns) {
+  protected static String listToSql(List<String> columns) {
     return String.join(",", quoteIdentifiers(columns));
   }
 
-  public static String fieldToSql(Field field) {
-    var sql = new StringBuilder();
-    sql.append("\"").append(field.name()).append("\"").append(" ").append(field.type()).append(" ");
-    if (!field.nullable()) {
-      sql.append("NOT NULL");
-    }
-    return sql.toString();
+  protected static String fieldToSql(Field field) {
+    var notNull = field.nullable() ? "" : "NOT NULL";
+
+    return "\"%s\" %s %s".formatted(field.name(), field.type(), notNull).trim();
   }
 }

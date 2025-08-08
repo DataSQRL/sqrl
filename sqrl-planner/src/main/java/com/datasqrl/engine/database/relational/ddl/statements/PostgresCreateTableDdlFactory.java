@@ -19,40 +19,56 @@ import static com.datasqrl.engine.database.relational.AbstractJdbcStatementFacto
 
 import com.datasqrl.engine.database.relational.CreateTableJdbcStatement;
 import com.datasqrl.engine.database.relational.CreateTableJdbcStatement.PartitionType;
+import java.util.EnumSet;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
 public class PostgresCreateTableDdlFactory extends GenericCreateTableDdlFactory {
 
-  public static final String PARTITION_SUFFIX = "_all";
+  private static final Set<PartitionType> SUPPORTED_PARTITIONS =
+      EnumSet.of(PartitionType.NONE, PartitionType.RANGE, PartitionType.HASH);
+
+  private static final String PARTITION_SUFFIX = "_all";
 
   private final boolean addDefaultPartition;
 
   @Override
   public String createTableDdl(CreateTableJdbcStatement stmt) {
-    var sql = super.createTableDdl(stmt);
-    if (stmt.getPartitionType() != PartitionType.NONE) {
-      sql +=
-          " PARTITION BY %s (%s)"
-              .formatted(stmt.getPartitionType(), listToSql(stmt.getPartitionKey()));
-      if (addDefaultPartition) {
-        sql += ";\n\n";
-        String partitionDefinition =
-            switch (stmt.getPartitionType()) {
-              case RANGE -> "FROM (MINVALUE) TO (MAXVALUE)";
-              case HASH -> "WITH (MODULUS 1, REMAINDER 0)";
-              default ->
-                  throw new UnsupportedOperationException(
-                      "Unsupported partition type: " + stmt.getPartitionType());
-            };
-        sql +=
-            "CREATE TABLE IF NOT EXISTS %s PARTITION OF %s FOR VALUES %s"
-                .formatted(
-                    quoteIdentifier(stmt.getName() + PARTITION_SUFFIX),
-                    quoteIdentifier(stmt.getName()),
-                    partitionDefinition);
-      }
+    var ddl = super.createTableDdl(stmt);
+    if (stmt.getPartitionType() == PartitionType.NONE) {
+      return ddl;
     }
-    return sql;
+
+    var partitionDdl =
+        "%s PARTITION BY %s (%s)"
+            .formatted(ddl, stmt.getPartitionType(), listToSql(stmt.getPartitionKey()));
+
+    if (!addDefaultPartition) {
+      return partitionDdl;
+    }
+
+    var allPartitionTableName = quoteIdentifier(stmt.getName() + PARTITION_SUFFIX);
+    var tableName = quoteIdentifier(stmt.getName());
+    var partitionDefinition =
+        switch (stmt.getPartitionType()) {
+          case RANGE -> "FROM (MINVALUE) TO (MAXVALUE)";
+          case HASH -> "WITH (MODULUS 1, REMAINDER 0)";
+          default -> null; // validated already, cannot happen
+        };
+
+    return """
+        %s;
+
+        CREATE TABLE IF NOT EXISTS %s PARTITION OF %s FOR VALUES %s"""
+        .formatted(partitionDdl, allPartitionTableName, tableName, partitionDefinition);
+  }
+
+  @Override
+  public void validatePartitionType(PartitionType partitionType) {
+    if (!SUPPORTED_PARTITIONS.contains(partitionType)) {
+      throw new UnsupportedOperationException(
+          "Postgres does not support %s partitions".formatted(partitionType));
+    }
   }
 }

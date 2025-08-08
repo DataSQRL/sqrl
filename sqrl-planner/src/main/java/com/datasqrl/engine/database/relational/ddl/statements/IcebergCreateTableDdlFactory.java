@@ -17,20 +17,29 @@ package com.datasqrl.engine.database.relational.ddl.statements;
 
 import com.datasqrl.engine.database.relational.CreateTableJdbcStatement;
 import com.datasqrl.engine.database.relational.CreateTableJdbcStatement.PartitionType;
-import com.google.common.base.Preconditions;
+import java.util.EnumSet;
+import java.util.Set;
 
 public class IcebergCreateTableDdlFactory extends GenericCreateTableDdlFactory {
 
+  private static final Set<PartitionType> SUPPORTED_PARTITIONS =
+      EnumSet.of(PartitionType.NONE, PartitionType.LIST);
+
   @Override
   public String createTableDdl(CreateTableJdbcStatement stmt) {
-    var sql = super.createTableDdl(stmt);
-    if (stmt.getPartitionType() != PartitionType.NONE) {
-      Preconditions.checkArgument(
-          stmt.getPartitionType() == PartitionType.LIST,
-          "Iceberg does not support %s partitions",
-          stmt.getPartitionType());
-      sql += " PARTITIONED BY (%s)".formatted(listToSql(stmt.getPartitionKey()));
+    var ddl = super.createTableDdl(stmt);
+    if (stmt.getPartitionType() == PartitionType.NONE) {
+      return ddl;
     }
-    return sql;
+
+    return "%s PARTITIONED BY (%s)".formatted(ddl, listToSql(stmt.getPartitionKey()));
+  }
+
+  @Override
+  public void validatePartitionType(PartitionType partitionType) {
+    if (!SUPPORTED_PARTITIONS.contains(partitionType)) {
+      throw new UnsupportedOperationException(
+          "Iceberg does not support %s partitions".formatted(partitionType));
+    }
   }
 }
