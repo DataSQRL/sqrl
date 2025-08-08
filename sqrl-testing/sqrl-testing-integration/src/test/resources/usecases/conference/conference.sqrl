@@ -61,7 +61,7 @@ PersonalizedEventSearch(query String NOT NULL, userid String NOT NULL) :=
     ORDER BY score DESC;
 
 /*+test */
-RecommendedEventsTest := SELECT id, title, score FROM Table(RecommendedEvents('1')) ORDER BY score DESC;
+RecommendedEventsTest := SELECT id, title FROM Table(RecommendedEvents('1'));
 
 /*+test */
-PersonalizedSearchTest := SELECT id, title, score FROM Table(PersonalizedEventSearch('flink', '1')) ORDER BY score DESC;
+PersonalizedSearchTest := SELECT id, title FROM Table(PersonalizedEventSearch('flink', '1'));

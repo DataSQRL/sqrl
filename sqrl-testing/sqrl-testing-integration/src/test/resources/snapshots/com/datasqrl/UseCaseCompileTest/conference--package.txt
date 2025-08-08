@@ -456,11 +456,11 @@ WHERE `liked`
 GROUP BY `eventid`;
 CREATE VIEW `RecommendedEventsTest`
 AS
-SELECT `id`, `title`, `score`
+SELECT `id`, `title`
 FROM TABLE(`RecommendedEvents`('1'));
 CREATE VIEW `PersonalizedSearchTest`
 AS
-SELECT `id`, `title`, `score`
+SELECT `id`, `title`
 FROM TABLE(`PersonalizedEventSearch`('flink', '1'));
 CREATE TABLE `EventLikeCount_1` (
   `eventid` BIGINT NOT NULL,

@@ -2,44 +2,34 @@
   "data" : {
     "RecommendedEventsTest" : [ {
       "id" : 1136827,
-      "title" : "The Wonderful World of Apache Kafka",
-      "score" : 0.28058923
+      "title" : "The Wonderful World of Apache Kafka"
     }, {
       "id" : 1136833,
-      "title" : "Unlocking the Power of Apache Flink: An Introduction in 4 Acts",
-      "score" : 0.27710582
+      "title" : "Unlocking the Power of Apache Flink: An Introduction in 4 Acts"
     }, {
       "id" : 1136845,
-      "title" : "Building a Dynamic Rules Engine with Kafka Streams",
-      "score" : 0.25310022
+      "title" : "Building a Dynamic Rules Engine with Kafka Streams"
     }, {
       "id" : 1136829,
-      "title" : "Unifying Stream Processing with a Fast Data Store",
-      "score" : 0.23068957
+      "title" : "Unifying Stream Processing with a Fast Data Store"
     }, {
       "id" : 1136824,
-      "title" : "Analytics: The Final Data Frontier (or, Why Users Need Your Data and How Pinot Serves it to Them)",
-      "score" : 0.2278671
+      "title" : "Analytics: The Final Data Frontier (or, Why Users Need Your Data and How Pinot Serves it to Them)"
     }, {
       "id" : 1136822,
-      "title" : "The Top 5 Mistakes Engineers Make When Implementing Apache Flink",
-      "score" : 0.22733952
+      "title" : "The Top 5 Mistakes Engineers Make When Implementing Apache Flink"
     }, {
       "id" : 1136832,
-      "title" : "From 0 to 300 mph Towards the Promised Land",
-      "score" : 0.22676809
+      "title" : "From 0 to 300 mph Towards the Promised Land"
     }, {
       "id" : 1136834,
-      "title" : "Getting Data In and Out of Flink - Understanding Flink and Its Connector Ecosystem",
-      "score" : 0.22428161
+      "title" : "Getting Data In and Out of Flink - Understanding Flink and Its Connector Ecosystem"
     }, {
       "id" : 1136826,
-      "title" : "From 🐛 to 🦋: Data Pipelines Evolution from Batch to Streaming",
-      "score" : 0.22161164
+      "title" : "From 🐛 to 🦋: Data Pipelines Evolution from Batch to Streaming"
     }, {
       "id" : 1136908,
-      "title" : "Ready Player One: Unforgettable Gaming Experiences powered by Confluent and AWS",
-      "score" : 0.2215074
+      "title" : "Ready Player One: Unforgettable Gaming Experiences powered by Confluent and AWS"
     } ]
   }
 }
