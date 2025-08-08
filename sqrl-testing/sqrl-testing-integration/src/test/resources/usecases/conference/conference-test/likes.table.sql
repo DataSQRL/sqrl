@@ -5,5 +5,6 @@ CREATE TABLE Likes (
       'format' = 'flexible-json',
       'path' = '${DATA_PATH}/likes.jsonl',
       'source.monitor-interval' = '1 sec',
+      'flexible-json.timestamp-format.standard' = 'ISO-8601',
       'connector' = 'filesystem'
       );

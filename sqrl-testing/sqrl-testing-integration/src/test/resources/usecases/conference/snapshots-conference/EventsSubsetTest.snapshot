@@ -1,1 +1,25 @@
-{"data":{"EventsSubsetTest":[{"url":"https://events.bizzabo.com/468544/agenda/session/1136821","date":"September 26, 2023 - September 27, 2023","title":"Streaming into the Future: The Evolution and Impact of Data Streaming Platforms"},{"url":"https://events.bizzabo.com/468544/agenda/session/1136822","date":"September 26, 2023","title":"The Top 5 Mistakes Engineers Make When Implementing Apache Flink"},{"url":"https://events.bizzabo.com/468544/agenda/session/1136823","date":"September 26, 2023","title":"10 tips for enabling data discovery and governance in your organization"},{"url":"https://events.bizzabo.com/468544/agenda/session/1136824","date":"September 26, 2023","title":"Analytics: The Final Data Frontier (or, Why Users Need Your Data and How Pinot Serves it to Them)"},{"url":"https://events.bizzabo.com/468544/agenda/session/1136825","date":"September 26, 2023","title":"Beyond a Lifetime of Data"}]}}
+{
+  "data" : {
+    "EventsSubsetTest" : [ {
+      "url" : "https://events.bizzabo.com/468544/agenda/session/1136822",
+      "date" : "September 26, 2023",
+      "title" : "The Top 5 Mistakes Engineers Make When Implementing Apache Flink"
+    }, {
+      "url" : "https://events.bizzabo.com/468544/agenda/session/1136823",
+      "date" : "September 26, 2023",
+      "title" : "10 tips for enabling data discovery and governance in your organization"
+    }, {
+      "url" : "https://events.bizzabo.com/468544/agenda/session/1136824",
+      "date" : "September 26, 2023",
+      "title" : "Analytics: The Final Data Frontier (or, Why Users Need Your Data and How Pinot Serves it to Them)"
+    }, {
+      "url" : "https://events.bizzabo.com/468544/agenda/session/1136825",
+      "date" : "September 26, 2023",
+      "title" : "Beyond a Lifetime of Data"
+    }, {
+      "url" : "https://events.bizzabo.com/468544/agenda/session/1136826",
+      "date" : "September 26, 2023",
+      "title" : "From 🐛 to 🦋: Data Pipelines Evolution from Batch to Streaming"
+    } ]
+  }
+}

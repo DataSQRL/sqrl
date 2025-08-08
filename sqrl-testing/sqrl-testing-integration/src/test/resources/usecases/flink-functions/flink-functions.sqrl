@@ -1,4 +1,6 @@
+/*+primary_key(name) */
 FlinkFunctions := SELECT
+  name,
   UPPER(name) AS name_upper,
   CHAR_LENGTH(name) AS name_length,
   NOW() AS time_now,

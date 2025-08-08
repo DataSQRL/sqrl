@@ -50,18 +50,17 @@ public class FullUseCaseIT extends AbstractFullUseCaseTest {
 
   private static final Set<String> DISABLED_USE_CASE_PATHS =
       Set.of(
-          "flink-only", // not a full test case
-          "conference", //
           "iceberg-export", // fails in build server
           "snowflake", // fails in build server
           "sensors-full", // flaky (too much data)
+          "flink-only", // not a full test case
           "connectors" // not an executable test case
           );
 
   @Disabled("Intended for manual usage")
   @Test
   void specificUseCase() {
-    var pkg = USE_CASES.resolve("analytics-only").resolve("package.json");
+    var pkg = USE_CASES.resolve("conference").resolve("package.json");
 
     var param = new UseCaseParam(pkg);
     fullUseCaseTest(param);
