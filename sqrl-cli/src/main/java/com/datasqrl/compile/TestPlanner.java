@@ -36,7 +36,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.TreeMap;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 
@@ -95,11 +94,11 @@ public class TestPlanner {
           new GraphqlQuery(definition1.getName(), AstPrinter.printAst(definition1), baseHeaders));
     }
 
-    var queryNames = queries.stream().map(GraphqlQuery::getName).collect(Collectors.toSet());
-    var nonQueryViews =
-        jdbcViews.stream().filter(view -> !queryNames.contains(view.getName())).toList();
-
-    return new TestPlan(nonQueryViews, queries, mutations, subscriptions);
+    return new TestPlan(
+        List.copyOf(jdbcViews),
+        List.copyOf(queries),
+        List.copyOf(mutations),
+        List.copyOf(subscriptions));
   }
 
   @SneakyThrows
