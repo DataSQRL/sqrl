@@ -54,6 +54,15 @@ public class IndexDefinition implements Comparable<IndexDefinition> {
     this.type = type;
   }
 
+  private IndexDefinition(
+      String tableName, List<Integer> columns, List<String> columnNames, IndexType type) {
+    this.tableName = tableName;
+    this.columns = columns;
+    this.columnNames = columnNames;
+    this.partitionOffset = -1;
+    this.type = type;
+  }
+
   public String getName() {
     return tableName
         + "_"
@@ -63,8 +72,8 @@ public class IndexDefinition implements Comparable<IndexDefinition> {
   }
 
   public static IndexDefinition getPrimaryKeyIndex(
-      String tableId, List<Integer> primaryKeys, List<String> fieldNames) {
-    return new IndexDefinition(tableId, primaryKeys, fieldNames, -1, IndexType.BTREE);
+      String tableId, List<Integer> primaryKeys, List<String> pkNames) {
+    return new IndexDefinition(tableId, primaryKeys, pkNames, IndexType.BTREE);
   }
 
   public int numEqualityColumnsRequired() {

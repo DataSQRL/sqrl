@@ -165,7 +165,14 @@ END
           "type" : "TEXT",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "OrderEntryJoin",
@@ -220,6 +227,7 @@ END
             "sql" : "SELECT \"t\".\"id\" AS \"id1\", \"t0\".\"id\" AS \"id2\", \"t\".\"quantity\" * \"t0\".\"quantity\" AS \"multi\"\nFROM (SELECT \"id\", \"customerid\", \"time\", \"productid\", \"quantity\", \"discount\"\n  FROM \"_OrderEntries_1\") AS \"t\"\n INNER JOIN (SELECT \"id\", \"customerid\", \"time\", \"productid\", \"quantity\", \"discount\"\n  FROM \"_OrderEntries_1\") AS \"t0\" ON \"t\".\"customerid\" = \"t0\".\"customerid\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }

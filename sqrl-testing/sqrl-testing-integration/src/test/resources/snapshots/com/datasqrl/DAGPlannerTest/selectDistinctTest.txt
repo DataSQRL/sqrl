@@ -132,7 +132,15 @@ INSERT INTO `default_catalog`.`default_database`.`ProductId_2`
           "type" : "JSONB",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "id",
+        "time"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "ProductId_2",
@@ -144,7 +152,14 @@ INSERT INTO `default_catalog`.`default_database`.`ProductId_2`
           "type" : "BIGINT",
           "nullable" : false
         }
-      ]
+      ],
+      "primaryKey" : [
+        "productid"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "Orders",
@@ -211,6 +226,7 @@ INSERT INTO `default_catalog`.`default_database`.`ProductId_2`
             "sql" : "SELECT *\nFROM \"Orders_1\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -235,6 +251,7 @@ INSERT INTO `default_catalog`.`default_database`.`ProductId_2`
             "sql" : "SELECT *\nFROM \"ProductId_2\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }

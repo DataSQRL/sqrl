@@ -205,7 +205,15 @@ INSERT INTO `default_catalog`.`default_database`.`SelectOrders1_2`
           "type" : "JSONB",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "id",
+        "time"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "SelectOrders1_2",
@@ -232,7 +240,15 @@ INSERT INTO `default_catalog`.`default_database`.`SelectOrders1_2`
           "type" : "JSONB",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "id",
+        "time"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "SelectOrders2_3",
@@ -259,7 +275,15 @@ INSERT INTO `default_catalog`.`default_database`.`SelectOrders1_2`
           "type" : "JSONB",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "id",
+        "time"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "Orders",
@@ -368,6 +392,7 @@ INSERT INTO `default_catalog`.`default_database`.`SelectOrders1_2`
             "sql" : "SELECT *\nFROM \"Orders_1\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -392,6 +417,7 @@ INSERT INTO `default_catalog`.`default_database`.`SelectOrders1_2`
             "sql" : "SELECT *\nFROM \"SelectOrders1_2\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -416,6 +442,7 @@ INSERT INTO `default_catalog`.`default_database`.`SelectOrders1_2`
             "sql" : "SELECT *\nFROM \"SelectOrders2_3\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -449,6 +476,7 @@ INSERT INTO `default_catalog`.`default_database`.`SelectOrders1_2`
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -482,6 +510,7 @@ INSERT INTO `default_catalog`.`default_database`.`SelectOrders1_2`
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }

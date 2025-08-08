@@ -346,6 +346,7 @@ CREATE INDEX IF NOT EXISTS "Submission_btree_c0c3" ON "Submission" USING btree (
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -366,6 +367,7 @@ CREATE INDEX IF NOT EXISTS "Submission_btree_c0c3" ON "Submission" USING btree (
               }
             ],
             "pagination" : "NONE",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -411,6 +413,7 @@ CREATE INDEX IF NOT EXISTS "Submission_btree_c0c3" ON "Submission" USING btree (
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -444,6 +447,7 @@ CREATE INDEX IF NOT EXISTS "Submission_btree_c0c3" ON "Submission" USING btree (
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -477,6 +481,7 @@ CREATE INDEX IF NOT EXISTS "Submission_btree_c0c3" ON "Submission" USING btree (
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -497,6 +502,7 @@ CREATE INDEX IF NOT EXISTS "Submission_btree_c0c3" ON "Submission" USING btree (
               }
             ],
             "pagination" : "NONE",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }

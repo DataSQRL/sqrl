@@ -131,6 +131,7 @@ CREATE TABLE IF NOT EXISTS "MathFunctions" ("d" NUMERIC NOT NULL, "b" INTEGER NO
             "sql" : "SELECT *\nFROM \"MathFunctions\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }

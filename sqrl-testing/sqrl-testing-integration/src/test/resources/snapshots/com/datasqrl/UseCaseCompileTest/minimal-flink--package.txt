@@ -141,6 +141,7 @@ FROM (SELECT "sensorid", MAX("temperature") AS "maxTemp", AVG("temperature") AS 
             "sql" : "SELECT *\nFROM (SELECT \"sensorid\", MAX(\"temperature\") AS \"maxTemp\", AVG(\"temperature\") AS \"avgTemp\"\n  FROM \"SensorReading\"\n  GROUP BY \"sensorid\"\n  ORDER BY \"sensorid\" NULLS FIRST) AS \"t1\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -165,6 +166,7 @@ FROM (SELECT "sensorid", MAX("temperature") AS "maxTemp", AVG("temperature") AS 
             "sql" : "SELECT *\nFROM \"SensorReading\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -198,6 +200,7 @@ FROM (SELECT "sensorid", MAX("temperature") AS "maxTemp", AVG("temperature") AS 
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }

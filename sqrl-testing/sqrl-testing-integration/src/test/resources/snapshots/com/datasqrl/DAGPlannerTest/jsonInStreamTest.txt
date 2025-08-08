@@ -523,7 +523,14 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
-      ]
+      ],
+      "primaryKey" : [
+        "customerid"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "CustomerStream_2",
@@ -555,7 +562,15 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
-      ]
+      ],
+      "primaryKey" : [
+        "customerid",
+        "lastUpdated"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "ObjComplex_3",
@@ -572,7 +587,14 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
           "type" : "JSONB",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "customerid"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "jsonArrayAggTable_4",
@@ -589,7 +611,14 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
           "type" : "JSONB",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "name"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "jsonArrayTable_5",
@@ -606,7 +635,14 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
           "type" : "JSONB",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "customerid"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "jsonConcatTable_6",
@@ -623,7 +659,14 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
           "type" : "JSONB",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "customerid"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "jsonExistsTable_7",
@@ -640,7 +683,14 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
           "type" : "BOOLEAN",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "customerid"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "jsonExtractTable_8",
@@ -657,7 +707,14 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
           "type" : "TEXT",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "customerid"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "jsonObjectAggTable_9",
@@ -674,7 +731,14 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
           "type" : "JSONB",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "name"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "jsonQueryTable_10",
@@ -691,7 +755,14 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
           "type" : "TEXT",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "customerid"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "jsonToStringTable_11",
@@ -708,7 +779,14 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
           "type" : "TEXT",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "customerid"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "toJsonTable_12",
@@ -725,7 +803,14 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
           "type" : "JSONB",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "customerid"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "Customer",
@@ -987,6 +1072,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
             "sql" : "SELECT *\nFROM \"Customer_1\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1011,6 +1097,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
             "sql" : "SELECT *\nFROM \"CustomerStream_2\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1035,6 +1122,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
             "sql" : "SELECT *\nFROM \"ObjComplex_3\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1059,6 +1147,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
             "sql" : "SELECT *\nFROM \"jsonArrayAggTable_4\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1083,6 +1172,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
             "sql" : "SELECT *\nFROM \"jsonArrayTable_5\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1107,6 +1197,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
             "sql" : "SELECT *\nFROM \"jsonConcatTable_6\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1131,6 +1222,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
             "sql" : "SELECT *\nFROM \"jsonExistsTable_7\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1155,6 +1247,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
             "sql" : "SELECT *\nFROM \"jsonExtractTable_8\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1179,6 +1272,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
             "sql" : "SELECT *\nFROM \"jsonObjectAggTable_9\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1203,6 +1297,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
             "sql" : "SELECT *\nFROM \"jsonQueryTable_10\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1227,6 +1322,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
             "sql" : "SELECT *\nFROM \"jsonToStringTable_11\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1251,6 +1347,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
             "sql" : "SELECT *\nFROM \"toJsonTable_12\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }

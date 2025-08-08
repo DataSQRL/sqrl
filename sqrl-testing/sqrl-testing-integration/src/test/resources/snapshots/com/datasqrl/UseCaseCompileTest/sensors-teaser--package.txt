@@ -244,6 +244,7 @@ CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" BIGINT NOT NULL, "time" B
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -277,6 +278,7 @@ CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" BIGINT NOT NULL, "time" B
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -301,6 +303,7 @@ CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" BIGINT NOT NULL, "time" B
             "sql" : "SELECT *\nFROM \"SensorReading\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }

@@ -115,6 +115,7 @@ CREATE TABLE IF NOT EXISTS "results" ("completions_result" TEXT , "extract_json_
             "sql" : "SELECT \"val\"\nFROM \"data\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -139,6 +140,7 @@ CREATE TABLE IF NOT EXISTS "results" ("completions_result" TEXT , "extract_json_
             "sql" : "SELECT \"completions_result\", \"extract_json_result_response\", \"extract_json_result_with_schema_response\"\nFROM \"results\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }

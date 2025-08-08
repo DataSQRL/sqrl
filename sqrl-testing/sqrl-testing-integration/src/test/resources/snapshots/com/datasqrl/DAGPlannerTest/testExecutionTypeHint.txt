@@ -182,7 +182,14 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerAgg3_2`
           "type" : "BIGINT",
           "nullable" : false
         }
-      ]
+      ],
+      "primaryKey" : [
+        "customerid"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "CustomerAgg3_2",
@@ -199,7 +206,14 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerAgg3_2`
           "type" : "BIGINT",
           "nullable" : false
         }
-      ]
+      ],
+      "primaryKey" : [
+        "customerid"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "Orders_3",
@@ -231,7 +245,15 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerAgg3_2`
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
-      ]
+      ],
+      "primaryKey" : [
+        "id",
+        "time"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "CustomerAgg1",
@@ -342,6 +364,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerAgg3_2`
             "sql" : "SELECT *\nFROM \"CustomerAgg1_1\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -366,6 +389,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerAgg3_2`
             "sql" : "SELECT \"customerid\", COUNT(*) + 1 AS \"num\"\nFROM \"Orders_3\"\nGROUP BY \"customerid\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -390,6 +414,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerAgg3_2`
             "sql" : "SELECT *\nFROM \"CustomerAgg3_2\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -414,6 +439,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerAgg3_2`
             "sql" : "SELECT *\nFROM \"Orders_3\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }

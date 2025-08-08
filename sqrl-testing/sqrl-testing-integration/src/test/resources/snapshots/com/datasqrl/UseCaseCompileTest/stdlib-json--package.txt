@@ -172,6 +172,7 @@ CREATE TABLE IF NOT EXISTS "UnmodifiedJsonData" ("id" BIGINT NOT NULL, "val" TEX
             "sql" : "SELECT *\nFROM \"Json\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -196,6 +197,7 @@ CREATE TABLE IF NOT EXISTS "UnmodifiedJsonData" ("id" BIGINT NOT NULL, "val" TEX
             "sql" : "SELECT *\nFROM (SELECT \"id\", \"val\", \"json_col\", \"json_col_2\", \"json_col_3\", \"json_col_4\"\n  FROM \"UnmodifiedJsonData\"\n  ORDER BY \"id\" NULLS FIRST) AS \"t\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheTime" : 0,
             "database" : "POSTGRES"
           }
         }
