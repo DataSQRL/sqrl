@@ -1704,7 +1704,8 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
           "type" : "FLOAT",
           "nullable" : true
         }
-      ]
+      ],
+      "description" : "Newly placed orders"
     },
     {
       "name" : "SelectCustomers",
@@ -1736,7 +1737,8 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
-      ]
+      ],
+      "description" : "This is for selected customers\n    and their orders"
     },
     {
       "name" : "TemporalJoin",

@@ -65,7 +65,8 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
         query.getFunction().getSimpleName(),
         query.getRelNode(),
         withView,
-        getTableNameMapping(tableIdMap));
+        getTableNameMapping(tableIdMap),
+        query.getFunction().getDocumentation());
   }
 
   protected static Map<String, String> getTableNameMapping(
@@ -75,7 +76,11 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
   }
 
   public QueryResult createQuery(
-      String viewName, RelNode relNode, boolean withView, Map<String, String> tableNameMapping) {
+      String viewName,
+      RelNode relNode,
+      boolean withView,
+      Map<String, String> tableNameMapping,
+      Optional<String> documentation) {
     var rewrittenRelNode = dialectCallConverter.convert(relNode);
     var sqlNodes = relToSqlConverter.convert(rewrittenRelNode, tableNameMapping);
     var sql = sqlNodeToString.convert(sqlNodes).getSql();
@@ -99,7 +104,8 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
               Type.VIEW,
               viewSql,
               datatype,
-              getColumns(datatype.getFieldList(), PlannerHints.EMPTY));
+              getColumns(datatype.getFieldList(), PlannerHints.EMPTY),
+              documentation.orElse(null));
     }
     return new JdbcStatementFactory.QueryResult(qBuilder, view);
   }
@@ -114,7 +120,7 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
             createTable.getTable().getPrimaryKey().get(),
             createTable.getTableAnalysis().getHints());
     return new JdbcStatement(
-        tableName, Type.TABLE, ddl.getSql(), createTable.getDatatype(), ddl.getColumns());
+        tableName, Type.TABLE, ddl.getSql(), createTable.getDatatype(), ddl.getColumns(), null);
   }
 
   public CreateTableDDL createTable(
