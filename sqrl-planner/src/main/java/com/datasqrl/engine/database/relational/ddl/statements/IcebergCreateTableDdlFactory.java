@@ -15,22 +15,15 @@
  */
 package com.datasqrl.engine.database.relational.ddl.statements;
 
-import com.datasqrl.engine.database.relational.CreateTableJdbcStatement;
 import com.datasqrl.engine.database.relational.CreateTableJdbcStatement.PartitionType;
-import com.google.common.base.Preconditions;
 
-public class IcebergCreateTableDdlFactory extends GenericCreateTableDdlFactory {
+public class IcebergCreateTableDdlFactory extends PartitionedCreateTableDdlFactory {
 
   @Override
-  public String createTableDdl(CreateTableJdbcStatement statement) {
-    var sql = super.createTableDdl(statement);
-    if (statement.getPartitionType() != PartitionType.NONE) {
-      Preconditions.checkArgument(
-          statement.getPartitionType() == PartitionType.LIST,
-          "Iceberg does not support %s partitions",
-          statement.getPartitionType());
-      sql += " PARTITIONED BY (%s)".formatted(listToSql(statement.getPartitionKey()));
+  void validatePartitionType(PartitionType partitionType) {
+    if (partitionType != PartitionType.LIST) {
+      throw new UnsupportedOperationException(
+          "Iceberg does not support %s partitions".formatted(partitionType));
     }
-    return sql;
   }
 }
