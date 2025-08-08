@@ -97,7 +97,8 @@ public class CompilationProcess {
 
       // create test artifact
       if (executionGoal == ExecutionGoal.TEST) {
-        var testPlanner = new TestPlanner(serverPlanOpt.get().getFunctions(), config);
+        var gqlGenerator = new GqlGenerator(serverPlanOpt.get().getFunctions());
+        var testPlanner = new TestPlanner(config, gqlGenerator);
         testPlan = testPlanner.generateTestPlan(apiSource.get(), testsPath);
       }
     }
