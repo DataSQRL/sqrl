@@ -20,7 +20,6 @@ import com.datasqrl.config.PackageJson;
 import com.datasqrl.engine.database.relational.JdbcStatement;
 import com.datasqrl.graphql.SqrlObjectMapper;
 import com.datasqrl.util.FlinkOperatorStatusChecker;
-import com.datasqrl.util.ResultSetPrinter;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -193,9 +192,10 @@ public class DatasqrlTest {
       } catch (Exception ignored) {
       }
 
-      // 5. Run the queries against JDBC & API, finish subscriptions and snapshot the results
+      // 5. Validate JDBC views, run the API queries, finish subscriptions and snapshot the API
+      // results
       if (testPlan != null) {
-        var jdbcExList = queryAndSnapshotJdbcViews(testPlan.getJdbcViews(), snapshotDir);
+        var jdbcExList = validateJdbcViews(testPlan.getJdbcViews());
         exceptions.addAll(jdbcExList);
 
         var gqlExList = executeAndSnapshotGraphqlQueries(testPlan.getQueries(), snapshotDir, 0);
@@ -224,7 +224,6 @@ public class DatasqrlTest {
 
         var expectedSnapshots =
             Stream.of(
-                    testPlan.getJdbcViews().stream().map(f -> f.getName() + SNAPSHOT_EXT),
                     collectGraphqlQueryNames(testPlan.getQueries()).stream(),
                     collectGraphqlQueryNames(testPlan.getMutations()).stream(),
                     collectGraphqlQueryNames(testPlan.getSubscriptions()).stream())
@@ -278,8 +277,7 @@ public class DatasqrlTest {
     return exitCode;
   }
 
-  private List<Exception> queryAndSnapshotJdbcViews(
-      List<JdbcStatement> jdbcViews, Path snapshotDir) {
+  private List<Exception> validateJdbcViews(List<JdbcStatement> jdbcViews) {
     var exceptions = new ArrayList<Exception>();
 
     var url = env.get("POSTGRES_JDBC_URL");
@@ -290,11 +288,12 @@ public class DatasqrlTest {
       for (var view : jdbcViews) {
         var viewName = view.getName();
 
+        // Execute dummy select to make sure the view is created properly
         try (var stmt = conn.createStatement()) {
-          var resultSet = stmt.executeQuery("SELECT * FROM \"%s\" LIMIT 10".formatted(viewName));
-          var data = ResultSetPrinter.toString(resultSet);
+          stmt.executeQuery("SELECT * FROM \"%s\" LIMIT 10".formatted(viewName));
 
-          snapshot(snapshotDir, viewName, data, exceptions);
+        } catch (Exception ex) {
+          exceptions.add(ex);
         }
       }
     } catch (Exception ex) {
