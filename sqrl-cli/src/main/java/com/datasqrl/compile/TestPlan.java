@@ -15,6 +15,7 @@
  */
 package com.datasqrl.compile;
 
+import com.datasqrl.engine.database.relational.JdbcStatement;
 import java.util.List;
 import java.util.Map;
 import lombok.AllArgsConstructor;
@@ -26,6 +27,7 @@ import lombok.NoArgsConstructor;
 @Getter
 public class TestPlan {
 
+  List<JdbcStatement> jdbcViews;
   List<GraphqlQuery> queries;
   List<GraphqlQuery> mutations;
   List<GraphqlQuery> subscriptions;
