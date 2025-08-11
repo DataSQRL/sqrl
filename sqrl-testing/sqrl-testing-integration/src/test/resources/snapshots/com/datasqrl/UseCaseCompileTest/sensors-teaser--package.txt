@@ -1,27 +1,29 @@
 >>>pipeline_explain.txt
 === SecReading
 ID:     default_catalog.default_database.SecReading
-Type:   stream
+Type:   state
 Stage:  flink
 Inputs: default_catalog.default_database.SensorReading
 Annotations:
  - features: STREAM_WINDOW_AGGREGATION (feature)
  - stream-root: SensorReading
  - sort: [1 DESC-nulls-last]
-Primary Key: -
+Primary Key: sensorid, timeStart, timeEnd, timeSec
 Timestamp  : timeSec
 Schema:
  - sensorid: BIGINT NOT NULL
  - timeSec: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+ - timeStart: TIMESTAMP(3) NOT NULL
+ - timeEnd: TIMESTAMP(3) NOT NULL
  - temp: DOUBLE NOT NULL
 Plan:
-LogicalProject(sensorid=[$0], timeSec=[$3], temp=[$4])
+LogicalProject(sensorid=[$0], timeSec=[$3], timeStart=[$1], timeEnd=[$2], temp=[$4])
   LogicalAggregate(group=[{0, 1, 2, 3}], temp=[AVG($4)])
-    LogicalProject(sensorid=[$0], window_start=[$5], window_end=[$6], timeSec=[$7], temperature=[$2])
+    LogicalProject(sensorid=[$0], timeStart=[$5], timeEnd=[$6], timeSec=[$7], temperature=[$2])
       LogicalTableFunctionScan(invocation=[TUMBLE(DESCRIPTOR($4), 1000:INTERVAL SECOND)], rowType=[RecordType(BIGINT sensorid, BIGINT time, DOUBLE temperature, DOUBLE humidity, TIMESTAMP_LTZ(3) *ROWTIME* timestamp, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end, TIMESTAMP_LTZ(3) *ROWTIME* window_time)])
         LogicalProject(sensorid=[$0], time=[$1], temperature=[$2], humidity=[$3], timestamp=[$4])
           LogicalTableScan(table=[[default_catalog, default_database, SensorReading]])
-SQL: CREATE VIEW SecReading AS  SELECT sensorid, window_time as timeSec,
+SQL: CREATE VIEW SecReading AS  SELECT sensorid, window_time as timeSec, window_start as timeStart, window_end as timeEnd,
         avg(temperature) as temp
     FROM TABLE(TUMBLE(TABLE SensorReading, DESCRIPTOR(`timestamp`), INTERVAL '1' SECONDS))
     GROUP BY sensorid, window_start, window_end, window_time
@@ -32,9 +34,6 @@ ID:     default_catalog.default_database.SensorMaxTemp
 Type:   state
 Stage:  flink
 Inputs: default_catalog.default_database._SensorMaxTempWindow
-Annotations:
- - mostRecentDistinct: true
- - stream-root: SensorReading
 Primary Key: sensorid
 Timestamp  : window_time
 Schema:
@@ -77,12 +76,11 @@ SELECT `SensorReading`.`sensorid`, `SensorReading`.`time`, `SensorReading`.`temp
 FROM `default_catalog`.`default_database`.`SensorReading` AS `SensorReading`
 === _SensorMaxTempWindow
 ID:     default_catalog.default_database._SensorMaxTempWindow
-Type:   stream
+Type:   state
 Stage:  flink
 Inputs: default_catalog.default_database.SecReading
 Annotations:
  - features: STREAM_WINDOW_AGGREGATION (feature)
- - stream-root: SensorReading
 Primary Key: -
 Timestamp  : window_time
 Schema:
@@ -92,9 +90,9 @@ Schema:
 Plan:
 LogicalProject(sensorid=[$0], window_time=[$3], maxTemp=[$4])
   LogicalAggregate(group=[{0, 1, 2, 3}], maxTemp=[MAX($4)])
-    LogicalProject(sensorid=[$0], window_start=[$3], window_end=[$4], window_time=[$5], temp=[$2])
-      LogicalTableFunctionScan(invocation=[HOP(DESCRIPTOR($1), 5000:INTERVAL SECOND, 60000:INTERVAL MINUTE)], rowType=[RecordType(BIGINT sensorid, TIMESTAMP_LTZ(3) *ROWTIME* timeSec, DOUBLE temp, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end, TIMESTAMP_LTZ(3) *ROWTIME* window_time)])
-        LogicalProject(sensorid=[$0], timeSec=[$1], temp=[$2])
+    LogicalProject(sensorid=[$0], window_start=[$5], window_end=[$6], window_time=[$7], temp=[$4])
+      LogicalTableFunctionScan(invocation=[HOP(DESCRIPTOR($1), 5000:INTERVAL SECOND, 60000:INTERVAL MINUTE)], rowType=[RecordType(BIGINT sensorid, TIMESTAMP_LTZ(3) *ROWTIME* timeSec, TIMESTAMP(3) timeStart, TIMESTAMP(3) timeEnd, DOUBLE temp, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end, TIMESTAMP_LTZ(3) *ROWTIME* window_time)])
+        LogicalProject(sensorid=[$0], timeSec=[$1], timeStart=[$2], timeEnd=[$3], temp=[$4])
           LogicalTableScan(table=[[default_catalog, default_database, SecReading]])
 SQL: CREATE VIEW _SensorMaxTempWindow AS  SELECT sensorid, window_time, max(temp) as maxTemp
     FROM TABLE(HOP(TABLE SecReading, DESCRIPTOR(timeSec), INTERVAL '5' SECONDS, INTERVAL '1' MINUTES))
@@ -122,7 +120,7 @@ CREATE TABLE `SensorReading` (
 LIKE `SensorReading__schema`;
 CREATE VIEW `SecReading`
 AS
-SELECT `sensorid`, `window_time` AS `timeSec`, AVG(`temperature`) AS `temp`
+SELECT `sensorid`, `window_time` AS `timeSec`, `window_start` AS `timeStart`, `window_end` AS `timeEnd`, AVG(`temperature`) AS `temp`
 FROM TABLE(TUMBLE(TABLE `SensorReading`, DESCRIPTOR(`timestamp`), INTERVAL '1' SECOND))
 GROUP BY `sensorid`, `window_start`, `window_end`, `window_time`;
 CREATE VIEW `_SensorMaxTempWindow`
@@ -138,18 +136,23 @@ FROM (SELECT `sensorid`, `window_time`, `maxTemp`, ROW_NUMBER() OVER (PARTITION 
 WHERE `__sqrlinternal_rownum` = 1;
 CREATE VIEW `SecReadingTest`
 AS
-SELECT *
+SELECT `sensorid`, `timeSec`, `temp`
 FROM `SecReading`;
 CREATE VIEW `SensorMaxTempTest`
 AS
 SELECT `sensorid`, `maxTemp`
 FROM `SensorMaxTemp`;
+CREATE VIEW `SecReadingFullTest`
+AS
+SELECT *
+FROM `SecReading`;
 CREATE TABLE `SecReading_1` (
   `sensorid` BIGINT NOT NULL,
   `timeSec` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `timeStart` TIMESTAMP(3) NOT NULL,
+  `timeEnd` TIMESTAMP(3) NOT NULL,
   `temp` DOUBLE NOT NULL,
-  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
-  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+  PRIMARY KEY (`sensorid`, `timeStart`, `timeEnd`, `timeSec`) NOT ENFORCED
 ) WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
@@ -188,12 +191,12 @@ CREATE TABLE `SensorReading_3` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`SecReading_1`
-(SELECT `sensorid`, `timeSec`, `temp`, `hash_columns`(`sensorid`, `timeSec`, `temp`) AS `__pk_hash`
+(SELECT *
  FROM `default_catalog`.`default_database`.`SecReading`)
 ;
 INSERT INTO `default_catalog`.`default_database`.`SensorMaxTemp_2`
  (SELECT *
-  FROM `default_catalog`.`default_database`.`_SensorMaxTempWindow`)
+  FROM `default_catalog`.`default_database`.`SensorMaxTemp`)
  ;
  INSERT INTO `default_catalog`.`default_database`.`SensorReading_3`
   (SELECT *
@@ -206,7 +209,7 @@ INSERT INTO `default_catalog`.`default_database`.`SensorMaxTemp_2`
   "testRunnerTopics" : [ ]
 }
 >>>postgres-schema.sql
-CREATE TABLE IF NOT EXISTS "SecReading" ("sensorid" BIGINT NOT NULL, "timeSec" TIMESTAMP WITH TIME ZONE NOT NULL, "temp" DOUBLE PRECISION NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "SecReading" ("sensorid" BIGINT NOT NULL, "timeSec" TIMESTAMP WITH TIME ZONE NOT NULL, "timeStart" TIMESTAMP WITHOUT TIME ZONE NOT NULL, "timeEnd" TIMESTAMP WITHOUT TIME ZONE NOT NULL, "temp" DOUBLE PRECISION NOT NULL , PRIMARY KEY ("sensorid","timeStart","timeEnd","timeSec"));
 CREATE TABLE IF NOT EXISTS "SensorMaxTemp" ("sensorid" BIGINT NOT NULL, "window_time" TIMESTAMP WITH TIME ZONE NOT NULL, "maxTemp" DOUBLE PRECISION NOT NULL , PRIMARY KEY ("sensorid"));
 CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" BIGINT NOT NULL, "time" BIGINT NOT NULL, "temperature" DOUBLE PRECISION NOT NULL, "humidity" DOUBLE PRECISION NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("sensorid","time"))
 >>>postgres-views.sql
@@ -236,7 +239,7 @@ CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" BIGINT NOT NULL, "time" B
           ],
           "query" : {
             "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM (SELECT \"sensorid\", \"timeSec\", \"temp\"\n  FROM \"SecReading\"\n  ORDER BY \"timeSec\" DESC NULLS LAST) AS \"t0\"\nWHERE \"sensorid\" = $1",
+            "sql" : "SELECT *\nFROM (SELECT \"sensorid\", \"timeSec\", \"timeStart\", \"timeEnd\", \"temp\"\n  FROM \"SecReading\"\n  ORDER BY \"timeSec\" DESC NULLS LAST) AS \"t\"\nWHERE \"sensorid\" = $1",
             "parameters" : [
               {
                 "type" : "arg",
@@ -333,7 +336,7 @@ CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" BIGINT NOT NULL, "time" B
         },
         "format" : "JSON",
         "apiQuery" : {
-          "query" : "query SecReading($sensorid: Long!, $limit: Int = 10, $offset: Int = 0) {\nSecReading(sensorid: $sensorid, limit: $limit, offset: $offset) {\nsensorid\ntimeSec\ntemp\n}\n\n}",
+          "query" : "query SecReading($sensorid: Long!, $limit: Int = 10, $offset: Int = 0) {\nSecReading(sensorid: $sensorid, limit: $limit, offset: $offset) {\nsensorid\ntimeSec\ntimeStart\ntimeEnd\ntemp\n}\n\n}",
           "queryName" : "SecReading",
           "operationType" : "QUERY"
         },
@@ -400,7 +403,7 @@ CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" BIGINT NOT NULL, "time" B
     ],
     "schema" : {
       "type" : "string",
-      "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  \"\"\"\n  Returns the sensor temperature for a sensor by id from most recent.\n      Sensor temperature readings are averaged per second.\n  \"\"\"\n  SecReading(sensorid: Long!, limit: Int = 10, offset: Int = 0): [SecReading!]\n  \"Returns the maximum temperature recorded for a given sensor\"\n  SensorMaxTemp(sensorid: Long, limit: Int = 10, offset: Int = 0): [SensorMaxTemp!]\n  SensorReading(limit: Int = 10, offset: Int = 0): [SensorReading!]\n}\n\ntype SecReading {\n  sensorid: Long!\n  timeSec: DateTime!\n  temp: Float!\n}\n\ntype SensorMaxTemp {\n  sensorid: Long!\n  window_time: DateTime!\n  maxTemp: Float!\n}\n\ntype SensorReading {\n  sensorid: Long!\n  time: Long!\n  temperature: Float!\n  humidity: Float!\n  timestamp: DateTime!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  \"\"\"\n  Returns the sensor temperature for a sensor by id from most recent.\n      Sensor temperature readings are averaged per second.\n  \"\"\"\n  SecReading(sensorid: Long!, limit: Int = 10, offset: Int = 0): [SecReading!]\n  \"Returns the maximum temperature recorded for a given sensor\"\n  SensorMaxTemp(sensorid: Long, limit: Int = 10, offset: Int = 0): [SensorMaxTemp!]\n  SensorReading(limit: Int = 10, offset: Int = 0): [SensorReading!]\n}\n\ntype SecReading {\n  sensorid: Long!\n  timeSec: DateTime!\n  timeStart: DateTime!\n  timeEnd: DateTime!\n  temp: Float!\n}\n\ntype SensorMaxTemp {\n  sensorid: Long!\n  window_time: DateTime!\n  maxTemp: Float!\n}\n\ntype SensorReading {\n  sensorid: Long!\n  time: Long!\n  temperature: Float!\n  humidity: Float!\n  timestamp: DateTime!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
     }
   }
 }
