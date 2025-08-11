@@ -144,7 +144,7 @@ public class GraphqlSchemaUtil {
       case TIME_WITH_LOCAL_TIME_ZONE:
       case TIMESTAMP:
       case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
-        return Optional.of(CustomScalars.DATETIME);
+        return Optional.of(CustomScalars.FLEXIBLE_DATETIME);
       case INTERVAL_YEAR:
       case INTERVAL_YEAR_MONTH:
       case INTERVAL_MONTH:
