@@ -1,1 +1,7 @@
-{"data":{"CountEventsTest":[{"num_events":143.0}]}}
+{
+  "data" : {
+    "CountEventsTest" : [ {
+      "num_events" : 26
+    } ]
+  }
+}

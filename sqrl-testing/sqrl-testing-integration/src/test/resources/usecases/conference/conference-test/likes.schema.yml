@@ -7,7 +7,7 @@ columns:
   type: "STRING"
   tests:
   - "not_null"
-- name: "eventId"
+- name: "eventid"
   type: "BIGINT"
   tests:
   - "not_null"

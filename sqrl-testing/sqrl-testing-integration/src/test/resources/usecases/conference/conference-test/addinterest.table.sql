@@ -5,5 +5,6 @@ CREATE TABLE AddInterest (
       'format' = 'flexible-json',
       'path' = '${DATA_PATH}/addinterest.jsonl',
       'source.monitor-interval' = '1',
-      'connector' = 'filesystem'
+       'flexible-json.timestamp-format.standard' = 'ISO-8601',
+       'connector' = 'filesystem'
       );

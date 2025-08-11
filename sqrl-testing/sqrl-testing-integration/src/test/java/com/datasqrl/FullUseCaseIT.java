@@ -50,15 +50,11 @@ public class FullUseCaseIT extends AbstractFullUseCaseTest {
 
   private static final Set<String> DISABLED_USE_CASE_PATHS =
       Set.of(
-          "flink-only", // not a full test case
-          "flink-functions", // not a full test case
-          "conference", // fails in build server
           "iceberg-export", // fails in build server
           "snowflake", // fails in build server
           "sensors-full", // flaky (too much data)
-          "analytics-only",
-          "postgres-log",
-          "connectors" // should not be executed
+          "flink-only", // not a full test case
+          "connectors" // not an executable test case
           );
 
   @Disabled("Intended for manual usage")

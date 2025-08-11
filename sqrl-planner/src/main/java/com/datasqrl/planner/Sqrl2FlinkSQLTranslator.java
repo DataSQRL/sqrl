@@ -24,6 +24,7 @@ import com.datasqrl.config.PackageJson.CompilerConfig;
 import com.datasqrl.engine.stream.flink.FlinkStreamEngine;
 import com.datasqrl.engine.stream.flink.plan.FlinkSqlNodeFactory;
 import com.datasqrl.engine.stream.flink.sql.RelToFlinkSql;
+import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.error.ErrorLocation.FileLocation;
@@ -57,10 +58,12 @@ import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.ServiceLoader;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -312,10 +315,17 @@ public class Sqrl2FlinkSQLTranslator {
     var relNode = relRoot.rel;
     Optional<Sort> topLevelSort = Optional.empty();
     if (removeTopLevelSort) {
+      Set<String> missingSorts = new HashSet<>(relNode.getRowType().getFieldNames());
+      missingSorts.removeAll(relRoot.validatedRowType.getFieldNames());
+      errors.checkFatal(
+          missingSorts.isEmpty(),
+          ErrorCode.MISSING_SORT_COLUMN,
+          "All sort columns must be part of the SELECT clause for table definitions, missing: %s",
+          missingSorts);
       if (relNode instanceof Sort sort) {
         // Remove top-level sort and attach it to TableAnalysis later
         topLevelSort = Optional.of(sort);
-        relNode = topLevelSort.get().getInput();
+        relNode = sort.getInput();
       } else {
         errors.warn("Expected top-level sort on relnode: %s", relNode.explain());
       }

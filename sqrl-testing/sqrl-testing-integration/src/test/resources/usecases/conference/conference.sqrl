@@ -1,0 +1,67 @@
+/*
+ Needs vector embeddings support from sqrl-functions
+ */
+IMPORT events-test.Events AS _EventStream;
+IMPORT stdlib.openai.vector_embed;
+
+_ProcessedEventStream := SELECT *,
+    coalesce(CAST(REGEXP_EXTRACT(url, '(\d*)$') AS BIGINT),0) AS id,
+    concat(title,'\n',abstract) AS full_text,
+    concat(trim(REGEXP_EXTRACT(`date`, '^[^-]*')),' ',trim(REGEXP_EXTRACT(`time`, '\d\d?:\d\d\s(AM|PM)'))) AS startTime
+    FROM _EventStream;
+_ProcessedEventStream.embedding :=  vector_embed(full_text, 'text-embedding-3-small');
+_ProcessedEventStream.startTimestamp := TO_TIMESTAMP(concat(startTime,' PDT'), 'MMMM d, yyyy h:mm a z');
+
+/*+query_by_all(id), vector_dim(embedding, 1536) */
+Events := DISTINCT _ProcessedEventStream ON id ORDER BY last_updated DESC;
+
+/*+test */
+CountEventsTest := SELECT COUNT(*) as num_events FROM Events;
+/*+test */
+EventsSubsetTest := SELECT url, `date`, title FROM Events ORDER BY url LIMIT 5;
+
+IMPORT conference-test.Likes AS _Likes;
+IMPORT conference-test.AddInterest AS _AddInterestStream;
+
+_AddInterest := SELECT *, vector_embed(text, 'text-embedding-3-small') AS embedding FROM _AddInterestStream;
+
+_LikeVector := SELECT l.userid, e.embedding, e.title, e.abstract, e.location, l.event_time
+              FROM _Likes l JOIN Events FOR SYSTEM_TIME AS OF l.event_time e ON l.eventid = e.id WHERE l.liked;
+
+_UserInterestVectors := SELECT userid, embedding, event_time FROM _LikeVector
+                 UNION ALL
+                 SELECT userid, embedding, event_time FROM _AddInterest;
+
+/*+vector_dim(interestVector, 1536) */
+_UserInterests := SELECT userid, center(embedding) as interestVector FROM _UserInterestVectors GROUP BY userid;
+
+_UserLikes := DISTINCT _Likes ON userid, eventid ORDER BY event_time DESC;
+
+/*+no_query */
+EventLikeCount := SELECT eventid, count(*) as num, avg(eventid) as test
+                  FROM _UserLikes WHERE liked GROUP BY eventid;
+Events.likeCount := SELECT * FROM EventLikeCount l WHERE this.id = l.eventid;
+
+
+EventsLiked(userid String NOT NULL) := SELECT e.* FROM _UserLikes l JOIN Events e ON l.eventid = e.id
+                                WHERE l.userid = :userid
+                                ORDER BY e.startTimestamp ASC;
+
+
+RecommendedEvents(userid String NOT NULL) :=
+SELECT e.*, cosine_similarity(i.interestVector, e.embedding) as score
+FROM Events e JOIN _UserInterests i ON i.userid = :userid
+ORDER BY score DESC;
+
+PersonalizedEventSearch(query String NOT NULL, userid String NOT NULL) :=
+    SELECT e.*, coalesce(cosine_similarity(i.interestVector, e.embedding),0.0) as score
+        FROM Events e
+        LEFT JOIN _UserInterests i ON i.userid = :userid
+        WHERE text_search(:query, title, abstract) > 0 -- AND e.startTimestamp >= now() - INTERVAL 30 MINUTE
+    ORDER BY score DESC;
+
+/*+test */
+RecommendedEventsTest := SELECT id, title FROM Table(RecommendedEvents('1'));
+
+/*+test */
+PersonalizedSearchTest := SELECT id, title FROM Table(PersonalizedEventSearch('flink', '1'));

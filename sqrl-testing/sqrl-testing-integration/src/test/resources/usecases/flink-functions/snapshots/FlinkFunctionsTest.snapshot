@@ -1,0 +1,17 @@
+{
+  "data" : {
+    "FlinkFunctionsTest" : [ {
+      "name_upper" : "ALICE",
+      "name_md5" : "64489c85dc2fe0787b85cd87214b3810",
+      "formatted_name" : "Hello, Alice"
+    }, {
+      "name_upper" : "BOB",
+      "name_md5" : "2fc1c0beb992cd7096975cfebf9d5c3b",
+      "formatted_name" : "Hello, Bob"
+    }, {
+      "name_upper" : "CHARLIE",
+      "name_md5" : "ea2bfa79cd221f1e88a9bf39ea155cd8",
+      "formatted_name" : "Hello, Charlie"
+    } ]
+  }
+}

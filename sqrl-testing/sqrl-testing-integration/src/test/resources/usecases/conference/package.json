@@ -1,14 +1,18 @@
 {
   "version": "1",
   "enabled-engines": ["vertx", "postgres", "kafka", "flink"],
-  "values" : {
-    "flink-config": {
-      "table.exec.source.idle-timeout": "10000 ms"
+  "engines": {
+    "flink": {
+      "config": {
+        "table.exec.source.idle-timeout": "1 ms"
+      }
     }
+  },
+  "script": {
+    "main": "conference.sqrl"
   },
   "test-runner": {
     "snapshot-folder": "snapshots-conference",
-    "test-folder": "tests-conference",
     "delay-sec" : -1,
     "required-checkpoints" : 1
   }

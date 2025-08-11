@@ -468,15 +468,6 @@ public class SqlScriptPlanner {
     }
   }
 
-  @Value
-  private static class HintsAndDocs {
-
-    PlannerHints hints;
-    Optional<String> documentation;
-
-    public static final HintsAndDocs EMPTY = new HintsAndDocs(PlannerHints.EMPTY, Optional.empty());
-  }
-
   /**
    * Adjusts the access for functions and tables based on the available stages and configuration We
    * might consider throwing an exception for SUBSCRIPTION access when no subscription stages are
@@ -640,7 +631,7 @@ public class SqlScriptPlanner {
       AccessVisibility visibility,
       boolean isSource,
       Sqrl2FlinkSQLTranslator sqrlEnv) {
-    var availableStages = determineStages(tableStages, hintsAndDocs.hints);
+    var availableStages = determineStages(tableStages, hintsAndDocs.hints());
     var tableNode =
         new TableNode(
             tableAnalysis,
@@ -650,7 +641,7 @@ public class SqlScriptPlanner {
     dagBuilder.add(tableNode);
 
     // Figure out if and what type of access function we should add for this table
-    var queryByHint = hintsAndDocs.hints.getQueryByHint();
+    var queryByHint = hintsAndDocs.hints().getQueryByHint();
     if (visibility.isEndpoint()) { // only add function if this table is an endpoint
       var relBuilder = sqrlEnv.getTableScan(tableAnalysis.getObjectIdentifier());
       List<FunctionParameter> parameters = List.of();
@@ -678,7 +669,7 @@ public class SqlScriptPlanner {
               SqlNameUtil.toIdentifier(fctName), relBuilder.build(), parameters, tableAnalysis);
       fctBuilder.fullPath(NamePath.of(tableName));
       fctBuilder.visibility(visibility);
-      fctBuilder.documentation(hintsAndDocs.documentation);
+      fctBuilder.documentation(hintsAndDocs.documentation());
       addFunctionToDag(
           fctBuilder.build(), HintsAndDocs.EMPTY); // hints don't apply to the function access
     } else if (queryByHint.isPresent()) {
@@ -692,7 +683,7 @@ public class SqlScriptPlanner {
   private void addFunctionToDag(SqrlTableFunction function, HintsAndDocs hintsAndDocs) {
     var availableStages =
         determineStages(
-            determineViableStages(function.getVisibility().getAccess()), hintsAndDocs.hints);
+            determineViableStages(function.getVisibility().getAccess()), hintsAndDocs.hints());
     dagBuilder.add(
         new TableFunctionNode(
             function, getStageAnalysis(function.getFunctionAnalysis(), availableStages)));
@@ -783,7 +774,7 @@ public class SqlScriptPlanner {
                 flinkTable.sqlCreateTable,
                 flinkTable.schema,
                 getLogEngineBuilder(hintsAndDocs));
-        hintsAndDocs.getHints().updateColumnNamesHints(tableAnalysis::getField);
+        hintsAndDocs.hints().updateColumnNamesHints(tableAnalysis::getField);
         addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv);
       } catch (Throwable e) {
         throw flinkTable.errorCollector.handle(e);
@@ -831,7 +822,7 @@ public class SqlScriptPlanner {
       mutationBuilder.stage(logStage.get());
       MutationInsertType insertType =
           hintsAndDocs
-              .getHints()
+              .hints()
               .getHint(MutationInsertHint.class)
               .map(MutationInsertHint::getInsertType)
               .orElse(MutationInsertType.SINGLE);
@@ -840,7 +831,7 @@ public class SqlScriptPlanner {
               logStage.get(), originalTableName, tableBuilder, datatype, insertType));
       mutationBuilder.name(Name.system(originalTableName));
       mutationBuilder.insertType(insertType);
-      mutationBuilder.documentation(hintsAndDocs.documentation);
+      mutationBuilder.documentation(hintsAndDocs.documentation());
       tableBuilder
           .extractMetadataColumns(MutationComputedColumn.UUID_METADATA, true)
           .forEach(
@@ -998,5 +989,10 @@ public class SqlScriptPlanner {
 
       return new ExternalFlinkTable(tableName, tableSql, schema, tableError);
     }
+  }
+
+  static record HintsAndDocs(PlannerHints hints, Optional<String> documentation) {
+
+    public static final HintsAndDocs EMPTY = new HintsAndDocs(PlannerHints.EMPTY, Optional.empty());
   }
 }
