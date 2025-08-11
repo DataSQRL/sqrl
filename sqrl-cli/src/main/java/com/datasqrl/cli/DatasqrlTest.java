@@ -15,37 +15,28 @@
  */
 package com.datasqrl.cli;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-
+import com.datasqrl.compile.TestPlan;
 import com.datasqrl.config.PackageJson;
+import com.datasqrl.graphql.SqrlObjectMapper;
 import com.datasqrl.util.FlinkOperatorStatusChecker;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
-import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.common.JobStatus;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.core.execution.JobClient;
-import org.apache.flink.table.api.TableResult;
 
 /**
  * The test runner executes the test against the running DataSQRL pipeline and snapshots the
@@ -60,14 +51,13 @@ import org.apache.flink.table.api.TableResult;
  */
 public class DatasqrlTest {
 
+  private static final String GRAPHQL_ENDPOINT = "http://localhost:8888/graphql";
+
   private final Path rootDir;
   private final Path planDir;
   private final PackageJson sqrlConfig;
   private final Configuration flinkConfig;
   private final Map<String, String> env;
-  public String GRAPHQL_ENDPOINT = "http://localhost:8888/graphql";
-  private final ObjectMapper objectMapper = new ObjectMapper();
-  private final ObjectWriter jsonWriter = objectMapper.writerWithDefaultPrettyPrinter();
 
   public DatasqrlTest(
       Path rootDir,
@@ -85,61 +75,53 @@ public class DatasqrlTest {
   @SneakyThrows
   public int run() {
     // 1. Run the DataSQRL pipeline via {@link DatasqrlRun}
-    DatasqrlRun run = DatasqrlRun.nonBlocking(planDir, sqrlConfig, flinkConfig, env);
+    var run = DatasqrlRun.nonBlocking(planDir, sqrlConfig, flinkConfig, env);
 
     var testConfig = sqrlConfig.getTestConfig();
     // Initialize snapshot directory
-    Path snapshotDir = testConfig.getSnapshotDir(rootDir);
+    var snapshotDir = testConfig.getSnapshotDir(rootDir);
     // Check if the directory exists, create it if it doesn’t
     if (!Files.exists(snapshotDir)) {
       Files.createDirectories(snapshotDir);
     }
     // Collects all exceptions during the testing
-    List<Exception> exceptions = new ArrayList<>();
+    var exceptions = new ArrayList<Exception>();
     // Retrieve test plan
-    Optional<TestPlan> testPlanOpt = Optional.empty();
+    TestPlan testPlan = null;
     // Read configuration
-    int delaySec = testConfig.getDelaySec();
-    int mutationWait = testConfig.getMutationDelaySec();
-    int requiredCheckpoints = testConfig.getRequiredCheckpoints();
+    var delaySec = testConfig.getDelaySec();
+    var mutationWaitSec = testConfig.getMutationDelaySec();
+    var requiredCheckpoints = testConfig.getRequiredCheckpoints();
 
     // It is possible that no test plan exists, such as no test queries.
     // We still run it for exports or other explicit tests the user created outside the test
     // framework
-    if (Files.exists(planDir.resolve("test.json"))) {
-      testPlanOpt =
-          Optional.of(
-              objectMapper.readValue(planDir.resolve("test.json").toFile(), TestPlan.class));
+    var testJson = planDir.resolve("test.json").toFile();
+    if (testJson.exists()) {
+      testPlan = SqrlObjectMapper.MAPPER.readValue(testJson, TestPlan.class);
     }
 
     try {
-      TableResult result = run.run();
-      // todo add file check instead of sleeping to make sure pipeline has started
+      var result = run.run();
       Thread.sleep(1000);
 
-      List<SubscriptionClient> subscriptionClients = List.of();
+      var subscriptionClients = new ArrayList<SubscriptionClient>();
       // 2. Execute subscription & mutation queries against the API and snapshot results
-      if (testPlanOpt.isPresent()) {
-        TestPlan testPlan = testPlanOpt.get();
-        // TODO: Etienne run all subscription queries async and collect the results.
-
+      if (testPlan != null) {
         // 1. add the graphql subscriptions to the test plan
         // 2. connect a websocket to the graphql server hosted in vertx
         // 3. run all the graphql subscriptions requests by sending them to the websocket
         // 4. collect the response data (from the websocket) that the pipeline has written to kafka.
 
         // Initialize subscriptions
-        subscriptionClients = new ArrayList<>();
-        List<CompletableFuture<Void>> subscriptionFutures = new ArrayList<>();
+        var subscriptionFutures = new ArrayList<CompletableFuture<Void>>();
 
-        for (GraphqlQuery subscription : testPlan.getSubscriptions()) {
-          SubscriptionClient client =
+        for (var subscription : testPlan.getSubscriptions()) {
+          var client =
               new SubscriptionClient(
-                  subscription.getName(),
-                  subscription.getQuery(),
-                  subscription.getHeaders() != null ? subscription.getHeaders() : Map.of());
+                  subscription.getName(), subscription.getQuery(), subscription.getHeaders());
           subscriptionClients.add(client);
-          CompletableFuture<Void> future = client.start();
+          var future = client.start();
           subscriptionFutures.add(future);
         }
 
@@ -147,31 +129,21 @@ public class DatasqrlTest {
         CompletableFuture.allOf(subscriptionFutures.toArray(new CompletableFuture[0])).join();
 
         if (!subscriptionClients.isEmpty()) {
-          // sqrl server takes a while to create the server side wiring that connnects kafka to
+          // sqrl server takes a while to create the server side wiring that connects kafka to
           // websocket.  We don't have any mechanism to notify us when the server is ready
           // we should replace this with some sort of GET /status that list which subscriptions are
           // ready
           Thread.sleep(5_000);
         }
 
-        // Execute mutations
-        for (GraphqlQuery mutationQuery : testPlan.getMutations()) {
-          // Execute mutation queries
-          String data =
-              executeQuery(
-                  mutationQuery.getQuery(),
-                  mutationQuery.getHeaders() != null ? mutationQuery.getHeaders() : Map.of());
-          // Snapshot result
-          Path snapshotPath = snapshotDir.resolve(mutationQuery.getName() + ".snapshot");
-          snapshot(snapshotPath, mutationQuery.getName(), data, exceptions);
-          // wait before next mutation
-          if (mutationWait > 0) Thread.sleep(mutationWait * 1000);
-        }
+        var exList =
+            executeAndSnapshotGraphqlQueries(testPlan.getMutations(), snapshotDir, mutationWaitSec);
+        exceptions.addAll(exList);
       }
 
       // 3. Wait for the Flink job to finish or the configured delay
       if (delaySec == -1) {
-        FlinkOperatorStatusChecker flinkOperatorStatusChecker =
+        var flinkOperatorStatusChecker =
             new FlinkOperatorStatusChecker(
                 result.getJobClient().get().getJobID().toString(), requiredCheckpoints);
         flinkOperatorStatusChecker.run();
@@ -180,9 +152,9 @@ public class DatasqrlTest {
           for (int i = 0; i < delaySec; i++) {
             // break early if job is done
             try {
-              CompletableFuture<JobStatus> jobStatusCompletableFuture =
+              var jobStatusCompletableFuture =
                   result.getJobClient().map(JobClient::getJobStatus).get();
-              JobStatus status = jobStatusCompletableFuture.get(1, TimeUnit.SECONDS);
+              var status = jobStatusCompletableFuture.get(1, TimeUnit.SECONDS);
               if (status == JobStatus.FAILED) {
                 exceptions.add(new JobFailureException());
                 break;
@@ -204,12 +176,11 @@ public class DatasqrlTest {
       }
 
       try {
-        JobExecutionResult jobExecutionResult =
-            result
-                .getJobClient()
-                .get()
-                .getJobExecutionResult()
-                .get(2, TimeUnit.SECONDS); // flink will hold if the minicluster is stopped
+        result
+            .getJobClient()
+            .get()
+            .getJobExecutionResult()
+            .get(2, TimeUnit.SECONDS); // flink will hold if the minicluster is stopped
       } catch (ExecutionException e) {
         // try to catch the job failure if we can
         exceptions.add(new JobFailureException(e));
@@ -217,59 +188,44 @@ public class DatasqrlTest {
       }
 
       // 4. Run the queries against the API, finish subscriptions and snapshot the results
-      if (testPlanOpt.isPresent()) {
-        TestPlan testPlan = testPlanOpt.get();
-        for (GraphqlQuery query : testPlan.getQueries()) {
-          // Execute queries
-          String data =
-              executeQuery(
-                  query.getQuery(), query.getHeaders() != null ? query.getHeaders() : Map.of());
+      if (testPlan != null) {
+        var exList = executeAndSnapshotGraphqlQueries(testPlan.getQueries(), snapshotDir, 0);
+        exceptions.addAll(exList);
 
-          // Snapshot result
-          Path snapshotPath = snapshotDir.resolve(query.getName() + ".snapshot");
-          snapshot(snapshotPath, query.getName(), data, exceptions);
-        }
-        // TODO make sure for the exceptions
-        // TODO: Etienne terminate subscriptions, sort all records retrieved, and snapshot the
-        // result like we do the queries above
-        // add snapshot comparison below for subscriptions
         // Stop subscriptions
-        for (SubscriptionClient client : subscriptionClients) {
+        for (var client : subscriptionClients) {
           client.stop();
         }
 
         // Collect messages and write to snapshots
-        for (SubscriptionClient client : subscriptionClients) {
-          List<String> messages = client.getMessages();
+        for (var client : subscriptionClients) {
+          var messages = client.getMessages();
 
-          assert messages.size() < 1000
-              : "Too many messages, that is unexpeccted " + messages.size();
+          assert messages.size() < 1000 : "Too many messages: %d > 1000".formatted(messages.size());
 
-          String data =
+          var data =
               messages.stream()
                   // to guarantee that snapshots are stable, must sort the responses by json
                   // contents
                   .sorted()
                   .collect(Collectors.joining(",", "[", "]"));
-          Path snapshotPath = snapshotDir.resolve(client.getName() + ".snapshot");
+          var snapshotPath = snapshotDir.resolve(client.getName() + ".snapshot");
           snapshot(snapshotPath, client.getName(), data, exceptions);
         }
 
-        List<String> expectedSnapshotsQueries =
-            testPlan.getQueries().stream().map(f -> f.getName() + ".snapshot").toList();
-        List<String> expectedSnapshotsMutations =
-            testPlan.getMutations().stream().map(f -> f.getName() + ".snapshot").toList();
-        List<String> expectedSnapshotsSubscriptions =
-            testPlan.getSubscriptions().stream().map(f -> f.getName() + ".snapshot").toList();
-        List<String> expectedSnapshots = new ArrayList<>();
+        var expectedSnapshotsQueries = collectGraphqlQueryNames(testPlan.getQueries());
+        var expectedSnapshotsMutations = collectGraphqlQueryNames(testPlan.getMutations());
+        var expectedSnapshotsSubscriptions = collectGraphqlQueryNames(testPlan.getSubscriptions());
+
+        var expectedSnapshots = new ArrayList<String>();
         expectedSnapshots.addAll(expectedSnapshotsQueries);
         expectedSnapshots.addAll(expectedSnapshotsMutations);
         expectedSnapshots.addAll(expectedSnapshotsSubscriptions);
+
         // Check all snapshots in the directory
-        try (DirectoryStream<Path> directoryStream =
-            Files.newDirectoryStream(snapshotDir, "*.snapshot")) {
-          for (Path path : directoryStream) {
-            String snapshotFileName = path.getFileName().toString();
+        try (var directoryStream = Files.newDirectoryStream(snapshotDir, "*.snapshot")) {
+          for (var path : directoryStream) {
+            var snapshotFileName = path.getFileName().toString();
             if (!expectedSnapshots.contains(snapshotFileName)) {
               // Snapshot exists on filesystem but missing in the test results
               exceptions.add(new MissingSnapshotException(snapshotFileName));
@@ -285,7 +241,7 @@ public class DatasqrlTest {
     // 5. Print the test results on the command line
     int exitCode = 0;
     if (!exceptions.isEmpty()) {
-      for (Exception e : exceptions) {
+      for (var e : exceptions) {
         if (e instanceof SnapshotMismatchException ex) {
           logRed("Snapshot mismatch for test: " + ex.getTestName());
           logRed("Expected: " + ex.getExpected());
@@ -311,6 +267,32 @@ public class DatasqrlTest {
       }
     }
     return exitCode;
+  }
+
+  @SneakyThrows
+  private List<Exception> executeAndSnapshotGraphqlQueries(
+      List<TestPlan.GraphqlQuery> queries, Path snapshotDir, int mutationWait) {
+    var exceptions = new ArrayList<Exception>();
+
+    for (var query : queries) {
+      // Execute queries
+      var data = executeQuery(query.getQuery(), query.getHeaders());
+
+      // Snapshot result
+      var snapshotPath = snapshotDir.resolve(query.getName() + ".snapshot");
+      snapshot(snapshotPath, query.getName(), data, exceptions);
+
+      // Wait before next mutation
+      if (mutationWait > 0) {
+        Thread.sleep(mutationWait * 1000L);
+      }
+    }
+
+    return exceptions;
+  }
+
+  private List<String> collectGraphqlQueryNames(List<TestPlan.GraphqlQuery> queries) {
+    return queries.stream().map(f -> f.getName() + ".snapshot").toList();
   }
 
   @SneakyThrows
@@ -340,17 +322,17 @@ public class DatasqrlTest {
 
     // Existing snapshot logic
     if (Files.exists(snapshotPath)) {
-      var existingSnapshot = Files.readString(snapshotPath, UTF_8);
+      var existingSnapshot = Files.readString(snapshotPath);
       if (existingSnapshot.equals(content)) {
         exceptions.add(new SnapshotOkException(name));
       } else if (format(existingSnapshot).equals(content)) {
-        Files.writeString(snapshotPath, content, UTF_8);
+        Files.writeString(snapshotPath, content);
         exceptions.add(new SnapshotOkException(name));
       } else {
         exceptions.add(new SnapshotMismatchException(name, existingSnapshot, content));
       }
     } else {
-      Files.writeString(snapshotPath, content, UTF_8);
+      Files.writeString(snapshotPath, content);
       exceptions.add(new SnapshotCreationException(name));
     }
   }
@@ -358,8 +340,8 @@ public class DatasqrlTest {
   @SneakyThrows
   private String format(String rawData) {
     try {
-      var data = objectMapper.readValue(rawData, Object.class);
-      return jsonWriter.writeValueAsString(data);
+      var data = SqrlObjectMapper.MAPPER.readValue(rawData, Object.class);
+      return SqrlObjectMapper.MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(data);
     } catch (JsonProcessingException e) {
       return rawData;
     }
@@ -371,26 +353,5 @@ public class DatasqrlTest {
 
   private void logRed(String line) {
     System.out.println("\u001B[31m" + line + "\u001B[0m");
-  }
-
-  // Todo: Unify with other testplan
-  @AllArgsConstructor
-  @NoArgsConstructor
-  @Getter
-  public static class TestPlan {
-
-    List<GraphqlQuery> queries;
-    List<GraphqlQuery> mutations;
-    List<GraphqlQuery> subscriptions;
-  }
-
-  @AllArgsConstructor
-  @NoArgsConstructor
-  @Getter
-  public static class GraphqlQuery {
-
-    String name;
-    String query;
-    Map<String, String> headers;
   }
 }

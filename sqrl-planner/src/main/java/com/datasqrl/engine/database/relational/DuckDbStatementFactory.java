@@ -118,7 +118,11 @@ public class DuckDbStatementFactory extends AbstractJdbcStatementFactory {
             });
 
     return createQuery(
-        query.getFunction().getSimpleName(), replaced, false, getTableNameMapping(tableIdMap));
+        query.getFunction().getSimpleName(),
+        replaced,
+        false,
+        getTableNameMapping(tableIdMap),
+        query.getFunction().getDocumentation());
   }
 
   @Override

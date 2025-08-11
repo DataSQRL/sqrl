@@ -25,10 +25,8 @@
   <packaging>pom</packaging>
 
   <name>SQRL</name>
-  <description>
-    DataSQRL is a data streaming framework for incremental and real-time data processing applications.
-    Ingest, transform, store, and serve data as iceberg views, data APIs, or LLM tooling with the simplicity of SQL.
-  </description>
+  <description>DataSQRL is a data streaming framework for incremental and real-time data processing applications.
+    Ingest, transform, store, and serve data as iceberg views, data APIs, or LLM tooling with the simplicity of SQL.</description>
   <url>https://docs.datasqrl.com/</url>
 
   <inceptionYear>2021</inceptionYear>
@@ -152,7 +150,7 @@
     <hadoop.version>3.4.1</hadoop.version>
     <jacoco.version>0.8.13</jacoco.version>
     <jjwt.version>0.12.6</jjwt.version>
-    <assertj.version>3.27.3</assertj.version>
+    <assertj.version>3.27.4</assertj.version>
     <awaitility.version>4.3.0</awaitility.version>
     <jakarta.annotation.version>3.0.0</jakarta.annotation.version>
     <graphql-micrometer.version>1.0.1</graphql-micrometer.version>
@@ -167,7 +165,7 @@
     <flink-connector-postgres-cdc.version>3.4.0</flink-connector-postgres-cdc.version>
     <zookeeper.version>3.9.3</zookeeper.version>
     <snakeyaml.version>2.4</snakeyaml.version>
-    <aws-sdk-bom.version>2.32.15</aws-sdk-bom.version>
+    <aws-sdk-bom.version>2.32.18</aws-sdk-bom.version>
     <openai-gpt3-java.version>0.18.2</openai-gpt3-java.version>
     <flink-client.version>1.1.4</flink-client.version>
 
@@ -984,8 +982,7 @@
             --add-opens=java.base/java.lang=ALL-UNNAMED
             --add-opens=java.base/java.io=ALL-UNNAMED
             --add-opens=java.base/java.nio=ALL-UNNAMED
-            --add-opens=java.base/java.net=ALL-UNNAMED
-          </argLine>
+            --add-opens=java.base/java.net=ALL-UNNAMED</argLine>
         </configuration>
         <executions>
           <execution>

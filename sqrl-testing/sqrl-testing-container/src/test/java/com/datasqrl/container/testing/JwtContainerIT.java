@@ -19,10 +19,12 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.jsonwebtoken.Jwts;
+import java.security.KeyPairGenerator;
 import java.time.Instant;
 import java.util.Date;
 import javax.crypto.spec.SecretKeySpec;
 import lombok.SneakyThrows;
+import org.apache.http.util.EntityUtils;
 import org.junit.jupiter.api.Test;
 
 public class JwtContainerIT extends SqrlContainerTestBase {
@@ -51,6 +53,45 @@ public class JwtContainerIT extends SqrlContainerTestBase {
     validateBasicGraphQLResponse(response);
   }
 
+  @Test
+  @SneakyThrows
+  void
+      givenJwtEnabledScript_whenServerStartedWithMismatchedAlgorithm_thenReturns401WithDetailedError() {
+    compileAndStartServer("jwt-authorized.sqrl", testDir);
+
+    // Generate token with RS256 algorithm while server expects HS256
+    var response =
+        executeGraphQLQuery("{\"query\":\"query { __typename }\"}", generateRS256JwtToken());
+
+    assertThat(response.getStatusLine().getStatusCode()).isEqualTo(401);
+
+    // Verify the response contains detailed error information in JSON format
+    var responseBody = EntityUtils.toString(response.getEntity());
+    assertThat(responseBody).contains("\"error\"");
+    assertThat(responseBody).contains("\"JWT auth failed\"");
+    assertThat(responseBody).contains("\"cause\"");
+    assertThat(responseBody).contains("\"NoSuchKeyIdException: algorithm [RS256]: <null>\"");
+  }
+
+  @Test
+  @SneakyThrows
+  void givenJwtEnabledScript_whenQueryHasCorruptJwt_thenReturns401WithDetailedError() {
+    compileAndStartServer("jwt-authorized.sqrl", testDir);
+
+    // Generate token with RS256 algorithm while server expects HS256
+    var response = executeGraphQLQuery("{\"query\":\"query { __typename }\"}", "dummy-invalid-jwt");
+
+    assertThat(response.getStatusLine().getStatusCode()).isEqualTo(401);
+
+    // Verify the response contains detailed error information in JSON format
+    var responseBody = EntityUtils.toString(response.getEntity());
+    System.out.println(responseBody);
+    assertThat(responseBody).contains("\"error\"");
+    assertThat(responseBody).contains("\"JWT auth failed\"");
+    assertThat(responseBody).contains("\"cause\"");
+    assertThat(responseBody).contains("\"IllegalArgumentException: Invalid format for JWT\"");
+  }
+
   private String generateJwtToken() {
     var now = Instant.now();
     var expiration = now.plusSeconds(20);
@@ -66,5 +107,29 @@ public class JwtContainerIT extends SqrlContainerTestBase {
             new SecretKeySpec(
                 "testSecretThatIsAtLeast256BitsLong32Chars".getBytes(UTF_8), "HmacSHA256"))
         .compact();
+  }
+
+  private String generateRS256JwtToken() {
+    var now = Instant.now();
+    var expiration = now.plusSeconds(20);
+
+    // Generate an RSA key pair for RS256 algorithm (different from server's expected HS256)
+    try {
+      var keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+      keyPairGenerator.initialize(2048);
+      var keyPair = keyPairGenerator.generateKeyPair();
+
+      return Jwts.builder()
+          .issuer("my-test-issuer")
+          .audience()
+          .add("my-test-audience")
+          .and()
+          .issuedAt(Date.from(now))
+          .expiration(Date.from(expiration))
+          .signWith(keyPair.getPrivate(), Jwts.SIG.RS256)
+          .compact();
+    } catch (Exception e) {
+      throw new RuntimeException("Failed to generate RSA key pair for test", e);
+    }
   }
 }

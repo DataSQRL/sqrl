@@ -48,8 +48,11 @@ public class JdbcStatement {
   /** The datatype converted to a list of Field. It's null if there is no dataType. */
   List<Field> fields;
 
+  /** The docstring for this table if defined */
+  String description;
+
   public JdbcStatement(String name, Type type, String sql) {
-    this(name, type, sql, null, null);
+    this(name, type, sql, null, null, null);
   }
 
   @JsonCreator
@@ -57,17 +60,24 @@ public class JdbcStatement {
       @JsonProperty("name") String name,
       @JsonProperty("type") Type type,
       @JsonProperty("sql") String sql,
-      @JsonProperty("fields") List<Field> fields) {
-    this(name, type, sql, null, fields);
+      @JsonProperty("fields") List<Field> fields,
+      @JsonProperty("description") String description) {
+    this(name, type, sql, null, fields, description);
   }
 
   public JdbcStatement(
-      String name, Type type, String sql, RelDataType dataType, List<Field> fields) {
+      String name,
+      Type type,
+      String sql,
+      RelDataType dataType,
+      List<Field> fields,
+      String description) {
     this.name = name;
     this.type = type;
     this.sql = sql;
     this.dataType = dataType;
     this.fields = fields;
+    this.description = description;
   }
 
   public record Field(String name, String type, boolean nullable) {}
