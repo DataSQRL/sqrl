@@ -35,7 +35,6 @@
       }
     },
     "snowflake": {
-      "schema-type": "aws-glue",
       "catalog-name": "${SNOWFLAKE_CATALOG_NAME}",
       "external-volume": "${SNOWFLAKE_EXTERNAL_VOLUME}",
       "url": "${SNOWFLAKE_JDBC_URL}"

@@ -20,7 +20,7 @@
     "snowflake": {
       "catalog-name": "MyCatalog",
       "external-volume": "MyNewVolume",
-      "url": "${SOWFLAKE_JDBC_URL}"
+      "url": "${SNOWFLAKE_JDBC_URL}"
     }
   },
   "connectors" : {
