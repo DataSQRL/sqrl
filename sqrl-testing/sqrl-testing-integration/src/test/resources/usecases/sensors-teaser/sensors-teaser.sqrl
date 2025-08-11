@@ -4,7 +4,7 @@ IMPORT sensor-local.SensorReading; -- Import sensor data
     Sensor temperature readings are averaged per second.
  */
 /*+query_by_all(sensorid) */
-SecReading := SELECT sensorid, window_time as timeSec,
+SecReading := SELECT sensorid, window_time as timeSec, window_start as timeStart, window_end as timeEnd,
         avg(temperature) as temp
     FROM TABLE(TUMBLE(TABLE SensorReading, DESCRIPTOR(`timestamp`), INTERVAL '1' SECONDS))
     GROUP BY sensorid, window_start, window_end, window_time
@@ -25,7 +25,11 @@ SensorMaxTemp := DISTINCT _SensorMaxTempWindow ON sensorid ORDER BY window_time 
 /* =======TEST CASES======== */
 
 /*+test */
-SecReadingTest := SELECT * FROM SecReading ORDER BY timeSec DESC, temp DESC LIMIT 5;
+SecReadingTest := SELECT sensorid, timeSec, temp FROM SecReading ORDER BY timeSec DESC, temp DESC LIMIT 5;
 
 /*+test */
 SensorMaxTempTest := SELECT sensorid, maxTemp FROM SensorMaxTemp ORDER BY maxTemp DESC LIMIT 5;
+
+/** Also tests window_start and window_end properly mapped to GraphQL */
+/*+test */
+SecReadingFullTest := SELECT * FROM SecReading ORDER BY timeSec DESC, temp DESC LIMIT 5;

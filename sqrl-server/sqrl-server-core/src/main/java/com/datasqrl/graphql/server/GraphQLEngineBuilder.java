@@ -176,7 +176,7 @@ public class GraphQLEngineBuilder
         RuntimeWiring.newRuntimeWiring()
             .codeRegistry(codeRegistry)
             .scalar(CustomScalars.DOUBLE)
-            .scalar(CustomScalars.DATETIME)
+            .scalar(CustomScalars.FLEXIBLE_DATETIME)
             .scalar(CustomScalars.DATE)
             .scalar(CustomScalars.TIME)
             .scalar(CustomScalars.JSON);
