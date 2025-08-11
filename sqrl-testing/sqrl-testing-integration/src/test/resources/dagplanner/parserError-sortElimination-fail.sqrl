@@ -1,0 +1,3 @@
+IMPORT ecommerceTs.Orders AS _Orders;
+
+SortedOrders := SELECT id, `time` FROM _Orders ORDER BY customerid DESC;

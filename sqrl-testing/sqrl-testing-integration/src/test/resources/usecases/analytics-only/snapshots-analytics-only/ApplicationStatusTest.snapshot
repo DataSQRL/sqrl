@@ -1,1 +1,0 @@
-{"data":{"ApplicationStatusTest":[{"status":"applied","num":92.0},{"status":"approval","num":38.0},{"status":"check","num":57.0},{"status":"closing","num":19.0},{"status":"funding","num":10.0},{"status":"pre-approval","num":75.0},{"status":"processing","num":31.0},{"status":"reviewed","num":83.0},{"status":"underwriting","num":51.0},{"status":"verification","num":66.0}]}}

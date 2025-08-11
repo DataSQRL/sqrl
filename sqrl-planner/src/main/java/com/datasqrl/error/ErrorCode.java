@@ -51,6 +51,7 @@ public enum ErrorCode implements ErrorLabel {
   FUNCTION_EXISTS,
   NOT_YET_IMPLEMENTED,
   NO_API_ENDPOINTS,
+  MISSING_SORT_COLUMN,
   ROWTIME_IS_NULLABLE;
 
   @Override

@@ -55,7 +55,7 @@ public class UseCaseCompileTest extends AbstractUseCaseTest {
   @Disabled
   void runTestCaseByName(Path script, Path graphQlFile, Path packageFile) {
     assumeTrue(
-        script.toString().endsWith("sensors-mutation.sqrl"), "Not the test marked for execution.");
+        script.toString().endsWith("analytics-only.sqrl"), "Not the test marked for execution.");
 
     super.testUsecase(script, graphQlFile, packageFile);
   }

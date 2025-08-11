@@ -1,0 +1,10 @@
+[FATAL] All sort columns must be part of the SELECT clause for table definitions, missing: [customerid]
+in script:parsererror-sortelimination-fail.sqrl [3:1]:
+IMPORT ecommerceTs.Orders AS _Orders;
+
+SortedOrders := SELECT id, `time` FROM _Orders ORDER BY customerid DESC;
+^
+DataSQRL pulls up any sort order for table definitions to execute them at query time
+for performance reasons.
+This requires that all sort column are in the SELECT clause. You can hide these columns
+with `_` or use table functions.
