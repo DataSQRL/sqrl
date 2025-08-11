@@ -141,6 +141,7 @@
               "type": "string"
             }
           },
+          "required": ["catalog-name", "external-volume", "url"],
           "additionalProperties": false
         },
         "vertx": {
