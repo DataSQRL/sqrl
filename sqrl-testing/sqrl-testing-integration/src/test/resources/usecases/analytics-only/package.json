@@ -9,6 +9,11 @@
       "config": {
         "table.exec.source.idle-timeout": "1 ms"
       }
+    },
+    "snowflake": {
+      "catalog-name": "MyCatalog",
+      "external-volume": "MyNewVolume",
+      "url": "${SNOWFLAKE_JDBC_URL}"
     }
   },
   "connectors" : {

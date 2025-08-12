@@ -33,11 +33,6 @@
         "table.exec.resource.default-parallelism": 1,
         "taskmanager.memory.network.max": "800m"
       }
-    },
-    "snowflake": {
-      "catalog-name": "${SNOWFLAKE_CATALOG_NAME}",
-      "external-volume": "${SNOWFLAKE_EXTERNAL_VOLUME}",
-      "url": "${SNOWFLAKE_JDBC_URL}"
     }
   },
   "connectors": {

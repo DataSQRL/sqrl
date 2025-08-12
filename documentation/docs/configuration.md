@@ -123,7 +123,6 @@ Used as a *table-format* engine together with a query engine such as Flink or Sn
 
 | Key               | Type         | Default | Description                          |
 |-------------------|--------------|---------|--------------------------------------|
-| `schema-type`     | `"aws-glue"` | –       | External catalog implementation.     |
 | `catalog-name`    | string       | –       | Glue catalog.                        |
 | `external-volume` | string       | –       | Snowflake external volume name.      |
 | `url`             | string       | –       | Full JDBC URL including auth params. |
@@ -261,7 +260,8 @@ Unresolved `${sqrl:*}` placeholders raise a validation error.
 
 ## Internal Environment Variables
 
-For dependent services, DataSQRL creates and uses the following environment variables inside the Docker container:
+For engines that may be running as standalone services inside the DataSQRL Docker container,
+we use the following environment variables internally:
 
 * **Kafka**
   * `KAFKA_BOOTSTRAP_SERVERS`
@@ -275,10 +275,7 @@ For dependent services, DataSQRL creates and uses the following environment vari
   * `POSTGRES_JDBC_URL`
   * `POSTGRES_USERNAME`
   * `POSTGRES_PASSWORD`
-* **Snowflake**
-  * `SNOWFLAKE_JDBC_URL`
-  * `SNOWFLAKE_EXTERNAL_VOLUME`
-  * `SNOWFLAKE_CATALOG_NAME`
+
 ---
 
 ## Default Configuration
@@ -301,12 +298,6 @@ The built-in fallback (excerpt - full version [here](https://raw.githubuserconte
         "table.exec.resource.default-parallelism": 1,
         "taskmanager.memory.network.max": "800m"
       }
-    },
-    "snowflake": {
-      "schema-type": "aws-glue",
-      "catalog-name": "${SNOWFLAKE_CATALOG_NAME}",
-      "external-volume": "${SNOWFLAKE_EXTERNAL_VOLUME}",
-      "url": "${SNOWFLAKE_JDBC_URL}"
     }
   },
   "compiler": {
