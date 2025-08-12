@@ -134,9 +134,6 @@
             "external-volume": {
               "type": "string"
             },
-            "schema-type": {
-              "type": "string"
-            },
             "url": {
               "type": "string"
             }
