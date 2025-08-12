@@ -67,7 +67,7 @@ public abstract class AbstractCompileCmd extends AbstractCmd {
 
     var engines = getEngines();
     if (!engines.isEmpty()) {
-      sqrlConfig.setPipeline(engines);
+      sqrlConfig.setEnabledEngines(engines);
     }
 
     DirectoryManager.prepareTargetDirectory(getTargetDir());

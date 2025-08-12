@@ -22,12 +22,11 @@ import lombok.Getter;
 public class PackageJsonImpl implements PackageJson {
 
   public static final String ENGINES_PROPERTY = "engines";
+  public static final String ENABLED_ENGINES_KEY = "enabled-engines";
   public static final String DISCOVERY_KEY = "discovery";
   public static final String DEPENDENCIES_KEY = "dependencies";
   public static final String SCRIPT_KEY = "script";
   public static final String COMPILER_KEY = "compiler";
-  public static final String PACKAGE_KEY = "package";
-  public static final String PIPELINE_KEY = "enabled-engines";
   public static final String CONNECTORS_KEY = "connectors";
   public static final String CONFIG_KEY = "config";
   public static final String TEST_RUNNER_KEY = "test-runner";
@@ -44,12 +43,12 @@ public class PackageJsonImpl implements PackageJson {
 
   @Override
   public List<String> getEnabledEngines() {
-    return sqrlConfig.asList(PIPELINE_KEY, String.class).get();
+    return sqrlConfig.asList(ENABLED_ENGINES_KEY, String.class).get();
   }
 
   @Override
-  public void setPipeline(List<String> pipeline) {
-    sqrlConfig.setProperty(PIPELINE_KEY, pipeline);
+  public void setEnabledEngines(List<String> enabledEngines) {
+    sqrlConfig.setProperty(ENABLED_ENGINES_KEY, enabledEngines);
   }
 
   @Override

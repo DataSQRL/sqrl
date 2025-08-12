@@ -30,7 +30,7 @@ public interface PackageJson {
 
   List<String> getEnabledEngines();
 
-  void setPipeline(List<String> pipeline);
+  void setEnabledEngines(List<String> enabledEngines);
 
   EnginesConfig getEngines();
 
