@@ -53,13 +53,13 @@ class PackageJsonImplTest {
   }
 
   @Test
-  void givenPackageJson_whenSetPipeline_thenUpdatesEnabledEngines() {
+  void givenPackageJson_whenSetEnabledEngines_thenUpdatesEnabledEngines() {
     var packageJson = new PackageJsonImpl(config);
 
-    List<String> pipeline = List.of("stage1", "stage2", "stage3");
-    packageJson.setPipeline(pipeline);
+    var enabledEngines = List.of("stage1", "stage2", "stage3");
+    packageJson.setEnabledEngines(enabledEngines);
 
-    assertThat(packageJson.getEnabledEngines()).containsExactlyInAnyOrderElementsOf(pipeline);
+    assertThat(packageJson.getEnabledEngines()).containsExactlyInAnyOrderElementsOf(enabledEngines);
   }
 
   @Test
