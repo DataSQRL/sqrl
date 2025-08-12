@@ -165,7 +165,7 @@
     <flink-connector-postgres-cdc.version>3.4.0</flink-connector-postgres-cdc.version>
     <zookeeper.version>3.9.3</zookeeper.version>
     <snakeyaml.version>2.4</snakeyaml.version>
-    <aws-sdk-bom.version>2.32.19</aws-sdk-bom.version>
+    <aws-sdk-bom.version>2.32.20</aws-sdk-bom.version>
     <openai-gpt3-java.version>0.18.2</openai-gpt3-java.version>
     <flink-client.version>1.1.4</flink-client.version>
 
