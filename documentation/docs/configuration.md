@@ -117,15 +117,21 @@ No mandatory keys. Physical DDL (tables, indexes, views) is produced automatical
 
 ### Iceberg (`iceberg`)
 
-Used as a *table-format* engine together with a query engine such as Flink or Snowflake.
+Used as a *table-format* engine together with a query engine such as Flink, Snowflake, or DuckDB.
+
+### DuckDB (`duckdb`)
+
+| Key   | Type       | Default          | Description    |
+|-------|------------|------------------|----------------|
+| `url` | **string** | `"jdbc:duckdb:"` | Full JDBC URL. |
 
 ### Snowflake (`snowflake`)
 
-| Key               | Type         | Default | Description                          |
-|-------------------|--------------|---------|--------------------------------------|
-| `catalog-name`    | string       | –       | Glue catalog.                        |
-| `external-volume` | string       | –       | Snowflake external volume name.      |
-| `url`             | string       | –       | Full JDBC URL including auth params. |
+| Key               | Type       | Default | Description                          |
+|-------------------|------------|---------|--------------------------------------|
+| `catalog-name`    | **string** | –       | Glue catalog.                        |
+| `external-volume` | **string** | –       | Snowflake external volume name.      |
+| `url`             | **string** | –       | Full JDBC URL including auth params. |
 
 ---
 
@@ -298,6 +304,9 @@ The built-in fallback (excerpt - full version [here](https://raw.githubuserconte
         "table.exec.resource.default-parallelism": 1,
         "taskmanager.memory.network.max": "800m"
       }
+    },
+    "duckdb": {
+      "url": "jdbc:duckdb:"
     }
   },
   "compiler": {

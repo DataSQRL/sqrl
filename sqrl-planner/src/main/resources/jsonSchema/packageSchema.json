@@ -114,6 +114,15 @@
       "type": "object",
       "minProperties": 1,
       "properties": {
+        "duckdb": {
+          "type": "object",
+          "properties": {
+            "url": {
+              "type": "string"
+            }
+          },
+          "required": ["url"]
+        },
         "flink": {
           "type": "object",
           "minProperties": 1,

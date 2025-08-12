@@ -18,8 +18,14 @@ package com.datasqrl.engine.server;
 import com.datasqrl.config.EngineFactory;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.engine.IExecutionEngine;
+import com.datasqrl.engine.database.relational.DuckDBEngineFactory;
+import com.datasqrl.engine.database.relational.SnowflakeEngineFactory;
 import com.google.auto.service.AutoService;
 import com.google.inject.Inject;
+import io.vertx.core.json.JsonObject;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 @AutoService(EngineFactory.class)
 public class VertxEngineFactory extends GenericJavaServerEngineFactory {
@@ -40,7 +46,47 @@ public class VertxEngineFactory extends GenericJavaServerEngineFactory {
 
     @Inject
     public VertxEngine(PackageJson packageJson) {
-      super(ENGINE_NAME, packageJson);
+      super(ENGINE_NAME, packageJson, getQueryEngineConfigs(packageJson));
+    }
+
+    // TODO ferenc: This is temporary until we get away from JsonObject,
+    //  after that this should be generalized
+    private static List<JsonObject> getQueryEngineConfigs(PackageJson packageJson) {
+      var configs = new ArrayList<JsonObject>();
+
+      getDuckDbConfig(packageJson).map(configs::add);
+      getSnowflakeConfig(packageJson).map(configs::add);
+
+      return List.copyOf(configs);
+    }
+
+    private static Optional<JsonObject> getDuckDbConfig(PackageJson packageJson) {
+      var url = getUrl(packageJson, DuckDBEngineFactory.ENGINE_NAME);
+      if (url == null) {
+        return Optional.empty();
+      }
+
+      return Optional.of(JsonObject.of("duckDbConfig", JsonObject.of("url", url)));
+    }
+
+    private static Optional<JsonObject> getSnowflakeConfig(PackageJson packageJson) {
+      var url = getUrl(packageJson, SnowflakeEngineFactory.ENGINE_NAME);
+      if (url == null) {
+        return Optional.empty();
+      }
+
+      return Optional.of(JsonObject.of("snowflakeConfig", JsonObject.of("url", url)));
+    }
+
+    private static String getUrl(PackageJson packageJson, String engineName) {
+      if (!packageJson.getEnabledEngines().contains(engineName)) {
+        return null;
+      }
+
+      return packageJson
+          .getEngines()
+          .getEngineConfigOrEmpty(engineName)
+          .getSetting("url", Optional.empty());
     }
   }
 }

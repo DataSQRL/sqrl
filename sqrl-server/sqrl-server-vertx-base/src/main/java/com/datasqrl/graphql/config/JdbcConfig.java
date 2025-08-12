@@ -26,10 +26,8 @@ import lombok.Setter;
 public class JdbcConfig {
 
   private String url;
-  private String driver;
 
   public JdbcConfig(JsonObject json) {
     url = json.getString("url");
-    driver = json.getString("driver");
   }
 }

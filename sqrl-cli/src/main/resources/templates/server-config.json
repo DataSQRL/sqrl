@@ -196,12 +196,6 @@
     "bootstrap.servers" : "${KAFKA_BOOTSTRAP_SERVERS}",
     "auto.offset.reset" : "latest"
   },
-  "duckDbConfig" : {
-    "url" : "jdbc:duckdb:",
-    "driver" : null
-  },
-  "snowflakeConfig" : {
-    "url" : "${SNOWFLAKE_URL}",
-    "driver" : null
-  }
+  "duckDbConfig" : null,
+  "snowflakeConfig" : null
 }
