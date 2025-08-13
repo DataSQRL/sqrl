@@ -22,18 +22,6 @@ const header: HomepageHeaderProps = {
 };
 
 const Support = [
-  // {
-  //   title: 'Slack',
-  //   image: '/img/logos/slack_sqrl.svg',
-  //   link: 'https://join.slack.com/t/datasqrlcommunity/shared_invite/zt-2l3rl1g6o-im6YXYCqU7t55CNaHqz_Kg',
-  //   linkText: 'Share Your Thoughts',
-  //   description: (
-  //       <>
-  //         If you want to talk to the community, ask questions, brainstorm on your problem or tune into the development process behind DataSQRL,
-  //         join us <Link to="https://join.slack.com/t/datasqrlcommunity/shared_invite/zt-2l3rl1g6o-im6YXYCqU7t55CNaHqz_Kg">on Slack</Link>. Get help and share your thoughts while watching how the sausage gets made.
-  //       </>
-  //   ),
-  // },
   {
     title: 'GitHub',
     image: '/img/logos/github.svg',
@@ -74,6 +62,18 @@ const Support = [
         </>
     ),
   },
+  // {
+  //   title: 'Slack',
+  //   image: '/img/logos/slack_sqrl.svg',
+  //   link: 'https://join.slack.com/t/datasqrlcommunity/shared_invite/zt-2l3rl1g6o-im6YXYCqU7t55CNaHqz_Kg',
+  //   linkText: 'Share Your Thoughts',
+  //   description: (
+  //       <>
+  //         If you want to talk to the community, ask questions, brainstorm on your problem or tune into the development process behind DataSQRL,
+  //         join us <Link to="https://join.slack.com/t/datasqrlcommunity/shared_invite/zt-2l3rl1g6o-im6YXYCqU7t55CNaHqz_Kg">on Slack</Link>. Get help and share your thoughts while watching how the sausage gets made.
+  //       </>
+  //   ),
+  // },
 ];
 
 const Updates = [
