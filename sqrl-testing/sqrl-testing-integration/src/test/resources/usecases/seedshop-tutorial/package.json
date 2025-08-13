@@ -3,6 +3,11 @@
   "script": {
     "main": "seedshop-extended.sqrl"
   },
+  "dependencies": {
+    "sink": {
+      "folder": "local-sink"
+    }
+  },
   "test-runner": {
     "delay-sec": -1
   }
