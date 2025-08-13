@@ -138,11 +138,7 @@ const config: Config = {
           items: [
             {
               label: 'GitHub',
-              href: 'https://github.com/DataSQRL/sqrl',
-            },
-            {
-              label: 'Slack',
-              href: 'https://join.slack.com/t/datasqrlcommunity/shared_invite/zt-2l3rl1g6o-im6YXYCqU7t55CNaHqz_Kg',
+              href: 'https://github.com/DataSQRL/sqrl/discussions',
             },
             {
               label: 'Updates',
@@ -154,11 +150,11 @@ const config: Config = {
           title: 'More',
           items: [
             {
-              label: 'Talk to Us',
-              to: 'https://join.slack.com/t/datasqrlcommunity/shared_invite/zt-2l3rl1g6o-im6YXYCqU7t55CNaHqz_Kg',
+              label: 'Implementation',
+              href: 'https://github.com/DataSQRL/sqrl',
             },
             {
-              label: 'Support',
+              label: 'File an Issue',
               href: 'https://github.com/DataSQRL/sqrl/issues/new',
             },
           ],

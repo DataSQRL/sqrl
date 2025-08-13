@@ -16,24 +16,24 @@ const header: HomepageHeaderProps = {
         We would love for you to nerd out with us and join our open-source community.
       </>
   ),
-  buttonLink: 'https://join.slack.com/t/datasqrlcommunity/shared_invite/zt-2l3rl1g6o-im6YXYCqU7t55CNaHqz_Kg',
-  buttonText: 'Join us on Slack',
+  buttonLink: 'https://github.com/DataSQRL/sqrl',
+  buttonText: 'Join us on GitHub',
   image: '/img/undraw/community.svg',
 };
 
 const Support = [
-  {
-    title: 'Slack',
-    image: '/img/logos/slack_sqrl.svg',
-    link: 'https://join.slack.com/t/datasqrlcommunity/shared_invite/zt-2l3rl1g6o-im6YXYCqU7t55CNaHqz_Kg',
-    linkText: 'Share Your Thoughts',
-    description: (
-        <>
-          If you want to talk to the community, ask questions, brainstorm on your problem or tune into the development process behind DataSQRL,
-          join us <Link to="https://join.slack.com/t/datasqrlcommunity/shared_invite/zt-2l3rl1g6o-im6YXYCqU7t55CNaHqz_Kg">on Slack</Link>. Get help and share your thoughts while watching how the sausage gets made.
-        </>
-    ),
-  },
+  // {
+  //   title: 'Slack',
+  //   image: '/img/logos/slack_sqrl.svg',
+  //   link: 'https://join.slack.com/t/datasqrlcommunity/shared_invite/zt-2l3rl1g6o-im6YXYCqU7t55CNaHqz_Kg',
+  //   linkText: 'Share Your Thoughts',
+  //   description: (
+  //       <>
+  //         If you want to talk to the community, ask questions, brainstorm on your problem or tune into the development process behind DataSQRL,
+  //         join us <Link to="https://join.slack.com/t/datasqrlcommunity/shared_invite/zt-2l3rl1g6o-im6YXYCqU7t55CNaHqz_Kg">on Slack</Link>. Get help and share your thoughts while watching how the sausage gets made.
+  //       </>
+  //   ),
+  // },
   {
     title: 'GitHub',
     image: '/img/logos/github.svg',
@@ -42,7 +42,9 @@ const Support = [
     description: (
         <>
           <Link to="https://github.com/DataSQRL/sqrl">GitHub</Link> is where all open-source development on DataSQRL takes place.&nbsp;
-          <Link to="https://github.com/DataSQRL/sqrl/issues">File a bug</Link>, star DataSQRL, or contribute to the codebase. That's the beauty of open-source: when
+          <Link to="https://github.com/DataSQRL/sqrl/issues">File a bug</Link>, star DataSQRL,&nbsp;
+          <Link to="https://github.com/DataSQRL/sqrl/discussions/">ask questions</Link>,
+          or contribute to the codebase. That's the beauty of open-source: when
           everybody contributes a little, something great can happen.
         </>
     ),
@@ -56,6 +58,19 @@ const Support = [
         <>
           The <Link to="/blog">DataSQRL blog</Link> regularly publishes articles on the development of
           DataSQRL, how to implement data products, and lessons we learned along the way. Great morning reading.
+        </>
+    ),
+  },
+  {
+    title: 'Youtube',
+    image: '/img/logos/youtube_sqrl.svg',
+    link: 'https://www.youtube.com/@datasqrl',
+    linkText: 'Subscribe',
+    description: (
+        <>
+          We publish tutorial videos, DataSQRL examples, and how-tos on the <Link to="https://www.youtube.com/@datasqrl">DataSQRL Youtube channel</Link>.
+          If you like to learn by watching, this is the place to go.
+          And yes, we are too uncool for TikTok.
         </>
     ),
   },
@@ -75,19 +90,7 @@ const Updates = [
   //       </>
   //   ),
   // },
-  {
-    title: 'Youtube',
-    image: '/img/logos/youtube_sqrl.svg',
-    link: 'https://www.youtube.com/@datasqrl',
-    linkText: 'Subscribe',
-    description: (
-        <>
-          We publish tutorial videos, DataSQRL examples, and how-tos on the <Link to="https://www.youtube.com/@datasqrl">DataSQRL Youtube channel</Link>.
-          If you like to learn by watching, this is the place to go.
-          And yes, we are too uncool for TikTok.
-        </>
-    ),
-  },
+
 ];
 
 
