@@ -51,7 +51,7 @@ CustomerPromotion := SUBSCRIBE SELECT s.customerid, c.first_name, c.last_name, c
         FROM CustomersSpending s JOIN Customers FOR SYSTEM_TIME AS OF `week` c ON s.customerid = c.id
         WHERE s.spend > 250;
 
-EXPORT CustomerPromotion TO mySinkPackage.promotion;
+EXPORT CustomerPromotion TO sink.promotion;
 
 /*+test */
 CustomerPromotionTest := SELECT COUNT(*) AS numPromotions FROM CustomerPromotion;

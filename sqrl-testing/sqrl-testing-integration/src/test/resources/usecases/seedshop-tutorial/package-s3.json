@@ -1,0 +1,22 @@
+{
+  "version": "1",
+  "script": {
+    "main": "seedshop-extended.sqrl"
+  },
+  "engines": {
+    "flink": {
+      "config": {
+        "s3.endpoint": "http://minio:9000",
+        "s3.path.style.access": "true"
+      }
+    }
+  },
+  "dependencies": {
+    "sink": {
+      "folder": "s3-sink"
+    }
+  },
+  "test-runner": {
+    "delay-sec": -1
+  }
+}

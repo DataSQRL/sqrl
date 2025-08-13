@@ -65,6 +65,7 @@ import org.apache.flink.configuration.CheckpointingOptions;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.configuration.ExecutionOptions;
 import org.apache.flink.core.execution.SavepointFormatType;
+import org.apache.flink.core.fs.FileSystem;
 import org.apache.flink.runtime.jobgraph.SavepointConfigOptions;
 import org.apache.flink.table.api.TableResult;
 import org.apache.kafka.clients.admin.AdminClient;
@@ -198,6 +199,7 @@ public class DatasqrlRun {
               flinkConfig.set(SavepointConfigOptions.SAVEPOINT_PATH, sp);
             });
 
+    FileSystem.initialize(flinkConfig, null);
     SqrlRunner runner = new SqrlRunner(execMode, flinkConfig, resolver, sqlFile, planFile, udfPath);
 
     return runner.run();
