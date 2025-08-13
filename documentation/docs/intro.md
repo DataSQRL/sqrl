@@ -98,7 +98,7 @@ The compiler automatically generates all necessary:
 DataSQRL is open source and community-driven. Get help and contribute:
 
 - 🐛 **Issues**: [GitHub Issues](https://github.com/DataSQRL/sqrl/issues)
-- 💬 **Community**: [DataSQRL Slack](https://join.slack.com/t/datasqrlcommunity/shared_invite/zt-2l3rl1g6o-im6YXYCqU7t55CNaHqz_Kg)
+- 💬 **Community**: [GitHub Discussions](https://github.com/DataSQRL/sqrl/discussions/)
 - 🎯 **Examples**: [DataSQRL Examples Repository](https://github.com/DataSQRL/datasqrl-examples)
 
 We welcome feedback, bug reports, and contributions to help make data pipeline development faster and more reliable for everyone.
