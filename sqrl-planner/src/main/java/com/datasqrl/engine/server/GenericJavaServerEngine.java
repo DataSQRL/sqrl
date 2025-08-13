@@ -24,10 +24,9 @@ import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.EnginePhysicalPlan.DeploymentArtifact;
 import com.datasqrl.engine.ExecutionEngine;
-import com.datasqrl.engine.database.relational.DuckDBEngineFactory;
-import com.datasqrl.engine.database.relational.SnowflakeEngineFactory;
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.config.ServerConfigUtil;
+import com.datasqrl.planner.dag.plan.ServerStagePlan;
 import io.vertx.core.json.JsonObject;
 import java.util.List;
 import lombok.SneakyThrows;
@@ -38,17 +37,22 @@ import lombok.extern.slf4j.Slf4j;
 public abstract class GenericJavaServerEngine extends ExecutionEngine.Base implements ServerEngine {
 
   private final EngineConfig engineConfig;
-  private final List<String> enabledEngines;
+  private final List<JsonObject> queryEngineConfigs;
 
-  public GenericJavaServerEngine(String engineName, PackageJson packageJson) {
+  GenericJavaServerEngine(String engineName, PackageJson packageJson) {
+    this(engineName, packageJson, List.of());
+  }
+
+  GenericJavaServerEngine(
+      String engineName, PackageJson packageJson, List<JsonObject> queryEngineConfigs) {
     super(engineName, EngineType.SERVER, NO_CAPABILITIES);
-    engineConfig = packageJson.getEngines().getEngineConfigOrEmpty(engineName);
-    enabledEngines = packageJson.getEnabledEngines();
+    this.engineConfig = packageJson.getEngines().getEngineConfigOrEmpty(engineName);
+    this.queryEngineConfigs = queryEngineConfigs;
   }
 
   @Override
   @SneakyThrows
-  public EnginePhysicalPlan plan(com.datasqrl.planner.dag.plan.ServerStagePlan serverPlan) {
+  public EnginePhysicalPlan plan(ServerStagePlan serverPlan) {
     serverPlan.getFunctions().stream()
         .filter(fct -> fct.getExecutableQuery() == null)
         .forEach(
@@ -70,20 +74,14 @@ public abstract class GenericJavaServerEngine extends ExecutionEngine.Base imple
 
   @SneakyThrows
   ServerConfig readDefaultConfig() {
-    ServerConfig serverConfig;
     try (var input = getClass().getResourceAsStream("/templates/server-config.json")) {
       var json = MAPPER.readValue(input, JsonObject.class);
-      disableConfigIfNeeded(json, DuckDBEngineFactory.ENGINE_NAME, "duckDbConfig");
-      disableConfigIfNeeded(json, SnowflakeEngineFactory.ENGINE_NAME, "snowflakeConfig");
 
-      serverConfig = new ServerConfig(json);
-    }
-    return serverConfig;
-  }
+      for (JsonObject queryEngineConfig : queryEngineConfigs) {
+        json.mergeIn(queryEngineConfig);
+      }
 
-  private void disableConfigIfNeeded(JsonObject json, String engineName, String configName) {
-    if (!enabledEngines.contains(engineName)) {
-      json.putNull(configName);
+      return new ServerConfig(json);
     }
   }
 }
