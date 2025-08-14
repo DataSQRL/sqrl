@@ -30,11 +30,11 @@ import com.datasqrl.graphql.jdbc.DatabaseType;
 import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.dag.plan.MaterializationStagePlan;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NonNull;
@@ -94,16 +94,27 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
     // Create extensions
     planBuilder.statements(stmtFactory.extractExtensions(stagePlan.getQueries()));
     // Create tables
-    Set<String> tableNames = new HashSet<>();
+    var tableNames = new HashSet<String>();
+    var duplicateTableNames = new ArrayList<String>();
     var jdbcCreateTables =
         stagePlan.getTables().stream().map(JdbcEngineCreateTable.class::cast).toList();
-    jdbcCreateTables.stream()
-        .map(stmtFactory::createTable)
-        .forEach(
-            stmt -> {
-              planBuilder.statement(stmt);
-              tableNames.add(stmt.getName());
-            });
+
+    for (JdbcEngineCreateTable jdbcCreateTable : jdbcCreateTables) {
+      var stmt = stmtFactory.createTable(jdbcCreateTable);
+      planBuilder.statement(stmt);
+      if (!tableNames.add(stmt.getName())) {
+        duplicateTableNames.add(stmt.getName());
+      }
+    }
+
+    if (!duplicateTableNames.isEmpty()) {
+      throw new IllegalStateException(
+          ("Duplicate table(s) detected: %s."
+                  + " This most likely occurs with AWS Glue tables, which are automatically lowercased."
+                  + " For AWS Glue, ensure that the SQRL script does not use table names that differ only by case.")
+              .formatted(duplicateTableNames));
+    }
+
     Map<String, JdbcEngineCreateTable> tableIdMap =
         jdbcCreateTables.stream()
             .collect(
