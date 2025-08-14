@@ -65,9 +65,13 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
     this.connector = connectorFactory.getOptionalConfig(getName());
   }
 
+  public abstract JdbcStatementFactory getStatementFactory();
+
   protected abstract JdbcDialect getDialect();
 
   protected abstract DatabaseType getDatabaseType();
+
+  protected abstract String getConnectorTableName(FlinkTableBuilder tableBuilder);
 
   public EngineCreateTable createTable(
       ExecutionStage stage,
@@ -75,22 +79,13 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
       FlinkTableBuilder tableBuilder,
       RelDataType relDataType,
       Optional<TableAnalysis> tableAnalysis) {
-    var tableId = tableBuilder.getTableName();
-    var connect =
-        connector.orElseThrow(
-            () ->
-                new IllegalArgumentException(
-                    "Missing Flink connector configuration for engine: " + getName()));
-    tableBuilder.setConnectorOptions(
-        connect.toMapWithSubstitution(
-            Context.builder().tableName(originalTableName).tableId(tableId).build()));
+
+    var connectorOptions = getConnectorOptions(originalTableName, tableBuilder.getTableName());
+    tableBuilder.setConnectorOptions(connectorOptions);
+
     return new JdbcEngineCreateTable(
         getConnectorTableName(tableBuilder), tableBuilder, relDataType, tableAnalysis.get());
   }
-
-  public abstract String getConnectorTableName(FlinkTableBuilder tableBuilder);
-
-  public abstract JdbcStatementFactory getStatementFactory();
 
   public EnginePhysicalPlan plan(MaterializationStagePlan stagePlan) {
     var stmtFactory = getStatementFactory();
@@ -138,5 +133,17 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
               });
     }
     return planBuilder.build();
+  }
+
+  protected Map<String, String> getConnectorOptions(String originalTableName, String tableId) {
+    return connector
+        .map(
+            connConf ->
+                connConf.toMapWithSubstitution(
+                    Context.builder().tableName(originalTableName).tableId(tableId).build()))
+        .orElseThrow(
+            () ->
+                new IllegalArgumentException(
+                    "Missing Flink connector configuration for engine: " + getName()));
   }
 }

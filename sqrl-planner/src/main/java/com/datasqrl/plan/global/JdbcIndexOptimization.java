@@ -33,7 +33,7 @@ public class JdbcIndexOptimization implements PhysicalPlanRewriter {
   @Override
   public boolean appliesTo(EnginePhysicalPlan plan) {
     return plan instanceof JdbcPhysicalPlan jpp
-        && ((JdbcPhysicalPlan) plan).stage().getEngine() instanceof AbstractJDBCDatabaseEngine;
+        && jpp.stage().getEngine() instanceof AbstractJDBCDatabaseEngine;
   }
 
   @Override

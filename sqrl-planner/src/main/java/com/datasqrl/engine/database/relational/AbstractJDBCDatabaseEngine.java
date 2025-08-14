@@ -50,7 +50,7 @@ public abstract class AbstractJDBCDatabaseEngine extends AbstractJDBCEngine
   }
 
   @Override
-  public String getConnectorTableName(FlinkTableBuilder tableBuilder) {
+  protected String getConnectorTableName(FlinkTableBuilder tableBuilder) {
     return tableBuilder.getConnectorOptions().get(CONNECTOR_TABLENAME_KEY);
   }
 
