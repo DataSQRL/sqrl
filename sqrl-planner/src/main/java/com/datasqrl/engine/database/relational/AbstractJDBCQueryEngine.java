@@ -33,7 +33,7 @@ public abstract class AbstractJDBCQueryEngine extends AbstractJDBCEngine impleme
   }
 
   @Override
-  public String getConnectorTableName(FlinkTableBuilder tableBuilder) {
+  protected String getConnectorTableName(FlinkTableBuilder tableBuilder) {
     throw new UnsupportedOperationException();
   }
 }

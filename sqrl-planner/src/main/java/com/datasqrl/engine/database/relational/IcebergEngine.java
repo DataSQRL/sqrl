@@ -23,11 +23,17 @@ import com.datasqrl.datatype.flink.iceberg.IcebergDataTypeMapper;
 import com.datasqrl.engine.database.QueryEngine;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
 import com.google.inject.Inject;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.regex.Pattern;
 import lombok.NonNull;
 
 public class IcebergEngine extends AbstractJDBCTableFormatEngine {
 
-  public static final String CONNECTOR_TABLENAME_KEY = "catalog-table";
+  private static final String CATALOG_TABLE_KEY = "catalog-table";
+  private static final String CATALOG_IMPL_KEY = "catalog-impl";
+
+  private static final Pattern GLUE_TABLE_PATTERN = Pattern.compile("^[a-z0-9_]{1,255}$");
 
   @Inject
   public IcebergEngine(@NonNull PackageJson json, ConnectorFactoryFactory connectorFactory) {
@@ -49,7 +55,7 @@ public class IcebergEngine extends AbstractJDBCTableFormatEngine {
 
   @Override
   public String getConnectorTableName(FlinkTableBuilder tableBuilder) {
-    return tableBuilder.getConnectorOptions().get(CONNECTOR_TABLENAME_KEY);
+    return tableBuilder.getConnectorOptions().get(CATALOG_TABLE_KEY);
   }
 
   @Override
@@ -60,5 +66,41 @@ public class IcebergEngine extends AbstractJDBCTableFormatEngine {
   @Override
   public DataTypeMapping getTypeMapping() {
     return new IcebergDataTypeMapper();
+  }
+
+  @Override
+  protected Map<String, String> getConnectorOptions(String originalTableName, String tableId) {
+    var connectorOptions = super.getConnectorOptions(originalTableName, tableId);
+
+    if (!isGlueCatalog(connectorOptions)) {
+      return connectorOptions;
+    }
+
+    var tableName = connectorOptions.get(CATALOG_TABLE_KEY);
+    tableName = validatedGlueTableName(tableName);
+
+    var mutableOptions = new HashMap<>(connectorOptions);
+    mutableOptions.put(CATALOG_TABLE_KEY, tableName);
+
+    return mutableOptions;
+  }
+
+  private boolean isGlueCatalog(Map<String, String> connectorOptions) {
+    var catalogImpl = connectorOptions.get(CATALOG_IMPL_KEY);
+
+    return catalogImpl != null && catalogImpl.endsWith("GlueCatalog");
+  }
+
+  /** AWS GlueCatalog names have to match {@code GLUE_TABLE_PATTERN}. */
+  private String validatedGlueTableName(String tableName) {
+    var loweredTableName = tableName.toLowerCase();
+
+    if (GLUE_TABLE_PATTERN.matcher(loweredTableName).matches()) {
+      return loweredTableName;
+    }
+
+    throw new IllegalArgumentException(
+        "Invalid AWS Glue table name: '%s'. Name has to match: %s"
+            .formatted(loweredTableName, GLUE_TABLE_PATTERN));
   }
 }
