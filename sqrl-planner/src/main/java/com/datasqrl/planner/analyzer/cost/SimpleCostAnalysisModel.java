@@ -37,14 +37,14 @@ public record SimpleCostAnalysisModel(@NonNull Type type) implements CostModel {
 
   public Simple getCost(ExecutionStage executionStage, TableAnalysis tableAnalysis) {
     var cost = 1.0;
-    switch (executionStage.getEngine().getType()) {
+    switch (executionStage.engine().getType()) {
       case DATABASE:
         // Currently we make the simplifying assumption that database execution is the baseline and
         // we compare
         // other engines against it
         // However, if the database is a table format, we apply a penalty because query engines are
         // less efficient.
-        if (executionStage.getEngine() instanceof AnalyticDatabaseEngine) {
+        if (executionStage.engine() instanceof AnalyticDatabaseEngine) {
           cost = cost * 1.3;
         }
         break;
@@ -74,7 +74,7 @@ public record SimpleCostAnalysisModel(@NonNull Type type) implements CostModel {
         break;
       default:
         throw new UnsupportedOperationException(
-            "Unsupported engine type: " + executionStage.getEngine().getType());
+            "Unsupported engine type: " + executionStage.engine().getType());
     }
     return new Simple(cost);
   }

@@ -27,6 +27,7 @@ import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.config.ServerConfigUtil;
 import com.datasqrl.planner.dag.plan.ServerStagePlan;
+import com.datasqrl.planner.tables.SqrlTableFunction;
 import io.vertx.core.json.JsonObject;
 import java.util.List;
 import lombok.SneakyThrows;
@@ -53,17 +54,22 @@ public abstract class GenericJavaServerEngine extends ExecutionEngine.Base imple
   @Override
   @SneakyThrows
   public EnginePhysicalPlan plan(ServerStagePlan serverPlan) {
-    serverPlan.getFunctions().stream()
-        .filter(fct -> fct.getExecutableQuery() == null)
-        .forEach(
-            fct -> {
-              throw new IllegalStateException("Function has not been planned: " + fct);
-            });
+    validateFunctions(serverPlan.getFunctions());
 
     return new ServerPhysicalPlan(
         serverPlan.getFunctions(),
         serverPlan.getMutations(),
         List.of(new DeploymentArtifact("-config.json", serverConfig())));
+  }
+
+  private void validateFunctions(List<SqrlTableFunction> functions) {
+    var invalidFunctions =
+        functions.stream().filter(fn -> fn.getExecutableQuery() == null).toList();
+
+    if (!invalidFunctions.isEmpty()) {
+      throw new IllegalStateException(
+          "Found function(s) that has not been planned: " + invalidFunctions);
+    }
   }
 
   @SneakyThrows

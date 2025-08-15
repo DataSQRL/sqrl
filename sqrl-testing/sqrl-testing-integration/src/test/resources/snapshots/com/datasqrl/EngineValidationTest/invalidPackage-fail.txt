@@ -1,0 +1,2 @@
+[FATAL] Engine 'iceberg' requires a query engine, but none are listed under 'enabled-engines'. Available options: [duckdb, snowflake]
+

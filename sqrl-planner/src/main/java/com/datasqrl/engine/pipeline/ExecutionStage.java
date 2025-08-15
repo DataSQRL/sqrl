@@ -23,33 +23,31 @@ import org.apache.calcite.sql.SqlOperator;
 
 public interface ExecutionStage {
 
-  String getName();
+  String name();
 
   default boolean supportsAllFeatures(Collection<EngineFeature> capabilities) {
     return capabilities.stream().allMatch(this::supportsFeature);
   }
 
   default EngineType getType() {
-    return getEngine().getType();
+    return engine().getType();
   }
 
   boolean supportsFeature(EngineFeature capability);
 
-  //  boolean supportsFunction(FunctionDefinition function);
-
   default boolean isRead() {
-    return getEngine().getType().isRead();
+    return engine().getType().isRead();
   }
 
   default boolean isWrite() {
-    return getEngine().getType().isWrite();
+    return engine().getType().isWrite();
   }
 
   default boolean isCompute() {
-    return getEngine().getType().isCompute();
+    return engine().getType().isCompute();
   }
 
-  ExecutionEngine getEngine();
+  ExecutionEngine engine();
 
   default boolean supportsFunction(SqlOperator operator) {
     return true;

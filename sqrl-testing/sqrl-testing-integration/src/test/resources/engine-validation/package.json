@@ -1,0 +1,11 @@
+{
+  "version": "1",
+  "enabled-engines": ["flink", "iceberg", "vertx"],
+  "connectors" : {
+    "iceberg" : {
+      "warehouse":"warehouse",
+      "catalog-type":"hadoop",
+      "catalog-name": "mydatabase"
+    }
+  }
+}

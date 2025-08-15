@@ -62,7 +62,7 @@ public class CompilationProcess {
     var environment =
         new Sqrl2FlinkSQLTranslator(
             buildPath,
-            (FlinkStreamEngine) planner.getStreamStage().getEngine(),
+            (FlinkStreamEngine) planner.getStreamStage().engine(),
             config.getCompilerConfig());
     planner.planMain(mainScript, environment);
     var dagBuilder = planner.getDagBuilder();

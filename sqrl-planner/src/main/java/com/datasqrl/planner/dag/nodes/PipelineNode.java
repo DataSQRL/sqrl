@@ -96,7 +96,7 @@ public abstract class PipelineNode implements AbstractDAG.Node, Comparable<Pipel
       return "no stages found";
     }
     return stageAnalysis.values().stream()
-        .map(stage -> stage.getStage().getName() + ": " + stage.getMessage())
+        .map(stage -> stage.getStage().name() + ": " + stage.getMessage())
         .collect(Collectors.joining("\n"));
   }
 

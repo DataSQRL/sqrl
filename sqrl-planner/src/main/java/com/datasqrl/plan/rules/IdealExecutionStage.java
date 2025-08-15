@@ -27,7 +27,7 @@ public final class IdealExecutionStage implements ExecutionStage {
   public static final String NAME = "IDEAL";
 
   @Override
-  public String getName() {
+  public String name() {
     return NAME;
   }
 
@@ -37,7 +37,7 @@ public final class IdealExecutionStage implements ExecutionStage {
   }
 
   @Override
-  public ExecutionEngine getEngine() {
+  public ExecutionEngine engine() {
     throw new UnsupportedOperationException();
   }
 }

@@ -20,6 +20,7 @@ import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrinter;
 import com.datasqrl.util.OsProcessManager;
+import com.google.inject.ProvisionException;
 import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.SneakyThrows;
@@ -47,10 +48,14 @@ public abstract class AbstractCmd implements Runnable, IExitCodeGenerator {
     try {
       runInternal(collector);
       cli.statusHook.onSuccess(collector);
-    } catch (CollectedException e) {
-      if (e.isInternalError()) e.printStackTrace();
-      e.printStackTrace();
-      cli.statusHook.onFailure(e, collector);
+
+    } catch (ProvisionException | CollectedException e) {
+      var ce = unwrapCollectedException(e);
+      if (ce.isInternalError()) {
+        ce.printStackTrace();
+      }
+      cli.statusHook.onFailure(ce, collector);
+
     } catch (Throwable e) { // unknown exception
       collector.getCatcher().handle(e);
       e.printStackTrace();
@@ -89,5 +94,29 @@ public abstract class AbstractCmd implements Runnable, IExitCodeGenerator {
   @Override
   public int getExitCode() {
     return exitCode.get();
+  }
+
+  /**
+   * Unwraps {@link CollectedException} from Guice {@link ProvisionException} wrappers to provide
+   * clean error messages.
+   *
+   * <p>Validation errors during dependency injection (e.g., in pipeline configuration) are thrown
+   * as {@link CollectedException} with clear messages. Guice wraps them in {@link
+   * ProvisionException}, obscuring the original error with verbose DI stack traces.
+   *
+   * @param e the runtime exception that may be a CollectedException or contain one as a cause
+   * @return the unwrapped CollectedException
+   * @throws RuntimeException the original exception if it doesn't contain a CollectedException
+   */
+  private CollectedException unwrapCollectedException(RuntimeException e) {
+    if (e instanceof CollectedException ce) {
+      return ce;
+    }
+
+    if (e.getCause() instanceof CollectedException ce) {
+      return ce;
+    }
+
+    throw e;
   }
 }

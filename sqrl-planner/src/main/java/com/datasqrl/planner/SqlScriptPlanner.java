@@ -168,17 +168,17 @@ public class SqlScriptPlanner {
     and server_subscribe to tables and subscription stages.
      */
     this.tableStages =
-        pipeline.getStages().stream()
+        pipeline.stages().stream()
             .filter(
                 stage ->
                     stage.getType() == EngineType.DATABASE || stage.getType() == EngineType.STREAMS)
             .collect(Collectors.toList());
     this.queryStages =
-        pipeline.getStages().stream()
+        pipeline.stages().stream()
             .filter(stage -> stage.getType() == EngineType.DATABASE)
             .collect(Collectors.toList());
     this.subscriptionStages =
-        pipeline.getStages().stream()
+        pipeline.stages().stream()
             .filter(stage -> stage.getType() == EngineType.LOG)
             .collect(Collectors.toList());
   }
@@ -566,8 +566,8 @@ public class SqlScriptPlanner {
                       execHint.getStageNames().stream()
                           .anyMatch(
                               name ->
-                                  stage.getName().equalsIgnoreCase(name)
-                                      || stage.getEngine().getType().name().equalsIgnoreCase(name)))
+                                  stage.name().equalsIgnoreCase(name)
+                                      || stage.engine().getType().name().equalsIgnoreCase(name)))
               .collect(Collectors.toList());
       if (availableStages.isEmpty()) {
         throw new StatementParserException(
@@ -815,7 +815,7 @@ public class SqlScriptPlanner {
             "CREATE TABLE requires that a log engine is configured that supports mutations");
       };
     }
-    var engine = (LogEngine) logStage.get().getEngine();
+    var engine = (LogEngine) logStage.get().engine();
     return (tableBuilder, datatype) -> {
       var originalTableName = tableBuilder.getTableName();
       var mutationBuilder = MutationQuery.builder();

@@ -26,10 +26,10 @@ import java.util.stream.Collectors;
 
 public interface ExecutionPipeline {
 
-  List<ExecutionStage> getStages();
+  List<ExecutionStage> stages();
 
   default List<ExecutionStage> getReadStages() {
-    return getStages().stream().filter(ExecutionStage::isRead).collect(Collectors.toList());
+    return stages().stream().filter(ExecutionStage::isRead).collect(Collectors.toList());
   }
 
   /**
@@ -40,12 +40,12 @@ public interface ExecutionPipeline {
   default Optional<ServerEngine> getServerEngine() {
     return StreamUtil.getOnlyElement(
         getStagesByType(EngineType.SERVER).stream()
-            .map(stage -> (ServerEngine) stage.getEngine())
+            .map(stage -> (ServerEngine) stage.engine())
             .distinct());
   }
 
   default boolean hasReadStages() {
-    return getStages().stream().anyMatch(ExecutionStage::isRead);
+    return stages().stream().anyMatch(ExecutionStage::isRead);
   }
 
   Set<ExecutionStage> getUpStreamFrom(ExecutionStage stage);
@@ -54,18 +54,18 @@ public interface ExecutionPipeline {
 
   default Optional<ExecutionStage> getStage(String name) {
     return StreamUtil.getOnlyElement(
-        getStages().stream().filter(s -> s.getName().equalsIgnoreCase(name)));
+        stages().stream().filter(s -> s.name().equalsIgnoreCase(name)));
   }
 
   default Optional<ExecutionStage> getMutationStage() {
     return StreamUtil.getOnlyElement(
         getStagesByType(EngineType.LOG).stream()
-            .filter(stage -> stage.getEngine().supports(EngineFeature.MUTATIONS)));
+            .filter(stage -> stage.engine().supports(EngineFeature.MUTATIONS)));
   }
 
   default Optional<ExecutionStage> getStageByType(EngineType type) {
     return StreamUtil.getOnlyElement(
-        getStages().stream().filter(s -> s.getEngine().getType().equals(type)));
+        stages().stream().filter(s -> s.engine().getType().equals(type)));
   }
 
   /**
@@ -77,8 +77,8 @@ public interface ExecutionPipeline {
    * @return the stage for a given {@link EngineType}.
    */
   default List<ExecutionStage> getStagesByType(EngineType type) {
-    return getStages().stream()
-        .filter(s -> s.getEngine().getType().equals(type))
+    return stages().stream()
+        .filter(s -> s.engine().getType().equals(type))
         .collect(Collectors.toList());
   }
 }
