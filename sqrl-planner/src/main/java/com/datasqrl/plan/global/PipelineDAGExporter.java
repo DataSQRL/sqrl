@@ -71,7 +71,7 @@ public class PipelineDAGExporter {
               .map(PipelineNode::getId)
               .sorted()
               .collect(Collectors.toUnmodifiableList());
-      var stage = node.getChosenStage().getEngine().getName().toLowerCase();
+      var stage = node.getChosenStage().engine().getName().toLowerCase();
       if (node instanceof TableNode tableNode) {
         var table = tableNode.getTableAnalysis();
         if (table.getSourceSinkTable().isPresent()) {

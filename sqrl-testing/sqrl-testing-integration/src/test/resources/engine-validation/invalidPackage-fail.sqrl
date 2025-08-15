@@ -1,0 +1,2 @@
+Numbers := SELECT * FROM (VALUES (1), (2), (3), (4), (5)) AS T(id);
+Numbers2 := SELECT * FROM (VALUES (1), (2), (3), (4), (4)) AS T(id);

@@ -37,7 +37,7 @@ public abstract class StageAnalysis {
   }
 
   public String getName() {
-    return stage.getName();
+    return stage.name();
   }
 
   @Value

@@ -291,7 +291,7 @@ public class Packager {
     // We'll write a single asset for each folder in the physical plan stage, plus any deployment
     // artifacts that the plan has
     for (PhysicalStagePlan stagePlan : plan.getStagePlans()) {
-      writePlan(stagePlan.getStage().getName(), stagePlan.getPlan(), planDir);
+      writePlan(stagePlan.getStage().name(), stagePlan.getPlan(), planDir);
     }
 
     if (testPlan != null) {

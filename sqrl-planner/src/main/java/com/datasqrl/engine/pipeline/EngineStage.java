@@ -17,22 +17,11 @@ package com.datasqrl.engine.pipeline;
 
 import com.datasqrl.engine.EngineFeature;
 import com.datasqrl.engine.ExecutionEngine;
-import lombok.Value;
 
-@Value
-public class EngineStage implements ExecutionStage {
-
-  String name;
-  ExecutionEngine engine;
+public record EngineStage(String name, ExecutionEngine engine) implements ExecutionStage {
 
   @Override
   public boolean supportsFeature(EngineFeature capability) {
     return engine.supports(capability);
   }
-
-  //  @Override
-  //  public boolean supportsFunction(FunctionDefinition function) {
-  //    return engine.supports(function);
-  //  }
-
 }

@@ -17,7 +17,6 @@ package com.datasqrl.config;
 
 import com.datasqrl.cli.EngineIds;
 import com.datasqrl.engine.ExecutionEngine;
-import com.datasqrl.engine.IExecutionEngine;
 import com.datasqrl.engine.database.DatabaseEngine;
 import com.datasqrl.engine.database.QueryEngine;
 import com.datasqrl.engine.export.PrintEngineFactory;
@@ -35,13 +34,8 @@ import java.util.Optional;
 import java.util.Set;
 import lombok.Getter;
 import lombok.NonNull;
-import org.apache.commons.lang3.tuple.Pair;
 
-/**
- * Configuration for the engines
- *
- * <p>
- */
+/** Configuration for the engines */
 public class PipelineFactory {
 
   public static final List<String> defaultEngines = List.of(PrintEngineFactory.NAME);
@@ -59,10 +53,20 @@ public class PipelineFactory {
     this.engineConfig = engineConfig;
   }
 
+  public ExecutionPipeline createPipeline() {
+    var errorCollector = injector.getInstance(ErrorCollector.class);
+    return SimplePipeline.of(getEngines(), errorCollector);
+  }
+
+  public Map<String, ExecutionEngine> getEngines() {
+    return getEngines(Optional.empty());
+  }
+
   private Map<String, ExecutionEngine> getEngines(Optional<EngineType> engineType) {
     Map<String, ExecutionEngine> engines = new HashMap<>();
     Set<String> allEngines = new HashSet<>(enabledEngines);
     allEngines.addAll(defaultEngines);
+
     for (String engineId : allEngines) {
       if (engineId.equalsIgnoreCase(EngineIds.TEST)) {
         continue;
@@ -70,7 +74,7 @@ public class PipelineFactory {
       var engineFactory =
           ServiceLoaderDiscovery.get(EngineFactory.class, EngineFactory::getEngineName, engineId);
 
-      IExecutionEngine engine = injector.getInstance(engineFactory.getFactoryClass());
+      var engine = injector.getInstance(engineFactory.getFactoryClass());
       if (engineType.map(type -> engine.getType() == type).orElse(true)) {
         engines.put(engineId, (ExecutionEngine) engine);
       }
@@ -85,26 +89,5 @@ public class PipelineFactory {
                     .filter(databaseEngine::supportsQueryEngine)
                     .forEach(databaseEngine::addQueryEngine));
     return engines;
-  }
-
-  public Map<String, ExecutionEngine> getEngines() {
-    return getEngines(Optional.empty());
-  }
-
-  public Pair<String, ExecutionEngine> getEngine(EngineType type) {
-    var engines = getEngines(Optional.of(type));
-    // Todo: error collector
-    var errors = ErrorCollector.root();
-    errors.checkFatal(
-        !engines.isEmpty(), "Need to configure a %s engine", type.name().toLowerCase());
-    errors.checkFatal(
-        engines.size() == 1,
-        "Currently support only a single %s engine",
-        type.name().toLowerCase());
-    return Pair.of(engines.entrySet().iterator().next());
-  }
-
-  public ExecutionPipeline createPipeline() {
-    return SimplePipeline.of(getEngines(), /*todo*/ ErrorCollector.root());
   }
 }

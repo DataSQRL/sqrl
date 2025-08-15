@@ -173,14 +173,12 @@ public class DAGPlanner {
     var serverEngine = pipeline.getServerEngine();
     var serverPlan = ServerStagePlan.builder();
     List<ExecutionStage> dataStoreStages =
-        pipeline.getStages().stream()
-            .filter(stage -> stage.getEngine().getType().isDataStore())
-            .collect(Collectors.toList());
+        pipeline.stages().stream().filter(stage -> stage.engine().getType().isDataStore()).toList();
 
     var engineUtils = new MaterializationStagePlan.Utils(sqrlEnv.getRexUtil());
     Map<ExecutionStage, MaterializationStagePlanBuilder> exportPlans =
-        pipeline.getStages().stream()
-            .filter(stage -> stage.getEngine().getType().supportsExport())
+        pipeline.stages().stream()
+            .filter(stage -> stage.engine().getType().supportsExport())
             .collect(
                 Collectors.toMap(
                     Function.identity(),
@@ -245,11 +243,11 @@ public class DAGPlanner {
                   }
                   assert exportStage != null;
                   Preconditions.checkArgument(
-                      exportStage.getEngine().getType().supportsExport(),
+                      exportStage.engine().getType().supportsExport(),
                       "Execution stage [%s] does not support exporting [%s]",
                       exportStage,
                       node);
-                  var exportEngine = (ExportEngine) exportStage.getEngine();
+                  var exportEngine = (ExportEngine) exportStage.engine();
                   TableAnalysis originalNodeTable = node.getTableAnalysis(),
                       sinkNodeTable = originalNodeTable;
                   if (exportEngine.supports(EngineFeature.MATERIALIZE_ON_KEY)
@@ -325,7 +323,7 @@ public class DAGPlanner {
     // SqrlTableFunction
     Map<ObjectIdentifier, SqrlTableFunction> databaseTableMapping = new HashMap<>();
     for (ExecutionStage dataStoreStage : dataStoreStages) {
-      var dbEngine = (DatabaseEngine) dataStoreStage.getEngine();
+      var dbEngine = (DatabaseEngine) dataStoreStage.engine();
       var dbPlan = exportPlans.get(dataStoreStage);
       dag.allNodesByClassAndStage(PlannedNode.class, dataStoreStage)
           .forEach(

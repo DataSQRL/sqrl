@@ -33,13 +33,13 @@ public class JdbcIndexOptimization implements PhysicalPlanRewriter {
   @Override
   public boolean appliesTo(EnginePhysicalPlan plan) {
     return plan instanceof JdbcPhysicalPlan jpp
-        && jpp.stage().getEngine() instanceof AbstractJDBCDatabaseEngine;
+        && jpp.stage().engine() instanceof AbstractJDBCDatabaseEngine;
   }
 
   @Override
   public JdbcPhysicalPlan rewrite(EnginePhysicalPlan plan, Sqrl2FlinkSQLTranslator sqrlEnv) {
     var jdbcPlan = (JdbcPhysicalPlan) plan;
-    var engine = (AbstractJDBCDatabaseEngine) jdbcPlan.stage().getEngine();
+    var engine = (AbstractJDBCDatabaseEngine) jdbcPlan.stage().engine();
     var indexSelectorConfig = engine.getIndexSelectorConfig();
     var indexSelector = new IndexSelector(sqrlEnv, indexSelectorConfig, jdbcPlan.tableIdMap());
 
