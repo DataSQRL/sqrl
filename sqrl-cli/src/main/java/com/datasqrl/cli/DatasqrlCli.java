@@ -26,7 +26,7 @@ import picocli.CommandLine.ScopeType;
 @CommandLine.Command(
     name = "datasqrl",
     mixinStandardHelpOptions = true,
-    version = "v0.7.0",
+    versionProvider = CliVersionProvider.class,
     subcommands = {CompileCmd.class, TestCmd.class, RunCmd.class, ExecuteCmd.class})
 @Getter
 public class DatasqrlCli implements Runnable {
