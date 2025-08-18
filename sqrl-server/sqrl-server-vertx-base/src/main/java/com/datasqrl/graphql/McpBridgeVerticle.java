@@ -19,6 +19,7 @@ import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.graphql.server.operation.ApiOperation;
 import com.datasqrl.graphql.server.operation.McpMethodType;
+import com.datasqrl.util.ProjectConstants;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -287,7 +288,9 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
             .put("resources", new JsonObject().put("subscribe", false).put("listChanged", false));
 
     JsonObject serverInfo =
-        new JsonObject().put("name", "datasqrl-mcp-server").put("version", "0.7.0");
+        new JsonObject()
+            .put("name", "datasqrl-mcp-server")
+            .put("version", ProjectConstants.SQRL_VERSION);
 
     return new JsonObject()
         .put("protocolVersion", PROTOCOL_VERSION)
