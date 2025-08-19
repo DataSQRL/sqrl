@@ -15,8 +15,11 @@
  */
 package com.datasqrl.engine.database.relational;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import com.datasqrl.calcite.OperatorRuleTransformer;
 import com.datasqrl.calcite.convert.RelToSqlNode;
+import com.datasqrl.calcite.convert.RelToSqlNode.SqlNodes;
 import com.datasqrl.calcite.convert.SqlNodeToString;
 import com.datasqrl.calcite.dialect.postgres.SqlCreatePostgresView;
 import com.datasqrl.canonicalizer.Name;
@@ -24,11 +27,13 @@ import com.datasqrl.engine.database.relational.CreateTableJdbcStatement.CreateTa
 import com.datasqrl.engine.database.relational.CreateTableJdbcStatement.PartitionType;
 import com.datasqrl.engine.database.relational.JdbcStatement.Field;
 import com.datasqrl.engine.database.relational.JdbcStatement.Type;
+import com.datasqrl.engine.database.relational.ddl.statements.GenericCreateViewDdlFactory;
 import com.datasqrl.planner.dag.plan.MaterializationStagePlan.Query;
 import com.datasqrl.planner.hint.DataTypeHint;
 import com.datasqrl.planner.hint.PartitionKeyHint;
 import com.datasqrl.planner.hint.PlannerHints;
 import com.datasqrl.planner.hint.TtlHint;
+import com.datasqrl.planner.parser.SqrlStatementParser;
 import com.datasqrl.sql.DatabaseExtension;
 import com.datasqrl.util.CalciteUtil;
 import java.time.Duration;
@@ -38,6 +43,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.MatchResult;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
@@ -57,6 +64,9 @@ import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 
 @AllArgsConstructor
 public abstract class AbstractJdbcStatementFactory implements JdbcStatementFactory {
+
+  private static final Pattern POSITIONAL_ARG_PATTERN =
+      Pattern.compile(Pattern.quote(SqrlStatementParser.POSITIONAL_ARGUMENT_PREFIX) + "(\\d+)");
 
   protected final OperatorRuleTransformer dialectCallConverter;
   protected final RelToSqlNode relToSqlConverter;
@@ -80,6 +90,39 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
         .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().tableName()));
   }
 
+  @Override
+  public QueryResult createPassthroughQuery(Query query, boolean withView) {
+    var passthroughSql = query.getFunction().getFunctionAnalysis().getOriginalSql();
+    var description = query.getFunction().getDocumentation().orElse(null);
+
+    // Replace all argument references
+    var formattedSql =
+        POSITIONAL_ARG_PATTERN
+            .matcher(passthroughSql)
+            .replaceAll(matchResult -> replacePassthroughArg(matchResult, passthroughSql));
+
+    var qBuilder = ExecutableJdbcReadQuery.builder().sql(formattedSql);
+    if (!withView) {
+      return new QueryResult(qBuilder, null);
+    }
+
+    var viewName = query.getFunction().getSimpleName();
+    var rowType = query.getRelNode().getRowType();
+    var viewSql =
+        new GenericCreateViewDdlFactory()
+            .createView(viewName, rowType.getFieldNames(), passthroughSql);
+    var view =
+        new GenericJdbcStatement(
+            viewName,
+            Type.VIEW,
+            viewSql,
+            description,
+            rowType,
+            getColumns(rowType.getFieldList(), PlannerHints.EMPTY));
+
+    return new QueryResult(qBuilder, view);
+  }
+
   public QueryResult createQuery(
       String viewName,
       RelNode relNode,
@@ -94,23 +137,7 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
 
     JdbcStatement view = null;
     if (withView) {
-      var viewNameIdentifier = new SqlIdentifier(viewName, SqlParserPos.ZERO);
-      var columnList =
-          new SqlNodeList(
-              relNode.getRowType().getFieldList().stream()
-                  .map(f -> new SqlIdentifier(f.getName(), SqlParserPos.ZERO))
-                  .collect(Collectors.toList()),
-              SqlParserPos.ZERO);
-      var viewSql = createView(viewNameIdentifier, columnList, sqlNodes.getSqlNode());
-      var datatype = relNode.getRowType();
-      view =
-          new GenericJdbcStatement(
-              viewName,
-              Type.VIEW,
-              viewSql,
-              documentation.orElse(null),
-              datatype,
-              getColumns(datatype.getFieldList(), PlannerHints.EMPTY));
+      view = getViewStatement(viewName, relNode.getRowType(), sqlNodes, documentation);
     }
     return new JdbcStatementFactory.QueryResult(qBuilder, view);
   }
@@ -245,5 +272,32 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
         });
 
     return matchedExtensions;
+  }
+
+  private String replacePassthroughArg(MatchResult matchResult, String sql) {
+    int number = Integer.parseInt(matchResult.group(1));
+    checkArgument(number >= 0, "Invalid index: %s [%s]", number, sql);
+
+    return "\\$" + (number + 1);
+  }
+
+  private JdbcStatement getViewStatement(
+      String viewName, RelDataType rowType, SqlNodes sqlNodes, Optional<String> documentation) {
+    var viewNameIdentifier = new SqlIdentifier(viewName, SqlParserPos.ZERO);
+    var columnList =
+        new SqlNodeList(
+            rowType.getFieldList().stream()
+                .map(f -> new SqlIdentifier(f.getName(), SqlParserPos.ZERO))
+                .collect(Collectors.toList()),
+            SqlParserPos.ZERO);
+    var viewSql = createView(viewNameIdentifier, columnList, sqlNodes.getSqlNode());
+
+    return new GenericJdbcStatement(
+        viewName,
+        Type.VIEW,
+        viewSql,
+        documentation.orElse(null),
+        rowType,
+        getColumns(rowType.getFieldList(), PlannerHints.EMPTY));
   }
 }

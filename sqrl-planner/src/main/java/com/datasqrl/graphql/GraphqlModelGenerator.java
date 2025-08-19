@@ -84,7 +84,7 @@ public class GraphqlModelGenerator extends GraphqlSchemaWalker {
   protected void visitSubscription(
       FieldDefinition atField, SqrlTableFunction tableFunction, TypeDefinitionRegistry registry) {
     Preconditions.checkArgument(
-        tableFunction.getVisibility().getAccess() == AccessModifier.SUBSCRIPTION);
+        tableFunction.getVisibility().access() == AccessModifier.SUBSCRIPTION);
     final var executableQuery = tableFunction.getExecutableQuery();
 
     var fieldName = atField.getName();

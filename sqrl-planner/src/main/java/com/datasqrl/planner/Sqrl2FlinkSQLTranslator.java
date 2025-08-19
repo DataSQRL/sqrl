@@ -31,11 +31,13 @@ import com.datasqrl.error.ErrorLocation.FileLocation;
 import com.datasqrl.flinkrunner.stdlib.utils.AutoRegisterSystemFunction;
 import com.datasqrl.function.FlinkUdfNsObject;
 import com.datasqrl.graphql.server.MutationComputedColumnType;
+import com.datasqrl.plan.table.Multiplicity;
 import com.datasqrl.plan.util.PrimaryKeyMap;
 import com.datasqrl.planner.FlinkPhysicalPlan.Builder;
 import com.datasqrl.planner.analyzer.SQRLLogicalPlanAnalyzer;
 import com.datasqrl.planner.analyzer.SQRLLogicalPlanAnalyzer.ViewAnalysis;
 import com.datasqrl.planner.analyzer.TableAnalysis;
+import com.datasqrl.planner.analyzer.TableOrFunctionAnalysis;
 import com.datasqrl.planner.dag.plan.MutationQuery.MutationQueryBuilder;
 import com.datasqrl.planner.hint.PlannerHints;
 import com.datasqrl.planner.parser.ParsePosUtil;
@@ -525,18 +527,8 @@ public class Sqrl2FlinkSQLTranslator {
       Map<Integer, Integer> argumentIndexMap,
       PlannerHints hints,
       ErrorCollector errors) {
-    List<FunctionParameter> parameters = new ArrayList<>();
-    for (var i = 0; i < arguments.size(); i++) {
-      var parsedArg = arguments.get(i);
-      var type = parsedArg.getResolvedRelDataType();
-      parameters.add(
-          new SqrlFunctionParameter(
-              parsedArg.getName().get(),
-              parsedArg.getIndex(),
-              type,
-              parsedArg.isParentField(),
-              parsedArg.getResolvedMetadata()));
-    }
+
+    var parameters = getFunctionParameters(arguments);
     // Analyze Query
     var funcDef2 = parseSQL(originalSql);
     var viewAnalysis = analyzeView(funcDef2, false, hints, errors);
@@ -550,12 +542,60 @@ public class Sqrl2FlinkSQLTranslator {
     tblBuilder.originalSql(originalSql);
     var tableAnalysis = tblBuilder.build();
     // Build table function
-    var fctBuilder =
-        SqrlTableFunction.builder()
-            .functionAnalysis(tableAnalysis)
-            .parameters(parameters)
-            .multiplicity(SqrlTableFunction.getMultiplicity(updateParameters));
-    return fctBuilder;
+    return SqrlTableFunction.builder()
+        .functionAnalysis(tableAnalysis)
+        .parameters(parameters)
+        .multiplicity(SqrlTableFunction.getMultiplicity(updateParameters));
+  }
+
+  public SqrlTableFunction.SqrlTableFunctionBuilder resolveSqrlPassThroughTableFunction(
+      ObjectIdentifier identifier,
+      String originalSql,
+      List<ParsedArgument> arguments,
+      ParsedObject<String> returnType,
+      List<TableOrFunctionAnalysis> fromTables,
+      PlannerHints hints,
+      ErrorCollector errors) {
+
+    var parameters = getFunctionParameters(arguments);
+
+    var parsedReturnType = parse2RelDataType(returnType);
+    var returnDataType =
+        CalciteUtil.getRelTypeBuilder(typeFactory)
+            .addAll(parsedReturnType.stream().map(ParsedRelDataTypeResult::field).toList())
+            .build();
+    // use values relnode from return type
+    var values = getRelBuilder(null).values(returnDataType).build();
+    var tableAnalysis =
+        TableAnalysis.builder()
+            .objectIdentifier(identifier)
+            .originalSql(originalSql)
+            .originalRelnode(values)
+            .collapsedRelnode(values)
+            .hints(hints)
+            .errors(errors)
+            .fromTables(fromTables)
+            .build();
+
+    return SqrlTableFunction.builder()
+        .functionAnalysis(tableAnalysis)
+        .parameters(parameters)
+        .passthrough(true)
+        .multiplicity(Multiplicity.MANY);
+  }
+
+  private static List<FunctionParameter> getFunctionParameters(List<ParsedArgument> args) {
+
+    return args.stream()
+        .map(
+            parsedArg ->
+                new SqrlFunctionParameter(
+                    parsedArg.getName().get(),
+                    parsedArg.getIndex(),
+                    parsedArg.getResolvedRelDataType(),
+                    parsedArg.isParentField(),
+                    parsedArg.getResolvedMetadata()))
+        .collect(Collectors.toList());
   }
 
   /**

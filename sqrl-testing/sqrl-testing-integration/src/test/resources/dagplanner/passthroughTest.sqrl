@@ -1,0 +1,9 @@
+IMPORT ecommerceTs.Orders;
+
+FilteredOrders := SELECT * FROM Orders WHERE id>0;
+
+PassThroughTable RETURNS (id BIGINT NOT NULL, updateTime TIMESTAMP_LTZ(3) NOT NULL):=
+                 SELECT id, time AS updateTime FROM "FilteredOrders";
+
+PassThroughFunction(customerid BIGINT NOT NULL) RETURNS (id BIGINT NOT NULL) :=
+                   SELECT id FROM "FilteredOrders" WHERE customerid = :customerid;
