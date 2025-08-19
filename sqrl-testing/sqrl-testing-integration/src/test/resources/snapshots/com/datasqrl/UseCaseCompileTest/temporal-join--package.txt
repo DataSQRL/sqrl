@@ -261,9 +261,9 @@ INSERT INTO `default_catalog`.`default_database`.`EnrichedSensorReading_2`
   "testRunnerTopics" : [ ]
 }
 >>>postgres-schema.sql
-CREATE TABLE IF NOT EXISTS "EnrichedSensorReading" ("sensorid" INTEGER NOT NULL, "temperature" FLOAT NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE NOT NULL, "sensor_name" TEXT , "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
-CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" INTEGER NOT NULL, "temperature" FLOAT NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
-CREATE TABLE IF NOT EXISTS "SensorUpdates" ("sensorid" INTEGER NOT NULL, "sensor_name" TEXT NOT NULL, "lastUpdated" TIMESTAMP WITH TIME ZONE NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"))
+CREATE TABLE IF NOT EXISTS "EnrichedSensorReading" ("sensorid" INTEGER NOT NULL, "temperature" FLOAT NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE NOT NULL, "sensor_name" TEXT, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" INTEGER NOT NULL, "temperature" FLOAT NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "SensorUpdates" ("sensorid" INTEGER NOT NULL, "sensor_name" TEXT NOT NULL, "lastUpdated" TIMESTAMP WITH TIME ZONE NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"))
 >>>postgres-views.sql
 
 >>>vertx.json
@@ -290,6 +290,7 @@ CREATE TABLE IF NOT EXISTS "SensorUpdates" ("sensorid" INTEGER NOT NULL, "sensor
             "sql" : "SELECT *\nFROM (SELECT \"sensorid\", \"temperature\", \"event_time\", \"sensor_name\"\n  FROM \"EnrichedSensorReading\"\n  ORDER BY \"event_time\" NULLS FIRST) AS \"t0\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -314,6 +315,7 @@ CREATE TABLE IF NOT EXISTS "SensorUpdates" ("sensorid" INTEGER NOT NULL, "sensor
             "sql" : "SELECT \"sensorid\", \"temperature\", \"event_time\"\nFROM \"SensorReading\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -338,6 +340,7 @@ CREATE TABLE IF NOT EXISTS "SensorUpdates" ("sensorid" INTEGER NOT NULL, "sensor
             "sql" : "SELECT \"sensorid\", \"sensor_name\", \"lastUpdated\"\nFROM \"SensorUpdates\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }

@@ -80,7 +80,7 @@ END
   "testRunnerTopics" : [ ]
 }
 >>>postgres-schema.sql
-CREATE TABLE IF NOT EXISTS "Orders" ("id" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "time" TIMESTAMP WITH TIME ZONE NOT NULL, "productid" BIGINT NOT NULL, "quantity" BIGINT NOT NULL, "unit_price" DOUBLE PRECISION , "discount" DOUBLE PRECISION , "_ingest_time" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id","customerid","time"))
+CREATE TABLE IF NOT EXISTS "Orders" ("id" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "time" TIMESTAMP WITH TIME ZONE NOT NULL, "productid" BIGINT NOT NULL, "quantity" BIGINT NOT NULL, "unit_price" DOUBLE PRECISION, "discount" DOUBLE PRECISION, "_ingest_time" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("id","customerid","time"))
 >>>postgres-views.sql
 
 >>>vertx.json
@@ -107,6 +107,7 @@ CREATE TABLE IF NOT EXISTS "Orders" ("id" BIGINT NOT NULL, "customerid" BIGINT N
             "sql" : "SELECT *\nFROM \"Orders\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }

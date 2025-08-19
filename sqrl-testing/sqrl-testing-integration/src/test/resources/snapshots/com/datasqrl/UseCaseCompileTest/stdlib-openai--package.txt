@@ -87,8 +87,8 @@ INSERT INTO `default_catalog`.`default_database`.`results_2`
   "testRunnerTopics" : [ ]
 }
 >>>postgres-schema.sql
-CREATE TABLE IF NOT EXISTS "data" ("val" INTEGER NOT NULL, "__pk_hash" INTEGER NOT NULL , PRIMARY KEY ("__pk_hash"));
-CREATE TABLE IF NOT EXISTS "results" ("completions_result" TEXT , "extract_json_result_response" TEXT , "extract_json_result_with_schema_response" TEXT , "__pk_hash" INTEGER NOT NULL , PRIMARY KEY ("__pk_hash"))
+CREATE TABLE IF NOT EXISTS "data" ("val" INTEGER NOT NULL, "__pk_hash" INTEGER NOT NULL, PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "results" ("completions_result" TEXT, "extract_json_result_response" TEXT, "extract_json_result_with_schema_response" TEXT, "__pk_hash" INTEGER NOT NULL, PRIMARY KEY ("__pk_hash"))
 >>>postgres-views.sql
 
 >>>vertx.json
@@ -115,6 +115,7 @@ CREATE TABLE IF NOT EXISTS "results" ("completions_result" TEXT , "extract_json_
             "sql" : "SELECT \"val\"\nFROM \"data\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -139,6 +140,7 @@ CREATE TABLE IF NOT EXISTS "results" ("completions_result" TEXT , "extract_json_
             "sql" : "SELECT \"completions_result\", \"extract_json_result_response\", \"extract_json_result_with_schema_response\"\nFROM \"results\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }

@@ -173,7 +173,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer2_2`
     {
       "name" : "Customer_1",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"Customer_1\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\",\"lastUpdated\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Customer_1\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY (\"customerid\",\"lastUpdated\"))",
       "fields" : [
         {
           "name" : "customerid",
@@ -200,12 +200,20 @@ INSERT INTO `default_catalog`.`default_database`.`Customer2_2`
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
-      ]
+      ],
+      "primaryKey" : [
+        "customerid",
+        "lastUpdated"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "Customer2_2",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"Customer2_2\" (\"updatedTime\" TIMESTAMP WITH TIME ZONE NOT NULL, \"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\",\"lastUpdated\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Customer2_2\" (\"updatedTime\" TIMESTAMP WITH TIME ZONE NOT NULL, \"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY (\"customerid\",\"lastUpdated\"))",
       "fields" : [
         {
           "name" : "updatedTime",
@@ -237,12 +245,20 @@ INSERT INTO `default_catalog`.`default_database`.`Customer2_2`
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
-      ]
+      ],
+      "primaryKey" : [
+        "customerid",
+        "lastUpdated"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "CustomerByTime2_3",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerByTime2_3\" (\"updatedTime\" TIMESTAMP WITH TIME ZONE NOT NULL, \"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerByTime2_3\" (\"updatedTime\" TIMESTAMP WITH TIME ZONE NOT NULL, \"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY (\"customerid\"))",
       "fields" : [
         {
           "name" : "updatedTime",
@@ -274,7 +290,14 @@ INSERT INTO `default_catalog`.`default_database`.`Customer2_2`
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
-      ]
+      ],
+      "primaryKey" : [
+        "customerid"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "Customer",
@@ -408,6 +431,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer2_2`
             "sql" : "SELECT *\nFROM \"Customer_1\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -432,6 +456,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer2_2`
             "sql" : "SELECT *\nFROM \"Customer2_2\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -456,6 +481,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer2_2`
             "sql" : "SELECT *\nFROM \"CustomerByTime2_3\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }

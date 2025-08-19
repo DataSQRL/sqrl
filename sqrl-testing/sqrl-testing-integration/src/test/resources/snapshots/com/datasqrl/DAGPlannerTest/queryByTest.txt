@@ -157,7 +157,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders1_2`
     {
       "name" : "Orders_1",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"Orders_1\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB  , PRIMARY KEY (\"id\",\"time\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Orders_1\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB, PRIMARY KEY (\"id\",\"time\"))",
       "fields" : [
         {
           "name" : "id",
@@ -179,12 +179,20 @@ INSERT INTO `default_catalog`.`default_database`.`Orders1_2`
           "type" : "JSONB",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "id",
+        "time"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "Orders1_2",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"Orders1_2\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB  , PRIMARY KEY (\"id\",\"time\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Orders1_2\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB, PRIMARY KEY (\"id\",\"time\"))",
       "fields" : [
         {
           "name" : "id",
@@ -206,12 +214,20 @@ INSERT INTO `default_catalog`.`default_database`.`Orders1_2`
           "type" : "JSONB",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "id",
+        "time"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "Orders2_3",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"Orders2_3\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB  , PRIMARY KEY (\"id\",\"time\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Orders2_3\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB, PRIMARY KEY (\"id\",\"time\"))",
       "fields" : [
         {
           "name" : "id",
@@ -233,7 +249,15 @@ INSERT INTO `default_catalog`.`default_database`.`Orders1_2`
           "type" : "JSONB",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "id",
+        "time"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "Orders",
@@ -298,6 +322,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders1_2`
             "sql" : "SELECT *\nFROM \"Orders_1\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -347,6 +372,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders1_2`
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -396,6 +422,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders1_2`
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }

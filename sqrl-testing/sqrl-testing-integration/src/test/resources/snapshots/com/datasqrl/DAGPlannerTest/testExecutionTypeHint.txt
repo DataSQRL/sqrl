@@ -170,7 +170,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerAgg3_2`
     {
       "name" : "CustomerAgg1_1",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerAgg1_1\" (\"customerid\" BIGINT NOT NULL, \"num\" BIGINT NOT NULL , PRIMARY KEY (\"customerid\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerAgg1_1\" (\"customerid\" BIGINT NOT NULL, \"num\" BIGINT NOT NULL, PRIMARY KEY (\"customerid\"))",
       "fields" : [
         {
           "name" : "customerid",
@@ -182,12 +182,19 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerAgg3_2`
           "type" : "BIGINT",
           "nullable" : false
         }
-      ]
+      ],
+      "primaryKey" : [
+        "customerid"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "CustomerAgg3_2",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerAgg3_2\" (\"customerid\" BIGINT NOT NULL, \"num\" BIGINT NOT NULL , PRIMARY KEY (\"customerid\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerAgg3_2\" (\"customerid\" BIGINT NOT NULL, \"num\" BIGINT NOT NULL, PRIMARY KEY (\"customerid\"))",
       "fields" : [
         {
           "name" : "customerid",
@@ -199,12 +206,19 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerAgg3_2`
           "type" : "BIGINT",
           "nullable" : false
         }
-      ]
+      ],
+      "primaryKey" : [
+        "customerid"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "Orders_3",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"Orders_3\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB , \"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"id\",\"time\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Orders_3\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB, \"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY (\"id\",\"time\"))",
       "fields" : [
         {
           "name" : "id",
@@ -231,7 +245,15 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerAgg3_2`
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
-      ]
+      ],
+      "primaryKey" : [
+        "id",
+        "time"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "CustomerAgg1",
@@ -342,6 +364,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerAgg3_2`
             "sql" : "SELECT *\nFROM \"CustomerAgg1_1\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -366,6 +389,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerAgg3_2`
             "sql" : "SELECT \"customerid\", COUNT(*) + 1 AS \"num\"\nFROM \"Orders_3\"\nGROUP BY \"customerid\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -390,6 +414,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerAgg3_2`
             "sql" : "SELECT *\nFROM \"CustomerAgg3_2\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -414,6 +439,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerAgg3_2`
             "sql" : "SELECT *\nFROM \"Orders_3\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }

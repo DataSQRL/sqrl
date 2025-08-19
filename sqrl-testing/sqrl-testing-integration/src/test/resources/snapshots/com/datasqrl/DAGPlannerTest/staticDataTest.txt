@@ -1289,43 +1289,64 @@ INSERT INTO `default_catalog`.`default_database`.`Numbers2_2`
     {
       "name" : "Numbers_1",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"Numbers_1\" (\"id\" INTEGER NOT NULL , PRIMARY KEY (\"id\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Numbers_1\" (\"id\" INTEGER NOT NULL, PRIMARY KEY (\"id\"))",
       "fields" : [
         {
           "name" : "id",
           "type" : "INTEGER",
           "nullable" : false
         }
-      ]
+      ],
+      "primaryKey" : [
+        "id"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "Numbers2_2",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"Numbers2_2\" (\"id\" INTEGER NOT NULL , PRIMARY KEY (\"id\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Numbers2_2\" (\"id\" INTEGER NOT NULL, PRIMARY KEY (\"id\"))",
       "fields" : [
         {
           "name" : "id",
           "type" : "INTEGER",
           "nullable" : false
         }
-      ]
+      ],
+      "primaryKey" : [
+        "id"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "NumbersLarge_3",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"NumbersLarge_3\" (\"id\" INTEGER NOT NULL , PRIMARY KEY (\"id\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"NumbersLarge_3\" (\"id\" INTEGER NOT NULL, PRIMARY KEY (\"id\"))",
       "fields" : [
         {
           "name" : "id",
           "type" : "INTEGER",
           "nullable" : false
         }
-      ]
+      ],
+      "primaryKey" : [
+        "id"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "Orders_4",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"Orders_4\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB  , PRIMARY KEY (\"id\",\"time\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Orders_4\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB, PRIMARY KEY (\"id\",\"time\"))",
       "fields" : [
         {
           "name" : "id",
@@ -1347,7 +1368,15 @@ INSERT INTO `default_catalog`.`default_database`.`Numbers2_2`
           "type" : "JSONB",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "id",
+        "time"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "Numbers",
@@ -1516,6 +1545,7 @@ INSERT INTO `default_catalog`.`default_database`.`Numbers2_2`
             "sql" : "SELECT *\nFROM \"Numbers_1\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1540,6 +1570,7 @@ INSERT INTO `default_catalog`.`default_database`.`Numbers2_2`
             "sql" : "SELECT *\nFROM \"Numbers2_2\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1564,6 +1595,7 @@ INSERT INTO `default_catalog`.`default_database`.`Numbers2_2`
             "sql" : "SELECT *\nFROM \"NumbersLarge_3\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1588,6 +1620,7 @@ INSERT INTO `default_catalog`.`default_database`.`Numbers2_2`
             "sql" : "SELECT \"Orders_40\".\"id\", \"Orders_40\".\"time\"\nFROM \"Orders_4\" AS \"Orders_40\"\n INNER JOIN (SELECT \"id\", CAST(\"id\" AS BIGINT) AS \"id0\"\n  FROM \"Numbers_1\") AS \"t\" ON \"Orders_40\".\"customerid\" = \"t\".\"id0\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1612,6 +1645,7 @@ INSERT INTO `default_catalog`.`default_database`.`Numbers2_2`
             "sql" : "SELECT \"Orders_40\".\"id\", \"Orders_40\".\"time\"\nFROM \"Orders_4\" AS \"Orders_40\"\n INNER JOIN (SELECT \"id\", CAST(\"id\" AS BIGINT) AS \"id0\"\n  FROM (VALUES (1),\n      (2),\n      (3),\n      (4),\n      (4)) AS \"t\" (\"id\")) AS \"t0\" ON \"Orders_40\".\"customerid\" = \"t0\".\"id0\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1636,6 +1670,7 @@ INSERT INTO `default_catalog`.`default_database`.`Numbers2_2`
             "sql" : "SELECT \"Orders_40\".\"id\", \"Orders_40\".\"time\", \"t\".\"id\" AS \"otherid\"\nFROM \"Orders_4\" AS \"Orders_40\",\n  (VALUES (1, 1),\n    (2, 2),\n    (3, 3),\n    (4, 4),\n    (4, 4)) AS \"t\" (\"id\", \"pk\")",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1660,6 +1695,7 @@ INSERT INTO `default_catalog`.`default_database`.`Numbers2_2`
             "sql" : "SELECT \"Orders_40\".\"id\", \"Orders_40\".\"time\", \"t\".\"pk\"\nFROM \"Orders_4\" AS \"Orders_40\",\n  (VALUES (1, 1),\n    (2, 2),\n    (3, 3),\n    (4, 4),\n    (4, 4)) AS \"t\" (\"id\", \"pk\")",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1684,6 +1720,7 @@ INSERT INTO `default_catalog`.`default_database`.`Numbers2_2`
             "sql" : "SELECT *\nFROM \"Orders_4\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }

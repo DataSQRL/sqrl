@@ -277,9 +277,9 @@ INSERT INTO `default_catalog`.`default_database`.`SensorAnalysis_2`
   "testRunnerTopics" : [ ]
 }
 >>>postgres-schema.sql
-CREATE TABLE IF NOT EXISTS "SensorAnalysis" ("sensorid" INTEGER NOT NULL, "avg_temperatures" FLOAT NOT NULL, "max_temperature" FLOAT NOT NULL , PRIMARY KEY ("sensorid"));
-CREATE TABLE IF NOT EXISTS "SensorMaxTempLastMin" ("sensorid" INTEGER NOT NULL, "endOfMin" TIMESTAMP WITH TIME ZONE NOT NULL, "avg_temperature" FLOAT NOT NULL , PRIMARY KEY ("sensorid"));
-CREATE TABLE IF NOT EXISTS "SensorReading" ("uuid" TEXT NOT NULL, "sensorid" INTEGER NOT NULL, "temperature" FLOAT NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE  , PRIMARY KEY ("uuid"));
+CREATE TABLE IF NOT EXISTS "SensorAnalysis" ("sensorid" INTEGER NOT NULL, "avg_temperatures" FLOAT NOT NULL, "max_temperature" FLOAT NOT NULL, PRIMARY KEY ("sensorid"));
+CREATE TABLE IF NOT EXISTS "SensorMaxTempLastMin" ("sensorid" INTEGER NOT NULL, "endOfMin" TIMESTAMP WITH TIME ZONE NOT NULL, "avg_temperature" FLOAT NOT NULL, PRIMARY KEY ("sensorid"));
+CREATE TABLE IF NOT EXISTS "SensorReading" ("uuid" TEXT NOT NULL, "sensorid" INTEGER NOT NULL, "temperature" FLOAT NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE, PRIMARY KEY ("uuid"));
 
 CREATE INDEX IF NOT EXISTS "SensorReading_hash_c1" ON "SensorReading" USING hash ("sensorid")
 >>>postgres-views.sql
@@ -308,6 +308,7 @@ CREATE INDEX IF NOT EXISTS "SensorReading_hash_c1" ON "SensorReading" USING hash
             "sql" : "SELECT *\nFROM \"SensorMaxTempLastMin\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -341,6 +342,7 @@ CREATE INDEX IF NOT EXISTS "SensorReading_hash_c1" ON "SensorReading" USING hash
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -374,6 +376,7 @@ CREATE INDEX IF NOT EXISTS "SensorReading_hash_c1" ON "SensorReading" USING hash
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }

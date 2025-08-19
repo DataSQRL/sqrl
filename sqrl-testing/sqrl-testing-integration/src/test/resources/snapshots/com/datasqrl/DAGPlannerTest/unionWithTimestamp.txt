@@ -174,7 +174,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
     {
       "name" : "CombinedStream_1",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"CombinedStream_1\" (\"customerid\" BIGINT NOT NULL, \"rowtime\" TIMESTAMP WITH TIME ZONE NOT NULL, \"__pk_hash\" TEXT  , PRIMARY KEY (\"__pk_hash\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"CombinedStream_1\" (\"customerid\" BIGINT NOT NULL, \"rowtime\" TIMESTAMP WITH TIME ZONE NOT NULL, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
       "fields" : [
         {
           "name" : "customerid",
@@ -191,12 +191,19 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
           "type" : "TEXT",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "Customer_2",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"Customer_2\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\",\"lastUpdated\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Customer_2\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY (\"customerid\",\"lastUpdated\"))",
       "fields" : [
         {
           "name" : "customerid",
@@ -223,12 +230,20 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
-      ]
+      ],
+      "primaryKey" : [
+        "customerid",
+        "lastUpdated"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "Orders_3",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"Orders_3\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB  , PRIMARY KEY (\"id\",\"time\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Orders_3\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB, PRIMARY KEY (\"id\",\"time\"))",
       "fields" : [
         {
           "name" : "id",
@@ -250,7 +265,15 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
           "type" : "JSONB",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "id",
+        "time"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "CombinedStream",
@@ -354,6 +377,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
             "sql" : "SELECT \"customerid\", \"rowtime\"\nFROM \"CombinedStream_1\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -378,6 +402,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
             "sql" : "SELECT *\nFROM \"Customer_2\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -402,6 +427,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
             "sql" : "SELECT *\nFROM \"Orders_3\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }

@@ -183,8 +183,8 @@ INSERT INTO `default_catalog`.`default_database`.`NestedArray_2`
   ;
   END
 >>>postgres-schema.sql
-CREATE TABLE IF NOT EXISTS "IntArray" ("id" INTEGER NOT NULL, "int_array" JSONB  , PRIMARY KEY ("id"));
-CREATE TABLE IF NOT EXISTS "NestedArray" ("id" INTEGER NOT NULL, "nested_array" JSONB  , PRIMARY KEY ("id"));
-CREATE TABLE IF NOT EXISTS "StringArray" ("id" INTEGER NOT NULL, "string_array" JSONB  , PRIMARY KEY ("id"))
+CREATE TABLE IF NOT EXISTS "IntArray" ("id" INTEGER NOT NULL, "int_array" JSONB, PRIMARY KEY ("id"));
+CREATE TABLE IF NOT EXISTS "NestedArray" ("id" INTEGER NOT NULL, "nested_array" JSONB, PRIMARY KEY ("id"));
+CREATE TABLE IF NOT EXISTS "StringArray" ("id" INTEGER NOT NULL, "string_array" JSONB, PRIMARY KEY ("id"))
 >>>postgres-views.sql
 

@@ -149,8 +149,8 @@ INSERT INTO `default_catalog`.`default_database`.`VectorData_2`
 >>>postgres-schema.sql
 CREATE EXTENSION IF NOT EXISTS vector;
 
-CREATE TABLE IF NOT EXISTS "CategoryCentroids" ("category_id" INTEGER NOT NULL, "center_vector" JSONB  , PRIMARY KEY ("category_id"));
-CREATE TABLE IF NOT EXISTS "VectorData" ("doc_id" INTEGER NOT NULL, "category_id" INTEGER NOT NULL, "vector" VECTOR(5)  , PRIMARY KEY ("doc_id"));
+CREATE TABLE IF NOT EXISTS "CategoryCentroids" ("category_id" INTEGER NOT NULL, "center_vector" JSONB, PRIMARY KEY ("category_id"));
+CREATE TABLE IF NOT EXISTS "VectorData" ("doc_id" INTEGER NOT NULL, "category_id" INTEGER NOT NULL, "vector" VECTOR(5), PRIMARY KEY ("doc_id"));
 
 CREATE INDEX IF NOT EXISTS "VectorData_vector_cosine_c2" ON "VectorData" USING HNSW ("vector" vector_cosine_ops)
 >>>postgres-views.sql
@@ -188,6 +188,7 @@ CREATE INDEX IF NOT EXISTS "VectorData_vector_cosine_c2" ON "VectorData" USING H
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -212,6 +213,7 @@ CREATE INDEX IF NOT EXISTS "VectorData_vector_cosine_c2" ON "VectorData" USING H
             "sql" : "SELECT *\nFROM \"VectorData\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -245,6 +247,7 @@ CREATE INDEX IF NOT EXISTS "VectorData_vector_cosine_c2" ON "VectorData" USING H
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -278,6 +281,7 @@ CREATE INDEX IF NOT EXISTS "VectorData_vector_cosine_c2" ON "VectorData" USING H
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }

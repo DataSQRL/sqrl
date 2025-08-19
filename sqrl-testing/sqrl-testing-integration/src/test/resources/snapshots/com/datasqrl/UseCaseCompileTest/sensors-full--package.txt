@@ -428,13 +428,13 @@ INSERT INTO `default_catalog`.`default_database`.`Machine_2`
   "testRunnerTopics" : [ ]
 }
 >>>postgres-schema.sql
-CREATE TABLE IF NOT EXISTS "HighTemp" ("machineId" BIGINT NOT NULL, "sensorid" BIGINT NOT NULL, "temp" DOUBLE PRECISION NOT NULL, "timeSec" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("sensorid","timeSec"));
-CREATE TABLE IF NOT EXISTS "Machine" ("machineId" BIGINT NOT NULL, "maxTemp" DOUBLE PRECISION NOT NULL, "avgTemp" DOUBLE PRECISION NOT NULL , PRIMARY KEY ("machineId"));
-CREATE TABLE IF NOT EXISTS "SecReading" ("sensorid" BIGINT NOT NULL, "timeSec" TIMESTAMP WITH TIME ZONE NOT NULL, "temp" DOUBLE PRECISION NOT NULL , PRIMARY KEY ("sensorid","timeSec"));
-CREATE TABLE IF NOT EXISTS "SensorLastHour" ("sensorid" BIGINT NOT NULL, "window_time" TIMESTAMP WITH TIME ZONE NOT NULL, "avgTemp" DOUBLE PRECISION NOT NULL, "maxTemp" DOUBLE PRECISION NOT NULL , PRIMARY KEY ("sensorid"));
-CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" BIGINT NOT NULL, "time" BIGINT NOT NULL, "temperature" DOUBLE PRECISION NOT NULL, "humidity" DOUBLE PRECISION NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("sensorid","time"));
-CREATE TABLE IF NOT EXISTS "SensorUpdates" ("id" BIGINT NOT NULL, "machineId" BIGINT NOT NULL, "placed" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id","placed"));
-CREATE TABLE IF NOT EXISTS "Sensors" ("id" BIGINT NOT NULL, "machineId" BIGINT NOT NULL, "placed" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));
+CREATE TABLE IF NOT EXISTS "HighTemp" ("machineId" BIGINT NOT NULL, "sensorid" BIGINT NOT NULL, "temp" DOUBLE PRECISION NOT NULL, "timeSec" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("sensorid","timeSec"));
+CREATE TABLE IF NOT EXISTS "Machine" ("machineId" BIGINT NOT NULL, "maxTemp" DOUBLE PRECISION NOT NULL, "avgTemp" DOUBLE PRECISION NOT NULL, PRIMARY KEY ("machineId"));
+CREATE TABLE IF NOT EXISTS "SecReading" ("sensorid" BIGINT NOT NULL, "timeSec" TIMESTAMP WITH TIME ZONE NOT NULL, "temp" DOUBLE PRECISION NOT NULL, PRIMARY KEY ("sensorid","timeSec"));
+CREATE TABLE IF NOT EXISTS "SensorLastHour" ("sensorid" BIGINT NOT NULL, "window_time" TIMESTAMP WITH TIME ZONE NOT NULL, "avgTemp" DOUBLE PRECISION NOT NULL, "maxTemp" DOUBLE PRECISION NOT NULL, PRIMARY KEY ("sensorid"));
+CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" BIGINT NOT NULL, "time" BIGINT NOT NULL, "temperature" DOUBLE PRECISION NOT NULL, "humidity" DOUBLE PRECISION NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("sensorid","time"));
+CREATE TABLE IF NOT EXISTS "SensorUpdates" ("id" BIGINT NOT NULL, "machineId" BIGINT NOT NULL, "placed" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("id","placed"));
+CREATE TABLE IF NOT EXISTS "Sensors" ("id" BIGINT NOT NULL, "machineId" BIGINT NOT NULL, "placed" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("id"));
 
 CREATE INDEX IF NOT EXISTS "Sensors_hash_c1" ON "Sensors" USING hash ("machineId")
 >>>postgres-views.sql
@@ -463,6 +463,7 @@ CREATE INDEX IF NOT EXISTS "Sensors_hash_c1" ON "Sensors" USING hash ("machineId
             "sql" : "SELECT *\nFROM \"HighTemp\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -487,6 +488,7 @@ CREATE INDEX IF NOT EXISTS "Sensors_hash_c1" ON "Sensors" USING hash ("machineId
             "sql" : "SELECT *\nFROM \"Machine\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -516,6 +518,7 @@ CREATE INDEX IF NOT EXISTS "Sensors_hash_c1" ON "Sensors" USING hash ("machineId
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -545,6 +548,7 @@ CREATE INDEX IF NOT EXISTS "Sensors_hash_c1" ON "Sensors" USING hash ("machineId
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -574,6 +578,7 @@ CREATE INDEX IF NOT EXISTS "Sensors_hash_c1" ON "Sensors" USING hash ("machineId
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -598,6 +603,7 @@ CREATE INDEX IF NOT EXISTS "Sensors_hash_c1" ON "Sensors" USING hash ("machineId
             "sql" : "SELECT *\nFROM (SELECT \"sensorid\", \"timeSec\", \"temp\"\n  FROM \"SecReading\"\n  ORDER BY \"timeSec\" DESC NULLS LAST) AS \"t\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -622,6 +628,7 @@ CREATE INDEX IF NOT EXISTS "Sensors_hash_c1" ON "Sensors" USING hash ("machineId
             "sql" : "SELECT *\nFROM \"SensorLastHour\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -646,6 +653,7 @@ CREATE INDEX IF NOT EXISTS "Sensors_hash_c1" ON "Sensors" USING hash ("machineId
             "sql" : "SELECT *\nFROM \"SensorReading\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -670,6 +678,7 @@ CREATE INDEX IF NOT EXISTS "Sensors_hash_c1" ON "Sensors" USING hash ("machineId
             "sql" : "SELECT *\nFROM \"SensorUpdates\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -694,6 +703,7 @@ CREATE INDEX IF NOT EXISTS "Sensors_hash_c1" ON "Sensors" USING hash ("machineId
             "sql" : "SELECT *\nFROM \"Sensors\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -727,6 +737,7 @@ CREATE INDEX IF NOT EXISTS "Sensors_hash_c1" ON "Sensors" USING hash ("machineId
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }

@@ -209,9 +209,9 @@ INSERT INTO `default_catalog`.`default_database`.`SensorMaxTemp_2`
   "testRunnerTopics" : [ ]
 }
 >>>postgres-schema.sql
-CREATE TABLE IF NOT EXISTS "SecReading" ("sensorid" BIGINT NOT NULL, "timeSec" TIMESTAMP WITH TIME ZONE NOT NULL, "timeStart" TIMESTAMP WITHOUT TIME ZONE NOT NULL, "timeEnd" TIMESTAMP WITHOUT TIME ZONE NOT NULL, "temp" DOUBLE PRECISION NOT NULL , PRIMARY KEY ("sensorid","timeStart","timeEnd","timeSec"));
-CREATE TABLE IF NOT EXISTS "SensorMaxTemp" ("sensorid" BIGINT NOT NULL, "window_time" TIMESTAMP WITH TIME ZONE NOT NULL, "maxTemp" DOUBLE PRECISION NOT NULL , PRIMARY KEY ("sensorid"));
-CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" BIGINT NOT NULL, "time" BIGINT NOT NULL, "temperature" DOUBLE PRECISION NOT NULL, "humidity" DOUBLE PRECISION NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("sensorid","time"))
+CREATE TABLE IF NOT EXISTS "SecReading" ("sensorid" BIGINT NOT NULL, "timeSec" TIMESTAMP WITH TIME ZONE NOT NULL, "timeStart" TIMESTAMP WITHOUT TIME ZONE NOT NULL, "timeEnd" TIMESTAMP WITHOUT TIME ZONE NOT NULL, "temp" DOUBLE PRECISION NOT NULL, PRIMARY KEY ("sensorid","timeStart","timeEnd","timeSec"));
+CREATE TABLE IF NOT EXISTS "SensorMaxTemp" ("sensorid" BIGINT NOT NULL, "window_time" TIMESTAMP WITH TIME ZONE NOT NULL, "maxTemp" DOUBLE PRECISION NOT NULL, PRIMARY KEY ("sensorid"));
+CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" BIGINT NOT NULL, "time" BIGINT NOT NULL, "temperature" DOUBLE PRECISION NOT NULL, "humidity" DOUBLE PRECISION NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("sensorid","time"))
 >>>postgres-views.sql
 
 >>>vertx.json
@@ -247,6 +247,7 @@ CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" BIGINT NOT NULL, "time" B
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -280,6 +281,7 @@ CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" BIGINT NOT NULL, "time" B
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -304,6 +306,7 @@ CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" BIGINT NOT NULL, "time" B
             "sql" : "SELECT *\nFROM \"SensorReading\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }

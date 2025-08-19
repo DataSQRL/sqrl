@@ -268,7 +268,7 @@ INSERT INTO `default_catalog`.`default_database`.`MyOrdersIndexHash_2`
     {
       "name" : "MyOrdersIndexBtree_1",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"MyOrdersIndexBtree_1\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB  , PRIMARY KEY (\"id\",\"time\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"MyOrdersIndexBtree_1\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB, PRIMARY KEY (\"id\",\"time\"))",
       "fields" : [
         {
           "name" : "id",
@@ -290,12 +290,20 @@ INSERT INTO `default_catalog`.`default_database`.`MyOrdersIndexHash_2`
           "type" : "JSONB",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "id",
+        "time"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "MyOrdersIndexHash_2",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"MyOrdersIndexHash_2\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB  , PRIMARY KEY (\"id\",\"time\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"MyOrdersIndexHash_2\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB, PRIMARY KEY (\"id\",\"time\"))",
       "fields" : [
         {
           "name" : "id",
@@ -317,12 +325,20 @@ INSERT INTO `default_catalog`.`default_database`.`MyOrdersIndexHash_2`
           "type" : "JSONB",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "id",
+        "time"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "MyOrdersNoHint_3",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"MyOrdersNoHint_3\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB  , PRIMARY KEY (\"id\",\"time\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"MyOrdersNoHint_3\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB, PRIMARY KEY (\"id\",\"time\"))",
       "fields" : [
         {
           "name" : "id",
@@ -344,12 +360,20 @@ INSERT INTO `default_catalog`.`default_database`.`MyOrdersIndexHash_2`
           "type" : "JSONB",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "id",
+        "time"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "MyOrdersNoIndex_4",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"MyOrdersNoIndex_4\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB  , PRIMARY KEY (\"id\",\"time\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"MyOrdersNoIndex_4\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB, PRIMARY KEY (\"id\",\"time\"))",
       "fields" : [
         {
           "name" : "id",
@@ -371,12 +395,20 @@ INSERT INTO `default_catalog`.`default_database`.`MyOrdersIndexHash_2`
           "type" : "JSONB",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "id",
+        "time"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "MyOrdersTwoIndex_5",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"MyOrdersTwoIndex_5\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB  , PRIMARY KEY (\"id\",\"time\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"MyOrdersTwoIndex_5\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB, PRIMARY KEY (\"id\",\"time\"))",
       "fields" : [
         {
           "name" : "id",
@@ -398,7 +430,15 @@ INSERT INTO `default_catalog`.`default_database`.`MyOrdersIndexHash_2`
           "type" : "JSONB",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "id",
+        "time"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "MyOrdersIndexBtree",
@@ -581,6 +621,7 @@ INSERT INTO `default_catalog`.`default_database`.`MyOrdersIndexHash_2`
             "sql" : "SELECT *\nFROM \"MyOrdersIndexBtree_1\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -605,6 +646,7 @@ INSERT INTO `default_catalog`.`default_database`.`MyOrdersIndexHash_2`
             "sql" : "SELECT *\nFROM \"MyOrdersIndexHash_2\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -629,6 +671,7 @@ INSERT INTO `default_catalog`.`default_database`.`MyOrdersIndexHash_2`
             "sql" : "SELECT *\nFROM \"MyOrdersNoHint_3\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -653,6 +696,7 @@ INSERT INTO `default_catalog`.`default_database`.`MyOrdersIndexHash_2`
             "sql" : "SELECT *\nFROM \"MyOrdersNoIndex_4\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -677,6 +721,7 @@ INSERT INTO `default_catalog`.`default_database`.`MyOrdersIndexHash_2`
             "sql" : "SELECT *\nFROM \"MyOrdersTwoIndex_5\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }

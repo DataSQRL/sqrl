@@ -110,7 +110,7 @@ INSERT INTO `default_catalog`.`default_database`.`ProductId_2`
     {
       "name" : "Orders_1",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"Orders_1\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB  , PRIMARY KEY (\"id\",\"time\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Orders_1\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB, PRIMARY KEY (\"id\",\"time\"))",
       "fields" : [
         {
           "name" : "id",
@@ -132,19 +132,34 @@ INSERT INTO `default_catalog`.`default_database`.`ProductId_2`
           "type" : "JSONB",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "id",
+        "time"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "ProductId_2",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"ProductId_2\" (\"productid\" BIGINT NOT NULL , PRIMARY KEY (\"productid\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"ProductId_2\" (\"productid\" BIGINT NOT NULL, PRIMARY KEY (\"productid\"))",
       "fields" : [
         {
           "name" : "productid",
           "type" : "BIGINT",
           "nullable" : false
         }
-      ]
+      ],
+      "primaryKey" : [
+        "productid"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "Orders",
@@ -211,6 +226,7 @@ INSERT INTO `default_catalog`.`default_database`.`ProductId_2`
             "sql" : "SELECT *\nFROM \"Orders_1\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -235,6 +251,7 @@ INSERT INTO `default_catalog`.`default_database`.`ProductId_2`
             "sql" : "SELECT *\nFROM \"ProductId_2\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }

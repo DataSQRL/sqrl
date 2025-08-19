@@ -999,19 +999,19 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
   "testRunnerTopics" : [ ]
 }
 >>>postgres-schema.sql
-CREATE TABLE IF NOT EXISTS "AnotherCustomer" ("customerid" BIGINT NOT NULL, "email" TEXT NOT NULL, "lastUpdated" BIGINT NOT NULL , PRIMARY KEY ("customerid","lastUpdated"));
-CREATE TABLE IF NOT EXISTS "Customer" ("customerid" BIGINT NOT NULL, "email" TEXT NOT NULL, "name" TEXT NOT NULL, "lastUpdated" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("customerid","lastUpdated"));
-CREATE TABLE IF NOT EXISTS "CustomerByMultipleTime" ("customerid" BIGINT NOT NULL, "email" TEXT NOT NULL, "name" TEXT NOT NULL, "lastUpdated" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("customerid","email"));
-CREATE TABLE IF NOT EXISTS "CustomerByTime2" ("customerid" BIGINT NOT NULL, "email" TEXT NOT NULL, "name" TEXT NOT NULL, "lastUpdated" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("customerid"));
-CREATE TABLE IF NOT EXISTS "CustomerFilteredDistinct" ("customerid" BIGINT NOT NULL, "email" TEXT NOT NULL, "name" TEXT NOT NULL, "lastUpdated" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("customerid"));
-CREATE TABLE IF NOT EXISTS "CustomerTimeWindow" ("window_start" TIMESTAMP WITHOUT TIME ZONE NOT NULL, "window_end" TIMESTAMP WITHOUT TIME ZONE NOT NULL, "unique_email_count" BIGINT NOT NULL , PRIMARY KEY ("window_start","window_end"));
-CREATE TABLE IF NOT EXISTS "ExplicitDistinct" ("customerid" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "name" TEXT NOT NULL , PRIMARY KEY ("customerid"));
-CREATE TABLE IF NOT EXISTS "ExternalOrders" ("id" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "time" TIMESTAMP WITH TIME ZONE NOT NULL, "entries" JSONB  , PRIMARY KEY ("id","time"));
-CREATE TABLE IF NOT EXISTS "InvalidDistinct" ("customerid" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "namee" TEXT NOT NULL , PRIMARY KEY ("customerid"));
-CREATE TABLE IF NOT EXISTS "Orders" ("orderid" INTEGER NOT NULL, "amount" FLOAT  , PRIMARY KEY ("orderid"));
-CREATE TABLE IF NOT EXISTS "SelectCustomers" ("customerid" BIGINT NOT NULL, "email" TEXT NOT NULL, "name" TEXT NOT NULL, "lastUpdated" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("customerid","name"));
-CREATE TABLE IF NOT EXISTS "TemporalJoin" ("id" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "time" TIMESTAMP WITH TIME ZONE NOT NULL, "entries" JSONB , "customerid0" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "name" TEXT NOT NULL , PRIMARY KEY ("id","time"));
-CREATE TABLE IF NOT EXISTS "UnnestOrders" ("id" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "time" TIMESTAMP WITH TIME ZONE NOT NULL, "productid" BIGINT NOT NULL, "quantity" BIGINT NOT NULL, "discount" DOUBLE PRECISION , "newId" BIGINT NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "AnotherCustomer" ("customerid" BIGINT NOT NULL, "email" TEXT NOT NULL, "lastUpdated" BIGINT NOT NULL, PRIMARY KEY ("customerid","lastUpdated"));
+CREATE TABLE IF NOT EXISTS "Customer" ("customerid" BIGINT NOT NULL, "email" TEXT NOT NULL, "name" TEXT NOT NULL, "lastUpdated" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("customerid","lastUpdated"));
+CREATE TABLE IF NOT EXISTS "CustomerByMultipleTime" ("customerid" BIGINT NOT NULL, "email" TEXT NOT NULL, "name" TEXT NOT NULL, "lastUpdated" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("customerid","email"));
+CREATE TABLE IF NOT EXISTS "CustomerByTime2" ("customerid" BIGINT NOT NULL, "email" TEXT NOT NULL, "name" TEXT NOT NULL, "lastUpdated" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("customerid"));
+CREATE TABLE IF NOT EXISTS "CustomerFilteredDistinct" ("customerid" BIGINT NOT NULL, "email" TEXT NOT NULL, "name" TEXT NOT NULL, "lastUpdated" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("customerid"));
+CREATE TABLE IF NOT EXISTS "CustomerTimeWindow" ("window_start" TIMESTAMP WITHOUT TIME ZONE NOT NULL, "window_end" TIMESTAMP WITHOUT TIME ZONE NOT NULL, "unique_email_count" BIGINT NOT NULL, PRIMARY KEY ("window_start","window_end"));
+CREATE TABLE IF NOT EXISTS "ExplicitDistinct" ("customerid" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "name" TEXT NOT NULL, PRIMARY KEY ("customerid"));
+CREATE TABLE IF NOT EXISTS "ExternalOrders" ("id" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "time" TIMESTAMP WITH TIME ZONE NOT NULL, "entries" JSONB, PRIMARY KEY ("id","time"));
+CREATE TABLE IF NOT EXISTS "InvalidDistinct" ("customerid" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "namee" TEXT NOT NULL, PRIMARY KEY ("customerid"));
+CREATE TABLE IF NOT EXISTS "Orders" ("orderid" INTEGER NOT NULL, "amount" FLOAT, PRIMARY KEY ("orderid"));
+CREATE TABLE IF NOT EXISTS "SelectCustomers" ("customerid" BIGINT NOT NULL, "email" TEXT NOT NULL, "name" TEXT NOT NULL, "lastUpdated" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("customerid","name"));
+CREATE TABLE IF NOT EXISTS "TemporalJoin" ("id" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "time" TIMESTAMP WITH TIME ZONE NOT NULL, "entries" JSONB, "customerid0" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "name" TEXT NOT NULL, PRIMARY KEY ("id","time"));
+CREATE TABLE IF NOT EXISTS "UnnestOrders" ("id" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "time" TIMESTAMP WITH TIME ZONE NOT NULL, "productid" BIGINT NOT NULL, "quantity" BIGINT NOT NULL, "discount" DOUBLE PRECISION, "newId" BIGINT NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
 
 CREATE INDEX IF NOT EXISTS "SelectCustomers_hash_c2" ON "SelectCustomers" USING hash ("name")
 >>>postgres-views.sql
@@ -1063,6 +1063,7 @@ FROM "ExternalOrders" AS "ExternalOrders0"
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1092,6 +1093,7 @@ FROM "ExternalOrders" AS "ExternalOrders0"
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1129,6 +1131,7 @@ FROM "ExternalOrders" AS "ExternalOrders0"
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1144,6 +1147,7 @@ FROM "ExternalOrders" AS "ExternalOrders0"
             "sql" : "SELECT *\nFROM \"CustomerByTime2\"",
             "parameters" : [ ],
             "pagination" : "NONE",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1164,6 +1168,7 @@ FROM "ExternalOrders" AS "ExternalOrders0"
             "sql" : "SELECT *\nFROM \"CustomerByMultipleTime\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1184,6 +1189,7 @@ FROM "ExternalOrders" AS "ExternalOrders0"
             "sql" : "SELECT *\nFROM (SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\"\n  FROM \"SelectCustomers\"\n  ORDER BY \"timestamp\" DESC NULLS LAST\n  FETCH NEXT 10 ROWS ONLY) AS \"t\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }

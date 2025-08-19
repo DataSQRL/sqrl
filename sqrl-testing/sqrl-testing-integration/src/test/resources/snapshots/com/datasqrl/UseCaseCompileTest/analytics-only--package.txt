@@ -4,7 +4,7 @@ ID:     default_catalog.default_database.ApplicationInfo
 Type:   state
 Stage:  iceberg
 Inputs: default_catalog.default_database._Applications, default_catalog.default_database._LoanTypes
-Primary Key: id
+Primary Key: id, loan_type_id
 Timestamp  : updated_at
 Schema:
  - id: BIGINT NOT NULL
@@ -42,7 +42,7 @@ Stage:  flink
 Inputs: default_catalog.default_database._ApplicationUpdates, default_catalog.default_database._Applications, default_catalog.default_database._LoanTypes
 Annotations:
  - stream-root: _ApplicationUpdates
-Primary Key: -
+Primary Key: customer_id
 Timestamp  : event_time
 Schema:
  - status: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -100,7 +100,7 @@ Inputs: default_catalog.default_database._ApplicationsStream
 Annotations:
  - mostRecentDistinct: true
  - stream-root: _ApplicationsStream
-Primary Key: id
+Primary Key: id, loan_type_id
 Timestamp  : updated_at
 Schema:
  - id: BIGINT NOT NULL
@@ -303,8 +303,7 @@ CREATE TABLE `ApplicationStatus_1` (
   `duration` BIGINT NOT NULL,
   `max_amount` DOUBLE NOT NULL,
   `min_amount` DOUBLE NOT NULL,
-  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
-  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+  PRIMARY KEY (`customer_id`) NOT ENFORCED
 )
 PARTITIONED BY (`customer_id`)
 WITH (
@@ -323,7 +322,7 @@ CREATE TABLE `_Applications_2` (
   `duration` BIGINT NOT NULL,
   `application_date` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  PRIMARY KEY (`id`) NOT ENFORCED
+  PRIMARY KEY (`id`, `loan_type_id`) NOT ENFORCED
 )
 PARTITIONED BY (`loan_type_id`)
 WITH (
@@ -355,7 +354,7 @@ CREATE TABLE `_LoanTypes_3` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`ApplicationStatus_1`
-(SELECT `status`, `message`, `event_time`, `id`, `customer_id`, `loan_type_id`, `amount`, `duration`, `max_amount`, `min_amount`, `hash_columns`(`status`, `message`, `event_time`, `id`, `customer_id`, `loan_type_id`, `amount`, `duration`, `max_amount`, `min_amount`) AS `__pk_hash`
+(SELECT *
  FROM `default_catalog`.`default_database`.`ApplicationStatus`)
 ;
 INSERT INTO `default_catalog`.`default_database`.`_Applications_2`
@@ -368,9 +367,9 @@ INSERT INTO `default_catalog`.`default_database`.`_Applications_2`
   ;
   END
 >>>iceberg-schema.sql
-CREATE TABLE IF NOT EXISTS "ApplicationStatus" ("status" TEXT NOT NULL, "message" TEXT NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE NOT NULL, "id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "loan_type_id" BIGINT NOT NULL, "amount" DOUBLE PRECISION NOT NULL, "duration" BIGINT NOT NULL, "max_amount" DOUBLE PRECISION NOT NULL, "min_amount" DOUBLE PRECISION NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
-CREATE TABLE IF NOT EXISTS "_Applications" ("id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "loan_type_id" BIGINT NOT NULL, "amount" DOUBLE PRECISION NOT NULL, "duration" BIGINT NOT NULL, "application_date" TIMESTAMP WITH TIME ZONE NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));
-CREATE TABLE IF NOT EXISTS "_LoanTypes" ("id" BIGINT NOT NULL, "name" TEXT NOT NULL, "description" TEXT NOT NULL, "interest_rate" DOUBLE PRECISION NOT NULL, "max_amount" DOUBLE PRECISION NOT NULL, "min_amount" DOUBLE PRECISION NOT NULL, "max_duration" BIGINT NOT NULL, "min_duration" BIGINT NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"))
+CREATE TABLE IF NOT EXISTS "ApplicationStatus" ("status" TEXT NOT NULL, "message" TEXT NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE NOT NULL, "id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "loan_type_id" BIGINT NOT NULL, "amount" DOUBLE PRECISION NOT NULL, "duration" BIGINT NOT NULL, "max_amount" DOUBLE PRECISION NOT NULL, "min_amount" DOUBLE PRECISION NOT NULL, PRIMARY KEY ("customer_id")) PARTITIONED BY ("customer_id");
+CREATE TABLE IF NOT EXISTS "_Applications" ("id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "loan_type_id" BIGINT NOT NULL, "amount" DOUBLE PRECISION NOT NULL, "duration" BIGINT NOT NULL, "application_date" TIMESTAMP WITH TIME ZONE NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("id","loan_type_id")) PARTITIONED BY ("loan_type_id");
+CREATE TABLE IF NOT EXISTS "_LoanTypes" ("id" BIGINT NOT NULL, "name" TEXT NOT NULL, "description" TEXT NOT NULL, "interest_rate" DOUBLE PRECISION NOT NULL, "max_amount" DOUBLE PRECISION NOT NULL, "min_amount" DOUBLE PRECISION NOT NULL, "max_duration" BIGINT NOT NULL, "min_duration" BIGINT NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("id"))
 >>>iceberg-snowflake-schema.sql
 CREATE OR REPLACE ICEBERG TABLE ApplicationStatus EXTERNAL_VOLUME = 'MyNewVolume' CATALOG = 'MyCatalog' CATALOG_TABLE_NAME = 'ApplicationStatus';
 CREATE OR REPLACE ICEBERG TABLE _Applications EXTERNAL_VOLUME = 'MyNewVolume' CATALOG = 'MyCatalog' CATALOG_TABLE_NAME = '_Applications';

@@ -191,10 +191,10 @@ INSERT INTO `default_catalog`.`default_database`.`Recommendation_2`
    ;
    END
 >>>postgres-schema.sql
-CREATE TABLE IF NOT EXISTS "Click" ("url" TEXT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "userid" TEXT NOT NULL , PRIMARY KEY ("url","userid","timestamp"));
-CREATE TABLE IF NOT EXISTS "Recommendation" ("url" TEXT NOT NULL, "rec" TEXT NOT NULL, "frequency" BIGINT NOT NULL , PRIMARY KEY ("url","rec"));
-CREATE TABLE IF NOT EXISTS "Trending" ("url" TEXT NOT NULL, "total" BIGINT NOT NULL , PRIMARY KEY ("url"));
-CREATE TABLE IF NOT EXISTS "VisitAfter" ("beforeURL" TEXT NOT NULL, "afterURL" TEXT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"))
+CREATE TABLE IF NOT EXISTS "Click" ("url" TEXT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "userid" TEXT NOT NULL, PRIMARY KEY ("url","userid","timestamp"));
+CREATE TABLE IF NOT EXISTS "Recommendation" ("url" TEXT NOT NULL, "rec" TEXT NOT NULL, "frequency" BIGINT NOT NULL, PRIMARY KEY ("url","rec"));
+CREATE TABLE IF NOT EXISTS "Trending" ("url" TEXT NOT NULL, "total" BIGINT NOT NULL, PRIMARY KEY ("url"));
+CREATE TABLE IF NOT EXISTS "VisitAfter" ("beforeURL" TEXT NOT NULL, "afterURL" TEXT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"))
 >>>postgres-views.sql
 
 >>>vertx.json
@@ -221,6 +221,7 @@ CREATE TABLE IF NOT EXISTS "VisitAfter" ("beforeURL" TEXT NOT NULL, "afterURL" T
             "sql" : "SELECT *\nFROM \"Click\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -254,6 +255,7 @@ CREATE TABLE IF NOT EXISTS "VisitAfter" ("beforeURL" TEXT NOT NULL, "afterURL" T
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -278,6 +280,7 @@ CREATE TABLE IF NOT EXISTS "VisitAfter" ("beforeURL" TEXT NOT NULL, "afterURL" T
             "sql" : "SELECT *\nFROM (SELECT \"url\", \"total\"\n  FROM \"Trending\"\n  ORDER BY \"total\" DESC NULLS LAST, \"url\" NULLS FIRST) AS \"t\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -302,6 +305,7 @@ CREATE TABLE IF NOT EXISTS "VisitAfter" ("beforeURL" TEXT NOT NULL, "afterURL" T
             "sql" : "SELECT \"beforeURL\", \"afterURL\", \"timestamp\"\nFROM \"VisitAfter\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }

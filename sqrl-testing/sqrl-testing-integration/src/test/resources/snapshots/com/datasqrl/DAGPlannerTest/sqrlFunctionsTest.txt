@@ -85,7 +85,7 @@ INSERT INTO `default_catalog`.`default_database`.`MyTable2_2`
     {
       "name" : "MyTable_1",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"MyTable_1\" (\"val\" INTEGER NOT NULL, \"myTimestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"val\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"MyTable_1\" (\"val\" INTEGER NOT NULL, \"myTimestamp\" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY (\"val\"))",
       "fields" : [
         {
           "name" : "val",
@@ -97,12 +97,19 @@ INSERT INTO `default_catalog`.`default_database`.`MyTable2_2`
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
-      ]
+      ],
+      "primaryKey" : [
+        "val"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "MyTable2_2",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"MyTable2_2\" (\"val\" INTEGER NOT NULL, \"myTimestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"val\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"MyTable2_2\" (\"val\" INTEGER NOT NULL, \"myTimestamp\" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY (\"val\"))",
       "fields" : [
         {
           "name" : "val",
@@ -114,7 +121,14 @@ INSERT INTO `default_catalog`.`default_database`.`MyTable2_2`
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
-      ]
+      ],
+      "primaryKey" : [
+        "val"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "MyTable",
@@ -176,6 +190,7 @@ INSERT INTO `default_catalog`.`default_database`.`MyTable2_2`
             "sql" : "SELECT *\nFROM \"MyTable_1\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -200,6 +215,7 @@ INSERT INTO `default_catalog`.`default_database`.`MyTable2_2`
             "sql" : "SELECT *\nFROM \"MyTable2_2\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }

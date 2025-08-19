@@ -199,7 +199,7 @@ INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
     {
       "name" : "MachineReading_1",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"MachineReading_1\" (\"sensorid\" INTEGER , \"temperature\" FLOAT , \"event_time\" TIMESTAMP WITH TIME ZONE , \"machineid\" INTEGER , \"__pk_hash\" TEXT  , PRIMARY KEY (\"__pk_hash\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"MachineReading_1\" (\"sensorid\" INTEGER, \"temperature\" FLOAT, \"event_time\" TIMESTAMP WITH TIME ZONE, \"machineid\" INTEGER, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
       "fields" : [
         {
           "name" : "sensorid",
@@ -226,12 +226,19 @@ INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
           "type" : "TEXT",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "MachineTempByHour_2",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"MachineTempByHour_2\" (\"machineid\" INTEGER , \"time_hour\" TIMESTAMP WITH TIME ZONE NOT NULL, \"avg_temperature\" FLOAT , \"__pk_hash\" TEXT  , PRIMARY KEY (\"__pk_hash\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"MachineTempByHour_2\" (\"machineid\" INTEGER, \"time_hour\" TIMESTAMP WITH TIME ZONE NOT NULL, \"avg_temperature\" FLOAT, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
       "fields" : [
         {
           "name" : "machineid",
@@ -253,7 +260,14 @@ INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
           "type" : "TEXT",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "MachineReading",
@@ -330,6 +344,7 @@ INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
             "sql" : "SELECT \"sensorid\", \"temperature\", \"event_time\", \"machineid\"\nFROM \"MachineReading_1\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -354,6 +369,7 @@ INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
             "sql" : "SELECT \"machineid\", \"time_hour\", \"avg_temperature\"\nFROM \"MachineTempByHour_2\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }

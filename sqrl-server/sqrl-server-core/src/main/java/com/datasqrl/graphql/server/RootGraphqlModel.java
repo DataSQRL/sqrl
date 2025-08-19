@@ -325,7 +325,7 @@ public class RootGraphqlModel {
     PaginationType pagination;
 
     /** For how long the results of this query can be cached. 0 to disable caching */
-    long cacheTime;
+    long cacheDurationMs;
 
     /** The database the query is executed against */
     DatabaseType database;
@@ -340,7 +340,7 @@ public class RootGraphqlModel {
     }
 
     public SqlQuery updateSQL(String newSQL) {
-      return new SqlQuery(newSQL, parameters, pagination, cacheTime, database);
+      return new SqlQuery(newSQL, parameters, pagination, cacheDurationMs, database);
     }
   }
 
