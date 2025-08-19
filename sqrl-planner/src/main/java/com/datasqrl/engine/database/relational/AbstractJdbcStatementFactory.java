@@ -20,14 +20,18 @@ import com.datasqrl.calcite.convert.RelToSqlNode;
 import com.datasqrl.calcite.convert.SqlNodeToString;
 import com.datasqrl.calcite.dialect.postgres.SqlCreatePostgresView;
 import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.engine.database.relational.CreateTableJdbcStatement.CreateTableDdlFactory;
+import com.datasqrl.engine.database.relational.CreateTableJdbcStatement.PartitionType;
 import com.datasqrl.engine.database.relational.JdbcStatement.Field;
 import com.datasqrl.engine.database.relational.JdbcStatement.Type;
-import com.datasqrl.engine.database.relational.ddl.statements.CreateTableDDL;
 import com.datasqrl.planner.dag.plan.MaterializationStagePlan.Query;
 import com.datasqrl.planner.hint.DataTypeHint;
+import com.datasqrl.planner.hint.PartitionKeyHint;
 import com.datasqrl.planner.hint.PlannerHints;
+import com.datasqrl.planner.hint.TtlHint;
 import com.datasqrl.sql.DatabaseExtension;
 import com.datasqrl.util.CalciteUtil;
+import java.time.Duration;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -57,6 +61,7 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
   protected final OperatorRuleTransformer dialectCallConverter;
   protected final RelToSqlNode relToSqlConverter;
   protected final SqlNodeToString sqlNodeToString;
+  protected final CreateTableDdlFactory createTableDdlFactory;
 
   @Override
   public QueryResult createQuery(
@@ -72,7 +77,7 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
   protected static Map<String, String> getTableNameMapping(
       Map<String, JdbcEngineCreateTable> tableIdMap) {
     return tableIdMap.entrySet().stream()
-        .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getTableName()));
+        .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().tableName()));
   }
 
   public QueryResult createQuery(
@@ -99,37 +104,55 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
       var viewSql = createView(viewNameIdentifier, columnList, sqlNodes.getSqlNode());
       var datatype = relNode.getRowType();
       view =
-          new JdbcStatement(
+          new GenericJdbcStatement(
               viewName,
               Type.VIEW,
               viewSql,
+              documentation.orElse(null),
               datatype,
-              getColumns(datatype.getFieldList(), PlannerHints.EMPTY),
-              documentation.orElse(null));
+              getColumns(datatype.getFieldList(), PlannerHints.EMPTY));
     }
     return new JdbcStatementFactory.QueryResult(qBuilder, view);
   }
 
   @Override
   public JdbcStatement createTable(JdbcEngineCreateTable createTable) {
-    var tableName = createTable.getTableName();
-    var ddl =
-        createTable(
-            tableName,
-            createTable.getDatatype().getFieldList(),
-            createTable.getTable().getPrimaryKey().get(),
-            createTable.getTableAnalysis().getHints());
-    return new JdbcStatement(
-        tableName, Type.TABLE, ddl.getSql(), createTable.getDatatype(), ddl.getColumns(), null);
+    var tableName = createTable.tableName();
+    List<String> primaryKeys = createTable.table().getPrimaryKey().orElseThrow();
+    List<String> partitionKeys =
+        createTable
+            .tableAnalysis()
+            .getHints()
+            .getHint(PartitionKeyHint.class)
+            .map(PartitionKeyHint::getColumnNames)
+            .orElse(List.of());
+    // DagPlanner validates that partition keys are part of primary key
+
+    PartitionType partitionType = getPartitionType(createTable, partitionKeys);
+    Duration ttl =
+        createTable
+            .tableAnalysis()
+            .getHints()
+            .getHint(TtlHint.class)
+            .flatMap(TtlHint::getTtl)
+            .orElse(Duration.ZERO);
+
+    return new CreateTableJdbcStatement(
+        tableName,
+        null,
+        getColumns(createTable.datatype().getFieldList(), createTable.tableAnalysis().getHints()),
+        primaryKeys,
+        partitionKeys,
+        partitionType,
+        partitionType == PartitionType.NONE ? 0 : 1,
+        ttl,
+        createTable,
+        createTableDdlFactory);
   }
 
-  public CreateTableDDL createTable(
-      String name, List<RelDataTypeField> fields, List<String> primaryKeys, PlannerHints hints) {
-    // TODO: Move to SqlNode
-    var tableName = quoteIdentifier(name);
-    var columns = getColumns(fields, hints);
-    var pks = quoteValues(primaryKeys);
-    return new CreateTableDDL(tableName, columns, pks);
+  protected PartitionType getPartitionType(
+      JdbcEngineCreateTable createTable, List<String> partitionKey) {
+    return partitionKey.isEmpty() ? PartitionType.NONE : PartitionType.LIST;
   }
 
   protected List<Field> getColumns(List<RelDataTypeField> fields, PlannerHints hints) {
@@ -173,7 +196,7 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
     return "\"" + column + "\"";
   }
 
-  public static List<String> quoteValues(List<String> values) {
+  public static List<String> quoteIdentifiers(List<String> values) {
     return values.stream()
         .map(AbstractJdbcStatementFactory::quoteIdentifier)
         .collect(Collectors.toList());

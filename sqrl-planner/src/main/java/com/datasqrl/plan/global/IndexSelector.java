@@ -16,7 +16,7 @@
 package com.datasqrl.plan.global;
 
 import com.datasqrl.calcite.SqrlRexUtil;
-import com.datasqrl.engine.database.relational.JdbcEngineCreateTable;
+import com.datasqrl.engine.database.relational.CreateTableJdbcStatement;
 import com.datasqrl.plan.global.QueryIndexSummary.IndexableFunctionCall;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
 import com.datasqrl.planner.analyzer.TableAnalysis;
@@ -67,7 +67,7 @@ public class IndexSelector {
 
   private final Sqrl2FlinkSQLTranslator framework;
   private final IndexSelectorConfig config;
-  private final Map<String, JdbcEngineCreateTable> tableMap;
+  private final Map<String, CreateTableJdbcStatement> tableMap;
 
   public List<QueryIndexSummary> getIndexSelection(RelNode queryRelnode) {
     var pushedDownFilters = applyPushDownFilters(queryRelnode);
@@ -196,11 +196,10 @@ public class IndexSelector {
     Function<QueryIndexSummary, Double> initialCost = idx -> idx.getBaseCost();
     if (config.hasPrimaryKeyIndex() && table.getAnalysis().getPrimaryKey().isDefined()) {
       // The baseline cost is the cost of doing the lookup with the primary key index
-      var pkIdx =
-          IndexDefinition.getPrimaryKeyIndex(
-              table.getTableName(),
-              table.getAnalysis().getPrimaryKey().asSimpleList(),
-              table.getAnalysis().getRowType().getFieldNames());
+      // we need to use the primary key on the physical table (i.e. from the statement)
+      var pkNames = table.getStmt().getPrimaryKey();
+      var pkIndexes = pkNames.stream().map(table.getAnalysis()::getFieldIndex).toList();
+      var pkIdx = IndexDefinition.getPrimaryKeyIndex(table.getTableName(), pkIndexes, pkNames);
       initialCost = idx -> idx.getCost(pkIdx);
       candidates.remove(pkIdx);
     }
@@ -478,8 +477,9 @@ public class IndexSelector {
   private NamedTable getNamedTable(TableScan scan) {
     var names = scan.getTable().getQualifiedName();
     var nameId = names.get(names.size() - 1);
-    JdbcEngineCreateTable createTable = tableMap.get(nameId);
-    return new NamedTable(nameId, createTable.getTableName(), createTable.getTableAnalysis());
+    CreateTableJdbcStatement stmt = tableMap.get(nameId);
+    var createTable = stmt.getEngineTable();
+    return new NamedTable(nameId, createTable.tableName(), createTable.tableAnalysis(), stmt);
   }
 
   @Value
@@ -488,5 +488,6 @@ public class IndexSelector {
     @Include String tableId;
     String tableName;
     TableAnalysis analysis;
+    CreateTableJdbcStatement stmt;
   }
 }

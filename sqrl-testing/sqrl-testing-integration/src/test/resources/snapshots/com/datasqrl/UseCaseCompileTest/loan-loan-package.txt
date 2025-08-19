@@ -704,17 +704,17 @@ INSERT INTO `default_catalog`.`default_database`.`ApplicationAlert_2`
   "testRunnerTopics" : [ ]
 }
 >>>postgres-schema.sql
-CREATE TABLE IF NOT EXISTS "AddChatMessage" ("_uuid" TEXT NOT NULL, "role" TEXT NOT NULL, "content" TEXT NOT NULL, "name" TEXT , "context" JSONB , "event_time" TIMESTAMP WITH TIME ZONE  , PRIMARY KEY ("_uuid"));
-CREATE TABLE IF NOT EXISTS "ApplicationAlert" ("_uuid" TEXT NOT NULL, "id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "loan_type_id" BIGINT NOT NULL, "max_amount" DOUBLE PRECISION NOT NULL, "min_amount" DOUBLE PRECISION NOT NULL, "amount" DOUBLE PRECISION NOT NULL , PRIMARY KEY ("_uuid"));
-CREATE TABLE IF NOT EXISTS "ApplicationStatus" ("_uuid" TEXT NOT NULL, "status" TEXT NOT NULL, "message" TEXT , "event_time" TIMESTAMP WITH TIME ZONE , "id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "loan_type_id" BIGINT NOT NULL, "amount" DOUBLE PRECISION NOT NULL, "duration" BIGINT NOT NULL, "max_amount" DOUBLE PRECISION NOT NULL, "min_amount" DOUBLE PRECISION NOT NULL , PRIMARY KEY ("_uuid"));
-CREATE TABLE IF NOT EXISTS "ApplicationUpdates" ("_uuid" TEXT NOT NULL, "loan_application_id" BIGINT NOT NULL, "status" TEXT NOT NULL, "message" TEXT , "event_time" TIMESTAMP WITH TIME ZONE  , PRIMARY KEY ("_uuid"));
-CREATE TABLE IF NOT EXISTS "Applications" ("id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "loan_type_id" BIGINT NOT NULL, "amount" DOUBLE PRECISION NOT NULL, "duration" BIGINT NOT NULL, "application_date" TIMESTAMP WITH TIME ZONE NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));
-CREATE TABLE IF NOT EXISTS "ApplicationsStream" ("id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "loan_type_id" BIGINT NOT NULL, "amount" DOUBLE PRECISION NOT NULL, "duration" BIGINT NOT NULL, "application_date" TIMESTAMP WITH TIME ZONE NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id","updated_at"));
-CREATE TABLE IF NOT EXISTS "CustomerChatMessage" ("role" TEXT NOT NULL, "content" TEXT NOT NULL, "name" TEXT , "customerid" INTEGER , "timestamp" TIMESTAMP WITH TIME ZONE , "uuid" TEXT NOT NULL , PRIMARY KEY ("uuid"));
-CREATE TABLE IF NOT EXISTS "Customers" ("id" BIGINT NOT NULL, "first_name" TEXT NOT NULL, "last_name" TEXT NOT NULL, "email" TEXT NOT NULL, "phone" TEXT NOT NULL, "address" TEXT NOT NULL, "date_of_birth" TEXT NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));
-CREATE TABLE IF NOT EXISTS "CustomersStream" ("id" BIGINT NOT NULL, "first_name" TEXT NOT NULL, "last_name" TEXT NOT NULL, "email" TEXT NOT NULL, "phone" TEXT NOT NULL, "address" TEXT NOT NULL, "date_of_birth" TEXT NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id","updated_at"));
-CREATE TABLE IF NOT EXISTS "LoanTypes" ("id" BIGINT NOT NULL, "name" TEXT NOT NULL, "description" TEXT NOT NULL, "interest_rate" DOUBLE PRECISION NOT NULL, "max_amount" DOUBLE PRECISION NOT NULL, "min_amount" DOUBLE PRECISION NOT NULL, "max_duration" BIGINT NOT NULL, "min_duration" BIGINT NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));
-CREATE TABLE IF NOT EXISTS "LoanTypesStream" ("id" BIGINT NOT NULL, "name" TEXT NOT NULL, "description" TEXT NOT NULL, "interest_rate" DOUBLE PRECISION NOT NULL, "max_amount" DOUBLE PRECISION NOT NULL, "min_amount" DOUBLE PRECISION NOT NULL, "max_duration" BIGINT NOT NULL, "min_duration" BIGINT NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id","updated_at"));
+CREATE TABLE IF NOT EXISTS "AddChatMessage" ("_uuid" TEXT NOT NULL, "role" TEXT NOT NULL, "content" TEXT NOT NULL, "name" TEXT, "context" JSONB, "event_time" TIMESTAMP WITH TIME ZONE, PRIMARY KEY ("_uuid"));
+CREATE TABLE IF NOT EXISTS "ApplicationAlert" ("_uuid" TEXT NOT NULL, "id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "loan_type_id" BIGINT NOT NULL, "max_amount" DOUBLE PRECISION NOT NULL, "min_amount" DOUBLE PRECISION NOT NULL, "amount" DOUBLE PRECISION NOT NULL, PRIMARY KEY ("_uuid"));
+CREATE TABLE IF NOT EXISTS "ApplicationStatus" ("_uuid" TEXT NOT NULL, "status" TEXT NOT NULL, "message" TEXT, "event_time" TIMESTAMP WITH TIME ZONE, "id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "loan_type_id" BIGINT NOT NULL, "amount" DOUBLE PRECISION NOT NULL, "duration" BIGINT NOT NULL, "max_amount" DOUBLE PRECISION NOT NULL, "min_amount" DOUBLE PRECISION NOT NULL, PRIMARY KEY ("_uuid"));
+CREATE TABLE IF NOT EXISTS "ApplicationUpdates" ("_uuid" TEXT NOT NULL, "loan_application_id" BIGINT NOT NULL, "status" TEXT NOT NULL, "message" TEXT, "event_time" TIMESTAMP WITH TIME ZONE, PRIMARY KEY ("_uuid"));
+CREATE TABLE IF NOT EXISTS "Applications" ("id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "loan_type_id" BIGINT NOT NULL, "amount" DOUBLE PRECISION NOT NULL, "duration" BIGINT NOT NULL, "application_date" TIMESTAMP WITH TIME ZONE NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("id"));
+CREATE TABLE IF NOT EXISTS "ApplicationsStream" ("id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "loan_type_id" BIGINT NOT NULL, "amount" DOUBLE PRECISION NOT NULL, "duration" BIGINT NOT NULL, "application_date" TIMESTAMP WITH TIME ZONE NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("id","updated_at"));
+CREATE TABLE IF NOT EXISTS "CustomerChatMessage" ("role" TEXT NOT NULL, "content" TEXT NOT NULL, "name" TEXT, "customerid" INTEGER, "timestamp" TIMESTAMP WITH TIME ZONE, "uuid" TEXT NOT NULL, PRIMARY KEY ("uuid"));
+CREATE TABLE IF NOT EXISTS "Customers" ("id" BIGINT NOT NULL, "first_name" TEXT NOT NULL, "last_name" TEXT NOT NULL, "email" TEXT NOT NULL, "phone" TEXT NOT NULL, "address" TEXT NOT NULL, "date_of_birth" TEXT NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("id"));
+CREATE TABLE IF NOT EXISTS "CustomersStream" ("id" BIGINT NOT NULL, "first_name" TEXT NOT NULL, "last_name" TEXT NOT NULL, "email" TEXT NOT NULL, "phone" TEXT NOT NULL, "address" TEXT NOT NULL, "date_of_birth" TEXT NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("id","updated_at"));
+CREATE TABLE IF NOT EXISTS "LoanTypes" ("id" BIGINT NOT NULL, "name" TEXT NOT NULL, "description" TEXT NOT NULL, "interest_rate" DOUBLE PRECISION NOT NULL, "max_amount" DOUBLE PRECISION NOT NULL, "min_amount" DOUBLE PRECISION NOT NULL, "max_duration" BIGINT NOT NULL, "min_duration" BIGINT NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("id"));
+CREATE TABLE IF NOT EXISTS "LoanTypesStream" ("id" BIGINT NOT NULL, "name" TEXT NOT NULL, "description" TEXT NOT NULL, "interest_rate" DOUBLE PRECISION NOT NULL, "max_amount" DOUBLE PRECISION NOT NULL, "min_amount" DOUBLE PRECISION NOT NULL, "max_duration" BIGINT NOT NULL, "min_duration" BIGINT NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("id","updated_at"));
 
 CREATE INDEX IF NOT EXISTS "ApplicationUpdates_hash_c1" ON "ApplicationUpdates" USING hash ("loan_application_id");
 CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash ("customer_id")
@@ -744,6 +744,7 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
             "sql" : "SELECT *\nFROM \"AddChatMessage\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -768,6 +769,7 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
             "sql" : "SELECT *\nFROM \"ApplicationAlert\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -792,6 +794,7 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
             "sql" : "SELECT *\nFROM \"ApplicationStatus\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -816,6 +819,7 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
             "sql" : "SELECT *\nFROM \"ApplicationUpdates\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -845,6 +849,7 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -874,6 +879,7 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -903,6 +909,7 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -927,6 +934,7 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
             "sql" : "SELECT *\nFROM \"Applications\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -951,6 +959,7 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
             "sql" : "SELECT *\nFROM \"ApplicationsStream\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -975,6 +984,7 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
             "sql" : "SELECT *\nFROM (SELECT \"role\", \"content\", \"name\", \"customerid\", \"timestamp\", \"uuid\"\n  FROM \"CustomerChatMessage\"\n  ORDER BY \"timestamp\" DESC NULLS LAST) AS \"t\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -999,6 +1009,7 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
             "sql" : "SELECT *\nFROM \"Customers\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1028,6 +1039,7 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1057,6 +1069,7 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1081,6 +1094,7 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
             "sql" : "SELECT *\nFROM \"CustomersStream\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1105,6 +1119,7 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
             "sql" : "SELECT *\nFROM \"LoanTypes\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1129,6 +1144,7 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
             "sql" : "SELECT *\nFROM \"LoanTypesStream\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }

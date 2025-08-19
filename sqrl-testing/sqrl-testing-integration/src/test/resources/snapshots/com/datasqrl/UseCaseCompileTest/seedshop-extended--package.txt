@@ -700,18 +700,19 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerPromotion_1`
   "testRunnerTopics" : [ ]
 }
 >>>postgres-schema.sql
-CREATE TABLE IF NOT EXISTS "Customers" ("id" BIGINT NOT NULL, "first_name" TEXT NOT NULL, "last_name" TEXT NOT NULL, "email" TEXT NOT NULL, "ip_address" TEXT , "country" TEXT , "changed_on" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));
-CREATE TABLE IF NOT EXISTS "CustomersOrderStats" ("customerid" BIGINT NOT NULL, "first_order" TIMESTAMP WITH TIME ZONE NOT NULL, "total_spend" DOUBLE PRECISION NOT NULL, "total_saved" DOUBLE PRECISION NOT NULL, "num_orders" BIGINT NOT NULL , PRIMARY KEY ("customerid"));
-CREATE TABLE IF NOT EXISTS "CustomersPastPurchases" ("customerid" BIGINT NOT NULL, "productid" BIGINT NOT NULL, "num_orders" BIGINT NOT NULL, "total_quantity" BIGINT NOT NULL , PRIMARY KEY ("customerid","productid"));
-CREATE TABLE IF NOT EXISTS "CustomersSpending" ("customerid" BIGINT NOT NULL, "week" TIMESTAMP WITH TIME ZONE NOT NULL, "spend" DOUBLE PRECISION NOT NULL, "saved" DOUBLE PRECISION NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
-CREATE TABLE IF NOT EXISTS "Orders" ("id" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "time" TIMESTAMP WITH TIME ZONE NOT NULL, "items" JSONB  , PRIMARY KEY ("id","time"));
-CREATE TABLE IF NOT EXISTS "OrdersTotals" ("id" BIGINT NOT NULL, "time" TIMESTAMP WITH TIME ZONE NOT NULL, "customerid" BIGINT NOT NULL, "price" DOUBLE PRECISION NOT NULL, "saving" DOUBLE PRECISION NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
-CREATE TABLE IF NOT EXISTS "Products" ("id" BIGINT NOT NULL, "name" TEXT NOT NULL, "sizing" TEXT NOT NULL, "weight_in_gram" BIGINT NOT NULL, "type" TEXT NOT NULL, "category" TEXT NOT NULL, "usda_id" BIGINT NOT NULL, "updated" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));
-CREATE TABLE IF NOT EXISTS "ProductsByCountry" ("productid" BIGINT NOT NULL, "country" TEXT , "quantity" BIGINT NOT NULL, "spend" DOUBLE PRECISION NOT NULL, "weight" BIGINT NOT NULL, "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "Customers" ("id" BIGINT NOT NULL, "first_name" TEXT NOT NULL, "last_name" TEXT NOT NULL, "email" TEXT NOT NULL, "ip_address" TEXT, "country" TEXT, "changed_on" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("id"));
+CREATE TABLE IF NOT EXISTS "CustomersOrderStats" ("customerid" BIGINT NOT NULL, "first_order" TIMESTAMP WITH TIME ZONE NOT NULL, "total_spend" DOUBLE PRECISION NOT NULL, "total_saved" DOUBLE PRECISION NOT NULL, "num_orders" BIGINT NOT NULL, PRIMARY KEY ("customerid"));
+CREATE TABLE IF NOT EXISTS "CustomersPastPurchases" ("customerid" BIGINT NOT NULL, "productid" BIGINT NOT NULL, "num_orders" BIGINT NOT NULL, "total_quantity" BIGINT NOT NULL, PRIMARY KEY ("customerid","productid"));
+CREATE TABLE IF NOT EXISTS "CustomersSpending" ("customerid" BIGINT NOT NULL, "week" TIMESTAMP WITH TIME ZONE NOT NULL, "spend" DOUBLE PRECISION NOT NULL, "saved" DOUBLE PRECISION NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "Orders" ("id" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "time" TIMESTAMP WITH TIME ZONE NOT NULL, "items" JSONB, PRIMARY KEY ("id","time"));
+CREATE TABLE IF NOT EXISTS "OrdersTotals" ("id" BIGINT NOT NULL, "time" TIMESTAMP WITH TIME ZONE NOT NULL, "customerid" BIGINT NOT NULL, "price" DOUBLE PRECISION NOT NULL, "saving" DOUBLE PRECISION NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "Products" ("id" BIGINT NOT NULL, "name" TEXT NOT NULL, "sizing" TEXT NOT NULL, "weight_in_gram" BIGINT NOT NULL, "type" TEXT NOT NULL, "category" TEXT NOT NULL, "usda_id" BIGINT NOT NULL, "updated" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("id"));
+CREATE TABLE IF NOT EXISTS "ProductsByCountry" ("productid" BIGINT NOT NULL, "country" TEXT, "quantity" BIGINT NOT NULL, "spend" DOUBLE PRECISION NOT NULL, "weight" BIGINT NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
 
 CREATE INDEX IF NOT EXISTS "Customers_hash_c3" ON "Customers" USING hash ("email");
 CREATE INDEX IF NOT EXISTS "OrdersTotals_hash_c0" ON "OrdersTotals" USING hash ("id");
 CREATE INDEX IF NOT EXISTS "Orders_hash_c1" ON "Orders" USING hash ("customerid");
+CREATE INDEX IF NOT EXISTS "ProductsByCountry_hash_c0" ON "ProductsByCountry" USING hash ("productid");
 CREATE INDEX IF NOT EXISTS "Products_text_c1c5" ON "Products" USING GIN (to_tsvector('english', coalesce("name", '') || ' ' || coalesce("category", '') ))
 >>>postgres-views.sql
 
@@ -756,6 +757,7 @@ CREATE INDEX IF NOT EXISTS "Products_text_c1c5" ON "Products" USING GIN (to_tsve
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -785,6 +787,7 @@ CREATE INDEX IF NOT EXISTS "Products_text_c1c5" ON "Products" USING GIN (to_tsve
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -814,6 +817,7 @@ CREATE INDEX IF NOT EXISTS "Products_text_c1c5" ON "Products" USING GIN (to_tsve
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -843,6 +847,7 @@ CREATE INDEX IF NOT EXISTS "Products_text_c1c5" ON "Products" USING GIN (to_tsve
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -872,6 +877,7 @@ CREATE INDEX IF NOT EXISTS "Products_text_c1c5" ON "Products" USING GIN (to_tsve
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -901,6 +907,7 @@ CREATE INDEX IF NOT EXISTS "Products_text_c1c5" ON "Products" USING GIN (to_tsve
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -930,6 +937,7 @@ CREATE INDEX IF NOT EXISTS "Products_text_c1c5" ON "Products" USING GIN (to_tsve
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -954,6 +962,7 @@ CREATE INDEX IF NOT EXISTS "Products_text_c1c5" ON "Products" USING GIN (to_tsve
             "sql" : "SELECT *\nFROM \"Orders\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -987,6 +996,7 @@ CREATE INDEX IF NOT EXISTS "Products_text_c1c5" ON "Products" USING GIN (to_tsve
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1020,6 +1030,7 @@ CREATE INDEX IF NOT EXISTS "Products_text_c1c5" ON "Products" USING GIN (to_tsve
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1053,6 +1064,7 @@ CREATE INDEX IF NOT EXISTS "Products_text_c1c5" ON "Products" USING GIN (to_tsve
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1094,6 +1106,7 @@ CREATE INDEX IF NOT EXISTS "Products_text_c1c5" ON "Products" USING GIN (to_tsve
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }

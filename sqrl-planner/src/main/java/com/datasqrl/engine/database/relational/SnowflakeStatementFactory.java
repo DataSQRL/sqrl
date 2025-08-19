@@ -24,6 +24,7 @@ import com.datasqrl.calcite.dialect.snowflake.SqlCreateIcebergTableFromObjectSto
 import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.engine.database.relational.JdbcStatement.Type;
+import com.datasqrl.engine.database.relational.ddl.statements.GenericCreateTableDdlFactory;
 import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.planner.hint.DataTypeHint;
 import java.util.Optional;
@@ -41,7 +42,8 @@ public class SnowflakeStatementFactory extends AbstractJdbcStatementFactory {
     super(
         new OperatorRuleTransformer(Dialect.SNOWFLAKE),
         new SnowflakeRelToSqlNode(),
-        new SnowflakeSqlNodeToString()); // Iceberg does not support queries
+        new SnowflakeSqlNodeToString(),
+        new GenericCreateTableDdlFactory()); // Iceberg does not support queries
     this.engineConfig = engineConfig;
   }
 
@@ -52,8 +54,8 @@ public class SnowflakeStatementFactory extends AbstractJdbcStatementFactory {
 
   @Override
   public JdbcStatement createTable(JdbcEngineCreateTable createTable) {
-    var tableName = createTable.getTableName();
-    return new JdbcStatement(tableName, Type.TABLE, getSnowflakeCreateTable(tableName));
+    var tableName = createTable.tableName();
+    return new GenericJdbcStatement(tableName, Type.TABLE, getSnowflakeCreateTable(tableName));
   }
 
   public String getSnowflakeCreateTable(String tableName) {

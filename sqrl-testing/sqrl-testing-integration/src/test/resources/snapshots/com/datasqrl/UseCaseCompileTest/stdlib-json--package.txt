@@ -144,8 +144,8 @@ INSERT INTO `default_catalog`.`default_database`.`UnmodifiedJsonData_2`
   "testRunnerTopics" : [ ]
 }
 >>>postgres-schema.sql
-CREATE TABLE IF NOT EXISTS "Json" ("id" BIGINT NOT NULL, "val" TEXT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("id"));
-CREATE TABLE IF NOT EXISTS "UnmodifiedJsonData" ("id" BIGINT NOT NULL, "val" TEXT NOT NULL, "json_col" JSONB , "json_col_2" JSONB , "json_col_3" JSONB , "json_col_4" JSONB  , PRIMARY KEY ("id"))
+CREATE TABLE IF NOT EXISTS "Json" ("id" BIGINT NOT NULL, "val" TEXT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("id"));
+CREATE TABLE IF NOT EXISTS "UnmodifiedJsonData" ("id" BIGINT NOT NULL, "val" TEXT NOT NULL, "json_col" JSONB, "json_col_2" JSONB, "json_col_3" JSONB, "json_col_4" JSONB, PRIMARY KEY ("id"))
 >>>postgres-views.sql
 
 >>>vertx.json
@@ -172,6 +172,7 @@ CREATE TABLE IF NOT EXISTS "UnmodifiedJsonData" ("id" BIGINT NOT NULL, "val" TEX
             "sql" : "SELECT *\nFROM \"Json\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -196,6 +197,7 @@ CREATE TABLE IF NOT EXISTS "UnmodifiedJsonData" ("id" BIGINT NOT NULL, "val" TEX
             "sql" : "SELECT *\nFROM (SELECT \"id\", \"val\", \"json_col\", \"json_col_2\", \"json_col_3\", \"json_col_4\"\n  FROM \"UnmodifiedJsonData\"\n  ORDER BY \"id\" NULLS FIRST) AS \"t\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }

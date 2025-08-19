@@ -282,12 +282,12 @@ INSERT INTO `default_catalog`.`default_database`.`kafka_avro_table_2`
   "testRunnerTopics" : [ ]
 }
 >>>postgres-schema.sql
-CREATE TABLE IF NOT EXISTS "iceberg_parquet_table" ("user_id" INTEGER , "name" TEXT , "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
-CREATE TABLE IF NOT EXISTS "kafka_avro_table" ("user_id" INTEGER , "name" TEXT , "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
-CREATE TABLE IF NOT EXISTS "kafka_debezium_table" ("user_id" INTEGER , "name" TEXT , "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
-CREATE TABLE IF NOT EXISTS "kafka_safe_csv_table" ("user_id" INTEGER , "name" TEXT , "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
-CREATE TABLE IF NOT EXISTS "kafka_safe_json_table" ("user_id" INTEGER , "name" TEXT , "__pk_hash" TEXT  , PRIMARY KEY ("__pk_hash"));
-CREATE TABLE IF NOT EXISTS "upsert_kafka_confluent_avro" ("user_id" INTEGER NOT NULL, "name" TEXT  , PRIMARY KEY ("user_id"))
+CREATE TABLE IF NOT EXISTS "iceberg_parquet_table" ("user_id" INTEGER, "name" TEXT, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "kafka_avro_table" ("user_id" INTEGER, "name" TEXT, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "kafka_debezium_table" ("user_id" INTEGER, "name" TEXT, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "kafka_safe_csv_table" ("user_id" INTEGER, "name" TEXT, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "kafka_safe_json_table" ("user_id" INTEGER, "name" TEXT, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "upsert_kafka_confluent_avro" ("user_id" INTEGER NOT NULL, "name" TEXT, PRIMARY KEY ("user_id"))
 >>>postgres-views.sql
 
 >>>vertx.json
@@ -314,6 +314,7 @@ CREATE TABLE IF NOT EXISTS "upsert_kafka_confluent_avro" ("user_id" INTEGER NOT 
             "sql" : "SELECT \"user_id\", \"name\"\nFROM \"iceberg_parquet_table\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -338,6 +339,7 @@ CREATE TABLE IF NOT EXISTS "upsert_kafka_confluent_avro" ("user_id" INTEGER NOT 
             "sql" : "SELECT \"user_id\", \"name\"\nFROM \"kafka_avro_table\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -362,6 +364,7 @@ CREATE TABLE IF NOT EXISTS "upsert_kafka_confluent_avro" ("user_id" INTEGER NOT 
             "sql" : "SELECT \"user_id\", \"name\"\nFROM \"kafka_debezium_table\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -386,6 +389,7 @@ CREATE TABLE IF NOT EXISTS "upsert_kafka_confluent_avro" ("user_id" INTEGER NOT 
             "sql" : "SELECT \"user_id\", \"name\"\nFROM \"kafka_safe_csv_table\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -410,6 +414,7 @@ CREATE TABLE IF NOT EXISTS "upsert_kafka_confluent_avro" ("user_id" INTEGER NOT 
             "sql" : "SELECT \"user_id\", \"name\"\nFROM \"kafka_safe_json_table\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -434,6 +439,7 @@ CREATE TABLE IF NOT EXISTS "upsert_kafka_confluent_avro" ("user_id" INTEGER NOT 
             "sql" : "SELECT *\nFROM \"upsert_kafka_confluent_avro\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }

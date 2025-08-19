@@ -104,7 +104,7 @@ END
   "testRunnerTopics" : [ ]
 }
 >>>postgres-schema.sql
-CREATE TABLE IF NOT EXISTS "MathFunctions" ("d" NUMERIC NOT NULL, "b" INTEGER NOT NULL, "cbrt" DOUBLE PRECISION , "copy_sign" DOUBLE PRECISION , "expm1" DOUBLE PRECISION , "hypot" DOUBLE PRECISION , "log1p" DOUBLE PRECISION , "next_after" DOUBLE PRECISION , "scalb" DOUBLE PRECISION , "ulp" DOUBLE PRECISION , "binomial_distribution" DOUBLE PRECISION , "exponential_distribution" DOUBLE PRECISION , "normal_distribution" DOUBLE PRECISION , "poisson_distribution" DOUBLE PRECISION  , PRIMARY KEY ("d"))
+CREATE TABLE IF NOT EXISTS "MathFunctions" ("d" NUMERIC NOT NULL, "b" INTEGER NOT NULL, "cbrt" DOUBLE PRECISION, "copy_sign" DOUBLE PRECISION, "expm1" DOUBLE PRECISION, "hypot" DOUBLE PRECISION, "log1p" DOUBLE PRECISION, "next_after" DOUBLE PRECISION, "scalb" DOUBLE PRECISION, "ulp" DOUBLE PRECISION, "binomial_distribution" DOUBLE PRECISION, "exponential_distribution" DOUBLE PRECISION, "normal_distribution" DOUBLE PRECISION, "poisson_distribution" DOUBLE PRECISION, PRIMARY KEY ("d"))
 >>>postgres-views.sql
 
 >>>vertx.json
@@ -131,6 +131,7 @@ CREATE TABLE IF NOT EXISTS "MathFunctions" ("d" NUMERIC NOT NULL, "b" INTEGER NO
             "sql" : "SELECT *\nFROM \"MathFunctions\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }

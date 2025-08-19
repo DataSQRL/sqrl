@@ -340,8 +340,8 @@ INSERT INTO `default_catalog`.`default_database`.`TotalUserTokens_2`
   "testRunnerTopics" : [ ]
 }
 >>>postgres-schema.sql
-CREATE TABLE IF NOT EXISTS "TotalOrgTokens" ("orgid" BIGINT NOT NULL, "total_tokens" BIGINT NOT NULL, "total_requests" BIGINT NOT NULL , PRIMARY KEY ("orgid"));
-CREATE TABLE IF NOT EXISTS "TotalUserTokens" ("userid" BIGINT NOT NULL, "total_tokens" BIGINT NOT NULL, "total_requests" BIGINT NOT NULL , PRIMARY KEY ("userid"));
+CREATE TABLE IF NOT EXISTS "TotalOrgTokens" ("orgid" BIGINT NOT NULL, "total_tokens" BIGINT NOT NULL, "total_requests" BIGINT NOT NULL, PRIMARY KEY ("orgid"));
+CREATE TABLE IF NOT EXISTS "TotalUserTokens" ("userid" BIGINT NOT NULL, "total_tokens" BIGINT NOT NULL, "total_requests" BIGINT NOT NULL, PRIMARY KEY ("userid"));
 
 CREATE INDEX IF NOT EXISTS "TotalOrgTokens_btree_c1" ON "TotalOrgTokens" USING btree ("total_tokens")
 >>>postgres-views.sql
@@ -370,6 +370,7 @@ CREATE INDEX IF NOT EXISTS "TotalOrgTokens_btree_c1" ON "TotalOrgTokens" USING b
             "sql" : "SELECT *\nFROM \"TotalOrgTokens\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -403,6 +404,7 @@ CREATE INDEX IF NOT EXISTS "TotalOrgTokens_btree_c1" ON "TotalOrgTokens" USING b
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -444,6 +446,7 @@ CREATE INDEX IF NOT EXISTS "TotalOrgTokens_btree_c1" ON "TotalOrgTokens" USING b
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }

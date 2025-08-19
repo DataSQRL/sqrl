@@ -136,9 +136,9 @@ INSERT INTO `default_catalog`.`default_database`.`MyTable_2`
   "testRunnerTopics" : [ ]
 }
 >>>postgres-schema.sql
-CREATE TABLE IF NOT EXISTS "MyAsyncTable" ("val" TEXT NOT NULL, "myFnc" TEXT  , PRIMARY KEY ("val"));
-CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, "myFnc" BIGINT  , PRIMARY KEY ("val"));
-CREATE TABLE IF NOT EXISTS "MyTableAnother" ("val" INTEGER NOT NULL, "myFnc" BIGINT  , PRIMARY KEY ("val"))
+CREATE TABLE IF NOT EXISTS "MyAsyncTable" ("val" TEXT NOT NULL, "myFnc" TEXT, PRIMARY KEY ("val"));
+CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, "myFnc" BIGINT, PRIMARY KEY ("val"));
+CREATE TABLE IF NOT EXISTS "MyTableAnother" ("val" INTEGER NOT NULL, "myFnc" BIGINT, PRIMARY KEY ("val"))
 >>>postgres-views.sql
 
 >>>vertx.json
@@ -165,6 +165,7 @@ CREATE TABLE IF NOT EXISTS "MyTableAnother" ("val" INTEGER NOT NULL, "myFnc" BIG
             "sql" : "SELECT *\nFROM (SELECT \"val\", \"myFnc\"\n  FROM \"MyAsyncTable\"\n  ORDER BY \"val\" NULLS FIRST) AS \"t\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -189,6 +190,7 @@ CREATE TABLE IF NOT EXISTS "MyTableAnother" ("val" INTEGER NOT NULL, "myFnc" BIG
             "sql" : "SELECT *\nFROM (SELECT \"val\", \"myFnc\"\n  FROM \"MyTable\"\n  ORDER BY \"val\" NULLS FIRST) AS \"t\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -213,6 +215,7 @@ CREATE TABLE IF NOT EXISTS "MyTableAnother" ("val" INTEGER NOT NULL, "myFnc" BIG
             "sql" : "SELECT *\nFROM (SELECT \"val\", \"myFnc\"\n  FROM \"MyTableAnother\"\n  ORDER BY \"val\" NULLS FIRST) AS \"t\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }

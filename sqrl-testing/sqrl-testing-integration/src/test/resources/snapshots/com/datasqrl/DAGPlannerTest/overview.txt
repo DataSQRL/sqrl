@@ -449,7 +449,7 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2`
     {
       "name" : "Customer_1",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"Customer_1\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Customer_1\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY (\"customerid\"))",
       "fields" : [
         {
           "name" : "customerid",
@@ -476,12 +476,19 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2`
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
-      ]
+      ],
+      "primaryKey" : [
+        "customerid"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "CustomerImport_2",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerImport_2\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\",\"lastUpdated\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerImport_2\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY (\"customerid\",\"lastUpdated\"))",
       "fields" : [
         {
           "name" : "customerid",
@@ -508,12 +515,20 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2`
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
-      ]
+      ],
+      "primaryKey" : [
+        "customerid",
+        "lastUpdated"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "LargeOrders_3",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"LargeOrders_3\" (\"_uuid\" TEXT NOT NULL, \"orderid\" INTEGER , \"customerid\" BIGINT , \"amount\" FLOAT , \"orderTime\" TIMESTAMP WITH TIME ZONE  , PRIMARY KEY (\"_uuid\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"LargeOrders_3\" (\"_uuid\" TEXT NOT NULL, \"orderid\" INTEGER, \"customerid\" BIGINT, \"amount\" FLOAT, \"orderTime\" TIMESTAMP WITH TIME ZONE, PRIMARY KEY (\"_uuid\"))",
       "fields" : [
         {
           "name" : "_uuid",
@@ -540,12 +555,19 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2`
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "_uuid"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "Orders_5",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"Orders_5\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB  , PRIMARY KEY (\"id\",\"time\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Orders_5\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB, PRIMARY KEY (\"id\",\"time\"))",
       "fields" : [
         {
           "name" : "id",
@@ -567,12 +589,20 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2`
           "type" : "JSONB",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "id",
+        "time"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "SimpleOrders_6",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"SimpleOrders_6\" (\"_uuid\" TEXT NOT NULL, \"orderid\" INTEGER , \"customerid\" BIGINT , \"amount\" FLOAT , \"orderTime\" TIMESTAMP WITH TIME ZONE  , PRIMARY KEY (\"_uuid\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"SimpleOrders_6\" (\"_uuid\" TEXT NOT NULL, \"orderid\" INTEGER, \"customerid\" BIGINT, \"amount\" FLOAT, \"orderTime\" TIMESTAMP WITH TIME ZONE, PRIMARY KEY (\"_uuid\"))",
       "fields" : [
         {
           "name" : "_uuid",
@@ -599,12 +629,19 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2`
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "_uuid"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "UnnestOrders_8",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"UnnestOrders_8\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"productid\" BIGINT NOT NULL, \"quantity\" BIGINT NOT NULL, \"discount\" DOUBLE PRECISION , \"__pk_hash\" TEXT  , PRIMARY KEY (\"__pk_hash\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"UnnestOrders_8\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"productid\" BIGINT NOT NULL, \"quantity\" BIGINT NOT NULL, \"discount\" DOUBLE PRECISION, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
       "fields" : [
         {
           "name" : "id",
@@ -641,7 +678,14 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2`
           "type" : "TEXT",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "Customer",
@@ -866,6 +910,7 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2`
             "sql" : "SELECT *\nFROM \"Customer_1\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -903,6 +948,7 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2`
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -932,6 +978,7 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2`
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -956,6 +1003,7 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2`
             "sql" : "SELECT *\nFROM \"CustomerImport_2\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -980,6 +1028,7 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2`
             "sql" : "SELECT *\nFROM \"LargeOrders_3\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1004,6 +1053,7 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2`
             "sql" : "SELECT *\nFROM \"Orders_5\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1028,6 +1078,7 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2`
             "sql" : "SELECT *\nFROM \"SimpleOrders_6\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1052,6 +1103,7 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2`
             "sql" : "SELECT \"id\", \"customerid\", \"time\", \"productid\", \"quantity\", \"discount\"\nFROM \"UnnestOrders_8\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1085,6 +1137,7 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2`
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }

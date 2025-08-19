@@ -496,7 +496,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
     {
       "name" : "Customer_1",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"Customer_1\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Customer_1\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY (\"customerid\"))",
       "fields" : [
         {
           "name" : "customerid",
@@ -523,12 +523,19 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
-      ]
+      ],
+      "primaryKey" : [
+        "customerid"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "CustomerStream_2",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerStream_2\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\",\"lastUpdated\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerStream_2\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY (\"customerid\",\"lastUpdated\"))",
       "fields" : [
         {
           "name" : "customerid",
@@ -555,12 +562,20 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
-      ]
+      ],
+      "primaryKey" : [
+        "customerid",
+        "lastUpdated"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "ObjComplex_3",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"ObjComplex_3\" (\"customerid\" BIGINT NOT NULL, \"obj\" JSONB  , PRIMARY KEY (\"customerid\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"ObjComplex_3\" (\"customerid\" BIGINT NOT NULL, \"obj\" JSONB, PRIMARY KEY (\"customerid\"))",
       "fields" : [
         {
           "name" : "customerid",
@@ -572,12 +587,19 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
           "type" : "JSONB",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "customerid"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "jsonArrayAggTable_4",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"jsonArrayAggTable_4\" (\"name\" TEXT NOT NULL, \"agg\" JSONB  , PRIMARY KEY (\"name\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"jsonArrayAggTable_4\" (\"name\" TEXT NOT NULL, \"agg\" JSONB, PRIMARY KEY (\"name\"))",
       "fields" : [
         {
           "name" : "name",
@@ -589,12 +611,19 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
           "type" : "JSONB",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "name"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "jsonArrayTable_5",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"jsonArrayTable_5\" (\"customerid\" BIGINT NOT NULL, \"obj\" JSONB  , PRIMARY KEY (\"customerid\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"jsonArrayTable_5\" (\"customerid\" BIGINT NOT NULL, \"obj\" JSONB, PRIMARY KEY (\"customerid\"))",
       "fields" : [
         {
           "name" : "customerid",
@@ -606,12 +635,19 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
           "type" : "JSONB",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "customerid"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "jsonConcatTable_6",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"jsonConcatTable_6\" (\"customerid\" BIGINT NOT NULL, \"obj\" JSONB  , PRIMARY KEY (\"customerid\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"jsonConcatTable_6\" (\"customerid\" BIGINT NOT NULL, \"obj\" JSONB, PRIMARY KEY (\"customerid\"))",
       "fields" : [
         {
           "name" : "customerid",
@@ -623,12 +659,19 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
           "type" : "JSONB",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "customerid"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "jsonExistsTable_7",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"jsonExistsTable_7\" (\"customerid\" BIGINT NOT NULL, \"obj\" BOOLEAN  , PRIMARY KEY (\"customerid\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"jsonExistsTable_7\" (\"customerid\" BIGINT NOT NULL, \"obj\" BOOLEAN, PRIMARY KEY (\"customerid\"))",
       "fields" : [
         {
           "name" : "customerid",
@@ -640,12 +683,19 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
           "type" : "BOOLEAN",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "customerid"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "jsonExtractTable_8",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"jsonExtractTable_8\" (\"customerid\" BIGINT NOT NULL, \"obj\" TEXT  , PRIMARY KEY (\"customerid\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"jsonExtractTable_8\" (\"customerid\" BIGINT NOT NULL, \"obj\" TEXT, PRIMARY KEY (\"customerid\"))",
       "fields" : [
         {
           "name" : "customerid",
@@ -657,12 +707,19 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
           "type" : "TEXT",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "customerid"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "jsonObjectAggTable_9",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"jsonObjectAggTable_9\" (\"name\" TEXT NOT NULL, \"agg\" JSONB  , PRIMARY KEY (\"name\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"jsonObjectAggTable_9\" (\"name\" TEXT NOT NULL, \"agg\" JSONB, PRIMARY KEY (\"name\"))",
       "fields" : [
         {
           "name" : "name",
@@ -674,12 +731,19 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
           "type" : "JSONB",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "name"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "jsonQueryTable_10",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"jsonQueryTable_10\" (\"customerid\" BIGINT NOT NULL, \"obj\" TEXT  , PRIMARY KEY (\"customerid\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"jsonQueryTable_10\" (\"customerid\" BIGINT NOT NULL, \"obj\" TEXT, PRIMARY KEY (\"customerid\"))",
       "fields" : [
         {
           "name" : "customerid",
@@ -691,12 +755,19 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
           "type" : "TEXT",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "customerid"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "jsonToStringTable_11",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"jsonToStringTable_11\" (\"customerid\" BIGINT NOT NULL, \"obj\" TEXT  , PRIMARY KEY (\"customerid\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"jsonToStringTable_11\" (\"customerid\" BIGINT NOT NULL, \"obj\" TEXT, PRIMARY KEY (\"customerid\"))",
       "fields" : [
         {
           "name" : "customerid",
@@ -708,12 +779,19 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
           "type" : "TEXT",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "customerid"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "toJsonTable_12",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"toJsonTable_12\" (\"customerid\" BIGINT NOT NULL, \"obj\" JSONB  , PRIMARY KEY (\"customerid\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"toJsonTable_12\" (\"customerid\" BIGINT NOT NULL, \"obj\" JSONB, PRIMARY KEY (\"customerid\"))",
       "fields" : [
         {
           "name" : "customerid",
@@ -725,7 +803,14 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
           "type" : "JSONB",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "customerid"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "Customer",
@@ -987,6 +1072,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
             "sql" : "SELECT *\nFROM \"Customer_1\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1011,6 +1097,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
             "sql" : "SELECT *\nFROM \"CustomerStream_2\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1035,6 +1122,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
             "sql" : "SELECT *\nFROM \"ObjComplex_3\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1059,6 +1147,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
             "sql" : "SELECT *\nFROM \"jsonArrayAggTable_4\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1083,6 +1172,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
             "sql" : "SELECT *\nFROM \"jsonArrayTable_5\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1107,6 +1197,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
             "sql" : "SELECT *\nFROM \"jsonConcatTable_6\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1131,6 +1222,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
             "sql" : "SELECT *\nFROM \"jsonExistsTable_7\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1155,6 +1247,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
             "sql" : "SELECT *\nFROM \"jsonExtractTable_8\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1179,6 +1272,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
             "sql" : "SELECT *\nFROM \"jsonObjectAggTable_9\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1203,6 +1297,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
             "sql" : "SELECT *\nFROM \"jsonQueryTable_10\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1227,6 +1322,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
             "sql" : "SELECT *\nFROM \"jsonToStringTable_11\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1251,6 +1347,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
             "sql" : "SELECT *\nFROM \"toJsonTable_12\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }

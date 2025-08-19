@@ -123,6 +123,8 @@ public interface PackageJson {
 
     String getSetting(String key, Optional<String> defaultValue);
 
+    Optional<String> getSettingOptional(String key);
+
     Map<String, Object> getConfig();
 
     boolean isEmpty();
@@ -139,6 +141,11 @@ public interface PackageJson {
           () ->
               new IllegalArgumentException(
                   "Engine " + engineName + " does not have configuration options"));
+    }
+
+    @Override
+    public Optional<String> getSettingOptional(String key) {
+      return Optional.empty();
     }
 
     @Override

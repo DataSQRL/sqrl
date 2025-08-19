@@ -25,6 +25,7 @@ import com.datasqrl.planner.analyzer.TableOrFunctionAnalysis;
 import com.datasqrl.planner.util.Documented;
 import com.google.common.base.Preconditions;
 import java.lang.reflect.Type;
+import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -85,6 +86,8 @@ public class SqrlTableFunction implements TableFunction, TableOrFunctionAnalysis
 
   /** A documentation string that describes the function */
   @Default private Optional<String> documentation = Optional.empty();
+
+  @Default private Duration cacheDuration = Duration.ZERO;
 
   @Override
   public RelDataType getRowType(

@@ -279,7 +279,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
     {
       "name" : "Customer_1",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"Customer_1\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\",\"lastUpdated\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Customer_1\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY (\"customerid\",\"lastUpdated\"))",
       "fields" : [
         {
           "name" : "customerid",
@@ -306,12 +306,20 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
-      ]
+      ],
+      "primaryKey" : [
+        "customerid",
+        "lastUpdated"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "Orders_2",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"Orders_2\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB  , PRIMARY KEY (\"id\",\"time\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Orders_2\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB, PRIMARY KEY (\"id\",\"time\"))",
       "fields" : [
         {
           "name" : "id",
@@ -333,7 +341,15 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
           "type" : "JSONB",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "id",
+        "time"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "Customer",
@@ -582,6 +598,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
             "sql" : "SELECT *\nFROM \"Customer_1\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -606,6 +623,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
             "sql" : "SELECT \"Orders_20\".\"id\", \"Customer_10\".\"name\", \"Orders_20\".\"customerid\"\nFROM \"Orders_2\" AS \"Orders_20\"\n INNER JOIN \"Customer_1\" AS \"Customer_10\" ON \"Orders_20\".\"customerid\" = \"Customer_10\".\"customerid\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -630,6 +648,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
             "sql" : "SELECT \"Orders_20\".\"time\", \"Orders_20\".\"id\", \"Customer_10\".\"name\", \"Orders_20\".\"customerid\"\nFROM \"Orders_2\" AS \"Orders_20\"\n INNER JOIN \"Customer_1\" AS \"Customer_10\" ON \"Orders_20\".\"customerid\" = \"Customer_10\".\"customerid\" AND \"Customer_10\".\"name\" = 'Robert' AND \"Orders_20\".\"id\" > 5",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -654,6 +673,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
             "sql" : "SELECT COALESCE(\"Customer_10\".\"customerid\", 0) AS \"cid\", COALESCE(\"Customer_10\".\"lastUpdated\", 0) AS \"ctime\", \"Orders_20\".\"id\", \"Customer_10\".\"name\", \"Orders_20\".\"customerid\"\nFROM \"Orders_2\" AS \"Orders_20\"\n LEFT JOIN \"Customer_1\" AS \"Customer_10\" ON \"Orders_20\".\"customerid\" = \"Customer_10\".\"customerid\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -678,6 +698,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
             "sql" : "SELECT \"Orders_20\".\"time\", \"Orders_20\".\"id\", \"Orders_20\".\"customerid\"\nFROM \"Orders_2\" AS \"Orders_20\"\n LEFT JOIN \"Customer_1\" AS \"Customer_10\" ON \"Orders_20\".\"customerid\" = \"Customer_10\".\"customerid\"\nWHERE \"Customer_10\".\"customerid\" IS NULL AND \"Customer_10\".\"lastUpdated\" IS NULL",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -702,6 +723,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
             "sql" : "SELECT COALESCE(\"Orders_20\".\"id\", 0) AS \"ouuid\", COALESCE(\"Orders_20\".\"time\", PROCTIME()) AS \"otime\", \"Orders_20\".\"id\", \"Customer_10\".\"name\", \"Orders_20\".\"customerid\"\nFROM \"Orders_2\" AS \"Orders_20\"\n RIGHT JOIN \"Customer_1\" AS \"Customer_10\" ON \"Orders_20\".\"customerid\" = \"Customer_10\".\"customerid\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -726,6 +748,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
             "sql" : "SELECT \"Customer_10\".\"lastUpdated\", \"Customer_10\".\"customerid\", \"Customer_10\".\"name\"\nFROM \"Orders_2\" AS \"Orders_20\"\n RIGHT JOIN \"Customer_1\" AS \"Customer_10\" ON \"Orders_20\".\"customerid\" = \"Customer_10\".\"customerid\"\nWHERE \"Orders_20\".\"id\" IS NULL AND \"Orders_20\".\"time\" IS NULL",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -750,6 +773,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
             "sql" : "SELECT *\nFROM \"Orders_2\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }

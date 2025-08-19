@@ -283,8 +283,10 @@ public class DAGPlanner {
                         .getHints()
                         .getHint(PartitionKeyHint.class)
                         .ifPresent(
-                            partitionKeyHint ->
-                                tblBuilder.setPartition(partitionKeyHint.getColumnNames()));
+                            partitionKeyHint -> {
+                              var partitionKey = partitionKeyHint.getColumnNames();
+                              tblBuilder.setPartition(partitionKey);
+                            });
                   }
 
                   // #2nd: apply type casting

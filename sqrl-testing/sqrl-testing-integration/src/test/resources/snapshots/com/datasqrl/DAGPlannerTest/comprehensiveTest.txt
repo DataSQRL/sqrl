@@ -993,7 +993,9 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
       "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 1,
-      "config" : { }
+      "config" : {
+        "retention.ms" : "129600000"
+      }
     }
   ],
   "testRunnerTopics" : [ ]
@@ -1004,7 +1006,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
     {
       "name" : "AnotherCustomer_1",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"AnotherCustomer_1\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL , PRIMARY KEY (\"customerid\",\"lastUpdated\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"AnotherCustomer_1\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, PRIMARY KEY (\"customerid\",\"lastUpdated\"))",
       "fields" : [
         {
           "name" : "customerid",
@@ -1021,12 +1023,20 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
           "type" : "BIGINT",
           "nullable" : false
         }
-      ]
+      ],
+      "primaryKey" : [
+        "customerid",
+        "lastUpdated"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "Customer_2",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"Customer_2\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\",\"lastUpdated\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Customer_2\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY (\"customerid\",\"lastUpdated\"))",
       "fields" : [
         {
           "name" : "customerid",
@@ -1053,12 +1063,20 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
-      ]
+      ],
+      "primaryKey" : [
+        "customerid",
+        "lastUpdated"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "CustomerByMultipleTime_4",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerByMultipleTime_4\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\",\"email\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerByMultipleTime_4\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY (\"customerid\",\"email\"))",
       "fields" : [
         {
           "name" : "customerid",
@@ -1085,12 +1103,20 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
-      ]
+      ],
+      "primaryKey" : [
+        "customerid",
+        "email"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "CustomerByTime2_5",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerByTime2_5\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerByTime2_5\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY (\"customerid\"))",
       "fields" : [
         {
           "name" : "customerid",
@@ -1117,12 +1143,19 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
-      ]
+      ],
+      "primaryKey" : [
+        "customerid"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "CustomerFilteredDistinct_6",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerFilteredDistinct_6\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerFilteredDistinct_6\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY (\"customerid\"))",
       "fields" : [
         {
           "name" : "customerid",
@@ -1149,12 +1182,19 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
-      ]
+      ],
+      "primaryKey" : [
+        "customerid"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "CustomerTimeWindow_9",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerTimeWindow_9\" (\"window_start\" TIMESTAMP WITHOUT TIME ZONE NOT NULL, \"window_end\" TIMESTAMP WITHOUT TIME ZONE NOT NULL, \"unique_email_count\" BIGINT NOT NULL , PRIMARY KEY (\"window_start\",\"window_end\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerTimeWindow_9\" (\"window_start\" TIMESTAMP WITHOUT TIME ZONE NOT NULL, \"window_end\" TIMESTAMP WITHOUT TIME ZONE NOT NULL, \"unique_email_count\" BIGINT NOT NULL, PRIMARY KEY (\"window_start\",\"window_end\"))",
       "fields" : [
         {
           "name" : "window_start",
@@ -1171,12 +1211,20 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
           "type" : "BIGINT",
           "nullable" : false
         }
-      ]
+      ],
+      "primaryKey" : [
+        "window_start",
+        "window_end"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "ExplicitDistinct_10",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"ExplicitDistinct_10\" (\"customerid\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL, \"name\" TEXT NOT NULL , PRIMARY KEY (\"customerid\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"ExplicitDistinct_10\" (\"customerid\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL, \"name\" TEXT NOT NULL, PRIMARY KEY (\"customerid\"))",
       "fields" : [
         {
           "name" : "customerid",
@@ -1193,12 +1241,19 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
           "type" : "TEXT",
           "nullable" : false
         }
-      ]
+      ],
+      "primaryKey" : [
+        "customerid"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "ExternalOrders_11",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"ExternalOrders_11\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB  , PRIMARY KEY (\"id\",\"time\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"ExternalOrders_11\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB, PRIMARY KEY (\"id\",\"time\"))",
       "fields" : [
         {
           "name" : "id",
@@ -1220,12 +1275,20 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
           "type" : "JSONB",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "id",
+        "time"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "InvalidDistinct_12",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"InvalidDistinct_12\" (\"customerid\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL, \"namee\" TEXT NOT NULL , PRIMARY KEY (\"customerid\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"InvalidDistinct_12\" (\"customerid\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL, \"namee\" TEXT NOT NULL, PRIMARY KEY (\"customerid\"))",
       "fields" : [
         {
           "name" : "customerid",
@@ -1242,12 +1305,19 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
           "type" : "TEXT",
           "nullable" : false
         }
-      ]
+      ],
+      "primaryKey" : [
+        "customerid"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "Orders_13",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"Orders_13\" (\"orderid\" INTEGER NOT NULL, \"amount\" FLOAT  , PRIMARY KEY (\"orderid\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Orders_13\" (\"orderid\" INTEGER NOT NULL, \"amount\" FLOAT, PRIMARY KEY (\"orderid\"))",
       "fields" : [
         {
           "name" : "orderid",
@@ -1259,12 +1329,19 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
           "type" : "FLOAT",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "orderid"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "SelectCustomers_14",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"SelectCustomers_14\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\",\"name\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"SelectCustomers_14\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY (\"customerid\",\"name\"))",
       "fields" : [
         {
           "name" : "customerid",
@@ -1291,12 +1368,20 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
-      ]
+      ],
+      "primaryKey" : [
+        "customerid",
+        "name"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "TemporalJoin_15",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"TemporalJoin_15\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB , \"customerid0\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL, \"name\" TEXT NOT NULL , PRIMARY KEY (\"id\",\"time\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"TemporalJoin_15\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB, \"customerid0\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL, \"name\" TEXT NOT NULL, PRIMARY KEY (\"id\",\"time\"))",
       "fields" : [
         {
           "name" : "id",
@@ -1333,12 +1418,20 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
           "type" : "TEXT",
           "nullable" : false
         }
-      ]
+      ],
+      "primaryKey" : [
+        "id",
+        "time"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "UnnestOrders_16",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"UnnestOrders_16\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"productid\" BIGINT NOT NULL, \"quantity\" BIGINT NOT NULL, \"discount\" DOUBLE PRECISION , \"newId\" BIGINT NOT NULL, \"__pk_hash\" TEXT  , PRIMARY KEY (\"__pk_hash\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"UnnestOrders_16\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"productid\" BIGINT NOT NULL, \"quantity\" BIGINT NOT NULL, \"discount\" DOUBLE PRECISION, \"newId\" BIGINT NOT NULL, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
       "fields" : [
         {
           "name" : "id",
@@ -1380,7 +1473,14 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
           "type" : "TEXT",
           "nullable" : true
         }
-      ]
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "AnotherCustomer",
@@ -1693,6 +1793,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
       "name" : "Orders",
       "type" : "VIEW",
       "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"orderid\", \"amount\") AS SELECT *\nFROM \"Orders_13\"",
+      "description" : "Newly placed orders",
       "fields" : [
         {
           "name" : "orderid",
@@ -1704,13 +1805,13 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
           "type" : "FLOAT",
           "nullable" : true
         }
-      ],
-      "description" : "Newly placed orders"
+      ]
     },
     {
       "name" : "SelectCustomers",
       "type" : "VIEW",
       "sql" : "CREATE OR REPLACE VIEW \"SelectCustomers\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM (SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\"\n  FROM \"SelectCustomers_14\"\n  ORDER BY \"timestamp\" DESC NULLS LAST\n  FETCH NEXT 10 ROWS ONLY) AS \"t1\"",
+      "description" : "This is for selected customers\n    and their orders",
       "fields" : [
         {
           "name" : "customerid",
@@ -1737,8 +1838,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
-      ],
-      "description" : "This is for selected customers\n    and their orders"
+      ]
     },
     {
       "name" : "TemporalJoin",
@@ -1860,6 +1960,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1897,6 +1998,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1921,6 +2023,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
             "sql" : "SELECT *\nFROM \"AnotherCustomer_1\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1945,6 +2048,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
             "sql" : "SELECT *\nFROM \"Customer_2\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1969,6 +2073,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
             "sql" : "SELECT *\nFROM \"CustomerByMultipleTime_4\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -1993,6 +2098,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
             "sql" : "SELECT *\nFROM \"CustomerByTime2_5\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -2017,6 +2123,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
             "sql" : "SELECT *\nFROM \"CustomerFilteredDistinct_6\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -2041,6 +2148,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
             "sql" : "SELECT *\nFROM \"CustomerTimeWindow_9\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -2065,6 +2173,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
             "sql" : "SELECT *\nFROM \"ExplicitDistinct_10\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -2089,6 +2198,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
             "sql" : "SELECT *\nFROM \"ExternalOrders_11\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -2113,6 +2223,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
             "sql" : "SELECT *\nFROM \"InvalidDistinct_12\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -2137,6 +2248,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
             "sql" : "SELECT *\nFROM \"ExternalOrders_11\" AS \"ExternalOrders_110\"\n INNER JOIN \"ExplicitDistinct_10\" AS \"ExplicitDistinct_100\" ON \"ExternalOrders_110\".\"customerid\" = \"ExplicitDistinct_100\".\"customerid\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -2161,6 +2273,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
             "sql" : "SELECT *\nFROM \"Orders_13\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -2185,6 +2298,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
             "sql" : "SELECT *\nFROM (SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\"\n  FROM \"SelectCustomers_14\"\n  ORDER BY \"timestamp\" DESC NULLS LAST\n  FETCH NEXT 10 ROWS ONLY) AS \"t\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -2209,6 +2323,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
             "sql" : "SELECT *\nFROM \"TemporalJoin_15\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -2233,6 +2348,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
             "sql" : "SELECT \"id\", \"customerid\", \"time\", \"productid\", \"quantity\", \"discount\", \"newId\"\nFROM \"UnnestOrders_16\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -2266,6 +2382,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -2299,6 +2416,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 300000,
             "database" : "POSTGRES"
           }
         }
@@ -2340,6 +2458,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }

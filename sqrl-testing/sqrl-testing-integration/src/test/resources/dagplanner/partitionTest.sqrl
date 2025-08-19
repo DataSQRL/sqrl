@@ -1,0 +1,7 @@
+IMPORT ecommerceTs.Orders AS _OrdersStream;
+
+/*+ partition_key(time), ttl(30 days) */
+OrderUpdates := SELECT * FROM _OrdersStream;
+
+/*+ partition_key(id) */
+Orders := DISTINCT _OrdersStream ON id ORDER BY `time` DESC;

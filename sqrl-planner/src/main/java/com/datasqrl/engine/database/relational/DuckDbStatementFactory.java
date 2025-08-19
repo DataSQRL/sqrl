@@ -25,6 +25,7 @@ import com.datasqrl.calcite.dialect.ExtendedPostgresSqlDialect;
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.config.PackageJson.EngineConfig;
+import com.datasqrl.engine.database.relational.ddl.statements.GenericCreateTableDdlFactory;
 import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.planner.dag.plan.MaterializationStagePlan.Query;
 import com.datasqrl.planner.hint.DataTypeHint;
@@ -50,7 +51,8 @@ public class DuckDbStatementFactory extends AbstractJdbcStatementFactory {
     super(
         new OperatorRuleTransformer(Dialect.POSTGRES),
         new PostgresRelToSqlNode(),
-        new PostgresSqlNodeToString()); // Iceberg does not support queries
+        new PostgresSqlNodeToString(),
+        new GenericCreateTableDdlFactory()); // Iceberg does not support queries
     this.engineConfig = engineConfig;
   }
 
@@ -84,7 +86,7 @@ public class DuckDbStatementFactory extends AbstractJdbcStatementFactory {
               public RelNode visit(TableScan scan) {
                 String tableId = scan.getTable().getQualifiedName().get(2);
                 JdbcEngineCreateTable createTable = tableIdMap.get(tableId);
-                Map<String, String> connector = createTable.getTable().getConnectorOptions();
+                Map<String, String> connector = createTable.table().getConnectorOptions();
                 String warehouse = connector.get("warehouse");
                 String databaseName =
                     connector.get("database-name") == null
@@ -104,7 +106,7 @@ public class DuckDbStatementFactory extends AbstractJdbcStatementFactory {
                     rexBuilder.makeCall(
                         lightweightOp("iceberg_scan"),
                         rexBuilder.makeLiteral(
-                            warehouse + "/" + databaseName + "/" + createTable.getTableName()),
+                            warehouse + "/" + databaseName + "/" + createTable.tableName()),
                         allowMovedPaths);
                 return new LogicalTableFunctionScan(
                     scan.getCluster(),

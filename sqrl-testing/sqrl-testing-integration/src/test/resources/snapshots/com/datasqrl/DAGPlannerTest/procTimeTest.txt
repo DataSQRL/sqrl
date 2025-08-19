@@ -187,7 +187,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerOrdersJoin_2`
     {
       "name" : "Customer_1",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"Customer_1\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT , \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\",\"lastUpdated\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Customer_1\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY (\"customerid\",\"lastUpdated\"))",
       "fields" : [
         {
           "name" : "customerid",
@@ -214,12 +214,20 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerOrdersJoin_2`
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
-      ]
+      ],
+      "primaryKey" : [
+        "customerid",
+        "lastUpdated"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "CustomerOrdersJoin_2",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerOrdersJoin_2\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT , \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"id\" BIGINT NOT NULL, \"customerid0\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB , \"_ingest_time0\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"customerid\",\"lastUpdated\",\"id\",\"time\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerOrdersJoin_2\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"id\" BIGINT NOT NULL, \"customerid0\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB, \"_ingest_time0\" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY (\"customerid\",\"lastUpdated\",\"id\",\"time\"))",
       "fields" : [
         {
           "name" : "customerid",
@@ -271,12 +279,22 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerOrdersJoin_2`
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
-      ]
+      ],
+      "primaryKey" : [
+        "customerid",
+        "lastUpdated",
+        "id",
+        "time"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "Orders_3",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"Orders_3\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB , \"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY (\"id\",\"time\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Orders_3\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB, \"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY (\"id\",\"time\"))",
       "fields" : [
         {
           "name" : "id",
@@ -303,7 +321,15 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerOrdersJoin_2`
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
-      ]
+      ],
+      "primaryKey" : [
+        "id",
+        "time"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
     },
     {
       "name" : "Customer",
@@ -452,6 +478,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerOrdersJoin_2`
             "sql" : "SELECT *\nFROM \"Customer_1\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -476,6 +503,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerOrdersJoin_2`
             "sql" : "SELECT *\nFROM \"CustomerOrdersJoin_2\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -500,6 +528,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerOrdersJoin_2`
             "sql" : "SELECT *\nFROM \"Orders_3\"",
             "parameters" : [ ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }

@@ -15,17 +15,23 @@
  */
 package com.datasqrl.engine.database.relational;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import java.util.List;
-import lombok.Value;
-import org.apache.calcite.rel.type.RelDataType;
 
-@Value
-public class JdbcStatement {
+@JsonDeserialize(as = GenericJdbcStatement.class)
+public interface JdbcStatement {
 
-  public enum Type {
+  String getName();
+
+  Type getType();
+
+  String getSql();
+
+  String getDescription();
+
+  List<Field> getFields();
+
+  enum Type {
     TABLE,
     VIEW,
     QUERY,
@@ -33,52 +39,5 @@ public class JdbcStatement {
     EXTENSION
   }
 
-  /** The name of the table/view/query/index */
-  String name;
-
-  /** The type of statement */
-  Type type;
-
-  /** The SQL representation of this statement */
-  String sql;
-
-  /** The datatype for table, view, and query. Is null for other types. */
-  @JsonIgnore RelDataType dataType;
-
-  /** The datatype converted to a list of Field. It's null if there is no dataType. */
-  List<Field> fields;
-
-  /** The docstring for this table if defined */
-  String description;
-
-  public JdbcStatement(String name, Type type, String sql) {
-    this(name, type, sql, null, null, null);
-  }
-
-  @JsonCreator
-  public JdbcStatement(
-      @JsonProperty("name") String name,
-      @JsonProperty("type") Type type,
-      @JsonProperty("sql") String sql,
-      @JsonProperty("fields") List<Field> fields,
-      @JsonProperty("description") String description) {
-    this(name, type, sql, null, fields, description);
-  }
-
-  public JdbcStatement(
-      String name,
-      Type type,
-      String sql,
-      RelDataType dataType,
-      List<Field> fields,
-      String description) {
-    this.name = name;
-    this.type = type;
-    this.sql = sql;
-    this.dataType = dataType;
-    this.fields = fields;
-    this.description = description;
-  }
-
-  public record Field(String name, String type, boolean nullable) {}
+  record Field(String name, String type, boolean nullable) {}
 }

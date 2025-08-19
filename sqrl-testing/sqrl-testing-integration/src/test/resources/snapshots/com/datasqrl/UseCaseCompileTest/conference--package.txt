@@ -551,10 +551,10 @@ INSERT INTO `default_catalog`.`default_database`.`Events_2`
 >>>postgres-schema.sql
 CREATE EXTENSION IF NOT EXISTS vector;
 
-CREATE TABLE IF NOT EXISTS "EventLikeCount" ("eventid" BIGINT NOT NULL, "num" BIGINT NOT NULL, "test" BIGINT NOT NULL , PRIMARY KEY ("eventid"));
-CREATE TABLE IF NOT EXISTS "Events" ("url" TEXT NOT NULL, "date" TEXT NOT NULL, "time" TEXT NOT NULL, "title" TEXT NOT NULL, "abstract" TEXT NOT NULL, "location" TEXT NOT NULL, "speakers" JSONB , "last_updated" TIMESTAMP WITH TIME ZONE NOT NULL, "id" BIGINT NOT NULL, "full_text" TEXT NOT NULL, "startTime" TEXT , "embedding" VECTOR(1536) , "startTimestamp" TIMESTAMP WITHOUT TIME ZONE  , PRIMARY KEY ("id"));
-CREATE TABLE IF NOT EXISTS "_UserInterests" ("userid" TEXT NOT NULL, "interestVector" VECTOR(1536)  , PRIMARY KEY ("userid"));
-CREATE TABLE IF NOT EXISTS "_UserLikes" ("_uuid" TEXT NOT NULL, "eventid" BIGINT NOT NULL, "userid" TEXT NOT NULL, "liked" BOOLEAN NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE NOT NULL , PRIMARY KEY ("userid","eventid"));
+CREATE TABLE IF NOT EXISTS "EventLikeCount" ("eventid" BIGINT NOT NULL, "num" BIGINT NOT NULL, "test" BIGINT NOT NULL, PRIMARY KEY ("eventid"));
+CREATE TABLE IF NOT EXISTS "Events" ("url" TEXT NOT NULL, "date" TEXT NOT NULL, "time" TEXT NOT NULL, "title" TEXT NOT NULL, "abstract" TEXT NOT NULL, "location" TEXT NOT NULL, "speakers" JSONB, "last_updated" TIMESTAMP WITH TIME ZONE NOT NULL, "id" BIGINT NOT NULL, "full_text" TEXT NOT NULL, "startTime" TEXT, "embedding" VECTOR(1536), "startTimestamp" TIMESTAMP WITHOUT TIME ZONE, PRIMARY KEY ("id"));
+CREATE TABLE IF NOT EXISTS "_UserInterests" ("userid" TEXT NOT NULL, "interestVector" VECTOR(1536), PRIMARY KEY ("userid"));
+CREATE TABLE IF NOT EXISTS "_UserLikes" ("_uuid" TEXT NOT NULL, "eventid" BIGINT NOT NULL, "userid" TEXT NOT NULL, "liked" BOOLEAN NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("userid","eventid"));
 
 CREATE INDEX IF NOT EXISTS "Events_text_c3c4" ON "Events" USING GIN (to_tsvector('english', coalesce("title", '') || ' ' || coalesce("abstract", '') ))
 >>>postgres-views.sql
@@ -592,6 +592,7 @@ CREATE INDEX IF NOT EXISTS "Events_text_c3c4" ON "Events" USING GIN (to_tsvector
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -621,6 +622,7 @@ CREATE INDEX IF NOT EXISTS "Events_text_c3c4" ON "Events" USING GIN (to_tsvector
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -654,6 +656,7 @@ CREATE INDEX IF NOT EXISTS "Events_text_c3c4" ON "Events" USING GIN (to_tsvector
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -695,6 +698,7 @@ CREATE INDEX IF NOT EXISTS "Events_text_c3c4" ON "Events" USING GIN (to_tsvector
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
@@ -728,6 +732,7 @@ CREATE INDEX IF NOT EXISTS "Events_text_c3c4" ON "Events" USING GIN (to_tsvector
               }
             ],
             "pagination" : "LIMIT_AND_OFFSET",
+            "cacheDurationMs" : 0,
             "database" : "POSTGRES"
           }
         }
