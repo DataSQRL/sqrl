@@ -138,7 +138,7 @@ public abstract class GraphqlSchemaWalker {
         typeDefinition.getSourceLocation(),
         "Could not infer non-object type on graphql schema: %s",
         typeDefinition.getName());
-    if (tableFunction.getVisibility().getAccess()
+    if (tableFunction.getVisibility().access()
         == AccessModifier.QUERY) { // walking a query table function
       visitQuery(parentType, atField, tableFunction, registry);
     } else { // walking a subscription table function

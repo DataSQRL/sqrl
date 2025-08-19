@@ -89,6 +89,12 @@ public class SqrlTableFunction implements TableFunction, TableOrFunctionAnalysis
 
   @Default private Duration cacheDuration = Duration.ZERO;
 
+  /**
+   * Whether this is a passthrough function where the SQL gets executed directly against the engine
+   * without analysis/translation
+   */
+  @Default private boolean passthrough = false;
+
   @Override
   public RelDataType getRowType(
       RelDataTypeFactory relDataTypeFactory, List<? extends Object> list) {

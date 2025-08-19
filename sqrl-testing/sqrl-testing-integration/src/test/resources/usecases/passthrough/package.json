@@ -1,0 +1,10 @@
+{
+  "version": "1",
+  "enabled-engines": ["postgres","flink", "vertx"],
+  "script": {
+    "main": "hierarchy.sqrl"
+  },
+  "test-runner": {
+    "delay-sec": -1
+  }
+}

@@ -20,7 +20,6 @@ import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.planner.dag.plan.MaterializationStagePlan.Query;
 import java.util.List;
 import java.util.Map;
-import lombok.Value;
 
 public interface JdbcStatementFactory {
 
@@ -39,11 +38,11 @@ public interface JdbcStatementFactory {
   QueryResult createQuery(
       Query query, boolean withView, Map<String, JdbcEngineCreateTable> tableIdMap);
 
+  QueryResult createPassthroughQuery(Query query, boolean withView);
+
   JdbcStatement addIndex(IndexDefinition indexDefinition);
 
-  @Value
-  class QueryResult {
-    ExecutableJdbcReadQuery.ExecutableJdbcReadQueryBuilder execQueryBuilder;
-    JdbcStatement view;
-  }
+  record QueryResult(
+      ExecutableJdbcReadQuery.ExecutableJdbcReadQueryBuilder execQueryBuilder,
+      JdbcStatement view) {}
 }

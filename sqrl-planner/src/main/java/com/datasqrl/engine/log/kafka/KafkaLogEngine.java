@@ -278,6 +278,10 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
           "The Kafka engine currently only supports"
               + "simple filter queries without any transformations, but got: %s",
           relNode.explain());
+      errors.checkFatal(
+          !query.getFunction().isPassthrough(),
+          "Kafka does not support passthrough queries: %s",
+          query.getFunction());
       RelOptTable table = relNode.getTable();
       var tableName = table.getQualifiedName().get(2);
       var topicName = table2TopicMap.get(tableName);

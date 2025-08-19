@@ -1,0 +1,32 @@
+IMPORT hr-data.* AS _;
+
+/*+ query_by_any(employeeid, name) */
+Employees := DISTINCT _employees ON employeeid ORDER BY updatedDate DESC;
+/*+ no_query */
+Reporting := DISTINCT _reporting ON employeeid, managerid ORDER BY updatedDate DESC;
+
+Employees.directReports := SELECT e.* FROM Reporting r JOIN Employees e ON r.employeeid = e.employeeid
+                           WHERE r.managerid = this.employeeid ORDER BY e.employeeid;
+
+Employees.allReports RETURNS (employeeid BIGINT NOT NULL, name STRING NOT NULL, level INT NOT NULL) :=
+  WITH RECURSIVE employee_hierarchy AS (
+    -- Base case: direct reports
+    SELECT r.employeeid, r.managerid, 1 as level
+    FROM "Reporting" r
+    WHERE r.managerid = this.employeeid
+    
+    UNION ALL
+    
+    -- Recursive case: reports of reports
+    SELECT r.employeeid, r.managerid, eh.level + 1 as level
+    FROM "Reporting" r
+    INNER JOIN employee_hierarchy eh ON r.managerid = eh.employeeid
+  )
+  SELECT e.employeeid, e.name, eh.level
+  FROM employee_hierarchy eh
+  JOIN "Employees" e ON eh.employeeid = e.employeeid
+  ORDER BY eh.level, e.employeeid;
+
+
+/*+test */
+EmployeeCountTest := SELECT count(*) AS num_employees FROM Employees;

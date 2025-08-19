@@ -15,6 +15,7 @@
  */
 package com.datasqrl.planner;
 
+import static com.datasqrl.planner.parser.SqlScriptStatementSplitter.removeStatementDelimiter;
 import static com.datasqrl.planner.parser.StatementParserException.checkFatal;
 
 import com.datasqrl.canonicalizer.Name;
@@ -48,6 +49,7 @@ import com.datasqrl.plan.table.RelDataTypeTableSchema;
 import com.datasqrl.plan.validate.ExecutionGoal;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator.MutationBuilder;
 import com.datasqrl.planner.analyzer.TableAnalysis;
+import com.datasqrl.planner.analyzer.TableOrFunctionAnalysis;
 import com.datasqrl.planner.analyzer.cost.CostModel;
 import com.datasqrl.planner.dag.DAGBuilder;
 import com.datasqrl.planner.dag.nodes.ExportNode;
@@ -74,6 +76,7 @@ import com.datasqrl.planner.parser.SqrlCreateTableStatement;
 import com.datasqrl.planner.parser.SqrlDefinition;
 import com.datasqrl.planner.parser.SqrlExportStatement;
 import com.datasqrl.planner.parser.SqrlImportStatement;
+import com.datasqrl.planner.parser.SqrlPassthroughTableFunctionStatement;
 import com.datasqrl.planner.parser.SqrlStatement;
 import com.datasqrl.planner.parser.SqrlStatementParser;
 import com.datasqrl.planner.parser.SqrlTableDefinition;
@@ -83,6 +86,7 @@ import com.datasqrl.planner.parser.StackableStatement;
 import com.datasqrl.planner.parser.StatementParserException;
 import com.datasqrl.planner.tables.AccessVisibility;
 import com.datasqrl.planner.tables.SqrlTableFunction;
+import com.datasqrl.planner.util.SqlTableNameExtractor;
 import com.datasqrl.util.SqlNameUtil;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
@@ -316,16 +320,12 @@ public class SqlScriptPlanner {
 
       var originalSql = sqrlDef.toSql(sqrlEnv, statementStack);
       // Relationships and Table functions require special handling
-      if (sqrlDef instanceof SqrlTableFunctionStatement tblFctStmt) {
-        var identifier =
-            SqlNameUtil.toIdentifier(
-                tblFctStmt
-                    .getPath()
-                    .getFirst()); // TODO: this should be resolved against the current catalog and
-        // database
+      if (sqrlDef instanceof SqrlTableFunctionStatement tblFnStmt) {
+        // TODO: should be resolved against the current catalog and database
+        var identifier = SqlNameUtil.toIdentifier(tblFnStmt.getPath().getFirst());
         final var arguments = new LinkedHashMap<Name, ParsedArgument>();
-        if (!tblFctStmt.getSignature().isEmpty()) {
-          var parsedArgs = sqrlEnv.parse2RelDataType(tblFctStmt.getSignature());
+        if (!tblFnStmt.getSignature().isEmpty()) {
+          var parsedArgs = sqrlEnv.parse2RelDataType(tblFnStmt.getSignature());
           parsedArgs.forEach(
               parsedField -> {
                 var field = parsedField.field();
@@ -355,7 +355,7 @@ public class SqlScriptPlanner {
               });
         }
         TableAnalysis parentTbl = null;
-        if (tblFctStmt.isRelationship()) {
+        if (tblFnStmt.isRelationship()) {
           /* To resolve the arguments and get their type, we first need to look up the parent table
            */
           var parentNode = dagBuilder.getNode(identifier);
@@ -364,13 +364,13 @@ public class SqlScriptPlanner {
               sqrlDef.getTableName().getFileLocation(),
               ErrorCode.INVALID_TABLE_FUNCTION_ARGUMENTS,
               "Could not find parent table for relationship: %s",
-              tblFctStmt.getPath().getFirst());
+              tblFnStmt.getPath().getFirst());
           checkFatal(
               parentNode.get() instanceof TableNode,
               sqrlDef.getTableName().getFileLocation(),
               ErrorCode.INVALID_TABLE_FUNCTION_ARGUMENTS,
               "Relationships can only be added to tables (not functions): %s [%s]",
-              tblFctStmt.getPath().getFirst(),
+              tblFnStmt.getPath().getFirst(),
               parentNode.get().getClass());
           identifier = SqlNameUtil.toIdentifier(tablePath.toString());
           parentTbl = ((TableNode) parentNode.get()).getTableAnalysis();
@@ -382,7 +382,7 @@ public class SqlScriptPlanner {
         }
         // Resolve arguments, map indexes, and check for errors
         Map<Integer, Integer> argumentIndexMap = new HashMap<>();
-        for (ParsedArgument argIndex : tblFctStmt.getArgumentsByIndex()) {
+        for (ParsedArgument argIndex : tblFnStmt.getArgumentsByIndex()) {
           if (argIndex.isParentField()) {
             // Check if we need to add this argument when encountered for the first time
             RelDataTypeField field =
@@ -409,21 +409,60 @@ public class SqlScriptPlanner {
           argumentIndexMap.put(argIndex.getIndex(), signatureArg.getIndex());
         }
 
-        var fctBuilder =
-            sqrlEnv.resolveSqrlTableFunction(
-                identifier,
-                originalSql,
-                new ArrayList<>(arguments.values()),
-                argumentIndexMap,
-                hints,
-                errors);
-        fctBuilder.fullPath(tblFctStmt.getPath());
+        SqrlTableFunction.SqrlTableFunctionBuilder fnBuilder;
+        boolean isNativeFunction = false;
+        if (tblFnStmt instanceof SqrlPassthroughTableFunctionStatement passthroughStmt) {
+          originalSql = removeStatementDelimiter(passthroughStmt.getDefinitionBody().get().trim());
+          for (Map.Entry<Integer, Integer> mapping : argumentIndexMap.entrySet()) {
+            originalSql =
+                originalSql.replace(
+                    SqrlStatementParser.POSITIONAL_ARGUMENT_PREFIX + mapping.getKey(),
+                    SqrlStatementParser.POSITIONAL_ARGUMENT_PREFIX + mapping.getValue());
+          }
+          // extract from tables using simple-regex
+          var fromTableNames = SqlTableNameExtractor.findTableNames(originalSql);
+          List<TableOrFunctionAnalysis> fromTables =
+              fromTableNames.stream()
+                  .map(
+                      tblName -> {
+                        var node = dagBuilder.getNode(SqlNameUtil.toIdentifier(tblName));
+                        errors.checkFatal(
+                            node.isPresent(),
+                            "Could not find table %s referenced in query",
+                            tblName);
+                        errors.checkFatal(
+                            node.get() instanceof TableNode, "Referenced table %s is", tblName);
+                        return (TableOrFunctionAnalysis)
+                            ((TableNode) node.get()).getTableAnalysis();
+                      })
+                  .toList();
+          fnBuilder =
+              sqrlEnv.resolveSqrlPassThroughTableFunction(
+                  identifier,
+                  originalSql,
+                  new ArrayList<>(arguments.values()),
+                  passthroughStmt.getReturnType(),
+                  fromTables,
+                  hints,
+                  errors);
+        } else {
+          fnBuilder =
+              sqrlEnv.resolveSqrlTableFunction(
+                  identifier,
+                  originalSql,
+                  new ArrayList<>(arguments.values()),
+                  argumentIndexMap,
+                  hints,
+                  errors);
+        }
+        fnBuilder.fullPath(tblFnStmt.getPath());
         var visibility =
-            new AccessVisibility(access, hints.isTest(), tblFctStmt.isRelationship(), isHidden);
-        fctBuilder.visibility(visibility);
-        fctBuilder.documentation(documentation);
-        fctBuilder.cacheDuration(getCacheDuration(hintsAndDocs));
-        var fct = fctBuilder.build();
+            new AccessVisibility(
+                access, hints.isTest(), tblFnStmt.isRelationship() || isNativeFunction, isHidden);
+        fnBuilder.visibility(visibility);
+        fnBuilder.documentation(documentation);
+        fnBuilder.cacheDuration(getCacheDuration(hintsAndDocs));
+        var fct = fnBuilder.build();
         errors.checkFatal(
             dagBuilder.getNode(fct.getIdentifier()).isEmpty(),
             ErrorCode.FUNCTION_EXISTS,
@@ -688,7 +727,7 @@ public class SqlScriptPlanner {
   private void addFunctionToDag(SqrlTableFunction function, HintsAndDocs hintsAndDocs) {
     var availableStages =
         determineStages(
-            determineViableStages(function.getVisibility().getAccess()), hintsAndDocs.hints());
+            determineViableStages(function.getVisibility().access()), hintsAndDocs.hints());
     dagBuilder.add(
         new TableFunctionNode(
             function, getStageAnalysis(function.getFunctionAnalysis(), availableStages)));

@@ -1,0 +1,12 @@
+query Employee {
+    Employees(employeeid: 1) {
+        name
+        directReports(limit: 10) {
+            employeeid
+        }
+        allReports(limit: 100) {
+            employeeid
+            level
+        }
+    }
+}

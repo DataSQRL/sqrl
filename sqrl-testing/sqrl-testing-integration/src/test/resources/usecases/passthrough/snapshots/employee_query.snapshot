@@ -1,0 +1,40 @@
+{
+  "data" : {
+    "Employees" : [ {
+      "name" : "Sarah Johnson",
+      "directReports" : [ {
+        "employeeid" : 2
+      }, {
+        "employeeid" : 3
+      } ],
+      "allReports" : [ {
+        "employeeid" : 2,
+        "level" : 1
+      }, {
+        "employeeid" : 3,
+        "level" : 1
+      }, {
+        "employeeid" : 4,
+        "level" : 2
+      }, {
+        "employeeid" : 5,
+        "level" : 2
+      }, {
+        "employeeid" : 6,
+        "level" : 2
+      }, {
+        "employeeid" : 7,
+        "level" : 2
+      }, {
+        "employeeid" : 8,
+        "level" : 3
+      }, {
+        "employeeid" : 9,
+        "level" : 3
+      }, {
+        "employeeid" : 10,
+        "level" : 3
+      } ]
+    } ]
+  }
+}

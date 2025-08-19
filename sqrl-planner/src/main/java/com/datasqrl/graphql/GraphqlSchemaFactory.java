@@ -125,7 +125,7 @@ public class GraphqlSchemaFactory {
 
     final List<SqrlTableFunction> tableFunctions =
         serverPlan.getFunctions().stream()
-            .filter(function -> function.getVisibility().getAccess() == tableFunctionsType)
+            .filter(function -> function.getVisibility().access() == tableFunctionsType)
             .toList();
 
     // group table functions by their parent path
@@ -370,7 +370,7 @@ public class GraphqlSchemaFactory {
                         .build())
             .collect(Collectors.toList());
     List<GraphQLArgument> limitAndOffsetArguments = List.of();
-    if (tableFunction.getVisibility().getAccess() != AccessModifier.SUBSCRIPTION
+    if (tableFunction.getVisibility().access() != AccessModifier.SUBSCRIPTION
         && tableFunction.getMultiplicity() == Multiplicity.MANY) {
       limitAndOffsetArguments = generateLimitAndOffsetArguments();
     }

@@ -61,7 +61,7 @@ public class SqrlStatementParser {
       BEGINNING_COMMENT
           + "(?<fullmatch>(?<tablename>"
           + IDENTIFIER_REGEX
-          + ")\\s*(\\((?<arguments>.*?)\\))?\\s*:=)";
+          + ")\\s*(\\((?<arguments>.*?)\\))?\\s*(?:RETURNS\\s*\\((?<returntype>.*?)\\)\\s*)?:=)";
   public static final String CREATE_TABLE_REGEX =
       BEGINNING_COMMENT + "(?<fullmatch>create\\s+(temporary\\s+)?table)";
 
@@ -100,6 +100,7 @@ public class SqrlStatementParser {
   public static final String SELECT_KEYWORD = "select";
   public static final String DISTINCT_KEYWORD = "distinct";
   public static final String SUBSCRIBE_KEYWORD = "subscribe";
+  public static final String WITH_KEYWORD = "with";
 
   public static final String SELF_REFERENCE_KEYWORD = "this";
 
@@ -199,6 +200,8 @@ public class SqrlStatementParser {
 
       ParsedObject<String> arguments =
           parse(sqrlDefinition, "arguments", statement).map(str -> str.isBlank() ? null : str);
+      ParsedObject<String> returnType =
+          parse(sqrlDefinition, "returntype", statement).map(str -> str.isBlank() ? null : str);
       // Identify SQL keyword
       var sqlKeywordPattern = Pattern.compile("^\\s*(\\w+)");
       var keywordMatcher = sqlKeywordPattern.matcher(definitionBody.get());
@@ -209,7 +212,9 @@ public class SqrlStatementParser {
         keywordEnd = keywordMatcher.end(1);
       }
       SqrlDefinition definition = null;
-      if (keyword.equalsIgnoreCase(SELECT_KEYWORD) || keyword.equalsIgnoreCase(SUBSCRIBE_KEYWORD)) {
+      if (keyword.equalsIgnoreCase(SELECT_KEYWORD)
+          || keyword.equalsIgnoreCase(WITH_KEYWORD)
+          || keyword.equalsIgnoreCase(SUBSCRIBE_KEYWORD)) {
         if (keyword.equalsIgnoreCase(
             SUBSCRIBE_KEYWORD)) { // Remove the keyword from definition body
           checkFatal(
@@ -222,19 +227,37 @@ public class SqrlStatementParser {
           definitionBody =
               parse(statement.substring(newDefinitionStart), statement, newDefinitionStart);
         }
-        if (arguments.isEmpty() && !isRelationship) {
+        if (arguments.isEmpty() && returnType.isEmpty() && !isRelationship) {
           definition = new SqrlTableDefinition(tableName, definitionBody, access, comment);
         } else {
           // Extract and replace argument and this references
-          var processedBody = replaceTableFunctionVariables(definitionBody, isRelationship);
+          var processedBody =
+              replaceTableFunctionVariables(definitionBody, isRelationship, returnType.isPresent());
           definitionBody = definitionBody.map(x -> processedBody.getKey());
-          definition =
-              new SqrlTableFunctionStatement(
-                  tableName, definitionBody, access, comment, arguments, processedBody.getRight());
+          if (returnType.isPresent()) {
+            definition =
+                new SqrlPassthroughTableFunctionStatement(
+                    tableName,
+                    definitionBody,
+                    access,
+                    comment,
+                    arguments,
+                    processedBody.getRight(),
+                    returnType);
+          } else {
+            definition =
+                new SqrlTableFunctionStatement(
+                    tableName,
+                    definitionBody,
+                    access,
+                    comment,
+                    arguments,
+                    processedBody.getRight());
+          }
         }
       } else if (keyword.equalsIgnoreCase(DISTINCT_KEYWORD)) { // SQRL's special DISTINCT statement
         checkFatal(
-            arguments.isEmpty(),
+            arguments.isEmpty() && returnType.isEmpty(),
             ErrorCode.INVALID_SQRL_DEFINITION,
             "Table function not supported for operation");
         var distinctMatcher = DISTINCT_PARSER.matcher(definitionBody.get());
@@ -252,15 +275,10 @@ public class SqrlStatementParser {
             new SqrlDistinctStatement(tableName, comment, access, from, columns, remaining);
       } else { // otherwise, we assume it's a column expression
         checkFatal(
-            arguments.isEmpty(),
+            arguments.isEmpty() && returnType.isEmpty(),
             ErrorCode.INVALID_SQRL_DEFINITION,
             "Column definitions do not support arguments");
         definition = new SqrlAddColumnStatement(tableName, definitionBody, comment);
-        new StatementParserException(
-            ErrorCode.INVALID_SQRL_DEFINITION,
-            definitionBody.getFileLocation(),
-            "Not a valid SQRL operation: %s",
-            keyword);
       }
 
       return definition;
@@ -298,7 +316,7 @@ public class SqrlStatementParser {
    * @return
    */
   public static Pair<String, List<ParsedArgument>> replaceTableFunctionVariables(
-      ParsedObject<String> body, boolean isRelationship) {
+      ParsedObject<String> body, boolean isRelationship, boolean positionalArguments) {
     List<ParsedArgument> argumentIndexes = new ArrayList<>();
     var matcher = VARIABLE_PARSER.matcher(body.get());
     var processedQuery = new StringBuilder();
@@ -324,18 +342,27 @@ public class SqrlStatementParser {
         startPos = matcher.start("name2");
       }
       var variable =
-          new ParsedObject<String>(
+          new ParsedObject<>(
               matchedVariable,
               body.getFileLocation().add(computeFileLocation(body.get(), startPos)));
-      var replacement =
-          matcher.group("prefix") + "?" + " ".repeat(matcher.end() - matcher.start() - 2);
-      matcher.appendReplacement(processedQuery, replacement);
-      var arg = new ParsedArgument(variable, isParentField, argumentIndexes.size());
+      var indexPos = argumentIndexes.size();
+
+      String replacement = matcher.group("prefix");
+      if (positionalArguments) {
+        replacement += POSITIONAL_ARGUMENT_PREFIX + indexPos;
+      } else {
+        replacement += "?" + " ".repeat(matcher.end() - matcher.start() - 2);
+      }
+
+      matcher.appendReplacement(processedQuery, Matcher.quoteReplacement(replacement));
+      var arg = new ParsedArgument(variable, isParentField, indexPos);
       argumentIndexes.add(arg);
     }
     matcher.appendTail(processedQuery);
     return Pair.of(processedQuery.toString(), argumentIndexes);
   }
+
+  public static final String POSITIONAL_ARGUMENT_PREFIX = "$?$";
 
   static FileLocation relativeLocation(ParsedObject<String> base, int charOffset) {
     return base.getFileLocation().add(computeFileLocation(base.get(), charOffset));

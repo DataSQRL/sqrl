@@ -185,6 +185,49 @@ TableName.new_col := expression;
 Must appear **immediately after** the table it extends, and may reference previously added columns of the same table.
 
 
+### Passthrough definitions
+
+Passthrough definitions allow you to bypass SQRL's analysis and translation, passing SQL queries directly to the underlying database engine.
+This serves as a "backdoor" for SQL constructs that SQRL does not yet support natively.
+
+Passthrough table, function, or relationship definition have a `RETURNS` clause in their signature that defines the result type of the query.
+
+```
+TableName RETURNS (column TYPE [NOT NULL], ...) := 
+  SELECT raw_sql_query;
+```
+
+**⚠️ Important considerations:**
+- SQL must be written in the exact syntax of the target database engine
+- SQRL will not validate, parse, or optimize the query
+- Only use when SQRL lacks native support for the required functionality
+- Return type must be explicitly declared using the `RETURNS` clause
+
+The following defines a relationship definition with a recursive CTE that is passed through to the
+database engine for execution.
+Use `this` to reference parent fields in a relationship definition or `:name` to reference function
+arguments as in standard definitions. The only thing that changes is that adding a `RETURNS` declaration
+bypasses the SQRL analysis, optimization, and query rewriting.
+
+```sql
+Employees.allReports RETURNS (employeeid BIGINT NOT NULL, name STRING NOT NULL, level INT NOT NULL) :=
+  WITH RECURSIVE employee_hierarchy AS (
+    SELECT r.employeeid, r.managerid, 1 as level
+    FROM "Reporting" r
+    WHERE r.managerid = this.employeeid
+    
+    UNION ALL
+    
+    SELECT r.employeeid, r.managerid, eh.level + 1 as level
+    FROM "Reporting" r
+    INNER JOIN employee_hierarchy eh ON r.managerid = eh.employeeid
+  )
+  SELECT e.employeeid, e.name, eh.level
+  FROM employee_hierarchy eh
+  JOIN "Employees" e ON eh.employeeid = e.employeeid
+  ORDER BY eh.level, e.employeeid;
+```
+
 ## Interfaces
 
 The tables and functions defined in a SQRL script are exposed through an interface. The term "interface" is used generically to describe a means by which a client, user, or external system can access the processed data. The interface depends on the [configured engines](configuration.md#engines-engines): API endpoints for servers, queries and views for databases, and topics for logs. An interface is a sink in the data processing DAG that's defined by a SQRL script.
@@ -279,20 +322,21 @@ The following produce compile time errors:
 
 ## Cheat Sheet
 
-| Construct      | Example                                                                |
-|----------------|------------------------------------------------------------------------|
-| Import package | `IMPORT ecommerceTs.* ;`                                               |
-| Hidden import  | `IMPORT ecommerceTs.* AS _ ;`                                          |
-| Internal table | `CREATE TABLE Orders ( ... );`                                         |
-| External table | `CREATE TABLE kafka_table (...) WITH ('connector'='kafka');`           |
-| Table def.     | `BigOrders := SELECT * FROM Orders WHERE amount > 100;`                |
-| Distinct       | `Dedup := DISTINCT Events ON id ORDER BY ts DESC;`                     |
-| Function       | `OrdersById(id BIGINT) := SELECT * FROM Orders WHERE id = :id;`        |
-| Relationship   | `Customer.orders := SELECT * FROM Orders WHERE this.id = customerid;`  |
-| Column add     | `Orders.total := quantity * price;`                                    |
-| Subscription   | `Alerts := SUBSCRIBE SELECT * FROM Dedup WHERE level='WARN';`          |
-| Export         | `EXPORT Alerts TO logger.Warnings;`                                    |
-| Hint           | `/*+index(hash,id)*/`                                                  |
+| Construct        | Example                                                                |
+|------------------|------------------------------------------------------------------------|
+| Import package   | `IMPORT ecommerceTs.* ;`                                               |
+| Hidden import    | `IMPORT ecommerceTs.* AS _ ;`                                          |
+| Internal table   | `CREATE TABLE Orders ( ... );`                                         |
+| External table   | `CREATE TABLE kafka_table (...) WITH ('connector'='kafka');`           |
+| Table def.       | `BigOrders := SELECT * FROM Orders WHERE amount > 100;`                |
+| Distinct         | `Dedup := DISTINCT Events ON id ORDER BY ts DESC;`                     |
+| Function         | `OrdersById(id BIGINT) := SELECT * FROM Orders WHERE id = :id;`        |
+| Relationship     | `Customer.orders := SELECT * FROM Orders WHERE this.id = customerid;`  |
+| Column add       | `Orders.total := quantity * price;`                                    |
+| Passthrough func | `Func(id BIGINT) RETURNS (col INT) := SELECT raw_sql WHERE id = :id;`  |
+| Subscription     | `Alerts := SUBSCRIBE SELECT * FROM Dedup WHERE level='WARN';`          |
+| Export           | `EXPORT Alerts TO logger.Warnings;`                                    |
+| Hint             | `/*+index(hash,id)*/`                                                  |
 
 ## API Mapping
 

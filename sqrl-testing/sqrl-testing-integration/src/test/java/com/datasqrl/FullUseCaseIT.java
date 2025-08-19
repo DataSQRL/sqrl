@@ -60,7 +60,7 @@ public class FullUseCaseIT extends AbstractFullUseCaseTest {
   @Disabled("Intended for manual usage")
   @Test
   void specificUseCase() {
-    var pkg = USE_CASES.resolve("analytics-only").resolve("package.json");
+    var pkg = USE_CASES.resolve("passthrough").resolve("package.json");
 
     var param = new UseCaseParam(pkg);
     fullUseCaseTest(param);

@@ -27,6 +27,7 @@ import com.datasqrl.engine.EngineFeature;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.database.EngineCreateTable;
+import com.datasqrl.engine.database.relational.JdbcStatementFactory.QueryResult;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.graphql.jdbc.DatabaseType;
 import com.datasqrl.planner.analyzer.TableAnalysis;
@@ -157,20 +158,25 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
               query -> {
                 planBuilder.query(query.getRelNode());
                 var function = query.getFunction();
-                var result =
-                    stmtFactory.createQuery(query, !function.hasParameters(), tableId2Create);
-                if (result.getExecQueryBuilder() != null && function.getExecutableQuery() == null) {
+                QueryResult result;
+                if (function.isPassthrough()) {
+                  result = stmtFactory.createPassthroughQuery(query, !function.hasParameters());
+                } else {
+                  result =
+                      stmtFactory.createQuery(query, !function.hasParameters(), tableId2Create);
+                }
+                if (result.execQueryBuilder() != null && function.getExecutableQuery() == null) {
                   function.setExecutableQuery(
                       result
-                          .getExecQueryBuilder()
+                          .execQueryBuilder()
                           .cacheDuration(function.getCacheDuration())
                           .database(getDatabaseType())
                           .stage(stagePlan.getStage())
                           .build());
                 }
                 // Only add views that don't clash with tables
-                if (result.getView() != null && !tableNames.contains(result.getView().getName())) {
-                  planBuilder.statement(result.getView());
+                if (result.view() != null && !tableNames.contains(result.view().getName())) {
+                  planBuilder.statement(result.view());
                 }
               });
     }
