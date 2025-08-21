@@ -15,6 +15,7 @@
  */
 package com.datasqrl.graphql;
 
+import com.datasqrl.graphql.auth.JwtFailureHandler;
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.graphql.server.operation.ApiOperation;
@@ -33,6 +34,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.jwt.JWTAuth;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.handler.JWTAuthHandler;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
@@ -99,75 +101,91 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
     String mcpRoutePrefix = config.getServletConfig().getMcpEndpoint(modelVersion);
 
     // MCP SSE endpoint - handles POST for messages
-    router
-        .post(mcpRoutePrefix)
-        .handler(
-            ctx -> {
-              JsonNode payload = null;
-              try {
-                payload = OBJECT_MAPPER.readTree(ctx.body().buffer().getBytes());
-                processIncomingMessages(ctx, payload);
-              } catch (IOException e) { // TODO: improve error handling
-                throw new RuntimeException(e);
-              }
-            });
+    var postRoute = router.post(mcpRoutePrefix);
+
+    // Add JWT auth if configured
+    jwtAuth.ifPresent(
+        auth -> {
+          log.info("Applying JWT authentication to MCP endpoint: {}", mcpRoutePrefix);
+          postRoute.handler(JWTAuthHandler.create(auth));
+          postRoute.failureHandler(new JwtFailureHandler());
+        });
+
+    postRoute.handler(
+        ctx -> {
+          JsonNode payload = null;
+          try {
+            payload = objectMapper.readTree(ctx.body().buffer().getBytes());
+            processIncomingMessages(ctx, payload);
+          } catch (IOException e) { // TODO: improve error handling
+            throw new RuntimeException(e);
+          }
+        });
 
     // SSE endpoint for server-to-client streaming
-    router
-        .get(mcpRoutePrefix + "/sse")
-        .handler(
-            ctx -> {
-              if (!accepts(ctx, CT_SSE)) {
-                ctx.response().setStatusCode(406).end();
-                return;
-              }
-              var response = ctx.response();
+    var sseRoute = router.get(mcpRoutePrefix + "/sse");
 
-              // Set up SSE headers
-              response
-                  .putHeader("Content-Type", "text/event-stream")
-                  .putHeader("Cache-Control", "no-cache")
-                  .putHeader("Connection", "keep-alive")
-                  .putHeader("Access-Control-Allow-Origin", "*")
-                  .setChunked(true);
+    // Add JWT auth to SSE endpoint if configured
+    jwtAuth.ifPresent(
+        auth -> {
+          log.info("Applying JWT authentication to MCP SSE endpoint: {}/sse", mcpRoutePrefix);
+          sseRoute.handler(JWTAuthHandler.create(auth));
+          sseRoute.failureHandler(new JwtFailureHandler());
+        });
 
-              var connectionId = UUID.randomUUID().toString();
-              SseConnection connection = new SseConnection(connectionId, response);
-              sseConnections.put(connectionId, connection);
+    sseRoute.handler(
+        ctx -> {
+          if (!accepts(ctx, CT_SSE)) {
+            ctx.response().setStatusCode(406).end();
+            return;
+          }
+          HttpServerResponse response = ctx.response();
 
-              // Send initial connection event
-              sendSseMessage(
-                  connection, "connected", new JsonObject().put("connectionId", connectionId));
+          // Set up SSE headers
+          response
+              .putHeader("Content-Type", "text/event-stream")
+              .putHeader("Cache-Control", "no-cache")
+              .putHeader("Connection", "keep-alive")
+              .putHeader("Access-Control-Allow-Origin", "*")
+              .setChunked(true);
 
-              // Send heartbeat every 30 seconds
-              long timerId =
-                  vertx.setPeriodic(
-                      30000,
-                      id -> {
-                        if (sseConnections.containsKey(connectionId)) {
-                          sendSseMessage(
-                              connection,
-                              "heartbeat",
-                              new JsonObject().put("timestamp", System.currentTimeMillis()));
-                        }
-                      });
+          String connectionId = UUID.randomUUID().toString();
+          SseConnection connection = new SseConnection(connectionId, response);
+          sseConnections.put(connectionId, connection);
 
-              // Handle connection close
-              response.closeHandler(
-                  v -> {
-                    vertx.cancelTimer(timerId);
-                    sseConnections.remove(connectionId);
-                    log.info("SSE connection closed: {}", connectionId);
+          // Send initial connection event
+          sendSseMessage(
+              connection, "connected", new JsonObject().put("connectionId", connectionId));
+
+          // Send heartbeat every 30 seconds
+          long timerId =
+              vertx.setPeriodic(
+                  30000,
+                  id -> {
+                    if (sseConnections.containsKey(connectionId)) {
+                      sendSseMessage(
+                          connection,
+                          "heartbeat",
+                          new JsonObject().put("timestamp", System.currentTimeMillis()));
+                    }
                   });
 
-              // Handle client disconnect
-              response.exceptionHandler(
-                  throwable -> {
-                    vertx.cancelTimer(timerId);
-                    sseConnections.remove(connectionId);
-                    log.warn("SSE connection error: {} - {}", connectionId, throwable.getMessage());
-                  });
-            });
+          // Handle connection close
+          response.closeHandler(
+              v -> {
+                vertx.cancelTimer(timerId);
+                sseConnections.remove(connectionId);
+                log.info("SSE connection closed: {}", connectionId);
+              });
+
+          // Handle client disconnect
+          response.exceptionHandler(
+              throwable -> {
+                vertx.cancelTimer(timerId);
+                sseConnections.remove(connectionId);
+                log.warn("SSE connection error: {} - {}", connectionId, throwable.getMessage());
+              });
+        });
     startPromise.complete();
   }
 
@@ -322,7 +340,7 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
     if (tool == null) {
       return Future.failedFuture(new McpException(-32602, "Tool not found: " + toolName));
     }
-    Map<String, Object> variables = OBJECT_MAPPER.convertValue(arguments, new TypeReference<>() {});
+    Map<String, Object> variables = objectMapper.convertValue(arguments, new TypeReference<>() {});
     return bridgeRequestToGraphQL(ctx, tool, variables)
         .map(
             executionResult -> {
@@ -335,7 +353,9 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
                             err ->
                                 new JsonObject()
                                     .put("type", "text")
-                                    .put("text", "Tool Error:" + err.getPath()))
+                                    .put(
+                                        "text",
+                                        "Tool Error[" + err.getPath() + "]: " + err.getMessage()))
                         .toList());
                 json.put("isError", true);
               } else {
@@ -346,7 +366,8 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
                       List.of(
                           new JsonObject()
                               .put("type", "text")
-                              .put("text", OBJECT_MAPPER.writeValueAsString(result))));
+                              .put("text", objectMapper.writeValueAsString(result))));
+                  json.put("isError", false);
                 } catch (JsonProcessingException e) {
                   throw new RuntimeException(e);
                 }
