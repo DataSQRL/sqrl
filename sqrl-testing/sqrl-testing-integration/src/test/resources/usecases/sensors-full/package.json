@@ -1,7 +1,10 @@
 {
   "version": "1",
   "script": {
-    "main": "sensors-full.sqrl"
+    "main": "sensors-full.sqrl",
+    "config": {
+      "variant": "testdata"
+    }
   },
   "test-runner": {
     "delay-sec": -1

@@ -15,12 +15,11 @@
  */
 package com.datasqrl.function.vector;
 
-import static com.datasqrl.function.FlinkUdfNsObject.getFunctionNameFromClass;
-
 import com.datasqrl.flinkrunner.stdlib.vector.center;
 import com.datasqrl.function.CalciteFunctionUtil;
 import com.datasqrl.function.translations.PostgresSqlTranslation;
 import com.datasqrl.function.translations.SqlTranslation;
+import com.datasqrl.util.FunctionUtil;
 import com.google.auto.service.AutoService;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlWriter;
@@ -31,7 +30,8 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 public class CenterSqlTranslation extends PostgresSqlTranslation {
 
   public CenterSqlTranslation() {
-    super(CalciteFunctionUtil.lightweightOp(getFunctionNameFromClass(center.class).getDisplay()));
+    super(
+        CalciteFunctionUtil.lightweightOp(FunctionUtil.getFunctionName(center.class).getDisplay()));
   }
 
   @Override

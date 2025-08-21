@@ -219,13 +219,16 @@ public class FlinkSqlNodeFactory {
   //  public static final SqlDistribution NO_DISTRIBUTION = null;
 
   public static SqlCreateTable createTable(
-      String tableName, RelDataType relDataType, boolean isTemporary) {
+      String tableName,
+      RelDataType relDataType,
+      Map<String, String> connectorOptions,
+      boolean isTemporary) {
     return new SqlCreateTable(
         SqlParserPos.ZERO,
         FlinkSqlNodeFactory.identifier(tableName),
         createColumns(relDataType),
         Collections.emptyList(),
-        FlinkSqlNodeFactory.createProperties(Map.of("connector", "datagen")),
+        FlinkSqlNodeFactory.createProperties(connectorOptions),
         //        NO_DISTRIBUTION,
         SqlNodeList.EMPTY,
         null,

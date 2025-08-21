@@ -193,7 +193,9 @@ public class DAGPlanner {
           .forEach(
               mut -> {
                 planBuilder.mutation(mut.getCreateTopic());
-                serverPlan.mutation(mut);
+                if (mut.isGenerateAccess()) {
+                  serverPlan.mutation(mut);
+                }
               });
     }
 
@@ -213,8 +215,7 @@ public class DAGPlanner {
               Set<ExecutionStage> downstreamStages =
                   new HashSet<>(); // We want to only plan once for each stage
               // We need stable iteration order for reproducibility
-              List<PipelineNode> downstreamNodes =
-                  dag.getOutputs(node).stream().sorted().collect(Collectors.toList());
+              List<PipelineNode> downstreamNodes = dag.getOutputs(node).stream().sorted().toList();
               for (PipelineNode downstream : downstreamNodes) {
                 if (downstream instanceof ExportNode
                     || !downstream.getChosenStage().equals(streamStage)) {

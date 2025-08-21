@@ -56,7 +56,7 @@ Was expecting one of:
     "[" ...
     "(" ...
     
-in script:parsererror-flinkparser-fail.sqrl [5:27]:
+in script:parserError-flinkparser-fail.sqrl [5:27]:
 CustomerTimeWindow := SELECT
                           window_start, window_end
                           COUNT(DISTINCT email) AS unique_email_count

@@ -16,33 +16,18 @@
 package com.datasqrl.loaders;
 
 import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.io.tables.TableSchema;
 import com.datasqrl.loaders.FlinkTableNamespaceObject.FlinkTable;
-import com.datasqrl.module.TableNamespaceObject;
+import com.datasqrl.loaders.schema.SchemaLoader;
 import java.nio.file.Path;
-import java.util.Optional;
-import lombok.Getter;
-import lombok.Value;
 
-@Getter
-public class FlinkTableNamespaceObject implements TableNamespaceObject<FlinkTable> {
-
-  private final FlinkTable table;
-
-  public FlinkTableNamespaceObject(FlinkTable table) {
-    this.table = table;
-  }
+public record FlinkTableNamespaceObject(
+    com.datasqrl.loaders.FlinkTableNamespaceObject.FlinkTable table, SchemaLoader schemaLoader)
+    implements TableNamespaceObject<FlinkTable> {
 
   @Override
-  public Name getName() {
-    return table.getName();
+  public Name name() {
+    return table.name();
   }
 
-  @Value
-  public static class FlinkTable {
-    Name name;
-    String flinkSQL;
-    Path flinkSqlFile;
-    Optional<TableSchema> schema;
-  }
+  public record FlinkTable(Name name, String flinkSql, Path flinkSqlFile) {}
 }
