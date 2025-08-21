@@ -410,8 +410,9 @@ public class SqlScriptPlanner {
         }
 
         SqrlTableFunction.SqrlTableFunctionBuilder fnBuilder;
-        boolean isNativeFunction = false;
+        boolean passthroughFn = false;
         if (tblFnStmt instanceof SqrlPassthroughTableFunctionStatement passthroughStmt) {
+          passthroughFn = true;
           originalSql = removeStatementDelimiter(passthroughStmt.getDefinitionBody().get().trim());
           for (Map.Entry<Integer, Integer> mapping : argumentIndexMap.entrySet()) {
             originalSql =
@@ -458,19 +459,19 @@ public class SqlScriptPlanner {
         fnBuilder.fullPath(tblFnStmt.getPath());
         var visibility =
             new AccessVisibility(
-                access, hints.isTest(), tblFnStmt.isRelationship() || isNativeFunction, isHidden);
+                access, hints.isTest(), tblFnStmt.isRelationship() || passthroughFn, isHidden);
         fnBuilder.visibility(visibility);
         fnBuilder.documentation(documentation);
         fnBuilder.cacheDuration(getCacheDuration(hintsAndDocs));
-        var fct = fnBuilder.build();
+        var fn = fnBuilder.build();
         errors.checkFatal(
-            dagBuilder.getNode(fct.getIdentifier()).isEmpty(),
+            dagBuilder.getNode(fn.getIdentifier()).isEmpty(),
             ErrorCode.FUNCTION_EXISTS,
             "Function or relationship [%s] already exists in catalog",
             tablePath);
-        addFunctionToDag(fct, hintsAndDocs);
-        if (!fct.getVisibility().isAccessOnly()) {
-          sqrlEnv.registerSqrlTableFunction(fct);
+        addFunctionToDag(fn, hintsAndDocs);
+        if (!fn.getVisibility().isAccessOnly()) {
+          sqrlEnv.registerSqrlTableFunction(fn);
         }
       } else {
         var visibility = new AccessVisibility(access, hints.isTest(), true, isHidden);
