@@ -15,6 +15,11 @@
  */
 package com.datasqrl.container.testing;
 
+import static com.datasqrl.env.EnvVariableNames.KAFKA_BOOTSTRAP_SERVERS;
+import static com.datasqrl.env.EnvVariableNames.POSTGRES_DATABASE;
+import static com.datasqrl.env.EnvVariableNames.POSTGRES_HOST;
+import static com.datasqrl.env.EnvVariableNames.POSTGRES_PASSWORD;
+import static com.datasqrl.env.EnvVariableNames.POSTGRES_USERNAME;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -50,7 +55,7 @@ public class JwtContainerIT extends SqrlContainerTestBase {
   private void startPostgreSQLContainer() {
     if (postgresql == null) {
       postgresql =
-          new PostgreSQLContainer<>("postgres:13-alpine")
+          new PostgreSQLContainer<>("postgres:17")
               .withDatabaseName("datasqrl")
               .withUsername("datasqrl")
               .withPassword("password")
@@ -88,11 +93,11 @@ public class JwtContainerIT extends SqrlContainerTestBase {
         testDir,
         container -> {
           container
-              .withEnv("POSTGRES_HOST", "postgresql")
-              .withEnv("POSTGRES_USERNAME", postgresql.getUsername())
-              .withEnv("POSTGRES_PASSWORD", postgresql.getPassword())
-              .withEnv("POSTGRES_DATABASE", postgresql.getDatabaseName())
-              .withEnv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092");
+              .withEnv(POSTGRES_HOST, "postgresql")
+              .withEnv(POSTGRES_USERNAME, postgresql.getUsername())
+              .withEnv(POSTGRES_PASSWORD, postgresql.getPassword())
+              .withEnv(POSTGRES_DATABASE, postgresql.getDatabaseName())
+              .withEnv(KAFKA_BOOTSTRAP_SERVERS, "localhost:9092");
         });
   }
 
@@ -177,12 +182,12 @@ public class JwtContainerIT extends SqrlContainerTestBase {
     var client = McpClient.sync(transport).requestTimeout(Duration.ofSeconds(10)).build();
 
     // Should fail when trying to initialize due to lack of authentication
-    assertThatThrownBy(
-            () -> {
-              client.initialize();
-              client.listTools();
-            })
-        .hasMessageContaining("401");
+    assertThatThrownBy(() -> client.initialize())
+        .satisfies(
+            ex -> {
+              var fullMessage = getFullExceptionMessage(ex);
+              assertThat(fullMessage).containsIgnoringCase("JWT auth failed");
+            });
 
     client.close();
   }
@@ -281,5 +286,20 @@ public class JwtContainerIT extends SqrlContainerTestBase {
     } catch (Exception e) {
       throw new RuntimeException("Failed to generate RSA key pair for test", e);
     }
+  }
+
+  private String getFullExceptionMessage(Throwable throwable) {
+    var messages = new StringBuilder();
+    var current = throwable;
+    while (current != null) {
+      if (current.getMessage() != null) {
+        if (messages.length() > 0) {
+          messages.append(" -> ");
+        }
+        messages.append(current.getMessage());
+      }
+      current = current.getCause();
+    }
+    return messages.toString();
   }
 }
