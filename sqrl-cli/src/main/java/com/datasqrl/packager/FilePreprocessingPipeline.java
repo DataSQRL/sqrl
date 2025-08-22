@@ -42,9 +42,8 @@ import lombok.Getter;
 import lombok.SneakyThrows;
 
 /**
- * Helps to preprocess files which means 1) copying all relevant files into the build directory
- * (canonicalizing the name and preserving relative paths) 2) running all registered preprocessors
- * for more elaborate preprocessing than just copying files.
+ * Helps to preprocess files which means 1) copying all relevant files into the build directory 2)
+ * running all registered preprocessors for more elaborate preprocessing than just copying files.
  */
 @AllArgsConstructor(onConstructor_ = @Inject)
 public class FilePreprocessingPipeline {
@@ -110,8 +109,7 @@ public class FilePreprocessingPipeline {
 
     private Path getRelativeBuildPath(Path srcPath) {
       checkArgument(Files.isDirectory(srcPath));
-      var canonicalizeSrcPath = Preprocessor.canonicalizePath(srcPath);
-      var absolutePath = canonicalizeSrcPath.toAbsolutePath().normalize();
+      var absolutePath = srcPath.toAbsolutePath().normalize();
       var absoluteSourceDir = sourceDir.toAbsolutePath().normalize();
       if (!absolutePath.startsWith(absoluteSourceDir)) {
         throw new IllegalArgumentException("File is not under the source directory: " + srcPath);
@@ -153,8 +151,7 @@ public class FilePreprocessingPipeline {
 
     @SneakyThrows
     private void copy(Path file, Path targetDir) {
-      Path copyPath = targetDir.resolve(file.getFileName());
-      copyPath = Preprocessor.canonicalizePath(copyPath);
+      var copyPath = targetDir.resolve(file.getFileName());
       ensureDirectoryExists(targetDir);
       Files.copy(file, copyPath, StandardCopyOption.REPLACE_EXISTING);
     }

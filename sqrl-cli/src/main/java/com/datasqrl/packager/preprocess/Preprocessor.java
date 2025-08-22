@@ -21,8 +21,4 @@ import java.nio.file.Path;
 public interface Preprocessor {
 
   void process(Path file, FilePreprocessingPipeline.Context context);
-
-  static Path canonicalizePath(Path path) {
-    return Path.of(path.toString().toLowerCase());
-  }
 }

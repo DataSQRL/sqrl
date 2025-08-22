@@ -106,7 +106,7 @@ public class FilePreprocessingPipelineIT extends AbstractAssetSnapshotTest {
     Path libDir = buildPath.getUdfPath();
 
     // Verify JAR file is copied to lib directory
-    Path jarFile = libDir.resolve("myjavafunction-0.1.0-snapshot.jar");
+    Path jarFile = libDir.resolve("myjavafunction-0.1.0-SNAPSHOT.jar");
     assertThat(jarFile).exists();
 
     // Verify function manifest is created in build directory
@@ -142,7 +142,7 @@ public class FilePreprocessingPipelineIT extends AbstractAssetSnapshotTest {
 
     // Assert JAR files are processed correctly
     Path libDir = buildPath.getUdfPath();
-    assertThat(libDir.resolve("myjavafunction-0.1.0-snapshot.jar")).exists();
+    assertThat(libDir.resolve("myjavafunction-0.1.0-SNAPSHOT.jar")).exists();
     assertThat(countFiles(libDir, false)).isEqualTo(1); // test-udf.jar
 
     // Verify function manifest was created and has correct content
@@ -175,7 +175,7 @@ public class FilePreprocessingPipelineIT extends AbstractAssetSnapshotTest {
       JsonNode manifest = SqrlObjectMapper.INSTANCE.readTree(manifestFile.toFile());
       assertThat(manifest.get("language").asText()).isEqualTo("java");
       assertThat(manifest.get("functionClass").asText()).isEqualTo("com.myudf." + fnName);
-      assertThat(manifest.get("jarPath").asText()).isEqualTo("myjavafunction-0.1.0-snapshot.jar");
+      assertThat(manifest.get("jarPath").asText()).isEqualTo("myjavafunction-0.1.0-SNAPSHOT.jar");
     }
   }
 

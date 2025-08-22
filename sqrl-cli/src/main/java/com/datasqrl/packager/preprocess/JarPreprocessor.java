@@ -77,7 +77,7 @@ public class JarPreprocessor implements Preprocessor {
       var obj = mapper.createObjectNode();
       obj.put("language", "java");
       obj.put("functionClass", clazz);
-      obj.put("jarPath", Preprocessor.canonicalizePath(path).toFile().getName());
+      obj.put("jarPath", path.getFileName().toString());
 
       // Create a file in a temporary directory
       var functionName = clazz.substring(clazz.lastIndexOf('.') + 1);
