@@ -18,21 +18,20 @@ package com.datasqrl.config;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import java.nio.file.Path;
-import lombok.Getter;
 
-@Getter
-public class BuildPath {
-
-  public static final String UDF_DIR = "lib";
-
-  private final Path buildDir;
+public record BuildPath(Path buildDir, Path targetDir) {
 
   @Inject
-  public BuildPath(@Named("buildDir") Path buildDir) {
+  public BuildPath(@Named("buildDir") Path buildDir, @Named("targetDir") Path targetDir) {
     this.buildDir = buildDir;
+    this.targetDir = targetDir;
   }
 
   public Path getUdfPath() {
-    return buildDir.resolve(BuildPath.UDF_DIR);
+    return targetDir.resolve(SqrlConstants.FLINK_ASSETS_DIR).resolve(SqrlConstants.LIB_DIR);
+  }
+
+  public Path getDataPath() {
+    return targetDir.resolve(SqrlConstants.FLINK_ASSETS_DIR).resolve(SqrlConstants.DATA_DIR);
   }
 }

@@ -36,7 +36,6 @@ class PackageJsonSchemaTest {
         "missingVersionField.json",
         "validIcebergConfig.json",
         "missingCompileSection.json",
-        "validDependencies.json",
         "missingProfilesField.json",
         "validPackageWithUrls.json",
         "onlyVersionFieldExists.json"
@@ -56,7 +55,6 @@ class PackageJsonSchemaTest {
         "emptyEnabledEngines.json",
         "invalidVersionFormat.json",
         "emptyEnginesFlinkConnectors.json",
-        "missingRequiredDependencyFields.json",
         "emptyTestRunner.json",
         "emptyPropertiesInPackage.json",
         "invalidEnumString.json"

@@ -15,9 +15,7 @@
  */
 package com.datasqrl.packager;
 
-import com.datasqrl.config.Dependency;
 import com.datasqrl.config.PackageJson;
-import com.datasqrl.config.PackageJson.DependenciesConfig;
 import com.datasqrl.config.PackageJson.ScriptConfig;
 import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.error.ErrorCollector;
@@ -26,11 +24,8 @@ import com.datasqrl.util.ConfigLoaderUtils;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.regex.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -40,37 +35,44 @@ import lombok.extern.slf4j.Slf4j;
 public class PackageBootstrap {
   ErrorCollector errors;
 
+  public static Optional<List<Path>> findPackageFile(Path rootDir, List<Path> packageFiles) {
+    if (!packageFiles.isEmpty()) {
+      return Optional.of(packageFiles.stream().map(rootDir::resolve).toList());
+    }
+
+    var defaultPkg = rootDir.resolve(SqrlConstants.DEFAULT_PACKAGE);
+
+    return Files.isRegularFile(defaultPkg) ? Optional.of(List.of(defaultPkg)) : Optional.empty();
+  }
+
+  /**
+   * Initializes the {@link PackageJson} by merging all package.json configuration files, looking up
+   * the default, and potentially adding the main script and graphql file as config options to it.
+   *
+   * <p>At the end of the bootstrap, the {@link PackageJson} is fully initialized and ready to be
+   * used.
+   *
+   * @param rootDir
+   * @param packageFiles
+   * @param files
+   * @param withRun
+   * @return
+   */
   @SneakyThrows
   public PackageJson bootstrap(
       Path rootDir, List<Path> packageFiles, Path[] files, boolean withRun) {
     ErrorCollector errors = this.errors.withLocation(ErrorPrefix.CONFIG).resolve("package");
 
-    // Create build dir to unpack resolved dependencies
-    Path buildDir = rootDir.resolve(SqrlConstants.BUILD_DIR_NAME);
-    Packager.cleanBuildDir(buildDir);
-    Packager.createBuildDir(buildDir);
-
-    Optional<List<Path>> existingPackage = Packager.findPackageFile(rootDir, packageFiles);
-
-    Map<String, Dependency> dependencies = new HashMap<>();
+    Optional<List<Path>> existingPackage = findPackageFile(rootDir, packageFiles);
 
     // Create package.json from project root if exists
     List<Path> configFiles = new ArrayList<>();
-
     existingPackage.ifPresent(configFiles::addAll);
-
     // Could not find any package json
     PackageJson packageJson =
         withRun
             ? ConfigLoaderUtils.loadUnresolvedRunConfig(errors, configFiles)
             : ConfigLoaderUtils.loadUnresolvedConfig(errors, configFiles);
-
-    // Add dependencies of discovered profiles
-    dependencies.forEach(
-        (key, dep) -> {
-          DependenciesConfig dependenciesConfig = packageJson.getDependencies();
-          dependenciesConfig.addDependency(key, dep);
-        });
 
     // Override main and graphql if they are specified as command line arguments
     Optional<Path> mainScript =
@@ -104,37 +106,6 @@ public class PackageBootstrap {
     }
 
     return packageJson;
-  }
-
-  /**
-   * We want to guard against confusion with remote repo names and filesystem paths so we can throw
-   * sensible error messages
-   */
-  public static boolean isLocalProfile(Path rootDir, String profile) {
-    // 1. Check if it's on the local file system
-    if (Files.isDirectory(rootDir.resolve(profile))) {
-      // 1. Profile must contain a package json
-      if (!Files.isRegularFile(rootDir.resolve(profile).resolve(SqrlConstants.PACKAGE_JSON))) {
-        log.info(
-            "Profile ["
-                + profile
-                + "] is a directory but missing a package.json. Attempting to resolve as a remote"
-                + " profile.");
-        return false;
-      }
-
-      return true;
-    }
-    // 2. Check if it looks like a repo link
-    if (Pattern.matches("^\\w+(?:\\.\\w+)+$", profile)) {
-      return false;
-    }
-
-    throw new RuntimeException(
-        String.format(
-            "Unknown profile format [%s]. It must be either be a filesystem folder or a repository"
-                + " name.",
-            profile));
   }
 
   private Path relativize(Path rootDir, Optional<Path> path) {

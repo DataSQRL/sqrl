@@ -1,5 +1,5 @@
 [FATAL] Column expression must directly follow the definition of table [Orders]
-in script:plannererror-add-column-fail.sqrl [2:1]:
+in script:plannerError-add-column-fail.sqrl [2:1]:
 IMPORT ecommerceTs.Orders;
 Orders.col1 := (id + customerid)/2;
 ^

@@ -1,0 +1,21 @@
+---
+name: "Customer"
+schema_version: "1"
+partial_schema: false
+columns:
+- name: "customerid"
+  type: "BIGINT"
+  tests:
+  - "not_null"
+- name: "email"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "name"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "lastUpdated"
+  type: "BIGINT"
+  tests:
+  - "not_null"

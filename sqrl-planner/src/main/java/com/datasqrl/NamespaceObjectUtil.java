@@ -16,6 +16,7 @@
 package com.datasqrl;
 
 import com.datasqrl.function.FlinkUdfNsObject;
+import com.datasqrl.util.FunctionUtil;
 import com.google.common.base.Preconditions;
 import java.util.Optional;
 import org.apache.flink.table.functions.FunctionDefinition;
@@ -27,14 +28,8 @@ public class NamespaceObjectUtil {
         function instanceof FunctionDefinition,
         "All SQRL function implementations must extend FunctionDefinition: %s",
         function.getClass());
-    var functionNameFromClass = getFunctionNameFromClass(function.getClass());
+    var functionNameFromClass = FunctionUtil.getFunctionNameStr(function.getClass());
     return new FlinkUdfNsObject(
         functionNameFromClass, function, functionNameFromClass, Optional.empty());
-  }
-
-  static String getFunctionNameFromClass(Class clazz) {
-    var fctName = clazz.getSimpleName();
-    fctName = Character.toLowerCase(fctName.charAt(0)) + fctName.substring(1);
-    return fctName;
   }
 }

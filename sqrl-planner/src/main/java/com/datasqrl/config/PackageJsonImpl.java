@@ -24,7 +24,6 @@ public class PackageJsonImpl implements PackageJson {
   public static final String ENGINES_PROPERTY = "engines";
   public static final String ENABLED_ENGINES_KEY = "enabled-engines";
   public static final String DISCOVERY_KEY = "discovery";
-  public static final String DEPENDENCIES_KEY = "dependencies";
   public static final String SCRIPT_KEY = "script";
   public static final String COMPILER_KEY = "compiler";
   public static final String CONNECTORS_KEY = "connectors";
@@ -64,11 +63,6 @@ public class PackageJsonImpl implements PackageJson {
   @Override
   public DiscoveryConfigImpl getDiscovery() {
     return new DiscoveryConfigImpl(sqrlConfig.getSubConfig(DISCOVERY_KEY));
-  }
-
-  @Override
-  public DependenciesConfigImpl getDependencies() {
-    return new DependenciesConfigImpl(sqrlConfig, sqrlConfig.getSubConfig(DEPENDENCIES_KEY));
   }
 
   @Override

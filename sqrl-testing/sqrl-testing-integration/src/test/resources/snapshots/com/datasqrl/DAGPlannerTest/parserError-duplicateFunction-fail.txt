@@ -1,5 +1,5 @@
 [FATAL] Function or relationship [CustomerById] already exists in catalog
-in script:parsererror-duplicatefunction-fail.sqrl [4:1]:
+in script:parserError-duplicateFunction-fail.sqrl [4:1]:
 
 CustomerById(id INT) := SELECT * FROM Customer WHERE customerid = :id;
 CustomerById(name STRING) := SELECT * FROM Customer WHERE customerid = :name;

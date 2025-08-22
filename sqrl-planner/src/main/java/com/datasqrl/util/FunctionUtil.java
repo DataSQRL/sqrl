@@ -15,32 +15,36 @@
  */
 package com.datasqrl.util;
 
+import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.function.FunctionMetadata;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.Optional;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import org.apache.calcite.sql.SqlOperator;
+import org.apache.flink.table.functions.BuiltInFunctionDefinition;
 import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.planner.functions.bridging.BridgingSqlAggFunction;
 import org.apache.flink.table.planner.functions.bridging.BridgingSqlFunction;
 
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class FunctionUtil {
 
-  public static <T> Optional<T> getFunctionByNameFromClass(
-      Class clazz, Class<T> assignableFrom, String name) {
-    for (Field field : clazz.getDeclaredFields()) {
-      try {
-        if (Modifier.isStatic(field.getModifiers())
-            && assignableFrom.isAssignableFrom(field.getType())) {
-          if (field.getName().equalsIgnoreCase(name)) {
-            return Optional.of((T) field.get(null));
-          }
-        }
-      } catch (IllegalAccessException e) {
-
-      }
+  public static String getFunctionName(FunctionDefinition function) {
+    if (function instanceof BuiltInFunctionDefinition) {
+      return ((BuiltInFunctionDefinition) function).getName();
     }
-    return Optional.empty();
+    return getFunctionName(function.getClass()).getDisplay();
+  }
+
+  public static Name getFunctionName(Class<?> clazz) {
+    var fnName = getFunctionNameStr(clazz);
+    return Name.system(fnName);
+  }
+
+  public static String getFunctionNameStr(Class<?> clazz) {
+    var fnName = clazz.getSimpleName();
+
+    return Character.toLowerCase(fnName.charAt(0)) + fnName.substring(1);
   }
 
   public static Optional<FunctionDefinition> getBridgedFunction(SqlOperator operator) {

@@ -1,0 +1,4 @@
+>>>type
+RecordType(BIGINT NOT NULL loan_application_id, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL status, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL message, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL event_time) NOT NULL
+>>>connector
+{connector=filesystem, format=flexible-json, path=${DATA_PATH}/application_updates.jsonl}

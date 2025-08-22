@@ -15,12 +15,11 @@
  */
 package com.datasqrl.function.vector;
 
-import static com.datasqrl.function.FlinkUdfNsObject.getFunctionNameFromClass;
-
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.flinkrunner.stdlib.vector.FlinkVectorType;
 import com.datasqrl.flinkrunner.stdlib.vector.VectorFunctions;
 import com.datasqrl.sql.DatabaseExtension;
+import com.datasqrl.util.FunctionUtil;
 import com.google.auto.service.AutoService;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -37,7 +36,7 @@ public class VectorPgExtension implements DatabaseExtension {
   @Override
   public Set<Name> operators() {
     return VectorFunctions.functions.stream()
-        .map(f -> getFunctionNameFromClass(f.getClass()))
+        .map(f -> FunctionUtil.getFunctionName(f.getClass()))
         .collect(Collectors.toSet());
   }
 

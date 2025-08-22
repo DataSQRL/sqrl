@@ -17,13 +17,10 @@ package com.datasqrl.loaders;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.module.NamespaceObject;
-import com.datasqrl.module.SqrlModule;
 import com.datasqrl.plan.MainScript;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -33,29 +30,38 @@ public class ScriptSqrlModule implements SqrlModule {
   private final String scriptContent;
   private final Path scriptPath;
   private final NamePath namePath;
+  private final ModuleLoader moduleLoader;
 
-  private final AtomicBoolean planned = new AtomicBoolean(false);
-
-  // Planning a single table. Return a planning ns object and then only add that table
   @Override
   public Optional<NamespaceObject> getNamespaceObject(Name name) {
-    return Optional.of(new ScriptNamespaceObject(Optional.of(name)));
+    throw new UnsupportedOperationException(
+        "Cannot import an individual table from SQRL script. "
+            + "Use `%s;` to import entire script in a separate database or `%s.*;` to import script inline."
+                .formatted(namePath, namePath));
   }
 
   // Planning all tables. Return a single planning ns object and add all tables
   @Override
   public List<NamespaceObject> getNamespaceObjects() {
-    return List.of(new ScriptNamespaceObject(Optional.empty()));
+    return List.of(new ScriptNamespaceObject(true));
+  }
+
+  public NamespaceObject asNamespaceObject() {
+    return new ScriptNamespaceObject(false);
   }
 
   @AllArgsConstructor
   public class ScriptNamespaceObject implements NamespaceObject {
 
-    @Getter Optional<Name> tableName; // specific table name to import, empty for all
+    @Getter boolean inline;
 
     @Override
-    public Name getName() {
+    public Name name() {
       return namePath.getLast();
+    }
+
+    public ModuleLoader getModuleLoader() {
+      return moduleLoader;
     }
 
     public MainScript getScript() {

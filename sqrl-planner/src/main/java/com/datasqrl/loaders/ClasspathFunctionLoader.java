@@ -17,7 +17,6 @@ package com.datasqrl.loaders;
 
 import com.datasqrl.NamespaceObjectUtil;
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.module.NamespaceObject;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import java.util.List;
@@ -35,6 +34,11 @@ import org.apache.flink.table.functions.TableAggregateFunction;
 import org.apache.flink.table.functions.TableFunction;
 import org.apache.flink.table.functions.UserDefinedFunction;
 
+/**
+ * Loads functions from the classpath which applies to standard library functions that are part of
+ * the DataSQRL distribution (in contrast to UDFs that the user provides via JARs - those are loaded
+ * from a directory)
+ */
 @AllArgsConstructor
 public class ClasspathFunctionLoader {
 
@@ -78,18 +82,13 @@ public class ClasspathFunctionLoader {
     return StreamSupport.stream(ServiceLoader.load(serviceInterface).spliterator(), false);
   }
 
-  public Set<NamePath> loadedLibraries() {
-    return functionsByPackage.keySet();
-  }
-
   public List<NamespaceObject> load(NamePath namePath) {
-    if (functionsByPackage.containsKey(namePath)) {
-      List<NamespaceObject> fctObjetcs =
-          functionsByPackage.get(namePath).stream()
-              .map(NamespaceObjectUtil::createNsObject)
-              .collect(Collectors.toList());
-      return fctObjetcs;
+    if (!functionsByPackage.containsKey(namePath)) {
+      return List.of();
     }
-    return List.of();
+
+    return functionsByPackage.get(namePath).stream()
+        .map(NamespaceObjectUtil::createNsObject)
+        .collect(Collectors.toList());
   }
 }

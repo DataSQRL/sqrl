@@ -230,9 +230,14 @@ public abstract class AbstractAssetSnapshotTest {
 
   private static final String SQRL_EXTENSION = ".sqrl";
 
-  @SneakyThrows
   public static Stream<Path> getSQRLScripts(Path directory, boolean includeFail) {
-    return Files.walk(directory)
+    return getSQRLScripts(directory, true, includeFail);
+  }
+
+  @SneakyThrows
+  public static Stream<Path> getSQRLScripts(
+      Path directory, boolean includeNested, boolean includeFail) {
+    return Files.walk(directory, includeNested ? Integer.MAX_VALUE : 1)
         .filter(path -> !Files.isDirectory(path))
         .filter(path -> path.toString().endsWith(SQRL_EXTENSION))
         .filter(path -> !path.toString().contains("/build/"))
@@ -284,7 +289,7 @@ public abstract class AbstractAssetSnapshotTest {
     @Override
     public Stream<? extends Arguments> provideArguments(ExtensionContext context)
         throws IOException {
-      return getSQRLScripts(directory, includeFail)
+      return getSQRLScripts(directory, false, includeFail)
           .sorted(Comparator.comparing(c -> c.toFile().getName().toLowerCase()))
           .map(Arguments::of);
     }
