@@ -24,6 +24,13 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import feign.Feign;
+import feign.FeignException;
+import feign.Headers;
+import feign.Param;
+import feign.RequestLine;
+import feign.jackson.JacksonDecoder;
+import feign.jackson.JacksonEncoder;
 import io.jsonwebtoken.Jwts;
 import io.modelcontextprotocol.client.McpClient;
 import io.modelcontextprotocol.client.transport.HttpClientStreamableHttpTransport;
@@ -44,6 +51,25 @@ import org.testcontainers.containers.PostgreSQLContainer;
 
 @Slf4j
 public class JwtContainerIT extends SqrlContainerTestBase {
+
+  // Response types for REST endpoints  
+  static class MyTableItem {
+    public int val;
+  }
+  
+  static class MyTableResponse {
+    public List<MyTableItem> data;
+  }
+
+  // Feign client for testing REST endpoints
+  interface RestClient {
+    @RequestLine("GET /rest/queries/MyTable?limit={limit}")
+    MyTableResponse getMyTable(@Param("limit") int limit);
+
+    @RequestLine("GET /rest/queries/MyTable?limit={limit}")
+    @Headers("Authorization: Bearer {token}")
+    MyTableResponse getMyTableWithAuth(@Param("token") String token, @Param("limit") int limit);
+  }
 
   private PostgreSQLContainer<?> postgresql;
 
@@ -112,7 +138,7 @@ public class JwtContainerIT extends SqrlContainerTestBase {
 
   @Test
   @SneakyThrows
-  void givenJwtEnabledScript_whenServerStarted_thenUnauthorizedRequestsReturn401() {
+  void givenJwt_whenUnauthenticatedGraphQL_thenReturns401() {
     compileAndStartServer("jwt-authorized.sqrl", testDir);
 
     var response = executeGraphQLQuery("{\"query\":\"query { __typename }\"}");
@@ -122,7 +148,7 @@ public class JwtContainerIT extends SqrlContainerTestBase {
 
   @Test
   @SneakyThrows
-  void givenJwtEnabledScript_whenServerStartedWithValidJwt_thenAuthorizedRequestsSucceed() {
+  void givenJwt_whenAuthenticatedGraphQL_thenSucceeds() {
     compileAndStartServer("jwt-authorized.sqrl", testDir);
 
     var response = executeGraphQLQuery("{\"query\":\"query { __typename }\"}", generateJwtToken());
@@ -132,7 +158,7 @@ public class JwtContainerIT extends SqrlContainerTestBase {
   @Test
   @SneakyThrows
   void
-      givenJwtEnabledScript_whenServerStartedWithMismatchedAlgorithm_thenReturns401WithDetailedError() {
+      givenJwt_whenBadToken_thenReturns401() {
     compileAndStartServer("jwt-authorized.sqrl", testDir);
 
     // Generate token with RS256 algorithm while server expects HS256
@@ -151,7 +177,7 @@ public class JwtContainerIT extends SqrlContainerTestBase {
 
   @Test
   @SneakyThrows
-  void givenJwtEnabledScript_whenQueryHasCorruptJwt_thenReturns401WithDetailedError() {
+  void givenJwt_whenCorruptedToken_thenReturns401() {
     compileAndStartServer("jwt-authorized.sqrl", testDir);
 
     // Generate token with RS256 algorithm while server expects HS256
@@ -170,7 +196,7 @@ public class JwtContainerIT extends SqrlContainerTestBase {
 
   @Test
   @SneakyThrows
-  void givenJwtEnabledScript_whenMcpClientAccessesWithoutAuth_thenFails() {
+  void givenJwt_whenUnauthenticatedMcp_thenFails() {
     compileAndStartServer("jwt-authorized.sqrl", testDir);
 
     var mcpUrl =
@@ -194,7 +220,7 @@ public class JwtContainerIT extends SqrlContainerTestBase {
 
   @Test
   @SneakyThrows
-  void givenJwtEnabledScript_whenMcpClientAccessesWithValidJwt_thenSucceeds() {
+  void givenJwt_whenAuthenticatedMcp_thenSucceeds() {
     compileAndStartServerWithDatabase("jwt-authorized.sqrl", testDir);
 
     var mcpUrl =
@@ -243,6 +269,53 @@ public class JwtContainerIT extends SqrlContainerTestBase {
       log.info("Detailed MCP Validation Results:");
       System.out.println(logs);
     }
+  }
+
+  @Test
+  @SneakyThrows
+  void givenJwt_whenUnauthenticatedRest_thenReturns401() {
+    compileAndStartServerWithDatabase("jwt-authorized.sqrl", testDir);
+
+    var restUrl =
+        String.format("http://localhost:%d", serverContainer.getMappedPort(HTTP_SERVER_PORT));
+    log.info("Testing REST endpoint without auth: {}", restUrl);
+
+    var restClient =
+        Feign.builder()
+            .encoder(new JacksonEncoder())
+            .decoder(new JacksonDecoder())
+            .target(RestClient.class, restUrl);
+
+    // When JWT is enabled, all REST endpoints require authentication
+    assertThatThrownBy(() -> restClient.getMyTable(5))
+        .isInstanceOf(FeignException.Unauthorized.class)
+        .hasMessageContaining("JWT auth failed");
+  }
+
+  @Test
+  @SneakyThrows
+  void givenJwt_whenAuthenticatedRest_thenSucceeds() {
+    compileAndStartServerWithDatabase("jwt-authorized.sqrl", testDir);
+
+    var restUrl =
+        String.format("http://localhost:%d", serverContainer.getMappedPort(HTTP_SERVER_PORT));
+    var jwtToken = generateJwtToken();
+    log.info("Testing REST endpoint with valid JWT: {}", restUrl);
+
+    var restClient =
+        Feign.builder()
+            .encoder(new JacksonEncoder())
+            .decoder(new JacksonDecoder())
+            .target(RestClient.class, restUrl);
+
+    // REST endpoint should work with valid JWT
+    var response = restClient.getMyTableWithAuth(jwtToken, 5);
+    log.info("REST endpoint response with JWT: {}", response);
+
+    assertThat(response).isNotNull();
+    assertThat(response.data).isNotNull();
+    assertThat(response.data).isNotEmpty();
+    assertThat(response.data).allSatisfy(item -> assertThat(item.val).isPositive());
   }
 
   private String generateJwtToken() {
