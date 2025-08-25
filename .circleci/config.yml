@@ -308,8 +308,8 @@ jobs:
             echo "default-key $(gpg --list-keys --with-colons | grep pub | cut -d':' -f5)" >> ~/.gnupg/gpg.conf
             echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf
       - run:
-          name: Build and deploy artifacts
-          command: mvn -U clean -T1C -B deploy ${CIRCLE_TAG:+-Prelease} -Deasyjacoco.skip=true -DskipDockerBuild=true
+          name: Build and deploy Maven artifacts
+          command: mvn -U clean -T1C -B deploy -DonlyJars ${CIRCLE_TAG:+-Prelease} -Deasyjacoco.skip=true
 
   build-images:
     # use a full VM so we can run Maven and Jib
