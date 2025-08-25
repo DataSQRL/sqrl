@@ -441,558 +441,560 @@ CREATE INDEX IF NOT EXISTS "Sensors_hash_c1" ON "Sensors" USING hash ("machineId
 
 >>>vertx.json
 {
-  "model" : {
-    "queries" : [
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "HighTemp",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"HighTemp\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "Machine",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Machine\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Machine",
-        "fieldName" : "sensors",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Sensors\"\nWHERE \"machineId\" = $1",
-            "parameters" : [
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "HighTemp",
+          "exec" : {
+            "arguments" : [
               {
-                "type" : "source",
-                "key" : "machineId"
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
               }
             ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Sensors",
-        "fieldName" : "lastHour",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"HighTemp\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"SensorLastHour\"\nWHERE $1 = \"sensorid\"",
-            "parameters" : [
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Machine",
+          "exec" : {
+            "arguments" : [
               {
-                "type" : "source",
-                "key" : "id"
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
               }
             ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Sensors",
-        "fieldName" : "readings",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Machine\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM (SELECT \"sensorid\", \"timeSec\", \"temp\"\n  FROM \"SecReading\"\n  ORDER BY \"timeSec\" DESC NULLS LAST) AS \"t\"\nWHERE \"sensorid\" = $1",
-            "parameters" : [
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Machine",
+          "fieldName" : "sensors",
+          "exec" : {
+            "arguments" : [
               {
-                "type" : "source",
-                "key" : "id"
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
               }
             ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "SecReading",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Sensors\"\nWHERE \"machineId\" = $1",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "key" : "machineId"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM (SELECT \"sensorid\", \"timeSec\", \"temp\"\n  FROM \"SecReading\"\n  ORDER BY \"timeSec\" DESC NULLS LAST) AS \"t\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
           }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "SensorLastHour",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"SensorLastHour\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "SensorReading",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"SensorReading\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "SensorUpdates",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"SensorUpdates\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "Sensors",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Sensors\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "SecReadingByTemp",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "temp"
-            },
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM (SELECT \"sensorid\", \"timeSec\", \"temp\"\n  FROM \"SecReading\"\n  ORDER BY \"timeSec\" DESC NULLS LAST) AS \"t\"\nWHERE \"temp\" > $1\nORDER BY \"timeSec\" NULLS FIRST\nFETCH NEXT 10 ROWS ONLY",
-            "parameters" : [
+        },
+        {
+          "type" : "args",
+          "parentType" : "Sensors",
+          "fieldName" : "lastHour",
+          "exec" : {
+            "arguments" : [
               {
-                "type" : "arg",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"SensorLastHour\"\nWHERE $1 = \"sensorid\"",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "key" : "id"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Sensors",
+          "fieldName" : "readings",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"sensorid\", \"timeSec\", \"temp\"\n  FROM \"SecReading\"\n  ORDER BY \"timeSec\" DESC NULLS LAST) AS \"t\"\nWHERE \"sensorid\" = $1",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "key" : "id"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "SecReading",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"sensorid\", \"timeSec\", \"temp\"\n  FROM \"SecReading\"\n  ORDER BY \"timeSec\" DESC NULLS LAST) AS \"t\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "SensorLastHour",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"SensorLastHour\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "SensorReading",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"SensorReading\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "SensorUpdates",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"SensorUpdates\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Sensors",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Sensors\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "SecReadingByTemp",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
                 "path" : "temp"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
               }
             ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"sensorid\", \"timeSec\", \"temp\"\n  FROM \"SecReading\"\n  ORDER BY \"timeSec\" DESC NULLS LAST) AS \"t\"\nWHERE \"temp\" > $1\nORDER BY \"timeSec\" NULLS FIRST\nFETCH NEXT 10 ROWS ONLY",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "temp"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
           }
         }
+      ],
+      "mutations" : [ ],
+      "subscriptions" : [ ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetHighTemp",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query HighTemp($limit: Int = 10, $offset: Int = 0) {\nHighTemp(limit: $limit, offset: $offset) {\nmachineId\nsensorid\ntemp\ntimeSec\n}\n\n}",
+            "queryName" : "HighTemp",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/HighTemp{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetMachine",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "sensors_lastHour_offset" : {
+                  "type" : "integer"
+                },
+                "offset" : {
+                  "type" : "integer"
+                },
+                "sensors_readings_offset" : {
+                  "type" : "integer"
+                },
+                "sensors_limit" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "sensors_readings_limit" : {
+                  "type" : "integer"
+                },
+                "sensors_offset" : {
+                  "type" : "integer"
+                },
+                "sensors_lastHour_limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query Machine($limit: Int = 10, $offset: Int = 0$sensors_limit: Int = 10, $sensors_offset: Int = 0$sensors_lastHour_limit: Int = 10, $sensors_lastHour_offset: Int = 0$sensors_readings_limit: Int = 10, $sensors_readings_offset: Int = 0) {\nMachine(limit: $limit, offset: $offset) {\nmachineId\nmaxTemp\navgTemp\nsensors(limit: $sensors_limit, offset: $sensors_offset) {\nid\nmachineId\nplaced\ntimestamp\nlastHour(limit: $sensors_lastHour_limit, offset: $sensors_lastHour_offset) {\nsensorid\nwindow_time\navgTemp\nmaxTemp\n}\nreadings(limit: $sensors_readings_limit, offset: $sensors_readings_offset) {\nsensorid\ntimeSec\ntemp\n}\n}\n}\n\n}",
+            "queryName" : "Machine",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Machine{?sensors_lastHour_offset,offset,sensors_readings_offset,sensors_limit,limit,sensors_readings_limit,sensors_offset,sensors_lastHour_limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetSecReading",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query SecReading($limit: Int = 10, $offset: Int = 0) {\nSecReading(limit: $limit, offset: $offset) {\nsensorid\ntimeSec\ntemp\n}\n\n}",
+            "queryName" : "SecReading",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/SecReading{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetSensorLastHour",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query SensorLastHour($limit: Int = 10, $offset: Int = 0) {\nSensorLastHour(limit: $limit, offset: $offset) {\nsensorid\nwindow_time\navgTemp\nmaxTemp\n}\n\n}",
+            "queryName" : "SensorLastHour",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/SensorLastHour{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetSensorReading",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query SensorReading($limit: Int = 10, $offset: Int = 0) {\nSensorReading(limit: $limit, offset: $offset) {\nsensorid\ntime\ntemperature\nhumidity\ntimestamp\n}\n\n}",
+            "queryName" : "SensorReading",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/SensorReading{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetSensorUpdates",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query SensorUpdates($limit: Int = 10, $offset: Int = 0) {\nSensorUpdates(limit: $limit, offset: $offset) {\nid\nmachineId\nplaced\ntimestamp\n}\n\n}",
+            "queryName" : "SensorUpdates",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/SensorUpdates{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetSensors",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "readings_limit" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "readings_offset" : {
+                  "type" : "integer"
+                },
+                "lastHour_offset" : {
+                  "type" : "integer"
+                },
+                "lastHour_limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query Sensors($limit: Int = 10, $offset: Int = 0$lastHour_limit: Int = 10, $lastHour_offset: Int = 0$readings_limit: Int = 10, $readings_offset: Int = 0) {\nSensors(limit: $limit, offset: $offset) {\nid\nmachineId\nplaced\ntimestamp\nlastHour(limit: $lastHour_limit, offset: $lastHour_offset) {\nsensorid\nwindow_time\navgTemp\nmaxTemp\n}\nreadings(limit: $readings_limit, offset: $readings_offset) {\nsensorid\ntimeSec\ntemp\n}\n}\n\n}",
+            "queryName" : "Sensors",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Sensors{?offset,readings_limit,limit,readings_offset,lastHour_offset,lastHour_limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetSecReadingByTemp",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "temp" : {
+                  "type" : "integer"
+                },
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "temp"
+              ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query SecReadingByTemp($temp: Int!, $limit: Int = 10, $offset: Int = 0) {\nSecReadingByTemp(temp: $temp, limit: $limit, offset: $offset) {\nsensorid\ntimeSec\ntemp\n}\n\n}",
+            "queryName" : "SecReadingByTemp",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/SecReadingByTemp{?temp,offset,limit}"
+        }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\ntype HighTemp {\n  machineId: Long!\n  sensorid: Long!\n  temp: Float!\n  timeSec: DateTime!\n}\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Machine {\n  machineId: Long!\n  maxTemp: Float!\n  avgTemp: Float!\n  sensors(limit: Int = 10, offset: Int = 0): [Sensors!]\n}\n\ntype Query {\n  HighTemp(limit: Int = 10, offset: Int = 0): [HighTemp!]\n  Machine(limit: Int = 10, offset: Int = 0): [Machine!]\n  SecReading(limit: Int = 10, offset: Int = 0): [SecReading!]\n  SensorLastHour(limit: Int = 10, offset: Int = 0): [SensorLastHour!]\n  SensorReading(limit: Int = 10, offset: Int = 0): [SensorReading!]\n  SensorUpdates(limit: Int = 10, offset: Int = 0): [SensorUpdates!]\n  Sensors(limit: Int = 10, offset: Int = 0): [Sensors!]\n  SecReadingByTemp(temp: Int!, limit: Int = 10, offset: Int = 0): [SecReading!]\n}\n\ntype SecReading {\n  sensorid: Long!\n  timeSec: DateTime!\n  temp: Float!\n}\n\ntype SensorLastHour {\n  sensorid: Long!\n  window_time: DateTime!\n  avgTemp: Float!\n  maxTemp: Float!\n}\n\ntype SensorReading {\n  sensorid: Long!\n  time: Long!\n  temperature: Float!\n  humidity: Float!\n  timestamp: DateTime!\n}\n\ntype SensorUpdates {\n  id: Long!\n  machineId: Long!\n  placed: Long!\n  timestamp: DateTime!\n}\n\ntype Sensors {\n  id: Long!\n  machineId: Long!\n  placed: Long!\n  timestamp: DateTime!\n  lastHour(limit: Int = 10, offset: Int = 0): [SensorLastHour!]\n  readings(limit: Int = 10, offset: Int = 0): [SecReading!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
-    ],
-    "mutations" : [ ],
-    "subscriptions" : [ ],
-    "operations" : [
-      {
-        "function" : {
-          "name" : "GetHighTemp",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query HighTemp($limit: Int = 10, $offset: Int = 0) {\nHighTemp(limit: $limit, offset: $offset) {\nmachineId\nsensorid\ntemp\ntimeSec\n}\n\n}",
-          "queryName" : "HighTemp",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/HighTemp{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetMachine",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "sensors_lastHour_offset" : {
-                "type" : "integer"
-              },
-              "offset" : {
-                "type" : "integer"
-              },
-              "sensors_readings_offset" : {
-                "type" : "integer"
-              },
-              "sensors_limit" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              },
-              "sensors_readings_limit" : {
-                "type" : "integer"
-              },
-              "sensors_offset" : {
-                "type" : "integer"
-              },
-              "sensors_lastHour_limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query Machine($limit: Int = 10, $offset: Int = 0$sensors_limit: Int = 10, $sensors_offset: Int = 0$sensors_lastHour_limit: Int = 10, $sensors_lastHour_offset: Int = 0$sensors_readings_limit: Int = 10, $sensors_readings_offset: Int = 0) {\nMachine(limit: $limit, offset: $offset) {\nmachineId\nmaxTemp\navgTemp\nsensors(limit: $sensors_limit, offset: $sensors_offset) {\nid\nmachineId\nplaced\ntimestamp\nlastHour(limit: $sensors_lastHour_limit, offset: $sensors_lastHour_offset) {\nsensorid\nwindow_time\navgTemp\nmaxTemp\n}\nreadings(limit: $sensors_readings_limit, offset: $sensors_readings_offset) {\nsensorid\ntimeSec\ntemp\n}\n}\n}\n\n}",
-          "queryName" : "Machine",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/Machine{?sensors_lastHour_offset,offset,sensors_readings_offset,sensors_limit,limit,sensors_readings_limit,sensors_offset,sensors_lastHour_limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetSecReading",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query SecReading($limit: Int = 10, $offset: Int = 0) {\nSecReading(limit: $limit, offset: $offset) {\nsensorid\ntimeSec\ntemp\n}\n\n}",
-          "queryName" : "SecReading",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/SecReading{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetSensorLastHour",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query SensorLastHour($limit: Int = 10, $offset: Int = 0) {\nSensorLastHour(limit: $limit, offset: $offset) {\nsensorid\nwindow_time\navgTemp\nmaxTemp\n}\n\n}",
-          "queryName" : "SensorLastHour",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/SensorLastHour{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetSensorReading",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query SensorReading($limit: Int = 10, $offset: Int = 0) {\nSensorReading(limit: $limit, offset: $offset) {\nsensorid\ntime\ntemperature\nhumidity\ntimestamp\n}\n\n}",
-          "queryName" : "SensorReading",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/SensorReading{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetSensorUpdates",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query SensorUpdates($limit: Int = 10, $offset: Int = 0) {\nSensorUpdates(limit: $limit, offset: $offset) {\nid\nmachineId\nplaced\ntimestamp\n}\n\n}",
-          "queryName" : "SensorUpdates",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/SensorUpdates{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetSensors",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "readings_limit" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              },
-              "readings_offset" : {
-                "type" : "integer"
-              },
-              "lastHour_offset" : {
-                "type" : "integer"
-              },
-              "lastHour_limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query Sensors($limit: Int = 10, $offset: Int = 0$lastHour_limit: Int = 10, $lastHour_offset: Int = 0$readings_limit: Int = 10, $readings_offset: Int = 0) {\nSensors(limit: $limit, offset: $offset) {\nid\nmachineId\nplaced\ntimestamp\nlastHour(limit: $lastHour_limit, offset: $lastHour_offset) {\nsensorid\nwindow_time\navgTemp\nmaxTemp\n}\nreadings(limit: $readings_limit, offset: $readings_offset) {\nsensorid\ntimeSec\ntemp\n}\n}\n\n}",
-          "queryName" : "Sensors",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/Sensors{?offset,readings_limit,limit,readings_offset,lastHour_offset,lastHour_limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetSecReadingByTemp",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "temp" : {
-                "type" : "integer"
-              },
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [
-              "temp"
-            ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query SecReadingByTemp($temp: Int!, $limit: Int = 10, $offset: Int = 0) {\nSecReadingByTemp(temp: $temp, limit: $limit, offset: $offset) {\nsensorid\ntimeSec\ntemp\n}\n\n}",
-          "queryName" : "SecReadingByTemp",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/SecReadingByTemp{?temp,offset,limit}"
-      }
-    ],
-    "schema" : {
-      "type" : "string",
-      "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\ntype HighTemp {\n  machineId: Long!\n  sensorid: Long!\n  temp: Float!\n  timeSec: DateTime!\n}\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Machine {\n  machineId: Long!\n  maxTemp: Float!\n  avgTemp: Float!\n  sensors(limit: Int = 10, offset: Int = 0): [Sensors!]\n}\n\ntype Query {\n  HighTemp(limit: Int = 10, offset: Int = 0): [HighTemp!]\n  Machine(limit: Int = 10, offset: Int = 0): [Machine!]\n  SecReading(limit: Int = 10, offset: Int = 0): [SecReading!]\n  SensorLastHour(limit: Int = 10, offset: Int = 0): [SensorLastHour!]\n  SensorReading(limit: Int = 10, offset: Int = 0): [SensorReading!]\n  SensorUpdates(limit: Int = 10, offset: Int = 0): [SensorUpdates!]\n  Sensors(limit: Int = 10, offset: Int = 0): [Sensors!]\n  SecReadingByTemp(temp: Int!, limit: Int = 10, offset: Int = 0): [SecReading!]\n}\n\ntype SecReading {\n  sensorid: Long!\n  timeSec: DateTime!\n  temp: Float!\n}\n\ntype SensorLastHour {\n  sensorid: Long!\n  window_time: DateTime!\n  avgTemp: Float!\n  maxTemp: Float!\n}\n\ntype SensorReading {\n  sensorid: Long!\n  time: Long!\n  temperature: Float!\n  humidity: Float!\n  timestamp: DateTime!\n}\n\ntype SensorUpdates {\n  id: Long!\n  machineId: Long!\n  placed: Long!\n  timestamp: DateTime!\n}\n\ntype Sensors {\n  id: Long!\n  machineId: Long!\n  placed: Long!\n  timestamp: DateTime!\n  lastHour(limit: Int = 10, offset: Int = 0): [SensorLastHour!]\n  readings(limit: Int = 10, offset: Int = 0): [SecReading!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
     }
   }
 }

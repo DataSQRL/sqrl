@@ -172,156 +172,158 @@ CREATE INDEX IF NOT EXISTS "Reporting_hash_c1" ON "Reporting" USING hash ("manag
 
 >>>vertx.json
 {
-  "model" : {
-    "queries" : [
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "Employees",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "employeeid"
-            },
-            {
-              "type" : "variable",
-              "path" : "name"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Employees\"\nWHERE (\"employeeid\" = $1 OR $1 IS NULL) AND (\"name\" = $2 OR $2 IS NULL)",
-            "parameters" : [
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Employees",
+          "exec" : {
+            "arguments" : [
               {
-                "type" : "arg",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
                 "path" : "employeeid"
               },
               {
-                "type" : "arg",
+                "type" : "variable",
                 "path" : "name"
-              }
-            ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Employees",
-        "fieldName" : "allReports",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "WITH RECURSIVE employee_hierarchy AS (\n    SELECT r.employeeid, r.managerid, 1 as level\n    FROM \"Reporting\" r\n    WHERE r.managerid = $1\n    UNION ALL\n    SELECT r.employeeid, r.managerid, eh.level + 1 as level\n    FROM \"Reporting\" r\n    INNER JOIN employee_hierarchy eh ON r.managerid = eh.employeeid\n  )\n  SELECT e.employeeid, e.name, eh.level\n  FROM employee_hierarchy eh\n  JOIN \"Employees\" e ON eh.employeeid = e.employeeid\n  ORDER BY eh.level, e.employeeid",
-            "parameters" : [
+              },
               {
-                "type" : "source",
-                "key" : "employeeid"
+                "type" : "variable",
+                "path" : "limit"
               }
             ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Employees",
-        "fieldName" : "directReports",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Employees\"\nWHERE (\"employeeid\" = $1 OR $1 IS NULL) AND (\"name\" = $2 OR $2 IS NULL)",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "employeeid"
+                },
+                {
+                  "type" : "arg",
+                  "path" : "name"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT \"Employees\".\"employeeid\", \"Employees\".\"name\", \"Employees\".\"email\", \"Employees\".\"updatedDate\"\nFROM \"Reporting\"\n INNER JOIN \"Employees\" ON \"Reporting\".\"employeeid\" = \"Employees\".\"employeeid\"\nWHERE \"Reporting\".\"managerid\" = $1\nORDER BY \"Employees\".\"employeeid\" NULLS FIRST",
-            "parameters" : [
-              {
-                "type" : "source",
-                "key" : "employeeid"
-              }
-            ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      }
-    ],
-    "mutations" : [ ],
-    "subscriptions" : [ ],
-    "operations" : [
-      {
-        "function" : {
-          "name" : "GetEmployees",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "allReports_limit" : {
-                "type" : "integer"
-              },
-              "offset" : {
-                "type" : "integer"
-              },
-              "name" : {
-                "type" : "string"
-              },
-              "limit" : {
-                "type" : "integer"
-              },
-              "employeeid" : {
-                "type" : "integer"
-              },
-              "allReports_offset" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
           }
         },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query Employees($employeeid: Long, $name: String, $limit: Int = 10, $offset: Int = 0$allReports_limit: Int = 10, $allReports_offset: Int = 0) {\nEmployees(employeeid: $employeeid, name: $name, limit: $limit, offset: $offset) {\nemployeeid\nname\nemail\nupdatedDate\nallReports(limit: $allReports_limit, offset: $allReports_offset) {\nemployeeid\nname\nlevel\n}\n}\n\n}",
-          "queryName" : "Employees",
-          "operationType" : "QUERY"
+        {
+          "type" : "args",
+          "parentType" : "Employees",
+          "fieldName" : "allReports",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "WITH RECURSIVE employee_hierarchy AS (\n    SELECT r.employeeid, r.managerid, 1 as level\n    FROM \"Reporting\" r\n    WHERE r.managerid = $1\n    UNION ALL\n    SELECT r.employeeid, r.managerid, eh.level + 1 as level\n    FROM \"Reporting\" r\n    INNER JOIN employee_hierarchy eh ON r.managerid = eh.employeeid\n  )\n  SELECT e.employeeid, e.name, eh.level\n  FROM employee_hierarchy eh\n  JOIN \"Employees\" e ON eh.employeeid = e.employeeid\n  ORDER BY eh.level, e.employeeid",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "key" : "employeeid"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
         },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/Employees{?allReports_limit,offset,name,limit,employeeid,allReports_offset}"
+        {
+          "type" : "args",
+          "parentType" : "Employees",
+          "fieldName" : "directReports",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"Employees\".\"employeeid\", \"Employees\".\"name\", \"Employees\".\"email\", \"Employees\".\"updatedDate\"\nFROM \"Reporting\"\n INNER JOIN \"Employees\" ON \"Reporting\".\"employeeid\" = \"Employees\".\"employeeid\"\nWHERE \"Reporting\".\"managerid\" = $1\nORDER BY \"Employees\".\"employeeid\" NULLS FIRST",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "key" : "employeeid"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        }
+      ],
+      "mutations" : [ ],
+      "subscriptions" : [ ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetEmployees",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "allReports_limit" : {
+                  "type" : "integer"
+                },
+                "offset" : {
+                  "type" : "integer"
+                },
+                "name" : {
+                  "type" : "string"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "employeeid" : {
+                  "type" : "integer"
+                },
+                "allReports_offset" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query Employees($employeeid: Long, $name: String, $limit: Int = 10, $offset: Int = 0$allReports_limit: Int = 10, $allReports_offset: Int = 0) {\nEmployees(employeeid: $employeeid, name: $name, limit: $limit, offset: $offset) {\nemployeeid\nname\nemail\nupdatedDate\nallReports(limit: $allReports_limit, offset: $allReports_offset) {\nemployeeid\nname\nlevel\n}\n}\n\n}",
+            "queryName" : "Employees",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Employees{?allReports_limit,offset,name,limit,employeeid,allReports_offset}"
+        }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\ntype Employees {\n  employeeid: Long!\n  name: String!\n  email: String!\n  updatedDate: DateTime!\n  allReports(limit: Int = 10, offset: Int = 0): [Employees_allReports!]\n  directReports(limit: Int = 10, offset: Int = 0): [Employees!]\n}\n\ntype Employees_allReports {\n  employeeid: Long!\n  name: String!\n  level: Int!\n}\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  Employees(employeeid: Long, name: String, limit: Int = 10, offset: Int = 0): [Employees!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
-    ],
-    "schema" : {
-      "type" : "string",
-      "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\ntype Employees {\n  employeeid: Long!\n  name: String!\n  email: String!\n  updatedDate: DateTime!\n  allReports(limit: Int = 10, offset: Int = 0): [Employees_allReports!]\n  directReports(limit: Int = 10, offset: Int = 0): [Employees!]\n}\n\ntype Employees_allReports {\n  employeeid: Long!\n  name: String!\n  level: Int!\n}\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  Employees(employeeid: Long, name: String, limit: Int = 10, offset: Int = 0): [Employees!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
     }
   }
 }
