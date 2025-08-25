@@ -202,11 +202,6 @@
       </dependency>
       <dependency>
         <groupId>com.datasqrl</groupId>
-        <artifactId>sqrl-server-vertx-base</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.datasqrl</groupId>
         <artifactId>sqrl-server-vertx</artifactId>
         <version>${project.version}</version>
       </dependency>
@@ -464,7 +459,7 @@
       <dependency>
         <groupId>com.datasqrl.flink</groupId>
         <artifactId>flink-s3-fs-hadoop</artifactId>
-        <version>1.19.3-10</version>
+        <version>1.19.3-13</version>
       </dependency>
       <dependency>
         <groupId>org.apache.flink</groupId>
@@ -1445,7 +1440,7 @@
       </activation>
       <properties>
         <skipITs>true</skipITs>
-        <dockerfile.skip>true</dockerfile.skip>
+        <skipDockerBuild>true</skipDockerBuild>
         <maven.test.excludeProjects>sqrl-testing-container</maven.test.excludeProjects>
       </properties>
       <build>
@@ -1476,7 +1471,7 @@
         </property>
       </activation>
       <properties>
-        <dockerfile.skip>true</dockerfile.skip>
+        <skipDockerBuild>true</skipDockerBuild>
         <maven.test.excludeProjects>sqrl-testing-container</maven.test.excludeProjects>
       </properties>
       <build>
@@ -1529,20 +1524,6 @@
       <properties>
         <skipTests>true</skipTests>
         <skipITs>true</skipITs>
-      </properties>
-    </profile>
-    <profile>
-      <!-- builds the shaded JARs, but not the images -->
-      <id>only-jars</id>
-      <activation>
-        <property>
-          <name>onlyJars</name>
-        </property>
-      </activation>
-      <properties>
-        <skipTests>true</skipTests>
-        <skipITs>true</skipITs>
-        <dockerfile.skip>true</dockerfile.skip>
       </properties>
     </profile>
     <profile>

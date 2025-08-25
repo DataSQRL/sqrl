@@ -43,13 +43,14 @@
     </dependency>
     <dependency>
       <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-server-vertx-base</artifactId>
+      <artifactId>sqrl-server-vertx</artifactId>
     </dependency>
 
     <dependency>
       <groupId>com.datasqrl.flinkrunner</groupId>
       <artifactId>stdlib-utils</artifactId>
     </dependency>
+
     <dependency>
       <groupId>com.datasqrl.flinkrunner</groupId>
       <artifactId>flink-sql-runner</artifactId>
@@ -59,6 +60,11 @@
           <artifactId>flink-s3-fs-hadoop</artifactId>
         </exclusion>
       </exclusions>
+    </dependency>
+    <!-- Use DataSQRL's fixed version of flink-s3-fs-hadoop without shading conflicts -->
+    <dependency>
+      <groupId>com.datasqrl.flink</groupId>
+      <artifactId>flink-s3-fs-hadoop</artifactId>
     </dependency>
 
     <!-- Flink dependencies -->
@@ -367,12 +373,6 @@
       <artifactId>sqrl-planner</artifactId>
       <type>test-jar</type>
       <scope>test</scope>
-    </dependency>
-
-    <!-- Use DataSQRL's fixed version of flink-s3-fs-hadoop without shading conflicts -->
-    <dependency>
-      <groupId>com.datasqrl.flink</groupId>
-      <artifactId>flink-s3-fs-hadoop</artifactId>
     </dependency>
   </dependencies>
 
