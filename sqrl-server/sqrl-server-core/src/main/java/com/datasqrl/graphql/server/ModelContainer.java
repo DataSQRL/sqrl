@@ -13,32 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.compile;
+package com.datasqrl.graphql.server;
 
-import com.datasqrl.engine.database.relational.JdbcStatement;
-import java.util.List;
 import java.util.Map;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 
-@AllArgsConstructor
-@NoArgsConstructor
-@Getter
-public class TestPlan {
+public class ModelContainer {
 
-  List<JdbcStatement> jdbcViews;
-  List<GraphqlQuery> queries;
-  List<GraphqlQuery> mutations;
-  List<GraphqlQuery> subscriptions;
-
-  @AllArgsConstructor
-  @NoArgsConstructor
-  @Getter
-  public static class GraphqlQuery {
-    String version;
-    String name;
-    String query;
-    Map<String, String> headers;
-  }
+  public Map<String, RootGraphqlModel> models;
 }

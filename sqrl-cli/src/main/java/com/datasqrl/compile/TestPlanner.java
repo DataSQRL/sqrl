@@ -18,7 +18,7 @@ package com.datasqrl.compile;
 import com.datasqrl.compile.TestPlan.GraphqlQuery;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.engine.database.relational.JdbcStatement;
-import com.datasqrl.graphql.APISource;
+import com.datasqrl.graphql.ApiSource;
 import com.datasqrl.util.FileUtil;
 import graphql.language.AstPrinter;
 import graphql.language.Definition;
@@ -47,7 +47,9 @@ public class TestPlanner {
   private final GqlGenerator gqlGenerator;
   private final List<JdbcStatement> jdbcViews;
 
-  public TestPlan generateTestPlan(APISource source, Optional<Path> testsPath) {
+  public TestPlan generateTestPlan(
+      Map<String, ApiSource> apiSchemaByVersion, Optional<Path> testsPath) {
+
     var parser = new Parser();
     var queries = new ArrayList<GraphqlQuery>();
     var mutations = new ArrayList<GraphqlQuery>();
@@ -56,42 +58,50 @@ public class TestPlanner {
     // Get base headers from PackageJson
     var baseHeaders = packageJson.getTestConfig().getHeaders();
 
-    testsPath.ifPresent(
-        p -> {
-          try (var paths = Files.walk(p)) {
-            paths
-                .filter(Files::isRegularFile)
-                .filter(path -> path.toString().endsWith(".graphql"))
-                .sorted(Comparator.comparing(path -> path.getFileName().toString().toLowerCase()))
-                .forEach(
-                    file -> {
-                      String content;
-                      try {
-                        content = new String(Files.readAllBytes(file));
-                      } catch (IOException e) {
-                        throw new RuntimeException(e);
-                      }
-                      var document = parser.parseDocument(content);
-                      var prefix = FileUtil.separateExtension(file).getLeft();
-                      extractQueriesAndMutations(
-                          document,
-                          queries,
-                          mutations,
-                          subscriptions,
-                          prefix,
-                          loadHeaders(file.getParent(), prefix, baseHeaders));
-                    });
-          } catch (IOException e) {
-            e.printStackTrace();
-          }
-        });
+    for (var entry : apiSchemaByVersion.entrySet()) {
+      var version = entry.getKey();
+      var schemaSource = entry.getValue();
 
-    var document = parser.parseDocument(source.getDefinition());
-    var queryNodes = gqlGenerator.visitDocument(document, null);
-    for (Node<?> definition : queryNodes) {
-      var definition1 = (OperationDefinition) definition;
-      queries.add(
-          new GraphqlQuery(definition1.getName(), AstPrinter.printAst(definition1), baseHeaders));
+      // TODO: ferenc: Create a way to test specific graphql files against specific versions
+      testsPath.ifPresent(
+          p -> {
+            try (var paths = Files.walk(p)) {
+              paths
+                  .filter(Files::isRegularFile)
+                  .filter(path -> path.toString().endsWith(".graphql"))
+                  .sorted(Comparator.comparing(path -> path.getFileName().toString().toLowerCase()))
+                  .forEach(
+                      file -> {
+                        String content;
+                        try {
+                          content = new String(Files.readAllBytes(file));
+                        } catch (IOException e) {
+                          throw new RuntimeException(e);
+                        }
+                        var document = parser.parseDocument(content);
+                        var prefix = FileUtil.separateExtension(file).getLeft();
+                        extractQueriesAndMutations(
+                            document,
+                            queries,
+                            mutations,
+                            subscriptions,
+                            version,
+                            prefix,
+                            loadHeaders(file.getParent(), prefix, baseHeaders));
+                      });
+            } catch (IOException e) {
+              e.printStackTrace();
+            }
+          });
+
+      var document = parser.parseDocument(schemaSource.getDefinition());
+      var queryNodes = gqlGenerator.visitDocument(document, null);
+      for (Node<?> definition : queryNodes) {
+        var definition1 = (OperationDefinition) definition;
+        queries.add(
+            new GraphqlQuery(
+                version, definition1.getName(), AstPrinter.printAst(definition1), baseHeaders));
+      }
     }
 
     return new TestPlan(
@@ -102,7 +112,7 @@ public class TestPlanner {
   }
 
   @SneakyThrows
-  public Map<String, String> loadHeaders(
+  private Map<String, String> loadHeaders(
       Path testDir, String prefix, Map<String, String> baseHeaders) {
     var headersFile = testDir.resolve(prefix + ".properties");
 
@@ -142,12 +152,14 @@ public class TestPlanner {
       List<GraphqlQuery> queries,
       List<GraphqlQuery> mutations,
       List<GraphqlQuery> subscriptions,
+      String version,
       String prefix,
       Map<String, String> headers) {
 
     for (Definition<?> definition : document.getDefinitions()) {
       if (definition instanceof OperationDefinition operationDefinition) {
-        var query = new GraphqlQuery(prefix, AstPrinter.printAst(operationDefinition), headers);
+        var query =
+            new GraphqlQuery(version, prefix, AstPrinter.printAst(operationDefinition), headers);
         switch (operationDefinition.getOperation()) {
           case QUERY:
             queries.add(query);

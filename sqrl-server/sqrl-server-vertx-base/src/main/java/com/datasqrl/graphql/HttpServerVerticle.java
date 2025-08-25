@@ -17,6 +17,7 @@ package com.datasqrl.graphql;
 
 import com.datasqrl.graphql.config.CorsHandlerOptions;
 import com.datasqrl.graphql.config.ServerConfig;
+import com.datasqrl.graphql.server.ModelContainer;
 import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.graphql.server.operation.ApiOperation;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -53,7 +54,7 @@ public class HttpServerVerticle extends AbstractVerticle {
   private ServerConfig config;
 
   /** Server model */
-  private RootGraphqlModel model;
+  private Map<String, RootGraphqlModel> models;
 
   // ---------------------------------------------------------------------------
   // Lifecyle
@@ -61,19 +62,19 @@ public class HttpServerVerticle extends AbstractVerticle {
 
   public HttpServerVerticle() {
     this.config = null;
-    this.model = null;
+    this.models = null;
   }
 
-  public HttpServerVerticle(ServerConfig config, RootGraphqlModel model) {
+  public HttpServerVerticle(ServerConfig config, Map<String, RootGraphqlModel> models) {
     this.config = config;
-    this.model = model;
+    this.models = models;
   }
 
   @Override
   public void start(Promise<Void> startPromise) {
-    if (this.model == null) {
+    if (this.models == null) {
       try {
-        this.model = loadModel();
+        this.models = loadModel();
       } catch (Exception e) {
         startPromise.fail(e);
         return;
@@ -106,88 +107,42 @@ public class HttpServerVerticle extends AbstractVerticle {
   // ---------------------------------------------------------------------------
 
   private void bootstrap(Promise<Void> startPromise) {
-    Router root = Router.router(vertx);
+    var router = Router.router(vertx);
 
     // ── Metrics ───────────────────────────────────────────────────────────────
     var meterRegistry = findMeterRegistry();
     meterRegistry.ifPresent(
         registry ->
-            root.route("/metrics")
+            router
+                .route("/metrics")
                 .handler(
                     ctx -> {
                       ctx.response().putHeader("content-type", "text/plain").end(registry.scrape());
                     }));
 
     // ── Global handlers (CORS, body, etc.) ────────────────────────────────────
-    root.route().handler(toCorsHandler(config.getCorsHandlerOptions()));
-    root.route().handler(BodyHandler.create());
+    router.route().handler(toCorsHandler(config.getCorsHandlerOptions()));
+    router.route().handler(BodyHandler.create());
 
     // Use detailed tracing if enabled, otherwise use standard logging (must be after BodyHandler)
     if (System.getenv("SQRL_DEBUG") != null) {
-      root.route().handler(DetailedRequestTracer.create());
+      router.route().handler(DetailedRequestTracer.create());
     } else {
-      root.route().handler(LoggerHandler.create());
+      router.route().handler(LoggerHandler.create());
     }
 
     // ── Health checks ────────────────────────────────────────────────────────
-    root.get("/health*").handler(HealthCheckHandler.create(vertx));
-
-    // ── Deploy protocol-specific verticles ───────────────────────────────────
-    DeploymentOptions childOpts = new DeploymentOptions().setInstances(1);
-
-    // inside bootstrap() in HttpServerVerticle
-    var jwtOpt =
-        Optional.ofNullable(config.getJwtAuth())
-            .map(
-                authCfg -> {
-                  log.info("JWT authentication enabled");
-                  return JWTAuth.create(vertx, authCfg);
-                });
-
-    if (jwtOpt.isEmpty()) {
-      log.info("JWT authentication disabled - no JWT configuration found");
-    }
+    router.get("/health*").handler(HealthCheckHandler.create(vertx));
 
     // Deploy GraphQL verticle first
-    GraphQLServerVerticle graphQLVerticle = new GraphQLServerVerticle(root, config, model, jwtOpt);
-    boolean hasMcp = model.getOperations().stream().anyMatch(ApiOperation::isMcpEndpoint);
-    boolean hasRest = model.getOperations().stream().anyMatch(ApiOperation::isRestEndpoint);
-    vertx
-        .deployVerticle(graphQLVerticle, childOpts)
-        .onSuccess(
-            graphQLDeploymentId -> {
-              log.info("GraphQL verticle deployed successfully: {}", graphQLDeploymentId);
-              if (hasMcp) {
-                // Deploy MCP bridge verticle with access to GraphQL engine
-                McpBridgeVerticle mcpBridgeVerticle =
-                    new McpBridgeVerticle(root, config, model, jwtOpt, graphQLVerticle);
-                vertx
-                    .deployVerticle(mcpBridgeVerticle, childOpts)
-                    .onSuccess(
-                        mcpDeploymentId ->
-                            log.info(
-                                "MCP bridge verticle deployed successfully: {}", mcpDeploymentId))
-                    .onFailure(err -> log.error("Failed to deploy MCP bridge verticle", err));
-              }
-              if (hasRest) {
-                // Deploy REST bridge verticle with access to GraphQL engine
-                RestBridgeVerticle restBridgeVerticle =
-                    new RestBridgeVerticle(root, config, model, jwtOpt, graphQLVerticle);
-                vertx
-                    .deployVerticle(restBridgeVerticle, childOpts)
-                    .onSuccess(
-                        restDeploymentId ->
-                            log.info(
-                                "REST bridge verticle deployed successfully: {}", restDeploymentId))
-                    .onFailure(err -> log.error("Failed to deploy REST bridge verticle", err));
-              }
-            })
-        .onFailure(err -> log.error("Failed to deploy GraphQL verticle", err));
+    for (var modelEntry : models.entrySet()) {
+      deployVersionedModel(router, modelEntry.getKey(), modelEntry.getValue());
+    }
 
     // ── Start the HTTP server ────────────────────────────────────────────────
     vertx
         .createHttpServer(config.getHttpServerOptions())
-        .requestHandler(root)
+        .requestHandler(router)
         .listen(config.getHttpServerOptions().getPort())
         .onSuccess(
             srv -> {
@@ -214,6 +169,60 @@ public class HttpServerVerticle extends AbstractVerticle {
 
     throw new IllegalStateException(
         "Unable to register metrics to: " + registry.getClass().getSimpleName());
+  }
+
+  private void deployVersionedModel(Router router, String modelVersion, RootGraphqlModel model) {
+    var childOpts = new DeploymentOptions().setInstances(1);
+
+    // inside bootstrap() in HttpServerVerticle
+    var jwtOpt =
+        Optional.ofNullable(config.getJwtAuth())
+            .map(
+                authCfg -> {
+                  log.info("JWT authentication enabled");
+                  return JWTAuth.create(vertx, authCfg);
+                });
+
+    if (jwtOpt.isEmpty()) {
+      log.info("JWT authentication disabled - no JWT configuration found");
+    }
+
+    var graphQLVerticle = new GraphQLServerVerticle(router, config, modelVersion, model, jwtOpt);
+    var hasMcp = model.getOperations().stream().anyMatch(ApiOperation::isMcpEndpoint);
+    var hasRest = model.getOperations().stream().anyMatch(ApiOperation::isRestEndpoint);
+    vertx
+        .deployVerticle(graphQLVerticle, childOpts)
+        .onSuccess(
+            graphQLDeploymentId -> {
+              log.info("GraphQL verticle deployed successfully: {}", graphQLDeploymentId);
+              if (hasMcp) {
+                // Deploy MCP bridge verticle with access to GraphQL engine
+                var mcpBridgeVerticle =
+                    new McpBridgeVerticle(
+                        router, config, modelVersion, model, jwtOpt, graphQLVerticle);
+                vertx
+                    .deployVerticle(mcpBridgeVerticle, childOpts)
+                    .onSuccess(
+                        mcpDeploymentId ->
+                            log.info(
+                                "MCP bridge verticle deployed successfully: {}", mcpDeploymentId))
+                    .onFailure(err -> log.error("Failed to deploy MCP bridge verticle", err));
+              }
+              if (hasRest) {
+                // Deploy REST bridge verticle with access to GraphQL engine
+                var restBridgeVerticle =
+                    new RestBridgeVerticle(
+                        router, config, modelVersion, model, jwtOpt, graphQLVerticle);
+                vertx
+                    .deployVerticle(restBridgeVerticle, childOpts)
+                    .onSuccess(
+                        restDeploymentId ->
+                            log.info(
+                                "REST bridge verticle deployed successfully: {}", restDeploymentId))
+                    .onFailure(err -> log.error("Failed to deploy REST bridge verticle", err));
+              }
+            })
+        .onFailure(err -> log.error("Failed to deploy GraphQL verticle", err));
   }
 
   // ---------------------------------------------------------------------------
@@ -246,10 +255,10 @@ public class HttpServerVerticle extends AbstractVerticle {
   }
 
   @SneakyThrows
-  private static RootGraphqlModel loadModel() {
+  private static Map<String, RootGraphqlModel> loadModel() {
     return getObjectMapper()
         .readValue(new File("vertx.json").getAbsoluteFile(), ModelContainer.class)
-        .model;
+        .models;
   }
 
   public static ObjectMapper getObjectMapper() {
@@ -262,7 +271,7 @@ public class HttpServerVerticle extends AbstractVerticle {
 
   /** Build a Vert.x {@link CorsHandler} from our own options DTO. */
   private CorsHandler toCorsHandler(CorsHandlerOptions opts) {
-    CorsHandler ch =
+    var ch =
         opts.getAllowedOrigin() != null
             ? CorsHandler.create().addOrigin(opts.getAllowedOrigin())
             : CorsHandler.create();
@@ -278,9 +287,5 @@ public class HttpServerVerticle extends AbstractVerticle {
         .allowCredentials(opts.isAllowCredentials())
         .maxAgeSeconds(opts.getMaxAgeSeconds())
         .allowPrivateNetwork(opts.isAllowPrivateNetwork());
-  }
-
-  public static class ModelContainer {
-    public RootGraphqlModel model;
   }
 }

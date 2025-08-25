@@ -253,7 +253,7 @@ public abstract class SqrlContainerTestBase {
   }
 
   protected String getGraphQLEndpoint() {
-    return getBaseUrl() + "/graphql";
+    return getBaseUrl() + "/v1/graphql";
   }
 
   protected String getMetricsEndpoint() {

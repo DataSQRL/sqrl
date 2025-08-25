@@ -15,29 +15,28 @@
  */
 package com.datasqrl.graphql;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.EqualsAndHashCode.Include;
-import lombok.Getter;
 import lombok.ToString;
+import lombok.Value;
 
 @AllArgsConstructor
-@Getter
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @ToString(of = "path")
-public class APISource {
+@Value
+public class ApiSource {
 
-  @Include Optional<Path> path;
+  @Include Path path;
   String definition;
 
-  public static APISource of(Path path, String contents) throws IOException {
-    return new APISource(Optional.of(path), contents);
+  public ApiSource(String definition) {
+    this(null, definition);
   }
 
-  public static APISource of(String definition) {
-    return new APISource(Optional.empty(), definition);
+  public Optional<Path> getPath() {
+    return Optional.ofNullable(path);
   }
 }

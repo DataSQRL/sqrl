@@ -62,4 +62,24 @@ public class ServletConfig {
       }
     }
   }
+
+  public String getGraphiQLEndpoint(String version) {
+    return getVersioned(version, graphiQLEndpoint);
+  }
+
+  public String getGraphQLEndpoint(String version) {
+    return getVersioned(version, graphQLEndpoint);
+  }
+
+  public String getRestEndpoint(String version) {
+    return getVersioned(version, restEndpoint);
+  }
+
+  public String getMcpEndpoint(String version) {
+    return getVersioned(version, mcpEndpoint);
+  }
+
+  private String getVersioned(String version, String endpoint) {
+    return '/' + version + endpoint;
+  }
 }

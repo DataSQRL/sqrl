@@ -86,4 +86,16 @@ public class SwaggerConfig {
       this.licenseUrl = (String) json.getValue("licenseUrl");
     }
   }
+
+  public String getEndpoint(String version) {
+    return getVersioned(version, endpoint);
+  }
+
+  public String getUiEndpoint(String version) {
+    return getVersioned(version, uiEndpoint);
+  }
+
+  private String getVersioned(String version, String endpoint) {
+    return '/' + version + endpoint;
+  }
 }

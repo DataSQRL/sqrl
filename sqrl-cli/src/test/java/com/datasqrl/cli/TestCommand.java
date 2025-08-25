@@ -15,7 +15,6 @@
  */
 package com.datasqrl.cli;
 
-import static com.datasqrl.config.ScriptConfigImpl.GRAPHQL_NORMALIZED_FILE_NAME;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
@@ -193,7 +192,7 @@ public class TestCommand {
         OUTPUT_DIR.toString(),
         "-a",
         "GraphQL");
-    Path schemaFile = rootDir.resolve(GRAPHQL_NORMALIZED_FILE_NAME);
+    Path schemaFile = rootDir.resolve("schema.graphqls");
     assertThat(Files.isRegularFile(schemaFile))
         .as(() -> "Schema file could not be found: %s".formatted(schemaFile))
         .isTrue();
@@ -244,7 +243,7 @@ public class TestCommand {
       args.add(graphql);
     }
 
-    execute(path, args.toArray(a -> new String[a]));
+    execute(path, args.toArray(String[]::new));
     snapshotSql();
   }
 
@@ -283,8 +282,7 @@ public class TestCommand {
   // SQRL #479 - Infinite loop replication
   @Test
   void creditCardInfiniteLoop() {
-    var basePath = CC_PATH;
-    execute(basePath, "compile", "creditcard.sqrl", "creditcard.graphqls");
+    execute(CC_PATH, "compile", "creditcard.sqrl", "creditcard.graphqls");
   }
 
   public static int execute(Path rootDir, String... args) {

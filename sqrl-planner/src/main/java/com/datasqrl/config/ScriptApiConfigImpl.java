@@ -13,29 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.graphql;
+package com.datasqrl.config;
 
-import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.PackageJson.ScriptApiConfig;
-import com.datasqrl.config.PackageJson.ScriptConfig;
-import com.google.inject.Inject;
 import java.util.List;
-import java.util.Optional;
-import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
-@Getter
-public class ScriptFiles {
+@RequiredArgsConstructor
+public class ScriptApiConfigImpl implements ScriptApiConfig {
 
-  private final ScriptConfig config;
-  private final Optional<String> graphql;
-  private final List<String> operations;
-  private final List<ScriptApiConfig> apiConfigs;
+  private final SqrlConfig sqrlConfig;
 
-  @Inject
-  public ScriptFiles(PackageJson rootConfig) {
-    config = rootConfig.getScriptConfig();
-    graphql = config.getGraphql();
-    operations = config.getOperations();
-    apiConfigs = config.getScriptApiConfigs();
+  @Override
+  public String getVersion() {
+    return sqrlConfig.getSelfKey();
+  }
+
+  @Override
+  public String getSchema() {
+    return sqrlConfig.asString("schema").get();
+  }
+
+  @Override
+  public List<String> getOperations() {
+    return sqrlConfig.asList("operations", String.class).get();
   }
 }

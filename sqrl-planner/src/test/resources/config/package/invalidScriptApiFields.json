@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "script": {
+    "main": "asd",
+    "api": {
+      "operations": ["op1", "op2"]
+    }
+  }
+}

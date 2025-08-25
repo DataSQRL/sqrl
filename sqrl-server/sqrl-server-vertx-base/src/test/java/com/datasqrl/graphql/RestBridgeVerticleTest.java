@@ -20,9 +20,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.datasqrl.graphql.HttpServerVerticle.ModelContainer;
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.config.ServletConfig;
+import com.datasqrl.graphql.server.ModelContainer;
 import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.graphql.server.operation.ApiOperation;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -83,11 +83,12 @@ class RestBridgeVerticleTest {
     model =
         new ObjectMapper()
             .readValue(Resources.getResource("testdata/vertx-rest.json"), ModelContainer.class)
-            .model;
+            .models
+            .get("v1");
 
     // Setup basic mocks
     when(serverConfig.getServletConfig()).thenReturn(servletConfig);
-    when(servletConfig.getRestEndpoint()).thenReturn("/api/rest");
+    when(servletConfig.getRestEndpoint("v1")).thenReturn("/v1/api/rest");
     when(graphQLServerVerticle.getGraphQLEngine()).thenReturn(graphQL);
     when(routingContext.request()).thenReturn(request);
     when(routingContext.response()).thenReturn(response);
@@ -103,7 +104,7 @@ class RestBridgeVerticleTest {
 
     restBridgeVerticle =
         new RestBridgeVerticle(
-            router, serverConfig, model, Optional.empty(), graphQLServerVerticle);
+            router, serverConfig, "v1", model, Optional.empty(), graphQLServerVerticle);
   }
 
   @Test
@@ -113,7 +114,7 @@ class RestBridgeVerticleTest {
     restBridgeVerticle.start(promise);
 
     // Then
-    verify(router).get("/api/rest/queries/HighTempAlert");
+    verify(router).get("/v1/api/rest/queries/HighTempAlert");
     assertThat(promise.future().succeeded()).isTrue();
   }
 
@@ -124,7 +125,7 @@ class RestBridgeVerticleTest {
     restBridgeVerticle.start(promise);
 
     // Then
-    verify(router).post("/api/rest/mutations/SensorReading");
+    verify(router).post("/v1/api/rest/mutations/SensorReading");
     assertThat(promise.future().succeeded()).isTrue();
   }
 
@@ -257,7 +258,7 @@ class RestBridgeVerticleTest {
     restBridgeVerticle.start(promise);
 
     // Then - Should create route without query params
-    verify(router).get("/api/rest/queries/HighTempAlert");
+    verify(router).get("/v1/api/rest/queries/HighTempAlert");
   }
 
   @Test
@@ -267,7 +268,7 @@ class RestBridgeVerticleTest {
     restBridgeVerticle.start(promise);
 
     // Then - Should convert {sensorid} to :sensorid
-    verify(router).get("/api/rest/queries/:sensorid/maxTemp");
+    verify(router).get("/v1/api/rest/queries/:sensorid/maxTemp");
   }
 
   private ApiOperation getOperationByName(String name) {
