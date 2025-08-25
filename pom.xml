@@ -104,6 +104,7 @@
     <!-- Params -->
     <docker.image.tag>local</docker.image.tag>
     <snapshots.update>false</snapshots.update>
+    <skipDockerBuild>false</skipDockerBuild>
 
     <!-- Dependency versions -->
     <mockito.version>4.8.0</mockito.version>
@@ -850,6 +851,33 @@
           <groupId>com.google.cloud.tools</groupId>
           <artifactId>jib-maven-plugin</artifactId>
           <version>${jib-maven-plugin.version}</version>
+          <configuration>
+            <platforms>
+              <platform>
+                <architecture>amd64</architecture>
+                <os>linux</os>
+              </platform>
+              <platform>
+                <architecture>arm64</architecture>
+                <os>linux</os>
+              </platform>
+            </platforms>
+            <container>
+              <appRoot>/opt/sqrl</appRoot>
+            </container>
+          </configuration>
+          <executions>
+            <execution>
+              <id>build-docker-image</id>
+              <goals>
+                <goal>dockerBuild</goal>
+              </goals>
+              <phase>package</phase>
+              <configuration>
+                <skip>${skipDockerBuild}</skip>
+              </configuration>
+            </execution>
+          </executions>
         </plugin>
       </plugins>
     </pluginManagement>
@@ -1499,6 +1527,28 @@
         <skipTests>true</skipTests>
         <skipITs>true</skipITs>
         <dockerfile.skip>true</dockerfile.skip>
+      </properties>
+    </profile>
+    <profile>
+      <id>skip-docker-build-onlyITs</id>
+      <activation>
+        <property>
+          <name>onlyITs</name>
+        </property>
+      </activation>
+      <properties>
+        <skipDockerBuild>true</skipDockerBuild>
+      </properties>
+    </profile>
+    <profile>
+      <id>skip-docker-build-onlyUTs</id>
+      <activation>
+        <property>
+          <name>onlyUTs</name>
+        </property>
+      </activation>
+      <properties>
+        <skipDockerBuild>true</skipDockerBuild>
       </properties>
     </profile>
   </profiles>

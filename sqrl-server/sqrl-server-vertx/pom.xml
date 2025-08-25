@@ -62,7 +62,6 @@
             <mainClass>com.datasqrl.graphql.SqrlLauncher</mainClass>
             <workingDirectory>/opt/sqrl/config</workingDirectory>
             <entrypoint>/opt/sqrl/entrypoint.sh</entrypoint>
-            <appRoot>/opt/sqrl</appRoot>
           </container>
           <extraDirectories>
             <paths>
@@ -81,15 +80,6 @@
             </permissions>
           </extraDirectories>
         </configuration>
-        <executions>
-          <execution>
-            <id>build-docker-image</id>
-            <goals>
-              <goal>dockerBuild</goal>
-            </goals>
-            <phase>package</phase>
-          </execution>
-        </executions>
       </plugin>
     </plugins>
   </build>
