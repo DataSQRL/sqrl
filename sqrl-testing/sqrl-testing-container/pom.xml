@@ -105,6 +105,12 @@
       <version>${commonsio.version}</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>com.amazonaws</groupId>
+      <artifactId>aws-java-sdk-s3</artifactId>
+      <version>${aws-java-sdk.version}</version>
+      <scope>test</scope>
+    </dependency>
 
     <dependency>
       <groupId>com.datasqrl</groupId>

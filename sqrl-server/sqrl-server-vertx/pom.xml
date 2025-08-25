@@ -28,8 +28,6 @@
   <name>SQRL :: Server :: Vert.x</name>
 
   <properties>
-    <vertx.verticle>com.datasqrl.graphql.HttpServerVerticle</vertx.verticle>
-    <skipVertexFatJar>false</skipVertexFatJar>
     <docker.image.name>datasqrl/sqrl-server</docker.image.name>
   </properties>
 
@@ -49,33 +47,45 @@
   <build>
     <finalName>vertx-server</finalName>
     <plugins>
+      <!-- Use Jib to build layered Docker images -->
       <plugin>
-        <groupId>io.reactiverse</groupId>
-        <artifactId>vertx-maven-plugin</artifactId>
+        <groupId>com.google.cloud.tools</groupId>
+        <artifactId>jib-maven-plugin</artifactId>
         <configuration>
-          <redeploy>true</redeploy>
-          <attach>true</attach>
-          <launcher>com.datasqrl.graphql.SqrlLauncher</launcher>
-          <skip>${skipVertexFatJar}</skip>
+          <from>
+            <image>eclipse-temurin:17</image>
+          </from>
+          <to>
+            <image>${docker.image.name}:${docker.image.tag}</image>
+          </to>
+          <container>
+            <mainClass>com.datasqrl.graphql.SqrlLauncher</mainClass>
+            <workingDirectory>/opt/sqrl/config</workingDirectory>
+            <entrypoint>/entrypoint.sh</entrypoint>
+            <appRoot>/opt/sqrl</appRoot>
+          </container>
+          <extraDirectories>
+            <paths>
+              <path>
+                <from>${project.basedir}/src/main/jib</from>
+                <includes>
+                  <include>**/*</include>
+                </includes>
+              </path>
+            </paths>
+            <permissions>
+              <permission>
+                <file>/entrypoint.sh</file>
+                <mode>755</mode>
+              </permission>
+            </permissions>
+          </extraDirectories>
         </configuration>
-        <executions>
-          <execution>
-            <id>package</id>
-            <goals>
-              <goal>package</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-
-      <plugin>
-        <groupId>com.spotify</groupId>
-        <artifactId>dockerfile-maven-plugin</artifactId>
         <executions>
           <execution>
             <id>build-docker-image</id>
             <goals>
-              <goal>build</goal>
+              <goal>dockerBuild</goal>
             </goals>
             <phase>package</phase>
           </execution>
@@ -90,26 +100,8 @@
 
       <build>
         <plugins>
-          <plugin>
-            <groupId>com.marvinformatics.jacoco</groupId>
-            <artifactId>easy-jacoco-maven-plugin</artifactId>
-            <version>${easy-jacoco-maven-plugin.version}</version>
-            <executions>
-              <execution>
-                <id>instrument-uber-jar</id>
-                <goals>
-                  <goal>instrument-jar</goal>
-                </goals>
-                <configuration>
-                  <source>${project.build.directory}/vertx-server.jar</source>
-                  <destination>${project.build.directory}/vertx-server.jar</destination>
-                  <includes>
-                    <include>com/datasqrl/*</include>
-                  </includes>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
+          <!-- JaCoCo instrumentation not needed with Jib layered approach -->
+          <!-- Instrumentation will be handled by standard JaCoCo agent -->
         </plugins>
       </build>
     </profile>

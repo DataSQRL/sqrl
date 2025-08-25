@@ -26,5 +26,6 @@ fi
 # Change to config directory (default WORKDIR)
 cd /opt/sqrl/config
 
-# Run the application jar from the app directory using SqrlLauncher to enable metrics
-exec java $SQRL_JVM_ARGS -cp /opt/sqrl/app/vertx-server.jar com.datasqrl.graphql.SqrlLauncher
+# Read classpath from Jib-generated file to include resources directory
+CLASSPATH=$(cat /opt/sqrl/jib-classpath-file)
+exec java $SQRL_JVM_ARGS -cp "$CLASSPATH" com.datasqrl.graphql.SqrlLauncher

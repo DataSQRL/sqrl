@@ -417,7 +417,7 @@
           <execution>
             <id>build-docker-image</id>
             <goals>
-              <goal>dockerBuild</goal>
+              <goal>build</goal>
             </goals>
             <phase>package</phase>
           </execution>
