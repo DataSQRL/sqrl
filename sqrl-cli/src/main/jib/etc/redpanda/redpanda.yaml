@@ -1,4 +1,3 @@
-#!/bin/bash
 #
 # Copyright © 2021 DataSQRL (contact@datasqrl.com)
 #
@@ -15,16 +14,21 @@
 # limitations under the License.
 #
 
-set -e
-
-# Enable debug mode if DEBUG environment variable is set
-if [[ -n "${SQRL_DEBUG+x}" && -n "$SQRL_DEBUG" ]]; then
-    SQRL_JVM_ARGS="-Dlog4j2.configurationFile=/opt/sqrl/app/log4j2-debug.properties"
-    set -x
-fi
-
-# Change to config directory (default WORKDIR)
-cd /opt/sqrl/config
-
-# Run the application jar from the app directory using SqrlLauncher to enable metrics
-exec java $SQRL_JVM_ARGS -cp /opt/sqrl/app/vertx-server.jar com.datasqrl.graphql.SqrlLauncher
+redpanda:
+  data_directory: /data/redpanda
+  node_id: 0
+  seed_servers: []
+  kafka_api:
+    - address: 0.0.0.0
+      port: 9092
+      name: PLAINTEXT
+  advertised_kafka_api:
+    - address: 127.0.0.1
+      port: 9092
+      name: PLAINTEXT
+rpk:
+  overprovisioned: true
+schema_registry:
+  schema_registry_api:
+    - address: 0.0.0.0
+      port: 8086

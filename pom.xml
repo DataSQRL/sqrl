@@ -95,6 +95,7 @@
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <argLine></argLine>
 
     <!-- Flink runner props -->
     <flinkrunner.version>0.7.1</flinkrunner.version>
@@ -103,6 +104,7 @@
     <!-- Params -->
     <docker.image.tag>local</docker.image.tag>
     <snapshots.update>false</snapshots.update>
+    <skipDockerBuild>false</skipDockerBuild>
 
     <!-- Dependency versions -->
     <mockito.version>4.8.0</mockito.version>
@@ -115,7 +117,7 @@
     <postgres.version>42.7.7</postgres.version>
     <log4j.version>2.25.1</log4j.version>
     <scala.version>2.12</scala.version>
-    <guava.version>33.4.8-jre</guava.version>
+    <guava.version>31.0.1-jre</guava.version>
     <commonsio.version>2.20.0</commonsio.version>
     <commons-lang3.version>3.18.0</commons-lang3.version>
     <!-- hadoop shades in commons-config 2.1.1, so upgrade path here is very narrow -->
@@ -163,11 +165,12 @@
     <swagger-core.version>2.2.35</swagger-core.version>
     <commons-csv.version>1.9.0</commons-csv.version>
     <guice.version>7.0.0</guice.version>
-    <guice-multibindings.version>4.2.3</guice-multibindings.version>
+    <guice-multibindings.version>7.0.0</guice-multibindings.version>
     <flink-connector-postgres-cdc.version>3.4.0</flink-connector-postgres-cdc.version>
     <zookeeper.version>3.9.3</zookeeper.version>
     <snakeyaml.version>2.4</snakeyaml.version>
     <aws-sdk-bom.version>2.32.24</aws-sdk-bom.version>
+    <aws-java-sdk.version>1.12.784</aws-java-sdk.version>
     <openai-gpt3-java.version>0.18.2</openai-gpt3-java.version>
     <flink-client.version>1.1.4</flink-client.version>
 
@@ -179,6 +182,7 @@
     <git-code-format-maven-plugin.version>5.3</git-code-format-maven-plugin.version>
     <sortpom.plugin.version>4.0.0</sortpom.plugin.version>
     <dockerfile-maven-plugin.version>1.4.13</dockerfile-maven-plugin.version>
+    <jib-maven-plugin.version>3.4.4</jib-maven-plugin.version>
     <easy-jacoco-maven-plugin.version>0.1.4</easy-jacoco-maven-plugin.version>
   </properties>
 
@@ -194,11 +198,6 @@
       <dependency>
         <groupId>com.datasqrl</groupId>
         <artifactId>sqrl-server-core</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.datasqrl</groupId>
-        <artifactId>sqrl-server-vertx-base</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -458,9 +457,9 @@
         <version>${flink.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.apache.flink</groupId>
+        <groupId>com.datasqrl.flink</groupId>
         <artifactId>flink-s3-fs-hadoop</artifactId>
-        <version>${flink.version}</version>
+        <version>1.19.3-13</version>
       </dependency>
       <dependency>
         <groupId>org.apache.flink</groupId>
@@ -843,6 +842,54 @@
             <pullNewerImage>false</pullNewerImage>
           </configuration>
         </plugin>
+        <plugin>
+          <groupId>com.google.cloud.tools</groupId>
+          <artifactId>jib-maven-plugin</artifactId>
+          <version>${jib-maven-plugin.version}</version>
+          <configuration>
+            <platforms>
+              <platform>
+                <architecture>amd64</architecture>
+                <os>linux</os>
+              </platform>
+              <platform>
+                <architecture>arm64</architecture>
+                <os>linux</os>
+              </platform>
+            </platforms>
+            <container>
+              <appRoot>/opt/sqrl</appRoot>
+            </container>
+            <extraDirectories>
+              <paths>
+                <path>
+                  <from>${project.basedir}/src/main/jib</from>
+                  <includes>
+                    <include>**/*</include>
+                  </includes>
+                </path>
+              </paths>
+              <permissions>
+                <permission>
+                  <file>/opt/sqrl/entrypoint.sh</file>
+                  <mode>755</mode>
+                </permission>
+              </permissions>
+            </extraDirectories>
+          </configuration>
+          <executions>
+            <execution>
+              <id>build-docker-image</id>
+              <goals>
+                <goal>dockerBuild</goal>
+              </goals>
+              <phase>package</phase>
+              <configuration>
+                <skip>${skipDockerBuild}</skip>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
       </plugins>
     </pluginManagement>
     <plugins>
@@ -901,7 +948,28 @@
                     <exclude>org.apache.logging.log4j:log4j-slf4j2-impl</exclude>
                     <exclude>org.slf4j:slf4j-reload4j</exclude>
                   </excludes>
-                  <message>SLF4J 2.x is not allowed. Use log4j-slf4j-impl instead of log4j-slf4j2-impl</message>
+                  <message>SLF4J 2.x is not allowed. Use log4j-slf4j-impl instead of log4j-slf4j2-impl.</message>
+                </bannedDependencies>
+              </rules>
+            </configuration>
+          </execution>
+          <execution>
+            <id>enforce-flink-s3-version</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <bannedDependencies>
+                  <searchTransitive>true</searchTransitive>
+                  <includes>
+                    <include>*:*</include>
+                  </includes>
+                  <excludes>
+                    <!-- Ban original flink-s3-fs-hadoop to avoid shading conflicts -->
+                    <exclude>org.apache.flink:flink-s3-fs-hadoop</exclude>
+                  </excludes>
+                  <message>Use com.datasqrl.flink:flink-s3-fs-hadoop instead of org.apache.flink:flink-s3-fs-hadoop to avoid shading conflicts.</message>
                 </bannedDependencies>
               </rules>
             </configuration>
@@ -1372,7 +1440,7 @@
       </activation>
       <properties>
         <skipITs>true</skipITs>
-        <dockerfile.skip>true</dockerfile.skip>
+        <skipDockerBuild>true</skipDockerBuild>
         <maven.test.excludeProjects>sqrl-testing-container</maven.test.excludeProjects>
       </properties>
       <build>
@@ -1403,7 +1471,7 @@
         </property>
       </activation>
       <properties>
-        <dockerfile.skip>true</dockerfile.skip>
+        <skipDockerBuild>true</skipDockerBuild>
         <maven.test.excludeProjects>sqrl-testing-container</maven.test.excludeProjects>
       </properties>
       <build>
@@ -1459,7 +1527,7 @@
       </properties>
     </profile>
     <profile>
-      <!-- builds the shaded JARs, but not the images -->
+      <!-- builds the JARs and deploys to Maven repository, but skips Docker image builds -->
       <id>only-jars</id>
       <activation>
         <property>
@@ -1469,7 +1537,29 @@
       <properties>
         <skipTests>true</skipTests>
         <skipITs>true</skipITs>
-        <dockerfile.skip>true</dockerfile.skip>
+        <skipDockerBuild>true</skipDockerBuild>
+      </properties>
+    </profile>
+    <profile>
+      <id>skip-docker-build-onlyITs</id>
+      <activation>
+        <property>
+          <name>onlyITs</name>
+        </property>
+      </activation>
+      <properties>
+        <skipDockerBuild>true</skipDockerBuild>
+      </properties>
+    </profile>
+    <profile>
+      <id>skip-docker-build-onlyUTs</id>
+      <activation>
+        <property>
+          <name>onlyUTs</name>
+        </property>
+      </activation>
+      <properties>
+        <skipDockerBuild>true</skipDockerBuild>
       </properties>
     </profile>
   </profiles>
