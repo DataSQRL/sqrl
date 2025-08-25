@@ -865,6 +865,22 @@
             <container>
               <appRoot>/opt/sqrl</appRoot>
             </container>
+            <extraDirectories>
+              <paths>
+                <path>
+                  <from>${project.basedir}/src/main/jib</from>
+                  <includes>
+                    <include>**/*</include>
+                  </includes>
+                </path>
+              </paths>
+              <permissions>
+                <permission>
+                  <file>/opt/sqrl/entrypoint.sh</file>
+                  <mode>755</mode>
+                </permission>
+              </permissions>
+            </extraDirectories>
           </configuration>
           <executions>
             <execution>
