@@ -391,232 +391,234 @@ INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
 }
 >>>vertx.json
 {
-  "model" : {
-    "queries" : [
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "MachineReading",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "MachineReading",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"sensorid\", \"temperature\", \"event_time\", \"machineid\"\nFROM \"MachineReading_1\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT \"sensorid\", \"temperature\", \"event_time\", \"machineid\"\nFROM \"MachineReading_1\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "MachineTempByHour",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"machineid\", \"time_hour\", \"avg_temperature\"\nFROM \"MachineTempByHour_2\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Sensors",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Sensors_3\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
           }
         }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "MachineTempByHour",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT \"machineid\", \"time_hour\", \"avg_temperature\"\nFROM \"MachineTempByHour_2\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
+      ],
+      "mutations" : [
+        {
+          "type" : "kafka",
+          "fieldName" : "Sensors",
+          "returnList" : true,
+          "topic" : "kafka-mutation-Sensors",
+          "computedColumns" : {
+            "updatedTime" : "TIMESTAMP"
+          },
+          "transactional" : true,
+          "sinkConfig" : { }
+        },
+        {
+          "type" : "kafka",
+          "fieldName" : "_SensorReading",
+          "returnList" : true,
+          "topic" : "kafka-mutation-_SensorReading",
+          "computedColumns" : {
+            "event_id" : "UUID",
+            "event_time" : "TIMESTAMP"
+          },
+          "transactional" : false,
+          "sinkConfig" : { }
         }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "Sensors",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Sensors_3\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      }
-    ],
-    "mutations" : [
-      {
-        "type" : "kafka",
-        "fieldName" : "Sensors",
-        "returnList" : true,
-        "topic" : "kafka-mutation-Sensors",
-        "computedColumns" : {
-          "updatedTime" : "TIMESTAMP"
-        },
-        "transactional" : true,
-        "sinkConfig" : { }
-      },
-      {
-        "type" : "kafka",
-        "fieldName" : "_SensorReading",
-        "returnList" : true,
-        "topic" : "kafka-mutation-_SensorReading",
-        "computedColumns" : {
-          "event_id" : "UUID",
-          "event_time" : "TIMESTAMP"
-        },
-        "transactional" : false,
-        "sinkConfig" : { }
-      }
-    ],
-    "subscriptions" : [ ],
-    "operations" : [
-      {
-        "function" : {
-          "name" : "GetMachineReading",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query MachineReading($limit: Int = 10, $offset: Int = 0) {\nMachineReading(limit: $limit, offset: $offset) {\nsensorid\ntemperature\nevent_time\nmachineid\n}\n\n}",
-          "queryName" : "MachineReading",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/MachineReading{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetMachineTempByHour",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query MachineTempByHour($limit: Int = 10, $offset: Int = 0) {\nMachineTempByHour(limit: $limit, offset: $offset) {\nmachineid\ntime_hour\navg_temperature\n}\n\n}",
-          "queryName" : "MachineTempByHour",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/MachineTempByHour{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetSensors",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query Sensors($limit: Int = 10, $offset: Int = 0) {\nSensors(limit: $limit, offset: $offset) {\nsensorid\nmachineid\nupdatedTime\n}\n\n}",
-          "queryName" : "Sensors",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/Sensors{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "AddSensors",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "event" : {
-                "type" : "array",
-                "items" : {
-                  "type" : "object",
-                  "properties" : {
-                    "machineid" : {
-                      "type" : "integer"
-                    },
-                    "sensorid" : {
-                      "type" : "integer"
-                    }
-                  },
-                  "required" : [
-                    "sensorid"
-                  ]
+      ],
+      "subscriptions" : [ ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetMachineReading",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
                 }
-              }
-            },
-            "required" : [
-              "event"
-            ]
-          }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query MachineReading($limit: Int = 10, $offset: Int = 0) {\nMachineReading(limit: $limit, offset: $offset) {\nsensorid\ntemperature\nevent_time\nmachineid\n}\n\n}",
+            "queryName" : "MachineReading",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/MachineReading{?offset,limit}"
         },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "mutation Sensors($event: [SensorsInput!]!) {\nSensors(event: $event) {\nsensorid\nmachineid\nupdatedTime\n}\n\n}",
-          "queryName" : "Sensors",
-          "operationType" : "MUTATION"
+        {
+          "function" : {
+            "name" : "GetMachineTempByHour",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query MachineTempByHour($limit: Int = 10, $offset: Int = 0) {\nMachineTempByHour(limit: $limit, offset: $offset) {\nmachineid\ntime_hour\navg_temperature\n}\n\n}",
+            "queryName" : "MachineTempByHour",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/MachineTempByHour{?offset,limit}"
         },
-        "mcpMethod" : "NONE",
-        "restMethod" : "POST",
-        "uriTemplate" : "mutations/Sensors"
+        {
+          "function" : {
+            "name" : "GetSensors",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query Sensors($limit: Int = 10, $offset: Int = 0) {\nSensors(limit: $limit, offset: $offset) {\nsensorid\nmachineid\nupdatedTime\n}\n\n}",
+            "queryName" : "Sensors",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Sensors{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "AddSensors",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "event" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "object",
+                    "properties" : {
+                      "machineid" : {
+                        "type" : "integer"
+                      },
+                      "sensorid" : {
+                        "type" : "integer"
+                      }
+                    },
+                    "required" : [
+                      "sensorid"
+                    ]
+                  }
+                }
+              },
+              "required" : [
+                "event"
+              ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "mutation Sensors($event: [SensorsInput!]!) {\nSensors(event: $event) {\nsensorid\nmachineid\nupdatedTime\n}\n\n}",
+            "queryName" : "Sensors",
+            "operationType" : "MUTATION"
+          },
+          "mcpMethod" : "NONE",
+          "restMethod" : "POST",
+          "uriTemplate" : "mutations/Sensors"
+        }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype MachineReading {\n  sensorid: Int\n  temperature: Float\n  event_time: DateTime\n  machineid: Int\n}\n\ntype MachineTempByHour {\n  machineid: Int\n  time_hour: DateTime!\n  avg_temperature: Float\n}\n\ntype Mutation {\n  Sensors(event: [SensorsInput!]!): [SensorsResultOutput!]!\n  _SensorReading(event: [_SensorReadingInput!]!): [_SensorReadingResultOutput!]!\n}\n\ntype Query {\n  MachineReading(limit: Int = 10, offset: Int = 0): [MachineReading!]\n  MachineTempByHour(limit: Int = 10, offset: Int = 0): [MachineTempByHour!]\n  Sensors(limit: Int = 10, offset: Int = 0): [Sensors!]\n}\n\ntype Sensors {\n  sensorid: Int!\n  machineid: Int\n  updatedTime: DateTime\n}\n\ninput SensorsInput {\n  sensorid: Int!\n  machineid: Int\n}\n\ntype SensorsResultOutput {\n  sensorid: Int!\n  machineid: Int\n  updatedTime: DateTime\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ninput _SensorReadingInput {\n  sensorid: Int\n  temperature: Float\n}\n\ntype _SensorReadingResultOutput {\n  event_id: String!\n  sensorid: Int\n  temperature: Float\n  event_time: DateTime\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
-    ],
-    "schema" : {
-      "type" : "string",
-      "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype MachineReading {\n  sensorid: Int\n  temperature: Float\n  event_time: DateTime\n  machineid: Int\n}\n\ntype MachineTempByHour {\n  machineid: Int\n  time_hour: DateTime!\n  avg_temperature: Float\n}\n\ntype Mutation {\n  Sensors(event: [SensorsInput!]!): [SensorsResultOutput!]!\n  _SensorReading(event: [_SensorReadingInput!]!): [_SensorReadingResultOutput!]!\n}\n\ntype Query {\n  MachineReading(limit: Int = 10, offset: Int = 0): [MachineReading!]\n  MachineTempByHour(limit: Int = 10, offset: Int = 0): [MachineTempByHour!]\n  Sensors(limit: Int = 10, offset: Int = 0): [Sensors!]\n}\n\ntype Sensors {\n  sensorid: Int!\n  machineid: Int\n  updatedTime: DateTime\n}\n\ninput SensorsInput {\n  sensorid: Int!\n  machineid: Int\n}\n\ntype SensorsResultOutput {\n  sensorid: Int!\n  machineid: Int\n  updatedTime: DateTime\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ninput _SensorReadingInput {\n  sensorid: Int\n  temperature: Float\n}\n\ntype _SensorReadingResultOutput {\n  event_id: String!\n  sensorid: Int\n  temperature: Float\n  event_time: DateTime\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
     }
   }
 }

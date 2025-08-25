@@ -16,16 +16,26 @@
 package com.datasqrl.graphql;
 
 import com.datasqrl.config.PackageJson;
+import com.datasqrl.config.PackageJson.ScriptApiConfig;
 import com.datasqrl.config.PackageJson.ScriptConfig;
 import com.google.inject.Inject;
+import java.util.List;
+import java.util.Optional;
 import lombok.Getter;
 
+@Getter
 public class ScriptFiles {
 
-  @Getter private final ScriptConfig config;
+  private final ScriptConfig config;
+  private final Optional<String> graphql;
+  private final List<String> operations;
+  private final List<ScriptApiConfig> apiConfigs;
 
   @Inject
   public ScriptFiles(PackageJson rootConfig) {
-    this.config = rootConfig.getScriptConfig();
+    config = rootConfig.getScriptConfig();
+    graphql = config.getGraphql();
+    operations = config.getOperations();
+    apiConfigs = config.getScriptApiConfigs();
   }
 }

@@ -223,67 +223,69 @@ CREATE TABLE IF NOT EXISTS "Schema" ("uuidField" TEXT NOT NULL, "timestampMillis
 
 >>>vertx.json
 {
-  "model" : {
-    "queries" : [
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "Schema",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Schema",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"uuidField\", \"timestampMillisField\", \"nullableTimestampMillisField\", \"timestampMicrosField\", \"nullableTimestampMicrosField\", \"dateField\", \"nullableDateField\", \"timeMillisField\", \"nullableTimeMillisField\", \"timeMicrosField\", \"nullableTimeMicrosField\", \"complexArrayField\", \"nullableComplexArrayField\", \"multiNestedRecord\", \"stringField\", \"nullableStringField\", \"intField\", \"nullableIntField\", \"longField\", \"nullableLongField\", \"floatField\", \"nullableFloatField\", \"doubleField\", \"nullableDoubleField\", \"booleanField\", \"nullableBooleanField\", \"enumField\", \"nullableEnumField\", \"arrayField\", \"nullableArrayField\", \"nestedRecord\", \"nullableNestedRecord\", \"decimalField\", \"mapField\", \"nullableMapField\"\n  FROM \"Schema\"\n  ORDER BY \"uuidField\" DESC NULLS LAST) AS \"t\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM (SELECT \"uuidField\", \"timestampMillisField\", \"nullableTimestampMillisField\", \"timestampMicrosField\", \"nullableTimestampMicrosField\", \"dateField\", \"nullableDateField\", \"timeMillisField\", \"nullableTimeMillisField\", \"timeMicrosField\", \"nullableTimeMicrosField\", \"complexArrayField\", \"nullableComplexArrayField\", \"multiNestedRecord\", \"stringField\", \"nullableStringField\", \"intField\", \"nullableIntField\", \"longField\", \"nullableLongField\", \"floatField\", \"nullableFloatField\", \"doubleField\", \"nullableDoubleField\", \"booleanField\", \"nullableBooleanField\", \"enumField\", \"nullableEnumField\", \"arrayField\", \"nullableArrayField\", \"nestedRecord\", \"nullableNestedRecord\", \"decimalField\", \"mapField\", \"nullableMapField\"\n  FROM \"Schema\"\n  ORDER BY \"uuidField\" DESC NULLS LAST) AS \"t\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
           }
         }
-      }
-    ],
-    "mutations" : [ ],
-    "subscriptions" : [ ],
-    "operations" : [
-      {
-        "function" : {
-          "name" : "GetSchema",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
+      ],
+      "mutations" : [ ],
+      "subscriptions" : [ ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetSchema",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
               },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query Schema($limit: Int = 10, $offset: Int = 0) {\nSchema(limit: $limit, offset: $offset) {\nuuidField\ntimestampMillisField\nnullableTimestampMillisField\ntimestampMicrosField\nnullableTimestampMicrosField\ndateField\nnullableDateField\ntimeMillisField\nnullableTimeMillisField\ntimeMicrosField\nnullableTimeMicrosField\ncomplexArrayField {\nitemFieldOne\nitemFieldTwo\n}\nnullableComplexArrayField {\nnullableItemFieldOne\nnullableItemFieldTwo\n}\nmultiNestedRecord {\nnestedLevelOne {\nlevelOneField\n}\n}\nstringField\nnullableStringField\nintField\nnullableIntField\nlongField\nnullableLongField\nfloatField\nnullableFloatField\ndoubleField\nnullableDoubleField\nbooleanField\nnullableBooleanField\nenumField\nnullableEnumField\narrayField\nnullableArrayField\nnestedRecord {\nnestedStringField\nnestedIntField\nnestedArrayField\nnestedMapField\n}\nnullableNestedRecord {\nnullableNestedStringField\nnullableNestedLongField\n}\ndecimalField\nmapField\nnullableMapField\n}\n\n}",
-          "queryName" : "Schema",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/Schema{?offset,limit}"
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query Schema($limit: Int = 10, $offset: Int = 0) {\nSchema(limit: $limit, offset: $offset) {\nuuidField\ntimestampMillisField\nnullableTimestampMillisField\ntimestampMicrosField\nnullableTimestampMicrosField\ndateField\nnullableDateField\ntimeMillisField\nnullableTimeMillisField\ntimeMicrosField\nnullableTimeMicrosField\ncomplexArrayField {\nitemFieldOne\nitemFieldTwo\n}\nnullableComplexArrayField {\nnullableItemFieldOne\nnullableItemFieldTwo\n}\nmultiNestedRecord {\nnestedLevelOne {\nlevelOneField\n}\n}\nstringField\nnullableStringField\nintField\nnullableIntField\nlongField\nnullableLongField\nfloatField\nnullableFloatField\ndoubleField\nnullableDoubleField\nbooleanField\nnullableBooleanField\nenumField\nnullableEnumField\narrayField\nnullableArrayField\nnestedRecord {\nnestedStringField\nnestedIntField\nnestedArrayField\nnestedMapField\n}\nnullableNestedRecord {\nnullableNestedStringField\nnullableNestedLongField\n}\ndecimalField\nmapField\nnullableMapField\n}\n\n}",
+            "queryName" : "Schema",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Schema{?offset,limit}"
+        }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  Schema(limit: Int = 10, offset: Int = 0): [Schema!]\n}\n\ntype Schema {\n  uuidField: String!\n  timestampMillisField: DateTime!\n  nullableTimestampMillisField: DateTime\n  timestampMicrosField: DateTime!\n  nullableTimestampMicrosField: DateTime\n  dateField: Date!\n  nullableDateField: Date\n  timeMillisField: LocalTime!\n  nullableTimeMillisField: LocalTime\n  timeMicrosField: LocalTime!\n  nullableTimeMicrosField: LocalTime\n  complexArrayField: [Schema_complexArrayFieldOutput]!\n  nullableComplexArrayField: [Schema_nullableComplexArrayFieldOutput]\n  multiNestedRecord: Schema_multiNestedRecordOutput!\n  stringField: String!\n  nullableStringField: String\n  intField: Int!\n  nullableIntField: Int\n  longField: Long!\n  nullableLongField: Long\n  floatField: Float!\n  nullableFloatField: Float\n  doubleField: Float!\n  nullableDoubleField: Float\n  booleanField: Boolean!\n  nullableBooleanField: Boolean\n  enumField: String!\n  nullableEnumField: String\n  arrayField: [String]!\n  nullableArrayField: [Int]\n  nestedRecord: Schema_nestedRecordOutput!\n  nullableNestedRecord: Schema_nullableNestedRecordOutput\n  decimalField: Float!\n  mapField: JSON!\n  nullableMapField: JSON\n}\n\ntype Schema_complexArrayFieldOutput {\n  itemFieldOne: Int!\n  itemFieldTwo: String!\n}\n\ntype Schema_multiNestedRecordOutput {\n  nestedLevelOne: Schema_multiNestedRecord_nestedLevelOneOutput!\n}\n\ntype Schema_multiNestedRecord_nestedLevelOneOutput {\n  levelOneField: String!\n  nestedLevelTwo: Schema_multiNestedRecord_nestedLevelOne_nestedLevelTwoOutput!\n}\n\ntype Schema_multiNestedRecord_nestedLevelOne_nestedLevelTwoOutput {\n  levelTwoField: Int!\n}\n\ntype Schema_nestedRecordOutput {\n  nestedStringField: String!\n  nestedIntField: Int!\n  nestedArrayField: [Float]!\n  nestedMapField: JSON!\n}\n\ntype Schema_nullableComplexArrayFieldOutput {\n  nullableItemFieldOne: Float\n  nullableItemFieldTwo: Boolean\n}\n\ntype Schema_nullableNestedRecordOutput {\n  nullableNestedStringField: String\n  nullableNestedLongField: Long\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
-    ],
-    "schema" : {
-      "type" : "string",
-      "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  Schema(limit: Int = 10, offset: Int = 0): [Schema!]\n}\n\ntype Schema {\n  uuidField: String!\n  timestampMillisField: DateTime!\n  nullableTimestampMillisField: DateTime\n  timestampMicrosField: DateTime!\n  nullableTimestampMicrosField: DateTime\n  dateField: Date!\n  nullableDateField: Date\n  timeMillisField: LocalTime!\n  nullableTimeMillisField: LocalTime\n  timeMicrosField: LocalTime!\n  nullableTimeMicrosField: LocalTime\n  complexArrayField: [Schema_complexArrayFieldOutput]!\n  nullableComplexArrayField: [Schema_nullableComplexArrayFieldOutput]\n  multiNestedRecord: Schema_multiNestedRecordOutput!\n  stringField: String!\n  nullableStringField: String\n  intField: Int!\n  nullableIntField: Int\n  longField: Long!\n  nullableLongField: Long\n  floatField: Float!\n  nullableFloatField: Float\n  doubleField: Float!\n  nullableDoubleField: Float\n  booleanField: Boolean!\n  nullableBooleanField: Boolean\n  enumField: String!\n  nullableEnumField: String\n  arrayField: [String]!\n  nullableArrayField: [Int]\n  nestedRecord: Schema_nestedRecordOutput!\n  nullableNestedRecord: Schema_nullableNestedRecordOutput\n  decimalField: Float!\n  mapField: JSON!\n  nullableMapField: JSON\n}\n\ntype Schema_complexArrayFieldOutput {\n  itemFieldOne: Int!\n  itemFieldTwo: String!\n}\n\ntype Schema_multiNestedRecordOutput {\n  nestedLevelOne: Schema_multiNestedRecord_nestedLevelOneOutput!\n}\n\ntype Schema_multiNestedRecord_nestedLevelOneOutput {\n  levelOneField: String!\n  nestedLevelTwo: Schema_multiNestedRecord_nestedLevelOne_nestedLevelTwoOutput!\n}\n\ntype Schema_multiNestedRecord_nestedLevelOne_nestedLevelTwoOutput {\n  levelTwoField: Int!\n}\n\ntype Schema_nestedRecordOutput {\n  nestedStringField: String!\n  nestedIntField: Int!\n  nestedArrayField: [Float]!\n  nestedMapField: JSON!\n}\n\ntype Schema_nullableComplexArrayFieldOutput {\n  nullableItemFieldOne: Float\n  nullableItemFieldTwo: Boolean\n}\n\ntype Schema_nullableNestedRecordOutput {\n  nullableNestedStringField: String\n  nullableNestedLongField: Long\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
     }
   }
 }

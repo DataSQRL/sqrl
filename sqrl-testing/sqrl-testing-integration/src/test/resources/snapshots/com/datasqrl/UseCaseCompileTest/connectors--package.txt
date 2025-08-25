@@ -292,322 +292,324 @@ CREATE TABLE IF NOT EXISTS "upsert_kafka_confluent_avro" ("user_id" INTEGER NOT 
 
 >>>vertx.json
 {
-  "model" : {
-    "queries" : [
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "iceberg_parquet_table",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "iceberg_parquet_table",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"user_id\", \"name\"\nFROM \"iceberg_parquet_table\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT \"user_id\", \"name\"\nFROM \"iceberg_parquet_table\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "kafka_avro_table",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"user_id\", \"name\"\nFROM \"kafka_avro_table\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "kafka_debezium_table",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"user_id\", \"name\"\nFROM \"kafka_debezium_table\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "kafka_safe_csv_table",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"user_id\", \"name\"\nFROM \"kafka_safe_csv_table\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "kafka_safe_json_table",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"user_id\", \"name\"\nFROM \"kafka_safe_json_table\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "upsert_kafka_confluent_avro",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"upsert_kafka_confluent_avro\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
           }
         }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "kafka_avro_table",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+      ],
+      "mutations" : [ ],
+      "subscriptions" : [ ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "Geticeberg_parquet_table",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT \"user_id\", \"name\"\nFROM \"kafka_avro_table\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "kafka_debezium_table",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query iceberg_parquet_table($limit: Int = 10, $offset: Int = 0) {\niceberg_parquet_table(limit: $limit, offset: $offset) {\nuser_id\nname\n}\n\n}",
+            "queryName" : "iceberg_parquet_table",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/iceberg_parquet_table{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "Getkafka_avro_table",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT \"user_id\", \"name\"\nFROM \"kafka_debezium_table\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "kafka_safe_csv_table",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query kafka_avro_table($limit: Int = 10, $offset: Int = 0) {\nkafka_avro_table(limit: $limit, offset: $offset) {\nuser_id\nname\n}\n\n}",
+            "queryName" : "kafka_avro_table",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/kafka_avro_table{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "Getkafka_debezium_table",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT \"user_id\", \"name\"\nFROM \"kafka_safe_csv_table\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "kafka_safe_json_table",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query kafka_debezium_table($limit: Int = 10, $offset: Int = 0) {\nkafka_debezium_table(limit: $limit, offset: $offset) {\nuser_id\nname\n}\n\n}",
+            "queryName" : "kafka_debezium_table",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/kafka_debezium_table{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "Getkafka_safe_csv_table",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT \"user_id\", \"name\"\nFROM \"kafka_safe_json_table\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "upsert_kafka_confluent_avro",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query kafka_safe_csv_table($limit: Int = 10, $offset: Int = 0) {\nkafka_safe_csv_table(limit: $limit, offset: $offset) {\nuser_id\nname\n}\n\n}",
+            "queryName" : "kafka_safe_csv_table",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/kafka_safe_csv_table{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "Getkafka_safe_json_table",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"upsert_kafka_confluent_avro\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query kafka_safe_json_table($limit: Int = 10, $offset: Int = 0) {\nkafka_safe_json_table(limit: $limit, offset: $offset) {\nuser_id\nname\n}\n\n}",
+            "queryName" : "kafka_safe_json_table",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/kafka_safe_json_table{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "Getupsert_kafka_confluent_avro",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query upsert_kafka_confluent_avro($limit: Int = 10, $offset: Int = 0) {\nupsert_kafka_confluent_avro(limit: $limit, offset: $offset) {\nuser_id\nname\n}\n\n}",
+            "queryName" : "upsert_kafka_confluent_avro",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/upsert_kafka_confluent_avro{?offset,limit}"
         }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  iceberg_parquet_table(limit: Int = 10, offset: Int = 0): [iceberg_parquet_table!]\n  kafka_avro_table(limit: Int = 10, offset: Int = 0): [kafka_avro_table!]\n  kafka_debezium_table(limit: Int = 10, offset: Int = 0): [kafka_debezium_table!]\n  kafka_safe_csv_table(limit: Int = 10, offset: Int = 0): [kafka_safe_csv_table!]\n  kafka_safe_json_table(limit: Int = 10, offset: Int = 0): [kafka_safe_json_table!]\n  upsert_kafka_confluent_avro(limit: Int = 10, offset: Int = 0): [upsert_kafka_confluent_avro!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ntype iceberg_parquet_table {\n  user_id: Int\n  name: String\n}\n\ntype kafka_avro_table {\n  user_id: Int\n  name: String\n}\n\ntype kafka_debezium_table {\n  user_id: Int\n  name: String\n}\n\ntype kafka_safe_csv_table {\n  user_id: Int\n  name: String\n}\n\ntype kafka_safe_json_table {\n  user_id: Int\n  name: String\n}\n\ntype upsert_kafka_confluent_avro {\n  user_id: Int!\n  name: String\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
-    ],
-    "mutations" : [ ],
-    "subscriptions" : [ ],
-    "operations" : [
-      {
-        "function" : {
-          "name" : "Geticeberg_parquet_table",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query iceberg_parquet_table($limit: Int = 10, $offset: Int = 0) {\niceberg_parquet_table(limit: $limit, offset: $offset) {\nuser_id\nname\n}\n\n}",
-          "queryName" : "iceberg_parquet_table",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/iceberg_parquet_table{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "Getkafka_avro_table",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query kafka_avro_table($limit: Int = 10, $offset: Int = 0) {\nkafka_avro_table(limit: $limit, offset: $offset) {\nuser_id\nname\n}\n\n}",
-          "queryName" : "kafka_avro_table",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/kafka_avro_table{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "Getkafka_debezium_table",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query kafka_debezium_table($limit: Int = 10, $offset: Int = 0) {\nkafka_debezium_table(limit: $limit, offset: $offset) {\nuser_id\nname\n}\n\n}",
-          "queryName" : "kafka_debezium_table",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/kafka_debezium_table{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "Getkafka_safe_csv_table",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query kafka_safe_csv_table($limit: Int = 10, $offset: Int = 0) {\nkafka_safe_csv_table(limit: $limit, offset: $offset) {\nuser_id\nname\n}\n\n}",
-          "queryName" : "kafka_safe_csv_table",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/kafka_safe_csv_table{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "Getkafka_safe_json_table",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query kafka_safe_json_table($limit: Int = 10, $offset: Int = 0) {\nkafka_safe_json_table(limit: $limit, offset: $offset) {\nuser_id\nname\n}\n\n}",
-          "queryName" : "kafka_safe_json_table",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/kafka_safe_json_table{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "Getupsert_kafka_confluent_avro",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query upsert_kafka_confluent_avro($limit: Int = 10, $offset: Int = 0) {\nupsert_kafka_confluent_avro(limit: $limit, offset: $offset) {\nuser_id\nname\n}\n\n}",
-          "queryName" : "upsert_kafka_confluent_avro",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/upsert_kafka_confluent_avro{?offset,limit}"
-      }
-    ],
-    "schema" : {
-      "type" : "string",
-      "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  iceberg_parquet_table(limit: Int = 10, offset: Int = 0): [iceberg_parquet_table!]\n  kafka_avro_table(limit: Int = 10, offset: Int = 0): [kafka_avro_table!]\n  kafka_debezium_table(limit: Int = 10, offset: Int = 0): [kafka_debezium_table!]\n  kafka_safe_csv_table(limit: Int = 10, offset: Int = 0): [kafka_safe_csv_table!]\n  kafka_safe_json_table(limit: Int = 10, offset: Int = 0): [kafka_safe_json_table!]\n  upsert_kafka_confluent_avro(limit: Int = 10, offset: Int = 0): [upsert_kafka_confluent_avro!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ntype iceberg_parquet_table {\n  user_id: Int\n  name: String\n}\n\ntype kafka_avro_table {\n  user_id: Int\n  name: String\n}\n\ntype kafka_debezium_table {\n  user_id: Int\n  name: String\n}\n\ntype kafka_safe_csv_table {\n  user_id: Int\n  name: String\n}\n\ntype kafka_safe_json_table {\n  user_id: Int\n  name: String\n}\n\ntype upsert_kafka_confluent_avro {\n  user_id: Int!\n  name: String\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
     }
   }
 }

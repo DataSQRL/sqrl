@@ -241,118 +241,120 @@ INSERT INTO `default_catalog`.`default_database`.`CategoryDistinct_2`
 }
 >>>vertx.json
 {
-  "model" : {
-    "queries" : [
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "Category",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Category",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"categoryid\", \"name\", \"description\", \"updateTime\"\nFROM \"Category_1\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT \"categoryid\", \"name\", \"description\", \"updateTime\"\nFROM \"Category_1\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "CategoryDistinct",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"CategoryDistinct_2\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
           }
         }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "CategoryDistinct",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+      ],
+      "mutations" : [ ],
+      "subscriptions" : [ ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetCategory",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"CategoryDistinct_2\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query Category($limit: Int = 10, $offset: Int = 0) {\nCategory(limit: $limit, offset: $offset) {\ncategoryid\nname\ndescription\nupdateTime\n}\n\n}",
+            "queryName" : "Category",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Category{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetCategoryDistinct",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query CategoryDistinct($limit: Int = 10, $offset: Int = 0) {\nCategoryDistinct(limit: $limit, offset: $offset) {\ncategoryid\nname\ndescription\nupdateTime\n}\n\n}",
+            "queryName" : "CategoryDistinct",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CategoryDistinct{?offset,limit}"
         }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "type Category {\n  categoryid: Int!\n  name: String!\n  description: String\n  updateTime: DateTime!\n}\n\ntype CategoryDistinct {\n  categoryid: Int!\n  name: String!\n  description: String\n  updateTime: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  Category(limit: Int = 10, offset: Int = 0): [Category!]\n  CategoryDistinct(limit: Int = 10, offset: Int = 0): [CategoryDistinct!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
-    ],
-    "mutations" : [ ],
-    "subscriptions" : [ ],
-    "operations" : [
-      {
-        "function" : {
-          "name" : "GetCategory",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query Category($limit: Int = 10, $offset: Int = 0) {\nCategory(limit: $limit, offset: $offset) {\ncategoryid\nname\ndescription\nupdateTime\n}\n\n}",
-          "queryName" : "Category",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/Category{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetCategoryDistinct",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query CategoryDistinct($limit: Int = 10, $offset: Int = 0) {\nCategoryDistinct(limit: $limit, offset: $offset) {\ncategoryid\nname\ndescription\nupdateTime\n}\n\n}",
-          "queryName" : "CategoryDistinct",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/CategoryDistinct{?offset,limit}"
-      }
-    ],
-    "schema" : {
-      "type" : "string",
-      "schema" : "type Category {\n  categoryid: Int!\n  name: String!\n  description: String\n  updateTime: DateTime!\n}\n\ntype CategoryDistinct {\n  categoryid: Int!\n  name: String!\n  description: String\n  updateTime: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  Category(limit: Int = 10, offset: Int = 0): [Category!]\n  CategoryDistinct(limit: Int = 10, offset: Int = 0): [CategoryDistinct!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
     }
   }
 }

@@ -1933,1063 +1933,1065 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
 }
 >>>vertx.json
 {
-  "model" : {
-    "queries" : [
-      {
-        "type" : "args",
-        "parentType" : "Customer",
-        "fieldName" : "related",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Customer_2\"\nWHERE $1 = \"customerid\"\nORDER BY \"timestamp\" NULLS FIRST",
-            "parameters" : [
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Customer",
+          "fieldName" : "related",
+          "exec" : {
+            "arguments" : [
               {
-                "type" : "source",
-                "key" : "customerid"
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
               }
             ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Customer",
-        "fieldName" : "relatedByLength",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "length"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Customer_2\"\nWHERE $1 = \"customerid\"\nORDER BY \"timestamp\" NULLS FIRST",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "key" : "customerid"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Customer_2\"\nWHERE $2 = \"customerid\" AND CHAR_LENGTH(\"email\") >= $1\nORDER BY \"timestamp\" NULLS FIRST",
-            "parameters" : [
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Customer",
+          "fieldName" : "relatedByLength",
+          "exec" : {
+            "arguments" : [
               {
-                "type" : "arg",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
                 "path" : "length"
               },
               {
-                "type" : "source",
-                "key" : "customerid"
+                "type" : "variable",
+                "path" : "limit"
               }
             ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "AnotherCustomer",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Customer_2\"\nWHERE $2 = \"customerid\" AND CHAR_LENGTH(\"email\") >= $1\nORDER BY \"timestamp\" NULLS FIRST",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "length"
+                },
+                {
+                  "type" : "source",
+                  "key" : "customerid"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"AnotherCustomer_1\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
           }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "Customer",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Customer_2\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "CustomerByMultipleTime",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"CustomerByMultipleTime_4\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "CustomerByTime2",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"CustomerByTime2_5\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "CustomerFilteredDistinct",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"CustomerFilteredDistinct_6\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "CustomerTimeWindow",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"CustomerTimeWindow_9\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "ExplicitDistinct",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"ExplicitDistinct_10\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "ExternalOrders",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"ExternalOrders_11\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "InvalidDistinct",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"InvalidDistinct_12\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "MissedTemporalJoin",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"ExternalOrders_11\" AS \"ExternalOrders_110\"\n INNER JOIN \"ExplicitDistinct_10\" AS \"ExplicitDistinct_100\" ON \"ExternalOrders_110\".\"customerid\" = \"ExplicitDistinct_100\".\"customerid\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "Orders",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Orders_13\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "SelectCustomers",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM (SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\"\n  FROM \"SelectCustomers_14\"\n  ORDER BY \"timestamp\" DESC NULLS LAST\n  FETCH NEXT 10 ROWS ONLY) AS \"t\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "TemporalJoin",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"TemporalJoin_15\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "UnnestOrders",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT \"id\", \"customerid\", \"time\", \"productid\", \"quantity\", \"discount\", \"newId\"\nFROM \"UnnestOrders_16\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "CustomerById",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "minId"
-            },
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Customer_2\"\nWHERE \"customerid\" > $1",
-            "parameters" : [
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "AnotherCustomer",
+          "exec" : {
+            "arguments" : [
               {
-                "type" : "arg",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"AnotherCustomer_1\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Customer",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Customer_2\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "CustomerByMultipleTime",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"CustomerByMultipleTime_4\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "CustomerByTime2",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"CustomerByTime2_5\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "CustomerFilteredDistinct",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"CustomerFilteredDistinct_6\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "CustomerTimeWindow",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"CustomerTimeWindow_9\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "ExplicitDistinct",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"ExplicitDistinct_10\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "ExternalOrders",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"ExternalOrders_11\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "InvalidDistinct",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"InvalidDistinct_12\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "MissedTemporalJoin",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"ExternalOrders_11\" AS \"ExternalOrders_110\"\n INNER JOIN \"ExplicitDistinct_10\" AS \"ExplicitDistinct_100\" ON \"ExternalOrders_110\".\"customerid\" = \"ExplicitDistinct_100\".\"customerid\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Orders",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Orders_13\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "SelectCustomers",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\"\n  FROM \"SelectCustomers_14\"\n  ORDER BY \"timestamp\" DESC NULLS LAST\n  FETCH NEXT 10 ROWS ONLY) AS \"t\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "TemporalJoin",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"TemporalJoin_15\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "UnnestOrders",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"id\", \"customerid\", \"time\", \"productid\", \"quantity\", \"discount\", \"newId\"\nFROM \"UnnestOrders_16\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "CustomerById",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
                 "path" : "minId"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
               }
             ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "CustomerQuery",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "id"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Customer_2\"\nWHERE \"customerid\" > $1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "minId"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"AnotherCustomer_1\"\nWHERE \"customerid\" = $1",
-            "parameters" : [
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "CustomerQuery",
+          "exec" : {
+            "arguments" : [
               {
-                "type" : "arg",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
                 "path" : "id"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
               }
             ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 300000,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "TableFunctionCallsTblFct",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "arg2"
-            },
-            {
-              "type" : "variable",
-              "path" : "arg1"
-            },
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"AnotherCustomer_1\"\nWHERE \"customerid\" = $1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "id"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 300000,
+              "database" : "POSTGRES"
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"Customer_2\"\n  WHERE \"customerid\" > $2) AS \"t0\"\nWHERE \"customerid\" > $1",
-            "parameters" : [
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "TableFunctionCallsTblFct",
+          "exec" : {
+            "arguments" : [
               {
-                "type" : "arg",
+                "type" : "variable",
+                "path" : "arg2"
+              },
+              {
+                "type" : "variable",
                 "path" : "arg1"
               },
               {
-                "type" : "arg",
-                "path" : "arg2"
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
               }
             ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"Customer_2\"\n  WHERE \"customerid\" > $2) AS \"t0\"\nWHERE \"customerid\" > $1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "arg1"
+                },
+                {
+                  "type" : "arg",
+                  "path" : "arg2"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
           }
         }
-      }
-    ],
-    "mutations" : [
-      {
-        "type" : "kafka",
-        "fieldName" : "Orders",
-        "returnList" : false,
-        "topic" : "kafka-mutation-Orders",
-        "computedColumns" : { },
-        "transactional" : false,
-        "sinkConfig" : { }
-      }
-    ],
-    "subscriptions" : [
-      {
-        "type" : "kafka",
-        "fieldName" : "CustomerSubscription",
-        "topic" : "kafka-CustomerSubscription",
-        "sinkConfig" : { },
-        "filters" : { }
-      },
-      {
-        "type" : "kafka",
-        "fieldName" : "CustomerSubscriptionById",
-        "topic" : "kafka-Customer",
-        "sinkConfig" : { },
-        "filters" : {
-          "minId" : "customerid"
+      ],
+      "mutations" : [
+        {
+          "type" : "kafka",
+          "fieldName" : "Orders",
+          "returnList" : false,
+          "topic" : "kafka-mutation-Orders",
+          "computedColumns" : { },
+          "transactional" : false,
+          "sinkConfig" : { }
         }
+      ],
+      "subscriptions" : [
+        {
+          "type" : "kafka",
+          "fieldName" : "CustomerSubscription",
+          "topic" : "kafka-CustomerSubscription",
+          "sinkConfig" : { },
+          "filters" : { }
+        },
+        {
+          "type" : "kafka",
+          "fieldName" : "CustomerSubscriptionById",
+          "topic" : "kafka-Customer",
+          "sinkConfig" : { },
+          "filters" : {
+            "minId" : "customerid"
+          }
+        }
+      ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetAnotherCustomer",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query AnotherCustomer($limit: Int = 10, $offset: Int = 0) {\nAnotherCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nlastUpdated\n}\n\n}",
+            "queryName" : "AnotherCustomer",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/AnotherCustomer{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetCustomer",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query Customer($limit: Int = 10, $offset: Int = 0) {\nCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+            "queryName" : "Customer",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Customer{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetCustomerByMultipleTime",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query CustomerByMultipleTime($limit: Int = 10, $offset: Int = 0) {\nCustomerByMultipleTime(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+            "queryName" : "CustomerByMultipleTime",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomerByMultipleTime{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetCustomerByTime2",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query CustomerByTime2($limit: Int = 10, $offset: Int = 0) {\nCustomerByTime2(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+            "queryName" : "CustomerByTime2",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomerByTime2{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetCustomerFilteredDistinct",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query CustomerFilteredDistinct($limit: Int = 10, $offset: Int = 0) {\nCustomerFilteredDistinct(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+            "queryName" : "CustomerFilteredDistinct",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomerFilteredDistinct{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetCustomerTimeWindow",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query CustomerTimeWindow($limit: Int = 10, $offset: Int = 0) {\nCustomerTimeWindow(limit: $limit, offset: $offset) {\nwindow_start\nwindow_end\nunique_email_count\n}\n\n}",
+            "queryName" : "CustomerTimeWindow",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomerTimeWindow{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetExplicitDistinct",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query ExplicitDistinct($limit: Int = 10, $offset: Int = 0) {\nExplicitDistinct(limit: $limit, offset: $offset) {\ncustomerid\ntimestamp\nname\n}\n\n}",
+            "queryName" : "ExplicitDistinct",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/ExplicitDistinct{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetExternalOrders",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query ExternalOrders($limit: Int = 10, $offset: Int = 0) {\nExternalOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
+            "queryName" : "ExternalOrders",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/ExternalOrders{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetInvalidDistinct",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query InvalidDistinct($limit: Int = 10, $offset: Int = 0) {\nInvalidDistinct(limit: $limit, offset: $offset) {\ncustomerid\ntimestamp\nnamee\n}\n\n}",
+            "queryName" : "InvalidDistinct",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/InvalidDistinct{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetMissedTemporalJoin",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query MissedTemporalJoin($limit: Int = 10, $offset: Int = 0) {\nMissedTemporalJoin(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\ncustomerid0\ntimestamp\nname\n}\n\n}",
+            "queryName" : "MissedTemporalJoin",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/MissedTemporalJoin{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetOrders",
+            "description" : "Newly placed orders",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query Orders($limit: Int = 10, $offset: Int = 0) {\nOrders(limit: $limit, offset: $offset) {\norderid\namount\n}\n\n}",
+            "queryName" : "Orders",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Orders{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetSelectCustomers",
+            "description" : "This is for selected customers\n    and their orders",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query SelectCustomers($limit: Int = 10, $offset: Int = 0) {\nSelectCustomers(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+            "queryName" : "SelectCustomers",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/SelectCustomers{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetTemporalJoin",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query TemporalJoin($limit: Int = 10, $offset: Int = 0) {\nTemporalJoin(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\ncustomerid0\ntimestamp\nname\n}\n\n}",
+            "queryName" : "TemporalJoin",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/TemporalJoin{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetUnnestOrders",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query UnnestOrders($limit: Int = 10, $offset: Int = 0) {\nUnnestOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nproductid\nquantity\ndiscount\nnewId\n}\n\n}",
+            "queryName" : "UnnestOrders",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/UnnestOrders{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetCustomerById",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "minId" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "minId"
+              ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query CustomerById($minId: Int!, $limit: Int = 10, $offset: Int = 0) {\nCustomerById(minId: $minId, limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+            "queryName" : "CustomerById",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomerById{?offset,limit,minId}"
+        },
+        {
+          "function" : {
+            "name" : "GetCustomerQuery",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "id" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "id"
+              ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query CustomerQuery($id: Long!, $limit: Int = 10, $offset: Int = 0) {\nCustomerQuery(id: $id, limit: $limit, offset: $offset) {\ncustomerid\nemail\nlastUpdated\n}\n\n}",
+            "queryName" : "CustomerQuery",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomerQuery{?offset,limit,id}"
+        },
+        {
+          "function" : {
+            "name" : "GetTableFunctionCallsTblFct",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "arg2" : {
+                  "type" : "integer"
+                },
+                "offset" : {
+                  "type" : "integer"
+                },
+                "arg1" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "arg1",
+                "arg2"
+              ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query TableFunctionCallsTblFct($arg1: Int!, $arg2: Int!, $limit: Int = 10, $offset: Int = 0) {\nTableFunctionCallsTblFct(arg1: $arg1, arg2: $arg2, limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+            "queryName" : "TableFunctionCallsTblFct",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/TableFunctionCallsTblFct{?arg2,offset,arg1,limit}"
+        },
+        {
+          "function" : {
+            "name" : "AddOrders",
+            "description" : "Newly placed orders",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "amount" : {
+                  "type" : "number"
+                },
+                "orderid" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "orderid"
+              ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "mutation Orders($orderid: Int!, $amount: Float) {\nOrders(event: { orderid: $orderid, amount: $amount }) {\norderid\namount\n}\n\n}",
+            "queryName" : "Orders",
+            "operationType" : "MUTATION"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "POST",
+          "uriTemplate" : "mutations/Orders"
+        }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "type AnotherCustomer {\n  customerid: Long!\n  email: String!\n  lastUpdated: Long!\n}\n\ntype Customer {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n  related(limit: Int = 10, offset: Int = 0): [Customer!]\n  relatedByLength(length: Int!, limit: Int = 10, offset: Int = 0): [Customer!]\n}\n\ntype CustomerByMultipleTime {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\ntype CustomerByTime2 {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\ntype CustomerFilteredDistinct {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\ntype CustomerTimeWindow {\n  window_start: DateTime!\n  window_end: DateTime!\n  unique_email_count: Long!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\ntype ExplicitDistinct {\n  customerid: Long!\n  timestamp: DateTime!\n  name: String!\n}\n\ntype ExternalOrders {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  entries: [ExternalOrders_entriesOutput]!\n}\n\ntype ExternalOrders_entriesOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\ntype InvalidDistinct {\n  customerid: Long!\n  timestamp: DateTime!\n  namee: String!\n}\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype MissedTemporalJoin {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  entries: [MissedTemporalJoin_entriesOutput]!\n  customerid0: Long!\n  timestamp: DateTime!\n  name: String!\n}\n\ntype MissedTemporalJoin_entriesOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Mutation {\n  \"Newly placed orders\"\n  Orders(event: OrdersInput!): OrdersResultOutput!\n}\n\ntype Orders {\n  orderid: Int!\n  amount: Float\n}\n\ninput OrdersInput {\n  orderid: Int!\n  amount: Float\n}\n\ntype OrdersResultOutput {\n  orderid: Int!\n  amount: Float\n}\n\ntype Query {\n  AnotherCustomer(limit: Int = 10, offset: Int = 0): [AnotherCustomer!]\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerByMultipleTime(limit: Int = 10, offset: Int = 0): [CustomerByMultipleTime!]\n  CustomerByTime2(limit: Int = 10, offset: Int = 0): [CustomerByTime2!]\n  CustomerFilteredDistinct(limit: Int = 10, offset: Int = 0): [CustomerFilteredDistinct!]\n  CustomerTimeWindow(limit: Int = 10, offset: Int = 0): [CustomerTimeWindow!]\n  ExplicitDistinct(limit: Int = 10, offset: Int = 0): [ExplicitDistinct!]\n  ExternalOrders(limit: Int = 10, offset: Int = 0): [ExternalOrders!]\n  InvalidDistinct(limit: Int = 10, offset: Int = 0): [InvalidDistinct!]\n  MissedTemporalJoin(limit: Int = 10, offset: Int = 0): [MissedTemporalJoin!]\n  \"Newly placed orders\"\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n  \"\"\"\n  This is for selected customers\n      and their orders\n  \"\"\"\n  SelectCustomers(limit: Int = 10, offset: Int = 0): [Customer!]\n  TemporalJoin(limit: Int = 10, offset: Int = 0): [TemporalJoin!]\n  UnnestOrders(limit: Int = 10, offset: Int = 0): [UnnestOrders!]\n  CustomerById(minId: Int!, limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerQuery(id: Long!, limit: Int = 10, offset: Int = 0): [AnotherCustomer!]\n  TableFunctionCallsTblFct(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]\n}\n\ntype Subscription {\n  CustomerSubscription: Customer\n  CustomerSubscriptionById(minId: Int!): Customer\n}\n\ntype TemporalJoin {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  entries: [TemporalJoin_entriesOutput]!\n  customerid0: Long!\n  timestamp: DateTime!\n  name: String!\n}\n\ntype TemporalJoin_entriesOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\ntype UnnestOrders {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  productid: Long!\n  quantity: Long!\n  discount: Float\n  newId: Long!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
-    ],
-    "operations" : [
-      {
-        "function" : {
-          "name" : "GetAnotherCustomer",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query AnotherCustomer($limit: Int = 10, $offset: Int = 0) {\nAnotherCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nlastUpdated\n}\n\n}",
-          "queryName" : "AnotherCustomer",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/AnotherCustomer{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetCustomer",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query Customer($limit: Int = 10, $offset: Int = 0) {\nCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
-          "queryName" : "Customer",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/Customer{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetCustomerByMultipleTime",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query CustomerByMultipleTime($limit: Int = 10, $offset: Int = 0) {\nCustomerByMultipleTime(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
-          "queryName" : "CustomerByMultipleTime",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/CustomerByMultipleTime{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetCustomerByTime2",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query CustomerByTime2($limit: Int = 10, $offset: Int = 0) {\nCustomerByTime2(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
-          "queryName" : "CustomerByTime2",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/CustomerByTime2{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetCustomerFilteredDistinct",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query CustomerFilteredDistinct($limit: Int = 10, $offset: Int = 0) {\nCustomerFilteredDistinct(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
-          "queryName" : "CustomerFilteredDistinct",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/CustomerFilteredDistinct{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetCustomerTimeWindow",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query CustomerTimeWindow($limit: Int = 10, $offset: Int = 0) {\nCustomerTimeWindow(limit: $limit, offset: $offset) {\nwindow_start\nwindow_end\nunique_email_count\n}\n\n}",
-          "queryName" : "CustomerTimeWindow",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/CustomerTimeWindow{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetExplicitDistinct",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query ExplicitDistinct($limit: Int = 10, $offset: Int = 0) {\nExplicitDistinct(limit: $limit, offset: $offset) {\ncustomerid\ntimestamp\nname\n}\n\n}",
-          "queryName" : "ExplicitDistinct",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/ExplicitDistinct{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetExternalOrders",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query ExternalOrders($limit: Int = 10, $offset: Int = 0) {\nExternalOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
-          "queryName" : "ExternalOrders",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/ExternalOrders{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetInvalidDistinct",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query InvalidDistinct($limit: Int = 10, $offset: Int = 0) {\nInvalidDistinct(limit: $limit, offset: $offset) {\ncustomerid\ntimestamp\nnamee\n}\n\n}",
-          "queryName" : "InvalidDistinct",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/InvalidDistinct{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetMissedTemporalJoin",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query MissedTemporalJoin($limit: Int = 10, $offset: Int = 0) {\nMissedTemporalJoin(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\ncustomerid0\ntimestamp\nname\n}\n\n}",
-          "queryName" : "MissedTemporalJoin",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/MissedTemporalJoin{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetOrders",
-          "description" : "Newly placed orders",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query Orders($limit: Int = 10, $offset: Int = 0) {\nOrders(limit: $limit, offset: $offset) {\norderid\namount\n}\n\n}",
-          "queryName" : "Orders",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/Orders{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetSelectCustomers",
-          "description" : "This is for selected customers\n    and their orders",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query SelectCustomers($limit: Int = 10, $offset: Int = 0) {\nSelectCustomers(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
-          "queryName" : "SelectCustomers",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/SelectCustomers{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetTemporalJoin",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query TemporalJoin($limit: Int = 10, $offset: Int = 0) {\nTemporalJoin(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\ncustomerid0\ntimestamp\nname\n}\n\n}",
-          "queryName" : "TemporalJoin",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/TemporalJoin{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetUnnestOrders",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query UnnestOrders($limit: Int = 10, $offset: Int = 0) {\nUnnestOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nproductid\nquantity\ndiscount\nnewId\n}\n\n}",
-          "queryName" : "UnnestOrders",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/UnnestOrders{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetCustomerById",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              },
-              "minId" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [
-              "minId"
-            ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query CustomerById($minId: Int!, $limit: Int = 10, $offset: Int = 0) {\nCustomerById(minId: $minId, limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
-          "queryName" : "CustomerById",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/CustomerById{?offset,limit,minId}"
-      },
-      {
-        "function" : {
-          "name" : "GetCustomerQuery",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              },
-              "id" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [
-              "id"
-            ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query CustomerQuery($id: Long!, $limit: Int = 10, $offset: Int = 0) {\nCustomerQuery(id: $id, limit: $limit, offset: $offset) {\ncustomerid\nemail\nlastUpdated\n}\n\n}",
-          "queryName" : "CustomerQuery",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/CustomerQuery{?offset,limit,id}"
-      },
-      {
-        "function" : {
-          "name" : "GetTableFunctionCallsTblFct",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "arg2" : {
-                "type" : "integer"
-              },
-              "offset" : {
-                "type" : "integer"
-              },
-              "arg1" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [
-              "arg1",
-              "arg2"
-            ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query TableFunctionCallsTblFct($arg1: Int!, $arg2: Int!, $limit: Int = 10, $offset: Int = 0) {\nTableFunctionCallsTblFct(arg1: $arg1, arg2: $arg2, limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
-          "queryName" : "TableFunctionCallsTblFct",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/TableFunctionCallsTblFct{?arg2,offset,arg1,limit}"
-      },
-      {
-        "function" : {
-          "name" : "AddOrders",
-          "description" : "Newly placed orders",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "amount" : {
-                "type" : "number"
-              },
-              "orderid" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [
-              "orderid"
-            ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "mutation Orders($orderid: Int!, $amount: Float) {\nOrders(event: { orderid: $orderid, amount: $amount }) {\norderid\namount\n}\n\n}",
-          "queryName" : "Orders",
-          "operationType" : "MUTATION"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "POST",
-        "uriTemplate" : "mutations/Orders"
-      }
-    ],
-    "schema" : {
-      "type" : "string",
-      "schema" : "type AnotherCustomer {\n  customerid: Long!\n  email: String!\n  lastUpdated: Long!\n}\n\ntype Customer {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n  related(limit: Int = 10, offset: Int = 0): [Customer!]\n  relatedByLength(length: Int!, limit: Int = 10, offset: Int = 0): [Customer!]\n}\n\ntype CustomerByMultipleTime {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\ntype CustomerByTime2 {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\ntype CustomerFilteredDistinct {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\ntype CustomerTimeWindow {\n  window_start: DateTime!\n  window_end: DateTime!\n  unique_email_count: Long!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\ntype ExplicitDistinct {\n  customerid: Long!\n  timestamp: DateTime!\n  name: String!\n}\n\ntype ExternalOrders {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  entries: [ExternalOrders_entriesOutput]!\n}\n\ntype ExternalOrders_entriesOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\ntype InvalidDistinct {\n  customerid: Long!\n  timestamp: DateTime!\n  namee: String!\n}\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype MissedTemporalJoin {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  entries: [MissedTemporalJoin_entriesOutput]!\n  customerid0: Long!\n  timestamp: DateTime!\n  name: String!\n}\n\ntype MissedTemporalJoin_entriesOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Mutation {\n  \"Newly placed orders\"\n  Orders(event: OrdersInput!): OrdersResultOutput!\n}\n\ntype Orders {\n  orderid: Int!\n  amount: Float\n}\n\ninput OrdersInput {\n  orderid: Int!\n  amount: Float\n}\n\ntype OrdersResultOutput {\n  orderid: Int!\n  amount: Float\n}\n\ntype Query {\n  AnotherCustomer(limit: Int = 10, offset: Int = 0): [AnotherCustomer!]\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerByMultipleTime(limit: Int = 10, offset: Int = 0): [CustomerByMultipleTime!]\n  CustomerByTime2(limit: Int = 10, offset: Int = 0): [CustomerByTime2!]\n  CustomerFilteredDistinct(limit: Int = 10, offset: Int = 0): [CustomerFilteredDistinct!]\n  CustomerTimeWindow(limit: Int = 10, offset: Int = 0): [CustomerTimeWindow!]\n  ExplicitDistinct(limit: Int = 10, offset: Int = 0): [ExplicitDistinct!]\n  ExternalOrders(limit: Int = 10, offset: Int = 0): [ExternalOrders!]\n  InvalidDistinct(limit: Int = 10, offset: Int = 0): [InvalidDistinct!]\n  MissedTemporalJoin(limit: Int = 10, offset: Int = 0): [MissedTemporalJoin!]\n  \"Newly placed orders\"\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n  \"\"\"\n  This is for selected customers\n      and their orders\n  \"\"\"\n  SelectCustomers(limit: Int = 10, offset: Int = 0): [Customer!]\n  TemporalJoin(limit: Int = 10, offset: Int = 0): [TemporalJoin!]\n  UnnestOrders(limit: Int = 10, offset: Int = 0): [UnnestOrders!]\n  CustomerById(minId: Int!, limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerQuery(id: Long!, limit: Int = 10, offset: Int = 0): [AnotherCustomer!]\n  TableFunctionCallsTblFct(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]\n}\n\ntype Subscription {\n  CustomerSubscription: Customer\n  CustomerSubscriptionById(minId: Int!): Customer\n}\n\ntype TemporalJoin {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  entries: [TemporalJoin_entriesOutput]!\n  customerid0: Long!\n  timestamp: DateTime!\n  name: String!\n}\n\ntype TemporalJoin_entriesOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\ntype UnnestOrders {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  productid: Long!\n  quantity: Long!\n  discount: Float\n  newId: Long!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
     }
   }
 }

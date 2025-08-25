@@ -1,0 +1,11 @@
+{
+  "version": "1",
+  "script": {
+    "main": "asd",
+    "graphql": "my-graphqls",
+    "api": {
+      "schema": "my-schema",
+      "operations": ["op1", "op2"]
+    }
+  }
+}

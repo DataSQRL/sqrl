@@ -558,220 +558,222 @@ INSERT INTO `default_catalog`.`default_database`.`DistinctCustomer_2`
 }
 >>>vertx.json
 {
-  "model" : {
-    "queries" : [
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "Customer",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Customer",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Customer_1\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Customer_1\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "DistinctCustomer",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"DistinctCustomer_2\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Orders",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Orders_3\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "TemporalJoin",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"TemporalJoin_4\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
           }
         }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "DistinctCustomer",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+      ],
+      "mutations" : [ ],
+      "subscriptions" : [ ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetCustomer",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"DistinctCustomer_2\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "Orders",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query Customer($limit: Int = 10, $offset: Int = 0) {\nCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+            "queryName" : "Customer",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Customer{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetDistinctCustomer",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Orders_3\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "TemporalJoin",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query DistinctCustomer($limit: Int = 10, $offset: Int = 0) {\nDistinctCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+            "queryName" : "DistinctCustomer",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/DistinctCustomer{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetOrders",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"TemporalJoin_4\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query Orders($limit: Int = 10, $offset: Int = 0) {\nOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
+            "queryName" : "Orders",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Orders{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetTemporalJoin",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query TemporalJoin($limit: Int = 10, $offset: Int = 0) {\nTemporalJoin(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\ncustomerid0\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+            "queryName" : "TemporalJoin",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/TemporalJoin{?offset,limit}"
         }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "type Customer {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\ntype DistinctCustomer {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Orders {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  entries: [Orders_entriesOutput]!\n}\n\ntype Orders_entriesOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  DistinctCustomer(limit: Int = 10, offset: Int = 0): [DistinctCustomer!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n  TemporalJoin(limit: Int = 10, offset: Int = 0): [TemporalJoin!]\n}\n\ntype TemporalJoin {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  entries: [TemporalJoin_entriesOutput]!\n  customerid0: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\ntype TemporalJoin_entriesOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
-    ],
-    "mutations" : [ ],
-    "subscriptions" : [ ],
-    "operations" : [
-      {
-        "function" : {
-          "name" : "GetCustomer",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query Customer($limit: Int = 10, $offset: Int = 0) {\nCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
-          "queryName" : "Customer",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/Customer{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetDistinctCustomer",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query DistinctCustomer($limit: Int = 10, $offset: Int = 0) {\nDistinctCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
-          "queryName" : "DistinctCustomer",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/DistinctCustomer{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetOrders",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query Orders($limit: Int = 10, $offset: Int = 0) {\nOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
-          "queryName" : "Orders",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/Orders{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetTemporalJoin",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query TemporalJoin($limit: Int = 10, $offset: Int = 0) {\nTemporalJoin(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\ncustomerid0\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
-          "queryName" : "TemporalJoin",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/TemporalJoin{?offset,limit}"
-      }
-    ],
-    "schema" : {
-      "type" : "string",
-      "schema" : "type Customer {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\ntype DistinctCustomer {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Orders {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  entries: [Orders_entriesOutput]!\n}\n\ntype Orders_entriesOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  DistinctCustomer(limit: Int = 10, offset: Int = 0): [DistinctCustomer!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n  TemporalJoin(limit: Int = 10, offset: Int = 0): [TemporalJoin!]\n}\n\ntype TemporalJoin {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  entries: [TemporalJoin_entriesOutput]!\n  customerid0: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\ntype TemporalJoin_entriesOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
     }
   }
 }

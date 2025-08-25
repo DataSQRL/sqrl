@@ -167,7 +167,7 @@ class GraphQLJwtHandlerIT {
     // Create the GraphQL server verticle directly (similar to McpBridgeVerticle)
     var jwtAuth =
         Optional.of(io.vertx.ext.auth.jwt.JWTAuth.create(vertx, serverConfig.getJwtAuth()));
-    graphQLServerVerticle = new GraphQLServerVerticle(router, serverConfig, model, jwtAuth);
+    graphQLServerVerticle = new GraphQLServerVerticle(router, serverConfig, "v1", model, jwtAuth);
 
     vertx
         .deployVerticle(graphQLServerVerticle)
@@ -246,7 +246,7 @@ class GraphQLJwtHandlerIT {
         new WebSocketConnectOptions()
             .setPort(SERVER_PORT)
             .setHost("localhost")
-            .setURI("/graphql")
+            .setURI("/v1/graphql")
             .putHeader("Authorization", "Bearer badToken");
 
     var client = vertx.createWebSocketClient();
@@ -335,7 +335,7 @@ class GraphQLJwtHandlerIT {
     var query = new JsonObject().put("query", "query { mock }");
     var webClient = WebClient.create(vertx);
     webClient
-        .post(SERVER_PORT, "localhost", "/graphql")
+        .post(SERVER_PORT, "localhost", "/v1/graphql")
         .putHeader("Authorization", "Bearer " + token)
         .putHeader("Content-Type", "application/json")
         .sendJson(query)

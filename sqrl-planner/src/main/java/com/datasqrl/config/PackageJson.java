@@ -99,6 +99,8 @@ public interface PackageJson {
 
     Optional<String> getMainScript();
 
+    List<ScriptApiConfig> getScriptApiConfigs();
+
     Optional<String> getGraphql();
 
     List<String> getOperations();
@@ -106,6 +108,15 @@ public interface PackageJson {
     void setMainScript(String script);
 
     void setGraphql(String graphql);
+  }
+
+  interface ScriptApiConfig {
+
+    String getVersion();
+
+    String getSchema();
+
+    List<String> getOperations();
   }
 
   interface EnginesConfig {

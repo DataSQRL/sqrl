@@ -744,322 +744,324 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerCumulate_2`
 }
 >>>vertx.json
 {
-  "model" : {
-    "queries" : [
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "Customer",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Customer",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Customer_1\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Customer_1\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "CustomerCumulate",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"CustomerCumulate_2\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "CustomerHop",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"CustomerHop_3\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "CustomerSession",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"CustomerSession_4\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "CustomerTumble",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"CustomerTumble_5\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "StreamJoin",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"StreamJoin_6\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
           }
         }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "CustomerCumulate",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+      ],
+      "mutations" : [ ],
+      "subscriptions" : [ ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetCustomer",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"CustomerCumulate_2\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "CustomerHop",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query Customer($limit: Int = 10, $offset: Int = 0) {\nCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+            "queryName" : "Customer",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Customer{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetCustomerCumulate",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"CustomerHop_3\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "CustomerSession",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query CustomerCumulate($limit: Int = 10, $offset: Int = 0) {\nCustomerCumulate(limit: $limit, offset: $offset) {\nwindow_start\nwindow_end\ntotal\n}\n\n}",
+            "queryName" : "CustomerCumulate",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomerCumulate{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetCustomerHop",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"CustomerSession_4\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "CustomerTumble",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query CustomerHop($limit: Int = 10, $offset: Int = 0) {\nCustomerHop(limit: $limit, offset: $offset) {\nwindow_start\nwindow_end\nwindow_time\ntotal\n}\n\n}",
+            "queryName" : "CustomerHop",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomerHop{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetCustomerSession",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"CustomerTumble_5\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "StreamJoin",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query CustomerSession($limit: Int = 10, $offset: Int = 0) {\nCustomerSession(limit: $limit, offset: $offset) {\ncustomerid\nwindow_start\nwindow_end\nwindow_time\ntotal\n}\n\n}",
+            "queryName" : "CustomerSession",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomerSession{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetCustomerTumble",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"StreamJoin_6\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query CustomerTumble($limit: Int = 10, $offset: Int = 0) {\nCustomerTumble(limit: $limit, offset: $offset) {\nwindow_start\nwindow_end\ntotal\n}\n\n}",
+            "queryName" : "CustomerTumble",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomerTumble{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetStreamJoin",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query StreamJoin($limit: Int = 10, $offset: Int = 0) {\nStreamJoin(limit: $limit, offset: $offset) {\nwindow_start\nwindow_end\nwindow_time\ntotal\ncustomerid\nwindow_start0\nwindow_end0\nwindow_time0\ntotal0\n}\n\n}",
+            "queryName" : "StreamJoin",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/StreamJoin{?offset,limit}"
         }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "type Customer {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\ntype CustomerCumulate {\n  window_start: DateTime!\n  window_end: DateTime!\n  total: Long!\n}\n\ntype CustomerHop {\n  window_start: DateTime!\n  window_end: DateTime!\n  window_time: DateTime!\n  total: Long!\n}\n\ntype CustomerSession {\n  customerid: Long!\n  window_start: DateTime!\n  window_end: DateTime!\n  window_time: DateTime!\n  total: Long!\n}\n\ntype CustomerTumble {\n  window_start: DateTime!\n  window_end: DateTime!\n  total: Long!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerCumulate(limit: Int = 10, offset: Int = 0): [CustomerCumulate!]\n  CustomerHop(limit: Int = 10, offset: Int = 0): [CustomerHop!]\n  CustomerSession(limit: Int = 10, offset: Int = 0): [CustomerSession!]\n  CustomerTumble(limit: Int = 10, offset: Int = 0): [CustomerTumble!]\n  StreamJoin(limit: Int = 10, offset: Int = 0): [StreamJoin!]\n}\n\ntype StreamJoin {\n  window_start: DateTime!\n  window_end: DateTime!\n  window_time: DateTime!\n  total: Long!\n  customerid: Long!\n  window_start0: DateTime!\n  window_end0: DateTime!\n  window_time0: DateTime!\n  total0: Long!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
-    ],
-    "mutations" : [ ],
-    "subscriptions" : [ ],
-    "operations" : [
-      {
-        "function" : {
-          "name" : "GetCustomer",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query Customer($limit: Int = 10, $offset: Int = 0) {\nCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
-          "queryName" : "Customer",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/Customer{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetCustomerCumulate",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query CustomerCumulate($limit: Int = 10, $offset: Int = 0) {\nCustomerCumulate(limit: $limit, offset: $offset) {\nwindow_start\nwindow_end\ntotal\n}\n\n}",
-          "queryName" : "CustomerCumulate",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/CustomerCumulate{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetCustomerHop",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query CustomerHop($limit: Int = 10, $offset: Int = 0) {\nCustomerHop(limit: $limit, offset: $offset) {\nwindow_start\nwindow_end\nwindow_time\ntotal\n}\n\n}",
-          "queryName" : "CustomerHop",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/CustomerHop{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetCustomerSession",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query CustomerSession($limit: Int = 10, $offset: Int = 0) {\nCustomerSession(limit: $limit, offset: $offset) {\ncustomerid\nwindow_start\nwindow_end\nwindow_time\ntotal\n}\n\n}",
-          "queryName" : "CustomerSession",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/CustomerSession{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetCustomerTumble",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query CustomerTumble($limit: Int = 10, $offset: Int = 0) {\nCustomerTumble(limit: $limit, offset: $offset) {\nwindow_start\nwindow_end\ntotal\n}\n\n}",
-          "queryName" : "CustomerTumble",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/CustomerTumble{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetStreamJoin",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query StreamJoin($limit: Int = 10, $offset: Int = 0) {\nStreamJoin(limit: $limit, offset: $offset) {\nwindow_start\nwindow_end\nwindow_time\ntotal\ncustomerid\nwindow_start0\nwindow_end0\nwindow_time0\ntotal0\n}\n\n}",
-          "queryName" : "StreamJoin",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/StreamJoin{?offset,limit}"
-      }
-    ],
-    "schema" : {
-      "type" : "string",
-      "schema" : "type Customer {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\ntype CustomerCumulate {\n  window_start: DateTime!\n  window_end: DateTime!\n  total: Long!\n}\n\ntype CustomerHop {\n  window_start: DateTime!\n  window_end: DateTime!\n  window_time: DateTime!\n  total: Long!\n}\n\ntype CustomerSession {\n  customerid: Long!\n  window_start: DateTime!\n  window_end: DateTime!\n  window_time: DateTime!\n  total: Long!\n}\n\ntype CustomerTumble {\n  window_start: DateTime!\n  window_end: DateTime!\n  total: Long!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerCumulate(limit: Int = 10, offset: Int = 0): [CustomerCumulate!]\n  CustomerHop(limit: Int = 10, offset: Int = 0): [CustomerHop!]\n  CustomerSession(limit: Int = 10, offset: Int = 0): [CustomerSession!]\n  CustomerTumble(limit: Int = 10, offset: Int = 0): [CustomerTumble!]\n  StreamJoin(limit: Int = 10, offset: Int = 0): [StreamJoin!]\n}\n\ntype StreamJoin {\n  window_start: DateTime!\n  window_end: DateTime!\n  window_time: DateTime!\n  total: Long!\n  customerid: Long!\n  window_start0: DateTime!\n  window_end0: DateTime!\n  window_time0: DateTime!\n  total0: Long!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
     }
   }
 }

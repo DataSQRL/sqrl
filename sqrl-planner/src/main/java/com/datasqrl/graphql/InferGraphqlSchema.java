@@ -23,7 +23,6 @@ import com.google.inject.Inject;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphqlTypeComparatorRegistry;
 import graphql.schema.idl.SchemaPrinter;
-import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 
@@ -35,19 +34,19 @@ public class InferGraphqlSchema {
   private final GraphqlSchemaFactory graphqlSchemaFactory;
 
   @SneakyThrows
-  public Optional<String> inferGraphQLSchema(ServerPhysicalPlan serverPlan) {
-    Optional<GraphQLSchema> gqlSchema = graphqlSchemaFactory.generate(serverPlan);
+  public String inferGraphQLSchema(ServerPhysicalPlan serverPlan) {
+    GraphQLSchema gqlSchema = graphqlSchemaFactory.generate(serverPlan);
 
     SchemaPrinter.Options opts =
         SchemaPrinter.Options.defaultOptions()
             .setComparators(GraphqlTypeComparatorRegistry.AS_IS_REGISTRY)
             .includeDirectives(directiveName -> directiveName.equalsIgnoreCase(API_DIRECTIVE_NAME));
 
-    return gqlSchema.map(schema -> new SchemaPrinter(opts).print(schema));
+    return new SchemaPrinter(opts).print(gqlSchema);
   }
 
   // Validates the schema
-  public void validateSchema(APISource apiSource, ServerPhysicalPlan serverPlan) {
+  public void validateSchema(ApiSource apiSource, ServerPhysicalPlan serverPlan) {
     var schemaValidator =
         new GraphqlSchemaValidator(
             serverPlan.getFunctions(),

@@ -315,311 +315,313 @@ CREATE INDEX IF NOT EXISTS "Submission_btree_c0c3" ON "Submission" USING btree (
 
 >>>vertx.json
 {
-  "model" : {
-    "queries" : [
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "Package",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "name"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Package\"\nWHERE \"name\" = $1 OR $1 IS NULL",
-            "parameters" : [
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Package",
+          "exec" : {
+            "arguments" : [
               {
-                "type" : "arg",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
                 "path" : "name"
-              }
-            ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Package",
-        "fieldName" : "latest",
-        "exec" : {
-          "arguments" : [ ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM (SELECT \"name\", \"version\", \"variant\", \"latest\", \"type\", \"license\", \"repository\", \"homepage\", \"documentation\", \"readme\", \"description\", \"keywords\", \"uniqueId\", \"file\", \"hash\", \"authorId\", \"submissionTime\", \"event_time\", \"variant0\", \"repoURL\"\n  FROM \"Submission\") AS \"t\"\nWHERE $1 = \"name\" AND \"latest\" = TRUE\nORDER BY \"submissionTime\" DESC NULLS LAST\nFETCH NEXT 1 ROWS ONLY",
-            "parameters" : [
+              },
               {
-                "type" : "source",
-                "key" : "name"
+                "type" : "variable",
+                "path" : "limit"
               }
             ],
-            "pagination" : "NONE",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Package",
-        "fieldName" : "versions",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "version"
-            },
-            {
-              "type" : "variable",
-              "path" : "variant"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Package\"\nWHERE \"name\" = $1 OR $1 IS NULL",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "name"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM (SELECT \"name\", \"version\", \"variant\", \"latest\", \"type\", \"license\", \"repository\", \"homepage\", \"documentation\", \"readme\", \"description\", \"keywords\", \"uniqueId\", \"file\", \"hash\", \"authorId\", \"submissionTime\", \"event_time\", \"variant0\", \"repoURL\"\n  FROM \"Submission\") AS \"t\"\nWHERE $3 = \"name\" AND ($1 IS NULL OR $1 = \"version\") AND ($2 IS NULL OR $2 = \"variant\")\nORDER BY \"submissionTime\" DESC NULLS LAST",
-            "parameters" : [
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Package",
+          "fieldName" : "latest",
+          "exec" : {
+            "arguments" : [ ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"name\", \"version\", \"variant\", \"latest\", \"type\", \"license\", \"repository\", \"homepage\", \"documentation\", \"readme\", \"description\", \"keywords\", \"uniqueId\", \"file\", \"hash\", \"authorId\", \"submissionTime\", \"event_time\", \"variant0\", \"repoURL\"\n  FROM \"Submission\") AS \"t\"\nWHERE $1 = \"name\" AND \"latest\" = TRUE\nORDER BY \"submissionTime\" DESC NULLS LAST\nFETCH NEXT 1 ROWS ONLY",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "key" : "name"
+                }
+              ],
+              "pagination" : "NONE",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Package",
+          "fieldName" : "versions",
+          "exec" : {
+            "arguments" : [
               {
-                "type" : "arg",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
                 "path" : "version"
               },
               {
-                "type" : "arg",
+                "type" : "variable",
                 "path" : "variant"
               },
               {
-                "type" : "source",
-                "key" : "name"
+                "type" : "variable",
+                "path" : "limit"
               }
             ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "TopicSearch",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "topicName"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"name\", \"version\", \"variant\", \"latest\", \"type\", \"license\", \"repository\", \"homepage\", \"documentation\", \"readme\", \"description\", \"keywords\", \"uniqueId\", \"file\", \"hash\", \"authorId\", \"submissionTime\", \"event_time\", \"variant0\", \"repoURL\"\n  FROM \"Submission\") AS \"t\"\nWHERE $3 = \"name\" AND ($1 IS NULL OR $1 = \"version\") AND ($2 IS NULL OR $2 = \"variant\")\nORDER BY \"submissionTime\" DESC NULLS LAST",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "version"
+                },
+                {
+                  "type" : "arg",
+                  "path" : "variant"
+                },
+                {
+                  "type" : "source",
+                  "key" : "name"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM (SELECT \"topicName\", \"numPackages\"\n  FROM \"TopicSearch\"\n  ORDER BY \"numPackages\" DESC NULLS LAST, \"topicName\" NULLS FIRST) AS \"t\"\nWHERE \"topicName\" = $1 OR $1 IS NULL",
-            "parameters" : [
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "TopicSearch",
+          "exec" : {
+            "arguments" : [
               {
-                "type" : "arg",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
                 "path" : "topicName"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
               }
             ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "TopicPackages",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "topicName"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"topicName\", \"numPackages\"\n  FROM \"TopicSearch\"\n  ORDER BY \"numPackages\" DESC NULLS LAST, \"topicName\" NULLS FIRST) AS \"t\"\nWHERE \"topicName\" = $1 OR $1 IS NULL",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "topicName"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM (SELECT \"pkgName\", \"topicName\", \"numSubmissions\", \"lastSubmission\"\n  FROM \"TopicPackages\"\n  ORDER BY \"numSubmissions\" DESC NULLS LAST, \"pkgName\" NULLS FIRST) AS \"t\"\nWHERE \"topicName\" = $1",
-            "parameters" : [
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "TopicPackages",
+          "exec" : {
+            "arguments" : [
               {
-                "type" : "arg",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
                 "path" : "topicName"
-              }
-            ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "TopicPackages",
-        "fieldName" : "latest",
-        "exec" : {
-          "arguments" : [ ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM (SELECT \"name\", \"version\", \"variant\", \"latest\", \"type\", \"license\", \"repository\", \"homepage\", \"documentation\", \"readme\", \"description\", \"keywords\", \"uniqueId\", \"file\", \"hash\", \"authorId\", \"submissionTime\", \"event_time\", \"variant0\", \"repoURL\"\n  FROM \"Submission\") AS \"t\"\nWHERE $1 = \"name\" AND \"latest\" = TRUE\nORDER BY \"submissionTime\" DESC NULLS LAST\nFETCH NEXT 1 ROWS ONLY",
-            "parameters" : [
+              },
               {
-                "type" : "source",
-                "key" : "pkgName"
+                "type" : "variable",
+                "path" : "limit"
               }
             ],
-            "pagination" : "NONE",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"pkgName\", \"topicName\", \"numSubmissions\", \"lastSubmission\"\n  FROM \"TopicPackages\"\n  ORDER BY \"numSubmissions\" DESC NULLS LAST, \"pkgName\" NULLS FIRST) AS \"t\"\nWHERE \"topicName\" = $1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "topicName"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "TopicPackages",
+          "fieldName" : "latest",
+          "exec" : {
+            "arguments" : [ ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"name\", \"version\", \"variant\", \"latest\", \"type\", \"license\", \"repository\", \"homepage\", \"documentation\", \"readme\", \"description\", \"keywords\", \"uniqueId\", \"file\", \"hash\", \"authorId\", \"submissionTime\", \"event_time\", \"variant0\", \"repoURL\"\n  FROM \"Submission\") AS \"t\"\nWHERE $1 = \"name\" AND \"latest\" = TRUE\nORDER BY \"submissionTime\" DESC NULLS LAST\nFETCH NEXT 1 ROWS ONLY",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "key" : "pkgName"
+                }
+              ],
+              "pagination" : "NONE",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
           }
         }
+      ],
+      "mutations" : [ ],
+      "subscriptions" : [ ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetPackage",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "versions_version" : {
+                  "type" : "string"
+                },
+                "versions_offset" : {
+                  "type" : "integer"
+                },
+                "offset" : {
+                  "type" : "integer"
+                },
+                "name" : {
+                  "type" : "string"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "versions_limit" : {
+                  "type" : "integer"
+                },
+                "versions_variant" : {
+                  "type" : "string"
+                }
+              },
+              "required" : [
+                "name",
+                "versions_version",
+                "versions_variant"
+              ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query Package($name: String!, $limit: Int = 10, $offset: Int = 0$versions_version: String!, $versions_variant: String!, $versions_limit: Int = 10, $versions_offset: Int = 0) {\nPackage(name: $name, limit: $limit, offset: $offset) {\nname\nlatest {\nname\nversion\nvariant\nlatest\ntype\nlicense\nrepository\nhomepage\ndocumentation\nreadme\ndescription\nuniqueId\nkeywords\nrepoURL\nfile\nhash\nsubmissionTime\n}\nversions(version: $versions_version, variant: $versions_variant, limit: $versions_limit, offset: $versions_offset) {\nname\nversion\nvariant\nlatest\ntype\nlicense\nrepository\nhomepage\ndocumentation\nreadme\ndescription\nuniqueId\nkeywords\nrepoURL\nfile\nhash\nsubmissionTime\n}\n}\n\n}",
+            "queryName" : "Package",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Package{?versions_version,versions_offset,offset,name,limit,versions_limit,versions_variant}"
+        },
+        {
+          "function" : {
+            "name" : "GetTopicSearch",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "topicName" : {
+                  "type" : "string"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query TopicSearch($topicName: String, $limit: Int = 10, $offset: Int = 0) {\nTopicSearch(topicName: $topicName, limit: $limit, offset: $offset) {\ntopicName\nnumPackages\n}\n\n}",
+            "queryName" : "TopicSearch",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/TopicSearch{?offset,limit,topicName}"
+        },
+        {
+          "function" : {
+            "name" : "GetTopicPackages",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "topicName" : {
+                  "type" : "string"
+                }
+              },
+              "required" : [
+                "topicName"
+              ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query TopicPackages($topicName: String!, $limit: Int = 10, $offset: Int = 0) {\nTopicPackages(topicName: $topicName, limit: $limit, offset: $offset) {\ntopicName\npkgName\nlastSubmission\nnumSubmissions\nlatest {\nname\nversion\nvariant\nlatest\ntype\nlicense\nrepository\nhomepage\ndocumentation\nreadme\ndescription\nuniqueId\nkeywords\nrepoURL\nfile\nhash\nsubmissionTime\n}\n}\n\n}",
+            "queryName" : "TopicPackages",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/TopicPackages{?offset,limit,topicName}"
+        }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "type Package {\n  name: String!\n  latest: Submission\n  versions(version: String!, variant: String!, limit: Int = 10, offset: Int = 0): [Submission!]\n}\n\ntype Query {\n  Package(name: String!, limit: Int = 10, offset: Int = 0): [Package!]\n  TopicSearch(topicName: String, limit: Int = 10, offset: Int = 0): [TopicSearch!]\n  TopicPackages(topicName: String!, limit: Int = 10, offset: Int = 0): [TopicPackages!]\n}\n\ntype Submission {\n  name: String!\n  version: String!\n  variant: String!\n  latest: Boolean!\n  type: String\n  license: String\n  repository: String\n  homepage: String\n  documentation: String\n  readme: String\n  description: String\n  uniqueId: String!\n  keywords: [String!]\n  repoURL: String!\n  file: String!\n  hash: String!\n  submissionTime: String!\n}\n\ntype TopicSearch {\n  topicName: String!\n  numPackages: Int!\n}\n\ntype TopicPackages {\n  topicName: String!\n  pkgName: String!\n  lastSubmission: String!\n  numSubmissions: Int!\n  latest: Submission\n}"
       }
-    ],
-    "mutations" : [ ],
-    "subscriptions" : [ ],
-    "operations" : [
-      {
-        "function" : {
-          "name" : "GetPackage",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "versions_version" : {
-                "type" : "string"
-              },
-              "versions_offset" : {
-                "type" : "integer"
-              },
-              "offset" : {
-                "type" : "integer"
-              },
-              "name" : {
-                "type" : "string"
-              },
-              "limit" : {
-                "type" : "integer"
-              },
-              "versions_limit" : {
-                "type" : "integer"
-              },
-              "versions_variant" : {
-                "type" : "string"
-              }
-            },
-            "required" : [
-              "name",
-              "versions_version",
-              "versions_variant"
-            ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query Package($name: String!, $limit: Int = 10, $offset: Int = 0$versions_version: String!, $versions_variant: String!, $versions_limit: Int = 10, $versions_offset: Int = 0) {\nPackage(name: $name, limit: $limit, offset: $offset) {\nname\nlatest {\nname\nversion\nvariant\nlatest\ntype\nlicense\nrepository\nhomepage\ndocumentation\nreadme\ndescription\nuniqueId\nkeywords\nrepoURL\nfile\nhash\nsubmissionTime\n}\nversions(version: $versions_version, variant: $versions_variant, limit: $versions_limit, offset: $versions_offset) {\nname\nversion\nvariant\nlatest\ntype\nlicense\nrepository\nhomepage\ndocumentation\nreadme\ndescription\nuniqueId\nkeywords\nrepoURL\nfile\nhash\nsubmissionTime\n}\n}\n\n}",
-          "queryName" : "Package",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/Package{?versions_version,versions_offset,offset,name,limit,versions_limit,versions_variant}"
-      },
-      {
-        "function" : {
-          "name" : "GetTopicSearch",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              },
-              "topicName" : {
-                "type" : "string"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query TopicSearch($topicName: String, $limit: Int = 10, $offset: Int = 0) {\nTopicSearch(topicName: $topicName, limit: $limit, offset: $offset) {\ntopicName\nnumPackages\n}\n\n}",
-          "queryName" : "TopicSearch",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/TopicSearch{?offset,limit,topicName}"
-      },
-      {
-        "function" : {
-          "name" : "GetTopicPackages",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              },
-              "topicName" : {
-                "type" : "string"
-              }
-            },
-            "required" : [
-              "topicName"
-            ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query TopicPackages($topicName: String!, $limit: Int = 10, $offset: Int = 0) {\nTopicPackages(topicName: $topicName, limit: $limit, offset: $offset) {\ntopicName\npkgName\nlastSubmission\nnumSubmissions\nlatest {\nname\nversion\nvariant\nlatest\ntype\nlicense\nrepository\nhomepage\ndocumentation\nreadme\ndescription\nuniqueId\nkeywords\nrepoURL\nfile\nhash\nsubmissionTime\n}\n}\n\n}",
-          "queryName" : "TopicPackages",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/TopicPackages{?offset,limit,topicName}"
-      }
-    ],
-    "schema" : {
-      "type" : "string",
-      "schema" : "type Package {\n  name: String!\n  latest: Submission\n  versions(version: String!, variant: String!, limit: Int = 10, offset: Int = 0): [Submission!]\n}\n\ntype Query {\n  Package(name: String!, limit: Int = 10, offset: Int = 0): [Package!]\n  TopicSearch(topicName: String, limit: Int = 10, offset: Int = 0): [TopicSearch!]\n  TopicPackages(topicName: String!, limit: Int = 10, offset: Int = 0): [TopicPackages!]\n}\n\ntype Submission {\n  name: String!\n  version: String!\n  variant: String!\n  latest: Boolean!\n  type: String\n  license: String\n  repository: String\n  homepage: String\n  documentation: String\n  readme: String\n  description: String\n  uniqueId: String!\n  keywords: [String!]\n  repoURL: String!\n  file: String!\n  hash: String!\n  submissionTime: String!\n}\n\ntype TopicSearch {\n  topicName: String!\n  numPackages: Int!\n}\n\ntype TopicPackages {\n  topicName: String!\n  pkgName: String!\n  lastSubmission: String!\n  numSubmissions: Int!\n  latest: Submission\n}"
     }
   }
 }

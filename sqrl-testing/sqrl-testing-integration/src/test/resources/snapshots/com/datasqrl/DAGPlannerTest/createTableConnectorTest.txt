@@ -248,118 +248,120 @@ INSERT INTO `default_catalog`.`default_database`.`SensorTempByHour_2`
 }
 >>>vertx.json
 {
-  "model" : {
-    "queries" : [
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "SensorReading",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "SensorReading",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"uuid\", \"sensorid\", \"epoch_timestamp\", \"temperature\", \"timestamp\"\nFROM \"SensorReading_1\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT \"uuid\", \"sensorid\", \"epoch_timestamp\", \"temperature\", \"timestamp\"\nFROM \"SensorReading_1\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "SensorTempByHour",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"SensorTempByHour_2\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
           }
         }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "SensorTempByHour",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+      ],
+      "mutations" : [ ],
+      "subscriptions" : [ ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetSensorReading",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"SensorTempByHour_2\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query SensorReading($limit: Int = 10, $offset: Int = 0) {\nSensorReading(limit: $limit, offset: $offset) {\nuuid\nsensorid\nepoch_timestamp\ntemperature\ntimestamp\n}\n\n}",
+            "queryName" : "SensorReading",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/SensorReading{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetSensorTempByHour",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query SensorTempByHour($limit: Int = 10, $offset: Int = 0) {\nSensorTempByHour(limit: $limit, offset: $offset) {\nsensorid\ntime_hour\navg_temperature\n}\n\n}",
+            "queryName" : "SensorTempByHour",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/SensorTempByHour{?offset,limit}"
         }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  SensorReading(limit: Int = 10, offset: Int = 0): [SensorReading!]\n  SensorTempByHour(limit: Int = 10, offset: Int = 0): [SensorTempByHour!]\n}\n\ntype SensorReading {\n  uuid: String!\n  sensorid: Long!\n  epoch_timestamp: Long!\n  temperature: Float!\n  timestamp: DateTime!\n}\n\ntype SensorTempByHour {\n  sensorid: Long!\n  time_hour: DateTime!\n  avg_temperature: Float!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
-    ],
-    "mutations" : [ ],
-    "subscriptions" : [ ],
-    "operations" : [
-      {
-        "function" : {
-          "name" : "GetSensorReading",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query SensorReading($limit: Int = 10, $offset: Int = 0) {\nSensorReading(limit: $limit, offset: $offset) {\nuuid\nsensorid\nepoch_timestamp\ntemperature\ntimestamp\n}\n\n}",
-          "queryName" : "SensorReading",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/SensorReading{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetSensorTempByHour",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query SensorTempByHour($limit: Int = 10, $offset: Int = 0) {\nSensorTempByHour(limit: $limit, offset: $offset) {\nsensorid\ntime_hour\navg_temperature\n}\n\n}",
-          "queryName" : "SensorTempByHour",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/SensorTempByHour{?offset,limit}"
-      }
-    ],
-    "schema" : {
-      "type" : "string",
-      "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  SensorReading(limit: Int = 10, offset: Int = 0): [SensorReading!]\n  SensorTempByHour(limit: Int = 10, offset: Int = 0): [SensorTempByHour!]\n}\n\ntype SensorReading {\n  uuid: String!\n  sensorid: Long!\n  epoch_timestamp: Long!\n  temperature: Float!\n  timestamp: DateTime!\n}\n\ntype SensorTempByHour {\n  sensorid: Long!\n  time_hour: DateTime!\n  avg_temperature: Float!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
     }
   }
 }

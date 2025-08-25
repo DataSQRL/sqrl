@@ -46,7 +46,7 @@ public class GenerateServerModel {
    * @return
    */
   public RootGraphqlModel generateGraphQLModel(
-      APISource graphqlSchema, ServerPhysicalPlan serverPlan, List<APISource> operationFiles) {
+      ApiSource graphqlSchema, ServerPhysicalPlan serverPlan, List<ApiSource> operationFiles) {
     var graphqlModelGenerator =
         new GraphqlModelGenerator(
             serverPlan.getFunctions(), serverPlan.getMutations(), errorCollector);
@@ -64,7 +64,7 @@ public class GenerateServerModel {
         errorCollector.withScript(graphqlSchema.getPath(), graphqlSchema.getDefinition());
     List<ApiOperation> definedOperations = new ArrayList<>();
     // First, convert all explicitly defined operations, preserving the original order
-    for (APISource operationFile : operationFiles) {
+    for (ApiSource operationFile : operationFiles) {
       localErrors =
           errorCollector.withScript(operationFile.getPath(), operationFile.getDefinition());
       try {

@@ -41,7 +41,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class RestBridgeVerticle extends AbstractBridgeVerticle {
 
-  public static final String RESULT_DATA_KEY = "data";
+  private static final String RESULT_DATA_KEY = "data";
 
   // Pattern for RFC 6570 URI template query parameters: {?param1,param2}
   private static final Pattern QUERY_PARAMS_PATTERN = Pattern.compile("\\{\\?([^}]+)\\}");
@@ -53,10 +53,11 @@ public class RestBridgeVerticle extends AbstractBridgeVerticle {
   public RestBridgeVerticle(
       Router router,
       ServerConfig config,
+      String modelVersion,
       RootGraphqlModel model,
       Optional<JWTAuth> jwtAuth,
       GraphQLServerVerticle graphQLServerVerticle) {
-    super(router, config, model, jwtAuth, graphQLServerVerticle);
+    super(router, config, modelVersion, model, jwtAuth, graphQLServerVerticle);
   }
 
   @Override
@@ -89,10 +90,13 @@ public class RestBridgeVerticle extends AbstractBridgeVerticle {
     // Initialize Swagger service
     swaggerService =
         new SwaggerService(
-            config.getSwaggerConfig(), model, config.getServletConfig().getRestEndpoint());
+            config.getSwaggerConfig(),
+            model,
+            modelVersion,
+            config.getServletConfig().getRestEndpoint(modelVersion));
 
     // Setup Swagger JSON endpoint
-    var swaggerJsonEndpoint = config.getSwaggerConfig().getEndpoint();
+    var swaggerJsonEndpoint = config.getSwaggerConfig().getEndpoint(modelVersion);
     router
         .get(swaggerJsonEndpoint)
         .handler(
@@ -112,7 +116,7 @@ public class RestBridgeVerticle extends AbstractBridgeVerticle {
             });
 
     // Setup Swagger UI endpoint
-    var swaggerUIEndpoint = config.getSwaggerConfig().getUiEndpoint();
+    var swaggerUIEndpoint = config.getSwaggerConfig().getUiEndpoint(modelVersion);
     router
         .get(swaggerUIEndpoint)
         .handler(
@@ -224,7 +228,7 @@ public class RestBridgeVerticle extends AbstractBridgeVerticle {
       route = "/" + route;
     }
     // Ensure route starts with REST prefix
-    route = config.getServletConfig().getRestEndpoint() + route;
+    route = config.getServletConfig().getRestEndpoint(modelVersion) + route;
     return route;
   }
 

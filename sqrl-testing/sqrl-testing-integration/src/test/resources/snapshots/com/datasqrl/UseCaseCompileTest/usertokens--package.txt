@@ -348,258 +348,260 @@ CREATE INDEX IF NOT EXISTS "TotalOrgTokens_btree_c1" ON "TotalOrgTokens" USING b
 
 >>>vertx.json
 {
-  "model" : {
-    "queries" : [
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "TotalOrgTokens",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"TotalOrgTokens\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "TotalUserTokens",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            },
-            {
-              "type" : "variable",
-              "path" : "userid"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"TotalUserTokens\"\nWHERE \"userid\" = $1",
-            "parameters" : [
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "TotalOrgTokens",
+          "exec" : {
+            "arguments" : [
               {
-                "type" : "arg",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"TotalOrgTokens\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "TotalUserTokens",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
                 "path" : "userid"
               }
             ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "TotalOrgTokensByRange",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "minTokens"
-            },
-            {
-              "type" : "variable",
-              "path" : "maxTokens"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"TotalUserTokens\"\nWHERE \"userid\" = $1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "userid"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"TotalOrgTokens\"\nWHERE \"total_tokens\" >= $1 AND \"total_tokens\" <= $2",
-            "parameters" : [
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "TotalOrgTokensByRange",
+          "exec" : {
+            "arguments" : [
               {
-                "type" : "arg",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
                 "path" : "minTokens"
               },
               {
-                "type" : "arg",
+                "type" : "variable",
                 "path" : "maxTokens"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
               }
             ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"TotalOrgTokens\"\nWHERE \"total_tokens\" >= $1 AND \"total_tokens\" <= $2",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "minTokens"
+                },
+                {
+                  "type" : "arg",
+                  "path" : "maxTokens"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
           }
         }
+      ],
+      "mutations" : [
+        {
+          "type" : "kafka",
+          "fieldName" : "UserTokens",
+          "returnList" : false,
+          "topic" : "UserTokens",
+          "computedColumns" : {
+            "request_time" : "TIMESTAMP"
+          },
+          "transactional" : false,
+          "sinkConfig" : { }
+        }
+      ],
+      "subscriptions" : [
+        {
+          "type" : "kafka",
+          "fieldName" : "UsageAlert",
+          "topic" : "UsageAlert",
+          "sinkConfig" : { },
+          "filters" : { }
+        }
+      ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetTotalOrgTokens",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query TotalOrgTokens($limit: Int = 10, $offset: Int = 0) {\nTotalOrgTokens(limit: $limit, offset: $offset) {\norgid\ntotal_tokens\ntotal_requests\n}\n\n}",
+            "queryName" : "TotalOrgTokens",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/TotalOrgTokens{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetTotalUserTokens",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "userid" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "userid"
+              ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query TotalUserTokens($userid: Long!, $limit: Int = 10, $offset: Int = 0) {\nTotalUserTokens(userid: $userid, limit: $limit, offset: $offset) {\nuserid\ntotal_tokens\ntotal_requests\n}\n\n}",
+            "queryName" : "TotalUserTokens",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/TotalUserTokens{?offset,limit,userid}"
+        },
+        {
+          "function" : {
+            "name" : "GetTotalOrgTokensByRange",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "maxTokens" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "minTokens" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "minTokens",
+                "maxTokens"
+              ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query TotalOrgTokensByRange($minTokens: Long!, $maxTokens: Long!, $limit: Int = 10, $offset: Int = 0) {\nTotalOrgTokensByRange(minTokens: $minTokens, maxTokens: $maxTokens, limit: $limit, offset: $offset) {\norgid\ntotal_tokens\ntotal_requests\n}\n\n}",
+            "queryName" : "TotalOrgTokensByRange",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/TotalOrgTokensByRange{?offset,maxTokens,limit,minTokens}"
+        },
+        {
+          "function" : {
+            "name" : "AddUserTokens",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "tokens" : {
+                  "type" : "integer"
+                },
+                "userid" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "userid",
+                "tokens"
+              ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "mutation UserTokens($userid: Long!, $tokens: Long!) {\nUserTokens(event: { userid: $userid, tokens: $tokens }) {\nuserid\ntokens\nrequest_time\n}\n\n}",
+            "queryName" : "UserTokens",
+            "operationType" : "MUTATION"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "POST",
+          "uriTemplate" : "mutations/UserTokens"
+        }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Mutation {\n  UserTokens(event: UserTokensInput!): UserTokensResultOutput!\n}\n\ntype Query {\n  TotalOrgTokens(limit: Int = 10, offset: Int = 0): [TotalOrgTokens!]\n  TotalUserTokens(userid: Long!, limit: Int = 10, offset: Int = 0): [TotalUserTokens!]\n  TotalOrgTokensByRange(minTokens: Long!, maxTokens: Long!, limit: Int = 10, offset: Int = 0): [TotalOrgTokens!]\n}\n\ntype Subscription {\n  UsageAlert: UserTokens\n}\n\ntype TotalOrgTokens {\n  orgid: Long!\n  total_tokens: Long!\n  total_requests: Long!\n}\n\ntype TotalUserTokens {\n  userid: Long!\n  total_tokens: Long!\n  total_requests: Long!\n}\n\ntype UserTokens {\n  userid: Long!\n  tokens: Long!\n  request_time: DateTime!\n}\n\ninput UserTokensInput {\n  userid: Long!\n  tokens: Long!\n}\n\ntype UserTokensResultOutput {\n  userid: Long!\n  tokens: Long!\n  request_time: DateTime!\n}\n"
       }
-    ],
-    "mutations" : [
-      {
-        "type" : "kafka",
-        "fieldName" : "UserTokens",
-        "returnList" : false,
-        "topic" : "UserTokens",
-        "computedColumns" : {
-          "request_time" : "TIMESTAMP"
-        },
-        "transactional" : false,
-        "sinkConfig" : { }
-      }
-    ],
-    "subscriptions" : [
-      {
-        "type" : "kafka",
-        "fieldName" : "UsageAlert",
-        "topic" : "UsageAlert",
-        "sinkConfig" : { },
-        "filters" : { }
-      }
-    ],
-    "operations" : [
-      {
-        "function" : {
-          "name" : "GetTotalOrgTokens",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query TotalOrgTokens($limit: Int = 10, $offset: Int = 0) {\nTotalOrgTokens(limit: $limit, offset: $offset) {\norgid\ntotal_tokens\ntotal_requests\n}\n\n}",
-          "queryName" : "TotalOrgTokens",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/TotalOrgTokens{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetTotalUserTokens",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              },
-              "userid" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [
-              "userid"
-            ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query TotalUserTokens($userid: Long!, $limit: Int = 10, $offset: Int = 0) {\nTotalUserTokens(userid: $userid, limit: $limit, offset: $offset) {\nuserid\ntotal_tokens\ntotal_requests\n}\n\n}",
-          "queryName" : "TotalUserTokens",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/TotalUserTokens{?offset,limit,userid}"
-      },
-      {
-        "function" : {
-          "name" : "GetTotalOrgTokensByRange",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "maxTokens" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              },
-              "minTokens" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [
-              "minTokens",
-              "maxTokens"
-            ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query TotalOrgTokensByRange($minTokens: Long!, $maxTokens: Long!, $limit: Int = 10, $offset: Int = 0) {\nTotalOrgTokensByRange(minTokens: $minTokens, maxTokens: $maxTokens, limit: $limit, offset: $offset) {\norgid\ntotal_tokens\ntotal_requests\n}\n\n}",
-          "queryName" : "TotalOrgTokensByRange",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/TotalOrgTokensByRange{?offset,maxTokens,limit,minTokens}"
-      },
-      {
-        "function" : {
-          "name" : "AddUserTokens",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "tokens" : {
-                "type" : "integer"
-              },
-              "userid" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [
-              "userid",
-              "tokens"
-            ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "mutation UserTokens($userid: Long!, $tokens: Long!) {\nUserTokens(event: { userid: $userid, tokens: $tokens }) {\nuserid\ntokens\nrequest_time\n}\n\n}",
-          "queryName" : "UserTokens",
-          "operationType" : "MUTATION"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "POST",
-        "uriTemplate" : "mutations/UserTokens"
-      }
-    ],
-    "schema" : {
-      "type" : "string",
-      "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Mutation {\n  UserTokens(event: UserTokensInput!): UserTokensResultOutput!\n}\n\ntype Query {\n  TotalOrgTokens(limit: Int = 10, offset: Int = 0): [TotalOrgTokens!]\n  TotalUserTokens(userid: Long!, limit: Int = 10, offset: Int = 0): [TotalUserTokens!]\n  TotalOrgTokensByRange(minTokens: Long!, maxTokens: Long!, limit: Int = 10, offset: Int = 0): [TotalOrgTokens!]\n}\n\ntype Subscription {\n  UsageAlert: UserTokens\n}\n\ntype TotalOrgTokens {\n  orgid: Long!\n  total_tokens: Long!\n  total_requests: Long!\n}\n\ntype TotalUserTokens {\n  userid: Long!\n  total_tokens: Long!\n  total_requests: Long!\n}\n\ntype UserTokens {\n  userid: Long!\n  tokens: Long!\n  request_time: DateTime!\n}\n\ninput UserTokensInput {\n  userid: Long!\n  tokens: Long!\n}\n\ntype UserTokensResultOutput {\n  userid: Long!\n  tokens: Long!\n  request_time: DateTime!\n}\n"
     }
   }
 }

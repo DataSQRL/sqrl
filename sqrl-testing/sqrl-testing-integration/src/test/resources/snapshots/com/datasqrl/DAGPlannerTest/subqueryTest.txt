@@ -434,299 +434,301 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerWithOrders_2`
 }
 >>>vertx.json
 {
-  "model" : {
-    "queries" : [
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "Customer",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Customer_1\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "CustomerWithOrders",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"CustomerWithOrders_2\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "Orders",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Orders_3\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "CustomerOrderCount",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "customerid"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT \"name\", COALESCE((((SELECT COUNT(*)\n      FROM \"Orders\"\n      WHERE \"customerid\" = $1))) - 1, 0) AS \"num_orders\"\nFROM \"Customer_1\"\nWHERE \"customerid\" = $1",
-            "parameters" : [
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Customer",
+          "exec" : {
+            "arguments" : [
               {
-                "type" : "arg",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Customer_1\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "CustomerWithOrders",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"CustomerWithOrders_2\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Orders",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Orders_3\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "CustomerOrderCount",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
                 "path" : "customerid"
-              }
-            ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "SimilarOrders",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "name"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT \"id\", \"customerid\", \"time\", \"entries\", COALESCE(\"customerid\" - (((SELECT \"customerid\"\n      FROM \"Customer\"\n      WHERE \"name\" = $1))), 0) AS \"similarity\"\nFROM \"Orders_3\"\nORDER BY COALESCE(\"customerid\" - (((SELECT \"customerid\"\n      FROM \"Customer\"\n      WHERE \"name\" = $1))), 0) DESC NULLS LAST\nFETCH NEXT 10 ROWS ONLY",
-            "parameters" : [
+              },
               {
-                "type" : "arg",
-                "path" : "name"
+                "type" : "variable",
+                "path" : "limit"
               }
             ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"name\", COALESCE((((SELECT COUNT(*)\n      FROM \"Orders\"\n      WHERE \"customerid\" = $1))) - 1, 0) AS \"num_orders\"\nFROM \"Customer_1\"\nWHERE \"customerid\" = $1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "customerid"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "SimilarOrders",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "name"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"id\", \"customerid\", \"time\", \"entries\", COALESCE(\"customerid\" - (((SELECT \"customerid\"\n      FROM \"Customer\"\n      WHERE \"name\" = $1))), 0) AS \"similarity\"\nFROM \"Orders_3\"\nORDER BY COALESCE(\"customerid\" - (((SELECT \"customerid\"\n      FROM \"Customer\"\n      WHERE \"name\" = $1))), 0) DESC NULLS LAST\nFETCH NEXT 10 ROWS ONLY",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "name"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
           }
         }
+      ],
+      "mutations" : [ ],
+      "subscriptions" : [ ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetCustomer",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query Customer($limit: Int = 10, $offset: Int = 0) {\nCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+            "queryName" : "Customer",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Customer{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetCustomerWithOrders",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query CustomerWithOrders($limit: Int = 10, $offset: Int = 0) {\nCustomerWithOrders(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+            "queryName" : "CustomerWithOrders",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomerWithOrders{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetOrders",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query Orders($limit: Int = 10, $offset: Int = 0) {\nOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
+            "queryName" : "Orders",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Orders{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetCustomerOrderCount",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "customerid"
+              ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query CustomerOrderCount($customerid: Long!, $limit: Int = 10, $offset: Int = 0) {\nCustomerOrderCount(customerid: $customerid, limit: $limit, offset: $offset) {\nname\nnum_orders\n}\n\n}",
+            "queryName" : "CustomerOrderCount",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomerOrderCount{?offset,customerid,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetSimilarOrders",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "name" : {
+                  "type" : "string"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "name"
+              ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query SimilarOrders($name: String!, $limit: Int = 10, $offset: Int = 0) {\nSimilarOrders(name: $name, limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\nsimilarity\n}\n\n}",
+            "queryName" : "SimilarOrders",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/SimilarOrders{?offset,name,limit}"
+        }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "type Customer {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\ntype CustomerOrderCount {\n  name: String!\n  num_orders: Long!\n}\n\ntype CustomerWithOrders {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Orders {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  entries: [Orders_entriesOutput]!\n}\n\ntype Orders_entriesOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerWithOrders(limit: Int = 10, offset: Int = 0): [CustomerWithOrders!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n  CustomerOrderCount(customerid: Long!, limit: Int = 10, offset: Int = 0): [CustomerOrderCount!]\n  SimilarOrders(name: String!, limit: Int = 10, offset: Int = 0): [SimilarOrders!]\n}\n\ntype SimilarOrders {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  entries: [SimilarOrders_entriesOutput]!\n  similarity: Long!\n}\n\ntype SimilarOrders_entriesOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
-    ],
-    "mutations" : [ ],
-    "subscriptions" : [ ],
-    "operations" : [
-      {
-        "function" : {
-          "name" : "GetCustomer",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query Customer($limit: Int = 10, $offset: Int = 0) {\nCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
-          "queryName" : "Customer",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/Customer{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetCustomerWithOrders",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query CustomerWithOrders($limit: Int = 10, $offset: Int = 0) {\nCustomerWithOrders(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
-          "queryName" : "CustomerWithOrders",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/CustomerWithOrders{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetOrders",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query Orders($limit: Int = 10, $offset: Int = 0) {\nOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
-          "queryName" : "Orders",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/Orders{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetCustomerOrderCount",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "customerid" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [
-              "customerid"
-            ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query CustomerOrderCount($customerid: Long!, $limit: Int = 10, $offset: Int = 0) {\nCustomerOrderCount(customerid: $customerid, limit: $limit, offset: $offset) {\nname\nnum_orders\n}\n\n}",
-          "queryName" : "CustomerOrderCount",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/CustomerOrderCount{?offset,customerid,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetSimilarOrders",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "name" : {
-                "type" : "string"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [
-              "name"
-            ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query SimilarOrders($name: String!, $limit: Int = 10, $offset: Int = 0) {\nSimilarOrders(name: $name, limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\nsimilarity\n}\n\n}",
-          "queryName" : "SimilarOrders",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/SimilarOrders{?offset,name,limit}"
-      }
-    ],
-    "schema" : {
-      "type" : "string",
-      "schema" : "type Customer {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\ntype CustomerOrderCount {\n  name: String!\n  num_orders: Long!\n}\n\ntype CustomerWithOrders {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Orders {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  entries: [Orders_entriesOutput]!\n}\n\ntype Orders_entriesOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerWithOrders(limit: Int = 10, offset: Int = 0): [CustomerWithOrders!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n  CustomerOrderCount(customerid: Long!, limit: Int = 10, offset: Int = 0): [CustomerOrderCount!]\n  SimilarOrders(name: String!, limit: Int = 10, offset: Int = 0): [SimilarOrders!]\n}\n\ntype SimilarOrders {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  entries: [SimilarOrders_entriesOutput]!\n  similarity: Long!\n}\n\ntype SimilarOrders_entriesOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
     }
   }
 }

@@ -64,7 +64,7 @@ public class SqrlRunContainerIT extends SqrlContainerTestBase {
 
     // Test GraphQL endpoint
     var baseUrl = "http://localhost:" + runContainer.getMappedPort(HTTP_SERVER_PORT);
-    var graphqlEndpoint = baseUrl + "/graphql";
+    var graphqlEndpoint = baseUrl + "/v1/graphql";
 
     var response =
         executeGraphQLQueryToRunContainer(graphqlEndpoint, "{\"query\":\"query { __typename }\"}");

@@ -119,183 +119,185 @@ FROM (SELECT "sensorid", MAX("temperature") AS "maxTemp", AVG("temperature") AS 
   ORDER BY "sensorid" NULLS FIRST) AS "t5"
 >>>vertx.json
 {
-  "model" : {
-    "queries" : [
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "SensorAggregate",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM (SELECT \"sensorid\", MAX(\"temperature\") AS \"maxTemp\", AVG(\"temperature\") AS \"avgTemp\"\n  FROM \"SensorReading\"\n  GROUP BY \"sensorid\"\n  ORDER BY \"sensorid\" NULLS FIRST) AS \"t1\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "SensorReading",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"SensorReading\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "SensorReadingById",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "sensorid"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"SensorReading\"\nWHERE \"sensorid\" = $1\nORDER BY \"event_time\" DESC NULLS LAST",
-            "parameters" : [
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "SensorAggregate",
+          "exec" : {
+            "arguments" : [
               {
-                "type" : "arg",
-                "path" : "sensorid"
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
               }
             ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"sensorid\", MAX(\"temperature\") AS \"maxTemp\", AVG(\"temperature\") AS \"avgTemp\"\n  FROM \"SensorReading\"\n  GROUP BY \"sensorid\"\n  ORDER BY \"sensorid\" NULLS FIRST) AS \"t1\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "SensorReading",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"SensorReading\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "SensorReadingById",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "sensorid"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"SensorReading\"\nWHERE \"sensorid\" = $1\nORDER BY \"event_time\" DESC NULLS LAST",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "sensorid"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
           }
         }
+      ],
+      "mutations" : [ ],
+      "subscriptions" : [ ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetSensorAggregate",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query SensorAggregate($limit: Int = 10, $offset: Int = 0) {\nSensorAggregate(limit: $limit, offset: $offset) {\nsensorid\nmaxTemp\navgTemp\n}\n\n}",
+            "queryName" : "SensorAggregate",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/SensorAggregate{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetSensorReading",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query SensorReading($limit: Int = 10, $offset: Int = 0) {\nSensorReading(limit: $limit, offset: $offset) {\nsensorid\ntemperature\nevent_time\n}\n\n}",
+            "queryName" : "SensorReading",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/SensorReading{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetSensorReadingById",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "sensorid" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "sensorid"
+              ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query SensorReadingById($sensorid: Int!, $limit: Int = 10, $offset: Int = 0) {\nSensorReadingById(sensorid: $sensorid, limit: $limit, offset: $offset) {\nsensorid\ntemperature\nevent_time\n}\n\n}",
+            "queryName" : "SensorReadingById",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/SensorReadingById{?offset,limit,sensorid}"
+        }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  SensorAggregate(limit: Int = 10, offset: Int = 0): [SensorAggregate!]\n  SensorReading(limit: Int = 10, offset: Int = 0): [SensorReading!]\n  SensorReadingById(sensorid: Int!, limit: Int = 10, offset: Int = 0): [SensorReading!]\n}\n\ntype SensorAggregate {\n  sensorid: Int!\n  maxTemp: Float!\n  avgTemp: Float!\n}\n\ntype SensorReading {\n  sensorid: Int!\n  temperature: Float!\n  event_time: Long!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
-    ],
-    "mutations" : [ ],
-    "subscriptions" : [ ],
-    "operations" : [
-      {
-        "function" : {
-          "name" : "GetSensorAggregate",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query SensorAggregate($limit: Int = 10, $offset: Int = 0) {\nSensorAggregate(limit: $limit, offset: $offset) {\nsensorid\nmaxTemp\navgTemp\n}\n\n}",
-          "queryName" : "SensorAggregate",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/SensorAggregate{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetSensorReading",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query SensorReading($limit: Int = 10, $offset: Int = 0) {\nSensorReading(limit: $limit, offset: $offset) {\nsensorid\ntemperature\nevent_time\n}\n\n}",
-          "queryName" : "SensorReading",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/SensorReading{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetSensorReadingById",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              },
-              "sensorid" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [
-              "sensorid"
-            ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query SensorReadingById($sensorid: Int!, $limit: Int = 10, $offset: Int = 0) {\nSensorReadingById(sensorid: $sensorid, limit: $limit, offset: $offset) {\nsensorid\ntemperature\nevent_time\n}\n\n}",
-          "queryName" : "SensorReadingById",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/SensorReadingById{?offset,limit,sensorid}"
-      }
-    ],
-    "schema" : {
-      "type" : "string",
-      "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  SensorAggregate(limit: Int = 10, offset: Int = 0): [SensorAggregate!]\n  SensorReading(limit: Int = 10, offset: Int = 0): [SensorReading!]\n  SensorReadingById(sensorid: Int!, limit: Int = 10, offset: Int = 0): [SensorReading!]\n}\n\ntype SensorAggregate {\n  sensorid: Int!\n  maxTemp: Float!\n  avgTemp: Float!\n}\n\ntype SensorReading {\n  sensorid: Int!\n  temperature: Float!\n  event_time: Long!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
     }
   }
 }

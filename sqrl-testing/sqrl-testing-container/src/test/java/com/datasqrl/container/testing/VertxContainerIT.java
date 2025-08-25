@@ -65,7 +65,7 @@ public class VertxContainerIT extends SqrlContainerTestBase {
     var response = executeGraphQLQuery(testQuery);
     validateBasicGraphQLResponse(response);
 
-    assertTraceLogContains("REQUEST BODY", testQuery, "/graphql");
+    assertTraceLogContains("REQUEST BODY", testQuery, "/v1/graphql");
 
     var randomPath = "/random/test/path/12345";
     var testBody = "{\"test\":\"data\",\"random\":\"content\"}";
@@ -77,7 +77,7 @@ public class VertxContainerIT extends SqrlContainerTestBase {
 
     assertTraceLogContains("REQUEST BODY", testBody, randomPath);
 
-    var graphiqlResponse = sharedHttpClient.execute(new HttpGet(getBaseUrl() + "/graphiql/"));
+    var graphiqlResponse = sharedHttpClient.execute(new HttpGet(getBaseUrl() + "/v1/graphiql/"));
 
     assertThat(graphiqlResponse.getStatusLine().getStatusCode()).isEqualTo(200);
     assertThat(graphiqlResponse.getFirstHeader("Content-Type").getValue()).contains("text/html");
@@ -97,7 +97,7 @@ public class VertxContainerIT extends SqrlContainerTestBase {
         .contains("static/css/main.")
         .contains("<div id=\"root\"></div>");
 
-    assertTraceLogContains("INCOMING REQUEST", "Method: GET", "URI: /graphiql/");
+    assertTraceLogContains("INCOMING REQUEST", "Method: GET", "URI: /v1/graphiql/");
   }
 
   @Test

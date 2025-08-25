@@ -465,7 +465,7 @@ public class GraphqlSchemaValidator extends GraphqlSchemaWalker {
     return type;
   }
 
-  public void validate(APISource source) {
+  public void validate(ApiSource source) {
     try {
       var registry = (new SchemaParser()).parse(source.getDefinition());
       var queryType = getType(registry, () -> getQueryTypeName(registry));
