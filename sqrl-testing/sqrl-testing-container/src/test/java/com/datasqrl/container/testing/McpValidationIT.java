@@ -72,7 +72,7 @@ class McpValidationIT extends SqrlContainerTestBase {
     serverContainer.start();
     log.info("HTTP server started on port {}", serverContainer.getMappedPort(HTTP_SERVER_PORT));
 
-    var mcpUrl = String.format("http://%s:8888/mcp", serverAlias);
+    var mcpUrl = String.format("http://%s:8888/v1/mcp", serverAlias);
     log.info("Testing MCP endpoint: {}", mcpUrl);
 
     var mcpInspector =
@@ -136,7 +136,7 @@ class McpValidationIT extends SqrlContainerTestBase {
     serverContainer.start();
     log.info("HTTP server started on port {}", serverContainer.getMappedPort(HTTP_SERVER_PORT));
 
-    var mcpUrl = String.format("http://%s:8888/mcp", serverAlias);
+    var mcpUrl = String.format("http://%s:8888/v1/mcp", serverAlias);
 
     var validatorContainer =
         createMcpInspectorContainer(getMcpInspectorImage())
