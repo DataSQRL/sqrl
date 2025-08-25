@@ -105,12 +105,6 @@
       <version>${commonsio.version}</version>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>org.apache.flink</groupId>
-      <artifactId>flink-s3-fs-hadoop</artifactId>
-      <version>${flink.version}</version>
-      <scope>test</scope>
-    </dependency>
 
     <dependency>
       <groupId>com.datasqrl</groupId>

@@ -53,6 +53,12 @@
     <dependency>
       <groupId>com.datasqrl.flinkrunner</groupId>
       <artifactId>flink-sql-runner</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>org.apache.flink</groupId>
+          <artifactId>flink-s3-fs-hadoop</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <!-- Flink dependencies -->
@@ -83,10 +89,6 @@
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-json</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.flink</groupId>
-      <artifactId>flink-hadoop-fs</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
@@ -352,93 +354,70 @@
       <scope>test</scope>
     </dependency>
 
-    <!-- The 'flink-s3-fs-hadoop' is kept down here for a reason!
-         It shades wrong versions of Jackson and Guava, and messes up the IntelliJ classpath otherwise.
-         On the Maven side, the faulty classes are excluded at shading, so the order would not matter there. -->
+    <!-- Use DataSQRL's fixed version of flink-s3-fs-hadoop without shading conflicts -->
     <dependency>
-      <groupId>org.apache.flink</groupId>
+      <groupId>com.datasqrl.flink</groupId>
       <artifactId>flink-s3-fs-hadoop</artifactId>
     </dependency>
   </dependencies>
 
+  <repositories>
+    <repository>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+      <id>github</id>
+      <url>https://maven.pkg.github.com/DataSQRL/flink-s3-fs-hadoop</url>
+    </repository>
+  </repositories>
+
   <build>
     <plugins>
+      <!-- Use Jib to build layered Docker images -->
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-shade-plugin</artifactId>
-        <executions>
-          <execution>
-            <goals>
-              <goal>shade</goal>
-            </goals>
-            <phase>package</phase>
-            <configuration>
-              <finalName>sqrl-cli</finalName>
-              <shadedArtifactAttached>true</shadedArtifactAttached>
-              <minimizeJar>false</minimizeJar>
-              <transformers>
-                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                  <mainClass>com.datasqrl.cli.DatasqrlCli</mainClass>
-                </transformer>
-                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"></transformer>
-              </transformers>
-              <filters>
-                <filter>
-                  <artifact>*:*</artifact>
-                  <excludes>
-                    <exclude>META-INF/*.SF</exclude>
-                    <exclude>META-INF/*.DSA</exclude>
-                    <exclude>META-INF/*.RSA</exclude>
-                    <exclude>META-INF/versions/19/**/*</exclude>
-                  </excludes>
-                </filter>
-                <filter>
-                  <artifact>org.apache.flink:flink-s3-fs-hadoop</artifact>
-                  <excludes>
-                    <exclude>com/fasterxml/jackson/**</exclude>
-                    <exclude>com/google/**</exclude>
-                  </excludes>
-                </filter>
-              </filters>
-              <relocations>
-                <relocation>
-                  <pattern>org.objectweb.asm.</pattern>
-                  <shadedPattern>sqrl.asm.</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>jakarta.</pattern>
-                  <shadedPattern>sqrl.jakarta.</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>io.vertx.</pattern>
-                  <shadedPattern>sqrl.vertx.</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>com.sun.el.</pattern>
-                  <shadedPattern>sqrl.el.</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>com.fasterxml.jackson.</pattern>
-                  <shadedPattern>sqrl.jackson.</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>org.yaml.snakeyaml.</pattern>
-                  <shadedPattern>sqrl.snakeyaml.</shadedPattern>
-                </relocation>
-              </relocations>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-
-      <plugin>
-        <groupId>com.spotify</groupId>
-        <artifactId>dockerfile-maven-plugin</artifactId>
+        <groupId>com.google.cloud.tools</groupId>
+        <artifactId>jib-maven-plugin</artifactId>
+        <configuration>
+          <from>
+            <image>datasqrl/base-sqrl:latest</image>
+          </from>
+          <to>
+            <image>${docker.image.name}:${docker.image.tag}</image>
+          </to>
+          <container>
+            <mainClass>com.datasqrl.cli.DatasqrlCli</mainClass>
+            <workingDirectory>/build</workingDirectory>
+            <entrypoint>/opt/sqrl/entrypoint.sh</entrypoint>
+            <environment>
+              <JAVA_TOOL_OPTIONS>--add-exports=java.base/sun.net.util=ALL-UNNAMED --add-exports=java.rmi/sun.rmi.registry=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED --add-exports=java.security.jgss/sun.security.krb5=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.net=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.nio=ALL-UNNAMED --add-opens=java.base/sun.nio.ch=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED --add-opens=java.base/java.text=ALL-UNNAMED --add-opens=java.base/java.time=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.util.concurrent=ALL-UNNAMED --add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED --add-opens=java.base/java.util.concurrent.locks=ALL-UNNAMED</JAVA_TOOL_OPTIONS>
+            </environment>
+            <appRoot>/opt/sqrl</appRoot>
+          </container>
+          <extraDirectories>
+            <paths>
+              <path>
+                <from>${project.basedir}/src/main/jib</from>
+                <includes>
+                  <include>**/*</include>
+                </includes>
+              </path>
+            </paths>
+            <permissions>
+              <permission>
+                <file>/opt/sqrl/entrypoint.sh</file>
+                <mode>755</mode>
+              </permission>
+            </permissions>
+          </extraDirectories>
+        </configuration>
         <executions>
           <execution>
             <id>build-docker-image</id>
             <goals>
-              <goal>build</goal>
+              <goal>dockerBuild</goal>
             </goals>
             <phase>package</phase>
           </execution>
