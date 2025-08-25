@@ -1527,6 +1527,20 @@
       </properties>
     </profile>
     <profile>
+      <!-- builds the JARs and deploys to Maven repository, but skips Docker image builds -->
+      <id>only-jars</id>
+      <activation>
+        <property>
+          <name>onlyJars</name>
+        </property>
+      </activation>
+      <properties>
+        <skipTests>true</skipTests>
+        <skipITs>true</skipITs>
+        <skipDockerBuild>true</skipDockerBuild>
+      </properties>
+    </profile>
+    <profile>
       <id>skip-docker-build-onlyITs</id>
       <activation>
         <property>
