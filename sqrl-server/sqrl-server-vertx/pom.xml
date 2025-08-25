@@ -61,7 +61,7 @@
           <container>
             <mainClass>com.datasqrl.graphql.SqrlLauncher</mainClass>
             <workingDirectory>/opt/sqrl/config</workingDirectory>
-            <entrypoint>/entrypoint.sh</entrypoint>
+            <entrypoint>/opt/sqrl/entrypoint.sh</entrypoint>
             <appRoot>/opt/sqrl</appRoot>
           </container>
           <extraDirectories>
@@ -75,7 +75,7 @@
             </paths>
             <permissions>
               <permission>
-                <file>/entrypoint.sh</file>
+                <file>/opt/sqrl/entrypoint.sh</file>
                 <mode>755</mode>
               </permission>
             </permissions>
