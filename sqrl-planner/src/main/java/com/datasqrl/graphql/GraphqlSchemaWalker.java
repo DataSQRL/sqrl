@@ -62,7 +62,7 @@ public abstract class GraphqlSchemaWalker {
   /*
    * Schema walking methods
    */
-  public void walkAPISource(APISource apiSource) {
+  public void walkAPISource(ApiSource apiSource) {
     var registry = (new SchemaParser()).parse(apiSource.getDefinition());
 
     var rootMutationTypeOpt = TypeDefinitionRegistryUtil.getMutationType(registry);

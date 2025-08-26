@@ -52,10 +52,11 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
   private static final String CT_JSON = "application/json";
   private static final String CT_SSE = "text/event-stream";
 
-  public static final String RESOURCES_RESULT_KEY = "resources";
-  public static final String RESOURCE_TEMPLATES_RESULT_KEY = "resourceTemplates";
+  private static final String RESOURCES_RESULT_KEY = "resources";
+  private static final String RESOURCE_TEMPLATES_RESULT_KEY = "resourceTemplates";
 
   private final ConcurrentHashMap<String, SseConnection> sseConnections = new ConcurrentHashMap<>();
+
   private final Map<String, ApiOperation> tools;
   private final JsonObject toolsList;
   private final List<ApiOperation> resources;
@@ -65,10 +66,11 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
   public McpBridgeVerticle(
       Router router,
       ServerConfig config,
+      String modelVersion,
       RootGraphqlModel model,
       Optional<JWTAuth> jwtAuth,
       GraphQLServerVerticle graphQLServerVerticle) {
-    super(router, config, model, jwtAuth, graphQLServerVerticle);
+    super(router, config, modelVersion, model, jwtAuth, graphQLServerVerticle);
     this.tools =
         model.getOperations().stream()
             .filter(op -> op.getMcpMethod() == McpMethodType.TOOL)
@@ -94,7 +96,7 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
 
   @Override
   public void start(Promise<Void> startPromise) {
-    String mcpRoutePrefix = config.getServletConfig().getMcpEndpoint();
+    String mcpRoutePrefix = config.getServletConfig().getMcpEndpoint(modelVersion);
 
     // MCP SSE endpoint - handles POST for messages
     router
@@ -103,7 +105,7 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
             ctx -> {
               JsonNode payload = null;
               try {
-                payload = objectMapper.readTree(ctx.body().buffer().getBytes());
+                payload = OBJECT_MAPPER.readTree(ctx.body().buffer().getBytes());
                 processIncomingMessages(ctx, payload);
               } catch (IOException e) { // TODO: improve error handling
                 throw new RuntimeException(e);
@@ -119,7 +121,7 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
                 ctx.response().setStatusCode(406).end();
                 return;
               }
-              HttpServerResponse response = ctx.response();
+              var response = ctx.response();
 
               // Set up SSE headers
               response
@@ -129,7 +131,7 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
                   .putHeader("Access-Control-Allow-Origin", "*")
                   .setChunked(true);
 
-              String connectionId = UUID.randomUUID().toString();
+              var connectionId = UUID.randomUUID().toString();
               SseConnection connection = new SseConnection(connectionId, response);
               sseConnections.put(connectionId, connection);
 
@@ -182,16 +184,6 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
   // Broadcast a message to all connected SSE clients
   public void broadcast(String event, JsonObject data) {
     sseConnections.values().forEach(connection -> sendSseMessage(connection, event, data));
-  }
-
-  private static class SseConnection {
-    final String id;
-    final HttpServerResponse response;
-
-    SseConnection(String id, HttpServerResponse response) {
-      this.id = id;
-      this.response = response;
-    }
   }
 
   public Future<JsonObject> handleRequest(RoutingContext ctx, JsonNode request) {
@@ -330,8 +322,7 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
     if (tool == null) {
       return Future.failedFuture(new McpException(-32602, "Tool not found: " + toolName));
     }
-    Map<String, Object> variables =
-        objectMapper.convertValue(arguments, new TypeReference<Map<String, Object>>() {});
+    Map<String, Object> variables = OBJECT_MAPPER.convertValue(arguments, new TypeReference<>() {});
     return bridgeRequestToGraphQL(ctx, tool, variables)
         .map(
             executionResult -> {
@@ -355,7 +346,7 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
                       List.of(
                           new JsonObject()
                               .put("type", "text")
-                              .put("text", objectMapper.writeValueAsString(result))));
+                              .put("text", OBJECT_MAPPER.writeValueAsString(result))));
                 } catch (JsonProcessingException e) {
                   throw new RuntimeException(e);
                 }
@@ -521,6 +512,8 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
     List<String> accept = ctx.request().headers().getAll(HttpHeaders.ACCEPT);
     return accept.stream().anyMatch(h -> h.contains(mime));
   }
+
+  private record SseConnection(String id, HttpServerResponse response) {}
 
   static class McpException extends RuntimeException {
     final int code;

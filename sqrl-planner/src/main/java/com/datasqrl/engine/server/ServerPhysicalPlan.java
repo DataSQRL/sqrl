@@ -20,10 +20,11 @@ import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.planner.dag.plan.MutationQuery;
 import com.datasqrl.planner.tables.SqrlTableFunction;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 
 @RequiredArgsConstructor
 @Getter
@@ -45,5 +46,5 @@ public class ServerPhysicalPlan implements EnginePhysicalPlan {
    * <p>TODO: generalize to support multiple types of APIs (e.g. REST, GraphQL, gRPC) and make a
    * list
    */
-  @Setter RootGraphqlModel model;
+  final Map<String, RootGraphqlModel> models = new LinkedHashMap<>();
 }

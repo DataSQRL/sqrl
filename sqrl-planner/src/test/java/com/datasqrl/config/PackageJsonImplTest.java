@@ -112,10 +112,11 @@ class PackageJsonImplTest {
 
     assertThat(scriptConfig.getMainScript()).isEmpty();
     assertThat(scriptConfig.getGraphql()).isEmpty();
+    assertThat(scriptConfig.getScriptApiConfigs()).isEmpty();
   }
 
   @Test
-  void givenScriptConfig_whenSetValues_thenUpdatesConfiguration() {
+  void givenScriptConfig_whenSetRawValues_thenUpdatesConfiguration() {
     var scriptConfig = new ScriptConfigImpl(config);
 
     scriptConfig.setMainScript("main.sqrl");
@@ -123,6 +124,20 @@ class PackageJsonImplTest {
 
     assertThat(scriptConfig.getMainScript()).contains("main.sqrl");
     assertThat(scriptConfig.getGraphql()).contains("schema.graphql");
+  }
+
+  @Test
+  void givenScriptConfig_whenSetApiValues_thenUpdatesConfiguration() {
+    var apiConf = config.getSubConfig("api");
+
+    var v1 = apiConf.getSubConfig("v1");
+    v1.setProperty("schema", "my-schema");
+
+    var scriptConfig = new ScriptConfigImpl(config);
+
+    assertThat(scriptConfig.getScriptApiConfigs()).hasSize(1);
+    assertThat(scriptConfig.getScriptApiConfigs().get(0).getVersion()).isEqualTo("v1");
+    assertThat(scriptConfig.getScriptApiConfigs().get(0).getSchema()).isEqualTo("my-schema");
   }
 
   @Test

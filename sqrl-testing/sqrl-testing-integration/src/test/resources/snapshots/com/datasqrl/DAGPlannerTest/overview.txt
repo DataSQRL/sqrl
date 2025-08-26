@@ -888,540 +888,542 @@ INSERT INTO `default_catalog`.`default_database`.`customersink_ex2`
 }
 >>>vertx.json
 {
-  "model" : {
-    "queries" : [
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "Customer",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Customer_1\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Customer",
-        "fieldName" : "largeOrders",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            },
-            {
-              "type" : "variable",
-              "path" : "minAmount"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"SimpleOrders_6\"\nWHERE $2 = \"customerid\" AND \"amount\" >= $1\nORDER BY \"amount\" DESC NULLS LAST",
-            "parameters" : [
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Customer",
+          "exec" : {
+            "arguments" : [
               {
-                "type" : "arg",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Customer_1\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Customer",
+          "fieldName" : "largeOrders",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
                 "path" : "minAmount"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"SimpleOrders_6\"\nWHERE $2 = \"customerid\" AND \"amount\" >= $1\nORDER BY \"amount\" DESC NULLS LAST",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "minAmount"
+                },
+                {
+                  "type" : "source",
+                  "key" : "customerid"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Customer",
+          "fieldName" : "orders",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
               },
               {
-                "type" : "source",
-                "key" : "customerid"
+                "type" : "variable",
+                "path" : "limit"
               }
             ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Customer",
-        "fieldName" : "orders",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"SimpleOrders_6\"\nWHERE $1 = \"customerid\"\nORDER BY \"orderTime\" DESC NULLS LAST",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "key" : "customerid"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"SimpleOrders_6\"\nWHERE $1 = \"customerid\"\nORDER BY \"orderTime\" DESC NULLS LAST",
-            "parameters" : [
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "CustomerImport",
+          "exec" : {
+            "arguments" : [
               {
-                "type" : "source",
-                "key" : "customerid"
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
               }
             ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "CustomerImport",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"CustomerImport_2\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"CustomerImport_2\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
           }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "LargeOrders",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"LargeOrders_3\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "Orders",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Orders_5\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "SimpleOrders",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"SimpleOrders_6\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "UnnestOrders",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT \"id\", \"customerid\", \"time\", \"productid\", \"quantity\", \"discount\"\nFROM \"UnnestOrders_8\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "CustomerById",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "customerid"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Customer_1\"\nWHERE \"customerid\" = $1",
-            "parameters" : [
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "LargeOrders",
+          "exec" : {
+            "arguments" : [
               {
-                "type" : "arg",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"LargeOrders_3\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Orders",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Orders_5\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "SimpleOrders",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"SimpleOrders_6\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "UnnestOrders",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"id\", \"customerid\", \"time\", \"productid\", \"quantity\", \"discount\"\nFROM \"UnnestOrders_8\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "CustomerById",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
                 "path" : "customerid"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
               }
             ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Customer_1\"\nWHERE \"customerid\" = $1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "customerid"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
           }
         }
-      }
-    ],
-    "mutations" : [
-      {
-        "type" : "kafka",
-        "fieldName" : "SimpleOrders",
-        "returnList" : false,
-        "topic" : "kafka-mutation-SimpleOrders",
-        "computedColumns" : {
-          "orderTime" : "TIMESTAMP",
-          "_uuid" : "UUID"
-        },
-        "transactional" : false,
-        "sinkConfig" : { }
-      }
-    ],
-    "subscriptions" : [
-      {
-        "type" : "kafka",
-        "fieldName" : "LargeOrderSubscription",
-        "topic" : "kafka-LargeOrders",
-        "sinkConfig" : { },
-        "filters" : {
-          "customerid" : "customerid"
+      ],
+      "mutations" : [
+        {
+          "type" : "kafka",
+          "fieldName" : "SimpleOrders",
+          "returnList" : false,
+          "topic" : "kafka-mutation-SimpleOrders",
+          "computedColumns" : {
+            "orderTime" : "TIMESTAMP",
+            "_uuid" : "UUID"
+          },
+          "transactional" : false,
+          "sinkConfig" : { }
         }
+      ],
+      "subscriptions" : [
+        {
+          "type" : "kafka",
+          "fieldName" : "LargeOrderSubscription",
+          "topic" : "kafka-LargeOrders",
+          "sinkConfig" : { },
+          "filters" : {
+            "customerid" : "customerid"
+          }
+        }
+      ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetCustomer",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "largeOrders_limit" : {
+                  "type" : "integer"
+                },
+                "orders_limit" : {
+                  "type" : "integer"
+                },
+                "offset" : {
+                  "type" : "integer"
+                },
+                "largeOrders_offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "largeOrders_minAmount" : {
+                  "type" : "number"
+                },
+                "orders_offset" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "largeOrders_minAmount"
+              ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query Customer($limit: Int = 10, $offset: Int = 0$largeOrders_minAmount: Float!, $largeOrders_limit: Int = 10, $largeOrders_offset: Int = 0$orders_limit: Int = 10, $orders_offset: Int = 0) {\nCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\nlargeOrders(minAmount: $largeOrders_minAmount, limit: $largeOrders_limit, offset: $largeOrders_offset) {\norderid\ncustomerid\namount\norderTime\n}\norders(limit: $orders_limit, offset: $orders_offset) {\norderid\ncustomerid\namount\norderTime\n}\n}\n\n}",
+            "queryName" : "Customer",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Customer{?largeOrders_limit,orders_limit,offset,largeOrders_offset,limit,largeOrders_minAmount,orders_offset}"
+        },
+        {
+          "function" : {
+            "name" : "GetCustomerImport",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query CustomerImport($limit: Int = 10, $offset: Int = 0) {\nCustomerImport(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+            "queryName" : "CustomerImport",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomerImport{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetLargeOrders",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query LargeOrders($limit: Int = 10, $offset: Int = 0) {\nLargeOrders(limit: $limit, offset: $offset) {\norderid\ncustomerid\namount\norderTime\n}\n\n}",
+            "queryName" : "LargeOrders",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/LargeOrders{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetOrders",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query Orders($limit: Int = 10, $offset: Int = 0) {\nOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
+            "queryName" : "Orders",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Orders{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetSimpleOrders",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query SimpleOrders($limit: Int = 10, $offset: Int = 0) {\nSimpleOrders(limit: $limit, offset: $offset) {\norderid\ncustomerid\namount\norderTime\n}\n\n}",
+            "queryName" : "SimpleOrders",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/SimpleOrders{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetUnnestOrders",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query UnnestOrders($limit: Int = 10, $offset: Int = 0) {\nUnnestOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nproductid\nquantity\ndiscount\n}\n\n}",
+            "queryName" : "UnnestOrders",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/UnnestOrders{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetCustomerById",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "largeOrders_limit" : {
+                  "type" : "integer"
+                },
+                "orders_limit" : {
+                  "type" : "integer"
+                },
+                "offset" : {
+                  "type" : "integer"
+                },
+                "largeOrders_offset" : {
+                  "type" : "integer"
+                },
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "largeOrders_minAmount" : {
+                  "type" : "number"
+                },
+                "orders_offset" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "customerid",
+                "largeOrders_minAmount"
+              ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query CustomerById($customerid: Long!, $limit: Int = 10, $offset: Int = 0$largeOrders_minAmount: Float!, $largeOrders_limit: Int = 10, $largeOrders_offset: Int = 0$orders_limit: Int = 10, $orders_offset: Int = 0) {\nCustomerById(customerid: $customerid, limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\nlargeOrders(minAmount: $largeOrders_minAmount, limit: $largeOrders_limit, offset: $largeOrders_offset) {\norderid\ncustomerid\namount\norderTime\n}\norders(limit: $orders_limit, offset: $orders_offset) {\norderid\ncustomerid\namount\norderTime\n}\n}\n\n}",
+            "queryName" : "CustomerById",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomerById{?largeOrders_limit,orders_limit,offset,largeOrders_offset,customerid,limit,largeOrders_minAmount,orders_offset}"
+        },
+        {
+          "function" : {
+            "name" : "AddSimpleOrders",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "amount" : {
+                  "type" : "number"
+                },
+                "orderid" : {
+                  "type" : "integer"
+                },
+                "customerid" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "mutation SimpleOrders($orderid: Int, $customerid: Long, $amount: Float) {\nSimpleOrders(event: { orderid: $orderid, customerid: $customerid, amount: $amount }) {\norderid\ncustomerid\namount\norderTime\n}\n\n}",
+            "queryName" : "SimpleOrders",
+            "operationType" : "MUTATION"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "POST",
+          "uriTemplate" : "mutations/SimpleOrders"
+        }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "type Customer {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n  largeOrders(minAmount: Float!, limit: Int = 10, offset: Int = 0): [SimpleOrders!]\n  orders(limit: Int = 10, offset: Int = 0): [SimpleOrders!]\n}\n\ntype CustomerImport {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Mutation {\n  SimpleOrders(event: SimpleOrdersInput!): SimpleOrdersResultOutput!\n}\n\ntype Orders {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  entries: [Orders_entriesOutput]!\n}\n\ntype Orders_entriesOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerImport(limit: Int = 10, offset: Int = 0): [CustomerImport!]\n  LargeOrders(limit: Int = 10, offset: Int = 0): [SimpleOrders!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n  SimpleOrders(limit: Int = 10, offset: Int = 0): [SimpleOrders!]\n  UnnestOrders(limit: Int = 10, offset: Int = 0): [UnnestOrders!]\n  CustomerById(customerid: Long!, limit: Int = 10, offset: Int = 0): [Customer!]\n}\n\ntype SimpleOrders {\n  orderid: Int\n  customerid: Long\n  amount: Float\n  orderTime: DateTime\n}\n\ninput SimpleOrdersInput {\n  orderid: Int\n  customerid: Long\n  amount: Float\n}\n\ntype SimpleOrdersResultOutput {\n  orderid: Int\n  customerid: Long\n  amount: Float\n  orderTime: DateTime\n}\n\ntype Subscription {\n  LargeOrderSubscription(customerid: Long): SimpleOrders\n}\n\ntype UnnestOrders {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  productid: Long!\n  quantity: Long!\n  discount: Float\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
-    ],
-    "operations" : [
-      {
-        "function" : {
-          "name" : "GetCustomer",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "largeOrders_limit" : {
-                "type" : "integer"
-              },
-              "orders_limit" : {
-                "type" : "integer"
-              },
-              "offset" : {
-                "type" : "integer"
-              },
-              "largeOrders_offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              },
-              "largeOrders_minAmount" : {
-                "type" : "number"
-              },
-              "orders_offset" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [
-              "largeOrders_minAmount"
-            ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query Customer($limit: Int = 10, $offset: Int = 0$largeOrders_minAmount: Float!, $largeOrders_limit: Int = 10, $largeOrders_offset: Int = 0$orders_limit: Int = 10, $orders_offset: Int = 0) {\nCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\nlargeOrders(minAmount: $largeOrders_minAmount, limit: $largeOrders_limit, offset: $largeOrders_offset) {\norderid\ncustomerid\namount\norderTime\n}\norders(limit: $orders_limit, offset: $orders_offset) {\norderid\ncustomerid\namount\norderTime\n}\n}\n\n}",
-          "queryName" : "Customer",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/Customer{?largeOrders_limit,orders_limit,offset,largeOrders_offset,limit,largeOrders_minAmount,orders_offset}"
-      },
-      {
-        "function" : {
-          "name" : "GetCustomerImport",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query CustomerImport($limit: Int = 10, $offset: Int = 0) {\nCustomerImport(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
-          "queryName" : "CustomerImport",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/CustomerImport{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetLargeOrders",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query LargeOrders($limit: Int = 10, $offset: Int = 0) {\nLargeOrders(limit: $limit, offset: $offset) {\norderid\ncustomerid\namount\norderTime\n}\n\n}",
-          "queryName" : "LargeOrders",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/LargeOrders{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetOrders",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query Orders($limit: Int = 10, $offset: Int = 0) {\nOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
-          "queryName" : "Orders",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/Orders{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetSimpleOrders",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query SimpleOrders($limit: Int = 10, $offset: Int = 0) {\nSimpleOrders(limit: $limit, offset: $offset) {\norderid\ncustomerid\namount\norderTime\n}\n\n}",
-          "queryName" : "SimpleOrders",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/SimpleOrders{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetUnnestOrders",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query UnnestOrders($limit: Int = 10, $offset: Int = 0) {\nUnnestOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nproductid\nquantity\ndiscount\n}\n\n}",
-          "queryName" : "UnnestOrders",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/UnnestOrders{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetCustomerById",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "largeOrders_limit" : {
-                "type" : "integer"
-              },
-              "orders_limit" : {
-                "type" : "integer"
-              },
-              "offset" : {
-                "type" : "integer"
-              },
-              "largeOrders_offset" : {
-                "type" : "integer"
-              },
-              "customerid" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              },
-              "largeOrders_minAmount" : {
-                "type" : "number"
-              },
-              "orders_offset" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [
-              "customerid",
-              "largeOrders_minAmount"
-            ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query CustomerById($customerid: Long!, $limit: Int = 10, $offset: Int = 0$largeOrders_minAmount: Float!, $largeOrders_limit: Int = 10, $largeOrders_offset: Int = 0$orders_limit: Int = 10, $orders_offset: Int = 0) {\nCustomerById(customerid: $customerid, limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\nlargeOrders(minAmount: $largeOrders_minAmount, limit: $largeOrders_limit, offset: $largeOrders_offset) {\norderid\ncustomerid\namount\norderTime\n}\norders(limit: $orders_limit, offset: $orders_offset) {\norderid\ncustomerid\namount\norderTime\n}\n}\n\n}",
-          "queryName" : "CustomerById",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/CustomerById{?largeOrders_limit,orders_limit,offset,largeOrders_offset,customerid,limit,largeOrders_minAmount,orders_offset}"
-      },
-      {
-        "function" : {
-          "name" : "AddSimpleOrders",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "amount" : {
-                "type" : "number"
-              },
-              "orderid" : {
-                "type" : "integer"
-              },
-              "customerid" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "mutation SimpleOrders($orderid: Int, $customerid: Long, $amount: Float) {\nSimpleOrders(event: { orderid: $orderid, customerid: $customerid, amount: $amount }) {\norderid\ncustomerid\namount\norderTime\n}\n\n}",
-          "queryName" : "SimpleOrders",
-          "operationType" : "MUTATION"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "POST",
-        "uriTemplate" : "mutations/SimpleOrders"
-      }
-    ],
-    "schema" : {
-      "type" : "string",
-      "schema" : "type Customer {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n  largeOrders(minAmount: Float!, limit: Int = 10, offset: Int = 0): [SimpleOrders!]\n  orders(limit: Int = 10, offset: Int = 0): [SimpleOrders!]\n}\n\ntype CustomerImport {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Mutation {\n  SimpleOrders(event: SimpleOrdersInput!): SimpleOrdersResultOutput!\n}\n\ntype Orders {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  entries: [Orders_entriesOutput]!\n}\n\ntype Orders_entriesOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerImport(limit: Int = 10, offset: Int = 0): [CustomerImport!]\n  LargeOrders(limit: Int = 10, offset: Int = 0): [SimpleOrders!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n  SimpleOrders(limit: Int = 10, offset: Int = 0): [SimpleOrders!]\n  UnnestOrders(limit: Int = 10, offset: Int = 0): [UnnestOrders!]\n  CustomerById(customerid: Long!, limit: Int = 10, offset: Int = 0): [Customer!]\n}\n\ntype SimpleOrders {\n  orderid: Int\n  customerid: Long\n  amount: Float\n  orderTime: DateTime\n}\n\ninput SimpleOrdersInput {\n  orderid: Int\n  customerid: Long\n  amount: Float\n}\n\ntype SimpleOrdersResultOutput {\n  orderid: Int\n  customerid: Long\n  amount: Float\n  orderTime: DateTime\n}\n\ntype Subscription {\n  LargeOrderSubscription(customerid: Long): SimpleOrders\n}\n\ntype UnnestOrders {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  productid: Long!\n  quantity: Long!\n  discount: Float\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
     }
   }
 }

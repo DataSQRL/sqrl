@@ -106,9 +106,36 @@
         "operations": {
           "type": "array",
           "items": { "type": "string" }
+        },
+        "api": {
+          "type": "object",
+          "minProperties": 1,
+          "properties": {
+            "schema": {
+              "type": "string"
+            },
+            "operations": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          },
+          "additionalProperties": false,
+          "required": ["schema"]
         }
       },
-      "additionalProperties": false
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "not": {
+            "required": ["api", "graphql"]
+          }
+        },
+        {
+          "not": {
+            "required": ["api", "operations"]
+          }
+        }
+      ]
     },
     "engines": {
       "type": "object",

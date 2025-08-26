@@ -48,7 +48,7 @@ public class SwaggerContainerIT extends SqrlContainerTestBase {
 
   @SneakyThrows
   private void testSwaggerJsonEndpoint() {
-    var swaggerJsonUrl = getBaseUrl() + "/swagger";
+    var swaggerJsonUrl = getBaseUrl() + "/v1/swagger";
     var request = new HttpGet(swaggerJsonUrl);
     var response = sharedHttpClient.execute(request);
 
@@ -80,18 +80,18 @@ public class SwaggerContainerIT extends SqrlContainerTestBase {
 
     // Verify REST endpoints are documented
     var paths = jsonResponse.get("paths");
-    assertThat(paths.has("/rest/queries/Schema"))
+    assertThat(paths.has("/v1/rest/queries/Schema"))
         .as("Schema REST endpoint should be documented")
         .isTrue();
 
     // Verify endpoint details
-    var schemaPath = paths.get("/rest/queries/Schema");
+    var schemaPath = paths.get("/v1/rest/queries/Schema");
     assertThat(schemaPath.has("get")).as("Schema endpoint should have GET method").isTrue();
   }
 
   @SneakyThrows
   private void testSwaggerUIEndpoint() {
-    var swaggerUIUrl = getBaseUrl() + "/swagger-ui";
+    var swaggerUIUrl = getBaseUrl() + "/v1/swagger-ui";
     var request = new HttpGet(swaggerUIUrl);
     var response = sharedHttpClient.execute(request);
 

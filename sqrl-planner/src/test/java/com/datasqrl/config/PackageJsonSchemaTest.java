@@ -39,7 +39,8 @@ class PackageJsonSchemaTest {
         "validDependencies.json",
         "missingProfilesField.json",
         "validPackageWithUrls.json",
-        "onlyVersionFieldExists.json"
+        "onlyVersionFieldExists.json",
+        "scriptApiVersion.json"
       })
   void validConfigFile(String configFileName) {
     var errors = ErrorCollector.root();
@@ -59,7 +60,9 @@ class PackageJsonSchemaTest {
         "missingRequiredDependencyFields.json",
         "emptyTestRunner.json",
         "emptyPropertiesInPackage.json",
-        "invalidEnumString.json"
+        "invalidEnumString.json",
+        "invalidScriptFields.json",
+        "invalidScriptApiFields.json"
       })
   void invalidConfigFile(String configFileName) {
     testForErrors(

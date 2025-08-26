@@ -27,7 +27,7 @@ import com.datasqrl.graphql.HttpServerVerticle;
 import com.datasqrl.graphql.SqrlObjectMapper;
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.config.ServerConfigUtil;
-import com.datasqrl.graphql.server.RootGraphqlModel;
+import com.datasqrl.graphql.server.ModelContainer;
 import com.datasqrl.util.ConfigLoaderUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.prometheusmetrics.PrometheusConfig;
@@ -275,8 +275,8 @@ public class DatasqrlRun {
       return;
     }
 
-    RootGraphqlModel rootGraphqlModel = mapper.readValue(vertxJson, ModelContainer.class).model;
-    if (rootGraphqlModel == null) {
+    var rootGraphqlModel = mapper.readValue(vertxJson, ModelContainer.class).models;
+    if (rootGraphqlModel == null || rootGraphqlModel.isEmpty()) {
       return; // no graphql server queries
     }
 
@@ -352,9 +352,5 @@ public class DatasqrlRun {
         .getEngineConfig(EngineIds.SERVER)
         .map(PackageJson.EngineConfig::getConfig)
         .orElse(null);
-  }
-
-  public static class ModelContainer {
-    public RootGraphqlModel model;
   }
 }

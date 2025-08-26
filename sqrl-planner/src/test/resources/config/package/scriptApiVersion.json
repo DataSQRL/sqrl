@@ -1,0 +1,10 @@
+{
+  "version": "1",
+  "script": {
+    "main": "asd",
+    "api": {
+      "schema": "my-schema",
+      "operations": ["op1", "op2"]
+    }
+  }
+}
