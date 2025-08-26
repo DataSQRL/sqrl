@@ -1,5 +1,5 @@
 [FATAL]  Unknown identifier 'BIGIT'
-in script:invalidargumenttype-fail.sqrl [2:15]:
+in script:invalidArgumentType-fail.sqrl [2:15]:
 IMPORT ecommerceTs.Orders;
 OrdersById(id BIGIT, otherid BIGINT) := SELECT * FROM Orders WHERE :id = id AND id = :otherid;
 --------------^

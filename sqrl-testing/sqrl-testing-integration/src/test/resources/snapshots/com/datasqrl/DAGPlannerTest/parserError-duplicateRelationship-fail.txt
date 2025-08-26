@@ -1,5 +1,5 @@
 [FATAL] Function or relationship [Customer.related] already exists in catalog
-in script:parsererror-duplicaterelationship-fail.sqrl [4:1]:
+in script:parserError-duplicateRelationship-fail.sqrl [4:1]:
 Customer.related := SELECT * FROM Customer other WHERE this.customerid = other.customerid ORDER BY other.`timestamp`;
 -- overloads are not permitted
 Customer.related(length INT) := SELECT * FROM Customer other WHERE this.customerid = other.customerid

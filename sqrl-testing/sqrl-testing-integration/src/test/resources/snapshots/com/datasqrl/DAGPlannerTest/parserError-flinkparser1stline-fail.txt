@@ -56,7 +56,7 @@ Was expecting one of:
     "[" ...
     "(" ...
     
-in script:parsererror-flinkparser1stline-fail.sqrl [3:42]:
+in script:parserError-flinkparser1stline-fail.sqrl [3:42]:
 IMPORT ecommerceTs.Customer;
 
 CustomerTimeWindow := SELECT window_start] window_end,
