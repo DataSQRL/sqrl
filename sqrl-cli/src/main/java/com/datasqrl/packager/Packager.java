@@ -57,9 +57,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -117,7 +115,7 @@ public class Packager {
                   buildDir.getBuildDir(),
                   NamePath.parse(entry.getKey()),
                   entry.getValue().normalize(entry.getKey(), errors))
-              ? Optional.<NamePath>empty()
+              ? Optional.empty()
               : Optional.of(NamePath.parse(entry.getKey()));
       deps.add(namePath);
     }
@@ -126,9 +124,7 @@ public class Packager {
   }
 
   private void copyFilesToBuildDir(ErrorCollector errors) throws IOException {
-    Map<String, Optional<Path>> destinationPaths =
-        copyScriptFilesToBuildDir().entrySet().stream()
-            .collect(Collectors.toMap(Entry::getKey, v -> canonicalizePath(v.getValue())));
+    Map<String, Optional<Path>> destinationPaths = copyScriptFilesToBuildDir();
     // Files should exist, if error occurs its internal, hence we create root error collector
     addFileToPackageJsonConfig(
         buildDir.getBuildDir(), config.getScriptConfig(), destinationPaths, errors);
@@ -152,14 +148,6 @@ public class Packager {
             }
           }
         });
-  }
-
-  public static Optional<Path> canonicalizePath(Optional<Path> path) {
-    return path.map(Packager::canonicalizePath);
-  }
-
-  public static Path canonicalizePath(Path path) {
-    return Path.of(path.toString().toLowerCase());
   }
 
   /**
@@ -276,7 +264,7 @@ public class Packager {
   public static Path copyFile(Path srcFile, Path destDir, Path relativeDestPath)
       throws IOException {
     Preconditions.checkArgument(Files.isRegularFile(srcFile), "Is not a file: %s", srcFile);
-    var targetPath = canonicalizePath(destDir.resolve(relativeDestPath));
+    var targetPath = destDir.resolve(relativeDestPath);
     if (!Files.exists(targetPath.getParent())) {
       Files.createDirectories(targetPath.getParent());
     }
