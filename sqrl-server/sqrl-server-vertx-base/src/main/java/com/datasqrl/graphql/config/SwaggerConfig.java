@@ -21,7 +21,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class SwaggerConfig {
+public class SwaggerConfig implements Versioned {
 
   private boolean enabled;
   private String endpoint;
@@ -88,14 +88,10 @@ public class SwaggerConfig {
   }
 
   public String getEndpoint(String version) {
-    return getVersioned(version, endpoint);
+    return getVersionedEndpoint(version, endpoint);
   }
 
   public String getUiEndpoint(String version) {
-    return getVersioned(version, uiEndpoint);
-  }
-
-  private String getVersioned(String version, String endpoint) {
-    return '/' + version + endpoint;
+    return getVersionedEndpoint(version, uiEndpoint);
   }
 }

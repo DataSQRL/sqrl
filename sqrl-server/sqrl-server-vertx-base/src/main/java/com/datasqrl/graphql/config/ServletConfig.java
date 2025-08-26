@@ -23,7 +23,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class ServletConfig {
+public class ServletConfig implements Versioned {
 
   private String graphiQLEndpoint = "/graphiql*";
   private String graphQLEndpoint = "/graphql";
@@ -64,22 +64,18 @@ public class ServletConfig {
   }
 
   public String getGraphiQLEndpoint(String version) {
-    return getVersioned(version, graphiQLEndpoint);
+    return getVersionedEndpoint(version, graphiQLEndpoint);
   }
 
   public String getGraphQLEndpoint(String version) {
-    return getVersioned(version, graphQLEndpoint);
+    return getVersionedEndpoint(version, graphQLEndpoint);
   }
 
   public String getRestEndpoint(String version) {
-    return getVersioned(version, restEndpoint);
+    return getVersionedEndpoint(version, restEndpoint);
   }
 
   public String getMcpEndpoint(String version) {
-    return getVersioned(version, mcpEndpoint);
-  }
-
-  private String getVersioned(String version, String endpoint) {
-    return '/' + version + endpoint;
+    return getVersionedEndpoint(version, mcpEndpoint);
   }
 }
