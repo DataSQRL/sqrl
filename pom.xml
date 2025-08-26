@@ -151,7 +151,7 @@
          Otherwise, it might break the Flink filesystem integration. -->
     <hadoop.version>3.3.4</hadoop.version>
     <jacoco.version>0.8.13</jacoco.version>
-    <jjwt.version>0.12.7</jjwt.version>
+    <jjwt.version>0.13.0</jjwt.version>
     <assertj.version>3.27.4</assertj.version>
     <awaitility.version>4.3.0</awaitility.version>
     <jakarta.annotation.version>3.0.0</jakarta.annotation.version>
