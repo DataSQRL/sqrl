@@ -188,22 +188,6 @@ public class SqlScriptPlanner {
             .collect(Collectors.toList());
   }
 
-  private record ScriptContext(
-      ModuleLoader moduleLoader, String databaseName, boolean generateAccess) {
-
-    ScriptContext fromImport(ModuleLoader moduleLoader, boolean isInline, String databaseName) {
-      if (isInline) {
-        return new ScriptContext(moduleLoader, this.databaseName, generateAccess);
-      } else {
-        return new ScriptContext(moduleLoader, databaseName, false);
-      }
-    }
-
-    boolean hasSameDatabase(ScriptContext other) {
-      return this.databaseName.equals(other.databaseName);
-    }
-  }
-
   /**
    * Main entry method for parsing a SQRL script. The bulk of this method ensure that exceptions and
    * errors are correctly mapped to the source so that users can easily understand what the issue is
@@ -867,11 +851,18 @@ public class SqlScriptPlanner {
               scriptObject.getModuleLoader(),
               scriptObject.isInline(),
               alias.orElse(scriptObject.name().getDisplay()));
-      if (!priorContext.hasSameDatabase(scriptContext))
+
+      if (priorContext.hasDifferentDatabase(scriptContext)) {
+        // Switch DB
         sqrlEnv.setDatabase(scriptContext.databaseName(), false);
+      }
+
       planMain(scriptObject.getScript(), sqrlEnv);
-      if (!priorContext.hasSameDatabase(scriptContext))
+
+      if (priorContext.hasDifferentDatabase(scriptContext)) {
+        // Switch it back
         sqrlEnv.setDatabase(priorContext.databaseName(), true);
+      }
       scriptContext = priorContext;
     } else {
       throw new UnsupportedOperationException("Unexpected object imported: " + nsObject);
@@ -1070,5 +1061,19 @@ public class SqlScriptPlanner {
   record HintsAndDocs(PlannerHints hints, Optional<String> documentation) {
 
     public static final HintsAndDocs EMPTY = new HintsAndDocs(PlannerHints.EMPTY, Optional.empty());
+  }
+
+  private record ScriptContext(
+      ModuleLoader moduleLoader, String databaseName, boolean generateAccess) {
+
+    ScriptContext fromImport(ModuleLoader moduleLoader, boolean isInline, String databaseName) {
+      return isInline
+          ? new ScriptContext(moduleLoader, this.databaseName, generateAccess)
+          : new ScriptContext(moduleLoader, databaseName, false);
+    }
+
+    boolean hasDifferentDatabase(ScriptContext other) {
+      return !databaseName.equals(other.databaseName);
+    }
   }
 }
