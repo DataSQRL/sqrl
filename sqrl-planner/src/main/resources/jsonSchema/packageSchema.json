@@ -121,6 +121,11 @@
           },
           "additionalProperties": false,
           "required": ["schema"]
+        },
+        "config":{
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": true
         }
       },
       "additionalProperties": false,
@@ -196,33 +201,6 @@
     "connectors": {
       "type": "object",
       "minProperties": 1
-    },
-    "dependencies": {
-      "type": "object",
-      "patternProperties": {
-        ".*": {
-          "type": "object",
-          "properties": {
-            "name": {
-              "type": "string"
-            },
-            "folder": {
-              "type": "string"
-            },
-            "version": {
-              "type": "string"
-            },
-            "variant": {
-              "type": "string"
-            }
-          },
-          "oneOf": [
-            { "required": ["name"] },
-            { "required": ["folder"] }
-          ],
-          "additionalProperties": false
-        }
-      }
     },
     "package": {
       "type": "object",

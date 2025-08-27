@@ -5,6 +5,6 @@ CREATE TABLE AddInterest (
       'format' = 'flexible-json',
       'path' = '${DATA_PATH}/addinterest.jsonl',
       'source.monitor-interval' = '1',
-       'flexible-json.timestamp-format.standard' = 'ISO-8601',
-       'connector' = 'filesystem'
-      );
+      'connector' = 'filesystem'
+      )
+LIKE `AddInterest.schema.yml`;

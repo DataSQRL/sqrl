@@ -6,4 +6,5 @@ CREATE TABLE Click (
       'path' = '${DATA_PATH}/click.jsonl',
       'source.monitor-interval' = '10 sec',
       'connector' = 'filesystem'
-      );
+      )
+LIKE `Click.schema.yml`;

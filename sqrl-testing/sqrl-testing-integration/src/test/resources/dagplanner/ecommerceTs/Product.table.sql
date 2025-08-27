@@ -6,4 +6,5 @@ CREATE TABLE Product (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec',
   'connector' = 'filesystem'
-  );
+  )
+LIKE `Product.schema.yml`;

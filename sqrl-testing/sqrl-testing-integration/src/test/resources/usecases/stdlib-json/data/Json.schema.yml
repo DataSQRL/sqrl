@@ -8,7 +8,7 @@ columns:
     tests:
       - "not_null"
   - name: "val"
-    type: "String"
+    type: "STRING"
     tests:
       - "not_null"
   - name: "timestamp"

@@ -27,8 +27,8 @@ public class NamespaceObjectUtil {
         function instanceof FunctionDefinition,
         "All SQRL function implementations must extend FunctionDefinition: %s",
         function.getClass());
-    var functionNameFromClass = function.getClass().getSimpleName();
-    return new FlinkUdfNsObject(
-        functionNameFromClass, function, functionNameFromClass, Optional.empty());
+    var fnName = function.getClass().getSimpleName();
+
+    return new FlinkUdfNsObject(fnName, function, fnName, Optional.empty());
   }
 }

@@ -18,6 +18,7 @@ package com.datasqrl.config;
 import com.datasqrl.config.PackageJson.ScriptApiConfig;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 
@@ -30,6 +31,7 @@ public class ScriptConfigImpl implements PackageJson.ScriptConfig {
   public static final String API_KEY = "api";
   public static final String GRAPHQL_KEY = "graphql";
   public static final String OPERATIONS_KEY = "operations";
+  public static final String CONFIG_KEY = "config";
 
   @Override
   public Optional<String> getMainScript() {
@@ -60,6 +62,11 @@ public class ScriptConfigImpl implements PackageJson.ScriptConfig {
   @Override
   public List<String> getOperations() {
     return sqrlConfig.asList(OPERATIONS_KEY, String.class).get();
+  }
+
+  @Override
+  public Map<String, Object> getConfig() {
+    return sqrlConfig.getSubConfig(CONFIG_KEY).toMap();
   }
 
   @Override

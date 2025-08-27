@@ -8,4 +8,5 @@ CREATE TABLE Orders (
     'topic' = '${sqrl:topic}',
     'connector' = 'kafka',
     'avro.timestamp_mapping.legacy' = 'false'
-);
+)
+LIKE `orders.avsc`;

@@ -6,4 +6,5 @@ CREATE TABLE Orders (
 'path' = 'file:/mock',
 'source.monitor-interval' = '10 sec',
 'connector' = 'filesystem'
-);
+)
+LIKE `Orders.schema.yml`;

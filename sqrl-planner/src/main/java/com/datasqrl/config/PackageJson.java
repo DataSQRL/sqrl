@@ -38,8 +38,6 @@ public interface PackageJson {
 
   DiscoveryConfig getDiscovery();
 
-  DependenciesConfig getDependencies();
-
   void toFile(Path path, boolean pretty);
 
   ScriptConfig getScriptConfig();
@@ -105,6 +103,8 @@ public interface PackageJson {
 
     List<String> getOperations();
 
+    Map<String, Object> getConfig();
+
     void setMainScript(String script);
 
     void setGraphql(String graphql);
@@ -168,15 +168,6 @@ public interface PackageJson {
     public boolean isEmpty() {
       return true;
     }
-  }
-
-  interface DependenciesConfig {
-
-    void addDependency(String key, Dependency dep);
-
-    Optional<Dependency> getDependency(String profile);
-
-    Map<String, ? extends Dependency> getDependencies();
   }
 
   interface DiscoveryConfig {

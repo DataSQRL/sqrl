@@ -28,4 +28,8 @@ public class SqrlConstants {
   public static final String FLINK_ASSETS_DIR = "flink";
   public static final String LIB_DIR = "lib";
   public static final String DATA_DIR = "data";
+  public static final String SQRL_EXTENSION = "sqrl";
+  public static final String SQL_EXTENSION = "sql";
+  public static final String GRAPHQL_EXTENSION = "graphql";
+  public static final String GRAPHQL_SCHEMA_EXTENSION = "graphqls";
 }

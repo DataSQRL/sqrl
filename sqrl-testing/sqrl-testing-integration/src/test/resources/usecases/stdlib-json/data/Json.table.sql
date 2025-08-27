@@ -5,4 +5,4 @@ CREATE TABLE MyTable (
       'format' = 'flexible-json',
       'path' = '${DATA_PATH}/json.jsonl',
       'connector' = 'filesystem'
-      );
+) LIKE `Json.schema.yml`;

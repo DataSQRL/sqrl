@@ -5,4 +5,5 @@ WATERMARK FOR `event_time` AS `event_time`
 'format' = 'flexible-json',
 'path' = '${DATA_PATH}/application_updates.jsonl',
 'connector' = 'filesystem'
-);
+)
+LIKE `ApplicationUpdates.schema.yml`;

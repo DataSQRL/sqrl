@@ -6,4 +6,4 @@ CREATE TABLE MyTable (
       'warehouse' = '/tmp/duckdb',
       'catalog-type' = 'hadoop',
       'catalog-name' = 'mydatabase'
-      );
+) LIKE `.`;

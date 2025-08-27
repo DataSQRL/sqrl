@@ -7,4 +7,5 @@ CREATE TABLE SensorReading (
       'path' = '${DATA_PATH}/sensorreading.csv.gz',
       'connector' = 'filesystem',
       'flexible-csv.skip-header' = 'true'
-      );
+      )
+LIKE `SensorReading.schema.yml`;

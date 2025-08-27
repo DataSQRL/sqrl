@@ -56,12 +56,6 @@
       "properties.group.id": "${KAFKA_GROUP_ID}",
       "topic": "${sqrl:table-name}"
     },
-    "localfile": {
-      "connector": "filesystem",
-      "format": "${sqrl:format}",
-      "path": "${DATA_PATH}/${sqrl:filename}",
-      "source.monitor-interval": "10 sec"
-    },
     "iceberg": {
       "connector": "iceberg",
       "catalog-table": "${sqrl:table-name}"

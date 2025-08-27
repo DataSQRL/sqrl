@@ -1,11 +1,9 @@
 {
   "version": "1",
   "script": {
-    "main": "seedshop-extended.sqrl"
-  },
-  "dependencies": {
-    "sink": {
-      "folder": "local-sink"
+    "main": "seedshop-extended.sqrl",
+    "config": {
+      "variant": "local"
     }
   },
   "test-runner": {

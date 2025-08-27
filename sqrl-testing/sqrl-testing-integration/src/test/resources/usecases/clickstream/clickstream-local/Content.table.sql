@@ -6,4 +6,5 @@ CREATE TABLE Content (
       'path' = '${DATA_PATH}/content.jsonl',
       'source.monitor-interval' = '10 sec',
       'connector' = 'filesystem'
-      );
+      )
+LIKE `Content.schema.yml`;

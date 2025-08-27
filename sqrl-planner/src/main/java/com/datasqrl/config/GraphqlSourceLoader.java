@@ -18,7 +18,7 @@ package com.datasqrl.config;
 import com.datasqrl.config.PackageJson.ScriptApiConfig;
 import com.datasqrl.graphql.ApiSource;
 import com.datasqrl.graphql.ScriptFiles;
-import com.datasqrl.module.resolver.ResourceResolver;
+import com.datasqrl.loaders.resolver.ResourceResolver;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import java.nio.file.Files;
