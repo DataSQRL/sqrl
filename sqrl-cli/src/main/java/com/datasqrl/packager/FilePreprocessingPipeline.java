@@ -34,11 +34,14 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 
 /**
@@ -46,13 +49,28 @@ import lombok.SneakyThrows;
  * (preserving relative paths) 2) running all registered preprocessors for more elaborate
  * preprocessing than just copying files.
  */
+@SuppressWarnings("NullableProblems")
 @AllArgsConstructor(onConstructor_ = @Inject)
 public class FilePreprocessingPipeline {
 
   private final BuildPath buildPath;
   private final Set<Preprocessor> preprocessors;
 
-  private Set<String> getCopyExtensions() {
+  public void run(Path sourceDir, ErrorCollector errors) throws IOException {
+    run(sourceDir, NamePath.ROOT, errors);
+  }
+
+  public void run(Path sourceDir, NamePath namePath, ErrorCollector errors) throws IOException {
+    Path buildDir = NameUtil.namepath2Path(buildPath.buildDir(), namePath);
+
+    Files.walkFileTree(
+        sourceDir,
+        EnumSet.of(FileVisitOption.FOLLOW_LINKS),
+        Integer.MAX_VALUE,
+        new PathVisitor(sourceDir, buildDir, errors));
+  }
+
+  private static Set<String> getCopyExtensions() {
     Set<String> copyExtensions = new HashSet<>(TableSchemaFactory.factoriesByExtension().keySet());
     copyExtensions.add(SqrlConstants.SQRL_EXTENSION);
     copyExtensions.add(SqrlConstants.SQL_EXTENSION);
@@ -61,44 +79,57 @@ public class FilePreprocessingPipeline {
     return copyExtensions;
   }
 
-  public void run(Path sourceDir, ErrorCollector errors) throws IOException {
-    run(sourceDir, NamePath.ROOT, errors);
-  }
+  @RequiredArgsConstructor
+  private class PathVisitor extends SimpleFileVisitor<Path> {
 
-  public void run(Path sourceDir, NamePath namePath, ErrorCollector errors) throws IOException {
-    Path buildDir = NameUtil.namepath2Path(buildPath.buildDir(), namePath);
-    Context context =
-        new Context(sourceDir, buildDir, buildPath.getUdfPath(), buildPath.getDataPath(), errors);
-    FilenameAnalyzer fileAnalyzer = FilenameAnalyzer.of(getCopyExtensions());
-    Files.walkFileTree(
-        sourceDir,
-        EnumSet.of(FileVisitOption.FOLLOW_LINKS),
-        Integer.MAX_VALUE,
-        new SimpleFileVisitor<>() {
+    private static final FilenameAnalyzer FILENAME_ANALYZER =
+        FilenameAnalyzer.of(getCopyExtensions());
 
-          private Context localContext = context;
+    private final Deque<Context> ctxDeque = new ArrayDeque<>();
 
-          @Override
-          public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
-            if (dir.startsWith(buildDir)) {
-              return FileVisitResult.SKIP_SUBTREE;
-            }
-            localContext = context.getSubContext(dir);
+    private final Path sourceDir;
+    private final Path buildDir;
+    private final ErrorCollector errors;
 
-            return FileVisitResult.CONTINUE;
-          }
+    @Override
+    public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+      if (dir.startsWith(buildDir)) {
+        return FileVisitResult.SKIP_SUBTREE;
+      }
 
-          @Override
-          public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
-            if (Files.isRegularFile(file)) {
-              if (fileAnalyzer.analyze(file).isPresent()) {
-                context.copyToBuild(file);
-              }
-              preprocessors.forEach(p -> p.process(file, localContext));
-            }
-            return FileVisitResult.CONTINUE;
-          }
-        });
+      var currentCtx = ctxDeque.peek();
+      if (currentCtx == null) {
+        currentCtx =
+            new Context(
+                sourceDir, buildDir, buildPath.getUdfPath(), buildPath.getDataPath(), errors);
+      }
+
+      ctxDeque.push(currentCtx.getSubContext(dir));
+
+      return FileVisitResult.CONTINUE;
+    }
+
+    @Override
+    public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+      ctxDeque.pop();
+
+      return super.postVisitDirectory(dir, exc);
+    }
+
+    @Override
+    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+      if (Files.isRegularFile(file)) {
+
+        var ctx = ctxDeque.peek();
+        if (FILENAME_ANALYZER.analyze(file).isPresent()) {
+          ctx.copyToBuild(file);
+        }
+
+        preprocessors.forEach(p -> p.process(file, ctx));
+      }
+
+      return FileVisitResult.CONTINUE;
+    }
   }
 
   @AllArgsConstructor
