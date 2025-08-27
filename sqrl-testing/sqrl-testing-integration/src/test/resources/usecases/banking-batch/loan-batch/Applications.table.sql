@@ -4,4 +4,5 @@ PRIMARY KEY (id, `updated_at`) NOT ENFORCED
 'format' = 'flexible-json',
 'path' = '${DATA_PATH}/applications.jsonl',
 'connector' = 'filesystem'
-);
+)
+LIKE `Applications.schema.yml`;

@@ -6,4 +6,5 @@ CREATE TABLE Orders (
       'path' = '${DATA_PATH}/orders.jsonl',
       'source.monitor-interval' = '10000',
       'connector' = 'filesystem'
-      );
+      )
+LIKE `Orders.schema.yml`;

@@ -25,22 +25,15 @@ import com.datasqrl.config.PackageJson.CompilerConfig;
 import com.datasqrl.config.SqrlCompilerConfiguration;
 import com.datasqrl.config.SqrlConfigPipeline;
 import com.datasqrl.config.SqrlConstants;
-import com.datasqrl.discovery.preprocessor.FlexibleSchemaInferencePreprocessor;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.io.schema.avro.AvroSchemaPreprocessor;
-import com.datasqrl.io.schema.flexible.FlexibleSchemaPreprocessor;
 import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.loaders.ModuleLoaderImpl;
-import com.datasqrl.module.resolver.FileResourceResolver;
-import com.datasqrl.module.resolver.ResourceResolver;
+import com.datasqrl.loaders.resolver.FileResourceResolver;
+import com.datasqrl.loaders.resolver.ResourceResolver;
 import com.datasqrl.packager.preprocess.CopyStaticDataPreprocessor;
-import com.datasqrl.packager.preprocess.DataSystemPreprocessor;
-import com.datasqrl.packager.preprocess.FlinkSqlPreprocessor;
 import com.datasqrl.packager.preprocess.JarPreprocessor;
-import com.datasqrl.packager.preprocess.ScriptPreprocessor;
-import com.datasqrl.packager.preprocess.TablePreprocessor;
-import com.datasqrl.packager.preprocessor.Preprocessor;
+import com.datasqrl.packager.preprocess.Preprocessor;
 import com.datasqrl.plan.MainScript;
 import com.datasqrl.plan.validate.ExecutionGoal;
 import com.google.inject.AbstractModule;
@@ -83,15 +76,8 @@ public class SqrlInjector extends AbstractModule {
     bind(ConnectorFactoryFactory.class).to(ConnectorFactoryFactoryImpl.class);
 
     Multibinder<Preprocessor> binder = Multibinder.newSetBinder(binder(), Preprocessor.class);
-    binder.addBinding().to(ScriptPreprocessor.class);
-    binder.addBinding().to(TablePreprocessor.class);
     binder.addBinding().to(CopyStaticDataPreprocessor.class);
     binder.addBinding().to(JarPreprocessor.class);
-    binder.addBinding().to(DataSystemPreprocessor.class);
-    binder.addBinding().to(FlinkSqlPreprocessor.class);
-    binder.addBinding().to(FlexibleSchemaPreprocessor.class);
-    binder.addBinding().to(AvroSchemaPreprocessor.class);
-    binder.addBinding().to(FlexibleSchemaInferencePreprocessor.class);
   }
 
   @Provides

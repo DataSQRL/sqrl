@@ -5,4 +5,5 @@ CREATE TABLE Orders (
     'format' = 'flexible-json',
     'path' = '${DATA_PATH}/orders.jsonl',
     'connector' = 'filesystem'
-);
+)
+LIKE `Orders.schema.yml`;

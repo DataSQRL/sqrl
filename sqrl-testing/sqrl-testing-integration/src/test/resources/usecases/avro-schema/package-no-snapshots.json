@@ -1,7 +1,10 @@
 {
   "version": "1",
   "script": {
-    "main": "avro-schema.sqrl"
+    "main": "avro-schema.sqrl",
+    "config": {
+      "variant": "json"
+    }
   },
   "test-runner": {
     "snapshot-folder": "snapshots-tmp",

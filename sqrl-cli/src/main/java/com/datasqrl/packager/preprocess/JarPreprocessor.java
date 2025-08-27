@@ -17,21 +17,16 @@ package com.datasqrl.packager.preprocess;
 
 import static com.datasqrl.packager.LambdaUtil.rethrowCall;
 
-import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.loaders.ClasspathFunctionLoader;
-import com.datasqrl.packager.preprocessor.Preprocessor;
+import com.datasqrl.packager.FilePreprocessingPipeline;
 import com.datasqrl.util.SqrlObjectMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -43,30 +38,25 @@ import org.apache.commons.io.IOUtils;
 @Slf4j
 public class JarPreprocessor implements Preprocessor {
 
-  public static final ObjectMapper mapper = SqrlObjectMapper.INSTANCE;
-
-  public static final String SERVICES_PATH = "META-INF/services/";
-  public static final Set<String> flinkUdfs =
-      ClasspathFunctionLoader.flinkUdfClasses.stream()
+  private static final ObjectMapper MAPPER = SqrlObjectMapper.INSTANCE;
+  private static final String SERVICES_PATH = "META-INF/services/";
+  private static final Set<String> FLINK_UDFS =
+      ClasspathFunctionLoader.FLINK_UDF_CLASSES.stream()
           .map(Class::getCanonicalName)
           .collect(Collectors.toSet());
 
-  @Override
-  public Pattern getPattern() {
-    return Pattern.compile(".*\\.jar$");
-  }
-
   @SneakyThrows
   @Override
-  public void processFile(Path path, ProcessorContext processorContext, ErrorCollector errors) {
-    try (java.util.jar.JarFile file = new java.util.jar.JarFile(path.toFile())) {
+  public void process(Path path, FilePreprocessingPipeline.Context context) {
+    if (!path.getFileName().toString().endsWith(".jar")) return;
+    try (var file = new java.util.jar.JarFile(path.toFile())) {
       file.stream()
           .filter(this::isValidEntry)
-          .filter(entry -> flinkUdfs.contains(getClassName(entry)))
-          .forEach(
-              entry -> rethrowCall(() -> processJarEntry(entry, file, processorContext, path)));
+          .filter(entry -> FLINK_UDFS.contains(getClassName(entry)))
+          .forEach(entry -> rethrowCall(() -> processJarEntry(entry, file, context, path)));
+      context.copyToLib(path);
     } catch (Exception e) {
-      log.warn("Could not jar in path:" + path, e);
+      log.warn("Could not read jar in path:" + path, e);
     }
   }
 
@@ -77,23 +67,22 @@ public class JarPreprocessor implements Preprocessor {
 
   /** Processes a single jar entry */
   private Void processJarEntry(
-      JarEntry entry, JarFile file, ProcessorContext processorContext, Path path)
+      JarEntry entry, JarFile file, FilePreprocessingPipeline.Context processorContext, Path path)
       throws IOException {
     var input = file.getInputStream(entry);
     var classes = IOUtils.readLines(input, Charset.defaultCharset());
 
-    for (String clazz : classes) {
-      var obj = mapper.createObjectNode();
+    for (var clazz : classes) {
+      var obj = MAPPER.createObjectNode();
       obj.put("language", "java");
       obj.put("functionClass", clazz);
       obj.put("jarPath", path.toFile().getName());
 
       // Create a file in a temporary directory
       var functionName = clazz.substring(clazz.lastIndexOf('.') + 1);
-      var toFile = createTempFile(obj, functionName);
-      processorContext.addDependency(path);
-      processorContext.addDependency(toFile.toPath());
-      processorContext.addLibrary(path);
+      var functionPath =
+          processorContext.createNewBuildFile(Path.of(functionName + ".function.json"));
+      MAPPER.writeValue(functionPath.toFile(), obj);
     }
 
     return null;
@@ -102,13 +91,5 @@ public class JarPreprocessor implements Preprocessor {
   /** Checks if the jar entry is valid */
   private boolean isValidEntry(java.util.jar.JarEntry entry) {
     return entry.getName().startsWith(SERVICES_PATH) && !entry.getName().endsWith("/");
-  }
-
-  /** Creates a temporary file and writes the given object to it */
-  private File createTempFile(ObjectNode obj, String functionName) throws IOException {
-    var functionPath = Files.createTempDirectory("fnc").resolve(functionName + ".function.json");
-
-    mapper.writeValue(functionPath.toFile(), obj);
-    return functionPath.toFile();
   }
 }

@@ -22,4 +22,5 @@ dependencies {
 shadowJar {
     mergeServiceFiles()
     zip64 = true
+    destinationDirectory = file('lib')
 }

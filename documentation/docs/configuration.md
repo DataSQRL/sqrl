@@ -68,7 +68,7 @@ Each sub-key below `engines` must match one of the IDs in **`enabled-engines`**.
 > **Built-in connector templates**  
 > `postgres`, `postgres_log-source`, `postgres_log-sink`,  
 > `kafka`, `kafka-keyed`, `kafka-upsert`,  
-> `iceberg`, `localfile`, `print`.
+> `iceberg`, `print`.
 
 ### Kafka (`kafka`)
 
@@ -143,7 +143,6 @@ Used as a *table-format* engine together with a query engine such as Flink, Snow
     "postgres": { "connector": "jdbc-sqrl",  /*...*/ },
     "kafka-mutation": { "connector" : "kafka", /*...*/ },
     "kafka": { "connector" : "kafka", /*...*/ },
-    "localfile": { "connector": "filesystem", /*...*/ },
     "iceberg": { "connector": "iceberg", /*...*/ },
     "postgres_log-source": { "connector": "postgres-cdc", /*...*/ },
     "postgres_log-sink": { "connector": "jdbc-sqrl", /*...*/ },
@@ -333,7 +332,6 @@ The built-in fallback (excerpt - full version [here](https://raw.githubuserconte
     "postgres": { "connector": "jdbc-sqrl",  /*...*/ },
     "kafka-mutation": { "connector" : "kafka", /*...*/ },
     "kafka": { "connector" : "kafka", /*...*/ },
-    "localfile": { "connector": "filesystem", /*...*/ },
     "iceberg": { "connector": "iceberg", /*...*/ },
     "postgres_log-source": { "connector": "postgres-cdc", /*...*/ },
     "postgres_log-sink": { "connector": "jdbc-sqrl", /*...*/ },

@@ -5,10 +5,5 @@
   },
   "test-runner": {
     "delay-sec": -1
-  },
-  "dependencies": {
-    "sensor-local": {
-      "folder": "sensor-testdata"
-    }
   }
 }

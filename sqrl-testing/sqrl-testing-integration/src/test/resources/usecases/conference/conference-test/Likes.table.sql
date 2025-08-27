@@ -7,4 +7,5 @@ CREATE TABLE Likes (
       'source.monitor-interval' = '1 sec',
       'flexible-json.timestamp-format.standard' = 'ISO-8601',
       'connector' = 'filesystem'
-      );
+      )
+LIKE `Likes.schema.yml`;

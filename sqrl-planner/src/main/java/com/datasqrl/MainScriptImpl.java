@@ -16,7 +16,7 @@
 package com.datasqrl;
 
 import com.datasqrl.config.PackageJson;
-import com.datasqrl.module.resolver.ResourceResolver;
+import com.datasqrl.loaders.resolver.ResourceResolver;
 import com.datasqrl.plan.MainScript;
 import com.datasqrl.util.FileUtil;
 import com.google.inject.Inject;

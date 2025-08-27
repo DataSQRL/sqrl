@@ -1,0 +1,5 @@
+IMPORT subproject.sources;
+IMPORT subproject.sources AS mysources;
+
+CustomerAggregate1 := SELECT customerid, num_updates * 1 AS updates FROM sources.CustomerAggregate;
+CustomerAggregate2 := SELECT customerid, num_updates * 2 AS updates FROM mysources.CustomerAggregate;

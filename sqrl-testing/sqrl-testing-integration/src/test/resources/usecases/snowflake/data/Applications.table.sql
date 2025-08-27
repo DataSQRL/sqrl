@@ -6,4 +6,5 @@ CREATE TABLE Applications (
       'path' = '${DATA_PATH}/applications.jsonl',
       'source.monitor-interval' = '1 sec',
       'connector' = 'filesystem'
-      );
+      )
+LIKE `Applications.schema.yml`;

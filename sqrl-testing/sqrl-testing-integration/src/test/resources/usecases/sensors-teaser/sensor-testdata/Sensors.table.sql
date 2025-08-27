@@ -6,4 +6,5 @@ CREATE TABLE Sensors (
       'format' = 'flexible-json',
       'path' = '${DATA_PATH}/sensors.jsonl',
       'connector' = 'filesystem'
-      );
+      )
+LIKE `Sensors.schema.yml`;

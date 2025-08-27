@@ -359,7 +359,7 @@ AS
 SELECT `_ProductsStream`.`id`, `_ProductsStream`.`name`, `_ProductsStream`.`sizing`, `_ProductsStream`.`weight_in_gram`, `_ProductsStream`.`type`, `_ProductsStream`.`category`, `_ProductsStream`.`usda_id`, `_ProductsStream`.`updated`
 FROM `default_catalog`.`default_database`.`_ProductsStream` AS `_ProductsStream`
 === promotion
-ID:     sink.promotion
+ID:     local-sink.promotion
 Type:   export
 Stage:  flink
 Inputs: default_catalog.default_database.CustomerPromotion

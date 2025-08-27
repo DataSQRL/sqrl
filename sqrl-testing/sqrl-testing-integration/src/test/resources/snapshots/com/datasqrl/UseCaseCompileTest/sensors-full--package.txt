@@ -216,6 +216,66 @@ SQL: CREATE VIEW _SensorMaxTempWindow AS  SELECT sensorid, window_time, avg(temp
                         FROM TABLE(HOP(TABLE SecReading, DESCRIPTOR(timeSec), INTERVAL '1' MINUTES, INTERVAL '60' MINUTES))
                         GROUP BY sensorid, window_start, window_end, window_time;
 
+>>>generated-schema.graphqls
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+
+type HighTemp {
+  machineid: Float!
+  sensorid: Float!
+  temp: Float!
+  timeSec: DateTime!
+}
+
+type Machine {
+  machineid: Float!
+  maxTemp: Float!
+  avgTemp: Float!
+  sensors(limit: Int = 10, offset: Int = 0): [Sensors!]
+}
+
+type Query {
+  HighTemp(sensorid: Float, timeSec: DateTime, limit: Int = 10, offset: Int = 0): [HighTemp!]
+  Machine(machineid: Float, limit: Int = 10, offset: Int = 0): [Machine!]
+  SecReading(sensorid: Float, timeSec: DateTime, limit: Int = 10, offset: Int = 0): [SecReading!]
+  SecReadingByTemp(temp: Int!): [SecReadingByTemp!]
+  SensorReading(sensorid: Float, time: DateTime, limit: Int = 10, offset: Int = 0): [SensorReading!]
+  Sensors(id: Float, limit: Int = 10, offset: Int = 0): [Sensors!]
+}
+
+type SecReading {
+  sensorid: Float!
+  timeSec: DateTime!
+  temp: Float!
+}
+
+type SecReadingByTemp {
+  sensorid: Float!
+  timeSec: DateTime!
+  temp: Float!
+}
+
+type SensorReading {
+  sensorid: Float!
+  time: DateTime!
+  temperature: Float!
+  humidity: Float!
+}
+
+type Sensors {
+  id: Float!
+  machineid: Float!
+  placed: DateTime!
+  lastHour: lastHour
+  readings(limit: Int = 10, offset: Int = 0): [SecReading!]
+}
+
+type lastHour {
+  maxTemp: Float!
+  avgTemp: Float!
+  parent: Sensors!
+}
+
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `SensorReading__schema` (
   `sensorid` BIGINT NOT NULL,

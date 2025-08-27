@@ -1,0 +1,4 @@
+>>>type
+RecordType(BIGINT NOT NULL groupId, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL groupName, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL created, RecordType(BIGINT NOT NULL machineId) NOT NULL ARRAY NOT NULL machines) NOT NULL
+>>>connector
+{connector=filesystem, format=flexible-json, path=${DATA_PATH}/machinegroup.jsonl.gz}

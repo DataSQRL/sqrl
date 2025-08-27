@@ -39,15 +39,12 @@ public class TableNode extends PlannedNode {
     return tableAnalysis.isSourceOrSink();
   }
 
-  public boolean isMutation() {
-    return getMutation().isPresent();
-  }
-
   public Optional<MutationQuery> getMutation() {
     if (!isSource()) {
       return Optional.empty();
     }
-    return Optional.ofNullable(tableAnalysis.getSourceSinkTable().get().getMutationDefinition());
+    MutationQuery mutation = tableAnalysis.getSourceSinkTable().get().getMutationDefinition();
+    return Optional.ofNullable(mutation);
   }
 
   @Override

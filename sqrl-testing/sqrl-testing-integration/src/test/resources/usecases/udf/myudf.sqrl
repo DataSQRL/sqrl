@@ -1,6 +1,6 @@
-IMPORT myjavafunction.build.libs.MyScalarFunction;
-IMPORT myjavafunction.build.libs.MyScalarFunction AS AnotherFunction;
-IMPORT myjavafunction.build.libs.MyAsyncScalarFunction;
+IMPORT myjavafunction.lib.MyScalarFunction;
+IMPORT myjavafunction.lib.MyScalarFunction AS AnotherFunction;
+IMPORT myjavafunction.lib.MyAsyncScalarFunction;
 
 MyTable := SELECT val, MyScalarFunction(val, val) AS myFnc
            FROM (VALUES ((1)), ((2)), ((3)), ((4)), ((5)),

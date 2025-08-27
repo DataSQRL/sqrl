@@ -47,7 +47,6 @@ class PackageJsonImplTest {
     assertThat(packageJson.getVersion()).isEqualTo(1);
     assertThat(packageJson.getEngines()).isNotNull();
     assertThat(packageJson.getDiscovery()).isNotNull();
-    assertThat(packageJson.getDependencies()).isNotNull();
     assertThat(packageJson.getScriptConfig()).isNotNull();
     assertThat(packageJson.getCompilerConfig()).isNotNull();
   }
@@ -168,20 +167,6 @@ class PackageJsonImplTest {
     assertThat(connectorsConfig.getConnectorConfig("jdbc")).isPresent();
     assertThat(connectorsConfig.getConnectorConfig("kafka")).isPresent();
     assertThat(connectorsConfig.getConnectorConfig("nonexistent")).isEmpty();
-  }
-
-  @Test
-  void
-      givenConfigWithDependencies_whenCreateDependenciesConfig_thenReturnsDependencyConfigurations() {
-    config.getSubConfig("dependencies").getSubConfig("dep1").setProperty("name", "dependency1");
-    config.getSubConfig("dependencies").getSubConfig("dep2").setProperty("name", "dependency2");
-
-    var dependenciesConfig =
-        new DependenciesConfigImpl(config, config.getSubConfig("dependencies"));
-
-    assertThat(dependenciesConfig.getDependency("dep1")).isPresent();
-    assertThat(dependenciesConfig.getDependency("dep2")).isPresent();
-    assertThat(dependenciesConfig.getDependency("nonexistent")).isEmpty();
   }
 
   @Test

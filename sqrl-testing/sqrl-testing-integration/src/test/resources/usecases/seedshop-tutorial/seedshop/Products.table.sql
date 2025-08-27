@@ -5,4 +5,5 @@ CREATE TABLE Products (
       'format' = 'flexible-json',
       'path' = '${DATA_PATH}/products.jsonl',
       'connector' = 'filesystem'
-      );
+      )
+LIKE `Products.schema.yml`;

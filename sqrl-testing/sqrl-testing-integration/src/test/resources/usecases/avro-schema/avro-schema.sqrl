@@ -1,4 +1,4 @@
-IMPORT avro-json.Schema AS _Schema;
+IMPORT avro-schema.schema_{{variant}} AS _Schema;
 
 Schema := SELECT * FROM _Schema ORDER BY uuidField DESC;
 

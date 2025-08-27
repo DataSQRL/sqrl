@@ -7,4 +7,5 @@ CREATE TABLE Events (
       'json.timestamp-format.standard' = 'ISO-8601',
       'source.monitor-interval' = '1 sec',
       'connector' = 'filesystem'
-      );
+      )
+LIKE `Events.schema.yml`;

@@ -5,4 +5,5 @@ CREATE TABLE MachineGroup (
       'format' = 'flexible-json',
       'path' = '${DATA_PATH}/machinegroup.jsonl',
       'connector' = 'filesystem'
-      );
+      )
+LIKE `MachineGroup.schema.yml`;

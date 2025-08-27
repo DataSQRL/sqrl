@@ -6,4 +6,5 @@ WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '0.001' SECOND
 'path' = '${DATA_PATH}/customers.jsonl',
 'source.monitor-interval' = '10 sec',
 'connector' = 'filesystem'
-);
+)
+LIKE `Customers.schema.yml`;
