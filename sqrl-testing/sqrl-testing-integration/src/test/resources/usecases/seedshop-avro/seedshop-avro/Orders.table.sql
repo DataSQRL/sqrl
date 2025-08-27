@@ -9,4 +9,4 @@ CREATE TABLE Orders (
     'connector' = 'kafka',
     'avro.timestamp_mapping.legacy' = 'false'
 )
-LIKE `Orders.avsc`;
+LIKE `orders.avsc`;
