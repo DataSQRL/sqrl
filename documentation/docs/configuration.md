@@ -17,7 +17,6 @@ Multiple files can be provided; they are merged **in order** – latter files ov
 | `engines`         | **object**   | –                                        | Engine specific configuration (see below).                     |
 | `connectors`      | **object**   | [see defaults](#connectors-connectors)   | External system connectors configuration (see below).          |
 | `compiler`        | **object**   | [see defaults](#compiler-compiler)       | Controls compilation, logging, and generated artifacts.        |
-| `dependencies`    | **object**   | `{}`                                     | Aliases for packages that can be `IMPORT`-ed from SQRL.        |
 | `discovery`       | **object**   | `{}`                                     | Rules for automatic table discovery when importing data files. |
 | `script`          | **object**   | –                                        | Points to the main SQRL script and GraphQL schema.             |
 | `package`         | **object**   | –                                        | Optional metadata (name, description, etc.) for publishing.    |
@@ -188,22 +187,6 @@ Used as a *table-format* engine together with a query engine such as Flink, Snow
 
 ---
 
-## Dependencies (`dependencies`)
-
-```json
-{
-  "dependencies": {
-    "my-alias": {
-      "folder": "folder-name"
-    }
-  }
-}
-```
-
-If only `folder` is given the dependency key (`my-alias` in the above example) acts as a **local folder alias**.
-
----
-
 ## Discovery (`discovery`)
 
 | Key       | Type               | Default | Purpose                                                                                                     |
@@ -214,11 +197,12 @@ If only `folder` is given the dependency key (`my-alias` in the above example) a
 
 ## Script (`script`)
 
-| Key          | Type         | Description                                                   |
-|--------------|--------------|---------------------------------------------------------------|
-| `main`       | **string**   | Path to the main `.sqrl` file.                                |
-| `graphql`    | **string**   | Optional GraphQL schema file (defaults to `schema.graphqls`). |
-| `operations` | **string[]** | Optional GraphQL operation definitions.                       |
+| Key          | Type         | Description                                                                                         |
+|--------------|--------------|-----------------------------------------------------------------------------------------------------|
+| `main`       | **string**   | Path to the main `.sqrl` file.                                                                      |
+| `graphql`    | **string**   | Optional GraphQL schema file (defaults to `schema.graphqls`). If the file does not exist, inferred. |
+| `operations` | **string[]** | Optional GraphQL operation definitions.                                                             |
+| `config`     | **object**   | Script related configuration options, like schema variant templating.                               |
 
 ---
 
