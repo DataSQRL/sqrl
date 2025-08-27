@@ -1,5 +1,5 @@
 [FATAL] Non-query expression encountered in illegal context
-in script:parsererror-statement-fail.sqrl [3:1]:
+in script:parserError-statement-fail.sqrl [3:1]:
 IMPORT ecommerceTs.Customer;
 
 AnotherCustomer : SELECT * FROM Customer WHERE customerid > 0;

@@ -231,7 +231,7 @@ public class FlexibleSchemaInferencePreprocessor implements DiscoveryPreprocesso
           .anyMatch(
               f ->
                   f.length() > length
-                      && Name.system(f.substring(0, length)).equals(tableName)
+                      && Name.lower(f.substring(0, length)).equals(tableName)
                       && filterExtensions.contains(f.substring(length).toLowerCase()));
     }
   }

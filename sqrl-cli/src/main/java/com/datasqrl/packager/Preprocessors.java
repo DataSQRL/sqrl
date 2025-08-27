@@ -15,7 +15,6 @@
  */
 package com.datasqrl.packager;
 
-import static com.datasqrl.packager.Packager.canonicalizePath;
 import static com.datasqrl.util.NameUtil.namepath2Path;
 
 import com.datasqrl.canonicalizer.NamePath;
@@ -117,8 +116,7 @@ public class Preprocessors {
 
   @SneakyThrows
   private void copy(Path fileOrDir, Path copyDir) {
-    Path copyPath = copyDir.resolve(fileOrDir.getFileName());
-    copyPath = canonicalizePath(copyPath);
+    var copyPath = copyDir.resolve(fileOrDir.getFileName());
     Files.createDirectories(copyPath.getParent());
     Files.copy(fileOrDir, copyPath, StandardCopyOption.REPLACE_EXISTING);
   }

@@ -1,5 +1,5 @@
 ---
-name: "customers"
+name: "LoanTypes"
 schema_version: "1"
 partial_schema: false
 columns:
@@ -7,28 +7,32 @@ columns:
   type: "BIGINT"
   tests:
   - "not_null"
-- name: "first_name"
+- name: "name"
   type: "STRING"
   tests:
   - "not_null"
-- name: "last_name"
+- name: "description"
   type: "STRING"
   tests:
   - "not_null"
-- name: "email"
-  type: "STRING"
+- name: "interest_rate"
+  type: "DOUBLE"
   tests:
   - "not_null"
-- name: "phone"
-  type: "STRING"
+- name: "max_amount"
+  type: "DOUBLE"
   tests:
   - "not_null"
-- name: "address"
-  type: "STRING"
+- name: "min_amount"
+  type: "DOUBLE"
   tests:
   - "not_null"
-- name: "date_of_birth"
-  type: "STRING"
+- name: "max_duration"
+  type: "BIGINT"
+  tests:
+  - "not_null"
+- name: "min_duration"
+  type: "BIGINT"
   tests:
   - "not_null"
 - name: "updated_at"

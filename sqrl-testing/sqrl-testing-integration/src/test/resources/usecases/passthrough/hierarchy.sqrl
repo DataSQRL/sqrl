@@ -1,9 +1,9 @@
 IMPORT hr-data.* AS _;
 
 /*+ query_by_any(employeeid, name) */
-Employees := DISTINCT _employees ON employeeid ORDER BY updatedDate DESC;
+Employees := DISTINCT _Employees ON employeeid ORDER BY updatedDate DESC;
 /*+ no_query */
-Reporting := DISTINCT _reporting ON employeeid, managerid ORDER BY updatedDate DESC;
+Reporting := DISTINCT _Reporting ON employeeid, managerid ORDER BY updatedDate DESC;
 
 Employees.directReports := SELECT e.* FROM Reporting r JOIN Employees e ON r.employeeid = e.employeeid
                            WHERE r.managerid = this.employeeid ORDER BY e.employeeid;

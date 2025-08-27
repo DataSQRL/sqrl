@@ -1,5 +1,5 @@
 [FATAL] Argument [emails] is not defined in the signature of the function
-in script:parsererror-argincomplete-fail.sqrl [3:73]:
+in script:parserError-argincomplete-fail.sqrl [3:73]:
 IMPORT ecommerceTs.Customer;
 
 CustomerByEmail(email STRING NOT NULL) := SELECT * FROM Customer WHERE :emails = email;
