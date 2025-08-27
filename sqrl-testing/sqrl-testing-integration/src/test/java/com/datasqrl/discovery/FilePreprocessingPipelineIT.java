@@ -142,7 +142,7 @@ public class FilePreprocessingPipelineIT extends AbstractAssetSnapshotTest {
 
     // Assert JAR files are processed correctly
     Path libDir = buildPath.getUdfPath();
-    assertThat(libDir.resolve("myjavafunction-0.1.0-snapshot.jar")).exists();
+    assertThat(libDir.resolve("myjavafunction-0.1.0-SNAPSHOT.jar")).exists();
     assertThat(countFiles(libDir, false)).isEqualTo(1); // test-udf.jar
 
     // Verify function manifest was created and has correct content

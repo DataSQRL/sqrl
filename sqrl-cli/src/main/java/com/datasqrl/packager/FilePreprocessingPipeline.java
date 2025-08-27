@@ -80,9 +80,11 @@ public class FilePreprocessingPipeline {
 
           @Override
           public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
-            if (dir.getFileName().toString().equalsIgnoreCase(SqrlConstants.BUILD_DIR_NAME))
+            if (dir.startsWith(buildDir)) {
               return FileVisitResult.SKIP_SUBTREE;
+            }
             localContext = context.getSubContext(dir);
+
             return FileVisitResult.CONTINUE;
           }
 
