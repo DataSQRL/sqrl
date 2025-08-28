@@ -33,6 +33,7 @@ import com.datasqrl.loaders.ModuleLoaderImpl;
 import com.datasqrl.loaders.resolver.FileResourceResolver;
 import com.datasqrl.loaders.resolver.ResourceResolver;
 import com.datasqrl.packager.preprocess.CopyStaticDataPreprocessor;
+import com.datasqrl.packager.preprocess.JBangPreprocessor;
 import com.datasqrl.packager.preprocess.JarPreprocessor;
 import com.datasqrl.packager.preprocess.Preprocessor;
 import com.datasqrl.plan.MainScript;
@@ -79,6 +80,7 @@ public class SqrlInjector extends AbstractModule {
 
     Multibinder<Preprocessor> binder = Multibinder.newSetBinder(binder(), Preprocessor.class);
     binder.addBinding().to(CopyStaticDataPreprocessor.class);
+    binder.addBinding().to(JBangPreprocessor.class);
     binder.addBinding().to(JarPreprocessor.class);
   }
 
@@ -108,6 +110,11 @@ public class SqrlInjector extends AbstractModule {
   @Provides
   public NameCanonicalizer provideNameCanonicalizer() {
     return NameCanonicalizer.SYSTEM;
+  }
+
+  @Provides
+  public JBangRunner provideJBangRunner() {
+    return new JBangRunner();
   }
 
   @Provides

@@ -20,5 +20,5 @@ import java.nio.file.Path;
 
 public interface Preprocessor {
 
-  void process(Path file, FilePreprocessingPipeline.Context context);
+  void process(Path file, FilePreprocessingPipeline.Context ctx);
 }

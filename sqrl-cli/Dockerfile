@@ -22,7 +22,8 @@ COPY redpanda.yaml /etc/redpanda/redpanda.yaml
 COPY target/sqrl-cli.jar /opt/sqrl/sqrl-cli.jar
 COPY entrypoint.sh /opt/sqrl/entrypoint.sh
 
-ENV JAVA_TOOL_OPTIONS="--add-exports=java.base/sun.net.util=ALL-UNNAMED \
+ENV PATH="/opt/jbang/bin:${PATH}"
+ENV SQRL_JVM_TOOL_OPTS="--add-exports=java.base/sun.net.util=ALL-UNNAMED \
   --add-exports=java.rmi/sun.rmi.registry=ALL-UNNAMED \
   --add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED \
   --add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED \

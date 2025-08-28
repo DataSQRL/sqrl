@@ -121,6 +121,7 @@
     <!-- hadoop shades in commons-config 2.1.1, so upgrade path here is very narrow -->
     <commons-config.version>2.3</commons-config.version>
     <commons-collections.version>4.5.0</commons-collections.version>
+    <commons-exec.version>1.4.0</commons-exec.version>
     <httpcomponents.version>4.5.14</httpcomponents.version>
     <commons-bean.version>1.11.0</commons-bean.version>
     <h2.version>2.3.232</h2.version>
@@ -304,6 +305,11 @@
         <groupId>org.apache.commons</groupId>
         <artifactId>commons-collections4</artifactId>
         <version>${commons-collections.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-exec</artifactId>
+        <version>${commons-exec.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.httpcomponents</groupId>
@@ -1018,7 +1024,7 @@
             <licenseSet>
               <header>com/mycila/maven/plugin/license/templates/APACHE-2.txt</header>
               <excludes>
-                <exclude>src/test/resources/**</exclude>
+                <exclude>**/src/test/resources/**</exclude>
                 <exclude>**/m2e-target/**</exclude>
                 <exclude>bin/**</exclude>
                 <exclude>documentation/**/index_features_list.txt</exclude>
