@@ -14,9 +14,13 @@ Schema:
  - lastUpdated: BIGINT NOT NULL
 Plan:
 LogicalProject(customerid=[$0], email=[$1], lastUpdated=[$3])
-  LogicalFilter(condition=[>($0, 100)])
-    LogicalTableScan(table=[[default_catalog, default_database, _Customer]])
-SQL: CREATE VIEW AnotherCustomer AS  SELECT customerid, email, lastUpdated FROM _Customer WHERE customerid > 100;
+  LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
+    LogicalFilter(condition=[>($0, 100)])
+      LogicalTableScan(table=[[default_catalog, default_database, _Customer]])
+SQL: CREATE VIEW AnotherCustomer AS  WITH customer_subset AS (
+    SELECT * FROM _Customer WHERE customerid > 100
+)
+SELECT customerid, email, lastUpdated FROM customer_subset;
 
 === Customer
 ID:     default_catalog.default_database.Customer
@@ -581,9 +585,10 @@ FROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMB
 WHERE `$f5` = 1;
 CREATE VIEW `AnotherCustomer`
 AS
-SELECT `customerid`, `email`, `lastUpdated`
-FROM `_Customer`
-WHERE `customerid` > 100;
+WITH `customer_subset` AS (SELECT *
+  FROM `_Customer`
+  WHERE `customerid` > 100) (SELECT `customerid`, `email`, `lastUpdated`
+  FROM `customer_subset`);
 CREATE VIEW `CustomerByMultipleTime`
 AS
 SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`
