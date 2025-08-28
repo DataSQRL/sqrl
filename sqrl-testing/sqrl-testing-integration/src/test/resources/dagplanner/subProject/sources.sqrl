@@ -11,3 +11,5 @@ CREATE TABLE Customer (
 LIKE `customer.schema.yml`;
 
 CustomerAggregate := SELECT customerid, COUNT(*) AS num_updates FROM Customer GROUP BY customerid;
+
+Customer.aggregate := SELECT * FROM CustomerAggregate a WHERE this.customerid = a.customerid;
