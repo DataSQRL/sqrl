@@ -21,6 +21,7 @@ import static com.datasqrl.env.EnvVariableNames.POSTGRES_PASSWORD;
 import static com.datasqrl.env.EnvVariableNames.POSTGRES_USERNAME;
 
 import com.datasqrl.config.PackageJson;
+import com.datasqrl.engine.server.VertxEngineFactory;
 import com.datasqrl.flinkrunner.EnvVarResolver;
 import com.datasqrl.flinkrunner.SqrlRunner;
 import com.datasqrl.graphql.HttpServerVerticle;
@@ -349,7 +350,7 @@ public class DatasqrlRun {
   private Map<String, Object> vertxConfig() {
     return sqrlConfig
         .getEngines()
-        .getEngineConfig(EngineIds.SERVER)
+        .getEngineConfig(VertxEngineFactory.ENGINE_NAME)
         .map(PackageJson.EngineConfig::getConfig)
         .orElse(null);
   }

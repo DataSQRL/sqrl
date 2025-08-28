@@ -15,11 +15,18 @@
  */
 package com.datasqrl.cli;
 
+import com.datasqrl.config.PipelineFactory;
 import com.datasqrl.config.SqrlConstants;
+import com.datasqrl.engine.database.relational.DuckDBEngineFactory;
+import com.datasqrl.engine.database.relational.IcebergEngineFactory;
+import com.datasqrl.engine.database.relational.PostgresEngineFactory;
+import com.datasqrl.engine.database.relational.SnowflakeEngineFactory;
+import com.datasqrl.engine.server.VertxEngineFactory;
 import com.datasqrl.env.GlobalEnvironmentStore;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.validate.ExecutionGoal;
 import com.datasqrl.util.ConfigLoaderUtils;
+import java.util.HashSet;
 import java.util.List;
 import picocli.CommandLine;
 
@@ -54,14 +61,24 @@ public class TestCmd extends AbstractCompileCmd {
   }
 
   @Override
-  protected List<String> getEngines() {
-    return List.of(
-        EngineIds.TEST,
-        EngineIds.DATABASE,
-        EngineIds.LOG,
-        EngineIds.ICEBERG,
-        EngineIds.DUCKDB,
-        EngineIds.SERVER,
-        EngineIds.STREAMS);
+  protected List<String> getEngines(List<String> enabledEngines) {
+    var engineSet = new HashSet<>(enabledEngines);
+
+    // Remove "snowflake", test does not support that
+    engineSet.remove(SnowflakeEngineFactory.ENGINE_NAME);
+
+    // Make sure "test", "vertex", and "postgres" are present
+    engineSet.addAll(
+        List.of(
+            PipelineFactory.TEST_ENGINE_NAME,
+            VertxEngineFactory.ENGINE_NAME,
+            PostgresEngineFactory.ENGINE_NAME));
+
+    // Make sure we enable "duckdb" if "iceberg" is present
+    if (engineSet.contains(IcebergEngineFactory.ENGINE_NAME)) {
+      engineSet.add(DuckDBEngineFactory.ENGINE_NAME);
+    }
+
+    return List.copyOf(engineSet);
   }
 }

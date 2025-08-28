@@ -15,7 +15,6 @@
  */
 package com.datasqrl.config;
 
-import com.datasqrl.cli.EngineIds;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.database.DatabaseEngine;
 import com.datasqrl.engine.database.QueryEngine;
@@ -39,6 +38,7 @@ import lombok.NonNull;
 public class PipelineFactory {
 
   public static final List<String> defaultEngines = List.of(PrintEngineFactory.NAME);
+  public static final String TEST_ENGINE_NAME = "test";
 
   private final Injector injector;
   private final List<String> enabledEngines;
@@ -68,7 +68,7 @@ public class PipelineFactory {
     allEngines.addAll(defaultEngines);
 
     for (String engineId : allEngines) {
-      if (engineId.equalsIgnoreCase(EngineIds.TEST)) {
+      if (engineId.equalsIgnoreCase(TEST_ENGINE_NAME)) {
         continue;
       }
       var engineFactory =

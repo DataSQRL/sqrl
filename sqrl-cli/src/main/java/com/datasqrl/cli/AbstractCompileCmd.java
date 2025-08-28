@@ -66,7 +66,7 @@ public abstract class AbstractCompileCmd extends AbstractCmd {
             getGoal() == ExecutionGoal.RUN || getGoal() == ExecutionGoal.TEST);
     var testConfig = sqrlConfig.getTestConfig();
 
-    var engines = getEngines();
+    var engines = getEngines(sqrlConfig.getEnabledEngines());
     if (!engines.isEmpty()) {
       sqrlConfig.setEnabledEngines(engines);
     }
@@ -115,7 +115,7 @@ public abstract class AbstractCompileCmd extends AbstractCmd {
     }
   }
 
-  protected List<String> getEngines() {
+  protected List<String> getEngines(List<String> enabledEngines) {
     return List.of();
   }
 
