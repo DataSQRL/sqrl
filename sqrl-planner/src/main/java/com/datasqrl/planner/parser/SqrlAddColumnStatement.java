@@ -29,9 +29,9 @@ import org.apache.commons.collections4.ListUtils;
 /** Represents a column definition that extends a previous table definition */
 public class SqrlAddColumnStatement extends SqrlDefinition implements StackableStatement {
 
-  public static final String ALTER_VIEW_PREFIX = "ALTER VIEW %s AS ";
+  public static final String ALTER_VIEW_PREFIX = "ALTER VIEW `%s` AS ";
   public static final String ADD_COLUMN_PREFIX = "SELECT %s, ";
-  public static final String ADD_COLUMN_SQL_FRAGMENT = "%s AS %s FROM \n( %s )";
+  public static final String ADD_COLUMN_SQL_FRAGMENT = "%s AS `%s` FROM \n( %s )";
 
   private String addColumnPrefix = ADD_COLUMN_PREFIX.formatted("*");
 
