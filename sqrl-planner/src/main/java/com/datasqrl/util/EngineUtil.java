@@ -19,7 +19,6 @@ import com.datasqrl.config.EngineFactory;
 import com.datasqrl.engine.IExecutionEngine;
 import com.datasqrl.engine.database.DatabaseEngine;
 import com.datasqrl.engine.database.QueryEngine;
-import java.lang.reflect.Modifier;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -46,8 +45,6 @@ public final class EngineUtil {
       Class<? extends IExecutionEngine> parentEngineClass) {
 
     return ServiceLoaderDiscovery.getAll(EngineFactory.class).stream()
-        .filter(factory -> parentEngineClass.isAssignableFrom(factory.getFactoryClass()))
-        .filter(factory -> !factory.getClass().isInterface())
-        .filter(factory -> !Modifier.isAbstract(factory.getClass().getModifiers()));
+        .filter(factory -> parentEngineClass.isAssignableFrom(factory.getFactoryClass()));
   }
 }
