@@ -54,10 +54,10 @@ public class ApiOperation {
   @JsonCreator
   public ApiOperation(
       @JsonProperty("function") FunctionDefinition function,
-      @JsonProperty("apiQuery") GraphQLQuery apiQuery,
-      @JsonProperty("mcpMethod") McpMethodType mcpMethod,
-      @JsonProperty("restMethod") RestMethodType restMethod,
-      @JsonProperty("uriTemplate") String uriTemplate,
+      @JsonProperty("query") GraphQLQuery apiQuery,
+      @JsonProperty("mcp") McpMethodType mcpMethod,
+      @JsonProperty("rest") RestMethodType restMethod,
+      @JsonProperty("uri") String uriTemplate,
       @JsonProperty("format") ResultFormat format) {
     this.function = function;
     this.apiQuery = apiQuery;
