@@ -52,21 +52,21 @@ import org.testcontainers.containers.PostgreSQLContainer;
 @Slf4j
 public class JwtContainerIT extends SqrlContainerTestBase {
 
-  // Response types for REST endpoints  
+  // Response types for REST endpoints
   static class MyTableItem {
     public int val;
   }
-  
+
   static class MyTableResponse {
     public List<MyTableItem> data;
   }
 
   // Feign client for testing REST endpoints
   interface RestClient {
-    @RequestLine("GET /rest/queries/MyTable?limit={limit}")
+    @RequestLine("GET /v1/rest/queries/MyTable?limit={limit}")
     MyTableResponse getMyTable(@Param("limit") int limit);
 
-    @RequestLine("GET /rest/queries/MyTable?limit={limit}")
+    @RequestLine("GET /v1/rest/queries/MyTable?limit={limit}")
     @Headers("Authorization: Bearer {token}")
     MyTableResponse getMyTableWithAuth(@Param("token") String token, @Param("limit") int limit);
   }
@@ -157,8 +157,7 @@ public class JwtContainerIT extends SqrlContainerTestBase {
 
   @Test
   @SneakyThrows
-  void
-      givenJwt_whenBadToken_thenReturns401() {
+  void givenJwt_whenBadToken_thenReturns401() {
     compileAndStartServer("jwt-authorized.sqrl", testDir);
 
     // Generate token with RS256 algorithm while server expects HS256
@@ -200,7 +199,7 @@ public class JwtContainerIT extends SqrlContainerTestBase {
     compileAndStartServer("jwt-authorized.sqrl", testDir);
 
     var mcpUrl =
-        String.format("http://localhost:%d/mcp", serverContainer.getMappedPort(HTTP_SERVER_PORT));
+        String.format("http://localhost:%d/v1/mcp", serverContainer.getMappedPort(HTTP_SERVER_PORT));
     log.info("Testing MCP endpoint without JWT: {}", mcpUrl);
 
     // Create MCP client without authentication
@@ -224,7 +223,7 @@ public class JwtContainerIT extends SqrlContainerTestBase {
     compileAndStartServerWithDatabase("jwt-authorized.sqrl", testDir);
 
     var mcpUrl =
-        String.format("http://localhost:%d/mcp", serverContainer.getMappedPort(HTTP_SERVER_PORT));
+        String.format("http://localhost:%d/v1/mcp", serverContainer.getMappedPort(HTTP_SERVER_PORT));
     var jwtToken = generateJwtToken();
     log.info("Testing MCP endpoint with valid JWT: {}", mcpUrl);
 
