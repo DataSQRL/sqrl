@@ -35,7 +35,6 @@ import com.datasqrl.graphql.server.RootGraphqlModel.StringSchema;
 import graphql.ExecutionInput;
 import graphql.ExecutionResult;
 import graphql.GraphQL;
-import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.pgclient.PgBuilder;
@@ -198,8 +197,7 @@ class WriteIT {
                 new GraphQLEngineBuilder.Builder()
                     .withMutationConfiguration(new MutationConfigurationImpl(model, vertx, config))
                     .withSubscriptionConfiguration(
-                        new SubscriptionConfigurationImpl(
-                            model, vertx, config, Promise.promise(), null))
+                        new SubscriptionConfigurationImpl(model, vertx, config, null))
                     .build(),
                 new VertxContext(new VertxJdbcClient(Map.of(DatabaseType.POSTGRES, client)), null))
             .build();
