@@ -88,7 +88,6 @@ import com.datasqrl.planner.tables.AccessVisibility;
 import com.datasqrl.planner.tables.SqrlTableFunction;
 import com.datasqrl.planner.util.SqlTableNameExtractor;
 import com.datasqrl.util.FunctionUtil;
-import com.datasqrl.util.SqlNameUtil;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import java.time.Duration;
@@ -114,6 +113,7 @@ import org.apache.flink.sql.parser.ddl.SqlDropTable;
 import org.apache.flink.sql.parser.ddl.SqlDropView;
 import org.apache.flink.sql.parser.dml.RichSqlInsert;
 import org.apache.flink.table.api.ValidationException;
+import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.apache.flink.table.functions.UserDefinedFunction;
 
 /**
@@ -306,6 +306,15 @@ public class SqlScriptPlanner {
             "Column expression must directly follow the definition of table [%s]",
             tablePath);
         access = ((SqrlTableDefinition) statementStack.get(0)).getAccess();
+        var identifier = scriptContext.toIdentifier(tablePath.getFirst());
+        var tblNodeOpt = dagBuilder.getNode(identifier);
+        Preconditions.checkArgument(
+            tblNodeOpt.isPresent() && tblNodeOpt.get() instanceof TableNode,
+            "Could not find table [%s] but located the stack",
+            tablePath);
+        ((SqrlAddColumnStatement) sqrlDef)
+            .setColumnNames(
+                ((TableNode) tblNodeOpt.get()).getAnalysis().getRowType().getFieldNames());
       }
       var nameIsHidden = tablePath.getLast().isHidden();
       // Ignore hidden tables and test tables (that are not queries) when we are not running tests
@@ -323,7 +332,7 @@ public class SqlScriptPlanner {
       // Relationships and Table functions require special handling
       if (sqrlDef instanceof SqrlTableFunctionStatement tblFnStmt) {
         // TODO: should be resolved against the current catalog and database
-        var identifier = SqlNameUtil.toIdentifier(tblFnStmt.getPath().getFirst());
+        var identifier = scriptContext.toIdentifier(tblFnStmt.getPath().getFirst());
         final var arguments = new LinkedHashMap<Name, ParsedArgument>();
         if (!tblFnStmt.getSignature().isEmpty()) {
           var parsedArgs = sqrlEnv.parse2RelDataType(tblFnStmt.getSignature());
@@ -373,7 +382,7 @@ public class SqlScriptPlanner {
               "Relationships can only be added to tables (not functions): %s [%s]",
               tblFnStmt.getPath().getFirst(),
               parentNode.get().getClass());
-          identifier = SqlNameUtil.toIdentifier(tablePath.toString());
+          identifier = scriptContext.toIdentifier(tablePath.toString());
           parentTbl = ((TableNode) parentNode.get()).getTableAnalysis();
           checkFatal(
               parentTbl.getOptionalBaseTable().isEmpty(),
@@ -427,7 +436,7 @@ public class SqlScriptPlanner {
               fromTableNames.stream()
                   .map(
                       tblName -> {
-                        var node = dagBuilder.getNode(SqlNameUtil.toIdentifier(tblName));
+                        var node = dagBuilder.getNode(scriptContext.toIdentifier(tblName));
                         errors.checkFatal(
                             node.isPresent(),
                             "Could not find table %s referenced in query",
@@ -715,7 +724,7 @@ public class SqlScriptPlanner {
       var fnName = tableName + ACCESS_FUNCTION_SUFFIX;
       var fnBuilder =
           sqrlEnv.addSqrlTableFunction(
-              SqlNameUtil.toIdentifier(fnName), relBuilder.build(), parameters, tableAnalysis);
+              scriptContext.toIdentifier(fnName), relBuilder.build(), parameters, tableAnalysis);
       fnBuilder.fullPath(NamePath.of(tableName));
       fnBuilder.visibility(visibility);
       fnBuilder.documentation(hintsAndDocs.documentation());
@@ -936,7 +945,7 @@ public class SqlScriptPlanner {
     var tablePath = exportStmt.getTableIdentifier().get();
 
     // Lookup the table that is being exported
-    var tableNode = dagBuilder.getNode(SqlNameUtil.toIdentifier(tablePath.getLast()));
+    var tableNode = dagBuilder.getNode(scriptContext.toIdentifier(tablePath.getLast()));
     var inputNode =
         tableNode
             .orElseThrow(
@@ -1074,6 +1083,14 @@ public class SqlScriptPlanner {
 
     boolean hasDifferentDatabase(ScriptContext other) {
       return !databaseName.equals(other.databaseName);
+    }
+
+    public ObjectIdentifier toIdentifier(String name) {
+      return ObjectIdentifier.of("default_catalog", this.databaseName, name);
+    }
+
+    public ObjectIdentifier toIdentifier(Name name) {
+      return toIdentifier(name.getDisplay());
     }
   }
 }
