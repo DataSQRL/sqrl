@@ -69,9 +69,7 @@ public class SubscriptionConfigurationImpl implements SubscriptionConfiguration<
             .onFailure(
                 err -> {
                   log.error("Failed to subscribe to topic: {}", coords.getTopic(), err);
-                  if (!startPromise.future().isComplete()) {
-                    startPromise.fail(err);
-                  }
+                  startPromise.fail(err);
                 });
         return KafkaDataFetcherFactory.create(new KafkaSinkConsumer<>(consumer), coords);
       }
