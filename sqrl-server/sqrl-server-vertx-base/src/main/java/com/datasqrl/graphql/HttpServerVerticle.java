@@ -222,7 +222,11 @@ public class HttpServerVerticle extends AbstractVerticle {
                     .onFailure(err -> log.error("Failed to deploy REST bridge verticle", err));
               }
             })
-        .onFailure(err -> log.error("Failed to deploy GraphQL verticle", err));
+        .onFailure(
+            err -> {
+              log.error("Failed to deploy GraphQL verticle, shutting down application", err);
+              System.exit(1);
+            });
   }
 
   // ---------------------------------------------------------------------------

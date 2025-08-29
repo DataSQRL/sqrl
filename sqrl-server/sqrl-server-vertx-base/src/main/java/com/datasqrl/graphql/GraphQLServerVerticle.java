@@ -65,7 +65,9 @@ public class GraphQLServerVerticle extends AbstractVerticle {
       setupGraphQLRoutes(startPromise);
     } catch (Exception e) {
       log.error("Could not setup GraphQL routes", e);
-      startPromise.fail(e);
+      if (!startPromise.future().isComplete()) {
+        startPromise.fail(e);
+      }
     }
   }
 
@@ -162,7 +164,6 @@ public class GraphQLServerVerticle extends AbstractVerticle {
       }
       return graphQL.build();
     } catch (Exception e) {
-      startPromise.fail(e.getMessage());
       log.error("Unable to create GraphQL", e);
       throw e;
     }
