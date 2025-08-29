@@ -68,9 +68,6 @@ public class PipelineFactory {
     allEngines.addAll(defaultEngines);
 
     for (String engineId : allEngines) {
-      if (engineId.equalsIgnoreCase(TEST_ENGINE_NAME)) {
-        continue;
-      }
       var engineFactory =
           ServiceLoaderDiscovery.get(EngineFactory.class, EngineFactory::getEngineName, engineId);
 

@@ -15,7 +15,6 @@
  */
 package com.datasqrl.cli;
 
-import com.datasqrl.config.PipelineFactory;
 import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.engine.database.relational.DuckDBEngineFactory;
 import com.datasqrl.engine.database.relational.IcebergEngineFactory;
@@ -68,11 +67,7 @@ public class TestCmd extends AbstractCompileCmd {
     engineSet.remove(SnowflakeEngineFactory.ENGINE_NAME);
 
     // Make sure "test", "vertex", and "postgres" are present
-    engineSet.addAll(
-        List.of(
-            PipelineFactory.TEST_ENGINE_NAME,
-            VertxEngineFactory.ENGINE_NAME,
-            PostgresEngineFactory.ENGINE_NAME));
+    engineSet.addAll(List.of(VertxEngineFactory.ENGINE_NAME, PostgresEngineFactory.ENGINE_NAME));
 
     // Make sure we enable "duckdb" if "iceberg" is present
     if (engineSet.contains(IcebergEngineFactory.ENGINE_NAME)) {
