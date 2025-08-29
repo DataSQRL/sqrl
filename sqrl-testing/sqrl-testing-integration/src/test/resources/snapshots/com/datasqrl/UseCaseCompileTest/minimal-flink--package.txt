@@ -16,7 +16,7 @@ Plan:
 LogicalAggregate(group=[{0}], maxTemp=[MAX($1)], avgTemp=[AVG($1)])
   LogicalProject(sensorid=[$0], temperature=[$1])
     LogicalTableScan(table=[[default_catalog, default_database, SensorReading]])
-SQL: CREATE VIEW SensorAggregate AS  SELECT sensorid, MAX(temperature) AS maxTemp, AVG(temperature) AS avgTemp
+SQL: CREATE VIEW `SensorAggregate` AS  SELECT sensorid, MAX(temperature) AS maxTemp, AVG(temperature) AS avgTemp
                    FROM SensorReading
                    GROUP BY sensorid ORDER BY sensorid ASC;
 
@@ -53,7 +53,7 @@ LogicalSort(sort0=[$2], dir0=[DESC-nulls-last])
   LogicalProject(sensorid=[$0], temperature=[$1], event_time=[$2])
     LogicalFilter(condition=[=($0, ?0)])
       LogicalTableScan(table=[[default_catalog, default_database, SensorReading]])
-SQL: CREATE VIEW SensorReadingById AS  SELECT * FROM SensorReading
+SQL: CREATE VIEW `SensorReadingById` AS  SELECT * FROM SensorReading
                     WHERE sensorid = ?         ORDER BY event_time DESC;
 
 >>>flink-sql-no-functions.sql

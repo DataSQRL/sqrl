@@ -37,7 +37,7 @@ Plan:
 LogicalProject(window_start=[$0], window_end=[$1], unique_email_count=[$2])
   LogicalFilter(condition=[>($2, 1)])
     LogicalTableScan(table=[[default_catalog, default_database, CustomerTimeWindow]])
-SQL: CREATE VIEW CustomerHighCount AS  SELECT * FROM CustomerTimeWindow WHERE unique_email_count > 1;
+SQL: CREATE VIEW `CustomerHighCount` AS  SELECT * FROM CustomerTimeWindow WHERE unique_email_count > 1;
 
 === CustomerTimeWindow
 ID:     default_catalog.default_database.CustomerTimeWindow
@@ -58,7 +58,7 @@ LogicalAggregate(group=[{0, 1}], unique_email_count=[COUNT(DISTINCT $2)])
     LogicalTableFunctionScan(invocation=[TUMBLE(DESCRIPTOR($4), 60000:INTERVAL MINUTE)], rowType=[RecordType(BIGINT customerid, VARCHAR(2147483647) email, VARCHAR(2147483647) name, BIGINT lastUpdated, TIMESTAMP_LTZ(3) *ROWTIME* timestamp, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end, TIMESTAMP_LTZ(3) *ROWTIME* window_time)])
       LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
         LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW CustomerTimeWindow AS  SELECT
+SQL: CREATE VIEW `CustomerTimeWindow` AS  SELECT
                           window_start, window_end,
                           COUNT(DISTINCT email) AS unique_email_count
                       FROM TABLE(

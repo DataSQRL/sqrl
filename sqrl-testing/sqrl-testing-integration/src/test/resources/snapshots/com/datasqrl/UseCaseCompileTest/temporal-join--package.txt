@@ -20,7 +20,7 @@ LogicalProject(sensorid=[$0], temperature=[$1], event_time=[$2], sensor_name=[$4
     LogicalFilter(condition=[=($cor1.sensorid, $0)])
       LogicalSnapshot(period=[$cor1.event_time])
         LogicalTableScan(table=[[default_catalog, default_database, _SensorDistinct]])
-SQL: CREATE VIEW EnrichedSensorReading AS  SELECT r.sensorid, r.temperature, r.event_time, u.sensor_name
+SQL: CREATE VIEW `EnrichedSensorReading` AS  SELECT r.sensorid, r.temperature, r.event_time, u.sensor_name
                          FROM SensorReading r LEFT JOIN _SensorDistinct FOR SYSTEM_TIME AS OF r.event_time u on r.sensorid = u.sensorid
                          ORDER BY r.event_time ASC;
 

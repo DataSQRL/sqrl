@@ -30,7 +30,7 @@ LogicalProject(status=[$1], message=[$2], event_time=[$3], id=[$4], customer_id=
     LogicalFilter(condition=[=($0, $cor3.loan_type_id)])
       LogicalSnapshot(period=[$cor3.event_time])
         LogicalTableScan(table=[[default_catalog, default_database, _LoanTypes]])
-SQL: CREATE VIEW ApplicationStatus AS  SELECT u.status, u.message, u.event_time, a.id, a.customer_id, a.loan_type_id,
+SQL: CREATE VIEW `ApplicationStatus` AS  SELECT u.status, u.message, u.event_time, a.id, a.customer_id, a.loan_type_id,
                             a.amount, a.duration, t.max_amount, t.min_amount
                      FROM _ApplicationUpdates u JOIN _Applications FOR SYSTEM_TIME AS OF u.`event_time` a ON a.id = u.loan_application_id
                                                JOIN _LoanTypes FOR SYSTEM_TIME AS OF u.`event_time` t ON t.id = a.loan_type_id;
@@ -126,7 +126,7 @@ LogicalProject(id=[$4], status=[$1], message=[$2], event_time=[$3])
   LogicalJoin(condition=[=($6, $0)], joinType=[inner])
     LogicalTableScan(table=[[default_catalog, default_database, _ApplicationUpdates]])
     LogicalTableScan(table=[[default_catalog, default_database, _ApplicationsStream]])
-SQL: CREATE VIEW _FakeStreamJoin AS  SELECT a.id, u.status, u.message, u.event_time
+SQL: CREATE VIEW `_FakeStreamJoin` AS  SELECT a.id, u.status, u.message, u.event_time
                      FROM _ApplicationUpdates u JOIN _ApplicationsStream a ON a.loan_type_id = u.loan_application_id;
 
 === _LoanTypes

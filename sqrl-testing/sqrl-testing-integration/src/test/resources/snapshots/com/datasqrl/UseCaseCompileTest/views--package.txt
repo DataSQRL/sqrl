@@ -12,7 +12,7 @@ Schema:
 Plan:
 LogicalProject(val=[$0])
   LogicalValues(tuples=[[{ 1 }, { 2 }]])
-SQL: CREATE VIEW MyView AS  SELECT * FROM (VALUES (1), (2)) AS t(val) ORDER BY val ASC;
+SQL: CREATE VIEW `MyView` AS  SELECT * FROM (VALUES (1), (2)) AS t(val) ORDER BY val ASC;
 
 >>>flink-sql-no-functions.sql
 CREATE VIEW `MyView`

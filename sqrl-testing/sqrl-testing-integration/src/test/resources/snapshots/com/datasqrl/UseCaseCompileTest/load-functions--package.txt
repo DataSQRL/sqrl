@@ -11,7 +11,7 @@ Schema:
 Plan:
 LogicalProject(id=[$0], fct_result=[TestFunction($0)])
   LogicalValues(tuples=[[{ 1 }, { 2 }]])
-SQL: CREATE VIEW FunctionApplied AS  SELECT id, TestFunction(id) AS fct_result FROM (VALUES
+SQL: CREATE VIEW `FunctionApplied` AS  SELECT id, TestFunction(id) AS fct_result FROM (VALUES
     (1),
     (2)
 ) AS data_table(id);

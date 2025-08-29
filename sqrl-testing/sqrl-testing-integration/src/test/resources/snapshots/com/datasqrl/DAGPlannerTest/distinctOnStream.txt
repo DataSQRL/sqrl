@@ -43,7 +43,7 @@ LogicalProject(customerid=[$0], endOfMin=[$3], total=[$4])
       LogicalTableFunctionScan(invocation=[TUMBLE(DESCRIPTOR($4), 60000:INTERVAL MINUTE)], rowType=[RecordType(BIGINT customerid, VARCHAR(2147483647) email, VARCHAR(2147483647) name, BIGINT lastUpdated, TIMESTAMP_LTZ(3) *ROWTIME* timestamp, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end, TIMESTAMP_LTZ(3) *ROWTIME* window_time)])
         LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
           LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW CustomerUpdates AS  SELECT
+SQL: CREATE VIEW `CustomerUpdates` AS  SELECT
                           customerid, window_time AS endOfMin, COUNT(1) AS total
                       FROM TABLE(
                               TUMBLE(TABLE Customer, DESCRIPTOR(`timestamp`), INTERVAL '1' MINUTE)

@@ -44,7 +44,7 @@ LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], _ingest
   LogicalJoin(condition=[AND(=($0, $6), <($4, $9))], joinType=[inner])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
     LogicalTableScan(table=[[default_catalog, default_database, Orders]])
-SQL: CREATE VIEW CustomerOrdersJoin AS  SELECT * FROM Customer c JOIN Orders o ON c.customerid = o.customerid
+SQL: CREATE VIEW `CustomerOrdersJoin` AS  SELECT * FROM Customer c JOIN Orders o ON c.customerid = o.customerid
                       AND c._ingest_time < o._ingest_time;
 
 === Orders

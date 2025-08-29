@@ -16,7 +16,7 @@ Schema:
 Plan:
 LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3])
   LogicalTableScan(table=[[default_catalog, default_database, _OrdersStream]])
-SQL: CREATE VIEW OrderUpdates AS  SELECT * FROM _OrdersStream;
+SQL: CREATE VIEW `OrderUpdates` AS  SELECT * FROM _OrdersStream;
 
 === Orders
 ID:     default_catalog.default_database.Orders

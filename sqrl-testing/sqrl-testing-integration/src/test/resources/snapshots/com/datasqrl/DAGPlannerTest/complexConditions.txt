@@ -85,7 +85,7 @@ Plan:
 LogicalProject(productid=[$0], name=[$1], description=[$2], category=[$3], _ingest_time=[$4])
   LogicalFilter(condition=[array_contains(ARRAY('one':VARCHAR(2147483647) CHARACTER SET "UTF-16LE", 'two':VARCHAR(2147483647) CHARACTER SET "UTF-16LE"), $1)])
     LogicalTableScan(table=[[default_catalog, default_database, Product]])
-SQL: CREATE VIEW ProductFilter1 AS  SELECT * FROM Product WHERE array_contains(ARRAY[CAST('one' AS String), CAST('two' AS String)], name);
+SQL: CREATE VIEW `ProductFilter1` AS  SELECT * FROM Product WHERE array_contains(ARRAY[CAST('one' AS String), CAST('two' AS String)], name);
 
 === ProductFilter2
 ID:     default_catalog.default_database.ProductFilter2
@@ -106,7 +106,7 @@ Plan:
 LogicalProject(productid=[$0], name=[$1], description=[$2], category=[$3], _ingest_time=[$4])
   LogicalFilter(condition=[array_contains(split('one, two', ','), $1)])
     LogicalTableScan(table=[[default_catalog, default_database, Product]])
-SQL: CREATE VIEW ProductFilter2 AS  SELECT * FROM Product WHERE array_contains(split('one, two', ','), name);
+SQL: CREATE VIEW `ProductFilter2` AS  SELECT * FROM Product WHERE array_contains(split('one, two', ','), name);
 
 === SelectOrders1
 ID:     default_catalog.default_database.SelectOrders1
@@ -128,7 +128,7 @@ LogicalProject(customerid=[$0])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
 }))])
     LogicalTableScan(table=[[default_catalog, default_database, Orders]])
-SQL: CREATE VIEW SelectOrders1 AS  SELECT o.id, o.`time` FROM Orders o WHERE o.customerid > (SELECT c.customerid FROM Customer c WHERE c.name = 'foo');
+SQL: CREATE VIEW `SelectOrders1` AS  SELECT o.id, o.`time` FROM Orders o WHERE o.customerid > (SELECT c.customerid FROM Customer c WHERE c.name = 'foo');
 
 === SelectOrders2
 ID:     default_catalog.default_database.SelectOrders2
@@ -150,7 +150,7 @@ LogicalProject(customerid=[$0])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
 }))])
     LogicalTableScan(table=[[default_catalog, default_database, Orders]])
-SQL: CREATE VIEW SelectOrders2 AS  SELECT o.id, o.`time` FROM Orders o WHERE o.customerid NOT IN (SELECT c.customerid FROM Customer c WHERE c.name = 'foo');
+SQL: CREATE VIEW `SelectOrders2` AS  SELECT o.id, o.`time` FROM Orders o WHERE o.customerid NOT IN (SELECT c.customerid FROM Customer c WHERE c.name = 'foo');
 
 === SelectOrders3
 ID:     default_catalog.default_database.SelectOrders3
@@ -172,7 +172,7 @@ LogicalProject(customerid=[$0])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
 })])
     LogicalTableScan(table=[[default_catalog, default_database, Orders]])
-SQL: CREATE VIEW SelectOrders3 AS  SELECT o.id, o.`time` FROM Orders o WHERE o.customerid IN (SELECT c.customerid FROM Customer c WHERE c.name = 'foo');
+SQL: CREATE VIEW `SelectOrders3` AS  SELECT o.id, o.`time` FROM Orders o WHERE o.customerid IN (SELECT c.customerid FROM Customer c WHERE c.name = 'foo');
 
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `Orders__schema` (

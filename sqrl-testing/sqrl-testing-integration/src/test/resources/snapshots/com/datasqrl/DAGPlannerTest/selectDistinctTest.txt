@@ -38,7 +38,7 @@ LogicalAggregate(group=[{0}])
       Uncollect
         LogicalProject(entries=[$cor1.entries])
           LogicalValues(tuples=[[{ 0 }]])
-SQL: CREATE VIEW ProductId AS  SELECT DISTINCT productid FROM Orders o CROSS JOIN UNNEST(entries);
+SQL: CREATE VIEW `ProductId` AS  SELECT DISTINCT productid FROM Orders o CROSS JOIN UNNEST(entries);
 
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `Orders__schema` (

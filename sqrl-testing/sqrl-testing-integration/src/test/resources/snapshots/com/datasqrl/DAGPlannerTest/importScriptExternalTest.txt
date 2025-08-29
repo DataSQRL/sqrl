@@ -12,7 +12,7 @@ Schema:
 Plan:
 LogicalProject(customerid=[$0], updates=[$1])
   LogicalTableScan(table=[[default_catalog, sources, CustomerAggregate]])
-SQL: CREATE VIEW CustomerAggregate1 AS  SELECT customerid, num_updates * 1 AS updates FROM sources.CustomerAggregate;
+SQL: CREATE VIEW `CustomerAggregate1` AS  SELECT customerid, num_updates * 1 AS updates FROM sources.CustomerAggregate;
 
 === CustomerAggregate2
 ID:     default_catalog.default_database.CustomerAggregate2
@@ -27,7 +27,7 @@ Schema:
 Plan:
 LogicalProject(customerid=[$0], updates=[*($1, 2)])
   LogicalTableScan(table=[[default_catalog, mysources, CustomerAggregate]])
-SQL: CREATE VIEW CustomerAggregate2 AS  SELECT customerid, num_updates * 2 AS updates FROM mysources.CustomerAggregate;
+SQL: CREATE VIEW `CustomerAggregate2` AS  SELECT customerid, num_updates * 2 AS updates FROM mysources.CustomerAggregate;
 
 === Customer
 ID:     default_catalog.mysources.Customer
@@ -66,7 +66,7 @@ Plan:
 LogicalAggregate(group=[{0}], num_updates=[COUNT()])
   LogicalProject(customerid=[$0])
     LogicalTableScan(table=[[default_catalog, mysources, Customer]])
-SQL: CREATE VIEW CustomerAggregate AS  SELECT customerid, COUNT(*) AS num_updates FROM Customer GROUP BY customerid;
+SQL: CREATE VIEW `CustomerAggregate` AS  SELECT customerid, COUNT(*) AS num_updates FROM Customer GROUP BY customerid;
 
 === Customer
 ID:     default_catalog.sources.Customer
@@ -105,7 +105,7 @@ Plan:
 LogicalAggregate(group=[{0}], num_updates=[COUNT()])
   LogicalProject(customerid=[$0])
     LogicalTableScan(table=[[default_catalog, sources, Customer]])
-SQL: CREATE VIEW CustomerAggregate AS  SELECT customerid, COUNT(*) AS num_updates FROM Customer GROUP BY customerid;
+SQL: CREATE VIEW `CustomerAggregate` AS  SELECT customerid, COUNT(*) AS num_updates FROM Customer GROUP BY customerid;
 
 >>>flink-sql-no-functions.sql
 CREATE DATABASE IF NOT EXISTS `sources`;

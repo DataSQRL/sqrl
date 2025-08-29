@@ -16,7 +16,7 @@ Plan:
 LogicalProject(sensorid=[$0], temperature=[$1], event_time=[$2])
   LogicalFilter(condition=[>($1, 50)])
     LogicalTableScan(table=[[default_catalog, default_database, SensorReading]])
-SQL: CREATE VIEW HighTempAlert AS  SELECT * FROM SensorReading WHERE temperature > 50 ORDER BY sensorid DESC;
+SQL: CREATE VIEW `HighTempAlert` AS  SELECT * FROM SensorReading WHERE temperature > 50 ORDER BY sensorid DESC;
 
 === SensorMaxTemp
 ID:     default_catalog.default_database.SensorMaxTemp
@@ -34,7 +34,7 @@ Plan:
 LogicalAggregate(group=[{0}], maxTemp=[MAX($1)])
   LogicalProject(sensorid=[$0], temperature=[$1])
     LogicalTableScan(table=[[default_catalog, default_database, SensorReading]])
-SQL: CREATE VIEW SensorMaxTemp AS  SELECT sensorid, max(temperature) as maxTemp
+SQL: CREATE VIEW `SensorMaxTemp` AS  SELECT sensorid, max(temperature) as maxTemp
     FROM SensorReading
     GROUP BY sensorid
     ORDER BY sensorid DESC;
@@ -72,7 +72,7 @@ Schema:
 Plan:
 LogicalProject(sensorid=[$0], temperature=[$1], event_time=[$2])
   LogicalTableScan(table=[[default_catalog, default_database, SensorReading]])
-SQL: CREATE VIEW SensorReadingSubscription AS  SELECT * FROM SensorReading;
+SQL: CREATE VIEW `SensorReadingSubscription` AS  SELECT * FROM SensorReading;
 
 === SensorSubscriptionById
 ID:     default_catalog.default_database.SensorSubscriptionById
@@ -86,7 +86,7 @@ Plan:
 LogicalProject(sensorid=[$0], temperature=[$1], event_time=[$2])
   LogicalFilter(condition=[=($0, ?0)])
     LogicalTableScan(table=[[default_catalog, default_database, SensorReadingSubscription]])
-SQL: CREATE VIEW SensorSubscriptionById AS  SELECT * FROM SensorReadingSubscription
+SQL: CREATE VIEW `SensorSubscriptionById` AS  SELECT * FROM SensorReadingSubscription
                                                                     WHERE sensorid = ?        ;
 
 >>>flink-sql-no-functions.sql

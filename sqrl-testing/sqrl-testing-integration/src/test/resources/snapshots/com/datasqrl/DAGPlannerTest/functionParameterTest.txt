@@ -35,7 +35,7 @@ Plan:
 LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
   LogicalFilter(condition=[AND(=(?0, $1), OR(IS NULL(?1), =(?1, $0)))])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW CustomerByEmail AS  SELECT * FROM Customer WHERE ?      = email AND (?   IS NULL OR ?   = customerid);
+SQL: CREATE VIEW `CustomerByEmail` AS  SELECT * FROM Customer WHERE ?      = email AND (?   IS NULL OR ?   = customerid);
 
 === CustomerByIds
 ID:     default_catalog.default_database.CustomerByIds
@@ -50,7 +50,7 @@ Plan:
 LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
   LogicalFilter(condition=[array_contains(CAST(?0):BIGINT NOT NULL ARRAY, $0)])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW CustomerByIds AS  SELECT * FROM Customer WHERE array_contains(CAST(?    AS BIGINT ARRAY), customerid);
+SQL: CREATE VIEW `CustomerByIds` AS  SELECT * FROM Customer WHERE array_contains(CAST(?    AS BIGINT ARRAY), customerid);
 
 === CustomerByNothing
 ID:     default_catalog.default_database.CustomerByNothing
@@ -70,7 +70,7 @@ Schema:
 Plan:
 LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW CustomerByNothing AS  SELECT * FROM Customer;
+SQL: CREATE VIEW `CustomerByNothing` AS  SELECT * FROM Customer;
 
 === CustomersByTime
 ID:     default_catalog.default_database.CustomersByTime
@@ -86,7 +86,7 @@ LogicalSort(sort0=[$4], dir0=[ASC-nulls-first])
   LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
     LogicalFilter(condition=[AND(=($0, ?0), >=(+($4, 14400000:INTERVAL HOUR), ?1))])
       LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW CustomersByTime AS 
+SQL: CREATE VIEW `CustomersByTime` AS 
     SELECT * FROM Customer WHERE customerid = ?           AND `timestamp` + INTERVAL '4' HOUR >= ?        
     ORDER BY `timestamp` ASC;
 
@@ -103,7 +103,7 @@ Annotations:
 Plan:
 LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
   LogicalTableFunctionScan(invocation=[CustomerByEmail('john@doe.com', ?0)], rowType=[RecordType(BIGINT customerid, VARCHAR(2147483647) email, VARCHAR(2147483647) name, BIGINT lastUpdated, TIMESTAMP_LTZ(3) *ROWTIME* timestamp)], elementType=[class [Ljava.lang.Object;])
-SQL: CREATE VIEW SelectCustomer AS  SELECT * FROM TABLE(CustomerByEmail(email => 'john@doe.com', id => ?  ));
+SQL: CREATE VIEW `SelectCustomer` AS  SELECT * FROM TABLE(CustomerByEmail(email => 'john@doe.com', id => ?  ));
 
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `Customer__schema` (

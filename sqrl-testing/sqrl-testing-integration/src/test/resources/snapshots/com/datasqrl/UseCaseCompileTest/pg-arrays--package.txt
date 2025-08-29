@@ -20,7 +20,7 @@ LogicalProject(id=[$0], int_array=[$1])
         LogicalValues(tuples=[[{ 0 }]])
       LogicalProject(EXPR$0=[4], EXPR$1=[ARRAY(5, 6)])
         LogicalValues(tuples=[[{ 0 }]])
-SQL: CREATE VIEW IntArray AS 
+SQL: CREATE VIEW `IntArray` AS 
   SELECT id, int_array
   FROM (VALUES
     (1, ARRAY[1, 2]),
@@ -46,7 +46,7 @@ LogicalProject(id=[$0], nested_array=[$1])
         LogicalValues(tuples=[[{ 0 }]])
       LogicalProject(EXPR$0=[2], EXPR$1=[ARRAY(ARRAY('x', 'y'), ARRAY('z'))])
         LogicalValues(tuples=[[{ 0 }]])
-SQL: CREATE VIEW NestedArray AS 
+SQL: CREATE VIEW `NestedArray` AS 
   SELECT id, nested_array
   FROM (VALUES
     (
@@ -86,7 +86,7 @@ LogicalProject(id=[$0], string_array=[$1])
         LogicalValues(tuples=[[{ 0 }]])
       LogicalProject(EXPR$0=[4], EXPR$1=[ARRAY('e', 'f')])
         LogicalValues(tuples=[[{ 0 }]])
-SQL: CREATE VIEW StringArray AS 
+SQL: CREATE VIEW `StringArray` AS 
   SELECT id, string_array
   FROM (VALUES
     (1, ARRAY['a', 'b']),

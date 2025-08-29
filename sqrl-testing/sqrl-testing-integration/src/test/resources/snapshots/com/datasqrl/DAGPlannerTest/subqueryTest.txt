@@ -40,7 +40,7 @@ LogicalAggregate(group=[{}], EXPR$0=[COUNT()])
 }), 1), 0:BIGINT)])
   LogicalFilter(condition=[=($0, ?0)])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW CustomerOrderCount AS 
+SQL: CREATE VIEW `CustomerOrderCount` AS 
 SELECT c.name, coalesce((SELECT COUNT(*) FROM Orders o WHERE o.customerid = ?          ) -1, 0) AS num_orders
 FROM Customer c WHERE c.customerid = ?          ;
 
@@ -66,7 +66,7 @@ LogicalFilter(condition=[=($cor1.customerid, $1)])
   LogicalTableScan(table=[[default_catalog, default_database, Orders]])
 })], variablesSet=[[$cor1]])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW CustomerWithOrders AS  SELECT * FROM Customer c
+SQL: CREATE VIEW `CustomerWithOrders` AS  SELECT * FROM Customer c
 WHERE EXISTS (SELECT o.id FROM Orders o WHERE c.customerid = o.customerid);
 
 === Orders
@@ -108,7 +108,7 @@ LogicalProject(customerid=[$0])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
 })), 0:BIGINT)])
     LogicalTableScan(table=[[default_catalog, default_database, Orders]])
-SQL: CREATE VIEW SimilarOrders AS 
+SQL: CREATE VIEW `SimilarOrders` AS 
 SELECT o.*, coalesce(o.customerid - (SELECT customerid FROM Customer WHERE name = ?    ), 0) as similarity
 FROM Orders o
 ORDER BY similarity DESC LIMIT 10;

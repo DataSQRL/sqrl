@@ -43,7 +43,7 @@ LogicalProject(time=[$2], id=[$0], name=[$6], customerid=[$1])
   LogicalJoin(condition=[=($1, $4)], joinType=[inner])
     LogicalTableScan(table=[[default_catalog, default_database, Orders]])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW OrderCustomer AS  SELECT o.`time`, o.id, c.name, o.customerid FROM Orders o INNER JOIN Customer c on o.customerid = c.customerid;
+SQL: CREATE VIEW `OrderCustomer` AS  SELECT o.`time`, o.id, c.name, o.customerid FROM Orders o INNER JOIN Customer c on o.customerid = c.customerid;
 
 === OrderCustomerConstant
 ID:     default_catalog.default_database.OrderCustomerConstant
@@ -62,7 +62,7 @@ LogicalProject(time=[$2], id=[$0], name=[$6], customerid=[$1])
   LogicalJoin(condition=[AND(=($1, $4), =($6, 'Robert'), >($0, 5))], joinType=[inner])
     LogicalTableScan(table=[[default_catalog, default_database, Orders]])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW OrderCustomerConstant AS  SELECT o.`time`, o.id, c.name, o.customerid FROM Orders o INNER JOIN Customer c ON o.customerid = c.customerid AND c.name = 'Robert' AND o.id > 5;
+SQL: CREATE VIEW `OrderCustomerConstant` AS  SELECT o.`time`, o.id, c.name, o.customerid FROM Orders o INNER JOIN Customer c ON o.customerid = c.customerid AND c.name = 'Robert' AND o.id > 5;
 
 === OrderCustomerLeft
 ID:     default_catalog.default_database.OrderCustomerLeft
@@ -81,7 +81,7 @@ LogicalProject(lastUpdated=[$7], id=[$0], name=[$6], customerid=[$1])
   LogicalJoin(condition=[=($1, $4)], joinType=[left])
     LogicalTableScan(table=[[default_catalog, default_database, Orders]])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW OrderCustomerLeft AS  SELECT c.lastUpdated, o.id, c.name, o.customerid  FROM Orders o LEFT JOIN Customer c on o.customerid = c.customerid;
+SQL: CREATE VIEW `OrderCustomerLeft` AS  SELECT c.lastUpdated, o.id, c.name, o.customerid  FROM Orders o LEFT JOIN Customer c on o.customerid = c.customerid;
 
 === OrderCustomerLeftExcluded
 ID:     default_catalog.default_database.OrderCustomerLeftExcluded
@@ -100,7 +100,7 @@ LogicalProject(time=[$2], id=[$0], customerid=[$1])
     LogicalJoin(condition=[=($1, $4)], joinType=[left])
       LogicalTableScan(table=[[default_catalog, default_database, Orders]])
       LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW OrderCustomerLeftExcluded AS  SELECT o.`time`, o.id, o.customerid  FROM Orders o LEFT JOIN Customer c on o.customerid = c.customerid WHERE c.customerid IS NULL;
+SQL: CREATE VIEW `OrderCustomerLeftExcluded` AS  SELECT o.`time`, o.id, o.customerid  FROM Orders o LEFT JOIN Customer c on o.customerid = c.customerid WHERE c.customerid IS NULL;
 
 === OrderCustomerRight
 ID:     default_catalog.default_database.OrderCustomerRight
@@ -119,7 +119,7 @@ LogicalProject(ouuid=[coalesce($0, 0:BIGINT)], id=[$0], name=[$6], customerid=[$
   LogicalJoin(condition=[=($1, $4)], joinType=[right])
     LogicalTableScan(table=[[default_catalog, default_database, Orders]])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW OrderCustomerRight AS  SELECT coalesce(o.id, 0) as ouuid, o.id, c.name, o.customerid  FROM Orders o RIGHT JOIN Customer c on o.customerid = c.customerid;
+SQL: CREATE VIEW `OrderCustomerRight` AS  SELECT coalesce(o.id, 0) as ouuid, o.id, c.name, o.customerid  FROM Orders o RIGHT JOIN Customer c on o.customerid = c.customerid;
 
 === OrderCustomerRightExcluded
 ID:     default_catalog.default_database.OrderCustomerRightExcluded
@@ -138,7 +138,7 @@ LogicalProject(lastUpdated=[$7], customerid=[$4], name=[$6])
     LogicalJoin(condition=[=($1, $4)], joinType=[right])
       LogicalTableScan(table=[[default_catalog, default_database, Orders]])
       LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW OrderCustomerRightExcluded AS  SELECT c.lastUpdated, c.customerid, c.name  FROM Orders o RIGHT JOIN Customer c on o.customerid = c.customerid WHERE o.id IS NULL;
+SQL: CREATE VIEW `OrderCustomerRightExcluded` AS  SELECT c.lastUpdated, c.customerid, c.name  FROM Orders o RIGHT JOIN Customer c on o.customerid = c.customerid WHERE o.id IS NULL;
 
 === Orders
 ID:     default_catalog.default_database.Orders

@@ -31,7 +31,7 @@ LogicalProject(id=[$0], customer_id=[$1], loan_type_id=[$2], amount=[$3], durati
       LogicalTableScan(table=[[default_catalog, default_database, _Applications]])
       LogicalTableScan(table=[[default_catalog, default_database, _LoanTypes]])
     LogicalTableScan(table=[[default_catalog, default_database, _LoanTypes]])
-SQL: CREATE VIEW ApplicationInfo AS  SELECT a.*, t.*, t2.id AS id2 FROM _Applications a
+SQL: CREATE VIEW `ApplicationInfo` AS  SELECT a.*, t.*, t2.id AS id2 FROM _Applications a
     JOIN _LoanTypes t ON t.id = a.loan_type_id
     LEFT JOIN _LoanTypes t2 ON t2.id = a.customer_id;
 
@@ -66,7 +66,7 @@ LogicalProject(status=[$1], message=[$2], event_time=[$3], id=[$4], customer_id=
     LogicalFilter(condition=[=($0, $cor3.loan_type_id)])
       LogicalSnapshot(period=[$cor3.event_time])
         LogicalTableScan(table=[[default_catalog, default_database, _LoanTypes]])
-SQL: CREATE VIEW ApplicationStatus AS  SELECT u.status, u.message, u.event_time, a.id, a.customer_id, a.loan_type_id,
+SQL: CREATE VIEW `ApplicationStatus` AS  SELECT u.status, u.message, u.event_time, a.id, a.customer_id, a.loan_type_id,
                             a.amount, a.duration, t.max_amount, t.min_amount
                      FROM _ApplicationUpdates u JOIN _Applications FOR SYSTEM_TIME AS OF u.`event_time` a ON a.id = u.loan_application_id
                                                JOIN _LoanTypes FOR SYSTEM_TIME AS OF u.`event_time` t ON t.id = a.loan_type_id;

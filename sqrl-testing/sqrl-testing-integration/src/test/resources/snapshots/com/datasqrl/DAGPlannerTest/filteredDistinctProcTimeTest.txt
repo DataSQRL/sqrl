@@ -136,7 +136,7 @@ Schema:
 Plan:
 LogicalProject(id=[$0], time=[$2], customerid=[$1], _ingest_time=[$4])
   LogicalTableScan(table=[[default_catalog, default_database, Orders]])
-SQL: CREATE VIEW OrderFields AS  SELECT id, `time`, customerid, _ingest_time FROM Orders;
+SQL: CREATE VIEW `OrderFields` AS  SELECT id, `time`, customerid, _ingest_time FROM Orders;
 
 === Orders
 ID:     default_catalog.default_database.Orders

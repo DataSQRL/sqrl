@@ -41,7 +41,7 @@ LogicalAggregate(group=[{0, 1}], total=[COUNT()])
     LogicalTableFunctionScan(invocation=[CUMULATE(DESCRIPTOR($4), 300000:INTERVAL MINUTE, 600000:INTERVAL MINUTE)], rowType=[RecordType(BIGINT customerid, VARCHAR(2147483647) email, VARCHAR(2147483647) name, BIGINT lastUpdated, TIMESTAMP_LTZ(3) *ROWTIME* timestamp, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end, TIMESTAMP_LTZ(3) *ROWTIME* window_time)])
       LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
         LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW CustomerCumulate AS  SELECT window_start, window_end, COUNT(customerid) AS total
+SQL: CREATE VIEW `CustomerCumulate` AS  SELECT window_start, window_end, COUNT(customerid) AS total
                   FROM TABLE(CUMULATE(TABLE Customer, DESCRIPTOR(`timestamp`), INTERVAL '5' MINUTES, INTERVAL '10' MINUTES))
                   GROUP BY window_start, window_end;
 
@@ -65,7 +65,7 @@ LogicalAggregate(group=[{0, 1, 2}], total=[COUNT()])
     LogicalTableFunctionScan(invocation=[HOP(DESCRIPTOR($4), 300000:INTERVAL MINUTE, 600000:INTERVAL MINUTE)], rowType=[RecordType(BIGINT customerid, VARCHAR(2147483647) email, VARCHAR(2147483647) name, BIGINT lastUpdated, TIMESTAMP_LTZ(3) *ROWTIME* timestamp, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end, TIMESTAMP_LTZ(3) *ROWTIME* window_time)])
       LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
         LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW CustomerHop AS  SELECT window_start, window_end, window_time, COUNT(customerid) AS total
+SQL: CREATE VIEW `CustomerHop` AS  SELECT window_start, window_end, window_time, COUNT(customerid) AS total
                   FROM TABLE(HOP(TABLE Customer, DESCRIPTOR(`timestamp`), INTERVAL '5' MINUTES, INTERVAL '10' MINUTES))
                   GROUP BY window_start, window_end, window_time;
 
@@ -92,7 +92,7 @@ LogicalProject(customerid=[$3], window_start=[$0], window_end=[$1], window_time=
       LogicalTableFunctionScan(invocation=[SESSION(PARTITION BY($0), DESCRIPTOR($4), 600000:INTERVAL MINUTE)], rowType=[RecordType(BIGINT customerid, VARCHAR(2147483647) email, VARCHAR(2147483647) name, BIGINT lastUpdated, TIMESTAMP_LTZ(3) *ROWTIME* timestamp, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end, TIMESTAMP_LTZ(3) *ROWTIME* window_time)])
         LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
           LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW CustomerSession AS  SELECT customerid, window_start, window_end, window_time, COUNT(customerid) AS total
+SQL: CREATE VIEW `CustomerSession` AS  SELECT customerid, window_start, window_end, window_time, COUNT(customerid) AS total
                   FROM TABLE(SESSION(TABLE Customer PARTITION BY customerid, DESCRIPTOR(`timestamp`), INTERVAL '10' MINUTES))
                   GROUP BY window_start, window_end, window_time, customerid;
 
@@ -115,7 +115,7 @@ LogicalAggregate(group=[{0, 1}], total=[COUNT()])
     LogicalTableFunctionScan(invocation=[TUMBLE(DESCRIPTOR($4), 600000:INTERVAL MINUTE)], rowType=[RecordType(BIGINT customerid, VARCHAR(2147483647) email, VARCHAR(2147483647) name, BIGINT lastUpdated, TIMESTAMP_LTZ(3) *ROWTIME* timestamp, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end, TIMESTAMP_LTZ(3) *ROWTIME* window_time)])
       LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
         LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW CustomerTumble AS  SELECT window_start, window_end, COUNT(customerid) AS total
+SQL: CREATE VIEW `CustomerTumble` AS  SELECT window_start, window_end, COUNT(customerid) AS total
                 FROM TABLE(TUMBLE(TABLE Customer, DESCRIPTOR(`timestamp`), INTERVAL '10' MINUTES))
                 GROUP BY window_start, window_end;
 
@@ -141,7 +141,7 @@ LogicalProject(window_start=[$0], window_end=[$1], window_time=[$2], total=[$3],
   LogicalJoin(condition=[=($7, $2)], joinType=[inner])
     LogicalTableScan(table=[[default_catalog, default_database, CustomerHop]])
     LogicalTableScan(table=[[default_catalog, default_database, CustomerSession]])
-SQL: CREATE VIEW StreamJoin AS  SELECT * FROM CustomerHop h INNER JOIN CustomerSession s ON s.window_time = h.window_time;
+SQL: CREATE VIEW `StreamJoin` AS  SELECT * FROM CustomerHop h INNER JOIN CustomerSession s ON s.window_time = h.window_time;
 
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `Customer__schema` (

@@ -14,7 +14,7 @@ Schema:
 Plan:
 LogicalProject(id=[$0], hello=['hello world1'])
   LogicalTableScan(table=[[default_catalog, default_database, _MyApplications1]])
-SQL: CREATE VIEW MyTable1 AS  SELECT id, 'hello world1' as hello FROM _MyApplications1;
+SQL: CREATE VIEW `MyTable1` AS  SELECT id, 'hello world1' as hello FROM _MyApplications1;
 
 === MyTable2
 ID:     default_catalog.default_database.MyTable2
@@ -31,7 +31,7 @@ Schema:
 Plan:
 LogicalProject(id=[$0], hello=['hello world2'])
   LogicalTableScan(table=[[default_catalog, default_database, _MyApplications2]])
-SQL: CREATE VIEW MyTable2 AS  SELECT id, 'hello world2' as hello FROM _MyApplications2;
+SQL: CREATE VIEW `MyTable2` AS  SELECT id, 'hello world2' as hello FROM _MyApplications2;
 
 === MyTable3
 ID:     default_catalog.default_database.MyTable3
@@ -48,7 +48,7 @@ Schema:
 Plan:
 LogicalProject(id=[$0], hello=['hello world3'])
   LogicalTableScan(table=[[default_catalog, default_database, _MyApplications2]])
-SQL: CREATE VIEW MyTable3 AS  SELECT id, 'hello world3' as hello FROM _MyApplications2;
+SQL: CREATE VIEW `MyTable3` AS  SELECT id, 'hello world3' as hello FROM _MyApplications2;
 
 === _Applications
 ID:     default_catalog.default_database._Applications
@@ -94,7 +94,7 @@ Schema:
 Plan:
 LogicalProject(id=[$0], customer_id=[$1], loan_type_id=[$2], amount=[$3], duration=[$4], application_date=[$5], updated_at=[$6])
   LogicalTableScan(table=[[default_catalog, default_database, _Applications]])
-SQL: CREATE VIEW _MyApplications1 AS  SELECT * FROM _Applications;
+SQL: CREATE VIEW `_MyApplications1` AS  SELECT * FROM _Applications;
 
 === _MyApplications2
 ID:     default_catalog.default_database._MyApplications2
@@ -117,7 +117,7 @@ Plan:
 LogicalProject(id=[$0], customer_id=[$1], loan_type_id=[$2], amount=[$3], duration=[$4], application_date=[$5], updated_at=[$6])
   LogicalFilter(condition=[>=($0, 0)])
     LogicalTableScan(table=[[default_catalog, default_database, _Applications]])
-SQL: CREATE VIEW _MyApplications2 AS  SELECT * FROM _Applications WHERE id >= 0;
+SQL: CREATE VIEW `_MyApplications2` AS  SELECT * FROM _Applications WHERE id >= 0;
 
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `_Applications__schema` (
