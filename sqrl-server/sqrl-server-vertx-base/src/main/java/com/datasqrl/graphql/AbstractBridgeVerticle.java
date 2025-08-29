@@ -138,6 +138,7 @@ public abstract class AbstractBridgeVerticle extends AbstractVerticle {
             .query(operation.getApiQuery().query())
             .operationName(operation.getApiQuery().queryName())
             .variables(variables)
+            .graphQLContext(builder -> builder.put(RoutingContext.class, ctx))
             .build();
 
     // Kick off async execution (GraphQL Java spawns its own executor)
