@@ -109,13 +109,13 @@
     <dependency>
       <groupId>io.github.openfeign</groupId>
       <artifactId>feign-core</artifactId>
-      <version>13.5</version>
+      <version>${feign.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>io.github.openfeign</groupId>
       <artifactId>feign-jackson</artifactId>
-      <version>13.5</version>
+      <version>${feign.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>

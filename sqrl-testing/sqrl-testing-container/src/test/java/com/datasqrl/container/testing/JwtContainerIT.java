@@ -39,6 +39,7 @@ import java.nio.file.Path;
 import java.security.KeyPairGenerator;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -199,11 +200,12 @@ public class JwtContainerIT extends SqrlContainerTestBase {
     compileAndStartServer("jwt-authorized.sqrl", testDir);
 
     var mcpUrl =
-        String.format("http://localhost:%d/v1/mcp", serverContainer.getMappedPort(HTTP_SERVER_PORT));
+        String.format(
+            "http://localhost:%d/v1/mcp", serverContainer.getMappedPort(HTTP_SERVER_PORT));
     log.info("Testing MCP endpoint without JWT: {}", mcpUrl);
 
     // Create MCP client without authentication
-    var transport = HttpClientStreamableHttpTransport.builder(mcpUrl).build();
+    var transport = HttpClientStreamableHttpTransport.builder(mcpUrl).endpoint("/v1/mcp").build();
     var client = McpClient.sync(transport).requestTimeout(Duration.ofSeconds(10)).build();
 
     // Should fail when trying to initialize due to lack of authentication
@@ -223,7 +225,8 @@ public class JwtContainerIT extends SqrlContainerTestBase {
     compileAndStartServerWithDatabase("jwt-authorized.sqrl", testDir);
 
     var mcpUrl =
-        String.format("http://localhost:%d/v1/mcp", serverContainer.getMappedPort(HTTP_SERVER_PORT));
+        String.format(
+            "http://localhost:%d/v1/mcp", serverContainer.getMappedPort(HTTP_SERVER_PORT));
     var jwtToken = generateJwtToken();
     log.info("Testing MCP endpoint with valid JWT: {}", mcpUrl);
 
@@ -231,6 +234,7 @@ public class JwtContainerIT extends SqrlContainerTestBase {
     var transport =
         HttpClientStreamableHttpTransport.builder(mcpUrl)
             .customizeRequest(r -> r.header("Authorization", "Bearer " + jwtToken))
+            .endpoint("/v1/mcp")
             .build();
 
     try (var client = McpClient.sync(transport).requestTimeout(Duration.ofSeconds(10)).build(); ) {
@@ -319,7 +323,7 @@ public class JwtContainerIT extends SqrlContainerTestBase {
 
   private String generateJwtToken() {
     var now = Instant.now();
-    var expiration = now.plusSeconds(20);
+    var expiration = now.plus(1, ChronoUnit.HOURS);
 
     return Jwts.builder()
         .issuer("my-test-issuer")
