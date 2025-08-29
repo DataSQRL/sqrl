@@ -30,6 +30,7 @@ import com.datasqrl.graphql.server.RootGraphqlModel.SubscriptionCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.SubscriptionCoordsVisitor;
 import com.datasqrl.graphql.server.SubscriptionConfiguration;
 import graphql.schema.DataFetcher;
+import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.kafka.client.consumer.KafkaConsumer;
 import java.util.HashMap;
@@ -52,6 +53,7 @@ public class SubscriptionConfigurationImpl implements SubscriptionConfiguration<
   RootGraphqlModel root;
   Vertx vertx;
   ServerConfig config;
+  Promise<Void> startPromise;
   VertxJdbcClient client;
 
   @Override
@@ -67,8 +69,9 @@ public class SubscriptionConfigurationImpl implements SubscriptionConfiguration<
             .onFailure(
                 err -> {
                   log.error("Failed to subscribe to topic: {}", coords.getTopic(), err);
-                  throw new RuntimeException(
-                      "Failed to subscribe to Kafka topic: " + coords.getTopic(), err);
+                  if (!startPromise.future().isComplete()) {
+                    startPromise.fail(err);
+                  }
                 });
         return KafkaDataFetcherFactory.create(new KafkaSinkConsumer<>(consumer), coords);
       }
