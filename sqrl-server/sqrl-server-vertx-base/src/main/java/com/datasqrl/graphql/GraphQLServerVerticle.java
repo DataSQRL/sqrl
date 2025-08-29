@@ -107,7 +107,7 @@ public class GraphQLServerVerticle extends AbstractVerticle {
         });
 
     // Create GraphQL engine
-    this.graphQLEngine = createGraphQL(clients, createMetadataReaders());
+    this.graphQLEngine = createGraphQL(clients, startPromise, createMetadataReaders());
 
     handler
         .handler(GraphQLWSHandler.create(this.graphQLEngine))
@@ -143,21 +143,29 @@ public class GraphQLServerVerticle extends AbstractVerticle {
   }
 
   public GraphQL createGraphQL(
-      Map<DatabaseType, SqlClient> client, Map<MetadataType, MetadataReader> headerReaders) {
-    var vertxJdbcClient = new VertxJdbcClient(client);
-    var graphQL =
-        model.accept(
-            new GraphQLEngineBuilder.Builder()
-                .withMutationConfiguration(new MutationConfigurationImpl(model, vertx, config))
-                .withSubscriptionConfiguration(
-                    new SubscriptionConfigurationImpl(model, vertx, config, vertxJdbcClient))
-                .withExtendedScalarTypes(CustomScalars.getExtendedScalars())
-                .build(),
-            new VertxContext(vertxJdbcClient, headerReaders));
-    var meterRegistry = BackendRegistries.getDefaultNow();
-    if (meterRegistry != null) {
-      graphQL.instrumentation(new MicrometerInstrumentation(meterRegistry));
+      Map<DatabaseType, SqlClient> client,
+      Promise<Void> startPromise,
+      Map<MetadataType, MetadataReader> headerReaders) {
+    try {
+      var vertxJdbcClient = new VertxJdbcClient(client);
+      var graphQL =
+          model.accept(
+              new GraphQLEngineBuilder.Builder()
+                  .withMutationConfiguration(new MutationConfigurationImpl(model, vertx, config))
+                  .withSubscriptionConfiguration(
+                      new SubscriptionConfigurationImpl(
+                          model, vertx, config, startPromise, vertxJdbcClient))
+                  .withExtendedScalarTypes(CustomScalars.getExtendedScalars())
+                  .build(),
+              new VertxContext(vertxJdbcClient, headerReaders));
+      var meterRegistry = BackendRegistries.getDefaultNow();
+      if (meterRegistry != null) {
+        graphQL.instrumentation(new MicrometerInstrumentation(meterRegistry));
+      }
+      return graphQL.build();
+    } catch (Exception e) {
+      log.error("Unable to create GraphQL", e);
+      throw e;
     }
-    return graphQL.build();
   }
 }
