@@ -100,7 +100,7 @@
     "description" : "[0 ASC-nulls-first, 2 DESC-nulls-last]"
   } ],
   "plan" : "LogicalAggregate(group=[{0, 1}], frequency=[COUNT()])\n  LogicalProject(url=[$0], rec=[$1])\n    LogicalTableScan(table=[[default_catalog, default_database, VisitAfter]])\n",
-  "sql" : "CREATE VIEW Recommendation AS  SELECT beforeURL AS url, afterURL AS rec,\n    count(1) AS frequency FROM VisitAfter\n    GROUP BY beforeURL, afterURL ORDER BY url ASC, frequency DESC;\n",
+  "sql" : "CREATE VIEW `Recommendation` AS  SELECT beforeURL AS url, afterURL AS rec,\n    count(1) AS frequency FROM VisitAfter\n    GROUP BY beforeURL, afterURL ORDER BY url ASC, frequency DESC;\n",
   "primary_key" : [ "url", "rec" ],
   "timestamp" : "-",
   "schema" : [ {
@@ -124,7 +124,7 @@
     "description" : "[1 DESC-nulls-last, 0 ASC-nulls-first]"
   } ],
   "plan" : "LogicalAggregate(group=[{0}], total=[COUNT()])\n  LogicalProject(url=[$0])\n    LogicalTableScan(table=[[default_catalog, default_database, Click]])\n",
-  "sql" : "CREATE VIEW Trending AS  SELECT url, count(1) AS total\n    FROM Click\n    GROUP BY url ORDER BY total DESC, url ASC;\n",
+  "sql" : "CREATE VIEW `Trending` AS  SELECT url, count(1) AS total\n    FROM Click\n    GROUP BY url ORDER BY total DESC, url ASC;\n",
   "primary_key" : [ "url" ],
   "timestamp" : "-",
   "schema" : [ {
@@ -142,7 +142,7 @@
   "inputs" : [ "default_catalog.default_database.Click" ],
   "annotations" : [ ],
   "plan" : "LogicalProject(beforeURL=[$0], afterURL=[$3], timestamp=[$4])\n  LogicalJoin(condition=[AND(=($2, $5), <($1, $4), >=($1, -($4, *(10, 60000:INTERVAL MINUTE))))], joinType=[inner])\n    LogicalTableScan(table=[[default_catalog, default_database, Click]])\n    LogicalTableScan(table=[[default_catalog, default_database, Click]])\n",
-  "sql" : "CREATE VIEW VisitAfter AS  SELECT b.url AS beforeURL, a.url AS afterURL,\n    a.`timestamp` AS `timestamp`\n    FROM Click b JOIN Click a ON b.userid=a.userid AND\n        b.`timestamp` < a.`timestamp` AND\n        b.`timestamp` >= a.`timestamp` - INTERVAL 10 MINUTE;\n",
+  "sql" : "CREATE VIEW `VisitAfter` AS  SELECT b.url AS beforeURL, a.url AS afterURL,\n    a.`timestamp` AS `timestamp`\n    FROM Click b JOIN Click a ON b.userid=a.userid AND\n        b.`timestamp` < a.`timestamp` AND\n        b.`timestamp` >= a.`timestamp` - INTERVAL 10 MINUTE;\n",
   "timestamp" : "timestamp",
   "schema" : [ {
     "name" : "beforeURL",
