@@ -115,7 +115,7 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
         ctx -> {
           JsonNode payload = null;
           try {
-            payload = objectMapper.readTree(ctx.body().buffer().getBytes());
+            payload = OBJECT_MAPPER.readTree(ctx.body().buffer().getBytes());
             processIncomingMessages(ctx, payload);
           } catch (IOException e) { // TODO: improve error handling
             throw new RuntimeException(e);
@@ -340,7 +340,7 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
     if (tool == null) {
       return Future.failedFuture(new McpException(-32602, "Tool not found: " + toolName));
     }
-    Map<String, Object> variables = objectMapper.convertValue(arguments, new TypeReference<>() {});
+    Map<String, Object> variables = OBJECT_MAPPER.convertValue(arguments, new TypeReference<>() {});
     return bridgeRequestToGraphQL(ctx, tool, variables)
         .map(
             executionResult -> {
@@ -366,7 +366,7 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
                       List.of(
                           new JsonObject()
                               .put("type", "text")
-                              .put("text", objectMapper.writeValueAsString(result))));
+                              .put("text", OBJECT_MAPPER.writeValueAsString(result))));
                   json.put("isError", false);
                 } catch (JsonProcessingException e) {
                   throw new RuntimeException(e);
