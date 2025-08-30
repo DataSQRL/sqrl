@@ -45,7 +45,7 @@ Plan:
 LogicalProject(_uuid=[$0], id=[$4], customer_id=[$5], loan_type_id=[$6], max_amount=[$9], min_amount=[$10], amount=[$7])
   LogicalFilter(condition=[AND(=($1, 'underwriting'), OR(>($7, $9), <($7, $10)))])
     LogicalTableScan(table=[[default_catalog, default_database, ApplicationStatus]])
-SQL: CREATE VIEW ApplicationAlert AS  SELECT _uuid, id, customer_id, loan_type_id, max_amount, min_amount, amount
+SQL: CREATE VIEW `ApplicationAlert` AS  SELECT _uuid, id, customer_id, loan_type_id, max_amount, min_amount, amount
                     FROM ApplicationStatus a
                     WHERE status = 'underwriting' AND (amount > max_amount OR amount < min_amount);
 
@@ -81,7 +81,7 @@ LogicalProject(_uuid=[$0], status=[$2], message=[$3], event_time=[$4], id=[$5], 
     LogicalFilter(condition=[=($0, $cor3.loan_type_id)])
       LogicalSnapshot(period=[$cor3.event_time])
         LogicalTableScan(table=[[default_catalog, default_database, LoanTypes]])
-SQL: CREATE VIEW ApplicationStatus AS  SELECT u._uuid, u.status, u.message, u.event_time, a.id, a.customer_id, a.loan_type_id,
+SQL: CREATE VIEW `ApplicationStatus` AS  SELECT u._uuid, u.status, u.message, u.event_time, a.id, a.customer_id, a.loan_type_id,
                             a.amount, a.duration, t.max_amount, t.min_amount
                      FROM ApplicationUpdates u JOIN Applications FOR SYSTEM_TIME AS OF u.`event_time` a ON a.id = u.loan_application_id
                             JOIN LoanTypes FOR SYSTEM_TIME AS OF u.`event_time` t ON t.id = a.loan_type_id;
@@ -182,7 +182,7 @@ Schema:
 Plan:
 LogicalProject(role=[$1], content=[$2], name=[$3], customerid=[$4.customerid], timestamp=[$5], uuid=[$0])
   LogicalTableScan(table=[[default_catalog, default_database, AddChatMessage]])
-SQL: CREATE VIEW CustomerChatMessage AS  SELECT role, content, name, c.context.customerid, event_time AS `timestamp`,
+SQL: CREATE VIEW `CustomerChatMessage` AS  SELECT role, content, name, c.context.customerid, event_time AS `timestamp`,
                         _uuid AS uuid
                        FROM AddChatMessage c ORDER BY `timestamp` DESC;
 

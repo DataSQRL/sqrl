@@ -20,7 +20,7 @@ LogicalProject(sensorid=[$1], temperature=[$2], event_time=[$3], machineid=[$5])
     LogicalFilter(condition=[=($cor1.sensorid, $0)])
       LogicalSnapshot(period=[$cor1.event_time])
         LogicalTableScan(table=[[default_catalog, default_database, _Sensors]])
-SQL: CREATE VIEW MachineReading AS  SELECT r.sensorid, r.temperature, r.event_time, s.machineid
+SQL: CREATE VIEW `MachineReading` AS  SELECT r.sensorid, r.temperature, r.event_time, s.machineid
                   FROM _SensorReading r JOIN _Sensors FOR SYSTEM_TIME AS OF r.event_time s ON r.sensorid = s.sensorid;
 
 === MachineTempByHour
@@ -44,7 +44,7 @@ LogicalProject(machineid=[$0], time_hour=[$3], avg_temperature=[$4])
       LogicalTableFunctionScan(invocation=[TUMBLE(DESCRIPTOR($2), 3600000:INTERVAL MINUTE)], rowType=[RecordType(INTEGER sensorid, FLOAT temperature, TIMESTAMP_LTZ(3) *ROWTIME* event_time, INTEGER machineid, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end, TIMESTAMP_LTZ(3) *ROWTIME* window_time)])
         LogicalProject(sensorid=[$0], temperature=[$1], event_time=[$2], machineid=[$3])
           LogicalTableScan(table=[[default_catalog, default_database, MachineReading]])
-SQL: CREATE VIEW MachineTempByHour AS  SELECT machineid, window_time as time_hour, AVG(temperature) AS avg_temperature
+SQL: CREATE VIEW `MachineTempByHour` AS  SELECT machineid, window_time as time_hour, AVG(temperature) AS avg_temperature
                      FROM TABLE(TUMBLE(TABLE MachineReading, DESCRIPTOR(event_time), INTERVAL '60' MINUTES))
                      GROUP BY machineid, window_start, window_end, window_time;
 

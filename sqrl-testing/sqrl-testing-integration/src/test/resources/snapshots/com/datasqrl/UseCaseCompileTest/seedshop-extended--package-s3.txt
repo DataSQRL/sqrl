@@ -23,7 +23,7 @@ LogicalProject(customerid=[$0], first_name=[$5], last_name=[$6], email=[$7], spe
       LogicalFilter(condition=[=($cor19.customerid, $0)])
         LogicalSnapshot(period=[$cor19.week])
           LogicalTableScan(table=[[default_catalog, default_database, Customers]])
-SQL: CREATE VIEW CustomerPromotion AS  SELECT s.customerid, c.first_name, c.last_name, c.email, s.spend, s.saved
+SQL: CREATE VIEW `CustomerPromotion` AS  SELECT s.customerid, c.first_name, c.last_name, c.email, s.spend, s.saved
         FROM CustomersSpending s JOIN Customers FOR SYSTEM_TIME AS OF `week` c ON s.customerid = c.id
         WHERE s.spend > 250;
 
@@ -74,7 +74,7 @@ Plan:
 LogicalAggregate(group=[{0}], first_order=[MIN($1)], total_spend=[SUM($2)], total_saved=[SUM($3)], num_orders=[COUNT()])
   LogicalProject(customerid=[$2], time=[$1], price=[$3], saving=[$4])
     LogicalTableScan(table=[[default_catalog, default_database, OrdersTotals]])
-SQL: CREATE VIEW CustomersOrderStats AS  SELECT customerid, min(`time`) as first_order,
+SQL: CREATE VIEW `CustomersOrderStats` AS  SELECT customerid, min(`time`) as first_order,
                               sum(price) as total_spend, sum(saving) as total_saved,
                               count(1) as num_orders
                        FROM OrdersTotals GROUP BY customerid;
@@ -99,7 +99,7 @@ LogicalAggregate(group=[{0, 1}], num_orders=[COUNT()], total_quantity=[SUM($2)])
       Uncollect
         LogicalProject(items=[$cor12.items])
           LogicalValues(tuples=[[{ 0 }]])
-SQL: CREATE VIEW CustomersPastPurchases AS  SELECT o.customerid, i.productid, count(1) as num_orders,
+SQL: CREATE VIEW `CustomersPastPurchases` AS  SELECT o.customerid, i.productid, count(1) as num_orders,
          sum(i.quantity) as total_quantity
       FROM Orders o CROSS JOIN UNNEST(o.items) i
       GROUP BY o.customerid, i.productid;
@@ -127,7 +127,7 @@ LogicalProject(customerid=[$0], week=[$3], spend=[$4], saved=[$5])
       LogicalTableFunctionScan(invocation=[TUMBLE(DESCRIPTOR($1), 604800000:INTERVAL DAY)], rowType=[RecordType(BIGINT id, TIMESTAMP_LTZ(3) *ROWTIME* time, BIGINT customerid, DOUBLE price, DOUBLE saving, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end, TIMESTAMP_LTZ(3) *ROWTIME* window_time)])
         LogicalProject(id=[$0], time=[$1], customerid=[$2], price=[$3], saving=[$4])
           LogicalTableScan(table=[[default_catalog, default_database, OrdersTotals]])
-SQL: CREATE VIEW CustomersSpending AS  SELECT customerid, window_time AS week,
+SQL: CREATE VIEW `CustomersSpending` AS  SELECT customerid, window_time AS week,
          sum(price) AS spend, sum(saving) AS saved
       FROM TABLE(TUMBLE(TABLE OrdersTotals, DESCRIPTOR(`time`), INTERVAL '7' DAYS))
       GROUP BY customerid, window_start, window_end, window_time
@@ -178,7 +178,7 @@ LogicalProject(id=[$0], time=[$4], customerid=[$1], price=[$5], saving=[$6])
       LogicalTableFunctionScan(invocation=[TUMBLE(DESCRIPTOR($1), 1:INTERVAL SECOND)], rowType=[RecordType(BIGINT id, TIMESTAMP_LTZ(3) *ROWTIME* time, BIGINT customerid, BIGINT productid, BIGINT quantity, DOUBLE unit_price, DOUBLE discount, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end, TIMESTAMP_LTZ(3) *ROWTIME* window_time)])
         LogicalProject(id=[$0], time=[$1], customerid=[$2], productid=[$3], quantity=[$4], unit_price=[$5], discount=[$6])
           LogicalTableScan(table=[[default_catalog, default_database, _OrderItems]])
-SQL: CREATE VIEW OrdersTotals AS  SELECT id, window_time AS `time`, customerid, sum(quantity * unit_price - coalesce(discount, 0.0)) as price,
+SQL: CREATE VIEW `OrdersTotals` AS  SELECT id, window_time AS `time`, customerid, sum(quantity * unit_price - coalesce(discount, 0.0)) as price,
                   sum(coalesce(discount, 0.0)) as saving
                 FROM TABLE(TUMBLE(TABLE _OrderItems, DESCRIPTOR(`time`), INTERVAL '0.001' SECONDS))
                 GROUP BY id, customerid, window_start, window_end, window_time;
@@ -197,7 +197,7 @@ LogicalSort(sort0=[$8], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC-nulls-firs
   LogicalProject(id=[$0], name=[$1], sizing=[$2], weight_in_gram=[$3], type=[$4], category=[$5], usda_id=[$6], updated=[$7], score=[text_search(?0, $1)])
     LogicalFilter(condition=[>(text_search(CAST(?0):VARCHAR(2147483647) CHARACTER SET "UTF-16LE", $1), 0)])
       LogicalTableScan(table=[[default_catalog, default_database, Products]])
-SQL: CREATE VIEW ProductSearch AS  SELECT p.*, text_search(?     , name) as score
+SQL: CREATE VIEW `ProductSearch` AS  SELECT p.*, text_search(?     , name) as score
                                  FROM Products p
                                  WHERE text_search(?     , name) > 0
                                  ORDER BY score DESC, id ASC;
@@ -216,7 +216,7 @@ LogicalSort(sort0=[$0], dir0=[ASC-nulls-first])
   LogicalProject(id=[$0], name=[$1], sizing=[$2], weight_in_gram=[$3], type=[$4], category=[$5], usda_id=[$6], updated=[$7])
     LogicalFilter(condition=[AND(>(text_search(CAST(?0):VARCHAR(2147483647) CHARACTER SET "UTF-16LE", $1, $5), 0), >($0, ?1))])
       LogicalTableScan(table=[[default_catalog, default_database, Products]])
-SQL: CREATE VIEW ProductSearchWithId AS  SELECT * FROM Products WHERE text_search(?     , name, category) > 0
+SQL: CREATE VIEW `ProductSearchWithId` AS  SELECT * FROM Products WHERE text_search(?     , name, category) > 0
                                                                           AND id > ?   ORDER BY id ASC;
 
 === Products
@@ -274,7 +274,7 @@ LogicalAggregate(group=[{0, 1}], quantity=[SUM($2)], spend=[SUM($3)], weight=[SU
       LogicalFilter(condition=[=($cor29.customerid, $0)])
         LogicalSnapshot(period=[$cor29.time])
           LogicalTableScan(table=[[default_catalog, default_database, Customers]])
-SQL: CREATE VIEW ProductsByCountry AS  SELECT p.id AS productid, c.country AS country, sum(o.quantity) as quantity,
+SQL: CREATE VIEW `ProductsByCountry` AS  SELECT p.id AS productid, c.country AS country, sum(o.quantity) as quantity,
          sum(o.quantity * o.unit_price) as spend, sum(o.quantity * p.weight_in_gram) as weight
       FROM _OrderItems o
           JOIN Products FOR SYSTEM_TIME AS OF o.`time` p ON o.productid = p.id
@@ -331,7 +331,7 @@ LogicalProject(id=[$0], time=[$2], customerid=[$1], productid=[$4], quantity=[$5
     Uncollect
       LogicalProject(items=[$cor1.items])
         LogicalValues(tuples=[[{ 0 }]])
-SQL: CREATE VIEW _OrderItems AS  SELECT o.id, o.`time`, o.customerid, i.* FROM Orders o CROSS JOIN UNNEST(o.items) i;
+SQL: CREATE VIEW `_OrderItems` AS  SELECT o.id, o.`time`, o.customerid, i.* FROM Orders o CROSS JOIN UNNEST(o.items) i;
 
 === _ProductsStream
 ID:     default_catalog.default_database._ProductsStream

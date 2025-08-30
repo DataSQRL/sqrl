@@ -18,7 +18,7 @@ Schema:
 Plan:
 LogicalProject(name=[$0], name_upper=[UPPER($0)], name_length=[CHAR_LENGTH($0)], time_now=[NOW()], current_unix_ts=[UNIX_TIMESTAMP()], generated_uuid=[UUID()], name_md5=[MD5($0)], formatted_name=[FORMAT('Hello, %s', $0)], name_json=[TO_JSONB(CONCAT('{"a": "', $0, '"}'))])
   LogicalValues(tuples=[[{ 'Alice' }, { 'Bob' }, { 'Charlie' }]])
-SQL: CREATE VIEW FlinkFunctions AS  SELECT
+SQL: CREATE VIEW `FlinkFunctions` AS  SELECT
   name,
   UPPER(name) AS name_upper,
   CHAR_LENGTH(name) AS name_length,

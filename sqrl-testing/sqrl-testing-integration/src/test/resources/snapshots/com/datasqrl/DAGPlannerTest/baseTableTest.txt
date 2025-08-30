@@ -35,7 +35,7 @@ Plan:
 LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
   LogicalFilter(condition=[=($0, ?0)])
     LogicalTableScan(table=[[default_catalog, default_database, CustomerWithEmail]])
-SQL: CREATE VIEW CustomerById AS  SELECT * FROM CustomerWithEmail WHERE customerid = ?  ;
+SQL: CREATE VIEW `CustomerById` AS  SELECT * FROM CustomerWithEmail WHERE customerid = ?  ;
 
 === CustomerWithEmail
 ID:     default_catalog.default_database.CustomerWithEmail
@@ -55,7 +55,7 @@ Schema:
 Plan:
 LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW CustomerWithEmail AS  SELECT * FROM Customer WHERE email IS NOT NULL;
+SQL: CREATE VIEW `CustomerWithEmail` AS  SELECT * FROM Customer WHERE email IS NOT NULL;
 
 === DistinctCustomer
 ID:     default_catalog.default_database.DistinctCustomer
@@ -97,7 +97,7 @@ Plan:
 LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
   LogicalFilter(condition=[=($0, ?0)])
     LogicalTableScan(table=[[default_catalog, default_database, DistinctCustomer]])
-SQL: CREATE VIEW DistinctCustomerById AS  SELECT * FROM DistinctCustomer WHERE customerid = ?  ;
+SQL: CREATE VIEW `DistinctCustomerById` AS  SELECT * FROM DistinctCustomer WHERE customerid = ?  ;
 
 === Product
 ID:     default_catalog.default_database.Product
@@ -117,7 +117,7 @@ Schema:
 Plan:
 LogicalProject(productid=[$0], name=[$1], description=[$2], category=[$3], _ingest_time=[$4])
   LogicalTableScan(table=[[default_catalog, default_database, _Product]])
-SQL: CREATE VIEW Product AS  SELECT * FROM _Product WHERE name is NOT NULL;
+SQL: CREATE VIEW `Product` AS  SELECT * FROM _Product WHERE name is NOT NULL;
 
 === ProductByCategory
 ID:     default_catalog.default_database.ProductByCategory
@@ -132,7 +132,7 @@ Plan:
 LogicalProject(productid=[$0], name=[$1], description=[$2], category=[$3], _ingest_time=[$4])
   LogicalFilter(condition=[=($3, ?0)])
     LogicalTableScan(table=[[default_catalog, default_database, Product]])
-SQL: CREATE VIEW ProductByCategory AS  SELECT * FROM Product WHERE category = ?        ;
+SQL: CREATE VIEW `ProductByCategory` AS  SELECT * FROM Product WHERE category = ?        ;
 
 === _Product
 ID:     default_catalog.default_database._Product

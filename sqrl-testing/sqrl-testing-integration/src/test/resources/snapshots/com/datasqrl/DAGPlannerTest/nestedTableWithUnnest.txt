@@ -40,7 +40,7 @@ LogicalAggregate(group=[{0}], price=[SUM($1)], saving=[SUM($2)])
       Uncollect
         LogicalProject(entries=[$cor1.entries])
           LogicalValues(tuples=[[{ 0 }]])
-SQL: CREATE VIEW _OrdersTotals AS  SELECT id, sum(quantity * unit_price) as price,
+SQL: CREATE VIEW `_OrdersTotals` AS  SELECT id, sum(quantity * unit_price) as price,
                         sum(coalesce(discount, 0.0)) as saving FROM Orders CROSS JOIN UNNEST(entries)
                         GROUP BY id;
 

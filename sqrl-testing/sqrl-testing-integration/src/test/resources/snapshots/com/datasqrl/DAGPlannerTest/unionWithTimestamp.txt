@@ -15,7 +15,7 @@ LogicalUnion(all=[true])
     LogicalTableScan(table=[[default_catalog, default_database, Orders]])
   LogicalProject(customerid=[$0], rowtime=[$4])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW CombinedStream AS  SELECT o.customerid, o.`time` AS rowtime FROM Orders o UNION ALL SELECT c.customerid, c.`timestamp` AS rowtime FROM Customer c;
+SQL: CREATE VIEW `CombinedStream` AS  SELECT o.customerid, o.`time` AS rowtime FROM Orders o UNION ALL SELECT c.customerid, c.`timestamp` AS rowtime FROM Customer c;
 
 === Customer
 ID:     default_catalog.default_database.Customer

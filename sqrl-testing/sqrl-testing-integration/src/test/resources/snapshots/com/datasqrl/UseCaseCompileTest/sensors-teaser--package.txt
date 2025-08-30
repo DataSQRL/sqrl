@@ -23,7 +23,7 @@ LogicalProject(sensorid=[$0], timeSec=[$3], timeStart=[$1], timeEnd=[$2], temp=[
       LogicalTableFunctionScan(invocation=[TUMBLE(DESCRIPTOR($4), 1000:INTERVAL SECOND)], rowType=[RecordType(BIGINT sensorid, BIGINT time, DOUBLE temperature, DOUBLE humidity, TIMESTAMP_LTZ(3) *ROWTIME* timestamp, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end, TIMESTAMP_LTZ(3) *ROWTIME* window_time)])
         LogicalProject(sensorid=[$0], time=[$1], temperature=[$2], humidity=[$3], timestamp=[$4])
           LogicalTableScan(table=[[default_catalog, default_database, SensorReading]])
-SQL: CREATE VIEW SecReading AS  SELECT sensorid, window_time as timeSec, window_start as timeStart, window_end as timeEnd,
+SQL: CREATE VIEW `SecReading` AS  SELECT sensorid, window_time as timeSec, window_start as timeStart, window_end as timeEnd,
         avg(temperature) as temp
     FROM TABLE(TUMBLE(TABLE SensorReading, DESCRIPTOR(`timestamp`), INTERVAL '1' SECONDS))
     GROUP BY sensorid, window_start, window_end, window_time
@@ -94,7 +94,7 @@ LogicalProject(sensorid=[$0], window_time=[$3], maxTemp=[$4])
       LogicalTableFunctionScan(invocation=[HOP(DESCRIPTOR($1), 5000:INTERVAL SECOND, 60000:INTERVAL MINUTE)], rowType=[RecordType(BIGINT sensorid, TIMESTAMP_LTZ(3) *ROWTIME* timeSec, TIMESTAMP(3) timeStart, TIMESTAMP(3) timeEnd, DOUBLE temp, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end, TIMESTAMP_LTZ(3) *ROWTIME* window_time)])
         LogicalProject(sensorid=[$0], timeSec=[$1], timeStart=[$2], timeEnd=[$3], temp=[$4])
           LogicalTableScan(table=[[default_catalog, default_database, SecReading]])
-SQL: CREATE VIEW _SensorMaxTempWindow AS  SELECT sensorid, window_time, max(temp) as maxTemp
+SQL: CREATE VIEW `_SensorMaxTempWindow` AS  SELECT sensorid, window_time, max(temp) as maxTemp
     FROM TABLE(HOP(TABLE SecReading, DESCRIPTOR(timeSec), INTERVAL '5' SECONDS, INTERVAL '1' MINUTES))
     GROUP BY sensorid, window_start, window_end, window_time;
 

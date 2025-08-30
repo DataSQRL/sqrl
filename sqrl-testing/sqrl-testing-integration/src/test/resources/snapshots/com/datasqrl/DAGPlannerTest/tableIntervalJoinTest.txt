@@ -38,7 +38,7 @@ LogicalProject(id=[$0], name=[$6], customerid=[$1])
   LogicalJoin(condition=[AND(=($1, $4), >($2, $8), <=($2, +($8, *(31, 86400000:INTERVAL DAY))))], joinType=[inner])
     LogicalTableScan(table=[[default_catalog, default_database, Orders]])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW OrderCustomer1 AS  SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid AND o.`time` > c.`timestamp` AND o.`time` <= c.`timestamp` + INTERVAL 31 DAYS;
+SQL: CREATE VIEW `OrderCustomer1` AS  SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid AND o.`time` > c.`timestamp` AND o.`time` <= c.`timestamp` + INTERVAL 31 DAYS;
 
 === OrderCustomer2
 ID:     default_catalog.default_database.OrderCustomer2
@@ -56,7 +56,7 @@ LogicalProject(id=[$0], name=[$6], customerid=[$1])
   LogicalJoin(condition=[AND(=($1, $4), >=($2, +($8, *(2, 86400000:INTERVAL DAY))), <=($2, +($8, *(31, 86400000:INTERVAL DAY))))], joinType=[inner])
     LogicalTableScan(table=[[default_catalog, default_database, Orders]])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW OrderCustomer2 AS  SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid AND o.`time` >= c.`timestamp` + INTERVAL 2 DAYS AND o.`time` <= c.`timestamp` + INTERVAL 31 DAYS;
+SQL: CREATE VIEW `OrderCustomer2` AS  SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid AND o.`time` >= c.`timestamp` + INTERVAL 2 DAYS AND o.`time` <= c.`timestamp` + INTERVAL 31 DAYS;
 
 === OrderCustomer3
 ID:     default_catalog.default_database.OrderCustomer3
@@ -74,7 +74,7 @@ LogicalProject(id=[$0], name=[$6], customerid=[$1])
   LogicalJoin(condition=[AND(=($1, $4), >=($2, -($8, 14400000:INTERVAL HOUR)), <=($2, $8))], joinType=[inner])
     LogicalTableScan(table=[[default_catalog, default_database, Orders]])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW OrderCustomer3 AS  SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid AND o.`time` BETWEEN c.`timestamp` - INTERVAL '4' HOUR AND c.`timestamp`;
+SQL: CREATE VIEW `OrderCustomer3` AS  SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid AND o.`time` BETWEEN c.`timestamp` - INTERVAL '4' HOUR AND c.`timestamp`;
 
 === Orders
 ID:     default_catalog.default_database.Orders

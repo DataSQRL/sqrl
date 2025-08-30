@@ -48,7 +48,7 @@ Schema:
 Plan:
 LogicalProject(uuidField=[$0], timestampMillisField=[$1], nullableTimestampMillisField=[$2], timestampMicrosField=[$3], nullableTimestampMicrosField=[$4], dateField=[$5], nullableDateField=[$6], timeMillisField=[$7], nullableTimeMillisField=[$8], timeMicrosField=[$9], nullableTimeMicrosField=[$10], complexArrayField=[$11], nullableComplexArrayField=[$12], multiNestedRecord=[$13], stringField=[$14], nullableStringField=[$15], intField=[$16], nullableIntField=[$17], longField=[$18], nullableLongField=[$19], floatField=[$20], nullableFloatField=[$21], doubleField=[$22], nullableDoubleField=[$23], booleanField=[$24], nullableBooleanField=[$25], enumField=[$26], nullableEnumField=[$27], arrayField=[$28], nullableArrayField=[$29], nestedRecord=[$30], nullableNestedRecord=[$31], decimalField=[$32], mapField=[$33], nullableMapField=[$34])
   LogicalTableScan(table=[[default_catalog, default_database, _Schema]])
-SQL: CREATE VIEW Schema AS  SELECT * FROM _Schema ORDER BY uuidField DESC;
+SQL: CREATE VIEW `Schema` AS  SELECT * FROM _Schema ORDER BY uuidField DESC;
 
 === _Schema
 ID:     default_catalog.default_database._Schema

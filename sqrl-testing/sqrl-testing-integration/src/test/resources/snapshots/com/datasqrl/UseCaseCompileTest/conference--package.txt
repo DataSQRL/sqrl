@@ -15,7 +15,7 @@ LogicalAggregate(group=[{0}], num=[COUNT()], test=[AVG($0)])
   LogicalProject(eventid=[$1])
     LogicalFilter(condition=[$3])
       LogicalTableScan(table=[[default_catalog, default_database, _UserLikes]])
-SQL: CREATE VIEW EventLikeCount AS  SELECT eventid, count(*) as num, avg(eventid) as test
+SQL: CREATE VIEW `EventLikeCount` AS  SELECT eventid, count(*) as num, avg(eventid) as test
                   FROM _UserLikes WHERE liked GROUP BY eventid;
 
 === Events
@@ -68,7 +68,7 @@ LogicalSort(sort0=[$12], dir0=[ASC-nulls-first])
       LogicalJoin(condition=[=($1, $13)], joinType=[inner])
         LogicalTableScan(table=[[default_catalog, default_database, _UserLikes]])
         LogicalTableScan(table=[[default_catalog, default_database, Events]])
-SQL: CREATE VIEW EventsLiked AS  SELECT e.* FROM _UserLikes l JOIN Events e ON l.eventid = e.id
+SQL: CREATE VIEW `EventsLiked` AS  SELECT e.* FROM _UserLikes l JOIN Events e ON l.eventid = e.id
                                 WHERE l.userid = ?      
                                 ORDER BY e.startTimestamp ASC;
 
@@ -87,7 +87,7 @@ LogicalSort(sort0=[$13], dir0=[DESC-nulls-last])
       LogicalJoin(condition=[=($13, ?1)], joinType=[left])
         LogicalTableScan(table=[[default_catalog, default_database, Events]])
         LogicalTableScan(table=[[default_catalog, default_database, _UserInterests]])
-SQL: CREATE VIEW PersonalizedEventSearch AS 
+SQL: CREATE VIEW `PersonalizedEventSearch` AS 
     SELECT e.*, coalesce(cosine_similarity(i.interestVector, e.embedding),0.0) as score
         FROM Events e
         LEFT JOIN _UserInterests i ON i.userid = ?      
@@ -108,7 +108,7 @@ LogicalSort(sort0=[$13], dir0=[DESC-nulls-last])
     LogicalJoin(condition=[=($13, ?0)], joinType=[inner])
       LogicalTableScan(table=[[default_catalog, default_database, Events]])
       LogicalTableScan(table=[[default_catalog, default_database, _UserInterests]])
-SQL: CREATE VIEW RecommendedEvents AS 
+SQL: CREATE VIEW `RecommendedEvents` AS 
 SELECT e.*, cosine_similarity(i.interestVector, e.embedding) as score
 FROM Events e JOIN _UserInterests i ON i.userid = ?      
 ORDER BY score DESC;
@@ -131,7 +131,7 @@ Schema:
 Plan:
 LogicalProject(_uuid=[$0], userid=[$1], text=[$2], event_time=[$3], embedding=[vector_embed($2, 'text-embedding-3-small')])
   LogicalTableScan(table=[[default_catalog, default_database, _AddInterestStream]])
-SQL: CREATE VIEW _AddInterest AS  SELECT *, vector_embed(text, 'text-embedding-3-small') AS embedding FROM _AddInterestStream;
+SQL: CREATE VIEW `_AddInterest` AS  SELECT *, vector_embed(text, 'text-embedding-3-small') AS embedding FROM _AddInterestStream;
 
 === _AddInterestStream
 ID:     default_catalog.default_database._AddInterestStream
@@ -204,7 +204,7 @@ LogicalProject(userid=[$2], embedding=[$16], title=[$8], abstract=[$9], location
       LogicalFilter(condition=[=($cor1.eventid, $8)])
         LogicalSnapshot(period=[$cor1.event_time])
           LogicalTableScan(table=[[default_catalog, default_database, Events]])
-SQL: CREATE VIEW _LikeVector AS  SELECT l.userid, e.embedding, e.title, e.abstract, e.location, l.event_time
+SQL: CREATE VIEW `_LikeVector` AS  SELECT l.userid, e.embedding, e.title, e.abstract, e.location, l.event_time
               FROM _Likes l JOIN Events FOR SYSTEM_TIME AS OF l.event_time e ON l.eventid = e.id WHERE l.liked;
 
 === _Likes
@@ -257,8 +257,8 @@ LogicalProject(url=[$0], date=[$1], time=[$2], title=[$3], abstract=[$4], locati
   LogicalProject(url=[$0], date=[$1], time=[$2], title=[$3], abstract=[$4], location=[$5], speakers=[$6], last_updated=[$7], id=[$8], full_text=[$9], startTime=[$10], embedding=[vector_embed($9, 'text-embedding-3-small')])
     LogicalProject(url=[$0], date=[$1], time=[$2], title=[$3], abstract=[$4], location=[$5], speakers=[$6], last_updated=[$7], id=[coalesce(CAST(REGEXP_EXTRACT($0, '(\d*)$')):BIGINT, 0:BIGINT)], full_text=[CONCAT($3, '\n', $4)], startTime=[CONCAT(TRIM(FLAG(BOTH), ' ', REGEXP_EXTRACT($1, '^[^-]*')), ' ', TRIM(FLAG(BOTH), ' ', REGEXP_EXTRACT($2, '\d\d?:\d\d\s(AM|PM)')))])
       LogicalTableScan(table=[[default_catalog, default_database, _EventStream]])
-SQL: ALTER VIEW _ProcessedEventStream AS SELECT `url`, `date`, `time`, `title`, `abstract`, `location`, `speakers`, `last_updated`, `id`, `full_text`, `startTime`, `embedding`,  TO_TIMESTAMP(concat(startTime,' PDT'), 'MMMM d, yyyy h:mm a z') AS startTimestamp FROM 
-( SELECT `url`, `date`, `time`, `title`, `abstract`, `location`, `speakers`, `last_updated`, `id`, `full_text`, `startTime`,   vector_embed(full_text, 'text-embedding-3-small') AS embedding FROM 
+SQL: ALTER VIEW `_ProcessedEventStream` AS SELECT `url`, `date`, `time`, `title`, `abstract`, `location`, `speakers`, `last_updated`, `id`, `full_text`, `startTime`, `embedding`,  TO_TIMESTAMP(concat(startTime,' PDT'), 'MMMM d, yyyy h:mm a z') AS `startTimestamp` FROM 
+( SELECT `url`, `date`, `time`, `title`, `abstract`, `location`, `speakers`, `last_updated`, `id`, `full_text`, `startTime`,   vector_embed(full_text, 'text-embedding-3-small') AS `embedding` FROM 
 (  SELECT *,
     coalesce(CAST(REGEXP_EXTRACT(url, '(\d*)$') AS BIGINT),0) AS id,
     concat(title,'\n',abstract) AS full_text,
@@ -281,7 +281,7 @@ LogicalUnion(all=[true])
     LogicalTableScan(table=[[default_catalog, default_database, _LikeVector]])
   LogicalProject(userid=[$1], embedding=[$4], event_time=[$3])
     LogicalTableScan(table=[[default_catalog, default_database, _AddInterest]])
-SQL: CREATE VIEW _UserInterestVectors AS  SELECT userid, embedding, event_time FROM _LikeVector
+SQL: CREATE VIEW `_UserInterestVectors` AS  SELECT userid, embedding, event_time FROM _LikeVector
                  UNION ALL
                  SELECT userid, embedding, event_time FROM _AddInterest;
 
@@ -299,7 +299,7 @@ Plan:
 LogicalAggregate(group=[{0}], interestVector=[center($1)])
   LogicalProject(userid=[$0], embedding=[$1])
     LogicalTableScan(table=[[default_catalog, default_database, _UserInterestVectors]])
-SQL: CREATE VIEW _UserInterests AS  SELECT userid, center(embedding) as interestVector FROM _UserInterestVectors GROUP BY userid;
+SQL: CREATE VIEW `_UserInterests` AS  SELECT userid, center(embedding) as interestVector FROM _UserInterestVectors GROUP BY userid;
 
 === _UserLikes
 ID:     default_catalog.default_database._UserLikes

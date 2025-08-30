@@ -14,7 +14,7 @@ LogicalProject(category_id=[$0], center_vector=[vector_to_double($1)])
   LogicalAggregate(group=[{0}], agg#0=[CENTER($1)])
     LogicalProject(category_id=[$1], vector=[$2])
       LogicalTableScan(table=[[default_catalog, default_database, VectorData]])
-SQL: CREATE VIEW CategoryCentroids AS  SELECT category_id, vector_to_double(CENTER(vector)) as center_vector FROM VectorData GROUP BY category_id;
+SQL: CREATE VIEW `CategoryCentroids` AS  SELECT category_id, vector_to_double(CENTER(vector)) as center_vector FROM VectorData GROUP BY category_id;
 
 === DocumentSimilarity
 ID:     default_catalog.default_database.DocumentSimilarity
@@ -31,7 +31,7 @@ LogicalSort(sort0=[$1], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC-nulls-firs
       LogicalJoin(condition=[<>($0, $3)], joinType=[inner])
         LogicalTableScan(table=[[default_catalog, default_database, VectorData]])
         LogicalTableScan(table=[[default_catalog, default_database, VectorData]])
-SQL: CREATE VIEW DocumentSimilarity AS  SELECT v2.doc_id, cosine_similarity(v1.vector, v2.vector) as score
+SQL: CREATE VIEW `DocumentSimilarity` AS  SELECT v2.doc_id, cosine_similarity(v1.vector, v2.vector) as score
                                            FROM VectorData v1 JOIN VectorData v2 ON v1.doc_id <> v2.doc_id
                                            WHERE v1.doc_id = ?      
                                            ORDER BY score DESC, doc_id ASC;
@@ -51,7 +51,7 @@ LogicalSort(sort0=[$3], dir0=[DESC-nulls-last])
       LogicalJoin(condition=[>(cosine_similarity($2, $5), 0.5:DECIMAL(2, 1))], joinType=[inner])
         LogicalTableScan(table=[[default_catalog, default_database, VectorData]])
         LogicalTableScan(table=[[default_catalog, default_database, VectorData]])
-SQL: CREATE VIEW DocumentSimilarityIndex AS   SELECT e.*
+SQL: CREATE VIEW `DocumentSimilarityIndex` AS   SELECT e.*
                         FROM VectorData i JOIN VectorData e ON cosine_similarity(i.vector, e.vector) > 0.5
                         WHERE i.doc_id = ?       AND i.doc_id <> e.doc_id
                         ORDER BY cosine_similarity(i.vector, e.vector) DESC;
@@ -78,7 +78,7 @@ LogicalProject(doc_id=[$0], category_id=[$1], vector=[double_to_vector(CAST($2):
         LogicalValues(tuples=[[{ 0 }]])
       LogicalProject(EXPR$0=[4], EXPR$1=[5], EXPR$2=[ARRAY(0.1:DECIMAL(3, 2), 0.12:DECIMAL(3, 2), 0.05:DECIMAL(3, 2), 0.85:DECIMAL(3, 2), 0.9:DECIMAL(3, 2))])
         LogicalValues(tuples=[[{ 0 }]])
-SQL: CREATE VIEW VectorData AS  SELECT doc_id, category_id, double_to_vector(vector) AS vector FROM (VALUES
+SQL: CREATE VIEW `VectorData` AS  SELECT doc_id, category_id, double_to_vector(vector) AS vector FROM (VALUES
              (1, 10, ARRAY[0.9, 0.8, 0.01, 0.1, 0.15]),
              (2, 10, ARRAY[0.85, 0.85, 0.03, 0.12, 0.09]),
              (3, 5, ARRAY[0.05, 0.1, 0.0, 0.9, 0.85]),

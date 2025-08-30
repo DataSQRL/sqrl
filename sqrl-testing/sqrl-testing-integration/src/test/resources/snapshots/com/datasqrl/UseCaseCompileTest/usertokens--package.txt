@@ -14,7 +14,7 @@ Plan:
 LogicalAggregate(group=[{0}], total_tokens=[SUM($1)], total_requests=[COUNT()])
   LogicalProject(orgid=[$3], tokens=[$1])
     LogicalTableScan(table=[[default_catalog, default_database, _EnrichedUserTokens]])
-SQL: CREATE VIEW TotalOrgTokens AS  SELECT orgid, sum(tokens) as total_tokens,
+SQL: CREATE VIEW `TotalOrgTokens` AS  SELECT orgid, sum(tokens) as total_tokens,
                          count(tokens) as total_requests
                   FROM _EnrichedUserTokens GROUP BY orgid;
 
@@ -30,7 +30,7 @@ Plan:
 LogicalProject(orgid=[$0], total_tokens=[$1], total_requests=[$2])
   LogicalFilter(condition=[AND(>=($1, ?0), <=($1, ?1))])
     LogicalTableScan(table=[[default_catalog, default_database, TotalOrgTokens]])
-SQL: CREATE VIEW TotalOrgTokensByRange AS 
+SQL: CREATE VIEW `TotalOrgTokensByRange` AS 
     SELECT * FROM TotalOrgTokens
     WHERE total_tokens >= ?          AND total_tokens <= ?         ;
 
@@ -49,7 +49,7 @@ Plan:
 LogicalAggregate(group=[{0}], total_tokens=[SUM($1)], total_requests=[COUNT()])
   LogicalProject(userid=[$0], tokens=[$1])
     LogicalTableScan(table=[[default_catalog, default_database, UserTokens]])
-SQL: CREATE VIEW TotalUserTokens AS  SELECT userid, sum(tokens) as total_tokens,
+SQL: CREATE VIEW `TotalUserTokens` AS  SELECT userid, sum(tokens) as total_tokens,
                           count(tokens) as total_requests
                    FROM UserTokens GROUP BY userid;
 
@@ -68,7 +68,7 @@ Plan:
 LogicalProject(userid=[$0], tokens=[$1], request_time=[$2])
   LogicalFilter(condition=[>($1, 100000)])
     LogicalTableScan(table=[[default_catalog, default_database, UserTokens]])
-SQL: CREATE VIEW UsageAlert AS  SELECT * FROM UserTokens WHERE tokens > 100000;
+SQL: CREATE VIEW `UsageAlert` AS  SELECT * FROM UserTokens WHERE tokens > 100000;
 
 === UserTokens
 ID:     default_catalog.default_database.UserTokens
@@ -131,7 +131,7 @@ LogicalProject(userid=[$0], tokens=[$1], request_time=[$2], orgid=[$4])
     LogicalFilter(condition=[=($0, $cor1.userid)])
       LogicalSnapshot(period=[$cor1.request_time])
         LogicalTableScan(table=[[default_catalog, default_database, _CurrentUserInfo]])
-SQL: CREATE VIEW _EnrichedUserTokens AS  SELECT t.*, u.orgid FROM UserTokens t
+SQL: CREATE VIEW `_EnrichedUserTokens` AS  SELECT t.*, u.orgid FROM UserTokens t
    JOIN _CurrentUserInfo FOR SYSTEM_TIME AS OF t.request_time u ON u.userid = t.userid;
 
 === _UserInfo

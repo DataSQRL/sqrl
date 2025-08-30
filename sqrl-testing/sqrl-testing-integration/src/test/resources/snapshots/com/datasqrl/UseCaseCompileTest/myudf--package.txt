@@ -13,7 +13,7 @@ Schema:
 Plan:
 LogicalProject(val=[$0], myFnc=[MyAsyncScalarFunction($0, $1)])
   LogicalValues(tuples=[[{ '1', 1 }, { '2', 2 }, { '3', 3 }]])
-SQL: CREATE VIEW MyAsyncTable AS  SELECT val, MyAsyncScalarFunction(val, ival) AS myFnc
+SQL: CREATE VIEW `MyAsyncTable` AS  SELECT val, MyAsyncScalarFunction(val, ival) AS myFnc
            FROM (VALUES (('1'), (1)), (('2'), (2)), (('3'), (3))) AS t(val, ival) ORDER BY val;
 
 === MyTable
@@ -30,7 +30,7 @@ Schema:
 Plan:
 LogicalProject(val=[$0], myFnc=[MyScalarFunction(CAST($0):BIGINT, CAST($0):BIGINT)])
   LogicalValues(tuples=[[{ 1 }, { 2 }, { 3 }, { 4 }, { 5 }, { 6 }, { 7 }, { 8 }, { 9 }, { 10 }]])
-SQL: CREATE VIEW MyTable AS  SELECT val, MyScalarFunction(val, val) AS myFnc
+SQL: CREATE VIEW `MyTable` AS  SELECT val, MyScalarFunction(val, val) AS myFnc
            FROM (VALUES ((1)), ((2)), ((3)), ((4)), ((5)),
             ((6)), ((7)), ((8)), ((9)), ((10))) AS t(val) ORDER BY val;
 
@@ -48,7 +48,7 @@ Schema:
 Plan:
 LogicalProject(val=[$0], myFnc=[AnotherFunction(CAST($0):BIGINT, CAST($0):BIGINT)])
   LogicalValues(tuples=[[{ 1 }, { 2 }]])
-SQL: CREATE VIEW MyTableAnother AS  SELECT val, AnotherFunction(val, val) AS myFnc
+SQL: CREATE VIEW `MyTableAnother` AS  SELECT val, AnotherFunction(val, val) AS myFnc
            FROM (VALUES ((1)), ((2))) AS t(val) ORDER BY val;
 
 === MyTableDifferentCase
@@ -65,7 +65,7 @@ Schema:
 Plan:
 LogicalProject(val=[$0], fn=[anotherFunction(CAST($0):BIGINT, CAST($0):BIGINT)])
   LogicalValues(tuples=[[{ 1 }, { 2 }]])
-SQL: CREATE VIEW MyTableDifferentCase AS  SELECT val, anotherFunction(val, val) as fn FROM (VALUES ((1)), ((2))) AS t(val) ORDER BY val;
+SQL: CREATE VIEW `MyTableDifferentCase` AS  SELECT val, anotherFunction(val, val) as fn FROM (VALUES ((1)), ((2))) AS t(val) ORDER BY val;
 
 >>>flink-sql-no-functions.sql
 CREATE VIEW `MyTable`

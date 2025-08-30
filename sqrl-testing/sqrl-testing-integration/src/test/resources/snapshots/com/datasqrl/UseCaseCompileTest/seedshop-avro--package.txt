@@ -18,7 +18,7 @@ LogicalAggregate(group=[{0}], number=[COUNT()], volume=[SUM($1)])
       Uncollect
         LogicalProject(items=[$cor1.items])
           LogicalValues(tuples=[[{ 0 }]])
-SQL: CREATE VIEW OrderCount AS  SELECT id, COUNT(1) as number, SUM(i.quantity) as volume
+SQL: CREATE VIEW `OrderCount` AS  SELECT id, COUNT(1) as number, SUM(i.quantity) as volume
               FROM Orders o CROSS JOIN UNNEST(o.items) i
               GROUP BY id;
 

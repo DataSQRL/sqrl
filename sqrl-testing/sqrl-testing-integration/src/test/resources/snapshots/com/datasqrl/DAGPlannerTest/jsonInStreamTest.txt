@@ -64,7 +64,7 @@ Schema:
 Plan:
 LogicalProject(customerid=[$0], obj=[jsonb_object(CONCAT('application#', $2), $0)])
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW ObjComplex AS  SELECT customerid, jsonb_object(concat('application#',CAST(name AS VARCHAR)), customerid) AS obj FROM Customer;
+SQL: CREATE VIEW `ObjComplex` AS  SELECT customerid, jsonb_object(concat('application#',CAST(name AS VARCHAR)), customerid) AS obj FROM Customer;
 
 === jsonArrayAggTable
 ID:     default_catalog.default_database.jsonArrayAggTable
@@ -80,7 +80,7 @@ Plan:
 LogicalAggregate(group=[{0}], agg=[jsonb_array_agg($0)])
   LogicalProject(name=[$2])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW jsonArrayAggTable AS  SELECT name, jsonb_array_agg(name) AS agg FROM Customer GROUP BY name;
+SQL: CREATE VIEW `jsonArrayAggTable` AS  SELECT name, jsonb_array_agg(name) AS agg FROM Customer GROUP BY name;
 
 === jsonArrayTable
 ID:     default_catalog.default_database.jsonArrayTable
@@ -97,7 +97,7 @@ Schema:
 Plan:
 LogicalProject(customerid=[$0], obj=[jsonb_array($0)])
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW jsonArrayTable AS  SELECT customerid, jsonb_array(customerid) AS obj FROM Customer;
+SQL: CREATE VIEW `jsonArrayTable` AS  SELECT customerid, jsonb_array(customerid) AS obj FROM Customer;
 
 === jsonConcatTable
 ID:     default_catalog.default_database.jsonConcatTable
@@ -114,7 +114,7 @@ Schema:
 Plan:
 LogicalProject(customerid=[$0], obj=[jsonb_concat(to_jsonb('{"a": true}'), to_jsonb('{"a": false}'))])
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW jsonConcatTable AS  SELECT customerid, jsonb_concat(to_jsonb('{"a": true}'), to_jsonb('{"a": false}')) AS obj FROM Customer;
+SQL: CREATE VIEW `jsonConcatTable` AS  SELECT customerid, jsonb_concat(to_jsonb('{"a": true}'), to_jsonb('{"a": false}')) AS obj FROM Customer;
 
 === jsonExistsTable
 ID:     default_catalog.default_database.jsonExistsTable
@@ -131,7 +131,7 @@ Schema:
 Plan:
 LogicalProject(customerid=[$0], obj=[jsonb_exists(to_jsonb('{"a": true}'), '$.a')])
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW jsonExistsTable AS  SELECT customerid, jsonb_exists(to_jsonb('{"a": true}'), '$.a') AS obj FROM Customer;
+SQL: CREATE VIEW `jsonExistsTable` AS  SELECT customerid, jsonb_exists(to_jsonb('{"a": true}'), '$.a') AS obj FROM Customer;
 
 === jsonExtractTable
 ID:     default_catalog.default_database.jsonExtractTable
@@ -148,7 +148,7 @@ Schema:
 Plan:
 LogicalProject(customerid=[$0], obj=[jsonb_extract(to_jsonb('{"a": "hello"}'), '$.a':VARCHAR(2147483647) CHARACTER SET "UTF-16LE", 'default':VARCHAR(2147483647) CHARACTER SET "UTF-16LE")])
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW jsonExtractTable AS  SELECT customerid, jsonb_extract(to_jsonb('{"a": "hello"}'), CAST('$.a' AS varchar), CAST('default' AS varchar)) AS obj FROM Customer;
+SQL: CREATE VIEW `jsonExtractTable` AS  SELECT customerid, jsonb_extract(to_jsonb('{"a": "hello"}'), CAST('$.a' AS varchar), CAST('default' AS varchar)) AS obj FROM Customer;
 
 === jsonObjectAggTable
 ID:     default_catalog.default_database.jsonObjectAggTable
@@ -164,7 +164,7 @@ Plan:
 LogicalAggregate(group=[{0}], agg=[jsonb_object_agg($1, $0)])
   LogicalProject(name=[$2], $f1=['key'])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW jsonObjectAggTable AS  SELECT name, jsonb_object_agg('key', name) AS agg FROM Customer GROUP BY name;
+SQL: CREATE VIEW `jsonObjectAggTable` AS  SELECT name, jsonb_object_agg('key', name) AS agg FROM Customer GROUP BY name;
 
 === jsonQueryTable
 ID:     default_catalog.default_database.jsonQueryTable
@@ -181,7 +181,7 @@ Schema:
 Plan:
 LogicalProject(customerid=[$0], obj=[jsonb_query(to_jsonb('{"a": {"b": 1}}'), '$.a')])
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW jsonQueryTable AS  SELECT customerid, jsonb_query(to_jsonb('{"a": {"b": 1}}'), '$.a') AS obj FROM Customer;
+SQL: CREATE VIEW `jsonQueryTable` AS  SELECT customerid, jsonb_query(to_jsonb('{"a": {"b": 1}}'), '$.a') AS obj FROM Customer;
 
 === jsonToStringTable
 ID:     default_catalog.default_database.jsonToStringTable
@@ -198,7 +198,7 @@ Schema:
 Plan:
 LogicalProject(customerid=[$0], obj=[jsonb_to_string(to_jsonb('{"a": 1}'))])
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW jsonToStringTable AS  SELECT customerid, jsonb_to_string(to_jsonb('{"a": 1}')) AS obj FROM Customer;
+SQL: CREATE VIEW `jsonToStringTable` AS  SELECT customerid, jsonb_to_string(to_jsonb('{"a": 1}')) AS obj FROM Customer;
 
 === toJsonTable
 ID:     default_catalog.default_database.toJsonTable
@@ -215,7 +215,7 @@ Schema:
 Plan:
 LogicalProject(customerid=[$0], obj=[to_jsonb('{"a": 1}')])
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW toJsonTable AS  SELECT customerid, to_jsonb('{"a": 1}') AS obj FROM Customer;
+SQL: CREATE VIEW `toJsonTable` AS  SELECT customerid, to_jsonb('{"a": 1}') AS obj FROM Customer;
 
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `CustomerStream__schema` (

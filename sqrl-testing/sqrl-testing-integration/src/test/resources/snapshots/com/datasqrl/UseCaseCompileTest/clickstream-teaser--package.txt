@@ -36,7 +36,7 @@ Plan:
 LogicalAggregate(group=[{0, 1}], frequency=[COUNT()])
   LogicalProject(url=[$0], rec=[$1])
     LogicalTableScan(table=[[default_catalog, default_database, VisitAfter]])
-SQL: CREATE VIEW Recommendation AS  SELECT beforeURL AS url, afterURL AS rec,
+SQL: CREATE VIEW `Recommendation` AS  SELECT beforeURL AS url, afterURL AS rec,
     count(1) AS frequency FROM VisitAfter
     GROUP BY beforeURL, afterURL ORDER BY url ASC, frequency DESC;
 
@@ -56,7 +56,7 @@ Plan:
 LogicalAggregate(group=[{0}], total=[COUNT()])
   LogicalProject(url=[$0])
     LogicalTableScan(table=[[default_catalog, default_database, Click]])
-SQL: CREATE VIEW Trending AS  SELECT url, count(1) AS total
+SQL: CREATE VIEW `Trending` AS  SELECT url, count(1) AS total
     FROM Click
     GROUP BY url ORDER BY total DESC, url ASC;
 
@@ -76,7 +76,7 @@ LogicalProject(beforeURL=[$0], afterURL=[$3], timestamp=[$4])
   LogicalJoin(condition=[AND(=($2, $5), <($1, $4), >=($1, -($4, *(10, 60000:INTERVAL MINUTE))))], joinType=[inner])
     LogicalTableScan(table=[[default_catalog, default_database, Click]])
     LogicalTableScan(table=[[default_catalog, default_database, Click]])
-SQL: CREATE VIEW VisitAfter AS  SELECT b.url AS beforeURL, a.url AS afterURL,
+SQL: CREATE VIEW `VisitAfter` AS  SELECT b.url AS beforeURL, a.url AS afterURL,
     a.`timestamp` AS `timestamp`
     FROM Click b JOIN Click a ON b.userid=a.userid AND
         b.`timestamp` < a.`timestamp` AND

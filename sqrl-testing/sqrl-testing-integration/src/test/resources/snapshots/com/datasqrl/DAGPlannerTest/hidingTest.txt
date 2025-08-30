@@ -18,7 +18,7 @@ Plan:
 LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
   LogicalFilter(condition=[>($0, 0)])
     LogicalTableScan(table=[[default_catalog, default_database, _Customer]])
-SQL: CREATE VIEW AnotherCustomer AS  SELECT * FROM _Customer WHERE customerid > 0;
+SQL: CREATE VIEW `AnotherCustomer` AS  SELECT * FROM _Customer WHERE customerid > 0;
 
 === Customer
 ID:     default_catalog.default_database.Customer
@@ -58,7 +58,7 @@ Schema:
 Plan:
 LogicalProject(customerid=[$0], lastUpdated=[$3])
   LogicalTableScan(table=[[default_catalog, default_database, _SomeCustomer]])
-SQL: CREATE VIEW FinalCustomer AS  SELECT customerid, lastUpdated FROM _SomeCustomer;
+SQL: CREATE VIEW `FinalCustomer` AS  SELECT customerid, lastUpdated FROM _SomeCustomer;
 
 === _Customer
 ID:     default_catalog.default_database._Customer
@@ -102,7 +102,7 @@ Plan:
 LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
   LogicalFilter(condition=[>($0, 1)])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW _SomeCustomer AS  SELECT * FROM Customer WHERE customerid > 1;
+SQL: CREATE VIEW `_SomeCustomer` AS  SELECT * FROM Customer WHERE customerid > 1;
 
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `Customer__schema` (

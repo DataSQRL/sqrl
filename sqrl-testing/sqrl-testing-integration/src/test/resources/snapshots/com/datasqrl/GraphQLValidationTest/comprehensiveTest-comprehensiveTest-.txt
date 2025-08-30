@@ -16,7 +16,7 @@ Plan:
 LogicalProject(customerid=[$0], email=[$1], lastUpdated=[$3])
   LogicalFilter(condition=[>($0, 100)])
     LogicalTableScan(table=[[default_catalog, default_database, _Customer]])
-SQL: CREATE VIEW AnotherCustomer AS  SELECT customerid, email, lastUpdated FROM _Customer WHERE customerid > 100;
+SQL: CREATE VIEW `AnotherCustomer` AS  SELECT customerid, email, lastUpdated FROM _Customer WHERE customerid > 100;
 
 === Customer
 ID:     default_catalog.default_database.Customer
@@ -54,7 +54,7 @@ Plan:
 LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
   LogicalFilter(condition=[>($0, ?0)])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW CustomerById AS  SELECT * FROM Customer WHERE customerid > ?     ;
+SQL: CREATE VIEW `CustomerById` AS  SELECT * FROM Customer WHERE customerid > ?     ;
 
 === CustomerByMultipleTime
 ID:     default_catalog.default_database.CustomerByMultipleTime
@@ -159,7 +159,7 @@ Plan:
 LogicalProject(customerid=[$0], email=[$1], lastUpdated=[$2])
   LogicalFilter(condition=[=($0, ?0)])
     LogicalTableScan(table=[[default_catalog, default_database, AnotherCustomer]])
-SQL: CREATE VIEW CustomerQuery AS  SELECT * FROM AnotherCustomer WHERE customerid = ?  ;
+SQL: CREATE VIEW `CustomerQuery` AS  SELECT * FROM AnotherCustomer WHERE customerid = ?  ;
 
 === CustomerSubscription
 ID:     default_catalog.default_database.CustomerSubscription
@@ -179,7 +179,7 @@ Schema:
 Plan:
 LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW CustomerSubscription AS  SELECT * FROM Customer;
+SQL: CREATE VIEW `CustomerSubscription` AS  SELECT * FROM Customer;
 
 === CustomerSubscriptionById
 ID:     default_catalog.default_database.CustomerSubscriptionById
@@ -194,7 +194,7 @@ Plan:
 LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
   LogicalFilter(condition=[=($0, ?0)])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW CustomerSubscriptionById AS  SELECT * FROM Customer WHERE customerid = ?     ;
+SQL: CREATE VIEW `CustomerSubscriptionById` AS  SELECT * FROM Customer WHERE customerid = ?     ;
 
 === CustomerTimeWindow
 ID:     default_catalog.default_database.CustomerTimeWindow
@@ -215,7 +215,7 @@ LogicalAggregate(group=[{0, 1}], unique_email_count=[COUNT(DISTINCT $2)])
     LogicalTableFunctionScan(invocation=[TUMBLE(DESCRIPTOR($4), 60000:INTERVAL MINUTE)], rowType=[RecordType(BIGINT customerid, VARCHAR(2147483647) email, VARCHAR(2147483647) name, BIGINT lastUpdated, TIMESTAMP_LTZ(3) *ROWTIME* timestamp, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end, TIMESTAMP_LTZ(3) *ROWTIME* window_time)])
       LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
         LogicalTableScan(table=[[default_catalog, default_database, SelectCustomers]])
-SQL: CREATE VIEW CustomerTimeWindow AS  SELECT
+SQL: CREATE VIEW `CustomerTimeWindow` AS  SELECT
                           window_start, window_end,
                           COUNT(DISTINCT email) AS unique_email_count
                       FROM TABLE(
@@ -240,7 +240,7 @@ Schema:
 Plan:
 LogicalProject(window_start=[$0], window_end=[$1], unique_email_count=[$2])
   LogicalTableScan(table=[[default_catalog, default_database, CustomerTimeWindow]])
-SQL: CREATE VIEW CustomerTimeWindowTest AS  SELECT * FROM CustomerTimeWindow ORDER BY window_end DESC;
+SQL: CREATE VIEW `CustomerTimeWindowTest` AS  SELECT * FROM CustomerTimeWindow ORDER BY window_end DESC;
 
 === ExplicitDistinct
 ID:     default_catalog.default_database.ExplicitDistinct
@@ -260,7 +260,7 @@ LogicalProject(customerid=[$0], timestamp=[$4], name=[$2])
   LogicalFilter(condition=[=($5, 1)])
     LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $4 DESC NULLS LAST)])
       LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW ExplicitDistinct AS  SELECT customerid, `timestamp`, name FROM (SELECT *, (ROW_NUMBER() OVER (PARTITION BY customerid ORDER BY `timestamp` DESC)) AS _rownum FROM Customer) WHERE (_rownum = 1);
+SQL: CREATE VIEW `ExplicitDistinct` AS  SELECT customerid, `timestamp`, name FROM (SELECT *, (ROW_NUMBER() OVER (PARTITION BY customerid ORDER BY `timestamp` DESC)) AS _rownum FROM Customer) WHERE (_rownum = 1);
 
 === ExternalOrders
 ID:     default_catalog.default_database.ExternalOrders
@@ -302,7 +302,7 @@ LogicalProject(customerid=[$0], timestamp=[$4], namee=[$2])
   LogicalFilter(condition=[=($5, 1)])
     LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $4 DESC NULLS LAST)])
       LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW InvalidDistinct AS  SELECT customerid, `timestamp`, name AS namee FROM (SELECT *, (ROW_NUMBER() OVER (PARTITION BY customerid ORDER BY `timestamp` DESC)) AS _rownum FROM Customer) WHERE (_rownum = 1);
+SQL: CREATE VIEW `InvalidDistinct` AS  SELECT customerid, `timestamp`, name AS namee FROM (SELECT *, (ROW_NUMBER() OVER (PARTITION BY customerid ORDER BY `timestamp` DESC)) AS _rownum FROM Customer) WHERE (_rownum = 1);
 
 === MissedTemporalJoin
 ID:     default_catalog.default_database.MissedTemporalJoin
@@ -324,7 +324,7 @@ LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3], customerid0=[$
   LogicalJoin(condition=[=($1, $4)], joinType=[inner])
     LogicalTableScan(table=[[default_catalog, default_database, ExternalOrders]])
     LogicalTableScan(table=[[default_catalog, default_database, ExplicitDistinct]])
-SQL: CREATE VIEW MissedTemporalJoin AS  SELECT * FROM ExternalOrders o JOIN ExplicitDistinct c ON o.customerid = c.customerid;
+SQL: CREATE VIEW `MissedTemporalJoin` AS  SELECT * FROM ExternalOrders o JOIN ExplicitDistinct c ON o.customerid = c.customerid;
 
 === Orders
 ID:     default_catalog.default_database.Orders
@@ -362,7 +362,7 @@ Plan:
 LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
   LogicalFilter(condition=[>($0, 0)])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW SelectCustomers AS  SELECT * From Customer WHERE customerid > 0 ORDER BY `timestamp` DESC LIMIT 10;
+SQL: CREATE VIEW `SelectCustomers` AS  SELECT * From Customer WHERE customerid > 0 ORDER BY `timestamp` DESC LIMIT 10;
 
 === TableFunctionCallsTblFct
 ID:     default_catalog.default_database.TableFunctionCallsTblFct
@@ -378,7 +378,7 @@ Plan:
 LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
   LogicalFilter(condition=[>($0, ?0)])
     LogicalTableFunctionScan(invocation=[CustomerById(?1)], rowType=[RecordType(BIGINT customerid, VARCHAR(2147483647) email, VARCHAR(2147483647) name, BIGINT lastUpdated, TIMESTAMP_LTZ(3) *ROWTIME* timestamp)], elementType=[class [Ljava.lang.Object;])
-SQL: CREATE VIEW TableFunctionCallsTblFct AS  SELECT * FROM Table(CustomerById(?    )) WHERE customerid > ?    ;
+SQL: CREATE VIEW `TableFunctionCallsTblFct` AS  SELECT * FROM Table(CustomerById(?    )) WHERE customerid > ?    ;
 
 === TemporalJoin
 ID:     default_catalog.default_database.TemporalJoin
@@ -404,7 +404,7 @@ LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3], customerid0=[$
     LogicalFilter(condition=[=($cor1.customerid, $0)])
       LogicalSnapshot(period=[$cor1.time])
         LogicalTableScan(table=[[default_catalog, default_database, ExplicitDistinct]])
-SQL: CREATE VIEW TemporalJoin AS  SELECT * FROM ExternalOrders o JOIN ExplicitDistinct FOR SYSTEM_TIME AS OF `time` c ON o.customerid = c.customerid;
+SQL: CREATE VIEW `TemporalJoin` AS  SELECT * FROM ExternalOrders o JOIN ExplicitDistinct FOR SYSTEM_TIME AS OF `time` c ON o.customerid = c.customerid;
 
 === UnnestOrders
 ID:     default_catalog.default_database.UnnestOrders
@@ -431,7 +431,7 @@ LogicalProject(id=[$0], customerid=[$1], time=[$2], productid=[$3], quantity=[$4
       Uncollect
         LogicalProject(entries=[$cor5.entries])
           LogicalValues(tuples=[[{ 0 }]])
-SQL: ALTER VIEW UnnestOrders AS SELECT `id`, `customerid`, `time`, `productid`, `quantity`, `discount`,  id + productid AS newId FROM 
+SQL: ALTER VIEW `UnnestOrders` AS SELECT `id`, `customerid`, `time`, `productid`, `quantity`, `discount`,  id + productid AS `newId` FROM 
 (  SELECT o.id, o.customerid, o.`time`, e.productid, e.quantity, e.discount FROM ExternalOrders o CROSS JOIN UNNEST(entries) e );
 === _Customer
 ID:     default_catalog.default_database._Customer

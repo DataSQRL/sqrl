@@ -12,7 +12,7 @@ Plan:
 LogicalAggregate(group=[{0}])
   LogicalProject(name=[$0])
     LogicalTableScan(table=[[default_catalog, default_database, Submission]])
-SQL: CREATE VIEW Package AS  SELECT DISTINCT name FROM Submission;
+SQL: CREATE VIEW `Package` AS  SELECT DISTINCT name FROM Submission;
 
 === Submission
 ID:     default_catalog.default_database.Submission
@@ -45,7 +45,7 @@ Schema:
 Plan:
 LogicalProject(name=[$0], version=[$1], variant=[$2], latest=[$3], type=[$4], license=[$5], repository=[$6], homepage=[$7], documentation=[$8], readme=[$9], description=[$10], keywords=[$11], uniqueId=[$12], file=[$13], hash=[$14], authorId=[$15], submissionTime=[$16], event_time=[$17], variant0=[COALESCE($2, 'default')], repoURL=[CONCAT('https://repository.datasqrl.com/', $13)])
   LogicalTableScan(table=[[default_catalog, default_database, _SubmissionRaw]])
-SQL: CREATE VIEW Submission AS  SELECT *,  COALESCE(variant, 'default') AS variant0,
+SQL: CREATE VIEW `Submission` AS  SELECT *,  COALESCE(variant, 'default') AS variant0,
                      concat('https://repository.datasqrl.com/',file) AS repoURL
               FROM _SubmissionRaw;
 
@@ -68,7 +68,7 @@ LogicalProject(pkgName=[$0], topicName=[$20], submissionTime=[$16])
       Uncollect
         LogicalProject(keywords=[$cor1.keywords])
           LogicalValues(tuples=[[{ 0 }]])
-SQL: CREATE VIEW SubmissionTopics AS  SELECT s.name AS pkgName, k.name AS topicName, s.submissionTime
+SQL: CREATE VIEW `SubmissionTopics` AS  SELECT s.name AS pkgName, k.name AS topicName, s.submissionTime
                     FROM Submission s CROSS JOIN UNNEST(keywords) k(name);
 
 === TopicPackages
@@ -89,7 +89,7 @@ Plan:
 LogicalAggregate(group=[{0, 1}], numSubmissions=[COUNT()], lastSubmission=[MAX($2)])
   LogicalProject(pkgName=[$0], topicName=[$1], submissionTime=[$2])
     LogicalTableScan(table=[[default_catalog, default_database, SubmissionTopics]])
-SQL: CREATE VIEW TopicPackages AS  SELECT pkgName, topicName, COUNT(1) AS numSubmissions, MAX(submissionTime) AS lastSubmission
+SQL: CREATE VIEW `TopicPackages` AS  SELECT pkgName, topicName, COUNT(1) AS numSubmissions, MAX(submissionTime) AS lastSubmission
                  FROM SubmissionTopics
                  GROUP BY pkgName, topicName ORDER BY numSubmissions DESC, pkgName ASC;
 
@@ -109,7 +109,7 @@ Plan:
 LogicalAggregate(group=[{0}], numPackages=[COUNT(DISTINCT $1)])
   LogicalProject(topicName=[$1], pkgName=[$0])
     LogicalTableScan(table=[[default_catalog, default_database, SubmissionTopics]])
-SQL: CREATE VIEW TopicSearch AS  SELECT topicName, COUNT(DISTINCT pkgName) AS numPackages
+SQL: CREATE VIEW `TopicSearch` AS  SELECT topicName, COUNT(DISTINCT pkgName) AS numPackages
                FROM SubmissionTopics
                GROUP BY topicName ORDER BY numPackages DESC, topicName ASC;
 

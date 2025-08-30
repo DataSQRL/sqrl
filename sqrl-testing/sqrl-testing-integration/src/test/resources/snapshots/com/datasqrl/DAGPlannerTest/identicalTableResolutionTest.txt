@@ -34,7 +34,7 @@ Plan:
 LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3])
   LogicalFilter(condition=[=($0, ?0)])
     LogicalTableScan(table=[[default_catalog, default_database, SelectOrders1]])
-SQL: CREATE VIEW OrdersById1 AS  SELECT * FROM SelectOrders1 WHERE id = ?  ;
+SQL: CREATE VIEW `OrdersById1` AS  SELECT * FROM SelectOrders1 WHERE id = ?  ;
 
 === OrdersById2
 ID:     default_catalog.default_database.OrdersById2
@@ -49,7 +49,7 @@ Plan:
 LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3])
   LogicalFilter(condition=[=($0, ?0)])
     LogicalTableScan(table=[[default_catalog, default_database, SelectOrders2]])
-SQL: CREATE VIEW OrdersById2 AS  SELECT * FROM SelectOrders2 WHERE id = ?  ;
+SQL: CREATE VIEW `OrdersById2` AS  SELECT * FROM SelectOrders2 WHERE id = ?  ;
 
 === SelectOrders1
 ID:     default_catalog.default_database.SelectOrders1
@@ -68,7 +68,7 @@ Schema:
 Plan:
 LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3])
   LogicalTableScan(table=[[default_catalog, default_database, Orders]])
-SQL: CREATE VIEW SelectOrders1 AS  SELECT * FROM Orders;
+SQL: CREATE VIEW `SelectOrders1` AS  SELECT * FROM Orders;
 
 === SelectOrders2
 ID:     default_catalog.default_database.SelectOrders2
@@ -87,7 +87,7 @@ Schema:
 Plan:
 LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3])
   LogicalTableScan(table=[[default_catalog, default_database, Orders]])
-SQL: CREATE VIEW SelectOrders2 AS  SELECT * FROM Orders;
+SQL: CREATE VIEW `SelectOrders2` AS  SELECT * FROM Orders;
 
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `Orders__schema` (

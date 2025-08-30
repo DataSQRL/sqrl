@@ -13,7 +13,7 @@ Plan:
 LogicalAggregate(group=[{0}], num=[COUNT()])
   LogicalProject(customerid=[$1])
     LogicalTableScan(table=[[default_catalog, default_database, Orders]])
-SQL: CREATE VIEW CustomerAgg1 AS  SELECT customerid, COUNT(id) as num FROM Orders GROUP BY customerid;
+SQL: CREATE VIEW `CustomerAgg1` AS  SELECT customerid, COUNT(id) as num FROM Orders GROUP BY customerid;
 
 === CustomerAgg2
 ID:     default_catalog.default_database.CustomerAgg2
@@ -30,7 +30,7 @@ LogicalProject(customerid=[$0], num=[+($1, 1)])
   LogicalAggregate(group=[{0}], agg#0=[COUNT()])
     LogicalProject(customerid=[$1])
       LogicalTableScan(table=[[default_catalog, default_database, Orders]])
-SQL: CREATE VIEW CustomerAgg2 AS  SELECT customerid, COUNT(id) + 1 as num FROM Orders GROUP BY customerid;
+SQL: CREATE VIEW `CustomerAgg2` AS  SELECT customerid, COUNT(id) + 1 as num FROM Orders GROUP BY customerid;
 
 === CustomerAgg3
 ID:     default_catalog.default_database.CustomerAgg3
@@ -47,7 +47,7 @@ LogicalProject(customerid=[$0], num=[+($1, 2)])
   LogicalAggregate(group=[{0}], agg#0=[COUNT()])
     LogicalProject(customerid=[$1])
       LogicalTableScan(table=[[default_catalog, default_database, Orders]])
-SQL: CREATE VIEW CustomerAgg3 AS  SELECT customerid, COUNT(id) + 2 as num FROM Orders GROUP BY customerid;
+SQL: CREATE VIEW `CustomerAgg3` AS  SELECT customerid, COUNT(id) + 2 as num FROM Orders GROUP BY customerid;
 
 === Orders
 ID:     default_catalog.default_database.Orders

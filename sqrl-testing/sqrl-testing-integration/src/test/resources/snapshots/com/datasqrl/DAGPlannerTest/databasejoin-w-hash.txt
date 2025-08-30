@@ -15,7 +15,7 @@ LogicalProject(id1=[$0], id2=[$6], multi=[*($4, $10)])
   LogicalJoin(condition=[=($1, $7)], joinType=[inner])
     LogicalTableScan(table=[[default_catalog, default_database, _OrderEntries]])
     LogicalTableScan(table=[[default_catalog, default_database, _OrderEntries]])
-SQL: CREATE VIEW OrderEntryJoin AS  SELECT o1.id AS id1, o2.id AS id2, o1.quantity * o2.quantity AS multi
+SQL: CREATE VIEW `OrderEntryJoin` AS  SELECT o1.id AS id1, o2.id AS id2, o1.quantity * o2.quantity AS multi
                   FROM _OrderEntries o1 JOIN _OrderEntries o2 ON o1.customerid = o2.customerid;
 
 === _OrderEntries
@@ -41,7 +41,7 @@ LogicalProject(id=[$0], customerid=[$1], time=[$2], productid=[$4], quantity=[$5
     Uncollect
       LogicalProject(entries=[$cor1.entries])
         LogicalValues(tuples=[[{ 0 }]])
-SQL: CREATE VIEW _OrderEntries AS  SELECT o.id, o.customerid, o.`time`, e.productid, e.quantity, e.discount FROM _Orders o CROSS JOIN UNNEST(entries) e;
+SQL: CREATE VIEW `_OrderEntries` AS  SELECT o.id, o.customerid, o.`time`, e.productid, e.quantity, e.discount FROM _Orders o CROSS JOIN UNNEST(entries) e;
 
 === _Orders
 ID:     default_catalog.default_database._Orders
