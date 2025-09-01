@@ -1,9 +1,11 @@
 FROM eclipse-temurin:17-jdk-noble
 
 ARG POSTGRES_VERSION=17
+ARG JBANG_VERSION=0.129.0
 
 ENV TZ=America/Los_Angeles
 ENV POSTGRES_VERSION=${POSTGRES_VERSION}
+ENV JBANG_DOWNLOAD_VERSION=${JBANG_VERSION}
 ENV JBANG_DIR=/opt/jbang
 
 # Install dependencies, PostgreSQL, Redpanda, and JBang
