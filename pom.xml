@@ -150,7 +150,7 @@
     <iceberg.version>1.9.2</iceberg.version>
     <!-- Do not touch Hadoop version unless it has been updated on the Flink side.
          Otherwise, it might break the Flink filesystem integration. -->
-    <hadoop.version>3.3.4</hadoop.version>
+    <hadoop.version>3.4.2</hadoop.version>
     <jacoco.version>0.8.13</jacoco.version>
     <jjwt.version>0.13.0</jjwt.version>
     <assertj.version>3.27.4</assertj.version>
