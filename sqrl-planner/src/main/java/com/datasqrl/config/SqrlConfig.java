@@ -131,6 +131,12 @@ public class SqrlConfig {
     return prefix.isEmpty() ? key : prefix + "." + key;
   }
 
+  public String getSelfKey() {
+    var lastDot = prefix.lastIndexOf('.');
+
+    return lastDot < 0 ? prefix : prefix.substring(lastDot + 1);
+  }
+
   public int getVersion() {
     errors.checkFatal(containsKey(VERSION_KEY), "Configuration file does not have a `version`.");
     int version = asInt(VERSION_KEY).get();

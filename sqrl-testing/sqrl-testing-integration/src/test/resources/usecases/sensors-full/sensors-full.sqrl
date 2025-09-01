@@ -1,5 +1,5 @@
-IMPORT sensor-testdata.SensorReading; -- Import sensor data
-IMPORT sensor-testdata.Sensors AS SensorUpdates;
+IMPORT sensor-{{variant}}.SensorReading; -- Import sensor data
+IMPORT sensor-{{variant}}.Sensors AS SensorUpdates;
 
 /* Aggregate sensor readings to second */
 /*+primary_key(sensorid, timeSec) */

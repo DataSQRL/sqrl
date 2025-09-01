@@ -147,32 +147,35 @@
     <projectreactor.version>3.7.9</projectreactor.version>
     <avro.version>1.12.0</avro.version>
     <freemarker.version>2.3.34</freemarker.version>
+    <mustache.version>0.9.14</mustache.version>
     <jsonschema.version>1.5.8</jsonschema.version>
     <iceberg.version>1.9.2</iceberg.version>
     <!-- Do not touch Hadoop version unless it has been updated on the Flink side.
          Otherwise, it might break the Flink filesystem integration. -->
     <hadoop.version>3.3.4</hadoop.version>
     <jacoco.version>0.8.13</jacoco.version>
-    <jjwt.version>0.12.7</jjwt.version>
+    <jjwt.version>0.13.0</jjwt.version>
     <assertj.version>3.27.4</assertj.version>
     <awaitility.version>4.3.0</awaitility.version>
     <jakarta.annotation.version>3.0.0</jakarta.annotation.version>
     <graphql-micrometer.version>1.0.1</graphql-micrometer.version>
     <calcite-core.version>1.40.0</calcite-core.version>
-    <duckdb.version>1.3.2.0</duckdb.version>
-    <snowflake-jdbc.version>3.26.0</snowflake-jdbc.version>
+    <duckdb.version>1.3.2.1</duckdb.version>
+    <snowflake-jdbc.version>3.26.1</snowflake-jdbc.version>
     <reflections.version>0.10.2</reflections.version>
-    <swagger-core.version>2.2.35</swagger-core.version>
+    <swagger-core.version>2.2.36</swagger-core.version>
     <commons-csv.version>1.9.0</commons-csv.version>
     <guice.version>7.0.0</guice.version>
     <guice-multibindings.version>4.2.3</guice-multibindings.version>
     <flink-connector-postgres-cdc.version>3.4.0</flink-connector-postgres-cdc.version>
-    <zookeeper.version>3.9.3</zookeeper.version>
+    <zookeeper.version>3.9.4</zookeeper.version>
     <snakeyaml.version>2.4</snakeyaml.version>
-    <aws-sdk-bom.version>2.32.24</aws-sdk-bom.version>
+    <aws-sdk-bom.version>2.33.0</aws-sdk-bom.version>
     <aws-java-sdk.version>1.12.784</aws-java-sdk.version>
     <openai-gpt3-java.version>0.18.2</openai-gpt3-java.version>
     <flink-client.version>1.1.4</flink-client.version>
+    <mcp-sdk.version>0.11.3</mcp-sdk.version>
+    <feign.version>13.5</feign.version>
 
     <!-- Plugin versions -->
     <maven-javadoc-plugin.version>3.11.3</maven-javadoc-plugin.version>
@@ -602,6 +605,12 @@
         <groupId>org.freemarker</groupId>
         <artifactId>freemarker</artifactId>
         <version>${freemarker.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.github.spullara.mustache.java</groupId>
+        <artifactId>compiler</artifactId>
+        <version>${mustache.version}</version>
       </dependency>
 
       <!-- testing -->
@@ -1197,6 +1206,10 @@
           <name>m2e.version</name>
         </property>
       </activation>
+
+      <properties>
+        <argLine></argLine>
+      </properties>
 
       <build>
         <directory>${project.basedir}/m2e-target</directory>

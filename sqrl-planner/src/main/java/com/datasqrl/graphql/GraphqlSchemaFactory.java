@@ -76,7 +76,7 @@ public class GraphqlSchemaFactory {
     this.addApiDirective = !config.getApiConfig().isGraphQLProtocolOnly();
   }
 
-  public Optional<GraphQLSchema> generate(ServerPhysicalPlan serverPlan) {
+  public GraphQLSchema generate(ServerPhysicalPlan serverPlan) {
     // configure the schema builder
     var graphQLSchemaBuilder = GraphQLSchema.newSchema();
     if (extendedScalarTypes) { // use the plural parameter name in place of only bigInteger to avoid
@@ -111,8 +111,11 @@ public class GraphqlSchemaFactory {
 
     graphQLSchemaBuilder.additionalTypes(new LinkedHashSet<>(objectTypes)); // the cleaned types
 
-    if (addApiDirective) addApiDirectiveTypes(graphQLSchemaBuilder);
-    return Optional.of(graphQLSchemaBuilder.build());
+    if (addApiDirective) {
+      addApiDirectiveTypes(graphQLSchemaBuilder);
+    }
+
+    return graphQLSchemaBuilder.build();
   }
 
   /**

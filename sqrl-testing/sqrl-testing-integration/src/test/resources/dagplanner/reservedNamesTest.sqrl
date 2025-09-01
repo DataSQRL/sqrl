@@ -1,0 +1,9 @@
+IMPORT ecommerceTs.Orders AS Order;
+
+Order.from := SELECT * FROM `Order` other WHERE this.customerid = other.customerid;
+
+Where := SELECT * FROM `Order` WHERE customerid > 0;
+
+Where.select := 'some value';
+
+

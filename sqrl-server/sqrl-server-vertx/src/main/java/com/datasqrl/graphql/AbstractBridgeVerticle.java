@@ -39,36 +39,27 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /** Abstract Verticle that maps requests to GraphQL queries */
+@RequiredArgsConstructor(access = AccessLevel.PROTECTED)
 @Slf4j
 public abstract class AbstractBridgeVerticle extends AbstractVerticle {
 
-  protected final Router router;
-  protected final ServerConfig config;
-  protected final RootGraphqlModel model;
-  protected final Optional<JWTAuth> jwtAuth;
-  protected final ObjectMapper objectMapper;
-  protected final GraphQLServerVerticle graphQLServerVerticle;
+  protected static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
   // Reusable JSON field names
   protected static final String JSON_ERROR = "error";
   protected static final String JSON_MESSAGE = "message";
 
-  public AbstractBridgeVerticle(
-      Router router,
-      ServerConfig config,
-      RootGraphqlModel model,
-      Optional<JWTAuth> jwtAuth,
-      GraphQLServerVerticle graphQLServerVerticle) {
-    this.router = router;
-    this.config = config;
-    this.model = model;
-    this.jwtAuth = jwtAuth;
-    this.objectMapper = new ObjectMapper();
-    this.graphQLServerVerticle = graphQLServerVerticle;
-  }
+  protected final Router router;
+  protected final ServerConfig config;
+  protected final String modelVersion;
+  protected final RootGraphqlModel model;
+  protected final Optional<JWTAuth> jwtAuth;
+  protected final GraphQLServerVerticle graphQLServerVerticle;
 
   protected void handleError(
       Throwable err, RoutingContext ctx, int statusCode, String errorMessage) {
@@ -114,9 +105,9 @@ public abstract class AbstractBridgeVerticle extends AbstractVerticle {
 
       // Convert the collected variables to a JsonNode
       if (variables == null || variables.isEmpty()) {
-        arguments = objectMapper.readTree("{}");
+        arguments = OBJECT_MAPPER.readTree("{}");
       } else {
-        arguments = objectMapper.valueToTree(variables);
+        arguments = OBJECT_MAPPER.valueToTree(variables);
       }
     } catch (JsonProcessingException e) {
       throw new ValidationException("Could not parse parameter JSON:" + e.getMessage());
@@ -133,7 +124,7 @@ public abstract class AbstractBridgeVerticle extends AbstractVerticle {
   }
 
   protected ObjectMapper getSchemaMapper() {
-    return objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+    return OBJECT_MAPPER.setSerializationInclusion(JsonInclude.Include.NON_NULL);
   }
 
   protected Future<ExecutionResult> executeGraphQLAsync(
@@ -147,6 +138,7 @@ public abstract class AbstractBridgeVerticle extends AbstractVerticle {
             .query(operation.getApiQuery().query())
             .operationName(operation.getApiQuery().queryName())
             .variables(variables)
+            .graphQLContext(builder -> builder.put(RoutingContext.class, ctx))
             .build();
 
     // Kick off async execution (GraphQL Java spawns its own executor)

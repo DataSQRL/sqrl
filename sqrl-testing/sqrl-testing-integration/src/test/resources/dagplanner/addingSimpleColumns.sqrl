@@ -1,6 +1,9 @@
 IMPORT ecommerceTs.Orders;
 FilteredOrders := SELECT * FROM Orders WHERE id>0;
 FilteredOrders.col2 := customerid * 2;
+FilteredOrders.customerid := 0; --overwrite existing colum
+FilteredOrders.timestamp := TIMESTAMPDIFF(SECOND, TO_TIMESTAMP_LTZ(0, 3), `time`); -- use reserved keyword as column name
+FilteredOrders.col2 := col2 * 4; --overwrite based on existing
 
 -- making sure identical columns can be selected and primary key is propagated and selected correctly
 OrderIds := SELECT id AS id1, id AS id2, `time` FROM Orders;

@@ -38,15 +38,17 @@ public class SubscriptionClient {
   private static final int MAX_RETRIES = 3;
   private static final long INITIAL_DELAY_MS = 100;
 
+  private final ObjectMapper objectMapper = new ObjectMapper();
+  private final Vertx vertx = Vertx.vertx();
+  private final CompletableFuture<Void> connectedFuture = new CompletableFuture<>();
+  private final List<String> messages = new ArrayList<>();
+
+  private final String version;
   private final String name;
   private final String query;
   private final Map<String, String> headers;
-  private final List<String> messages = new ArrayList<>();
-  private WebSocket webSocket;
-  private final Vertx vertx = Vertx.vertx();
 
-  private final ObjectMapper objectMapper = new ObjectMapper();
-  private CompletableFuture<Void> connectedFuture = new CompletableFuture<>();
+  private WebSocket webSocket;
 
   public CompletableFuture<Void> start() {
     attemptConnection(0);
@@ -79,16 +81,14 @@ public class SubscriptionClient {
   private void connectWebSocket(int attempt) {
     /* 1. Collect handshake headers */
     var headerMap = MultiMap.caseInsensitiveMultiMap();
-    if (headers != null) {
-      headers.forEach((k, v) -> headerMap.add(k, v));
-    }
+    headers.forEach(headerMap::add);
 
     /* 2. Describe the connection */
     var opts =
         new WebSocketConnectOptions()
             .setHost("localhost")
             .setPort(8888)
-            .setURI("/graphql")
+            .setURI("/%s/graphql".formatted(version))
             .addSubProtocol("graphql-transport-ws") // or "graphql-ws"
             .setHeaders(headerMap);
 

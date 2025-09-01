@@ -13,7 +13,7 @@ Plan:
 LogicalAggregate(group=[{0}], cnt=[COUNT()])
   LogicalProject(customerid=[$1])
     LogicalTableScan(table=[[default_catalog, default_database, Orders]])
-SQL: CREATE VIEW OrderAgg1 AS  SELECT customerid, COUNT(1) as cnt FROM Orders GROUP BY customerid;
+SQL: CREATE VIEW `OrderAgg1` AS  SELECT customerid, COUNT(1) as cnt FROM Orders GROUP BY customerid;
 
 === OrderAgg2
 ID:     default_catalog.default_database.OrderAgg2
@@ -30,7 +30,7 @@ Plan:
 LogicalAggregate(group=[{0}], timestamp=[MAX($1)], cnt=[COUNT()])
   LogicalProject(customerid=[$1], time=[$2])
     LogicalTableScan(table=[[default_catalog, default_database, Orders]])
-SQL: CREATE VIEW OrderAgg2 AS  SELECT customerid, MAX(`time`) as `timestamp`, COUNT(1) as cnt FROM Orders GROUP BY customerid;
+SQL: CREATE VIEW `OrderAgg2` AS  SELECT customerid, MAX(`time`) as `timestamp`, COUNT(1) as cnt FROM Orders GROUP BY customerid;
 
 === OrderAgg3
 ID:     default_catalog.default_database.OrderAgg3
@@ -46,7 +46,7 @@ Plan:
 LogicalAggregate(group=[{0}], cnt=[COUNT()])
   LogicalProject(customerid=[$1])
     LogicalTableScan(table=[[default_catalog, default_database, OrdersState]])
-SQL: CREATE VIEW OrderAgg3 AS  SELECT customerid, COUNT(1) as cnt FROM OrdersState GROUP BY customerid;
+SQL: CREATE VIEW `OrderAgg3` AS  SELECT customerid, COUNT(1) as cnt FROM OrdersState GROUP BY customerid;
 
 === OrderAgg4
 ID:     default_catalog.default_database.OrderAgg4
@@ -63,7 +63,7 @@ Plan:
 LogicalAggregate(group=[{0}], timestamp=[MAX($1)], cnt=[COUNT()])
   LogicalProject(customerid=[$1], time=[$2])
     LogicalTableScan(table=[[default_catalog, default_database, OrdersState]])
-SQL: CREATE VIEW OrderAgg4 AS  SELECT customerid, MAX(`time`) as `timestamp`, COUNT(1) as cnt FROM OrdersState GROUP BY customerid;
+SQL: CREATE VIEW `OrderAgg4` AS  SELECT customerid, MAX(`time`) as `timestamp`, COUNT(1) as cnt FROM OrdersState GROUP BY customerid;
 
 === Orders
 ID:     default_catalog.default_database.Orders
@@ -581,322 +581,324 @@ INSERT INTO `default_catalog`.`default_database`.`OrderAgg2_2`
 }
 >>>vertx.json
 {
-  "model" : {
-    "queries" : [
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "OrderAgg1",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "OrderAgg1",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"OrderAgg1_1\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"OrderAgg1_1\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "OrderAgg2",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"OrderAgg2_2\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "OrderAgg3",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"OrderAgg3_3\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "OrderAgg4",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"OrderAgg4_4\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Orders",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Orders_5\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "OrdersState",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"OrdersState_6\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
           }
         }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "OrderAgg2",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+      ],
+      "mutations" : [ ],
+      "subscriptions" : [ ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetOrderAgg1",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"OrderAgg2_2\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "OrderAgg3",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query OrderAgg1($limit: Int = 10, $offset: Int = 0) {\nOrderAgg1(limit: $limit, offset: $offset) {\ncustomerid\ncnt\n}\n\n}",
+            "queryName" : "OrderAgg1",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/OrderAgg1{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetOrderAgg2",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"OrderAgg3_3\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "OrderAgg4",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query OrderAgg2($limit: Int = 10, $offset: Int = 0) {\nOrderAgg2(limit: $limit, offset: $offset) {\ncustomerid\ntimestamp\ncnt\n}\n\n}",
+            "queryName" : "OrderAgg2",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/OrderAgg2{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetOrderAgg3",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"OrderAgg4_4\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "Orders",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query OrderAgg3($limit: Int = 10, $offset: Int = 0) {\nOrderAgg3(limit: $limit, offset: $offset) {\ncustomerid\ncnt\n}\n\n}",
+            "queryName" : "OrderAgg3",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/OrderAgg3{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetOrderAgg4",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Orders_5\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "OrdersState",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query OrderAgg4($limit: Int = 10, $offset: Int = 0) {\nOrderAgg4(limit: $limit, offset: $offset) {\ncustomerid\ntimestamp\ncnt\n}\n\n}",
+            "queryName" : "OrderAgg4",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/OrderAgg4{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetOrders",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"OrdersState_6\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query Orders($limit: Int = 10, $offset: Int = 0) {\nOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
+            "queryName" : "Orders",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Orders{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetOrdersState",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query OrdersState($limit: Int = 10, $offset: Int = 0) {\nOrdersState(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
+            "queryName" : "OrdersState",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/OrdersState{?offset,limit}"
         }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype OrderAgg1 {\n  customerid: Long!\n  cnt: Long!\n}\n\ntype OrderAgg2 {\n  customerid: Long!\n  timestamp: DateTime!\n  cnt: Long!\n}\n\ntype OrderAgg3 {\n  customerid: Long!\n  cnt: Long!\n}\n\ntype OrderAgg4 {\n  customerid: Long!\n  timestamp: DateTime!\n  cnt: Long!\n}\n\ntype Orders {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  entries: [Orders_entriesOutput]!\n}\n\ntype OrdersState {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  entries: [OrdersState_entriesOutput]!\n}\n\ntype OrdersState_entriesOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Orders_entriesOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Query {\n  OrderAgg1(limit: Int = 10, offset: Int = 0): [OrderAgg1!]\n  OrderAgg2(limit: Int = 10, offset: Int = 0): [OrderAgg2!]\n  OrderAgg3(limit: Int = 10, offset: Int = 0): [OrderAgg3!]\n  OrderAgg4(limit: Int = 10, offset: Int = 0): [OrderAgg4!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n  OrdersState(limit: Int = 10, offset: Int = 0): [OrdersState!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
-    ],
-    "mutations" : [ ],
-    "subscriptions" : [ ],
-    "operations" : [
-      {
-        "function" : {
-          "name" : "GetOrderAgg1",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query OrderAgg1($limit: Int = 10, $offset: Int = 0) {\nOrderAgg1(limit: $limit, offset: $offset) {\ncustomerid\ncnt\n}\n\n}",
-          "queryName" : "OrderAgg1",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/OrderAgg1{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetOrderAgg2",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query OrderAgg2($limit: Int = 10, $offset: Int = 0) {\nOrderAgg2(limit: $limit, offset: $offset) {\ncustomerid\ntimestamp\ncnt\n}\n\n}",
-          "queryName" : "OrderAgg2",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/OrderAgg2{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetOrderAgg3",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query OrderAgg3($limit: Int = 10, $offset: Int = 0) {\nOrderAgg3(limit: $limit, offset: $offset) {\ncustomerid\ncnt\n}\n\n}",
-          "queryName" : "OrderAgg3",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/OrderAgg3{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetOrderAgg4",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query OrderAgg4($limit: Int = 10, $offset: Int = 0) {\nOrderAgg4(limit: $limit, offset: $offset) {\ncustomerid\ntimestamp\ncnt\n}\n\n}",
-          "queryName" : "OrderAgg4",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/OrderAgg4{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetOrders",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query Orders($limit: Int = 10, $offset: Int = 0) {\nOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
-          "queryName" : "Orders",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/Orders{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetOrdersState",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query OrdersState($limit: Int = 10, $offset: Int = 0) {\nOrdersState(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
-          "queryName" : "OrdersState",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/OrdersState{?offset,limit}"
-      }
-    ],
-    "schema" : {
-      "type" : "string",
-      "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype OrderAgg1 {\n  customerid: Long!\n  cnt: Long!\n}\n\ntype OrderAgg2 {\n  customerid: Long!\n  timestamp: DateTime!\n  cnt: Long!\n}\n\ntype OrderAgg3 {\n  customerid: Long!\n  cnt: Long!\n}\n\ntype OrderAgg4 {\n  customerid: Long!\n  timestamp: DateTime!\n  cnt: Long!\n}\n\ntype Orders {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  entries: [Orders_entriesOutput]!\n}\n\ntype OrdersState {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  entries: [OrdersState_entriesOutput]!\n}\n\ntype OrdersState_entriesOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Orders_entriesOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Query {\n  OrderAgg1(limit: Int = 10, offset: Int = 0): [OrderAgg1!]\n  OrderAgg2(limit: Int = 10, offset: Int = 0): [OrderAgg2!]\n  OrderAgg3(limit: Int = 10, offset: Int = 0): [OrderAgg3!]\n  OrderAgg4(limit: Int = 10, offset: Int = 0): [OrderAgg4!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n  OrdersState(limit: Int = 10, offset: Int = 0): [OrdersState!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
     }
   }
 }

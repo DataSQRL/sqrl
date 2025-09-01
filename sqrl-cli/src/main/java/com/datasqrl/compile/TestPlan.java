@@ -36,6 +36,7 @@ public class TestPlan {
   @NoArgsConstructor
   @Getter
   public static class GraphqlQuery {
+    String version;
     String name;
     String query;
     Map<String, String> headers;

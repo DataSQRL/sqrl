@@ -478,6 +478,7 @@ workflows:
               ignore: /.*/
           requires:
             - download-maven-dependencies
+            - docker-build-base-image
             - docker-build-mcp-inspector
       - integration-tests:
           <<: *job-defaults

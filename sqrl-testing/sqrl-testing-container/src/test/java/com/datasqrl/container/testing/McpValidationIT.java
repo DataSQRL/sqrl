@@ -18,7 +18,11 @@ package com.datasqrl.container.testing;
 import static org.assertj.core.api.Assertions.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.modelcontextprotocol.client.McpClient;
+import io.modelcontextprotocol.client.transport.HttpClientStreamableHttpTransport;
+import io.modelcontextprotocol.spec.McpSchema;
 import java.time.Duration;
+import java.util.Map;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
@@ -72,7 +76,7 @@ class McpValidationIT extends SqrlContainerTestBase {
     serverContainer.start();
     log.info("HTTP server started on port {}", serverContainer.getMappedPort(HTTP_SERVER_PORT));
 
-    var mcpUrl = String.format("http://%s:8888/mcp", serverAlias);
+    var mcpUrl = String.format("http://%s:8888/v1/mcp", serverAlias);
     log.info("Testing MCP endpoint: {}", mcpUrl);
 
     var mcpInspector =
@@ -136,7 +140,7 @@ class McpValidationIT extends SqrlContainerTestBase {
     serverContainer.start();
     log.info("HTTP server started on port {}", serverContainer.getMappedPort(HTTP_SERVER_PORT));
 
-    var mcpUrl = String.format("http://%s:8888/mcp", serverAlias);
+    var mcpUrl = String.format("http://%s:8888/v1/mcp", serverAlias);
 
     var validatorContainer =
         createMcpInspectorContainer(getMcpInspectorImage())
@@ -185,6 +189,81 @@ class McpValidationIT extends SqrlContainerTestBase {
       } catch (Exception stopException) {
         log.error("Failed to stop container: {}", stopException.getMessage());
       }
+    }
+  }
+
+  @Test
+  @SneakyThrows
+  void givenUdfTestCase_whenUnauthenticatedMcp_thenSucceeds() {
+    compileSqrlScript("myudf.sqrl", testDir);
+    startGraphQLServer(testDir);
+
+    var mcpUrl =
+        String.format(
+            "http://localhost:%d/v1/mcp", serverContainer.getMappedPort(HTTP_SERVER_PORT));
+    log.info("Testing MCP endpoint without JWT: {}", mcpUrl);
+
+    // Create MCP client without authentication
+    log.info("Creating MCP transport for URL: {}", mcpUrl);
+    var transport = HttpClientStreamableHttpTransport.builder(mcpUrl).endpoint("/v1/mcp").build();
+    var client = McpClient.sync(transport).requestTimeout(Duration.ofSeconds(10)).build();
+
+    try {
+      // Test MCP protocol initialization
+      var initResponse = client.initialize();
+      log.info("MCP server initialized successfully: {}", initResponse);
+
+      assertThat(initResponse).isNotNull();
+      assertThat(initResponse.protocolVersion()).isEqualTo("2024-11-05");
+      assertThat(initResponse.serverInfo()).isNotNull();
+      assertThat(initResponse.serverInfo().name()).isEqualTo("datasqrl-mcp-server");
+      assertThat(initResponse.capabilities()).isNotNull();
+      assertThat(initResponse.capabilities().tools()).isNotNull();
+      assertThat(initResponse.capabilities().resources()).isNotNull();
+
+      // Test tools listing
+      var tools = client.listTools();
+      log.info("Successfully listed {} tools", tools.tools().size());
+
+      assertThat(tools).isNotNull();
+      assertThat(tools.tools()).isNotNull();
+      assertThat(tools.tools()).isNotEmpty();
+
+      // Verify tool structure based on UDF test case
+      var toolNames = tools.tools().stream().map(McpSchema.Tool::name).toList();
+      log.info("Available tools: {}", toolNames);
+
+      // Test resources listing
+      var resources = client.listResources();
+      log.info("Successfully listed {} resources", resources.resources().size());
+
+      assertThat(resources).isNotNull();
+      assertThat(resources.resources()).isNotNull();
+      // Resources may be empty, which is valid
+
+      var firstTool = tools.tools().get(0);
+      log.info("Testing tool call for: {}", firstTool.name());
+
+      var callRequest =
+          McpSchema.CallToolRequest.builder()
+              .name(firstTool.name())
+              .arguments(Map.of("limit", 3))
+              .build();
+
+      var toolResult = client.callTool(callRequest);
+      log.info("Tool call result: {}", toolResult);
+
+      assertThat(toolResult).isNotNull();
+      assertThat(toolResult.content()).isNotNull();
+      assertThat(toolResult.content()).isNotEmpty();
+
+      client.close();
+    } finally {
+      // Print server logs when test fails to help debug
+      var serverLogs = serverContainer.getLogs();
+      log.error("=== SERVER LOGS ON MCP CLIENT ERROR ===");
+      System.out.println(serverLogs);
+      log.error("=== END SERVER LOGS ===");
     }
   }
 

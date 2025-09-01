@@ -14,7 +14,7 @@ Schema:
 Plan:
 LogicalProject(id=[$0], hello=['hello world1'])
   LogicalTableScan(table=[[default_catalog, default_database, _MyApplications1]])
-SQL: CREATE VIEW MyTable1 AS  SELECT id, 'hello world1' as hello FROM _MyApplications1;
+SQL: CREATE VIEW `MyTable1` AS  SELECT id, 'hello world1' as hello FROM _MyApplications1;
 
 === MyTable2
 ID:     default_catalog.default_database.MyTable2
@@ -31,7 +31,7 @@ Schema:
 Plan:
 LogicalProject(id=[$0], hello=['hello world2'])
   LogicalTableScan(table=[[default_catalog, default_database, _MyApplications2]])
-SQL: CREATE VIEW MyTable2 AS  SELECT id, 'hello world2' as hello FROM _MyApplications2;
+SQL: CREATE VIEW `MyTable2` AS  SELECT id, 'hello world2' as hello FROM _MyApplications2;
 
 === MyTable3
 ID:     default_catalog.default_database.MyTable3
@@ -48,7 +48,7 @@ Schema:
 Plan:
 LogicalProject(id=[$0], hello=['hello world3'])
   LogicalTableScan(table=[[default_catalog, default_database, _MyApplications2]])
-SQL: CREATE VIEW MyTable3 AS  SELECT id, 'hello world3' as hello FROM _MyApplications2;
+SQL: CREATE VIEW `MyTable3` AS  SELECT id, 'hello world3' as hello FROM _MyApplications2;
 
 === _Applications
 ID:     default_catalog.default_database._Applications
@@ -94,7 +94,7 @@ Schema:
 Plan:
 LogicalProject(id=[$0], customer_id=[$1], loan_type_id=[$2], amount=[$3], duration=[$4], application_date=[$5], updated_at=[$6])
   LogicalTableScan(table=[[default_catalog, default_database, _Applications]])
-SQL: CREATE VIEW _MyApplications1 AS  SELECT * FROM _Applications;
+SQL: CREATE VIEW `_MyApplications1` AS  SELECT * FROM _Applications;
 
 === _MyApplications2
 ID:     default_catalog.default_database._MyApplications2
@@ -117,7 +117,7 @@ Plan:
 LogicalProject(id=[$0], customer_id=[$1], loan_type_id=[$2], amount=[$3], duration=[$4], application_date=[$5], updated_at=[$6])
   LogicalFilter(condition=[>=($0, 0)])
     LogicalTableScan(table=[[default_catalog, default_database, _Applications]])
-SQL: CREATE VIEW _MyApplications2 AS  SELECT * FROM _Applications WHERE id >= 0;
+SQL: CREATE VIEW `_MyApplications2` AS  SELECT * FROM _Applications WHERE id >= 0;
 
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `_Applications__schema` (
@@ -253,169 +253,171 @@ CREATE OR REPLACE VIEW "MyTable3"("id", "hello") AS SELECT "id", 'hello world3' 
 FROM "_MyApplications2"
 >>>vertx.json
 {
-  "model" : {
-    "queries" : [
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "MyTable1",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "MyTable1",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"id\", 'hello world1' AS \"hello\"\nFROM \"iceberg_scan\"('/tmp/duckdb/default_database/_MyApplications1', ALLOW_MOVED_PATHS = TRUE)",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "DUCKDB"
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT \"id\", 'hello world1' AS \"hello\"\nFROM \"iceberg_scan\"('/tmp/duckdb/default_database/_MyApplications1', ALLOW_MOVED_PATHS = TRUE)",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "DUCKDB"
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "MyTable2",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"id\", 'hello world2' AS \"hello\"\nFROM \"iceberg_scan\"('/tmp/duckdb/default_database/_MyApplications2', ALLOW_MOVED_PATHS = TRUE)",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "DUCKDB"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "MyTable3",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"id\", 'hello world3' AS \"hello\"\nFROM \"_MyApplications2\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
           }
         }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "MyTable2",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+      ],
+      "mutations" : [ ],
+      "subscriptions" : [ ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetMyTable1",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT \"id\", 'hello world2' AS \"hello\"\nFROM \"iceberg_scan\"('/tmp/duckdb/default_database/_MyApplications2', ALLOW_MOVED_PATHS = TRUE)",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "DUCKDB"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "MyTable3",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query MyTable1($limit: Int = 10, $offset: Int = 0) {\nMyTable1(limit: $limit, offset: $offset) {\nid\nhello\n}\n\n}",
+            "queryName" : "MyTable1",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/MyTable1{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetMyTable2",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT \"id\", 'hello world3' AS \"hello\"\nFROM \"_MyApplications2\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query MyTable2($limit: Int = 10, $offset: Int = 0) {\nMyTable2(limit: $limit, offset: $offset) {\nid\nhello\n}\n\n}",
+            "queryName" : "MyTable2",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/MyTable2{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetMyTable3",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query MyTable3($limit: Int = 10, $offset: Int = 0) {\nMyTable3(limit: $limit, offset: $offset) {\nid\nhello\n}\n\n}",
+            "queryName" : "MyTable3",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/MyTable3{?offset,limit}"
         }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype MyTable1 {\n  id: Long!\n  hello: String!\n}\n\ntype MyTable2 {\n  id: Long!\n  hello: String!\n}\n\ntype MyTable3 {\n  id: Long!\n  hello: String!\n}\n\ntype Query {\n  MyTable1(limit: Int = 10, offset: Int = 0): [MyTable1!]\n  MyTable2(limit: Int = 10, offset: Int = 0): [MyTable2!]\n  MyTable3(limit: Int = 10, offset: Int = 0): [MyTable3!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
-    ],
-    "mutations" : [ ],
-    "subscriptions" : [ ],
-    "operations" : [
-      {
-        "function" : {
-          "name" : "GetMyTable1",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query MyTable1($limit: Int = 10, $offset: Int = 0) {\nMyTable1(limit: $limit, offset: $offset) {\nid\nhello\n}\n\n}",
-          "queryName" : "MyTable1",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/MyTable1{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetMyTable2",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query MyTable2($limit: Int = 10, $offset: Int = 0) {\nMyTable2(limit: $limit, offset: $offset) {\nid\nhello\n}\n\n}",
-          "queryName" : "MyTable2",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/MyTable2{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetMyTable3",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query MyTable3($limit: Int = 10, $offset: Int = 0) {\nMyTable3(limit: $limit, offset: $offset) {\nid\nhello\n}\n\n}",
-          "queryName" : "MyTable3",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/MyTable3{?offset,limit}"
-      }
-    ],
-    "schema" : {
-      "type" : "string",
-      "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype MyTable1 {\n  id: Long!\n  hello: String!\n}\n\ntype MyTable2 {\n  id: Long!\n  hello: String!\n}\n\ntype MyTable3 {\n  id: Long!\n  hello: String!\n}\n\ntype Query {\n  MyTable1(limit: Int = 10, offset: Int = 0): [MyTable1!]\n  MyTable2(limit: Int = 10, offset: Int = 0): [MyTable2!]\n  MyTable3(limit: Int = 10, offset: Int = 0): [MyTable3!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
     }
   }
 }

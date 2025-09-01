@@ -106,9 +106,41 @@
         "operations": {
           "type": "array",
           "items": { "type": "string" }
+        },
+        "api": {
+          "type": "object",
+          "minProperties": 1,
+          "properties": {
+            "schema": {
+              "type": "string"
+            },
+            "operations": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          },
+          "additionalProperties": false,
+          "required": ["schema"]
+        },
+        "config":{
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": true
         }
       },
-      "additionalProperties": false
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "not": {
+            "required": ["api", "graphql"]
+          }
+        },
+        {
+          "not": {
+            "required": ["api", "operations"]
+          }
+        }
+      ]
     },
     "engines": {
       "type": "object",
@@ -169,33 +201,6 @@
     "connectors": {
       "type": "object",
       "minProperties": 1
-    },
-    "dependencies": {
-      "type": "object",
-      "patternProperties": {
-        ".*": {
-          "type": "object",
-          "properties": {
-            "name": {
-              "type": "string"
-            },
-            "folder": {
-              "type": "string"
-            },
-            "version": {
-              "type": "string"
-            },
-            "variant": {
-              "type": "string"
-            }
-          },
-          "oneOf": [
-            { "required": ["name"] },
-            { "required": ["folder"] }
-          ],
-          "additionalProperties": false
-        }
-      }
     },
     "package": {
       "type": "object",

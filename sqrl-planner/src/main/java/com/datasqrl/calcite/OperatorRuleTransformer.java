@@ -53,7 +53,7 @@ public class OperatorRuleTransformer {
     this.transformMap =
         ServiceLoaderDiscovery.getAll(OperatorRuleTransform.class).stream()
             .filter(transform -> transform.getDialect() == dialect)
-            .collect(Collectors.toMap(t -> Name.system(t.getRuleOperatorName()), t -> t));
+            .collect(Collectors.toMap(t -> Name.lower(t.getRuleOperatorName()), t -> t));
   }
 
   public RelNode convert(RelNode relNode) {
@@ -79,7 +79,7 @@ public class OperatorRuleTransformer {
           @Override
           public RelNode visit(LogicalAggregate aggregate) {
             for (AggregateCall call : aggregate.getAggCallList()) {
-              var transform = transformMap.get(Name.system(call.getAggregation().getName()));
+              var transform = transformMap.get(Name.lower(call.getAggregation().getName()));
               if (transform != null) {
                 transforms.put(call.getAggregation(), transform);
               }
@@ -93,7 +93,7 @@ public class OperatorRuleTransformer {
                 new RexShuttle() {
                   @Override
                   public RexNode visitCall(RexCall call) {
-                    var transform = transformMap.get(Name.system(call.getOperator().getName()));
+                    var transform = transformMap.get(Name.lower(call.getOperator().getName()));
                     if (transform != null) {
                       transforms.put(call.getOperator(), transform);
                     }

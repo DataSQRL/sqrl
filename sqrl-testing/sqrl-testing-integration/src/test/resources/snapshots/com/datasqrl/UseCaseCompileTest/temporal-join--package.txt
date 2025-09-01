@@ -20,7 +20,7 @@ LogicalProject(sensorid=[$0], temperature=[$1], event_time=[$2], sensor_name=[$4
     LogicalFilter(condition=[=($cor1.sensorid, $0)])
       LogicalSnapshot(period=[$cor1.event_time])
         LogicalTableScan(table=[[default_catalog, default_database, _SensorDistinct]])
-SQL: CREATE VIEW EnrichedSensorReading AS  SELECT r.sensorid, r.temperature, r.event_time, u.sensor_name
+SQL: CREATE VIEW `EnrichedSensorReading` AS  SELECT r.sensorid, r.temperature, r.event_time, u.sensor_name
                          FROM SensorReading r LEFT JOIN _SensorDistinct FOR SYSTEM_TIME AS OF r.event_time u on r.sensorid = u.sensorid
                          ORDER BY r.event_time ASC;
 
@@ -268,250 +268,252 @@ CREATE TABLE IF NOT EXISTS "SensorUpdates" ("sensorid" INTEGER NOT NULL, "sensor
 
 >>>vertx.json
 {
-  "model" : {
-    "queries" : [
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "EnrichedSensorReading",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "EnrichedSensorReading",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"sensorid\", \"temperature\", \"event_time\", \"sensor_name\"\n  FROM \"EnrichedSensorReading\"\n  ORDER BY \"event_time\" NULLS FIRST) AS \"t0\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM (SELECT \"sensorid\", \"temperature\", \"event_time\", \"sensor_name\"\n  FROM \"EnrichedSensorReading\"\n  ORDER BY \"event_time\" NULLS FIRST) AS \"t0\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "SensorReading",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"sensorid\", \"temperature\", \"event_time\"\nFROM \"SensorReading\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "SensorUpdates",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"sensorid\", \"sensor_name\", \"lastUpdated\"\nFROM \"SensorUpdates\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
           }
         }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "SensorReading",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT \"sensorid\", \"temperature\", \"event_time\"\nFROM \"SensorReading\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
+      ],
+      "mutations" : [
+        {
+          "type" : "kafka",
+          "fieldName" : "SensorReading",
+          "returnList" : false,
+          "topic" : "SensorReading",
+          "computedColumns" : {
+            "event_time" : "TIMESTAMP"
+          },
+          "transactional" : false,
+          "sinkConfig" : { }
+        },
+        {
+          "type" : "kafka",
+          "fieldName" : "SensorUpdates",
+          "returnList" : false,
+          "topic" : "SensorUpdates",
+          "computedColumns" : {
+            "lastUpdated" : "TIMESTAMP"
+          },
+          "transactional" : false,
+          "sinkConfig" : { }
         }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "SensorUpdates",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+      ],
+      "subscriptions" : [ ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetEnrichedSensorReading",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT \"sensorid\", \"sensor_name\", \"lastUpdated\"\nFROM \"SensorUpdates\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query EnrichedSensorReading($limit: Int = 10, $offset: Int = 0) {\nEnrichedSensorReading(limit: $limit, offset: $offset) {\nsensorid\ntemperature\nevent_time\nsensor_name\n}\n\n}",
+            "queryName" : "EnrichedSensorReading",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/EnrichedSensorReading{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetSensorReading",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query SensorReading($limit: Int = 10, $offset: Int = 0) {\nSensorReading(limit: $limit, offset: $offset) {\nsensorid\ntemperature\nevent_time\n}\n\n}",
+            "queryName" : "SensorReading",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/SensorReading{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetSensorUpdates",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query SensorUpdates($limit: Int = 10, $offset: Int = 0) {\nSensorUpdates(limit: $limit, offset: $offset) {\nsensorid\nsensor_name\nlastUpdated\n}\n\n}",
+            "queryName" : "SensorUpdates",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/SensorUpdates{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "AddSensorReading",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "temperature" : {
+                  "type" : "number"
+                },
+                "sensorid" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "sensorid",
+                "temperature"
+              ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "mutation SensorReading($sensorid: Int!, $temperature: Float!) {\nSensorReading(event: { sensorid: $sensorid, temperature: $temperature }) {\nsensorid\ntemperature\nevent_time\n}\n\n}",
+            "queryName" : "SensorReading",
+            "operationType" : "MUTATION"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "POST",
+          "uriTemplate" : "mutations/SensorReading"
+        },
+        {
+          "function" : {
+            "name" : "AddSensorUpdates",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "sensorid" : {
+                  "type" : "integer"
+                },
+                "sensor_name" : {
+                  "type" : "string"
+                }
+              },
+              "required" : [
+                "sensorid",
+                "sensor_name"
+              ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "mutation SensorUpdates($sensorid: Int!, $sensor_name: String!) {\nSensorUpdates(event: { sensorid: $sensorid, sensor_name: $sensor_name }) {\nsensorid\nsensor_name\nlastUpdated\n}\n\n}",
+            "queryName" : "SensorUpdates",
+            "operationType" : "MUTATION"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "POST",
+          "uriTemplate" : "mutations/SensorUpdates"
         }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\ntype EnrichedSensorReading {\n  sensorid: Int!\n  temperature: Float!\n  event_time: DateTime!\n  sensor_name: String\n}\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Mutation {\n  SensorReading(event: SensorReadingInput!): SensorReadingResultOutput!\n  SensorUpdates(event: SensorUpdatesInput!): SensorUpdatesResultOutput!\n}\n\ntype Query {\n  EnrichedSensorReading(limit: Int = 10, offset: Int = 0): [EnrichedSensorReading!]\n  SensorReading(limit: Int = 10, offset: Int = 0): [SensorReading!]\n  SensorUpdates(limit: Int = 10, offset: Int = 0): [SensorUpdates!]\n}\n\ntype SensorReading {\n  sensorid: Int!\n  temperature: Float!\n  event_time: DateTime!\n}\n\ninput SensorReadingInput {\n  sensorid: Int!\n  temperature: Float!\n}\n\ntype SensorReadingResultOutput {\n  sensorid: Int!\n  temperature: Float!\n  event_time: DateTime!\n}\n\ntype SensorUpdates {\n  sensorid: Int!\n  sensor_name: String!\n  lastUpdated: DateTime!\n}\n\ninput SensorUpdatesInput {\n  sensorid: Int!\n  sensor_name: String!\n}\n\ntype SensorUpdatesResultOutput {\n  sensorid: Int!\n  sensor_name: String!\n  lastUpdated: DateTime!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
-    ],
-    "mutations" : [
-      {
-        "type" : "kafka",
-        "fieldName" : "SensorReading",
-        "returnList" : false,
-        "topic" : "SensorReading",
-        "computedColumns" : {
-          "event_time" : "TIMESTAMP"
-        },
-        "transactional" : false,
-        "sinkConfig" : { }
-      },
-      {
-        "type" : "kafka",
-        "fieldName" : "SensorUpdates",
-        "returnList" : false,
-        "topic" : "SensorUpdates",
-        "computedColumns" : {
-          "lastUpdated" : "TIMESTAMP"
-        },
-        "transactional" : false,
-        "sinkConfig" : { }
-      }
-    ],
-    "subscriptions" : [ ],
-    "operations" : [
-      {
-        "function" : {
-          "name" : "GetEnrichedSensorReading",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query EnrichedSensorReading($limit: Int = 10, $offset: Int = 0) {\nEnrichedSensorReading(limit: $limit, offset: $offset) {\nsensorid\ntemperature\nevent_time\nsensor_name\n}\n\n}",
-          "queryName" : "EnrichedSensorReading",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/EnrichedSensorReading{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetSensorReading",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query SensorReading($limit: Int = 10, $offset: Int = 0) {\nSensorReading(limit: $limit, offset: $offset) {\nsensorid\ntemperature\nevent_time\n}\n\n}",
-          "queryName" : "SensorReading",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/SensorReading{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetSensorUpdates",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query SensorUpdates($limit: Int = 10, $offset: Int = 0) {\nSensorUpdates(limit: $limit, offset: $offset) {\nsensorid\nsensor_name\nlastUpdated\n}\n\n}",
-          "queryName" : "SensorUpdates",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/SensorUpdates{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "AddSensorReading",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "temperature" : {
-                "type" : "number"
-              },
-              "sensorid" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [
-              "sensorid",
-              "temperature"
-            ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "mutation SensorReading($sensorid: Int!, $temperature: Float!) {\nSensorReading(event: { sensorid: $sensorid, temperature: $temperature }) {\nsensorid\ntemperature\nevent_time\n}\n\n}",
-          "queryName" : "SensorReading",
-          "operationType" : "MUTATION"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "POST",
-        "uriTemplate" : "mutations/SensorReading"
-      },
-      {
-        "function" : {
-          "name" : "AddSensorUpdates",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "sensorid" : {
-                "type" : "integer"
-              },
-              "sensor_name" : {
-                "type" : "string"
-              }
-            },
-            "required" : [
-              "sensorid",
-              "sensor_name"
-            ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "mutation SensorUpdates($sensorid: Int!, $sensor_name: String!) {\nSensorUpdates(event: { sensorid: $sensorid, sensor_name: $sensor_name }) {\nsensorid\nsensor_name\nlastUpdated\n}\n\n}",
-          "queryName" : "SensorUpdates",
-          "operationType" : "MUTATION"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "POST",
-        "uriTemplate" : "mutations/SensorUpdates"
-      }
-    ],
-    "schema" : {
-      "type" : "string",
-      "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\ntype EnrichedSensorReading {\n  sensorid: Int!\n  temperature: Float!\n  event_time: DateTime!\n  sensor_name: String\n}\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Mutation {\n  SensorReading(event: SensorReadingInput!): SensorReadingResultOutput!\n  SensorUpdates(event: SensorUpdatesInput!): SensorUpdatesResultOutput!\n}\n\ntype Query {\n  EnrichedSensorReading(limit: Int = 10, offset: Int = 0): [EnrichedSensorReading!]\n  SensorReading(limit: Int = 10, offset: Int = 0): [SensorReading!]\n  SensorUpdates(limit: Int = 10, offset: Int = 0): [SensorUpdates!]\n}\n\ntype SensorReading {\n  sensorid: Int!\n  temperature: Float!\n  event_time: DateTime!\n}\n\ninput SensorReadingInput {\n  sensorid: Int!\n  temperature: Float!\n}\n\ntype SensorReadingResultOutput {\n  sensorid: Int!\n  temperature: Float!\n  event_time: DateTime!\n}\n\ntype SensorUpdates {\n  sensorid: Int!\n  sensor_name: String!\n  lastUpdated: DateTime!\n}\n\ninput SensorUpdatesInput {\n  sensorid: Int!\n  sensor_name: String!\n}\n\ntype SensorUpdatesResultOutput {\n  sensorid: Int!\n  sensor_name: String!\n  lastUpdated: DateTime!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
     }
   }
 }

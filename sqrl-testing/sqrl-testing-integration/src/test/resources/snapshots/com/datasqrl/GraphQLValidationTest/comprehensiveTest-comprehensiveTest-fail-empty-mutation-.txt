@@ -1,26 +1,26 @@
-[NOTICE] This table does not propagate the source row time columns: default_catalog.default_database._customer[timestamp]
-in script:comprehensivetest.sqrl [10:1]:
+[NOTICE] This table does not propagate the source row time columns: default_catalog.default_database._Customer[timestamp]
+in script:comprehensiveTest.sqrl [10:1]:
 CustomerFilteredDistinct := DISTINCT Customer ON customerid ORDER BY lastUpdated DESC;
 
-AnotherCustomer := SELECT customerid, email, lastUpdated FROM _customer WHERE customerid > 100;
+AnotherCustomer := SELECT customerid, email, lastUpdated FROM _Customer WHERE customerid > 100;
 ^
 
 [NOTICE] You can rewrite the join as a temporal join for greater efficiency by adding: FOR SYSTEM_TIME AS OF `time`
-in script:comprehensivetest.sqrl [18:1]:
+in script:comprehensiveTest.sqrl [18:1]:
 InvalidDistinct := SELECT customerid, `timestamp`, name AS namee FROM (SELECT *, (ROW_NUMBER() OVER (PARTITION BY customerid ORDER BY `timestamp` DESC)) AS _rownum FROM Customer) WHERE (_rownum = 1);
 
 MissedTemporalJoin := SELECT * FROM ExternalOrders o JOIN ExplicitDistinct c ON o.customerid = c.customerid;
 ^
 
 [NOTICE] This table does not propagate the source row time columns: default_catalog.default_database.SelectCustomers[timestamp]
-in script:comprehensivetest.sqrl [51:1]:
+in script:comprehensiveTest.sqrl [51:1]:
 );
 
 CustomerTimeWindow := SELECT
 ^
 
 [FATAL] Empty root object type: Mutation
-in script:comprehensivetest-fail-empty-mutation.graphqls [16:1]:
+in script:comprehensiveTest-fail-empty-mutation.graphqls [16:1]:
 }
 
 type Mutation {

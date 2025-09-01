@@ -1,6 +1,6 @@
 IMPORT ecommerceTs.* AS _;
-Customer := DISTINCT _customer ON customerid ORDER BY `timestamp` DESC;
-Orders := DISTINCT _orders ON id ORDER BY `time` DESC;
+Customer := DISTINCT _Customer ON customerid ORDER BY `timestamp` DESC;
+Orders := DISTINCT _Orders ON id ORDER BY `time` DESC;
 OrderCustomerLeft := SELECT c.lastUpdated, o.id, c.name, o.customerid  FROM Orders o LEFT JOIN Customer c on o.customerid = c.customerid;
 OrderCustomer := SELECT o.`time`, o.id, c.name, o.customerid FROM Orders o INNER JOIN Customer c on o.customerid = c.customerid;
 OrderCustomerLeftExcluded := SELECT o.`time`, o.id, o.customerid  FROM Orders o LEFT JOIN Customer c on o.customerid = c.customerid WHERE c.customerid IS NULL;

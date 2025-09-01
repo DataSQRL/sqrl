@@ -16,40 +16,19 @@
 package com.datasqrl.function;
 
 import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.module.FunctionNamespaceObject;
+import com.datasqrl.loaders.FunctionNamespaceObject;
 import java.net.URL;
 import java.util.Optional;
-import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.flink.table.functions.BuiltInFunctionDefinition;
 import org.apache.flink.table.functions.FunctionDefinition;
 
-@Value
 @Slf4j
-public class FlinkUdfNsObject implements FunctionNamespaceObject<FunctionDefinition> {
-  Name name;
-  FunctionDefinition function;
-  private final String sqlName;
-  Optional<URL> jarUrl;
+public record FlinkUdfNsObject(
+    Name name, FunctionDefinition function, String sqlName, Optional<URL> jarUrl)
+    implements FunctionNamespaceObject<FunctionDefinition> {
 
   public FlinkUdfNsObject(
       String name, FunctionDefinition function, String sqlName, Optional<URL> jarUrl) {
-    this.name = Name.system(name);
-    this.function = function;
-    this.sqlName = sqlName;
-    this.jarUrl = jarUrl;
-  }
-
-  public static String getFunctionName(FunctionDefinition function) {
-    if (function instanceof BuiltInFunctionDefinition) {
-      return ((BuiltInFunctionDefinition) function).getName();
-    }
-    return getFunctionNameFromClass(function.getClass()).getDisplay();
-  }
-
-  public static Name getFunctionNameFromClass(Class clazz) {
-    var fctName = clazz.getSimpleName();
-    fctName = Character.toLowerCase(fctName.charAt(0)) + fctName.substring(1);
-    return Name.system(fctName);
+    this(Name.system(name), function, sqlName, jarUrl);
   }
 }

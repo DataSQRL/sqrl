@@ -15,17 +15,14 @@
  */
 package com.datasqrl.canonicalizer;
 
-// import com.google.common.base.Preconditions;
-// import com.google.common.base.Strings;
 import java.io.Serializable;
 
 /** Represents the name of a field in the ingested data */
 public interface Name extends Serializable, Comparable<Name> {
 
-  String HIDDEN_PREFIX = "_";
-
-  String SYSTEM_HIDDEN_PREFIX = HIDDEN_PREFIX + HIDDEN_PREFIX;
   char NAME_DELIMITER = '_';
+  String HIDDEN_PREFIX = "_";
+  String SYSTEM_HIDDEN_PREFIX = HIDDEN_PREFIX + HIDDEN_PREFIX;
 
   /**
    * Returns the canonical version of the field name.
@@ -69,25 +66,9 @@ public interface Name extends Serializable, Comparable<Name> {
     return isHiddenString(getCanonical());
   }
 
-  default boolean isSsytemHidden() {
-    return getCanonical().startsWith(SYSTEM_HIDDEN_PREFIX);
-  }
-
-  default NamePath toNamePath() {
-    return NamePath.of(this);
-  }
-
   default Name append(Name name) {
     return new StandardName(
         this.getCanonical() + name.getCanonical(), this.getDisplay() + name.getCanonical());
-  }
-
-  default Name suffix(String suffix) {
-    return append(system(NAME_DELIMITER + suffix));
-  }
-
-  public static String addSuffix(String str, String suffix) {
-    return str + NAME_DELIMITER + suffix;
   }
 
   static boolean validName(String name) {
@@ -102,13 +83,11 @@ public interface Name extends Serializable, Comparable<Name> {
   }
 
   static Name of(String name, NameCanonicalizer canonicalizer) {
-    //    Preconditions.checkArgument(validName(name), "Invalid name: %s", name);
     name = name.trim();
     return new StandardName(canonicalizer.getCanonical(name), name);
   }
 
   static Name changeDisplayName(Name name, String displayName) {
-    //    Preconditions.checkArgument(!Strings.isNullOrEmpty(displayName));
     return new StandardName(name.getCanonical(), displayName.trim());
   }
 
@@ -116,11 +95,8 @@ public interface Name extends Serializable, Comparable<Name> {
     return of(name, NameCanonicalizer.SYSTEM);
   }
 
-  static String hiddenString(String name) {
-    if (isHiddenString(name)) {
-      return name;
-    }
-    return HIDDEN_PREFIX + name;
+  static Name lower(String name) {
+    return of(name, NameCanonicalizer.LOWERCASE_ENGLISH);
   }
 
   static boolean isHiddenString(String name) {
@@ -130,6 +106,4 @@ public interface Name extends Serializable, Comparable<Name> {
   static boolean isSystemHidden(String name) {
     return name.startsWith(SYSTEM_HIDDEN_PREFIX);
   }
-
-  boolean hasPrefix(Name variablePrefix);
 }

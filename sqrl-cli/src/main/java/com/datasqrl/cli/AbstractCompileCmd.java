@@ -15,7 +15,6 @@
  */
 package com.datasqrl.cli;
 
-import static com.datasqrl.config.ScriptConfigImpl.GRAPHQL_NORMALIZED_FILE_NAME;
 import static com.datasqrl.config.SqrlConstants.PACKAGE_JSON;
 
 import com.datasqrl.compile.CompilationProcess;
@@ -42,6 +41,8 @@ import org.apache.commons.lang3.tuple.Pair;
 import picocli.CommandLine;
 
 public abstract class AbstractCompileCmd extends AbstractCmd {
+
+  private static final String GRAPHQL_FILE_NAME_PATTERN = "schema.%s.graphqls";
 
   @CommandLine.Parameters(
       arity = "0..2",
@@ -132,15 +133,22 @@ public abstract class AbstractCompileCmd extends AbstractCmd {
 
   @SneakyThrows
   protected void addGraphql(PhysicalPlan plan, Path rootDir) {
-    List<ServerPhysicalPlan> plans = plan.getPlans(ServerPhysicalPlan.class).toList();
-    if (plans.isEmpty()) {
+    var serverPlan = plan.getPlans(ServerPhysicalPlan.class).findFirst();
+    if (serverPlan.isEmpty()) {
       return;
     }
 
-    Path path = rootDir.resolve(GRAPHQL_NORMALIZED_FILE_NAME);
-    Files.deleteIfExists(path);
-    StringSchema stringSchema = (StringSchema) plans.get(0).getModel().getSchema();
-    Files.writeString(path, stringSchema.getSchema(), StandardOpenOption.CREATE);
+    var models = serverPlan.get().getModels();
+    for (var entry : models.entrySet()) {
+      var version = entry.getKey();
+      var model = entry.getValue();
+
+      var path = rootDir.resolve(GRAPHQL_FILE_NAME_PATTERN.formatted(version));
+      Files.deleteIfExists(path);
+
+      var stringSchema = (StringSchema) model.getSchema();
+      Files.writeString(path, stringSchema.getSchema(), StandardOpenOption.CREATE);
+    }
   }
 
   private void validateTestPath(Path path) {

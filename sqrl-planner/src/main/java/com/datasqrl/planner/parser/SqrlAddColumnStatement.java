@@ -29,15 +29,26 @@ import org.apache.commons.collections4.ListUtils;
 /** Represents a column definition that extends a previous table definition */
 public class SqrlAddColumnStatement extends SqrlDefinition implements StackableStatement {
 
-  public static final String ALTER_VIEW_PREFIX = "ALTER VIEW %s AS ";
-  public static final String ADD_COLUMN_PREFIX = "SELECT *, ";
-  public static final String ADD_COLUMN_SQL = ADD_COLUMN_PREFIX + "%s AS %s FROM \n( %s )";
+  public static final String ALTER_VIEW_PREFIX = "ALTER VIEW `%s` AS ";
+  public static final String ADD_COLUMN_PREFIX = "SELECT %s, ";
+  public static final String ADD_COLUMN_SQL_FRAGMENT = "%s AS `%s` FROM \n( %s )";
+
+  private String addColumnPrefix = ADD_COLUMN_PREFIX.formatted("*");
 
   public SqrlAddColumnStatement(
       ParsedObject<NamePath> tableName,
       ParsedObject<String> definitionBody,
       SqrlComments comments) {
     super(tableName, definitionBody, AccessModifier.INHERIT, comments);
+  }
+
+  public void setColumnNames(List<String> columnNames) {
+    var escapedAndFiltered =
+        columnNames.stream()
+            .filter(col -> !col.equals(getColumnName()))
+            .map("`%s`"::formatted)
+            .toList();
+    this.addColumnPrefix = ADD_COLUMN_PREFIX.formatted(String.join(", ", escapedAndFiltered));
   }
 
   @Override
@@ -57,9 +68,7 @@ public class SqrlAddColumnStatement extends SqrlDefinition implements StackableS
     for (StackableStatement col : ListUtils.union(stack.subList(1, stack.size()), List.of(this))) {
       Preconditions.checkArgument(col instanceof SqrlAddColumnStatement);
       var column = (SqrlAddColumnStatement) col;
-      var columName = column.tableName.get().getLast().getDisplay();
-      innerSql =
-          addColumn(columName, removeStatementDelimiter(column.definitionBody.get()), innerSql);
+      innerSql = column.addColumn(innerSql);
     }
     var sql =
         String.format(ALTER_VIEW_PREFIX + "%s", table.toString(), addStatementDelimiter(innerSql));
@@ -68,7 +77,7 @@ public class SqrlAddColumnStatement extends SqrlDefinition implements StackableS
 
   @Override
   String getPrefix() {
-    return String.format(ALTER_VIEW_PREFIX + ADD_COLUMN_PREFIX, this.tableName.get().popLast());
+    return String.format(ALTER_VIEW_PREFIX + addColumnPrefix, this.tableName.get().popLast());
   }
 
   @Override
@@ -78,8 +87,14 @@ public class SqrlAddColumnStatement extends SqrlDefinition implements StackableS
         .add(SQLStatement.removeFirstRowOffset(location, getPrefix().length()));
   }
 
-  private static String addColumn(String columnName, String columnExpression, String innerBody) {
-    return ADD_COLUMN_SQL.formatted(columnExpression, columnName, innerBody);
+  private String getColumnName() {
+    return tableName.get().getLast().getDisplay();
+  }
+
+  private String addColumn(String innerBody) {
+    return addColumnPrefix
+        + ADD_COLUMN_SQL_FRAGMENT.formatted(
+            removeStatementDelimiter(definitionBody.get()), getColumnName(), innerBody);
   }
 
   @Override

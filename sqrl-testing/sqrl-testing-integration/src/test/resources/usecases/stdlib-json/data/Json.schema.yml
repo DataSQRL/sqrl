@@ -1,0 +1,17 @@
+---
+name: "json"
+schema_version: "1"
+partial_schema: false
+columns:
+  - name: "id"
+    type: "BIGINT"
+    tests:
+      - "not_null"
+  - name: "val"
+    type: "STRING"
+    tests:
+      - "not_null"
+  - name: "timestamp"
+    type: "TIMESTAMP"
+    tests:
+      - "not_null"

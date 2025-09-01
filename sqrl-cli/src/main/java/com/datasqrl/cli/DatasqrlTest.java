@@ -54,7 +54,7 @@ import org.apache.flink.core.execution.JobClient;
  */
 public class DatasqrlTest {
 
-  private static final String GRAPHQL_ENDPOINT = "http://localhost:8888/graphql";
+  private static final String GRAPHQL_ENDPOINT = "http://localhost:8888/%s/graphql";
   private static final String SNAPSHOT_EXT = ".snapshot";
 
   private final Path rootDir;
@@ -124,7 +124,10 @@ public class DatasqrlTest {
         for (var subscription : testPlan.getSubscriptions()) {
           var client =
               new SubscriptionClient(
-                  subscription.getName(), subscription.getQuery(), subscription.getHeaders());
+                  subscription.getVersion(),
+                  subscription.getName(),
+                  subscription.getQuery(),
+                  subscription.getHeaders());
           subscriptionClients.add(client);
           var future = client.start();
           subscriptionFutures.add(future);
@@ -310,7 +313,7 @@ public class DatasqrlTest {
 
     for (var query : queries) {
       // Execute queries
-      var data = executeQuery(query.getQuery(), query.getHeaders());
+      var data = executeQuery(query);
 
       // Snapshot result
       snapshot(snapshotDir, query.getName(), data, exceptions);
@@ -329,18 +332,16 @@ public class DatasqrlTest {
   }
 
   @SneakyThrows
-  private String executeQuery(String query, Map<String, String> headers) {
+  private String executeQuery(TestPlan.GraphqlQuery query) {
     var client = HttpClient.newHttpClient();
 
     var requestBuilder =
         HttpRequest.newBuilder()
-            .uri(URI.create(GRAPHQL_ENDPOINT))
+            .uri(URI.create(GRAPHQL_ENDPOINT.formatted(query.getVersion())))
             .header("Content-Type", "application/graphql")
-            .POST(HttpRequest.BodyPublishers.ofString(query));
+            .POST(HttpRequest.BodyPublishers.ofString(query.getQuery()));
 
-    if (headers != null) {
-      headers.forEach(requestBuilder::header);
-    }
+    query.getHeaders().forEach(requestBuilder::header);
 
     var response = client.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofString());
 

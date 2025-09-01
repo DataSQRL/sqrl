@@ -1,0 +1,21 @@
+---
+name: "ApplicationUpdates"
+schema_version: "1"
+partial_schema: false
+columns:
+- name: "loan_application_id"
+  type: "BIGINT"
+  tests:
+  - "not_null"
+- name: "status"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "message"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "event_time"
+  type: "TIMESTAMP"
+  tests:
+  - "not_null"

@@ -15,7 +15,7 @@ LogicalAggregate(group=[{0}], num=[COUNT()], test=[AVG($0)])
   LogicalProject(eventid=[$1])
     LogicalFilter(condition=[$3])
       LogicalTableScan(table=[[default_catalog, default_database, _UserLikes]])
-SQL: CREATE VIEW EventLikeCount AS  SELECT eventid, count(*) as num, avg(eventid) as test
+SQL: CREATE VIEW `EventLikeCount` AS  SELECT eventid, count(*) as num, avg(eventid) as test
                   FROM _UserLikes WHERE liked GROUP BY eventid;
 
 === Events
@@ -68,7 +68,7 @@ LogicalSort(sort0=[$12], dir0=[ASC-nulls-first])
       LogicalJoin(condition=[=($1, $13)], joinType=[inner])
         LogicalTableScan(table=[[default_catalog, default_database, _UserLikes]])
         LogicalTableScan(table=[[default_catalog, default_database, Events]])
-SQL: CREATE VIEW EventsLiked AS  SELECT e.* FROM _UserLikes l JOIN Events e ON l.eventid = e.id
+SQL: CREATE VIEW `EventsLiked` AS  SELECT e.* FROM _UserLikes l JOIN Events e ON l.eventid = e.id
                                 WHERE l.userid = ?      
                                 ORDER BY e.startTimestamp ASC;
 
@@ -87,7 +87,7 @@ LogicalSort(sort0=[$13], dir0=[DESC-nulls-last])
       LogicalJoin(condition=[=($13, ?1)], joinType=[left])
         LogicalTableScan(table=[[default_catalog, default_database, Events]])
         LogicalTableScan(table=[[default_catalog, default_database, _UserInterests]])
-SQL: CREATE VIEW PersonalizedEventSearch AS 
+SQL: CREATE VIEW `PersonalizedEventSearch` AS 
     SELECT e.*, coalesce(cosine_similarity(i.interestVector, e.embedding),0.0) as score
         FROM Events e
         LEFT JOIN _UserInterests i ON i.userid = ?      
@@ -108,7 +108,7 @@ LogicalSort(sort0=[$13], dir0=[DESC-nulls-last])
     LogicalJoin(condition=[=($13, ?0)], joinType=[inner])
       LogicalTableScan(table=[[default_catalog, default_database, Events]])
       LogicalTableScan(table=[[default_catalog, default_database, _UserInterests]])
-SQL: CREATE VIEW RecommendedEvents AS 
+SQL: CREATE VIEW `RecommendedEvents` AS 
 SELECT e.*, cosine_similarity(i.interestVector, e.embedding) as score
 FROM Events e JOIN _UserInterests i ON i.userid = ?      
 ORDER BY score DESC;
@@ -131,7 +131,7 @@ Schema:
 Plan:
 LogicalProject(_uuid=[$0], userid=[$1], text=[$2], event_time=[$3], embedding=[vector_embed($2, 'text-embedding-3-small')])
   LogicalTableScan(table=[[default_catalog, default_database, _AddInterestStream]])
-SQL: CREATE VIEW _AddInterest AS  SELECT *, vector_embed(text, 'text-embedding-3-small') AS embedding FROM _AddInterestStream;
+SQL: CREATE VIEW `_AddInterest` AS  SELECT *, vector_embed(text, 'text-embedding-3-small') AS embedding FROM _AddInterestStream;
 
 === _AddInterestStream
 ID:     default_catalog.default_database._AddInterestStream
@@ -204,7 +204,7 @@ LogicalProject(userid=[$2], embedding=[$16], title=[$8], abstract=[$9], location
       LogicalFilter(condition=[=($cor1.eventid, $8)])
         LogicalSnapshot(period=[$cor1.event_time])
           LogicalTableScan(table=[[default_catalog, default_database, Events]])
-SQL: CREATE VIEW _LikeVector AS  SELECT l.userid, e.embedding, e.title, e.abstract, e.location, l.event_time
+SQL: CREATE VIEW `_LikeVector` AS  SELECT l.userid, e.embedding, e.title, e.abstract, e.location, l.event_time
               FROM _Likes l JOIN Events FOR SYSTEM_TIME AS OF l.event_time e ON l.eventid = e.id WHERE l.liked;
 
 === _Likes
@@ -257,8 +257,8 @@ LogicalProject(url=[$0], date=[$1], time=[$2], title=[$3], abstract=[$4], locati
   LogicalProject(url=[$0], date=[$1], time=[$2], title=[$3], abstract=[$4], location=[$5], speakers=[$6], last_updated=[$7], id=[$8], full_text=[$9], startTime=[$10], embedding=[vector_embed($9, 'text-embedding-3-small')])
     LogicalProject(url=[$0], date=[$1], time=[$2], title=[$3], abstract=[$4], location=[$5], speakers=[$6], last_updated=[$7], id=[coalesce(CAST(REGEXP_EXTRACT($0, '(\d*)$')):BIGINT, 0:BIGINT)], full_text=[CONCAT($3, '\n', $4)], startTime=[CONCAT(TRIM(FLAG(BOTH), ' ', REGEXP_EXTRACT($1, '^[^-]*')), ' ', TRIM(FLAG(BOTH), ' ', REGEXP_EXTRACT($2, '\d\d?:\d\d\s(AM|PM)')))])
       LogicalTableScan(table=[[default_catalog, default_database, _EventStream]])
-SQL: ALTER VIEW _ProcessedEventStream AS SELECT *,  TO_TIMESTAMP(concat(startTime,' PDT'), 'MMMM d, yyyy h:mm a z') AS startTimestamp FROM 
-( SELECT *,   vector_embed(full_text, 'text-embedding-3-small') AS embedding FROM 
+SQL: ALTER VIEW `_ProcessedEventStream` AS SELECT `url`, `date`, `time`, `title`, `abstract`, `location`, `speakers`, `last_updated`, `id`, `full_text`, `startTime`, `embedding`,  TO_TIMESTAMP(concat(startTime,' PDT'), 'MMMM d, yyyy h:mm a z') AS `startTimestamp` FROM 
+( SELECT `url`, `date`, `time`, `title`, `abstract`, `location`, `speakers`, `last_updated`, `id`, `full_text`, `startTime`,   vector_embed(full_text, 'text-embedding-3-small') AS `embedding` FROM 
 (  SELECT *,
     coalesce(CAST(REGEXP_EXTRACT(url, '(\d*)$') AS BIGINT),0) AS id,
     concat(title,'\n',abstract) AS full_text,
@@ -281,7 +281,7 @@ LogicalUnion(all=[true])
     LogicalTableScan(table=[[default_catalog, default_database, _LikeVector]])
   LogicalProject(userid=[$1], embedding=[$4], event_time=[$3])
     LogicalTableScan(table=[[default_catalog, default_database, _AddInterest]])
-SQL: CREATE VIEW _UserInterestVectors AS  SELECT userid, embedding, event_time FROM _LikeVector
+SQL: CREATE VIEW `_UserInterestVectors` AS  SELECT userid, embedding, event_time FROM _LikeVector
                  UNION ALL
                  SELECT userid, embedding, event_time FROM _AddInterest;
 
@@ -299,7 +299,7 @@ Plan:
 LogicalAggregate(group=[{0}], interestVector=[center($1)])
   LogicalProject(userid=[$0], embedding=[$1])
     LogicalTableScan(table=[[default_catalog, default_database, _UserInterestVectors]])
-SQL: CREATE VIEW _UserInterests AS  SELECT userid, center(embedding) as interestVector FROM _UserInterestVectors GROUP BY userid;
+SQL: CREATE VIEW `_UserInterests` AS  SELECT userid, center(embedding) as interestVector FROM _UserInterestVectors GROUP BY userid;
 
 === _UserLikes
 ID:     default_catalog.default_database._UserLikes
@@ -358,13 +358,13 @@ SELECT *, COALESCE(CAST(`REGEXP_EXTRACT`(`url`, '(\d*)$') AS BIGINT), 0) AS `id`
 FROM `_EventStream`;
 ALTER VIEW `_ProcessedEventStream`
 AS
-SELECT *, `vector_embed`(`full_text`, 'text-embedding-3-small') AS `embedding`
+SELECT `url`, `date`, `time`, `title`, `abstract`, `location`, `speakers`, `last_updated`, `id`, `full_text`, `startTime`, `vector_embed`(`full_text`, 'text-embedding-3-small') AS `embedding`
 FROM (SELECT *, COALESCE(CAST(`REGEXP_EXTRACT`(`url`, '(\d*)$') AS BIGINT), 0) AS `id`, `concat`(`title`, '\n', `abstract`) AS `full_text`, `concat`(TRIM(BOTH ' ' FROM `REGEXP_EXTRACT`(`date`, '^[^-]*')), ' ', TRIM(BOTH ' ' FROM `REGEXP_EXTRACT`(`time`, '\d\d?:\d\d\s(AM|PM)'))) AS `startTime`
   FROM `_EventStream`);
 ALTER VIEW `_ProcessedEventStream`
 AS
-SELECT *, `TO_TIMESTAMP`(`concat`(`startTime`, ' PDT'), 'MMMM d, yyyy h:mm a z') AS `startTimestamp`
-FROM (SELECT *, `vector_embed`(`full_text`, 'text-embedding-3-small') AS `embedding`
+SELECT `url`, `date`, `time`, `title`, `abstract`, `location`, `speakers`, `last_updated`, `id`, `full_text`, `startTime`, `embedding`, `TO_TIMESTAMP`(`concat`(`startTime`, ' PDT'), 'MMMM d, yyyy h:mm a z') AS `startTimestamp`
+FROM (SELECT `url`, `date`, `time`, `title`, `abstract`, `location`, `speakers`, `last_updated`, `id`, `full_text`, `startTime`, `vector_embed`(`full_text`, 'text-embedding-3-small') AS `embedding`
   FROM (SELECT *, COALESCE(CAST(`REGEXP_EXTRACT`(`url`, '(\d*)$') AS BIGINT), 0) AS `id`, `concat`(`title`, '\n', `abstract`) AS `full_text`, `concat`(TRIM(BOTH ' ' FROM `REGEXP_EXTRACT`(`date`, '^[^-]*')), ' ', TRIM(BOTH ' ' FROM `REGEXP_EXTRACT`(`time`, '\d\d?:\d\d\s(AM|PM)'))) AS `startTime`
     FROM `_EventStream`));
 CREATE VIEW `Events`
@@ -416,7 +416,6 @@ CREATE TABLE `_AddInterestStream` (
   'format' = 'flexible-json',
   'path' = '${DATA_PATH}/addinterest.jsonl',
   'source.monitor-interval' = '1',
-  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'connector' = 'filesystem'
 )
 LIKE `_AddInterestStream__schema`;
@@ -561,330 +560,332 @@ CREATE INDEX IF NOT EXISTS "Events_text_c3c4" ON "Events" USING GIN (to_tsvector
 
 >>>vertx.json
 {
-  "model" : {
-    "queries" : [
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "Events",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "id"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Events\"\nWHERE \"id\" = $1",
-            "parameters" : [
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Events",
+          "exec" : {
+            "arguments" : [
               {
-                "type" : "arg",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
                 "path" : "id"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
               }
             ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Events",
-        "fieldName" : "likeCount",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Events\"\nWHERE \"id\" = $1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "id"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"EventLikeCount\"\nWHERE $1 = \"eventid\"",
-            "parameters" : [
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Events",
+          "fieldName" : "likeCount",
+          "exec" : {
+            "arguments" : [
               {
-                "type" : "source",
-                "key" : "id"
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
               }
             ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "EventsLiked",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            },
-            {
-              "type" : "variable",
-              "path" : "userid"
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"EventLikeCount\"\nWHERE $1 = \"eventid\"",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "key" : "id"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT \"Events\".\"url\", \"Events\".\"date\", \"Events\".\"time\", \"Events\".\"title\", \"Events\".\"abstract\", \"Events\".\"location\", \"Events\".\"speakers\", \"Events\".\"last_updated\", \"Events\".\"id\", \"Events\".\"full_text\", \"Events\".\"startTime\", \"Events\".\"embedding\", \"Events\".\"startTimestamp\"\nFROM \"_UserLikes\"\n INNER JOIN \"Events\" ON \"_UserLikes\".\"eventid\" = \"Events\".\"id\"\nWHERE \"_UserLikes\".\"userid\" = $1\nORDER BY \"Events\".\"startTimestamp\" NULLS FIRST",
-            "parameters" : [
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "EventsLiked",
+          "exec" : {
+            "arguments" : [
               {
-                "type" : "arg",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
                 "path" : "userid"
               }
             ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "PersonalizedEventSearch",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            },
-            {
-              "type" : "variable",
-              "path" : "query"
-            },
-            {
-              "type" : "variable",
-              "path" : "userid"
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"Events\".\"url\", \"Events\".\"date\", \"Events\".\"time\", \"Events\".\"title\", \"Events\".\"abstract\", \"Events\".\"location\", \"Events\".\"speakers\", \"Events\".\"last_updated\", \"Events\".\"id\", \"Events\".\"full_text\", \"Events\".\"startTime\", \"Events\".\"embedding\", \"Events\".\"startTimestamp\"\nFROM \"_UserLikes\"\n INNER JOIN \"Events\" ON \"_UserLikes\".\"eventid\" = \"Events\".\"id\"\nWHERE \"_UserLikes\".\"userid\" = $1\nORDER BY \"Events\".\"startTimestamp\" NULLS FIRST",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "userid"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT \"Events\".\"url\", \"Events\".\"date\", \"Events\".\"time\", \"Events\".\"title\", \"Events\".\"abstract\", \"Events\".\"location\", \"Events\".\"speakers\", \"Events\".\"last_updated\", \"Events\".\"id\", \"Events\".\"full_text\", \"Events\".\"startTime\", \"Events\".\"embedding\", \"Events\".\"startTimestamp\", COALESCE(1 - (\"_UserInterests\".\"interestVector\" <=> \"Events\".\"embedding\"), 0.0) AS \"score\"\nFROM \"Events\"\n LEFT JOIN \"_UserInterests\" ON \"_UserInterests\".\"userid\" = $2\nWHERE (\"to_tsvector\"('english', COALESCE(\"Events\".\"title\", ' ') || ' ' || COALESCE(\"Events\".\"abstract\", ' ')) @@ \"websearch_to_tsquery\"('english', CAST($1 AS TEXT)))\nORDER BY COALESCE(1 - (\"_UserInterests\".\"interestVector\" <=> \"Events\".\"embedding\"), 0.0) DESC NULLS LAST",
-            "parameters" : [
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "PersonalizedEventSearch",
+          "exec" : {
+            "arguments" : [
               {
-                "type" : "arg",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
                 "path" : "query"
               },
               {
-                "type" : "arg",
+                "type" : "variable",
                 "path" : "userid"
               }
             ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "RecommendedEvents",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            },
-            {
-              "type" : "variable",
-              "path" : "userid"
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"Events\".\"url\", \"Events\".\"date\", \"Events\".\"time\", \"Events\".\"title\", \"Events\".\"abstract\", \"Events\".\"location\", \"Events\".\"speakers\", \"Events\".\"last_updated\", \"Events\".\"id\", \"Events\".\"full_text\", \"Events\".\"startTime\", \"Events\".\"embedding\", \"Events\".\"startTimestamp\", COALESCE(1 - (\"_UserInterests\".\"interestVector\" <=> \"Events\".\"embedding\"), 0.0) AS \"score\"\nFROM \"Events\"\n LEFT JOIN \"_UserInterests\" ON \"_UserInterests\".\"userid\" = $2\nWHERE (\"to_tsvector\"('english', COALESCE(\"Events\".\"title\", ' ') || ' ' || COALESCE(\"Events\".\"abstract\", ' ')) @@ \"websearch_to_tsquery\"('english', CAST($1 AS TEXT)))\nORDER BY COALESCE(1 - (\"_UserInterests\".\"interestVector\" <=> \"Events\".\"embedding\"), 0.0) DESC NULLS LAST",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "query"
+                },
+                {
+                  "type" : "arg",
+                  "path" : "userid"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT \"Events\".\"url\", \"Events\".\"date\", \"Events\".\"time\", \"Events\".\"title\", \"Events\".\"abstract\", \"Events\".\"location\", \"Events\".\"speakers\", \"Events\".\"last_updated\", \"Events\".\"id\", \"Events\".\"full_text\", \"Events\".\"startTime\", \"Events\".\"embedding\", \"Events\".\"startTimestamp\", 1 - (\"_UserInterests\".\"interestVector\" <=> \"Events\".\"embedding\") AS \"score\"\nFROM \"Events\"\n INNER JOIN \"_UserInterests\" ON \"_UserInterests\".\"userid\" = $1\nORDER BY 1 - (\"_UserInterests\".\"interestVector\" <=> \"Events\".\"embedding\") DESC NULLS LAST",
-            "parameters" : [
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "RecommendedEvents",
+          "exec" : {
+            "arguments" : [
               {
-                "type" : "arg",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
                 "path" : "userid"
               }
             ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"Events\".\"url\", \"Events\".\"date\", \"Events\".\"time\", \"Events\".\"title\", \"Events\".\"abstract\", \"Events\".\"location\", \"Events\".\"speakers\", \"Events\".\"last_updated\", \"Events\".\"id\", \"Events\".\"full_text\", \"Events\".\"startTime\", \"Events\".\"embedding\", \"Events\".\"startTimestamp\", 1 - (\"_UserInterests\".\"interestVector\" <=> \"Events\".\"embedding\") AS \"score\"\nFROM \"Events\"\n INNER JOIN \"_UserInterests\" ON \"_UserInterests\".\"userid\" = $1\nORDER BY 1 - (\"_UserInterests\".\"interestVector\" <=> \"Events\".\"embedding\") DESC NULLS LAST",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "userid"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
           }
         }
+      ],
+      "mutations" : [ ],
+      "subscriptions" : [ ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetEvents",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "likeCount_offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "id" : {
+                  "type" : "integer"
+                },
+                "likeCount_limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "id"
+              ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query Events($id: Long!, $limit: Int = 10, $offset: Int = 0$likeCount_limit: Int = 10, $likeCount_offset: Int = 0) {\nEvents(id: $id, limit: $limit, offset: $offset) {\nurl\ndate\ntime\ntitle\nabstract\nlocation\nspeakers {\nname\ntitle\ncompany\n}\nlast_updated\nid\nfull_text\nstartTime\nstartTimestamp\nlikeCount(limit: $likeCount_limit, offset: $likeCount_offset) {\neventid\nnum\ntest\n}\n}\n\n}",
+            "queryName" : "Events",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Events{?offset,likeCount_offset,limit,id,likeCount_limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetEventsLiked",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "likeCount_offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "likeCount_limit" : {
+                  "type" : "integer"
+                },
+                "userid" : {
+                  "type" : "string"
+                }
+              },
+              "required" : [
+                "userid"
+              ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query EventsLiked($userid: String!, $limit: Int = 10, $offset: Int = 0$likeCount_limit: Int = 10, $likeCount_offset: Int = 0) {\nEventsLiked(userid: $userid, limit: $limit, offset: $offset) {\nurl\ndate\ntime\ntitle\nabstract\nlocation\nspeakers {\nname\ntitle\ncompany\n}\nlast_updated\nid\nfull_text\nstartTime\nstartTimestamp\nlikeCount(limit: $likeCount_limit, offset: $likeCount_offset) {\neventid\nnum\ntest\n}\n}\n\n}",
+            "queryName" : "EventsLiked",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/EventsLiked{?offset,likeCount_offset,limit,likeCount_limit,userid}"
+        },
+        {
+          "function" : {
+            "name" : "GetPersonalizedEventSearch",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "query" : {
+                  "type" : "string"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "userid" : {
+                  "type" : "string"
+                }
+              },
+              "required" : [
+                "query",
+                "userid"
+              ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query PersonalizedEventSearch($query: String!, $userid: String!, $limit: Int = 10, $offset: Int = 0) {\nPersonalizedEventSearch(query: $query, userid: $userid, limit: $limit, offset: $offset) {\nurl\ndate\ntime\ntitle\nabstract\nlocation\nspeakers {\nname\ntitle\ncompany\n}\nlast_updated\nid\nfull_text\nstartTime\nstartTimestamp\nscore\n}\n\n}",
+            "queryName" : "PersonalizedEventSearch",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/PersonalizedEventSearch{?offset,query,limit,userid}"
+        },
+        {
+          "function" : {
+            "name" : "GetRecommendedEvents",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "userid" : {
+                  "type" : "string"
+                }
+              },
+              "required" : [
+                "userid"
+              ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query RecommendedEvents($userid: String!, $limit: Int = 10, $offset: Int = 0) {\nRecommendedEvents(userid: $userid, limit: $limit, offset: $offset) {\nurl\ndate\ntime\ntitle\nabstract\nlocation\nspeakers {\nname\ntitle\ncompany\n}\nlast_updated\nid\nfull_text\nstartTime\nstartTimestamp\nscore\n}\n\n}",
+            "queryName" : "RecommendedEvents",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/RecommendedEvents{?offset,limit,userid}"
+        }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\ntype EventLikeCount {\n  eventid: Long!\n  num: Long!\n  test: Long!\n}\n\ntype Events {\n  url: String!\n  date: String!\n  time: String!\n  title: String!\n  abstract: String!\n  location: String!\n  speakers: [Events_speakersOutput]!\n  last_updated: DateTime!\n  id: Long!\n  full_text: String!\n  startTime: String\n  startTimestamp: DateTime\n  likeCount(limit: Int = 10, offset: Int = 0): [EventLikeCount!]\n}\n\ntype Events_speakersOutput {\n  name: String\n  title: String\n  company: String\n}\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype PersonalizedEventSearch {\n  url: String!\n  date: String!\n  time: String!\n  title: String!\n  abstract: String!\n  location: String!\n  speakers: [PersonalizedEventSearch_speakersOutput]!\n  last_updated: DateTime!\n  id: Long!\n  full_text: String!\n  startTime: String\n  startTimestamp: DateTime\n  score: Float!\n}\n\ntype PersonalizedEventSearch_speakersOutput {\n  name: String\n  title: String\n  company: String\n}\n\ntype Query {\n  Events(id: Long!, limit: Int = 10, offset: Int = 0): [Events!]\n  EventsLiked(userid: String!, limit: Int = 10, offset: Int = 0): [Events!]\n  PersonalizedEventSearch(query: String!, userid: String!, limit: Int = 10, offset: Int = 0): [PersonalizedEventSearch!]\n  RecommendedEvents(userid: String!, limit: Int = 10, offset: Int = 0): [RecommendedEvents!]\n}\n\ntype RecommendedEvents {\n  url: String!\n  date: String!\n  time: String!\n  title: String!\n  abstract: String!\n  location: String!\n  speakers: [RecommendedEvents_speakersOutput]!\n  last_updated: DateTime!\n  id: Long!\n  full_text: String!\n  startTime: String\n  startTimestamp: DateTime\n  score: Float!\n}\n\ntype RecommendedEvents_speakersOutput {\n  name: String\n  title: String\n  company: String\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
-    ],
-    "mutations" : [ ],
-    "subscriptions" : [ ],
-    "operations" : [
-      {
-        "function" : {
-          "name" : "GetEvents",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "likeCount_offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              },
-              "id" : {
-                "type" : "integer"
-              },
-              "likeCount_limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [
-              "id"
-            ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query Events($id: Long!, $limit: Int = 10, $offset: Int = 0$likeCount_limit: Int = 10, $likeCount_offset: Int = 0) {\nEvents(id: $id, limit: $limit, offset: $offset) {\nurl\ndate\ntime\ntitle\nabstract\nlocation\nspeakers {\nname\ntitle\ncompany\n}\nlast_updated\nid\nfull_text\nstartTime\nstartTimestamp\nlikeCount(limit: $likeCount_limit, offset: $likeCount_offset) {\neventid\nnum\ntest\n}\n}\n\n}",
-          "queryName" : "Events",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/Events{?offset,likeCount_offset,limit,id,likeCount_limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetEventsLiked",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "likeCount_offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              },
-              "likeCount_limit" : {
-                "type" : "integer"
-              },
-              "userid" : {
-                "type" : "string"
-              }
-            },
-            "required" : [
-              "userid"
-            ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query EventsLiked($userid: String!, $limit: Int = 10, $offset: Int = 0$likeCount_limit: Int = 10, $likeCount_offset: Int = 0) {\nEventsLiked(userid: $userid, limit: $limit, offset: $offset) {\nurl\ndate\ntime\ntitle\nabstract\nlocation\nspeakers {\nname\ntitle\ncompany\n}\nlast_updated\nid\nfull_text\nstartTime\nstartTimestamp\nlikeCount(limit: $likeCount_limit, offset: $likeCount_offset) {\neventid\nnum\ntest\n}\n}\n\n}",
-          "queryName" : "EventsLiked",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/EventsLiked{?offset,likeCount_offset,limit,likeCount_limit,userid}"
-      },
-      {
-        "function" : {
-          "name" : "GetPersonalizedEventSearch",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "query" : {
-                "type" : "string"
-              },
-              "limit" : {
-                "type" : "integer"
-              },
-              "userid" : {
-                "type" : "string"
-              }
-            },
-            "required" : [
-              "query",
-              "userid"
-            ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query PersonalizedEventSearch($query: String!, $userid: String!, $limit: Int = 10, $offset: Int = 0) {\nPersonalizedEventSearch(query: $query, userid: $userid, limit: $limit, offset: $offset) {\nurl\ndate\ntime\ntitle\nabstract\nlocation\nspeakers {\nname\ntitle\ncompany\n}\nlast_updated\nid\nfull_text\nstartTime\nstartTimestamp\nscore\n}\n\n}",
-          "queryName" : "PersonalizedEventSearch",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/PersonalizedEventSearch{?offset,query,limit,userid}"
-      },
-      {
-        "function" : {
-          "name" : "GetRecommendedEvents",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              },
-              "userid" : {
-                "type" : "string"
-              }
-            },
-            "required" : [
-              "userid"
-            ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query RecommendedEvents($userid: String!, $limit: Int = 10, $offset: Int = 0) {\nRecommendedEvents(userid: $userid, limit: $limit, offset: $offset) {\nurl\ndate\ntime\ntitle\nabstract\nlocation\nspeakers {\nname\ntitle\ncompany\n}\nlast_updated\nid\nfull_text\nstartTime\nstartTimestamp\nscore\n}\n\n}",
-          "queryName" : "RecommendedEvents",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/RecommendedEvents{?offset,limit,userid}"
-      }
-    ],
-    "schema" : {
-      "type" : "string",
-      "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\ntype EventLikeCount {\n  eventid: Long!\n  num: Long!\n  test: Long!\n}\n\ntype Events {\n  url: String!\n  date: String!\n  time: String!\n  title: String!\n  abstract: String!\n  location: String!\n  speakers: [Events_speakersOutput]!\n  last_updated: DateTime!\n  id: Long!\n  full_text: String!\n  startTime: String\n  startTimestamp: DateTime\n  likeCount(limit: Int = 10, offset: Int = 0): [EventLikeCount!]\n}\n\ntype Events_speakersOutput {\n  name: String\n  title: String\n  company: String\n}\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype PersonalizedEventSearch {\n  url: String!\n  date: String!\n  time: String!\n  title: String!\n  abstract: String!\n  location: String!\n  speakers: [PersonalizedEventSearch_speakersOutput]!\n  last_updated: DateTime!\n  id: Long!\n  full_text: String!\n  startTime: String\n  startTimestamp: DateTime\n  score: Float!\n}\n\ntype PersonalizedEventSearch_speakersOutput {\n  name: String\n  title: String\n  company: String\n}\n\ntype Query {\n  Events(id: Long!, limit: Int = 10, offset: Int = 0): [Events!]\n  EventsLiked(userid: String!, limit: Int = 10, offset: Int = 0): [Events!]\n  PersonalizedEventSearch(query: String!, userid: String!, limit: Int = 10, offset: Int = 0): [PersonalizedEventSearch!]\n  RecommendedEvents(userid: String!, limit: Int = 10, offset: Int = 0): [RecommendedEvents!]\n}\n\ntype RecommendedEvents {\n  url: String!\n  date: String!\n  time: String!\n  title: String!\n  abstract: String!\n  location: String!\n  speakers: [RecommendedEvents_speakersOutput]!\n  last_updated: DateTime!\n  id: Long!\n  full_text: String!\n  startTime: String\n  startTimestamp: DateTime\n  score: Float!\n}\n\ntype RecommendedEvents_speakersOutput {\n  name: String\n  title: String\n  company: String\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
     }
   }
 }

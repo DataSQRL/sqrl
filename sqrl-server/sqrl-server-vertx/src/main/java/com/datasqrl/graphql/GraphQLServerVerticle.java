@@ -30,6 +30,7 @@ import graphql.GraphQL;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import io.vertx.ext.auth.jwt.JWTAuth;
+import io.vertx.ext.web.Route;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.JWTAuthHandler;
 import io.vertx.ext.web.handler.graphql.GraphQLHandler;
@@ -52,6 +53,7 @@ public class GraphQLServerVerticle extends AbstractVerticle {
 
   private final Router router;
   private final ServerConfig config;
+  private final String modelVersion;
   private final RootGraphqlModel model;
   private final Optional<JWTAuth> authProvider;
 
@@ -63,7 +65,9 @@ public class GraphQLServerVerticle extends AbstractVerticle {
       setupGraphQLRoutes(startPromise);
     } catch (Exception e) {
       log.error("Could not setup GraphQL routes", e);
-      startPromise.fail(e);
+      if (!startPromise.future().isComplete()) {
+        startPromise.fail(e);
+      }
     }
   }
 
@@ -81,7 +85,7 @@ public class GraphQLServerVerticle extends AbstractVerticle {
 
       var graphiQlHandler = graphiQlHandlerBuilder.build();
       router
-          .route(this.config.getServletConfig().getGraphiQLEndpoint())
+          .route(this.config.getServletConfig().getGraphiQLEndpoint(modelVersion))
           .subRouter(graphiQlHandler.router());
     }
 
@@ -90,12 +94,12 @@ public class GraphQLServerVerticle extends AbstractVerticle {
     Map<DatabaseType, SqlClient> clients = jdbcConfig.createClients();
 
     // Setup GraphQL endpoint with auth if configured
-    var handler = router.route(this.config.getServletConfig().getGraphQLEndpoint());
+    var handler = router.route(this.config.getServletConfig().getGraphQLEndpoint(modelVersion));
     authProvider.ifPresent(
         (auth) -> {
           log.info(
               "Applying JWT authentication to GraphQL endpoint: {}",
-              this.config.getServletConfig().getGraphQLEndpoint());
+              this.config.getServletConfig().getGraphQLEndpoint(modelVersion));
           // Required for adding auth on ws handler
           System.setProperty("io.vertx.web.router.setup.lenient", "true");
           handler.handler(JWTAuthHandler.create(auth));
@@ -121,6 +125,12 @@ public class GraphQLServerVerticle extends AbstractVerticle {
         });
 
     return readers.build();
+  }
+
+  private Route routeVersioned(Router router, String version, String endpoint) {
+    var versionedRoute = '/' + version + endpoint;
+
+    return router.route(versionedRoute);
   }
 
   /**
@@ -154,7 +164,6 @@ public class GraphQLServerVerticle extends AbstractVerticle {
       }
       return graphQL.build();
     } catch (Exception e) {
-      startPromise.fail(e.getMessage());
       log.error("Unable to create GraphQL", e);
       throw e;
     }

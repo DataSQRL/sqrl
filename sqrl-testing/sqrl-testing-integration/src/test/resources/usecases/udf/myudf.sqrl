@@ -1,6 +1,6 @@
-IMPORT myjavafunction.build.libs.MyScalarFunction;
-IMPORT myjavafunction.build.libs.MyScalarFunction AS AnotherFunction;
-IMPORT myjavafunction.build.libs.MyAsyncScalarFunction;
+IMPORT myjavafunction.lib.MyScalarFunction;
+IMPORT myjavafunction.lib.MyScalarFunction AS AnotherFunction;
+IMPORT myjavafunction.lib.MyAsyncScalarFunction;
 
 MyTable := SELECT val, MyScalarFunction(val, val) AS myFnc
            FROM (VALUES ((1)), ((2)), ((3)), ((4)), ((5)),
@@ -8,6 +8,8 @@ MyTable := SELECT val, MyScalarFunction(val, val) AS myFnc
 
 MyTableAnother := SELECT val, AnotherFunction(val, val) AS myFnc
            FROM (VALUES ((1)), ((2))) AS t(val) ORDER BY val;
+
+MyTableDifferentCase := SELECT val, anotherFunction(val, val) as fn FROM (VALUES ((1)), ((2))) AS t(val) ORDER BY val;
 
 MyAsyncTable := SELECT val, MyAsyncScalarFunction(val, ival) AS myFnc
            FROM (VALUES (('1'), (1)), (('2'), (2)), (('3'), (3))) AS t(val, ival) ORDER BY val;

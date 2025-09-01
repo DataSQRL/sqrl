@@ -38,8 +38,10 @@ import io.swagger.v3.oas.models.servers.Server;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+@RequiredArgsConstructor
 @Slf4j
 public class SwaggerService {
 
@@ -49,13 +51,8 @@ public class SwaggerService {
 
   private final SwaggerConfig swaggerConfig;
   private final RootGraphqlModel model;
+  private final String modelVersion;
   private final String restEndpoint;
-
-  public SwaggerService(SwaggerConfig swaggerConfig, RootGraphqlModel model, String restEndpoint) {
-    this.swaggerConfig = swaggerConfig;
-    this.model = model;
-    this.restEndpoint = restEndpoint;
-  }
 
   public String generateSwaggerJson(String requestHost) {
     try {
@@ -299,6 +296,7 @@ public class SwaggerService {
         </html>
         """;
 
-    return String.format(swaggerUIHtml, swaggerConfig.getTitle(), swaggerConfig.getEndpoint());
+    return String.format(
+        swaggerUIHtml, swaggerConfig.getTitle(), swaggerConfig.getEndpoint(modelVersion));
   }
 }

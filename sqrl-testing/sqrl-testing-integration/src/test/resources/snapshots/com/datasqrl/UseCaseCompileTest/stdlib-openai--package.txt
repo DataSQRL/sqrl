@@ -10,7 +10,7 @@ Schema:
 Plan:
 LogicalProject(val=[$0])
   LogicalValues(tuples=[[{ 1 }]])
-SQL: CREATE VIEW data AS  SELECT * FROM (VALUES(1)) AS t(val);
+SQL: CREATE VIEW `data` AS  SELECT * FROM (VALUES(1)) AS t(val);
 
 === results
 ID:     default_catalog.default_database.results
@@ -26,7 +26,7 @@ Schema:
 Plan:
 LogicalProject(completions_result=[completions('Reply this exactly: \"Crunching data like a squirrel.\"', 'gpt-4o', 50, 0.1:DOUBLE)], extract_json_result_response=[extract_json('Reply this exactly: \"Crunching data like a squirrel.\" in the \"response\" property.', 'gpt-4o', 0.1:DOUBLE)], extract_json_result_with_schema_response=[extract_json('myField should be equal to \"Hello squirrels!\" ', 'gpt-4o', 0.1:DOUBLE, 1.0:DOUBLE, '{"$schema":"http://json-schema.org/draft-07/schema#","type":"object","properties":{"response":{"type":"object","properties":{"myField":{"type":"string"}},"required":["myField"],"additionalProperties":false}},"required":["response"],"additionalProperties":false}')])
   LogicalTableScan(table=[[default_catalog, default_database, data]])
-SQL: CREATE VIEW results AS  SELECT
+SQL: CREATE VIEW `results` AS  SELECT
             completions('Reply this exactly: \"Crunching data like a squirrel.\"', 'gpt-4o', 50, 0.1) AS completions_result,
             extract_json('Reply this exactly: \"Crunching data like a squirrel.\" in the \"response\" property.', 'gpt-4o', 0.1) AS extract_json_result_response,
             extract_json('myField should be equal to \"Hello squirrels!\" ', 'gpt-4o', 0.1, 1.0, '{"$schema":"http://json-schema.org/draft-07/schema#","type":"object","properties":{"response":{"type":"object","properties":{"myField":{"type":"string"}},"required":["myField"],"additionalProperties":false}},"required":["response"],"additionalProperties":false}') as extract_json_result_with_schema_response
@@ -93,118 +93,120 @@ CREATE TABLE IF NOT EXISTS "results" ("completions_result" TEXT, "extract_json_r
 
 >>>vertx.json
 {
-  "model" : {
-    "queries" : [
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "data",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "data",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"val\"\nFROM \"data\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT \"val\"\nFROM \"data\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "results",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"completions_result\", \"extract_json_result_response\", \"extract_json_result_with_schema_response\"\nFROM \"results\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
           }
         }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "results",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+      ],
+      "mutations" : [ ],
+      "subscriptions" : [ ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "Getdata",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT \"completions_result\", \"extract_json_result_response\", \"extract_json_result_with_schema_response\"\nFROM \"results\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query data($limit: Int = 10, $offset: Int = 0) {\ndata(limit: $limit, offset: $offset) {\nval\n}\n\n}",
+            "queryName" : "data",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/data{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "Getresults",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query results($limit: Int = 10, $offset: Int = 0) {\nresults(limit: $limit, offset: $offset) {\ncompletions_result\nextract_json_result_response\nextract_json_result_with_schema_response\n}\n\n}",
+            "queryName" : "results",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/results{?offset,limit}"
         }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  data(limit: Int = 10, offset: Int = 0): [data!]\n  results(limit: Int = 10, offset: Int = 0): [results!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ntype data {\n  val: Int!\n}\n\ntype results {\n  completions_result: String\n  extract_json_result_response: String\n  extract_json_result_with_schema_response: String\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
-    ],
-    "mutations" : [ ],
-    "subscriptions" : [ ],
-    "operations" : [
-      {
-        "function" : {
-          "name" : "Getdata",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query data($limit: Int = 10, $offset: Int = 0) {\ndata(limit: $limit, offset: $offset) {\nval\n}\n\n}",
-          "queryName" : "data",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/data{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "Getresults",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query results($limit: Int = 10, $offset: Int = 0) {\nresults(limit: $limit, offset: $offset) {\ncompletions_result\nextract_json_result_response\nextract_json_result_with_schema_response\n}\n\n}",
-          "queryName" : "results",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/results{?offset,limit}"
-      }
-    ],
-    "schema" : {
-      "type" : "string",
-      "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  data(limit: Int = 10, offset: Int = 0): [data!]\n  results(limit: Int = 10, offset: Int = 0): [results!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ntype data {\n  val: Int!\n}\n\ntype results {\n  completions_result: String\n  extract_json_result_response: String\n  extract_json_result_with_schema_response: String\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
     }
   }
 }

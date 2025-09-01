@@ -21,9 +21,9 @@ import com.datasqrl.config.PackageJson.ExplainConfig;
 import com.datasqrl.plan.global.PipelineDAGExporter;
 import com.datasqrl.planner.dag.PipelineDAG;
 import com.datasqrl.serializer.Deserializer;
-import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import com.google.inject.Inject;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -67,7 +67,7 @@ public class DagWriter {
       List<PipelineDAGExporter.Node> nodes = exporter.export(dag);
       if (explainConfig.isSorted()) Collections.sort(nodes); // make order deterministic
       writeFile(
-          buildDir.getBuildDir().resolve(EXPLAIN_TEXT_FILENAME),
+          buildDir.buildDir().resolve(EXPLAIN_TEXT_FILENAME),
           nodes.stream().map(PipelineDAGExporter.Node::toString).collect(Collectors.joining("\n")));
     }
     if (explainConfig.isVisual()) {
@@ -84,10 +84,10 @@ public class DagWriter {
       if (explainConfig.isSorted()) Collections.sort(nodes); // make order deterministic
       String jsonContent = Deserializer.INSTANCE.toJson(nodes);
       String htmlFile =
-          Resources.toString(Resources.getResource(VISUAL_HTML_FILENAME), Charsets.UTF_8);
+          Resources.toString(Resources.getResource(VISUAL_HTML_FILENAME), StandardCharsets.UTF_8);
       htmlFile = htmlFile.replace(DAG_PLACEHOLDER, jsonContent);
-      writeFile(buildDir.getBuildDir().resolve(EXPLAIN_VISUAL_FILENAME), htmlFile);
-      writeFile(buildDir.getBuildDir().resolve(EXPLAIN_JSON_FILENAME), jsonContent);
+      writeFile(buildDir.buildDir().resolve(EXPLAIN_VISUAL_FILENAME), htmlFile);
+      writeFile(buildDir.buildDir().resolve(EXPLAIN_JSON_FILENAME), jsonContent);
     }
   }
 

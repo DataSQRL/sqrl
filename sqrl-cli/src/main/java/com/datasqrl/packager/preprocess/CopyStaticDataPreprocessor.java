@@ -15,14 +15,11 @@
  */
 package com.datasqrl.packager.preprocess;
 
-import static com.datasqrl.config.SqrlConstants.DATA_DIR;
-
-import com.datasqrl.discovery.file.FileCompression;
-import com.datasqrl.discovery.file.FileCompression.CompressionIO;
-import com.datasqrl.discovery.file.FilenameAnalyzer;
-import com.datasqrl.discovery.file.FilenameAnalyzer.Components;
-import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.packager.preprocessor.Preprocessor;
+import com.datasqrl.packager.FilePreprocessingPipeline;
+import com.datasqrl.util.FileCompression;
+import com.datasqrl.util.FileCompression.CompressionIO;
+import com.datasqrl.util.FilenameAnalyzer;
+import com.datasqrl.util.FilenameAnalyzer.Components;
 import com.google.common.io.ByteStreams;
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
@@ -30,11 +27,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.Set;
-import java.util.regex.Pattern;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
@@ -44,37 +39,33 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class CopyStaticDataPreprocessor implements Preprocessor {
 
-  public static final Set<String> DATA_FILE_EXTENSIONS = Set.of("jsonl", "csv");
-
-  private static final FilenameAnalyzer DATA_PATTERN = FilenameAnalyzer.of(DATA_FILE_EXTENSIONS);
-  private static final FilenameAnalyzer CSV_PATTERN = FilenameAnalyzer.of(Set.of("csv"));
-
-  @Override
-  public Pattern getPattern() {
-    return DATA_PATTERN.getFilePattern();
-  }
+  private static final FilenameAnalyzer DATA_PATTERN = FilenameAnalyzer.of(Set.of("jsonl", "csv"));
 
   @SneakyThrows
   @Override
-  public void processFile(Path path, ProcessorContext processorContext, ErrorCollector errors) {
-    Path dataDir = processorContext.getBuildDir().resolve(DATA_DIR);
-    Files.createDirectories(dataDir);
-    Path data = dataDir.resolve(path.getFileName());
-    if (!Files.isRegularFile(data)) { // copy only if file does not already exist
-      Optional<Components> match = CSV_PATTERN.analyze(path);
-      if (match.isPresent()) {
-        Optional<CompressionIO> fileCompress = FileCompression.of(match.get().getCompression());
-        if (fileCompress.isPresent()) {
-          // Need to remove header row for CSV files since Flink does not support headers
-          copyFileSkipFirstLine(path, data, fileCompress.get());
-        } else {
-          errors.warn(
+  public void process(Path file, FilePreprocessingPipeline.Context context) {
+    Optional<Components> fileComponents = DATA_PATTERN.analyze(file);
+    if (fileComponents.isEmpty()) {
+      return;
+    }
+
+    var fileComp = fileComponents.get();
+    if (!"csv".equalsIgnoreCase(fileComp.extension())) {
+      context.copyToData(file);
+      return;
+    }
+
+    var compression = FileCompression.of(fileComp.compression());
+    if (compression.isPresent()) {
+      // Need to remove header row for CSV files since Flink does not support headers
+      copyFileSkipFirstLine(file, context.createNewDataFile(file), compression.get());
+
+    } else {
+      context
+          .getErrorCollector()
+          .warn(
               "Compression codex %s not supported. CSV file [%s] not copied.",
-              match.get().getCompression(), path);
-        }
-      } else {
-        Files.copy(path, data);
-      }
+              fileComponents.get().compression(), file);
     }
   }
 
@@ -88,7 +79,7 @@ public class CopyStaticDataPreprocessor implements Preprocessor {
     }
   }
 
-  public void copyFileSkipFirstLine(InputStream in, OutputStream out) throws IOException {
+  void copyFileSkipFirstLine(InputStream in, OutputStream out) throws IOException {
     var afterFirstLine = skipFirstLine(in);
     ByteStreams.copy(afterFirstLine, out);
   }

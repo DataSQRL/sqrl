@@ -45,7 +45,7 @@ Plan:
 LogicalProject(_uuid=[$0], id=[$4], customer_id=[$5], loan_type_id=[$6], max_amount=[$9], min_amount=[$10], amount=[$7])
   LogicalFilter(condition=[AND(=($1, 'underwriting'), OR(>($7, $9), <($7, $10)))])
     LogicalTableScan(table=[[default_catalog, default_database, ApplicationStatus]])
-SQL: CREATE VIEW ApplicationAlert AS  SELECT _uuid, id, customer_id, loan_type_id, max_amount, min_amount, amount
+SQL: CREATE VIEW `ApplicationAlert` AS  SELECT _uuid, id, customer_id, loan_type_id, max_amount, min_amount, amount
                     FROM ApplicationStatus a
                     WHERE status = 'underwriting' AND (amount > max_amount OR amount < min_amount);
 
@@ -81,7 +81,7 @@ LogicalProject(_uuid=[$0], status=[$2], message=[$3], event_time=[$4], id=[$5], 
     LogicalFilter(condition=[=($0, $cor3.loan_type_id)])
       LogicalSnapshot(period=[$cor3.event_time])
         LogicalTableScan(table=[[default_catalog, default_database, LoanTypes]])
-SQL: CREATE VIEW ApplicationStatus AS  SELECT u._uuid, u.status, u.message, u.event_time, a.id, a.customer_id, a.loan_type_id,
+SQL: CREATE VIEW `ApplicationStatus` AS  SELECT u._uuid, u.status, u.message, u.event_time, a.id, a.customer_id, a.loan_type_id,
                             a.amount, a.duration, t.max_amount, t.min_amount
                      FROM ApplicationUpdates u JOIN Applications FOR SYSTEM_TIME AS OF u.`event_time` a ON a.id = u.loan_application_id
                             JOIN LoanTypes FOR SYSTEM_TIME AS OF u.`event_time` t ON t.id = a.loan_type_id;
@@ -182,7 +182,7 @@ Schema:
 Plan:
 LogicalProject(role=[$1], content=[$2], name=[$3], customerid=[$4.customerid], timestamp=[$5], uuid=[$0])
   LogicalTableScan(table=[[default_catalog, default_database, AddChatMessage]])
-SQL: CREATE VIEW CustomerChatMessage AS  SELECT role, content, name, c.context.customerid, event_time AS `timestamp`,
+SQL: CREATE VIEW `CustomerChatMessage` AS  SELECT role, content, name, c.context.customerid, event_time AS `timestamp`,
                         _uuid AS uuid
                        FROM AddChatMessage c ORDER BY `timestamp` DESC;
 
@@ -722,905 +722,907 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
 
 >>>vertx.json
 {
-  "model" : {
-    "queries" : [
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "AddChatMessage",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"AddChatMessage\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "ApplicationAlert",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"ApplicationAlert\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "ApplicationStatus",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"ApplicationStatus\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "ApplicationUpdates",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"ApplicationUpdates\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "ApplicationUpdates",
-        "fieldName" : "application",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Applications\"\nWHERE $1 = \"id\"",
-            "parameters" : [
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "AddChatMessage",
+          "exec" : {
+            "arguments" : [
               {
-                "type" : "source",
-                "key" : "loan_application_id"
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
               }
             ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Applications",
-        "fieldName" : "loanType",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"AddChatMessage\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"LoanTypes\"\nWHERE $1 = \"id\"",
-            "parameters" : [
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "ApplicationAlert",
+          "exec" : {
+            "arguments" : [
               {
-                "type" : "source",
-                "key" : "loan_type_id"
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
               }
             ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Applications",
-        "fieldName" : "updates",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"ApplicationAlert\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"ApplicationUpdates\"\nWHERE $1 = \"loan_application_id\"\nORDER BY \"event_time\" NULLS FIRST",
-            "parameters" : [
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "ApplicationStatus",
+          "exec" : {
+            "arguments" : [
               {
-                "type" : "source",
-                "key" : "id"
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
               }
             ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "Applications",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"ApplicationStatus\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Applications\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
           }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "ApplicationsStream",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"ApplicationsStream\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "CustomerChatMessage",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM (SELECT \"role\", \"content\", \"name\", \"customerid\", \"timestamp\", \"uuid\"\n  FROM \"CustomerChatMessage\"\n  ORDER BY \"timestamp\" DESC NULLS LAST) AS \"t\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "Customers",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Customers\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Customers",
-        "fieldName" : "applications",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Applications\"\nWHERE $1 = \"customer_id\"\nORDER BY \"application_date\" NULLS FIRST",
-            "parameters" : [
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "ApplicationUpdates",
+          "exec" : {
+            "arguments" : [
               {
-                "type" : "source",
-                "key" : "id"
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
               }
             ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Customers",
-        "fieldName" : "overview",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"ApplicationUpdates\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT \"loan_type_id\", SUM(\"amount\") AS \"total_amount\", COUNT(*) AS \"total_loans\"\nFROM \"Applications\"\nWHERE $1 = \"customer_id\"\nGROUP BY \"loan_type_id\"",
-            "parameters" : [
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "ApplicationUpdates",
+          "fieldName" : "application",
+          "exec" : {
+            "arguments" : [
               {
-                "type" : "source",
-                "key" : "id"
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
               }
             ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "CustomersStream",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Applications\"\nWHERE $1 = \"id\"",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "key" : "loan_application_id"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"CustomersStream\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
           }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "LoanTypes",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+        },
+        {
+          "type" : "args",
+          "parentType" : "Applications",
+          "fieldName" : "loanType",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"LoanTypes\"\nWHERE $1 = \"id\"",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "key" : "loan_type_id"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"LoanTypes\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
           }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "LoanTypesStream",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+        },
+        {
+          "type" : "args",
+          "parentType" : "Applications",
+          "fieldName" : "updates",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"ApplicationUpdates\"\nWHERE $1 = \"loan_application_id\"\nORDER BY \"event_time\" NULLS FIRST",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "key" : "id"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"LoanTypesStream\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Applications",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Applications\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "ApplicationsStream",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"ApplicationsStream\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "CustomerChatMessage",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"role\", \"content\", \"name\", \"customerid\", \"timestamp\", \"uuid\"\n  FROM \"CustomerChatMessage\"\n  ORDER BY \"timestamp\" DESC NULLS LAST) AS \"t\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Customers",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Customers\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Customers",
+          "fieldName" : "applications",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Applications\"\nWHERE $1 = \"customer_id\"\nORDER BY \"application_date\" NULLS FIRST",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "key" : "id"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Customers",
+          "fieldName" : "overview",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"loan_type_id\", SUM(\"amount\") AS \"total_amount\", COUNT(*) AS \"total_loans\"\nFROM \"Applications\"\nWHERE $1 = \"customer_id\"\nGROUP BY \"loan_type_id\"",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "key" : "id"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "CustomersStream",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"CustomersStream\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "LoanTypes",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"LoanTypes\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "LoanTypesStream",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"LoanTypesStream\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
           }
         }
-      }
-    ],
-    "mutations" : [
-      {
-        "type" : "kafka",
-        "fieldName" : "AddChatMessage",
-        "returnList" : false,
-        "topic" : "AddChatMessage",
-        "computedColumns" : {
-          "_uuid" : "UUID",
-          "event_time" : "TIMESTAMP"
+      ],
+      "mutations" : [
+        {
+          "type" : "kafka",
+          "fieldName" : "AddChatMessage",
+          "returnList" : false,
+          "topic" : "AddChatMessage",
+          "computedColumns" : {
+            "_uuid" : "UUID",
+            "event_time" : "TIMESTAMP"
+          },
+          "transactional" : false,
+          "sinkConfig" : { }
         },
-        "transactional" : false,
-        "sinkConfig" : { }
-      },
-      {
-        "type" : "kafka",
-        "fieldName" : "ApplicationUpdates",
-        "returnList" : true,
-        "topic" : "ApplicationUpdates",
-        "computedColumns" : {
-          "_uuid" : "UUID",
-          "event_time" : "TIMESTAMP"
+        {
+          "type" : "kafka",
+          "fieldName" : "ApplicationUpdates",
+          "returnList" : true,
+          "topic" : "ApplicationUpdates",
+          "computedColumns" : {
+            "_uuid" : "UUID",
+            "event_time" : "TIMESTAMP"
+          },
+          "transactional" : true,
+          "sinkConfig" : { }
+        }
+      ],
+      "subscriptions" : [ ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "ApplicationStatusSpecialMcp",
+            "description" : "",
+            "parameters" : {
+              "type" : "object",
+              "properties" : { },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query ApplicationStatusSpecialMcp @api(rest: NONE, mcp: TOOL) {\n    ApplicationStatus(limit: 10, offset: 0) {\n        status\n        message\n        customer_id\n        loan_type_id\n        amount\n        duration\n        max_amount\n        min_amount\n    }\n}\n",
+            "queryName" : "ApplicationStatusSpecialMcp",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "NONE",
+          "uriTemplate" : "queries/ApplicationStatusSpecialMcp"
         },
-        "transactional" : true,
-        "sinkConfig" : { }
-      }
-    ],
-    "subscriptions" : [ ],
-    "operations" : [
-      {
-        "function" : {
-          "name" : "ApplicationStatusSpecialMcp",
-          "description" : "",
-          "parameters" : {
-            "type" : "object",
-            "properties" : { },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query ApplicationStatusSpecialMcp @api(rest: NONE, mcp: TOOL) {\n    ApplicationStatus(limit: 10, offset: 0) {\n        status\n        message\n        customer_id\n        loan_type_id\n        amount\n        duration\n        max_amount\n        min_amount\n    }\n}\n",
-          "queryName" : "ApplicationStatusSpecialMcp",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "NONE",
-        "uriTemplate" : "queries/ApplicationStatusSpecialMcp"
-      },
-      {
-        "function" : {
-          "name" : "GetAddChatMessage",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query AddChatMessage($limit: Int = 10, $offset: Int = 0) {\nAddChatMessage(limit: $limit, offset: $offset) {\nrole\ncontent\nname\ncontext {\ncustomerid\n}\nevent_time\n}\n\n}",
-          "queryName" : "AddChatMessage",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/AddChatMessage{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetApplicationAlert",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query ApplicationAlert($limit: Int = 10, $offset: Int = 0) {\nApplicationAlert(limit: $limit, offset: $offset) {\nid\ncustomer_id\nloan_type_id\nmax_amount\nmin_amount\namount\n}\n\n}",
-          "queryName" : "ApplicationAlert",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/ApplicationAlert{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetApplicationStatus",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query ApplicationStatus($limit: Int = 10, $offset: Int = 0) {\nApplicationStatus(limit: $limit, offset: $offset) {\nstatus\nmessage\nevent_time\nid\ncustomer_id\nloan_type_id\namount\nduration\nmax_amount\nmin_amount\n}\n\n}",
-          "queryName" : "ApplicationStatus",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/ApplicationStatus{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetApplicationUpdates",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "application_limit" : {
-                "type" : "integer"
-              },
-              "application_offset" : {
-                "type" : "integer"
-              },
-              "offset" : {
-                "type" : "integer"
-              },
-              "application_loanType_limit" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              },
-              "application_loanType_offset" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query ApplicationUpdates($limit: Int = 10, $offset: Int = 0$application_limit: Int = 10, $application_offset: Int = 0$application_loanType_limit: Int = 10, $application_loanType_offset: Int = 0) {\nApplicationUpdates(limit: $limit, offset: $offset) {\nloan_application_id\nstatus\nmessage\nevent_time\napplication(limit: $application_limit, offset: $application_offset) {\nid\ncustomer_id\nloan_type_id\namount\nduration\napplication_date\nupdated_at\nloanType(limit: $application_loanType_limit, offset: $application_loanType_offset) {\nid\nname\ndescription\ninterest_rate\nmax_amount\nmin_amount\nmax_duration\nmin_duration\nupdated_at\n}\n}\n}\n\n}",
-          "queryName" : "ApplicationUpdates",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/ApplicationUpdates{?application_limit,application_offset,offset,application_loanType_limit,limit,application_loanType_offset}"
-      },
-      {
-        "function" : {
-          "name" : "GetApplications",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              },
-              "loanType_limit" : {
-                "type" : "integer"
-              },
-              "updates_offset" : {
-                "type" : "integer"
-              },
-              "loanType_offset" : {
-                "type" : "integer"
-              },
-              "updates_limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query Applications($limit: Int = 10, $offset: Int = 0$loanType_limit: Int = 10, $loanType_offset: Int = 0$updates_limit: Int = 10, $updates_offset: Int = 0) {\nApplications(limit: $limit, offset: $offset) {\nid\ncustomer_id\nloan_type_id\namount\nduration\napplication_date\nupdated_at\nloanType(limit: $loanType_limit, offset: $loanType_offset) {\nid\nname\ndescription\ninterest_rate\nmax_amount\nmin_amount\nmax_duration\nmin_duration\nupdated_at\n}\nupdates(limit: $updates_limit, offset: $updates_offset) {\nloan_application_id\nstatus\nmessage\nevent_time\n}\n}\n\n}",
-          "queryName" : "Applications",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/Applications{?offset,limit,loanType_limit,updates_offset,loanType_offset,updates_limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetApplicationsStream",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query ApplicationsStream($limit: Int = 10, $offset: Int = 0) {\nApplicationsStream(limit: $limit, offset: $offset) {\nid\ncustomer_id\nloan_type_id\namount\nduration\napplication_date\nupdated_at\n}\n\n}",
-          "queryName" : "ApplicationsStream",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/ApplicationsStream{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetCustomerChatMessage",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query CustomerChatMessage($limit: Int = 10, $offset: Int = 0) {\nCustomerChatMessage(limit: $limit, offset: $offset) {\nrole\ncontent\nname\ncustomerid\ntimestamp\nuuid\n}\n\n}",
-          "queryName" : "CustomerChatMessage",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/CustomerChatMessage{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetCustomers",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "applications_loanType_limit" : {
-                "type" : "integer"
-              },
-              "applications_updates_offset" : {
-                "type" : "integer"
-              },
-              "overview_limit" : {
-                "type" : "integer"
-              },
-              "overview_offset" : {
-                "type" : "integer"
-              },
-              "offset" : {
-                "type" : "integer"
-              },
-              "applications_updates_limit" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              },
-              "applications_limit" : {
-                "type" : "integer"
-              },
-              "applications_loanType_offset" : {
-                "type" : "integer"
-              },
-              "applications_offset" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query Customers($limit: Int = 10, $offset: Int = 0$applications_limit: Int = 10, $applications_offset: Int = 0$applications_loanType_limit: Int = 10, $applications_loanType_offset: Int = 0$applications_updates_limit: Int = 10, $applications_updates_offset: Int = 0$overview_limit: Int = 10, $overview_offset: Int = 0) {\nCustomers(limit: $limit, offset: $offset) {\nid\nfirst_name\nlast_name\nemail\nphone\naddress\ndate_of_birth\nupdated_at\napplications(limit: $applications_limit, offset: $applications_offset) {\nid\ncustomer_id\nloan_type_id\namount\nduration\napplication_date\nupdated_at\nloanType(limit: $applications_loanType_limit, offset: $applications_loanType_offset) {\nid\nname\ndescription\ninterest_rate\nmax_amount\nmin_amount\nmax_duration\nmin_duration\nupdated_at\n}\nupdates(limit: $applications_updates_limit, offset: $applications_updates_offset) {\nloan_application_id\nstatus\nmessage\nevent_time\n}\n}\noverview(limit: $overview_limit, offset: $overview_offset) {\nloan_type_id\ntotal_amount\ntotal_loans\n}\n}\n\n}",
-          "queryName" : "Customers",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/Customers{?applications_loanType_limit,applications_updates_offset,overview_limit,overview_offset,offset,applications_updates_limit,limit,applications_limit,applications_loanType_offset,applications_offset}"
-      },
-      {
-        "function" : {
-          "name" : "GetCustomersStream",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query CustomersStream($limit: Int = 10, $offset: Int = 0) {\nCustomersStream(limit: $limit, offset: $offset) {\nid\nfirst_name\nlast_name\nemail\nphone\naddress\ndate_of_birth\nupdated_at\n}\n\n}",
-          "queryName" : "CustomersStream",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/CustomersStream{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetLoanTypes",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query LoanTypes($limit: Int = 10, $offset: Int = 0) {\nLoanTypes(limit: $limit, offset: $offset) {\nid\nname\ndescription\ninterest_rate\nmax_amount\nmin_amount\nmax_duration\nmin_duration\nupdated_at\n}\n\n}",
-          "queryName" : "LoanTypes",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/LoanTypes{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetLoanTypesStream",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query LoanTypesStream($limit: Int = 10, $offset: Int = 0) {\nLoanTypesStream(limit: $limit, offset: $offset) {\nid\nname\ndescription\ninterest_rate\nmax_amount\nmin_amount\nmax_duration\nmin_duration\nupdated_at\n}\n\n}",
-          "queryName" : "LoanTypesStream",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/LoanTypesStream{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "AddAddChatMessage",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "role" : {
-                "type" : "string"
-              },
-              "name" : {
-                "type" : "string"
-              },
-              "context" : {
-                "type" : "object",
-                "properties" : {
-                  "customerid" : {
-                    "type" : "integer"
-                  }
+        {
+          "function" : {
+            "name" : "GetAddChatMessage",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
                 },
-                "required" : [ ]
+                "limit" : {
+                  "type" : "integer"
+                }
               },
-              "content" : {
-                "type" : "string"
-              }
-            },
-            "required" : [
-              "role",
-              "content",
-              "context"
-            ]
-          }
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query AddChatMessage($limit: Int = 10, $offset: Int = 0) {\nAddChatMessage(limit: $limit, offset: $offset) {\nrole\ncontent\nname\ncontext {\ncustomerid\n}\nevent_time\n}\n\n}",
+            "queryName" : "AddChatMessage",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/AddChatMessage{?offset,limit}"
         },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "mutation AddChatMessage($role: String!, $content: String!, $name: String, $context: AddChatMessage_contextInput!) {\nAddChatMessage(event: { role: $role, content: $content, name: $name, context: $context }) {\nrole\ncontent\nname\ncontext {\ncustomerid\n}\nevent_time\n}\n\n}",
-          "queryName" : "AddChatMessage",
-          "operationType" : "MUTATION"
+        {
+          "function" : {
+            "name" : "GetApplicationAlert",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query ApplicationAlert($limit: Int = 10, $offset: Int = 0) {\nApplicationAlert(limit: $limit, offset: $offset) {\nid\ncustomer_id\nloan_type_id\nmax_amount\nmin_amount\namount\n}\n\n}",
+            "queryName" : "ApplicationAlert",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/ApplicationAlert{?offset,limit}"
         },
-        "mcpMethod" : "NONE",
-        "restMethod" : "POST",
-        "uriTemplate" : "mutations/AddChatMessage"
-      },
-      {
-        "function" : {
-          "name" : "AddApplicationUpdates",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "event" : {
-                "type" : "array",
-                "items" : {
+        {
+          "function" : {
+            "name" : "GetApplicationStatus",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query ApplicationStatus($limit: Int = 10, $offset: Int = 0) {\nApplicationStatus(limit: $limit, offset: $offset) {\nstatus\nmessage\nevent_time\nid\ncustomer_id\nloan_type_id\namount\nduration\nmax_amount\nmin_amount\n}\n\n}",
+            "queryName" : "ApplicationStatus",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/ApplicationStatus{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetApplicationUpdates",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "application_limit" : {
+                  "type" : "integer"
+                },
+                "application_offset" : {
+                  "type" : "integer"
+                },
+                "offset" : {
+                  "type" : "integer"
+                },
+                "application_loanType_limit" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "application_loanType_offset" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query ApplicationUpdates($limit: Int = 10, $offset: Int = 0$application_limit: Int = 10, $application_offset: Int = 0$application_loanType_limit: Int = 10, $application_loanType_offset: Int = 0) {\nApplicationUpdates(limit: $limit, offset: $offset) {\nloan_application_id\nstatus\nmessage\nevent_time\napplication(limit: $application_limit, offset: $application_offset) {\nid\ncustomer_id\nloan_type_id\namount\nduration\napplication_date\nupdated_at\nloanType(limit: $application_loanType_limit, offset: $application_loanType_offset) {\nid\nname\ndescription\ninterest_rate\nmax_amount\nmin_amount\nmax_duration\nmin_duration\nupdated_at\n}\n}\n}\n\n}",
+            "queryName" : "ApplicationUpdates",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/ApplicationUpdates{?application_limit,application_offset,offset,application_loanType_limit,limit,application_loanType_offset}"
+        },
+        {
+          "function" : {
+            "name" : "GetApplications",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "loanType_limit" : {
+                  "type" : "integer"
+                },
+                "updates_offset" : {
+                  "type" : "integer"
+                },
+                "loanType_offset" : {
+                  "type" : "integer"
+                },
+                "updates_limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query Applications($limit: Int = 10, $offset: Int = 0$loanType_limit: Int = 10, $loanType_offset: Int = 0$updates_limit: Int = 10, $updates_offset: Int = 0) {\nApplications(limit: $limit, offset: $offset) {\nid\ncustomer_id\nloan_type_id\namount\nduration\napplication_date\nupdated_at\nloanType(limit: $loanType_limit, offset: $loanType_offset) {\nid\nname\ndescription\ninterest_rate\nmax_amount\nmin_amount\nmax_duration\nmin_duration\nupdated_at\n}\nupdates(limit: $updates_limit, offset: $updates_offset) {\nloan_application_id\nstatus\nmessage\nevent_time\n}\n}\n\n}",
+            "queryName" : "Applications",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Applications{?offset,limit,loanType_limit,updates_offset,loanType_offset,updates_limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetApplicationsStream",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query ApplicationsStream($limit: Int = 10, $offset: Int = 0) {\nApplicationsStream(limit: $limit, offset: $offset) {\nid\ncustomer_id\nloan_type_id\namount\nduration\napplication_date\nupdated_at\n}\n\n}",
+            "queryName" : "ApplicationsStream",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/ApplicationsStream{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetCustomerChatMessage",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query CustomerChatMessage($limit: Int = 10, $offset: Int = 0) {\nCustomerChatMessage(limit: $limit, offset: $offset) {\nrole\ncontent\nname\ncustomerid\ntimestamp\nuuid\n}\n\n}",
+            "queryName" : "CustomerChatMessage",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomerChatMessage{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetCustomers",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "applications_loanType_limit" : {
+                  "type" : "integer"
+                },
+                "applications_updates_offset" : {
+                  "type" : "integer"
+                },
+                "overview_limit" : {
+                  "type" : "integer"
+                },
+                "overview_offset" : {
+                  "type" : "integer"
+                },
+                "offset" : {
+                  "type" : "integer"
+                },
+                "applications_updates_limit" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "applications_limit" : {
+                  "type" : "integer"
+                },
+                "applications_loanType_offset" : {
+                  "type" : "integer"
+                },
+                "applications_offset" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query Customers($limit: Int = 10, $offset: Int = 0$applications_limit: Int = 10, $applications_offset: Int = 0$applications_loanType_limit: Int = 10, $applications_loanType_offset: Int = 0$applications_updates_limit: Int = 10, $applications_updates_offset: Int = 0$overview_limit: Int = 10, $overview_offset: Int = 0) {\nCustomers(limit: $limit, offset: $offset) {\nid\nfirst_name\nlast_name\nemail\nphone\naddress\ndate_of_birth\nupdated_at\napplications(limit: $applications_limit, offset: $applications_offset) {\nid\ncustomer_id\nloan_type_id\namount\nduration\napplication_date\nupdated_at\nloanType(limit: $applications_loanType_limit, offset: $applications_loanType_offset) {\nid\nname\ndescription\ninterest_rate\nmax_amount\nmin_amount\nmax_duration\nmin_duration\nupdated_at\n}\nupdates(limit: $applications_updates_limit, offset: $applications_updates_offset) {\nloan_application_id\nstatus\nmessage\nevent_time\n}\n}\noverview(limit: $overview_limit, offset: $overview_offset) {\nloan_type_id\ntotal_amount\ntotal_loans\n}\n}\n\n}",
+            "queryName" : "Customers",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Customers{?applications_loanType_limit,applications_updates_offset,overview_limit,overview_offset,offset,applications_updates_limit,limit,applications_limit,applications_loanType_offset,applications_offset}"
+        },
+        {
+          "function" : {
+            "name" : "GetCustomersStream",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query CustomersStream($limit: Int = 10, $offset: Int = 0) {\nCustomersStream(limit: $limit, offset: $offset) {\nid\nfirst_name\nlast_name\nemail\nphone\naddress\ndate_of_birth\nupdated_at\n}\n\n}",
+            "queryName" : "CustomersStream",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomersStream{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetLoanTypes",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query LoanTypes($limit: Int = 10, $offset: Int = 0) {\nLoanTypes(limit: $limit, offset: $offset) {\nid\nname\ndescription\ninterest_rate\nmax_amount\nmin_amount\nmax_duration\nmin_duration\nupdated_at\n}\n\n}",
+            "queryName" : "LoanTypes",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/LoanTypes{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetLoanTypesStream",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query LoanTypesStream($limit: Int = 10, $offset: Int = 0) {\nLoanTypesStream(limit: $limit, offset: $offset) {\nid\nname\ndescription\ninterest_rate\nmax_amount\nmin_amount\nmax_duration\nmin_duration\nupdated_at\n}\n\n}",
+            "queryName" : "LoanTypesStream",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/LoanTypesStream{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "AddAddChatMessage",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "role" : {
+                  "type" : "string"
+                },
+                "name" : {
+                  "type" : "string"
+                },
+                "context" : {
                   "type" : "object",
                   "properties" : {
-                    "loan_application_id" : {
+                    "customerid" : {
                       "type" : "integer"
-                    },
-                    "message" : {
-                      "type" : "string"
-                    },
-                    "status" : {
-                      "type" : "string"
                     }
                   },
-                  "required" : [
-                    "loan_application_id",
-                    "status"
-                  ]
+                  "required" : [ ]
+                },
+                "content" : {
+                  "type" : "string"
                 }
-              }
-            },
-            "required" : [
-              "event"
-            ]
-          }
+              },
+              "required" : [
+                "role",
+                "content",
+                "context"
+              ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "mutation AddChatMessage($role: String!, $content: String!, $name: String, $context: AddChatMessage_contextInput!) {\nAddChatMessage(event: { role: $role, content: $content, name: $name, context: $context }) {\nrole\ncontent\nname\ncontext {\ncustomerid\n}\nevent_time\n}\n\n}",
+            "queryName" : "AddChatMessage",
+            "operationType" : "MUTATION"
+          },
+          "mcpMethod" : "NONE",
+          "restMethod" : "POST",
+          "uriTemplate" : "mutations/AddChatMessage"
         },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "mutation ApplicationUpdates($event: [ApplicationUpdatesInput!]!) {\nApplicationUpdates(event: $event) {\nloan_application_id\nstatus\nmessage\nevent_time\n}\n\n}",
-          "queryName" : "ApplicationUpdates",
-          "operationType" : "MUTATION"
-        },
-        "mcpMethod" : "NONE",
-        "restMethod" : "POST",
-        "uriTemplate" : "mutations/ApplicationUpdates"
+        {
+          "function" : {
+            "name" : "AddApplicationUpdates",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "event" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "object",
+                    "properties" : {
+                      "loan_application_id" : {
+                        "type" : "integer"
+                      },
+                      "message" : {
+                        "type" : "string"
+                      },
+                      "status" : {
+                        "type" : "string"
+                      }
+                    },
+                    "required" : [
+                      "loan_application_id",
+                      "status"
+                    ]
+                  }
+                }
+              },
+              "required" : [
+                "event"
+              ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "mutation ApplicationUpdates($event: [ApplicationUpdatesInput!]!) {\nApplicationUpdates(event: $event) {\nloan_application_id\nstatus\nmessage\nevent_time\n}\n\n}",
+            "queryName" : "ApplicationUpdates",
+            "operationType" : "MUTATION"
+          },
+          "mcpMethod" : "NONE",
+          "restMethod" : "POST",
+          "uriTemplate" : "mutations/ApplicationUpdates"
+        }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "type AddChatMessage {\n  role: String!\n  content: String!\n  name: String\n  context: AddChatMessage_contextOutput!\n  event_time: DateTime\n}\n\ninput AddChatMessageInput {\n  role: String!\n  content: String!\n  name: String\n  context: AddChatMessage_contextInput!\n}\n\ntype AddChatMessageResultOutput {\n  role: String!\n  content: String!\n  name: String\n  context: AddChatMessageResult_contextOutput!\n  event_time: DateTime\n}\n\ntype AddChatMessageResult_contextOutput {\n  customerid: Int\n}\n\ninput AddChatMessage_contextInput {\n  customerid: Int\n}\n\ntype AddChatMessage_contextOutput {\n  customerid: Int\n}\n\ntype ApplicationAlert {\n  id: Long!\n  customer_id: Long!\n  loan_type_id: Long!\n  max_amount: Float!\n  min_amount: Float!\n  amount: Float!\n}\n\ntype ApplicationStatus {\n  status: String!\n  message: String\n  event_time: DateTime\n  id: Long!\n  customer_id: Long!\n  loan_type_id: Long!\n  amount: Float!\n  duration: Long!\n  max_amount: Float!\n  min_amount: Float!\n}\n\ntype ApplicationUpdates {\n  loan_application_id: Long!\n  status: String!\n  message: String\n  event_time: DateTime\n  application(limit: Int = 10, offset: Int = 0): [Applications!]\n}\n\ninput ApplicationUpdatesInput {\n  loan_application_id: Long!\n  status: String!\n  message: String\n}\n\ntype ApplicationUpdatesResultOutput {\n  loan_application_id: Long!\n  status: String!\n  message: String\n  event_time: DateTime\n}\n\ntype Applications {\n  id: Long!\n  customer_id: Long!\n  loan_type_id: Long!\n  amount: Float!\n  duration: Long!\n  application_date: DateTime!\n  updated_at: DateTime!\n  loanType(limit: Int = 10, offset: Int = 0): [LoanTypes!]\n  updates(limit: Int = 10, offset: Int = 0): [ApplicationUpdates!]\n}\n\ntype ApplicationsStream {\n  id: Long!\n  customer_id: Long!\n  loan_type_id: Long!\n  amount: Float!\n  duration: Long!\n  application_date: DateTime!\n  updated_at: DateTime!\n}\n\ntype CustomerChatMessage {\n  role: String!\n  content: String!\n  name: String\n  customerid: Int\n  timestamp: DateTime\n  uuid: String!\n}\n\ntype Customers {\n  id: Long!\n  first_name: String!\n  last_name: String!\n  email: String!\n  phone: String!\n  address: String!\n  date_of_birth: String!\n  updated_at: DateTime!\n  applications(limit: Int = 10, offset: Int = 0): [Applications!]\n  overview(limit: Int = 10, offset: Int = 0): [Customers_overview!]\n}\n\ntype CustomersStream {\n  id: Long!\n  first_name: String!\n  last_name: String!\n  email: String!\n  phone: String!\n  address: String!\n  date_of_birth: String!\n  updated_at: DateTime!\n}\n\ntype Customers_overview {\n  loan_type_id: Long!\n  total_amount: Float!\n  total_loans: Long!\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype LoanTypes {\n  id: Long!\n  name: String!\n  description: String!\n  interest_rate: Float!\n  max_amount: Float!\n  min_amount: Float!\n  max_duration: Long!\n  min_duration: Long!\n  updated_at: DateTime!\n}\n\ntype LoanTypesStream {\n  id: Long!\n  name: String!\n  description: String!\n  interest_rate: Float!\n  max_amount: Float!\n  min_amount: Float!\n  max_duration: Long!\n  min_duration: Long!\n  updated_at: DateTime!\n}\n\ntype Mutation {\n  AddChatMessage(event: AddChatMessageInput!): AddChatMessageResultOutput!\n  ApplicationUpdates(event: [ApplicationUpdatesInput!]!): [ApplicationUpdatesResultOutput!]!\n}\n\ntype Query {\n  AddChatMessage(limit: Int = 10, offset: Int = 0): [AddChatMessage!]\n  ApplicationAlert(limit: Int = 10, offset: Int = 0): [ApplicationAlert!]\n  ApplicationStatus(limit: Int = 10, offset: Int = 0): [ApplicationStatus!]\n  ApplicationUpdates(limit: Int = 10, offset: Int = 0): [ApplicationUpdates!]\n  Applications(limit: Int = 10, offset: Int = 0): [Applications!]\n  ApplicationsStream(limit: Int = 10, offset: Int = 0): [ApplicationsStream!]\n  CustomerChatMessage(limit: Int = 10, offset: Int = 0): [CustomerChatMessage!]\n  Customers(limit: Int = 10, offset: Int = 0): [Customers!]\n  CustomersStream(limit: Int = 10, offset: Int = 0): [CustomersStream!]\n  LoanTypes(limit: Int = 10, offset: Int = 0): [LoanTypes!]\n  LoanTypesStream(limit: Int = 10, offset: Int = 0): [LoanTypesStream!]\n}\n\nenum _McpMethodType { NONE, TOOL, RESOURCE }\nenum _RestMethodType { NONE, GET, POST }\ndirective @api(\n  mcp: _McpMethodType,\n  rest: _RestMethodType,\n  uri: String\n) on FIELD_DEFINITION | QUERY | MUTATION\n"
       }
-    ],
-    "schema" : {
-      "type" : "string",
-      "schema" : "type AddChatMessage {\n  role: String!\n  content: String!\n  name: String\n  context: AddChatMessage_contextOutput!\n  event_time: DateTime\n}\n\ninput AddChatMessageInput {\n  role: String!\n  content: String!\n  name: String\n  context: AddChatMessage_contextInput!\n}\n\ntype AddChatMessageResultOutput {\n  role: String!\n  content: String!\n  name: String\n  context: AddChatMessageResult_contextOutput!\n  event_time: DateTime\n}\n\ntype AddChatMessageResult_contextOutput {\n  customerid: Int\n}\n\ninput AddChatMessage_contextInput {\n  customerid: Int\n}\n\ntype AddChatMessage_contextOutput {\n  customerid: Int\n}\n\ntype ApplicationAlert {\n  id: Long!\n  customer_id: Long!\n  loan_type_id: Long!\n  max_amount: Float!\n  min_amount: Float!\n  amount: Float!\n}\n\ntype ApplicationStatus {\n  status: String!\n  message: String\n  event_time: DateTime\n  id: Long!\n  customer_id: Long!\n  loan_type_id: Long!\n  amount: Float!\n  duration: Long!\n  max_amount: Float!\n  min_amount: Float!\n}\n\ntype ApplicationUpdates {\n  loan_application_id: Long!\n  status: String!\n  message: String\n  event_time: DateTime\n  application(limit: Int = 10, offset: Int = 0): [Applications!]\n}\n\ninput ApplicationUpdatesInput {\n  loan_application_id: Long!\n  status: String!\n  message: String\n}\n\ntype ApplicationUpdatesResultOutput {\n  loan_application_id: Long!\n  status: String!\n  message: String\n  event_time: DateTime\n}\n\ntype Applications {\n  id: Long!\n  customer_id: Long!\n  loan_type_id: Long!\n  amount: Float!\n  duration: Long!\n  application_date: DateTime!\n  updated_at: DateTime!\n  loanType(limit: Int = 10, offset: Int = 0): [LoanTypes!]\n  updates(limit: Int = 10, offset: Int = 0): [ApplicationUpdates!]\n}\n\ntype ApplicationsStream {\n  id: Long!\n  customer_id: Long!\n  loan_type_id: Long!\n  amount: Float!\n  duration: Long!\n  application_date: DateTime!\n  updated_at: DateTime!\n}\n\ntype CustomerChatMessage {\n  role: String!\n  content: String!\n  name: String\n  customerid: Int\n  timestamp: DateTime\n  uuid: String!\n}\n\ntype Customers {\n  id: Long!\n  first_name: String!\n  last_name: String!\n  email: String!\n  phone: String!\n  address: String!\n  date_of_birth: String!\n  updated_at: DateTime!\n  applications(limit: Int = 10, offset: Int = 0): [Applications!]\n  overview(limit: Int = 10, offset: Int = 0): [Customers_overview!]\n}\n\ntype CustomersStream {\n  id: Long!\n  first_name: String!\n  last_name: String!\n  email: String!\n  phone: String!\n  address: String!\n  date_of_birth: String!\n  updated_at: DateTime!\n}\n\ntype Customers_overview {\n  loan_type_id: Long!\n  total_amount: Float!\n  total_loans: Long!\n}\n\n\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype LoanTypes {\n  id: Long!\n  name: String!\n  description: String!\n  interest_rate: Float!\n  max_amount: Float!\n  min_amount: Float!\n  max_duration: Long!\n  min_duration: Long!\n  updated_at: DateTime!\n}\n\ntype LoanTypesStream {\n  id: Long!\n  name: String!\n  description: String!\n  interest_rate: Float!\n  max_amount: Float!\n  min_amount: Float!\n  max_duration: Long!\n  min_duration: Long!\n  updated_at: DateTime!\n}\n\ntype Mutation {\n  AddChatMessage(event: AddChatMessageInput!): AddChatMessageResultOutput!\n  ApplicationUpdates(event: [ApplicationUpdatesInput!]!): [ApplicationUpdatesResultOutput!]!\n}\n\ntype Query {\n  AddChatMessage(limit: Int = 10, offset: Int = 0): [AddChatMessage!]\n  ApplicationAlert(limit: Int = 10, offset: Int = 0): [ApplicationAlert!]\n  ApplicationStatus(limit: Int = 10, offset: Int = 0): [ApplicationStatus!]\n  ApplicationUpdates(limit: Int = 10, offset: Int = 0): [ApplicationUpdates!]\n  Applications(limit: Int = 10, offset: Int = 0): [Applications!]\n  ApplicationsStream(limit: Int = 10, offset: Int = 0): [ApplicationsStream!]\n  CustomerChatMessage(limit: Int = 10, offset: Int = 0): [CustomerChatMessage!]\n  Customers(limit: Int = 10, offset: Int = 0): [Customers!]\n  CustomersStream(limit: Int = 10, offset: Int = 0): [CustomersStream!]\n  LoanTypes(limit: Int = 10, offset: Int = 0): [LoanTypes!]\n  LoanTypesStream(limit: Int = 10, offset: Int = 0): [LoanTypesStream!]\n}\n\nenum _McpMethodType { NONE, TOOL, RESOURCE }\nenum _RestMethodType { NONE, GET, POST }\ndirective @api(\n  mcp: _McpMethodType,\n  rest: _RestMethodType,\n  uri: String\n) on FIELD_DEFINITION | QUERY | MUTATION\n"
     }
   }
 }

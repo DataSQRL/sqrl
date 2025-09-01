@@ -23,7 +23,7 @@ Schema:
 Plan:
 LogicalProject(d=[$0], b=[$1], cbrt=[cbrt(CAST($0):DOUBLE)], copy_sign=[copy_sign(CAST($0):DOUBLE, CAST($0):DOUBLE)], expm1=[expm1(CAST($0):DOUBLE)], hypot=[hypot(CAST($0):DOUBLE, CAST($0):DOUBLE)], log1p=[log1p(CAST($0):DOUBLE)], next_after=[next_after(CAST($0):DOUBLE, CAST($0):DOUBLE)], scalb=[scalb(CAST($0):DOUBLE, CAST($1):BIGINT)], ulp=[ulp(CAST($0):DOUBLE)], binomial_distribution=[binomial_distribution(CAST($1):BIGINT, 1:DOUBLE, CAST($1):BIGINT)], exponential_distribution=[exponential_distribution(CAST($0):DOUBLE, CAST($0):DOUBLE)], normal_distribution=[normal_distribution(CAST($0):DOUBLE, CAST($0):DOUBLE, CAST($0):DOUBLE)], poisson_distribution=[poisson_distribution(CAST($0):DOUBLE, CAST($1):BIGINT)])
   LogicalValues(tuples=[[{ 1.0, 11 }, { 2.0, 12 }, { 3.0, 13 }, { 4.0, 14 }, { 5.0, 15 }, { 6.0, 16 }, { 7.0, 17 }, { 8.0, 18 }, { 9.0, 19 }, { 10.0, 20 }]])
-SQL: CREATE VIEW MathFunctions AS  SELECT d, b,
+SQL: CREATE VIEW `MathFunctions` AS  SELECT d, b,
             cbrt(d) AS cbrt,
             copy_sign(d, d) AS copy_sign,
             expm1(d) AS expm1,
@@ -109,67 +109,69 @@ CREATE TABLE IF NOT EXISTS "MathFunctions" ("d" NUMERIC NOT NULL, "b" INTEGER NO
 
 >>>vertx.json
 {
-  "model" : {
-    "queries" : [
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "MathFunctions",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "MathFunctions",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"MathFunctions\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"MathFunctions\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
           }
         }
-      }
-    ],
-    "mutations" : [ ],
-    "subscriptions" : [ ],
-    "operations" : [
-      {
-        "function" : {
-          "name" : "GetMathFunctions",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
+      ],
+      "mutations" : [ ],
+      "subscriptions" : [ ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetMathFunctions",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
               },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query MathFunctions($limit: Int = 10, $offset: Int = 0) {\nMathFunctions(limit: $limit, offset: $offset) {\nd\nb\ncbrt\ncopy_sign\nexpm1\nhypot\nlog1p\nnext_after\nscalb\nulp\nbinomial_distribution\nexponential_distribution\nnormal_distribution\npoisson_distribution\n}\n\n}",
-          "queryName" : "MathFunctions",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/MathFunctions{?offset,limit}"
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query MathFunctions($limit: Int = 10, $offset: Int = 0) {\nMathFunctions(limit: $limit, offset: $offset) {\nd\nb\ncbrt\ncopy_sign\nexpm1\nhypot\nlog1p\nnext_after\nscalb\nulp\nbinomial_distribution\nexponential_distribution\nnormal_distribution\npoisson_distribution\n}\n\n}",
+            "queryName" : "MathFunctions",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/MathFunctions{?offset,limit}"
+        }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype MathFunctions {\n  d: Float!\n  b: Int!\n  cbrt: Float\n  copy_sign: Float\n  expm1: Float\n  hypot: Float\n  log1p: Float\n  next_after: Float\n  scalb: Float\n  ulp: Float\n  binomial_distribution: Float\n  exponential_distribution: Float\n  normal_distribution: Float\n  poisson_distribution: Float\n}\n\ntype Query {\n  MathFunctions(limit: Int = 10, offset: Int = 0): [MathFunctions!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
-    ],
-    "schema" : {
-      "type" : "string",
-      "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype MathFunctions {\n  d: Float!\n  b: Int!\n  cbrt: Float\n  copy_sign: Float\n  expm1: Float\n  hypot: Float\n  log1p: Float\n  next_after: Float\n  scalb: Float\n  ulp: Float\n  binomial_distribution: Float\n  exponential_distribution: Float\n  normal_distribution: Float\n  poisson_distribution: Float\n}\n\ntype Query {\n  MathFunctions(limit: Int = 10, offset: Int = 0): [MathFunctions!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
     }
   }
 }

@@ -15,13 +15,9 @@
  */
 package com.datasqrl.canonicalizer;
 
-// import com.google.common.base.Preconditions;
-// import com.google.common.base.Strings;
-
 public abstract class AbstractName implements Name {
 
   public static String validateName(String name) {
-    //    Preconditions.checkArgument(!Strings.isNullOrEmpty(name), "Not a valid name: %s", name);
     return name;
   }
 
@@ -51,10 +47,5 @@ public abstract class AbstractName implements Name {
   @Override
   public int compareTo(Name o) {
     return getCanonical().compareTo(o.getCanonical());
-  }
-
-  @Override
-  public boolean hasPrefix(Name variablePrefix) {
-    return this.getCanonical().startsWith(variablePrefix.getCanonical());
   }
 }

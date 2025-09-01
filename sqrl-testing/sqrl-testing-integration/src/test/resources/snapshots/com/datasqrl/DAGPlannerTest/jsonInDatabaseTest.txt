@@ -63,7 +63,7 @@ Schema:
 Plan:
 LogicalProject(obj=[jsonb_object(CONCAT('application#', $2), $0)])
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW ObjComplex AS  SELECT jsonb_object(concat('application#',CAST(name AS VARCHAR)), customerid) AS obj FROM Customer;
+SQL: CREATE VIEW `ObjComplex` AS  SELECT jsonb_object(concat('application#',CAST(name AS VARCHAR)), customerid) AS obj FROM Customer;
 
 === jsonArrayAggTable
 ID:     default_catalog.default_database.jsonArrayAggTable
@@ -79,7 +79,7 @@ LogicalProject(agg=[$1])
   LogicalAggregate(group=[{0}], agg=[jsonb_array_agg($0)])
     LogicalProject(name=[$2])
       LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW jsonArrayAggTable AS  SELECT jsonb_array_agg(name) AS agg FROM Customer GROUP BY name;
+SQL: CREATE VIEW `jsonArrayAggTable` AS  SELECT jsonb_array_agg(name) AS agg FROM Customer GROUP BY name;
 
 === jsonArrayTable
 ID:     default_catalog.default_database.jsonArrayTable
@@ -95,7 +95,7 @@ Schema:
 Plan:
 LogicalProject(obj=[jsonb_array($0)])
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW jsonArrayTable AS  SELECT jsonb_array(customerid) AS obj FROM Customer;
+SQL: CREATE VIEW `jsonArrayTable` AS  SELECT jsonb_array(customerid) AS obj FROM Customer;
 
 === jsonConcatTable
 ID:     default_catalog.default_database.jsonConcatTable
@@ -111,7 +111,7 @@ Schema:
 Plan:
 LogicalProject(obj=[jsonb_concat(to_jsonb('{"a": true}'), to_jsonb('{"a": false}'))])
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW jsonConcatTable AS  SELECT jsonb_concat(to_jsonb('{"a": true}'), to_jsonb('{"a": false}')) AS obj FROM Customer;
+SQL: CREATE VIEW `jsonConcatTable` AS  SELECT jsonb_concat(to_jsonb('{"a": true}'), to_jsonb('{"a": false}')) AS obj FROM Customer;
 
 === jsonExistsTable
 ID:     default_catalog.default_database.jsonExistsTable
@@ -127,7 +127,7 @@ Schema:
 Plan:
 LogicalProject(obj=[jsonb_exists(to_jsonb('{"a": true}'), '$.a')])
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW jsonExistsTable AS  SELECT jsonb_exists(to_jsonb('{"a": true}'), '$.a') AS obj FROM Customer;
+SQL: CREATE VIEW `jsonExistsTable` AS  SELECT jsonb_exists(to_jsonb('{"a": true}'), '$.a') AS obj FROM Customer;
 
 === jsonExtractTable
 ID:     default_catalog.default_database.jsonExtractTable
@@ -143,7 +143,7 @@ Schema:
 Plan:
 LogicalProject(obj=[jsonb_extract(to_jsonb('{"a": "hello"}'), '$.a':VARCHAR(2147483647) CHARACTER SET "UTF-16LE", 'default':VARCHAR(2147483647) CHARACTER SET "UTF-16LE")])
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW jsonExtractTable AS  SELECT jsonb_extract(to_jsonb('{"a": "hello"}'), CAST('$.a' AS varchar), CAST('default' AS varchar)) AS obj FROM Customer;
+SQL: CREATE VIEW `jsonExtractTable` AS  SELECT jsonb_extract(to_jsonb('{"a": "hello"}'), CAST('$.a' AS varchar), CAST('default' AS varchar)) AS obj FROM Customer;
 
 === jsonObjectAggTable
 ID:     default_catalog.default_database.jsonObjectAggTable
@@ -159,7 +159,7 @@ LogicalProject(agg=[$1])
   LogicalAggregate(group=[{0}], agg=[jsonb_object_agg($1, $0)])
     LogicalProject(name=[$2], $f1=['key'])
       LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW jsonObjectAggTable AS  SELECT jsonb_object_agg('key', name) AS agg FROM Customer GROUP BY name;
+SQL: CREATE VIEW `jsonObjectAggTable` AS  SELECT jsonb_object_agg('key', name) AS agg FROM Customer GROUP BY name;
 
 === jsonQueryTable
 ID:     default_catalog.default_database.jsonQueryTable
@@ -175,7 +175,7 @@ Schema:
 Plan:
 LogicalProject(obj=[jsonb_query(to_jsonb('{"a": {"b": 1}}'), '$.a')])
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW jsonQueryTable AS  SELECT jsonb_query(to_jsonb('{"a": {"b": 1}}'), '$.a') AS obj FROM Customer;
+SQL: CREATE VIEW `jsonQueryTable` AS  SELECT jsonb_query(to_jsonb('{"a": {"b": 1}}'), '$.a') AS obj FROM Customer;
 
 === jsonToStringTable
 ID:     default_catalog.default_database.jsonToStringTable
@@ -191,7 +191,7 @@ Schema:
 Plan:
 LogicalProject(obj=[jsonb_to_string(to_jsonb('{"a": 1}'))])
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW jsonToStringTable AS  SELECT jsonb_to_string(to_jsonb('{"a": 1}')) AS obj FROM Customer;
+SQL: CREATE VIEW `jsonToStringTable` AS  SELECT jsonb_to_string(to_jsonb('{"a": 1}')) AS obj FROM Customer;
 
 === toJsonTable
 ID:     default_catalog.default_database.toJsonTable
@@ -207,7 +207,7 @@ Schema:
 Plan:
 LogicalProject(obj=[to_jsonb('{"a": 1}')])
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW toJsonTable AS  SELECT to_jsonb('{"a": 1}') AS obj FROM Customer;
+SQL: CREATE VIEW `toJsonTable` AS  SELECT to_jsonb('{"a": 1}') AS obj FROM Customer;
 
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `CustomerStream__schema` (
@@ -592,628 +592,630 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
 }
 >>>vertx.json
 {
-  "model" : {
-    "queries" : [
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "Customer",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Customer",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Customer_1\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Customer_1\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "CustomerStream",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"CustomerStream_2\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "ObjComplex",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"jsonb_build_object\"(CONCAT('application#', \"name\"), \"customerid\") AS \"obj\"\nFROM \"Customer_1\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "jsonArrayAggTable",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"jsonb_agg\"(\"name\") AS \"agg\"\nFROM \"Customer_1\"\nGROUP BY \"name\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "jsonArrayTable",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"jsonb_build_array\"(\"customerid\") AS \"obj\"\nFROM \"Customer_1\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "jsonConcatTable",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT CAST('{\"a\": true}' AS JSONB) || CAST('{\"a\": false}' AS JSONB) AS \"obj\"\nFROM \"Customer_1\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "jsonExistsTable",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"jsonb_path_exists\"(CAST('{\"a\": true}' AS JSONB), '$.a') AS \"obj\"\nFROM \"Customer_1\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "jsonExtractTable",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT COALESCE(\"jsonb_path_query_first\"(CAST('{\"a\": \"hello\"}' AS JSONB), '$.a') #>> '{}', 'default') AS \"obj\"\nFROM \"Customer_1\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "jsonObjectAggTable",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"jsonb_object_agg\"('key', \"name\") AS \"agg\"\nFROM \"Customer_1\"\nGROUP BY \"name\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "jsonQueryTable",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"jsonb_path_query\"(CAST('{\"a\": {\"b\": 1}}' AS JSONB), '$.a') AS \"obj\"\nFROM \"Customer_1\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "jsonToStringTable",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT CAST('{\"a\": 1}' AS JSONB) #>> '{}' AS \"obj\"\nFROM \"Customer_1\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "toJsonTable",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT CAST('{\"a\": 1}' AS JSONB) AS \"obj\"\nFROM \"Customer_1\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
           }
         }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "CustomerStream",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+      ],
+      "mutations" : [ ],
+      "subscriptions" : [ ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetCustomer",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"CustomerStream_2\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "ObjComplex",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query Customer($limit: Int = 10, $offset: Int = 0) {\nCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+            "queryName" : "Customer",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Customer{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetCustomerStream",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT \"jsonb_build_object\"(CONCAT('application#', \"name\"), \"customerid\") AS \"obj\"\nFROM \"Customer_1\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "jsonArrayAggTable",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query CustomerStream($limit: Int = 10, $offset: Int = 0) {\nCustomerStream(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+            "queryName" : "CustomerStream",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomerStream{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetObjComplex",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT \"jsonb_agg\"(\"name\") AS \"agg\"\nFROM \"Customer_1\"\nGROUP BY \"name\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "jsonArrayTable",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query ObjComplex($limit: Int = 10, $offset: Int = 0) {\nObjComplex(limit: $limit, offset: $offset) {\nobj\n}\n\n}",
+            "queryName" : "ObjComplex",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/ObjComplex{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetjsonArrayAggTable",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT \"jsonb_build_array\"(\"customerid\") AS \"obj\"\nFROM \"Customer_1\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "jsonConcatTable",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query jsonArrayAggTable($limit: Int = 10, $offset: Int = 0) {\njsonArrayAggTable(limit: $limit, offset: $offset) {\nagg\n}\n\n}",
+            "queryName" : "jsonArrayAggTable",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/jsonArrayAggTable{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetjsonArrayTable",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT CAST('{\"a\": true}' AS JSONB) || CAST('{\"a\": false}' AS JSONB) AS \"obj\"\nFROM \"Customer_1\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "jsonExistsTable",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query jsonArrayTable($limit: Int = 10, $offset: Int = 0) {\njsonArrayTable(limit: $limit, offset: $offset) {\nobj\n}\n\n}",
+            "queryName" : "jsonArrayTable",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/jsonArrayTable{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetjsonConcatTable",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT \"jsonb_path_exists\"(CAST('{\"a\": true}' AS JSONB), '$.a') AS \"obj\"\nFROM \"Customer_1\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "jsonExtractTable",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query jsonConcatTable($limit: Int = 10, $offset: Int = 0) {\njsonConcatTable(limit: $limit, offset: $offset) {\nobj\n}\n\n}",
+            "queryName" : "jsonConcatTable",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/jsonConcatTable{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetjsonExistsTable",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT COALESCE(\"jsonb_path_query_first\"(CAST('{\"a\": \"hello\"}' AS JSONB), '$.a') #>> '{}', 'default') AS \"obj\"\nFROM \"Customer_1\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "jsonObjectAggTable",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query jsonExistsTable($limit: Int = 10, $offset: Int = 0) {\njsonExistsTable(limit: $limit, offset: $offset) {\nobj\n}\n\n}",
+            "queryName" : "jsonExistsTable",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/jsonExistsTable{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetjsonExtractTable",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT \"jsonb_object_agg\"('key', \"name\") AS \"agg\"\nFROM \"Customer_1\"\nGROUP BY \"name\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "jsonQueryTable",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query jsonExtractTable($limit: Int = 10, $offset: Int = 0) {\njsonExtractTable(limit: $limit, offset: $offset) {\nobj\n}\n\n}",
+            "queryName" : "jsonExtractTable",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/jsonExtractTable{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetjsonObjectAggTable",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT \"jsonb_path_query\"(CAST('{\"a\": {\"b\": 1}}' AS JSONB), '$.a') AS \"obj\"\nFROM \"Customer_1\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "jsonToStringTable",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query jsonObjectAggTable($limit: Int = 10, $offset: Int = 0) {\njsonObjectAggTable(limit: $limit, offset: $offset) {\nagg\n}\n\n}",
+            "queryName" : "jsonObjectAggTable",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/jsonObjectAggTable{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetjsonQueryTable",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT CAST('{\"a\": 1}' AS JSONB) #>> '{}' AS \"obj\"\nFROM \"Customer_1\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "toJsonTable",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query jsonQueryTable($limit: Int = 10, $offset: Int = 0) {\njsonQueryTable(limit: $limit, offset: $offset) {\nobj\n}\n\n}",
+            "queryName" : "jsonQueryTable",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/jsonQueryTable{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetjsonToStringTable",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT CAST('{\"a\": 1}' AS JSONB) AS \"obj\"\nFROM \"Customer_1\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query jsonToStringTable($limit: Int = 10, $offset: Int = 0) {\njsonToStringTable(limit: $limit, offset: $offset) {\nobj\n}\n\n}",
+            "queryName" : "jsonToStringTable",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/jsonToStringTable{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GettoJsonTable",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query toJsonTable($limit: Int = 10, $offset: Int = 0) {\ntoJsonTable(limit: $limit, offset: $offset) {\nobj\n}\n\n}",
+            "queryName" : "toJsonTable",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/toJsonTable{?offset,limit}"
         }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "type Customer {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\ntype CustomerStream {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype ObjComplex {\n  obj: JSON\n}\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerStream(limit: Int = 10, offset: Int = 0): [CustomerStream!]\n  ObjComplex(limit: Int = 10, offset: Int = 0): [ObjComplex!]\n  jsonArrayAggTable(limit: Int = 10, offset: Int = 0): [jsonArrayAggTable!]\n  jsonArrayTable(limit: Int = 10, offset: Int = 0): [jsonArrayTable!]\n  jsonConcatTable(limit: Int = 10, offset: Int = 0): [jsonConcatTable!]\n  jsonExistsTable(limit: Int = 10, offset: Int = 0): [jsonExistsTable!]\n  jsonExtractTable(limit: Int = 10, offset: Int = 0): [jsonExtractTable!]\n  jsonObjectAggTable(limit: Int = 10, offset: Int = 0): [jsonObjectAggTable!]\n  jsonQueryTable(limit: Int = 10, offset: Int = 0): [jsonQueryTable!]\n  jsonToStringTable(limit: Int = 10, offset: Int = 0): [jsonToStringTable!]\n  toJsonTable(limit: Int = 10, offset: Int = 0): [toJsonTable!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ntype jsonArrayAggTable {\n  agg: JSON\n}\n\ntype jsonArrayTable {\n  obj: JSON\n}\n\ntype jsonConcatTable {\n  obj: JSON\n}\n\ntype jsonExistsTable {\n  obj: Boolean\n}\n\ntype jsonExtractTable {\n  obj: String\n}\n\ntype jsonObjectAggTable {\n  agg: JSON\n}\n\ntype jsonQueryTable {\n  obj: String\n}\n\ntype jsonToStringTable {\n  obj: String\n}\n\ntype toJsonTable {\n  obj: JSON\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
-    ],
-    "mutations" : [ ],
-    "subscriptions" : [ ],
-    "operations" : [
-      {
-        "function" : {
-          "name" : "GetCustomer",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query Customer($limit: Int = 10, $offset: Int = 0) {\nCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
-          "queryName" : "Customer",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/Customer{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetCustomerStream",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query CustomerStream($limit: Int = 10, $offset: Int = 0) {\nCustomerStream(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
-          "queryName" : "CustomerStream",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/CustomerStream{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetObjComplex",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query ObjComplex($limit: Int = 10, $offset: Int = 0) {\nObjComplex(limit: $limit, offset: $offset) {\nobj\n}\n\n}",
-          "queryName" : "ObjComplex",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/ObjComplex{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetjsonArrayAggTable",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query jsonArrayAggTable($limit: Int = 10, $offset: Int = 0) {\njsonArrayAggTable(limit: $limit, offset: $offset) {\nagg\n}\n\n}",
-          "queryName" : "jsonArrayAggTable",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/jsonArrayAggTable{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetjsonArrayTable",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query jsonArrayTable($limit: Int = 10, $offset: Int = 0) {\njsonArrayTable(limit: $limit, offset: $offset) {\nobj\n}\n\n}",
-          "queryName" : "jsonArrayTable",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/jsonArrayTable{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetjsonConcatTable",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query jsonConcatTable($limit: Int = 10, $offset: Int = 0) {\njsonConcatTable(limit: $limit, offset: $offset) {\nobj\n}\n\n}",
-          "queryName" : "jsonConcatTable",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/jsonConcatTable{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetjsonExistsTable",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query jsonExistsTable($limit: Int = 10, $offset: Int = 0) {\njsonExistsTable(limit: $limit, offset: $offset) {\nobj\n}\n\n}",
-          "queryName" : "jsonExistsTable",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/jsonExistsTable{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetjsonExtractTable",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query jsonExtractTable($limit: Int = 10, $offset: Int = 0) {\njsonExtractTable(limit: $limit, offset: $offset) {\nobj\n}\n\n}",
-          "queryName" : "jsonExtractTable",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/jsonExtractTable{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetjsonObjectAggTable",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query jsonObjectAggTable($limit: Int = 10, $offset: Int = 0) {\njsonObjectAggTable(limit: $limit, offset: $offset) {\nagg\n}\n\n}",
-          "queryName" : "jsonObjectAggTable",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/jsonObjectAggTable{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetjsonQueryTable",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query jsonQueryTable($limit: Int = 10, $offset: Int = 0) {\njsonQueryTable(limit: $limit, offset: $offset) {\nobj\n}\n\n}",
-          "queryName" : "jsonQueryTable",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/jsonQueryTable{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetjsonToStringTable",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query jsonToStringTable($limit: Int = 10, $offset: Int = 0) {\njsonToStringTable(limit: $limit, offset: $offset) {\nobj\n}\n\n}",
-          "queryName" : "jsonToStringTable",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/jsonToStringTable{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GettoJsonTable",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query toJsonTable($limit: Int = 10, $offset: Int = 0) {\ntoJsonTable(limit: $limit, offset: $offset) {\nobj\n}\n\n}",
-          "queryName" : "toJsonTable",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/toJsonTable{?offset,limit}"
-      }
-    ],
-    "schema" : {
-      "type" : "string",
-      "schema" : "type Customer {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\ntype CustomerStream {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype ObjComplex {\n  obj: JSON\n}\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerStream(limit: Int = 10, offset: Int = 0): [CustomerStream!]\n  ObjComplex(limit: Int = 10, offset: Int = 0): [ObjComplex!]\n  jsonArrayAggTable(limit: Int = 10, offset: Int = 0): [jsonArrayAggTable!]\n  jsonArrayTable(limit: Int = 10, offset: Int = 0): [jsonArrayTable!]\n  jsonConcatTable(limit: Int = 10, offset: Int = 0): [jsonConcatTable!]\n  jsonExistsTable(limit: Int = 10, offset: Int = 0): [jsonExistsTable!]\n  jsonExtractTable(limit: Int = 10, offset: Int = 0): [jsonExtractTable!]\n  jsonObjectAggTable(limit: Int = 10, offset: Int = 0): [jsonObjectAggTable!]\n  jsonQueryTable(limit: Int = 10, offset: Int = 0): [jsonQueryTable!]\n  jsonToStringTable(limit: Int = 10, offset: Int = 0): [jsonToStringTable!]\n  toJsonTable(limit: Int = 10, offset: Int = 0): [toJsonTable!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ntype jsonArrayAggTable {\n  agg: JSON\n}\n\ntype jsonArrayTable {\n  obj: JSON\n}\n\ntype jsonConcatTable {\n  obj: JSON\n}\n\ntype jsonExistsTable {\n  obj: Boolean\n}\n\ntype jsonExtractTable {\n  obj: String\n}\n\ntype jsonObjectAggTable {\n  agg: JSON\n}\n\ntype jsonQueryTable {\n  obj: String\n}\n\ntype jsonToStringTable {\n  obj: String\n}\n\ntype toJsonTable {\n  obj: JSON\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
     }
   }
 }

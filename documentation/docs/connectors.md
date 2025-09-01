@@ -42,21 +42,17 @@ For example, to ingest data from the `User` and `Transaction` topics of a Kafka 
 By following this structure, you modularize your sources and sinks from your processing logic
 which makes it easier to read and maintain.
 
-It also allows you to switch out sources and sinks with DataSQRL's [dependency management](configuration#dependencies)
-which is useful for local development and testing. For example, you typically use different sources and sinks
-for local development, testing, QA, and production. Those could live in their respective source folders and
-be resolved through the [dependency section](configuration#dependencies) in the package configuration.
-
 ## External Schemas
 
 When ingesting data from external systems, the schema is often defined in or by those systems.
-For example, avro is a popular schema language for encoding messages in Kafka topics.
+For example, Avro is a popular schema language for encoding messages in Kafka topics.
 It can be very cumbersome to convert that schema to SQL and maintain that translation.
 
-With DataSQRL, you can place the avro schema next to the table definition file using the table name.
+With DataSQRL, you can easily create a table that fetches the schema from a given avro schema file.
 Following the example above and assuming that the schema for the `User` topic is `user.avsc`,
-you would place that file next to the `user.table.sql` file and DataSQRL automatically pulls in the schema,
-so the CREATE TABLE statement simplifies to only defining the metadata, watermark, and connector:
+and that file is placed next to the `user.table.sql` file, then a `LIKE <schema-file-path>` statement can be added
+to the `CREATE TABLE` statement, so in the `user.table.sql` we only need to define the metadata, the watermark,
+and the connector options:
 ```sql
 CREATE TABLE User (
   last_updated TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
@@ -69,5 +65,9 @@ CREATE TABLE User (
   'properties.group.id' = 'user-consumer-group',
   'scan.startup.mode' = 'earliest-offset',
   'format' = 'avro',
-);
+) LIKE `user.avsc`;
 ```
+
+:::info
+We can even include files from other folder via relative path, but in most cases it makes sense to put the schema file next to the table sql.
+:::

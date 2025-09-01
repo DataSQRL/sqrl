@@ -47,7 +47,6 @@ class PackageJsonImplTest {
     assertThat(packageJson.getVersion()).isEqualTo(1);
     assertThat(packageJson.getEngines()).isNotNull();
     assertThat(packageJson.getDiscovery()).isNotNull();
-    assertThat(packageJson.getDependencies()).isNotNull();
     assertThat(packageJson.getScriptConfig()).isNotNull();
     assertThat(packageJson.getCompilerConfig()).isNotNull();
   }
@@ -112,10 +111,11 @@ class PackageJsonImplTest {
 
     assertThat(scriptConfig.getMainScript()).isEmpty();
     assertThat(scriptConfig.getGraphql()).isEmpty();
+    assertThat(scriptConfig.getScriptApiConfigs()).isEmpty();
   }
 
   @Test
-  void givenScriptConfig_whenSetValues_thenUpdatesConfiguration() {
+  void givenScriptConfig_whenSetRawValues_thenUpdatesConfiguration() {
     var scriptConfig = new ScriptConfigImpl(config);
 
     scriptConfig.setMainScript("main.sqrl");
@@ -123,6 +123,20 @@ class PackageJsonImplTest {
 
     assertThat(scriptConfig.getMainScript()).contains("main.sqrl");
     assertThat(scriptConfig.getGraphql()).contains("schema.graphql");
+  }
+
+  @Test
+  void givenScriptConfig_whenSetApiValues_thenUpdatesConfiguration() {
+    var apiConf = config.getSubConfig("api");
+
+    var v1 = apiConf.getSubConfig("v1");
+    v1.setProperty("schema", "my-schema");
+
+    var scriptConfig = new ScriptConfigImpl(config);
+
+    assertThat(scriptConfig.getScriptApiConfigs()).hasSize(1);
+    assertThat(scriptConfig.getScriptApiConfigs().get(0).getVersion()).isEqualTo("v1");
+    assertThat(scriptConfig.getScriptApiConfigs().get(0).getSchema()).isEqualTo("my-schema");
   }
 
   @Test
@@ -153,20 +167,6 @@ class PackageJsonImplTest {
     assertThat(connectorsConfig.getConnectorConfig("jdbc")).isPresent();
     assertThat(connectorsConfig.getConnectorConfig("kafka")).isPresent();
     assertThat(connectorsConfig.getConnectorConfig("nonexistent")).isEmpty();
-  }
-
-  @Test
-  void
-      givenConfigWithDependencies_whenCreateDependenciesConfig_thenReturnsDependencyConfigurations() {
-    config.getSubConfig("dependencies").getSubConfig("dep1").setProperty("name", "dependency1");
-    config.getSubConfig("dependencies").getSubConfig("dep2").setProperty("name", "dependency2");
-
-    var dependenciesConfig =
-        new DependenciesConfigImpl(config, config.getSubConfig("dependencies"));
-
-    assertThat(dependenciesConfig.getDependency("dep1")).isPresent();
-    assertThat(dependenciesConfig.getDependency("dep2")).isPresent();
-    assertThat(dependenciesConfig.getDependency("nonexistent")).isEmpty();
   }
 
   @Test

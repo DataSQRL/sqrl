@@ -14,7 +14,7 @@ LogicalProject(category_id=[$0], center_vector=[vector_to_double($1)])
   LogicalAggregate(group=[{0}], agg#0=[CENTER($1)])
     LogicalProject(category_id=[$1], vector=[$2])
       LogicalTableScan(table=[[default_catalog, default_database, VectorData]])
-SQL: CREATE VIEW CategoryCentroids AS  SELECT category_id, vector_to_double(CENTER(vector)) as center_vector FROM VectorData GROUP BY category_id;
+SQL: CREATE VIEW `CategoryCentroids` AS  SELECT category_id, vector_to_double(CENTER(vector)) as center_vector FROM VectorData GROUP BY category_id;
 
 === DocumentSimilarity
 ID:     default_catalog.default_database.DocumentSimilarity
@@ -31,7 +31,7 @@ LogicalSort(sort0=[$1], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC-nulls-firs
       LogicalJoin(condition=[<>($0, $3)], joinType=[inner])
         LogicalTableScan(table=[[default_catalog, default_database, VectorData]])
         LogicalTableScan(table=[[default_catalog, default_database, VectorData]])
-SQL: CREATE VIEW DocumentSimilarity AS  SELECT v2.doc_id, cosine_similarity(v1.vector, v2.vector) as score
+SQL: CREATE VIEW `DocumentSimilarity` AS  SELECT v2.doc_id, cosine_similarity(v1.vector, v2.vector) as score
                                            FROM VectorData v1 JOIN VectorData v2 ON v1.doc_id <> v2.doc_id
                                            WHERE v1.doc_id = ?      
                                            ORDER BY score DESC, doc_id ASC;
@@ -51,7 +51,7 @@ LogicalSort(sort0=[$3], dir0=[DESC-nulls-last])
       LogicalJoin(condition=[>(cosine_similarity($2, $5), 0.5:DECIMAL(2, 1))], joinType=[inner])
         LogicalTableScan(table=[[default_catalog, default_database, VectorData]])
         LogicalTableScan(table=[[default_catalog, default_database, VectorData]])
-SQL: CREATE VIEW DocumentSimilarityIndex AS   SELECT e.*
+SQL: CREATE VIEW `DocumentSimilarityIndex` AS   SELECT e.*
                         FROM VectorData i JOIN VectorData e ON cosine_similarity(i.vector, e.vector) > 0.5
                         WHERE i.doc_id = ?       AND i.doc_id <> e.doc_id
                         ORDER BY cosine_similarity(i.vector, e.vector) DESC;
@@ -78,7 +78,7 @@ LogicalProject(doc_id=[$0], category_id=[$1], vector=[double_to_vector(CAST($2):
         LogicalValues(tuples=[[{ 0 }]])
       LogicalProject(EXPR$0=[4], EXPR$1=[5], EXPR$2=[ARRAY(0.1:DECIMAL(3, 2), 0.12:DECIMAL(3, 2), 0.05:DECIMAL(3, 2), 0.85:DECIMAL(3, 2), 0.9:DECIMAL(3, 2))])
         LogicalValues(tuples=[[{ 0 }]])
-SQL: CREATE VIEW VectorData AS  SELECT doc_id, category_id, double_to_vector(vector) AS vector FROM (VALUES
+SQL: CREATE VIEW `VectorData` AS  SELECT doc_id, category_id, double_to_vector(vector) AS vector FROM (VALUES
              (1, 10, ARRAY[0.9, 0.8, 0.01, 0.1, 0.15]),
              (2, 10, ARRAY[0.85, 0.85, 0.03, 0.12, 0.09]),
              (3, 5, ARRAY[0.05, 0.1, 0.0, 0.9, 0.85]),
@@ -157,262 +157,264 @@ CREATE INDEX IF NOT EXISTS "VectorData_vector_cosine_c2" ON "VectorData" USING H
 
 >>>vertx.json
 {
-  "model" : {
-    "queries" : [
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "CategoryCentroids",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            },
-            {
-              "type" : "variable",
-              "path" : "category_id"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"CategoryCentroids\"\nWHERE \"category_id\" = $1",
-            "parameters" : [
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "CategoryCentroids",
+          "exec" : {
+            "arguments" : [
               {
-                "type" : "arg",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
                 "path" : "category_id"
               }
             ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "VectorData",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"CategoryCentroids\"\nWHERE \"category_id\" = $1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "category_id"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"VectorData\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
           }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "DocumentSimilarity",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "doc_id"
-            },
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT \"VectorData0\".\"doc_id\", 1 - (\"VectorData\".\"vector\" <=> \"VectorData0\".\"vector\") AS \"score\"\nFROM \"VectorData\"\n INNER JOIN \"VectorData\" AS \"VectorData0\" ON \"VectorData\".\"doc_id\" <> \"VectorData0\".\"doc_id\"\nWHERE \"VectorData\".\"doc_id\" = $1\nORDER BY 1 - (\"VectorData\".\"vector\" <=> \"VectorData0\".\"vector\") DESC NULLS LAST, \"VectorData0\".\"doc_id\" NULLS FIRST",
-            "parameters" : [
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "VectorData",
+          "exec" : {
+            "arguments" : [
               {
-                "type" : "arg",
-                "path" : "doc_id"
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
               }
             ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "DocumentSimilarityIndex",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "doc_id"
-            },
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"VectorData\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT \"VectorData0\".\"doc_id\", \"VectorData0\".\"category_id\", \"VectorData0\".\"vector\", 1 - (\"VectorData\".\"vector\" <=> \"VectorData0\".\"vector\")\nFROM \"VectorData\"\n INNER JOIN \"VectorData\" AS \"VectorData0\" ON 1 - (\"VectorData\".\"vector\" <=> \"VectorData0\".\"vector\") > 0.5\nWHERE \"VectorData\".\"doc_id\" = $1 AND \"VectorData\".\"doc_id\" <> \"VectorData0\".\"doc_id\"\nORDER BY 1 - (\"VectorData\".\"vector\" <=> \"VectorData0\".\"vector\") DESC NULLS LAST",
-            "parameters" : [
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "DocumentSimilarity",
+          "exec" : {
+            "arguments" : [
               {
-                "type" : "arg",
+                "type" : "variable",
                 "path" : "doc_id"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
               }
             ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"VectorData0\".\"doc_id\", 1 - (\"VectorData\".\"vector\" <=> \"VectorData0\".\"vector\") AS \"score\"\nFROM \"VectorData\"\n INNER JOIN \"VectorData\" AS \"VectorData0\" ON \"VectorData\".\"doc_id\" <> \"VectorData0\".\"doc_id\"\nWHERE \"VectorData\".\"doc_id\" = $1\nORDER BY 1 - (\"VectorData\".\"vector\" <=> \"VectorData0\".\"vector\") DESC NULLS LAST, \"VectorData0\".\"doc_id\" NULLS FIRST",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "doc_id"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "DocumentSimilarityIndex",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "doc_id"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"VectorData0\".\"doc_id\", \"VectorData0\".\"category_id\", \"VectorData0\".\"vector\", 1 - (\"VectorData\".\"vector\" <=> \"VectorData0\".\"vector\")\nFROM \"VectorData\"\n INNER JOIN \"VectorData\" AS \"VectorData0\" ON 1 - (\"VectorData\".\"vector\" <=> \"VectorData0\".\"vector\") > 0.5\nWHERE \"VectorData\".\"doc_id\" = $1 AND \"VectorData\".\"doc_id\" <> \"VectorData0\".\"doc_id\"\nORDER BY 1 - (\"VectorData\".\"vector\" <=> \"VectorData0\".\"vector\") DESC NULLS LAST",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "doc_id"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
           }
         }
+      ],
+      "mutations" : [ ],
+      "subscriptions" : [ ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetCategoryCentroids",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "category_id" : {
+                  "type" : "integer"
+                },
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "category_id"
+              ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query CategoryCentroids($category_id: Int!, $limit: Int = 10, $offset: Int = 0) {\nCategoryCentroids(category_id: $category_id, limit: $limit, offset: $offset) {\ncategory_id\ncenter_vector\n}\n\n}",
+            "queryName" : "CategoryCentroids",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CategoryCentroids{?category_id,offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetVectorData",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query VectorData($limit: Int = 10, $offset: Int = 0) {\nVectorData(limit: $limit, offset: $offset) {\ndoc_id\ncategory_id\n}\n\n}",
+            "queryName" : "VectorData",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/VectorData{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetDocumentSimilarity",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "doc_id" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "doc_id"
+              ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query DocumentSimilarity($doc_id: Int!, $limit: Int = 10, $offset: Int = 0) {\nDocumentSimilarity(doc_id: $doc_id, limit: $limit, offset: $offset) {\ndoc_id\nscore\n}\n\n}",
+            "queryName" : "DocumentSimilarity",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/DocumentSimilarity{?offset,limit,doc_id}"
+        },
+        {
+          "function" : {
+            "name" : "GetDocumentSimilarityIndex",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "doc_id" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "doc_id"
+              ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query DocumentSimilarityIndex($doc_id: Int!, $limit: Int = 10, $offset: Int = 0) {\nDocumentSimilarityIndex(doc_id: $doc_id, limit: $limit, offset: $offset) {\ndoc_id\ncategory_id\n}\n\n}",
+            "queryName" : "DocumentSimilarityIndex",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/DocumentSimilarityIndex{?offset,limit,doc_id}"
+        }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "type CategoryCentroids {\n  category_id: Int!\n  center_vector: [Float]\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\ntype DocumentSimilarity {\n  doc_id: Int!\n  score: Float!\n}\n\ntype DocumentSimilarityIndex {\n  doc_id: Int!\n  category_id: Int!\n}\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  CategoryCentroids(category_id: Int!, limit: Int = 10, offset: Int = 0): [CategoryCentroids!]\n  VectorData(limit: Int = 10, offset: Int = 0): [VectorData!]\n  DocumentSimilarity(doc_id: Int!, limit: Int = 10, offset: Int = 0): [DocumentSimilarity!]\n  DocumentSimilarityIndex(doc_id: Int!, limit: Int = 10, offset: Int = 0): [DocumentSimilarityIndex!]\n}\n\ntype VectorData {\n  doc_id: Int!\n  category_id: Int!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
-    ],
-    "mutations" : [ ],
-    "subscriptions" : [ ],
-    "operations" : [
-      {
-        "function" : {
-          "name" : "GetCategoryCentroids",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "category_id" : {
-                "type" : "integer"
-              },
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [
-              "category_id"
-            ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query CategoryCentroids($category_id: Int!, $limit: Int = 10, $offset: Int = 0) {\nCategoryCentroids(category_id: $category_id, limit: $limit, offset: $offset) {\ncategory_id\ncenter_vector\n}\n\n}",
-          "queryName" : "CategoryCentroids",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/CategoryCentroids{?category_id,offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetVectorData",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query VectorData($limit: Int = 10, $offset: Int = 0) {\nVectorData(limit: $limit, offset: $offset) {\ndoc_id\ncategory_id\n}\n\n}",
-          "queryName" : "VectorData",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/VectorData{?offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetDocumentSimilarity",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              },
-              "doc_id" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [
-              "doc_id"
-            ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query DocumentSimilarity($doc_id: Int!, $limit: Int = 10, $offset: Int = 0) {\nDocumentSimilarity(doc_id: $doc_id, limit: $limit, offset: $offset) {\ndoc_id\nscore\n}\n\n}",
-          "queryName" : "DocumentSimilarity",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/DocumentSimilarity{?offset,limit,doc_id}"
-      },
-      {
-        "function" : {
-          "name" : "GetDocumentSimilarityIndex",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              },
-              "doc_id" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [
-              "doc_id"
-            ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query DocumentSimilarityIndex($doc_id: Int!, $limit: Int = 10, $offset: Int = 0) {\nDocumentSimilarityIndex(doc_id: $doc_id, limit: $limit, offset: $offset) {\ndoc_id\ncategory_id\n}\n\n}",
-          "queryName" : "DocumentSimilarityIndex",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/DocumentSimilarityIndex{?offset,limit,doc_id}"
-      }
-    ],
-    "schema" : {
-      "type" : "string",
-      "schema" : "type CategoryCentroids {\n  category_id: Int!\n  center_vector: [Float]\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\ntype DocumentSimilarity {\n  doc_id: Int!\n  score: Float!\n}\n\ntype DocumentSimilarityIndex {\n  doc_id: Int!\n  category_id: Int!\n}\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  CategoryCentroids(category_id: Int!, limit: Int = 10, offset: Int = 0): [CategoryCentroids!]\n  VectorData(limit: Int = 10, offset: Int = 0): [VectorData!]\n  DocumentSimilarity(doc_id: Int!, limit: Int = 10, offset: Int = 0): [DocumentSimilarity!]\n  DocumentSimilarityIndex(doc_id: Int!, limit: Int = 10, offset: Int = 0): [DocumentSimilarityIndex!]\n}\n\ntype VectorData {\n  doc_id: Int!\n  category_id: Int!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
     }
   }
 }

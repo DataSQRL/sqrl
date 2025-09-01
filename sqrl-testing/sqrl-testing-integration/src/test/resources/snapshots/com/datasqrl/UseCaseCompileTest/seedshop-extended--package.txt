@@ -23,7 +23,7 @@ LogicalProject(customerid=[$0], first_name=[$5], last_name=[$6], email=[$7], spe
       LogicalFilter(condition=[=($cor19.customerid, $0)])
         LogicalSnapshot(period=[$cor19.week])
           LogicalTableScan(table=[[default_catalog, default_database, Customers]])
-SQL: CREATE VIEW CustomerPromotion AS  SELECT s.customerid, c.first_name, c.last_name, c.email, s.spend, s.saved
+SQL: CREATE VIEW `CustomerPromotion` AS  SELECT s.customerid, c.first_name, c.last_name, c.email, s.spend, s.saved
         FROM CustomersSpending s JOIN Customers FOR SYSTEM_TIME AS OF `week` c ON s.customerid = c.id
         WHERE s.spend > 250;
 
@@ -74,7 +74,7 @@ Plan:
 LogicalAggregate(group=[{0}], first_order=[MIN($1)], total_spend=[SUM($2)], total_saved=[SUM($3)], num_orders=[COUNT()])
   LogicalProject(customerid=[$2], time=[$1], price=[$3], saving=[$4])
     LogicalTableScan(table=[[default_catalog, default_database, OrdersTotals]])
-SQL: CREATE VIEW CustomersOrderStats AS  SELECT customerid, min(`time`) as first_order,
+SQL: CREATE VIEW `CustomersOrderStats` AS  SELECT customerid, min(`time`) as first_order,
                               sum(price) as total_spend, sum(saving) as total_saved,
                               count(1) as num_orders
                        FROM OrdersTotals GROUP BY customerid;
@@ -99,7 +99,7 @@ LogicalAggregate(group=[{0, 1}], num_orders=[COUNT()], total_quantity=[SUM($2)])
       Uncollect
         LogicalProject(items=[$cor12.items])
           LogicalValues(tuples=[[{ 0 }]])
-SQL: CREATE VIEW CustomersPastPurchases AS  SELECT o.customerid, i.productid, count(1) as num_orders,
+SQL: CREATE VIEW `CustomersPastPurchases` AS  SELECT o.customerid, i.productid, count(1) as num_orders,
          sum(i.quantity) as total_quantity
       FROM Orders o CROSS JOIN UNNEST(o.items) i
       GROUP BY o.customerid, i.productid;
@@ -127,7 +127,7 @@ LogicalProject(customerid=[$0], week=[$3], spend=[$4], saved=[$5])
       LogicalTableFunctionScan(invocation=[TUMBLE(DESCRIPTOR($1), 604800000:INTERVAL DAY)], rowType=[RecordType(BIGINT id, TIMESTAMP_LTZ(3) *ROWTIME* time, BIGINT customerid, DOUBLE price, DOUBLE saving, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end, TIMESTAMP_LTZ(3) *ROWTIME* window_time)])
         LogicalProject(id=[$0], time=[$1], customerid=[$2], price=[$3], saving=[$4])
           LogicalTableScan(table=[[default_catalog, default_database, OrdersTotals]])
-SQL: CREATE VIEW CustomersSpending AS  SELECT customerid, window_time AS week,
+SQL: CREATE VIEW `CustomersSpending` AS  SELECT customerid, window_time AS week,
          sum(price) AS spend, sum(saving) AS saved
       FROM TABLE(TUMBLE(TABLE OrdersTotals, DESCRIPTOR(`time`), INTERVAL '7' DAYS))
       GROUP BY customerid, window_start, window_end, window_time
@@ -178,7 +178,7 @@ LogicalProject(id=[$0], time=[$4], customerid=[$1], price=[$5], saving=[$6])
       LogicalTableFunctionScan(invocation=[TUMBLE(DESCRIPTOR($1), 1:INTERVAL SECOND)], rowType=[RecordType(BIGINT id, TIMESTAMP_LTZ(3) *ROWTIME* time, BIGINT customerid, BIGINT productid, BIGINT quantity, DOUBLE unit_price, DOUBLE discount, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end, TIMESTAMP_LTZ(3) *ROWTIME* window_time)])
         LogicalProject(id=[$0], time=[$1], customerid=[$2], productid=[$3], quantity=[$4], unit_price=[$5], discount=[$6])
           LogicalTableScan(table=[[default_catalog, default_database, _OrderItems]])
-SQL: CREATE VIEW OrdersTotals AS  SELECT id, window_time AS `time`, customerid, sum(quantity * unit_price - coalesce(discount, 0.0)) as price,
+SQL: CREATE VIEW `OrdersTotals` AS  SELECT id, window_time AS `time`, customerid, sum(quantity * unit_price - coalesce(discount, 0.0)) as price,
                   sum(coalesce(discount, 0.0)) as saving
                 FROM TABLE(TUMBLE(TABLE _OrderItems, DESCRIPTOR(`time`), INTERVAL '0.001' SECONDS))
                 GROUP BY id, customerid, window_start, window_end, window_time;
@@ -197,7 +197,7 @@ LogicalSort(sort0=[$8], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC-nulls-firs
   LogicalProject(id=[$0], name=[$1], sizing=[$2], weight_in_gram=[$3], type=[$4], category=[$5], usda_id=[$6], updated=[$7], score=[text_search(?0, $1)])
     LogicalFilter(condition=[>(text_search(CAST(?0):VARCHAR(2147483647) CHARACTER SET "UTF-16LE", $1), 0)])
       LogicalTableScan(table=[[default_catalog, default_database, Products]])
-SQL: CREATE VIEW ProductSearch AS  SELECT p.*, text_search(?     , name) as score
+SQL: CREATE VIEW `ProductSearch` AS  SELECT p.*, text_search(?     , name) as score
                                  FROM Products p
                                  WHERE text_search(?     , name) > 0
                                  ORDER BY score DESC, id ASC;
@@ -216,7 +216,7 @@ LogicalSort(sort0=[$0], dir0=[ASC-nulls-first])
   LogicalProject(id=[$0], name=[$1], sizing=[$2], weight_in_gram=[$3], type=[$4], category=[$5], usda_id=[$6], updated=[$7])
     LogicalFilter(condition=[AND(>(text_search(CAST(?0):VARCHAR(2147483647) CHARACTER SET "UTF-16LE", $1, $5), 0), >($0, ?1))])
       LogicalTableScan(table=[[default_catalog, default_database, Products]])
-SQL: CREATE VIEW ProductSearchWithId AS  SELECT * FROM Products WHERE text_search(?     , name, category) > 0
+SQL: CREATE VIEW `ProductSearchWithId` AS  SELECT * FROM Products WHERE text_search(?     , name, category) > 0
                                                                           AND id > ?   ORDER BY id ASC;
 
 === Products
@@ -274,7 +274,7 @@ LogicalAggregate(group=[{0, 1}], quantity=[SUM($2)], spend=[SUM($3)], weight=[SU
       LogicalFilter(condition=[=($cor29.customerid, $0)])
         LogicalSnapshot(period=[$cor29.time])
           LogicalTableScan(table=[[default_catalog, default_database, Customers]])
-SQL: CREATE VIEW ProductsByCountry AS  SELECT p.id AS productid, c.country AS country, sum(o.quantity) as quantity,
+SQL: CREATE VIEW `ProductsByCountry` AS  SELECT p.id AS productid, c.country AS country, sum(o.quantity) as quantity,
          sum(o.quantity * o.unit_price) as spend, sum(o.quantity * p.weight_in_gram) as weight
       FROM _OrderItems o
           JOIN Products FOR SYSTEM_TIME AS OF o.`time` p ON o.productid = p.id
@@ -331,7 +331,7 @@ LogicalProject(id=[$0], time=[$2], customerid=[$1], productid=[$4], quantity=[$5
     Uncollect
       LogicalProject(items=[$cor1.items])
         LogicalValues(tuples=[[{ 0 }]])
-SQL: CREATE VIEW _OrderItems AS  SELECT o.id, o.`time`, o.customerid, i.* FROM Orders o CROSS JOIN UNNEST(o.items) i;
+SQL: CREATE VIEW `_OrderItems` AS  SELECT o.id, o.`time`, o.customerid, i.* FROM Orders o CROSS JOIN UNNEST(o.items) i;
 
 === _ProductsStream
 ID:     default_catalog.default_database._ProductsStream
@@ -359,7 +359,7 @@ AS
 SELECT `_ProductsStream`.`id`, `_ProductsStream`.`name`, `_ProductsStream`.`sizing`, `_ProductsStream`.`weight_in_gram`, `_ProductsStream`.`type`, `_ProductsStream`.`category`, `_ProductsStream`.`usda_id`, `_ProductsStream`.`updated`
 FROM `default_catalog`.`default_database`.`_ProductsStream` AS `_ProductsStream`
 === promotion
-ID:     sink.promotion
+ID:     local-sink.promotion
 Type:   export
 Stage:  flink
 Inputs: default_catalog.default_database.CustomerPromotion
@@ -718,661 +718,663 @@ CREATE INDEX IF NOT EXISTS "Products_text_c1c5" ON "Products" USING GIN (to_tsve
 
 >>>vertx.json
 {
-  "model" : {
-    "queries" : [
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "Customers",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "id"
-            },
-            {
-              "type" : "variable",
-              "path" : "email"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Customers\"\nWHERE (\"id\" = $1 OR $1 IS NULL) AND (\"email\" = $2 OR $2 IS NULL)",
-            "parameters" : [
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Customers",
+          "exec" : {
+            "arguments" : [
               {
-                "type" : "arg",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
                 "path" : "id"
               },
               {
-                "type" : "arg",
+                "type" : "variable",
                 "path" : "email"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
               }
             ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Customers",
-        "fieldName" : "order_stats",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Customers\"\nWHERE (\"id\" = $1 OR $1 IS NULL) AND (\"email\" = $2 OR $2 IS NULL)",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "id"
+                },
+                {
+                  "type" : "arg",
+                  "path" : "email"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"CustomersOrderStats\"\nWHERE \"customerid\" = $1",
-            "parameters" : [
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Customers",
+          "fieldName" : "order_stats",
+          "exec" : {
+            "arguments" : [
               {
-                "type" : "source",
-                "key" : "id"
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
               }
             ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Customers",
-        "fieldName" : "past_purchases",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"CustomersOrderStats\"\nWHERE \"customerid\" = $1",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "key" : "id"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"CustomersPastPurchases\"\nWHERE \"customerid\" = $1\nORDER BY \"num_orders\" DESC NULLS LAST, \"total_quantity\" DESC NULLS LAST",
-            "parameters" : [
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Customers",
+          "fieldName" : "past_purchases",
+          "exec" : {
+            "arguments" : [
               {
-                "type" : "source",
-                "key" : "id"
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
               }
             ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Customers",
-        "fieldName" : "purchases",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"CustomersPastPurchases\"\nWHERE \"customerid\" = $1\nORDER BY \"num_orders\" DESC NULLS LAST, \"total_quantity\" DESC NULLS LAST",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "key" : "id"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Orders\"\nWHERE \"customerid\" = $1",
-            "parameters" : [
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Customers",
+          "fieldName" : "purchases",
+          "exec" : {
+            "arguments" : [
               {
-                "type" : "source",
-                "key" : "id"
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
               }
             ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Orders",
-        "fieldName" : "customer",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Orders\"\nWHERE \"customerid\" = $1",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "key" : "id"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Customers\"\nWHERE $1 = \"id\"",
-            "parameters" : [
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Orders",
+          "fieldName" : "customer",
+          "exec" : {
+            "arguments" : [
               {
-                "type" : "source",
-                "key" : "customerid"
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
               }
             ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Orders",
-        "fieldName" : "totals",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Customers\"\nWHERE $1 = \"id\"",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "key" : "customerid"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM (SELECT \"id\", \"time\", \"customerid\", \"price\", \"saving\"\n  FROM \"OrdersTotals\") AS \"t\"\nWHERE $1 = \"id\"",
-            "parameters" : [
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Orders",
+          "fieldName" : "totals",
+          "exec" : {
+            "arguments" : [
               {
-                "type" : "source",
-                "key" : "id"
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
               }
             ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Customers",
-        "fieldName" : "spending",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"id\", \"time\", \"customerid\", \"price\", \"saving\"\n  FROM \"OrdersTotals\") AS \"t\"\nWHERE $1 = \"id\"",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "key" : "id"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM (SELECT \"customerid\", \"week\", \"spend\", \"saved\"\n  FROM \"CustomersSpending\"\n  ORDER BY \"week\" DESC NULLS LAST) AS \"t0\"\nWHERE \"customerid\" = $1",
-            "parameters" : [
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Customers",
+          "fieldName" : "spending",
+          "exec" : {
+            "arguments" : [
               {
-                "type" : "source",
-                "key" : "id"
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
               }
             ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "Orders",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"customerid\", \"week\", \"spend\", \"saved\"\n  FROM \"CustomersSpending\"\n  ORDER BY \"week\" DESC NULLS LAST) AS \"t0\"\nWHERE \"customerid\" = $1",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "key" : "id"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Orders\"",
-            "parameters" : [ ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
           }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "Products",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "id"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Products\"\nWHERE \"id\" = $1",
-            "parameters" : [
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Orders",
+          "exec" : {
+            "arguments" : [
               {
-                "type" : "arg",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Orders\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Products",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
                 "path" : "id"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
               }
             ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "ProductsByCountry",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            },
-            {
-              "type" : "variable",
-              "path" : "productid"
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Products\"\nWHERE \"id\" = $1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "id"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM (SELECT \"productid\", \"country\", \"quantity\", \"spend\", \"weight\"\n  FROM \"ProductsByCountry\") AS \"t\"\nWHERE \"productid\" = $1",
-            "parameters" : [
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "ProductsByCountry",
+          "exec" : {
+            "arguments" : [
               {
-                "type" : "arg",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
                 "path" : "productid"
               }
             ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "ProductSearch",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            },
-            {
-              "type" : "variable",
-              "path" : "query"
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"productid\", \"country\", \"quantity\", \"spend\", \"weight\"\n  FROM \"ProductsByCountry\") AS \"t\"\nWHERE \"productid\" = $1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "productid"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT \"id\", \"name\", \"sizing\", \"weight_in_gram\", \"type\", \"category\", \"usda_id\", \"updated\", \"ts_rank_cd\"(\"to_tsvector\"('english', COALESCE(\"name\", ' ')), \"websearch_to_tsquery\"('english', $1)) AS \"score\"\nFROM \"Products\"\nWHERE (\"to_tsvector\"('english', COALESCE(\"name\", ' ')) @@ \"websearch_to_tsquery\"('english', CAST($1 AS TEXT)))\nORDER BY \"ts_rank_cd\"(\"to_tsvector\"('english', COALESCE(\"name\", ' ')), \"websearch_to_tsquery\"('english', $1)) DESC NULLS LAST, \"id\" NULLS FIRST",
-            "parameters" : [
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "ProductSearch",
+          "exec" : {
+            "arguments" : [
               {
-                "type" : "arg",
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
                 "path" : "query"
               }
             ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
-          }
-        }
-      },
-      {
-        "type" : "args",
-        "parentType" : "Query",
-        "fieldName" : "ProductSearchWithId",
-        "exec" : {
-          "arguments" : [
-            {
-              "type" : "variable",
-              "path" : "offset"
-            },
-            {
-              "type" : "variable",
-              "path" : "id"
-            },
-            {
-              "type" : "variable",
-              "path" : "limit"
-            },
-            {
-              "type" : "variable",
-              "path" : "query"
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"id\", \"name\", \"sizing\", \"weight_in_gram\", \"type\", \"category\", \"usda_id\", \"updated\", \"ts_rank_cd\"(\"to_tsvector\"('english', COALESCE(\"name\", ' ')), \"websearch_to_tsquery\"('english', $1)) AS \"score\"\nFROM \"Products\"\nWHERE (\"to_tsvector\"('english', COALESCE(\"name\", ' ')) @@ \"websearch_to_tsquery\"('english', CAST($1 AS TEXT)))\nORDER BY \"ts_rank_cd\"(\"to_tsvector\"('english', COALESCE(\"name\", ' ')), \"websearch_to_tsquery\"('english', $1)) DESC NULLS LAST, \"id\" NULLS FIRST",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "query"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
             }
-          ],
-          "query" : {
-            "type" : "SqlQuery",
-            "sql" : "SELECT *\nFROM \"Products\"\nWHERE (\"to_tsvector\"('english', COALESCE(\"name\", ' ') || ' ' || COALESCE(\"category\", ' ')) @@ \"websearch_to_tsquery\"('english', CAST($1 AS TEXT))) AND \"id\" > $2\nORDER BY \"id\" NULLS FIRST",
-            "parameters" : [
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "ProductSearchWithId",
+          "exec" : {
+            "arguments" : [
               {
-                "type" : "arg",
-                "path" : "query"
+                "type" : "variable",
+                "path" : "offset"
               },
               {
-                "type" : "arg",
+                "type" : "variable",
                 "path" : "id"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "query"
               }
             ],
-            "pagination" : "LIMIT_AND_OFFSET",
-            "cacheDurationMs" : 0,
-            "database" : "POSTGRES"
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Products\"\nWHERE (\"to_tsvector\"('english', COALESCE(\"name\", ' ') || ' ' || COALESCE(\"category\", ' ')) @@ \"websearch_to_tsquery\"('english', CAST($1 AS TEXT))) AND \"id\" > $2\nORDER BY \"id\" NULLS FIRST",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "query"
+                },
+                {
+                  "type" : "arg",
+                  "path" : "id"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
           }
         }
+      ],
+      "mutations" : [ ],
+      "subscriptions" : [
+        {
+          "type" : "kafka",
+          "fieldName" : "CustomerPromotion",
+          "topic" : "CustomerPromotion",
+          "sinkConfig" : { },
+          "filters" : { }
+        }
+      ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetCustomers",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "order_stats_offset" : {
+                  "type" : "integer"
+                },
+                "offset" : {
+                  "type" : "integer"
+                },
+                "past_purchases_limit" : {
+                  "type" : "integer"
+                },
+                "purchases_offset" : {
+                  "type" : "integer"
+                },
+                "purchases_limit" : {
+                  "type" : "integer"
+                },
+                "purchases_totals_offset" : {
+                  "type" : "integer"
+                },
+                "spending_offset" : {
+                  "type" : "integer"
+                },
+                "spending_limit" : {
+                  "type" : "integer"
+                },
+                "order_stats_limit" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "purchases_totals_limit" : {
+                  "type" : "integer"
+                },
+                "id" : {
+                  "type" : "integer"
+                },
+                "email" : {
+                  "type" : "string"
+                },
+                "past_purchases_offset" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query Customers($id: Long, $email: String, $limit: Int = 10, $offset: Int = 0$order_stats_limit: Int = 10, $order_stats_offset: Int = 0$past_purchases_limit: Int = 10, $past_purchases_offset: Int = 0$purchases_limit: Int = 10, $purchases_offset: Int = 0$purchases_totals_limit: Int = 10, $purchases_totals_offset: Int = 0$spending_limit: Int = 10, $spending_offset: Int = 0) {\nCustomers(id: $id, email: $email, limit: $limit, offset: $offset) {\nid\nfirst_name\nlast_name\nemail\nip_address\ncountry\nchanged_on\ntimestamp\norder_stats(limit: $order_stats_limit, offset: $order_stats_offset) {\ncustomerid\nfirst_order\ntotal_spend\ntotal_saved\nnum_orders\n}\npast_purchases(limit: $past_purchases_limit, offset: $past_purchases_offset) {\ncustomerid\nproductid\nnum_orders\ntotal_quantity\n}\npurchases(limit: $purchases_limit, offset: $purchases_offset) {\nid\ncustomerid\ntime\nitems {\nproductid\nquantity\nunit_price\ndiscount\n}\ntotals(limit: $purchases_totals_limit, offset: $purchases_totals_offset) {\nid\ntime\ncustomerid\nprice\nsaving\n}\n}\nspending(limit: $spending_limit, offset: $spending_offset) {\ncustomerid\nweek\nspend\nsaved\n}\n}\n\n}",
+            "queryName" : "Customers",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Customers{?order_stats_offset,offset,past_purchases_limit,purchases_offset,purchases_limit,purchases_totals_offset,spending_offset,spending_limit,order_stats_limit,limit,purchases_totals_limit,id,email,past_purchases_offset}"
+        },
+        {
+          "function" : {
+            "name" : "GetOrders",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "customer_past_purchases_limit" : {
+                  "type" : "integer"
+                },
+                "customer_past_purchases_offset" : {
+                  "type" : "integer"
+                },
+                "totals_limit" : {
+                  "type" : "integer"
+                },
+                "offset" : {
+                  "type" : "integer"
+                },
+                "customer_order_stats_offset" : {
+                  "type" : "integer"
+                },
+                "totals_offset" : {
+                  "type" : "integer"
+                },
+                "customer_limit" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "customer_order_stats_limit" : {
+                  "type" : "integer"
+                },
+                "customer_offset" : {
+                  "type" : "integer"
+                },
+                "customer_spending_offset" : {
+                  "type" : "integer"
+                },
+                "customer_spending_limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query Orders($limit: Int = 10, $offset: Int = 0$customer_limit: Int = 10, $customer_offset: Int = 0$customer_order_stats_limit: Int = 10, $customer_order_stats_offset: Int = 0$customer_past_purchases_limit: Int = 10, $customer_past_purchases_offset: Int = 0$customer_spending_limit: Int = 10, $customer_spending_offset: Int = 0$totals_limit: Int = 10, $totals_offset: Int = 0) {\nOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nitems {\nproductid\nquantity\nunit_price\ndiscount\n}\ncustomer(limit: $customer_limit, offset: $customer_offset) {\nid\nfirst_name\nlast_name\nemail\nip_address\ncountry\nchanged_on\ntimestamp\norder_stats(limit: $customer_order_stats_limit, offset: $customer_order_stats_offset) {\ncustomerid\nfirst_order\ntotal_spend\ntotal_saved\nnum_orders\n}\npast_purchases(limit: $customer_past_purchases_limit, offset: $customer_past_purchases_offset) {\ncustomerid\nproductid\nnum_orders\ntotal_quantity\n}\nspending(limit: $customer_spending_limit, offset: $customer_spending_offset) {\ncustomerid\nweek\nspend\nsaved\n}\n}\ntotals(limit: $totals_limit, offset: $totals_offset) {\nid\ntime\ncustomerid\nprice\nsaving\n}\n}\n\n}",
+            "queryName" : "Orders",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Orders{?customer_past_purchases_limit,customer_past_purchases_offset,totals_limit,offset,customer_order_stats_offset,totals_offset,customer_limit,limit,customer_order_stats_limit,customer_offset,customer_spending_offset,customer_spending_limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetProducts",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "id" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "id"
+              ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query Products($id: Long!, $limit: Int = 10, $offset: Int = 0) {\nProducts(id: $id, limit: $limit, offset: $offset) {\nid\nname\nsizing\nweight_in_gram\ntype\ncategory\nusda_id\nupdated\n}\n\n}",
+            "queryName" : "Products",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Products{?offset,limit,id}"
+        },
+        {
+          "function" : {
+            "name" : "GetProductsByCountry",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "productid" : {
+                  "type" : "integer"
+                },
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "productid"
+              ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query ProductsByCountry($productid: Long!, $limit: Int = 10, $offset: Int = 0) {\nProductsByCountry(productid: $productid, limit: $limit, offset: $offset) {\nproductid\ncountry\nquantity\nspend\nweight\n}\n\n}",
+            "queryName" : "ProductsByCountry",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/ProductsByCountry{?productid,offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetProductSearch",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "query" : {
+                  "type" : "string"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "query"
+              ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query ProductSearch($query: String!, $limit: Int = 10, $offset: Int = 0) {\nProductSearch(query: $query, limit: $limit, offset: $offset) {\nid\nname\nsizing\nweight_in_gram\ntype\ncategory\nusda_id\nupdated\nscore\n}\n\n}",
+            "queryName" : "ProductSearch",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/ProductSearch{?offset,query,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetProductSearchWithId",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "query" : {
+                  "type" : "string"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "id" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "query",
+                "id"
+              ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query ProductSearchWithId($query: String!, $id: Int!, $limit: Int = 10, $offset: Int = 0) {\nProductSearchWithId(query: $query, id: $id, limit: $limit, offset: $offset) {\nid\nname\nsizing\nweight_in_gram\ntype\ncategory\nusda_id\nupdated\n}\n\n}",
+            "queryName" : "ProductSearchWithId",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/ProductSearchWithId{?offset,query,limit,id}"
+        }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "type CustomerPromotion {\n  customerid: Long!\n  first_name: String!\n  last_name: String!\n  email: String!\n  spend: Float!\n  saved: Float!\n}\n\ntype Customers {\n  id: Long!\n  first_name: String!\n  last_name: String!\n  email: String!\n  ip_address: String\n  country: String\n  changed_on: Long!\n  timestamp: DateTime!\n  order_stats(limit: Int = 10, offset: Int = 0): [CustomersOrderStats!]\n  past_purchases(limit: Int = 10, offset: Int = 0): [CustomersPastPurchases!]\n  purchases(limit: Int = 10, offset: Int = 0): [Orders!]\n  spending(limit: Int = 10, offset: Int = 0): [CustomersSpending!]\n}\n\ntype CustomersOrderStats {\n  customerid: Long!\n  first_order: DateTime!\n  total_spend: Float!\n  total_saved: Float!\n  num_orders: Long!\n}\n\ntype CustomersPastPurchases {\n  customerid: Long!\n  productid: Long!\n  num_orders: Long!\n  total_quantity: Long!\n}\n\ntype CustomersSpending {\n  customerid: Long!\n  week: DateTime!\n  spend: Float!\n  saved: Float!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Orders {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  items: [Orders_itemsOutput]!\n  customer(limit: Int = 10, offset: Int = 0): [Customers!]\n  totals(limit: Int = 10, offset: Int = 0): [OrdersTotals!]\n}\n\ntype OrdersTotals {\n  id: Long!\n  time: DateTime!\n  customerid: Long!\n  price: Float!\n  saving: Float!\n}\n\ntype Orders_itemsOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\ntype ProductSearch {\n  id: Long!\n  name: String!\n  sizing: String!\n  weight_in_gram: Long!\n  type: String!\n  category: String!\n  usda_id: Long!\n  updated: DateTime!\n  score: Float\n}\n\ntype Products {\n  id: Long!\n  name: String!\n  sizing: String!\n  weight_in_gram: Long!\n  type: String!\n  category: String!\n  usda_id: Long!\n  updated: DateTime!\n}\n\ntype ProductsByCountry {\n  productid: Long!\n  country: String\n  quantity: Long!\n  spend: Float!\n  weight: Long!\n}\n\ntype Query {\n  Customers(id: Long, email: String, limit: Int = 10, offset: Int = 0): [Customers!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n  Products(id: Long!, limit: Int = 10, offset: Int = 0): [Products!]\n  ProductsByCountry(productid: Long!, limit: Int = 10, offset: Int = 0): [ProductsByCountry!]\n  ProductSearch(query: String!, limit: Int = 10, offset: Int = 0): [ProductSearch!]\n  ProductSearchWithId(query: String!, id: Int!, limit: Int = 10, offset: Int = 0): [Products!]\n}\n\ntype Subscription {\n  CustomerPromotion: CustomerPromotion\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
-    ],
-    "mutations" : [ ],
-    "subscriptions" : [
-      {
-        "type" : "kafka",
-        "fieldName" : "CustomerPromotion",
-        "topic" : "CustomerPromotion",
-        "sinkConfig" : { },
-        "filters" : { }
-      }
-    ],
-    "operations" : [
-      {
-        "function" : {
-          "name" : "GetCustomers",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "order_stats_offset" : {
-                "type" : "integer"
-              },
-              "offset" : {
-                "type" : "integer"
-              },
-              "past_purchases_limit" : {
-                "type" : "integer"
-              },
-              "purchases_offset" : {
-                "type" : "integer"
-              },
-              "purchases_limit" : {
-                "type" : "integer"
-              },
-              "purchases_totals_offset" : {
-                "type" : "integer"
-              },
-              "spending_offset" : {
-                "type" : "integer"
-              },
-              "spending_limit" : {
-                "type" : "integer"
-              },
-              "order_stats_limit" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              },
-              "purchases_totals_limit" : {
-                "type" : "integer"
-              },
-              "id" : {
-                "type" : "integer"
-              },
-              "email" : {
-                "type" : "string"
-              },
-              "past_purchases_offset" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query Customers($id: Long, $email: String, $limit: Int = 10, $offset: Int = 0$order_stats_limit: Int = 10, $order_stats_offset: Int = 0$past_purchases_limit: Int = 10, $past_purchases_offset: Int = 0$purchases_limit: Int = 10, $purchases_offset: Int = 0$purchases_totals_limit: Int = 10, $purchases_totals_offset: Int = 0$spending_limit: Int = 10, $spending_offset: Int = 0) {\nCustomers(id: $id, email: $email, limit: $limit, offset: $offset) {\nid\nfirst_name\nlast_name\nemail\nip_address\ncountry\nchanged_on\ntimestamp\norder_stats(limit: $order_stats_limit, offset: $order_stats_offset) {\ncustomerid\nfirst_order\ntotal_spend\ntotal_saved\nnum_orders\n}\npast_purchases(limit: $past_purchases_limit, offset: $past_purchases_offset) {\ncustomerid\nproductid\nnum_orders\ntotal_quantity\n}\npurchases(limit: $purchases_limit, offset: $purchases_offset) {\nid\ncustomerid\ntime\nitems {\nproductid\nquantity\nunit_price\ndiscount\n}\ntotals(limit: $purchases_totals_limit, offset: $purchases_totals_offset) {\nid\ntime\ncustomerid\nprice\nsaving\n}\n}\nspending(limit: $spending_limit, offset: $spending_offset) {\ncustomerid\nweek\nspend\nsaved\n}\n}\n\n}",
-          "queryName" : "Customers",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/Customers{?order_stats_offset,offset,past_purchases_limit,purchases_offset,purchases_limit,purchases_totals_offset,spending_offset,spending_limit,order_stats_limit,limit,purchases_totals_limit,id,email,past_purchases_offset}"
-      },
-      {
-        "function" : {
-          "name" : "GetOrders",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "customer_past_purchases_limit" : {
-                "type" : "integer"
-              },
-              "customer_past_purchases_offset" : {
-                "type" : "integer"
-              },
-              "totals_limit" : {
-                "type" : "integer"
-              },
-              "offset" : {
-                "type" : "integer"
-              },
-              "customer_order_stats_offset" : {
-                "type" : "integer"
-              },
-              "totals_offset" : {
-                "type" : "integer"
-              },
-              "customer_limit" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              },
-              "customer_order_stats_limit" : {
-                "type" : "integer"
-              },
-              "customer_offset" : {
-                "type" : "integer"
-              },
-              "customer_spending_offset" : {
-                "type" : "integer"
-              },
-              "customer_spending_limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [ ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query Orders($limit: Int = 10, $offset: Int = 0$customer_limit: Int = 10, $customer_offset: Int = 0$customer_order_stats_limit: Int = 10, $customer_order_stats_offset: Int = 0$customer_past_purchases_limit: Int = 10, $customer_past_purchases_offset: Int = 0$customer_spending_limit: Int = 10, $customer_spending_offset: Int = 0$totals_limit: Int = 10, $totals_offset: Int = 0) {\nOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nitems {\nproductid\nquantity\nunit_price\ndiscount\n}\ncustomer(limit: $customer_limit, offset: $customer_offset) {\nid\nfirst_name\nlast_name\nemail\nip_address\ncountry\nchanged_on\ntimestamp\norder_stats(limit: $customer_order_stats_limit, offset: $customer_order_stats_offset) {\ncustomerid\nfirst_order\ntotal_spend\ntotal_saved\nnum_orders\n}\npast_purchases(limit: $customer_past_purchases_limit, offset: $customer_past_purchases_offset) {\ncustomerid\nproductid\nnum_orders\ntotal_quantity\n}\nspending(limit: $customer_spending_limit, offset: $customer_spending_offset) {\ncustomerid\nweek\nspend\nsaved\n}\n}\ntotals(limit: $totals_limit, offset: $totals_offset) {\nid\ntime\ncustomerid\nprice\nsaving\n}\n}\n\n}",
-          "queryName" : "Orders",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/Orders{?customer_past_purchases_limit,customer_past_purchases_offset,totals_limit,offset,customer_order_stats_offset,totals_offset,customer_limit,limit,customer_order_stats_limit,customer_offset,customer_spending_offset,customer_spending_limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetProducts",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              },
-              "id" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [
-              "id"
-            ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query Products($id: Long!, $limit: Int = 10, $offset: Int = 0) {\nProducts(id: $id, limit: $limit, offset: $offset) {\nid\nname\nsizing\nweight_in_gram\ntype\ncategory\nusda_id\nupdated\n}\n\n}",
-          "queryName" : "Products",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/Products{?offset,limit,id}"
-      },
-      {
-        "function" : {
-          "name" : "GetProductsByCountry",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "productid" : {
-                "type" : "integer"
-              },
-              "offset" : {
-                "type" : "integer"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [
-              "productid"
-            ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query ProductsByCountry($productid: Long!, $limit: Int = 10, $offset: Int = 0) {\nProductsByCountry(productid: $productid, limit: $limit, offset: $offset) {\nproductid\ncountry\nquantity\nspend\nweight\n}\n\n}",
-          "queryName" : "ProductsByCountry",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/ProductsByCountry{?productid,offset,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetProductSearch",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "query" : {
-                "type" : "string"
-              },
-              "limit" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [
-              "query"
-            ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query ProductSearch($query: String!, $limit: Int = 10, $offset: Int = 0) {\nProductSearch(query: $query, limit: $limit, offset: $offset) {\nid\nname\nsizing\nweight_in_gram\ntype\ncategory\nusda_id\nupdated\nscore\n}\n\n}",
-          "queryName" : "ProductSearch",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/ProductSearch{?offset,query,limit}"
-      },
-      {
-        "function" : {
-          "name" : "GetProductSearchWithId",
-          "parameters" : {
-            "type" : "object",
-            "properties" : {
-              "offset" : {
-                "type" : "integer"
-              },
-              "query" : {
-                "type" : "string"
-              },
-              "limit" : {
-                "type" : "integer"
-              },
-              "id" : {
-                "type" : "integer"
-              }
-            },
-            "required" : [
-              "query",
-              "id"
-            ]
-          }
-        },
-        "format" : "JSON",
-        "apiQuery" : {
-          "query" : "query ProductSearchWithId($query: String!, $id: Int!, $limit: Int = 10, $offset: Int = 0) {\nProductSearchWithId(query: $query, id: $id, limit: $limit, offset: $offset) {\nid\nname\nsizing\nweight_in_gram\ntype\ncategory\nusda_id\nupdated\n}\n\n}",
-          "queryName" : "ProductSearchWithId",
-          "operationType" : "QUERY"
-        },
-        "mcpMethod" : "TOOL",
-        "restMethod" : "GET",
-        "uriTemplate" : "queries/ProductSearchWithId{?offset,query,limit,id}"
-      }
-    ],
-    "schema" : {
-      "type" : "string",
-      "schema" : "type CustomerPromotion {\n  customerid: Long!\n  first_name: String!\n  last_name: String!\n  email: String!\n  spend: Float!\n  saved: Float!\n}\n\ntype Customers {\n  id: Long!\n  first_name: String!\n  last_name: String!\n  email: String!\n  ip_address: String\n  country: String\n  changed_on: Long!\n  timestamp: DateTime!\n  order_stats(limit: Int = 10, offset: Int = 0): [CustomersOrderStats!]\n  past_purchases(limit: Int = 10, offset: Int = 0): [CustomersPastPurchases!]\n  purchases(limit: Int = 10, offset: Int = 0): [Orders!]\n  spending(limit: Int = 10, offset: Int = 0): [CustomersSpending!]\n}\n\ntype CustomersOrderStats {\n  customerid: Long!\n  first_order: DateTime!\n  total_spend: Float!\n  total_saved: Float!\n  num_orders: Long!\n}\n\ntype CustomersPastPurchases {\n  customerid: Long!\n  productid: Long!\n  num_orders: Long!\n  total_quantity: Long!\n}\n\ntype CustomersSpending {\n  customerid: Long!\n  week: DateTime!\n  spend: Float!\n  saved: Float!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Orders {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  items: [Orders_itemsOutput]!\n  customer(limit: Int = 10, offset: Int = 0): [Customers!]\n  totals(limit: Int = 10, offset: Int = 0): [OrdersTotals!]\n}\n\ntype OrdersTotals {\n  id: Long!\n  time: DateTime!\n  customerid: Long!\n  price: Float!\n  saving: Float!\n}\n\ntype Orders_itemsOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\ntype ProductSearch {\n  id: Long!\n  name: String!\n  sizing: String!\n  weight_in_gram: Long!\n  type: String!\n  category: String!\n  usda_id: Long!\n  updated: DateTime!\n  score: Float\n}\n\ntype Products {\n  id: Long!\n  name: String!\n  sizing: String!\n  weight_in_gram: Long!\n  type: String!\n  category: String!\n  usda_id: Long!\n  updated: DateTime!\n}\n\ntype ProductsByCountry {\n  productid: Long!\n  country: String\n  quantity: Long!\n  spend: Float!\n  weight: Long!\n}\n\ntype Query {\n  Customers(id: Long, email: String, limit: Int = 10, offset: Int = 0): [Customers!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n  Products(id: Long!, limit: Int = 10, offset: Int = 0): [Products!]\n  ProductsByCountry(productid: Long!, limit: Int = 10, offset: Int = 0): [ProductsByCountry!]\n  ProductSearch(query: String!, limit: Int = 10, offset: Int = 0): [ProductSearch!]\n  ProductSearchWithId(query: String!, id: Int!, limit: Int = 10, offset: Int = 0): [Products!]\n}\n\ntype Subscription {\n  CustomerPromotion: CustomerPromotion\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
     }
   }
 }

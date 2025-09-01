@@ -34,7 +34,7 @@ public final class NamePath extends AbstractPath<Name, NamePath> {
   }
 
   @Override
-  protected Constructor constructor() {
+  protected AbstractPath.Constructor<Name, NamePath> constructor() {
     return CONSTRUCTOR;
   }
 

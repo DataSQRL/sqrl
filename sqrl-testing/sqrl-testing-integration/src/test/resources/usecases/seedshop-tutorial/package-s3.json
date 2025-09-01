@@ -1,7 +1,10 @@
 {
   "version": "1",
   "script": {
-    "main": "seedshop-extended.sqrl"
+    "main": "seedshop-extended.sqrl",
+    "config": {
+      "variant": "s3"
+    }
   },
   "engines": {
     "flink": {
@@ -9,11 +12,6 @@
         "s3.endpoint": "http://minio:9000",
         "s3.path.style.access": "true"
       }
-    }
-  },
-  "dependencies": {
-    "sink": {
-      "folder": "s3-sink"
     }
   },
   "test-runner": {
