@@ -16,17 +16,10 @@
 package com.datasqrl.cli;
 
 import com.datasqrl.config.SqrlConstants;
-import com.datasqrl.engine.database.relational.DuckDBEngineFactory;
-import com.datasqrl.engine.database.relational.IcebergEngineFactory;
-import com.datasqrl.engine.database.relational.PostgresEngineFactory;
-import com.datasqrl.engine.database.relational.SnowflakeEngineFactory;
-import com.datasqrl.engine.server.VertxEngineFactory;
 import com.datasqrl.env.GlobalEnvironmentStore;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.validate.ExecutionGoal;
 import com.datasqrl.util.ConfigLoaderUtils;
-import java.util.HashSet;
-import java.util.List;
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "test", description = "Compiles, then tests a SQRL script")
@@ -57,23 +50,5 @@ public class TestCmd extends AbstractCompileCmd {
   @Override
   public ExecutionGoal getGoal() {
     return ExecutionGoal.TEST;
-  }
-
-  @Override
-  protected List<String> getEngines(List<String> enabledEngines) {
-    var engineSet = new HashSet<>(enabledEngines);
-
-    // Remove "snowflake", test does not support that
-    engineSet.remove(SnowflakeEngineFactory.ENGINE_NAME);
-
-    // Make sure "test", "vertex", and "postgres" are present
-    engineSet.addAll(List.of(VertxEngineFactory.ENGINE_NAME, PostgresEngineFactory.ENGINE_NAME));
-
-    // Make sure we enable "duckdb" if "iceberg" is present
-    if (engineSet.contains(IcebergEngineFactory.ENGINE_NAME)) {
-      engineSet.add(DuckDBEngineFactory.ENGINE_NAME);
-    }
-
-    return List.copyOf(engineSet);
   }
 }

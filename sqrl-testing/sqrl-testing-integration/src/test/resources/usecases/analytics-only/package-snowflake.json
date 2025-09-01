@@ -1,6 +1,6 @@
 {
   "version": "1",
-  "enabled-engines": ["flink", "iceberg", "duckdb"],
+  "enabled-engines": ["flink", "iceberg", "snowflake"],
   "script": {
     "main": "analytics-only.sqrl"
   },
@@ -25,7 +25,6 @@
     }
   },
   "test-runner": {
-    "delay-sec": -1,
-    "required-checkpoints" : 1
+    "delay-sec": -1
   }
 }
