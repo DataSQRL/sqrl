@@ -308,11 +308,11 @@ jobs:
             echo "default-key $(gpg --list-keys --with-colons | grep pub | cut -d':' -f5)" >> ~/.gnupg/gpg.conf
             echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf
       - run:
-          name: Build shaded JAR
+          name: Build and deploy Maven artifacts
           command: mvn -U clean -T1C -B deploy -DonlyJars ${CIRCLE_TAG:+-Prelease} -Deasyjacoco.skip=true
 
   build-images:
-    # use a full VM so we can run Docker / Buildx
+    # use a full VM so we can run Maven and Jib
     executor: default-machine
 
     steps:
@@ -335,52 +335,50 @@ jobs:
       - install-jdk
 
       - run:
-          name: Build shaded JARs
-          command: mvn -U -T1C -B install -DonlyJars
-
-      - determine-version
-      - compute-base-tag
-      - setup-buildx:
-          builder_name: "sqrl-builder"
-
-      - run:
-          name: Pull base image
-          command: |
-            docker pull datasqrl/base-sqrl:$BASE_TAG
-
-      - run:
           name: Login to registries
           command: |
             echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
             echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
 
       - run:
-          name: Build + push Docker images
+          name: Build and push Docker images using Jib
           command: |
             set -x
             
-            build_and_push() {
-              local repo="$1" ; shift
-              local dir="$1"  ; shift
-
-              docker buildx build \
-                --platform linux/amd64,linux/arm64 \
-                --push \
-                --build-arg BASE_TAG=$BASE_TAG \
-                -t $REGISTRY/$repo:$TAG_SUFFIX \
-                -f $dir/Dockerfile \
-                $dir
-
-              # tag :latest on release builds
-              if [ "$LATEST_TAG" = "true" ]; then
-                docker buildx imagetools create \
-                  -t $REGISTRY/$repo:latest \
-                  $REGISTRY/$repo:$TAG_SUFFIX
-              fi
-            }
-
-            build_and_push cmd                 sqrl-cli
-            build_and_push sqrl-server         sqrl-server/sqrl-server-vertx
+            # Build and push CLI image
+            mvn -U -T1C -B package jib:build \
+              -pl sqrl-cli \
+              -am \
+              -Ddocker.image.tag=$TAG_SUFFIX \
+              -Djib.to.image=$REGISTRY/cmd:$TAG_SUFFIX \
+              -Deasyjacoco.skip=true
+            
+            # Build and push server image  
+            mvn -U -T1C -B package jib:build \
+              -pl sqrl-server/sqrl-server-vertx \
+              -am \
+              -Ddocker.image.tag=$TAG_SUFFIX \
+              -Djib.to.image=$REGISTRY/sqrl-server:$TAG_SUFFIX \
+              -Deasyjacoco.skip=true
+            
+            # Tag :latest on release builds
+            if [ "$LATEST_TAG" = "true" ]; then
+              # Re-tag and push CLI as latest
+              mvn jib:build \
+                -pl sqrl-cli \
+                -Ddocker.image.tag=latest \
+                -Djib.to.image=$REGISTRY/cmd:latest \
+                -Djib.from.image=$REGISTRY/cmd:$TAG_SUFFIX \
+                -Deasyjacoco.skip=true
+              
+              # Re-tag and push server as latest  
+              mvn jib:build \
+                -pl sqrl-server/sqrl-server-vertx \
+                -Ddocker.image.tag=latest \
+                -Djib.to.image=$REGISTRY/sqrl-server:latest \
+                -Djib.from.image=$REGISTRY/sqrl-server:$TAG_SUFFIX \
+                -Deasyjacoco.skip=true
+            fi
 
   docker-build-base-image:
     machine:

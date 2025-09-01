@@ -130,9 +130,9 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.apache.flink</groupId>
-      <artifactId>flink-s3-fs-hadoop</artifactId>
-      <version>${flink.version}</version>
+      <groupId>com.amazonaws</groupId>
+      <artifactId>aws-java-sdk-s3</artifactId>
+      <version>${aws-java-sdk.version}</version>
       <scope>test</scope>
     </dependency>
 
