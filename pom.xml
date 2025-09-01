@@ -166,7 +166,7 @@
     <guice.version>7.0.0</guice.version>
     <guice-multibindings.version>4.2.3</guice-multibindings.version>
     <flink-connector-postgres-cdc.version>3.4.0</flink-connector-postgres-cdc.version>
-    <zookeeper.version>3.9.3</zookeeper.version>
+    <zookeeper.version>3.9.4</zookeeper.version>
     <snakeyaml.version>2.4</snakeyaml.version>
     <aws-sdk-bom.version>2.33.0</aws-sdk-bom.version>
     <openai-gpt3-java.version>0.18.2</openai-gpt3-java.version>
