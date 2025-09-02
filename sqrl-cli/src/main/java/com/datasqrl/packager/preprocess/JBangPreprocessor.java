@@ -72,7 +72,7 @@ public class JBangPreprocessor extends UdfManifestPreprocessor {
     }
 
     try (var lines = Files.lines(file)) {
-      return lines.noneMatch(l -> l.startsWith(DEPS_EXPR));
+      return lines.map(String::trim).noneMatch(l -> l.startsWith(DEPS_EXPR));
     }
   }
 
