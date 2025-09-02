@@ -19,8 +19,10 @@ import com.datasqrl.packager.FilePreprocessingPipeline;
 import com.datasqrl.util.JBangRunner;
 import com.google.inject.Inject;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.exec.ExecuteException;
 import org.apache.commons.io.FilenameUtils;
@@ -29,18 +31,18 @@ import org.apache.commons.io.FilenameUtils;
 @Slf4j
 public class JBangPreprocessor extends UdfManifestPreprocessor {
 
+  private static final String DEPS_EXPR = "//DEPS";
+
   private final JBangRunner jBangRunner;
 
   @Override
   public void process(Path file, FilePreprocessingPipeline.Context ctx) {
-    var srcFileName = file.getFileName().toString();
-
-    if (!jBangRunner.isJBangAvailable() || skipFile(srcFileName)) {
+    if (!jBangRunner.isJBangAvailable() || skipFile(file)) {
       return;
     }
 
     try {
-      var targetFileName = FilenameUtils.removeExtension(srcFileName) + ".jar";
+      var targetFileName = FilenameUtils.removeExtension(file.getFileName().toString()) + ".jar";
       var targetPath = ctx.libDir().resolve(targetFileName);
 
       jBangRunner.exportLocalJar(file, targetPath);
@@ -53,7 +55,14 @@ public class JBangPreprocessor extends UdfManifestPreprocessor {
     }
   }
 
-  private boolean skipFile(String fileName) {
-    return !fileName.endsWith(".java") && !fileName.endsWith(".kt");
+  @SneakyThrows
+  private boolean skipFile(Path file) {
+    if (!file.getFileName().toString().endsWith(".java")) {
+      return true;
+    }
+
+    try (var lines = Files.lines(file)) {
+      return lines.noneMatch(l -> l.startsWith(DEPS_EXPR));
+    }
   }
 }
