@@ -18,9 +18,11 @@ package com.datasqrl.engine.server;
 import static com.datasqrl.graphql.SqrlObjectMapper.MAPPER;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.datasqrl.config.PackageJsonImpl;
+import com.datasqrl.config.PackageJson.EmptyEngineConfig;
+import com.datasqrl.config.QueryEngineConfigConverter;
 import com.datasqrl.graphql.config.ServerConfigUtil;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.List;
 import java.util.Map;
 import lombok.SneakyThrows;
@@ -28,7 +30,8 @@ import org.junit.jupiter.api.Test;
 
 class GenericJavaServerEngineTest {
 
-  GenericJavaServerEngine underTest = new GenericJavaServerEngine("", new PackageJsonImpl()) {};
+  GenericJavaServerEngine underTest =
+      new GenericJavaServerEngine("", new EmptyEngineConfig(""), new DummyConverter()) {};
 
   @Test
   void test() {
@@ -110,5 +113,13 @@ class GenericJavaServerEngineTest {
     // Ensure buffer is not a complex object (would have been corrupted by old VertxModule usage)
     assertThat(bufferNode.isObject()).isFalse();
     assertThat(bufferNode.has("bytes")).isFalse();
+  }
+
+  private static class DummyConverter implements QueryEngineConfigConverter {
+
+    @Override
+    public List<ObjectNode> convertConfigsToJson() {
+      return List.of();
+    }
   }
 }

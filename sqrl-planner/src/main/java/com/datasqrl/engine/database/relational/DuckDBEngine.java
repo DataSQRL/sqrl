@@ -33,6 +33,11 @@ public class DuckDBEngine extends AbstractJDBCQueryEngine {
   }
 
   @Override
+  public String serverConfigName() {
+    return "duckDbConfig";
+  }
+
+  @Override
   protected JdbcDialect getDialect() {
     return JdbcDialect.Postgres;
   }

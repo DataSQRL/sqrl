@@ -23,6 +23,8 @@ import com.datasqrl.config.ConnectorFactoryFactoryImpl;
 import com.datasqrl.config.ExecutionEnginesHolder;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.PackageJson.CompilerConfig;
+import com.datasqrl.config.QueryEngineConfigConverter;
+import com.datasqrl.config.QueryEngineConfigConverterImpl;
 import com.datasqrl.config.SqrlCompilerConfiguration;
 import com.datasqrl.config.SqrlConfigPipeline;
 import com.datasqrl.config.SqrlConstants;
@@ -76,6 +78,7 @@ public class SqrlInjector extends AbstractModule {
     bind(ModuleLoader.class).to(ModuleLoaderImpl.class);
     bind(CompilerConfig.class).to(SqrlCompilerConfiguration.class);
     bind(ConnectorFactoryFactory.class).to(ConnectorFactoryFactoryImpl.class);
+    bind(QueryEngineConfigConverter.class).to(QueryEngineConfigConverterImpl.class);
 
     Multibinder<Preprocessor> binder = Multibinder.newSetBinder(binder(), Preprocessor.class);
     binder.addBinding().to(CopyStaticDataPreprocessor.class);

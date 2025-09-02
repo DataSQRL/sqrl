@@ -26,7 +26,7 @@ class ServerConfigTest {
   void given_emptyJson_when_constructorCalled_then_createsConfigWithDefaults() {
     var json = new JsonObject();
 
-    var serverConfig = new ServerConfig(json);
+    var serverConfig = ServerConfigUtil.fromConfigMap(json.getMap());
 
     assertThat(serverConfig.getServletConfig()).isNotNull();
     assertThat(serverConfig.getGraphQLHandlerOptions()).isNotNull();
@@ -66,7 +66,7 @@ class ServerConfigTest {
                     .put("bootstrap.servers", "localhost:9092")
                     .put("groupId", "test-group"));
 
-    var serverConfig = new ServerConfig(json);
+    var serverConfig = ServerConfigUtil.fromConfigMap(json.getMap());
 
     assertThat(serverConfig.getServletConfig()).isNotNull();
     assertThat(serverConfig.getGraphQLHandlerOptions()).isNotNull();
@@ -96,7 +96,7 @@ class ServerConfigTest {
             .putNull("kafkaMutationConfig")
             .putNull("kafkaSubscriptionConfig");
 
-    var serverConfig = new ServerConfig(json);
+    var serverConfig = ServerConfigUtil.fromConfigMap(json.getMap());
 
     // Fields with empty defaults should still be created
     assertThat(serverConfig.getServletConfig()).isNotNull();
@@ -120,7 +120,7 @@ class ServerConfigTest {
     var json =
         new JsonObject().put("servletConfig", new JsonObject().put("graphQLEndpoint", "/test"));
 
-    var serverConfig = new ServerConfig(json);
+    var serverConfig = ServerConfigUtil.fromConfigMap(json.getMap());
 
     assertThat(serverConfig.getServletConfig()).isNotNull();
     assertThat(serverConfig.getGraphQLHandlerOptions()).isNotNull();

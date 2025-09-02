@@ -13,18 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.graphql.config;
+package com.datasqrl.config;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.util.List;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class JdbcConfig {
+/** Converts query engine configurations to JSON format for server deployment. */
+public interface QueryEngineConfigConverter {
 
-  private String url;
+  /**
+   * Converts enabled query engine configurations to a list of JSON objects.
+   *
+   * @return a list of ObjectNode instances, each containing server configuration for an enabled
+   *     query engine
+   */
+  List<ObjectNode> convertConfigsToJson();
 }

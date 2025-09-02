@@ -15,7 +15,7 @@
  */
 package com.datasqrl.graphql.config;
 
-import io.vertx.core.json.JsonObject;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -23,6 +23,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ServletConfig implements Versioned {
 
   private String graphiQLEndpoint = "/graphiql*";
@@ -30,38 +31,6 @@ public class ServletConfig implements Versioned {
   private String restEndpoint = "/rest";
   private String mcpEndpoint = "/mcp";
   private boolean usePgPool = true;
-
-  public ServletConfig(JsonObject json) {
-    for (java.util.Map.Entry<String, Object> member : json) {
-      switch (member.getKey()) {
-        case "graphiQLEndpoint":
-          if (member.getValue() instanceof String) {
-            this.graphiQLEndpoint = (String) member.getValue();
-          }
-          break;
-        case "graphQLEndpoint":
-          if (member.getValue() instanceof String) {
-            this.graphQLEndpoint = (String) member.getValue();
-          }
-          break;
-        case "restEndpoint":
-          if (member.getValue() instanceof String) {
-            this.restEndpoint = (String) member.getValue();
-          }
-          break;
-        case "mcpEndpoint":
-          if (member.getValue() instanceof String) {
-            this.mcpEndpoint = (String) member.getValue();
-          }
-          break;
-        case "usePgPool":
-          if (member.getValue() instanceof Boolean) {
-            this.usePgPool = (Boolean) member.getValue();
-          }
-          break;
-      }
-    }
-  }
 
   public String getGraphiQLEndpoint(String version) {
     return getVersionedEndpoint(version, graphiQLEndpoint);
