@@ -38,19 +38,20 @@ import org.apache.commons.io.IOUtils;
 @Slf4j
 abstract class UdfManifestPreprocessor implements Preprocessor {
 
-  private static final ObjectMapper MAPPER = SqrlObjectMapper.INSTANCE;
-  private static final String SERVICES_PATH = "META-INF/services/";
-  private static final Set<String> FLINK_UDFS =
+  static final Set<String> FLINK_UDFS =
       ClasspathFunctionLoader.FLINK_UDF_CLASSES.stream()
           .map(Class::getCanonicalName)
           .collect(Collectors.toSet());
 
-  void extractSqrlManifests(Path jarPath, FilePreprocessingPipeline.Context ctx) {
+  private static final ObjectMapper MAPPER = SqrlObjectMapper.INSTANCE;
+  private static final String SERVICES_PATH = "META-INF/services/";
+
+  void createUdfManifests(Path jarPath, FilePreprocessingPipeline.Context ctx) {
     try (var file = new JarFile(jarPath.toFile())) {
 
       file.stream()
           .filter(UdfManifestPreprocessor::isFlinkUdf)
-          .forEach(entry -> extractManifestsFromEntry(entry, file, jarPath, ctx));
+          .forEach(entry -> extractManifestData(entry, file, jarPath, ctx));
 
     } catch (Exception e) {
       log.warn("Could not read JAR file:" + jarPath, e);
@@ -58,21 +59,27 @@ abstract class UdfManifestPreprocessor implements Preprocessor {
   }
 
   @SneakyThrows
-  private void extractManifestsFromEntry(
+  void createUdfManifest(String fnClass, String jarName, FilePreprocessingPipeline.Context ctx) {
+    var obj = MAPPER.createObjectNode();
+    obj.put("language", "java");
+    obj.put("functionClass", fnClass);
+    obj.put("jarPath", jarName);
+
+    var fnName = fnClass.substring(fnClass.lastIndexOf('.') + 1);
+    var fnPath = ctx.createNewBuildFile(Path.of(fnName + ".function.json"));
+
+    MAPPER.writeValue(fnPath.toFile(), obj);
+    log.debug("Created UDF manifest: {} for class: {}", fnPath, fnClass);
+  }
+
+  @SneakyThrows
+  private void extractManifestData(
       JarEntry entry, JarFile file, Path jarPath, FilePreprocessingPipeline.Context ctx) {
     var jarEntryStream = file.getInputStream(entry);
     var classes = IOUtils.readLines(jarEntryStream, Charset.defaultCharset());
 
     for (var cls : classes) {
-      var obj = MAPPER.createObjectNode();
-      obj.put("language", "java");
-      obj.put("functionClass", cls);
-      obj.put("jarPath", jarPath.toFile().getName());
-
-      var fnName = cls.substring(cls.lastIndexOf('.') + 1);
-      var fnPath = ctx.createNewBuildFile(Path.of(fnName + ".function.json"));
-
-      MAPPER.writeValue(fnPath.toFile(), obj);
+      createUdfManifest(cls, jarPath.toFile().getName(), ctx);
     }
   }
 

@@ -31,7 +31,7 @@ public class JarPreprocessor extends UdfManifestPreprocessor {
       return;
     }
 
-    extractSqrlManifests(path, ctx);
+    createUdfManifests(path, ctx);
 
     ctx.copyToLib(path);
   }

@@ -1,7 +1,5 @@
 //DEPS org.apache.flink:flink-table-common:1.19.3
-//DEPS com.google.auto.service:auto-service:1.1.1
 
-import com.google.auto.service.AutoService;
 import org.apache.flink.table.functions.AsyncScalarFunction;
 import org.apache.flink.table.functions.FunctionContext;
 
@@ -10,7 +8,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-@AutoService(AsyncScalarFunction.class)
 public class MyAsyncScalarFunction extends AsyncScalarFunction {
 
     private transient ExecutorService executor;
