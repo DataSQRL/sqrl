@@ -32,10 +32,10 @@ import org.apache.commons.io.FilenameUtils;
 @Slf4j
 public class JBangPreprocessor extends UdfManifestPreprocessor {
 
-  private static final Pattern PACKAGE_PATTERN = Pattern.compile("package\\s+([\\w.]+);");
-  private static final Pattern CLASS_PATTERN = Pattern.compile("public\\s+class\\s+(\\w+)");
-  private static final Pattern EXTENDS_PATTERN = Pattern.compile("extends\\s+(\\w+)");
   private static final String DEPS_EXPR = "//DEPS";
+  private static final Pattern PACKAGE_PATTERN = Pattern.compile("package\\s+([\\w.]+);");
+  private static final Pattern CLASS_EXTENDS_PATTERN =
+      Pattern.compile("public\\s+class\\s+(\\w+)\\s+extends\\s+(\\w+)", Pattern.DOTALL);
 
   private final JBangRunner jBangRunner;
 
@@ -46,22 +46,22 @@ public class JBangPreprocessor extends UdfManifestPreprocessor {
     }
 
     var content = readFileContent(file);
-    if (!isFlinkUdfClass(content)) {
-      log.debug("Skip preprocessing file, as it is not a valid Flink UDF: {}", file);
+    var udfClassName = parseUdfClassName(file, content);
+    if (udfClassName == null) {
       return;
     }
 
     try {
-      var jarName = getJarName(file);
+      var jarName = FilenameUtils.removeExtension(file.getFileName().toString()) + ".jar";
       var targetPath = ctx.libDir().resolve(jarName);
 
       jBangRunner.exportLocalJar(file, targetPath);
-      createManifestFromJavaFile(file, content, ctx);
+      createUdfManifest(udfClassName, jarName, ctx);
 
     } catch (ExecuteException e) {
       log.warn("JBang export failed with exit code: {} for file: {}", e.getExitValue(), file);
     } catch (IOException e) {
-      log.warn("Could not execute JBang for file: " + file, e);
+      log.warn("Failed to execute JBang export for file: " + file, e);
     }
   }
 
@@ -81,41 +81,47 @@ public class JBangPreprocessor extends UdfManifestPreprocessor {
     return Files.readString(file);
   }
 
-  private boolean isFlinkUdfClass(String content) {
-    var extendsMatcher = EXTENDS_PATTERN.matcher(content);
-    if (!extendsMatcher.find()) {
-      return false;
+  private String parseUdfClassName(Path file, String content) {
+    var classExtendsMatcher = CLASS_EXTENDS_PATTERN.matcher(content);
+    var results = classExtendsMatcher.results().toList();
+    if (results.isEmpty()) {
+      log.warn(
+          "Skip preprocessing file {}, as it does not contain a 'public class' with an 'extends' statement",
+          file);
+      return null;
     }
 
-    var processedUdf = extendsMatcher.group(1);
+    if (results.size() > 1) {
+      log.warn(
+          "Skip preprocessing file {}, as it contains multiple public classes that are extending another class",
+          file);
+      return null;
+    }
+
+    var classMatcherRes = results.get(0);
+
+    var extendedClass = classMatcherRes.group(2); // group 2 is the extended class
 
     // Match against both canonical and simple class name
-    return FLINK_UDFS.stream()
-        .anyMatch(
-            udfParentClass ->
-                udfParentClass.equals(processedUdf) || udfParentClass.endsWith(processedUdf));
-  }
+    var extendsUdfClass =
+        FLINK_UDFS.stream()
+            .anyMatch(
+                udfParentClass ->
+                    udfParentClass.equals(extendedClass) || udfParentClass.endsWith(extendedClass));
 
-  private String getJarName(Path file) {
-    return FilenameUtils.removeExtension(file.getFileName().toString()) + ".jar";
-  }
+    if (!extendsUdfClass) {
+      log.warn(
+          "Skip preprocessing file {}, as it does not extend a proper Flink UDF parent class",
+          file);
+      return null;
+    }
 
-  private void createManifestFromJavaFile(
-      Path javaFile, String content, FilePreprocessingPipeline.Context ctx) {
     // Extract package (optional in JBang files)
     var packageMatcher = PACKAGE_PATTERN.matcher(content);
     var packageName = packageMatcher.find() ? packageMatcher.group(1) + "." : "";
 
-    // Extract class name
-    var classMatcher = CLASS_PATTERN.matcher(content);
-    if (!classMatcher.find()) {
-      log.debug("No public class found in file: {}", javaFile);
-      return;
-    }
+    var className = classMatcherRes.group(1); // group 1 is the class name
 
-    var className = classMatcher.group(1);
-    var fullClassName = packageName + className;
-
-    createUdfManifest(fullClassName, getJarName(javaFile), ctx);
+    return packageName + className;
   }
 }
