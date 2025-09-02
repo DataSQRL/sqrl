@@ -20,6 +20,7 @@ import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.ConnectorFactoryFactoryImpl;
+import com.datasqrl.config.ExecutionEnginesHolder;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.PackageJson.CompilerConfig;
 import com.datasqrl.config.SqrlCompilerConfiguration;
@@ -37,6 +38,7 @@ import com.datasqrl.packager.preprocess.Preprocessor;
 import com.datasqrl.plan.MainScript;
 import com.datasqrl.plan.validate.ExecutionGoal;
 import com.google.inject.AbstractModule;
+import com.google.inject.Injector;
 import com.google.inject.Provides;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Named;
@@ -121,5 +123,10 @@ public class SqrlInjector extends AbstractModule {
   @Provides
   public ErrorCollector provideErrorCollector() {
     return errors;
+  }
+
+  @Provides
+  public ExecutionEnginesHolder provideExecutionEnginesHolder(Injector injector) {
+    return new ExecutionEnginesHolder(errors, injector, sqrlConfig, goal == ExecutionGoal.TEST);
   }
 }

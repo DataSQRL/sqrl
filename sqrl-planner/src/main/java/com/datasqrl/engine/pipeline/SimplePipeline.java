@@ -15,13 +15,11 @@
  */
 package com.datasqrl.engine.pipeline;
 
-import com.datasqrl.config.EngineFactory;
 import com.datasqrl.config.EngineType;
 import com.datasqrl.engine.ExecutionEngine;
-import com.datasqrl.engine.database.QueryEngine;
 import com.datasqrl.engine.database.relational.AbstractJDBCTableFormatEngine;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.util.ServiceLoaderDiscovery;
+import com.datasqrl.util.EngineUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashMultimap;
 import java.util.ArrayList;
@@ -40,7 +38,8 @@ public record SimplePipeline(
     HashMultimap<ExecutionStage, ExecutionStage> downstream)
     implements ExecutionPipeline {
 
-  private static final List<String> AVAILABLE_QUERY_ENGINES = collectAvailableQueryEngines();
+  private static final List<String> AVAILABLE_QUERY_ENGINES =
+      EngineUtil.getAvailableQueryEngineNames();
 
   public static SimplePipeline of(Map<String, ExecutionEngine> engines, ErrorCollector errors) {
     var upstream = HashMultimap.<ExecutionStage, ExecutionStage>create();
@@ -104,13 +103,6 @@ public record SimplePipeline(
 
     return new SimplePipeline(
         stages.stream().map(ExecutionStage.class::cast).toList(), upstream, downstream);
-  }
-
-  private static List<String> collectAvailableQueryEngines() {
-    return ServiceLoaderDiscovery.getAll(EngineFactory.class).stream()
-        .filter(factory -> QueryEngine.class.isAssignableFrom(factory.getFactoryClass()))
-        .map(EngineFactory::getEngineName)
-        .toList();
   }
 
   private static List<EngineStage> getStage(

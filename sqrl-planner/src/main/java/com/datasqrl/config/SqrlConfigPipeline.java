@@ -27,9 +27,7 @@ public class SqrlConfigPipeline implements ExecutionPipeline {
   @Delegate ExecutionPipeline pipeline;
 
   @Inject
-  public SqrlConfigPipeline(Injector injector, PackageJson config) {
-    this.pipeline =
-        new PipelineFactory(injector, config.getEnabledEngines(), config.getEngines())
-            .createPipeline();
+  public SqrlConfigPipeline(Injector injector) {
+    this.pipeline = new PipelineFactory(injector).createPipeline();
   }
 }
