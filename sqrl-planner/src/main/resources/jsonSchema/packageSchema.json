@@ -87,6 +87,9 @@
             },
             "max-result-depth": {
               "type": "integer"
+            },
+            "default-limit": {
+              "type": "integer"
             }
           },
           "additionalProperties": false

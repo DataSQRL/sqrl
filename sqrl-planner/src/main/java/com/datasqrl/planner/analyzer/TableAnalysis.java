@@ -23,6 +23,7 @@ import com.datasqrl.plan.util.PrimaryKeyMap;
 import com.datasqrl.planner.analyzer.cost.CostAnalysis;
 import com.datasqrl.planner.hint.PlannerHints;
 import com.datasqrl.planner.tables.SourceSinkTableAnalysis;
+import com.datasqrl.util.CalciteUtil;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -151,6 +152,11 @@ public class TableAnalysis implements TableOrFunctionAnalysis {
   @Override
   public boolean isSourceOrSink() {
     return sourceSinkTable.isPresent();
+  }
+
+  public Optional<Integer> getLimit() {
+    if (topLevelSort.isPresent()) return CalciteUtil.getLimit(topLevelSort.get());
+    return Optional.empty();
   }
 
   /**

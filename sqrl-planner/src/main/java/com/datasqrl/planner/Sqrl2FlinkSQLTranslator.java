@@ -558,7 +558,7 @@ public class Sqrl2FlinkSQLTranslator {
     return SqrlTableFunction.builder()
         .functionAnalysis(tableAnalysis)
         .parameters(parameters)
-        .multiplicity(SqrlTableFunction.getMultiplicity(updateParameters));
+        .limit(CalciteUtil.getLimit(updateParameters));
   }
 
   public SqrlTableFunction.SqrlTableFunctionBuilder resolveSqrlPassThroughTableFunction(
@@ -594,7 +594,7 @@ public class Sqrl2FlinkSQLTranslator {
         .functionAnalysis(tableAnalysis)
         .parameters(parameters)
         .passthrough(true)
-        .multiplicity(Multiplicity.MANY);
+        .limit(Optional.empty());
   }
 
   private static List<FunctionParameter> getFunctionParameters(List<ParsedArgument> args) {
@@ -645,7 +645,7 @@ public class Sqrl2FlinkSQLTranslator {
         SqrlTableFunction.builder()
             .functionAnalysis(tableAnalysis)
             .parameters(parameters)
-            .multiplicity(SqrlTableFunction.getMultiplicity(relNode));
+            .limit(baseTable.getLimit());
     return fctBuilder;
   }
 

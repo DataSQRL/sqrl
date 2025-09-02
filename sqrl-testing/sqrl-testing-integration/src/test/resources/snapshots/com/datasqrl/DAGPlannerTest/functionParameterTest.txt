@@ -47,10 +47,11 @@ Annotations:
  - parameters: ids
  - base-table: Customer
 Plan:
-LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
-  LogicalFilter(condition=[array_contains(CAST(?0):BIGINT NOT NULL ARRAY, $0)])
-    LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW `CustomerByIds` AS  SELECT * FROM Customer WHERE array_contains(CAST(?    AS BIGINT ARRAY), customerid);
+LogicalSort(fetch=[100])
+  LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
+    LogicalFilter(condition=[array_contains(CAST(?0):BIGINT NOT NULL ARRAY, $0)])
+      LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW `CustomerByIds` AS  SELECT * FROM Customer WHERE array_contains(CAST(?    AS BIGINT ARRAY), customerid) LIMIT 100;
 
 === CustomerByNothing
 ID:     default_catalog.default_database.CustomerByNothing
@@ -86,7 +87,7 @@ LogicalSort(sort0=[$4], dir0=[ASC-nulls-first])
   LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
     LogicalFilter(condition=[AND(=($0, ?0), >=(+($4, 14400000:INTERVAL HOUR), ?1))])
       LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW `CustomersByTime` AS 
+SQL: CREATE VIEW `CustomersByTime` AS
     SELECT * FROM Customer WHERE customerid = ?           AND `timestamp` + INTERVAL '4' HOUR >= ?        
     ORDER BY `timestamp` ASC;
 
@@ -362,7 +363,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByNothing_2`
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT *\nFROM \"Customer_1\"\nWHERE (\"customerid\" = ANY (CAST($1 AS BIGINT ARRAY)))",
+              "sql" : "SELECT *\nFROM \"Customer_1\"\nWHERE (\"customerid\" = ANY (CAST($1 AS BIGINT ARRAY)))\nFETCH NEXT 100 ROWS ONLY",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -549,7 +550,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByNothing_2`
           },
           "format" : "JSON",
           "apiQuery" : {
-            "query" : "query CustomerByIds($ids: [Long]!, $limit: Int = 10, $offset: Int = 0) {\nCustomerByIds(ids: $ids, limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+            "query" : "query CustomerByIds($ids: [Long]!, $limit: Int = 100, $offset: Int = 0) {\nCustomerByIds(ids: $ids, limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
             "queryName" : "CustomerByIds",
             "operationType" : "QUERY"
           },
@@ -624,7 +625,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByNothing_2`
       ],
       "schema" : {
         "type" : "string",
-        "schema" : "type Customer {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerByEmail(email: String!, id: Long, limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerByIds(ids: [Long]!, limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomersByTime(customerid: Long!, fromTime: DateTime!, limit: Int = 10, offset: Int = 0): [Customer!]\n  SelectCustomer(id: Long, limit: Int = 10, offset: Int = 0): [Customer!]\n}\n\ntype Subscription {\n  CustomerByNothing: Customer\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+        "schema" : "type Customer {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerByEmail(email: String!, id: Long, limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerByIds(ids: [Long]!, limit: Int = 100, offset: Int = 0): [Customer!]\n  CustomersByTime(customerid: Long!, fromTime: DateTime!, limit: Int = 10, offset: Int = 0): [Customer!]\n  SelectCustomer(id: Long, limit: Int = 10, offset: Int = 0): [Customer!]\n}\n\ntype Subscription {\n  CustomerByNothing: Customer\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
     }
   }

@@ -15,7 +15,6 @@
  */
 package com.datasqrl.planner.tables;
 
-import com.datasqrl.calcite.SqrlRexUtil;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.engine.ExecutableQuery;
 import com.datasqrl.io.tables.TableType;
@@ -40,7 +39,6 @@ import lombok.NonNull;
 import lombok.Setter;
 import lombok.ToString;
 import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.rel.core.Sort;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.schema.FunctionParameter;
@@ -75,8 +73,8 @@ public class SqrlTableFunction implements TableFunction, TableOrFunctionAnalysis
    */
   @NonNull private final TableAnalysis functionAnalysis;
 
-  /** The multiplicity of the function result set */
-  @Default private final Multiplicity multiplicity = Multiplicity.MANY;
+  /** The limit of the function result set */
+  @Default private final Optional<Integer> limit = Optional.empty();
 
   /** The visibility of this function */
   private final AccessVisibility visibility;
@@ -147,12 +145,8 @@ public class SqrlTableFunction implements TableFunction, TableOrFunctionAnalysis
     return functionAnalysis::getCollapsedRelnode;
   }
 
-  public static Multiplicity getMultiplicity(RelNode relNode) {
-    Optional<Integer> limit = Optional.empty();
-    if (relNode instanceof Sort sort) {
-      limit = SqrlRexUtil.getLimit(sort.fetch);
-    }
-    return limit.filter(i -> i <= 1).map(i -> Multiplicity.ZERO_ONE).orElse(Multiplicity.MANY);
+  public Multiplicity getMultiplicity() {
+    return getLimit().filter(i -> i <= 1).map(i -> Multiplicity.ZERO_ONE).orElse(Multiplicity.MANY);
   }
 
   @Override
