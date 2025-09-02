@@ -23,7 +23,7 @@ import static org.apache.kafka.clients.producer.ProducerConfig.TRANSACTIONAL_ID_
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
-import io.vertx.core.json.JsonObject;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -35,15 +35,13 @@ import lombok.Setter;
 
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public abstract class KafkaConfig {
 
   protected Map<String, String> config = new HashMap<>();
 
-  public KafkaConfig(JsonObject json) {
-    for (Map.Entry<String, Object> entry : json) {
-      config.put(entry.getKey(), entry.getValue() == null ? null : entry.getValue().toString());
-    }
-
+  /** Validates that required configuration is present. Should be called after deserialization. */
+  public void validateConfig() {
     checkNotNull(
         config.get(BOOTSTRAP_SERVERS_CONFIG),
         "The '%s' config must be provided".formatted(BOOTSTRAP_SERVERS_CONFIG));
@@ -64,10 +62,6 @@ public abstract class KafkaConfig {
   @NoArgsConstructor
   public static class KafkaSubscriptionConfig extends KafkaConfig {
 
-    public KafkaSubscriptionConfig(JsonObject json) {
-      super(json);
-    }
-
     public KafkaSubscriptionConfig(Map<String, String> config) {
       super(config);
     }
@@ -84,10 +78,6 @@ public abstract class KafkaConfig {
   @Setter
   @NoArgsConstructor
   public static class KafkaMutationConfig extends KafkaConfig {
-
-    public KafkaMutationConfig(JsonObject json) {
-      super(json);
-    }
 
     public KafkaMutationConfig(Map<String, String> config) {
       super(config);

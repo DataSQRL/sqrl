@@ -30,6 +30,7 @@ import com.datasqrl.util.ServiceLoaderDiscovery;
 import com.datasqrl.util.StreamUtil;
 import com.google.inject.Injector;
 import com.google.inject.Singleton;
+import jakarta.annotation.Nullable;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -66,6 +67,12 @@ public class ExecutionEnginesHolder {
   }
 
   public Map<String, ExecutionEngine> getEngines() {
+    return getEngines(null);
+  }
+
+  public Map<String, ExecutionEngine> getEngines(
+      @Nullable Class<? extends ExecutionEngine> filterClass) {
+
     if (engines == null) {
       synchronized (this) {
         if (engines == null) {
@@ -98,7 +105,15 @@ public class ExecutionEnginesHolder {
       }
     }
 
-    return engines;
+    if (filterClass == null) {
+      return engines;
+    }
+
+    var filteredEngines = new TreeMap<String, ExecutionEngine>();
+    StreamUtil.filterByClass(engines.values(), filterClass)
+        .forEach(e -> filteredEngines.put(e.getName(), e));
+
+    return Collections.unmodifiableMap(filteredEngines);
   }
 
   ExecutionEngine getEngineInstance(String engineName) {

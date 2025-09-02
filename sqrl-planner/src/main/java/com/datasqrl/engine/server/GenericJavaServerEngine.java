@@ -17,18 +17,18 @@ package com.datasqrl.engine.server;
 
 import static com.datasqrl.engine.EngineFeature.NO_CAPABILITIES;
 import static com.datasqrl.graphql.SqrlObjectMapper.MAPPER;
+import static com.datasqrl.graphql.config.ServerConfigUtil.mergeConfigs;
 
 import com.datasqrl.config.EngineType;
-import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.PackageJson.EngineConfig;
+import com.datasqrl.config.QueryEngineConfigConverter;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.EnginePhysicalPlan.DeploymentArtifact;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.graphql.config.ServerConfig;
-import com.datasqrl.graphql.config.ServerConfigUtil;
 import com.datasqrl.planner.dag.plan.ServerStagePlan;
 import com.datasqrl.planner.tables.SqrlTableFunction;
-import io.vertx.core.json.JsonObject;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.List;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -38,17 +38,13 @@ import lombok.extern.slf4j.Slf4j;
 public abstract class GenericJavaServerEngine extends ExecutionEngine.Base implements ServerEngine {
 
   private final EngineConfig engineConfig;
-  private final List<JsonObject> queryEngineConfigs;
-
-  GenericJavaServerEngine(String engineName, PackageJson packageJson) {
-    this(engineName, packageJson, List.of());
-  }
+  private final QueryEngineConfigConverter configConverter;
 
   GenericJavaServerEngine(
-      String engineName, PackageJson packageJson, List<JsonObject> queryEngineConfigs) {
+      String engineName, EngineConfig engineConfig, QueryEngineConfigConverter configConverter) {
     super(engineName, EngineType.SERVER, NO_CAPABILITIES);
-    this.engineConfig = packageJson.getEngines().getEngineConfigOrEmpty(engineName);
-    this.queryEngineConfigs = queryEngineConfigs;
+    this.engineConfig = engineConfig;
+    this.configConverter = configConverter;
   }
 
   @Override
@@ -74,20 +70,17 @@ public abstract class GenericJavaServerEngine extends ExecutionEngine.Base imple
 
   @SneakyThrows
   private String serverConfig() {
-    var mergedConfig = ServerConfigUtil.mergeConfigs(readDefaultConfig(), engineConfig.getConfig());
+    var mergedConfig = mergeConfigs(readDefaultConfig(), engineConfig.getConfig());
     return MAPPER.copy().writer(new PrettyPrinter()).writeValueAsString(mergedConfig);
   }
 
   @SneakyThrows
   ServerConfig readDefaultConfig() {
     try (var input = getClass().getResourceAsStream("/templates/server-config.json")) {
-      var json = MAPPER.readValue(input, JsonObject.class);
+      var serverConfNode = (ObjectNode) MAPPER.readTree(input);
+      configConverter.convertConfigsToJson().forEach(serverConfNode::setAll);
 
-      for (JsonObject queryEngineConfig : queryEngineConfigs) {
-        json.mergeIn(queryEngineConfig);
-      }
-
-      return new ServerConfig(json);
+      return MAPPER.treeToValue(serverConfNode, ServerConfig.class).validated();
     }
   }
 }

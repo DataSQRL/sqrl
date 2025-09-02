@@ -33,6 +33,11 @@ public class SnowflakeEngine extends AbstractJDBCQueryEngine {
   }
 
   @Override
+  public String serverConfigName() {
+    return "snowflakeConfig";
+  }
+
+  @Override
   protected JdbcDialect getDialect() {
     return JdbcDialect.Snowflake;
   }

@@ -20,10 +20,7 @@ import static org.apache.commons.lang3.ObjectUtils.isEmpty;
 
 import com.datasqrl.util.JsonMergeUtils;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import io.vertx.core.json.JsonObject;
 import java.util.Map;
-import java.util.function.Function;
-import java.util.function.Supplier;
 import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +29,13 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ServerConfigUtil {
 
-  @SuppressWarnings("unchecked")
+  /**
+   * Merges server configuration with override values using Jackson.
+   *
+   * @param serverConfig base server configuration
+   * @param configOverrides map of configuration overrides
+   * @return merged and validated server configuration
+   */
   @SneakyThrows
   public static ServerConfig mergeConfigs(
       ServerConfig serverConfig, Map<String, Object> configOverrides) {
@@ -41,57 +44,17 @@ public class ServerConfigUtil {
     }
     var config = ((ObjectNode) MAPPER.valueToTree(serverConfig)).deepCopy();
     JsonMergeUtils.merge(config, MAPPER.valueToTree(configOverrides));
-    var json = MAPPER.treeToValue(config, Map.class);
-    return new ServerConfig(new JsonObject(json));
+    return MAPPER.treeToValue(config, ServerConfig.class).validated();
   }
 
   /**
-   * Maps a JSON object field to a configuration object using a constructor that accepts JsonObject.
-   * If the field is missing or null, uses the provided default supplier.
+   * Creates a ServerConfig from a configuration map using Jackson deserialization.
    *
-   * @param json the source JSON object
-   * @param fieldName the field name to extract
-   * @param ctor constructor function that takes JsonObject and returns the config object
-   * @param defaultVal supplier for default value when field is missing or null
-   * @param <T> the type of configuration object
-   * @return the mapped configuration object
+   * @param configMap map containing configuration values
+   * @return deserialized and validated ServerConfig instance
    */
-  public static <T> T mapField(
-      JsonObject json, String fieldName, Function<JsonObject, T> ctor, Supplier<T> defaultVal) {
-    var fieldValue = json.getJsonObject(fieldName);
-    if (fieldValue == null) {
-      return defaultVal.get();
-    }
-    return ctor.apply(fieldValue);
-  }
-
-  /**
-   * Maps a JSON object field to a configuration object using a constructor that accepts JsonObject.
-   * If the field is missing or null, creates the object with an empty JsonObject.
-   *
-   * @param json the source JSON object
-   * @param fieldName the field name to extract
-   * @param ctor constructor function that takes JsonObject and returns the config object
-   * @param <T> the type of configuration object
-   * @return the mapped configuration object
-   */
-  public static <T> T mapFieldWithEmptyDefault(
-      JsonObject json, String fieldName, Function<JsonObject, T> ctor) {
-    return mapField(json, fieldName, ctor, () -> ctor.apply(new JsonObject()));
-  }
-
-  /**
-   * Maps a JSON object field to a configuration object using a constructor that accepts JsonObject.
-   * If the field is missing or null, returns null.
-   *
-   * @param json the source JSON object
-   * @param fieldName the field name to extract
-   * @param ctor constructor function that takes JsonObject and returns the config object
-   * @param <T> the type of configuration object
-   * @return the mapped configuration object or null if field is missing
-   */
-  public static <T> T mapFieldWithNullDefault(
-      JsonObject json, String fieldName, Function<JsonObject, T> ctor) {
-    return mapField(json, fieldName, ctor, () -> null);
+  @SneakyThrows
+  public static ServerConfig fromConfigMap(Map<String, Object> configMap) {
+    return MAPPER.convertValue(configMap, ServerConfig.class).validated();
   }
 }

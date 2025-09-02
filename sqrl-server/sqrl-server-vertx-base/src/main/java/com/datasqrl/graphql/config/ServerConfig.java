@@ -15,11 +15,12 @@
  */
 package com.datasqrl.graphql.config;
 
-import static com.datasqrl.graphql.config.ServerConfigUtil.mapFieldWithEmptyDefault;
-import static com.datasqrl.graphql.config.ServerConfigUtil.mapFieldWithNullDefault;
+import static com.datasqrl.graphql.SqrlObjectMapper.MAPPER;
 
 import com.datasqrl.env.EnvVariableNames;
 import com.datasqrl.env.GlobalEnvironmentStore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonSetter;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.jwt.JWTAuthOptions;
@@ -27,6 +28,7 @@ import io.vertx.ext.web.handler.graphql.GraphQLHandlerOptions;
 import io.vertx.ext.web.handler.graphql.GraphiQLHandlerOptions;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.sqlclient.PoolOptions;
+import java.util.Map;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -34,57 +36,112 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ServerConfig {
 
-  ServletConfig servletConfig;
-  GraphQLHandlerOptions graphQLHandlerOptions;
-  GraphiQLHandlerOptions graphiQLHandlerOptions;
-  HttpServerOptions httpServerOptions;
-  PgConnectOptions pgConnectOptions;
-  PoolOptions poolOptions;
-  CorsHandlerOptions corsHandlerOptions;
-  JWTAuthOptions jwtAuth;
-  SwaggerConfig swaggerConfig;
-  KafkaConfig.KafkaMutationConfig kafkaMutationConfig;
-  KafkaConfig.KafkaSubscriptionConfig kafkaSubscriptionConfig;
-  JdbcConfig duckDbConfig;
-  JdbcConfig snowflakeConfig;
+  private ServletConfig servletConfig = new ServletConfig();
+  private GraphQLHandlerOptions graphQLHandlerOptions = new GraphQLHandlerOptions();
+  private GraphiQLHandlerOptions graphiQLHandlerOptions;
+  private HttpServerOptions httpServerOptions = new HttpServerOptions();
+  private PgConnectOptions pgConnectOptions = new PgConnectOptions();
+  private PoolOptions poolOptions = new PoolOptions();
+  private CorsHandlerOptions corsHandlerOptions = new CorsHandlerOptions();
+  private SwaggerConfig swaggerConfig = new SwaggerConfig();
+  private JWTAuthOptions jwtAuth;
 
-  public ServerConfig(JsonObject json) {
-    // Empty default mappings
-    servletConfig = mapFieldWithEmptyDefault(json, "servletConfig", ServletConfig::new);
-    graphQLHandlerOptions =
-        mapFieldWithEmptyDefault(json, "graphQLHandlerOptions", GraphQLHandlerOptions::new);
-    httpServerOptions = mapFieldWithEmptyDefault(json, "httpServerOptions", HttpServerOptions::new);
-    pgConnectOptions = loadPgConnectOptions(json);
-    poolOptions = mapFieldWithEmptyDefault(json, "poolOptions", PoolOptions::new);
-    corsHandlerOptions =
-        mapFieldWithEmptyDefault(json, "corsHandlerOptions", CorsHandlerOptions::new);
-    swaggerConfig = mapFieldWithEmptyDefault(json, "swaggerConfig", SwaggerConfig::new);
+  private KafkaConfig.KafkaMutationConfig kafkaMutationConfig;
+  private KafkaConfig.KafkaSubscriptionConfig kafkaSubscriptionConfig;
+  private JdbcConfig duckDbConfig;
+  private JdbcConfig snowflakeConfig;
 
-    // Null default mappings
-    graphiQLHandlerOptions =
-        mapFieldWithNullDefault(json, "graphiQLHandlerOptions", GraphiQLHandlerOptions::new);
-    jwtAuth = mapFieldWithNullDefault(json, "jwtAuth", JWTAuthOptions::new);
-    kafkaMutationConfig =
-        mapFieldWithNullDefault(json, "kafkaMutationConfig", KafkaConfig.KafkaMutationConfig::new);
-    kafkaSubscriptionConfig =
-        mapFieldWithNullDefault(
-            json, "kafkaSubscriptionConfig", KafkaConfig.KafkaSubscriptionConfig::new);
-    duckDbConfig = mapFieldWithNullDefault(json, "duckDbConfig", JdbcConfig::new);
-    snowflakeConfig = mapFieldWithNullDefault(json, "snowflakeConfig", JdbcConfig::new);
-  }
-
-  private PgConnectOptions loadPgConnectOptions(JsonObject json) {
-    var fieldName = "pgConnectOptions";
-    var pgConnectOptions = mapFieldWithEmptyDefault(json, fieldName, PgConnectOptions::new);
-
+  /**
+   * Validates and applies post-deserialization logic to this ServerConfig instance. This method
+   * should be called after any Jackson deserialization.
+   *
+   * @return this ServerConfig instance for method chaining
+   */
+  public ServerConfig validated() {
+    // Apply PostgreSQL port from environment variable if set
     var pgPort = GlobalEnvironmentStore.get(EnvVariableNames.POSTGRES_PORT);
     try {
-      pgConnectOptions.setPort(Integer.parseInt(pgPort));
+      if (pgPort != null && !pgPort.isEmpty()) {
+        pgConnectOptions.setPort(Integer.parseInt(pgPort));
+      }
     } catch (NumberFormatException ignored) {
+      // Ignore invalid port numbers
     }
 
-    return pgConnectOptions;
+    // Validate Kafka configs if present
+    if (kafkaMutationConfig != null) {
+      kafkaMutationConfig.validateConfig();
+    }
+    if (kafkaSubscriptionConfig != null) {
+      kafkaSubscriptionConfig.validateConfig();
+    }
+
+    return this;
+  }
+
+  ////////////////////////////////////////////////////////////////////////////////
+  // Custom JSON setters for Jackson deserialization of Vert.x classes
+  ////////////////////////////////////////////////////////////////////////////////
+
+  @JsonSetter("graphQLHandlerOptions")
+  public void setGraphQLHandlerOptionsFromJson(Map<String, Object> options) {
+    this.graphQLHandlerOptions = new GraphQLHandlerOptions(getJsonObjectOrEmpty(options));
+  }
+
+  @JsonSetter("httpServerOptions")
+  public void setHttpServerOptionsFromJson(Map<String, Object> options) {
+    this.httpServerOptions = new HttpServerOptions(getJsonObjectOrEmpty(options));
+  }
+
+  @JsonSetter("pgConnectOptions")
+  public void setPgConnectOptionsFromJson(Map<String, Object> options) {
+    this.pgConnectOptions = new PgConnectOptions(getJsonObjectOrEmpty(options));
+  }
+
+  @JsonSetter("poolOptions")
+  public void setPoolOptionsFromJson(Map<String, Object> options) {
+    this.poolOptions = new PoolOptions(getJsonObjectOrEmpty(options));
+  }
+
+  @JsonSetter("graphiQLHandlerOptions")
+  public void setGraphiQLHandlerOptionsFromJson(Map<String, Object> options) {
+    this.graphiQLHandlerOptions =
+        options == null ? null : new GraphiQLHandlerOptions(new JsonObject(options));
+  }
+
+  @JsonSetter("jwtAuth")
+  public void setJwtAuthFromJson(Map<String, Object> options) {
+    this.jwtAuth = options == null ? null : new JWTAuthOptions(new JsonObject(options));
+  }
+
+  ////////////////////////////////////////////////////////////////////////////////
+  // Custom JSON setters for Jackson deserialization of our own POJO classes
+  ////////////////////////////////////////////////////////////////////////////////
+
+  @JsonSetter("servletConfig")
+  public void setServletConfigFromJson(Map<String, Object> options) {
+    this.servletConfig =
+        options == null ? new ServletConfig() : MAPPER.convertValue(options, ServletConfig.class);
+  }
+
+  @JsonSetter("corsHandlerOptions")
+  public void setCorsHandlerOptionsFromJson(Map<String, Object> options) {
+    this.corsHandlerOptions =
+        options == null
+            ? new CorsHandlerOptions()
+            : MAPPER.convertValue(options, CorsHandlerOptions.class);
+  }
+
+  @JsonSetter("swaggerConfig")
+  public void setSwaggerConfigFromJson(Map<String, Object> options) {
+    this.swaggerConfig =
+        options == null ? new SwaggerConfig() : MAPPER.convertValue(options, SwaggerConfig.class);
+  }
+
+  private JsonObject getJsonObjectOrEmpty(Map<String, Object> options) {
+    return options == null ? new JsonObject() : new JsonObject(options);
   }
 }

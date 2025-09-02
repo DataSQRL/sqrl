@@ -18,10 +18,9 @@ package com.datasqrl.packager.config;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datasqrl.graphql.SqrlObjectMapper;
-import com.datasqrl.graphql.config.ServerConfig;
+import com.datasqrl.graphql.config.ServerConfigUtil;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.vertx.core.json.JsonObject;
 import java.io.File;
 import java.util.Comparator;
 import java.util.Map;
@@ -39,7 +38,7 @@ class ServerConfigTemplateTest {
   @SneakyThrows
   void test() {
     var original = mapper.readValue(TEMPLATE, Map.class);
-    var afterParsing = new ServerConfig(new JsonObject(original));
+    var afterParsing = ServerConfigUtil.fromConfigMap(original);
     assertThat(mapper.convertValue(afterParsing, Map.class))
         .usingRecursiveComparison()
         .withComparatorForType(numberComparatorIgnoringType(), Number.class)
@@ -58,7 +57,7 @@ class ServerConfigTemplateTest {
   @SneakyThrows
   public static void main(String[] args) {
     var original = mapper.readValue(TEMPLATE, Map.class);
-    var afterParsing = new ServerConfig(new JsonObject(original));
+    var afterParsing = ServerConfigUtil.fromConfigMap(original);
 
     if (!Objects.equals(original, mapper.convertValue(afterParsing, Map.class))) {
       mapper
