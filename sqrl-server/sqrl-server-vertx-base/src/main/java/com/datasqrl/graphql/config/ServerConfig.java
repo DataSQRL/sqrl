@@ -15,6 +15,8 @@
  */
 package com.datasqrl.graphql.config;
 
+import static com.datasqrl.graphql.SqrlObjectMapper.MAPPER;
+
 import com.datasqrl.env.EnvVariableNames;
 import com.datasqrl.env.GlobalEnvironmentStore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -44,8 +46,9 @@ public class ServerConfig {
   private PgConnectOptions pgConnectOptions = new PgConnectOptions();
   private PoolOptions poolOptions = new PoolOptions();
   private CorsHandlerOptions corsHandlerOptions = new CorsHandlerOptions();
-  private JWTAuthOptions jwtAuth;
   private SwaggerConfig swaggerConfig = new SwaggerConfig();
+  private JWTAuthOptions jwtAuth;
+
   private KafkaConfig.KafkaMutationConfig kafkaMutationConfig;
   private KafkaConfig.KafkaSubscriptionConfig kafkaSubscriptionConfig;
   private JdbcConfig duckDbConfig;
@@ -79,35 +82,66 @@ public class ServerConfig {
     return this;
   }
 
+  ////////////////////////////////////////////////////////////////////////////////
   // Custom JSON setters for Jackson deserialization of Vert.x classes
+  ////////////////////////////////////////////////////////////////////////////////
+
   @JsonSetter("graphQLHandlerOptions")
   public void setGraphQLHandlerOptionsFromJson(Map<String, Object> options) {
-    this.graphQLHandlerOptions = new GraphQLHandlerOptions(new JsonObject(options));
+    this.graphQLHandlerOptions = new GraphQLHandlerOptions(getJsonObjectOrEmpty(options));
+  }
+
+  @JsonSetter("httpServerOptions")
+  public void setHttpServerOptionsFromJson(Map<String, Object> options) {
+    this.httpServerOptions = new HttpServerOptions(getJsonObjectOrEmpty(options));
+  }
+
+  @JsonSetter("pgConnectOptions")
+  public void setPgConnectOptionsFromJson(Map<String, Object> options) {
+    this.pgConnectOptions = new PgConnectOptions(getJsonObjectOrEmpty(options));
+  }
+
+  @JsonSetter("poolOptions")
+  public void setPoolOptionsFromJson(Map<String, Object> options) {
+    this.poolOptions = new PoolOptions(getJsonObjectOrEmpty(options));
   }
 
   @JsonSetter("graphiQLHandlerOptions")
   public void setGraphiQLHandlerOptionsFromJson(Map<String, Object> options) {
     this.graphiQLHandlerOptions =
-        options != null ? new GraphiQLHandlerOptions(new JsonObject(options)) : null;
-  }
-
-  @JsonSetter("httpServerOptions")
-  public void setHttpServerOptionsFromJson(Map<String, Object> options) {
-    this.httpServerOptions = new HttpServerOptions(new JsonObject(options));
-  }
-
-  @JsonSetter("pgConnectOptions")
-  public void setPgConnectOptionsFromJson(Map<String, Object> options) {
-    this.pgConnectOptions = new PgConnectOptions(new JsonObject(options));
-  }
-
-  @JsonSetter("poolOptions")
-  public void setPoolOptionsFromJson(Map<String, Object> options) {
-    this.poolOptions = new PoolOptions(new JsonObject(options));
+        options == null ? null : new GraphiQLHandlerOptions(new JsonObject(options));
   }
 
   @JsonSetter("jwtAuth")
   public void setJwtAuthFromJson(Map<String, Object> options) {
-    this.jwtAuth = options != null ? new JWTAuthOptions(new JsonObject(options)) : null;
+    this.jwtAuth = options == null ? null : new JWTAuthOptions(new JsonObject(options));
+  }
+
+  ////////////////////////////////////////////////////////////////////////////////
+  // Custom JSON setters for Jackson deserialization of our own POJO classes
+  ////////////////////////////////////////////////////////////////////////////////
+
+  @JsonSetter("servletConfig")
+  public void setServletConfigFromJson(Map<String, Object> options) {
+    this.servletConfig =
+        options == null ? new ServletConfig() : MAPPER.convertValue(options, ServletConfig.class);
+  }
+
+  @JsonSetter("corsHandlerOptions")
+  public void setCorsHandlerOptionsFromJson(Map<String, Object> options) {
+    this.corsHandlerOptions =
+        options == null
+            ? new CorsHandlerOptions()
+            : MAPPER.convertValue(options, CorsHandlerOptions.class);
+  }
+
+  @JsonSetter("swaggerConfig")
+  public void setSwaggerConfigFromJson(Map<String, Object> options) {
+    this.swaggerConfig =
+        options == null ? new SwaggerConfig() : MAPPER.convertValue(options, SwaggerConfig.class);
+  }
+
+  private JsonObject getJsonObjectOrEmpty(Map<String, Object> options) {
+    return options == null ? new JsonObject() : new JsonObject(options);
   }
 }
