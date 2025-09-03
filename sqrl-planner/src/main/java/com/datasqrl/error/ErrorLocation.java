@@ -69,16 +69,12 @@ public interface ErrorLocation extends Serializable {
 
   ErrorLocation atFile(@NonNull ErrorLocation.FileRange file);
 
-  @Value
-  class FileLocation {
+  record FileLocation(int line, int offset) {
 
     public static final FileLocation START = new FileLocation(1, 1);
 
-    private final int line;
-    private final int offset;
-
     public FileLocation add(FileLocation additional) {
-      if (additional.getLine() == 1) {
+      if (additional.line() == 1) {
         return new FileLocation(line, offset + additional.offset - 1);
       } else {
         return new FileLocation(line + additional.line - 1, additional.offset);

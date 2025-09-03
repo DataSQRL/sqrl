@@ -45,7 +45,7 @@ public class SqrlRelMdSelectivity extends RelMdSelectivity
     selectivity *= Math.pow(0.05, constraints.getEqualityColumns().size());
     selectivity *= Math.pow(0.5, constraints.getInequalityColumns().size());
     for (IndexableFunctionCall fcall : constraints.getFunctionCalls()) {
-      selectivity *= fcall.getFunction().estimateSelectivity();
+      selectivity *= fcall.function().estimateSelectivity();
     }
     return selectivity;
   }

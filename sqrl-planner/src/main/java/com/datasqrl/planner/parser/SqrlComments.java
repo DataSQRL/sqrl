@@ -45,7 +45,7 @@ public class SqrlComments {
     return new SqrlComments(
         documentation,
         hints.stream()
-            .filter(p -> !p.isPresent() || !remove.test(p.get().getName()))
+            .filter(p -> !p.isPresent() || !remove.test(p.get().name()))
             .collect(Collectors.toUnmodifiableList()));
   }
 
@@ -53,7 +53,7 @@ public class SqrlComments {
     return hints.stream()
         .filter(ParsedObject::isPresent)
         .map(ParsedObject::get)
-        .map(SqrlHint::getName)
+        .map(SqrlHint::name)
         .anyMatch(match);
   }
 

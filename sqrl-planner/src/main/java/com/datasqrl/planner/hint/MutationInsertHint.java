@@ -46,7 +46,7 @@ public class MutationInsertHint extends PlannerHint {
 
     @Override
     public PlannerHint create(ParsedObject<SqrlHint> source) {
-      var arguments = source.get().getOptions();
+      var arguments = source.get().options();
       final Optional<MutationInsertType> insertType;
       if (arguments == null
           || arguments.size() != 1

@@ -31,7 +31,6 @@ import lombok.EqualsAndHashCode;
 import lombok.EqualsAndHashCode.Include;
 import lombok.Getter;
 import lombok.NonNull;
-import lombok.Value;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
@@ -153,9 +152,9 @@ public class QueryIndexSummary {
       List<IndexableFunctionCall> coveredCalls = new ArrayList<>();
       Set<Integer> indexCols = ImmutableSet.copyOf(indexDef.getColumns());
       for (IndexableFunctionCall fcall : this.functionCalls) {
-        var function = fcall.getFunction();
+        var function = fcall.function();
         if (function.getSupportedIndexes().contains(indexType)
-            && indexCols.containsAll(fcall.getColumnIndexes())) {
+            && indexCols.containsAll(fcall.columnIndexes())) {
           coveredCalls.add(fcall);
         }
       }
@@ -184,18 +183,7 @@ public class QueryIndexSummary {
         + functionCalls.toString();
   }
 
-  @Value
-  public static class IndexableFunctionCall {
-
-    List<Integer> columnIndexes;
-    IndexableFunction function;
-
-    //    @Override
-    //    public String toString() {
-    //      return function.getFunctionName() + columnIndexes.toString();
-    //    }
-
-  }
+  public record IndexableFunctionCall(List<Integer> columnIndexes, IndexableFunction function) {}
 
   /**
    * Visits a RexCall to determine whether this predicate is indexable. This visitor will look for a

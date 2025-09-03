@@ -52,7 +52,6 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import lombok.NonNull;
-import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.linq4j.Ord;
 import org.apache.calcite.plan.RelOptTable;
@@ -152,13 +151,11 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
     this.catalog = catalog;
   }
 
-  @Value
-  public static class ViewAnalysis {
-    RelNode relNode;
-    RelBuilder relBuilder;
-    TableAnalysis.TableAnalysisBuilder tableAnalysis;
-    boolean hasMostRecentDistinct;
-  }
+  public record ViewAnalysis(
+      RelNode relNode,
+      RelBuilder relBuilder,
+      TableAnalysis.TableAnalysisBuilder tableAnalysis,
+      boolean hasMostRecentDistinct) {}
 
   public ViewAnalysis analyze(PlannerHints hints) {
     originalRelnode.accept(this);
@@ -608,15 +605,15 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
       if (side == Side.LEFT) {
         constrainedInput = leftIn;
         remapPk = IndexMap.IDENTITY;
-        getEqualityIdx = EqualityCondition::getLeftIndex;
+        getEqualityIdx = EqualityCondition::leftIndex;
       } else {
         assert side == Side.RIGHT;
         constrainedInput = rightIn;
         remapPk = remapRightSide;
-        getEqualityIdx = EqualityCondition::getRightIndex;
+        getEqualityIdx = EqualityCondition::rightIndex;
       }
       Set<Integer> pkEqualities =
-          eqDecomp.getEqualities().stream().map(getEqualityIdx).collect(Collectors.toSet());
+          eqDecomp.equalities().stream().map(getEqualityIdx).collect(Collectors.toSet());
       var allCovered =
           constrainedInput.primaryKey.isDefined()
               && constrainedInput.primaryKey.asList().stream()
@@ -634,8 +631,8 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
       combinedPkColumns.addAll(leftIn.primaryKey.asList());
       combinedPkColumns.addAll(rightIn.primaryKey.remap(remapRightSide).asList());
       Set<Integer> constrainedColumns =
-          eqDecomp.getEqualities().stream()
-              .map(eq -> eq.isTwoSided() ? eq.getRightIndex() : eq.getOneSidedIndex())
+          eqDecomp.equalities().stream()
+              .map(eq -> eq.isTwoSided() ? eq.rightIndex() : eq.getOneSidedIndex())
               .collect(Collectors.toUnmodifiableSet());
       combinedPkColumns.removeIf(columnSet -> columnSet.containsAny(constrainedColumns));
       joinedPk = new PrimaryKeyMap(combinedPkColumns);
@@ -702,9 +699,9 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
           sharesRootWithPkConstraint = true;
           for (var i = 0; i < numRootPks; i++) {
             PrimaryKeyMap.ColumnSet left = leftRootPks.get(i), right = rightRootPks.get(i);
-            if (eqDecomp.getEqualities().stream()
+            if (eqDecomp.equalities().stream()
                 .noneMatch(
-                    eq -> left.contains(eq.getLeftIndex()) && right.contains(eq.getRightIndex()))) {
+                    eq -> left.contains(eq.leftIndex()) && right.contains(eq.rightIndex()))) {
               sharesRootWithPkConstraint = false;
               break;
             }
@@ -758,7 +755,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
     if (!isIntervalJoin && !isTemporalJoin) {
       costAnalyses.add(
           new JoinCostAnalysis(
-              leftIn.type, rightIn.type, eqDecomp.getEqualities().size(), singletonSide));
+              leftIn.type, rightIn.type, eqDecomp.equalities().size(), singletonSide));
     }
 
     return setProcessResult(

@@ -16,14 +16,10 @@
 package com.datasqrl.planner.parser;
 
 import com.datasqrl.error.ErrorLocation.FileLocation;
-import lombok.Value;
 
 /** Reprensets a CREATE TABLE statement */
-@Value
-public class SqrlCreateTableStatement implements SqrlDdlStatement {
-
-  ParsedObject<String> createTable;
-  SqrlComments comments;
+public record SqrlCreateTableStatement(ParsedObject<String> createTable, SqrlComments comments)
+    implements SqrlDdlStatement {
 
   public String toSql() {
     return createTable.get();

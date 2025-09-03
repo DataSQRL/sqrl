@@ -18,22 +18,18 @@ package com.datasqrl.planner.tables;
 import com.datasqrl.planner.dag.plan.MutationQuery;
 import javax.annotation.Nullable;
 import lombok.NonNull;
-import lombok.Value;
 import org.apache.flink.table.catalog.ResolvedSchema;
 
-/** Metadata we keep track off for imported/exported tables and their definition */
-@Value
-public class SourceSinkTableAnalysis {
-
-  /** The connector configuration for the source table */
-  @NonNull FlinkConnectorConfig connector;
-
-  /** The Flink schema of the source table */
-  @NonNull ResolvedSchema schema;
-
-  /**
-   * This is set for internal CREATE TABLE definitions that map to mutations only, otherwise null It
-   * contains the metadata information from the log engine on where to write the data
-   */
-  @Nullable MutationQuery mutationDefinition;
-}
+/**
+ * Metadata we keep track off for imported/exported tables and their definition
+ *
+ * @param connector The connector configuration for the source table
+ * @param schema The Flink schema of the source table
+ * @param mutationDefinition This is set for internal CREATE TABLE definitions that map to mutations
+ *     only, otherwise null It contains the metadata information from the log engine on where to
+ *     write the data
+ */
+public record SourceSinkTableAnalysis(
+    @NonNull FlinkConnectorConfig connector,
+    @NonNull ResolvedSchema schema,
+    @Nullable MutationQuery mutationDefinition) {}

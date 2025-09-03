@@ -181,6 +181,6 @@ public interface PackageJson {
 
     TablePattern getTablePattern(String defaultTablePattern);
 
-    ErrorCollector getErrors();
+    ErrorCollector errors();
   }
 }

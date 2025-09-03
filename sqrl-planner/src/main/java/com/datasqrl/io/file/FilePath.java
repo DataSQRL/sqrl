@@ -160,8 +160,7 @@ public class FilePath implements Serializable { // todo: move to io-core
     }
     var components = getComponents(null).get();
     if (components.hasCompression()) {
-      is =
-          StandardDeCompressors.getDecompressorForExtension(components.getCompression()).create(is);
+      is = StandardDeCompressors.getDecompressorForExtension(components.compression()).create(is);
     }
     return is;
   }
@@ -212,13 +211,8 @@ public class FilePath implements Serializable { // todo: move to io-core
     return java.nio.file.Path.of(path.flinkPath.toString());
   }
 
-  @Value
-  public static class NameComponents {
-
-    private final String identifier;
-    private final String fullName;
-    private final String format;
-    private final String compression;
+  public record NameComponents(
+      String identifier, String fullName, String format, String compression) {
 
     public boolean hasFormat() {
       return !Strings.isNullOrEmpty(format);
@@ -226,17 +220,6 @@ public class FilePath implements Serializable { // todo: move to io-core
 
     public boolean hasCompression() {
       return !Strings.isNullOrEmpty(compression);
-    }
-
-    public String getSuffix() {
-      var suffix = "";
-      if (hasFormat()) {
-        suffix += "." + format;
-      }
-      if (hasCompression()) {
-        suffix += "." + compression;
-      }
-      return suffix;
     }
   }
 

@@ -110,8 +110,7 @@ public class GraphqlModelGenerator extends GraphqlSchemaWalker {
     Map<String, MutationComputedColumnType> computedColumns =
         mutation.getComputedColumns().stream()
             .collect(
-                Collectors.toMap(
-                    MutationComputedColumn::getColumnName, MutationComputedColumn::getType));
+                Collectors.toMap(MutationComputedColumn::columnName, MutationComputedColumn::type));
     boolean returnList = GraphqlSchemaUtil.isListType(atField.getType());
     if (mutation.getCreateTopic() instanceof NewTopic newTopic) {
       mutationCoords =

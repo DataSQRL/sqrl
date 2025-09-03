@@ -158,7 +158,7 @@ public class DefaultSchemaGenerator extends FlexibleTypeMatcher implements Schem
       } else {
         BasicType type = null;
         for (FieldTypeStats fts : statTypes) {
-          var td = fts.getDetected();
+          var td = fts.detected();
           if (td instanceof BasicType basicType) {
             if (type == null) {
               type = basicType;
@@ -167,7 +167,7 @@ public class DefaultSchemaGenerator extends FlexibleTypeMatcher implements Schem
                   BasicTypeManager.combine(type, basicType, settings.maxCastingTypeDistance())
                       .orElse(null);
             }
-            maxArrayDepth = Math.max(fts.getArrayDepth(), maxArrayDepth);
+            maxArrayDepth = Math.max(fts.arrayDepth(), maxArrayDepth);
           } else {
             type = null; // abort type finding since it's a nested relation
           }
@@ -194,7 +194,7 @@ public class DefaultSchemaGenerator extends FlexibleTypeMatcher implements Schem
               } else {
                 type = BasicTypeManager.combineForced(type, basicType);
               }
-              maxArrayDepth = Math.max(fts.getArrayDepth(), maxArrayDepth);
+              maxArrayDepth = Math.max(fts.arrayDepth(), maxArrayDepth);
             } else {
               assert fts.nestedRelationStats != null;
               if (nested == null) {
@@ -202,7 +202,7 @@ public class DefaultSchemaGenerator extends FlexibleTypeMatcher implements Schem
               } else {
                 nested.merge(fts.nestedRelationStats);
               }
-              nestedRelationArrayDepth = Math.max(nestedRelationArrayDepth, fts.getArrayDepth());
+              nestedRelationArrayDepth = Math.max(nestedRelationArrayDepth, fts.arrayDepth());
             }
           }
           if (type != null) {
@@ -251,8 +251,8 @@ public class DefaultSchemaGenerator extends FlexibleTypeMatcher implements Schem
         // Try to match on raw first
         var match = matchType(fts, fieldTypes);
         if (match != null) {
-          if (!match.getType().getClass().equals(fts.getRaw().getClass())
-              || match.getArrayDepth() != fts.getArrayDepth()) {
+          if (!match.getType().getClass().equals(fts.raw().getClass())
+              || match.getArrayDepth() != fts.arrayDepth()) {
             errors.notice("Matched field type [%s] onto [%s]", fts, match);
           }
           typePairing.put(match, fts);

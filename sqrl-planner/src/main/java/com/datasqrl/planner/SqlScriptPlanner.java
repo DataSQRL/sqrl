@@ -226,8 +226,8 @@ public class SqlScriptPlanner {
               .atFile(
                   statement
                       .getFileLocation()
-                      .add(sqlStatement.mapSqlLocation(msgLocation.getLocation())))
-              .fatal(msgLocation.getMessage());
+                      .add(sqlStatement.mapSqlLocation(msgLocation.location())))
+              .fatal(msgLocation.message());
         }
         if (e instanceof ValidationException) {
           if (e.getCause() != null && e.getCause() != e) {
@@ -277,7 +277,7 @@ public class SqlScriptPlanner {
     var hints = PlannerHints.EMPTY;
     Optional<String> documentation = Optional.empty();
     if (stmt instanceof SqrlStatement statement) {
-      var comments = statement.getComments();
+      var comments = statement.comments();
       hints = PlannerHints.fromHints(comments);
       if (!comments.getDocumentation().isEmpty()) {
         documentation =
@@ -498,13 +498,13 @@ public class SqlScriptPlanner {
             sqrlEnv.addView(originalSql, hints, errors), hintsAndDocs, visibility, false, sqrlEnv);
       }
     } else if (stmt instanceof FlinkSQLStatement flinkStmt) {
-      var node = sqrlEnv.parseSQL(flinkStmt.getSql().get());
+      var node = sqrlEnv.parseSQL(flinkStmt.sql().get());
       if (node instanceof SqlCreateView || node instanceof SqlAlterViewAs) {
         // plan like other definitions from above
         var visibility =
             new AccessVisibility(adjustAccess(AccessModifier.QUERY), false, true, false);
         addTableToDag(
-            sqrlEnv.addView(flinkStmt.getSql().get(), hints, errors),
+            sqrlEnv.addView(flinkStmt.sql().get(), hints, errors),
             hintsAndDocs,
             visibility,
             false,
@@ -512,7 +512,7 @@ public class SqlScriptPlanner {
       } else if (node instanceof SqlCreateTable) {
         sqrlEnv
             .createTable(
-                flinkStmt.getSql().get(),
+                flinkStmt.sql().get(),
                 getLogEngineBuilder(hintsAndDocs),
                 scriptContext.moduleLoader().getSchemaLoader())
             .ifPresent(tableAnalysis -> addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv));
@@ -529,7 +529,7 @@ public class SqlScriptPlanner {
             "Removing tables is not supported. The DAG planner automatically removes unused tables.");
       } else {
         // just pass through
-        sqrlEnv.executeSQL(flinkStmt.getSql().get());
+        sqrlEnv.executeSQL(flinkStmt.sql().get());
       }
     }
   }
@@ -577,9 +577,9 @@ public class SqlScriptPlanner {
               .filter(
                   capability -> {
                     if (capability instanceof Feature feature) {
-                      return !executionStage.supportsFeature(feature.getFeature());
+                      return !executionStage.supportsFeature(feature.feature());
                     } else if (capability instanceof EngineCapability.Function function) {
-                      return !executionStage.supportsFunction(function.getFunction());
+                      return !executionStage.supportsFunction(function.function());
                     } else {
                       throw new UnsupportedOperationException(capability.getName());
                     }
@@ -778,13 +778,13 @@ public class SqlScriptPlanner {
       HintsAndDocs hintsAndDocs,
       Sqrl2FlinkSQLTranslator sqrlEnv,
       ErrorCollector errors) {
-    var path = importStmt.getPackageIdentifier().get();
+    var path = importStmt.packageIdentifier().get();
     var isStar = path.getLast().equals(STAR);
 
     // Handling of the name alias if set
     NamePath aliasPath = null;
-    if (importStmt.getAlias().isPresent()) {
-      aliasPath = importStmt.getAlias().get();
+    if (importStmt.alias().isPresent()) {
+      aliasPath = importStmt.alias().get();
       checkFatal(
           aliasPath.size() == 1,
           ErrorCode.INVALID_IMPORT,
@@ -795,7 +795,7 @@ public class SqlScriptPlanner {
     var module = scriptContext.moduleLoader.getModule(path.popLast()).orElse(null);
     checkFatal(
         module != null,
-        importStmt.getPackageIdentifier().getFileLocation(),
+        importStmt.packageIdentifier().getFileLocation(),
         ErrorLabel.GENERIC,
         "Could not find module [%s] at path: [%s]",
         path,
@@ -949,9 +949,9 @@ public class SqlScriptPlanner {
    * @param sqrlEnv
    */
   private void addExport(SqrlExportStatement exportStmt, Sqrl2FlinkSQLTranslator sqrlEnv) {
-    var sinkPath = exportStmt.getPackageIdentifier().get();
+    var sinkPath = exportStmt.packageIdentifier().get();
     var sinkName = sinkPath.getLast();
-    var tablePath = exportStmt.getTableIdentifier().get();
+    var tablePath = exportStmt.tableIdentifier().get();
 
     // Lookup the table that is being exported
     var tableNode = dagBuilder.getNode(scriptContext.toIdentifier(tablePath.getLast()));
@@ -961,7 +961,7 @@ public class SqlScriptPlanner {
                 () ->
                     new StatementParserException(
                         ErrorLabel.GENERIC,
-                        exportStmt.getTableIdentifier().getFileLocation(),
+                        exportStmt.tableIdentifier().getFileLocation(),
                         "Could not find table: %s",
                         tablePath.toString()))
             .unwrap(TableNode.class);
@@ -1004,7 +1004,7 @@ public class SqlScriptPlanner {
       var module = scriptContext.moduleLoader.getModule(sinkPath.popLast()).orElse(null);
       checkFatal(
           module != null,
-          exportStmt.getPackageIdentifier().getFileLocation(),
+          exportStmt.packageIdentifier().getFileLocation(),
           ErrorLabel.GENERIC,
           "Could not find module [%s] at path: [%s]",
           sinkPath,
@@ -1013,14 +1013,14 @@ public class SqlScriptPlanner {
       var sinkObj = module.getNamespaceObject(sinkName);
       checkFatal(
           sinkObj.isPresent(),
-          exportStmt.getPackageIdentifier().getFileLocation(),
+          exportStmt.packageIdentifier().getFileLocation(),
           ErrorLabel.GENERIC,
           "Could not find table [%s] in module [%s]",
           sinkName,
           module);
       checkFatal(
           sinkObj.get() instanceof FlinkTableNamespaceObject,
-          exportStmt.getPackageIdentifier().getFileLocation(),
+          exportStmt.packageIdentifier().getFileLocation(),
           ErrorLabel.GENERIC,
           "Not a valid sink table [%s] in module [%s]",
           sinkName,

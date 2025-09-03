@@ -178,11 +178,8 @@ public class SqrlRexUtil {
     return Optional.empty();
   }
 
-  @Value
-  public static final class JoinConditionDecomposition {
-
-    List<EqualityCondition> equalities;
-    List<RexNode> remainingPredicates;
+  public record JoinConditionDecomposition(
+      List<EqualityCondition> equalities, List<RexNode> remainingPredicates) {
 
     public List<EqualityCondition> getTwoSidedEqualities() {
       var result = new ArrayList<EqualityCondition>();
@@ -190,19 +187,13 @@ public class SqrlRexUtil {
       return result;
     }
 
-    @Value
-    public static final class EqualityCondition {
+    public record EqualityCondition(int leftIndex, int rightIndex) {
 
       public static final int NO_INDEX = -1;
 
-      public int leftIndex;
-      public int rightIndex;
-
-      public EqualityCondition(int leftIndex, int rightIndex) {
+      public EqualityCondition {
         Preconditions.checkArgument(leftIndex < rightIndex || rightIndex == NO_INDEX);
         Preconditions.checkArgument(leftIndex >= 0 || rightIndex >= 0);
-        this.leftIndex = leftIndex;
-        this.rightIndex = rightIndex;
       }
 
       public boolean isTwoSided() {

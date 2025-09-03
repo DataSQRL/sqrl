@@ -17,7 +17,6 @@ package com.datasqrl;
 
 import lombok.Builder;
 import lombok.Getter;
-import lombok.Value;
 
 @Getter
 @Builder
@@ -72,16 +71,5 @@ public class IntegrationTestSettings {
 
   public static IntegrationTestSettings getDatabaseOnly(DatabaseEngine database) {
     return getEngines(StreamEngine.NONE, database).build();
-  }
-
-  @Value
-  public static class EnginePair {
-
-    DatabaseEngine database;
-    StreamEngine stream;
-
-    public String getName() {
-      return database.name() + "_" + stream.name();
-    }
   }
 }

@@ -33,7 +33,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
-import lombok.Value;
 import org.apache.calcite.avatica.util.TimeUnit;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
@@ -295,12 +294,9 @@ public class CalciteUtil {
   public static final InputRefTransformation CAST_TRANSFORM =
       new BasicInputRefTransformation("cast", ops -> ops.size() == 1, 0);
 
-  @Value
-  public static class BasicInputRefTransformation implements InputRefTransformation {
-
-    String name;
-    Predicate<List<RexNode>> validationFunction;
-    int operandIndex;
+  public record BasicInputRefTransformation(
+      String name, Predicate<List<RexNode>> validationFunction, int operandIndex)
+      implements InputRefTransformation {
 
     @Override
     public boolean appliesTo(SqlOperator operator) {
@@ -410,10 +406,8 @@ public class CalciteUtil {
         force); // Need to force otherwise Calcite eliminates the project
   }
 
-  @Value
-  public static class RelDataTypeFieldBuilder implements RelDataTypeBuilder {
-
-    private final RelDataTypeFactory.FieldInfoBuilder fieldBuilder;
+  public record RelDataTypeFieldBuilder(RelDataTypeFactory.FieldInfoBuilder fieldBuilder)
+      implements RelDataTypeBuilder {
 
     @Override
     public RelDataTypeBuilder add(String name, RelDataType type) {

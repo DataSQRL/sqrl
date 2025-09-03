@@ -17,38 +17,27 @@ package com.datasqrl.planner.analyzer.cost;
 
 import com.datasqrl.io.tables.TableType;
 import com.datasqrl.plan.rules.Side;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 
-@AllArgsConstructor
-@Getter
-public class JoinCostAnalysis implements CostAnalysis {
-
-  final TableType leftType;
-  final TableType rightType;
-
-  /**
-   * The number of equality constraints between the two sides of the join to estimate cardinality of
-   * the result
-   */
-  final int numEqualities;
-
-  /**
-   * The side which has (at most) a single row matching any given row on the other side because of a
-   * pk constraint.
-   */
-  final Side singletonSide;
+/**
+ * @param numEqualities The number of equality constraints between the two sides of the join to
+ *     estimate cardinality of the result
+ * @param singletonSide The side which has (at most) a single row matching any given row on the
+ *     other side because of a pk constraint.
+ */
+public record JoinCostAnalysis(
+    TableType leftType, TableType rightType, int numEqualities, Side singletonSide)
+    implements CostAnalysis {
 
   @Override
   public double getCostMultiplier() {
     var localCost = 0.0;
-    if (getSingletonSide() != Side.LEFT) {
-      localCost += perSideCost(getLeftType());
+    if (singletonSide() != Side.LEFT) {
+      localCost += perSideCost(leftType());
     }
-    if (getSingletonSide() != Side.RIGHT) {
-      localCost += perSideCost(getRightType());
+    if (singletonSide() != Side.RIGHT) {
+      localCost += perSideCost(rightType());
     }
-    if (getSingletonSide() == Side.NONE && getNumEqualities() == 0) {
+    if (singletonSide() == Side.NONE && numEqualities() == 0) {
       localCost *= 100;
     }
     assert localCost >= 1;
@@ -63,7 +52,6 @@ public class JoinCostAnalysis implements CostAnalysis {
       case STATIC -> 1;
       case LOOKUP -> 2;
       case RELATION -> 20;
-      default -> throw new UnsupportedOperationException();
     };
   }
 }

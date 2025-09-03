@@ -40,12 +40,12 @@ public abstract class PlannerHint implements Hint {
 
   @Override
   public List<String> getOptions() {
-    return source.get().getOptions();
+    return source.get().options();
   }
 
   @Override
   public String getName() {
-    return source.get().getName().toLowerCase();
+    return source.get().name().toLowerCase();
   }
 
   public enum Type {
@@ -57,14 +57,14 @@ public abstract class PlannerHint implements Hint {
     Preconditions.checkArgument(sqrlHint.isPresent());
     try {
       var factory =
-          ServiceLoaderDiscovery.get(Factory.class, Factory::getName, sqrlHint.get().getName());
+          ServiceLoaderDiscovery.get(Factory.class, Factory::getName, sqrlHint.get().name());
       return factory.create(sqrlHint);
     } catch (ServiceLoaderException e) {
       throw new StatementParserException(
           ErrorLabel.GENERIC,
           sqrlHint.getFileLocation(),
           "Unrecognized hint [%s]",
-          sqrlHint.get().getName());
+          sqrlHint.get().name());
     }
   }
 
