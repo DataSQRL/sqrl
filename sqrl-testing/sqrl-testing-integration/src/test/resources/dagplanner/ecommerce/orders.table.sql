@@ -7,4 +7,4 @@ CREATE TABLE Orders (
 'source.monitor-interval' = '10 sec',
 'connector' = 'filesystem'
 )
-LIKE `Orders.schema.yml`;
+LIKE `orders.schema.yml`;

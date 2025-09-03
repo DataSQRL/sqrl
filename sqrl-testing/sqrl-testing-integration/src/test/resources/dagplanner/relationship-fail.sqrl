@@ -1,6 +1,6 @@
-IMPORT ecommerceTs.Customer; --base table = Customer
+IMPORT ecommerceTs.customer; --base table = Customer
 -- Orders has nested data `entries` (see orders.schema.yml)
-IMPORT ecommerceTs.Orders; --base table = Orders
+IMPORT ecommerceTs.orders; --base table = Orders
 
 rootFunction($i : INT) := SELECT id FROM Orders WHERE id = $i; -- no base table
 rootFunctionWithBaseTable($i : INT) := SELECT * FROM Orders WHERE id = $i; -- base table = Orders

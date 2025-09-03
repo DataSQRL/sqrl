@@ -1,4 +1,4 @@
-IMPORT ecommerceTs.Customer;
+IMPORT ecommerceTs.customer;
 
 CustomerTumble := SELECT window_start, window_end, COUNT(customerid) AS total
                 FROM TABLE(TUMBLE(TABLE Customer, DESCRIPTOR(`timestamp`), INTERVAL '10' MINUTES))

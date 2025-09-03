@@ -7,4 +7,4 @@ CREATE TABLE Product (
       'source.monitor-interval' = '10 sec',
       'connector' = 'filesystem'
       )
-LIKE `Product.schema.yml`;
+LIKE `product.schema.yml`;

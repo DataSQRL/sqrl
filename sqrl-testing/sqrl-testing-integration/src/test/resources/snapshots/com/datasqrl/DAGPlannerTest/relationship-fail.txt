@@ -39,7 +39,7 @@ Was expecting one of:
     <UNICODE_QUOTED_IDENTIFIER> ...
     
 in script:relationship-fail.sqrl [5:17]:
-IMPORT ecommerceTs.Orders; --base table = Orders
+IMPORT ecommerceTs.orders; --base table = Orders
 
 rootFunction($i : INT) := SELECT id FROM Orders WHERE id = $i; -- no base table
 ----------------^

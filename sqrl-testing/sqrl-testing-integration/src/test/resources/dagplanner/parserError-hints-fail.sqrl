@@ -1,4 +1,4 @@
-IMPORT ecommerceTs.Customer;
+IMPORT ecommerceTs.customer;
 
 /** This is for selected customers
     and their orders

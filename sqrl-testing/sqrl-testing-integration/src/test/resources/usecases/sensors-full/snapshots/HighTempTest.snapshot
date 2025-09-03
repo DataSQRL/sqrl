@@ -1,8 +1,1 @@
-{
-  "data" : {
-    "HighTempTest" : [ {
-      "num" : 9999,
-      "avg_temp" : 98.12856839
-    } ]
-  }
-}
+{"data":{"HighTempTest":[{"num":9999.0,"avg_temp":98.12856839}]}}

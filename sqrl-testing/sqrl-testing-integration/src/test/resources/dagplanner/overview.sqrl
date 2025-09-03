@@ -1,8 +1,8 @@
 -- This imports data from an external source. The source is defined in ecommerceTs/customer.table.sql and has an (optional)
 -- schema defined in customer.schema.yml. DataSQRL supports multiple schema formats such as Avro.
-IMPORT ecommerceTs.Customer AS CustomerImport;
+IMPORT ecommerceTs.customer AS CustomerImport;
 -- Orders has nested data `entries` (see orders.schema.yml)
-IMPORT ecommerceTs.Orders;
+IMPORT ecommerceTs.orders;
 
 -- We can also define table as data source, those become mutations. _uuid is a special column for the UUID generated
 -- on the server and the timestamp metadata is for the Kafka timestamp

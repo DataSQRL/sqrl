@@ -1,2 +1,2 @@
-IMPORT ecommerceTs.Orders;
+IMPORT ecommerceTs.orders;
 OrdersById(id BIGIT, otherid BIGINT) := SELECT * FROM Orders WHERE :id = id AND id = :otherid;

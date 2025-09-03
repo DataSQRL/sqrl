@@ -1,2 +1,2 @@
-IMPORT ecommerceTs.Orders;
+IMPORT ecommerceTs.orders;
 ProductId := SELECT DISTINCT productid FROM Orders o CROSS JOIN UNNEST(entries);

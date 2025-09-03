@@ -1,6 +1,6 @@
 [FATAL] Column expression must directly follow the definition of table [Orders]
 in script:plannerError-add-column-fail.sqrl [2:1]:
-IMPORT ecommerceTs.Orders;
+IMPORT ecommerceTs.orders;
 Orders.col1 := (id + customerid)/2;
 ^
 Adding a column to an existing table requires that the table is defined immediately

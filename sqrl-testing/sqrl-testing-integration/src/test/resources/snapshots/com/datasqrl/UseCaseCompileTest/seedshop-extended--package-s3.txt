@@ -378,7 +378,7 @@ CREATE TABLE `Orders` (
   WATERMARK FOR `time` AS `time` - INTERVAL '0.001' SECOND
 ) WITH (
   'format' = 'flexible-json',
-  'path' = '${DATA_PATH}/orderitems.jsonl',
+  'path' = '${DATA_PATH}/order_items.jsonl',
   'connector' = 'filesystem'
 )
 LIKE `Orders__schema`;

@@ -1,5 +1,5 @@
-IMPORT ecommerceTs.Customer; --base table = Customer
-IMPORT ecommerceTs.Orders; --base table = Orders
+IMPORT ecommerceTs.customer; --base table = Customer
+IMPORT ecommerceTs.orders; --base table = Orders
 
 rootFunction(i INT NOT NULL) := SELECT id FROM Orders WHERE id = :i; -- no base table
 rootFunctionWithBaseTable(i INT NOT NULL) := SELECT * FROM Orders WHERE id = :i; -- base table = Orders

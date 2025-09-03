@@ -1,4 +1,4 @@
-IMPORT ecommerceTs.Customer;
+IMPORT ecommerceTs.customer;
 
 CustomerQuery(id BIGINT,
              arg2 STRING,

@@ -1,4 +1,4 @@
-IMPORT ecommerceTs.Orders;
+IMPORT ecommerceTs.orders;
 
 /*+query_by_any(id, time, customerid) */
 Orders1 := SELECT * FROM Orders;

@@ -57,7 +57,7 @@ Was expecting one of:
     "(" ...
     
 in script:parserError-flinkparser1stline-fail.sqrl [3:42]:
-IMPORT ecommerceTs.Customer;
+IMPORT ecommerceTs.customer;
 
 CustomerTimeWindow := SELECT window_start] window_end,
 -----------------------------------------^

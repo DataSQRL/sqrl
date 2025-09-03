@@ -1,3 +1,3 @@
-IMPORT ecommerceTs.Customer;
+IMPORT ecommerceTs.customer;
 
 Customer := SELECT COUNT(*) AS num_customers FROM Customer;

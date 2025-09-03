@@ -7,4 +7,4 @@ CREATE TABLE Customer (
       'source.monitor-interval' = '10 sec',
       'connector' = 'filesystem'
       )
-LIKE `Customer.schema.yml`;
+LIKE `customer.schema.yml`;

@@ -1,4 +1,4 @@
-IMPORT ecommerceTs.Orders;
+IMPORT ecommerceTs.orders;
 
 SelectOrders1 := SELECT * FROM Orders;
 OrdersById1(id BIGINT NOT NULL) := SELECT * FROM SelectOrders1 WHERE id = :id;

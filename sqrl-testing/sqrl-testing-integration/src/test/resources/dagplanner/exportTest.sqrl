@@ -1,5 +1,5 @@
-IMPORT ecommerceTs.Customer;
-IMPORT ecommerceTs.Orders;
+IMPORT ecommerceTs.customer;
+IMPORT ecommerceTs.orders;
 JoinStream := SELECT o.id, c.name FROM Orders o JOIN Customer c on c.customerid = o.customerid;
 DistinctCustomer := DISTINCT Customer ON customerid ORDER BY `timestamp` DESC;
 

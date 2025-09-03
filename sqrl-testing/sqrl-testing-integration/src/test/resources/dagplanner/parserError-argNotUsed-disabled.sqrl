@@ -1,3 +1,3 @@
-IMPORT ecommerceTs.Customer;
+IMPORT ecommerceTs.customer;
 
 CustomerQuery(id BIGINT) := SELECT * FROM Customer WHERE customerid > 0;

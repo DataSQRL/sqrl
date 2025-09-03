@@ -1,4 +1,4 @@
-IMPORT ecommerceTs.Customer;
+IMPORT ecommerceTs.customer;
 
 CREATE TABLE IF NOT EXISTS `customer_id_count` (
     customerid     BIGINT,

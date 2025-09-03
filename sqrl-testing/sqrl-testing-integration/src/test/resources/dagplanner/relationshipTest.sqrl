@@ -1,5 +1,5 @@
-IMPORT ecommerceTs.Customer;
-IMPORT ecommerceTs.Orders;
+IMPORT ecommerceTs.customer;
+IMPORT ecommerceTs.orders;
 
 Customer.orders := SELECT * FROM Orders o WHERE this.customerid = o.customerid;
 Customer.orders2 := SELECT id FROM Orders o WHERE this.customerid = o.customerid;
