@@ -1,11 +1,11 @@
 {
   "data" : {
-    "JsonExtractTest" : [ {
+    "JsonExtractTest" : {
       "id" : 1,
       "json_extract_function" : "1",
       "json_extract_not_exists_function" : null,
       "json_extract_with_default_function" : "default",
       "json_extract_with_default_int_function" : 1
-    } ]
+    }
   }
 }
