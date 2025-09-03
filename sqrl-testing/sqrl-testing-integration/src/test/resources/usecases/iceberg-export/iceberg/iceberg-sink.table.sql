@@ -1,4 +1,4 @@
-CREATE TABLE MyTable (
+CREATE TABLE Iceberg_sink (
      PRIMARY KEY (id, `updated_at`) NOT ENFORCED
 ) WITH (
       'connector' = 'iceberg',

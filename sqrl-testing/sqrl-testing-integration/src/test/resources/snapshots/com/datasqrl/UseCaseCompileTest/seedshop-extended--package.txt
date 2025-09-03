@@ -467,7 +467,7 @@ SELECT `s`.`customerid`, `c`.`first_name`, `c`.`last_name`, `c`.`email`, `s`.`sp
 FROM `CustomersSpending` AS `s`
  INNER JOIN `Customers` FOR SYSTEM_TIME AS OF `week` AS `c` ON `s`.`customerid` = `c`.`id`
 WHERE `s`.`spend` > 250;
-CREATE TEMPORARY TABLE `promotion_ex1__schema` (
+CREATE TEMPORARY TABLE `SinkTable_ex1__schema` (
   `customerid` BIGINT NOT NULL,
   `first_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `last_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -477,14 +477,14 @@ CREATE TEMPORARY TABLE `promotion_ex1__schema` (
 ) WITH (
   'connector' = 'datagen'
 );
-CREATE TABLE `promotion_ex1` (
+CREATE TABLE `SinkTable_ex1` (
   PRIMARY KEY (`customerid`) NOT ENFORCED
 ) WITH (
   'format' = 'flexible-json',
   'path' = '/tmp/sink/',
   'connector' = 'filesystem'
 )
-LIKE `promotion_ex1__schema`;
+LIKE `SinkTable_ex1__schema`;
 CREATE VIEW `CustomerPromotionTest`
 AS
 SELECT COUNT(*) AS `numPromotions`
@@ -644,7 +644,7 @@ CREATE TABLE `ProductsByCountry_9` (
   'username' = '${POSTGRES_USERNAME}'
 );
 EXECUTE STATEMENT SET BEGIN
-INSERT INTO `default_catalog`.`default_database`.`promotion_ex1`
+INSERT INTO `default_catalog`.`default_database`.`SinkTable_ex1`
 (SELECT *
  FROM `default_catalog`.`default_database`.`CustomerPromotion`)
 ;

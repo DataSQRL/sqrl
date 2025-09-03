@@ -1,4 +1,4 @@
-CREATE TABLE `reporting` (
+CREATE TABLE `Reporting` (
   `employeeid` BIGINT NOT NULL,
   `managerid` BIGINT NOT NULL,
   `updatedDate` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,

@@ -31,8 +31,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.sql.SqlIdentifier;
+import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
-import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.flink.sql.parser.ddl.SqlCreateTable;
 import org.apache.flink.sql.parser.ddl.SqlTableColumn;
@@ -75,16 +75,16 @@ public class FlinkTableBuilder {
     return tableName.getSimple();
   }
 
-  public FlinkTableBuilder setRelDataType(RelDataType relDataType) {
+  public FlinkTableBuilder setColumns(RelDataType relDataType) {
     setColumnList(FlinkSqlNodeFactory.createColumns(relDataType));
     return this;
   }
 
-  public FlinkTableBuilder addComputedColumn(String columnName, SqlOperator operator) {
-    Preconditions.checkArgument(columnList != null, "Need to initialize columns first");
-    columnList.add(
-        FlinkSqlNodeFactory.getComputedColumn(
-            columnName, FlinkSqlNodeFactory.getCallWithNoArgs(operator)));
+  public FlinkTableBuilder addColumns(RelDataType relDataType) {
+    SqlNodeList addCols = FlinkSqlNodeFactory.createColumns(relDataType);
+    List<SqlNode> nodes = new ArrayList<>(addCols.getList());
+    if (columnList != null) nodes.addAll(columnList.getList());
+    setColumnList(new SqlNodeList(nodes, SqlParserPos.ZERO));
     return this;
   }
 

@@ -13,7 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.discovery;
+package com.datasqrl.loaders;
+
+import static com.datasqrl.loaders.ModuleLoaderImpl.TABLE_FILE_SUFFIX;
 
 import com.datasqrl.planner.tables.FlinkTableBuilder;
 import java.io.IOException;
@@ -24,15 +26,20 @@ import java.util.List;
 import lombok.NonNull;
 
 public class TableWriter {
-  public static final String TABLE_FILE_SUFFIX = ".table.sql";
 
   public TableWriter() {}
 
-  public Collection<Path> writeToFile(
-      @NonNull Path destinationDir, @NonNull FlinkTableBuilder table) throws IOException {
-    var tableConfigFile = destinationDir.resolve(table.getTableName() + TABLE_FILE_SUFFIX);
-    var sql = table.buildSql(false).toString() + ";";
-    Files.writeString(tableConfigFile, sql);
-    return List.of(tableConfigFile);
+  public static Path writeToFile(
+      @NonNull Path destinationDir, @NonNull String filename, @NonNull FlinkTableBuilder table) {
+    var tableConfigFile = destinationDir.resolve(filename + TABLE_FILE_SUFFIX);
+    try {
+      var sql = table.buildSql(false).toString() + ";";
+      Files.writeString(tableConfigFile, sql);
+      return tableConfigFile;
+    } catch (IOException e) {
+      throw new RuntimeException(
+          "Could not write table [%s] to file [%s]"
+              .formatted(table.getTableName(), tableConfigFile));
+    }
   }
 }

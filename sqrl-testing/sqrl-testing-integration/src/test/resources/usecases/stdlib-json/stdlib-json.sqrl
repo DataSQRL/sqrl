@@ -1,4 +1,4 @@
-IMPORT data.Json; -- Import JSON data source
+IMPORT data.json; -- Import JSON data source
 
 
 /* Create JSON data source */
