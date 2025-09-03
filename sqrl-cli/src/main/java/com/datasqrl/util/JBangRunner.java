@@ -15,24 +15,33 @@
  */
 package com.datasqrl.util;
 
-import com.google.inject.Singleton;
 import java.io.IOException;
 import java.nio.file.Path;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecutor;
 
-@Singleton
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 @Slf4j
-public final class JBangRunner {
+public class JBangRunner {
 
-  public JBangRunner() {
-    if (!isJBangAvailable()) {
-      log.warn("JBang not found in PATH, JBang script preprocessing disabled");
-    }
+  private volatile Boolean available = null;
+
+  public static JBangRunner create() {
+    return new JBangRunner();
+  }
+
+  public static JBangRunner disabled() {
+    return new DisabledRunner();
   }
 
   public void exportLocalJar(Path srcFile, Path targetFile) throws IOException {
+    if (!isJBangAvailable()) {
+      return;
+    }
+
     var cmdLine =
         new CommandLine("jbang")
             .addArgument("export")
@@ -50,17 +59,43 @@ public final class JBangRunner {
   }
 
   public boolean isJBangAvailable() {
-    try {
-      var proc = new ProcessBuilder("jbang", "--version").start();
+    if (available == null) {
+      synchronized (this) {
+        if (available == null) {
+          try {
+            var proc = new ProcessBuilder("jbang", "--version").start();
 
-      if (log.isDebugEnabled()) {
-        var err = new String(proc.getErrorStream().readAllBytes());
-        log.debug("JBang version: {}", err);
+            if (log.isDebugEnabled()) {
+              var err = new String(proc.getErrorStream().readAllBytes());
+              log.debug("JBang version: {}", err);
+            }
+
+            available = proc.waitFor() == 0;
+
+          } catch (Exception e) {
+            log.debug("JBang version check failed", e);
+            available = false;
+          }
+
+          if (!available) {
+            log.warn("JBang not found in PATH, JBang script preprocessing disabled");
+          }
+        }
       }
+    }
 
-      return proc.waitFor() == 0;
+    return available;
+  }
 
-    } catch (Exception e) {
+  private static class DisabledRunner extends JBangRunner {
+
+    @Override
+    public void exportLocalJar(Path srcFile, Path targetFile) {
+      // do nothing
+    }
+
+    @Override
+    public boolean isJBangAvailable() {
       return false;
     }
   }

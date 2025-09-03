@@ -43,6 +43,7 @@ import com.datasqrl.plan.validate.ExecutionGoal;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
 import com.google.inject.Provides;
+import com.google.inject.Singleton;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Named;
 import java.nio.file.Path;
@@ -56,19 +57,22 @@ public class SqrlInjector extends AbstractModule {
   private final Path targetDir;
   private final PackageJson sqrlConfig;
   private final ExecutionGoal goal;
+  private final boolean internalTestExec;
 
   public SqrlInjector(
       ErrorCollector errors,
       Path rootDir,
       Path targetDir,
       PackageJson sqrlConfig,
-      ExecutionGoal goal) {
+      ExecutionGoal goal,
+      boolean internalTestExec) {
     this.errors = errors;
     this.rootDir = rootDir;
     this.buildDir = rootDir.resolve(SqrlConstants.BUILD_DIR_NAME);
     this.targetDir = targetDir;
     this.sqrlConfig = sqrlConfig;
     this.goal = goal;
+    this.internalTestExec = internalTestExec;
   }
 
   @Override
@@ -116,8 +120,9 @@ public class SqrlInjector extends AbstractModule {
   }
 
   @Provides
+  @Singleton
   public JBangRunner provideJBangRunner() {
-    return new JBangRunner();
+    return internalTestExec ? JBangRunner.disabled() : JBangRunner.create();
   }
 
   @Provides

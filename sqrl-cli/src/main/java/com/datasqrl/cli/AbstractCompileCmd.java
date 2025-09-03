@@ -71,7 +71,8 @@ public abstract class AbstractCompileCmd extends AbstractCmd {
 
     var injector =
         Guice.createInjector(
-            new SqrlInjector(errors, cli.rootDir, getTargetDir(), sqrlConfig, getGoal()));
+            new SqrlInjector(
+                errors, cli.rootDir, getTargetDir(), sqrlConfig, getGoal(), cli.internalTestExec));
 
     var engineHolder = injector.getInstance(ExecutionEnginesHolder.class);
     engineHolder.initEnabledEngines();
