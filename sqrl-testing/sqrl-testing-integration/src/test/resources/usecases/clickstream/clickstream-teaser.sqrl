@@ -1,4 +1,4 @@
-IMPORT clickstream-local.Click;  -- Import data
+IMPORT clickstream-local.click;  -- Import data
 /* Most visited pages */
 Trending := SELECT url, count(1) AS total
     FROM Click

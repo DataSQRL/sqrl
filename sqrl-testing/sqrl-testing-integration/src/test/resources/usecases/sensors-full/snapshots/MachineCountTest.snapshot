@@ -1,1 +1,7 @@
-{"data":{"MachineCountTest":[{"num":9.0}]}}
+{
+  "data" : {
+    "MachineCountTest" : [ {
+      "num" : 9
+    } ]
+  }
+}

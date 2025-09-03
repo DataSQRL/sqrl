@@ -1,7 +1,7 @@
 /*
  Needs vector embeddings support from sqrl-functions
  */
-IMPORT events-test.Events AS _EventStream;
+IMPORT events-test.events AS _EventStream;
 IMPORT stdlib.openai.vector_embed;
 
 _ProcessedEventStream := SELECT *,
@@ -20,8 +20,8 @@ CountEventsTest := SELECT COUNT(*) as num_events FROM Events;
 /*+test */
 EventsSubsetTest := SELECT url, `date`, title FROM Events ORDER BY url LIMIT 5;
 
-IMPORT conference-test.Likes AS _Likes;
-IMPORT conference-test.AddInterest AS _AddInterestStream;
+IMPORT conference-test.likes AS _Likes;
+IMPORT conference-test.add_interest AS _AddInterestStream;
 
 _AddInterest := SELECT *, vector_embed(text, 'text-embedding-3-small') AS embedding FROM _AddInterestStream;
 

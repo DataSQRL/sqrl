@@ -1,5 +1,5 @@
 ---
-name: "json"
+name: "Json"
 schema_version: "1"
 partial_schema: false
 columns:

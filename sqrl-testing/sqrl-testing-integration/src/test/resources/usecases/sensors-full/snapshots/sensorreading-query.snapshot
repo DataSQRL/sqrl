@@ -1,1 +1,57 @@
-{"data":{"SensorReading":[{"sensorid":11.0,"temperature":97.77902628,"humidity":72},{"sensorid":12.0,"temperature":98.60197696,"humidity":20},{"sensorid":13.0,"temperature":98.61927989,"humidity":49},{"sensorid":14.0,"temperature":98.22816747,"humidity":93},{"sensorid":15.0,"temperature":98.70421276,"humidity":53},{"sensorid":16.0,"temperature":98.15038456,"humidity":26},{"sensorid":17.0,"temperature":97.98417222,"humidity":31},{"sensorid":18.0,"temperature":98.10564357,"humidity":0},{"sensorid":19.0,"temperature":97.11099009,"humidity":36},{"sensorid":0.0,"temperature":98.33798481,"humidity":26},{"sensorid":1.0,"temperature":98.72930103,"humidity":37},{"sensorid":2.0,"temperature":98.94266739,"humidity":94},{"sensorid":3.0,"temperature":98.35456765,"humidity":76}]}}
+{
+  "data" : {
+    "SensorReading" : [ {
+      "sensorid" : 1,
+      "temperature" : 98.43445143,
+      "humidity" : 78
+    }, {
+      "sensorid" : 18,
+      "temperature" : 98.11423534,
+      "humidity" : 17
+    }, {
+      "sensorid" : 11,
+      "temperature" : 97.71459778,
+      "humidity" : 59
+    }, {
+      "sensorid" : 3,
+      "temperature" : 98.38508018,
+      "humidity" : 32
+    }, {
+      "sensorid" : 0,
+      "temperature" : 98.309256,
+      "humidity" : 65
+    }, {
+      "sensorid" : 18,
+      "temperature" : 98.07897552,
+      "humidity" : 1
+    }, {
+      "sensorid" : 10,
+      "temperature" : 97.71237833,
+      "humidity" : 13
+    }, {
+      "sensorid" : 3,
+      "temperature" : 98.31110676,
+      "humidity" : 53
+    }, {
+      "sensorid" : 16,
+      "temperature" : 97.22468771,
+      "humidity" : 92
+    }, {
+      "sensorid" : 8,
+      "temperature" : 98.17062654,
+      "humidity" : 46
+    }, {
+      "sensorid" : 1,
+      "temperature" : 98.42684708,
+      "humidity" : 2
+    }, {
+      "sensorid" : 18,
+      "temperature" : 98.11138656,
+      "humidity" : 55
+    }, {
+      "sensorid" : 8,
+      "temperature" : 98.11057853,
+      "humidity" : 98
+    } ]
+  }
+}

@@ -1,6 +1,6 @@
-IMPORT loan-local.Customers AS CustomersStream;
-IMPORT loan-local.Applications AS ApplicationsStream;
-IMPORT loan-local.LoanTypes AS LoanTypesStream;
+IMPORT loan-local.customers AS CustomersStream;
+IMPORT loan-local.applications AS ApplicationsStream;
+IMPORT loan-local.loan_types AS LoanTypesStream;
 
 /*+insert(transaction) */
 CREATE TABLE ApplicationUpdates (

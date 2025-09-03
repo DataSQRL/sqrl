@@ -1,1 +1,12 @@
-{"data":{"Sensors":[{"id":9.0,"machineId":0.0,"placed":1.7151264E12,"lastHour":{"maxTemp":102.43826972,"avgTemp":102.03073343},"readings":[{"sensorid":9.0,"temp":102.43826972},{"sensorid":9.0,"temp":102.42454664},{"sensorid":9.0,"temp":102.35098704},{"sensorid":9.0,"temp":102.40430128},{"sensorid":9.0,"temp":102.39465162}]}]}}
+{
+  "errors" : [ {
+    "message" : "Validation error (UnknownArgument@[Sensors]) : Unknown field argument 'id'",
+    "locations" : [ {
+      "line" : 2,
+      "column" : 11
+    } ],
+    "extensions" : {
+      "classification" : "ValidationError"
+    }
+  } ]
+}

@@ -1,4 +1,4 @@
-IMPORT datasqrl-central.Submission AS _SubmissionRaw;
+IMPORT datasqrl-central.submission AS _SubmissionRaw;
 
 Submission := SELECT *,  COALESCE(variant, 'default') AS variant0,
                      concat('https://repository.datasqrl.com/',file) AS repoURL
