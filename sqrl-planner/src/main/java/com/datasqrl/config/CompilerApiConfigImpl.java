@@ -52,6 +52,11 @@ public class CompilerApiConfigImpl implements CompilerApiConfig {
     return sqrlConfig.asInt("max-result-depth").get();
   }
 
+  @Override
+  public int getDefaultLimit() {
+    return sqrlConfig.asInt("default-limit").get();
+  }
+
   public enum Endpoints {
     OPS_ONLY,
     GRAPHQL,

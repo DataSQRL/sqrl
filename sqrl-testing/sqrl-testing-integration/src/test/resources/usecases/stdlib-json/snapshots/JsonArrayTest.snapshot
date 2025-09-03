@@ -1,6 +1,6 @@
 {
   "data" : {
-    "JsonArrayTest" : [ {
+    "JsonArrayTest" : {
       "id" : 1,
       "json_array_string_function" : [ 1, {
         "a" : 1
@@ -10,6 +10,6 @@
       }, {
         "a" : 2
       } ]
-    } ]
+    }
   }
 }

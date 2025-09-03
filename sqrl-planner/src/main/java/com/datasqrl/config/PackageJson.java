@@ -76,6 +76,8 @@ public interface PackageJson {
     boolean isAddOperationsPrefix();
 
     int getMaxResultDepth();
+
+    int getDefaultLimit();
   }
 
   interface ExplainConfig {

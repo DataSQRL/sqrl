@@ -1,6 +1,6 @@
 {
   "data" : {
-    "JsonConcatTest" : [ {
+    "JsonConcatTest" : {
       "id" : 1,
       "json_concat_same_key_function" : {
         "a" : 2
@@ -9,6 +9,6 @@
         "a" : 1,
         "b" : 1
       }
-    } ]
+    }
   }
 }

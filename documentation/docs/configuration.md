@@ -179,7 +179,8 @@ Used as a *table-format* engine together with a query engine such as Flink, Snow
       ],
       "endpoints": "FULL",         // endpoint generation strategy (FULL, GRAPHQL, OPS_ONLY)
       "add-prefix": true,          // add an operation-type prefix before function names
-      "max-result-depth": 3        // maximum depth of graph traversal when generating operations from a schema
+      "max-result-depth": 3,       // maximum depth of graph traversal when generating operations from a schema
+      "default-limit": 10          // default endpoint result limit
     }
   }
 }
@@ -309,7 +310,8 @@ The built-in fallback (excerpt - full version [here](https://raw.githubuserconte
       "protocols": ["GRAPHQL", "REST", "MCP"],
       "endpoints": "FULL",
       "add-prefix": true,
-      "max-result-depth": 3
+      "max-result-depth": 3,
+      "default-limit": 10
     }
   },
   "connectors": {
