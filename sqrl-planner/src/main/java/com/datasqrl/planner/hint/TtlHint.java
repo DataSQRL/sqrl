@@ -54,7 +54,7 @@ public class TtlHint extends PlannerHint {
   }
 
   public static Duration parseDuration(ParsedObject<SqrlHint> source) {
-    var arguments = source.get().getOptions();
+    var arguments = source.get().options();
     if (arguments == null || arguments.isEmpty()) {
       return null;
     }
@@ -63,7 +63,7 @@ public class TtlHint extends PlannerHint {
           ErrorLabel.GENERIC,
           source.getFileLocation(),
           "%s hint only supports one duration argument (e.g. `2 days`).",
-          source.get().getName());
+          source.get().name());
     }
     try {
       return TimeUtils.parseDuration(arguments.get(0));
@@ -73,7 +73,7 @@ public class TtlHint extends PlannerHint {
           source.getFileLocation(),
           "%s hint does not have a valid duration argument: %s. Expected `2 days` or `10 s`. "
               + e.getMessage(),
-          source.get().getName(),
+          source.get().name(),
           arguments.get(0));
     }
   }

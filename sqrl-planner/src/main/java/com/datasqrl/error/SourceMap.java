@@ -20,14 +20,14 @@ import java.io.Serializable;
 
 public interface SourceMap extends Serializable {
 
-  String getSource();
+  String source();
 
   String getRange(FileRange range);
 
   public class EmptySourceMap implements SourceMap {
 
     @Override
-    public String getSource() {
+    public String source() {
       return "";
     }
 

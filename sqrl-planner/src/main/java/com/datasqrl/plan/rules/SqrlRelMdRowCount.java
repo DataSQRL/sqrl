@@ -72,6 +72,6 @@ public class SqrlRelMdRowCount extends RelMdRowCount implements BuiltInMetadata.
   }
 
   public static Double getRowCount(TableAnalysis table) {
-    return table.getTableStatistic().getRowCount();
+    return table.getTableStatistic().rowCount();
   }
 }

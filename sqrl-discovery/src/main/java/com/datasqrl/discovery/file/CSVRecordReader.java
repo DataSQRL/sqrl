@@ -28,7 +28,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
-import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -57,8 +56,8 @@ public class CSVRecordReader implements RecordReader {
     if (configOpt.isEmpty()) {
       return Stream.of();
     }
-    var format = configOpt.get().getFormat();
-    var header = configOpt.get().getHeader();
+    var format = configOpt.get().format();
+    var header = configOpt.get().header();
 
     var parser = CSVParser.parse(reader, format);
     return parser.stream()
@@ -85,11 +84,7 @@ public class CSVRecordReader implements RecordReader {
     return EXTENSIONS;
   }
 
-  @Value
-  private static class Config {
-    CSVFormat format;
-    String[] header;
-  }
+  private record Config(CSVFormat format, String[] header) {}
 
   private static CSVFormat getDefaultFormat(String delimiter) {
     return org.apache.commons.csv.CSVFormat.DEFAULT

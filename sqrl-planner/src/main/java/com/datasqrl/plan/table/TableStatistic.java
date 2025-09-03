@@ -15,17 +15,12 @@
  */
 package com.datasqrl.plan.table;
 
-import lombok.Value;
-
-@Value
-public class TableStatistic {
+public record TableStatistic(double rowCount) {
 
   private static final double DEFAULT_ROW_COUNT = 1e15;
 
   public static final TableStatistic UNKNOWN = new TableStatistic(Double.NaN);
   public static final double DEFAULT_NESTED_MULTIPLIER = 2.0;
-
-  private final double rowCount;
 
   public static TableStatistic of(double rowCount) {
     return new TableStatistic(rowCount);
@@ -51,7 +46,8 @@ public class TableStatistic {
     return new TableStatistic(rowCount * multiplier);
   }
 
-  public double getRowCount() {
+  @Override
+  public double rowCount() {
     if (isUnknown()) {
       return DEFAULT_ROW_COUNT;
     } else {

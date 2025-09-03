@@ -26,7 +26,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.SneakyThrows;
-import lombok.Value;
 
 public interface TestGraphQLSchema {
 
@@ -41,22 +40,12 @@ public interface TestGraphQLSchema {
 
   Map<String, String> getQueries();
 
-  @Value
-  class TestGraphQLSchemaImpl implements TestGraphQLSchema {
-    String name;
-    Path schemaPath;
-    Map<String, String> queries;
-  }
-
-  @Value
-  class Directory implements TestGraphQLSchema {
+  record Directory(Path schemaDir) implements TestGraphQLSchema {
 
     public static final String SCHEMA_FILE = "schema.graphqls";
     public static final String SCHEMA_FILE_EXTENSION = "graphqls";
 
     public static final String QUERY_FILE_SUFFIX = ".query.graphql";
-
-    Path schemaDir;
 
     @Override
     public String getName() {

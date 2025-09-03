@@ -156,8 +156,8 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
           .getQueries()
           .forEach(
               query -> {
-                planBuilder.query(query.getRelNode());
-                var function = query.getFunction();
+                planBuilder.query(query.relNode());
+                var function = query.function();
                 QueryResult result;
                 if (function.isPassthrough()) {
                   result = stmtFactory.createPassthroughQuery(query, !function.hasParameters());

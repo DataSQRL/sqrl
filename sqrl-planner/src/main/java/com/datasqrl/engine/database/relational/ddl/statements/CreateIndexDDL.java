@@ -22,15 +22,10 @@ import com.datasqrl.sql.SqlDDLStatement;
 import com.google.common.base.Preconditions;
 import java.util.List;
 import java.util.stream.Collectors;
-import lombok.Value;
 
-@Value
-public class CreateIndexDDL implements SqlDDLStatement {
-
-  String indexName;
-  String tableName;
-  List<String> columns;
-  IndexType type;
+public record CreateIndexDDL(
+    String indexName, String tableName, List<String> columns, IndexType type)
+    implements SqlDDLStatement {
 
   @Override
   public String getSql() {
@@ -41,7 +36,7 @@ public class CreateIndexDDL implements SqlDDLStatement {
             "to_tsvector('english', %s )"
                 .formatted(
                     quoteIdentifier(columns).stream()
-                        .map(col -> "coalesce(%s, '')".formatted(col))
+                        .map("coalesce(%s, '')"::formatted)
                         .collect(Collectors.joining(" || ' ' || ")));
         indexType = "GIN";
         break;
@@ -64,9 +59,7 @@ public class CreateIndexDDL implements SqlDDLStatement {
     }
 
     var createTable = "CREATE INDEX IF NOT EXISTS %s ON %s USING %s (%s)";
-    var sql =
-        createTable.formatted(
-            quoteIdentifier(indexName), quoteIdentifier(tableName), indexType, columnExpression);
-    return sql;
+    return createTable.formatted(
+        quoteIdentifier(indexName), quoteIdentifier(tableName), indexType, columnExpression);
   }
 }

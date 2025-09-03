@@ -265,13 +265,12 @@ public class FlinkSqlNodeFactory {
 
       if (metadataConfig.containsKey(columnName)) {
         var metadataEntry = metadataConfig.get(columnName);
-        var attribute = metadataEntry.getAttribute();
-        var isVirtual = metadataEntry.getVirtual();
+        var attribute = metadataEntry.attribute();
+        var isVirtual = metadataEntry.virtual();
         SqlNode metadataFnc;
 
         if (attribute.isEmpty()) {
-          metadataFnc =
-              SqlLiteral.createCharString(metadataEntry.getType().get(), SqlParserPos.ZERO);
+          metadataFnc = SqlLiteral.createCharString(metadataEntry.type().get(), SqlParserPos.ZERO);
         } else {
           metadataFnc = expressionParser.parseExpression(attribute.get());
           if (metadataFnc instanceof SqlIdentifier) {
@@ -359,10 +358,10 @@ public class FlinkSqlNodeFactory {
 
   public interface MetadataEntry {
 
-    Optional<String> getType();
+    Optional<String> type();
 
-    Optional<String> getAttribute();
+    Optional<String> attribute();
 
-    Optional<Boolean> getVirtual();
+    Optional<Boolean> virtual();
   }
 }

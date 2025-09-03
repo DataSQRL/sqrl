@@ -17,20 +17,14 @@ package com.datasqrl.config;
 
 import com.datasqrl.error.ErrorCollector;
 import java.util.Optional;
-import java.util.regex.Pattern;
 import lombok.NonNull;
-import lombok.Value;
 
-@Value
-public class DataDiscoveryConfigImpl implements PackageJson.DataDiscoveryConfig {
+public record DataDiscoveryConfigImpl(ErrorCollector errors, Optional<String> tablePattern)
+    implements PackageJson.DataDiscoveryConfig {
 
   public static final String TABLE_PATTERN_KEY = "pattern";
 
-  ErrorCollector errors;
-  Optional<String> tablePattern;
-
   public static DataDiscoveryConfigImpl of(SqrlConfig config, @NonNull ErrorCollector errors) {
-    Optional<Pattern> pattern = Optional.empty();
     var tablePattern =
         config
             .asString(TABLE_PATTERN_KEY)

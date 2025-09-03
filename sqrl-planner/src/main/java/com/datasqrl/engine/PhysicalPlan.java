@@ -33,7 +33,7 @@ public class PhysicalPlan {
   @Singular List<PhysicalStagePlan> stagePlans;
 
   public <T extends EnginePhysicalPlan> Stream<T> getPlans(Class<T> clazz) {
-    return StreamUtil.filterByClass(stagePlans.stream().map(PhysicalStagePlan::getPlan), clazz);
+    return StreamUtil.filterByClass(stagePlans.stream().map(PhysicalStagePlan::plan), clazz);
   }
 
   public PhysicalPlan applyRewriting(
@@ -54,10 +54,5 @@ public class PhysicalPlan {
     return builder.build();
   }
 
-  @Value
-  public static class PhysicalStagePlan {
-
-    ExecutionStage stage;
-    EnginePhysicalPlan plan;
-  }
+  public record PhysicalStagePlan(ExecutionStage stage, EnginePhysicalPlan plan) {}
 }

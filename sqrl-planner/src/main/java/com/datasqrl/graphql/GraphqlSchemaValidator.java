@@ -82,7 +82,7 @@ public class GraphqlSchemaValidator extends GraphqlSchemaWalker {
         atField,
         getValidMutationOutputType(atField, registry),
         getValidMutationInputType(atField, registry),
-        mutation.getComputedColumns().stream().map(MutationComputedColumn::getColumnName).toList(),
+        mutation.getComputedColumns().stream().map(MutationComputedColumn::columnName).toList(),
         registry);
   }
 

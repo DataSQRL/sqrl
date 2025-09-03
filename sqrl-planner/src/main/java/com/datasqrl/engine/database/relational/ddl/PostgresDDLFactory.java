@@ -106,7 +106,7 @@ public class PostgresDDLFactory extends AbstractJdbcStatementFactory
 
   @Override
   public List<JdbcStatement> extractExtensions(List<Query> queries) {
-    return extractTypeExtensions(queries.stream().map(Query::getRelNode), EXTENSIONS).stream()
+    return extractTypeExtensions(queries.stream().map(Query::relNode), EXTENSIONS).stream()
         .map(
             ext ->
                 new GenericJdbcStatement(
@@ -119,7 +119,7 @@ public class PostgresDDLFactory extends AbstractJdbcStatementFactory
     var ddl =
         new CreateIndexDDL(
             index.getName(), index.getTableName(), index.getColumnNames(), index.getType());
-    return new GenericJdbcStatement(ddl.getIndexName(), Type.INDEX, ddl.getSql());
+    return new GenericJdbcStatement(ddl.indexName(), Type.INDEX, ddl.getSql());
   }
 
   /*

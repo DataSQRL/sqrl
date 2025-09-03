@@ -63,7 +63,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import lombok.AllArgsConstructor;
-import lombok.Value;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.core.Sort;
@@ -544,11 +543,7 @@ public class DAGPlanner {
     }
   }
 
-  @Value
-  public static class InputTableKey {
-    ExecutionStage stage;
-    ObjectIdentifier tableId;
-  }
+  public record InputTableKey(ExecutionStage stage, ObjectIdentifier tableId) {}
 
   /**
    * Expands the views in a query that are executed in the same execution stage.

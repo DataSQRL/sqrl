@@ -25,7 +25,7 @@ public class PartitionKeyHint extends ColumnNamesHint {
   public static final String HINT_NAME = "partition_key";
 
   protected PartitionKeyHint(ParsedObject<SqrlHint> source) {
-    super(source, Type.DAG, source.get().getOptions());
+    super(source, Type.DAG, source.get().options());
   }
 
   @AutoService(Factory.class)
