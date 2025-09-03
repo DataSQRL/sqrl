@@ -1,0 +1,21 @@
+IMPORT usrlib.MyScalarFunction;
+IMPORT usrlib.MyScalarFunction AS AnotherFunction;
+IMPORT usrlib.MyAsyncScalarFunction;
+
+MyTable := SELECT val, MyScalarFunction(val, val) AS myFnc
+           FROM (VALUES ((1)), ((2)), ((3)), ((4)), ((5)),
+            ((6)), ((7)), ((8)), ((9)), ((10))) AS t(val) ORDER BY val;
+
+MyTableAnother := SELECT val, AnotherFunction(val, val) AS myFnc
+           FROM (VALUES ((1)), ((2))) AS t(val) ORDER BY val;
+
+MyTableDifferentCase := SELECT val, anotherFunction(val, val) as fn FROM (VALUES ((1)), ((2))) AS t(val) ORDER BY val;
+
+MyAsyncTable := SELECT val, MyAsyncScalarFunction(val, ival) AS myFnc
+           FROM (VALUES (('1'), (1)), (('2'), (2)), (('3'), (3))) AS t(val, ival) ORDER BY val;
+
+/*+test*/
+MyTableTest := SELECT * FROM MyTable;
+
+/*+test*/
+MyAsyncTableTest := SELECT * FROM MyAsyncTable;

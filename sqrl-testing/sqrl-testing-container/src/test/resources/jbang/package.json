@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "script": {
+    "main": "jbang-udf.sqrl"
+  },
+  "compiler": {
+    "compile-flink-plan": false
+  }
+}

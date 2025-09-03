@@ -43,7 +43,7 @@ public class CopyStaticDataPreprocessor implements Preprocessor {
 
   @SneakyThrows
   @Override
-  public void process(Path file, FilePreprocessingPipeline.Context context) {
+  public void process(Path file, FilePreprocessingPipeline.Context ctx) {
     Optional<Components> fileComponents = DATA_PATTERN.analyze(file);
     if (fileComponents.isEmpty()) {
       return;
@@ -51,18 +51,17 @@ public class CopyStaticDataPreprocessor implements Preprocessor {
 
     var fileComp = fileComponents.get();
     if (!"csv".equalsIgnoreCase(fileComp.extension())) {
-      context.copyToData(file);
+      ctx.copyToData(file);
       return;
     }
 
     var compression = FileCompression.of(fileComp.compression());
     if (compression.isPresent()) {
       // Need to remove header row for CSV files since Flink does not support headers
-      copyFileSkipFirstLine(file, context.createNewDataFile(file), compression.get());
+      copyFileSkipFirstLine(file, ctx.createNewDataFile(file), compression.get());
 
     } else {
-      context
-          .getErrorCollector()
+      ctx.errorCollector()
           .warn(
               "Compression codex %s not supported. CSV file [%s] not copied.",
               fileComponents.get().compression(), file);
