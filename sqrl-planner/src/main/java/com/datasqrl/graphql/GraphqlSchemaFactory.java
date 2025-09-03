@@ -35,7 +35,6 @@ import com.datasqrl.planner.dag.plan.MutationQuery;
 import com.datasqrl.planner.parser.AccessModifier;
 import com.datasqrl.planner.tables.SqrlFunctionParameter;
 import com.datasqrl.planner.tables.SqrlTableFunction;
-import com.datasqrl.util.CalciteUtil;
 import com.google.inject.Inject;
 import graphql.Scalars;
 import graphql.introspection.Introspection;

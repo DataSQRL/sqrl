@@ -31,7 +31,6 @@ import com.datasqrl.flinkrunner.stdlib.utils.AutoRegisterSystemFunction;
 import com.datasqrl.graphql.server.MutationComputedColumnType;
 import com.datasqrl.io.schema.SchemaConversionResult;
 import com.datasqrl.loaders.schema.SchemaLoader;
-import com.datasqrl.plan.table.Multiplicity;
 import com.datasqrl.plan.util.PrimaryKeyMap;
 import com.datasqrl.planner.FlinkPhysicalPlan.Builder;
 import com.datasqrl.planner.analyzer.SQRLLogicalPlanAnalyzer;
@@ -641,12 +640,11 @@ public class Sqrl2FlinkSQLTranslator {
             .collapsedRelnode(relNode)
             .objectIdentifier(identifier)
             .build();
-    var fctBuilder =
-        SqrlTableFunction.builder()
-            .functionAnalysis(tableAnalysis)
-            .parameters(parameters)
-            .limit(baseTable.getLimit());
-    return fctBuilder;
+
+    return SqrlTableFunction.builder()
+        .functionAnalysis(tableAnalysis)
+        .parameters(parameters)
+        .limit(baseTable.getLimit());
   }
 
   /**

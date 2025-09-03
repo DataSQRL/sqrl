@@ -17,7 +17,6 @@ package com.datasqrl.util;
 
 import com.datasqrl.calcite.SqrlRexUtil;
 import com.datasqrl.function.InputPreservingFunction;
-import com.datasqrl.plan.table.Multiplicity;
 import com.google.common.base.Preconditions;
 import java.math.BigDecimal;
 import java.util.ArrayList;

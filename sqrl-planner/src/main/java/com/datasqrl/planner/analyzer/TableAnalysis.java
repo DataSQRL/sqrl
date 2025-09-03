@@ -155,8 +155,7 @@ public class TableAnalysis implements TableOrFunctionAnalysis {
   }
 
   public Optional<Integer> getLimit() {
-    if (topLevelSort.isPresent()) return CalciteUtil.getLimit(topLevelSort.get());
-    return Optional.empty();
+    return topLevelSort.flatMap(CalciteUtil::getLimit);
   }
 
   /**
