@@ -37,6 +37,7 @@ import com.datasqrl.graphql.server.MutationInsertType;
 import com.datasqrl.io.schema.SchemaConversionResult;
 import com.datasqrl.loaders.FlinkTableNamespaceObject;
 import com.datasqrl.loaders.ModuleLoader;
+import com.datasqrl.loaders.ModuleLoaderImpl;
 import com.datasqrl.loaders.NamespaceObject;
 import com.datasqrl.loaders.ScriptSqrlModule.ScriptNamespaceObject;
 import com.datasqrl.loaders.TableWriter;
@@ -91,6 +92,7 @@ import com.datasqrl.planner.tables.FlinkTableBuilder;
 import com.datasqrl.planner.tables.SqrlTableFunction;
 import com.datasqrl.planner.util.SqlTableNameExtractor;
 import com.datasqrl.util.FunctionUtil;
+import com.datasqrl.util.StringUtil;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import java.nio.file.Path;
@@ -1083,7 +1085,11 @@ public class SqlScriptPlanner {
     }
 
     public void writeExportWithSchema(FlinkTableBuilder table) {
-      TableWriter.writeToFile(sourcePath.getParent(), table.getTableName() + "_export", table);
+      String exportFilename =
+          StringUtil.removeFromEnd(
+                  sourcePath.getFileName().toString(), ModuleLoaderImpl.TABLE_FILE_SUFFIX)
+              + "_export";
+      TableWriter.writeToFile(sourcePath.getParent(), exportFilename, table);
     }
   }
 
