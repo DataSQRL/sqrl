@@ -1,4 +1,4 @@
-IMPORT ecommerceTs.Orders;
+IMPORT ecommerceTs.orders;
 
 _OrdersTotals := SELECT id, sum(quantity * unit_price) as price,
                         sum(coalesce(discount, 0.0)) as saving FROM Orders CROSS JOIN UNNEST(entries)

@@ -1,5 +1,5 @@
-IMPORT ecommerceTs.Customer;
-IMPORT ecommerceTs.Product AS _Product;
+IMPORT ecommerceTs.customer;
+IMPORT ecommerceTs.product AS _Product;
 
 CustomerWithEmail := SELECT * FROM Customer WHERE email IS NOT NULL;
 DistinctCustomer := DISTINCT Customer ON customerid ORDER BY `timestamp` DESC;

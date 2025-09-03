@@ -1,5 +1,5 @@
-IMPORT ecommerceTs.Customer;
-IMPORT ecommerceTs.Customer AS _HiddenCustomer;
+IMPORT ecommerceTs.customer;
+IMPORT ecommerceTs.customer AS _HiddenCustomer;
 IMPORT ecommerceTs.* AS _; --imports all tables as hidden
 
 AnotherCustomer := SELECT * FROM _Customer WHERE customerid > 0;

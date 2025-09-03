@@ -1,4 +1,4 @@
-IMPORT sensor-testdata.SensorReading; -- Import sensor data
+IMPORT sensor-testdata.sensor_reading; -- Import sensor data
 
 /** Returns the sensor temperature for a sensor by id from most recent.
     Sensor temperature readings are averaged per second.

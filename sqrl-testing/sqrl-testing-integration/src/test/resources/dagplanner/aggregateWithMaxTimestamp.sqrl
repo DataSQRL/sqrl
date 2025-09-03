@@ -1,4 +1,4 @@
-IMPORT ecommerceTs.Orders;
+IMPORT ecommerceTs.orders;
 OrdersState := DISTINCT Orders ON id ORDER BY `time` DESC;
 OrderAgg1 := SELECT customerid, COUNT(1) as cnt FROM Orders GROUP BY customerid;
 OrderAgg2 := SELECT customerid, MAX(`time`) as `timestamp`, COUNT(1) as cnt FROM Orders GROUP BY customerid;

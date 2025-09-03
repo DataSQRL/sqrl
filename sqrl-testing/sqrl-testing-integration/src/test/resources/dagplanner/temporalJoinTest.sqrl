@@ -1,5 +1,5 @@
-IMPORT ecommerceTs.Customer;
-IMPORT ecommerceTs.Orders;
+IMPORT ecommerceTs.customer;
+IMPORT ecommerceTs.orders;
 DistinctCustomer := DISTINCT Customer ON customerid ORDER BY `timestamp` DESC;
 
 TemporalJoin := SELECT * FROM Orders o JOIN DistinctCustomer FOR SYSTEM_TIME AS OF `time` c ON o.customerid = c.customerid;

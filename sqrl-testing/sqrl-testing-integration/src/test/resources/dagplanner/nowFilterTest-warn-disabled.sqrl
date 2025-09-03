@@ -1,6 +1,6 @@
-IMPORT ecommerceTs.Customer;
-IMPORT ecommerceTs.Orders;
-IMPORT ecommerceTs.Product;
+IMPORT ecommerceTs.customer;
+IMPORT ecommerceTs.orders;
+IMPORT ecommerceTs.product;
 OrderFilter := SELECT * FROM Orders WHERE time > now() - INTERVAL 1 DAY;
 RecentOrders := SELECT * FROM Orders WHERE time >= now() - INTERVAL 1 SECOND;
 HistoricOrders := SELECT * FROM Orders WHERE time >= now() - INTERVAL 999 DAYS;

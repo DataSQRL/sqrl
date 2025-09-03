@@ -1,6 +1,6 @@
 -- We are testing the error message for not having any API endpoints.
 -- We are keeping the INSERT INTO statement in here to verify that we pass the DAG planning
-IMPORT ecommerceTs.Customer AS _Customer;
+IMPORT ecommerceTs.customer AS _Customer;
 
 CREATE TABLE IF NOT EXISTS `customer_id_count` (
     customerid     BIGINT,

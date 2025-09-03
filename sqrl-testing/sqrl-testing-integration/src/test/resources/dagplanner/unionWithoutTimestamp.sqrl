@@ -1,5 +1,5 @@
-IMPORT ecommerce.Customer;
-IMPORT ecommerce.Orders;
+IMPORT ecommerce.customer;
+IMPORT ecommerce.orders;
 CombinedStream := SELECT o.customerid FROM Orders o UNION ALL SELECT c.customerid FROM Customer c;
 /*+primary_key(customerid) */
 CombinedState := SELECT o.customerid FROM Orders o UNION SELECT c.customerid FROM Customer c;

@@ -1,5 +1,5 @@
-IMPORT ecommerceTs.Customer;
-IMPORT ecommerceTs.Orders;
+IMPORT ecommerceTs.customer;
+IMPORT ecommerceTs.orders;
 OrderCustomerLeft := SELECT coalesce(c.customerid, 0) as cid, coalesce(c.lastUpdated, 0) as ctime, o.id, c.name, o.customerid  FROM Orders o LEFT JOIN Customer c on o.customerid = c.customerid;
 OrderCustomer := SELECT o.id, c.name, o.customerid FROM Orders o INNER JOIN Customer c on o.customerid = c.customerid;
 OrderCustomerLeftExcluded := SELECT o.`time`, o.id, o.customerid  FROM Orders o LEFT JOIN Customer c on o.customerid = c.customerid WHERE c.customerid IS NULL AND c.lastUpdated IS NULL;

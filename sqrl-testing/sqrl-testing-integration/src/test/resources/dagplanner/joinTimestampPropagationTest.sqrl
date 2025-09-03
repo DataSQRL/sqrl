@@ -1,4 +1,4 @@
-IMPORT ecommerce.Customer;
-IMPORT ecommerce.Orders;
+IMPORT ecommerce.customer;
+IMPORT ecommerce.orders;
 OrderCustomer1 := SELECT o.id, c.name FROM Orders o JOIN Customer c on o.customerid = c.customerid;
 OrderCustomer2 := SELECT o.id, c.name, GREATEST(o._ingest_time, c._ingest_time) AS `timestamp` FROM Orders o JOIN Customer c on o.customerid = c.customerid;

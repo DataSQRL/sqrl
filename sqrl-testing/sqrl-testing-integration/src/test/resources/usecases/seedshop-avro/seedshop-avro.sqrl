@@ -1,4 +1,4 @@
-IMPORT seedshop-avro.Orders;
+IMPORT seedshop-avro.orders;
 
 OrderCount := SELECT id, COUNT(1) as number, SUM(i.quantity) as volume
               FROM Orders o CROSS JOIN UNNEST(o.items) i

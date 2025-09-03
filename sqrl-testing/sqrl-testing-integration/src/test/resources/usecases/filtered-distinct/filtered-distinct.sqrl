@@ -1,4 +1,4 @@
-IMPORT ecommerce.Orders;
+IMPORT ecommerce.orders;
 
 /*+filtered_distinct_order */
 DistinctOrders := DISTINCT Orders ON id ORDER BY `time` DESC;

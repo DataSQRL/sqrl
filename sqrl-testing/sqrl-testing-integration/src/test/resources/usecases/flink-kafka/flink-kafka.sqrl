@@ -1,6 +1,6 @@
-IMPORT loan-local.Applications AS _ApplicationsStream;
-IMPORT loan-local.LoanTypes AS _LoanTypesStream;
-IMPORT loan-local.ApplicationUpdates AS _ApplicationUpdates;
+IMPORT loan-local.applications AS _ApplicationsStream;
+IMPORT loan-local.loan_types AS _LoanTypesStream;
+IMPORT loan-local.application_updates AS _ApplicationUpdates;
 
 _Applications := DISTINCT _ApplicationsStream ON id ORDER BY updated_at DESC;
 _LoanTypes := DISTINCT _LoanTypesStream ON id ORDER BY updated_at DESC;

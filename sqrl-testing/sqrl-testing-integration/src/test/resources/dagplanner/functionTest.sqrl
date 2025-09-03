@@ -1,4 +1,4 @@
-IMPORT ecommerceTs.Product;
+IMPORT ecommerceTs.product;
 
 FunctionCalls := SELECT text_search('garden gnome', category, name) AS searchResult,
                         format('Go buy: %s in %s with id=%s', name, category, CAST(productid AS STRING)) AS format

@@ -1,5 +1,5 @@
-IMPORT ecommerceTs.Customer;
-IMPORT ecommerceTs.Orders;
+IMPORT ecommerceTs.customer;
+IMPORT ecommerceTs.orders;
 OrderCustomer1 := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid AND o.`time` > c.`timestamp` AND o.`time` <= c.`timestamp` + INTERVAL 31 DAYS;
 OrderCustomer2 := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid AND o.`time` >= c.`timestamp` + INTERVAL 2 DAYS AND o.`time` <= c.`timestamp` + INTERVAL 31 DAYS;
 OrderCustomer3 := SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid AND o.`time` BETWEEN c.`timestamp` - INTERVAL '4' HOUR AND c.`timestamp`;

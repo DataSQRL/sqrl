@@ -20,8 +20,7 @@ import com.datasqrl.loaders.FlinkTableNamespaceObject.FlinkTable;
 import com.datasqrl.loaders.schema.SchemaLoader;
 import java.nio.file.Path;
 
-public record FlinkTableNamespaceObject(
-    com.datasqrl.loaders.FlinkTableNamespaceObject.FlinkTable table, SchemaLoader schemaLoader)
+public record FlinkTableNamespaceObject(FlinkTable table, SchemaLoader schemaLoader)
     implements TableNamespaceObject<FlinkTable> {
 
   @Override

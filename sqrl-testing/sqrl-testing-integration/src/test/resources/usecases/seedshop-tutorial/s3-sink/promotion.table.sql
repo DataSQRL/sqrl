@@ -4,4 +4,4 @@ CREATE TABLE SinkTable (
       'connector' = 'filesystem',
       'format' = 'flexible-json',
       'path' = 's3://test/'
-) LIKE `.`;
+) LIKE `*`;

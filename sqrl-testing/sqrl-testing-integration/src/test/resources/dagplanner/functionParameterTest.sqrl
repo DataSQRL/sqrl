@@ -1,4 +1,4 @@
-IMPORT ecommerceTs.Customer;
+IMPORT ecommerceTs.customer;
 
 CustomerByIds(ids BIGINT ARRAY NOT NULL) := SELECT * FROM Customer WHERE array_contains(CAST(:ids AS BIGINT ARRAY), customerid);
 CustomerByEmail(email STRING NOT NULL, id BIGINT) := SELECT * FROM Customer WHERE :email = email AND (:id IS NULL OR :id = customerid);

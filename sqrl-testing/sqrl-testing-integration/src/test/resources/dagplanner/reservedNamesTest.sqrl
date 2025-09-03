@@ -1,4 +1,4 @@
-IMPORT ecommerceTs.Orders AS Order;
+IMPORT ecommerceTs.orders AS Order;
 
 Order.from := SELECT * FROM `Order` other WHERE this.customerid = other.customerid;
 

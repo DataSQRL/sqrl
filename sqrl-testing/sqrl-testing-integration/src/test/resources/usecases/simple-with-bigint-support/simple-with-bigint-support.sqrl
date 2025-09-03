@@ -1,4 +1,4 @@
-IMPORT ecommerce.Orders;
+IMPORT ecommerce.orders;
 
 /*+test */
 BigIntOrdersTest := SELECT * FROM Orders ORDER BY id ASC, `time` DESC, customerid DESC;

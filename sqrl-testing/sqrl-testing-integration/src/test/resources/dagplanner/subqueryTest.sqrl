@@ -1,5 +1,5 @@
-IMPORT ecommerceTs.Orders;
-IMPORT ecommerceTs.Customer;
+IMPORT ecommerceTs.orders;
+IMPORT ecommerceTs.customer;
 
 CustomerWithOrders := SELECT * FROM Customer c
 WHERE EXISTS (SELECT o.id FROM Orders o WHERE c.customerid = o.customerid);

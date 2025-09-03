@@ -656,7 +656,7 @@ CREATE VIEW `CustomerTimeWindowTest`
 AS
 SELECT *
 FROM `CustomerTimeWindow`;
-CREATE TEMPORARY TABLE `customersink_ex2__schema` (
+CREATE TEMPORARY TABLE `MyPrintSink_ex1__schema` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
@@ -667,12 +667,12 @@ CREATE TEMPORARY TABLE `customersink_ex2__schema` (
 ) WITH (
   'connector' = 'datagen'
 );
-CREATE TABLE `customersink_ex2` (
+CREATE TABLE `MyPrintSink_ex1` (
   PRIMARY KEY (`customerid`) NOT ENFORCED
 ) WITH (
   'connector' = 'print'
 )
-LIKE `customersink_ex2__schema`;
+LIKE `MyPrintSink_ex1__schema`;
 CREATE TABLE `AnotherCustomer_1` (
   `customerid` BIGINT NOT NULL,
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -955,7 +955,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
              (SELECT *
               FROM `default_catalog`.`default_database`.`SelectCustomers`)
              ;
-             INSERT INTO `default_catalog`.`default_database`.`customersink_ex2`
+             INSERT INTO `default_catalog`.`default_database`.`MyPrintSink_ex1`
               (SELECT *
                FROM `default_catalog`.`default_database`.`TemporalJoin`)
               ;

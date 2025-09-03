@@ -1,6 +1,6 @@
-IMPORT loan-batch.Customers AS _CustomersStream;
-IMPORT loan-batch.Applications AS _ApplicationsStream;
-IMPORT loan-batch.ApplicationUpdates;
+IMPORT loan-batch.customers AS _CustomersStream;
+IMPORT loan-batch.applications AS _ApplicationsStream;
+IMPORT loan-batch.application_updates;
 
 Customers := DISTINCT _CustomersStream ON id ORDER BY updated_at DESC;
 Applications := DISTINCT _ApplicationsStream ON id ORDER BY updated_at DESC;

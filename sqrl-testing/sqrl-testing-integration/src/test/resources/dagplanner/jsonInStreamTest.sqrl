@@ -1,4 +1,4 @@
-IMPORT ecommerceTs.Customer AS CustomerStream;
+IMPORT ecommerceTs.customer AS CustomerStream;
 Customer := DISTINCT CustomerStream ON customerid ORDER BY `timestamp` DESC;
 /*+ EXEC(streams) */ toJsonTable := SELECT customerid, to_jsonb('{"a": 1}') AS obj FROM Customer;
 /*+ EXEC(streams) */ jsonArrayTable := SELECT customerid, jsonb_array(customerid) AS obj FROM Customer;
