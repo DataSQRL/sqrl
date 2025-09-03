@@ -83,7 +83,9 @@ public class FlinkTableBuilder {
   public FlinkTableBuilder addColumns(RelDataType relDataType) {
     SqlNodeList addCols = FlinkSqlNodeFactory.createColumns(relDataType);
     List<SqlNode> nodes = new ArrayList<>(addCols.getList());
-    if (columnList != null) nodes.addAll(columnList.getList());
+    if (columnList != null) {
+      nodes.addAll(columnList.getList());
+    }
     setColumnList(new SqlNodeList(nodes, SqlParserPos.ZERO));
     return this;
   }

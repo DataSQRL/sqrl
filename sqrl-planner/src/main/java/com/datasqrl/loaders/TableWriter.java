@@ -21,8 +21,6 @@ import com.datasqrl.planner.tables.FlinkTableBuilder;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collection;
-import java.util.List;
 import lombok.NonNull;
 
 public class TableWriter {
@@ -30,12 +28,16 @@ public class TableWriter {
   public TableWriter() {}
 
   public static Path writeToFile(
-      @NonNull Path destinationDir, @NonNull String filename, @NonNull FlinkTableBuilder table) {
-    var tableConfigFile = destinationDir.resolve(filename + TABLE_FILE_SUFFIX);
+      @NonNull Path destDir, @NonNull String filename, @NonNull FlinkTableBuilder table) {
+
+    var tableConfigFile = destDir.resolve(filename + TABLE_FILE_SUFFIX);
+
     try {
-      var sql = table.buildSql(false).toString() + ";";
+      var sql = table.buildSql(false).toString();
       Files.writeString(tableConfigFile, sql);
+
       return tableConfigFile;
+
     } catch (IOException e) {
       throw new RuntimeException(
           "Could not write table [%s] to file [%s]"
