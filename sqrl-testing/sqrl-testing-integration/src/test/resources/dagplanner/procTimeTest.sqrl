@@ -1,5 +1,5 @@
-IMPORT ecommerce.Orders;
-IMPORT ecommerce.Customer;
+IMPORT ecommerce.orders;
+IMPORT ecommerce.customer;
 
 CustomerOrdersJoin := SELECT * FROM Customer c JOIN Orders o ON c.customerid = o.customerid
                       AND c._ingest_time < o._ingest_time;

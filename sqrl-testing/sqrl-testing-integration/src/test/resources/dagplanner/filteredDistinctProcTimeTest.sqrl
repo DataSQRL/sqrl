@@ -1,5 +1,5 @@
-IMPORT ecommerce.Orders;
-IMPORT ecommerce.Customer;
+IMPORT ecommerce.orders;
+IMPORT ecommerce.customer;
 
 OrderFields := SELECT id, `time`, customerid, _ingest_time FROM Orders;
 
