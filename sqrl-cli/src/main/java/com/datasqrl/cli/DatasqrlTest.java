@@ -15,6 +15,10 @@
  */
 package com.datasqrl.cli;
 
+import static com.datasqrl.env.EnvVariableNames.POSTGRES_JDBC_URL;
+import static com.datasqrl.env.EnvVariableNames.POSTGRES_PASSWORD;
+import static com.datasqrl.env.EnvVariableNames.POSTGRES_USERNAME;
+
 import com.datasqrl.compile.TestPlan;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.engine.database.relational.JdbcStatement;
@@ -31,6 +35,7 @@ import java.sql.DriverManager;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -272,7 +277,7 @@ public class DatasqrlTest {
         } else if (e instanceof SnapshotOkException ex) {
           logGreen("Snapshot OK for " + ex.getTestName());
         } else {
-          System.err.println(e.getMessage());
+          logRed(e.getMessage());
           exitCode = 1;
         }
       }
@@ -281,11 +286,15 @@ public class DatasqrlTest {
   }
 
   private List<Exception> validateJdbcViews(List<JdbcStatement> jdbcViews) {
+    if (jdbcViews.isEmpty()) {
+      return List.of();
+    }
+
     var exceptions = new ArrayList<Exception>();
 
-    var url = env.get("POSTGRES_JDBC_URL");
-    var username = env.get("POSTGRES_USERNAME");
-    var password = env.get("POSTGRES_PASSWORD");
+    var url = getRequiredEnv(POSTGRES_JDBC_URL);
+    var username = getRequiredEnv(POSTGRES_USERNAME);
+    var password = getRequiredEnv(POSTGRES_PASSWORD);
     try (var conn = DriverManager.getConnection(url, username, password)) {
 
       for (var view : jdbcViews) {
@@ -386,6 +395,11 @@ public class DatasqrlTest {
   }
 
   private void logRed(String line) {
-    System.out.println("\u001B[31m" + line + "\u001B[0m");
+    System.err.println("\u001B[31m" + line + "\u001B[0m");
+  }
+
+  private String getRequiredEnv(String envVarName) {
+    return Objects.requireNonNull(
+        env.get(envVarName), "Missing environment variable: " + envVarName);
   }
 }
