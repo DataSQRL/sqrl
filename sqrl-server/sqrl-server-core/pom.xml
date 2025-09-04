@@ -21,7 +21,7 @@
   <parent>
     <groupId>com.datasqrl</groupId>
     <artifactId>sqrl-server</artifactId>
-    <version>0.8-SNAPSHOT</version>
+    <version>0.9-SNAPSHOT</version>
   </parent>
 
   <artifactId>sqrl-server-core</artifactId>
