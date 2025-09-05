@@ -15,6 +15,8 @@
  */
 package com.datasqrl.graphql.config;
 
+import static com.datasqrl.graphql.config.ServerConfigUtil.getVersionedEndpoint;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -24,7 +26,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class ServletConfig implements Versioned {
+public class ServletConfig {
 
   private String graphiQLEndpoint = "/graphiql*";
   private String graphQLEndpoint = "/graphql";

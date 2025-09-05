@@ -15,6 +15,8 @@
  */
 package com.datasqrl.graphql.config;
 
+import static com.datasqrl.graphql.config.ServerConfigUtil.getVersionedEndpoint;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -24,7 +26,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class SwaggerConfig implements Versioned {
+public class SwaggerConfig {
 
   private boolean enabled = true;
   private String endpoint = "/swagger";
