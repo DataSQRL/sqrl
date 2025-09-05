@@ -90,9 +90,9 @@ public class VertxContainerIT extends SqrlContainerTestBase {
         .contains("<title>GraphiQL</title>")
         .contains("window.VERTX_GRAPHIQL_CONFIG")
         .contains("\"httpEnabled\":true")
-        .contains("\"graphQLUri\":\"/graphql\"")
+        .contains("\"graphQLUri\":\"/v1/graphql\"")
         .contains("\"graphQLWSEnabled\":true")
-        .contains("\"graphQLWSUri\":\"/graphql\"")
+        .contains("\"graphQLWSUri\":\"/v1/graphql\"")
         .contains("static/js/main.")
         .contains("static/css/main.")
         .contains("<div id=\"root\"></div>");
