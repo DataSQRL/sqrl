@@ -94,7 +94,7 @@ public class DatasqrlTest {
       Files.createDirectories(snapshotDir);
     }
     // Collects all exceptions during the testing
-    var exceptions = new ArrayList<Exception>();
+    var testResults = new ArrayList<TestResult>();
     // Retrieve test plan
     TestPlan testPlan = null;
     // Read configuration
@@ -149,9 +149,9 @@ public class DatasqrlTest {
           Thread.sleep(5_000);
         }
 
-        var exList =
+        var resList =
             executeAndSnapshotGraphqlQueries(testPlan.getMutations(), snapshotDir, mutationWaitSec);
-        exceptions.addAll(exList);
+        testResults.addAll(resList);
       }
 
       // 4. Wait for the Flink job to finish or the configured delay
@@ -169,7 +169,7 @@ public class DatasqrlTest {
                   result.getJobClient().map(JobClient::getJobStatus).get();
               var status = jobStatusCompletableFuture.get(1, TimeUnit.SECONDS);
               if (status == JobStatus.FAILED) {
-                exceptions.add(new JobFailureException());
+                testResults.add(TestResult.Failure.flink(null));
                 break;
               }
 
@@ -196,18 +196,18 @@ public class DatasqrlTest {
             .get(2, TimeUnit.SECONDS); // flink will hold if the minicluster is stopped
       } catch (ExecutionException e) {
         // try to catch the job failure if we can
-        exceptions.add(new JobFailureException(e));
+        testResults.add(TestResult.Failure.flink(e));
       } catch (Exception ignored) {
       }
 
       // 5. Validate JDBC views, run the API queries, finish subscriptions and snapshot the API
       // results
       if (testPlan != null) {
-        var jdbcExList = validateJdbcViews(testPlan.getJdbcViews());
-        exceptions.addAll(jdbcExList);
+        var jdbcResList = validateJdbcViews(testPlan.getJdbcViews());
+        testResults.addAll(jdbcResList);
 
-        var gqlExList = executeAndSnapshotGraphqlQueries(testPlan.getQueries(), snapshotDir, 0);
-        exceptions.addAll(gqlExList);
+        var gqlResList = executeAndSnapshotGraphqlQueries(testPlan.getQueries(), snapshotDir, 0);
+        testResults.addAll(gqlResList);
 
         // Stop subscriptions
         for (var client : subscriptionClients) {
@@ -227,7 +227,7 @@ public class DatasqrlTest {
                   .sorted()
                   .collect(Collectors.joining(",", "[", "]"));
 
-          snapshot(snapshotDir, client.getName(), data, exceptions);
+          snapshot(snapshotDir, client.getName(), data, testResults);
         }
 
         var expectedSnapshots =
@@ -244,7 +244,7 @@ public class DatasqrlTest {
             var snapshotFileName = path.getFileName().toString();
             if (!expectedSnapshots.contains(snapshotFileName)) {
               // Snapshot exists on filesystem but missing in the test results
-              exceptions.add(new MissingSnapshotException(snapshotFileName));
+              testResults.add(new TestResult.SnapshotMissing(snapshotFileName));
             }
           }
         }
@@ -255,42 +255,15 @@ public class DatasqrlTest {
     }
 
     // 6. Print the test results on the command line
-    int exitCode = 0;
-    if (!exceptions.isEmpty()) {
-      for (var e : exceptions) {
-        if (e instanceof SnapshotMismatchException ex) {
-          logRed("Snapshot mismatch for test: " + ex.getTestName());
-          logRed("Expected: " + ex.getExpected());
-          logRed("Actual  : " + ex.getActual());
-          exitCode = 1;
-        } else if (e instanceof JobFailureException ex) {
-          logRed("Flink job failed to start.");
-          ex.printStackTrace();
-          exitCode = 1;
-        } else if (e instanceof MissingSnapshotException ex) {
-          logRed("Snapshot on filesystem but not in result: " + ex.getTestName());
-          exitCode = 1;
-        } else if (e instanceof SnapshotCreationException ex) {
-          logGreen("Snapshot created for test: " + ex.getTestName());
-          logGreen("Rerun to verify.");
-          exitCode = 1;
-        } else if (e instanceof SnapshotOkException ex) {
-          logGreen("Snapshot OK for " + ex.getTestName());
-        } else {
-          logRed(e.getMessage());
-          exitCode = 1;
-        }
-      }
-    }
-    return exitCode;
+    return testResults.stream().peek(TestResult::print).mapToInt(TestResult::exitCode).sum();
   }
 
-  private List<Exception> validateJdbcViews(List<JdbcStatement> jdbcViews) {
+  private List<TestResult> validateJdbcViews(List<JdbcStatement> jdbcViews) {
     if (jdbcViews.isEmpty()) {
       return List.of();
     }
 
-    var exceptions = new ArrayList<Exception>();
+    var results = new ArrayList<TestResult>();
 
     var url = getRequiredEnv(POSTGRES_JDBC_URL);
     var username = getRequiredEnv(POSTGRES_USERNAME);
@@ -304,28 +277,28 @@ public class DatasqrlTest {
         try (var stmt = conn.createStatement()) {
           stmt.executeQuery("SELECT * FROM \"%s\" LIMIT 10".formatted(viewName));
 
-        } catch (Exception ex) {
-          exceptions.add(ex);
+        } catch (Exception e) {
+          results.add(TestResult.Failure.jdbc(e));
         }
       }
-    } catch (Exception ex) {
-      exceptions.add(ex);
+    } catch (Exception e) {
+      results.add(TestResult.Failure.jdbc(e));
     }
 
-    return exceptions;
+    return results;
   }
 
   @SneakyThrows
-  private List<Exception> executeAndSnapshotGraphqlQueries(
+  private List<TestResult> executeAndSnapshotGraphqlQueries(
       List<TestPlan.GraphqlQuery> queries, Path snapshotDir, int mutationWait) {
-    var exceptions = new ArrayList<Exception>();
+    var testResults = new ArrayList<TestResult>();
 
     for (var query : queries) {
       // Execute queries
       var data = executeQuery(query);
 
       // Snapshot result
-      snapshot(snapshotDir, query.getName(), data, exceptions);
+      snapshot(snapshotDir, query.getName(), data, testResults);
 
       // Wait before next mutation
       if (mutationWait > 0) {
@@ -333,7 +306,7 @@ public class DatasqrlTest {
       }
     }
 
-    return exceptions;
+    return testResults;
   }
 
   private List<String> collectGraphqlQueryNames(List<TestPlan.GraphqlQuery> queries) {
@@ -358,7 +331,8 @@ public class DatasqrlTest {
   }
 
   @SneakyThrows
-  private void snapshot(Path snapshotDir, String name, String rawJson, List<Exception> exceptions) {
+  private void snapshot(
+      Path snapshotDir, String name, String rawJson, List<TestResult> testResults) {
 
     var snapshotPath = snapshotDir.resolve(name + SNAPSHOT_EXT);
     var content = format(rawJson);
@@ -367,16 +341,16 @@ public class DatasqrlTest {
     if (Files.exists(snapshotPath)) {
       var existingSnapshot = Files.readString(snapshotPath);
       if (existingSnapshot.equals(content)) {
-        exceptions.add(new SnapshotOkException(name));
+        testResults.add(new TestResult.SnapshotOk(name));
       } else if (format(existingSnapshot).equals(content)) {
         Files.writeString(snapshotPath, content);
-        exceptions.add(new SnapshotOkException(name));
+        testResults.add(new TestResult.SnapshotOk(name));
       } else {
-        exceptions.add(new SnapshotMismatchException(name, existingSnapshot, content));
+        testResults.add(new TestResult.SnapshotMismatch(name, existingSnapshot, content));
       }
     } else {
       Files.writeString(snapshotPath, content);
-      exceptions.add(new SnapshotCreationException(name));
+      testResults.add(new TestResult.SnapshotCreate(name));
     }
   }
 
@@ -388,14 +362,6 @@ public class DatasqrlTest {
     } catch (JsonProcessingException e) {
       return rawData;
     }
-  }
-
-  private void logGreen(String line) {
-    System.out.println("\u001B[32m" + line + "\u001B[0m");
-  }
-
-  private void logRed(String line) {
-    System.err.println("\u001B[31m" + line + "\u001B[0m");
   }
 
   private String getRequiredEnv(String envVarName) {
