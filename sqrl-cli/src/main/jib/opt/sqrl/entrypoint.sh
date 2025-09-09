@@ -33,5 +33,6 @@ export BUILD_UID=$(stat -c '%u' /build)
 export BUILD_GID=$(stat -c '%g' /build)
 
 echo "Executing SQRL command: \"$1\" ..."
-# Jib sets up the classpath automatically, so we can run the main class directly
-exec java $SQRL_JVM_TOOL_OPTS $SQRL_JVM_ARGS -cp "/opt/sqrl/libs/*:/opt/sqrl/classes" com.datasqrl.cli.DatasqrlCli "${@}"
+# Read classpath from Jib-generated file to include resources directory
+CLASSPATH=$(cat /opt/sqrl/jib-classpath-file)
+exec java $SQRL_JVM_ARGS -cp "$CLASSPATH" com.datasqrl.cli.DatasqrlCli "${@}"

@@ -19,7 +19,13 @@ FROM datasqrl/base-sqrl:${BASE_TAG}
 
 COPY postgres.conf /etc/postgresql/${POSTGRES_VERSION}/main/conf.d/postgres.conf
 COPY redpanda.yaml /etc/redpanda/redpanda.yaml
+
+# Copy dependencies first (this layer will be cached if dependencies don't change)
+COPY target/libs /opt/sqrl/libs
+
+# Copy the application jar (this layer changes more frequently)
 COPY target/sqrl-cli.jar /opt/sqrl/sqrl-cli.jar
+
 COPY entrypoint.sh /opt/sqrl/entrypoint.sh
 
 ENV PATH="/opt/jbang/bin:${PATH}"

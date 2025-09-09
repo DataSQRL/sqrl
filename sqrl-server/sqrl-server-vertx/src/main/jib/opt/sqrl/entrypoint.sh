@@ -17,21 +17,15 @@
 
 set -e
 
-# Enable debug mode if SQRL_DEBUG environment variable is set
+# Enable debug mode if DEBUG environment variable is set
 if [[ -n "${SQRL_DEBUG+x}" && -n "$SQRL_DEBUG" ]]; then
-  set -x
+    SQRL_JVM_ARGS="-Dlog4j2.configurationFile=/opt/sqrl/app/log4j2-debug.properties"
+    set -x
 fi
 
-cd /build
+# Change to config directory (default WORKDIR)
+cd /opt/sqrl/config
 
-# Todo: there is a target flag we need to parse and set
-export DATA_PATH=/build/build/deploy/flink/data
-export UDF_PATH=/build/build/deploy/flink/lib
-
-# Get the UID/GID of the /build directory to ensure files are created with correct ownership
-export BUILD_UID=$(stat -c '%u' /build)
-export BUILD_GID=$(stat -c '%g' /build)
-
-echo "Executing SQRL command: \"$1\" ..."
-# Jib sets up the classpath automatically, so we can run the main class directly
-exec java $SQRL_JVM_TOOL_OPTS $SQRL_JVM_ARGS -cp "/opt/sqrl/libs/*:/opt/sqrl/classes" com.datasqrl.cli.DatasqrlCli "${@}"
+# Read classpath from Jib-generated file to include resources directory
+CLASSPATH=$(cat /opt/sqrl/jib-classpath-file)
+exec java $SQRL_JVM_ARGS -cp "$CLASSPATH" com.datasqrl.graphql.SqrlLauncher
