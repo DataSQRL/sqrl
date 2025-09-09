@@ -86,29 +86,37 @@ AS
 SELECT `_Reporting`.`employeeid`, `_Reporting`.`managerid`, `_Reporting`.`updatedDate`
 FROM `default_catalog`.`default_database`.`_Reporting` AS `_Reporting`
 >>>flink-sql-no-functions.sql
-CREATE TABLE `_Employees` (
+CREATE TEMPORARY TABLE `_Employees__schema` (
   `employeeid` BIGINT NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `updatedDate` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  WATERMARK FOR `updatedDate` AS `updatedDate` - INTERVAL '0.001' SECOND
+  `updatedDate` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
 ) WITH (
   'connector' = 'filesystem',
   'format' = 'flexible-json',
-  'path' = '${DATA_PATH}/employees.jsonl',
-  'source.monitor-interval' = '10 sec'
+  'path' = '${DATA_PATH}/employees.jsonl'
 );
-CREATE TABLE `_Reporting` (
+CREATE TABLE `_Employees` (
+  WATERMARK FOR `updatedDate` AS `updatedDate` - INTERVAL '0.001' SECOND
+) WITH (
+  'source.monitor-interval' = '10 sec'
+)
+LIKE `_Employees__schema`;
+CREATE TEMPORARY TABLE `_Reporting__schema` (
   `employeeid` BIGINT NOT NULL,
   `managerid` BIGINT NOT NULL,
-  `updatedDate` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  WATERMARK FOR `updatedDate` AS `updatedDate` - INTERVAL '0.001' SECOND
+  `updatedDate` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
 ) WITH (
   'connector' = 'filesystem',
   'format' = 'flexible-json',
-  'path' = '${DATA_PATH}/reporting.jsonl',
-  'source.monitor-interval' = '10 sec'
+  'path' = '${DATA_PATH}/reporting.jsonl'
 );
+CREATE TABLE `_Reporting` (
+  WATERMARK FOR `updatedDate` AS `updatedDate` - INTERVAL '0.001' SECOND
+) WITH (
+  'source.monitor-interval' = '10 sec'
+)
+LIKE `_Reporting__schema`;
 CREATE VIEW `Employees`
 AS
 SELECT `employeeid`, `name`, `email`, `updatedDate`
