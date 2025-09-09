@@ -18,6 +18,7 @@ package com.datasqrl.cli;
 import static com.datasqrl.env.EnvVariableNames.POSTGRES_JDBC_URL;
 import static com.datasqrl.env.EnvVariableNames.POSTGRES_PASSWORD;
 import static com.datasqrl.env.EnvVariableNames.POSTGRES_USERNAME;
+import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
 
 import com.datasqrl.compile.TestPlan;
 import com.datasqrl.config.PackageJson;
@@ -162,28 +163,26 @@ public class DatasqrlTest {
         flinkOperatorStatusChecker.run();
       } else {
         try {
-          for (int i = 0; i < delaySec; i++) {
-            // break early if job is done
-            try {
-              var jobStatusCompletableFuture =
-                  result.getJobClient().map(JobClient::getJobStatus).get();
-              var status = jobStatusCompletableFuture.get(1, TimeUnit.SECONDS);
-              if (status == JobStatus.FAILED) {
-                testResults.add(TestResult.Failure.flink(null));
-                break;
-              }
+          await()
+              .atMost(delaySec, TimeUnit.SECONDS)
+              .pollInterval(1, TimeUnit.SECONDS)
+              .until(
+                  () -> {
+                    try {
+                      var jobStatusCompletableFuture =
+                          result.getJobClient().map(JobClient::getJobStatus).get();
+                      var status = jobStatusCompletableFuture.get(1, TimeUnit.SECONDS);
+                      if (status == JobStatus.FAILED) {
+                        testResults.add(TestResult.Failure.flink(null));
+                        return true;
+                      }
 
-              if (status == JobStatus.FINISHED || status == JobStatus.CANCELED) {
-                break;
-              }
+                      return status == JobStatus.FINISHED || status == JobStatus.CANCELED;
 
-            } catch (Exception e) {
-              break;
-            }
-
-            Thread.sleep(1000);
-          }
-
+                    } catch (Exception e) {
+                      return true;
+                    }
+                  });
         } catch (Exception ignored) {
         }
       }
