@@ -36,6 +36,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.function.Predicate;
+import javax.annotation.Nullable;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
@@ -131,9 +132,15 @@ public abstract class AbstractAssetSnapshotTest {
     snapshot.createOrValidate();
   }
 
-  @SneakyThrows
   protected void writeTempPackage(Path script, String templateToReplace) {
-    var templatePkg = script.getParent().resolve("package.json");
+    writeTempPackage(script, null, templateToReplace);
+  }
+
+  @SneakyThrows
+  protected void writeTempPackage(
+      Path script, @Nullable String packageName, String templateToReplace) {
+    var pkgName = packageName != null ? packageName : "package.json";
+    var templatePkg = script.getParent().resolve(pkgName);
     assertThat(templatePkg).isRegularFile();
 
     var content = Files.readString(templatePkg);
