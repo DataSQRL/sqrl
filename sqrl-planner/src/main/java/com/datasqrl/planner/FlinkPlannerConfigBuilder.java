@@ -15,10 +15,13 @@
  */
 package com.datasqrl.planner;
 
+import com.datasqrl.config.PackageJson.CompilerConfig;
+import lombok.RequiredArgsConstructor;
 import org.apache.calcite.rel.rules.CoreRules;
 import org.apache.calcite.tools.RuleSet;
 import org.apache.calcite.tools.RuleSets;
-import org.apache.flink.table.api.TableConfig;
+import org.apache.flink.configuration.Configuration;
+import org.apache.flink.table.api.PlannerConfig;
 import org.apache.flink.table.planner.calcite.CalciteConfigBuilder;
 import org.apache.flink.table.planner.plan.optimize.program.FlinkChainedProgram;
 import org.apache.flink.table.planner.plan.optimize.program.FlinkStreamProgram;
@@ -26,10 +29,11 @@ import org.apache.flink.table.planner.plan.optimize.program.StreamOptimizeContex
 import org.apache.flink.table.planner.plan.rules.logical.FlinkProjectMergeRule;
 import org.apache.flink.table.planner.plan.rules.logical.ProjectWindowTableFunctionTransposeRule;
 
-public class FlinkRulesets {
+@RequiredArgsConstructor
+public class FlinkPlannerConfigBuilder {
 
-  /** This is copied over from Flink. We removed the join transpose rules */
-  public static final RuleSet PROJECT_RULES =
+  /** This is copied over from Flink, with the join transpose rules removed */
+  private static final RuleSet PROJECT_RULES =
       RuleSets.ofList(
           // push a projection past a filter
           CoreRules.PROJECT_FILTER_TRANSPOSE,
@@ -44,26 +48,32 @@ public class FlinkRulesets {
           // push a projection to the child of a WindowTableFunctionScan
           ProjectWindowTableFunctionTransposeRule.INSTANCE);
 
-  private static void setOptimizerRules(
-      CalciteConfigBuilder calciteConfigBuilder, TableConfig tableConfig) {
-    var originalProgram = FlinkStreamProgram.buildProgram(tableConfig);
-    var modifiedProgram = new FlinkChainedProgram<StreamOptimizeContext>();
+  private final CompilerConfig compilerConfig;
+  private final SqrlFunctionCatalog sqrlFunctionCatalog;
+  private final Configuration flinkConfig;
 
-    // Iterate over program names and replace PROJECT_REWRITE
-    //    for (String programName : originalProgram.getProgramNames()) {
-    //      if (programName.equals(FlinkStreamProgram.PROJECT_REWRITE())) {
-    //        modifiedProgram.addLast(
-    //            FlinkStreamProgram.PROJECT_REWRITE(),
-    //            FlinkHepRuleSetProgramBuilder.newBuilder()
-    //                .setHepRulesExecutionType(HEP_RULES_EXECUTION_TYPE.RULE_COLLECTION())
-    //                .setHepMatchOrder(HepMatchOrder.BOTTOM_UP)
-    //                .add(FlinkRulesets.PROJECT_RULES)
-    //                .build()
-    //        );
-    //      } else {
-    //        modifiedProgram.addLast(programName, originalProgram.get(programName).get());
-    //      }
-    //    }
-    //    calciteConfigBuilder.replaceStreamProgram(modifiedProgram);
+  public PlannerConfig build() {
+    var calciteConfigBuilder = new CalciteConfigBuilder();
+    calciteConfigBuilder.addSqlOperatorTable(sqrlFunctionCatalog.getOperatorTable());
+
+    if (compilerConfig.disablePredicatePushdown()) {
+      var sqrlStreamProgram = buildSqrlStreamProgram();
+      calciteConfigBuilder.replaceStreamProgram(sqrlStreamProgram);
+    }
+
+    return calciteConfigBuilder.build();
+  }
+
+  private FlinkChainedProgram<StreamOptimizeContext> buildSqrlStreamProgram() {
+    var origFlinkStreamProgram = FlinkStreamProgram.buildProgram(flinkConfig);
+    var sqrlStreamProgram = new FlinkChainedProgram<StreamOptimizeContext>();
+
+    for (var programName : origFlinkStreamProgram.getProgramNames()) {
+      if (!programName.equals(FlinkStreamProgram.PREDICATE_PUSHDOWN())) {
+        sqrlStreamProgram.addLast(programName, origFlinkStreamProgram.get(programName).get());
+      }
+    }
+
+    return sqrlStreamProgram;
   }
 }
