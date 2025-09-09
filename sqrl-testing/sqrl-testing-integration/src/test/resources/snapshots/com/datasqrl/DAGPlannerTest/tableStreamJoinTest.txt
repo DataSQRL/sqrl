@@ -98,6 +98,26 @@ LogicalProject(time=[$2], id=[$0], customerid=[$1])
       LogicalTableScan(table=[[default_catalog, default_database, Customer]])
 SQL: CREATE VIEW `OrderCustomerLeftExcluded` AS  SELECT o.`time`, o.id, o.customerid  FROM Orders o LEFT JOIN Customer c on o.customerid = c.customerid WHERE c.customerid IS NULL AND c.lastUpdated IS NULL;
 
+=== OrderCustomerLeftExcludedTimeBound
+ID:     default_catalog.default_database.OrderCustomerLeftExcludedTimeBound
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database.Customer, default_catalog.default_database.Orders
+Primary Key: id, time
+Timestamp  : time
+Schema:
+ - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+ - id: BIGINT NOT NULL
+ - customerid: BIGINT NOT NULL
+Plan:
+LogicalProject(time=[$2], id=[$0], customerid=[$1])
+  LogicalFilter(condition=[AND(IS NOT NULL($4), IS NULL($7))])
+    LogicalJoin(condition=[AND(=($1, $4), >=($8, $2), <=($8, +($2, *(1, 86400000:INTERVAL DAY))))], joinType=[left])
+      LogicalTableScan(table=[[default_catalog, default_database, Orders]])
+      LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW `OrderCustomerLeftExcludedTimeBound` AS  SELECT o.`time`, o.id, o.customerid  FROM Orders o LEFT JOIN Customer c ON o.customerid = c.customerid AND (c.`timestamp` BETWEEN o.`time` AND o.`time` + INTERVAL 1 DAY)
+                                                                                                                 WHERE c.customerid IS NOT NULL AND c.lastUpdated IS NULL;
+
 === OrderCustomerRight
 ID:     default_catalog.default_database.OrderCustomerRight
 Type:   state
@@ -159,6 +179,41 @@ SQL: CREATE VIEW `Orders__view`
 AS
 SELECT `Orders`.`id`, `Orders`.`customerid`, `Orders`.`time`, `Orders`.`entries`
 FROM `default_catalog`.`default_database`.`Orders` AS `Orders`
+=== VerifyStream
+ID:     default_catalog.default_database.VerifyStream
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database.OrderCustomerLeftExcludedTimeBound
+Annotations:
+ - features: STREAM_WINDOW_AGGREGATION (feature)
+Primary Key: window_start, window_end
+Timestamp  : -
+Schema:
+ - total: BIGINT NOT NULL
+ - total_id: BIGINT NOT NULL
+ - window_start: TIMESTAMP(3) NOT NULL
+ - window_end: TIMESTAMP(3) NOT NULL
+Plan:
+LogicalProject(total=[$2], total_id=[$3], window_start=[$0], window_end=[$1])
+  LogicalAggregate(group=[{0, 1}], total=[COUNT()], total_id=[SUM($2)])
+    LogicalProject(window_start=[$3], window_end=[$4], customerid=[$2])
+      LogicalTableFunctionScan(invocation=[TUMBLE(DESCRIPTOR($0), 1000:INTERVAL SECOND)], rowType=[RecordType(TIMESTAMP_LTZ(3) *ROWTIME* time, BIGINT id, BIGINT customerid, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end, TIMESTAMP_LTZ(3) *ROWTIME* window_time)])
+        LogicalProject(time=[$0], id=[$1], customerid=[$2])
+          LogicalTableScan(table=[[default_catalog, default_database, OrderCustomerLeftExcludedTimeBound]])
+SQL: CREATE VIEW `VerifyStream` AS  SELECT
+                      COUNT(*) AS total,
+                      SUM(customerid) AS total_id,
+                      window_start,
+                      window_end
+                  FROM TABLE(
+                          TUMBLE(
+                              TABLE OrderCustomerLeftExcludedTimeBound,
+                              DESCRIPTOR(`time`),
+                                  INTERVAL '1' SECOND
+                          )
+                       )
+                  GROUP BY window_start, window_end;
+
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `Customer__schema` (
   `customerid` BIGINT NOT NULL,
@@ -229,6 +284,17 @@ AS
 SELECT `o`.`time`, `o`.`id`, `c`.`name`, `o`.`customerid`
 FROM `Orders` AS `o`
  INNER JOIN `Customer` AS `c` ON `o`.`customerid` = `c`.`customerid` AND `c`.`name` = 'Robert' AND `o`.`id` > 5;
+CREATE VIEW `OrderCustomerLeftExcludedTimeBound`
+AS
+SELECT `o`.`time`, `o`.`id`, `o`.`customerid`
+FROM `Orders` AS `o`
+ LEFT JOIN `Customer` AS `c` ON `o`.`customerid` = `c`.`customerid` AND `c`.`timestamp` BETWEEN ASYMMETRIC `o`.`time` AND `o`.`time` + (INTERVAL 1 DAY)
+WHERE `c`.`customerid` IS NOT NULL AND `c`.`lastUpdated` IS NULL;
+CREATE VIEW `VerifyStream`
+AS
+SELECT COUNT(*) AS `total`, SUM(`customerid`) AS `total_id`, `window_start`, `window_end`
+FROM TABLE(TUMBLE(TABLE `OrderCustomerLeftExcludedTimeBound`, DESCRIPTOR(`time`), INTERVAL '1' SECOND))
+GROUP BY `window_start`, `window_end`;
 CREATE TABLE `Customer_1` (
   `customerid` BIGINT NOT NULL,
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -244,7 +310,20 @@ CREATE TABLE `Customer_1` (
   'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
   'username' = '${POSTGRES_USERNAME}'
 );
-CREATE TABLE `Orders_2` (
+CREATE TABLE `OrderCustomerLeftExcludedTimeBound_2` (
+  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `id` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  PRIMARY KEY (`id`, `time`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = 'OrderCustomerLeftExcludedTimeBound_2',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `Orders_3` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
@@ -254,7 +333,21 @@ CREATE TABLE `Orders_2` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
-  'table-name' = 'Orders_2',
+  'table-name' = 'Orders_3',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `VerifyStream_4` (
+  `total` BIGINT NOT NULL,
+  `total_id` BIGINT NOT NULL,
+  `window_start` TIMESTAMP(3) NOT NULL,
+  `window_end` TIMESTAMP(3) NOT NULL,
+  PRIMARY KEY (`window_start`, `window_end`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = 'VerifyStream_4',
   'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
   'username' = '${POSTGRES_USERNAME}'
 );
@@ -263,11 +356,19 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_1`
 (SELECT *
  FROM `default_catalog`.`default_database`.`Customer`)
 ;
-INSERT INTO `default_catalog`.`default_database`.`Orders_2`
- (SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`
-  FROM `default_catalog`.`default_database`.`Orders`)
+INSERT INTO `default_catalog`.`default_database`.`OrderCustomerLeftExcludedTimeBound_2`
+ (SELECT *
+  FROM `default_catalog`.`default_database`.`OrderCustomerLeftExcludedTimeBound`)
  ;
- END
+ INSERT INTO `default_catalog`.`default_database`.`Orders_3`
+  (SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`
+   FROM `default_catalog`.`default_database`.`Orders`)
+  ;
+  INSERT INTO `default_catalog`.`default_database`.`VerifyStream_4`
+   (SELECT *
+    FROM `default_catalog`.`default_database`.`VerifyStream`)
+   ;
+   END
 >>>kafka.json
 {
   "topics" : [ ],
@@ -317,9 +418,39 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
       "ttl" : 0.0
     },
     {
-      "name" : "Orders_2",
+      "name" : "OrderCustomerLeftExcludedTimeBound_2",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"Orders_2\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB, PRIMARY KEY (\"id\",\"time\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"OrderCustomerLeftExcludedTimeBound_2\" (\"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, PRIMARY KEY (\"id\",\"time\"))",
+      "fields" : [
+        {
+          "name" : "time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        }
+      ],
+      "primaryKey" : [
+        "id",
+        "time"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
+    },
+    {
+      "name" : "Orders_3",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Orders_3\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB, PRIMARY KEY (\"id\",\"time\"))",
       "fields" : [
         {
           "name" : "id",
@@ -345,6 +476,41 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
       "primaryKey" : [
         "id",
         "time"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
+    },
+    {
+      "name" : "VerifyStream_4",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"VerifyStream_4\" (\"total\" BIGINT NOT NULL, \"total_id\" BIGINT NOT NULL, \"window_start\" TIMESTAMP WITHOUT TIME ZONE NOT NULL, \"window_end\" TIMESTAMP WITHOUT TIME ZONE NOT NULL, PRIMARY KEY (\"window_start\",\"window_end\"))",
+      "fields" : [
+        {
+          "name" : "total",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "total_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "window_start",
+          "type" : "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "window_end",
+          "type" : "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable" : false
+        }
+      ],
+      "primaryKey" : [
+        "window_start",
+        "window_end"
       ],
       "partitionKey" : [ ],
       "partitionType" : "NONE",
@@ -386,7 +552,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
     {
       "name" : "OrderCustomer",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomer\"(\"id\", \"name\", \"customerid\") AS SELECT \"Orders_22\".\"id\", \"Customer_12\".\"name\", \"Orders_22\".\"customerid\"\nFROM \"Orders_2\" AS \"Orders_22\"\n INNER JOIN \"Customer_1\" AS \"Customer_12\" ON \"Orders_22\".\"customerid\" = \"Customer_12\".\"customerid\"",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomer\"(\"id\", \"name\", \"customerid\") AS SELECT \"Orders_32\".\"id\", \"Customer_12\".\"name\", \"Orders_32\".\"customerid\"\nFROM \"Orders_3\" AS \"Orders_32\"\n INNER JOIN \"Customer_1\" AS \"Customer_12\" ON \"Orders_32\".\"customerid\" = \"Customer_12\".\"customerid\"",
       "fields" : [
         {
           "name" : "id",
@@ -408,7 +574,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
     {
       "name" : "OrderCustomerConstant",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomerConstant\"(\"time\", \"id\", \"name\", \"customerid\") AS SELECT \"Orders_22\".\"time\", \"Orders_22\".\"id\", \"Customer_12\".\"name\", \"Orders_22\".\"customerid\"\nFROM \"Orders_2\" AS \"Orders_22\"\n INNER JOIN \"Customer_1\" AS \"Customer_12\" ON \"Orders_22\".\"customerid\" = \"Customer_12\".\"customerid\" AND \"Customer_12\".\"name\" = 'Robert' AND \"Orders_22\".\"id\" > 5",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomerConstant\"(\"time\", \"id\", \"name\", \"customerid\") AS SELECT \"Orders_32\".\"time\", \"Orders_32\".\"id\", \"Customer_12\".\"name\", \"Orders_32\".\"customerid\"\nFROM \"Orders_3\" AS \"Orders_32\"\n INNER JOIN \"Customer_1\" AS \"Customer_12\" ON \"Orders_32\".\"customerid\" = \"Customer_12\".\"customerid\" AND \"Customer_12\".\"name\" = 'Robert' AND \"Orders_32\".\"id\" > 5",
       "fields" : [
         {
           "name" : "time",
@@ -435,7 +601,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
     {
       "name" : "OrderCustomerLeft",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomerLeft\"(\"cid\", \"ctime\", \"id\", \"name\", \"customerid\") AS SELECT COALESCE(\"Customer_12\".\"customerid\", 0) AS \"cid\", COALESCE(\"Customer_12\".\"lastUpdated\", 0) AS \"ctime\", \"Orders_22\".\"id\", \"Customer_12\".\"name\", \"Orders_22\".\"customerid\"\nFROM \"Orders_2\" AS \"Orders_22\"\n LEFT JOIN \"Customer_1\" AS \"Customer_12\" ON \"Orders_22\".\"customerid\" = \"Customer_12\".\"customerid\"",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomerLeft\"(\"cid\", \"ctime\", \"id\", \"name\", \"customerid\") AS SELECT COALESCE(\"Customer_12\".\"customerid\", 0) AS \"cid\", COALESCE(\"Customer_12\".\"lastUpdated\", 0) AS \"ctime\", \"Orders_32\".\"id\", \"Customer_12\".\"name\", \"Orders_32\".\"customerid\"\nFROM \"Orders_3\" AS \"Orders_32\"\n LEFT JOIN \"Customer_1\" AS \"Customer_12\" ON \"Orders_32\".\"customerid\" = \"Customer_12\".\"customerid\"",
       "fields" : [
         {
           "name" : "cid",
@@ -467,7 +633,29 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
     {
       "name" : "OrderCustomerLeftExcluded",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomerLeftExcluded\"(\"time\", \"id\", \"customerid\") AS SELECT \"Orders_22\".\"time\", \"Orders_22\".\"id\", \"Orders_22\".\"customerid\"\nFROM \"Orders_2\" AS \"Orders_22\"\n LEFT JOIN \"Customer_1\" AS \"Customer_12\" ON \"Orders_22\".\"customerid\" = \"Customer_12\".\"customerid\"\nWHERE \"Customer_12\".\"customerid\" IS NULL AND \"Customer_12\".\"lastUpdated\" IS NULL",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomerLeftExcluded\"(\"time\", \"id\", \"customerid\") AS SELECT \"Orders_32\".\"time\", \"Orders_32\".\"id\", \"Orders_32\".\"customerid\"\nFROM \"Orders_3\" AS \"Orders_32\"\n LEFT JOIN \"Customer_1\" AS \"Customer_12\" ON \"Orders_32\".\"customerid\" = \"Customer_12\".\"customerid\"\nWHERE \"Customer_12\".\"customerid\" IS NULL AND \"Customer_12\".\"lastUpdated\" IS NULL",
+      "fields" : [
+        {
+          "name" : "time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        }
+      ]
+    },
+    {
+      "name" : "OrderCustomerLeftExcludedTimeBound",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomerLeftExcludedTimeBound\"(\"time\", \"id\", \"customerid\") AS SELECT *\nFROM \"OrderCustomerLeftExcludedTimeBound_2\"",
       "fields" : [
         {
           "name" : "time",
@@ -489,7 +677,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
     {
       "name" : "OrderCustomerRight",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomerRight\"(\"ouuid\", \"otime\", \"id\", \"name\", \"customerid\") AS SELECT COALESCE(\"Orders_22\".\"id\", 0) AS \"ouuid\", COALESCE(\"Orders_22\".\"time\", PROCTIME()) AS \"otime\", \"Orders_22\".\"id\", \"Customer_12\".\"name\", \"Orders_22\".\"customerid\"\nFROM \"Orders_2\" AS \"Orders_22\"\n RIGHT JOIN \"Customer_1\" AS \"Customer_12\" ON \"Orders_22\".\"customerid\" = \"Customer_12\".\"customerid\"",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomerRight\"(\"ouuid\", \"otime\", \"id\", \"name\", \"customerid\") AS SELECT COALESCE(\"Orders_32\".\"id\", 0) AS \"ouuid\", COALESCE(\"Orders_32\".\"time\", PROCTIME()) AS \"otime\", \"Orders_32\".\"id\", \"Customer_12\".\"name\", \"Orders_32\".\"customerid\"\nFROM \"Orders_3\" AS \"Orders_32\"\n RIGHT JOIN \"Customer_1\" AS \"Customer_12\" ON \"Orders_32\".\"customerid\" = \"Customer_12\".\"customerid\"",
       "fields" : [
         {
           "name" : "ouuid",
@@ -521,7 +709,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
     {
       "name" : "OrderCustomerRightExcluded",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomerRightExcluded\"(\"lastUpdated\", \"customerid\", \"name\") AS SELECT \"Customer_12\".\"lastUpdated\", \"Customer_12\".\"customerid\", \"Customer_12\".\"name\"\nFROM \"Orders_2\" AS \"Orders_22\"\n RIGHT JOIN \"Customer_1\" AS \"Customer_12\" ON \"Orders_22\".\"customerid\" = \"Customer_12\".\"customerid\"\nWHERE \"Orders_22\".\"id\" IS NULL AND \"Orders_22\".\"time\" IS NULL",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomerRightExcluded\"(\"lastUpdated\", \"customerid\", \"name\") AS SELECT \"Customer_12\".\"lastUpdated\", \"Customer_12\".\"customerid\", \"Customer_12\".\"name\"\nFROM \"Orders_3\" AS \"Orders_32\"\n RIGHT JOIN \"Customer_1\" AS \"Customer_12\" ON \"Orders_32\".\"customerid\" = \"Customer_12\".\"customerid\"\nWHERE \"Orders_32\".\"id\" IS NULL AND \"Orders_32\".\"time\" IS NULL",
       "fields" : [
         {
           "name" : "lastUpdated",
@@ -543,7 +731,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
     {
       "name" : "Orders",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"Orders_2\"",
+      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"Orders_3\"",
       "fields" : [
         {
           "name" : "id",
@@ -564,6 +752,33 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
           "name" : "entries",
           "type" : "JSONB",
           "nullable" : true
+        }
+      ]
+    },
+    {
+      "name" : "VerifyStream",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"VerifyStream\"(\"total\", \"total_id\", \"window_start\", \"window_end\") AS SELECT *\nFROM \"VerifyStream_4\"",
+      "fields" : [
+        {
+          "name" : "total",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "total_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "window_start",
+          "type" : "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "window_end",
+          "type" : "TIMESTAMP WITHOUT TIME ZONE",
+          "nullable" : false
         }
       ]
     },
@@ -621,7 +836,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"Orders_20\".\"id\", \"Customer_10\".\"name\", \"Orders_20\".\"customerid\"\nFROM \"Orders_2\" AS \"Orders_20\"\n INNER JOIN \"Customer_1\" AS \"Customer_10\" ON \"Orders_20\".\"customerid\" = \"Customer_10\".\"customerid\"",
+              "sql" : "SELECT \"Orders_30\".\"id\", \"Customer_10\".\"name\", \"Orders_30\".\"customerid\"\nFROM \"Orders_3\" AS \"Orders_30\"\n INNER JOIN \"Customer_1\" AS \"Customer_10\" ON \"Orders_30\".\"customerid\" = \"Customer_10\".\"customerid\"",
               "parameters" : [ ],
               "pagination" : "LIMIT_AND_OFFSET",
               "cacheDurationMs" : 0,
@@ -646,7 +861,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"Orders_20\".\"time\", \"Orders_20\".\"id\", \"Customer_10\".\"name\", \"Orders_20\".\"customerid\"\nFROM \"Orders_2\" AS \"Orders_20\"\n INNER JOIN \"Customer_1\" AS \"Customer_10\" ON \"Orders_20\".\"customerid\" = \"Customer_10\".\"customerid\" AND \"Customer_10\".\"name\" = 'Robert' AND \"Orders_20\".\"id\" > 5",
+              "sql" : "SELECT \"Orders_30\".\"time\", \"Orders_30\".\"id\", \"Customer_10\".\"name\", \"Orders_30\".\"customerid\"\nFROM \"Orders_3\" AS \"Orders_30\"\n INNER JOIN \"Customer_1\" AS \"Customer_10\" ON \"Orders_30\".\"customerid\" = \"Customer_10\".\"customerid\" AND \"Customer_10\".\"name\" = 'Robert' AND \"Orders_30\".\"id\" > 5",
               "parameters" : [ ],
               "pagination" : "LIMIT_AND_OFFSET",
               "cacheDurationMs" : 0,
@@ -671,7 +886,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT COALESCE(\"Customer_10\".\"customerid\", 0) AS \"cid\", COALESCE(\"Customer_10\".\"lastUpdated\", 0) AS \"ctime\", \"Orders_20\".\"id\", \"Customer_10\".\"name\", \"Orders_20\".\"customerid\"\nFROM \"Orders_2\" AS \"Orders_20\"\n LEFT JOIN \"Customer_1\" AS \"Customer_10\" ON \"Orders_20\".\"customerid\" = \"Customer_10\".\"customerid\"",
+              "sql" : "SELECT COALESCE(\"Customer_10\".\"customerid\", 0) AS \"cid\", COALESCE(\"Customer_10\".\"lastUpdated\", 0) AS \"ctime\", \"Orders_30\".\"id\", \"Customer_10\".\"name\", \"Orders_30\".\"customerid\"\nFROM \"Orders_3\" AS \"Orders_30\"\n LEFT JOIN \"Customer_1\" AS \"Customer_10\" ON \"Orders_30\".\"customerid\" = \"Customer_10\".\"customerid\"",
               "parameters" : [ ],
               "pagination" : "LIMIT_AND_OFFSET",
               "cacheDurationMs" : 0,
@@ -696,7 +911,32 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"Orders_20\".\"time\", \"Orders_20\".\"id\", \"Orders_20\".\"customerid\"\nFROM \"Orders_2\" AS \"Orders_20\"\n LEFT JOIN \"Customer_1\" AS \"Customer_10\" ON \"Orders_20\".\"customerid\" = \"Customer_10\".\"customerid\"\nWHERE \"Customer_10\".\"customerid\" IS NULL AND \"Customer_10\".\"lastUpdated\" IS NULL",
+              "sql" : "SELECT \"Orders_30\".\"time\", \"Orders_30\".\"id\", \"Orders_30\".\"customerid\"\nFROM \"Orders_3\" AS \"Orders_30\"\n LEFT JOIN \"Customer_1\" AS \"Customer_10\" ON \"Orders_30\".\"customerid\" = \"Customer_10\".\"customerid\"\nWHERE \"Customer_10\".\"customerid\" IS NULL AND \"Customer_10\".\"lastUpdated\" IS NULL",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "OrderCustomerLeftExcludedTimeBound",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"OrderCustomerLeftExcludedTimeBound_2\"",
               "parameters" : [ ],
               "pagination" : "LIMIT_AND_OFFSET",
               "cacheDurationMs" : 0,
@@ -721,7 +961,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT COALESCE(\"Orders_20\".\"id\", 0) AS \"ouuid\", COALESCE(\"Orders_20\".\"time\", PROCTIME()) AS \"otime\", \"Orders_20\".\"id\", \"Customer_10\".\"name\", \"Orders_20\".\"customerid\"\nFROM \"Orders_2\" AS \"Orders_20\"\n RIGHT JOIN \"Customer_1\" AS \"Customer_10\" ON \"Orders_20\".\"customerid\" = \"Customer_10\".\"customerid\"",
+              "sql" : "SELECT COALESCE(\"Orders_30\".\"id\", 0) AS \"ouuid\", COALESCE(\"Orders_30\".\"time\", PROCTIME()) AS \"otime\", \"Orders_30\".\"id\", \"Customer_10\".\"name\", \"Orders_30\".\"customerid\"\nFROM \"Orders_3\" AS \"Orders_30\"\n RIGHT JOIN \"Customer_1\" AS \"Customer_10\" ON \"Orders_30\".\"customerid\" = \"Customer_10\".\"customerid\"",
               "parameters" : [ ],
               "pagination" : "LIMIT_AND_OFFSET",
               "cacheDurationMs" : 0,
@@ -746,7 +986,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"Customer_10\".\"lastUpdated\", \"Customer_10\".\"customerid\", \"Customer_10\".\"name\"\nFROM \"Orders_2\" AS \"Orders_20\"\n RIGHT JOIN \"Customer_1\" AS \"Customer_10\" ON \"Orders_20\".\"customerid\" = \"Customer_10\".\"customerid\"\nWHERE \"Orders_20\".\"id\" IS NULL AND \"Orders_20\".\"time\" IS NULL",
+              "sql" : "SELECT \"Customer_10\".\"lastUpdated\", \"Customer_10\".\"customerid\", \"Customer_10\".\"name\"\nFROM \"Orders_3\" AS \"Orders_30\"\n RIGHT JOIN \"Customer_1\" AS \"Customer_10\" ON \"Orders_30\".\"customerid\" = \"Customer_10\".\"customerid\"\nWHERE \"Orders_30\".\"id\" IS NULL AND \"Orders_30\".\"time\" IS NULL",
               "parameters" : [ ],
               "pagination" : "LIMIT_AND_OFFSET",
               "cacheDurationMs" : 0,
@@ -771,7 +1011,32 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT *\nFROM \"Orders_2\"",
+              "sql" : "SELECT *\nFROM \"Orders_3\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "VerifyStream",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"VerifyStream_4\"",
               "parameters" : [ ],
               "pagination" : "LIMIT_AND_OFFSET",
               "cacheDurationMs" : 0,
@@ -915,6 +1180,32 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
         },
         {
           "function" : {
+            "name" : "GetOrderCustomerLeftExcludedTimeBound",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query OrderCustomerLeftExcludedTimeBound($limit: Int = 10, $offset: Int = 0) {\nOrderCustomerLeftExcludedTimeBound(limit: $limit, offset: $offset) {\ntime\nid\ncustomerid\n}\n\n}",
+            "queryName" : "OrderCustomerLeftExcludedTimeBound",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/OrderCustomerLeftExcludedTimeBound{?offset,limit}"
+        },
+        {
+          "function" : {
             "name" : "GetOrderCustomerRight",
             "parameters" : {
               "type" : "object",
@@ -990,11 +1281,37 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
           "uriTemplate" : "queries/Orders{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetVerifyStream",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query VerifyStream($limit: Int = 10, $offset: Int = 0) {\nVerifyStream(limit: $limit, offset: $offset) {\ntotal\ntotal_id\nwindow_start\nwindow_end\n}\n\n}",
+            "queryName" : "VerifyStream",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/VerifyStream{?offset,limit}"
         }
       ],
       "schema" : {
         "type" : "string",
-        "schema" : "type Customer {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype OrderCustomer {\n  id: Long!\n  name: String!\n  customerid: Long!\n}\n\ntype OrderCustomerConstant {\n  time: DateTime!\n  id: Long!\n  name: String!\n  customerid: Long!\n}\n\ntype OrderCustomerLeft {\n  cid: Long!\n  ctime: Long!\n  id: Long!\n  name: String\n  customerid: Long!\n}\n\ntype OrderCustomerLeftExcluded {\n  time: DateTime!\n  id: Long!\n  customerid: Long!\n}\n\ntype OrderCustomerRight {\n  ouuid: Long!\n  otime: DateTime!\n  id: Long\n  name: String!\n  customerid: Long\n}\n\ntype OrderCustomerRightExcluded {\n  lastUpdated: Long!\n  customerid: Long!\n  name: String!\n}\n\ntype Orders {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  entries: [Orders_entriesOutput]!\n}\n\ntype Orders_entriesOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  OrderCustomer(limit: Int = 10, offset: Int = 0): [OrderCustomer!]\n  OrderCustomerConstant(limit: Int = 10, offset: Int = 0): [OrderCustomerConstant!]\n  OrderCustomerLeft(limit: Int = 10, offset: Int = 0): [OrderCustomerLeft!]\n  OrderCustomerLeftExcluded(limit: Int = 10, offset: Int = 0): [OrderCustomerLeftExcluded!]\n  OrderCustomerRight(limit: Int = 10, offset: Int = 0): [OrderCustomerRight!]\n  OrderCustomerRightExcluded(limit: Int = 10, offset: Int = 0): [OrderCustomerRightExcluded!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+        "schema" : "type Customer {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype OrderCustomer {\n  id: Long!\n  name: String!\n  customerid: Long!\n}\n\ntype OrderCustomerConstant {\n  time: DateTime!\n  id: Long!\n  name: String!\n  customerid: Long!\n}\n\ntype OrderCustomerLeft {\n  cid: Long!\n  ctime: Long!\n  id: Long!\n  name: String\n  customerid: Long!\n}\n\ntype OrderCustomerLeftExcluded {\n  time: DateTime!\n  id: Long!\n  customerid: Long!\n}\n\ntype OrderCustomerLeftExcludedTimeBound {\n  time: DateTime!\n  id: Long!\n  customerid: Long!\n}\n\ntype OrderCustomerRight {\n  ouuid: Long!\n  otime: DateTime!\n  id: Long\n  name: String!\n  customerid: Long\n}\n\ntype OrderCustomerRightExcluded {\n  lastUpdated: Long!\n  customerid: Long!\n  name: String!\n}\n\ntype Orders {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  entries: [Orders_entriesOutput]!\n}\n\ntype Orders_entriesOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  OrderCustomer(limit: Int = 10, offset: Int = 0): [OrderCustomer!]\n  OrderCustomerConstant(limit: Int = 10, offset: Int = 0): [OrderCustomerConstant!]\n  OrderCustomerLeft(limit: Int = 10, offset: Int = 0): [OrderCustomerLeft!]\n  OrderCustomerLeftExcluded(limit: Int = 10, offset: Int = 0): [OrderCustomerLeftExcluded!]\n  OrderCustomerLeftExcludedTimeBound(limit: Int = 10, offset: Int = 0): [OrderCustomerLeftExcludedTimeBound!]\n  OrderCustomerRight(limit: Int = 10, offset: Int = 0): [OrderCustomerRight!]\n  OrderCustomerRightExcluded(limit: Int = 10, offset: Int = 0): [OrderCustomerRightExcluded!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n  VerifyStream(limit: Int = 10, offset: Int = 0): [VerifyStream!]\n}\n\ntype VerifyStream {\n  total: Long!\n  total_id: Long!\n  window_start: DateTime!\n  window_end: DateTime!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
     }
   }
