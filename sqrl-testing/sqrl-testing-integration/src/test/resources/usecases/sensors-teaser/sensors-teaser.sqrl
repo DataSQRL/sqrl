@@ -1,4 +1,4 @@
-IMPORT sensor-testdata.SensorReading; -- Import sensor data
+IMPORT sensor-testdata.sensor_reading; -- Import sensor data
 
 /** Returns the sensor temperature for a sensor by id from most recent.
     Sensor temperature readings are averaged per second.
@@ -25,7 +25,7 @@ SensorMaxTemp := DISTINCT _SensorMaxTempWindow ON sensorid ORDER BY window_time 
 /* =======TEST CASES======== */
 
 /*+test */
-SecReadingTest := SELECT sensorid, timeSec, temp FROM SecReading ORDER BY timeSec DESC, temp DESC LIMIT 5;
+SecReadingTest := SELECT sensorid, timeSec, temp FROM SecReading ORDER BY timeSec DESC, temp DESC LIMIT 50;
 
 /*+test */
 SensorMaxTempTest := SELECT sensorid, maxTemp FROM SensorMaxTemp ORDER BY maxTemp DESC LIMIT 5;

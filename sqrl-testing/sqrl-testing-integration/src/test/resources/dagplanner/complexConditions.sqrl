@@ -1,6 +1,6 @@
-IMPORT ecommerceTs.Orders;
-IMPORT ecommerceTs.Customer;
-IMPORT ecommerceTs.Product;
+IMPORT ecommerceTs.orders;
+IMPORT ecommerceTs.customer;
+IMPORT ecommerceTs.product;
 
 SelectOrders1 := SELECT o.id, o.`time` FROM Orders o WHERE o.customerid > (SELECT c.customerid FROM Customer c WHERE c.name = 'foo');
 SelectOrders2 := SELECT o.id, o.`time` FROM Orders o WHERE o.customerid NOT IN (SELECT c.customerid FROM Customer c WHERE c.name = 'foo');

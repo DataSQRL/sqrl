@@ -1,4 +1,4 @@
-IMPORT ecommerceTs.Orders;
+IMPORT ecommerceTs.orders;
 
 FilteredOrders := SELECT * FROM Orders WHERE id>0;
 

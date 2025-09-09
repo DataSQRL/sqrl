@@ -31,7 +31,6 @@ import com.datasqrl.flinkrunner.stdlib.utils.AutoRegisterSystemFunction;
 import com.datasqrl.graphql.server.MutationComputedColumnType;
 import com.datasqrl.io.schema.SchemaConversionResult;
 import com.datasqrl.loaders.schema.SchemaLoader;
-import com.datasqrl.plan.table.Multiplicity;
 import com.datasqrl.plan.util.PrimaryKeyMap;
 import com.datasqrl.planner.FlinkPhysicalPlan.Builder;
 import com.datasqrl.planner.analyzer.SQRLLogicalPlanAnalyzer;
@@ -75,7 +74,6 @@ import javax.annotation.Nullable;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.SneakyThrows;
-import lombok.Value;
 import org.apache.calcite.prepare.CalciteCatalogReader;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelRoot;
@@ -559,7 +557,7 @@ public class Sqrl2FlinkSQLTranslator {
     return SqrlTableFunction.builder()
         .functionAnalysis(tableAnalysis)
         .parameters(parameters)
-        .multiplicity(SqrlTableFunction.getMultiplicity(updateParameters));
+        .limit(CalciteUtil.getLimit(updateParameters));
   }
 
   public SqrlTableFunction.SqrlTableFunctionBuilder resolveSqrlPassThroughTableFunction(
@@ -595,7 +593,7 @@ public class Sqrl2FlinkSQLTranslator {
         .functionAnalysis(tableAnalysis)
         .parameters(parameters)
         .passthrough(true)
-        .multiplicity(Multiplicity.MANY);
+        .limit(Optional.empty());
   }
 
   private static List<FunctionParameter> getFunctionParameters(List<ParsedArgument> args) {
@@ -642,12 +640,11 @@ public class Sqrl2FlinkSQLTranslator {
             .collapsedRelnode(relNode)
             .objectIdentifier(identifier)
             .build();
-    var fctBuilder =
-        SqrlTableFunction.builder()
-            .functionAnalysis(tableAnalysis)
-            .parameters(parameters)
-            .multiplicity(SqrlTableFunction.getMultiplicity(relNode));
-    return fctBuilder;
+
+    return SqrlTableFunction.builder()
+        .functionAnalysis(tableAnalysis)
+        .parameters(parameters)
+        .limit(baseTable.getLimit());
   }
 
   /**
@@ -712,31 +709,33 @@ public class Sqrl2FlinkSQLTranslator {
   }
 
   public TableAnalysis createTableWithSchema(
-      String tableName,
+      Function<String, String> tableNameModifier,
       String tableDefinition,
       SchemaLoader schemaLoader,
       MutationBuilder logEngineBuilder) {
     return addSourceTable(
-        addTable(Optional.of(tableName), tableDefinition, schemaLoader, logEngineBuilder));
+        addTable(tableNameModifier, tableDefinition, schemaLoader, logEngineBuilder));
   }
 
-  public ObjectIdentifier addExternalExport(
-      String tableName, String tableDefinition, SchemaLoader schemaLoader) {
+  public AddTableResult addExternalExport(
+      Function<String, String> tableNameModifier,
+      String tableDefinition,
+      SchemaLoader schemaLoader) {
     var result =
         addTable(
-            Optional.of(tableName),
+            tableNameModifier,
             tableDefinition,
             schemaLoader,
             (x, y) -> {
               throw new UnsupportedOperationException(
                   "Export tables require connector configuration");
             });
-    return result.baseTableIdentifier;
+    return result;
   }
 
   public Optional<TableAnalysis> createTable(
       String tableDefinition, MutationBuilder logEngineBuilder, SchemaLoader schemaLoader) {
-    var result = addTable(Optional.empty(), tableDefinition, schemaLoader, logEngineBuilder);
+    var result = addTable(Function.identity(), tableDefinition, schemaLoader, logEngineBuilder);
     if (result.isSourceTable()) return Optional.of(addSourceTable(result));
     else return Optional.empty();
   }
@@ -772,26 +771,25 @@ public class Sqrl2FlinkSQLTranslator {
     return tableAnalysis;
   }
 
-  @Value
-  private static class AddTableResult {
-    String tableName;
-    ObjectIdentifier baseTableIdentifier;
-    boolean isSourceTable;
-  }
+  public record AddTableResult(
+      String tableName,
+      ObjectIdentifier baseTableIdentifier,
+      boolean isSourceTable,
+      SqlCreateTable createdTable) {}
 
   /**
    * Adds a table to Flink and analyzes the table for schema and primary key definition. If the
    * table does not have a connector, it is a mutation and we generate the connector via the
    * provided mutationBuilder.
    *
-   * @param tableName
+   * @param tableNameModifier
    * @param createTableSql
    * @param schemaLoader
    * @param mutationBuilder
    * @return
    */
   private AddTableResult addTable(
-      Optional<String> tableName,
+      Function<String, String> tableNameModifier,
       String createTableSql,
       SchemaLoader schemaLoader,
       MutationBuilder mutationBuilder) {
@@ -800,7 +798,7 @@ public class Sqrl2FlinkSQLTranslator {
         tableSqlNode instanceof SqlCreateTable, "Expected CREATE TABLE statement");
     var tableDefinition = (SqlCreateTable) tableSqlNode;
     var fullTable = tableDefinition;
-    final var finalTableName = tableName.orElse(tableDefinition.getTableName().getSimple());
+    final var finalTableName = tableNameModifier.apply(tableDefinition.getTableName().getSimple());
     if (fullTable instanceof SqlCreateTableLike) {
       // Check if the LIKE clause is referencing an external schema
       SqlTableLike likeClause = ((SqlCreateTableLike) fullTable).getTableLike();
@@ -840,7 +838,7 @@ public class Sqrl2FlinkSQLTranslator {
               likeClause,
               tableDefinition.isTemporary(),
               tableDefinition.ifNotExists);
-    } else if (tableName.isPresent()) {
+    } else if (!finalTableName.equals(tableDefinition.getTableName().getSimple())) {
       // Replace name but leave everything else
       fullTable =
           new SqlCreateTable(
@@ -934,7 +932,7 @@ public class Sqrl2FlinkSQLTranslator {
             pk);
     tableLookup.registerTable(tableAnalysis);
 
-    return new AddTableResult(finalTableName, tableId, connector.isSourceConnector());
+    return new AddTableResult(finalTableName, tableId, connector.isSourceConnector(), fullTable);
   }
 
   public ObjectIdentifier createSinkTable(FlinkTableBuilder tableBuilder) {

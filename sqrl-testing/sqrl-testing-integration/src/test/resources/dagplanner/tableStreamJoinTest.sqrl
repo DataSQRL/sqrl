@@ -1,8 +1,24 @@
-IMPORT ecommerceTs.Customer;
-IMPORT ecommerceTs.Orders;
+IMPORT ecommerceTs.customer;
+IMPORT ecommerceTs.orders;
 OrderCustomerLeft := SELECT coalesce(c.customerid, 0) as cid, coalesce(c.lastUpdated, 0) as ctime, o.id, c.name, o.customerid  FROM Orders o LEFT JOIN Customer c on o.customerid = c.customerid;
 OrderCustomer := SELECT o.id, c.name, o.customerid FROM Orders o INNER JOIN Customer c on o.customerid = c.customerid;
 OrderCustomerLeftExcluded := SELECT o.`time`, o.id, o.customerid  FROM Orders o LEFT JOIN Customer c on o.customerid = c.customerid WHERE c.customerid IS NULL AND c.lastUpdated IS NULL;
 OrderCustomerRight := SELECT coalesce(o.id, 0) as ouuid, coalesce(o.`time`, proctime()) as otime,o.id, c.name, o.customerid  FROM Orders o RIGHT JOIN Customer c on o.customerid = c.customerid;
 OrderCustomerRightExcluded := SELECT c.lastUpdated, c.customerid, c.name  FROM Orders o RIGHT JOIN Customer c on o.customerid = c.customerid WHERE o.id IS NULL AND o.`time` IS NULL;
 OrderCustomerConstant := SELECT o.`time`,o.id, c.name, o.customerid FROM Orders o INNER JOIN Customer c ON o.customerid = c.customerid AND c.name = 'Robert' AND o.id > 5;
+OrderCustomerLeftExcludedTimeBound := SELECT o.`time`, o.id, o.customerid  FROM Orders o LEFT JOIN Customer c ON o.customerid = c.customerid AND (c.`timestamp` BETWEEN o.`time` AND o.`time` + INTERVAL 1 DAY)
+                                                                                                                 WHERE c.customerid IS NOT NULL AND c.lastUpdated IS NULL;
+
+VerifyStream := SELECT
+                      COUNT(*) AS total,
+                      SUM(customerid) AS total_id,
+                      window_start,
+                      window_end
+                  FROM TABLE(
+                          TUMBLE(
+                              TABLE OrderCustomerLeftExcludedTimeBound,
+                              DESCRIPTOR(`time`),
+                                  INTERVAL '1' SECOND
+                          )
+                       )
+                  GROUP BY window_start, window_end;

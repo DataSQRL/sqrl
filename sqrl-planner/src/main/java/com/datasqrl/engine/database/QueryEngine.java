@@ -27,4 +27,6 @@ import com.datasqrl.planner.dag.plan.MaterializationStagePlan;
 public interface QueryEngine extends ExecutionEngine {
 
   EnginePhysicalPlan plan(MaterializationStagePlan stagePlan);
+
+  String serverConfigName();
 }

@@ -18,7 +18,8 @@
       "protocols": ["GRAPHQL", "REST", "MCP"],
       "endpoints": "FULL",
       "add-prefix": true,
-      "max-result-depth": 3
+      "max-result-depth": 3,
+      "default-limit": 10
     }
   },
   "engines": {

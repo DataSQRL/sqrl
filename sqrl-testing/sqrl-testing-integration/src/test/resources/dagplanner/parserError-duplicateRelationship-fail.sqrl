@@ -1,4 +1,4 @@
-IMPORT ecommerceTs.Customer;
+IMPORT ecommerceTs.customer;
 Customer.related := SELECT * FROM Customer other WHERE this.customerid = other.customerid ORDER BY other.`timestamp`;
 -- overloads are not permitted
 Customer.related(length INT) := SELECT * FROM Customer other WHERE this.customerid = other.customerid

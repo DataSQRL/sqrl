@@ -1,3 +1,3 @@
-IMPORT ecommerceTs.Orders;
+IMPORT ecommerceTs.orders;
 OrderAgg1 := SELECT o.customerid as customer, COUNT(o.id) as order_count FROM Orders o GROUP BY o.customerid;
 OrderAgg2 := SELECT COUNT(o.id) as order_count FROM Orders o;

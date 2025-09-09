@@ -1,10 +1,10 @@
 {
   "data" : {
-    "ToJsonTest" : [ {
+    "ToJsonTest" : {
       "id" : 1,
       "to_json_function" : {
         "a" : 1
       }
-    } ]
+    }
   }
 }

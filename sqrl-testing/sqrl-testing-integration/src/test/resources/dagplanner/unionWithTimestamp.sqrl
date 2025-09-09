@@ -1,3 +1,3 @@
-IMPORT ecommerceTs.Customer;
-IMPORT ecommerceTs.Orders;
+IMPORT ecommerceTs.customer;
+IMPORT ecommerceTs.orders;
 CombinedStream := SELECT o.customerid, o.`time` AS rowtime FROM Orders o UNION ALL SELECT c.customerid, c.`timestamp` AS rowtime FROM Customer c;

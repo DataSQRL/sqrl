@@ -1,3 +1,3 @@
-IMPORT ecommerceTs.Customer;
+IMPORT ecommerceTs.customer;
 
 AnotherCustomer : SELECT * FROM Customer WHERE customerid > 0;

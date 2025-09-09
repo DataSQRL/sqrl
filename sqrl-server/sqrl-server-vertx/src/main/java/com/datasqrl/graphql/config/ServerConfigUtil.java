@@ -20,10 +20,9 @@ import static org.apache.commons.lang3.ObjectUtils.isEmpty;
 
 import com.datasqrl.util.JsonMergeUtils;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.handler.graphql.GraphiQLHandlerOptions;
+import jakarta.annotation.Nullable;
 import java.util.Map;
-import java.util.function.Function;
-import java.util.function.Supplier;
 import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +31,13 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ServerConfigUtil {
 
-  @SuppressWarnings("unchecked")
+  /**
+   * Merges server configuration with override values using Jackson.
+   *
+   * @param serverConfig base server configuration
+   * @param configOverrides map of configuration overrides
+   * @return merged and validated server configuration
+   */
   @SneakyThrows
   public static ServerConfig mergeConfigs(
       ServerConfig serverConfig, Map<String, Object> configOverrides) {
@@ -41,57 +46,54 @@ public class ServerConfigUtil {
     }
     var config = ((ObjectNode) MAPPER.valueToTree(serverConfig)).deepCopy();
     JsonMergeUtils.merge(config, MAPPER.valueToTree(configOverrides));
-    var json = MAPPER.treeToValue(config, Map.class);
-    return new ServerConfig(new JsonObject(json));
+    return MAPPER.treeToValue(config, ServerConfig.class).validated();
   }
 
   /**
-   * Maps a JSON object field to a configuration object using a constructor that accepts JsonObject.
-   * If the field is missing or null, uses the provided default supplier.
+   * Creates a ServerConfig from a configuration map using Jackson deserialization.
    *
-   * @param json the source JSON object
-   * @param fieldName the field name to extract
-   * @param ctor constructor function that takes JsonObject and returns the config object
-   * @param defaultVal supplier for default value when field is missing or null
-   * @param <T> the type of configuration object
-   * @return the mapped configuration object
+   * @param configMap map containing configuration values
+   * @return deserialized and validated ServerConfig instance
    */
-  public static <T> T mapField(
-      JsonObject json, String fieldName, Function<JsonObject, T> ctor, Supplier<T> defaultVal) {
-    var fieldValue = json.getJsonObject(fieldName);
-    if (fieldValue == null) {
-      return defaultVal.get();
+  @SneakyThrows
+  public static ServerConfig fromConfigMap(Map<String, Object> configMap) {
+    return MAPPER.convertValue(configMap, ServerConfig.class).validated();
+  }
+
+  /**
+   * Creates a copy of GraphiQL handler options with versioned URIs.
+   *
+   * @param version the version prefix to prepend to endpoints
+   * @param graphiQLHandlerOptions the original options to copy and version
+   * @return a new GraphiQL handler options instance with versioned endpoints, or null if input is
+   *     null
+   */
+  @Nullable
+  public static GraphiQLHandlerOptions createVersionedGraphiQLHandlerOptions(
+      String version, @Nullable GraphiQLHandlerOptions graphiQLHandlerOptions) {
+    if (graphiQLHandlerOptions == null) {
+      return null;
     }
-    return ctor.apply(fieldValue);
+
+    var versionedOptions = new GraphiQLHandlerOptions(graphiQLHandlerOptions);
+    var versionedGraphQLUri = getVersionedEndpoint(version, versionedOptions.getGraphQLUri());
+    versionedOptions.setGraphQLUri(versionedGraphQLUri);
+
+    var versionedGraphQLWSUri = getVersionedEndpoint(version, versionedOptions.getGraphQLWSUri());
+    versionedOptions.setGraphWSQLUri(versionedGraphQLWSUri);
+
+    return versionedOptions;
   }
 
   /**
-   * Maps a JSON object field to a configuration object using a constructor that accepts JsonObject.
-   * If the field is missing or null, creates the object with an empty JsonObject.
+   * Prepends a version prefix to an endpoint path. Assumes {@code endpoint} start with '/'.
    *
-   * @param json the source JSON object
-   * @param fieldName the field name to extract
-   * @param ctor constructor function that takes JsonObject and returns the config object
-   * @param <T> the type of configuration object
-   * @return the mapped configuration object
+   * @param version the version prefix to prepend
+   * @param endpoint the endpoint path to version
+   * @return the versioned endpoint as "/{version}{endpoint}", or null if endpoint is null
    */
-  public static <T> T mapFieldWithEmptyDefault(
-      JsonObject json, String fieldName, Function<JsonObject, T> ctor) {
-    return mapField(json, fieldName, ctor, () -> ctor.apply(new JsonObject()));
-  }
-
-  /**
-   * Maps a JSON object field to a configuration object using a constructor that accepts JsonObject.
-   * If the field is missing or null, returns null.
-   *
-   * @param json the source JSON object
-   * @param fieldName the field name to extract
-   * @param ctor constructor function that takes JsonObject and returns the config object
-   * @param <T> the type of configuration object
-   * @return the mapped configuration object or null if field is missing
-   */
-  public static <T> T mapFieldWithNullDefault(
-      JsonObject json, String fieldName, Function<JsonObject, T> ctor) {
-    return mapField(json, fieldName, ctor, () -> null);
+  @Nullable
+  public static String getVersionedEndpoint(String version, @Nullable String endpoint) {
+    return endpoint == null ? null : '/' + version + endpoint;
   }
 }

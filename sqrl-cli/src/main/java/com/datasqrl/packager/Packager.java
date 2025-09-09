@@ -63,11 +63,7 @@ public class Packager {
 
   public void preprocess(ErrorCollector errors) {
     errors.checkFatal(
-        config
-            .getScriptConfig()
-            .getMainScript()
-            .map(cs -> (Boolean) StringUtils.isNotBlank(cs))
-            .orElse(Boolean.FALSE),
+        config.getScriptConfig().getMainScript().map(StringUtils::isNotBlank).orElse(Boolean.FALSE),
         "No config or main script specified");
     try {
       cleanBuildDir(buildDir.buildDir());

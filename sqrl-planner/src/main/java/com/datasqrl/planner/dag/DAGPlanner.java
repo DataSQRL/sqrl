@@ -300,7 +300,7 @@ public class DAGPlanner {
 
                   // #3rd: create table
                   var datatype = relBuilder.peek().getRowType();
-                  tblBuilder.setRelDataType(datatype);
+                  tblBuilder.setColumns(datatype);
                   var createdTable =
                       exportEngine.createTable(
                           exportStage,

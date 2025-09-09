@@ -1,4 +1,4 @@
-IMPORT ecommerceTs.Orders;
+IMPORT ecommerceTs.orders;
 Numbers := SELECT * FROM (VALUES (1), (2), (3), (4), (5)) AS T(id);
 OrderNumbers := SELECT o.id, o.`time` FROM Orders o JOIN Numbers n ON o.customerid = n.id;
 Numbers2 := SELECT * FROM (VALUES (1), (2), (3), (4), (4)) AS T(id);

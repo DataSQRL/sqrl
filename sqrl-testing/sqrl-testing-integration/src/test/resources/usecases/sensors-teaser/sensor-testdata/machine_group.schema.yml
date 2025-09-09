@@ -1,0 +1,25 @@
+---
+name: "MachineGroup"
+schema_version: "1"
+partial_schema: false
+columns:
+- name: "groupId"
+  type: "BIGINT"
+  tests:
+  - "not_null"
+- name: "groupName"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "created"
+  type: "TIMESTAMP"
+  tests:
+  - "not_null"
+- name: "machines"
+  columns:
+  - name: "machineId"
+    type: "BIGINT"
+    tests:
+    - "not_null"
+  tests:
+  - "not_null"

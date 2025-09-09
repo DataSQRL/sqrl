@@ -21,7 +21,7 @@
 
   <groupId>com.datasqrl</groupId>
   <artifactId>sqrl-root</artifactId>
-  <version>0.8-SNAPSHOT</version>
+  <version>0.9-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>SQRL</name>
@@ -98,7 +98,7 @@
     <argLine></argLine>
 
     <!-- Flink runner props -->
-    <flinkrunner.version>0.7.1</flinkrunner.version>
+    <flinkrunner.version>0.8.0</flinkrunner.version>
     <flinkrunner.image.repo>docker.io</flinkrunner.image.repo>
 
     <!-- Params -->
@@ -108,8 +108,8 @@
 
     <!-- Dependency versions -->
     <mockito.version>4.8.0</mockito.version>
-    <jackson.version>2.19.2</jackson.version>
-    <vertx.version>5.0.3</vertx.version>
+    <jackson.version>2.20.0</jackson.version>
+    <vertx.version>5.0.4</vertx.version>
     <agroal.version>2.8</agroal.version>
     <kafka.version>3.4.0</kafka.version>
     <flink.version>1.19.3</flink.version>
@@ -123,6 +123,7 @@
     <!-- hadoop shades in commons-config 2.1.1, so upgrade path here is very narrow -->
     <commons-config.version>2.3</commons-config.version>
     <commons-collections.version>4.5.0</commons-collections.version>
+    <commons-exec.version>1.5.0</commons-exec.version>
     <httpcomponents.version>4.5.14</httpcomponents.version>
     <commons-bean.version>1.11.0</commons-bean.version>
     <h2.version>2.3.232</h2.version>
@@ -139,7 +140,7 @@
     <autoservice.version>1.1.1</autoservice.version>
     <antlr.version>4.13.2</antlr.version>
     <guava.version>33.4.8-jre</guava.version>
-    <lombok.version>1.18.38</lombok.version>
+    <lombok.version>1.18.40</lombok.version>
     <junit.jupiter.version>5.13.4</junit.jupiter.version>
     <calcite.version>1.27.0</calcite.version>
     <graphql-java.version>19.2</graphql-java.version>
@@ -169,13 +170,13 @@
     <guice-multibindings.version>4.2.3</guice-multibindings.version>
     <flink-connector-postgres-cdc.version>3.4.0</flink-connector-postgres-cdc.version>
     <zookeeper.version>3.9.4</zookeeper.version>
-    <snakeyaml.version>2.4</snakeyaml.version>
-    <aws-sdk-bom.version>2.33.0</aws-sdk-bom.version>
+    <snakeyaml.version>2.5</snakeyaml.version>
+    <aws-sdk-bom.version>2.33.4</aws-sdk-bom.version>
     <aws-java-sdk.version>1.12.784</aws-java-sdk.version>
     <openai-gpt3-java.version>0.18.2</openai-gpt3-java.version>
     <flink-client.version>1.1.4</flink-client.version>
     <mcp-sdk.version>0.11.3</mcp-sdk.version>
-    <feign.version>13.5</feign.version>
+    <feign.version>13.6</feign.version>
 
     <!-- Plugin versions -->
     <maven-javadoc-plugin.version>3.11.3</maven-javadoc-plugin.version>
@@ -303,6 +304,11 @@
         <groupId>org.apache.commons</groupId>
         <artifactId>commons-collections4</artifactId>
         <version>${commons-collections.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-exec</artifactId>
+        <version>${commons-exec.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.httpcomponents</groupId>
@@ -552,7 +558,7 @@
       <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty-codec</artifactId>
-        <version>4.2.4.Final</version>
+        <version>4.2.5.Final</version>
       </dependency>
       <dependency>
         <groupId>org.postgresql</groupId>
@@ -1086,7 +1092,7 @@
             <licenseSet>
               <header>com/mycila/maven/plugin/license/templates/APACHE-2.txt</header>
               <excludes>
-                <exclude>src/test/resources/**</exclude>
+                <exclude>**/src/test/resources/**</exclude>
                 <exclude>**/m2e-target/**</exclude>
                 <exclude>bin/**</exclude>
                 <exclude>documentation/**/index_features_list.txt</exclude>

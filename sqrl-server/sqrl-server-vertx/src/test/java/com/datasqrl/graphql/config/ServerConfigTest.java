@@ -15,18 +15,19 @@
  */
 package com.datasqrl.graphql.config;
 
+import static com.datasqrl.graphql.SqrlObjectMapper.MAPPER;
 import static org.assertj.core.api.Assertions.*;
 
-import io.vertx.core.json.JsonObject;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 class ServerConfigTest {
 
   @Test
   void given_emptyJson_when_constructorCalled_then_createsConfigWithDefaults() {
-    var json = new JsonObject();
+    var json = MAPPER.createObjectNode();
 
-    var serverConfig = new ServerConfig(json);
+    var serverConfig = ServerConfigUtil.fromConfigMap(MAPPER.convertValue(json, Map.class));
 
     assertThat(serverConfig.getServletConfig()).isNotNull();
     assertThat(serverConfig.getGraphQLHandlerOptions()).isNotNull();
@@ -43,30 +44,30 @@ class ServerConfigTest {
 
   @Test
   void given_jsonWithAllFields_when_constructorCalled_then_createsConfigWithAllValues() {
-    var json =
-        new JsonObject()
-            .put("servletConfig", new JsonObject().put("graphQLEndpoint", "/custom-graphql"))
-            .put("graphQLHandlerOptions", new JsonObject())
-            .put("graphiQLHandlerOptions", new JsonObject())
-            .put("httpServerOptions", new JsonObject().put("port", 9999))
-            .put(
-                "pgConnectOptions", new JsonObject().put("host", "custom-host").put("port", "1234"))
-            .put("poolOptions", new JsonObject().put("maxSize", 20))
-            .put("corsHandlerOptions", new JsonObject().put("allowCredentials", true))
-            .put("jwtAuth", new JsonObject().put("algorithm", "HS256"))
-            .put("swaggerConfig", new JsonObject().put("enabled", true))
-            .put(
-                "kafkaMutationConfig",
-                new JsonObject()
-                    .put("bootstrap.servers", "localhost:9092")
-                    .put("topic", "mutations"))
-            .put(
-                "kafkaSubscriptionConfig",
-                new JsonObject()
-                    .put("bootstrap.servers", "localhost:9092")
-                    .put("groupId", "test-group"));
+    var json = MAPPER.createObjectNode();
+    json.set("servletConfig", MAPPER.createObjectNode().put("graphQLEndpoint", "/custom-graphql"));
+    json.set("graphQLHandlerOptions", MAPPER.createObjectNode());
+    json.set("graphiQLHandlerOptions", MAPPER.createObjectNode());
+    json.set("httpServerOptions", MAPPER.createObjectNode().put("port", 9999));
+    json.set(
+        "pgConnectOptions",
+        MAPPER.createObjectNode().put("host", "custom-host").put("port", "1234"));
+    json.set("poolOptions", MAPPER.createObjectNode().put("maxSize", 20));
+    json.set("corsHandlerOptions", MAPPER.createObjectNode().put("allowCredentials", true));
+    json.set("jwtAuth", MAPPER.createObjectNode().put("algorithm", "HS256"));
+    json.set("swaggerConfig", MAPPER.createObjectNode().put("enabled", true));
 
-    var serverConfig = new ServerConfig(json);
+    var kafkaMutationConfig = MAPPER.createObjectNode();
+    kafkaMutationConfig.put("bootstrap.servers", "localhost:9092");
+    kafkaMutationConfig.put("topic", "mutations");
+    json.set("kafkaMutationConfig", kafkaMutationConfig);
+
+    var kafkaSubscriptionConfig = MAPPER.createObjectNode();
+    kafkaSubscriptionConfig.put("bootstrap.servers", "localhost:9092");
+    kafkaSubscriptionConfig.put("groupId", "test-group");
+    json.set("kafkaSubscriptionConfig", kafkaSubscriptionConfig);
+
+    var serverConfig = ServerConfigUtil.fromConfigMap(MAPPER.convertValue(json, Map.class));
 
     assertThat(serverConfig.getServletConfig()).isNotNull();
     assertThat(serverConfig.getGraphQLHandlerOptions()).isNotNull();
@@ -83,20 +84,19 @@ class ServerConfigTest {
 
   @Test
   void given_jsonWithNullFields_when_constructorCalled_then_handlesNullsCorrectly() {
-    var json =
-        new JsonObject()
-            .putNull("servletConfig")
-            .putNull("graphQLHandlerOptions")
-            .putNull("httpServerOptions")
-            .putNull("pgConnectOptions")
-            .putNull("poolOptions")
-            .putNull("corsHandlerOptions")
-            .putNull("jwtAuth")
-            .putNull("swaggerConfig")
-            .putNull("kafkaMutationConfig")
-            .putNull("kafkaSubscriptionConfig");
+    var json = MAPPER.createObjectNode();
+    json.putNull("servletConfig");
+    json.putNull("graphQLHandlerOptions");
+    json.putNull("httpServerOptions");
+    json.putNull("pgConnectOptions");
+    json.putNull("poolOptions");
+    json.putNull("corsHandlerOptions");
+    json.putNull("jwtAuth");
+    json.putNull("swaggerConfig");
+    json.putNull("kafkaMutationConfig");
+    json.putNull("kafkaSubscriptionConfig");
 
-    var serverConfig = new ServerConfig(json);
+    var serverConfig = ServerConfigUtil.fromConfigMap(MAPPER.convertValue(json, Map.class));
 
     // Fields with empty defaults should still be created
     assertThat(serverConfig.getServletConfig()).isNotNull();
@@ -117,10 +117,10 @@ class ServerConfigTest {
 
   @Test
   void given_constructorWithJson_when_created_then_configurationIsApplied() {
-    var json =
-        new JsonObject().put("servletConfig", new JsonObject().put("graphQLEndpoint", "/test"));
+    var json = MAPPER.createObjectNode();
+    json.set("servletConfig", MAPPER.createObjectNode().put("graphQLEndpoint", "/test"));
 
-    var serverConfig = new ServerConfig(json);
+    var serverConfig = ServerConfigUtil.fromConfigMap(MAPPER.convertValue(json, Map.class));
 
     assertThat(serverConfig.getServletConfig()).isNotNull();
     assertThat(serverConfig.getGraphQLHandlerOptions()).isNotNull();

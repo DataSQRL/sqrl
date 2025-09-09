@@ -20,7 +20,6 @@ import com.datasqrl.env.GlobalEnvironmentStore;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.validate.ExecutionGoal;
 import com.datasqrl.util.ConfigLoaderUtils;
-import java.util.List;
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "test", description = "Compiles, then tests a SQRL script")
@@ -51,17 +50,5 @@ public class TestCmd extends AbstractCompileCmd {
   @Override
   public ExecutionGoal getGoal() {
     return ExecutionGoal.TEST;
-  }
-
-  @Override
-  protected List<String> getEngines() {
-    return List.of(
-        EngineIds.TEST,
-        EngineIds.DATABASE,
-        EngineIds.LOG,
-        EngineIds.ICEBERG,
-        EngineIds.DUCKDB,
-        EngineIds.SERVER,
-        EngineIds.STREAMS);
   }
 }

@@ -15,6 +15,8 @@
  */
 package com.datasqrl.graphql;
 
+import static com.datasqrl.graphql.config.ServerConfigUtil.createVersionedGraphiQLHandlerOptions;
+
 import com.datasqrl.graphql.auth.AuthMetadataReader;
 import com.datasqrl.graphql.auth.JwtFailureHandler;
 import com.datasqrl.graphql.config.ServerConfig;
@@ -80,10 +82,10 @@ public class GraphQLServerVerticle extends AbstractVerticle {
   protected void setupGraphQLRoutes(Promise<Void> startPromise) {
     // Setup GraphiQL handler if configured
     if (this.config.getGraphiQLHandlerOptions() != null) {
-      var graphiQlHandlerBuilder =
-          GraphiQLHandler.builder(vertx).with(this.config.getGraphiQLHandlerOptions());
+      var versionedOptions =
+          createVersionedGraphiQLHandlerOptions(modelVersion, config.getGraphiQLHandlerOptions());
 
-      var graphiQlHandler = graphiQlHandlerBuilder.build();
+      var graphiQlHandler = GraphiQLHandler.builder(vertx).with(versionedOptions).build();
       router
           .route(this.config.getServletConfig().getGraphiQLEndpoint(modelVersion))
           .subRouter(graphiQlHandler.router());

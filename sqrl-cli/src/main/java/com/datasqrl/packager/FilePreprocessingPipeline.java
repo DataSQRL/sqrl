@@ -40,7 +40,6 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 
@@ -132,14 +131,8 @@ public class FilePreprocessingPipeline {
     }
   }
 
-  @AllArgsConstructor
-  public static class Context {
-
-    Path sourceDir;
-    Path buildDir;
-    Path libDir;
-    Path dataDir;
-    @Getter ErrorCollector errorCollector;
+  public record Context(
+      Path sourceDir, Path buildDir, Path libDir, Path dataDir, ErrorCollector errorCollector) {
 
     private Path getRelativeBuildPath(Path srcPath) {
       checkArgument(Files.isDirectory(srcPath));

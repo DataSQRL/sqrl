@@ -198,7 +198,7 @@ CREATE TABLE `ApplicationUpdates` (
   PRIMARY KEY (`loan_application_id`, `event_time`) NOT ENFORCED
 ) WITH (
   'format' = 'flexible-json',
-  'path' = '${DATA_PATH}/applicationupdates.jsonl',
+  'path' = '${DATA_PATH}/application_updates.jsonl',
   'connector' = 'filesystem'
 )
 LIKE `ApplicationUpdates__schema`;

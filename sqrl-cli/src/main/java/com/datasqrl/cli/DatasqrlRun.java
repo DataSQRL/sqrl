@@ -21,11 +21,11 @@ import static com.datasqrl.env.EnvVariableNames.POSTGRES_PASSWORD;
 import static com.datasqrl.env.EnvVariableNames.POSTGRES_USERNAME;
 
 import com.datasqrl.config.PackageJson;
+import com.datasqrl.engine.server.VertxEngineFactory;
 import com.datasqrl.flinkrunner.EnvVarResolver;
 import com.datasqrl.flinkrunner.SqrlRunner;
 import com.datasqrl.graphql.HttpServerVerticle;
 import com.datasqrl.graphql.SqrlObjectMapper;
-import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.config.ServerConfigUtil;
 import com.datasqrl.graphql.server.ModelContainer;
 import com.datasqrl.util.ConfigLoaderUtils;
@@ -34,7 +34,6 @@ import io.micrometer.prometheusmetrics.PrometheusConfig;
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
-import io.vertx.core.json.JsonObject;
 import io.vertx.micrometer.MicrometerMetricsFactory;
 import java.net.URI;
 import java.nio.file.Files;
@@ -287,7 +286,7 @@ public class DatasqrlRun {
     }
 
     Map<String, Object> json = mapper.readValue(vertxConfigJson, Map.class);
-    var baseServerConfig = new ServerConfig(new JsonObject(json));
+    var baseServerConfig = ServerConfigUtil.fromConfigMap(json);
 
     var serverConfig = ServerConfigUtil.mergeConfigs(baseServerConfig, vertxConfig());
     var serverVerticle = new HttpServerVerticle(serverConfig, rootGraphqlModel);
@@ -349,7 +348,7 @@ public class DatasqrlRun {
   private Map<String, Object> vertxConfig() {
     return sqrlConfig
         .getEngines()
-        .getEngineConfig(EngineIds.SERVER)
+        .getEngineConfig(VertxEngineFactory.ENGINE_NAME)
         .map(PackageJson.EngineConfig::getConfig)
         .orElse(null);
   }

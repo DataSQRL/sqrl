@@ -1,6 +1,6 @@
-IMPORT seedshop.OrderItems AS Orders;
-IMPORT seedshop.Products AS _ProductsStream;
-IMPORT seedshop.Customers AS _CustomersStream;
+IMPORT seedshop.order_items AS Orders;
+IMPORT seedshop.products AS _ProductsStream;
+IMPORT seedshop.customers AS _CustomersStream;
 
 _OrderItems := SELECT o.id, o.`time`, o.customerid, i.* FROM Orders o CROSS JOIN UNNEST(o.items) i;
 

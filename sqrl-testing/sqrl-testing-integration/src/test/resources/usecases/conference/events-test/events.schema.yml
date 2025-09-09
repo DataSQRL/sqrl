@@ -1,0 +1,41 @@
+---
+name: "Events"
+schema_version: "1"
+partial_schema: false
+columns:
+- name: "url"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "date"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "time"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "title"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "abstract"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "location"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "speakers"
+  columns:
+  - name: "name"
+    type: "STRING"
+  - name: "title"
+    type: "STRING"
+  - name: "company"
+    type: "STRING"
+- name: "last_updated"
+  type: "TIMESTAMP"
+  tests:
+  - "not_null"

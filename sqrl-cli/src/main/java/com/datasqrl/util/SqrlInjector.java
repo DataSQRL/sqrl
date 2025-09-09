@@ -20,8 +20,11 @@ import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.ConnectorFactoryFactoryImpl;
+import com.datasqrl.config.ExecutionEnginesHolder;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.PackageJson.CompilerConfig;
+import com.datasqrl.config.QueryEngineConfigConverter;
+import com.datasqrl.config.QueryEngineConfigConverterImpl;
 import com.datasqrl.config.SqrlCompilerConfiguration;
 import com.datasqrl.config.SqrlConfigPipeline;
 import com.datasqrl.config.SqrlConstants;
@@ -32,12 +35,15 @@ import com.datasqrl.loaders.ModuleLoaderImpl;
 import com.datasqrl.loaders.resolver.FileResourceResolver;
 import com.datasqrl.loaders.resolver.ResourceResolver;
 import com.datasqrl.packager.preprocess.CopyStaticDataPreprocessor;
+import com.datasqrl.packager.preprocess.JBangPreprocessor;
 import com.datasqrl.packager.preprocess.JarPreprocessor;
 import com.datasqrl.packager.preprocess.Preprocessor;
 import com.datasqrl.plan.MainScript;
 import com.datasqrl.plan.validate.ExecutionGoal;
 import com.google.inject.AbstractModule;
+import com.google.inject.Injector;
 import com.google.inject.Provides;
+import com.google.inject.Singleton;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Named;
 import java.nio.file.Path;
@@ -51,19 +57,22 @@ public class SqrlInjector extends AbstractModule {
   private final Path targetDir;
   private final PackageJson sqrlConfig;
   private final ExecutionGoal goal;
+  private final boolean internalTestExec;
 
   public SqrlInjector(
       ErrorCollector errors,
       Path rootDir,
       Path targetDir,
       PackageJson sqrlConfig,
-      ExecutionGoal goal) {
+      ExecutionGoal goal,
+      boolean internalTestExec) {
     this.errors = errors;
     this.rootDir = rootDir;
     this.buildDir = rootDir.resolve(SqrlConstants.BUILD_DIR_NAME);
     this.targetDir = targetDir;
     this.sqrlConfig = sqrlConfig;
     this.goal = goal;
+    this.internalTestExec = internalTestExec;
   }
 
   @Override
@@ -74,9 +83,11 @@ public class SqrlInjector extends AbstractModule {
     bind(ModuleLoader.class).to(ModuleLoaderImpl.class);
     bind(CompilerConfig.class).to(SqrlCompilerConfiguration.class);
     bind(ConnectorFactoryFactory.class).to(ConnectorFactoryFactoryImpl.class);
+    bind(QueryEngineConfigConverter.class).to(QueryEngineConfigConverterImpl.class);
 
     Multibinder<Preprocessor> binder = Multibinder.newSetBinder(binder(), Preprocessor.class);
     binder.addBinding().to(CopyStaticDataPreprocessor.class);
+    binder.addBinding().to(JBangPreprocessor.class);
     binder.addBinding().to(JarPreprocessor.class);
   }
 
@@ -109,6 +120,12 @@ public class SqrlInjector extends AbstractModule {
   }
 
   @Provides
+  @Singleton
+  public JBangRunner provideJBangRunner() {
+    return internalTestExec ? JBangRunner.disabled() : JBangRunner.create();
+  }
+
+  @Provides
   public PackageJson provideSqrlConfig() {
     return sqrlConfig;
   }
@@ -121,5 +138,10 @@ public class SqrlInjector extends AbstractModule {
   @Provides
   public ErrorCollector provideErrorCollector() {
     return errors;
+  }
+
+  @Provides
+  public ExecutionEnginesHolder provideExecutionEnginesHolder(Injector injector) {
+    return new ExecutionEnginesHolder(errors, injector, sqrlConfig, goal == ExecutionGoal.TEST);
   }
 }

@@ -1,4 +1,4 @@
-IMPORT ecommerceTs.Customer;
+IMPORT ecommerceTs.customer;
 /*+query_by_all(productid) */
-IMPORT ecommerceTs.Product;
+IMPORT ecommerceTs.product;
 

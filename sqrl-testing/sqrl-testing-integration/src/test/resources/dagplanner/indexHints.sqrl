@@ -1,4 +1,4 @@
-IMPORT ecommerceTs.Orders AS _Orders;
+IMPORT ecommerceTs.orders AS _Orders;
 
 /*+index(btree, id) */
 MyOrdersIndexBtree := SELECT * FROM _Orders WHERE id > 10;

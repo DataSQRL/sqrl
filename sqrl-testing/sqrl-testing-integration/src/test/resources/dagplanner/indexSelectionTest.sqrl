@@ -1,6 +1,6 @@
-IMPORT ecommerceTs.Orders AS _Orders;
-IMPORT ecommerceTs.Product AS _Product;
-IMPORT ecommerceTs.Customer;
+IMPORT ecommerceTs.orders AS _Orders;
+IMPORT ecommerceTs.product AS _Product;
+IMPORT ecommerceTs.customer;
 
 /*+query_by_all(time, customerid) */
 Orders := SELECT * FROM _Orders;

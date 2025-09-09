@@ -38,9 +38,9 @@ import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class FilePreprocessingPipelineIT extends AbstractAssetSnapshotTest {
+class FilePreprocessingPipelineIT extends AbstractAssetSnapshotTest {
 
-  public static final Path FILES_DIR = getResourcesDirectory("preprocessor-test-project");
+  private static final Path FILES_DIR = getResourcesDirectory("preprocessor-test-project");
 
   private ErrorCollector errorCollector;
   private BuildPath buildPath;
@@ -57,14 +57,14 @@ public class FilePreprocessingPipelineIT extends AbstractAssetSnapshotTest {
   }
 
   @Test
-  public void given_dataFiles_when_copyStaticDataPreprocessorRuns_then_copiesDataFilesCorrectly()
+  void given_dataFiles_when_copyStaticDataPreprocessorRuns_then_copiesDataFilesCorrectly()
       throws Exception {
     // Arrange
-    var preprocessorOrchestrator =
+    var preprocessingPipeline =
         new FilePreprocessingPipeline(buildPath, Set.of(new CopyStaticDataPreprocessor()));
 
     // Act
-    preprocessorOrchestrator.run(FILES_DIR, errorCollector);
+    preprocessingPipeline.run(FILES_DIR, errorCollector);
 
     // Assert
     Path dataDir = buildPath.getDataPath();
@@ -94,13 +94,13 @@ public class FilePreprocessingPipelineIT extends AbstractAssetSnapshotTest {
   }
 
   @Test
-  public void given_jarFile_when_jarPreprocessorRuns_then_processesJarCorrectly() throws Exception {
+  void given_jarFile_when_jarPreprocessorRuns_then_processesJarCorrectly() throws Exception {
     // Arrange
-    var preprocessorOrchestrator =
+    var preprocessingPipeline =
         new FilePreprocessingPipeline(buildPath, Set.of(new JarPreprocessor()));
 
     // Act
-    preprocessorOrchestrator.run(FILES_DIR, errorCollector);
+    preprocessingPipeline.run(FILES_DIR, errorCollector);
 
     // Assert
     Path libDir = buildPath.getUdfPath();
@@ -120,15 +120,15 @@ public class FilePreprocessingPipelineIT extends AbstractAssetSnapshotTest {
   }
 
   @Test
-  public void given_mixedFiles_when_allPreprocessorsRun_then_processesAllFilesCorrectly()
+  void given_mixedFiles_when_allPreprocessorsRun_then_processesAllFilesCorrectly()
       throws Exception {
     // Arrange
     var preprocessors =
         Sets.newLinkedHashSet(List.of(new CopyStaticDataPreprocessor(), new JarPreprocessor()));
-    var preprocessorOrchestrator = new FilePreprocessingPipeline(buildPath, preprocessors);
+    var preprocessingPipeline = new FilePreprocessingPipeline(buildPath, preprocessors);
 
     // Act
-    preprocessorOrchestrator.run(FILES_DIR, errorCollector);
+    preprocessingPipeline.run(FILES_DIR, errorCollector);
 
     // Assert data files are processed correctly
     Path dataDir = buildPath.getDataPath();

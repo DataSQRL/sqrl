@@ -1,4 +1,4 @@
-IMPORT data.Applications AS _Applications;
+IMPORT data.applications AS _Applications;
 
 /*+partition_key(id) */
 _MyApplications1 := SELECT * FROM _Applications;

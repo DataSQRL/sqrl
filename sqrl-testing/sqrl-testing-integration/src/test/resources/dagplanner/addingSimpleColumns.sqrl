@@ -1,4 +1,4 @@
-IMPORT ecommerceTs.Orders;
+IMPORT ecommerceTs.orders;
 FilteredOrders := SELECT * FROM Orders WHERE id>0;
 FilteredOrders.col2 := customerid * 2;
 FilteredOrders.customerid := 0; --overwrite existing colum

@@ -17,6 +17,7 @@ package com.datasqrl.graphql;
 
 import com.datasqrl.graphql.config.CorsHandlerOptions;
 import com.datasqrl.graphql.config.ServerConfig;
+import com.datasqrl.graphql.config.ServerConfigUtil;
 import com.datasqrl.graphql.server.ModelContainer;
 import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.graphql.server.operation.ApiOperation;
@@ -86,7 +87,7 @@ public class HttpServerVerticle extends AbstractVerticle {
           .onFailure(startPromise::fail)
           .onSuccess(
               raw -> {
-                this.config = new ServerConfig(raw);
+                this.config = ServerConfigUtil.fromConfigMap(raw.getMap());
                 try {
                   bootstrap(startPromise);
                 } catch (Exception e) {

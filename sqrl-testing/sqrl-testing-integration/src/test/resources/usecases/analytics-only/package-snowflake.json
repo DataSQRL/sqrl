@@ -1,0 +1,30 @@
+{
+  "version": "1",
+  "enabled-engines": ["flink", "iceberg", "snowflake"],
+  "script": {
+    "main": "analytics-only.sqrl"
+  },
+  "engines": {
+    "flink": {
+      "config": {
+        "table.exec.source.idle-timeout": "1 ms"
+      }
+    },
+    "snowflake": {
+      "catalog-name": "MyCatalog",
+      "external-volume": "MyNewVolume",
+      "url": "${SNOWFLAKE_JDBC_URL}"
+    }
+  },
+  "connectors" : {
+    "iceberg" : {
+      "write.parquet.page-size-bytes": 1000,
+      "warehouse":"/tmp/duckdb",
+      "catalog-type":"hadoop",
+      "catalog-name": "mydatabase"
+    }
+  },
+  "test-runner": {
+    "delay-sec": -1
+  }
+}

@@ -1,4 +1,4 @@
-IMPORT ecommerceTs.Customer;
+IMPORT ecommerceTs.customer;
 
 -- This correctly makes 'updatedTime' the new timestamp
 Customer2 := SELECT `timestamp` AS updatedTime, * FROM Customer;

@@ -1,6 +1,6 @@
-IMPORT ecommerceTs.Customer;
+IMPORT ecommerceTs.customer;
 
-CustomerByIds(ids BIGINT ARRAY NOT NULL) := SELECT * FROM Customer WHERE array_contains(CAST(:ids AS BIGINT ARRAY), customerid);
+CustomerByIds(ids BIGINT ARRAY NOT NULL) := SELECT * FROM Customer WHERE array_contains(CAST(:ids AS BIGINT ARRAY), customerid) LIMIT 100;
 CustomerByEmail(email STRING NOT NULL, id BIGINT) := SELECT * FROM Customer WHERE :email = email AND (:id IS NULL OR :id = customerid);
 CustomerByNothing() := SUBSCRIBE SELECT * FROM Customer;
 CustomersByTime(customerid BIGINT NOT NULL, fromTime TIMESTAMP NOT NULL) :=

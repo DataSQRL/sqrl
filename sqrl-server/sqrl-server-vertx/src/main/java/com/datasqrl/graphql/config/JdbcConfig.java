@@ -15,7 +15,7 @@
  */
 package com.datasqrl.graphql.config;
 
-import io.vertx.core.json.JsonObject;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -23,11 +23,8 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class JdbcConfig {
 
   private String url;
-
-  public JdbcConfig(JsonObject json) {
-    url = json.getString("url");
-  }
 }

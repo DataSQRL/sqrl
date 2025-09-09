@@ -1,4 +1,4 @@
-IMPORT ecommerceTs.Orders AS _OrdersStream;
+IMPORT ecommerceTs.orders AS _OrdersStream;
 
 /*+ partition_key(time), ttl(30 days) */
 OrderUpdates := SELECT * FROM _OrdersStream;

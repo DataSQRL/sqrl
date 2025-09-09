@@ -1,4 +1,4 @@
-IMPORT mock.Data;
+IMPORT mock.data;
 
 -- This export operation will not be compiled because
 -- the 'compiler.logger' setting is currently set to NONE.

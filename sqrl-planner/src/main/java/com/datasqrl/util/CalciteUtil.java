@@ -15,6 +15,7 @@
  */
 package com.datasqrl.util;
 
+import com.datasqrl.calcite.SqrlRexUtil;
 import com.datasqrl.function.InputPreservingFunction;
 import com.google.common.base.Preconditions;
 import java.math.BigDecimal;
@@ -37,6 +38,7 @@ import org.apache.calcite.avatica.util.TimeUnit;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.core.AggregateCall;
+import org.apache.calcite.rel.core.Sort;
 import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
@@ -238,6 +240,14 @@ public class CalciteUtil {
           .flatMap(t -> getNonAlteredInputRef(t.getOperand(operator, operands)));
     }
     return Optional.empty();
+  }
+
+  public static Optional<Integer> getLimit(RelNode relNode) {
+    Optional<Integer> limit = Optional.empty();
+    if (relNode instanceof Sort sort) {
+      limit = SqrlRexUtil.getLimit(sort.fetch);
+    }
+    return limit;
   }
 
   public interface InputRefTransformation {

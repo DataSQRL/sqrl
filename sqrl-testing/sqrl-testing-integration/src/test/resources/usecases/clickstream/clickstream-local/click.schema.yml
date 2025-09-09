@@ -1,0 +1,17 @@
+---
+name: "Click"
+schema_version: "1"
+partial_schema: false
+columns:
+- name: "url"
+  type: "STRING"
+  tests:
+  - "not_null"
+- name: "timestamp"
+  type: "TIMESTAMP"
+  tests:
+  - "not_null"
+- name: "userid"
+  type: "STRING"
+  tests:
+  - "not_null"

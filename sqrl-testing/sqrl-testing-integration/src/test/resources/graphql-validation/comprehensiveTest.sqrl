@@ -1,5 +1,5 @@
-IMPORT ecommerceTs.Customer;
-IMPORT ecommerceTs.Orders AS ExternalOrders;
+IMPORT ecommerceTs.customer;
+IMPORT ecommerceTs.orders AS ExternalOrders;
 IMPORT ecommerceTs.* AS _;
 
 CustomerByTime2 := DISTINCT Customer ON customerid ORDER BY `timestamp` DESC NULLS LAST;

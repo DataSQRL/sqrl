@@ -1,4 +1,4 @@
-IMPORT ecommerceTs.Customer;
+IMPORT ecommerceTs.customer;
 
 CustomerById(id INT) := SELECT * FROM Customer WHERE customerid = :id;
 CustomerById(name STRING) := SELECT * FROM Customer WHERE customerid = :name;

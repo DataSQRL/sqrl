@@ -69,11 +69,13 @@ public class GraphqlSchemaFactory {
   private final Set<String> definedTypeNames = new HashSet<>();
   private final boolean extendedScalarTypes;
   private final boolean addApiDirective;
+  private final int defaultLimit;
 
   @Inject
   public GraphqlSchemaFactory(CompilerConfig config) {
     this.extendedScalarTypes = config.isExtendedScalarTypes();
     this.addApiDirective = !config.getApiConfig().isGraphQLProtocolOnly();
+    this.defaultLimit = config.getApiConfig().getDefaultLimit();
   }
 
   public GraphQLSchema generate(ServerPhysicalPlan serverPlan) {
@@ -375,17 +377,18 @@ public class GraphqlSchemaFactory {
     List<GraphQLArgument> limitAndOffsetArguments = List.of();
     if (tableFunction.getVisibility().access() != AccessModifier.SUBSCRIPTION
         && tableFunction.getMultiplicity() == Multiplicity.MANY) {
-      limitAndOffsetArguments = generateLimitAndOffsetArguments();
+      limitAndOffsetArguments = generateLimitAndOffsetArguments(tableFunction);
     }
     return ListUtils.union(parametersArguments, limitAndOffsetArguments);
   }
 
-  private List<GraphQLArgument> generateLimitAndOffsetArguments() {
+  private List<GraphQLArgument> generateLimitAndOffsetArguments(SqrlTableFunction tableFunction) {
+    var limitValue = tableFunction.getLimit().orElse(defaultLimit);
     var limit =
         GraphQLArgument.newArgument()
             .name(LIMIT)
             .type(Scalars.GraphQLInt)
-            .defaultValueLiteral(IntValue.of(10))
+            .defaultValueLiteral(IntValue.of(limitValue))
             .build();
 
     var offset =

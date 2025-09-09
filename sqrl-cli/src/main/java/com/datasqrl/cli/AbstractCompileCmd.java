@@ -20,6 +20,7 @@ import static com.datasqrl.config.SqrlConstants.PACKAGE_JSON;
 import com.datasqrl.compile.CompilationProcess;
 import com.datasqrl.compile.DirectoryManager;
 import com.datasqrl.compile.TestPlan;
+import com.datasqrl.config.ExecutionEnginesHolder;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.server.ServerPhysicalPlan;
 import com.datasqrl.error.ErrorCollector;
@@ -35,7 +36,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
-import java.util.List;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.tuple.Pair;
 import picocli.CommandLine;
@@ -64,12 +64,6 @@ public abstract class AbstractCompileCmd extends AbstractCmd {
             this.cli.packageFiles,
             this.files,
             getGoal() == ExecutionGoal.RUN || getGoal() == ExecutionGoal.TEST);
-    var testConfig = sqrlConfig.getTestConfig();
-
-    var engines = getEngines();
-    if (!engines.isEmpty()) {
-      sqrlConfig.setEnabledEngines(engines);
-    }
 
     DirectoryManager.prepareTargetDirectory(getTargetDir());
     errors.checkFatal(
@@ -77,7 +71,11 @@ public abstract class AbstractCompileCmd extends AbstractCmd {
 
     var injector =
         Guice.createInjector(
-            new SqrlInjector(errors, cli.rootDir, getTargetDir(), sqrlConfig, getGoal()));
+            new SqrlInjector(
+                errors, cli.rootDir, getTargetDir(), sqrlConfig, getGoal(), cli.internalTestExec));
+
+    var engineHolder = injector.getInstance(ExecutionEnginesHolder.class);
+    engineHolder.initEnabledEngines();
 
     var packager = injector.getInstance(Packager.class);
     packager.preprocess(errors.withLocation(ErrorPrefix.CONFIG.resolve(PACKAGE_JSON)));
@@ -86,7 +84,7 @@ public abstract class AbstractCompileCmd extends AbstractCmd {
     }
 
     var compilationProcess = injector.getInstance(CompilationProcess.class);
-    var testDir = testConfig.getTestDir(cli.rootDir);
+    var testDir = sqrlConfig.getTestConfig().getTestDir(cli.rootDir);
     testDir.ifPresent(this::validateTestPath);
 
     Pair<PhysicalPlan, ? extends TestPlan> plan = compilationProcess.executeCompilation(testDir);
@@ -113,10 +111,6 @@ public abstract class AbstractCompileCmd extends AbstractCmd {
     if (!errors.hasErrors()) {
       execute(errors);
     }
-  }
-
-  protected List<String> getEngines() {
-    return List.of();
   }
 
   protected void postprocess(
