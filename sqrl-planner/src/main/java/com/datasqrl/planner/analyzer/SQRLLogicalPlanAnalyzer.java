@@ -739,7 +739,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
     }
 
     TableType resultType;
-    if (isTemporalJoin) {
+    if (isTemporalJoin || isIntervalJoin) {
       resultType = STREAM;
     } else if (rightIn.type.isStream() && leftIn.type.isStream()) {
       resultType = joinType.isOuterJoin() ? TableType.STATE : STREAM;
