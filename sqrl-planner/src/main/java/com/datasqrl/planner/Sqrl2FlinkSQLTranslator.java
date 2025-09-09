@@ -17,7 +17,6 @@ package com.datasqrl.planner;
 
 import static com.datasqrl.config.SqrlConstants.FLINK_DEFAULT_CATALOG;
 import static com.google.common.base.Preconditions.checkArgument;
-import static org.apache.flink.table.planner.utils.ShortcutUtils.unwrapContext;
 
 import com.datasqrl.calcite.SqrlRexUtil;
 import com.datasqrl.config.BuildPath;
@@ -63,7 +62,6 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -124,9 +122,6 @@ import org.apache.flink.table.catalog.Column.PhysicalColumn;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.apache.flink.table.catalog.ResolvedCatalogTable;
 import org.apache.flink.table.catalog.ResolvedSchema;
-import org.apache.flink.table.expressions.Expression;
-import org.apache.flink.table.expressions.ResolvedExpression;
-import org.apache.flink.table.expressions.resolver.ExpressionResolver;
 import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.operations.Operation;
 import org.apache.flink.table.operations.StatementSetOperation;
@@ -134,7 +129,6 @@ import org.apache.flink.table.operations.ddl.AlterViewAsOperation;
 import org.apache.flink.table.operations.ddl.CreateCatalogFunctionOperation;
 import org.apache.flink.table.operations.ddl.CreateTableOperation;
 import org.apache.flink.table.operations.ddl.CreateViewOperation;
-import org.apache.flink.table.planner.calcite.CalciteConfigBuilder;
 import org.apache.flink.table.planner.calcite.FlinkPlannerImpl;
 import org.apache.flink.table.planner.calcite.FlinkRelBuilder;
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
@@ -214,12 +208,12 @@ public class Sqrl2FlinkSQLTranslator {
 
     // Set up table environment
     var sEnv = StreamExecutionEnvironment.getExecutionEnvironment(planBuilder.getConfig());
-    var tEnvConfig =
+    var tEnvSettings =
         EnvironmentSettings.newInstance()
             .withConfiguration(planBuilder.getConfig())
             .withClassLoader(udfClassLoader)
             .build();
-    this.tEnv = (StreamTableEnvironmentImpl) StreamTableEnvironment.create(sEnv, tEnvConfig);
+    this.tEnv = (StreamTableEnvironmentImpl) StreamTableEnvironment.create(sEnv, tEnvSettings);
 
     // Extract a number of classes we need access to for planning
     this.validatorSupplier = ((PlannerBase) tEnv.getPlanner())::createFlinkPlanner;
@@ -227,12 +221,10 @@ public class Sqrl2FlinkSQLTranslator {
     typeFactory = (FlinkTypeFactory) planner.getOrCreateSqlValidator().getTypeFactory();
     // Initialize function catalog (custom)
     sqrlFunctionCatalog = new SqrlFunctionCatalog(typeFactory);
-    var calciteConfigBuilder = new CalciteConfigBuilder();
-    calciteConfigBuilder.addSqlOperatorTable(sqrlFunctionCatalog.getOperatorTable());
-    //    setOptimizerRules(calciteConfigBuilder,tEnv.getConfig()); TODO: fix, so we have more
-    // effective subgraph identification by not pushing down projections
 
-    this.tEnv.getConfig().setPlannerConfig(calciteConfigBuilder.build());
+    var plannerConfigBuilder =
+        new FlinkPlannerConfigBuilder(compilerConfig, sqrlFunctionCatalog, planBuilder.getConfig());
+    this.tEnv.getConfig().setPlannerConfig(plannerConfigBuilder.build());
     this.catalogManager = tEnv.getCatalogManager();
 
     execFnFactory = new FlinkExecFunctionFactory(tEnv.getConfig(), typeFactory);
@@ -388,25 +380,6 @@ public class Sqrl2FlinkSQLTranslator {
             .getRelBuilderFactory()
             .create(flinkPlanner.cluster(), null)
             .transform(config.getRelBuilderConfigTransform());
-  }
-
-  public Function<Expression, ResolvedExpression> getExpressionResolver() {
-    var flinkPlanner = this.validatorSupplier.get();
-    final var relBuilder = getRelBuilder(flinkPlanner);
-    final var context = unwrapContext(relBuilder);
-    final var parser = tEnv.getParser();
-    final var expressionResolver =
-        ExpressionResolver.resolverFor(
-                context.getTableConfig(),
-                context.getClassLoader(),
-                name -> Optional.empty(),
-                context.getFunctionCatalog().asLookup(parser::parseIdentifier),
-                context.getCatalogManager().getDataTypeFactory(),
-                parser::parseSqlExpression)
-            .build();
-    return exp -> {
-      return expressionResolver.resolve(Collections.singletonList(exp)).get(0);
-    };
   }
 
   private CalciteCatalogReader getCalciteCatalog(@Nullable FlinkPlannerImpl flinkPlanner) {
