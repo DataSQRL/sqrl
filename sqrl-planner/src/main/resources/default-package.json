@@ -3,8 +3,9 @@
   "enabled-engines": ["vertx", "postgres", "kafka", "flink"],
   "compiler": {
     "logger": "print",
-    "extended-scalar-types": true,
     "compile-flink-plan": true,
+    "disable-predicate-pushdown": false,
+    "extended-scalar-types": true,
     "cost-model": "DEFAULT",
     "explain": {
       "text": true,
