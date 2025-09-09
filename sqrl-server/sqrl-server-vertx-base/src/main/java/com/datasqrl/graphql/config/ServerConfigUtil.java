@@ -20,6 +20,8 @@ import static org.apache.commons.lang3.ObjectUtils.isEmpty;
 
 import com.datasqrl.util.JsonMergeUtils;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.vertx.ext.web.handler.graphql.GraphiQLHandlerOptions;
+import jakarta.annotation.Nullable;
 import java.util.Map;
 import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
@@ -56,5 +58,42 @@ public class ServerConfigUtil {
   @SneakyThrows
   public static ServerConfig fromConfigMap(Map<String, Object> configMap) {
     return MAPPER.convertValue(configMap, ServerConfig.class).validated();
+  }
+
+  /**
+   * Creates a copy of GraphiQL handler options with versioned URIs.
+   *
+   * @param version the version prefix to prepend to endpoints
+   * @param graphiQLHandlerOptions the original options to copy and version
+   * @return a new GraphiQL handler options instance with versioned endpoints, or null if input is
+   *     null
+   */
+  @Nullable
+  public static GraphiQLHandlerOptions createVersionedGraphiQLHandlerOptions(
+      String version, @Nullable GraphiQLHandlerOptions graphiQLHandlerOptions) {
+    if (graphiQLHandlerOptions == null) {
+      return null;
+    }
+
+    var versionedOptions = new GraphiQLHandlerOptions(graphiQLHandlerOptions);
+    var versionedGraphQLUri = getVersionedEndpoint(version, versionedOptions.getGraphQLUri());
+    versionedOptions.setGraphQLUri(versionedGraphQLUri);
+
+    var versionedGraphQLWSUri = getVersionedEndpoint(version, versionedOptions.getGraphQLWSUri());
+    versionedOptions.setGraphWSQLUri(versionedGraphQLWSUri);
+
+    return versionedOptions;
+  }
+
+  /**
+   * Prepends a version prefix to an endpoint path. Assumes {@code endpoint} start with '/'.
+   *
+   * @param version the version prefix to prepend
+   * @param endpoint the endpoint path to version
+   * @return the versioned endpoint as "/{version}{endpoint}", or null if endpoint is null
+   */
+  @Nullable
+  public static String getVersionedEndpoint(String version, @Nullable String endpoint) {
+    return endpoint == null ? null : '/' + version + endpoint;
   }
 }
