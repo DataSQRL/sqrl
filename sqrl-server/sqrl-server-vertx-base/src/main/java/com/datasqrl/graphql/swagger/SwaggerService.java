@@ -18,6 +18,8 @@ package com.datasqrl.graphql.swagger;
 import com.datasqrl.graphql.config.SwaggerConfig;
 import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.graphql.server.operation.ApiOperation;
+import com.datasqrl.graphql.server.operation.FunctionDefinition;
+import com.datasqrl.graphql.server.operation.RestMethodType;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.core.util.Json;
@@ -32,14 +34,18 @@ import io.swagger.v3.oas.models.media.Content;
 import io.swagger.v3.oas.models.media.MediaType;
 import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.oas.models.parameters.Parameter;
+import io.swagger.v3.oas.models.parameters.RequestBody;
 import io.swagger.v3.oas.models.responses.ApiResponse;
 import io.swagger.v3.oas.models.responses.ApiResponses;
 import io.swagger.v3.oas.models.servers.Server;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ObjectUtils;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -160,9 +166,17 @@ public class SwaggerService {
             .description(operation.getFunction().getDescription());
 
     // Add parameters
-    var parameters = extractParameters(uriTemplate);
-    if (!parameters.isEmpty()) {
-      swaggerOperation.parameters(parameters);
+    if (operation.getRestMethod() == RestMethodType.GET) {
+      var parameters = extractParameters(uriTemplate);
+      if (!parameters.isEmpty()) {
+        swaggerOperation.parameters(parameters);
+      }
+    }
+
+    // Add request body
+    if (operation.getRestMethod() == RestMethodType.POST) {
+      var requestBody = buildRequestBody(operation);
+      requestBody.ifPresent(swaggerOperation::setRequestBody);
     }
 
     // Add responses
@@ -246,6 +260,67 @@ public class SwaggerService {
     }
 
     return parameters;
+  }
+
+  private Optional<RequestBody> buildRequestBody(ApiOperation operation) {
+    var fn = operation.getFunction();
+    var params = fn.getParameters();
+    var props = params.getProperties();
+
+    if (props.isEmpty()) {
+      return Optional.empty();
+    }
+
+    var requestBody = new RequestBody();
+    requestBody.description(fn.getDescription());
+    requestBody.content(
+        new Content()
+            .addMediaType("application/json", new MediaType().schema(paramsToSchema(params))));
+
+    return Optional.of(requestBody);
+  }
+
+  private Schema<?> paramsToSchema(FunctionDefinition.Parameters params) {
+    var schema = new Schema<>();
+    schema.type(params.getType());
+
+    addPropsToSchema(schema, params.getProperties());
+
+    if (ObjectUtils.isNotEmpty(params.getRequired())) {
+      schema.required(params.getRequired());
+    }
+
+    return schema;
+  }
+
+  private Schema<?> argToSchema(FunctionDefinition.Argument arg) {
+    var schema = new Schema<>();
+    schema.type(arg.getType());
+    schema.description(arg.getDescription());
+
+    if (ObjectUtils.isNotEmpty(arg.getEnumValues())) {
+      schema._enum(new ArrayList<>(arg.getEnumValues()));
+    }
+
+    if (arg.getItems() != null) {
+      schema.items(argToSchema(arg.getItems()));
+    }
+
+    addPropsToSchema(schema, arg.getProperties());
+
+    if (ObjectUtils.isNotEmpty(arg.getRequired())) {
+      schema.required(arg.getRequired());
+    }
+
+    return schema;
+  }
+
+  private void addPropsToSchema(Schema<?> schema, Map<String, FunctionDefinition.Argument> props) {
+    if (ObjectUtils.isNotEmpty(props)) {
+      for (var entry : props.entrySet()) {
+        schema.addProperty(entry.getKey(), argToSchema(entry.getValue()));
+      }
+    }
   }
 
   public String generateSwaggerUI() {
