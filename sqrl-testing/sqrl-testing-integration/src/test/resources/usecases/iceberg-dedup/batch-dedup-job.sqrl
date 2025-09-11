@@ -1,0 +1,11 @@
+IMPORT tables.sink;
+
+SubsetCdcTable := SELECT * FROM CdcTable WHERE time_bucket > 0 AND time_bucket < 3;
+SubsetCdcTable.time_bucket := 0;
+
+DedupedCdcTable := DISTINCT SubsetCdcTable ON account_id, id ORDER BY account_id, id;
+
+INSERT OVERWRITE CdcTable /*+OPTIONS('write.distribution-mode' = 'none')*/ SELECT * FROM DedupedCdcTable;
+
+/*+test*/
+DedupedDataTest := SELECT * FROM CdcTable WHERE time_bucket = 0 ORDER BY ts DESC LIMIT 1000;
