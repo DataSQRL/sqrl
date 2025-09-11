@@ -197,7 +197,7 @@ INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
       "tableName" : "Sensors",
       "format" : "flexible-json",
       "numPartitions" : 1,
-      "replicationFactor" : 1,
+      "replicationFactor" : 3,
       "config" : { }
     },
     {
@@ -205,7 +205,7 @@ INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
       "tableName" : "_SensorReading",
       "format" : "flexible-json",
       "numPartitions" : 1,
-      "replicationFactor" : 1,
+      "replicationFactor" : 3,
       "config" : { }
     }
   ],

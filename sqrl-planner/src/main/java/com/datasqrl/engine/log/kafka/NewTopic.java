@@ -32,7 +32,11 @@ public class NewTopic implements EngineCreateTable {
   private short replicationFactor;
   private Map<String, String> config;
 
-  public NewTopic(String topicName, String tableName, String format) {
-    this(topicName, tableName, format, 1, (short) 1, Map.of());
+  public NewTopic(String topicName, String tableName) {
+    this(topicName, tableName, null, Map.of());
+  }
+
+  public NewTopic(String topicName, String tableName, String format, Map<String, String> config) {
+    this(topicName, tableName, format, 1, (short) 3, config);
   }
 }

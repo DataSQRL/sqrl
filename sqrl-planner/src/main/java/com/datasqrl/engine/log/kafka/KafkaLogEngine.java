@@ -217,7 +217,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
     tableBuilder.setConnectorOptions(connectorConfig);
     String topicName = connectorConfig.get(CONNECTOR_TOPIC_KEY);
     // TODO: Add schema based on reldatatype
-    return new NewTopic(topicName, tableBuilder.getTableName(), format, 1, (short) 1, topicConfig);
+    return new NewTopic(topicName, tableBuilder.getTableName(), format, topicConfig);
   }
 
   @Override
@@ -299,7 +299,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
 
     var testRunnerTopics =
         testRunnerConfig.getCreateTopics().stream()
-            .map(topicName -> new NewTopic(topicName, topicName, null))
+            .map(topicName -> new NewTopic(topicName, topicName))
             .toList();
 
     return new KafkaPhysicalPlan(topics, testRunnerTopics);
