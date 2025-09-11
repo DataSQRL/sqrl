@@ -109,6 +109,8 @@ import org.apache.flink.sql.parser.dml.RichSqlInsert;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.CompiledPlan;
 import org.apache.flink.table.api.EnvironmentSettings;
+import org.apache.flink.table.api.ExplainDetail;
+import org.apache.flink.table.api.ExplainFormat;
 import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.api.TableException;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
@@ -284,6 +286,10 @@ public class Sqrl2FlinkSQLTranslator {
     if (executionMode == RuntimeExecutionMode.STREAMING && compileFlinkPlan) {
       var parse = (StatementSetOperation) tEnv.getParser().parse(insert + ";").get(0);
       compiledPlan = Optional.of(tEnv.compilePlan(parse.getOperations()));
+    } else {
+      var expl = tEnv.explainSql(insert, ExplainFormat.TEXT, ExplainDetail.CHANGELOG_MODE);
+      var out = "=======================\n\n\n" + expl + "\n\n\n=======================";
+      System.out.println(out);
     }
     return planBuilder.build(compiledPlan);
   }

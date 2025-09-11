@@ -1,0 +1,13 @@
+IMPORT tables.min_sink;
+
+INSERT OVERWRITE MinCdcTable VALUES
+  (1,  1, 'A', 'I', 'payload_005', TIMESTAMP '2025-09-11 00:00:09.000',  0);
+
+INSERT OVERWRITE MinCdcTable VALUES
+  (3,  1, 'A', 'I', 'payload_015', TIMESTAMP '2025-09-11 00:00:10.000',  0);
+
+INSERT OVERWRITE MinCdcTable VALUES
+  (1,  1, 'A', 'I', 'payload_007', TIMESTAMP '2025-09-11 00:00:09.000',  0);
+
+/*+test*/
+OverwriteTest := SELECT * FROM MinCdcTable ORDER BY ts DESC LIMIT 1000;

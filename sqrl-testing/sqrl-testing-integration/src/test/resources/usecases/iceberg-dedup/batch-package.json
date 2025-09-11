@@ -1,0 +1,29 @@
+{
+  "version": "1",
+  "enabled-engines": ["flink", "iceberg", "duckdb"],
+  "script": {
+    "main": "batch-dedup-job.sqrl"
+  },
+  "engines": {
+    "flink": {
+      "config": {
+        "execution.runtime-mode": "batch",
+        "table.exec.source.idle-timeout": "10 s"
+      }
+    }
+  },
+  "connectors" : {
+    "iceberg" : {
+      "warehouse": "/tmp/duckdb",
+      "catalog-name": "mydatabase",
+      "catalog-type": "hadoop",
+      "write.parquet.page-size-bytes": 1000,
+      "format-version": 2
+    }
+  },
+  "test-runner": {
+    "snapshot-folder": "snapshots/batch-dedup-job",
+    "delay-sec": 1000,
+    "required-checkpoints": 1
+  }
+}

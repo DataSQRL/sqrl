@@ -1,0 +1,10 @@
+IMPORT tables.min_source AS _CDC;
+IMPORT tables.min_sink;
+
+-- 5 min CDC-like source data 1 record / sec => 300 records
+-- Use the {ts_sec + 1} as "time_bucket"
+
+INSERT INTO MinCdcTable SELECT c.*, EXTRACT(SECOND FROM c.ts) + 1 AS time_bucket FROM _CDC c;
+
+/*+test*/
+CdCTableTest := SELECT * FROM MinCdcTable ORDER BY ts DESC LIMIT 50;

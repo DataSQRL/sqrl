@@ -1,0 +1,4 @@
+IMPORT usrlib.PartitionDeleteUdf;
+
+
+Res := SELECT PartitionDeleteUdf('time_bucket', 3);

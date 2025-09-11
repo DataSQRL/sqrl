@@ -1,0 +1,11 @@
+/*+no_query */
+IMPORT tables.min_sink;
+
+INSERT OVERWRITE MinCdcTable
+  SELECT account_id, id, pt, op, payload, ts, 0 AS time_bucket
+  FROM (
+    SELECT *, ROW_NUMBER() OVER (PARTITION BY account_id ORDER BY ts DESC) AS row_num
+    FROM MinCdcTable
+    WHERE time_bucket = 3
+  ) d
+  WHERE row_num = 1;

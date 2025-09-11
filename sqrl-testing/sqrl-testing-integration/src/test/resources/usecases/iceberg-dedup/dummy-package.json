@@ -1,0 +1,28 @@
+{
+  "version": "1",
+  "enabled-engines": ["flink", "iceberg", "duckdb"],
+  "script": {
+    "main": "dummy-job.sqrl"
+  },
+  "engines": {
+    "flink": {
+      "config": {
+        "execution.runtime-mode": "batch"
+      }
+    }
+  },
+  "connectors" : {
+    "iceberg" : {
+      "warehouse": "/tmp/duckdb",
+      "catalog-name": "mydatabase",
+      "catalog-type": "hadoop",
+      "write.parquet.page-size-bytes": 1000,
+      "format-version": 2
+    }
+  },
+  "test-runner": {
+    "snapshot-folder": "snapshots/dummy-job",
+    "delay-sec": -1,
+    "required-checkpoints": 1
+  }
+}

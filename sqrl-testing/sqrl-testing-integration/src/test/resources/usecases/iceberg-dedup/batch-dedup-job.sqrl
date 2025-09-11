@@ -1,0 +1,14 @@
+/*+no_query */
+IMPORT tables.min_sink;
+
+/*+no_query */
+SubsetCdcTable := SELECT * FROM MinCdcTable WHERE time_bucket = 3;
+/*+no_query */
+SubsetCdcTable.time_bucket := 0;
+
+/*+no_query */
+DedupedCdcTable := DISTINCT SubsetCdcTable ON account_id ORDER BY account_id;
+
+INSERT OVERWRITE MinCdcTable SELECT * FROM DedupedCdcTable;
+
+DELETE FROM MinCdcTable WHERE  time_bucket = 3;
