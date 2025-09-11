@@ -73,7 +73,7 @@ END
       "tableName" : "LogData_1",
       "format" : "flexible-json",
       "numPartitions" : 1,
-      "replicationFactor" : 1,
+      "replicationFactor" : 3,
       "config" : { }
     }
   ],
