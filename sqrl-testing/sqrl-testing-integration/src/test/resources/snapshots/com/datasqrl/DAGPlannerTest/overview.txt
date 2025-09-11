@@ -429,7 +429,7 @@ INSERT INTO `default_catalog`.`default_database`.`MyPrintSink_ex1`
       "tableName" : "LargeOrders_4",
       "format" : "flexible-json",
       "numPartitions" : 1,
-      "replicationFactor" : 1,
+      "replicationFactor" : 3,
       "config" : { }
     },
     {
@@ -437,7 +437,7 @@ INSERT INTO `default_catalog`.`default_database`.`MyPrintSink_ex1`
       "tableName" : "SimpleOrders",
       "format" : "flexible-json",
       "numPartitions" : 1,
-      "replicationFactor" : 1,
+      "replicationFactor" : 3,
       "config" : { }
     }
   ],

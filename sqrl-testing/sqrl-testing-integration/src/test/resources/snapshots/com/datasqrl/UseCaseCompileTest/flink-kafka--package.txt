@@ -327,7 +327,7 @@ INSERT INTO `default_catalog`.`default_database`.`StreamJoin_2`
       "tableName" : "ApplicationStatus_1",
       "format" : "flexible-json",
       "numPartitions" : 1,
-      "replicationFactor" : 1,
+      "replicationFactor" : 3,
       "config" : { }
     }
   ],
@@ -336,14 +336,14 @@ INSERT INTO `default_catalog`.`default_database`.`StreamJoin_2`
       "topicName" : "input_topic1",
       "tableName" : "input_topic1",
       "numPartitions" : 1,
-      "replicationFactor" : 1,
+      "replicationFactor" : 3,
       "config" : { }
     },
     {
       "topicName" : "input_topic2",
       "tableName" : "input_topic2",
       "numPartitions" : 1,
-      "replicationFactor" : 1,
+      "replicationFactor" : 3,
       "config" : { }
     }
   ]
