@@ -147,7 +147,7 @@
     <avro.version>1.12.0</avro.version>
     <freemarker.version>2.3.34</freemarker.version>
     <mustache.version>0.9.14</mustache.version>
-    <jsonschema.version>1.5.8</jsonschema.version>
+    <jsonschema.version>1.5.9</jsonschema.version>
     <iceberg.version>1.9.2</iceberg.version>
     <!-- Do not touch Hadoop version unless it has been updated on the Flink side.
          Otherwise, it might break the Flink filesystem integration. -->
