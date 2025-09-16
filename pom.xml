@@ -148,7 +148,7 @@
     <freemarker.version>2.3.34</freemarker.version>
     <mustache.version>0.9.14</mustache.version>
     <jsonschema.version>1.5.9</jsonschema.version>
-    <iceberg.version>1.9.2</iceberg.version>
+    <iceberg.version>1.10.0</iceberg.version>
     <!-- Do not touch Hadoop version unless it has been updated on the Flink side.
          Otherwise, it might break the Flink filesystem integration. -->
     <hadoop.version>3.3.4</hadoop.version>
