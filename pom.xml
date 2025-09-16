@@ -131,7 +131,7 @@
     <reactive-streams.version>1.0.4</reactive-streams.version>
     <testcontainers.version>1.21.3</testcontainers.version>
     <scram.version>2.1</scram.version>
-    <protobuf.version>4.32.0</protobuf.version>
+    <protobuf.version>4.32.1</protobuf.version>
     <picocli.version>4.7.7</picocli.version>
     <commonscodec.version>1.19.0</commonscodec.version>
     <guice.version>5.1.0</guice.version>
