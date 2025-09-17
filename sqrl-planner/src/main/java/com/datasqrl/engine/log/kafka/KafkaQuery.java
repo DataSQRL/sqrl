@@ -19,6 +19,7 @@ import com.datasqrl.engine.ExecutableQuery;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import java.util.Map;
 import lombok.Value;
+import org.apache.calcite.schema.FunctionParameter;
 
 @Value
 public class KafkaQuery implements ExecutableQuery {
@@ -26,6 +27,6 @@ public class KafkaQuery implements ExecutableQuery {
   ExecutionStage stage;
   String topicName;
 
-  /** The name of the column that we filter on with the index of the argument. */
-  Map<String, Integer> filterColumnNames;
+  /** The name of the column that we filter by the associated argument. */
+  Map<String, FunctionParameter> filterColumnNames;
 }

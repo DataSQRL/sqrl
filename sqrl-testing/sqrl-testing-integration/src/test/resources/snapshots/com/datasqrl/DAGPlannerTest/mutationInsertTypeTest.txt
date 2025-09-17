@@ -477,7 +477,11 @@ INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
           "returnList" : true,
           "topic" : "kafka-mutation-Sensors",
           "computedColumns" : {
-            "updatedTime" : "TIMESTAMP"
+            "updatedTime" : {
+              "metadataType" : "TIMESTAMP",
+              "name" : "",
+              "isRequired" : false
+            }
           },
           "transactional" : true,
           "sinkConfig" : { }
@@ -488,8 +492,16 @@ INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
           "returnList" : true,
           "topic" : "kafka-mutation-_SensorReading",
           "computedColumns" : {
-            "event_id" : "UUID",
-            "event_time" : "TIMESTAMP"
+            "event_id" : {
+              "metadataType" : "UUID",
+              "name" : "",
+              "isRequired" : true
+            },
+            "event_time" : {
+              "metadataType" : "TIMESTAMP",
+              "name" : "",
+              "isRequired" : false
+            }
           },
           "transactional" : false,
           "sinkConfig" : { }

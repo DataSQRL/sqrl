@@ -15,60 +15,19 @@
  */
 package com.datasqrl.graphql.jdbc;
 
+import com.datasqrl.graphql.exec.StandardExecutionContext;
+import com.datasqrl.graphql.server.Context;
 import com.datasqrl.graphql.server.QueryExecutionContext;
 import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
-import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentParameter;
-import com.datasqrl.graphql.server.RootGraphqlModel.MetadataParameter;
-import com.datasqrl.graphql.server.RootGraphqlModel.ParameterHandlerVisitor;
-import com.datasqrl.graphql.server.RootGraphqlModel.ParentParameter;
-import com.datasqrl.graphql.server.RootGraphqlModel.QueryParameterHandler;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-import lombok.SneakyThrows;
+import graphql.schema.DataFetchingEnvironment;
+import java.util.Set;
 
-public abstract class AbstractQueryExecutionContext
-    implements QueryExecutionContext, ParameterHandlerVisitor<Object, QueryExecutionContext> {
+public abstract class AbstractQueryExecutionContext<C extends Context>
+    extends StandardExecutionContext<C> implements QueryExecutionContext {
 
-  public static Object unboxList(List o, boolean isList) {
-    return isList ? o : (o.size() > 0 ? o.get(0) : null);
-  }
-
-  @SneakyThrows
-  @Override
-  public Object visitParentParameter(
-      ParentParameter parentParameter, QueryExecutionContext context) {
-    return context
-        .getContext()
-        .createPropertyFetcher(parentParameter.getKey())
-        .get(context.getEnvironment());
-  }
-
-  @Override
-  public Object visitArgumentParameter(
-      ArgumentParameter argumentParameter, QueryExecutionContext context) {
-    return context.getArguments().stream()
-        .filter(arg -> arg.getPath().equalsIgnoreCase(argumentParameter.getPath()))
-        .findFirst()
-        .map(Argument::getValue)
-        .orElse(null);
-  }
-
-  @Override
-  public Object visitMetadataParameter(
-      MetadataParameter metadataParameter, QueryExecutionContext context) {
-
-    var md = metadataParameter.getMetadata();
-    return context
-        .getContext()
-        .getMetadataReader(md.metadataType())
-        .read(context.getEnvironment(), md.name(), md.isRequired());
-  }
-
-  public List getParamArguments(List<QueryParameterHandler> parameters) {
-    return parameters.stream()
-        .map(param -> param.accept(this, this))
-        .collect(Collectors.toCollection(() -> new ArrayList<>(parameters.size() + 2)));
+  public AbstractQueryExecutionContext(
+      C context, DataFetchingEnvironment environment, Set<Argument> arguments) {
+    super(context, environment, arguments);
   }
 
   public static String addLimitOffsetToQuery(String sqlQuery, String limit, String offset) {

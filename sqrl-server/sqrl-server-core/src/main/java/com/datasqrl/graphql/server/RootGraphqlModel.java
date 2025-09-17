@@ -20,12 +20,12 @@ import com.datasqrl.graphql.server.operation.ApiOperation;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -43,10 +43,8 @@ import lombok.ToString;
  * <ul>
  *   <li>the root of the model, the schema, coords, the sql queries, the arguments and parameters
  *       are visited by {@link GraphQLEngineBuilder}
- *   <li>the mutations (kafka and prostgreSQL) are visited by {@link
- *       com.datasqrl.graphql.MutationConfigurationImpl}
- *   <li>the subscriptions (kafka and prostgreSQL) are visited by {@link
- *       com.datasqrl.graphql.SubscriptionConfigurationImpl}
+ *   <li>the mutations (kafka) are visited by MutationConfigurationImpl
+ *   <li>the subscriptions (kafka) are visited by SubscriptionConfigurationImpl
  * </ul>
  */
 @Getter
@@ -83,7 +81,7 @@ public class RootGraphqlModel {
   }
 
   @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
-  @JsonSubTypes({@Type(value = StringSchema.class, name = "string")})
+  @JsonSubTypes({@JsonSubTypes.Type(value = StringSchema.class, name = "string")})
   public interface Schema {
 
     <R, C> R accept(SchemaVisitor<R, C> visitor, C context);
@@ -109,7 +107,9 @@ public class RootGraphqlModel {
   }
 
   @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
-  @JsonSubTypes({@Type(value = KafkaMutationCoords.class, name = KafkaMutationCoords.type)})
+  @JsonSubTypes({
+    @JsonSubTypes.Type(value = KafkaMutationCoords.class, name = KafkaMutationCoords.type)
+  })
   public abstract static class MutationCoords {
     protected String type;
 
@@ -133,7 +133,7 @@ public class RootGraphqlModel {
     protected String fieldName;
     protected boolean returnList;
     protected String topic;
-    protected Map<String, MutationComputedColumnType> computedColumns;
+    protected Map<String, ResolvedMetadata> computedColumns;
     protected boolean transactional;
     protected Map<String, String> sinkConfig;
 
@@ -141,7 +141,7 @@ public class RootGraphqlModel {
         String fieldName,
         boolean returnList,
         String topic,
-        Map<String, MutationComputedColumnType> computedColumns,
+        Map<String, ResolvedMetadata> computedColumns,
         boolean transactional,
         Map<String, String> sinkConfig) {
       this.fieldName = fieldName;
@@ -162,10 +162,7 @@ public class RootGraphqlModel {
       use = JsonTypeInfo.Id.NAME,
       property = "type",
       defaultImpl = KafkaSubscriptionCoords.class)
-  @JsonSubTypes({
-    @Type(value = KafkaSubscriptionCoords.class, name = "kafka"),
-    @Type(value = PostgresSubscriptionCoords.class, name = "postgres_log")
-  })
+  @JsonSubTypes({@JsonSubTypes.Type(value = KafkaSubscriptionCoords.class, name = "kafka")})
   public abstract static class SubscriptionCoords {
     protected String type;
 
@@ -176,8 +173,6 @@ public class RootGraphqlModel {
 
   public interface SubscriptionCoordsVisitor<R, C> {
     R visit(KafkaSubscriptionCoords coords, C context);
-
-    R visit(PostgresSubscriptionCoords coords, C context);
   }
 
   @Getter
@@ -191,27 +186,12 @@ public class RootGraphqlModel {
     protected String fieldName;
     protected String topic;
     protected Map<String, String> sinkConfig;
-    protected Map<String, String> filters;
 
-    @Override
-    public <R, C> R accept(SubscriptionCoordsVisitor<R, C> visitor, C context) {
-      return visitor.visit(this, context);
-    }
-  }
-
-  @Getter
-  @AllArgsConstructor
-  @NoArgsConstructor
-  public static class PostgresSubscriptionCoords extends SubscriptionCoords {
-
-    private static final String type = "postgres_log";
-
-    protected String fieldName;
-    protected String tableName;
-    protected Map<String, String> filters;
-    protected String listenQuery;
-    protected String onNotifyQuery;
-    protected List<String> parameters;
+    /**
+     * Maps fields from the arriving subscription data to query parameters. Only records where the
+     * field value matches the parameter value are returned
+     */
+    protected Map<String, QueryParameterHandler> equalityConditions;
 
     @Override
     public <R, C> R accept(SubscriptionCoordsVisitor<R, C> visitor, C context) {
@@ -237,10 +217,10 @@ public class RootGraphqlModel {
   @NoArgsConstructor
   @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
   @JsonSubTypes({
-    @Type(value = ArgumentLookupQueryCoords.class, name = "args"),
-    @Type(value = FieldLookupQueryCoords.class, name = "field")
+    @JsonSubTypes.Type(value = ArgumentLookupQueryCoords.class, name = "args"),
+    @JsonSubTypes.Type(value = FieldLookupQueryCoords.class, name = "field")
   })
-  public abstract static class QueryCoords { // TODO should be renamed QueryCoords
+  public abstract static class QueryCoords {
 
     String parentType;
     String fieldName;
@@ -304,7 +284,7 @@ public class RootGraphqlModel {
   }
 
   @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
-  @JsonSubTypes({@Type(value = SqlQuery.class, name = "SqlQuery")})
+  @JsonSubTypes({@JsonSubTypes.Type(value = SqlQuery.class, name = "SqlQuery")})
   public interface QueryBase {
 
     <R, C> R accept(QueryBaseVisitor<R, C> visitor, C context);
@@ -346,8 +326,8 @@ public class RootGraphqlModel {
 
   @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
   @JsonSubTypes({
-    @Type(value = FixedArgument.class, name = FixedArgument.type),
-    @Type(value = VariableArgument.class, name = VariableArgument.type)
+    @JsonSubTypes.Type(value = FixedArgument.class, name = FixedArgument.type),
+    @JsonSubTypes.Type(value = VariableArgument.class, name = VariableArgument.type)
   })
   public interface Argument {
 
@@ -398,6 +378,12 @@ public class RootGraphqlModel {
     public String toString() {
       return "VariableArgument{" + "path='" + path + '\'' + '}';
     }
+
+    public static Set<Argument> convertArguments(Map<String, Object> arguments) {
+      return arguments.entrySet().stream()
+          .map(argument -> new VariableArgument(argument.getKey(), argument.getValue()))
+          .collect(Collectors.toSet());
+    }
   }
 
   public interface FixedArgumentVisitor<R, C> {
@@ -425,9 +411,9 @@ public class RootGraphqlModel {
 
   @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
   @JsonSubTypes({
-    @Type(value = ParentParameter.class, name = ParentParameter.type),
-    @Type(value = ArgumentParameter.class, name = ArgumentParameter.type),
-    @Type(value = MetadataParameter.class, name = MetadataParameter.type)
+    @JsonSubTypes.Type(value = ParentParameter.class, name = ParentParameter.type),
+    @JsonSubTypes.Type(value = ArgumentParameter.class, name = ArgumentParameter.type),
+    @JsonSubTypes.Type(value = MetadataParameter.class, name = MetadataParameter.type)
   })
   public interface QueryParameterHandler {
 

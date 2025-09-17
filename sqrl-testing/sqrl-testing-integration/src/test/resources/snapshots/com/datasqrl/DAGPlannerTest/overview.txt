@@ -1151,8 +1151,16 @@ INSERT INTO `default_catalog`.`default_database`.`MyPrintSink_ex1`
           "returnList" : false,
           "topic" : "kafka-mutation-SimpleOrders",
           "computedColumns" : {
-            "orderTime" : "TIMESTAMP",
-            "_uuid" : "UUID"
+            "orderTime" : {
+              "metadataType" : "TIMESTAMP",
+              "name" : "",
+              "isRequired" : false
+            },
+            "_uuid" : {
+              "metadataType" : "UUID",
+              "name" : "",
+              "isRequired" : true
+            }
           },
           "transactional" : false,
           "sinkConfig" : { }
@@ -1164,8 +1172,11 @@ INSERT INTO `default_catalog`.`default_database`.`MyPrintSink_ex1`
           "fieldName" : "LargeOrderSubscription",
           "topic" : "kafka-LargeOrders",
           "sinkConfig" : { },
-          "filters" : {
-            "customerid" : "customerid"
+          "equalityConditions" : {
+            "customerid" : {
+              "type" : "arg",
+              "path" : "customerid"
+            }
           }
         }
       ],

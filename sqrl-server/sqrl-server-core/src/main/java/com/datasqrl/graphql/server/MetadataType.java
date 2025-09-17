@@ -16,5 +16,7 @@
 package com.datasqrl.graphql.server;
 
 public enum MetadataType {
-  AUTH
+  AUTH,
+  UUID,
+  TIMESTAMP
 }

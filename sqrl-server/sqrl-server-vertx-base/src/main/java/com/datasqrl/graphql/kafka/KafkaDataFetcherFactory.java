@@ -15,18 +15,23 @@
  */
 package com.datasqrl.graphql.kafka;
 
+import com.datasqrl.graphql.exec.StandardExecutionContext;
 import com.datasqrl.graphql.io.SinkConsumer;
+import com.datasqrl.graphql.server.Context;
+import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.graphql.server.RootGraphqlModel.KafkaSubscriptionCoords;
 import graphql.schema.DataFetcher;
 import graphql.schema.DataFetchingEnvironment;
 import io.vertx.core.json.JsonObject;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 
 public class KafkaDataFetcherFactory {
 
-  public static DataFetcher<?> create(SinkConsumer consumer, KafkaSubscriptionCoords coords) {
+  public static DataFetcher<?> create(
+      SinkConsumer consumer, KafkaSubscriptionCoords coords, Context context) {
     var deferredFlux =
         Flux.create(sink -> consumer.listen(sink::next, sink::error, (x) -> sink.complete()))
             .share();
@@ -34,17 +39,25 @@ public class KafkaDataFetcherFactory {
     return new DataFetcher<>() {
       @Override
       public Publisher<Object> get(DataFetchingEnvironment env) throws Exception {
-        return deferredFlux.filter(entry -> !filterSubscription(entry, env.getArguments()));
+        var execContext =
+            new StandardExecutionContext(
+                context,
+                env,
+                RootGraphqlModel.VariableArgument.convertArguments(env.getArguments()));
+        Map<String, Object> fieldNameToValue =
+            coords.getEqualityConditions().entrySet().stream()
+                .collect(
+                    Collectors.toMap(
+                        Map.Entry::getKey,
+                        entry -> entry.getValue().accept(execContext, execContext)));
+        return deferredFlux.filter(entry -> filterSubscription(entry, fieldNameToValue));
       }
 
-      private boolean filterSubscription(Object data, Map<String, Object> args) {
-        if (args == null) {
-          return false;
-        }
-        for (Map.Entry<String, String> filter : coords.getFilters().entrySet()) {
-          var argValue = args.get(filter.getKey());
+      private boolean filterSubscription(Object data, Map<String, Object> fieldNameToValue) {
+        for (Map.Entry<String, Object> filter : fieldNameToValue.entrySet()) {
+          var argValue = filter.getValue();
           if (argValue == null) {
-            continue;
+            return false;
           }
 
           Map<String, Object> objectMap;
@@ -56,13 +69,13 @@ public class KafkaDataFetcherFactory {
             objectMap = Map.of();
           }
 
-          var retrievedData = objectMap.get(filter.getValue());
+          var retrievedData = objectMap.get(filter.getKey());
           if (!argValue.equals(retrievedData)) {
-            return true;
+            return false;
           }
         }
 
-        return false;
+        return true;
       }
     };
   }
