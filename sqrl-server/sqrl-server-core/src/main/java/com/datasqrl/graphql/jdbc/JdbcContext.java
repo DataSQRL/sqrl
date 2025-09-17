@@ -22,6 +22,7 @@ import com.datasqrl.graphql.server.GraphQLEngineBuilder;
 import com.datasqrl.graphql.server.MetadataReader;
 import com.datasqrl.graphql.server.MetadataType;
 import com.datasqrl.graphql.server.QueryExecutionContext;
+import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.VariableArgument;
@@ -50,9 +51,7 @@ public class JdbcContext implements Context {
     // Runtime execution, keep this as light as possible
     return (env) -> {
       Set<Argument> argumentSet =
-          env.getArguments().entrySet().stream()
-              .map(argument -> new VariableArgument(argument.getKey(), argument.getValue()))
-              .collect(Collectors.toSet());
+          RootGraphqlModel.VariableArgument.convertArguments(env.getArguments());
 
       QueryExecutionContext context = new JdbcExecutionContext(this, env, argumentSet);
       return resolvedQuery.accept(server, context);

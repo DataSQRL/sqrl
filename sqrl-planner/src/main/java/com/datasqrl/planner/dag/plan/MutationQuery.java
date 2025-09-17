@@ -19,10 +19,17 @@ import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.engine.ExecutableQuery;
 import com.datasqrl.engine.database.EngineCreateTable;
 import com.datasqrl.engine.pipeline.ExecutionStage;
+import com.datasqrl.graphql.server.MetadataType;
 import com.datasqrl.graphql.server.MutationInsertType;
+import com.datasqrl.graphql.server.ResolvedMetadata;
+import com.datasqrl.planner.parser.SqrlTableFunctionStatement;
+import com.datasqrl.planner.tables.MetadataExtractor;
 import com.datasqrl.planner.util.Documented;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
+import java.util.function.Function;
 import lombok.Builder;
 import lombok.Builder.Default;
 import lombok.Singular;
@@ -53,7 +60,7 @@ public class MutationQuery implements ExecutableQuery, Documented {
   RelDataType outputDataType;
 
   /** The columns that are computed and not provided explicitly by the user */
-  @Singular List<MutationComputedColumn> computedColumns;
+  @Singular Map<String, ResolvedMetadata> computedColumns;
 
   /** A documentation string that describes the mutation */
   @Default Optional<String> documentation = Optional.empty();
@@ -63,4 +70,27 @@ public class MutationQuery implements ExecutableQuery, Documented {
 
   /** Whether this mutation should be exposed in the interface */
   boolean generateAccess;
+
+  public static class MutationMetadataExtractor implements MetadataExtractor {
+    @Override
+    public ResolvedMetadata convert(String metadataAlias, boolean isNullable) {
+      if (metadataAlias.equalsIgnoreCase(UUID_METADATA)) {
+        return new ResolvedMetadata(MetadataType.UUID, "", !isNullable);
+      } else if (metadataAlias.equalsIgnoreCase(TIMESTAMP_METADATA)) {
+        return new ResolvedMetadata(MetadataType.UUID, "", !isNullable);
+      }
+      Optional<ResolvedMetadata> metadata =
+          SqrlTableFunctionStatement.parseMetadata(metadataAlias, !isNullable);
+      return metadata.orElse(null);
+    }
+
+    @Override
+    public boolean removeMetadata(String metadataAlias) {
+      // Remove for all but timestamp
+      return !metadataAlias.equalsIgnoreCase(TIMESTAMP_METADATA);
+    }
+  }
+
+  public static final String UUID_METADATA = "uuid";
+  public static final String TIMESTAMP_METADATA = "timestamp";
 }

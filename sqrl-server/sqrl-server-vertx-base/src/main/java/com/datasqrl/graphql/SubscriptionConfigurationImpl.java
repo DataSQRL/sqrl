@@ -16,25 +16,17 @@
 package com.datasqrl.graphql;
 
 import com.datasqrl.graphql.config.ServerConfig;
-import com.datasqrl.graphql.io.SinkConsumer;
 import com.datasqrl.graphql.kafka.KafkaDataFetcherFactory;
 import com.datasqrl.graphql.kafka.KafkaSinkConsumer;
-import com.datasqrl.graphql.postgres_log.PostgresDataFetcherFactory;
-import com.datasqrl.graphql.postgres_log.PostgresListenNotifyConsumer;
-import com.datasqrl.graphql.postgres_log.PostgresSinkConsumer;
 import com.datasqrl.graphql.server.Context;
 import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.graphql.server.RootGraphqlModel.KafkaSubscriptionCoords;
-import com.datasqrl.graphql.server.RootGraphqlModel.PostgresSubscriptionCoords;
-import com.datasqrl.graphql.server.RootGraphqlModel.SubscriptionCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.SubscriptionCoordsVisitor;
 import com.datasqrl.graphql.server.SubscriptionConfiguration;
 import graphql.schema.DataFetcher;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.kafka.client.consumer.KafkaConsumer;
-import java.util.HashMap;
-import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -71,28 +63,7 @@ public class SubscriptionConfigurationImpl implements SubscriptionConfiguration<
                   log.error("Failed to subscribe to topic: {}", coords.getTopic(), err);
                   startPromise.fail(err);
                 });
-        return KafkaDataFetcherFactory.create(new KafkaSinkConsumer<>(consumer), coords);
-      }
-
-      @Override
-      public DataFetcher<?> visit(PostgresSubscriptionCoords coords, Context context) {
-        Map<String, SinkConsumer> subscriptions = new HashMap<>();
-        for (SubscriptionCoords sub : root.getSubscriptions()) {
-          var pgSub = (PostgresSubscriptionCoords) sub;
-          var pgConsumer =
-              new PostgresListenNotifyConsumer(
-                  client,
-                  pgSub.getListenQuery(),
-                  pgSub.getOnNotifyQuery(),
-                  pgSub.getParameters(),
-                  vertx,
-                  config.getPgConnectOptions());
-
-          var pgSinkConsumer = new PostgresSinkConsumer(pgConsumer);
-
-          subscriptions.put(pgSub.getFieldName(), pgSinkConsumer);
-        }
-        return PostgresDataFetcherFactory.create(subscriptions, coords);
+        return KafkaDataFetcherFactory.create(new KafkaSinkConsumer<>(consumer), coords, context);
       }
     };
   }
