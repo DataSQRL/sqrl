@@ -38,6 +38,7 @@ import com.datasqrl.planner.dag.plan.MaterializationStagePlan;
 import com.datasqrl.planner.dag.plan.MaterializationStagePlan.Query;
 import com.datasqrl.planner.tables.FlinkConnectorConfig;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
+import com.datasqrl.planner.tables.SqrlFunctionParameter;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.StreamUtil;
 import com.google.common.base.Preconditions;
@@ -61,6 +62,7 @@ import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexDynamicParam;
 import org.apache.calcite.rex.RexNode;
+import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.flink.sql.parser.ddl.SqlTableColumn;
@@ -240,7 +242,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
     for (Query query : stagePlan.getQueries()) {
       var errors = query.errors();
       var relNode = query.relNode();
-      Map<String, Integer> filterColumns = new HashMap<>();
+      Map<String, FunctionParameter> filterColumns = new HashMap<>();
       if (relNode instanceof Project project
           && relNode.getRowType().equals(project.getInput().getRowType())) {
         relNode = project.getInput();
@@ -258,6 +260,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
         */
         var conditions = stagePlan.getUtils().rexUtil().getConjunctions(filter.getCondition());
         var fieldNames = filter.getRowType().getFieldNames();
+        var sqrlFct = query.getFunction();
         for (RexNode condition : conditions) {
           checkErrors.accept(condition instanceof RexCall);
           var call = (RexCall) condition;
@@ -267,7 +270,8 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
               var argumentIndex = ((RexDynamicParam) call.getOperands().get(i)).getIndex();
               var colIdx = CalciteUtil.getNonAlteredInputRef(call.getOperands().get((i + 1) % 2));
               checkErrors.accept(colIdx.isPresent());
-              filterColumns.put(fieldNames.get(colIdx.get()), argumentIndex);
+              filterColumns.put(
+                  fieldNames.get(colIdx.get()), sqrlFct.getParameters().get(argumentIndex));
             }
           }
         }

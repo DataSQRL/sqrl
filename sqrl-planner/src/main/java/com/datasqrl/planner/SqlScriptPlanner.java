@@ -33,7 +33,6 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.error.ErrorLocation.FileLocation;
 import com.datasqrl.function.FlinkUdfNsObject;
-import com.datasqrl.graphql.server.MutationComputedColumnType;
 import com.datasqrl.graphql.server.MutationInsertType;
 import com.datasqrl.io.schema.SchemaConversionResult;
 import com.datasqrl.loaders.FlinkTableNamespaceObject;
@@ -59,8 +58,8 @@ import com.datasqrl.planner.dag.DAGBuilder;
 import com.datasqrl.planner.dag.nodes.ExportNode;
 import com.datasqrl.planner.dag.nodes.TableFunctionNode;
 import com.datasqrl.planner.dag.nodes.TableNode;
-import com.datasqrl.planner.dag.plan.MutationComputedColumn;
 import com.datasqrl.planner.dag.plan.MutationQuery;
+import com.datasqrl.planner.dag.plan.MutationQuery.MutationMetadataExtractor;
 import com.datasqrl.planner.hint.CacheHint;
 import com.datasqrl.planner.hint.EngineHint;
 import com.datasqrl.planner.hint.MutationInsertHint;
@@ -935,18 +934,10 @@ public class SqlScriptPlanner {
       mutationBuilder.name(Name.system(originalTableName));
       mutationBuilder.insertType(insertType);
       mutationBuilder.documentation(hintsAndDocs.documentation());
+      // UUID and TIMESTAMP are special cases
       tableBuilder
-          .extractMetadataColumns(MutationComputedColumn.UUID_METADATA, true)
-          .forEach(
-              colName ->
-                  mutationBuilder.computedColumn(
-                      new MutationComputedColumn(colName, MutationComputedColumnType.UUID)));
-      tableBuilder
-          .extractMetadataColumns(MutationComputedColumn.TIMESTAMP_METADATA, false)
-          .forEach(
-              colName ->
-                  mutationBuilder.computedColumn(
-                      new MutationComputedColumn(colName, MutationComputedColumnType.TIMESTAMP)));
+          .extractMetadataColumns(new MutationMetadataExtractor())
+          .forEach(mutationBuilder::computedColumn);
       return mutationBuilder;
     };
   }

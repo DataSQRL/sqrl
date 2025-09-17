@@ -28,7 +28,7 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.error.ErrorLocation.FileLocation;
 import com.datasqrl.flinkrunner.stdlib.utils.AutoRegisterSystemFunction;
-import com.datasqrl.graphql.server.MutationComputedColumnType;
+import com.datasqrl.graphql.server.MetadataType;
 import com.datasqrl.io.schema.SchemaConversionResult;
 import com.datasqrl.loaders.schema.SchemaLoader;
 import com.datasqrl.plan.util.PrimaryKeyMap;
@@ -910,14 +910,10 @@ public class Sqrl2FlinkSQLTranslator {
         var column = flinkSchema.getColumns().get(i);
         outputType.add(field);
         // Check if field is a computed column, if so it should not be part of input type
-        var computedColumn =
-            computedColumns.stream()
-                .filter(col -> col.getColumnName().equals(column.getName()))
-                .findFirst();
-        if (computedColumn.isPresent()) {
+        var computedColumn = computedColumns.get(column.getName());
+        if (computedColumn != null) {
           // if computed column is UUID and we don't have a pk, select it as pk
-          if (pk.isUndefined()
-              && computedColumn.get().getType() == MutationComputedColumnType.UUID) {
+          if (pk.isUndefined() && computedColumn.metadataType() == MetadataType.UUID) {
             pk = PrimaryKeyMap.of(List.of(i));
           }
         } else {

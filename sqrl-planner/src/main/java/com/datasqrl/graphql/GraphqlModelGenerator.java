@@ -23,9 +23,9 @@ import com.datasqrl.engine.log.kafka.KafkaQuery;
 import com.datasqrl.engine.log.kafka.NewTopic;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.jdbc.SchemaConstants;
-import com.datasqrl.graphql.server.MutationComputedColumnType;
 import com.datasqrl.graphql.server.MutationInsertType;
 import com.datasqrl.graphql.server.PaginationType;
+import com.datasqrl.graphql.server.ResolvedMetadata;
 import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
 import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentLookupQueryCoords;
@@ -41,7 +41,6 @@ import com.datasqrl.graphql.server.RootGraphqlModel.QueryWithArguments;
 import com.datasqrl.graphql.server.RootGraphqlModel.SqlQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.SubscriptionCoords;
 import com.datasqrl.graphql.util.GraphqlSchemaUtil;
-import com.datasqrl.planner.dag.plan.MutationComputedColumn;
 import com.datasqrl.planner.dag.plan.MutationQuery;
 import com.datasqrl.planner.parser.AccessModifier;
 import com.datasqrl.planner.tables.SqrlFunctionParameter;
@@ -91,10 +90,9 @@ public class GraphqlModelGenerator extends GraphqlSchemaWalker {
     var inputArguments = atField.getInputValueDefinitions();
     SubscriptionCoords subscriptionCoords;
     if (executableQuery instanceof KafkaQuery kafkaQuery) {
-      Map<String, String> filters =
+      Map<String, QueryParameterHandler> filters =
           kafkaQuery.getFilterColumnNames().entrySet().stream()
-              .collect(
-                  Collectors.toMap(e -> inputArguments.get(e.getValue()).getName(), Entry::getKey));
+              .collect(Collectors.toMap(Entry::getKey, e -> convert(e.getValue())));
       subscriptionCoords =
           new KafkaSubscriptionCoords(fieldName, kafkaQuery.getTopicName(), Map.of(), filters);
     } else {
@@ -107,11 +105,7 @@ public class GraphqlModelGenerator extends GraphqlSchemaWalker {
   protected void visitMutation(
       FieldDefinition atField, TypeDefinitionRegistry registry, MutationQuery mutation) {
     MutationCoords mutationCoords;
-    Map<String, MutationComputedColumnType> computedColumns =
-        mutation.getComputedColumns().stream()
-            .collect(
-                Collectors.toMap(
-                    MutationComputedColumn::getColumnName, MutationComputedColumn::getType));
+    Map<String, ResolvedMetadata> computedColumns = mutation.getComputedColumns();
     boolean returnList = GraphqlSchemaUtil.isListType(atField.getType());
     if (mutation.getCreateTopic() instanceof NewTopic newTopic) {
       mutationCoords =
@@ -166,19 +160,8 @@ public class GraphqlModelGenerator extends GraphqlSchemaWalker {
         "This table function should be planned as an ExecutableJdbcReadQuery");
     final var executableJdbcReadQuery = (ExecutableJdbcReadQuery) executableQuery;
 
-    List<QueryParameterHandler> parameters = new ArrayList<>();
-    for (FunctionParameter functionParameter : tableFunction.getParameters()) {
-      final var parameter = (SqrlFunctionParameter) functionParameter;
-      QueryParameterHandler queryParam;
-      if (parameter.isParentField()) {
-        queryParam = new ParentParameter(parameter.getName());
-      } else if (parameter.isMetadata()) {
-        queryParam = new MetadataParameter(parameter.getMetadata().get());
-      } else {
-        queryParam = new RootGraphqlModel.ArgumentParameter(parameter.getName());
-      }
-      parameters.add(queryParam);
-    }
+    List<QueryParameterHandler> parameters =
+        tableFunction.getParameters().stream().map(GraphqlModelGenerator::convert).toList();
     RootGraphqlModel.QueryBase queryBase;
 
     var hasLimitOrOffset =
@@ -202,6 +185,19 @@ public class GraphqlModelGenerator extends GraphqlSchemaWalker {
 
     coordsBuilder.exec(set);
     queryCoords.add(coordsBuilder.build());
+  }
+
+  private static QueryParameterHandler convert(FunctionParameter functionParameter) {
+    final var parameter = (SqrlFunctionParameter) functionParameter;
+    QueryParameterHandler queryParam;
+    if (parameter.isParentField()) {
+      queryParam = new ParentParameter(parameter.getName());
+    } else if (parameter.isMetadata()) {
+      queryParam = new MetadataParameter(parameter.getMetadata().get());
+    } else {
+      queryParam = new RootGraphqlModel.ArgumentParameter(parameter.getName());
+    }
+    return queryParam;
   }
 
   private static Set<Argument> createArguments(FieldDefinition field) {

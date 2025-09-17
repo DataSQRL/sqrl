@@ -23,6 +23,7 @@ import com.datasqrl.graphql.server.GraphQLEngineBuilder;
 import com.datasqrl.graphql.server.MetadataReader;
 import com.datasqrl.graphql.server.MetadataType;
 import com.datasqrl.graphql.server.QueryExecutionContext;
+import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.VariableArgument;
@@ -94,9 +95,7 @@ public class VertxContext implements Context {
     DataFetcher<?> dataFetcher =
         env -> {
           Set<Argument> argumentSet =
-              env.getArguments().entrySet().stream()
-                  .map(argument -> new VariableArgument(argument.getKey(), argument.getValue()))
-                  .collect(Collectors.toSet());
+              RootGraphqlModel.VariableArgument.convertArguments(env.getArguments());
 
           var cf = new CompletableFuture<Object>();
 

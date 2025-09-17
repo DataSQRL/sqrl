@@ -33,15 +33,16 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.Value;
 
-@Value
-public class JdbcExecutionContext extends AbstractQueryExecutionContext {
+public class JdbcExecutionContext extends AbstractQueryExecutionContext<JdbcContext> {
 
-  JdbcContext context;
-  DataFetchingEnvironment environment;
-  Set<Argument> arguments;
+  public JdbcExecutionContext(
+      JdbcContext context, DataFetchingEnvironment environment, Set<Argument> arguments) {
+    super(context, environment, arguments);
+  }
 
   @SneakyThrows
   @Override
@@ -95,7 +96,7 @@ public class JdbcExecutionContext extends AbstractQueryExecutionContext {
       final String sqlQuery = unpreparedSqlQuery;
       return CompletableFuture.supplyAsync(
           () -> {
-            Connection connection = this.context.getClient().getConnection();
+            Connection connection = this.getContext().getClient().getConnection();
 
             try (PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
               for (int i = 0; i < paramObj.size(); i++) {
