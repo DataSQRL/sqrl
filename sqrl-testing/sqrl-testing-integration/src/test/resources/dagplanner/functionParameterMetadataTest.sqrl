@@ -1,5 +1,19 @@
 IMPORT ecommerceTs.customer;
 
+CREATE TABLE _InputData (
+    event_id STRING NOT NULL METADATA FROM 'uuid',
+    customerid BIGINT NOT NULL METADATA FROM 'auth.userid',
+    message STRING NOT NULL,
+    event_time TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp'
+);
+
+
 CustomersByTime(customerid BIGINT NOT NULL METADATA FROM 'auth.userid', fromTime TIMESTAMP NOT NULL) :=
     SELECT * FROM Customer WHERE customerid = :customerid AND `timestamp` + INTERVAL '4' HOUR >= :fromTime
     ORDER BY `timestamp` ASC;
+
+/*+no_query */
+CustomerMessage := SELECT * FROM _InputData WHERE message <> '';
+
+CustomerMessageStream(customerid BIGINT NOT NULL METADATA FROM 'auth.userid') :=
+                SUBSCRIBE SELECT * FROM CustomerMessage WHERE customerid = :customerid;
