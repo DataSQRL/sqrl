@@ -38,7 +38,6 @@ import com.datasqrl.planner.dag.plan.MaterializationStagePlan;
 import com.datasqrl.planner.dag.plan.MaterializationStagePlan.Query;
 import com.datasqrl.planner.tables.FlinkConnectorConfig;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
-import com.datasqrl.planner.tables.SqrlFunctionParameter;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.StreamUtil;
 import com.google.common.base.Preconditions;
