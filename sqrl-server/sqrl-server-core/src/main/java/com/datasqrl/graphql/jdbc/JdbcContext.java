@@ -25,12 +25,10 @@ import com.datasqrl.graphql.server.QueryExecutionContext;
 import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedQuery;
-import com.datasqrl.graphql.server.RootGraphqlModel.VariableArgument;
 import graphql.schema.DataFetcher;
 import graphql.schema.PropertyDataFetcher;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.Value;
 

@@ -17,7 +17,6 @@ package com.datasqrl.engine.log.kafka;
 
 import com.datasqrl.engine.ExecutableQuery;
 import com.datasqrl.engine.pipeline.ExecutionStage;
-import com.datasqrl.planner.tables.SqrlFunctionParameter;
 import java.util.Map;
 import lombok.Value;
 import org.apache.calcite.schema.FunctionParameter;

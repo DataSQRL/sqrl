@@ -16,10 +16,7 @@
 package com.datasqrl.graphql.server;
 
 import com.datasqrl.graphql.exec.ExecutionContext;
-import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedSqlQuery;
-import graphql.schema.DataFetchingEnvironment;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 public interface QueryExecutionContext extends ExecutionContext {

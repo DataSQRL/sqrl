@@ -23,7 +23,6 @@ import com.datasqrl.graphql.server.RootGraphqlModel.KafkaSubscriptionCoords;
 import graphql.schema.DataFetcher;
 import graphql.schema.DataFetchingEnvironment;
 import io.vertx.core.json.JsonObject;
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.reactivestreams.Publisher;

@@ -33,9 +33,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import lombok.Getter;
 import lombok.SneakyThrows;
-import lombok.Value;
 
 public class JdbcExecutionContext extends AbstractQueryExecutionContext<JdbcContext> {
 
