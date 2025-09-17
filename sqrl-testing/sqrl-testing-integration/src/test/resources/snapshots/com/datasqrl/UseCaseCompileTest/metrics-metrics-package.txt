@@ -390,8 +390,16 @@ CREATE INDEX IF NOT EXISTS "SensorReading_hash_c1" ON "SensorReading" USING hash
           "returnList" : false,
           "topic" : "SensorReading",
           "computedColumns" : {
-            "uuid" : "UUID",
-            "event_time" : "TIMESTAMP"
+            "uuid" : {
+              "metadataType" : "UUID",
+              "name" : "",
+              "isRequired" : true
+            },
+            "event_time" : {
+              "metadataType" : "TIMESTAMP",
+              "name" : "",
+              "isRequired" : false
+            }
           },
           "transactional" : false,
           "sinkConfig" : { }
@@ -403,7 +411,7 @@ CREATE INDEX IF NOT EXISTS "SensorReading_hash_c1" ON "SensorReading" USING hash
           "fieldName" : "HighTempAlert",
           "topic" : "HighTempAlert",
           "sinkConfig" : { },
-          "filters" : { }
+          "equalityConditions" : { }
         }
       ],
       "operations" : [

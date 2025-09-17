@@ -77,7 +77,7 @@ public class MutationQuery implements ExecutableQuery, Documented {
       if (metadataAlias.equalsIgnoreCase(UUID_METADATA)) {
         return new ResolvedMetadata(MetadataType.UUID, "", !isNullable);
       } else if (metadataAlias.equalsIgnoreCase(TIMESTAMP_METADATA)) {
-        return new ResolvedMetadata(MetadataType.UUID, "", !isNullable);
+        return new ResolvedMetadata(MetadataType.TIMESTAMP, "", !isNullable);
       }
       Optional<ResolvedMetadata> metadata =
           SqrlTableFunctionStatement.parseMetadata(metadataAlias, !isNullable);
