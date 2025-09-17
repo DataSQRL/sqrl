@@ -2487,15 +2487,18 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
           "fieldName" : "CustomerSubscription",
           "topic" : "kafka-CustomerSubscription",
           "sinkConfig" : { },
-          "filters" : { }
+          "equalityConditions" : { }
         },
         {
           "type" : "kafka",
           "fieldName" : "CustomerSubscriptionById",
           "topic" : "kafka-Customer",
           "sinkConfig" : { },
-          "filters" : {
-            "minId" : "customerid"
+          "equalityConditions" : {
+            "customerid" : {
+              "type" : "arg",
+              "path" : "minId"
+            }
           }
         }
       ],
