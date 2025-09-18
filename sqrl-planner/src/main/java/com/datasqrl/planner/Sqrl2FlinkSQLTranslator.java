@@ -265,6 +265,10 @@ public class Sqrl2FlinkSQLTranslator {
     return RelToFlinkSql.convertToSqlNode(relNode);
   }
 
+  public List<String> toSqlString(List<? extends SqlNode> sqlNode) {
+    return sqlNode.stream().map(this::toSqlString).toList();
+  }
+
   public String toSqlString(SqlNode sqlNode) {
     return RelToFlinkSql.convertToString(sqlNode);
   }
@@ -276,15 +280,21 @@ public class Sqrl2FlinkSQLTranslator {
    * @return
    */
   public FlinkPhysicalPlan compileFlinkPlan() {
-    var execute = planBuilder.getExecuteStatement();
-    // StatementSetOperation statmentSetOp = (StatementSetOperation) getOperation(execute);
+    var execute = planBuilder.getExecuteStatements();
+
+    if (executionMode != RuntimeExecutionMode.BATCH && execute.size() > 1) {
+      throw new UnsupportedOperationException("Multiple batches are only supported in BATCH mode");
+    }
+
     var insert = toSqlString(execute);
     planBuilder.add(execute, insert);
-    Optional<CompiledPlan> compiledPlan = Optional.empty();
+
+    var compiledPlan = Optional.<CompiledPlan>empty();
     if (executionMode == RuntimeExecutionMode.STREAMING && compileFlinkPlan) {
-      var parse = (StatementSetOperation) tEnv.getParser().parse(insert + ";").get(0);
+      var parse = (StatementSetOperation) tEnv.getParser().parse(insert.get(0) + ";").get(0);
       compiledPlan = Optional.of(tEnv.compilePlan(parse.getOperations()));
     }
+
     return planBuilder.build(compiledPlan);
   }
 
@@ -344,7 +354,7 @@ public class Sqrl2FlinkSQLTranslator {
                 .unwrap(CalciteCatalogReader.class),
             relBuilder,
             errors);
-    var viewAnalysis = analyzer.analyze(hints);
+    var viewAnalysis = analyzer.analyze(hints, planBuilder.currentBatch());
     viewAnalysis.getTableAnalysis().topLevelSort(topLevelSort);
     return viewAnalysis;
   }
@@ -587,6 +597,7 @@ public class Sqrl2FlinkSQLTranslator {
             .hints(hints)
             .errors(errors)
             .fromTables(fromTables)
+            .batchIndex(planBuilder.currentBatch())
             .build();
 
     return SqrlTableFunction.builder()
@@ -639,6 +650,7 @@ public class Sqrl2FlinkSQLTranslator {
             .errors(baseTable.getErrors())
             .collapsedRelnode(relNode)
             .objectIdentifier(identifier)
+            .batchIndex(baseTable.getBatchIndex())
             .build();
 
     return SqrlTableFunction.builder()
@@ -940,13 +952,17 @@ public class Sqrl2FlinkSQLTranslator {
         .getTableIdentifier();
   }
 
-  public void insertInto(RelNode relNode, ObjectIdentifier sinkTableId) {
+  public void insertInto(RelNode relNode, ObjectIdentifier sinkTableId, int batchIdx) {
     var selectQuery = toSqlNode(relNode);
-    planBuilder.addInsert(FlinkSqlNodeFactory.createInsert(selectQuery, sinkTableId));
+    planBuilder.addInsert(FlinkSqlNodeFactory.createInsert(selectQuery, sinkTableId), batchIdx);
   }
 
   public void insertInto(RichSqlInsert insert) {
     planBuilder.addInsert(insert);
+  }
+
+  public void nextBatch() {
+    planBuilder.nextBatch();
   }
 
   public SqlOperator lookupUserDefinedFunction(FunctionDefinition fct) {

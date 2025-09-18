@@ -101,6 +101,7 @@ public class SqrlStatementParser {
   public static final String DISTINCT_KEYWORD = "distinct";
   public static final String SUBSCRIBE_KEYWORD = "subscribe";
   public static final String WITH_KEYWORD = "with";
+  public static final String NEXT_BATCH_KEYWORD = "next_batch";
 
   public static final String SELF_REFERENCE_KEYWORD = "this";
 
@@ -110,6 +111,10 @@ public class SqrlStatementParser {
           + "\\.)((?<name1>\\w+)|`(?<name2>[^` ]+)`)";
   public static final Pattern VARIABLE_PARSER =
       Pattern.compile(VARIABLE_REGEX, Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+
+  public static final String NEXT_BATCH_REGEX = "\\s*NEXT_BATCH\\s*;";
+  public static final Pattern NEXT_BATCH_PARSER =
+      Pattern.compile(NEXT_BATCH_REGEX, Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
 
   private SqlScriptStatementSplitter sqlSplitter;
 
@@ -297,7 +302,13 @@ public class SqrlStatementParser {
       return new SqrlCreateTableStatement(createTableStmt, comment);
     }
 
-    // #4: If none of the regex match, we assume it's a Flink SQL statement
+    // #4: Next Batch
+    var nextBatch = NEXT_BATCH_PARSER.matcher(statement);
+    if (nextBatch.find()) {
+      return SqrlNextBatch.INSTANCE;
+    }
+
+    // #5: If none of the regex match, we assume it's a Flink SQL statement
     return new FlinkSQLStatement(new ParsedObject<>(statement, FileLocation.START));
   }
 

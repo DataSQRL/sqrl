@@ -79,6 +79,7 @@ import com.datasqrl.planner.parser.SqrlCreateTableStatement;
 import com.datasqrl.planner.parser.SqrlDefinition;
 import com.datasqrl.planner.parser.SqrlExportStatement;
 import com.datasqrl.planner.parser.SqrlImportStatement;
+import com.datasqrl.planner.parser.SqrlNextBatch;
 import com.datasqrl.planner.parser.SqrlPassthroughTableFunctionStatement;
 import com.datasqrl.planner.parser.SqrlStatement;
 import com.datasqrl.planner.parser.SqrlStatementParser;
@@ -112,7 +113,6 @@ import lombok.Getter;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.schema.FunctionParameter;
-import org.apache.calcite.sql.parser.SqlParseException;
 import org.apache.flink.sql.parser.ddl.SqlAlterTable;
 import org.apache.flink.sql.parser.ddl.SqlAlterView;
 import org.apache.flink.sql.parser.ddl.SqlAlterViewAs;
@@ -265,14 +265,12 @@ public class SqlScriptPlanner {
    * @param statementStack
    * @param sqrlEnv
    * @param errors
-   * @throws SqlParseException
    */
   private void planStatement(
       SQLStatement stmt,
       List<StackableStatement> statementStack,
       Sqrl2FlinkSQLTranslator sqrlEnv,
-      ErrorCollector errors)
-      throws SqlParseException {
+      ErrorCollector errors) {
     // Process hints & documentation
     var hints = PlannerHints.EMPTY;
     Optional<String> documentation = Optional.empty();
@@ -497,6 +495,9 @@ public class SqlScriptPlanner {
         addTableToDag(
             sqrlEnv.addView(originalSql, hints, errors), hintsAndDocs, visibility, false, sqrlEnv);
       }
+    } else if (stmt instanceof SqrlNextBatch) {
+      sqrlEnv.nextBatch();
+
     } else if (stmt instanceof FlinkSQLStatement flinkStmt) {
       var node = sqrlEnv.parseSQL(flinkStmt.getSql().get());
       if (node instanceof SqlCreateView || node instanceof SqlAlterViewAs) {

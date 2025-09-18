@@ -1,0 +1,17 @@
+{
+  "version": "1",
+  "enabled-engines": ["flink", "postgres"],
+  "script": {
+    "main": "multi-batch.sqrl"
+  },
+  "engines": {
+    "flink" : {
+      "config": {
+        "execution.runtime-mode": "batch"
+      }
+    }
+  },
+  "test-runner": {
+    "delay-sec": -1
+  }
+}

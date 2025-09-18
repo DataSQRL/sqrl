@@ -232,7 +232,8 @@ public class DAGPlanner {
                       targetTable = exportNode.getCreatedSinkTable().get();
                       sqrlEnv.insertInto(
                           sqrlEnv.getTableScan(node.getIdentifier().objectIdentifier()).build(),
-                          targetTable);
+                          targetTable,
+                          node.getTableAnalysis().getBatchIndex());
                       continue;
                     }
                   } else { // We are sinking into another engine
@@ -314,7 +315,8 @@ public class DAGPlanner {
                       new InputTableKey(exportStage, originalNodeTable.getObjectIdentifier()),
                       targetTable);
                   // Finally: add insert statement to sink into table
-                  sqrlEnv.insertInto(relBuilder.build(), targetTable);
+                  sqrlEnv.insertInto(
+                      relBuilder.build(), targetTable, sinkNodeTable.getBatchIndex());
                 }
               }
             });

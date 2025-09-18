@@ -1,0 +1,88 @@
+>>>pipeline_explain.txt
+=== BatchA
+ID:     default_catalog.default_database.BatchA
+Type:   state
+Stage:  flink
+Primary Key: val
+Timestamp  : -
+Schema:
+ - val: INTEGER NOT NULL
+Plan:
+LogicalProject(val=[$0])
+  LogicalValues(tuples=[[{ 1 }, { 2 }, { 3 }]])
+SQL: CREATE VIEW `BatchA` AS  SELECT * FROM (VALUES (1), (2), (3)) AS t(val);
+
+=== BatchB
+ID:     default_catalog.default_database.BatchB
+Type:   state
+Stage:  flink
+Inputs: default_catalog.default_database.BatchA
+Primary Key: 
+Timestamp  : -
+Schema:
+ - recordCount: BIGINT NOT NULL
+Plan:
+LogicalAggregate(group=[{}], recordCount=[COUNT()])
+  LogicalProject($f0=[0])
+    LogicalTableScan(table=[[default_catalog, default_database, BatchA]])
+SQL: CREATE VIEW `BatchB` AS  SELECT COUNT(*) AS recordCount FROM BatchA;
+
+>>>flink-sql-no-functions.sql
+CREATE VIEW `BatchA`
+AS
+SELECT *
+FROM (VALUES ROW(1),
+   ROW(2),
+   ROW(3)) AS `t` (`val`);
+CREATE VIEW `BatchB`
+AS
+SELECT COUNT(*) AS `recordCount`
+FROM `BatchA`;
+CREATE VIEW `BatchATest`
+AS
+SELECT *
+FROM `BatchA`;
+CREATE VIEW `BatchBTest`
+AS
+SELECT *
+FROM `BatchB`;
+CREATE TABLE `BatchA_1` (
+  `val` INTEGER NOT NULL,
+  PRIMARY KEY (`val`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = 'BatchA',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `BatchB_2` (
+  `recordCount` BIGINT NOT NULL,
+  `__pk_hash` INTEGER NOT NULL,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = 'BatchB',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`BatchA_1`
+(SELECT *
+ FROM `default_catalog`.`default_database`.`BatchA`)
+;
+END;
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`BatchB_2`
+(SELECT `recordCount`, 1 AS `__pk_hash`
+ FROM `default_catalog`.`default_database`.`BatchB`)
+;
+END
+>>>postgres-schema.sql
+CREATE TABLE IF NOT EXISTS "BatchA" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"));
+CREATE TABLE IF NOT EXISTS "BatchB" ("recordCount" BIGINT NOT NULL, "__pk_hash" INTEGER NOT NULL, PRIMARY KEY ("__pk_hash"))
+>>>postgres-views.sql
+

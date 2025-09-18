@@ -15,10 +15,11 @@
  */
 package com.datasqrl.planner;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.planner.tables.FlinkConnectorConfig;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -85,16 +86,29 @@ public class FlinkPhysicalPlan implements EnginePhysicalPlan {
     private final Set<String> connectors = new HashSet<>();
     private final Set<String> formats = new HashSet<>();
     private final Set<String> fullyResolvedFunctions = new HashSet<>();
-    private final List<RichSqlInsert> statementSet = new ArrayList<>();
+    private final List<List<RichSqlInsert>> statementSets = new ArrayList<>();
 
     private Configuration config;
 
     public Builder(Configuration config) {
       this.config = config.clone();
+      nextBatch();
     }
 
     public void addInsert(RichSqlInsert insert) {
-      statementSet.add(insert);
+      statementSets.get(statementSets.size() - 1).add(insert);
+    }
+
+    public void addInsert(RichSqlInsert insert, int batchIdx) {
+      statementSets.get(batchIdx).add(insert);
+    }
+
+    public int currentBatch() {
+      return statementSets.size() - 1;
+    }
+
+    public void nextBatch() {
+      statementSets.add(new ArrayList<>());
     }
 
     public void add(SqlNode sqlNode, Sqrl2FlinkSQLTranslator sqrlEnv) {
@@ -103,6 +117,14 @@ public class FlinkPhysicalPlan implements EnginePhysicalPlan {
 
     public void addFullyResolvedFunction(String createFunction) {
       fullyResolvedFunctions.add(createFunction);
+    }
+
+    public void add(List<? extends SqlNode> nodes, List<String> nodeSqls) {
+      checkArgument(nodeSqls.size() == nodes.size(), "Node and SQL size mismatch during planning");
+
+      for (int i = 0; i < nodes.size(); i++) {
+        add(nodes.get(i), nodeSqls.get(i));
+      }
     }
 
     public void add(SqlNode node, String nodeSql) {
@@ -133,11 +155,14 @@ public class FlinkPhysicalPlan implements EnginePhysicalPlan {
       config = inferredConfig.clone();
     }
 
-    public SqlExecute getExecuteStatement() {
-      Preconditions.checkArgument(
-          !statementSet.isEmpty(), "SQRL script does not contain any sink definitions");
-      var sqlStatementSet = new SqlStatementSet(statementSet, SqlParserPos.ZERO);
-      return new SqlExecute(sqlStatementSet, SqlParserPos.ZERO);
+    public List<SqlExecute> getExecuteStatements() {
+      checkArgument(hasSink(), "SQRL script does not contain any sink definitions");
+
+      return statementSets.stream()
+          .filter(inserts -> !inserts.isEmpty())
+          .map(inserts -> new SqlStatementSet(inserts, SqlParserPos.ZERO))
+          .map(ss -> new SqlExecute(ss, SqlParserPos.ZERO))
+          .toList();
     }
 
     public FlinkPhysicalPlan build(Optional<CompiledPlan> compiledPlan) {
@@ -155,6 +180,15 @@ public class FlinkPhysicalPlan implements EnginePhysicalPlan {
           explainedPlan,
           flinkSqlNoFunctions,
           config);
+    }
+
+    private boolean hasSink() {
+      for (List<RichSqlInsert> statementSet : statementSets) {
+        if (!statementSet.isEmpty()) {
+          return true;
+        }
+      }
+      return false;
     }
   }
 }
