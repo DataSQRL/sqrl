@@ -1,0 +1,27 @@
+>>>pipeline_explain.txt
+
+>>>flink-sql-no-functions.sql
+CREATE TABLE `TableA` (
+  `val` INTEGER
+) WITH (
+  'connector' = 'print'
+);
+CREATE TABLE `TableB` (
+  `recordCount` INTEGER
+) WITH (
+  'connector' = 'print'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `TableA`
+(SELECT *
+ FROM (VALUES ROW(1),
+    ROW(2),
+    ROW(3)) AS `t` (`val`))
+;
+END;
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `TableB`
+(SELECT COUNT(*) AS `recordCount`
+ FROM `BatchA`)
+;
+END

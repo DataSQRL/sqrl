@@ -54,13 +54,14 @@ public class FullUseCaseIT extends AbstractFullUseCaseTest {
           "snowflake", // fails in build server
           "sensors-full", // flaky (too much data)
           "flink-only", // not a full test case
+          "multi-batch", // not a full test case
           "connectors" // not an executable test case
           );
 
   @Disabled("Intended for manual usage")
   @Test
   void specificUseCase() {
-    var pkg = USE_CASES.resolve("passthrough").resolve("package.json");
+    var pkg = USE_CASES.resolve("multi-batch").resolve("package.json");
 
     var param = new UseCaseParam(pkg);
     fullUseCaseTest(param);

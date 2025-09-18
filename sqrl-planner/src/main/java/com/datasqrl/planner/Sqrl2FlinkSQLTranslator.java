@@ -265,6 +265,10 @@ public class Sqrl2FlinkSQLTranslator {
     return RelToFlinkSql.convertToSqlNode(relNode);
   }
 
+  public List<String> toSqlString(List<? extends SqlNode> sqlNode) {
+    return sqlNode.stream().map(this::toSqlString).toList();
+  }
+
   public String toSqlString(SqlNode sqlNode) {
     return RelToFlinkSql.convertToString(sqlNode);
   }
@@ -276,15 +280,21 @@ public class Sqrl2FlinkSQLTranslator {
    * @return
    */
   public FlinkPhysicalPlan compileFlinkPlan() {
-    var execute = planBuilder.getExecuteStatement();
-    // StatementSetOperation statmentSetOp = (StatementSetOperation) getOperation(execute);
+    var execute = planBuilder.getExecuteStatements();
+
+    if (executionMode != RuntimeExecutionMode.BATCH && execute.size() > 1) {
+      throw new UnsupportedOperationException("Multiple batches are only supported in BATCH mode");
+    }
+
     var insert = toSqlString(execute);
     planBuilder.add(execute, insert);
-    Optional<CompiledPlan> compiledPlan = Optional.empty();
+
+    var compiledPlan = Optional.<CompiledPlan>empty();
     if (executionMode == RuntimeExecutionMode.STREAMING && compileFlinkPlan) {
-      var parse = (StatementSetOperation) tEnv.getParser().parse(insert + ";").get(0);
+      var parse = (StatementSetOperation) tEnv.getParser().parse(insert.get(0) + ";").get(0);
       compiledPlan = Optional.of(tEnv.compilePlan(parse.getOperations()));
     }
+
     return planBuilder.build(compiledPlan);
   }
 
@@ -941,12 +951,25 @@ public class Sqrl2FlinkSQLTranslator {
   }
 
   public void insertInto(RelNode relNode, ObjectIdentifier sinkTableId) {
+    insertInto(relNode, sinkTableId, null);
+  }
+
+  public void insertInto(
+      RelNode relNode, ObjectIdentifier sinkTableId, @Nullable Integer batchIdx) {
     var selectQuery = toSqlNode(relNode);
-    planBuilder.addInsert(FlinkSqlNodeFactory.createInsert(selectQuery, sinkTableId));
+    planBuilder.addInsert(FlinkSqlNodeFactory.createInsert(selectQuery, sinkTableId), batchIdx);
   }
 
   public void insertInto(RichSqlInsert insert) {
-    planBuilder.addInsert(insert);
+    planBuilder.addInsert(insert, null);
+  }
+
+  public void nextBatch() {
+    planBuilder.nextBatch();
+  }
+
+  public int currentBatch() {
+    return planBuilder.currentBatch();
   }
 
   public SqlOperator lookupUserDefinedFunction(FunctionDefinition fct) {
