@@ -1,11 +1,17 @@
-BatchA := SELECT * FROM (VALUES (1), (2), (3)) AS t(val);
+CREATE TABLE TableA (
+  val INT
+) WITH (
+  'connector' = 'print'
+);
+
+CREATE TABLE TableB (
+  recordCount INT
+) WITH (
+  'connector' = 'print'
+);
+
+INSERT INTO TableA SELECT * FROM (VALUES (1), (2), (3)) AS t(val);
 
 NEXT_BATCH;
 
-BatchB := SELECT COUNT(*) AS recordCount FROM BatchA;
-
-/*+test */
-BatchATest := SELECT * FROM BatchA ORDER BY val;
-
-/*+test */
-BatchBTest := SELECT * FROM BatchB LIMIT 1;
+INSERT INTO TableB SELECT COUNT(*) AS recordCount FROM BatchA;

@@ -1,6 +1,6 @@
 {
   "version": "1",
-  "enabled-engines": ["flink", "postgres"],
+  "enabled-engines": ["flink"],
   "script": {
     "main": "multi-batch.sqrl"
   },

@@ -101,7 +101,6 @@ public class SqrlStatementParser {
   public static final String DISTINCT_KEYWORD = "distinct";
   public static final String SUBSCRIBE_KEYWORD = "subscribe";
   public static final String WITH_KEYWORD = "with";
-  public static final String NEXT_BATCH_KEYWORD = "next_batch";
 
   public static final String SELF_REFERENCE_KEYWORD = "this";
 

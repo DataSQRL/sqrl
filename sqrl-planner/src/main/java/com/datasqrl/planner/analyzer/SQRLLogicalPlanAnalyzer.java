@@ -160,7 +160,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
     boolean hasMostRecentDistinct;
   }
 
-  public ViewAnalysis analyze(PlannerHints hints, int currentBatch) {
+  public ViewAnalysis analyze(PlannerHints hints) {
     originalRelnode.accept(this);
     var analysis = this.intermediateAnalysis;
 
@@ -231,7 +231,6 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
             .requiredCapabilities(capabilityAnalysis.getRequiredCapabilities())
             .costs(costAnalyses)
             .hints(hints)
-            .batchIndex(currentBatch)
             .errors(errors);
     return new ViewAnalysis(analysis.relNode, relBuilder, tableAnalysis, hasMostRecentDistinct);
   }

@@ -119,9 +119,6 @@ public class TableAnalysis implements TableOrFunctionAnalysis {
   /** The planner hints attached to this table definition */
   @Builder.Default PlannerHints hints = PlannerHints.EMPTY;
 
-  /** Identifies the batch to which this table belongs. Relevant only for batch jobs. */
-  @Builder.Default int batchIndex = 0;
-
   /**
    * The error collector for the corresponding table definition for when we need to produce table
    * specific errors

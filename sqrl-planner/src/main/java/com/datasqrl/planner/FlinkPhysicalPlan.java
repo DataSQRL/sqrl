@@ -26,6 +26,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import javax.annotation.Nullable;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Value;
@@ -95,12 +96,9 @@ public class FlinkPhysicalPlan implements EnginePhysicalPlan {
       nextBatch();
     }
 
-    public void addInsert(RichSqlInsert insert) {
-      statementSets.get(statementSets.size() - 1).add(insert);
-    }
-
-    public void addInsert(RichSqlInsert insert, int batchIdx) {
-      statementSets.get(batchIdx).add(insert);
+    public void addInsert(RichSqlInsert insert, @Nullable Integer batchIdx) {
+      var idx = batchIdx != null ? batchIdx : statementSets.size() - 1;
+      statementSets.get(idx).add(insert);
     }
 
     public int currentBatch() {

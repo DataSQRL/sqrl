@@ -54,6 +54,7 @@ public class FullUseCaseIT extends AbstractFullUseCaseTest {
           "snowflake", // fails in build server
           "sensors-full", // flaky (too much data)
           "flink-only", // not a full test case
+          "multi-batch", // not a full test case
           "connectors" // not an executable test case
           );
 

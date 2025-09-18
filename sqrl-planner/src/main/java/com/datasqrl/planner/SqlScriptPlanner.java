@@ -26,6 +26,7 @@ import com.datasqrl.config.SystemBuiltInConnectors;
 import com.datasqrl.engine.log.LogEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
+import com.datasqrl.engine.stream.flink.FlinkEngineFactory;
 import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
@@ -496,6 +497,13 @@ public class SqlScriptPlanner {
             sqrlEnv.addView(originalSql, hints, errors), hintsAndDocs, visibility, false, sqrlEnv);
       }
     } else if (stmt instanceof SqrlNextBatch) {
+      var enabledEngines = packageJson.getEnabledEngines();
+      errors.checkFatal(
+          enabledEngines.size() == 1
+              && enabledEngines.get(0).equals(FlinkEngineFactory.ENGINE_NAME),
+          ErrorCode.INVALID_NEXT_BATCH,
+          "NEXT_BATCH usage with an unsupported engine setup: %s",
+          enabledEngines);
       sqrlEnv.nextBatch();
 
     } else if (stmt instanceof FlinkSQLStatement flinkStmt) {
@@ -1000,7 +1008,12 @@ public class SqlScriptPlanner {
         exportStage = optStage.get();
       }
       exportNode =
-          new ExportNode(stageAnalysis, sinkPath, Optional.of(exportStage), Optional.empty());
+          new ExportNode(
+              stageAnalysis,
+              sinkPath,
+              sqrlEnv.currentBatch(),
+              Optional.of(exportStage),
+              Optional.empty());
     } else { // the export is to a user-defined sink: load it
       var module = scriptContext.moduleLoader.getModule(sinkPath.popLast()).orElse(null);
       checkFatal(
@@ -1047,7 +1060,12 @@ public class SqlScriptPlanner {
             sqrlEnv.addExternalExport(tableNameModifier, flinkTable.sqlCreateTable, schemaLoader);
         var tableId = addTableResult.baseTableIdentifier();
         exportNode =
-            new ExportNode(stageAnalysis, sinkPath, Optional.empty(), Optional.of(tableId));
+            new ExportNode(
+                stageAnalysis,
+                sinkPath,
+                sqrlEnv.currentBatch(),
+                Optional.empty(),
+                Optional.of(tableId));
       } catch (Throwable e) {
         throw flinkTable.errorCollector.handle(e);
       }

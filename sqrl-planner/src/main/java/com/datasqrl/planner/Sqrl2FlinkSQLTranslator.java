@@ -354,7 +354,7 @@ public class Sqrl2FlinkSQLTranslator {
                 .unwrap(CalciteCatalogReader.class),
             relBuilder,
             errors);
-    var viewAnalysis = analyzer.analyze(hints, planBuilder.currentBatch());
+    var viewAnalysis = analyzer.analyze(hints);
     viewAnalysis.getTableAnalysis().topLevelSort(topLevelSort);
     return viewAnalysis;
   }
@@ -597,7 +597,6 @@ public class Sqrl2FlinkSQLTranslator {
             .hints(hints)
             .errors(errors)
             .fromTables(fromTables)
-            .batchIndex(planBuilder.currentBatch())
             .build();
 
     return SqrlTableFunction.builder()
@@ -650,7 +649,6 @@ public class Sqrl2FlinkSQLTranslator {
             .errors(baseTable.getErrors())
             .collapsedRelnode(relNode)
             .objectIdentifier(identifier)
-            .batchIndex(baseTable.getBatchIndex())
             .build();
 
     return SqrlTableFunction.builder()
@@ -952,17 +950,26 @@ public class Sqrl2FlinkSQLTranslator {
         .getTableIdentifier();
   }
 
-  public void insertInto(RelNode relNode, ObjectIdentifier sinkTableId, int batchIdx) {
+  public void insertInto(RelNode relNode, ObjectIdentifier sinkTableId) {
+    insertInto(relNode, sinkTableId, null);
+  }
+
+  public void insertInto(
+      RelNode relNode, ObjectIdentifier sinkTableId, @Nullable Integer batchIdx) {
     var selectQuery = toSqlNode(relNode);
     planBuilder.addInsert(FlinkSqlNodeFactory.createInsert(selectQuery, sinkTableId), batchIdx);
   }
 
   public void insertInto(RichSqlInsert insert) {
-    planBuilder.addInsert(insert);
+    planBuilder.addInsert(insert, null);
   }
 
   public void nextBatch() {
     planBuilder.nextBatch();
+  }
+
+  public int currentBatch() {
+    return planBuilder.currentBatch();
   }
 
   public SqlOperator lookupUserDefinedFunction(FunctionDefinition fct) {

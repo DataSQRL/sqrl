@@ -28,6 +28,7 @@ import org.apache.flink.table.catalog.ObjectIdentifier;
 public class ExportNode extends PipelineNode {
 
   private final NamePath sinkPath;
+  private final int batchIndex;
 
   private final Optional<ExecutionStage> sinkTo;
   private final Optional<ObjectIdentifier> createdSinkTable;
@@ -35,10 +36,12 @@ public class ExportNode extends PipelineNode {
   public ExportNode(
       Map<ExecutionStage, StageAnalysis> stageAnalysis,
       NamePath sinkPath,
+      int batchIndex,
       Optional<ExecutionStage> sinkTo,
       Optional<ObjectIdentifier> createdSinkTable) {
     super("export", stageAnalysis);
     this.sinkPath = sinkPath;
+    this.batchIndex = batchIndex;
     this.sinkTo = sinkTo;
     this.createdSinkTable = createdSinkTable;
   }
