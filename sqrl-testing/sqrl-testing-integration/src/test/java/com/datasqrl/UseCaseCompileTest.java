@@ -54,7 +54,8 @@ public class UseCaseCompileTest extends AbstractUseCaseTest {
   @ArgumentsSource(UseCaseFiles.class)
   @Disabled
   void runTestCaseByName(Path script, Path graphQlFile, Path packageFile) {
-    assumeTrue(script.toString().endsWith("duckdb.sqrl"), "Not the test marked for execution.");
+    assumeTrue(
+        script.toString().endsWith("multi-batch.sqrl"), "Not the test marked for execution.");
 
     super.testUsecase(script, graphQlFile, packageFile);
   }

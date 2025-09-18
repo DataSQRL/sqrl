@@ -1,0 +1,17 @@
+CREATE TABLE TableA (
+  val INT
+) WITH (
+  'connector' = 'print'
+);
+
+CREATE TABLE TableB (
+  recordCount INT
+) WITH (
+  'connector' = 'print'
+);
+
+INSERT INTO TableA SELECT * FROM (VALUES (1), (2), (3)) AS t(val);
+
+NEXT_BATCH;
+
+INSERT INTO TableB SELECT COUNT(*) AS recordCount FROM BatchA;

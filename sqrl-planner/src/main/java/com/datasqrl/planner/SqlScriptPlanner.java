@@ -26,6 +26,7 @@ import com.datasqrl.config.SystemBuiltInConnectors;
 import com.datasqrl.engine.log.LogEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
+import com.datasqrl.engine.stream.flink.FlinkEngineFactory;
 import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
@@ -79,6 +80,7 @@ import com.datasqrl.planner.parser.SqrlCreateTableStatement;
 import com.datasqrl.planner.parser.SqrlDefinition;
 import com.datasqrl.planner.parser.SqrlExportStatement;
 import com.datasqrl.planner.parser.SqrlImportStatement;
+import com.datasqrl.planner.parser.SqrlNextBatch;
 import com.datasqrl.planner.parser.SqrlPassthroughTableFunctionStatement;
 import com.datasqrl.planner.parser.SqrlStatement;
 import com.datasqrl.planner.parser.SqrlStatementParser;
@@ -112,7 +114,6 @@ import lombok.Getter;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.schema.FunctionParameter;
-import org.apache.calcite.sql.parser.SqlParseException;
 import org.apache.flink.sql.parser.ddl.SqlAlterTable;
 import org.apache.flink.sql.parser.ddl.SqlAlterView;
 import org.apache.flink.sql.parser.ddl.SqlAlterViewAs;
@@ -265,14 +266,12 @@ public class SqlScriptPlanner {
    * @param statementStack
    * @param sqrlEnv
    * @param errors
-   * @throws SqlParseException
    */
   private void planStatement(
       SQLStatement stmt,
       List<StackableStatement> statementStack,
       Sqrl2FlinkSQLTranslator sqrlEnv,
-      ErrorCollector errors)
-      throws SqlParseException {
+      ErrorCollector errors) {
     // Process hints & documentation
     var hints = PlannerHints.EMPTY;
     Optional<String> documentation = Optional.empty();
@@ -497,6 +496,16 @@ public class SqlScriptPlanner {
         addTableToDag(
             sqrlEnv.addView(originalSql, hints, errors), hintsAndDocs, visibility, false, sqrlEnv);
       }
+    } else if (stmt instanceof SqrlNextBatch) {
+      var enabledEngines = packageJson.getEnabledEngines();
+      errors.checkFatal(
+          enabledEngines.size() == 1
+              && enabledEngines.get(0).equals(FlinkEngineFactory.ENGINE_NAME),
+          ErrorCode.INVALID_NEXT_BATCH,
+          "NEXT_BATCH usage with an unsupported engine setup: %s",
+          enabledEngines);
+      sqrlEnv.nextBatch();
+
     } else if (stmt instanceof FlinkSQLStatement flinkStmt) {
       var node = sqrlEnv.parseSQL(flinkStmt.getSql().get());
       if (node instanceof SqlCreateView || node instanceof SqlAlterViewAs) {
@@ -999,7 +1008,12 @@ public class SqlScriptPlanner {
         exportStage = optStage.get();
       }
       exportNode =
-          new ExportNode(stageAnalysis, sinkPath, Optional.of(exportStage), Optional.empty());
+          new ExportNode(
+              stageAnalysis,
+              sinkPath,
+              sqrlEnv.currentBatch(),
+              Optional.of(exportStage),
+              Optional.empty());
     } else { // the export is to a user-defined sink: load it
       var module = scriptContext.moduleLoader.getModule(sinkPath.popLast()).orElse(null);
       checkFatal(
@@ -1046,7 +1060,12 @@ public class SqlScriptPlanner {
             sqrlEnv.addExternalExport(tableNameModifier, flinkTable.sqlCreateTable, schemaLoader);
         var tableId = addTableResult.baseTableIdentifier();
         exportNode =
-            new ExportNode(stageAnalysis, sinkPath, Optional.empty(), Optional.of(tableId));
+            new ExportNode(
+                stageAnalysis,
+                sinkPath,
+                sqrlEnv.currentBatch(),
+                Optional.empty(),
+                Optional.of(tableId));
       } catch (Throwable e) {
         throw flinkTable.errorCollector.handle(e);
       }
