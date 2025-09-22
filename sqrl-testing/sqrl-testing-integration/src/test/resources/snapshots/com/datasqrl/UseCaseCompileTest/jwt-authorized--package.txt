@@ -1,4 +1,26 @@
 >>>pipeline_explain.txt
+=== AuthInputData
+ID:     default_catalog.default_database.AuthInputData
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database.AuthInputData__base
+Annotations:
+ - stream-root: AuthInputData
+Primary Key: event_id
+Timestamp  : event_time
+Schema:
+ - event_id: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - val: BIGINT NOT NULL
+ - message: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Plan:
+LogicalWatermarkAssigner(rowtime=[event_time], watermark=[-($3, 0:INTERVAL SECOND)])
+  LogicalProject(event_id=[$0], val=[$1], message=[$2], event_time=[CAST($3):TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL])
+    LogicalTableScan(table=[[default_catalog, default_database, AuthInputData, metadata=[timestamp]]])
+SQL: CREATE VIEW `AuthInputData__view`
+AS
+SELECT `AuthInputData`.`event_id`, `AuthInputData`.`val`, `AuthInputData`.`message`, `AuthInputData`.`event_time`
+FROM `default_catalog`.`default_database`.`AuthInputData` AS `AuthInputData`
 === AuthMyTable
 ID:     default_catalog.default_database.AuthMyTable
 Type:   query
@@ -56,6 +78,21 @@ SQL: CREATE VIEW `AuthStringMyTableValues` AS
      WHERE array_contains(CAST(?     AS ARRAY<STRING>), CAST(t.val AS STRING))
      ORDER BY t.val ASC;
 
+=== MessageSubscription
+ID:     default_catalog.default_database.MessageSubscription
+Type:   query
+Stage:  kafka
+Inputs: default_catalog.default_database._Messages
+Annotations:
+ - stream-root: AuthInputData
+ - parameters: val
+ - base-table: AuthInputData
+Plan:
+LogicalProject(event_id=[$0], val=[$1], message=[$2], event_time=[$3])
+  LogicalFilter(condition=[=($1, ?0)])
+    LogicalTableScan(table=[[default_catalog, default_database, _Messages]])
+SQL: CREATE VIEW `MessageSubscription` AS  SELECT * FROM _Messages WHERE val = ?   ;
+
 === MyStringTable
 ID:     default_catalog.default_database.MyStringTable
 Type:   state
@@ -88,6 +125,26 @@ SQL: CREATE VIEW `MyTable` AS  SELECT val
            FROM (VALUES ((1)), ((2)), ((3)), ((4)), ((5)),
             ((6)), ((7)), ((8)), ((9)), ((10))) AS t(val) ORDER BY val;
 
+=== _Messages
+ID:     default_catalog.default_database._Messages
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database.AuthInputData
+Annotations:
+ - stream-root: AuthInputData
+Primary Key: event_id
+Timestamp  : event_time
+Schema:
+ - event_id: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - val: BIGINT NOT NULL
+ - message: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Plan:
+LogicalProject(event_id=[$0], val=[$1], message=[$2], event_time=[$3])
+  LogicalFilter(condition=[<>($2, '')])
+    LogicalTableScan(table=[[default_catalog, default_database, AuthInputData]])
+SQL: CREATE VIEW `_Messages` AS  SELECT * FROM AuthInputData WHERE message <> '';
+
 >>>flink-sql-no-functions.sql
 CREATE VIEW `MyTable`
 AS
@@ -117,6 +174,26 @@ CREATE VIEW `MyStringTableTest`
 AS
 SELECT *
 FROM `MyStringTable`;
+CREATE TABLE `AuthInputData` (
+  `event_id` STRING NOT NULL,
+  `val` BIGINT NOT NULL,
+  `message` STRING NOT NULL,
+  `event_time` TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
+  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
+) WITH (
+  'connector' = 'kafka',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
+  'properties.auto.offset.reset' = 'earliest',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'topic' = 'AuthInputData'
+);
+CREATE VIEW `_Messages`
+AS
+SELECT *
+FROM `AuthInputData`
+WHERE `message` <> '';
 CREATE TABLE `MyStringTable_1` (
   `val` CHAR(1) CHARACTER SET `UTF-16LE` NOT NULL,
   PRIMARY KEY (`val`) NOT ENFORCED
@@ -139,6 +216,19 @@ CREATE TABLE `MyTable_2` (
   'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
   'username' = '${POSTGRES_USERNAME}'
 );
+CREATE TABLE `_Messages_3` (
+  `event_id` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `val` BIGINT NOT NULL,
+  `message` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+) WITH (
+  'connector' = 'kafka',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'topic' = '_Messages'
+);
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`MyStringTable_1`
 (SELECT *
@@ -148,10 +238,31 @@ INSERT INTO `default_catalog`.`default_database`.`MyTable_2`
  (SELECT *
   FROM `default_catalog`.`default_database`.`MyTable`)
  ;
- END
+ INSERT INTO `default_catalog`.`default_database`.`_Messages_3`
+  (SELECT *
+   FROM `default_catalog`.`default_database`.`_Messages`)
+  ;
+  END
 >>>kafka.json
 {
-  "topics" : [ ],
+  "topics" : [
+    {
+      "topicName" : "_Messages",
+      "tableName" : "_Messages_3",
+      "format" : "flexible-json",
+      "numPartitions" : 1,
+      "replicationFactor" : 3,
+      "config" : { }
+    },
+    {
+      "topicName" : "AuthInputData",
+      "tableName" : "AuthInputData",
+      "format" : "flexible-json",
+      "numPartitions" : 1,
+      "replicationFactor" : 3,
+      "config" : { }
+    }
+  ],
   "testRunnerTopics" : [ ]
 }
 >>>postgres-schema.sql
@@ -317,8 +428,51 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"
           }
         }
       ],
-      "mutations" : [ ],
-      "subscriptions" : [ ],
+      "mutations" : [
+        {
+          "type" : "kafka",
+          "fieldName" : "AuthInputData",
+          "returnList" : false,
+          "topic" : "AuthInputData",
+          "computedColumns" : {
+            "val" : {
+              "metadataType" : "AUTH",
+              "name" : "val",
+              "required" : true
+            },
+            "event_id" : {
+              "metadataType" : "UUID",
+              "name" : "",
+              "required" : true
+            },
+            "event_time" : {
+              "metadataType" : "TIMESTAMP",
+              "name" : "",
+              "required" : true
+            }
+          },
+          "transactional" : false,
+          "sinkConfig" : { }
+        }
+      ],
+      "subscriptions" : [
+        {
+          "type" : "kafka",
+          "fieldName" : "MessageSubscription",
+          "topic" : "_Messages",
+          "sinkConfig" : { },
+          "equalityConditions" : {
+            "val" : {
+              "type" : "metadata",
+              "metadata" : {
+                "metadataType" : "AUTH",
+                "name" : "val",
+                "required" : true
+              }
+            }
+          }
+        }
+      ],
       "operations" : [
         {
           "function" : {
@@ -449,11 +603,36 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
           "uriTemplate" : "queries/AuthStringMyTableValues{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "AddAuthInputData",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "message" : {
+                  "type" : "string"
+                }
+              },
+              "required" : [
+                "message"
+              ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "mutation AuthInputData($message: String!) {\nAuthInputData(event: { message: $message }) {\nevent_id\nval\nmessage\nevent_time\n}\n\n}",
+            "queryName" : "AuthInputData",
+            "operationType" : "MUTATION"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "POST",
+          "uriTemplate" : "mutations/AuthInputData"
         }
       ],
       "schema" : {
         "type" : "string",
-        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype MyStringTable {\n  val: String!\n}\n\ntype MyTable {\n  val: Int!\n}\n\ntype Query {\n  MyStringTable(limit: Int = 10, offset: Int = 0): [MyStringTable!]\n  MyTable(limit: Int = 10, offset: Int = 0): [MyTable!]\n  AuthMyTable(limit: Int = 10, offset: Int = 0): [MyTable!]\n  AuthMyTableValues(limit: Int = 10, offset: Int = 0): [MyTable!]\n  AuthStringMyTableValues(limit: Int = 10, offset: Int = 0): [MyStringTable!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+        "schema" : "type AuthInputData {\n  event_id: String!\n  val: Long!\n  message: String!\n  event_time: DateTime!\n}\n\ninput AuthInputDataInput {\n  message: String!\n}\n\ntype AuthInputDataResultOutput {\n  event_id: String!\n  val: Long!\n  message: String!\n  event_time: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Mutation {\n  AuthInputData(event: AuthInputDataInput!): AuthInputDataResultOutput!\n}\n\ntype MyStringTable {\n  val: String!\n}\n\ntype MyTable {\n  val: Int!\n}\n\ntype Query {\n  MyStringTable(limit: Int = 10, offset: Int = 0): [MyStringTable!]\n  MyTable(limit: Int = 10, offset: Int = 0): [MyTable!]\n  AuthMyTable(limit: Int = 10, offset: Int = 0): [MyTable!]\n  AuthMyTableValues(limit: Int = 10, offset: Int = 0): [MyTable!]\n  AuthStringMyTableValues(limit: Int = 10, offset: Int = 0): [MyStringTable!]\n}\n\ntype Subscription {\n  MessageSubscription: AuthInputData\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
     }
   }

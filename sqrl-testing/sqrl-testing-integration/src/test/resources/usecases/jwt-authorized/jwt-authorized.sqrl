@@ -27,3 +27,17 @@ AuthStringMyTableValues(vals ARRAY<STRING> NOT NULL METADATA FROM 'auth.values')
       FROM MyStringTable t
      WHERE array_contains(CAST(:vals AS ARRAY<STRING>), CAST(t.val AS STRING))
      ORDER BY t.val ASC;
+
+/*+no_query */
+CREATE TABLE AuthInputData (
+    event_id STRING NOT NULL METADATA FROM 'uuid',
+    val BIGINT NOT NULL METADATA FROM 'auth.val',
+    message STRING NOT NULL,
+    event_time TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp'
+);
+
+_Messages := SELECT * FROM AuthInputData WHERE message <> '';
+
+MessageSubscription(val BIGINT NOT NULL METADATA FROM 'auth.val') :=
+                SUBSCRIBE SELECT * FROM _Messages WHERE val = :val;
+

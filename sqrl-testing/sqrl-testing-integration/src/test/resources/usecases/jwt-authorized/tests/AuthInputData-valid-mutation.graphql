@@ -1,0 +1,8 @@
+mutation {
+  mut1: AuthInputData(event: {message: "Hello"}) {
+    val
+  }
+  mut2: AuthInputData(event: {message: "World"}) {
+    val
+  }
+}
