@@ -138,7 +138,7 @@
     <autoservice.version>1.1.1</autoservice.version>
     <antlr.version>4.13.2</antlr.version>
     <guava.version>33.4.8-jre</guava.version>
-    <lombok.version>1.18.40</lombok.version>
+    <lombok.version>1.18.42</lombok.version>
     <junit.jupiter.version>5.13.4</junit.jupiter.version>
     <calcite.version>1.27.0</calcite.version>
     <graphql-java.version>19.2</graphql-java.version>
