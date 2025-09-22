@@ -19,8 +19,6 @@ import com.datasqrl.error.ErrorLocation.FileLocation;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
-import lombok.AllArgsConstructor;
-import lombok.Value;
 
 /**
  * Takes a script and splits it into individual statements delimited by `;`. Also filters out `--`
@@ -34,17 +32,13 @@ import lombok.Value;
  *     href="https://github.com/apache/flink-kubernetes-operator/blob/main/examples/flink-sql-runner-example/src/main/java/org/apache/flink/examples/SqlRunner.java">Flink's
  *     SqlRunner</a>
  */
-@Value
-@AllArgsConstructor
-public class SqlScriptStatementSplitter {
+public record SqlScriptStatementSplitter(boolean removeBlockComments) {
 
   public static final String STATEMENT_DELIMITER = ";"; // a statement should end with `;`
   public static final String LINE_DELIMITER = "\n";
 
   private static final String LINE_COMMENT_PATTERN = "--.*";
   public static final String BLOCK_COMMENT_PATTERN = "((/\\*)+?[\\w\\W]+?(\\*/)+)";
-
-  boolean removeBlockComments;
 
   public SqlScriptStatementSplitter() {
     this(false);

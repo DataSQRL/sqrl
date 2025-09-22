@@ -106,7 +106,7 @@ public class PostgresDDLFactory extends AbstractJdbcStatementFactory
 
   @Override
   public List<JdbcStatement> extractExtensions(List<Query> queries) {
-    return extractTypeExtensions(queries.stream().map(Query::getRelNode), EXTENSIONS).stream()
+    return extractTypeExtensions(queries.stream().map(Query::relNode), EXTENSIONS).stream()
         .map(
             ext ->
                 new GenericJdbcStatement(

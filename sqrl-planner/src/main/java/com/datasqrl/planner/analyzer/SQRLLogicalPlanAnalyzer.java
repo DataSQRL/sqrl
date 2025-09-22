@@ -52,7 +52,6 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import lombok.NonNull;
-import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.linq4j.Ord;
 import org.apache.calcite.plan.RelOptTable;
@@ -152,13 +151,11 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
     this.catalog = catalog;
   }
 
-  @Value
-  public static class ViewAnalysis {
-    RelNode relNode;
-    RelBuilder relBuilder;
-    TableAnalysis.TableAnalysisBuilder tableAnalysis;
-    boolean hasMostRecentDistinct;
-  }
+  public record ViewAnalysis(
+      RelNode relNode,
+      RelBuilder relBuilder,
+      TableAnalysis.TableAnalysisBuilder tableAnalysis,
+      boolean hasMostRecentDistinct) {}
 
   public ViewAnalysis analyze(PlannerHints hints) {
     originalRelnode.accept(this);

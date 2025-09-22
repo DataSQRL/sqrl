@@ -227,8 +227,8 @@ public class SqlScriptPlanner {
               .atFile(
                   statement
                       .getFileLocation()
-                      .add(sqlStatement.mapSqlLocation(msgLocation.getLocation())))
-              .fatal(msgLocation.getMessage());
+                      .add(sqlStatement.mapSqlLocation(msgLocation.location())))
+              .fatal(msgLocation.message());
         }
         if (e instanceof ValidationException) {
           if (e.getCause() != null && e.getCause() != e) {
@@ -278,10 +278,10 @@ public class SqlScriptPlanner {
     if (stmt instanceof SqrlStatement statement) {
       var comments = statement.getComments();
       hints = PlannerHints.fromHints(comments);
-      if (!comments.getDocumentation().isEmpty()) {
+      if (!comments.documentation().isEmpty()) {
         documentation =
             Optional.of(
-                comments.getDocumentation().stream()
+                comments.documentation().stream()
                     .map(ParsedObject::get)
                     .map(String::trim)
                     .collect(Collectors.joining("\n")));
@@ -586,9 +586,9 @@ public class SqlScriptPlanner {
               .filter(
                   capability -> {
                     if (capability instanceof Feature feature) {
-                      return !executionStage.supportsFeature(feature.getFeature());
+                      return !executionStage.supportsFeature(feature.feature());
                     } else if (capability instanceof EngineCapability.Function function) {
-                      return !executionStage.supportsFunction(function.getFunction());
+                      return !executionStage.supportsFunction(function.function());
                     } else {
                       throw new UnsupportedOperationException(capability.getName());
                     }

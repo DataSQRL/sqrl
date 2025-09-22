@@ -53,22 +53,21 @@ public class FieldTypeStats implements Serializable, Cloneable, TypeSignature {
   }
 
   public static FieldTypeStats of(@NonNull TypeSignature.Simple signature) {
-    return new FieldTypeStats(
-        signature.getRaw(), signature.getDetected(), signature.getArrayDepth());
+    return new FieldTypeStats(signature.raw(), signature.detected(), signature.arrayDepth());
   }
 
   @Override
-  public Type getRaw() {
+  public Type raw() {
     return raw;
   }
 
   @Override
-  public Type getDetected() {
+  public Type detected() {
     return detected;
   }
 
   @Override
-  public int getArrayDepth() {
+  public int arrayDepth() {
     return arrayDepth;
   }
 

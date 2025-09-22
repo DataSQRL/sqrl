@@ -57,7 +57,7 @@ public class TestContainersForTestGoal implements TestEngineVisitor<TestContaine
   @Override
   public TestContainerHook accept(TestEngines testEngines, Void context) {
     List<TestContainerHook> hooks = new ArrayList<>();
-    for (TestEngine engine : testEngines.getTestEngines()) {
+    for (TestEngine engine : testEngines.testEngines()) {
       hooks.add(engine.accept(this, context));
     }
 

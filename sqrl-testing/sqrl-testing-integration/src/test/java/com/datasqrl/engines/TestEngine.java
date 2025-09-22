@@ -201,7 +201,7 @@ public interface TestEngine {
 
   interface TestEngineVisitor<R, C> {
     default R accept(TestEngines testEngines, C context) {
-      testEngines.getTestEngines().forEach(t -> t.accept(this, context));
+      testEngines.testEngines().forEach(t -> t.accept(this, context));
       return null;
     }
 

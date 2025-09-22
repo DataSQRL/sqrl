@@ -84,7 +84,7 @@ public class PipelineDAGExporter {
                   .id(table.getIdentifier().toString())
                   .name(table.getName())
                   .type(NodeType.IMPORTS.getName())
-                  .connector(source.getConnector().getOptions())
+                  .connector(source.connector().getOptions())
                   .stage(stage)
                   .build());
         } else {
@@ -344,10 +344,7 @@ public class PipelineDAGExporter {
     items.forEach(i -> s.append(" - ").append(i.toString()).append(LINEBREAK));
   }
 
-  @Value
-  public static class SchemaColumn {
-    String name;
-    String type;
+  public record SchemaColumn(String name, String type) {
 
     @Override
     public String toString() {
@@ -355,10 +352,7 @@ public class PipelineDAGExporter {
     }
   }
 
-  @Value
-  public static class Annotation {
-    String name;
-    String description;
+  public record Annotation(String name, String description) {
 
     @Override
     public String toString() {

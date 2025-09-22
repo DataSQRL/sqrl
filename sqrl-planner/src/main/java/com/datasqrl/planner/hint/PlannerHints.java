@@ -67,9 +67,7 @@ public class PlannerHints {
 
   public static PlannerHints fromHints(SqrlComments comments) {
     List<PlannerHint> hints =
-        comments.getHints().stream()
-            .map(PlannerHint::from)
-            .collect(Collectors.toUnmodifiableList());
+        comments.hints().stream().map(PlannerHint::from).collect(Collectors.toUnmodifiableList());
     return new PlannerHints(hints);
   }
 }

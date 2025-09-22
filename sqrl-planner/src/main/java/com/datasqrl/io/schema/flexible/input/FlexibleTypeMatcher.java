@@ -38,19 +38,15 @@ public class FlexibleTypeMatcher implements Serializable {
       TypeSignature typeSignature, List<FieldType> fieldTypes) {
     FlexibleFieldSchema.FieldType match;
     // First, try to match raw type
-    match =
-        matchSingleType(typeSignature.getRaw(), typeSignature.getArrayDepth(), fieldTypes, false);
+    match = matchSingleType(typeSignature.raw(), typeSignature.arrayDepth(), fieldTypes, false);
     if (match == null) {
       // Second, try to match on detected
       match =
-          matchSingleType(
-              typeSignature.getDetected(), typeSignature.getArrayDepth(), fieldTypes, false);
+          matchSingleType(typeSignature.detected(), typeSignature.arrayDepth(), fieldTypes, false);
       if (match == null) {
         // If neither of those worked, try to force a match which means casting raw to STRING if
         // available
-        match =
-            matchSingleType(
-                typeSignature.getRaw(), typeSignature.getArrayDepth(), fieldTypes, true);
+        match = matchSingleType(typeSignature.raw(), typeSignature.arrayDepth(), fieldTypes, true);
       }
     }
     return match;
