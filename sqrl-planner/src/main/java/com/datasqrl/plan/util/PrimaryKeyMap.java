@@ -132,6 +132,12 @@ public class PrimaryKeyMap implements Serializable {
     return new ArrayList<>(columns);
   }
 
+  /**
+   * Note: only call if you are sure the primary key is simple (e.g. after calling {@link
+   * #makeSimple(RelDataType)}.
+   *
+   * @return the primary key indexes as a list
+   */
   public List<Integer> asSimpleList() {
     Preconditions.checkArgument(isSimple(), "Not a simple primary key");
     return columns.stream().map(ColumnSet::getOnly).collect(Collectors.toUnmodifiableList());
@@ -145,6 +151,21 @@ public class PrimaryKeyMap implements Serializable {
         columns.stream()
             .map(colSet -> colSet.pickBest(rowType))
             .collect(Collectors.toUnmodifiableList()));
+  }
+
+  /**
+   * Note: only call on defined primary keys
+   *
+   * @param indexes
+   * @return whether all primary key components are covered (i.e. identical to) an index from the
+   *     provided set.
+   */
+  public boolean coveredBy(Set<Integer> indexes) {
+    if (undefined) return false;
+    for (ColumnSet columnSet : columns) {
+      if (!columnSet.containsAny(indexes)) return false;
+    }
+    return true;
   }
 
   public List<ColumnSet> asSubList(int length) {

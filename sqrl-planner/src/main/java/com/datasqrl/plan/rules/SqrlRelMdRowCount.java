@@ -64,8 +64,7 @@ public class SqrlRelMdRowCount extends RelMdRowCount implements BuiltInMetadata.
 
   public static Double getRowCount(TableAnalysis table, QueryIndexSummary constraints) {
     var equalCols = constraints.getEqualityColumns();
-    if (table.getPrimaryKey().isDefined()
-        && equalCols.containsAll(table.getPrimaryKey().asSimpleList())) {
+    if (table.getPrimaryKey().isDefined() && table.getPrimaryKey().coveredBy(equalCols)) {
       return 1.0;
     }
     return getRowCount(table) * SqrlRelMdSelectivity.getSelectivity(table, constraints);
