@@ -159,7 +159,7 @@
     <jakarta.annotation.version>3.0.0</jakarta.annotation.version>
     <graphql-micrometer.version>1.0.1</graphql-micrometer.version>
     <calcite-core.version>1.40.0</calcite-core.version>
-    <duckdb.version>1.3.2.1</duckdb.version>
+    <duckdb.version>1.4.0.0</duckdb.version>
     <snowflake-jdbc.version>3.26.1</snowflake-jdbc.version>
     <reflections.version>0.10.2</reflections.version>
     <swagger-core.version>2.2.36</swagger-core.version>
