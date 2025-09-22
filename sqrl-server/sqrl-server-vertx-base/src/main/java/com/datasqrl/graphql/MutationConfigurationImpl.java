@@ -130,7 +130,7 @@ public class MutationConfigurationImpl implements MutationConfiguration<DataFetc
                         sinkResult -> {
                           // Add timestamp from sink to result
                           var dateTime =
-                              ZonedDateTime.ofInstant(sinkResult.getSourceTime(), ZoneOffset.UTC);
+                              ZonedDateTime.ofInstant(sinkResult.sourceTime(), ZoneOffset.UTC);
                           timestampColumns.forEach(
                               colName -> entry.put(colName, dateTime.toOffsetDateTime()));
                           return entry;

@@ -28,7 +28,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
-import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -44,6 +43,8 @@ public class CSVRecordReader implements RecordReader {
 
   public static final Set<String> EXTENSIONS = Set.of("csv");
 
+  private static final String[] DELIMITER_CANDIDATES = new String[] {",", ";", "\t"};
+
   @Override
   public String getFormat() {
     return "csv";
@@ -57,8 +58,8 @@ public class CSVRecordReader implements RecordReader {
     if (configOpt.isEmpty()) {
       return Stream.of();
     }
-    var format = configOpt.get().getFormat();
-    var header = configOpt.get().getHeader();
+    var format = configOpt.get().format();
+    var header = configOpt.get().header();
 
     var parser = CSVParser.parse(reader, format);
     return parser.stream()
@@ -85,12 +86,6 @@ public class CSVRecordReader implements RecordReader {
     return EXTENSIONS;
   }
 
-  @Value
-  private static class Config {
-    CSVFormat format;
-    String[] header;
-  }
-
   private static CSVFormat getDefaultFormat(String delimiter) {
     return org.apache.commons.csv.CSVFormat.DEFAULT
         .builder()
@@ -99,15 +94,12 @@ public class CSVRecordReader implements RecordReader {
         .build();
   }
 
-  private static final String[] DELIMITER_CANDIDATES = new String[] {",", ";", "\t"};
-
   private static Optional<Config> inferConfig(String headerLine) throws IOException {
     var delimiter = DEFAULT_DELIMITER;
     var topScoringDelimiter =
         Arrays.stream(DELIMITER_CANDIDATES)
             .map(del -> Pair.of(del, StringUtils.countMatches(headerLine, del)))
-            .sorted(Comparator.comparing(Pair<String, Integer>::getValue).reversed())
-            .findFirst()
+            .max(Comparator.comparing(Pair<String, Integer>::getValue))
             .get();
     if (topScoringDelimiter.getValue() > 0) {
       delimiter = topScoringDelimiter.getKey();
@@ -139,4 +131,6 @@ public class CSVRecordReader implements RecordReader {
     }
     return Optional.empty();
   }
+
+  private record Config(CSVFormat format, String[] header) {}
 }

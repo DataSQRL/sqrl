@@ -42,13 +42,6 @@ public interface TestGraphQLSchema {
   Map<String, String> getQueries();
 
   @Value
-  class TestGraphQLSchemaImpl implements TestGraphQLSchema {
-    String name;
-    Path schemaPath;
-    Map<String, String> queries;
-  }
-
-  @Value
   class Directory implements TestGraphQLSchema {
 
     public static final String SCHEMA_FILE = "schema.graphqls";

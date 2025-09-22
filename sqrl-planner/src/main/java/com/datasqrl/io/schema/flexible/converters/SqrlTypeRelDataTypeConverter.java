@@ -86,7 +86,7 @@ public class SqrlTypeRelDataTypeConverter implements SqrlTypeConverter<RelDataTy
 
   @Override
   public RelDataType visitArrayType(ArrayType type, Void context) {
-    return typeFactory.createArrayType(type.getSubType().accept(this, null), -1L);
+    return typeFactory.createArrayType(type.subType().accept(this, null), -1L);
   }
 
   public static Type convert(RelDataType datatype) {

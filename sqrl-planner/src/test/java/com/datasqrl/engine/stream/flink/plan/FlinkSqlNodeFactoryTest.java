@@ -26,7 +26,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import lombok.Value;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeSystem;
 import org.apache.calcite.sql.SqlIdentifier;
@@ -40,12 +39,9 @@ import org.junit.jupiter.api.Test;
 
 class FlinkSqlNodeFactoryTest {
 
-  @Value
-  public static class MockMetadataEntry implements MetadataEntry {
-    private final Optional<String> type;
-    private final Optional<String> attribute;
-    private final Optional<Boolean> virtual;
-  }
+  public record MockMetadataEntry(
+      Optional<String> type, Optional<String> attribute, Optional<Boolean> virtual)
+      implements MetadataEntry {}
 
   private String unparse(SqlNode node) {
     var sqlToString = SqlToStringFactory.get(Dialect.FLINK);

@@ -50,15 +50,7 @@ public class MaterializationStagePlan {
   /** Passed through since the engines might need it for query manipulation */
   Utils utils;
 
-  @Value
-  public static class Query {
-    SqrlTableFunction function;
-    RelNode relNode;
-    ErrorCollector errors;
-  }
+  public record Query(SqrlTableFunction function, RelNode relNode, ErrorCollector errors) {}
 
-  @Value
-  public static class Utils {
-    SqrlRexUtil rexUtil;
-  }
+  public record Utils(SqrlRexUtil rexUtil) {}
 }
