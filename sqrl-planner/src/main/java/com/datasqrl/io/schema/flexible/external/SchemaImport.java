@@ -46,7 +46,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import lombok.NonNull;
-import lombok.Value;
 
 /**
  * Converts a {@link SchemaDefinition} that is parsed out of a YAML file into a {@link
@@ -236,11 +235,7 @@ public class SchemaImport {
     return name;
   }
 
-  @Value
-  public static class BasicTypeParse {
-
-    private final int arrayDepth;
-    private final BasicType type;
+  public record BasicTypeParse(int arrayDepth, BasicType type) {
 
     public static BasicTypeParse parse(String basicType) {
       basicType = basicType.trim();

@@ -77,11 +77,11 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
   public QueryResult createQuery(
       Query query, boolean withView, Map<String, JdbcEngineCreateTable> tableIdMap) {
     return createQuery(
-        query.getFunction().getSimpleName(),
-        query.getRelNode(),
+        query.function().getSimpleName(),
+        query.relNode(),
         withView,
         getTableNameMapping(tableIdMap),
-        query.getFunction().getDocumentation());
+        query.function().getDocumentation());
   }
 
   protected static Map<String, String> getTableNameMapping(
@@ -92,8 +92,8 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
 
   @Override
   public QueryResult createPassthroughQuery(Query query, boolean withView) {
-    var passthroughSql = query.getFunction().getFunctionAnalysis().getOriginalSql();
-    var description = query.getFunction().getDocumentation().orElse(null);
+    var passthroughSql = query.function().getFunctionAnalysis().getOriginalSql();
+    var description = query.function().getDocumentation().orElse(null);
 
     // Replace all argument references
     var formattedSql =
@@ -106,8 +106,8 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
       return new QueryResult(qBuilder, null);
     }
 
-    var viewName = query.getFunction().getSimpleName();
-    var rowType = query.getRelNode().getRowType();
+    var viewName = query.function().getSimpleName();
+    var rowType = query.relNode().getRowType();
     var viewSql =
         new GenericCreateViewDdlFactory()
             .createView(viewName, rowType.getFieldNames(), passthroughSql);

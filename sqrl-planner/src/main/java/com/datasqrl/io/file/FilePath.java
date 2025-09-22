@@ -30,9 +30,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import lombok.AllArgsConstructor;
 import lombok.NonNull;
-import lombok.Value;
 import org.apache.flink.connector.file.src.compression.StandardDeCompressors;
 import org.apache.flink.core.fs.FileStatus;
 import org.apache.flink.core.fs.FileSystem;
@@ -160,8 +158,7 @@ public class FilePath implements Serializable { // todo: move to io-core
     }
     var components = getComponents(null).get();
     if (components.hasCompression()) {
-      is =
-          StandardDeCompressors.getDecompressorForExtension(components.getCompression()).create(is);
+      is = StandardDeCompressors.getDecompressorForExtension(components.compression()).create(is);
     }
     return is;
   }
@@ -212,13 +209,8 @@ public class FilePath implements Serializable { // todo: move to io-core
     return java.nio.file.Path.of(path.flinkPath.toString());
   }
 
-  @Value
-  public static class NameComponents {
-
-    private final String identifier;
-    private final String fullName;
-    private final String format;
-    private final String compression;
+  public record NameComponents(
+      String identifier, String fullName, String format, String compression) {
 
     public boolean hasFormat() {
       return !Strings.isNullOrEmpty(format);
@@ -240,16 +232,9 @@ public class FilePath implements Serializable { // todo: move to io-core
     }
   }
 
-  @Value
-  @AllArgsConstructor
-  public static class Status {
+  public record Status(boolean isDir, long length, Instant lastModified, FilePath path) {
 
     public static final Status NOT_EXIST = new Status(false, 0, null, null);
-
-    private final boolean isDir;
-    private final long length;
-    private final Instant lastModified;
-    private final FilePath path;
 
     Status(FileStatus status) {
       this(

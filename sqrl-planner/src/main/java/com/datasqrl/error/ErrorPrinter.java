@@ -66,27 +66,24 @@ public class ErrorPrinter {
                 .getSourceMap()
                 .getRange(
                     new FileRange(
-                        Math.max(1, fileRange.getFromLine() - LINES_BEFORE_LOCATION),
+                        Math.max(1, fileRange.fromLine() - LINES_BEFORE_LOCATION),
                         1,
-                        fileRange.getToLine(),
+                        fileRange.toLine(),
                         Integer.MAX_VALUE));
         b.append(codeSnippet);
-        b.append("-".repeat(Math.max(0, fileRange.getFromOffset() - 1)));
+        b.append("-".repeat(Math.max(0, fileRange.fromOffset() - 1)));
         b.append("^\n");
       } else {
         // print arrow pointing down to offset
         // print range starting at fromOffset=0
-        b.append("-".repeat(fileRange.getFromOffset() - 1));
+        b.append("-".repeat(fileRange.fromOffset() - 1));
         b.append("v\n");
         var codeSnippet =
             location
                 .getSourceMap()
                 .getRange(
                     new FileRange(
-                        fileRange.getFromLine(),
-                        1,
-                        fileRange.getToLine(),
-                        fileRange.getToOffset()));
+                        fileRange.fromLine(), 1, fileRange.toLine(), fileRange.toOffset()));
         b.append(codeSnippet).append("\n");
         addSeparator = true;
       }
@@ -101,10 +98,10 @@ public class ErrorPrinter {
   }
 
   private static boolean isAllZero(FileRange file) {
-    return file.getFromLine() == 0
-        && file.getFromOffset() == 0
-        && file.getToLine() == 0
-        && file.getToOffset() == 0;
+    return file.fromLine() == 0
+        && file.fromOffset() == 0
+        && file.toLine() == 0
+        && file.toOffset() == 0;
   }
 
   public static String getErrorDescription(ErrorMessage errorMessage, boolean addSeparator) {

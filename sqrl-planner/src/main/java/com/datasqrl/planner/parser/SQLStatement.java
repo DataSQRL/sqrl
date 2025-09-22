@@ -25,8 +25,8 @@ public interface SQLStatement {
   }
 
   static FileLocation removeFirstRowOffset(FileLocation location, int firstRowOffset) {
-    if (location.getLine() == 1) {
-      return new FileLocation(1, Math.max(location.getOffset() - firstRowOffset, 1));
+    if (location.line() == 1) {
+      return new FileLocation(1, Math.max(location.offset() - firstRowOffset, 1));
     }
     return location;
   }

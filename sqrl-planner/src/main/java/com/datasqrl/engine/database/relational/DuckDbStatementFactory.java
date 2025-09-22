@@ -78,7 +78,7 @@ public class DuckDbStatementFactory extends AbstractJdbcStatementFactory {
   @Override
   public QueryResult createQuery(
       Query query, boolean withView, Map<String, JdbcEngineCreateTable> tableIdMap) {
-    var relNode = query.getRelNode();
+    var relNode = query.relNode();
     var replaced =
         relNode.accept(
             new RelShuttleImpl() {
@@ -120,11 +120,11 @@ public class DuckDbStatementFactory extends AbstractJdbcStatementFactory {
             });
 
     return createQuery(
-        query.getFunction().getSimpleName(),
+        query.function().getSimpleName(),
         replaced,
         false,
         getTableNameMapping(tableIdMap),
-        query.getFunction().getDocumentation());
+        query.function().getDocumentation());
   }
 
   @Override

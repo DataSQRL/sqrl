@@ -355,7 +355,7 @@ public class Sqrl2FlinkSQLTranslator {
             relBuilder,
             errors);
     var viewAnalysis = analyzer.analyze(hints);
-    viewAnalysis.getTableAnalysis().topLevelSort(topLevelSort);
+    viewAnalysis.tableAnalysis().topLevelSort(topLevelSort);
     return viewAnalysis;
   }
 
@@ -512,11 +512,7 @@ public class Sqrl2FlinkSQLTranslator {
     var viewDef2 = parseSQL(originalSql);
     var viewAnalysis = analyzeView(viewDef2, removedSort, hints, errors);
     var tableAnalysis =
-        viewAnalysis
-            .getTableAnalysis()
-            .objectIdentifier(identifier)
-            .originalSql(originalSql)
-            .build();
+        viewAnalysis.tableAnalysis().objectIdentifier(identifier).originalSql(originalSql).build();
     tableLookup.registerTable(tableAnalysis);
 
     return tableAnalysis;
@@ -557,8 +553,8 @@ public class Sqrl2FlinkSQLTranslator {
     // Remap parameters in query so the RexDynamicParam point directly at the function parameter by
     // index
     var updateParameters =
-        viewAnalysis.getRelNode().accept(new DynamicParameterReplacer(argumentIndexMap));
-    var tblBuilder = viewAnalysis.getTableAnalysis();
+        viewAnalysis.relNode().accept(new DynamicParameterReplacer(argumentIndexMap));
+    var tblBuilder = viewAnalysis.tableAnalysis();
     tblBuilder.collapsedRelnode(updateParameters);
     tblBuilder.objectIdentifier(identifier);
     tblBuilder.originalSql(originalSql);
@@ -771,7 +767,7 @@ public class Sqrl2FlinkSQLTranslator {
     var view =
         createScanView(addResult.tableName + TEMP_VIEW_SUFFIX, addResult.baseTableIdentifier);
     var viewAnalysis = analyzeView(view, false, PlannerHints.EMPTY, ErrorCollector.root());
-    TableAnalysis.TableAnalysisBuilder tbBuilder = viewAnalysis.getTableAnalysis();
+    TableAnalysis.TableAnalysisBuilder tbBuilder = viewAnalysis.tableAnalysis();
     tbBuilder.objectIdentifier(addResult.baseTableIdentifier).originalSql(toSqlString(view));
     // Remove trivial LogicalProject so that subsequent references match
     RelNode relNode = tbBuilder.build().getOriginalRelnode();
@@ -1074,10 +1070,10 @@ public class Sqrl2FlinkSQLTranslator {
         location =
             location.add(
                 SQLStatement.removeFirstRowOffset(
-                    converted.get().getLocation(), DATATYPE_PARSING_PREFIX.length()));
+                    converted.get().location(), DATATYPE_PARSING_PREFIX.length()));
       }
       throw new StatementParserException(
-          location, e, converted.map(MessageLocation::getMessage).orElse(e.getMessage()));
+          location, e, converted.map(MessageLocation::message).orElse(e.getMessage()));
     }
   }
 

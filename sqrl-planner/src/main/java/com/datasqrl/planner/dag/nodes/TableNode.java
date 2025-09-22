@@ -43,7 +43,7 @@ public class TableNode extends PlannedNode {
     if (!isSource()) {
       return Optional.empty();
     }
-    MutationQuery mutation = tableAnalysis.getSourceSinkTable().get().getMutationDefinition();
+    MutationQuery mutation = tableAnalysis.getSourceSinkTable().get().mutationDefinition();
     return Optional.ofNullable(mutation);
   }
 

@@ -17,7 +17,6 @@ package com.datasqrl.error;
 
 import java.io.Serializable;
 import lombok.NonNull;
-import lombok.Value;
 
 // @JsonSerialize(as = ErrorLocation.class)
 public interface ErrorLocation extends Serializable {
@@ -69,16 +68,12 @@ public interface ErrorLocation extends Serializable {
 
   ErrorLocation atFile(@NonNull ErrorLocation.FileRange file);
 
-  @Value
-  class FileLocation {
+  record FileLocation(int line, int offset) {
 
     public static final FileLocation START = new FileLocation(1, 1);
 
-    private final int line;
-    private final int offset;
-
     public FileLocation add(FileLocation additional) {
-      if (additional.getLine() == 1) {
+      if (additional.line() == 1) {
         return new FileLocation(line, offset + additional.offset - 1);
       } else {
         return new FileLocation(line + additional.line - 1, additional.offset);
@@ -86,26 +81,10 @@ public interface ErrorLocation extends Serializable {
     }
   }
 
-  @Value
-  class FileRange {
-    private final int fromLine;
-    private final int toLine;
-    private final int fromOffset;
-    private final int toOffset;
+  record FileRange(int fromLine, int fromOffset, int toLine, int toOffset) {
 
     public FileRange(FileLocation location) {
       this(location.line, location.offset, location.line, location.offset);
-    }
-
-    public FileRange(int fromLine, int fromOffset, int toLine, int toOffset) {
-      this.fromLine = fromLine;
-      this.toLine = toLine;
-      this.fromOffset = fromOffset;
-      this.toOffset = toOffset;
-      //      Preconditions.checkArgument(fromLine>0 && toLine>0 && fromOffset>0 && toOffset>0,
-      // "Invalid file: %s",this);
-      //      Preconditions.checkArgument(fromLine<=toLine && (fromLine!=toLine ||
-      // fromOffset<=toOffset), "Invalid file: %s",this);
     }
 
     public boolean isLocation() {
@@ -113,7 +92,6 @@ public interface ErrorLocation extends Serializable {
     }
 
     public FileLocation asLocation() {
-      //      Preconditions.checkArgument(isLocation());
       return new FileLocation(fromLine, fromOffset);
     }
 

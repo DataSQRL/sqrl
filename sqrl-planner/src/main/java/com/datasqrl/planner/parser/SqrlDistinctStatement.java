@@ -65,15 +65,15 @@ public class SqrlDistinctStatement extends SqrlDefinition {
     var sql = super.toSql(sqrlEnv, stack);
     var view = sqrlEnv.parseSQL(sql);
     var viewAnalysis = sqrlEnv.analyzeView(view, false, PlannerHints.EMPTY, ErrorCollector.root());
-    var relB = viewAnalysis.getRelBuilder();
+    var relB = viewAnalysis.relBuilder();
 
     // if this is a filtered distinct, we need to add the corresponding processing
-    if (isFilteredDistinct && !viewAnalysis.isHasMostRecentDistinct()) {
+    if (isFilteredDistinct && !viewAnalysis.hasMostRecentDistinct()) {
       /*
       Because we define the view above, we know this is a project->filter->project(rowNum)->logicalwatermark
       The following code extracts those components and the information we need for the filtered distinct
        */
-      var project = (LogicalProject) viewAnalysis.getRelNode();
+      var project = (LogicalProject) viewAnalysis.relNode();
       var filter = (LogicalFilter) project.getInput();
       var rowNum = (LogicalProject) filter.getInput();
       var over =
@@ -91,7 +91,7 @@ public class SqrlDistinctStatement extends SqrlDefinition {
       relB.project(rowNum.getProjects());
       relB.filter(filter.getCondition());
     } else {
-      relB.push(viewAnalysis.getRelNode());
+      relB.push(viewAnalysis.relNode());
     }
     // Filter out last field for the row number
     relB.project(CalciteUtil.getIdentityRex(relB, relB.peek().getRowType().getFieldCount() - 1));

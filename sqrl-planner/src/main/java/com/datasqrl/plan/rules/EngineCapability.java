@@ -16,17 +16,13 @@
 package com.datasqrl.plan.rules;
 
 import com.datasqrl.engine.EngineFeature;
-import lombok.Value;
 import org.apache.calcite.sql.SqlOperator;
 
 public interface EngineCapability {
 
   String getName();
 
-  @Value
-  class Feature implements EngineCapability {
-
-    EngineFeature feature;
+  record Feature(EngineFeature feature) implements EngineCapability {
 
     @Override
     public String getName() {
@@ -39,10 +35,7 @@ public interface EngineCapability {
     }
   }
 
-  @Value
-  class Function implements EngineCapability {
-
-    SqlOperator function;
+  record Function(SqlOperator function) implements EngineCapability {
 
     @Override
     public String getName() {

@@ -18,7 +18,6 @@ package com.datasqrl.planner.parser;
 import com.datasqrl.error.ErrorLocation.FileLocation;
 import java.util.Optional;
 import java.util.regex.Pattern;
-import lombok.Value;
 import org.apache.calcite.runtime.CalciteContextException;
 import org.apache.calcite.sql.parser.SqlParseException;
 import org.apache.calcite.sql.parser.SqlParserPos;
@@ -75,9 +74,5 @@ public class ParsePosUtil {
     return message;
   }
 
-  @Value
-  public static class MessageLocation {
-    FileLocation location;
-    String message;
-  }
+  public record MessageLocation(FileLocation location, String message) {}
 }

@@ -175,13 +175,12 @@ public class IndexSelector {
 
   private Optional<IndexDefinition> getIndexDefinition(
       IndexableFunctionCall fcall, NamedTable table) {
-    var specialType =
-        config.getPreferredSpecialIndexType(fcall.getFunction().getSupportedIndexes());
+    var specialType = config.getPreferredSpecialIndexType(fcall.function().getSupportedIndexes());
     return specialType.map(
         idxType ->
             new IndexDefinition(
                 table.getTableName(),
-                fcall.getColumnIndexes(),
+                fcall.columnIndexes(),
                 table.getAnalysis().getRowType().getFieldNames(),
                 -1,
                 idxType));

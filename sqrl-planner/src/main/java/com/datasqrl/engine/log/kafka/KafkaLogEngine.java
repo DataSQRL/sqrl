@@ -238,8 +238,8 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
             .collect(Collectors.toMap(NewTopic::getTableName, NewTopic::getTopicName));
     // Plan queries
     for (Query query : stagePlan.getQueries()) {
-      var errors = query.getErrors();
-      var relNode = query.getRelNode();
+      var errors = query.errors();
+      var relNode = query.relNode();
       Map<String, Integer> filterColumns = new HashMap<>();
       if (relNode instanceof Project project
           && relNode.getRowType().equals(project.getInput().getRowType())) {
@@ -256,7 +256,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
         /*We expect that the filter is a simple AND condition of equality conditions of the sort `column = ?`
          i.e. a RexDynamicParam on one side and a RexInputRef on the other
         */
-        var conditions = stagePlan.getUtils().getRexUtil().getConjunctions(filter.getCondition());
+        var conditions = stagePlan.getUtils().rexUtil().getConjunctions(filter.getCondition());
         var fieldNames = filter.getRowType().getFieldNames();
         for (RexNode condition : conditions) {
           checkErrors.accept(condition instanceof RexCall);
@@ -279,16 +279,16 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
               + "simple filter queries without any transformations, but got: %s",
           relNode.explain());
       errors.checkFatal(
-          !query.getFunction().isPassthrough(),
+          !query.function().isPassthrough(),
           "Kafka does not support passthrough queries: %s",
-          query.getFunction());
+          query.function());
       RelOptTable table = relNode.getTable();
       var tableName = table.getQualifiedName().get(2);
       var topicName = table2TopicMap.get(tableName);
       Preconditions.checkArgument(
           topicName != null, "Could not find topic for table: %s [%s]", tableName, table2TopicMap);
       query
-          .getFunction()
+          .function()
           .setExecutableQuery(new KafkaQuery(stagePlan.getStage(), topicName, filterColumns));
     }
     // Plan topic creation

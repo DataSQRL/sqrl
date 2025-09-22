@@ -22,7 +22,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
-import lombok.Value;
 import org.apache.calcite.rel.RelCollation;
 import org.apache.calcite.rel.RelCollations;
 import org.apache.calcite.rel.type.RelDataType;
@@ -77,13 +76,6 @@ public interface IndexMap {
       Preconditions.checkArgument(inputIdx >= 0 && inputIdx < inputFields.size());
       return new RexInputRef(inputIdx, inputFields.get(inputIdx).getType());
     }
-  }
-
-  @Value
-  class Pair {
-
-    int source;
-    int target;
   }
 
   static IndexMap of(final Map<Integer, Integer> mapping) {

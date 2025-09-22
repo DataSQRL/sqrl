@@ -20,8 +20,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import lombok.Value;
 
 /**
  * Represents the comments on a SQRL statement which are either hints or doc-strings. Other columns
@@ -29,13 +27,10 @@ import lombok.Value;
  *
  * <p>Note that `--` comments are filtered out by {@link SqlScriptStatementSplitter}
  */
-@Value
-public class SqrlComments {
+public record SqrlComments(
+    List<ParsedObject<String>> documentation, List<ParsedObject<SqrlHint>> hints) {
 
   public static final SqrlComments EMPTY = new SqrlComments(List.of(), List.of());
-
-  List<ParsedObject<String>> documentation;
-  List<ParsedObject<SqrlHint>> hints;
 
   public static final Pattern COMMENT_PATTERN = Pattern.compile(SqrlStatementParser.COMMENT_REGEX);
   public static final String HINT_PREFIX = "/*+";
@@ -44,9 +39,7 @@ public class SqrlComments {
   public SqrlComments removeHintsByName(Predicate<String> remove) {
     return new SqrlComments(
         documentation,
-        hints.stream()
-            .filter(p -> !p.isPresent() || !remove.test(p.get().getName()))
-            .collect(Collectors.toUnmodifiableList()));
+        hints.stream().filter(p -> !p.isPresent() || !remove.test(p.get().getName())).toList());
   }
 
   public boolean containsHintByName(Predicate<String> match) {

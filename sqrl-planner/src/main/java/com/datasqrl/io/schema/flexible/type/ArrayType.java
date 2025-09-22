@@ -17,17 +17,7 @@ package com.datasqrl.io.schema.flexible.type;
 
 import java.util.Objects;
 
-public class ArrayType implements Type {
-
-  private final Type subType;
-
-  public ArrayType(Type subType) {
-    this.subType = subType;
-  }
-
-  public Type getSubType() {
-    return subType;
-  }
+public record ArrayType(Type subType) implements Type {
 
   @Override
   public boolean equals(Object o) {
