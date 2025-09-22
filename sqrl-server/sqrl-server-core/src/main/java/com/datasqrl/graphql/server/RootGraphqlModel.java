@@ -20,6 +20,7 @@ import com.datasqrl.graphql.server.operation.ApiOperation;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import java.util.List;
 import java.util.Map;
@@ -81,7 +82,7 @@ public class RootGraphqlModel {
   }
 
   @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
-  @JsonSubTypes({@JsonSubTypes.Type(value = StringSchema.class, name = "string")})
+  @JsonSubTypes({@Type(value = StringSchema.class, name = "string")})
   public interface Schema {
 
     <R, C> R accept(SchemaVisitor<R, C> visitor, C context);
@@ -107,9 +108,7 @@ public class RootGraphqlModel {
   }
 
   @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
-  @JsonSubTypes({
-    @JsonSubTypes.Type(value = KafkaMutationCoords.class, name = KafkaMutationCoords.type)
-  })
+  @JsonSubTypes({@Type(value = KafkaMutationCoords.class, name = KafkaMutationCoords.type)})
   public abstract static class MutationCoords {
     protected String type;
 
@@ -162,7 +161,7 @@ public class RootGraphqlModel {
       use = JsonTypeInfo.Id.NAME,
       property = "type",
       defaultImpl = KafkaSubscriptionCoords.class)
-  @JsonSubTypes({@JsonSubTypes.Type(value = KafkaSubscriptionCoords.class, name = "kafka")})
+  @JsonSubTypes({@Type(value = KafkaSubscriptionCoords.class, name = "kafka")})
   public abstract static class SubscriptionCoords {
     protected String type;
 
@@ -217,8 +216,8 @@ public class RootGraphqlModel {
   @NoArgsConstructor
   @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
   @JsonSubTypes({
-    @JsonSubTypes.Type(value = ArgumentLookupQueryCoords.class, name = "args"),
-    @JsonSubTypes.Type(value = FieldLookupQueryCoords.class, name = "field")
+    @Type(value = ArgumentLookupQueryCoords.class, name = "args"),
+    @Type(value = FieldLookupQueryCoords.class, name = "field")
   })
   public abstract static class QueryCoords {
 
@@ -284,7 +283,7 @@ public class RootGraphqlModel {
   }
 
   @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
-  @JsonSubTypes({@JsonSubTypes.Type(value = SqlQuery.class, name = "SqlQuery")})
+  @JsonSubTypes({@Type(value = SqlQuery.class, name = "SqlQuery")})
   public interface QueryBase {
 
     <R, C> R accept(QueryBaseVisitor<R, C> visitor, C context);
@@ -326,8 +325,8 @@ public class RootGraphqlModel {
 
   @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
   @JsonSubTypes({
-    @JsonSubTypes.Type(value = FixedArgument.class, name = FixedArgument.type),
-    @JsonSubTypes.Type(value = VariableArgument.class, name = VariableArgument.type)
+    @Type(value = FixedArgument.class, name = FixedArgument.type),
+    @Type(value = VariableArgument.class, name = VariableArgument.type)
   })
   public interface Argument {
 
@@ -411,9 +410,9 @@ public class RootGraphqlModel {
 
   @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
   @JsonSubTypes({
-    @JsonSubTypes.Type(value = ParentParameter.class, name = ParentParameter.type),
-    @JsonSubTypes.Type(value = ArgumentParameter.class, name = ArgumentParameter.type),
-    @JsonSubTypes.Type(value = MetadataParameter.class, name = MetadataParameter.type)
+    @Type(value = ParentParameter.class, name = ParentParameter.type),
+    @Type(value = ArgumentParameter.class, name = ArgumentParameter.type),
+    @Type(value = MetadataParameter.class, name = MetadataParameter.type)
   })
   public interface QueryParameterHandler {
 

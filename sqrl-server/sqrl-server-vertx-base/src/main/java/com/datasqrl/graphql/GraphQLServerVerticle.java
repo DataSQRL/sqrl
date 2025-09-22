@@ -153,10 +153,9 @@ public class GraphQLServerVerticle extends AbstractVerticle {
       var graphQL =
           model.accept(
               new GraphQLEngineBuilder.Builder()
-                  .withMutationConfiguration(new MutationConfigurationImpl(model, vertx, config))
+                  .withMutationConfiguration(new MutationConfigurationImpl(vertx, config))
                   .withSubscriptionConfiguration(
-                      new SubscriptionConfigurationImpl(
-                          model, vertx, config, startPromise, vertxJdbcClient))
+                      new SubscriptionConfigurationImpl(vertx, config, startPromise))
                   .withExtendedScalarTypes(CustomScalars.getExtendedScalars())
                   .build(),
               new VertxContext(vertxJdbcClient, headerReaders));

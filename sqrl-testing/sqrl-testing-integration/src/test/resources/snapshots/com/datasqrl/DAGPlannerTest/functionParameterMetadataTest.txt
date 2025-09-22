@@ -337,7 +337,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerMessage_2`
                   "metadata" : {
                     "metadataType" : "AUTH",
                     "name" : "userid",
-                    "isRequired" : true
+                    "required" : true
                   }
                 },
                 {
@@ -362,17 +362,17 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerMessage_2`
             "event_id" : {
               "metadataType" : "UUID",
               "name" : "",
-              "isRequired" : true
+              "required" : true
             },
             "customerid" : {
               "metadataType" : "AUTH",
               "name" : "userid",
-              "isRequired" : true
+              "required" : true
             },
             "event_time" : {
               "metadataType" : "TIMESTAMP",
               "name" : "",
-              "isRequired" : true
+              "required" : true
             }
           },
           "transactional" : false,
@@ -391,7 +391,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerMessage_2`
               "metadata" : {
                 "metadataType" : "AUTH",
                 "name" : "userid",
-                "isRequired" : true
+                "required" : true
               }
             }
           }

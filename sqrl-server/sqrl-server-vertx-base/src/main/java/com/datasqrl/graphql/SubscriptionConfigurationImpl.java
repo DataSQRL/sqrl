@@ -20,7 +20,6 @@ import com.datasqrl.graphql.kafka.KafkaDataFetcherFactory;
 import com.datasqrl.graphql.kafka.KafkaSinkConsumer;
 import com.datasqrl.graphql.server.Context;
 import com.datasqrl.graphql.server.RootGraphqlModel;
-import com.datasqrl.graphql.server.RootGraphqlModel.KafkaSubscriptionCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.SubscriptionCoordsVisitor;
 import com.datasqrl.graphql.server.SubscriptionConfiguration;
 import graphql.schema.DataFetcher;
@@ -42,29 +41,24 @@ import lombok.extern.slf4j.Slf4j;
 @AllArgsConstructor
 public class SubscriptionConfigurationImpl implements SubscriptionConfiguration<DataFetcher<?>> {
 
-  RootGraphqlModel root;
   Vertx vertx;
   ServerConfig config;
   Promise<Void> startPromise;
-  VertxJdbcClient client;
 
   @Override
   public SubscriptionCoordsVisitor<DataFetcher<?>, Context> createSubscriptionFetcherVisitor() {
-    return new SubscriptionCoordsVisitor<>() {
-      @Override
-      public DataFetcher<?> visit(KafkaSubscriptionCoords coords, Context context) {
-        KafkaConsumer<String, String> consumer =
-            KafkaConsumer.create(vertx, config.getKafkaSubscriptionConfig().asMap());
-        consumer
-            .subscribe(coords.getTopic())
-            .onSuccess(v -> log.info("Subscribed to topic: {}", coords.getTopic()))
-            .onFailure(
-                err -> {
-                  log.error("Failed to subscribe to topic: {}", coords.getTopic(), err);
-                  startPromise.fail(err);
-                });
-        return KafkaDataFetcherFactory.create(new KafkaSinkConsumer<>(consumer), coords, context);
-      }
+    return (coords, context) -> {
+      KafkaConsumer<String, String> consumer =
+          KafkaConsumer.create(vertx, config.getKafkaSubscriptionConfig().asMap());
+      consumer
+          .subscribe(coords.getTopic())
+          .onSuccess(v -> log.info("Subscribed to topic: {}", coords.getTopic()))
+          .onFailure(
+              err -> {
+                log.error("Failed to subscribe to topic: {}", coords.getTopic(), err);
+                startPromise.fail(err);
+              });
+      return KafkaDataFetcherFactory.create(new KafkaSinkConsumer<>(consumer), coords, context);
     };
   }
 }

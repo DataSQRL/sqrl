@@ -315,7 +315,7 @@ CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" INTEGER NOT NULL, "temper
             "event_time" : {
               "metadataType" : "TIMESTAMP",
               "name" : "",
-              "isRequired" : false
+              "required" : false
             }
           },
           "transactional" : false,

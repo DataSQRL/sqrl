@@ -82,7 +82,11 @@
           "returnList": true,
           "topic": "SensorReading",
           "computedColumns": {
-            "event_time": "TIMESTAMP"
+            "event_time": {
+              "metadataType": "TIMESTAMP",
+              "name": "",
+              "required": false
+            }
           },
           "transactional": false,
           "sinkConfig": {}
@@ -94,15 +98,18 @@
           "fieldName": "SensorReadingSubscription",
           "topic": "SensorReadingSubscription",
           "sinkConfig": {},
-          "filters": {}
+          "equalityConditions": {}
         },
         {
           "type": "kafka",
           "fieldName": "SensorSubscriptionById",
           "topic": "SensorReadingSubscription",
           "sinkConfig": {},
-          "filters": {
-            "sensorid": "sensorid"
+          "equalityConditions": {
+            "sensorid": {
+              "type": "arg",
+              "path": "sensorid"
+            }
           }
         }
       ],

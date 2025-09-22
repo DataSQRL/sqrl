@@ -386,12 +386,12 @@ INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
             "event_id" : {
               "metadataType" : "UUID",
               "name" : "",
-              "isRequired" : true
+              "required" : true
             },
             "event_time" : {
               "metadataType" : "TIMESTAMP",
               "name" : "",
-              "isRequired" : false
+              "required" : false
             }
           },
           "transactional" : false,
@@ -406,7 +406,7 @@ INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
             "updatedTime" : {
               "metadataType" : "TIMESTAMP",
               "name" : "",
-              "isRequired" : false
+              "required" : false
             }
           },
           "transactional" : false,

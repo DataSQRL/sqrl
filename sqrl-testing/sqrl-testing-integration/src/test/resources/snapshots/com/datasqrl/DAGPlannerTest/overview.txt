@@ -1154,12 +1154,12 @@ INSERT INTO `default_catalog`.`default_database`.`MyPrintSink_ex1`
             "orderTime" : {
               "metadataType" : "TIMESTAMP",
               "name" : "",
-              "isRequired" : false
+              "required" : false
             },
             "_uuid" : {
               "metadataType" : "UUID",
               "name" : "",
-              "isRequired" : true
+              "required" : true
             }
           },
           "transactional" : false,

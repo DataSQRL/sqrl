@@ -55,7 +55,7 @@ public class VertxQueryExecutionContext extends AbstractQueryExecutionContext<Ve
   }
 
   @Override
-  public CompletableFuture runQuery(ResolvedSqlQuery resolvedQuery, boolean isList) {
+  public CompletableFuture<Object> runQuery(ResolvedSqlQuery resolvedQuery, boolean isList) {
     var preparedQueryContainer = (PreparedSqrlQueryImpl) resolvedQuery.getPreparedQueryContainer();
     final var paramObj = getParamArguments(resolvedQuery.getQuery().getParameters());
     var query = resolvedQuery.getQuery();

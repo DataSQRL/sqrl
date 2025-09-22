@@ -393,12 +393,12 @@ CREATE INDEX IF NOT EXISTS "SensorReading_hash_c1" ON "SensorReading" USING hash
             "uuid" : {
               "metadataType" : "UUID",
               "name" : "",
-              "isRequired" : true
+              "required" : true
             },
             "event_time" : {
               "metadataType" : "TIMESTAMP",
               "name" : "",
-              "isRequired" : false
+              "required" : false
             }
           },
           "transactional" : false,

@@ -19,7 +19,7 @@ import com.datasqrl.graphql.server.ResolvedMetadata;
 
 public interface MetadataExtractor {
 
-  ResolvedMetadata convert(String metadataAlias, boolean isNullable);
+  ResolvedMetadata extract(String metadataAlias, boolean nullable);
 
   boolean removeMetadata(String metadataAlias);
 }

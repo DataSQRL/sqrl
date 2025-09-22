@@ -1161,12 +1161,12 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
             "_uuid" : {
               "metadataType" : "UUID",
               "name" : "",
-              "isRequired" : true
+              "required" : true
             },
             "event_time" : {
               "metadataType" : "TIMESTAMP",
               "name" : "",
-              "isRequired" : false
+              "required" : false
             }
           },
           "transactional" : false,
@@ -1181,12 +1181,12 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
             "_uuid" : {
               "metadataType" : "UUID",
               "name" : "",
-              "isRequired" : true
+              "required" : true
             },
             "event_time" : {
               "metadataType" : "TIMESTAMP",
               "name" : "",
-              "isRequired" : false
+              "required" : false
             }
           },
           "transactional" : true,

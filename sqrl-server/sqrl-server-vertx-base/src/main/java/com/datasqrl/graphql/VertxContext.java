@@ -90,21 +90,18 @@ public class VertxContext implements Context {
   public DataFetcher<?> createArgumentLookupFetcher(
       GraphQLEngineBuilder server, Set<Argument> arguments, ResolvedQuery resolvedQuery) {
 
-    DataFetcher<?> dataFetcher =
-        env -> {
-          Set<Argument> argumentSet =
-              RootGraphqlModel.VariableArgument.convertArguments(env.getArguments());
+    return env -> {
+      Set<Argument> argumentSet =
+          RootGraphqlModel.VariableArgument.convertArguments(env.getArguments());
 
-          var cf = new CompletableFuture<Object>();
+      var cf = new CompletableFuture<>();
 
-          // Execute
-          QueryExecutionContext context =
-              new VertxQueryExecutionContext(this, env, argumentSet, cf);
-          resolvedQuery.accept(server, context);
-          return cf;
-        };
+      // Execute
+      QueryExecutionContext context = new VertxQueryExecutionContext(this, env, argumentSet, cf);
+      resolvedQuery.accept(server, context);
 
-    return dataFetcher;
+      return cf;
+    };
   }
 
   @Override

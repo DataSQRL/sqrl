@@ -53,7 +53,6 @@ import lombok.extern.slf4j.Slf4j;
 @AllArgsConstructor
 public class MutationConfigurationImpl implements MutationConfiguration<DataFetcher<?>> {
 
-  private RootGraphqlModel root;
   private Vertx vertx;
   private ServerConfig config;
 
@@ -76,7 +75,7 @@ public class MutationConfigurationImpl implements MutationConfiguration<DataFetc
                         MetadataReader metadataReader =
                             context.getMetadataReader(metadata.metadataType());
                         yield (env ->
-                            metadataReader.read(env, metadata.name(), metadata.isRequired()));
+                            metadataReader.read(env, metadata.name(), metadata.required()));
                       }
                       default -> null;
                     };

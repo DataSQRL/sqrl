@@ -98,14 +98,12 @@ public class FlinkTableBuilder {
     for (var i = 0; i < columnList.size(); i++) {
       var column = columnList.get(i);
       if (column instanceof SqlTableColumn.SqlMetadataColumn columnMetadata) {
-        ResolvedMetadata metadata =
-            columnMetadata
-                .getMetadataAlias()
-                .map(alias -> extractor.convert(alias, columnMetadata.getType().getNullable()))
-                .orElse(null);
-        if (metadata != null) {
-          convertedColumns.put(columnMetadata.getName().getSimple(), metadata);
-        }
+        columnMetadata
+            .getMetadataAlias()
+            .map(alias -> extractor.extract(alias, columnMetadata.getType().getNullable()))
+            .ifPresent(
+                metadata -> convertedColumns.put(columnMetadata.getName().getSimple(), metadata));
+
         // Remove metadata if extractor says so
         if (columnMetadata.getMetadataAlias().map(extractor::removeMetadata).orElse(false)) {
           var regularColumn =

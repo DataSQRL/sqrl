@@ -357,7 +357,7 @@ CREATE TABLE IF NOT EXISTS "SensorUpdates" ("sensorid" INTEGER NOT NULL, "sensor
             "event_time" : {
               "metadataType" : "TIMESTAMP",
               "name" : "",
-              "isRequired" : true
+              "required" : true
             }
           },
           "transactional" : false,
@@ -372,7 +372,7 @@ CREATE TABLE IF NOT EXISTS "SensorUpdates" ("sensorid" INTEGER NOT NULL, "sensor
             "lastUpdated" : {
               "metadataType" : "TIMESTAMP",
               "name" : "",
-              "isRequired" : true
+              "required" : true
             }
           },
           "transactional" : false,

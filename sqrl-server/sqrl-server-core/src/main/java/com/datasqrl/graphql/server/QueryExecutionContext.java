@@ -21,5 +21,5 @@ import java.util.concurrent.CompletableFuture;
 
 public interface QueryExecutionContext extends ExecutionContext {
 
-  CompletableFuture runQuery(ResolvedSqlQuery pgQuery, boolean isList);
+  CompletableFuture<Object> runQuery(ResolvedSqlQuery pgQuery, boolean isList);
 }

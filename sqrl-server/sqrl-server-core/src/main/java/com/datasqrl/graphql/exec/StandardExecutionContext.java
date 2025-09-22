@@ -70,7 +70,7 @@ public class StandardExecutionContext<C extends Context>
     return context
         .getContext()
         .getMetadataReader(md.metadataType())
-        .read(context.getEnvironment(), md.name(), md.isRequired());
+        .read(context.getEnvironment(), md.name(), md.required());
   }
 
   public List<Object> getParamArguments(List<QueryParameterHandler> parameters) {

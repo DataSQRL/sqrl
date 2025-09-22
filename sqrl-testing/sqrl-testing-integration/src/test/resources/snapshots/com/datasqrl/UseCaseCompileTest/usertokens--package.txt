@@ -463,7 +463,7 @@ CREATE INDEX IF NOT EXISTS "TotalOrgTokens_btree_c1" ON "TotalOrgTokens" USING b
             "request_time" : {
               "metadataType" : "TIMESTAMP",
               "name" : "",
-              "isRequired" : true
+              "required" : true
             }
           },
           "transactional" : false,
