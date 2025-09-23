@@ -1,0 +1,14 @@
+/*+no_query */
+CREATE TABLE SimpleInput (
+    _uuid STRING NOT NULL METADATA FROM 'uuid',
+    userid INT,
+    event_time TIMESTAMP_LTZ(3) METADATA FROM 'timestamp'
+);
+
+_Input := SELECT *, _uuid AS unique_id FROM SimpleInput;
+
+/*+no_query */
+InputDistinct := DISTINCT _Input ON userid ORDER BY event_time DESC;
+
+/*+engine(database) */
+JoinTable := SELECT * FROM InputDistinct i2 JOIN _Input i1 ON i1.userid = i2.userid;
