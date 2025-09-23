@@ -26,6 +26,7 @@ public class SqrlConstants {
   public static final String PACKAGE_JSON = "package.json";
   public static final Path DEFAULT_PACKAGE = Path.of(PACKAGE_JSON);
   public static final String FLINK_ASSETS_DIR = "flink";
+  public static final String FLINK_DEFAULT_DATABASE = "default_database";
   public static final String LIB_DIR = "lib";
   public static final String DATA_DIR = "data";
   public static final String SQRL_EXTENSION = "sqrl";
