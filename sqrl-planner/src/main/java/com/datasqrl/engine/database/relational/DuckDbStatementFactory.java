@@ -25,6 +25,7 @@ import com.datasqrl.calcite.dialect.ExtendedPostgresSqlDialect;
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.config.PackageJson.EngineConfig;
+import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.engine.database.relational.ddl.statements.GenericCreateTableDdlFactory;
 import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.planner.dag.plan.MaterializationStagePlan.Query;
@@ -39,11 +40,13 @@ import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.logical.LogicalTableFunctionScan;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rex.RexBuilder;
-import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.SqlDataTypeSpec;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 
 public class DuckDbStatementFactory extends AbstractJdbcStatementFactory {
+
+  private static final String WAREHOUSE_KEY = "warehouse";
+  private static final String DATABASE_KEY = "catalog-database";
 
   private final EngineConfig engineConfig;
 
@@ -84,30 +87,30 @@ public class DuckDbStatementFactory extends AbstractJdbcStatementFactory {
             new RelShuttleImpl() {
               @Override
               public RelNode visit(TableScan scan) {
-                String tableId = scan.getTable().getQualifiedName().get(2);
-                JdbcEngineCreateTable createTable = tableIdMap.get(tableId);
-                Map<String, String> connector = createTable.table().getConnectorOptions();
-                String warehouse = connector.get("warehouse");
-                String databaseName =
-                    connector.get("database-name") == null
-                        ? "default_database"
-                        : connector.get("database-name");
-                RexBuilder rexBuilder = new RexBuilder(new TypeFactory());
+                var tableId = scan.getTable().getQualifiedName().get(2);
+                var createTable = tableIdMap.get(tableId);
+                var connector = createTable.table().getConnectorOptions();
+
+                var warehouse = connector.get(WAREHOUSE_KEY);
+                var databaseName =
+                    connector.getOrDefault(DATABASE_KEY, SqrlConstants.FLINK_DEFAULT_DATABASE);
+                var rexBuilder = new RexBuilder(new TypeFactory());
                 if (warehouse.startsWith("file://")) {
                   warehouse = warehouse.substring(7);
                 }
 
-                RexNode allowMovedPaths =
+                var allowMovedPaths =
                     rexBuilder.makeCall(
                         SqlStdOperatorTable.EQUALS,
                         rexBuilder.makeFlag(Params.ALLOW_MOVED_PATHS),
                         rexBuilder.makeLiteral(true));
-                RexNode rexNode =
+                var rexNode =
                     rexBuilder.makeCall(
                         lightweightOp("iceberg_scan"),
                         rexBuilder.makeLiteral(
                             warehouse + "/" + databaseName + "/" + createTable.tableName()),
                         allowMovedPaths);
+
                 return new LogicalTableFunctionScan(
                     scan.getCluster(),
                     scan.getTraitSet(),
