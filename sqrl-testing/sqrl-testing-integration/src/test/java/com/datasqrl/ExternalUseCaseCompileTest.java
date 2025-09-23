@@ -27,8 +27,8 @@ public class ExternalUseCaseCompileTest extends AbstractUseCaseTest {
   @Test
   public void testIndividual() {
     super.testUsecase(
-        Path.of("/Users/matthias/git/datasqrl-cba/fraud/fraud.sqrl"),
+        Path.of("/Users/matthias/git/cloud-backend/core/backend.sqrl"),
         null,
-        Path.of("/Users/matthias/git/datasqrl-cba/fraud/fraud_package_test.json"));
+        Path.of("/Users/matthias/git/cloud-backend/core/package-deploy.json"));
   }
 }
