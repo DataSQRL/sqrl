@@ -259,7 +259,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
         */
         var conditions = stagePlan.getUtils().rexUtil().getConjunctions(filter.getCondition());
         var fieldNames = filter.getRowType().getFieldNames();
-        var sqrlFct = query.getFunction();
+        var sqrlFn = query.function();
         for (RexNode condition : conditions) {
           checkErrors.accept(condition instanceof RexCall);
           var call = (RexCall) condition;
@@ -270,7 +270,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
               var colIdx = CalciteUtil.getNonAlteredInputRef(call.getOperands().get((i + 1) % 2));
               checkErrors.accept(colIdx.isPresent());
               filterColumns.put(
-                  fieldNames.get(colIdx.get()), sqrlFct.getParameters().get(argumentIndex));
+                  fieldNames.get(colIdx.get()), sqrlFn.getParameters().get(argumentIndex));
             }
           }
         }
