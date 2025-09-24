@@ -158,6 +158,7 @@
     <awaitility.version>4.3.0</awaitility.version>
     <jakarta.annotation.version>3.0.0</jakarta.annotation.version>
     <graphql-micrometer.version>1.0.1</graphql-micrometer.version>
+    <micrometer.version>1.15.4</micrometer.version>
     <calcite-core.version>1.40.0</calcite-core.version>
     <duckdb.version>1.4.0.0</duckdb.version>
     <snowflake-jdbc.version>3.26.1</snowflake-jdbc.version>
@@ -362,7 +363,7 @@
       <dependency>
         <groupId>io.micrometer</groupId>
         <artifactId>micrometer-registry-prometheus</artifactId>
-        <version>1.15.4</version>
+        <version>${micrometer.version}</version>
       </dependency>
       <!-- required for vertx jdbc -->
       <dependency>
