@@ -1,0 +1,15 @@
+[ {
+  "data" : {
+    "MessageSubscription" : {
+      "val" : 1,
+      "message" : "Hello"
+    }
+  }
+}, {
+  "data" : {
+    "MessageSubscription" : {
+      "val" : 1,
+      "message" : "World"
+    }
+  }
+} ]

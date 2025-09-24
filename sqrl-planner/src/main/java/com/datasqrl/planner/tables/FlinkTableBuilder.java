@@ -17,11 +17,13 @@ package com.datasqrl.planner.tables;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.engine.stream.flink.plan.FlinkSqlNodeFactory;
+import com.datasqrl.graphql.server.ResolvedMetadata;
 import com.datasqrl.util.StreamUtil;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -90,27 +92,28 @@ public class FlinkTableBuilder {
     return this;
   }
 
-  public List<String> extractMetadataColumns(String metadataAlias, boolean convertToRegular) {
+  public Map<String, ResolvedMetadata> extractMetadataColumns(MetadataExtractor extractor) {
     Preconditions.checkArgument(columnList != null, "Need to initialize columns first");
-    List<String> convertedColumns = new ArrayList<>();
+    Map<String, ResolvedMetadata> convertedColumns = new HashMap<>();
     for (var i = 0; i < columnList.size(); i++) {
       var column = columnList.get(i);
       if (column instanceof SqlTableColumn.SqlMetadataColumn columnMetadata) {
-        if (columnMetadata
+        columnMetadata
             .getMetadataAlias()
-            .filter(alias -> alias.equalsIgnoreCase(metadataAlias))
-            .isPresent()) {
-          convertedColumns.add(columnMetadata.getName().getSimple());
-          if (convertToRegular) {
-            var regularColumn =
-                new SqlRegularColumn(
-                    columnMetadata.getParserPosition(),
-                    columnMetadata.getName(),
-                    columnMetadata.getComment().orElse(null),
-                    columnMetadata.getType(),
-                    null);
-            columnList.set(i, regularColumn);
-          }
+            .map(alias -> extractor.extract(alias, columnMetadata.getType().getNullable()))
+            .ifPresent(
+                metadata -> convertedColumns.put(columnMetadata.getName().getSimple(), metadata));
+
+        // Remove metadata if extractor says so
+        if (columnMetadata.getMetadataAlias().map(extractor::removeMetadata).orElse(false)) {
+          var regularColumn =
+              new SqlRegularColumn(
+                  columnMetadata.getParserPosition(),
+                  columnMetadata.getName(),
+                  columnMetadata.getComment().orElse(null),
+                  columnMetadata.getType(),
+                  null);
+          columnList.set(i, regularColumn);
         }
       }
     }

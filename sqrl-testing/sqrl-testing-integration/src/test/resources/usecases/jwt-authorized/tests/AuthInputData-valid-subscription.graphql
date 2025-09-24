@@ -1,0 +1,6 @@
+subscription {
+  MessageSubscription {
+    val
+    message
+  }
+}

@@ -1573,15 +1573,18 @@ FROM "ExternalOrders" AS "ExternalOrders0"
           "fieldName" : "CustomerSubscription",
           "topic" : "CustomerSubscription",
           "sinkConfig" : { },
-          "filters" : { }
+          "equalityConditions" : { }
         },
         {
           "type" : "kafka",
           "fieldName" : "CustomerSubscriptionById",
           "topic" : "Customer",
           "sinkConfig" : { },
-          "filters" : {
-            "minId" : "customerid"
+          "equalityConditions" : {
+            "customerid" : {
+              "type" : "arg",
+              "path" : "minId"
+            }
           }
         }
       ],

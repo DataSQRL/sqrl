@@ -23,7 +23,6 @@ import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedSqlQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.SqlQuery;
 import graphql.schema.DataFetchingEnvironment;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -33,22 +32,22 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
 import lombok.SneakyThrows;
-import lombok.Value;
 
-@Value
-public class JdbcExecutionContext extends AbstractQueryExecutionContext {
+public class JdbcExecutionContext extends AbstractQueryExecutionContext<JdbcContext> {
 
-  JdbcContext context;
-  DataFetchingEnvironment environment;
-  Set<Argument> arguments;
+  public JdbcExecutionContext(
+      JdbcContext context, DataFetchingEnvironment environment, Set<Argument> arguments) {
+    super(context, environment, arguments);
+  }
 
   @SneakyThrows
   @Override
-  public CompletableFuture runQuery(ResolvedSqlQuery resolvedQuery, boolean isList) {
+  public CompletableFuture<Object> runQuery(ResolvedSqlQuery resolvedQuery, boolean isList) {
     PreparedSqrlQueryImpl preparedQueryContainer =
         ((PreparedSqrlQueryImpl) resolvedQuery.getPreparedQueryContainer());
-    final List paramObj = getParamArguments(resolvedQuery.getQuery().getParameters());
+    final List<Object> paramObj = getParamArguments(resolvedQuery.getQuery().getParameters());
     SqlQuery query = resolvedQuery.getQuery();
     String unpreparedSqlQuery = query.getSql();
     switch (query.getPagination()) {
@@ -76,39 +75,32 @@ public class JdbcExecutionContext extends AbstractQueryExecutionContext {
         throw new UnsupportedOperationException("Unsupported pagination: " + query.getPagination());
     }
 
+    Supplier<Connection> connSupplier;
+    Supplier<String> stmtSupplier;
     if (preparedQueryContainer != null) {
-      return CompletableFuture.supplyAsync(
-          () -> {
-            try (final var conn = preparedQueryContainer.connection();
-                final var stmt = conn.prepareStatement(preparedQueryContainer.preparedQuery())) {
-              for (int i = 0; i < paramObj.size(); i++) {
-                stmt.setObject(i + 1, paramObj.get(i));
-              }
-              var resultSet = stmt.executeQuery();
+      connSupplier = preparedQueryContainer::connection;
+      stmtSupplier = preparedQueryContainer::preparedQuery;
 
-              return unboxList(resultSetToList(resultSet), isList);
-            } catch (SQLException e) {
-              throw new RuntimeException(e);
-            }
-          });
     } else {
       final String sqlQuery = unpreparedSqlQuery;
-      return CompletableFuture.supplyAsync(
-          () -> {
-            Connection connection = this.context.getClient().getConnection();
-
-            try (PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
-              for (int i = 0; i < paramObj.size(); i++) {
-                statement.setObject(i + 1, paramObj.get(i));
-              }
-              ResultSet resultSet = statement.executeQuery();
-
-              return unboxList(resultSetToList(resultSet), isList);
-            } catch (SQLException e) {
-              throw new RuntimeException(e);
-            }
-          });
+      connSupplier = () -> getContext().getClient().getConnection();
+      stmtSupplier = () -> sqlQuery;
     }
+
+    return CompletableFuture.supplyAsync(
+        () -> {
+          try (final var conn = connSupplier.get();
+              final var stmt = conn.prepareStatement(stmtSupplier.get())) {
+            for (int i = 0; i < paramObj.size(); i++) {
+              stmt.setObject(i + 1, paramObj.get(i));
+            }
+            var resultSet = stmt.executeQuery();
+
+            return unboxList(resultSetToList(resultSet), isList);
+          } catch (SQLException e) {
+            throw new RuntimeException(e);
+          }
+        });
   }
 
   private List<Map<String, Object>> resultSetToList(ResultSet resultSet) throws SQLException {

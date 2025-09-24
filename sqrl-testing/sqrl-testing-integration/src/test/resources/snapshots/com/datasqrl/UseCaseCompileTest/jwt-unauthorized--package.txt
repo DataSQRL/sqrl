@@ -129,7 +129,7 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"
                   "metadata" : {
                     "metadataType" : "AUTH",
                     "name" : "val",
-                    "isRequired" : true
+                    "required" : true
                   }
                 }
               ],

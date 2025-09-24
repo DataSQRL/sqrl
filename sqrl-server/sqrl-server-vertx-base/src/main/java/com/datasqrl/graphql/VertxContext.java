@@ -23,9 +23,9 @@ import com.datasqrl.graphql.server.GraphQLEngineBuilder;
 import com.datasqrl.graphql.server.MetadataReader;
 import com.datasqrl.graphql.server.MetadataType;
 import com.datasqrl.graphql.server.QueryExecutionContext;
+import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedQuery;
-import com.datasqrl.graphql.server.RootGraphqlModel.VariableArgument;
 import graphql.schema.DataFetcher;
 import graphql.schema.DataFetchingEnvironment;
 import graphql.schema.PropertyDataFetcher;
@@ -33,7 +33,6 @@ import io.vertx.core.json.JsonObject;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.Value;
 import org.slf4j.Logger;
@@ -91,23 +90,18 @@ public class VertxContext implements Context {
   public DataFetcher<?> createArgumentLookupFetcher(
       GraphQLEngineBuilder server, Set<Argument> arguments, ResolvedQuery resolvedQuery) {
 
-    DataFetcher<?> dataFetcher =
-        env -> {
-          Set<Argument> argumentSet =
-              env.getArguments().entrySet().stream()
-                  .map(argument -> new VariableArgument(argument.getKey(), argument.getValue()))
-                  .collect(Collectors.toSet());
+    return env -> {
+      Set<Argument> argumentSet =
+          RootGraphqlModel.VariableArgument.convertArguments(env.getArguments());
 
-          var cf = new CompletableFuture<Object>();
+      var cf = new CompletableFuture<>();
 
-          // Execute
-          QueryExecutionContext context =
-              new VertxQueryExecutionContext(this, env, argumentSet, cf);
-          resolvedQuery.accept(server, context);
-          return cf;
-        };
+      // Execute
+      QueryExecutionContext context = new VertxQueryExecutionContext(this, env, argumentSet, cf);
+      resolvedQuery.accept(server, context);
 
-    return dataFetcher;
+      return cf;
+    };
   }
 
   @Override

@@ -1,29 +1,14 @@
-MyTable := SELECT val
-           FROM (VALUES ((1)), ((2)), ((3)), ((4)), ((5)),
-            ((6)), ((7)), ((8)), ((9)), ((10))) AS t(val) ORDER BY val;
+IMPORT jwt-authorized-base.*;
 
-MyStringTable := SELECT val FROM (VALUES 'a', 'b', 'c', 'd') AS t(val) ORDER BY val;
+/*+no_query */
+CREATE TABLE AuthInputData (
+    event_id STRING NOT NULL METADATA FROM 'uuid',
+    val BIGINT NOT NULL METADATA FROM 'auth.val',
+    message STRING NOT NULL,
+    event_time TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp'
+);
 
-/*+test*/
-MyTableTest := SELECT * FROM MyTable;
+_Messages := SELECT * FROM AuthInputData WHERE message <> '';
 
-/*+test*/
-MyStringTableTest := SELECT * FROM MyStringTable;
-
-AuthMyTable(val BIGINT NOT NULL METADATA FROM 'auth.val') :=
-    SELECT t.* 
-      FROM MyTable t 
-     WHERE t.val = :val
-     ORDER BY t.val ASC;
-
-AuthMyTableValues(vals ARRAY<BIGINT> NOT NULL METADATA FROM 'auth.values') :=
-    SELECT t.* 
-      FROM MyTable t 
-     WHERE array_contains(cast(:vals as ARRAY<BIGINT>), t.val)
-     ORDER BY t.val ASC;
-
-AuthStringMyTableValues(vals ARRAY<STRING> NOT NULL METADATA FROM 'auth.values') :=
-    SELECT t.*
-      FROM MyStringTable t
-     WHERE array_contains(CAST(:vals AS ARRAY<STRING>), CAST(t.val AS STRING))
-     ORDER BY t.val ASC;
+MessageSubscription(val BIGINT NOT NULL METADATA FROM 'auth.val') :=
+                SUBSCRIBE SELECT * FROM _Messages WHERE val = :val;

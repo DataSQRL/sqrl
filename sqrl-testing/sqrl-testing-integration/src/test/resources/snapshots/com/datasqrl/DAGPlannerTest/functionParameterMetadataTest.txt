@@ -22,6 +22,41 @@ SQL: CREATE VIEW `Customer__view`
 AS
 SELECT `Customer`.`customerid`, `Customer`.`email`, `Customer`.`name`, `Customer`.`lastUpdated`, `Customer`.`timestamp`
 FROM `default_catalog`.`default_database`.`Customer` AS `Customer`
+=== CustomerMessage
+ID:     default_catalog.default_database.CustomerMessage
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database._InputData
+Annotations:
+ - stream-root: _InputData
+Primary Key: event_id
+Timestamp  : event_time
+Schema:
+ - event_id: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - customerid: BIGINT NOT NULL
+ - message: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Plan:
+LogicalProject(event_id=[$0], customerid=[$1], message=[$2], event_time=[$3])
+  LogicalFilter(condition=[<>($2, '')])
+    LogicalTableScan(table=[[default_catalog, default_database, _InputData]])
+SQL: CREATE VIEW `CustomerMessage` AS  SELECT * FROM _InputData WHERE message <> '';
+
+=== CustomerMessageStream
+ID:     default_catalog.default_database.CustomerMessageStream
+Type:   query
+Stage:  kafka
+Inputs: default_catalog.default_database.CustomerMessage
+Annotations:
+ - stream-root: _InputData
+ - parameters: customerid
+ - base-table: CustomerMessage
+Plan:
+LogicalProject(event_id=[$0], customerid=[$1], message=[$2], event_time=[$3])
+  LogicalFilter(condition=[=($1, ?0)])
+    LogicalTableScan(table=[[default_catalog, default_database, CustomerMessage]])
+SQL: CREATE VIEW `CustomerMessageStream` AS  SELECT * FROM CustomerMessage WHERE customerid = ?          ;
+
 === CustomersByTime
 ID:     default_catalog.default_database.CustomersByTime
 Type:   query
@@ -40,6 +75,28 @@ SQL: CREATE VIEW `CustomersByTime` AS
     SELECT * FROM Customer WHERE customerid = ?           AND `timestamp` + INTERVAL '4' HOUR >= ?        
     ORDER BY `timestamp` ASC;
 
+=== _InputData
+ID:     default_catalog.default_database._InputData
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database._InputData__base
+Annotations:
+ - stream-root: _InputData
+Primary Key: event_id
+Timestamp  : event_time
+Schema:
+ - event_id: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - customerid: BIGINT NOT NULL
+ - message: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Plan:
+LogicalWatermarkAssigner(rowtime=[event_time], watermark=[-($3, 0:INTERVAL SECOND)])
+  LogicalProject(event_id=[$0], customerid=[$1], message=[$2], event_time=[CAST($3):TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL])
+    LogicalTableScan(table=[[default_catalog, default_database, _InputData, metadata=[timestamp]]])
+SQL: CREATE VIEW `_InputData__view`
+AS
+SELECT `_InputData`.`event_id`, `_InputData`.`customerid`, `_InputData`.`message`, `_InputData`.`event_time`
+FROM `default_catalog`.`default_database`.`_InputData` AS `_InputData`
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `Customer__schema` (
   `customerid` BIGINT NOT NULL,
@@ -60,6 +117,26 @@ CREATE TABLE `Customer` (
   'connector' = 'filesystem'
 )
 LIKE `Customer__schema`;
+CREATE TABLE `_InputData` (
+  `event_id` STRING NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `message` STRING NOT NULL,
+  `event_time` TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
+  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
+) WITH (
+  'connector' = 'kafka',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
+  'properties.auto.offset.reset' = 'earliest',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'topic' = 'kafka-mutation-_InputData'
+);
+CREATE VIEW `CustomerMessage`
+AS
+SELECT *
+FROM `_InputData`
+WHERE `message` <> '';
 CREATE TABLE `Customer_1` (
   `customerid` BIGINT NOT NULL,
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -75,15 +152,49 @@ CREATE TABLE `Customer_1` (
   'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
   'username' = '${POSTGRES_USERNAME}'
 );
+CREATE TABLE `CustomerMessage_2` (
+  `event_id` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `message` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+) WITH (
+  'connector' = 'kafka',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'topic' = 'kafka-CustomerMessage'
+);
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Customer_1`
 (SELECT *
  FROM `default_catalog`.`default_database`.`Customer`)
 ;
-END
+INSERT INTO `default_catalog`.`default_database`.`CustomerMessage_2`
+ (SELECT *
+  FROM `default_catalog`.`default_database`.`CustomerMessage`)
+ ;
+ END
 >>>kafka.json
 {
-  "topics" : [ ],
+  "topics" : [
+    {
+      "topicName" : "kafka-CustomerMessage",
+      "tableName" : "CustomerMessage_2",
+      "format" : "flexible-json",
+      "numPartitions" : 1,
+      "replicationFactor" : 3,
+      "config" : { }
+    },
+    {
+      "topicName" : "kafka-mutation-_InputData",
+      "tableName" : "_InputData",
+      "format" : "flexible-json",
+      "numPartitions" : 1,
+      "replicationFactor" : 3,
+      "config" : { }
+    }
+  ],
   "testRunnerTopics" : [ ]
 }
 >>>postgres.json
@@ -226,7 +337,7 @@ END
                   "metadata" : {
                     "metadataType" : "AUTH",
                     "name" : "userid",
-                    "isRequired" : true
+                    "required" : true
                   }
                 },
                 {
@@ -241,8 +352,51 @@ END
           }
         }
       ],
-      "mutations" : [ ],
-      "subscriptions" : [ ],
+      "mutations" : [
+        {
+          "type" : "kafka",
+          "fieldName" : "_InputData",
+          "returnList" : false,
+          "topic" : "kafka-mutation-_InputData",
+          "computedColumns" : {
+            "event_id" : {
+              "metadataType" : "UUID",
+              "name" : "",
+              "required" : true
+            },
+            "customerid" : {
+              "metadataType" : "AUTH",
+              "name" : "userid",
+              "required" : true
+            },
+            "event_time" : {
+              "metadataType" : "TIMESTAMP",
+              "name" : "",
+              "required" : true
+            }
+          },
+          "transactional" : false,
+          "sinkConfig" : { }
+        }
+      ],
+      "subscriptions" : [
+        {
+          "type" : "kafka",
+          "fieldName" : "CustomerMessageStream",
+          "topic" : "kafka-CustomerMessage",
+          "sinkConfig" : { },
+          "equalityConditions" : {
+            "customerid" : {
+              "type" : "metadata",
+              "metadata" : {
+                "metadataType" : "AUTH",
+                "name" : "userid",
+                "required" : true
+              }
+            }
+          }
+        }
+      ],
       "operations" : [
         {
           "function" : {
@@ -304,7 +458,7 @@ END
       ],
       "schema" : {
         "type" : "string",
-        "schema" : "type Customer {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomersByTime(fromTime: DateTime!, limit: Int = 10, offset: Int = 0): [Customer!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+        "schema" : "type Customer {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\ntype CustomerMessage {\n  event_id: String!\n  customerid: Long!\n  message: String!\n  event_time: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Mutation {\n  _InputData(event: _InputDataInput!): _InputDataResultOutput!\n}\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomersByTime(fromTime: DateTime!, limit: Int = 10, offset: Int = 0): [Customer!]\n}\n\ntype Subscription {\n  CustomerMessageStream: CustomerMessage\n}\n\ninput _InputDataInput {\n  message: String!\n}\n\ntype _InputDataResultOutput {\n  event_id: String!\n  customerid: Long!\n  message: String!\n  event_time: DateTime!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
     }
   }

@@ -354,7 +354,11 @@ CREATE TABLE IF NOT EXISTS "SensorUpdates" ("sensorid" INTEGER NOT NULL, "sensor
           "returnList" : false,
           "topic" : "SensorReading",
           "computedColumns" : {
-            "event_time" : "TIMESTAMP"
+            "event_time" : {
+              "metadataType" : "TIMESTAMP",
+              "name" : "",
+              "required" : true
+            }
           },
           "transactional" : false,
           "sinkConfig" : { }
@@ -365,7 +369,11 @@ CREATE TABLE IF NOT EXISTS "SensorUpdates" ("sensorid" INTEGER NOT NULL, "sensor
           "returnList" : false,
           "topic" : "SensorUpdates",
           "computedColumns" : {
-            "lastUpdated" : "TIMESTAMP"
+            "lastUpdated" : {
+              "metadataType" : "TIMESTAMP",
+              "name" : "",
+              "required" : true
+            }
           },
           "transactional" : false,
           "sinkConfig" : { }

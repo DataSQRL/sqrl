@@ -13,22 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.graphql.postgres_log;
+package com.datasqrl.planner.tables;
 
-import com.datasqrl.graphql.io.SinkConsumer;
-import java.util.function.Consumer;
-import lombok.AllArgsConstructor;
-import lombok.SneakyThrows;
+import com.datasqrl.graphql.server.ResolvedMetadata;
 
-@AllArgsConstructor
-public class PostgresSinkConsumer implements SinkConsumer {
+public interface MetadataExtractor {
 
-  private PostgresListenNotifyConsumer consumer;
+  ResolvedMetadata extract(String metadataAlias, boolean nullable);
 
-  @SneakyThrows
-  @Override
-  public void listen(
-      Consumer<Object> listener, Consumer<Throwable> errorHandler, Consumer<Void> endOfStream) {
-    consumer.subscribe(listener::accept);
-  }
+  boolean removeMetadata(String metadataAlias);
 }

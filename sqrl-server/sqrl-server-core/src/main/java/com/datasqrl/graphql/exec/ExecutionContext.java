@@ -13,23 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.planner.dag.plan;
+package com.datasqrl.graphql.exec;
 
-import com.datasqrl.graphql.server.MutationComputedColumnType;
-import lombok.Value;
+import com.datasqrl.graphql.server.Context;
+import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
+import graphql.schema.DataFetchingEnvironment;
+import java.util.Set;
 
-/**
- * The name of the uuid and timestamp column (if any) as defined in the CREATE TABLE statement.
- *
- * <p>TODO: We want to generalize this to allow arbitrary upfront computations on the server and not
- * have this hardcoded to just these two columns.
- */
-@Value
-public class MutationComputedColumn {
+public interface ExecutionContext {
 
-  public static final String UUID_METADATA = "uuid";
-  public static final String TIMESTAMP_METADATA = "timestamp";
+  Context getContext();
 
-  String columnName;
-  MutationComputedColumnType type;
+  DataFetchingEnvironment getEnvironment();
+
+  Set<Argument> getArguments();
 }
