@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -43,10 +44,8 @@ import lombok.ToString;
  * <ul>
  *   <li>the root of the model, the schema, coords, the sql queries, the arguments and parameters
  *       are visited by {@link GraphQLEngineBuilder}
- *   <li>the mutations (kafka and prostgreSQL) are visited by {@link
- *       com.datasqrl.graphql.MutationConfigurationImpl}
- *   <li>the subscriptions (kafka and prostgreSQL) are visited by {@link
- *       com.datasqrl.graphql.SubscriptionConfigurationImpl}
+ *   <li>the mutations (kafka) are visited by MutationConfigurationImpl
+ *   <li>the subscriptions (kafka) are visited by SubscriptionConfigurationImpl
  * </ul>
  */
 @Getter
@@ -133,7 +132,7 @@ public class RootGraphqlModel {
     protected String fieldName;
     protected boolean returnList;
     protected String topic;
-    protected Map<String, MutationComputedColumnType> computedColumns;
+    protected Map<String, ResolvedMetadata> computedColumns;
     protected boolean transactional;
     protected Map<String, String> sinkConfig;
 
@@ -141,7 +140,7 @@ public class RootGraphqlModel {
         String fieldName,
         boolean returnList,
         String topic,
-        Map<String, MutationComputedColumnType> computedColumns,
+        Map<String, ResolvedMetadata> computedColumns,
         boolean transactional,
         Map<String, String> sinkConfig) {
       this.fieldName = fieldName;
@@ -162,10 +161,7 @@ public class RootGraphqlModel {
       use = JsonTypeInfo.Id.NAME,
       property = "type",
       defaultImpl = KafkaSubscriptionCoords.class)
-  @JsonSubTypes({
-    @Type(value = KafkaSubscriptionCoords.class, name = "kafka"),
-    @Type(value = PostgresSubscriptionCoords.class, name = "postgres_log")
-  })
+  @JsonSubTypes({@Type(value = KafkaSubscriptionCoords.class, name = "kafka")})
   public abstract static class SubscriptionCoords {
     protected String type;
 
@@ -176,8 +172,6 @@ public class RootGraphqlModel {
 
   public interface SubscriptionCoordsVisitor<R, C> {
     R visit(KafkaSubscriptionCoords coords, C context);
-
-    R visit(PostgresSubscriptionCoords coords, C context);
   }
 
   @Getter
@@ -191,27 +185,12 @@ public class RootGraphqlModel {
     protected String fieldName;
     protected String topic;
     protected Map<String, String> sinkConfig;
-    protected Map<String, String> filters;
 
-    @Override
-    public <R, C> R accept(SubscriptionCoordsVisitor<R, C> visitor, C context) {
-      return visitor.visit(this, context);
-    }
-  }
-
-  @Getter
-  @AllArgsConstructor
-  @NoArgsConstructor
-  public static class PostgresSubscriptionCoords extends SubscriptionCoords {
-
-    private static final String type = "postgres_log";
-
-    protected String fieldName;
-    protected String tableName;
-    protected Map<String, String> filters;
-    protected String listenQuery;
-    protected String onNotifyQuery;
-    protected List<String> parameters;
+    /**
+     * Maps fields from the arriving subscription data to query parameters. Only records where the
+     * field value matches the parameter value are returned
+     */
+    protected Map<String, QueryParameterHandler> equalityConditions;
 
     @Override
     public <R, C> R accept(SubscriptionCoordsVisitor<R, C> visitor, C context) {
@@ -240,7 +219,7 @@ public class RootGraphqlModel {
     @Type(value = ArgumentLookupQueryCoords.class, name = "args"),
     @Type(value = FieldLookupQueryCoords.class, name = "field")
   })
-  public abstract static class QueryCoords { // TODO should be renamed QueryCoords
+  public abstract static class QueryCoords {
 
     String parentType;
     String fieldName;
@@ -397,6 +376,12 @@ public class RootGraphqlModel {
     @Override
     public String toString() {
       return "VariableArgument{" + "path='" + path + '\'' + '}';
+    }
+
+    public static Set<Argument> convertArguments(Map<String, Object> arguments) {
+      return arguments.entrySet().stream()
+          .map(argument -> new VariableArgument(argument.getKey(), argument.getValue()))
+          .collect(Collectors.toSet());
     }
   }
 

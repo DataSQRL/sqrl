@@ -96,7 +96,7 @@ public class JwtContainerIT extends SqrlContainerTestBase {
 
   @SneakyThrows
   private void createTestTables() {
-    // Create and populate tables as defined in jwt-authorized.sqrl
+    // Create and populate tables as defined in jwt-authorized-base.sqrl
     try (var connection = postgresql.createConnection("")) {
       try (var stmt = connection.createStatement()) {
         // Create MyTable and populate with values 1-10
@@ -140,7 +140,7 @@ public class JwtContainerIT extends SqrlContainerTestBase {
   @Test
   @SneakyThrows
   void givenJwt_whenUnauthenticatedGraphQL_thenReturns401() {
-    compileAndStartServer("jwt-authorized.sqrl", testDir);
+    compileAndStartServer("jwt-authorized-base.sqrl", testDir);
 
     var response = executeGraphQLQuery("{\"query\":\"query { __typename }\"}");
 
@@ -150,7 +150,7 @@ public class JwtContainerIT extends SqrlContainerTestBase {
   @Test
   @SneakyThrows
   void givenJwt_whenAuthenticatedGraphQL_thenSucceeds() {
-    compileAndStartServer("jwt-authorized.sqrl", testDir);
+    compileAndStartServer("jwt-authorized-base.sqrl", testDir);
 
     var response = executeGraphQLQuery("{\"query\":\"query { __typename }\"}", generateJwtToken());
     validateBasicGraphQLResponse(response);
@@ -159,7 +159,7 @@ public class JwtContainerIT extends SqrlContainerTestBase {
   @Test
   @SneakyThrows
   void givenJwt_whenBadToken_thenReturns401() {
-    compileAndStartServer("jwt-authorized.sqrl", testDir);
+    compileAndStartServer("jwt-authorized-base.sqrl", testDir);
 
     // Generate token with RS256 algorithm while server expects HS256
     var response =
@@ -178,7 +178,7 @@ public class JwtContainerIT extends SqrlContainerTestBase {
   @Test
   @SneakyThrows
   void givenJwt_whenCorruptedToken_thenReturns401() {
-    compileAndStartServer("jwt-authorized.sqrl", testDir);
+    compileAndStartServer("jwt-authorized-base.sqrl", testDir);
 
     // Generate token with RS256 algorithm while server expects HS256
     var response = executeGraphQLQuery("{\"query\":\"query { __typename }\"}", "dummy-invalid-jwt");
@@ -197,7 +197,7 @@ public class JwtContainerIT extends SqrlContainerTestBase {
   @Test
   @SneakyThrows
   void givenJwt_whenUnauthenticatedMcp_thenFails() {
-    compileAndStartServer("jwt-authorized.sqrl", testDir);
+    compileAndStartServer("jwt-authorized-base.sqrl", testDir);
 
     var mcpUrl =
         String.format(
@@ -222,7 +222,7 @@ public class JwtContainerIT extends SqrlContainerTestBase {
   @Test
   @SneakyThrows
   void givenJwt_whenAuthenticatedMcp_thenSucceeds() {
-    compileAndStartServerWithDatabase("jwt-authorized.sqrl", testDir);
+    compileAndStartServerWithDatabase("jwt-authorized-base.sqrl", testDir);
 
     var mcpUrl =
         String.format(
@@ -277,7 +277,7 @@ public class JwtContainerIT extends SqrlContainerTestBase {
   @Test
   @SneakyThrows
   void givenJwt_whenUnauthenticatedRest_thenReturns401() {
-    compileAndStartServerWithDatabase("jwt-authorized.sqrl", testDir);
+    compileAndStartServerWithDatabase("jwt-authorized-base.sqrl", testDir);
 
     var restUrl =
         String.format("http://localhost:%d", serverContainer.getMappedPort(HTTP_SERVER_PORT));
@@ -298,7 +298,7 @@ public class JwtContainerIT extends SqrlContainerTestBase {
   @Test
   @SneakyThrows
   void givenJwt_whenAuthenticatedRest_thenSucceeds() {
-    compileAndStartServerWithDatabase("jwt-authorized.sqrl", testDir);
+    compileAndStartServerWithDatabase("jwt-authorized-base.sqrl", testDir);
 
     var restUrl =
         String.format("http://localhost:%d", serverContainer.getMappedPort(HTTP_SERVER_PORT));

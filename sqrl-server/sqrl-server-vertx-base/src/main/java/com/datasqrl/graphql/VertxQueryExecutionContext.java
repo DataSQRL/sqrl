@@ -34,7 +34,6 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-import lombok.Value;
 
 /**
  * It is the ExecutionContext per servlet type. It is responsible for executing the resolved SQL
@@ -42,15 +41,21 @@ import lombok.Value;
  * GraphQL responses. It also implements the parameters and arguments visitors for the {@link
  * com.datasqrl.graphql.server.RootGraphqlModel} visitors
  */
-@Value
-public class VertxQueryExecutionContext extends AbstractQueryExecutionContext {
-  VertxContext context;
-  DataFetchingEnvironment environment;
-  Set<Argument> arguments;
-  CompletableFuture<Object> cf;
+public class VertxQueryExecutionContext extends AbstractQueryExecutionContext<VertxContext> {
+
+  final CompletableFuture<Object> cf;
+
+  public VertxQueryExecutionContext(
+      VertxContext context,
+      DataFetchingEnvironment environment,
+      Set<Argument> arguments,
+      CompletableFuture<Object> cf) {
+    super(context, environment, arguments);
+    this.cf = cf;
+  }
 
   @Override
-  public CompletableFuture runQuery(ResolvedSqlQuery resolvedQuery, boolean isList) {
+  public CompletableFuture<Object> runQuery(ResolvedSqlQuery resolvedQuery, boolean isList) {
     var preparedQueryContainer = (PreparedSqrlQueryImpl) resolvedQuery.getPreparedQueryContainer();
     final var paramObj = getParamArguments(resolvedQuery.getQuery().getParameters());
     var query = resolvedQuery.getQuery();
@@ -85,13 +90,13 @@ public class VertxQueryExecutionContext extends AbstractQueryExecutionContext {
     var parameters = Tuple.from(paramObj);
     if (preparedQueryContainer == null) {
       future =
-          this.context
+          this.getContext()
               .getSqlClient()
               .execute(resolvedQuery.getQuery().getDatabase(), unpreparedSqlQuery, parameters);
     } else {
       var preparedQuery = preparedQueryContainer.preparedQuery();
       future =
-          this.context
+          this.getContext()
               .getSqlClient()
               .execute(resolvedQuery.getQuery().getDatabase(), preparedQuery, parameters);
     }

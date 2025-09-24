@@ -107,7 +107,7 @@ class GraphQLJwtHandlerIT {
                 KafkaSubscriptionCoords.builder()
                     .topic("mytopic")
                     .fieldName("mock")
-                    .filters(Map.of())
+                    .equalityConditions(Map.of())
                     .build())
             .build();
 

@@ -196,10 +196,9 @@ class WriteIT {
         model
             .accept(
                 new GraphQLEngineBuilder.Builder()
-                    .withMutationConfiguration(new MutationConfigurationImpl(model, vertx, config))
+                    .withMutationConfiguration(new MutationConfigurationImpl(vertx, config))
                     .withSubscriptionConfiguration(
-                        new SubscriptionConfigurationImpl(
-                            model, vertx, config, Promise.promise(), null))
+                        new SubscriptionConfigurationImpl(vertx, config, Promise.promise()))
                     .build(),
                 new VertxContext(new VertxJdbcClient(Map.of(DatabaseType.POSTGRES, client)), null))
             .build();

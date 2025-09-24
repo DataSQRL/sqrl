@@ -460,7 +460,11 @@ CREATE INDEX IF NOT EXISTS "TotalOrgTokens_btree_c1" ON "TotalOrgTokens" USING b
           "returnList" : false,
           "topic" : "UserTokens",
           "computedColumns" : {
-            "request_time" : "TIMESTAMP"
+            "request_time" : {
+              "metadataType" : "TIMESTAMP",
+              "name" : "",
+              "required" : true
+            }
           },
           "transactional" : false,
           "sinkConfig" : { }
@@ -472,7 +476,7 @@ CREATE INDEX IF NOT EXISTS "TotalOrgTokens_btree_c1" ON "TotalOrgTokens" USING b
           "fieldName" : "UsageAlert",
           "topic" : "UsageAlert",
           "sinkConfig" : { },
-          "filters" : { }
+          "equalityConditions" : { }
         }
       ],
       "operations" : [

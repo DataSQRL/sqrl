@@ -1158,8 +1158,16 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
           "returnList" : false,
           "topic" : "AddChatMessage",
           "computedColumns" : {
-            "_uuid" : "UUID",
-            "event_time" : "TIMESTAMP"
+            "_uuid" : {
+              "metadataType" : "UUID",
+              "name" : "",
+              "required" : true
+            },
+            "event_time" : {
+              "metadataType" : "TIMESTAMP",
+              "name" : "",
+              "required" : false
+            }
           },
           "transactional" : false,
           "sinkConfig" : { }
@@ -1170,8 +1178,16 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
           "returnList" : true,
           "topic" : "ApplicationUpdates",
           "computedColumns" : {
-            "_uuid" : "UUID",
-            "event_time" : "TIMESTAMP"
+            "_uuid" : {
+              "metadataType" : "UUID",
+              "name" : "",
+              "required" : true
+            },
+            "event_time" : {
+              "metadataType" : "TIMESTAMP",
+              "name" : "",
+              "required" : false
+            }
           },
           "transactional" : true,
           "sinkConfig" : { }

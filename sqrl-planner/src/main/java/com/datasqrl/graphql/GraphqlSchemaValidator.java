@@ -25,7 +25,6 @@ import static com.datasqrl.graphql.util.GraphqlCheckUtil.createThrowable;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.util.GraphqlSchemaUtil;
-import com.datasqrl.planner.dag.plan.MutationComputedColumn;
 import com.datasqrl.planner.dag.plan.MutationQuery;
 import com.datasqrl.planner.tables.SqrlFunctionParameter;
 import com.datasqrl.planner.tables.SqrlTableFunction;
@@ -82,7 +81,7 @@ public class GraphqlSchemaValidator extends GraphqlSchemaWalker {
         atField,
         getValidMutationOutputType(atField, registry),
         getValidMutationInputType(atField, registry),
-        mutation.getComputedColumns().stream().map(MutationComputedColumn::getColumnName).toList(),
+        mutation.getComputedColumns().keySet().stream().toList(),
         registry);
   }
 

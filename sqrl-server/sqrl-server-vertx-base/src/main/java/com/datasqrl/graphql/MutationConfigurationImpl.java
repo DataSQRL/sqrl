@@ -21,7 +21,8 @@ import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.io.SinkProducer;
 import com.datasqrl.graphql.kafka.KafkaSinkProducer;
 import com.datasqrl.graphql.server.Context;
-import com.datasqrl.graphql.server.MutationComputedColumnType;
+import com.datasqrl.graphql.server.MetadataReader;
+import com.datasqrl.graphql.server.MetadataType;
 import com.datasqrl.graphql.server.MutationConfiguration;
 import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.graphql.server.RootGraphqlModel.MutationCoordsVisitor;
@@ -33,6 +34,7 @@ import io.vertx.core.Vertx;
 import io.vertx.kafka.client.producer.KafkaProducer;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -51,7 +53,6 @@ import lombok.extern.slf4j.Slf4j;
 @AllArgsConstructor
 public class MutationConfigurationImpl implements MutationConfiguration<DataFetcher<?>> {
 
-  private RootGraphqlModel root;
   private Vertx vertx;
   private ServerConfig config;
 
@@ -62,20 +63,33 @@ public class MutationConfigurationImpl implements MutationConfiguration<DataFetc
           KafkaProducer.create(
               vertx, config.getKafkaMutationConfig().asMap(coords.isTransactional()));
       SinkProducer emitter = new KafkaSinkProducer<>(coords.getTopic(), producer);
-      final List<String> uuidColumns =
-          coords.getComputedColumns().entrySet().stream()
-              .filter(e -> e.getValue() == MutationComputedColumnType.UUID)
-              .map(Entry::getKey)
-              .collect(Collectors.toList());
+      final Map<String, ComputeInputColumns> computedInputColumns = new HashMap<>();
+      coords
+          .getComputedColumns()
+          .forEach(
+              (colName, metadata) -> {
+                ComputeInputColumns fct =
+                    switch (metadata.metadataType()) {
+                      case UUID -> (env -> UUID.randomUUID());
+                      case AUTH -> {
+                        MetadataReader metadataReader =
+                            context.getMetadataReader(metadata.metadataType());
+                        yield (env ->
+                            metadataReader.read(env, metadata.name(), metadata.required()));
+                      }
+                      default -> null;
+                    };
+                if (fct != null) computedInputColumns.put(colName, fct);
+              });
       final List<String> timestampColumns =
           coords.getComputedColumns().entrySet().stream()
-              .filter(e -> e.getValue() == MutationComputedColumnType.TIMESTAMP)
+              .filter(e -> e.getValue().metadataType() == MetadataType.TIMESTAMP)
               .map(Entry::getKey)
               .collect(Collectors.toList());
 
       checkNotNull(emitter, "Could not find sink for field: %s", coords.getFieldName());
       return env -> {
-        var entries = getEntries(env, uuidColumns);
+        var entries = getEntries(env, computedInputColumns);
         var cf = new CompletableFuture<Object>();
 
         Future<List<Object>> sendFuture =
@@ -93,7 +107,14 @@ public class MutationConfigurationImpl implements MutationConfiguration<DataFetc
     };
   }
 
-  private List<Map> getEntries(DataFetchingEnvironment env, List<String> uuidColumns) {
+  @FunctionalInterface
+  interface ComputeInputColumns {
+
+    Object compute(DataFetchingEnvironment env);
+  }
+
+  private List<Map> getEntries(
+      DataFetchingEnvironment env, Map<String, ComputeInputColumns> computedColumns) {
     // Rules:
     // - Only one argument is allowed, it doesn't matter the name
     // - input argument cannot be null.
@@ -108,12 +129,15 @@ public class MutationConfigurationImpl implements MutationConfiguration<DataFetc
       entries = List.of((Map) argument);
     }
 
-    if (!uuidColumns.isEmpty()) {
+    if (!computedColumns.isEmpty()) {
       // Add UUID for event for the computed uuid columns
       entries.forEach(
           entry -> {
-            var uuid = UUID.randomUUID();
-            uuidColumns.forEach(colName -> entry.put(colName, uuid));
+            computedColumns.forEach(
+                (colName, fct) -> {
+                  var value = fct.compute(env);
+                  entry.put(colName, value);
+                });
           });
     }
     return entries;

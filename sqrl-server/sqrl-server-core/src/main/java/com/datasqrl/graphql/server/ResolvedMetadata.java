@@ -17,5 +17,9 @@ package com.datasqrl.graphql.server;
 
 import lombok.NonNull;
 
-public record ResolvedMetadata(
-    @NonNull MetadataType metadataType, String name, boolean isRequired) {}
+public record ResolvedMetadata(@NonNull MetadataType metadataType, String name, boolean required) {
+
+  public ResolvedMetadata(@NonNull MetadataType metadataType, boolean required) {
+    this(metadataType, "", required);
+  }
+}

@@ -20,8 +20,9 @@ import com.datasqrl.engine.ExecutableQuery;
 import com.datasqrl.engine.database.EngineCreateTable;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.graphql.server.MutationInsertType;
+import com.datasqrl.graphql.server.ResolvedMetadata;
 import com.datasqrl.planner.util.Documented;
-import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import lombok.Builder;
 import lombok.Builder.Default;
@@ -53,7 +54,7 @@ public class MutationQuery implements ExecutableQuery, Documented {
   RelDataType outputDataType;
 
   /** The columns that are computed and not provided explicitly by the user */
-  @Singular List<MutationComputedColumn> computedColumns;
+  @Singular Map<String, ResolvedMetadata> computedColumns;
 
   /** A documentation string that describes the mutation */
   @Default Optional<String> documentation = Optional.empty();
