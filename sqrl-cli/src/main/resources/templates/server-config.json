@@ -167,8 +167,8 @@
     "allowCredentials" : false,
     "maxAgeSeconds" : -1,
     "allowPrivateNetwork" : false,
-    "allowedMethods" : [ "POST", "GET" ],
-    "allowedHeaders" : [ ],
+    "allowedMethods" : [ "POST", "GET", "OPTIONS" ],
+    "allowedHeaders" : [ "*" ],
     "exposedHeaders" : [ ]
   },
   "jwtAuth" : null,

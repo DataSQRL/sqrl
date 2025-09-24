@@ -125,4 +125,23 @@ class ServerConfigTest {
     assertThat(serverConfig.getServletConfig()).isNotNull();
     assertThat(serverConfig.getGraphQLHandlerOptions()).isNotNull();
   }
+
+  @Test
+  void given_corsHandlerOptionsWithWildcardHeaders_when_constructorCalled_then_allowsAllHeaders() {
+    var json = MAPPER.createObjectNode();
+    var corsOptions = MAPPER.createObjectNode();
+    corsOptions.put("allowedOrigin", "*");
+    corsOptions.set(
+        "allowedMethods", MAPPER.createArrayNode().add("POST").add("GET").add("OPTIONS"));
+    corsOptions.set("allowedHeaders", MAPPER.createArrayNode().add("*"));
+    json.set("corsHandlerOptions", corsOptions);
+
+    var serverConfig = ServerConfigUtil.fromConfigMap(MAPPER.convertValue(json, Map.class));
+
+    assertThat(serverConfig.getCorsHandlerOptions()).isNotNull();
+    assertThat(serverConfig.getCorsHandlerOptions().getAllowedOrigin()).isEqualTo("*");
+    assertThat(serverConfig.getCorsHandlerOptions().getAllowedMethods())
+        .containsExactlyInAnyOrder("POST", "GET", "OPTIONS");
+    assertThat(serverConfig.getCorsHandlerOptions().getAllowedHeaders()).containsExactly("*");
+  }
 }
