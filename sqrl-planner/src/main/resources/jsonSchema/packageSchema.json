@@ -31,10 +31,13 @@
         "logger": {
           "type": "string"
         },
-        "extended-scalar-types": {
+        "compile-flink-plan": {
           "type": "boolean"
         },
-        "compile-flink-plan": {
+        "disable-predicate-pushdown": {
+          "type": "boolean"
+        },
+        "extended-scalar-types": {
           "type": "boolean"
         },
         "cost-model": {

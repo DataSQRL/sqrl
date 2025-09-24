@@ -41,6 +41,11 @@ public class CompilerConfigImpl implements PackageJson.CompilerConfig {
   }
 
   @Override
+  public boolean disablePredicatePushdown() {
+    return sqrlConfig.asBool("disable-predicate-pushdown").get();
+  }
+
+  @Override
   public CostModel getCostModel() {
     var costModel = sqrlConfig.as("cost-model", Type.class).get();
 
