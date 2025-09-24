@@ -339,8 +339,16 @@ INSERT INTO `default_catalog`.`default_database`.`_Input_2`
           "returnList" : false,
           "topic" : "kafka-mutation-SimpleInput",
           "computedColumns" : {
-            "_uuid" : "UUID",
-            "event_time" : "TIMESTAMP"
+            "_uuid" : {
+              "metadataType" : "UUID",
+              "name" : "",
+              "required" : true
+            },
+            "event_time" : {
+              "metadataType" : "TIMESTAMP",
+              "name" : "",
+              "required" : false
+            }
           },
           "transactional" : false,
           "sinkConfig" : { }
