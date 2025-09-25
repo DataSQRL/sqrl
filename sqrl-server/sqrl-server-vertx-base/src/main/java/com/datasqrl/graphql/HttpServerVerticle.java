@@ -24,6 +24,10 @@ import com.datasqrl.graphql.server.operation.ApiOperation;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.google.common.collect.MoreCollectors;
+import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics;
+import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics;
+import io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics;
+import io.micrometer.core.instrument.binder.system.UptimeMetrics;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
 import io.vertx.core.*;
@@ -37,6 +41,8 @@ import io.vertx.ext.web.handler.LoggerHandler;
 import io.vertx.ext.web.healthchecks.HealthCheckHandler;
 import io.vertx.micrometer.backends.BackendRegistries;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -50,6 +56,10 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class HttpServerVerticle extends AbstractVerticle {
+
+  /** Resources to close */
+  private final List<AutoCloseable> closeables = new ArrayList<>();
+
   // Configuration is loaded once and shared with child verticles
   /** Server configuration */
   private ServerConfig config;
@@ -61,6 +71,7 @@ public class HttpServerVerticle extends AbstractVerticle {
   // Lifecyle
   // ---------------------------------------------------------------------------
 
+  @SuppressWarnings("unused")
   public HttpServerVerticle() {
     this.config = null;
     this.models = null;
@@ -103,6 +114,19 @@ public class HttpServerVerticle extends AbstractVerticle {
     }
   }
 
+  @Override
+  public void stop(Promise<Void> stopPromise) throws Exception {
+    try {
+      for (AutoCloseable closeable : closeables) {
+        closeable.close();
+      }
+      stopPromise.complete();
+
+    } catch (Exception e) {
+      stopPromise.fail(e);
+    }
+  }
+
   // ---------------------------------------------------------------------------
   // Bootstrap
   // ---------------------------------------------------------------------------
@@ -113,13 +137,17 @@ public class HttpServerVerticle extends AbstractVerticle {
     // ── Metrics ───────────────────────────────────────────────────────────────
     var meterRegistry = findMeterRegistry();
     meterRegistry.ifPresent(
-        registry ->
-            router
-                .route("/metrics")
-                .handler(
-                    ctx -> {
-                      ctx.response().putHeader("content-type", "text/plain").end(registry.scrape());
-                    }));
+        registry -> {
+          registerJvmMetrics(registry);
+
+          router
+              .route("/metrics")
+              .handler(
+                  ctx ->
+                      ctx.response()
+                          .putHeader("content-type", "text/plain")
+                          .end(registry.scrape()));
+        });
 
     // ── Global handlers (CORS, body, etc.) ────────────────────────────────────
     router.route().handler(toCorsHandler(config.getCorsHandlerOptions()));
@@ -155,7 +183,11 @@ public class HttpServerVerticle extends AbstractVerticle {
 
   private Optional<PrometheusMeterRegistry> findMeterRegistry() {
     var registry = BackendRegistries.getDefaultNow();
-    log.info("Found registry: {}", registry != null ? registry.getClass().getSimpleName() : "null");
+    if (registry == null) {
+      return Optional.empty();
+    }
+
+    log.info("Found registry: {}", registry.getClass().getSimpleName());
 
     if (registry instanceof PrometheusMeterRegistry meterRegistry) {
       return Optional.of(meterRegistry);
@@ -257,6 +289,16 @@ public class HttpServerVerticle extends AbstractVerticle {
               }
             });
     return promise.future();
+  }
+
+  private void registerJvmMetrics(PrometheusMeterRegistry registry) {
+    new UptimeMetrics().bindTo(registry);
+    new JvmMemoryMetrics().bindTo(registry);
+    new JvmThreadMetrics().bindTo(registry);
+
+    var jvmGcMetrics = new JvmGcMetrics();
+    jvmGcMetrics.bindTo(registry);
+    closeables.add(jvmGcMetrics);
   }
 
   @SneakyThrows

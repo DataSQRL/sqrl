@@ -30,31 +30,42 @@ public class MetricsContainerIT extends SqrlContainerTestBase {
   }
 
   @Test
-  @SneakyThrows
   void givenRunningServer_whenAccessingMetricsEndpoint_thenReturnsMetrics() {
-    compileAndStartServer("myudf.sqrl", testDir);
+    var metricsData = getMetricsResult();
 
-    var response = sharedHttpClient.execute(new HttpGet(getMetricsEndpoint()));
+    // Validate Prometheus format
+    assertThat(metricsData)
+        .as("Metrics response should contain Prometheus-formatted metrics")
+        .isNotEmpty()
+        .contains("# HELP")
+        .contains("# TYPE");
+  }
 
-    var statusCode = response.getStatusLine().getStatusCode();
+  @Test
+  void givenRunningServer_whenAccessingMetricsEndpoint_thenReturnsJvmMetrics() {
+    var metricsData = getMetricsResult();
 
-    if (statusCode == 200) {
-      // Metrics endpoint is available - validate content
-      var responseBody = EntityUtils.toString(response.getEntity());
+    // Validate Prometheus format
+    assertThat(metricsData)
+        .as("Metrics response should contain JVM metrics")
+        .isNotEmpty()
+        .contains("# TYPE jvm_buffer_")
+        .contains("# TYPE jvm_gc_")
+        .contains("# TYPE jvm_memory_")
+        .contains("# TYPE jvm_threads_")
+        .contains("# TYPE process_");
+  }
 
-      // Validate Prometheus format and essential metrics
-      assertThat(responseBody)
-          .as("Metrics response should contain Prometheus-formatted metrics")
-          .isNotEmpty()
-          .contains("# HELP")
-          .contains("# TYPE");
+  @Test
+  void givenRunningServer_whenAccessingMetricsEndpoint_thenReturnsDbPoolMetrics() {
+    var metricsData = getMetricsResult();
 
-    } else {
-      throw new AssertionError(
-          "Unexpected status code for /metrics endpoint: "
-              + statusCode
-              + serverContainer.getLogs());
-    }
+    // Validate Prometheus format
+    assertThat(metricsData)
+        .as("Metrics response should contain DB pool metrics")
+        .isNotEmpty()
+        .contains("# TYPE vertx_pool_")
+        .contains("pool_name=\"postgres-pool\"");
   }
 
   @Test
@@ -79,5 +90,25 @@ public class MetricsContainerIT extends SqrlContainerTestBase {
       assertThat(jsonResponse.get("status").asText()).isEqualTo("UP");
     }
     // 204 No Content indicates healthy server with no registered health checks
+  }
+
+  @SneakyThrows
+  private String getMetricsResult() {
+    compileAndStartServer("myudf.sqrl", testDir);
+
+    var response = sharedHttpClient.execute(new HttpGet(getMetricsEndpoint()));
+
+    var statusCode = response.getStatusLine().getStatusCode();
+
+    if (statusCode == 200) {
+      // Metrics endpoint is available
+      return EntityUtils.toString(response.getEntity());
+
+    } else {
+      throw new AssertionError(
+          "Unexpected status code for /metrics endpoint: "
+              + statusCode
+              + serverContainer.getLogs());
+    }
   }
 }
