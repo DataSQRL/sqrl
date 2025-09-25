@@ -136,7 +136,7 @@
     "tracingPolicy" : null,
     "reconnectAttempts" : 0,
     "reconnectInterval" : 1000,
-    "metricsName" : "",
+    "metricsName" : "pg",
     "sslOptions" : null,
     "pipeliningLimit" : 256,
     "sslMode" : "DISABLE",

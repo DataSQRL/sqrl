@@ -64,7 +64,7 @@ public class JdbcClientsConfig {
     // ServiceLoader
     var url = snowflakeConf.getUrl();
     url += "?CLIENT_SESSION_KEEP_ALIVE=true";
-    var pool = initJdbcPool(url);
+    var pool = initJdbcPool(url, "snowflake-pool", "snowflake");
 
     return Optional.of(pool);
   }
@@ -78,21 +78,22 @@ public class JdbcClientsConfig {
 
     // No need for Class.forName() - DuckDB JDBC driver auto-registers via JDBC 4.0+ ServiceLoader
     var url = duckDbConf.getUrl();
-    var pool = initJdbcPool(url);
+    var pool = initJdbcPool(url, "duckdb-pool", "duckdb");
 
     return Optional.of(pool);
   }
 
   private SqlClient initPostgresSqlClient() {
-    var poolOptions = new PoolOptions(this.config.getPoolOptions());
+    var poolOptions = new PoolOptions(this.config.getPoolOptions()).setName("postgres-pool");
     // Note: setPipelined() method was removed in Vert.x 5, pipelining is now always enabled
     return Pool.pool(vertx, this.config.getPgConnectOptions(), poolOptions);
   }
 
   @SneakyThrows
-  private Pool initJdbcPool(String url) {
-    var connectOptions = new JDBCConnectOptions().setJdbcUrl(url);
+  private Pool initJdbcPool(String url, String poolName, String metricsName) {
+    var connectOptions = new JDBCConnectOptions().setJdbcUrl(url).setMetricsName(metricsName);
+    var poolOptions = new PoolOptions(this.config.getPoolOptions()).setName(poolName);
 
-    return JDBCPool.pool(vertx, connectOptions, new PoolOptions());
+    return JDBCPool.pool(vertx, connectOptions, poolOptions);
   }
 }
