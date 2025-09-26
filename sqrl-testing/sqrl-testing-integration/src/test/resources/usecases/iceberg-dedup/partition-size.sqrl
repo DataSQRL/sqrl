@@ -1,0 +1,115 @@
+IMPORT tables.min_sink;
+IMPORT tables.compaction_tracker;
+IMPORT functions.read_partition_sizes;
+
+--
+-- Part 1: Gather partitions to compact
+--
+
+_Partitions :=
+  SELECT *
+  FROM TABLE(read_partition_sizes('/tmp/duckdb', 'hadoop', 'mycatalog', 'mydatabase', 'mincdctable', '{{partitionId}}'))
+  WHERE time_bucket <= 10; -- max bucket hardcoded for test purposes
+
+_PartitionSizing :=
+  SELECT
+    partition_id,
+    SUM(CASE WHEN time_bucket = 0 THEN partition_size ELSE 0 END) AS base_size,
+    SUM(CASE WHEN time_bucket > 0 THEN partition_size ELSE 0 END) AS new_size
+  FROM _Partitions
+  GROUP BY partition_id;
+
+_PartitionSizing.total_size := base_size + new_size;
+
+_PartitionPriority :=
+  SELECT
+    {{partitionId}} AS partition_id,
+    time_bucket,
+    new_size,
+    total_size,
+    SUM(total_size) OVER (
+      ORDER BY new_size DESC
+      ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+    ) AS cumulative_total_size,
+    ROW_NUMBER() OVER (ORDER BY new_size DESC) AS row_num
+  FROM MinCdcTable d
+  JOIN _PartitionSizing p ON d.{{partitionId}} = p.partition_id
+  ORDER BY new_size DESC;
+
+_PartitionsToCompact :=
+  SELECT
+    '{{tableName}}' AS table_name,
+    '${DEPLOYMENT_ID}' AS job_id,
+    partition_id,
+    time_bucket AS cur_time_bucket,
+    0 AS max_time_bucket,
+    'initialize' AS action,
+    NOW() AS action_time
+  FROM _PartitionPriority
+  WHERE cumulative_total_size <= 100000
+  OR row_num <= 5; -- filters hardcoded for test purposes
+
+EXPORT _PartitionsToCompact TO tables.compaction_tracker;
+
+NEXT_BATCH;
+
+--
+-- Part 2: Compact gathered partitions
+--
+
+_DataToCompact :=
+  SELECT DISTINCT
+    table_name,
+    partition_id,
+    job_id,
+    max_time_bucket
+  FROM CompactionTracker
+  WHERE table_name = '{{tableName}}'
+  AND job_id = '${DEPLOYMENT_ID}'
+  AND action = 'initialize'
+  AND action_time > NOW() - INTERVAL 4 HOUR; -- last condition is for efficient pruning of iceberg read
+
+_InputData :=
+  SELECT /*+ BROADCAST(c) */ d.*
+  FROM MinCdcTable AS d
+  JOIN _DataToCompact AS c
+  ON d.account_id = c.account_id AND d.time_bucket <= c.max_time_bucket;
+
+INSERT OVERWRITE MinCdcTable
+  SELECT account_id, ..., 0 AS time_bucket
+  FROM (
+    SELECT *, ROW_NUMBER() OVER (PARTITION BY account_id ORDER BY ts DESC) AS row_num
+    FROM _InputData
+    WHERE time_bucket > 0
+  ) d
+  WHERE row_num = 1;
+
+_CompactionResult :=
+  SELECT table_name, partition_id, job_id, max_time_bucket, 'overwrite' AS action, NOW() AS action_time
+  FROM _DataToCompact;
+
+EXPORT _CompactionResult TO tables.compaction_tracker;
+
+--
+-- Part 3: Delete source partitions that were compacted
+--
+
+_DataToDelete :=
+  SELECT DISTINCT
+    table_name,
+    partition_id,
+    job_id,
+    max_time_bucket
+  FROM CompactionTracker
+  WHERE table_name = '{{tableName}}'
+  AND job_id = `${DEPLOYMENT_ID}`
+  AND action = 'overwrite'
+  AND action_time > NOW() - INTERVAL 4 HOUR; -- last condition is for efficient pruning of iceberg read
+
+delete_deduplicated_data(..., max_time_bucket);
+
+JobResult :=
+  SELECT table_name, partition_id, job_id, max_time_bucket, 'delete' AS action, NOW() AS action_time
+  FROM _DataToCompact;
+
+EXPORT JobResult TO CompactionTracker;
