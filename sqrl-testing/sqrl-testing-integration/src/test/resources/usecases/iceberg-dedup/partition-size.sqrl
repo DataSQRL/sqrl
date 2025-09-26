@@ -71,18 +71,15 @@ _DataToCompact :=
 
 _InputData :=
   SELECT /*+ BROADCAST(c) */ d.*
-  FROM MinCdcTable AS d
+  FROM {{tableName}} AS d
   JOIN _DataToCompact AS c
-  ON d.account_id = c.account_id AND d.time_bucket <= c.max_time_bucket;
+  ON d.{{partitionId}} = c.account_id AND d.time_bucket <= c.max_time_bucket;
 
-INSERT OVERWRITE MinCdcTable
-  SELECT account_id, ..., 0 AS time_bucket
-  FROM (
-    SELECT *, ROW_NUMBER() OVER (PARTITION BY account_id ORDER BY ts DESC) AS row_num
-    FROM _InputData
-    WHERE time_bucket > 0
-  ) d
-  WHERE row_num = 1;
+_InputData.time_bucket := 0;
+
+_DistInputData := DISTINCT _InputData ON {{partitionId}} ORDER BY ts DESC;
+
+INSERT OVERWRITE {{tableName}} SELECT * FROM _DistInputData;
 
 _CompactionResult :=
   SELECT table_name, partition_id, job_id, max_time_bucket, 'overwrite' AS action, NOW() AS action_time
