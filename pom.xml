@@ -117,7 +117,7 @@
     <scala.version>2.12</scala.version>
     <guava.version>33.5.0-jre</guava.version>
     <commonsio.version>2.20.0</commonsio.version>
-    <commons-lang3.version>3.18.0</commons-lang3.version>
+    <commons-lang3.version>3.19.0</commons-lang3.version>
     <!-- hadoop shades in commons-config 2.1.1, so upgrade path here is very narrow -->
     <commons-config.version>2.3</commons-config.version>
     <commons-collections.version>4.5.0</commons-collections.version>
