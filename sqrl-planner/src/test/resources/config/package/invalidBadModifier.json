@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "engines": {
+    "flink": {
+      "deployment": {
+        "taskmanager-size": "medium.disk",
+        "taskmanager-count": 2
+      }
+    }
+  }
+}

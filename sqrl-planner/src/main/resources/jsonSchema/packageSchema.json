@@ -165,6 +165,24 @@
             "config": {
               "type": "object",
               "minProperties": 1
+            },
+            "deployment": {
+              "type": "object",
+              "properties": {
+                "jobmanager-size": {
+                  "type": "string",
+                  "enum": ["dev", "small", "medium", "large"]
+                },
+                "taskmanager-size": {
+                  "type": "string",
+                  "enum": ["dev", "small", "small.mem", "small.cpu", "medium", "medium.mem", "medium.cpu", "large", "large.mem", "large.cpu"]
+                },
+                "taskmanager-count": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "additionalProperties": false
             }
           },
           "additionalProperties": false
@@ -195,6 +213,44 @@
             "config": {
               "type": "object",
               "minProperties": 1
+            },
+            "deployment": {
+              "type": "object",
+              "properties": {
+                "instance-size": {
+                  "type": "string",
+                  "enum": ["dev", "small", "small.disk", "medium", "medium.disk", "large", "large.disk"]
+                },
+                "instance-count": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "postgres": {
+          "type": "object",
+          "properties": {
+            "config": {
+              "type": "object",
+              "minProperties": 1
+            },
+            "deployment": {
+              "type": "object",
+              "properties": {
+                "instance-size": {
+                  "type": "string",
+                  "enum": ["dev", "small", "medium", "large", "xlarge"]
+                },
+                "replica-count": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "additionalProperties": false
             }
           },
           "additionalProperties": false
