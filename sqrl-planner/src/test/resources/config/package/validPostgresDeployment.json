@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "engines": {
+    "postgres": {
+      "deployment": {
+        "instance-size": "xlarge",
+        "replica-count": 2
+      }
+    }
+  }
+}

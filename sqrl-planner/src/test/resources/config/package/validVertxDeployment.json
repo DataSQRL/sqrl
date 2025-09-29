@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "engines": {
+    "vertx": {
+      "deployment": {
+        "instance-size": "medium.disk",
+        "instance-count": 3
+      }
+    }
+  }
+}
