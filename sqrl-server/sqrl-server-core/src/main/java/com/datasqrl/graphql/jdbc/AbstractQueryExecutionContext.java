@@ -18,19 +18,36 @@ package com.datasqrl.graphql.jdbc;
 import com.datasqrl.graphql.exec.StandardExecutionContext;
 import com.datasqrl.graphql.server.Context;
 import com.datasqrl.graphql.server.QueryExecutionContext;
+import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
 import graphql.schema.DataFetchingEnvironment;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public abstract class AbstractQueryExecutionContext<C extends Context>
     extends StandardExecutionContext<C> implements QueryExecutionContext {
 
-  public AbstractQueryExecutionContext(
+  protected AbstractQueryExecutionContext(
       C context, DataFetchingEnvironment environment, Set<Argument> arguments) {
     super(context, environment, arguments);
   }
 
   public static String addLimitOffsetToQuery(String sqlQuery, String limit, String offset) {
     return "SELECT * FROM (%s) x LIMIT %s OFFSET %s".formatted(sqlQuery, limit, offset);
+  }
+
+  protected Object mapParamArgumentType(Object param) {
+    // By default, do nothing
+    return param;
+  }
+
+  protected List<Object> getParamArguments(
+      List<RootGraphqlModel.QueryParameterHandler> parameters) {
+    return parameters.stream()
+        .map(param -> param.accept(this, this))
+        .map(this::mapParamArgumentType)
+        .collect(Collectors.toCollection(() -> new ArrayList<>(parameters.size() + 2)));
   }
 }

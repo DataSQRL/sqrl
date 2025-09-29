@@ -21,12 +21,9 @@ import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentParameter;
 import com.datasqrl.graphql.server.RootGraphqlModel.MetadataParameter;
 import com.datasqrl.graphql.server.RootGraphqlModel.ParameterHandlerVisitor;
 import com.datasqrl.graphql.server.RootGraphqlModel.ParentParameter;
-import com.datasqrl.graphql.server.RootGraphqlModel.QueryParameterHandler;
 import graphql.schema.DataFetchingEnvironment;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -71,11 +68,5 @@ public class StandardExecutionContext<C extends Context>
         .getContext()
         .getMetadataReader(md.metadataType())
         .read(context.getEnvironment(), md.name(), md.required());
-  }
-
-  public List<Object> getParamArguments(List<QueryParameterHandler> parameters) {
-    return parameters.stream()
-        .map(param -> param.accept(this, this))
-        .collect(Collectors.toCollection(() -> new ArrayList<>(parameters.size() + 2)));
   }
 }
