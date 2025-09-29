@@ -113,18 +113,18 @@
     <flink.version>1.19.3</flink.version>
     <slf4j.version>1.7.36</slf4j.version>
     <postgres.version>42.7.8</postgres.version>
-    <log4j.version>2.25.1</log4j.version>
+    <log4j.version>2.25.2</log4j.version>
     <scala.version>2.12</scala.version>
     <guava.version>33.5.0-jre</guava.version>
     <commonsio.version>2.20.0</commonsio.version>
-    <commons-lang3.version>3.18.0</commons-lang3.version>
+    <commons-lang3.version>3.19.0</commons-lang3.version>
     <!-- hadoop shades in commons-config 2.1.1, so upgrade path here is very narrow -->
     <commons-config.version>2.3</commons-config.version>
     <commons-collections.version>4.5.0</commons-collections.version>
     <commons-exec.version>1.5.0</commons-exec.version>
     <httpcomponents.version>4.5.14</httpcomponents.version>
     <commons-bean.version>1.11.0</commons-bean.version>
-    <h2.version>2.3.232</h2.version>
+    <h2.version>2.4.240</h2.version>
     <opencsv.version>5.12.0</opencsv.version>
     <javax.validation.version>2.0.1.Final</javax.validation.version>
     <glassfish.version>3.0.0</glassfish.version>
@@ -137,7 +137,7 @@
     <guice.version>5.1.0</guice.version>
     <autoservice.version>1.1.1</autoservice.version>
     <antlr.version>4.13.2</antlr.version>
-    <guava.version>33.4.8-jre</guava.version>
+    <guava.version>33.5.0-jre</guava.version>
     <lombok.version>1.18.42</lombok.version>
     <junit.jupiter.version>5.13.4</junit.jupiter.version>
     <calcite.version>1.27.0</calcite.version>
@@ -173,7 +173,7 @@
     <aws-sdk-bom.version>2.34.0</aws-sdk-bom.version>
     <openai-gpt3-java.version>0.18.2</openai-gpt3-java.version>
     <flink-client.version>1.1.4</flink-client.version>
-    <mcp-sdk.version>0.13.0</mcp-sdk.version>
+    <mcp-sdk.version>0.13.1</mcp-sdk.version>
     <feign.version>13.6</feign.version>
 
     <!-- Plugin versions -->
@@ -492,7 +492,7 @@
       <dependency>
         <groupId>org.immutables</groupId>
         <artifactId>value</artifactId>
-        <version>2.11.3</version>
+        <version>2.11.4</version>
         <scope>compile</scope>
       </dependency>
 
@@ -1212,7 +1212,7 @@
           <plugin>
             <groupId>org.sonatype.central</groupId>
             <artifactId>central-publishing-maven-plugin</artifactId>
-            <version>0.8.0</version>
+            <version>0.9.0</version>
             <extensions>true</extensions>
             <configuration>
               <publishingServerId>central</publishingServerId>
