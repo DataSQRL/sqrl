@@ -173,7 +173,7 @@
     <aws-sdk-bom.version>2.34.0</aws-sdk-bom.version>
     <openai-gpt3-java.version>0.18.2</openai-gpt3-java.version>
     <flink-client.version>1.1.4</flink-client.version>
-    <mcp-sdk.version>0.13.0</mcp-sdk.version>
+    <mcp-sdk.version>0.13.1</mcp-sdk.version>
     <feign.version>13.6</feign.version>
 
     <!-- Plugin versions -->
