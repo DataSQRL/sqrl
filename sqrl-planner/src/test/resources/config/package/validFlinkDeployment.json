@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "engines": {
+    "flink": {
+      "deployment": {
+        "jobmanager-size": "medium",
+        "taskmanager-size": "large.mem",
+        "taskmanager-count": 4
+      }
+    }
+  }
+}

@@ -39,7 +39,11 @@ class PackageJsonSchemaTest {
         "missingProfilesField.json",
         "validPackageWithUrls.json",
         "onlyVersionFieldExists.json",
-        "scriptApiVersion.json"
+        "scriptApiVersion.json",
+        "validFlinkDeployment.json",
+        "validPostgresDeployment.json",
+        "validVertxDeployment.json",
+        "validFullDeployment.json"
       })
   void validConfigFile(String configFileName) {
     var errors = ErrorCollector.root();
@@ -60,7 +64,11 @@ class PackageJsonSchemaTest {
         "emptyPropertiesInPackage.json",
         "invalidEnumString.json",
         "invalidScriptFields.json",
-        "invalidScriptApiFields.json"
+        "invalidScriptApiFields.json",
+        "invalidFlinkDeploymentSize.json",
+        "invalidDeploymentCount.json",
+        "invalidPostgresReplicaCount.json",
+        "invalidBadModifier.json"
       })
   void invalidConfigFile(String configFileName) {
     testForErrors(

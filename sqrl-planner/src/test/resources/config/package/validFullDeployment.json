@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "enabled-engines": ["flink", "postgres", "vertx"],
+  "engines": {
+    "flink": {
+      "deployment": {
+        "jobmanager-size": "dev",
+        "taskmanager-size": "small",
+        "taskmanager-count": 1
+      }
+    },
+    "postgres": {
+      "deployment": {
+        "instance-size": "small",
+        "replica-count": 0
+      }
+    },
+    "vertx": {
+      "deployment": {
+        "instance-size": "dev",
+        "instance-count": 1
+      }
+    }
+  }
+}

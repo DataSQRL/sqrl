@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "engines": {
+    "flink": {
+      "deployment": {
+        "jobmanager-size": "invalid-size",
+        "taskmanager-count": 2
+      }
+    }
+  }
+}
