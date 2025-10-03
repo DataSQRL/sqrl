@@ -24,6 +24,7 @@ import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedSqlQuery;
 import graphql.schema.DataFetchingEnvironment;
 import io.vertx.core.Future;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
@@ -104,13 +105,27 @@ public class VertxQueryExecutionContext extends AbstractQueryExecutionContext<Ve
     // map the resultSet to json for GraphQL response
     future
         .map(r -> resultMapper(r, isList))
-        .onSuccess(result -> cf.complete(result))
+        .onSuccess(cf::complete)
         .onFailure(
             f -> {
               f.printStackTrace();
               cf.completeExceptionally(f);
             });
     return cf;
+  }
+
+  @Override
+  protected Object mapParamArgumentType(Object param) {
+    if (param instanceof List<?> l) {
+      return l.toArray();
+    }
+
+    if (param instanceof JsonArray arr) {
+      // Unwrap JsonArray to plain Java array to avoid pgclient treating it as JSONB
+      return arr.getList().toArray();
+    }
+
+    return param;
   }
 
   private Object resultMapper(RowSet<Row> r, boolean isList) {
