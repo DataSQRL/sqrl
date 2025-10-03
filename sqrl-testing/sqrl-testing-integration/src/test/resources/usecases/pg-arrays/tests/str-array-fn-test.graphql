@@ -1,0 +1,5 @@
+query {
+  StringArrayFn(vals: ["c"]) {
+    val
+  }
+}

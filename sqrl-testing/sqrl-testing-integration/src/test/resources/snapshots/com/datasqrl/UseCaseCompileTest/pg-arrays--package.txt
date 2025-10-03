@@ -95,6 +95,33 @@ SQL: CREATE VIEW `StringArray` AS
     (4, ARRAY['e', 'f'])
   ) AS T(id, string_array);
 
+=== StringArrayFn
+ID:     default_catalog.default_database.StringArrayFn
+Type:   query
+Stage:  postgres
+Inputs: default_catalog.default_database.StringVals
+Annotations:
+ - parameters: vals
+ - base-table: StringVals
+Plan:
+LogicalProject(val=[$0])
+  LogicalFilter(condition=[array_contains(CAST(?0):VARCHAR(2147483647) CHARACTER SET "UTF-16LE" ARRAY, $0)])
+    LogicalTableScan(table=[[default_catalog, default_database, StringVals]])
+SQL: CREATE VIEW `StringArrayFn` AS  SELECT val FROM StringVals WHERE array_contains(CAST(?     AS ARRAY<STRING>), val);
+
+=== StringVals
+ID:     default_catalog.default_database.StringVals
+Type:   state
+Stage:  flink
+Primary Key: val
+Timestamp  : -
+Schema:
+ - val: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL
+Plan:
+LogicalProject(val=[$0])
+  LogicalValues(tuples=[[{ 'a' }, { 'b' }, { 'c' }]])
+SQL: CREATE VIEW `StringVals` AS  SELECT val FROM (VALUES ('a'), ('b'), ('c')) AS T(val);
+
 >>>flink-sql-no-functions.sql
 CREATE VIEW `IntArray`
 AS
@@ -132,6 +159,12 @@ CREATE VIEW `NestedArrayTest`
 AS
 SELECT *
 FROM `NestedArray`;
+CREATE VIEW `StringVals`
+AS
+SELECT `val`
+FROM (VALUES ROW('a'),
+   ROW('b'),
+   ROW('c')) AS `T` (`val`);
 CREATE TABLE `IntArray_1` (
   `id` INTEGER NOT NULL,
   `int_array` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
@@ -168,6 +201,17 @@ CREATE TABLE `StringArray_3` (
   'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
   'username' = '${POSTGRES_USERNAME}'
 );
+CREATE TABLE `StringVals_4` (
+  `val` CHAR(1) CHARACTER SET `UTF-16LE` NOT NULL,
+  PRIMARY KEY (`val`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = 'StringVals',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`IntArray_1`
 (SELECT `id`, `to_jsonb`(`int_array`) AS `int_array`
@@ -181,10 +225,15 @@ INSERT INTO `default_catalog`.`default_database`.`NestedArray_2`
   (SELECT `id`, `to_jsonb`(`string_array`) AS `string_array`
    FROM `default_catalog`.`default_database`.`StringArray`)
   ;
-  END
+  INSERT INTO `default_catalog`.`default_database`.`StringVals_4`
+   (SELECT *
+    FROM `default_catalog`.`default_database`.`StringVals`)
+   ;
+   END
 >>>postgres-schema.sql
 CREATE TABLE IF NOT EXISTS "IntArray" ("id" INTEGER NOT NULL, "int_array" JSONB, PRIMARY KEY ("id"));
 CREATE TABLE IF NOT EXISTS "NestedArray" ("id" INTEGER NOT NULL, "nested_array" JSONB, PRIMARY KEY ("id"));
-CREATE TABLE IF NOT EXISTS "StringArray" ("id" INTEGER NOT NULL, "string_array" JSONB, PRIMARY KEY ("id"))
+CREATE TABLE IF NOT EXISTS "StringArray" ("id" INTEGER NOT NULL, "string_array" JSONB, PRIMARY KEY ("id"));
+CREATE TABLE IF NOT EXISTS "StringVals" ("val" TEXT NOT NULL, PRIMARY KEY ("val"))
 >>>postgres-views.sql
 
