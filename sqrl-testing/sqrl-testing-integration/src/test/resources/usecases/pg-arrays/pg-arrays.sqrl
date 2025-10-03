@@ -70,3 +70,10 @@ StringArrayTest := SELECT * FROM StringArray ORDER BY id;
 
 /*+test*/
 NestedArrayTest := SELECT * FROM NestedArray ORDER BY id;
+
+--
+-- Define value tables and functions with an array parameter to test GraphQL array param mapping
+--
+
+StringVals := SELECT val FROM (VALUES ('a'), ('b'), ('c')) AS T(val);
+StringArrayFn(vals ARRAY<STRING> NOT NULL) := SELECT val FROM StringVals WHERE array_contains(CAST(:vals AS ARRAY<STRING>), val);
