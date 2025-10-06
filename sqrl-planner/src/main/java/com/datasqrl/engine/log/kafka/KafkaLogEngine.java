@@ -76,17 +76,17 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
 
   public static final String DEFAULT_TTL_KEY = "retention";
 
-  /* TODO: make these configurable */
-  public static final int DEFAULT_WATERMARK_MILLIS = 0;
-  public static final int DEFAULT_TX_WATERMARK_ADDITIONAL_MILLIS = 15000;
-
   public static final EnumSet<EngineFeature> KAFKA_FEATURES = EnumSet.of(EngineFeature.MUTATIONS);
 
   @Getter private final EngineConfig engineConfig;
   private final TestRunnerConfiguration testRunnerConfig;
   private final ConnectorConf streamConnectorConf;
   private final ConnectorConf mutationConnectorConf;
+
+  // ====== SETTINGS ===
   private final Optional<Duration> defaultTTL;
+  private final Duration defaultWatermark;
+  private final Duration transactionWatermark;
 
   @Inject
   public KafkaLogEngine(PackageJson json, ConnectorFactoryFactory connectorFactory) {
@@ -97,6 +97,9 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
     this.mutationConnectorConf =
         connectorFactory.getConfig(KafkaLogEngineFactory.ENGINE_NAME + "-mutation");
     defaultTTL = engineConfig.getSettingOptional(DEFAULT_TTL_KEY).map(TimeUtils::parseDuration);
+    defaultWatermark = TimeUtils.parseDuration(engineConfig.getSetting("watermark"));
+    transactionWatermark =
+        TimeUtils.parseDuration(engineConfig.getSetting("transaction-watermark"));
   }
 
   @Override
@@ -172,8 +175,8 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
               .filter(s -> s.equalsIgnoreCase("timestamp"))
               .isPresent()) {
             // TODO: make watermark configurable to 1 milli
-            int watermarkMillis = DEFAULT_WATERMARK_MILLIS;
-            if (isTransactional) watermarkMillis += DEFAULT_TX_WATERMARK_ADDITIONAL_MILLIS;
+            long watermarkMillis = defaultWatermark.toMillis();
+            if (isTransactional) watermarkMillis = transactionWatermark.toMillis();
             tableBuilder.setWatermarkMillis(metadataColumn.getName().getSimple(), watermarkMillis);
           }
         }

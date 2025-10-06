@@ -134,6 +134,10 @@ public interface PackageJson {
 
     String getEngineName();
 
+    default String getSetting(String key) {
+      return getSetting(key, Optional.empty());
+    }
+
     String getSetting(String key, Optional<String> defaultValue);
 
     Optional<String> getSettingOptional(String key);
