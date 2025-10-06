@@ -972,6 +972,7 @@ public class SqlScriptPlanner {
     var stageAnalysis = getSourceSinkStageAnalysis();
     ExportNode exportNode;
 
+    ObjectIdentifier sinkTableId = scriptContext.toIdentifier(sinkPath);
     // First, we check if the export is to a built-in sink, if so, resolve it
     var builtInSink =
         SystemBuiltInConnectors.forExport(sinkPath.getFirst()).filter(x -> sinkPath.size() == 2);
@@ -1005,6 +1006,16 @@ public class SqlScriptPlanner {
               sqrlEnv.currentBatch(),
               Optional.of(exportStage),
               Optional.empty());
+    } else if (sinkTableId != null
+        && sqrlEnv.getTableLookup().lookupSourceTable(sinkTableId) != null) {
+      // 2nd: the sink path resolves to a table source (i.e. CREATE TABLE)
+      exportNode =
+          new ExportNode(
+              stageAnalysis,
+              sinkPath,
+              sqrlEnv.currentBatch(),
+              Optional.empty(),
+              Optional.of(sinkTableId));
     } else { // the export is to a user-defined sink: load it
       var module = scriptContext.moduleLoader.getModule(sinkPath.popLast()).orElse(null);
       checkFatal(
@@ -1123,6 +1134,17 @@ public class SqlScriptPlanner {
 
     public ObjectIdentifier toIdentifier(String name) {
       return ObjectIdentifier.of("default_catalog", this.databaseName, name);
+    }
+
+    public ObjectIdentifier toIdentifier(NamePath namePath) {
+      int size = namePath.size();
+      if (namePath.isEmpty() || size > 3) return null;
+      String tableName = namePath.get(size - 1).getDisplay();
+      String databaseName = this.databaseName;
+      if (size > 1) databaseName = namePath.get(size - 2).getDisplay();
+      String catalogName = "default_catalog";
+      if (size > 2) catalogName = namePath.get(size - 3).getDisplay();
+      return ObjectIdentifier.of(catalogName, databaseName, tableName);
     }
 
     public ObjectIdentifier toIdentifier(Name name) {
