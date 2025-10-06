@@ -163,7 +163,7 @@
     <duckdb.version>1.4.0.0</duckdb.version>
     <snowflake-jdbc.version>3.26.1</snowflake-jdbc.version>
     <reflections.version>0.10.2</reflections.version>
-    <swagger-core.version>2.2.37</swagger-core.version>
+    <swagger-core.version>2.2.38</swagger-core.version>
     <commons-csv.version>1.9.0</commons-csv.version>
     <guice.version>7.0.0</guice.version>
     <guice-multibindings.version>4.2.3</guice-multibindings.version>
