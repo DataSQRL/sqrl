@@ -60,7 +60,7 @@ Schema:
  - machineid: INTEGER
  - updatedTime: TIMESTAMP_LTZ(3) *ROWTIME*
 Plan:
-LogicalWatermarkAssigner(rowtime=[updatedTime], watermark=[-($2, 0:INTERVAL SECOND)])
+LogicalWatermarkAssigner(rowtime=[updatedTime], watermark=[-($2, 15000:INTERVAL SECOND)])
   LogicalProject(sensorid=[$0], machineid=[$1], updatedTime=[CAST($2):TIMESTAMP_LTZ(3) *ROWTIME*])
     LogicalTableScan(table=[[default_catalog, default_database, Sensors, metadata=[timestamp]]])
 SQL: CREATE VIEW `Sensors__view`
@@ -95,7 +95,7 @@ CREATE TABLE `Sensors` (
   `machineid` INTEGER,
   `updatedTime` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
   PRIMARY KEY (`sensorid`) NOT ENFORCED,
-  WATERMARK FOR `updatedTime` AS `updatedTime` - INTERVAL '0.0' SECOND
+  WATERMARK FOR `updatedTime` AS `updatedTime` - INTERVAL '15.0' SECOND
 ) WITH (
   'connector' = 'upsert-kafka',
   'key.flexible-json.timestamp-format.standard' = 'ISO-8601',
@@ -198,6 +198,7 @@ INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
       "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 3,
+      "type" : "MUTATION",
       "config" : { }
     },
     {
@@ -206,6 +207,7 @@ INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
       "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 3,
+      "type" : "MUTATION",
       "config" : { }
     }
   ],
