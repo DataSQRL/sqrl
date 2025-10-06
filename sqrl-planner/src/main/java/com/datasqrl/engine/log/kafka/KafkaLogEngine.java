@@ -29,6 +29,7 @@ import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.database.EngineCreateTable;
 import com.datasqrl.engine.log.LogEngine;
+import com.datasqrl.engine.log.kafka.NewTopic.Type;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.flinkrunner.format.json.FlexibleJsonFormat;
 import com.datasqrl.graphql.server.MutationInsertType;
@@ -74,6 +75,10 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
   public static final String UPSERT_FORMAT = "upsert-%s";
 
   public static final String DEFAULT_TTL_KEY = "retention";
+
+  /* TODO: make these configurable */
+  public static final int DEFAULT_WATERMARK_MILLIS = 0;
+  public static final int DEFAULT_TX_WATERMARK_ADDITIONAL_MILLIS = 15000;
 
   public static final EnumSet<EngineFeature> KAFKA_FEATURES = EnumSet.of(EngineFeature.MUTATIONS);
 
@@ -167,7 +172,9 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
               .filter(s -> s.equalsIgnoreCase("timestamp"))
               .isPresent()) {
             // TODO: make watermark configurable to 1 milli
-            tableBuilder.setWatermarkMillis(metadataColumn.getName().getSimple(), 0);
+            int watermarkMillis = DEFAULT_WATERMARK_MILLIS;
+            if (isTransactional) watermarkMillis += DEFAULT_TX_WATERMARK_ADDITIONAL_MILLIS;
+            tableBuilder.setWatermarkMillis(metadataColumn.getName().getSimple(), watermarkMillis);
           }
         }
       }
@@ -218,7 +225,12 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
     tableBuilder.setConnectorOptions(connectorConfig);
     String topicName = connectorConfig.get(CONNECTOR_TOPIC_KEY);
     // TODO: Add schema based on reldatatype
-    return new NewTopic(topicName, tableBuilder.getTableName(), format, topicConfig);
+    return new NewTopic(
+        topicName,
+        tableBuilder.getTableName(),
+        format,
+        isMutation ? Type.MUTATION : Type.SUBSCRIPTION,
+        topicConfig);
   }
 
   @Override
