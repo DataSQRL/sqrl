@@ -180,6 +180,21 @@
                 "taskmanager-count": {
                   "type": "integer",
                   "minimum": 1
+                },
+                "secrets": {
+                  "oneOf": [
+                    {
+                      "type": "null"
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "minItems": 1
+                    }
+                  ]
                 }
               },
               "additionalProperties": false
