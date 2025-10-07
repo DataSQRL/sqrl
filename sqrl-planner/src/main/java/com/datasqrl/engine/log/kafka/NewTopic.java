@@ -25,18 +25,26 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Getter
 public class NewTopic implements EngineCreateTable {
+
+  public enum Type {
+    MUTATION,
+    SUBSCRIPTION
+  }
+
   private String topicName;
   private String tableName;
   private String format;
   private int numPartitions;
   private short replicationFactor;
+  private Type type;
   private Map<String, String> config;
 
   public NewTopic(String topicName, String tableName) {
-    this(topicName, tableName, null, Map.of());
+    this(topicName, tableName, null, Type.SUBSCRIPTION, Map.of());
   }
 
-  public NewTopic(String topicName, String tableName, String format, Map<String, String> config) {
-    this(topicName, tableName, format, 1, (short) 3, config);
+  public NewTopic(
+      String topicName, String tableName, String format, Type type, Map<String, String> config) {
+    this(topicName, tableName, format, 1, (short) 3, type, config);
   }
 }

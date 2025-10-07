@@ -328,6 +328,7 @@ INSERT INTO `default_catalog`.`default_database`.`StreamJoin_2`
       "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 3,
+      "type" : "SUBSCRIPTION",
       "config" : { }
     }
   ],
@@ -337,6 +338,7 @@ INSERT INTO `default_catalog`.`default_database`.`StreamJoin_2`
       "tableName" : "input_topic1",
       "numPartitions" : 1,
       "replicationFactor" : 3,
+      "type" : "SUBSCRIPTION",
       "config" : { }
     },
     {
@@ -344,6 +346,7 @@ INSERT INTO `default_catalog`.`default_database`.`StreamJoin_2`
       "tableName" : "input_topic2",
       "numPartitions" : 1,
       "replicationFactor" : 3,
+      "type" : "SUBSCRIPTION",
       "config" : { }
     }
   ]
