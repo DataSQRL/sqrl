@@ -15,6 +15,7 @@
  */
 package com.datasqrl.planner;
 
+import static com.datasqrl.config.SqrlConstants.FLINK_DEFAULT_CATALOG;
 import static org.apache.flink.table.planner.utils.ShortcutUtils.unwrapContext;
 
 import com.datasqrl.calcite.SqrlRexUtil;
@@ -167,7 +168,6 @@ import org.apache.flink.table.types.DataType;
 public class Sqrl2FlinkSQLTranslator {
 
   public static final String SCHEMA_SUFFIX = "__schema";
-  public static final String DEFAULT_CATALOG_NAME = "default_catalog";
 
   private final Set<String> createdDatabases = new HashSet<>();
 
@@ -412,7 +412,7 @@ public class Sqrl2FlinkSQLTranslator {
 
   public void setDatabase(String databaseName, boolean withCatalog) {
     if (withCatalog) {
-      executeSQL("USE CATALOG `%s`;".formatted(DEFAULT_CATALOG_NAME));
+      executeSQL("USE CATALOG `%s`;".formatted(FLINK_DEFAULT_CATALOG));
     }
     if (createdDatabases.add(databaseName)) {
       executeSQL("CREATE DATABASE IF NOT EXISTS `%s`;".formatted(databaseName));

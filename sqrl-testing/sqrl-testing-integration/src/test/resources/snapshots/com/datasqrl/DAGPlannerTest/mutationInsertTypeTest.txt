@@ -198,6 +198,7 @@ INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
       "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 3,
+      "type" : "MUTATION",
       "config" : { }
     },
     {
@@ -206,6 +207,7 @@ INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
       "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 3,
+      "type" : "MUTATION",
       "config" : { }
     }
   ],

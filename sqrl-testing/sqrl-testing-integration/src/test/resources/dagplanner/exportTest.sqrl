@@ -5,3 +5,14 @@ DistinctCustomer := DISTINCT Customer ON customerid ORDER BY `timestamp` DESC;
 
 EXPORT JoinStream TO log.JoinStream;
 EXPORT DistinctCustomer TO log.DistinctStream;
+
+CustomerSubset := SELECT customerid, name, `timestamp` FROM Customer;
+
+/*+no_query */
+CREATE TABLE CustomerExport (
+    customerid BIGINT,
+    name STRING,
+    `timestamp` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp'
+);
+
+EXPORT CustomerSubset TO CustomerExport;

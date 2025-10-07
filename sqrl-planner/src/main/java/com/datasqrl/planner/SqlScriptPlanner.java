@@ -15,6 +15,8 @@
  */
 package com.datasqrl.planner;
 
+import static com.datasqrl.config.SqrlConstants.FLINK_DEFAULT_CATALOG;
+import static com.datasqrl.config.SqrlConstants.FLINK_DEFAULT_DATABASE;
 import static com.datasqrl.planner.parser.SqlScriptStatementSplitter.removeStatementDelimiter;
 import static com.datasqrl.planner.parser.StatementParserException.checkFatal;
 
@@ -165,7 +167,7 @@ public class SqlScriptPlanner {
       ExecutionPipeline pipeline,
       ExecutionGoal executionGoal) {
     this.errorCollector = errorCollector;
-    this.scriptContext = new ScriptContext(moduleLoader, "default_database", true);
+    this.scriptContext = new ScriptContext(moduleLoader, FLINK_DEFAULT_DATABASE, true);
     this.sqrlParser = sqrlParser;
     this.packageJson = packageJson;
     this.pipeline = pipeline;
@@ -972,6 +974,7 @@ public class SqlScriptPlanner {
     var stageAnalysis = getSourceSinkStageAnalysis();
     ExportNode exportNode;
 
+    ObjectIdentifier sinkTableId = scriptContext.toIdentifier(sinkPath);
     // First, we check if the export is to a built-in sink, if so, resolve it
     var builtInSink =
         SystemBuiltInConnectors.forExport(sinkPath.getFirst()).filter(x -> sinkPath.size() == 2);
@@ -1005,6 +1008,15 @@ public class SqlScriptPlanner {
               sqrlEnv.currentBatch(),
               Optional.of(exportStage),
               Optional.empty());
+    } else if (sqrlEnv.getTableLookup().lookupSourceTable(sinkTableId) != null) {
+      // 2nd: the sink path resolves to a table source (i.e. CREATE TABLE)
+      exportNode =
+          new ExportNode(
+              stageAnalysis,
+              sinkPath,
+              sqrlEnv.currentBatch(),
+              Optional.empty(),
+              Optional.of(sinkTableId));
     } else { // the export is to a user-defined sink: load it
       var module = scriptContext.moduleLoader.getModule(sinkPath.popLast()).orElse(null);
       checkFatal(
@@ -1122,7 +1134,20 @@ public class SqlScriptPlanner {
     }
 
     public ObjectIdentifier toIdentifier(String name) {
-      return ObjectIdentifier.of("default_catalog", this.databaseName, name);
+      return ObjectIdentifier.of(FLINK_DEFAULT_CATALOG, this.databaseName, name);
+    }
+
+    public ObjectIdentifier toIdentifier(NamePath namePath) {
+      var size = namePath.size();
+      if (size == 0 || size > 3) {
+        return null;
+      }
+
+      var catalogName = size > 2 ? namePath.get(0).getDisplay() : FLINK_DEFAULT_CATALOG;
+      var databaseName = size > 1 ? namePath.get(size - 2).getDisplay() : this.databaseName;
+      var tableName = namePath.get(size - 1).getDisplay();
+
+      return ObjectIdentifier.of(catalogName, databaseName, tableName);
     }
 
     public ObjectIdentifier toIdentifier(Name name) {

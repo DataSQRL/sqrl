@@ -254,6 +254,28 @@
             }
           },
           "additionalProperties": false
+        },
+        "kafka": {
+          "type": "object",
+          "properties": {
+            "retention": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "watermark": {
+              "type": "string"
+            },
+            "transaction-watermark": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
         }
       }
     },

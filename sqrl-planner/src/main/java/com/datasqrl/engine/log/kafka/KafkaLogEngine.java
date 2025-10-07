@@ -29,6 +29,7 @@ import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.database.EngineCreateTable;
 import com.datasqrl.engine.log.LogEngine;
+import com.datasqrl.engine.log.kafka.NewTopic.Type;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.flinkrunner.format.json.FlexibleJsonFormat;
 import com.datasqrl.graphql.server.MutationInsertType;
@@ -81,7 +82,11 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
   private final TestRunnerConfiguration testRunnerConfig;
   private final ConnectorConf streamConnectorConf;
   private final ConnectorConf mutationConnectorConf;
+
+  // === SETTINGS ===
   private final Optional<Duration> defaultTTL;
+  private final Duration defaultWatermark;
+  private final Duration transactionWatermark;
 
   @Inject
   public KafkaLogEngine(PackageJson json, ConnectorFactoryFactory connectorFactory) {
@@ -92,6 +97,9 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
     this.mutationConnectorConf =
         connectorFactory.getConfig(KafkaLogEngineFactory.ENGINE_NAME + "-mutation");
     defaultTTL = engineConfig.getSettingOptional(DEFAULT_TTL_KEY).map(TimeUtils::parseDuration);
+    defaultWatermark = TimeUtils.parseDuration(engineConfig.getSetting("watermark"));
+    transactionWatermark =
+        TimeUtils.parseDuration(engineConfig.getSetting("transaction-watermark"));
   }
 
   @Override
@@ -166,8 +174,9 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
               .getMetadataAlias()
               .filter(s -> s.equalsIgnoreCase("timestamp"))
               .isPresent()) {
-            // TODO: make watermark configurable to 1 milli
-            tableBuilder.setWatermarkMillis(metadataColumn.getName().getSimple(), 0);
+            long watermarkMillis =
+                isTransactional ? transactionWatermark.toMillis() : defaultWatermark.toMillis();
+            tableBuilder.setWatermarkMillis(metadataColumn.getName().getSimple(), watermarkMillis);
           }
         }
       }
@@ -218,7 +227,12 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
     tableBuilder.setConnectorOptions(connectorConfig);
     String topicName = connectorConfig.get(CONNECTOR_TOPIC_KEY);
     // TODO: Add schema based on reldatatype
-    return new NewTopic(topicName, tableBuilder.getTableName(), format, topicConfig);
+    return new NewTopic(
+        topicName,
+        tableBuilder.getTableName(),
+        format,
+        isMutation ? Type.MUTATION : Type.SUBSCRIPTION,
+        topicConfig);
   }
 
   @Override

@@ -1,4 +1,10 @@
 >>>pipeline_explain.txt
+=== CustomerExport
+ID:     CustomerExport
+Type:   export
+Stage:  flink
+Inputs: default_catalog.default_database.CustomerSubset
+
 === Customer
 ID:     default_catalog.default_database.Customer
 Type:   stream
@@ -22,6 +28,24 @@ SQL: CREATE VIEW `Customer__view`
 AS
 SELECT `Customer`.`customerid`, `Customer`.`email`, `Customer`.`name`, `Customer`.`lastUpdated`, `Customer`.`timestamp`
 FROM `default_catalog`.`default_database`.`Customer` AS `Customer`
+=== CustomerSubset
+ID:     default_catalog.default_database.CustomerSubset
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database.Customer
+Annotations:
+ - stream-root: Customer
+Primary Key: -
+Timestamp  : timestamp
+Schema:
+ - customerid: BIGINT NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Plan:
+LogicalProject(customerid=[$0], name=[$2], timestamp=[$4])
+  LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL: CREATE VIEW `CustomerSubset` AS  SELECT customerid, name, `timestamp` FROM Customer;
+
 === DistinctCustomer
 ID:     default_catalog.default_database.DistinctCustomer
 Type:   state
@@ -149,6 +173,24 @@ SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`
 FROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC NULLS LAST) AS `__sqrlinternal_rownum`
   FROM `default_catalog`.`default_database`.`Customer`) AS `t`
 WHERE `__sqrlinternal_rownum` = 1;
+CREATE VIEW `CustomerSubset`
+AS
+SELECT `customerid`, `name`, `timestamp`
+FROM `Customer`;
+CREATE TABLE `CustomerExport` (
+  `customerid` BIGINT,
+  `name` STRING,
+  `timestamp` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
+  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.0' SECOND
+) WITH (
+  'connector' = 'kafka',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
+  'properties.auto.offset.reset' = 'earliest',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'topic' = 'kafka-mutation-CustomerExport'
+);
 CREATE TABLE `Customer_1` (
   `customerid` BIGINT NOT NULL,
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -164,7 +206,21 @@ CREATE TABLE `Customer_1` (
   'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
   'username' = '${POSTGRES_USERNAME}'
 );
-CREATE TABLE `DistinctStream_2` (
+CREATE TABLE `CustomerSubset_2` (
+  `customerid` BIGINT NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = 'CustomerSubset_2',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `DistinctStream_3` (
   `customerid` BIGINT NOT NULL,
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -181,7 +237,7 @@ CREATE TABLE `DistinctStream_2` (
   'value.flexible-json.timestamp-format.standard' = 'ISO-8601',
   'value.format' = 'flexible-json'
 );
-CREATE TABLE `DistinctCustomer_3` (
+CREATE TABLE `DistinctCustomer_4` (
   `customerid` BIGINT NOT NULL,
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -192,11 +248,11 @@ CREATE TABLE `DistinctCustomer_3` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
-  'table-name' = 'DistinctCustomer_3',
+  'table-name' = 'DistinctCustomer_4',
   'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
   'username' = '${POSTGRES_USERNAME}'
 );
-CREATE TABLE `JoinStream_4` (
+CREATE TABLE `JoinStream_5` (
   `id` BIGINT NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL
 ) WITH (
@@ -207,7 +263,7 @@ CREATE TABLE `JoinStream_4` (
   'properties.group.id' = '${KAFKA_GROUP_ID}',
   'topic' = 'kafka-JoinStream'
 );
-CREATE TABLE `JoinStream_5` (
+CREATE TABLE `JoinStream_6` (
   `id` BIGINT NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
@@ -216,11 +272,11 @@ CREATE TABLE `JoinStream_5` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
-  'table-name' = 'JoinStream_5',
+  'table-name' = 'JoinStream_6',
   'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
   'username' = '${POSTGRES_USERNAME}'
 );
-CREATE TABLE `Orders_6` (
+CREATE TABLE `Orders_7` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
@@ -230,7 +286,7 @@ CREATE TABLE `Orders_6` (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
-  'table-name' = 'Orders_6',
+  'table-name' = 'Orders_7',
   'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
   'username' = '${POSTGRES_USERNAME}'
 );
@@ -239,44 +295,54 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_1`
 (SELECT *
  FROM `default_catalog`.`default_database`.`Customer`)
 ;
-INSERT INTO `default_catalog`.`default_database`.`DistinctStream_2`
+INSERT INTO `default_catalog`.`default_database`.`CustomerExport`
  (SELECT *
-  FROM `default_catalog`.`default_database`.`DistinctCustomer`)
+  FROM `default_catalog`.`default_database`.`CustomerSubset`)
  ;
- INSERT INTO `default_catalog`.`default_database`.`DistinctCustomer_3`
-  (SELECT *
-   FROM `default_catalog`.`default_database`.`Customer`)
+ INSERT INTO `default_catalog`.`default_database`.`CustomerSubset_2`
+  (SELECT `customerid`, `name`, `timestamp`, `hash_columns`(`customerid`, `name`, `timestamp`) AS `__pk_hash`
+   FROM `default_catalog`.`default_database`.`CustomerSubset`)
   ;
-  INSERT INTO `default_catalog`.`default_database`.`JoinStream_4`
+  INSERT INTO `default_catalog`.`default_database`.`DistinctStream_3`
    (SELECT *
-    FROM `default_catalog`.`default_database`.`JoinStream`)
+    FROM `default_catalog`.`default_database`.`DistinctCustomer`)
    ;
-   INSERT INTO `default_catalog`.`default_database`.`JoinStream_5`
-    (SELECT `id`, `name`, `hash_columns`(`id`, `name`) AS `__pk_hash`
-     FROM `default_catalog`.`default_database`.`JoinStream`)
+   INSERT INTO `default_catalog`.`default_database`.`DistinctCustomer_4`
+    (SELECT *
+     FROM `default_catalog`.`default_database`.`Customer`)
     ;
-    INSERT INTO `default_catalog`.`default_database`.`Orders_6`
-     (SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`
-      FROM `default_catalog`.`default_database`.`Orders`)
+    INSERT INTO `default_catalog`.`default_database`.`JoinStream_5`
+     (SELECT *
+      FROM `default_catalog`.`default_database`.`JoinStream`)
      ;
-     END
+     INSERT INTO `default_catalog`.`default_database`.`JoinStream_6`
+      (SELECT `id`, `name`, `hash_columns`(`id`, `name`) AS `__pk_hash`
+       FROM `default_catalog`.`default_database`.`JoinStream`)
+      ;
+      INSERT INTO `default_catalog`.`default_database`.`Orders_7`
+       (SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`
+        FROM `default_catalog`.`default_database`.`Orders`)
+       ;
+       END
 >>>kafka.json
 {
   "topics" : [
     {
       "topicName" : "kafka-DistinctStream",
-      "tableName" : "DistinctStream_2",
+      "tableName" : "DistinctStream_3",
       "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 3,
+      "type" : "SUBSCRIPTION",
       "config" : { }
     },
     {
       "topicName" : "kafka-JoinStream",
-      "tableName" : "JoinStream_4",
+      "tableName" : "JoinStream_5",
       "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 3,
+      "type" : "SUBSCRIPTION",
       "config" : { }
     }
   ],
@@ -326,9 +392,43 @@ INSERT INTO `default_catalog`.`default_database`.`DistinctStream_2`
       "ttl" : 0.0
     },
     {
-      "name" : "DistinctCustomer_3",
+      "name" : "CustomerSubset_2",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"DistinctCustomer_3\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY (\"customerid\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerSubset_2\" (\"customerid\" BIGINT NOT NULL, \"name\" TEXT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "timestamp",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
+    },
+    {
+      "name" : "DistinctCustomer_4",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"DistinctCustomer_4\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY (\"customerid\"))",
       "fields" : [
         {
           "name" : "customerid",
@@ -365,9 +465,9 @@ INSERT INTO `default_catalog`.`default_database`.`DistinctStream_2`
       "ttl" : 0.0
     },
     {
-      "name" : "JoinStream_5",
+      "name" : "JoinStream_6",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"JoinStream_5\" (\"id\" BIGINT NOT NULL, \"name\" TEXT NOT NULL, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"JoinStream_6\" (\"id\" BIGINT NOT NULL, \"name\" TEXT NOT NULL, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
       "fields" : [
         {
           "name" : "id",
@@ -394,9 +494,9 @@ INSERT INTO `default_catalog`.`default_database`.`DistinctStream_2`
       "ttl" : 0.0
     },
     {
-      "name" : "Orders_6",
+      "name" : "Orders_7",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"Orders_6\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB, PRIMARY KEY (\"id\",\"time\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Orders_7\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB, PRIMARY KEY (\"id\",\"time\"))",
       "fields" : [
         {
           "name" : "id",
@@ -461,9 +561,31 @@ INSERT INTO `default_catalog`.`default_database`.`DistinctStream_2`
       ]
     },
     {
+      "name" : "CustomerSubset",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerSubset\"(\"customerid\", \"name\", \"timestamp\") AS SELECT \"customerid\", \"name\", \"timestamp\"\nFROM \"CustomerSubset_2\"",
+      "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "timestamp",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ]
+    },
+    {
       "name" : "DistinctCustomer",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"DistinctCustomer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"DistinctCustomer_3\"",
+      "sql" : "CREATE OR REPLACE VIEW \"DistinctCustomer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"DistinctCustomer_4\"",
       "fields" : [
         {
           "name" : "customerid",
@@ -495,7 +617,7 @@ INSERT INTO `default_catalog`.`default_database`.`DistinctStream_2`
     {
       "name" : "JoinStream",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"JoinStream\"(\"id\", \"name\") AS SELECT \"id\", \"name\"\nFROM \"JoinStream_5\"",
+      "sql" : "CREATE OR REPLACE VIEW \"JoinStream\"(\"id\", \"name\") AS SELECT \"id\", \"name\"\nFROM \"JoinStream_6\"",
       "fields" : [
         {
           "name" : "id",
@@ -512,7 +634,7 @@ INSERT INTO `default_catalog`.`default_database`.`DistinctStream_2`
     {
       "name" : "Orders",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"Orders_6\"",
+      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"Orders_7\"",
       "fields" : [
         {
           "name" : "id",
@@ -571,6 +693,31 @@ INSERT INTO `default_catalog`.`default_database`.`DistinctStream_2`
         {
           "type" : "args",
           "parentType" : "Query",
+          "fieldName" : "CustomerSubset",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"customerid\", \"name\", \"timestamp\"\nFROM \"CustomerSubset_2\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
           "fieldName" : "DistinctCustomer",
           "exec" : {
             "arguments" : [
@@ -585,7 +732,7 @@ INSERT INTO `default_catalog`.`default_database`.`DistinctStream_2`
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT *\nFROM \"DistinctCustomer_3\"",
+              "sql" : "SELECT *\nFROM \"DistinctCustomer_4\"",
               "parameters" : [ ],
               "pagination" : "LIMIT_AND_OFFSET",
               "cacheDurationMs" : 0,
@@ -610,7 +757,7 @@ INSERT INTO `default_catalog`.`default_database`.`DistinctStream_2`
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"id\", \"name\"\nFROM \"JoinStream_5\"",
+              "sql" : "SELECT \"id\", \"name\"\nFROM \"JoinStream_6\"",
               "parameters" : [ ],
               "pagination" : "LIMIT_AND_OFFSET",
               "cacheDurationMs" : 0,
@@ -635,7 +782,7 @@ INSERT INTO `default_catalog`.`default_database`.`DistinctStream_2`
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT *\nFROM \"Orders_6\"",
+              "sql" : "SELECT *\nFROM \"Orders_7\"",
               "parameters" : [ ],
               "pagination" : "LIMIT_AND_OFFSET",
               "cacheDurationMs" : 0,
@@ -672,6 +819,32 @@ INSERT INTO `default_catalog`.`default_database`.`DistinctStream_2`
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
           "uriTemplate" : "queries/Customer{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetCustomerSubset",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query CustomerSubset($limit: Int = 10, $offset: Int = 0) {\nCustomerSubset(limit: $limit, offset: $offset) {\ncustomerid\nname\ntimestamp\n}\n\n}",
+            "queryName" : "CustomerSubset",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomerSubset{?offset,limit}"
         },
         {
           "function" : {
@@ -754,7 +927,7 @@ INSERT INTO `default_catalog`.`default_database`.`DistinctStream_2`
       ],
       "schema" : {
         "type" : "string",
-        "schema" : "type Customer {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\ntype DistinctCustomer {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\n\"A JSON scalar\"\nscalar JSON\n\ntype JoinStream {\n  id: Long!\n  name: String!\n}\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Orders {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  entries: [Orders_entriesOutput]!\n}\n\ntype Orders_entriesOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  DistinctCustomer(limit: Int = 10, offset: Int = 0): [DistinctCustomer!]\n  JoinStream(limit: Int = 10, offset: Int = 0): [JoinStream!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+        "schema" : "type Customer {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\ntype CustomerSubset {\n  customerid: Long!\n  name: String!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\ntype DistinctCustomer {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\n\"A JSON scalar\"\nscalar JSON\n\ntype JoinStream {\n  id: Long!\n  name: String!\n}\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Orders {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  entries: [Orders_entriesOutput]!\n}\n\ntype Orders_entriesOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerSubset(limit: Int = 10, offset: Int = 0): [CustomerSubset!]\n  DistinctCustomer(limit: Int = 10, offset: Int = 0): [DistinctCustomer!]\n  JoinStream(limit: Int = 10, offset: Int = 0): [JoinStream!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
     }
   }
