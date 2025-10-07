@@ -15,6 +15,8 @@
  */
 package com.datasqrl.planner;
 
+import static com.datasqrl.config.SqrlConstants.FLINK_DEFAULT_CATALOG;
+import static com.datasqrl.config.SqrlConstants.FLINK_DEFAULT_DATABASE;
 import static com.datasqrl.planner.parser.SqlScriptStatementSplitter.removeStatementDelimiter;
 import static com.datasqrl.planner.parser.StatementParserException.checkFatal;
 
@@ -165,7 +167,7 @@ public class SqlScriptPlanner {
       ExecutionPipeline pipeline,
       ExecutionGoal executionGoal) {
     this.errorCollector = errorCollector;
-    this.scriptContext = new ScriptContext(moduleLoader, "default_database", true);
+    this.scriptContext = new ScriptContext(moduleLoader, FLINK_DEFAULT_DATABASE, true);
     this.sqrlParser = sqrlParser;
     this.packageJson = packageJson;
     this.pipeline = pipeline;
@@ -1006,8 +1008,7 @@ public class SqlScriptPlanner {
               sqrlEnv.currentBatch(),
               Optional.of(exportStage),
               Optional.empty());
-    } else if (sinkTableId != null
-        && sqrlEnv.getTableLookup().lookupSourceTable(sinkTableId) != null) {
+    } else if (sqrlEnv.getTableLookup().lookupSourceTable(sinkTableId) != null) {
       // 2nd: the sink path resolves to a table source (i.e. CREATE TABLE)
       exportNode =
           new ExportNode(
@@ -1133,17 +1134,19 @@ public class SqlScriptPlanner {
     }
 
     public ObjectIdentifier toIdentifier(String name) {
-      return ObjectIdentifier.of("default_catalog", this.databaseName, name);
+      return ObjectIdentifier.of(FLINK_DEFAULT_CATALOG, this.databaseName, name);
     }
 
     public ObjectIdentifier toIdentifier(NamePath namePath) {
-      int size = namePath.size();
-      if (namePath.isEmpty() || size > 3) return null;
-      String tableName = namePath.get(size - 1).getDisplay();
-      String databaseName = this.databaseName;
-      if (size > 1) databaseName = namePath.get(size - 2).getDisplay();
-      String catalogName = "default_catalog";
-      if (size > 2) catalogName = namePath.get(size - 3).getDisplay();
+      var size = namePath.size();
+      if (size == 0 || size > 3) {
+        return null;
+      }
+
+      var catalogName = size > 2 ? namePath.get(0).getDisplay() : FLINK_DEFAULT_CATALOG;
+      var databaseName = size > 1 ? namePath.get(size - 2).getDisplay() : this.databaseName;
+      var tableName = namePath.get(size - 1).getDisplay();
+
       return ObjectIdentifier.of(catalogName, databaseName, tableName);
     }
 

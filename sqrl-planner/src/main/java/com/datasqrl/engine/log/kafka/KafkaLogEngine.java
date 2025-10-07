@@ -83,7 +83,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
   private final ConnectorConf streamConnectorConf;
   private final ConnectorConf mutationConnectorConf;
 
-  // ====== SETTINGS ===
+  // === SETTINGS ===
   private final Optional<Duration> defaultTTL;
   private final Duration defaultWatermark;
   private final Duration transactionWatermark;
@@ -174,9 +174,8 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
               .getMetadataAlias()
               .filter(s -> s.equalsIgnoreCase("timestamp"))
               .isPresent()) {
-            // TODO: make watermark configurable to 1 milli
-            long watermarkMillis = defaultWatermark.toMillis();
-            if (isTransactional) watermarkMillis = transactionWatermark.toMillis();
+            long watermarkMillis =
+                isTransactional ? transactionWatermark.toMillis() : defaultWatermark.toMillis();
             tableBuilder.setWatermarkMillis(metadataColumn.getName().getSimple(), watermarkMillis);
           }
         }

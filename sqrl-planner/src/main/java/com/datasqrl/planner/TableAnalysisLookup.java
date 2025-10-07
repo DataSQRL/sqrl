@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import lombok.Value;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
@@ -61,7 +62,7 @@ public class TableAnalysisLookup {
   Map<ObjectIdentifier, TableAnalysis> id2View = new HashMap<>();
   ListMultimap<Integer, TableAnalysis> viewMap = ArrayListMultimap.create();
 
-  public TableAnalysis lookupSourceTable(ObjectIdentifier objectId) {
+  public TableAnalysis lookupSourceTable(@Nullable ObjectIdentifier objectId) {
     return id2SourceTable.get(objectId);
   }
 
