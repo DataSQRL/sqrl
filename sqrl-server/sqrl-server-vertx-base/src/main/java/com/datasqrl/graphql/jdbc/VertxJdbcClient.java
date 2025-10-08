@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.graphql;
+package com.datasqrl.graphql.jdbc;
 
-import com.datasqrl.graphql.jdbc.DatabaseType;
-import com.datasqrl.graphql.jdbc.JdbcClient;
+import com.datasqrl.graphql.VertxContext;
 import com.datasqrl.graphql.server.Context;
 import com.datasqrl.graphql.server.RootGraphqlModel.PreparedSqrlQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedQuery;
@@ -29,11 +28,13 @@ import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.SqlClient;
 import io.vertx.sqlclient.Tuple;
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Purpose: Manages SQL clients and executes queries. Collaboration: Used by {@link VertxContext} to
  * prepare and execute SQL queries.
  */
+@Slf4j
 public record VertxJdbcClient(Map<DatabaseType, SqlClient> clients) implements JdbcClient {
   @Override
   public ResolvedQuery prepareQuery(SqlQuery query, Context context) {
@@ -52,23 +53,14 @@ public record VertxJdbcClient(Map<DatabaseType, SqlClient> clients) implements J
     return new ResolvedSqlQuery(sqlQuery, null);
   }
 
-  public Future<RowSet<Row>> execute(
-      DatabaseType database, PreparedQuery<RowSet<Row>> query, Tuple tup) {
-    var sqlClient = clients.get(database);
-
-    if (database == DatabaseType.DUCKDB) {
-      return sqlClient
-          .query("INSTALL iceberg;")
-          .execute()
-          .compose(v -> sqlClient.query("LOAD iceberg;").execute())
-          .compose(t -> query.execute(tup));
-    }
+  public Future<RowSet<Row>> execute(PreparedQuery<RowSet<Row>> query, Tuple tup) {
     return query.execute(tup);
   }
 
   public Future<RowSet<Row>> execute(DatabaseType database, String query, Tuple tup) {
     var sqlClient = clients.get(database);
-    return execute(database, sqlClient.preparedQuery(query), tup);
+
+    return execute(sqlClient.preparedQuery(query), tup);
   }
 
   public record PreparedSqrlQueryImpl(PreparedQuery<RowSet<Row>> preparedQuery)

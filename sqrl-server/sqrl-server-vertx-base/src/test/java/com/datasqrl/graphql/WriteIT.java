@@ -24,6 +24,7 @@ import static org.mockito.Mockito.when;
 import com.datasqrl.graphql.config.KafkaConfig;
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.jdbc.DatabaseType;
+import com.datasqrl.graphql.jdbc.VertxJdbcClient;
 import com.datasqrl.graphql.server.GraphQLEngineBuilder;
 import com.datasqrl.graphql.server.PaginationType;
 import com.datasqrl.graphql.server.RootGraphqlModel;

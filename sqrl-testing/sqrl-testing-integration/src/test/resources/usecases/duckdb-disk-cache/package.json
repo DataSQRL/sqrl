@@ -1,0 +1,42 @@
+{
+  "version": "1",
+  "enabled-engines": [
+    "flink",
+    "iceberg",
+    "postgres",
+    "duckdb",
+    "kafka",
+    "vertx"
+  ],
+  "script": {
+    "main": "duckdb-disk-cache.sqrl"
+  },
+  "engines": {
+    "duckdb": {
+      "url" : "jdbc:duckdb:",
+      "config": {
+        "use-disk-cache": true
+      }
+    },
+    "flink": {
+      "config": {
+        "parallelism.default": "1",
+        "table.exec.source.idle-timeout": "1 ms",
+        "execution.checkpointing.interval": "8 s",
+        "execution.checkpointing.min-pause": "2 s"
+      }
+    }
+  },
+  "connectors" : {
+    "iceberg" : {
+      "write.parquet.page-size-bytes": 1000,
+      "warehouse":"/tmp/duckdb-with-cache",
+      "catalog-type":"hadoop",
+      "catalog-name": "mydatabase"
+    }
+  },
+  "test-runner": {
+    "delay-sec" : -1,
+    "required-checkpoints" : 1
+  }
+}

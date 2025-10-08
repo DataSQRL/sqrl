@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.graphql;
+package com.datasqrl.graphql.jdbc;
 
 import com.datasqrl.graphql.config.ServerConfig;
-import com.datasqrl.graphql.jdbc.DatabaseType;
+import com.datasqrl.util.DuckDbExtensions;
 import com.google.common.collect.ImmutableMap;
 import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonObject;
 import io.vertx.jdbcclient.JDBCConnectOptions;
 import io.vertx.jdbcclient.JDBCPool;
 import io.vertx.sqlclient.Pool;
@@ -43,14 +44,19 @@ public class JdbcClientsConfig {
 
   /** Creates a map of database clients for all configured database types. */
   public Map<DatabaseType, SqlClient> createClients() {
-    var builder =
-        ImmutableMap.<DatabaseType, SqlClient>builder()
-            .put(DatabaseType.POSTGRES, initPostgresSqlClient());
+    var clientsMapBuilder = ImmutableMap.<DatabaseType, SqlClient>builder();
 
-    initDuckdbSqlClient().ifPresent(client -> builder.put(DatabaseType.DUCKDB, client));
-    initSnowflakeClient().ifPresent(client -> builder.put(DatabaseType.SNOWFLAKE, client));
+    // PostgreSQL is always required and initializes synchronously
+    clientsMapBuilder.put(DatabaseType.POSTGRES, initPostgresSqlClient());
 
-    return builder.build();
+    // DuckDB initializes synchronously
+    initDuckdbSqlClient().ifPresent(client -> clientsMapBuilder.put(DatabaseType.DUCKDB, client));
+
+    // Snowflake initializes synchronously
+    initSnowflakeClient()
+        .ifPresent(client -> clientsMapBuilder.put(DatabaseType.SNOWFLAKE, client));
+
+    return clientsMapBuilder.build();
   }
 
   @SneakyThrows
@@ -64,9 +70,12 @@ public class JdbcClientsConfig {
     // ServiceLoader
     var url = snowflakeConf.getUrl();
     url += "?CLIENT_SESSION_KEEP_ALIVE=true";
-    var pool = initJdbcPool(url, "snowflake-pool", "snowflake");
 
-    return Optional.of(pool);
+    return Optional.of(
+        JDBCPool.pool(
+            vertx,
+            new JDBCConnectOptions().setJdbcUrl(url).setMetricsName("snowflake"),
+            new PoolOptions(this.config.getPoolOptions()).setName("snowflake-pool")));
   }
 
   @SneakyThrows
@@ -78,22 +87,28 @@ public class JdbcClientsConfig {
 
     // No need for Class.forName() - DuckDB JDBC driver auto-registers via JDBC 4.0+ ServiceLoader
     var url = duckDbConf.getUrl();
-    var pool = initJdbcPool(url, "duckdb-pool", "duckdb");
+    var extensions = new DuckDbExtensions(duckDbConf.getConfig());
+    var initSql = extensions.buildInitSql();
 
-    return Optional.of(pool);
+    var connectOptions =
+        new JDBCConnectOptions()
+            .setJdbcUrl(url)
+            .setMetricsName("duckdb")
+            .setExtraConfig(new JsonObject().put("initialSql", initSql));
+
+    var poolOptions =
+        new PoolOptions(this.config.getPoolOptions())
+            .setName("duckdb-pool")
+            .setMaxSize(1)
+            .setMaxLifetime(0)
+            .setIdleTimeout(0);
+
+    return Optional.of(JDBCPool.pool(vertx, connectOptions, poolOptions));
   }
 
   private SqlClient initPostgresSqlClient() {
     var poolOptions = new PoolOptions(this.config.getPoolOptions()).setName("postgres-pool");
     // Note: setPipelined() method was removed in Vert.x 5, pipelining is now always enabled
     return Pool.pool(vertx, this.config.getPgConnectOptions(), poolOptions);
-  }
-
-  @SneakyThrows
-  private Pool initJdbcPool(String url, String poolName, String metricsName) {
-    var connectOptions = new JDBCConnectOptions().setJdbcUrl(url).setMetricsName(metricsName);
-    var poolOptions = new PoolOptions(this.config.getPoolOptions()).setName(poolName);
-
-    return JDBCPool.pool(vertx, connectOptions, poolOptions);
   }
 }
