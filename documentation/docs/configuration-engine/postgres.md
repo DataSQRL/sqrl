@@ -20,6 +20,39 @@ No mandatory configuration keys are required. Physical DDL (tables, indexes, vie
 }
 ```
 
+## Deployment Configuration
+
+PostgreSQL supports deployment-specific configuration for database scaling and high availability:
+
+| Key              | Type        | Default | Description                                             |
+|------------------|-------------|---------|---------------------------------------------------------|
+| `instance-size`  | **string**  | -       | Database instance size for compute and memory          |
+| `replica-count`  | **integer** | -       | Number of read replicas (minimum: 0, maximum varies)   |
+
+### Instance Size Options
+
+Available `instance-size` options:
+- `dev` - Development/testing size with minimal resources
+- `small` - Small production workloads
+- `medium` - Medium production workloads  
+- `large` - Large production workloads
+- `xlarge` - Extra large production workloads
+
+### Deployment Example
+
+```json
+{
+  "engines": {
+    "postgres": {
+      "deployment": {
+        "instance-size": "large",
+        "replica-count": 2
+      }
+    }
+  }
+}
+```
+
 ## Usage Notes
 
 - Database schema is automatically generated from your SQRL script
@@ -27,3 +60,4 @@ No mandatory configuration keys are required. Physical DDL (tables, indexes, vie
 - Connection parameters are typically provided via environment variables
 - The engine handles both real-time data ingestion and query serving
 - Optimized for low-latency reads of materialized data
+- Read replicas improve query performance and provide redundancy
