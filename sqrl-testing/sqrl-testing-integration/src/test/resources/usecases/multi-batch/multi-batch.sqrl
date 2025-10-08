@@ -1,3 +1,5 @@
+IMPORT tables.source AS Src;
+
 CREATE TABLE TableA (
   val INT
 ) WITH (
@@ -10,8 +12,12 @@ CREATE TABLE TableB (
   'connector' = 'print'
 );
 
-INSERT INTO TableA SELECT * FROM (VALUES (1), (2), (3)) AS t(val);
+INSERT INTO TableA SELECT * FROM Src;
+
+EXPORT Src TO tables.sink_a;
 
 NEXT_BATCH;
 
-INSERT INTO TableB SELECT COUNT(*) AS recordCount FROM BatchA;
+INSERT INTO TableB SELECT COUNT(*) AS recordCount FROM TableA;
+
+EXPORT Src TO tables.sink_b;
