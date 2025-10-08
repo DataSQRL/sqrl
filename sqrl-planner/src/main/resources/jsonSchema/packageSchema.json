@@ -3,6 +3,7 @@
   "type": "object",
   "properties": {
     "version": {
+      "description": "The version number for the configuration schema",
       "oneOf": [
         {
           "type": "string"
@@ -13,6 +14,7 @@
       ]
     },
     "enabled-engines": {
+      "description": "List of engines to enable for the data pipeline. The compiler builds deployment artifacts for the enabled engines during the build.",
       "oneOf": [
         {
           "type": "array",
