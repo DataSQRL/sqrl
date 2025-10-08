@@ -1,6 +1,42 @@
 >>>pipeline_explain.txt
+=== Src
+ID:     default_catalog.default_database.Src
+Type:   stream
+Stage:  flink
+Inputs: default_catalog.default_database.Src__base
+Primary Key: -
+Timestamp  : -
+Schema:
+ - val: INTEGER NOT NULL
+Plan:
+LogicalTableScan(table=[[default_catalog, default_database, Src]])
+SQL: CREATE VIEW `Src__view`
+AS
+SELECT `Src`.`val`
+FROM `default_catalog`.`default_database`.`Src` AS `Src`
+=== sink_a
+ID:     tables.sink_a
+Type:   export
+Stage:  flink
+Inputs: default_catalog.default_database.Src
+
+=== sink_b
+ID:     tables.sink_b
+Type:   export
+Stage:  flink
+Inputs: default_catalog.default_database.Src
 
 >>>flink-sql-no-functions.sql
+CREATE TABLE `Src` (
+  `val` INTEGER NOT NULL
+) WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '5',
+  'rows-per-second' = '5',
+  'fields.val.kind' = 'random',
+  'fields.val.min' = '1',
+  'fields.val.max' = '5'
+);
 CREATE TABLE `TableA` (
   `val` INTEGER
 ) WITH (
@@ -11,17 +47,33 @@ CREATE TABLE `TableB` (
 ) WITH (
   'connector' = 'print'
 );
+CREATE TABLE `SinkA_ex1` (
+  `val` INTEGER
+) WITH (
+  'connector' = 'print'
+);
+CREATE TABLE `SinkB_ex2` (
+  `val` INTEGER
+) WITH (
+  'connector' = 'print'
+);
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `TableA`
 (SELECT *
- FROM (VALUES ROW(1),
-    ROW(2),
-    ROW(3)) AS `t` (`val`))
+ FROM `Src`)
 ;
-END;
+INSERT INTO `default_catalog`.`default_database`.`SinkA_ex1`
+ (SELECT *
+  FROM `default_catalog`.`default_database`.`Src`)
+ ;
+ END;
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `TableB`
 (SELECT COUNT(*) AS `recordCount`
- FROM `BatchA`)
+ FROM `TableA`)
 ;
-END
+INSERT INTO `default_catalog`.`default_database`.`SinkB_ex2`
+ (SELECT *
+  FROM `default_catalog`.`default_database`.`Src`)
+ ;
+ END
