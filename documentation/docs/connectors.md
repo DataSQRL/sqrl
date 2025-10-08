@@ -1,5 +1,7 @@
 # Connecting External Data Sources and Sinks
 
+ALWAYS USE EVENT TIME
+
 Use `CREATE TABLE` statements to connect external data sources and sinks with your SQRL script using the `WITH` clause to provide connector configuration.
 
 DataSQRL uses Apache Flink connectors and formats. To find a connector for your data system, use:
