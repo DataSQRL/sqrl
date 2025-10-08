@@ -51,9 +51,42 @@ For secure APIs with JWT authentication:
 }
 ```
 
+## Deployment Configuration
+
+Vert.x supports deployment-specific configuration options for scaling the API server:
+
+| Key               | Type        | Default | Description                                                    |
+|-------------------|-------------|---------|----------------------------------------------------------------|
+| `instance-size`   | **string**  | -       | Server instance size with storage variants                    |
+| `instance-count`  | **integer** | -       | Number of server instances to run (minimum: 1)               |
+
+### Instance Size Options
+
+Available `instance-size` options with storage variants:
+- `dev` - Development/testing size
+- `small`, `small.disk` - Small instances with optional additional disk
+- `medium`, `medium.disk` - Medium instances with optional additional disk
+- `large`, `large.disk` - Large instances with optional additional disk
+
+### Deployment Example
+
+```json
+{
+  "engines": {
+    "vertx": {
+      "deployment": {
+        "instance-size": "medium.disk",
+        "instance-count": 3
+      }
+    }
+  }
+}
+```
+
 ## Usage Notes
 
 - No mandatory keys required for basic operation
 - Connection pools to databases are generated automatically from the overall plan  
 - JWT authentication provides secure access to your GraphQL API
 - The server exposes GraphQL, REST, and MCP endpoints based on compiler configuration
+- Deployment configuration allows horizontal scaling for high-availability setups
