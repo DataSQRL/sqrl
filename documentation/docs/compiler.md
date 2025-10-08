@@ -73,7 +73,10 @@ The run command uses the following engines:
 * Postgres as the transactional database engine
 * Iceberg+DuckDB as the analytic database engine
 * RedPanda as the log engine: The RedPanda cluster is accessible on port 9092 (via Kafka command line tooling).
-* Vertx as the server engine: The GraphQL API is accessible at [http://localhost:8888/graphiql/](http://localhost:8888/graphiql/).
+* Vertx as the server engine: 
+  * The GraphQL API is accessible at [http://localhost:8888/v1/graphiql/](http://localhost:8888/v1/graphiql/).
+  * The Swagger UI for the REST API is accessible at [http://localhost:8888/v1/swagger-ui](http://localhost:8888/v1/swagger-ui)
+  * The MCP API is accessible at `http://localhost:8888/v1/mcp/`
 
 ### Data Access
 
