@@ -1,0 +1,6 @@
+query {
+    MyTable1 {
+        id
+        hello
+    }
+}

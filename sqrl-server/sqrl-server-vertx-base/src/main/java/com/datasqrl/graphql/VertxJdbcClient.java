@@ -29,11 +29,13 @@ import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.SqlClient;
 import io.vertx.sqlclient.Tuple;
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Purpose: Manages SQL clients and executes queries. Collaboration: Used by {@link VertxContext} to
  * prepare and execute SQL queries.
  */
+@Slf4j
 public record VertxJdbcClient(Map<DatabaseType, SqlClient> clients) implements JdbcClient {
   @Override
   public ResolvedQuery prepareQuery(SqlQuery query, Context context) {
@@ -56,13 +58,15 @@ public record VertxJdbcClient(Map<DatabaseType, SqlClient> clients) implements J
       DatabaseType database, PreparedQuery<RowSet<Row>> query, Tuple tup) {
     var sqlClient = clients.get(database);
 
+    // For DuckDB, load extensions per connection (LOAD is idempotent)
+    // Extensions persist per-connection for the connection's lifetime
     if (database == DatabaseType.DUCKDB) {
       return sqlClient
-          .query("INSTALL iceberg;")
+          .query("LOAD iceberg; LOAD cache_httpfs;")
           .execute()
-          .compose(v -> sqlClient.query("LOAD iceberg;").execute())
-          .compose(t -> query.execute(tup));
+          .compose(v -> query.execute(tup));
     }
+
     return query.execute(tup);
   }
 

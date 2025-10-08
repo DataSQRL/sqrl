@@ -88,18 +88,14 @@ public class VertxQueryExecutionContext extends AbstractQueryExecutionContext<Ve
 
     // execute the preparedQuery with the arguments extracted above
     Future<RowSet<Row>> future;
-    var parameters = Tuple.from(paramObj);
+    var params = Tuple.from(paramObj);
+    var database = resolvedQuery.getQuery().getDatabase();
+
     if (preparedQueryContainer == null) {
-      future =
-          this.getContext()
-              .getSqlClient()
-              .execute(resolvedQuery.getQuery().getDatabase(), unpreparedSqlQuery, parameters);
+      future = getContext().getSqlClient().execute(database, unpreparedSqlQuery, params);
     } else {
       var preparedQuery = preparedQueryContainer.preparedQuery();
-      future =
-          this.getContext()
-              .getSqlClient()
-              .execute(resolvedQuery.getQuery().getDatabase(), preparedQuery, parameters);
+      future = getContext().getSqlClient().execute(database, preparedQuery, params);
     }
 
     // map the resultSet to json for GraphQL response

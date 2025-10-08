@@ -35,18 +35,17 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import lombok.NonNull;
 import lombok.Value;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Purpose: Implements Context for Vert.x, providing SQL clients and data fetchers. Collaboration:
  * Uses {@link VertxJdbcClient} for database operations and {@link NameCanonicalizer} for name
  * handling.
  */
+@Slf4j
 @Value
 public class VertxContext implements Context {
 
-  private static final Logger log = LoggerFactory.getLogger(VertxContext.class);
   VertxJdbcClient sqlClient;
   Map<MetadataType, MetadataReader> metadataReaders;
 
@@ -76,7 +75,7 @@ public class VertxContext implements Context {
             return jsonObject.getMap().entrySet().stream()
                 .filter(e -> e.getKey().equalsIgnoreCase(getPropertyName()))
                 .filter(e -> e.getValue() != null)
-                .map(e -> e.getValue())
+                .map(Map.Entry::getValue)
                 .findAny()
                 .orElse(null);
           }

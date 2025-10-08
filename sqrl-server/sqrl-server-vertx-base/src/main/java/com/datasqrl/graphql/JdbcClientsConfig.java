@@ -18,12 +18,14 @@ package com.datasqrl.graphql;
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.jdbc.DatabaseType;
 import com.google.common.collect.ImmutableMap;
+import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.jdbcclient.JDBCConnectOptions;
 import io.vertx.jdbcclient.JDBCPool;
 import io.vertx.sqlclient.Pool;
 import io.vertx.sqlclient.PoolOptions;
 import io.vertx.sqlclient.SqlClient;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -42,15 +44,32 @@ public class JdbcClientsConfig {
   private final ServerConfig config;
 
   /** Creates a map of database clients for all configured database types. */
-  public Map<DatabaseType, SqlClient> createClients() {
-    var builder =
-        ImmutableMap.<DatabaseType, SqlClient>builder()
-            .put(DatabaseType.POSTGRES, initPostgresSqlClient());
+  public Future<Map<DatabaseType, SqlClient>> createClients() {
+    var clientsMapBuilder = ImmutableMap.<DatabaseType, SqlClient>builder();
+    var initFutures = new ArrayList<Future<SqlClient>>();
 
-    initDuckdbSqlClient().ifPresent(client -> builder.put(DatabaseType.DUCKDB, client));
-    initSnowflakeClient().ifPresent(client -> builder.put(DatabaseType.SNOWFLAKE, client));
+    // PostgreSQL is always required and initializes synchronously
+    clientsMapBuilder.put(DatabaseType.POSTGRES, initPostgresSqlClient());
 
-    return builder.build();
+    // DuckDB initialization is async (needs to install extensions)
+    initDuckdbSqlClient()
+        .ifPresent(
+            duckDbFuture -> {
+              var mappedFuture =
+                  duckDbFuture.onSuccess(
+                      client -> clientsMapBuilder.put(DatabaseType.DUCKDB, client));
+              initFutures.add(mappedFuture);
+            });
+
+    // Snowflake initializes synchronously
+    initSnowflakeClient()
+        .ifPresent(client -> clientsMapBuilder.put(DatabaseType.SNOWFLAKE, client));
+
+    if (initFutures.isEmpty()) {
+      return Future.succeededFuture(clientsMapBuilder.build());
+    }
+
+    return Future.all(initFutures).map(v -> clientsMapBuilder.build());
   }
 
   @SneakyThrows
@@ -70,7 +89,7 @@ public class JdbcClientsConfig {
   }
 
   @SneakyThrows
-  private Optional<SqlClient> initDuckdbSqlClient() {
+  private Optional<Future<SqlClient>> initDuckdbSqlClient() {
     var duckDbConf = config.getDuckDbConfig();
     if (duckDbConf == null) {
       return Optional.empty();
@@ -78,9 +97,29 @@ public class JdbcClientsConfig {
 
     // No need for Class.forName() - DuckDB JDBC driver auto-registers via JDBC 4.0+ ServiceLoader
     var url = duckDbConf.getUrl();
+    boolean useDiskCache = (boolean) duckDbConf.getConfig().getOrDefault("use-disk-cache", false);
+
     var pool = initJdbcPool(url, "duckdb-pool", "duckdb");
 
-    return Optional.of(pool);
+    // Install extensions asynchronously (they persist in the database file)
+    var extensionInstall = createDuckDbExtensionInstall(useDiskCache);
+    var poolWithExtensions =
+        pool.query(extensionInstall)
+            .execute()
+            .map(
+                v -> {
+                  log.info("DuckDB extensions installed successfully");
+                  return (SqlClient) pool;
+                })
+            .recover(
+                err -> {
+                  log.warn(
+                      "Failed to install DuckDB extensions (may already be installed): {}",
+                      err.getMessage());
+                  return Future.succeededFuture(pool);
+                });
+
+    return Optional.of(poolWithExtensions);
   }
 
   private SqlClient initPostgresSqlClient() {
@@ -95,5 +134,14 @@ public class JdbcClientsConfig {
     var poolOptions = new PoolOptions(this.config.getPoolOptions()).setName(poolName);
 
     return JDBCPool.pool(vertx, connectOptions, poolOptions);
+  }
+
+  private String createDuckDbExtensionInstall(boolean useDiskCache) {
+    var extInstallStr = "INSTALL iceberg;";
+    if (useDiskCache) {
+      extInstallStr += "INSTALL cache_httpfs FROM community;";
+    }
+
+    return extInstallStr;
   }
 }

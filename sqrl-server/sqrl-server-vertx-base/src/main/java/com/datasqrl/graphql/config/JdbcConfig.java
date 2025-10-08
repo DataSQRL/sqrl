@@ -16,6 +16,7 @@
 package com.datasqrl.graphql.config;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import java.util.Map;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -27,4 +28,5 @@ import lombok.Setter;
 public class JdbcConfig {
 
   private String url;
+  private Map<String, Object> config;
 }
