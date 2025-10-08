@@ -62,9 +62,19 @@ const sidebars = {
           label: '🔌 Source & Sink Connectors',
         },
         {
-          type: 'doc',
-          id: 'configuration',
+          type: 'category',
           label: '⚙️ Configuration',
+          link: {
+            type: 'doc',
+            id: 'configuration',
+          },
+          items: [
+            {
+              type: 'doc',
+              id: 'configuration-default',
+              label: 'Default Configuration',
+            },
+          ],
         },
         {
           type: 'doc',

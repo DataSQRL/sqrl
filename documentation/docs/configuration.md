@@ -166,16 +166,6 @@ Environment variables (e.g. `${POSTGRES_PASSWORD}`) can be referenced inside the
 
 
 
-
----
-
-## Top-Level Keys
-
-| Key               | Type         | Default                                  | Purpose                                                        |
-|-------------------|--------------|------------------------------------------|----------------------------------------------------------------|
-| `engines`         | **object**   | –                                        | Engine specific configuration (see below).                     |
-| `connectors`      | **object**   | [see defaults](#connectors-connectors)   | External system connectors configuration (see below).          |
-
 ---
 
 ## Engines (`engines`)
@@ -286,25 +276,6 @@ Used as a *table-format* engine together with a query engine such as Flink, Snow
 | `external-volume` | **string** | –       | Snowflake external volume name.      |
 | `url`             | **string** | –       | Full JDBC URL including auth params. |
 
----
-
-## Connectors (`connectors`)
-
-```json5
-{
-  "connectors": {
-    "postgres": { "connector": "jdbc-sqrl",  /*...*/ },
-    "kafka-mutation": { "connector" : "kafka", /*...*/ },
-    "kafka": { "connector" : "kafka", /*...*/ },
-    "iceberg": { "connector": "iceberg", /*...*/ },
-    "postgres_log-source": { "connector": "postgres-cdc", /*...*/ },
-    "postgres_log-sink": { "connector": "jdbc-sqrl", /*...*/ },
-    "print": { "connector": "print", /*...*/ }
-  }
-}
-```
-
----
 
 
 ## Internal Environment Variables
