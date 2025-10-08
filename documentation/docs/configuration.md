@@ -17,13 +17,13 @@ The engines that the pipeline compiles to.
 ```
 
 DataSQRL supports the following engines:
-* **flink**: Apache Flink is a streaming and batch data processor
-* **postgres**: PostgreSQL is a realtime database
-* **kafka**: Apache Kafka is a streaming data platform (i.e. log engine)
-* **iceberg**: Apache Iceberg is an analytic database format. Iceberg must be paired with a query engine for data access
-* **duckdb**: DuckDB is a vectorized database query engine that can read Iceberg tables.
-* **snowflake**: Snowflake is an analytic database query engine that can read Iceberg tables.
-* **vertx**: Eclipse Vert.x is a reactive server framework
+* **[flink](configuration-engine/flink)**: Apache Flink is a streaming and batch data processor
+* **[postgres](configuration-engine/postgres)**: PostgreSQL is a realtime database
+* **[kafka](configuration-engine/kafka)**: Apache Kafka is a streaming data platform (i.e. log engine)
+* **[iceberg](configuration-engine/iceberg)**: Apache Iceberg is an analytic database format. Iceberg must be paired with a query engine for data access
+* **[duckdb](configuration-engine/duckdb)**: DuckDB is a vectorized database query engine that can read Iceberg tables.
+* **[snowflake](configuration-engine/snowflake)**: Snowflake is an analytic database query engine that can read Iceberg tables.
+* **[vertx](configuration-engine/vertx)**: Eclipse Vert.x is a reactive server framework
 
 Guidelines for choosing the enabled engines in a pipeline:
 * Always choose one data processor (i.e. "flink")
@@ -152,133 +152,7 @@ Connector templates are used to configure how the engines in the pipeline exchan
 
 Environment variables (e.g. `${POSTGRES_PASSWORD}`) can be referenced inside the configuration files and SQRL scripts. Those are dynamically resolved by the DataSQRL runner when the pipeline is launched. If an environment variable is not configured, it is not replaced.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
----
-
-## Engines (`engines`)
-
-Each sub-key below `engines` must match one of the IDs in **`enabled-engines`**.
-
-```json5
-{
-  "engines": {
-    "<engine-id>": {
-      "type": "<engine-id>", // optional; inferred from key if omitted
-      "config": { /*...*/ }  // engine-specific knobs (Flink SQL options, etc.)
-    }
-  }
-}
-```
-
-### Flink (`flink`)
-
-| Key          | Type       | Default   | Notes                                                                                              |
-|--------------|------------|-----------|----------------------------------------------------------------------------------------------------|
-| `config`     | **object** | see below | Copied verbatim into the generated Flink SQL job (e.g. `"table.exec.source.idle-timeout": "5 s"`). |
-
-```json
-{
-  "engines": {
-    "flink": {
-      "config": {
-        "execution.runtime-mode": "STREAMING",
-        "execution.target": "local",
-        "execution.attached": true,
-        "rest.address": "localhost",
-        "rest.port": 8081,
-        "state.backend.type": "rocksdb",
-        "table.exec.resource.default-parallelism": 1,
-        "taskmanager.memory.network.max": "800m"
-      }
-    }
-  }
-}
-```
-
-> **Built-in connector templates**  
-> `postgres`, `postgres_log-source`, `postgres_log-sink`,  
-> `kafka`, `kafka-keyed`, `kafka-upsert`,  
-> `iceberg`, `print`.
-
-### Kafka (`kafka`)
-
-The default configuration only declares the engine; topic definitions are injected at **plan** time.  
-Additional keys (e.g. `bootstrap.servers`) may be added under `config`.
-
-### Vert.x (`vertx`)
-
-A GraphQL server that routes queries to the backing database/log engines.  
-No mandatory keys; connection pools are generated from the overall plan.
-In terms of security, we support JWT auth, that can be specified under the `config` section.
-
-| Key          | Type       | Default   | Notes                     |
-|--------------|------------|-----------|---------------------------|
-| `config`     | **object** | see below | Vert.x JWT configuration. |
-
-```json5
-{
-  "engines": {
-    "vertx" : {
-      "authKind": "JWT",
-      "config": {
-        "jwtAuth": {
-          "pubSecKeys": [
-            {
-              "algorithm": "HS256",
-              "buffer": "<signer-secret>"   // Base64 encoded signer secret string
-            }
-          ],
-          "jwtOptions": {
-            "issuer": "<jwt-issuer>",
-            "audience": ["<jwt-audience>"],
-            "expiresInSeconds": "3600",
-            "leeway": "60"
-          }
-        }
-      }
-    }
-  }
-}
-```
-
-### Postgres (`postgres`)
-
-No mandatory keys. Physical DDL (tables, indexes, views) is produced automatically.
-
-### Iceberg (`iceberg`)
-
-Used as a *table-format* engine together with a query engine such as Flink, Snowflake, or DuckDB.
-
-### DuckDB (`duckdb`)
-
-| Key   | Type       | Default          | Description    |
-|-------|------------|------------------|----------------|
-| `url` | **string** | `"jdbc:duckdb:"` | Full JDBC URL. |
-
-### Snowflake (`snowflake`)
-
-| Key               | Type       | Default | Description                          |
-|-------------------|------------|---------|--------------------------------------|
-| `catalog-name`    | **string** | –       | Glue catalog.                        |
-| `external-volume` | **string** | –       | Snowflake external volume name.      |
-| `url`             | **string** | –       | Full JDBC URL including auth params. |
-
-
-
-## Internal Environment Variables
+### Internal Environment Variables
 
 For engines that may be running as standalone services inside the DataSQRL Docker container,
 we use the following environment variables internally:
