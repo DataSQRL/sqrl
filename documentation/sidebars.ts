@@ -71,6 +71,41 @@ const sidebars = {
           items: [
             {
               type: 'doc',
+              id: 'configuration-engine/flink',
+              label: 'Flink Engine',
+            },
+            {
+              type: 'doc',
+              id: 'configuration-engine/kafka',
+              label: 'Kafka Engine',
+            },
+            {
+              type: 'doc',
+              id: 'configuration-engine/vertx',
+              label: 'Vert.x Engine',
+            },
+            {
+              type: 'doc',
+              id: 'configuration-engine/postgres',
+              label: 'PostgreSQL Engine',
+            },
+            {
+              type: 'doc',
+              id: 'configuration-engine/iceberg',
+              label: 'Iceberg Engine',
+            },
+            {
+              type: 'doc',
+              id: 'configuration-engine/duckdb',
+              label: 'DuckDB Engine',
+            },
+            {
+              type: 'doc',
+              id: 'configuration-engine/snowflake',
+              label: 'Snowflake Engine',
+            },
+            {
+              type: 'doc',
               id: 'configuration-default',
               label: 'Default Configuration',
             },
