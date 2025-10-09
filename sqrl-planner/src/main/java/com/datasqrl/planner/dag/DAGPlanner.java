@@ -48,6 +48,7 @@ import com.datasqrl.planner.tables.AccessVisibility;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
 import com.datasqrl.planner.tables.SqrlTableFunction;
 import com.datasqrl.util.CalciteUtil;
+import com.datasqrl.util.FlinkCompileException;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import com.google.inject.Inject;
@@ -318,7 +319,14 @@ public class DAGPlanner {
                 }
               }
             });
-    planBuilder.stagePlan(new PhysicalStagePlan(streamStage, sqrlEnv.compileFlinkPlan()));
+
+    try {
+      planBuilder.stagePlan(new PhysicalStagePlan(streamStage, sqrlEnv.compileFlinkPlan()));
+
+    } catch (FlinkCompileException e) {
+      e.setDag(dag.toString());
+      throw e;
+    }
 
     // 2nd: for each materialization stage, find all cuts to server or sinks generate queries for
     // those
