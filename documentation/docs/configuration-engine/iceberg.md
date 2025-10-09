@@ -8,15 +8,16 @@ Iceberg is used as a *table-format* engine and must be paired with a query engin
 
 ## Basic Configuration
 
-```json
+Since Iceberg is not a standalone data system but a data format, the configuration for Iceberg is managed through the shared `iceberg` connector:
+
+```json5
 {
-  "engines": {
+  "connectors": {
     "iceberg": {
-      "config": {
-        // Iceberg-specific configuration options
-      }
-    }
-  }
+      "warehouse": "iceberg-data-dir", // path the Iceberg table data is written to 
+      "catalog-type": "hadoop",        // the catalog to use for Iceberg metadata
+      "catalog-name": "mycatalog"      // the name of the catalog
+    },  }
 }
 ```
 
