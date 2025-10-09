@@ -145,8 +145,10 @@ Configuration options that control the compiler, such as where logging output is
 
 ## Connector Templates (`connectors`)
 
-Connector templates are used to configure how the engines in the pipeline exchange data. The connector templates use Flink SQL connector configuration options with variables. Only very advanced use cases require adjustments to the connector templates. Refer to the [default configuration](configuration-default) for documentation of all connector templates.
+Connector templates are used to configure how the engines in the pipeline connect to each other for data exchange. The connector templates use Flink SQL connector configuration options which are mapped to the configuration for each engine.
 
+The [default connector configuration](configuration-default) works for most local use cases without adjustments.
+Refer to the individual engine configuration for connector configuration options related to that engine.
 
 ## Environment Variables (`${VAR}`)
 
