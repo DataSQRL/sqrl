@@ -64,7 +64,10 @@ The following is the [default configuration file](https://raw.githubusercontent.
     },
     "iceberg": {
       "connector": "iceberg",
-      "catalog-table": "${sqrl:table-name}"
+      "catalog-table": "${sqrl:table-name}",
+      "warehouse": "iceberg-data",
+      "catalog-type": "hadoop",
+      "catalog-name": "mycatalog"
     },
     "postgres": {
       "connector": "jdbc-sqrl",
@@ -72,27 +75,6 @@ The following is the [default configuration file](https://raw.githubusercontent.
       "password": "${POSTGRES_PASSWORD}",
       "url": "jdbc:postgresql://${POSTGRES_AUTHORITY}",
       "driver": "org.postgresql.Driver",
-      "table-name": "${sqrl:table-name}"
-    },
-    "postgres_log-source": {
-      "connector": "postgres-cdc",
-      "hostname": "${POSTGRES_HOST}",
-      "port": "5432",
-      "username": "${POSTGRES_USERNAME}",
-      "password": "${POSTGRES_PASSWORD}",
-      "database-name": "datasqrl",
-      "schema-name": "public",
-      "table-name": "${sqrl:table-name}",
-      "slot.name": "flink_slot",
-      "decoding.plugin.name": "pgoutput",
-      "debezium.slot.drop_on_stop": "false"
-    },
-    "postgres_log-sink": {
-      "connector": "jdbc-sqrl",
-      "password": "${POSTGRES_PASSWORD}",
-      "driver": "org.postgresql.Driver",
-      "username": "${POSTGRES_USERNAME}",
-      "url": "jdbc:postgresql://${POSTGRES_AUTHORITY}",
       "table-name": "${sqrl:table-name}"
     },
     "print": {
