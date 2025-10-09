@@ -26,6 +26,7 @@ import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.PhysicalPlan.PhysicalStagePlan;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.MainScript;
+import com.datasqrl.util.FlinkCompileException;
 import com.datasqrl.util.SqrlObjectMapper;
 import com.fasterxml.jackson.core.util.DefaultIndenter;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
@@ -48,6 +49,7 @@ import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.SneakyThrows;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -91,6 +93,18 @@ public class Packager {
       SqrlObjectMapper.INSTANCE
           .writerWithDefaultPrettyPrinter()
           .writeValue(path.toFile(), testPlan);
+    }
+  }
+
+  public void postprocessFlinkCompileError(FlinkCompileException err) {
+    if (StringUtils.isNotBlank(err.getDag())) {
+      var dagPath = buildDir.buildDir().resolve("compile_error_dag.log");
+      writeTextToFile(dagPath, err.getDag());
+    }
+
+    if (CollectionUtils.isNotEmpty(err.getFlinkSql())) {
+      var sqlPath = buildDir.buildDir().resolve("compile_error_sql.log");
+      writeTextToFile(sqlPath, String.join("\n", err.getFlinkSql()));
     }
   }
 
@@ -159,18 +173,23 @@ public class Packager {
     var artifacts =
         ListUtils.union(
             plan.getDeploymentArtifacts(), List.of(new DeploymentArtifact(".json", plan)));
-    for (DeploymentArtifact artifact : artifacts) {
-      Path filePath = planDir.resolve(name + artifact.fileSuffix()).toAbsolutePath();
-      if (artifact.content() instanceof String) {
-        Files.writeString(
-            filePath,
-            (String) artifact.content(),
-            StandardOpenOption.CREATE,
-            StandardOpenOption.TRUNCATE_EXISTING,
-            StandardOpenOption.WRITE);
+    for (var artifact : artifacts) {
+      var filePath = planDir.resolve(name + artifact.fileSuffix()).toAbsolutePath();
+      if (artifact.content() instanceof String content) {
+        writeTextToFile(filePath, content);
       } else { // serialize as json
         jsonWriter.writeValue(filePath.toFile(), plan);
       }
     }
+  }
+
+  @SneakyThrows
+  private void writeTextToFile(Path path, String content) {
+    Files.writeString(
+        path,
+        content,
+        StandardOpenOption.CREATE,
+        StandardOpenOption.TRUNCATE_EXISTING,
+        StandardOpenOption.WRITE);
   }
 }
