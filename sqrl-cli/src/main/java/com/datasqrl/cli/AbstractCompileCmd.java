@@ -30,6 +30,7 @@ import com.datasqrl.graphql.server.RootGraphqlModel.StringSchema;
 import com.datasqrl.packager.PackageBootstrap;
 import com.datasqrl.packager.Packager;
 import com.datasqrl.plan.validate.ExecutionGoal;
+import com.datasqrl.util.FlinkCompileException;
 import com.datasqrl.util.SqrlInjector;
 import com.google.inject.Guice;
 import java.nio.file.Files;
@@ -87,7 +88,14 @@ public abstract class AbstractCompileCmd extends AbstractCmd {
     var testDir = sqrlConfig.getTestConfig().getTestDir(cli.rootDir);
     testDir.ifPresent(this::validateTestPath);
 
-    Pair<PhysicalPlan, ? extends TestPlan> plan = compilationProcess.executeCompilation(testDir);
+    Pair<PhysicalPlan, ? extends TestPlan> plan;
+    try {
+      plan = compilationProcess.executeCompilation(testDir);
+
+    } catch (FlinkCompileException e) {
+      packager.postprocessFlinkCompileError(e);
+      throw e;
+    }
 
     if (errors.hasErrors()) {
       return;

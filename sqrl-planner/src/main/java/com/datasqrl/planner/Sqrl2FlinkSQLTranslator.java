@@ -52,6 +52,7 @@ import com.datasqrl.planner.tables.SourceSinkTableAnalysis;
 import com.datasqrl.planner.tables.SqrlFunctionParameter;
 import com.datasqrl.planner.tables.SqrlTableFunction;
 import com.datasqrl.util.CalciteUtil;
+import com.datasqrl.util.FlinkCompileException;
 import com.datasqrl.util.FunctionUtil;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
@@ -292,7 +293,13 @@ public class Sqrl2FlinkSQLTranslator {
     var compiledPlan = Optional.<CompiledPlan>empty();
     if (executionMode == RuntimeExecutionMode.STREAMING && compileFlinkPlan) {
       var parse = (StatementSetOperation) tEnv.getParser().parse(insert.get(0) + ";").get(0);
-      compiledPlan = Optional.of(tEnv.compilePlan(parse.getOperations()));
+
+      try {
+        compiledPlan = Optional.of(tEnv.compilePlan(parse.getOperations()));
+
+      } catch (Exception e) {
+        throw new FlinkCompileException(planBuilder.getFlinkSql(), e);
+      }
     }
 
     return planBuilder.build(compiledPlan);
