@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.graphql;
+package com.datasqrl.graphql.jdbc;
 
-import com.datasqrl.graphql.jdbc.DatabaseType;
-import com.datasqrl.graphql.jdbc.JdbcClient;
+import com.datasqrl.graphql.VertxContext;
 import com.datasqrl.graphql.server.Context;
 import com.datasqrl.graphql.server.RootGraphqlModel.PreparedSqrlQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedQuery;
@@ -26,18 +25,19 @@ import io.vertx.core.Future;
 import io.vertx.sqlclient.PreparedQuery;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
-import io.vertx.sqlclient.SqlClient;
 import io.vertx.sqlclient.Tuple;
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Purpose: Manages SQL clients and executes queries. Collaboration: Used by {@link VertxContext} to
  * prepare and execute SQL queries.
  */
-public record VertxJdbcClient(Map<DatabaseType, SqlClient> clients) implements JdbcClient {
+@Slf4j
+public record VertxJdbcClient(Map<DatabaseType, SqlClientWrapper> clients) implements JdbcClient {
   @Override
   public ResolvedQuery prepareQuery(SqlQuery query, Context context) {
-    var sqlClient = clients.get(query.getDatabase());
+    var sqlClient = clients.get(query.getDatabase()).getSqlClient();
     if (sqlClient == null) {
       throw new RuntimeException("Could not find database engine: " + query.getDatabase());
     }
@@ -54,20 +54,25 @@ public record VertxJdbcClient(Map<DatabaseType, SqlClient> clients) implements J
 
   public Future<RowSet<Row>> execute(
       DatabaseType database, PreparedQuery<RowSet<Row>> query, Tuple tup) {
-    var sqlClient = clients.get(database);
+    var wrapper = clients.get(database);
 
+    // For DuckDB, load extensions per connection (LOAD is idempotent)
+    // Extensions persist per-connection for the connection's lifetime
     if (database == DatabaseType.DUCKDB) {
-      return sqlClient
-          .query("INSTALL iceberg;")
+      var duckDbWrapper = (SqlClientWrapper.DuckDbClientWrapper) wrapper;
+
+      return duckDbWrapper
+          .getSqlClient()
+          .query(duckDbWrapper.getExtensionLoad())
           .execute()
-          .compose(v -> sqlClient.query("LOAD iceberg;").execute())
-          .compose(t -> query.execute(tup));
+          .compose(v -> query.execute(tup));
     }
+
     return query.execute(tup);
   }
 
   public Future<RowSet<Row>> execute(DatabaseType database, String query, Tuple tup) {
-    var sqlClient = clients.get(database);
+    var sqlClient = clients.get(database).getSqlClient();
     return execute(database, sqlClient.preparedQuery(query), tup);
   }
 

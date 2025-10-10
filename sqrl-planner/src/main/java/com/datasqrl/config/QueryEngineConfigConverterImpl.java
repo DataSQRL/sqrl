@@ -39,11 +39,13 @@ public class QueryEngineConfigConverterImpl implements QueryEngineConfigConverte
       var queryEngine = (QueryEngine) engine;
       var engineConf = packageJson.getEngines().getEngineConfig(queryEngine.getName()).get();
       var url = engineConf.getSetting("url", Optional.empty());
+      var configMap = engineConf.getConfig();
 
       if (url != null) {
         var rootNode = MAPPER.createObjectNode();
         var configNode = rootNode.putObject(queryEngine.serverConfigName());
         configNode.put("url", url);
+        configNode.set("config", MAPPER.valueToTree(configMap));
 
         convertedConfigs.add(rootNode);
       }

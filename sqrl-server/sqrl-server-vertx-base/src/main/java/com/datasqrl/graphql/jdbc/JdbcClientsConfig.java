@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.graphql;
+package com.datasqrl.graphql.jdbc;
 
 import com.datasqrl.graphql.config.ServerConfig;
-import com.datasqrl.graphql.jdbc.DatabaseType;
 import com.google.common.collect.ImmutableMap;
+import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.jdbcclient.JDBCConnectOptions;
 import io.vertx.jdbcclient.JDBCPool;
 import io.vertx.sqlclient.Pool;
 import io.vertx.sqlclient.PoolOptions;
-import io.vertx.sqlclient.SqlClient;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -42,19 +42,36 @@ public class JdbcClientsConfig {
   private final ServerConfig config;
 
   /** Creates a map of database clients for all configured database types. */
-  public Map<DatabaseType, SqlClient> createClients() {
-    var builder =
-        ImmutableMap.<DatabaseType, SqlClient>builder()
-            .put(DatabaseType.POSTGRES, initPostgresSqlClient());
+  public Future<Map<DatabaseType, SqlClientWrapper>> createClients() {
+    var clientsMapBuilder = ImmutableMap.<DatabaseType, SqlClientWrapper>builder();
+    var initFutures = new ArrayList<Future<SqlClientWrapper>>();
 
-    initDuckdbSqlClient().ifPresent(client -> builder.put(DatabaseType.DUCKDB, client));
-    initSnowflakeClient().ifPresent(client -> builder.put(DatabaseType.SNOWFLAKE, client));
+    // PostgreSQL is always required and initializes synchronously
+    clientsMapBuilder.put(DatabaseType.POSTGRES, initPostgresSqlClient());
 
-    return builder.build();
+    // DuckDB initialization is async (needs to install extensions)
+    initDuckdbSqlClient()
+        .ifPresent(
+            wrapperFuture -> {
+              var mappedFuture =
+                  wrapperFuture.onSuccess(
+                      wrapper -> clientsMapBuilder.put(DatabaseType.DUCKDB, wrapper));
+              initFutures.add(mappedFuture);
+            });
+
+    // Snowflake initializes synchronously
+    initSnowflakeClient()
+        .ifPresent(client -> clientsMapBuilder.put(DatabaseType.SNOWFLAKE, client));
+
+    if (initFutures.isEmpty()) {
+      return Future.succeededFuture(clientsMapBuilder.build());
+    }
+
+    return Future.all(initFutures).map(v -> clientsMapBuilder.build());
   }
 
   @SneakyThrows
-  private Optional<SqlClient> initSnowflakeClient() {
+  private Optional<SqlClientWrapper> initSnowflakeClient() {
     var snowflakeConf = config.getSnowflakeConfig();
     if (snowflakeConf == null) {
       return Optional.empty();
@@ -66,11 +83,11 @@ public class JdbcClientsConfig {
     url += "?CLIENT_SESSION_KEEP_ALIVE=true";
     var pool = initJdbcPool(url, "snowflake-pool", "snowflake");
 
-    return Optional.of(pool);
+    return Optional.of(new SqlClientWrapper(pool));
   }
 
   @SneakyThrows
-  private Optional<SqlClient> initDuckdbSqlClient() {
+  private Optional<Future<SqlClientWrapper>> initDuckdbSqlClient() {
     var duckDbConf = config.getDuckDbConfig();
     if (duckDbConf == null) {
       return Optional.empty();
@@ -79,14 +96,34 @@ public class JdbcClientsConfig {
     // No need for Class.forName() - DuckDB JDBC driver auto-registers via JDBC 4.0+ ServiceLoader
     var url = duckDbConf.getUrl();
     var pool = initJdbcPool(url, "duckdb-pool", "duckdb");
+    var wrapper = new SqlClientWrapper.DuckDbClientWrapper(pool, duckDbConf.getConfig());
 
-    return Optional.of(pool);
+    // Install extensions asynchronously (they persist in the database file)
+    Future<SqlClientWrapper> wrapperFuture =
+        pool.query(wrapper.getExtensionInstall())
+            .execute()
+            .map(
+                v -> {
+                  log.info("DuckDB extensions installed successfully");
+                  return (SqlClientWrapper) wrapper.withClient(pool);
+                })
+            .recover(
+                err -> {
+                  log.warn(
+                      "Failed to install DuckDB extensions (may already be installed): {}",
+                      err.getMessage());
+                  return Future.succeededFuture(wrapper);
+                });
+
+    return Optional.of(wrapperFuture);
   }
 
-  private SqlClient initPostgresSqlClient() {
+  private SqlClientWrapper initPostgresSqlClient() {
     var poolOptions = new PoolOptions(this.config.getPoolOptions()).setName("postgres-pool");
     // Note: setPipelined() method was removed in Vert.x 5, pipelining is now always enabled
-    return Pool.pool(vertx, this.config.getPgConnectOptions(), poolOptions);
+    var pool = Pool.pool(vertx, this.config.getPgConnectOptions(), poolOptions);
+
+    return new SqlClientWrapper(pool);
   }
 
   @SneakyThrows

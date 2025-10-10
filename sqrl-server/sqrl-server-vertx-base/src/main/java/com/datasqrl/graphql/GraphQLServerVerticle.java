@@ -21,6 +21,9 @@ import com.datasqrl.graphql.auth.AuthMetadataReader;
 import com.datasqrl.graphql.auth.JwtFailureHandler;
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.jdbc.DatabaseType;
+import com.datasqrl.graphql.jdbc.JdbcClientsConfig;
+import com.datasqrl.graphql.jdbc.SqlClientWrapper;
+import com.datasqrl.graphql.jdbc.VertxJdbcClient;
 import com.datasqrl.graphql.server.CustomScalars;
 import com.datasqrl.graphql.server.GraphQLEngineBuilder;
 import com.datasqrl.graphql.server.MetadataReader;
@@ -32,14 +35,12 @@ import graphql.GraphQL;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import io.vertx.ext.auth.jwt.JWTAuth;
-import io.vertx.ext.web.Route;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.JWTAuthHandler;
 import io.vertx.ext.web.handler.graphql.GraphQLHandler;
 import io.vertx.ext.web.handler.graphql.GraphiQLHandler;
 import io.vertx.ext.web.handler.graphql.ws.GraphQLWSHandler;
 import io.vertx.micrometer.backends.BackendRegistries;
-import io.vertx.sqlclient.SqlClient;
 import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -91,31 +92,44 @@ public class GraphQLServerVerticle extends AbstractVerticle {
           .subRouter(graphiQlHandler.router());
     }
 
-    // Setup database clients
+    // Setup database clients asynchronously
     JdbcClientsConfig jdbcConfig = new JdbcClientsConfig(vertx, config);
-    Map<DatabaseType, SqlClient> clients = jdbcConfig.createClients();
+    jdbcConfig
+        .createClients()
+        .onSuccess(
+            clients -> {
+              log.info("Database clients initialized successfully");
 
-    // Setup GraphQL endpoint with auth if configured
-    var handler = router.route(this.config.getServletConfig().getGraphQLEndpoint(modelVersion));
-    authProvider.ifPresent(
-        (auth) -> {
-          log.info(
-              "Applying JWT authentication to GraphQL endpoint: {}",
-              this.config.getServletConfig().getGraphQLEndpoint(modelVersion));
-          // Required for adding auth on ws handler
-          System.setProperty("io.vertx.web.router.setup.lenient", "true");
-          handler.handler(JWTAuthHandler.create(auth));
-          handler.failureHandler(new JwtFailureHandler());
-        });
+              // Setup GraphQL endpoint with auth if configured
+              var handler =
+                  router.route(this.config.getServletConfig().getGraphQLEndpoint(modelVersion));
+              authProvider.ifPresent(
+                  (auth) -> {
+                    log.info(
+                        "Applying JWT authentication to GraphQL endpoint: {}",
+                        this.config.getServletConfig().getGraphQLEndpoint(modelVersion));
+                    // Required for adding auth on ws handler
+                    System.setProperty("io.vertx.web.router.setup.lenient", "true");
+                    handler.handler(JWTAuthHandler.create(auth));
+                    handler.failureHandler(new JwtFailureHandler());
+                  });
 
-    // Create GraphQL engine
-    this.graphQLEngine = createGraphQL(clients, startPromise, createMetadataReaders());
+              // Create GraphQL engine
+              this.graphQLEngine = createGraphQL(clients, startPromise, createMetadataReaders());
 
-    handler
-        .handler(GraphQLWSHandler.create(this.graphQLEngine))
-        .handler(GraphQLHandler.create(this.graphQLEngine, this.config.getGraphQLHandlerOptions()));
+              handler
+                  .handler(GraphQLWSHandler.create(this.graphQLEngine))
+                  .handler(
+                      GraphQLHandler.create(
+                          this.graphQLEngine, this.config.getGraphQLHandlerOptions()));
 
-    startPromise.complete();
+              startPromise.complete();
+            })
+        .onFailure(
+            err -> {
+              log.error("Failed to initialize database clients", err);
+              startPromise.fail(err);
+            });
   }
 
   private Map<MetadataType, MetadataReader> createMetadataReaders() {
@@ -129,12 +143,6 @@ public class GraphQLServerVerticle extends AbstractVerticle {
     return readers.build();
   }
 
-  private Route routeVersioned(Router router, String version, String endpoint) {
-    var versionedRoute = '/' + version + endpoint;
-
-    return router.route(versionedRoute);
-  }
-
   /**
    * Returns the GraphQL engine instance for internal use by other verticles.
    *
@@ -145,11 +153,11 @@ public class GraphQLServerVerticle extends AbstractVerticle {
   }
 
   public GraphQL createGraphQL(
-      Map<DatabaseType, SqlClient> client,
+      Map<DatabaseType, SqlClientWrapper> clients,
       Promise<Void> startPromise,
       Map<MetadataType, MetadataReader> headerReaders) {
     try {
-      var vertxJdbcClient = new VertxJdbcClient(client);
+      var vertxJdbcClient = new VertxJdbcClient(clients);
       var graphQL =
           model.accept(
               new GraphQLEngineBuilder.Builder()
@@ -159,10 +167,13 @@ public class GraphQLServerVerticle extends AbstractVerticle {
                   .withExtendedScalarTypes(CustomScalars.getExtendedScalars())
                   .build(),
               new VertxContext(vertxJdbcClient, headerReaders));
+
+      // Add metrics instrumentation if available
       var meterRegistry = BackendRegistries.getDefaultNow();
       if (meterRegistry != null) {
         graphQL.instrumentation(new MicrometerInstrumentation(meterRegistry));
       }
+
       return graphQL.build();
     } catch (Exception e) {
       log.error("Unable to create GraphQL", e);
