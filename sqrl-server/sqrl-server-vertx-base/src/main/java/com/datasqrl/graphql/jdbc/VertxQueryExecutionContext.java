@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.graphql;
+package com.datasqrl.graphql.jdbc;
 
 import static com.datasqrl.graphql.jdbc.SchemaConstants.LIMIT;
 import static com.datasqrl.graphql.jdbc.SchemaConstants.OFFSET;
 
-import com.datasqrl.graphql.VertxJdbcClient.PreparedSqrlQueryImpl;
-import com.datasqrl.graphql.jdbc.AbstractQueryExecutionContext;
+import com.datasqrl.graphql.VertxContext;
+import com.datasqrl.graphql.jdbc.VertxJdbcClient.PreparedSqrlQueryImpl;
 import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedSqlQuery;
 import graphql.schema.DataFetchingEnvironment;

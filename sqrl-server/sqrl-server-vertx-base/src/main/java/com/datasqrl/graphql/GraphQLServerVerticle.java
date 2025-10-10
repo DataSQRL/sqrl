@@ -21,6 +21,9 @@ import com.datasqrl.graphql.auth.AuthMetadataReader;
 import com.datasqrl.graphql.auth.JwtFailureHandler;
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.jdbc.DatabaseType;
+import com.datasqrl.graphql.jdbc.JdbcClientsConfig;
+import com.datasqrl.graphql.jdbc.SqlClientWrapper;
+import com.datasqrl.graphql.jdbc.VertxJdbcClient;
 import com.datasqrl.graphql.server.CustomScalars;
 import com.datasqrl.graphql.server.GraphQLEngineBuilder;
 import com.datasqrl.graphql.server.MetadataReader;
@@ -38,7 +41,6 @@ import io.vertx.ext.web.handler.graphql.GraphQLHandler;
 import io.vertx.ext.web.handler.graphql.GraphiQLHandler;
 import io.vertx.ext.web.handler.graphql.ws.GraphQLWSHandler;
 import io.vertx.micrometer.backends.BackendRegistries;
-import io.vertx.sqlclient.SqlClient;
 import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -151,11 +153,11 @@ public class GraphQLServerVerticle extends AbstractVerticle {
   }
 
   public GraphQL createGraphQL(
-      Map<DatabaseType, SqlClient> client,
+      Map<DatabaseType, SqlClientWrapper> clients,
       Promise<Void> startPromise,
       Map<MetadataType, MetadataReader> headerReaders) {
     try {
-      var vertxJdbcClient = new VertxJdbcClient(client);
+      var vertxJdbcClient = new VertxJdbcClient(clients);
       var graphQL =
           model.accept(
               new GraphQLEngineBuilder.Builder()

@@ -18,6 +18,8 @@ package com.datasqrl.graphql;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.datasqrl.graphql.jdbc.JdbcClient;
+import com.datasqrl.graphql.jdbc.VertxJdbcClient;
+import com.datasqrl.graphql.jdbc.VertxQueryExecutionContext;
 import com.datasqrl.graphql.server.Context;
 import com.datasqrl.graphql.server.GraphQLEngineBuilder;
 import com.datasqrl.graphql.server.MetadataReader;

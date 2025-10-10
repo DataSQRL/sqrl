@@ -24,6 +24,8 @@ import static org.mockito.Mockito.when;
 import com.datasqrl.graphql.config.KafkaConfig;
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.jdbc.DatabaseType;
+import com.datasqrl.graphql.jdbc.SqlClientWrapper;
+import com.datasqrl.graphql.jdbc.VertxJdbcClient;
 import com.datasqrl.graphql.server.GraphQLEngineBuilder;
 import com.datasqrl.graphql.server.PaginationType;
 import com.datasqrl.graphql.server.RootGraphqlModel;
@@ -200,7 +202,10 @@ class WriteIT {
                     .withSubscriptionConfiguration(
                         new SubscriptionConfigurationImpl(vertx, config, Promise.promise()))
                     .build(),
-                new VertxContext(new VertxJdbcClient(Map.of(DatabaseType.POSTGRES, client)), null))
+                new VertxContext(
+                    new VertxJdbcClient(
+                        Map.of(DatabaseType.POSTGRES, new SqlClientWrapper(client))),
+                    null))
             .build();
 
     ExecutionInput executionInput =
