@@ -5,8 +5,8 @@ const yaml = require('js-yaml');
 // File paths
 const SYSTEM_FUNCTIONS_YAML = path.join(__dirname, '../docs/stdlib-docs/stdlib-docs/system-functions.yml');
 const LIBRARY_FUNCTIONS_YAML = path.join(__dirname, '../docs/stdlib-docs/stdlib-docs/library-functions.yml');
-const SYSTEM_FUNCTIONS_OUTPUT = path.join(__dirname, '../docs/functions-system.md');
-const LIBRARY_FUNCTIONS_OUTPUT = path.join(__dirname, '../docs/functions-library.md');
+const SYSTEM_FUNCTIONS_OUTPUT = path.join(__dirname, '../docs/functions-system-generated.md');
+const LIBRARY_FUNCTIONS_OUTPUT = path.join(__dirname, '../docs/functions-library-generated.md');
 
 /**
  * Generates a markdown table row for a function
