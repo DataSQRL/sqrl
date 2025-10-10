@@ -19,29 +19,57 @@ When ingesting data from external data sources it is important to note the [type
 
 Specifically, entity data is often ingested as a stream of updates. To re-create the underlying entity `VERSIONED_STATE` table, use the `DISTINCT` statement with the entity's primary key.
 
-## External Schemas
+## LIKE Clause for Schema Loading
 
-When ingesting data from external systems, the schema is often defined in or by those systems.
-For example, Avro is a popular schema language for encoding messages in Kafka topics.
-It can be very cumbersome to convert that schema to SQL and maintain that translation.
+DataSQRL supports automatic schema loading from external schema files using the `LIKE` clause. This feature eliminates the need to manually define column definitions when the schema already exists in a supported format.
 
-With DataSQRL, you can easily create a table that fetches the schema from a given avro schema file.
-Assuming that the schema for the `User` topic is `user.avsc`,
-and that file is placed next to the `sources.sqrl` file in the `connectors` folder, add `LIKE <schema-file-path>` to the `CREATE TABLE` statement which populates the table schema from the avro file:
+```sql
+CREATE TABLE MyTable (
+  ...
+) WITH (
+  ...
+) LIKE 'mytable.avsc';
+```
+
+The `LIKE` clause:
+- **Automatically populates** column definitions from the referenced schema file
+- **Maintains schema consistency** between your data pipeline and external systems
+- **Reduces maintenance overhead** by eliminating manual schema translations
+- **Supports relative paths** to schema files in your project structure
+
+DataSQRL currently supports loading schemas from:
+- **Avro schema files** (`.avsc`)
+
+Assuming you have an Avro schema file `user.avsc` for a Kafka topic:
+
 ```sql
 CREATE TABLE User (
   last_updated TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
   WATERMARK FOR last_updated AS last_updated - INTERVAL '1' SECOND
 ) WITH (
   'connector' = 'kafka',
-  'topic' = 'user',
-  'properties.bootstrap.servers' = 'localhost:9092',
-  'properties.group.id' = 'user-consumer-group',
-  'scan.startup.mode' = 'earliest-offset',
-  'format' = 'avro',
-) LIKE `user.avsc`;
+  ...
+) LIKE 'user.avsc';
 ```
 
-:::info
-We can even include files from other folder via relative path, but in most cases it makes sense to put the schema file next to the table sql.
-:::
+In this example:
+- The `LIKE 'user.avsc'` clause loads all column definitions from the Avro schema
+- You add **metadata columns** (like `last_updated`) and **watermark specifications**
+- The **connector configuration** remains in the `WITH` clause as usual
+
+### Inferring Schema from Data Files
+
+To automatically discover the schema of a JSONL or CSV file, add the filename in the `LIKE` clause.
+In addition to generating the table columns based on the inferred schema of the data, this also configures the `filesystem` connector to access the data.
+
+For example, suppose you have a `users.jsonl` file in the `connectors` directory, you can define the `User` table simply as:
+
+```sql
+CREATE TABLE User (
+  WATERMARK FOR last_updated AS last_updated - INTERVAL '1' SECOND
+) WITH (
+  'source.monitor-interval' = '10 sec', -- remove for batch processing
+) LIKE 'users.jsonl';
+```
+
+This syntax is useful when building DataSQRL projects from data files since it eliminates the manual schema creation.
