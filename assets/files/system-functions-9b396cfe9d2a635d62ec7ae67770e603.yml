@@ -1,0 +1,77 @@
+jsonb:
+  - name: to_jsonb
+    description: Parses a JSON string or Flink object (e.g., `Row`, `Row[]`) into a JSON object.
+    example: to_jsonb('{"name":"Alice"}') → JSON object
+    identifier: to_jsonb
+  - name: jsonb_to_string
+    description: Serializes a JSON object into a JSON string.
+    example: jsonb_to_string(to_jsonb('{"a":1}')) → '{"a":1}'
+    identifier: jsonb_to_string
+  - name: jsonb_object
+    description: Constructs a JSON object from key-value pairs. Keys must be strings.
+    example: jsonb_object('a', 1, 'b', 2) → {"a":1,"b":2}
+    identifier: jsonb_object
+  - name: jsonb_array
+    description: Constructs a JSON array from multiple values or JSON objects.
+    example: jsonb_array(1, 'a', to_jsonb('{"b":2}')) → [1,"a",{"b":2}]
+    identifier: jsonb_array
+  - name: jsonb_extract
+    description: Extracts a value from a JSON object using a JSONPath expression. Optionally specify default value.
+    example: jsonb_extract(to_jsonb('{"a":1}'), '$.a') → 1
+    identifier: jsonb_extract
+  - name: jsonb_query
+    description: Executes a JSONPath query on a JSON object and returns the result as a JSON string.
+    example: jsonb_query(to_jsonb('{"a":[1,2]}'), '$.a') → '[1,2]'
+    identifier: jsonb_query
+  - name: jsonb_exists
+    description: Returns `TRUE` if a JSONPath exists within a JSON object.
+    example: jsonb_exists(to_jsonb('{"a":1}'), '$.a') → TRUE
+    identifier: jsonb_exists
+  - name: jsonb_concat
+    description: Merges two JSON objects. If keys overlap, the second object's values are used.
+    example: jsonb_concat(to_jsonb('{"a":1}'), to_jsonb('{"b":2}')) → {"a":1,"b":2}
+    identifier: jsonb_concat
+  - name: jsonb_array_agg
+    description: Aggregate function that accumulates values into a JSON array.
+    example: SELECT jsonb_array_agg(col) FROM tbl
+    identifier: jsonb_array_agg
+  - name: jsonb_object_agg
+    description: Aggregate function that accumulates key-value pairs into a JSON object.
+    example: SELECT jsonb_object_agg(key_col, val_col) FROM tbl
+    identifier: jsonb_object_agg
+
+vector:
+  - name: cosine_similarity
+    description: Computes cosine similarity between two vectors.
+    example: cosine_similarity(vec1, vec2)
+    identifier: cosine_similarity
+  - name: cosine_distance
+    description: Computes cosine distance between two vectors (1 - cosine similarity).
+    example: cosine_distance(vec1, vec2)
+    identifier: cosine_distance
+  - name: euclidean_distance
+    description: Computes the Euclidean distance between two vectors.
+    example: euclidean_distance(vec1, vec2)
+    identifier: euclidean_distance
+  - name: double_to_vector
+    description: Converts a `DOUBLE[]` array into a `VECTOR`.
+    example: double_to_vector([1.0, 2.0, 3.0])
+    identifier: double_to_vector
+  - name: vector_to_double
+    description: Converts a `VECTOR` into a `DOUBLE[]` array.
+    example: vector_to_double(vec)
+    identifier: vector_to_double
+  - name: center
+    description: Computes the centroid (average) of a collection of vectors. Aggregate function.
+    example: SELECT center(vecCol) FROM vectors
+    identifier: center
+
+text:
+  - name: format(String, String...)
+    description: A function that formats text based on a format string and variable number of arguments. It uses Java's `String.format` method internally. If the input text is `null`, it returns `null`.
+    example: format("Hello %s!", "World") returns "Hello World!"
+    identifier: format
+  - name: text_search(String, String...)
+    description: Evaluates a query against multiple text fields and returns a score based on the frequency of query words in the texts. It tokenizes both the query and the texts, and scores based on the proportion of query words found in the text.
+    example: text_search("hello", "hello world") returns 1.0
+    identifier: text_search
