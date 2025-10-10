@@ -36,3 +36,13 @@ Additional custom Kafka settings can be added under the `config` section.
 - Retention settings control how long data is stored in Kafka topics
 - Watermarks are used for handling late-arriving events in stream processing
 - Kafka serves as the messaging backbone between different engines in the pipeline
+
+<!--EXTENDED-->
+
+### Internal Environment Variables
+
+When running pipelines with the DataSQRL `run` command, the following environment variables are used
+in the configuration:
+
+* `KAFKA_BOOTSTRAP_SERVERS`
+* `KAFKA_GROUP_ID`
