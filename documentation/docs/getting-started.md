@@ -79,7 +79,7 @@ Note, that we are mapping the local directory so the compiler has access to the 
 
 ## Access the API
 
-The pipeline is exposed through a GraphQL API that you can access at  [http://localhost:8888/graphiql/](http://localhost:8888/graphiql/) in your browser.
+The pipeline is exposed through a GraphQL API that you can access at  [http://localhost:8888/v1/graphiql/](http://localhost:8888/v1/graphiql/) in your browser.
 
 To add user token requests, we run the following mutation:
 ```graphql
@@ -110,7 +110,7 @@ subscription {
   }
 }
 ```
-*While* the subscription is running, open a new browser tab for [GraphiQL](http://localhost:8888/graphiql/) and execute this mutation:
+*While* the subscription is running, open a new browser tab for [GraphiQL](http://localhost:8888/v1/graphiql/) and execute this mutation:
 ```graphql
 mutation {
  UserTokens(event: {userid: 2, tokens:400000}) {

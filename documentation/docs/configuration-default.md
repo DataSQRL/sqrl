@@ -1,3 +1,8 @@
+# Default DataSQRL `package.json` Configuration
+
+The following is the [default configuration file](https://raw.githubusercontent.com/DataSQRL/sqrl/refs/heads/main/sqrl-planner/src/main/resources/default-package.json) that user provided configuration files are merged on top of. It provides the default values for all configuration options.
+
+```json
 {
   "version": "1",
   "enabled-engines": ["vertx", "postgres", "kafka", "flink"],
@@ -37,12 +42,7 @@
     },
     "duckdb": {
       "url": "jdbc:duckdb:"
-    },
-    "kafka": {
-      "retention": null,
-      "watermark": "0 ms",
-      "transaction-watermark": "0 ms"
-  }
+    }
   },
   "connectors": {
     "kafka-mutation": {
@@ -90,3 +90,15 @@
     "required-checkpoints": 0
   }
 }
+```
+
+## Connector Template Variables
+
+The connector templates configured under `connectors` use SQRL-specific variables like `${sqrl:table-name}`.
+
+SQRL-specific variables start with a `sqrl:` prefix and are substituted by the compiler at compile-time in configuration files. SQRL env variables `${sqrl:<identifier>}` are used for templating inside connector configuration templates and support the following identifiers:
+`table-name`, `original-table-name`, `filename`, `format`, and `kafka-key`.
+
+:::warning
+Unresolved `${sqrl:*}` placeholders raise a validation error.
+:::
