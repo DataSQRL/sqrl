@@ -116,6 +116,7 @@ The `@api` directive is applied to the directive to control how the operation is
 * `uri`: AN RFC 6570 template to configure the REST path and MCP resource path. Any operation arguments that are not defined in the uri template are considered part of the payload for REST (and the method must be POST).
 
 ```graphql
+""" Returns up to 10 people for a given age """
 query GetPersonByAge($age: Int!) @api(rest: GET, mcp: TOOL, uri: "/queries/personByAge/{age}") {
     Person(age: $age, limit: 10, offset: 0) {
         name
@@ -125,6 +126,8 @@ query GetPersonByAge($age: Int!) @api(rest: GET, mcp: TOOL, uri: "/queries/perso
 ```
 
 This defines an operation `GetPersonByAge` which is the name of the MCP tool and REST endpoint with the path `/queries/personByAge/{age}` using GET method.
+
+The doc strings for the operations are used in the API and tooling documentation.
 
 By default, DataSQRL will add the custom operations to the generated ones. To only expose explicitly defined operations set `endpoints` option to `OPS_ONLY` in the [`package.json`](configuration).
 

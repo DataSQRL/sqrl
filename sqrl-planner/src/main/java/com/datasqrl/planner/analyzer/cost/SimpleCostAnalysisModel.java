@@ -27,7 +27,7 @@ public record SimpleCostAnalysisModel(@NonNull Type type) implements CostModel {
 
   public enum Type {
     DEFAULT, // Favors processing data at ingestion time unless the operation is too expensive (e.g.
-             // inner join)
+    // inner join)
     READ, // Favors processing data at query time
     WRITE // Favors processing data at ingestion time
   }
