@@ -1,9 +1,5 @@
 # Connecting External Data Sources and Sinks
 
-ALWAYS USE EVENT TIME
-
-STATE vs STREAM
-
 Use `CREATE TABLE` statements to connect external data sources and sinks with your SQRL script using the `WITH` clause to provide connector configuration.
 
 DataSQRL uses Apache Flink connectors and formats. To find a connector for your data system, use:
@@ -15,36 +11,13 @@ DataSQRL uses Apache Flink connectors and formats. To find a connector for your 
 
 ## Connector Management
 
-The best practice for managing connectors in your DataSQRL project is to create a folder for each system that you are
-connecting to and place all source or sink `CREATE TABLE` statements in separate files ending in `.table.sql` in that folder.
-You can then import from and export to those sources and sinks in the SQRL script.
+The best practice for managing connectors in your DataSQRL project is to place all `CREATE TABLE` statements for one data source in a single `.sqrl` file inside the `connectors` folder. This provides a modular structure for sources and sinks that supports reusability and replacing connectors for testing or different environments. [Import](sqrl-language#import-statement) those connector files into your main script.
 
-For example, to ingest data from the `User` and `Transaction` topics of a Kafka cluster, you would:
-1. Create a sub-directory `kafka-sources` in your project directory that contains your SQRL script
-2. Create two files `user.table.sql` and `transaction.table.sql`.
-3. Each file contains a `CREATE TABLE` statement that defines columns for each field in the message and a `WITH` clause
-   that contains the connector configuration. They will look like this:
-    ```sql
-    CREATE TABLE User (
-      user_id BIGINT,
-      user_name STRING,
-      last_updated TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
-      WATERMARK FOR last_updated AS last_updated - INTERVAL '1' SECOND
-      WATERMARK 
-    ) WITH (
-      'connector' = 'kafka',
-      'topic' = 'user',
-      'properties.bootstrap.servers' = 'localhost:9092',
-      'properties.group.id' = 'user-consumer-group',
-      'scan.startup.mode' = 'earliest-offset',
-      'format' = 'avro',
-    );
-    ```
-4. Import those sources into your SQRL script with `IMPORT kafak-sources.User;`
-5. Keep sources and sinks in separate folders (e.g. `kafka-sink`)
+We **strongly encourage** the use of event-time processing and ensuring that all sources are configured with a proper watermark. While processing-time is supported, only event-time ensures consistent data processing and sane, reproducible results.
 
-By following this structure, you modularize your sources and sinks from your processing logic
-which makes it easier to read and maintain.
+When ingesting data from external data sources it is important to note the [type of table](sqrl-language#type-system) you are creating: an append-only `STREAM` (e.g. with the `filesystem` connector), `VERSIONED_STATE` retraction stream (e.g. with the `upsert-kafka` connector), or a `LOOKUP` table (e.g. with the `jdbc` connector). The table type determines what operations a table supports and how it should be processed.
+
+Specifically, entity data is often ingested as a stream of updates. To re-create the underlying entity `VERSIONED_STATE` table, use the `DISTINCT` statement with the entity's primary key.
 
 ## External Schemas
 
@@ -53,15 +26,12 @@ For example, Avro is a popular schema language for encoding messages in Kafka to
 It can be very cumbersome to convert that schema to SQL and maintain that translation.
 
 With DataSQRL, you can easily create a table that fetches the schema from a given avro schema file.
-Following the example above and assuming that the schema for the `User` topic is `user.avsc`,
-and that file is placed next to the `user.table.sql` file, then a `LIKE <schema-file-path>` statement can be added
-to the `CREATE TABLE` statement, so in the `user.table.sql` we only need to define the metadata, the watermark,
-and the connector options:
+Assuming that the schema for the `User` topic is `user.avsc`,
+and that file is placed next to the `sources.sqrl` file in the `connectors` folder, add `LIKE <schema-file-path>` to the `CREATE TABLE` statement which populates the table schema from the avro file:
 ```sql
 CREATE TABLE User (
   last_updated TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
   WATERMARK FOR last_updated AS last_updated - INTERVAL '1' SECOND
-  WATERMARK 
 ) WITH (
   'connector' = 'kafka',
   'topic' = 'user',
