@@ -31,14 +31,22 @@ SQRL extends Flink SQL with features specifically designed for reactive data pro
 - **Subscription syntax** for real-time data streaming
 - **Type system** for stream processing semantics
 
-### 2. [Configuration](configuration) 
+### 2. [Interface Design](interface)
+DataSQRL automatically generates interfaces from your SQRL script for multiple protocols:
+- **Data Products** as database/data lake views and tables
+- **GraphQL APIs** with queries, mutations, and subscriptions
+- **REST endpoints** with GET/POST operations
+- **MCP tools/resources** for AI agent integration
+- **Schema customization** and operation control
+
+### 3. [Configuration](configuration) 
 JSON configuration files that define:
 - **Engines**: Data technologies (Flink, Postgres, Kafka, etc.)
 - **Connectors**: Templates for data sources and sinks
 - **Dependencies**: External data packages and libraries
 - **Compiler options**: Optimization and deployment settings
 
-### 3. [Compiler](compiler)
+### 4. [Compiler](compiler)
 The DataSQRL compiler:
 - **Transpiles** SQRL scripts into deployment assets
 - **Optimizes** data processing DAGs across multiple engines
@@ -53,6 +61,7 @@ The DataSQRL compiler:
 
 ### 📚 **Core Documentation**
 - [**SQRL Language**](sqrl-language) - Complete language specification and syntax
+- [**Interface Design**](interface) - API generation and data product interfaces
 - [**Configuration**](configuration) - Engine setup and project configuration  
 - [**Compiler**](compiler) - Command-line interface and compilation options
 - [**Functions**](functions) - Built-in functions and custom function libraries
