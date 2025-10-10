@@ -16,8 +16,6 @@ Frequently configured options include:
 
 Refer to the [Flink Documentation](hhttps://nightlies.apache.org/flink/flink-docs-release-1.19/docs/dev/table/config/) for all Flink configuration options.
 
-
-
 ## Example Configuration
 
 ```json
@@ -71,15 +69,3 @@ Available `taskmanager-size` options with resource variants:
   }
 }
 ```
-
-## Built-in Connector Templates
-
-The following connector templates are available when using Flink:
-- `postgres` - JDBC connector for PostgreSQL
-- `postgres_log-source` - PostgreSQL CDC source connector  
-- `postgres_log-sink` - PostgreSQL sink connector
-- `kafka` - Kafka connector for streaming data
-- `kafka-keyed` - Keyed Kafka connector
-- `kafka-upsert` - Kafka upsert connector
-- `iceberg` - Apache Iceberg connector
-- `print` - Print connector for debugging
