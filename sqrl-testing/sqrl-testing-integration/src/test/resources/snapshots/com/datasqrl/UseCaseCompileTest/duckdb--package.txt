@@ -129,16 +129,15 @@ CREATE TEMPORARY TABLE `_Applications__schema` (
   `application_date` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
 ) WITH (
-  'connector' = 'datagen'
+  'connector' = 'filesystem',
+  'format' = 'flexible-json',
+  'path' = '${DATA_PATH}/applications.jsonl'
 );
 CREATE TABLE `_Applications` (
   PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED,
   WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '0.001' SECOND
 ) WITH (
-  'format' = 'flexible-json',
-  'path' = '${DATA_PATH}/applications.jsonl',
-  'source.monitor-interval' = '1',
-  'connector' = 'filesystem'
+  'source.monitor-interval' = '1'
 )
 LIKE `_Applications__schema`;
 CREATE VIEW `_MyApplications1`
