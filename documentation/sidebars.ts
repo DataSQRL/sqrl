@@ -121,12 +121,12 @@ const sidebars = {
           items: [
             {
               type: 'doc',
-              id: 'functions-system',
+              id: 'functions-system-generated',
               label: 'System Functions',
             },
             {
               type: 'doc',
-              id: 'functions-library',
+              id: 'functions-library-generated',
               label: 'Library Functions',
             },
           ],
