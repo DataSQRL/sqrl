@@ -6,11 +6,11 @@ The `version` field specifies the version of the configuration file which is cur
 
 ---
 
-## Engines (`enabled-engines` and `engines`)
+## Engines (`enabled-engines`)
 
 The engines that the pipeline compiles to.
 
-```json5
+```json
 {
   "enabled-engines": ["flink", "postgres", "kafka", "vertx"]
 }
@@ -35,9 +35,9 @@ Guidelines for choosing the enabled engines in a pipeline:
 * Choose at most one log or server engine, but choosing multiple database engines is supported.
 * When choosing a query engine that operates in the cloud (e.g. snowflake), substitute for a locally executable query engine (i.e. "duckdb") for testing and running the pipeline locally.
 
-The individual engines are configured under the `engines` field. The following example configures a Flink-specific setting:
+The individual engines are configured under the **`engines`** field. The following example configures a Flink-specific setting:
 
-```json5
+```json
 {
   "engines": {
     "flink": {
@@ -57,17 +57,17 @@ Configures the main SQRL script to compile, the (optional) GraphQL schema for th
 
 The `config` JSON object is passed to the Mustache templating engine to substitute template variable occurrences (e.g. `{{table}}`) before the script is compiled.
 
-```json5
+```json
 {
   "script": {
-    "main": "my-project.sqrl",             // Main SQRL script for pipeline
-    "graphql": "api/schema.v1.graphqls", // GraphQL schema defines the API
+    "main": "my-project.sqrl",                         // Main SQRL script for pipeline
+    "graphql": "api/schema.v1.graphqls",               // GraphQL schema defines the API
     "operations": ["api/operations-v1/myop1.graphql"], //List of GraphQL queries that define operations which are exposed as API endpoints
-    "config": { //Arbitrary JSON object used by the mustache templating engine to instantiate SQRL files
+    "config": {                                        //Arbitrary JSON object used by the mustache templating engine to instantiate SQRL files
       "table": "orders",
       "filters": [
-{ "field": "total_amount", "isNull": false },
-{ "field": "coupon_code", "isNull": true },
+        { "field": "total_amount", "isNull": false },
+        { "field": "coupon_code", "isNull": true }
       ]
     }
   }
@@ -91,7 +91,7 @@ MyTable := SELECT
 Configures how the DataSQRL test runner executes tests.
 For streaming pipelines, use `required-checkpoints` to set a reliable time-interval for creating snapshots. Otherwise, configure a wall-clock delay via `delay-sec`.
 
-```json5
+```json
 {
   "test-runner": {
     "snapshot-folder": "snapshots/myproject/", // Snapshots output directory (default: "./snapshots")
@@ -111,7 +111,7 @@ For streaming pipelines, use `required-checkpoints` to set a reliable time-inter
 
 Configuration options that control the compiler, such as where logging output is produced, how the pipeline plan is written out, what cost model to use determine data processing step to engine allocation, and what protocols are exposed in the API.
 
-```json5
+```json
 {
   "compiler": {
     "logger": "print",             // "print" | "none"
@@ -154,24 +154,5 @@ Refer to the individual engine configuration for connector configuration options
 
 Environment variables (e.g. `${POSTGRES_PASSWORD}`) can be referenced inside the configuration files and SQRL scripts. Those are dynamically resolved by the DataSQRL runner when the pipeline is launched. If an environment variable is not configured, it is not replaced.
 
-### Internal Environment Variables
-
-For engines that may be running as standalone services inside the DataSQRL Docker container,
-we use the following environment variables internally:
-
-* **Kafka**
-  * `KAFKA_BOOTSTRAP_SERVERS`
-  * `KAFKA_GROUP_ID`
-* **PostgreSQL**
-  * `POSTGRES_VERSION`
-  * `POSTGRES_HOST`
-  * `POSTGRES_PORT`
-  * `POSTGRES_DATABASE`
-  * `POSTGRES_AUTHORITY`
-  * `POSTGRES_JDBC_URL`
-  * `POSTGRES_USERNAME`
-  * `POSTGRES_PASSWORD`
-
----
 
 

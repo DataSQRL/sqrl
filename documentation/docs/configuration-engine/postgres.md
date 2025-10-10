@@ -61,3 +61,19 @@ Available `instance-size` options:
 - The engine handles both real-time data ingestion and query serving
 - Optimized for low-latency reads of materialized data
 - Read replicas improve query performance and provide redundancy
+
+<!--EXTENDED-->
+
+### Internal Environment Variables
+
+When running pipelines with the DataSQRL `run` command, the following environment variables are used
+in the configuration:
+
+* `POSTGRES_VERSION`
+* `POSTGRES_HOST`
+* `POSTGRES_PORT`
+* `POSTGRES_DATABASE`
+* `POSTGRES_AUTHORITY`
+* `POSTGRES_JDBC_URL`
+* `POSTGRES_USERNAME`
+* `POSTGRES_PASSWORD`
