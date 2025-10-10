@@ -121,12 +121,12 @@ const sidebars = {
           items: [
             {
               type: 'doc',
-              id: 'stdlib-docs/stdlib-docs/system-functions',
+              id: 'functions-system',
               label: 'System Functions',
             },
             {
               type: 'doc',
-              id: 'stdlib-docs/stdlib-docs/library-functions',
+              id: 'functions-library',
               label: 'Library Functions',
             },
           ],
