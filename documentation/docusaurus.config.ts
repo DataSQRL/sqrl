@@ -130,7 +130,7 @@ const config: Config = {
           items: [
             {
               label: 'Getting Started',
-              to: '/docs/getting-started',
+              to: '/docs/intro/getting-started',
             },
             {
               label: 'User Documentation',

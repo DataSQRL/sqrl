@@ -243,7 +243,7 @@ docker run --rm -v $PWD:/build datasqrl/cmd:latest compile usertokens.sqrl usert
 
 Congratulations, you made the first big step toward building production-grade data pipelines the easy way.
 Next, check out:
-* **[Full Documentation](intro)** for the complete reference, language spec, and more.
+* **[Full Documentation](/docs/intro)** for the complete reference, language spec, and more.
 * **[Tutorials](tutorials)** if you prefer learning by doing.
 
 ## 4. Troubleshooting Common Issues
