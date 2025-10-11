@@ -33,12 +33,12 @@ const sidebars = {
   tutorialSidebar: [
     {
       type: 'doc',
-      id: 'intro',
+      id: 'intro/intro',
       label: '📖 Overview',
     },
     {
       type: 'doc',
-      id: 'getting-started',
+      id: 'intro/getting-started',
       label: '🚀 Getting Started',
     },
     {
@@ -138,14 +138,14 @@ const sidebars = {
         },
         {
           type: 'doc',
-          id: 'concepts',
+          id: 'intro/concepts',
           label: '🧠 Streaming Concepts',
         }
       ],
     },
     {
       type: 'doc',
-      id: 'tutorials',
+      id: 'intro/tutorials',
       label: '🎓 Tutorials',
     },
     {

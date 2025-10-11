@@ -165,7 +165,7 @@ You can run the script and access the API like we did above.
 
 Note, that when you compile or run the script, the compiler automatically created a connector table from the data in the `local-data/userinfo.table.sql` file. DataSQRL can automatically infer the schema from JSONL or CSV files and generate connectors.
 
-You can also define connectors manually to ingest data from Kafka, Kinesis, Postgres, Apache Iceberg, and many other sources. Check out the [Connectors Documentation](connectors.md) to learn how to ingest data from and sink data to many external data systems.
+You can also define connectors manually to ingest data from Kafka, Kinesis, Postgres, Apache Iceberg, and many other sources. Check out the [Connectors Documentation](../connectors) to learn how to ingest data from and sink data to many external data systems.
 
 ## Testing
 
@@ -243,8 +243,8 @@ docker run --rm -v $PWD:/build datasqrl/cmd:latest compile usertokens.sqrl usert
 
 Congratulations, you made the first big step toward building production-grade data pipelines the easy way.
 Next, check out:
-* **[Full Documentation](intro.md)** for the complete reference, language spec, and more.
-* **[Tutorials](tutorials.md)** if you prefer learning by doing.
+* **[Full Documentation](intro)** for the complete reference, language spec, and more.
+* **[Tutorials](tutorials)** if you prefer learning by doing.
 
 ## 4. Troubleshooting Common Issues
 
