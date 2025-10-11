@@ -21,7 +21,7 @@ const header: HomepageHeaderProps = {
         for GenAI and ML applications from all your data sources.
       </>
   ),
-  buttonLink: 'docs/getting-started',
+  buttonLink: 'docs/intro/getting-started',
   buttonText: 'Build Flink Apps in 10 min',
   image: "/img/diagrams/ai_infra_summary.png"
 };
@@ -139,7 +139,7 @@ TokenAnalysis := SELECT orgid, userid, sum(tokens) as total_tokens,
                     introspection, debugging - DataSQRL brings developer convenience and automation.
                   </p>
                   <Link className="button button--primary button--lg"
-                      to="/docs/getting-started">Get Started</Link>
+                      to="/docs/intro/getting-started">Get Started</Link>
                   <Link className="button button--primary button--lg"
                         to="/docs/intro">Learn More</Link>
                 </div>

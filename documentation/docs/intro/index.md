@@ -69,7 +69,7 @@ The DataSQRL compiler:
 ### 🔌 **Integration & Deployment**
 - [**Connectors**](../connectors) - Ingest from and export to external systems
 - [**Concepts**](concepts) - Key concepts in stream processing (time, watermarks, etc.)
-- [**How-To Guides**](../howto) - Best practices and implementation patterns
+- [**How-To Guides**](/docs/category/-how-to) - Best practices and implementation patterns
 
 ### 🛠️ **Advanced Topics**
 - [**Developer Documentation**](../deepdive) - Internal architecture and advanced customization

@@ -33,7 +33,7 @@ const sidebars = {
   tutorialSidebar: [
     {
       type: 'doc',
-      id: 'intro/intro',
+      id: 'intro/index',
       label: '📖 Overview',
     },
     {

@@ -28,3 +28,23 @@ feature:
   label: feature
   permalink: /feature
   description: Feature descriptions
+
+DataSQRL:
+  label: DataSQRL
+  permalink: /datasqrl
+  description: Posts about DataSQRL
+
+community:
+  label: Community
+  permalink: /community
+  description: Community updates and announcements
+
+Join:
+  label: Join
+  permalink: /join
+  description: Posts about SQL joins and temporal joins
+
+Flink:
+  label: Flink
+  permalink: /flink
+  description: Apache Flink related posts

@@ -95,4 +95,4 @@ In addition to breaking out the sink configuration from the main script, the `EX
 
 [FlinkSQL](https://nightlies.apache.org/flink/flink-docs-release-1.19/docs/dev/table/sql/overview/) is phenomenal extension of the SQL ecosystem to stream processing. With DataSQRL, we are trying to make it easier to build end-to-end data pipelines and complete data applications with FlinkSQL.
 
-Check out the [complete example](/docs/getting-started) which also covers testing, customization, and deployment. Or read the [documentation](/docs/sqrl-language) to learn more.
+Check out the [complete example](/docs/intro/getting-started) which also covers testing, customization, and deployment. Or read the [documentation](/docs/sqrl-language) to learn more.

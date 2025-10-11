@@ -21,7 +21,7 @@ const header: HomepageHeaderProps = {
         realtime data apps faster and easier. Batteries included.
       </>
   ),
-  buttonLink: 'docs/getting-started',
+  buttonLink: 'docs/intro/getting-started',
   buttonText: 'Build Flink Apps in 10 min',
   image: "/img/landingpage/flink_on_rails.png"
 };
@@ -139,7 +139,7 @@ docker run --rm -v $PWD:/build \\
                     introspection, debugging - DataSQRL brings developer convenience and happiness.
                   </p>
                   <Link className="button button--primary button--lg"
-                      to="/docs/getting-started">Get Started</Link>
+                      to="/docs/intro/getting-started">Get Started</Link>
                   <Link className="button button--primary button--lg"
                         to="/docs/intro">Learn More</Link>
                 </div>
@@ -164,7 +164,7 @@ docker run --rm -v $PWD:/build \\
                     Learn how DataSQRL simplifies building real-time data applications. This quick demo shows how to define your pipeline in SQL and go from source to API in minutes.
                   </p>
                   <Link className="button button--primary button--lg"
-                        to="/docs/getting-started">Try Now</Link>
+                        to="/docs/intro/getting-started">Try Now</Link>
                 </div>
               </div>
             </div>
