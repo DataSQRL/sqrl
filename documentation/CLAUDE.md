@@ -77,7 +77,8 @@ npm run swizzle
 
 ### Content Structure
 - **docs/**: Main documentation content in Markdown format
-  - Core documentation files include intro.md, getting-started.md, sqrl-language.md, etc.
+  - **intro/**: Introductory documentation (intro.md, getting-started.md, concepts.md, tutorials.md)
+  - Core documentation files include sqrl-language.md, interface.md, configuration.md, etc.
   - **stdlib-docs/**: Embedded function library documentation
 - **blog/**: Release notes, updates, and technical blog posts
 - **src/**: React components and custom pages

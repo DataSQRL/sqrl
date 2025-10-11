@@ -398,6 +398,6 @@ The following produce compile time errors:
 * Refer to the [Configuration documentation](configuration.md) for engine configuration.
 * See [Command documentation](compiler.md) for CLI usage of the compiler.
 * Read the [How-to guides](howto.md) for best-practices and implementation guidance.
-* Follow the [Tutorials](tutorials.md) for practical SQRL examples.
+* Follow the [Tutorials](intro/tutorials) for practical SQRL examples.
 
 For engine configuration, see **configuration.md**; for CLI usage, see **compiler.md**.
