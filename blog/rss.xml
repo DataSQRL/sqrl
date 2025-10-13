@@ -170,7 +170,7 @@ Run the above script with DataSQRL to see the result:</p>
 <p>In addition to breaking out the sink configuration from the main script, the <code>EXPORT</code> statement functions as an <code>INSERT INTO</code> statement and creates a <code>STATEMENT SET</code> implicitly. That makes the code easier to read.</p>
 <h2 class="anchor anchorWithStickyNavbar_LWe7" id="learn-more">Learn More<a href="https://docs.datasqrl.com/blog/flinksql-extensions#learn-more" class="hash-link" aria-label="Direct link to Learn More" title="Direct link to Learn More">​</a></h2>
 <p><a href="https://nightlies.apache.org/flink/flink-docs-release-1.19/docs/dev/table/sql/overview/" target="_blank" rel="noopener noreferrer">FlinkSQL</a> is phenomenal extension of the SQL ecosystem to stream processing. With DataSQRL, we are trying to make it easier to build end-to-end data pipelines and complete data applications with FlinkSQL.</p>
-<p>Check out the <a href="https://docs.datasqrl.com/docs/intro/getting-started">complete example</a> which also covers testing, customization, and deployment. Or read the <a href="https://docs.datasqrl.com/docs/sqrl-language">documentation</a> to learn more.</p>]]></content:encoded>
+<p>Check out the <a href="https://docs.datasqrl.com/docs/getting-started">complete example</a> which also covers testing, customization, and deployment. Or read the <a href="https://docs.datasqrl.com/docs/sqrl-language">documentation</a> to learn more.</p>]]></content:encoded>
             <category>Join</category>
             <category>Flink</category>
             <category>DataSQRL</category>
@@ -271,7 +271,7 @@ To get started with the latest compiler, simply pull the latest Docker image:</p
 <p>We've reached the end of our time-traveling adventure through the universe of temporal joins. We've seen how they're like the DeLorean of data operations, zipping us back and forth through time to make sure our data matches up just right. We've also compared them to the good ol' inner join.</p>
 <p>Temporal joins help us avoid the pitfalls of time-alignment problems when joining data streams with changing state. They're also super efficient, making them a great choice for high-volume, real-time data processing.</p>
 <p>And that’s why the temporal join is stream processing's secret superpower.</p>
-<p>DataSQRL makes using temporal joins a breeze. With its simplified syntax and smart defaults, it's like having a personal tour guide leading you through the sometimes bewildering landscape of stream processing. Take a look at our <a href="https://docs.datasqrl.com/docs/intro/getting-started">Getting Started</a> to see a complete example of temporal joins in action or take a look at our <a href="https://docs.datasqrl.com/docs/intro/tutorials">other tutorials</a> for a step-by-step guide to stream processing including temporal joins.</p>
+<p>DataSQRL makes using temporal joins a breeze. With its simplified syntax and smart defaults, it's like having a personal tour guide leading you through the sometimes bewildering landscape of stream processing. Take a look at our <a href="https://docs.datasqrl.com/docs/getting-started">Getting Started</a> to see a complete example of temporal joins in action or take a look at our <a href="https://docs.datasqrl.com/docs/tutorials">other tutorials</a> for a step-by-step guide to stream processing including temporal joins.</p>
 <p>Happy data time-traveling, folks!</p>]]></content:encoded>
             <category>Join</category>
             <category>Flink</category>
@@ -309,7 +309,7 @@ To get started with the latest compiler, simply pull the latest Docker image:</p
 <p>Here are some ideas for how you can contribute:</p>
 <ul>
 <li>Share your thoughts: Do you have ideas on how we can improve the SQRL language or the DataSQRL compiler? Jump into <a href="https://docs.datasqrl.com/community">our community</a> and let us know!</li>
-<li>Test the waters: Do you like playing with new technologies? Try out <a href="https://docs.datasqrl.com/docs/intro/getting-started">DataSQRL</a> and let us know if you find any bugs or missing features.</li>
+<li>Test the waters: Do you like playing with new technologies? Try out <a href="https://docs.datasqrl.com/docs/getting-started">DataSQRL</a> and let us know if you find any bugs or missing features.</li>
 <li>Spread the word: Think DataSQRL has potential? Share this blog post and <a href="https://github.com/DataSQRL/sqrl" target="_blank" rel="noopener noreferrer">star</a> DataSQRL on <a href="https://github.com/DataSQRL/sqrl" target="_blank" rel="noopener noreferrer">Github</a>. Your support can help us reach more like-minded individuals.</li>
 <li>Code with us: Do you enjoy contributing to open-source projects? Dive into <a href="https://github.com/DataSQRL/sqrl" target="_blank" rel="noopener noreferrer">the code</a> with us and pick up a <a href="https://github.com/DataSQRL/sqrl/issues" target="_blank" rel="noopener noreferrer">ticket</a>.</li>
 </ul>
@@ -318,7 +318,7 @@ To get started with the latest compiler, simply pull the latest Docker image:</p
 <p>You probably have a ton of questions now. How do I import my own data? How do I customize the API? How do I deploy SQRL scripts to production? How do I import functions from my favorite programming language?</p>
 <p>Those are all great questions. Check out <a href="https://docs.datasqrl.com/docs/intro">the documentation</a> for answers.</p>]]></content:encoded>
             <category>DataSQRL</category>
-            <category>Community</category>
+            <category>community</category>
         </item>
     </channel>
 </rss>
