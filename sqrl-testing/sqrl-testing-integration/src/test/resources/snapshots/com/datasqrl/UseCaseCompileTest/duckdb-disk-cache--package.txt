@@ -177,7 +177,7 @@ WITH (
   'catalog-table' = '_MyApplications1',
   'catalog-type' = 'hadoop',
   'connector' = 'iceberg',
-  'warehouse' = '/tmp/duckdb',
+  'warehouse' = '/tmp/duckdb-with-cache',
   'write.parquet.page-size-bytes' = '1000'
 );
 CREATE TABLE `_MyApplications2_2` (
@@ -194,7 +194,7 @@ CREATE TABLE `_MyApplications2_2` (
   'catalog-table' = '_MyApplications2',
   'catalog-type' = 'hadoop',
   'connector' = 'iceberg',
-  'warehouse' = '/tmp/duckdb',
+  'warehouse' = '/tmp/duckdb-with-cache',
   'write.parquet.page-size-bytes' = '1000'
 );
 CREATE TABLE `_MyApplications2_3` (
@@ -272,7 +272,7 @@ FROM "_MyApplications2"
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"id\", 'hello world1' AS \"hello\"\nFROM \"iceberg_scan\"('/tmp/duckdb/default_database/_MyApplications1', ALLOW_MOVED_PATHS = TRUE)",
+              "sql" : "SELECT \"id\", 'hello world1' AS \"hello\"\nFROM \"iceberg_scan\"('/tmp/duckdb-with-cache/default_database/_MyApplications1', ALLOW_MOVED_PATHS = TRUE)",
               "parameters" : [ ],
               "pagination" : "LIMIT_AND_OFFSET",
               "cacheDurationMs" : 0,
@@ -297,7 +297,7 @@ FROM "_MyApplications2"
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"id\", 'hello world2' AS \"hello\"\nFROM \"iceberg_scan\"('/tmp/duckdb/default_database/_MyApplications2', ALLOW_MOVED_PATHS = TRUE)",
+              "sql" : "SELECT \"id\", 'hello world2' AS \"hello\"\nFROM \"iceberg_scan\"('/tmp/duckdb-with-cache/default_database/_MyApplications2', ALLOW_MOVED_PATHS = TRUE)",
               "parameters" : [ ],
               "pagination" : "LIMIT_AND_OFFSET",
               "cacheDurationMs" : 0,

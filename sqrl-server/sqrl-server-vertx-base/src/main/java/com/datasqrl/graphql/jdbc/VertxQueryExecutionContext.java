@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.graphql;
+package com.datasqrl.graphql.jdbc;
 
 import static com.datasqrl.graphql.jdbc.SchemaConstants.LIMIT;
 import static com.datasqrl.graphql.jdbc.SchemaConstants.OFFSET;
 
-import com.datasqrl.graphql.VertxJdbcClient.PreparedSqrlQueryImpl;
-import com.datasqrl.graphql.jdbc.AbstractQueryExecutionContext;
+import com.datasqrl.graphql.VertxContext;
+import com.datasqrl.graphql.jdbc.VertxJdbcClient.PreparedSqrlQueryImpl;
 import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedSqlQuery;
 import graphql.schema.DataFetchingEnvironment;
@@ -88,18 +88,14 @@ public class VertxQueryExecutionContext extends AbstractQueryExecutionContext<Ve
 
     // execute the preparedQuery with the arguments extracted above
     Future<RowSet<Row>> future;
-    var parameters = Tuple.from(paramObj);
+    var params = Tuple.from(paramObj);
+    var database = resolvedQuery.getQuery().getDatabase();
+
     if (preparedQueryContainer == null) {
-      future =
-          this.getContext()
-              .getSqlClient()
-              .execute(resolvedQuery.getQuery().getDatabase(), unpreparedSqlQuery, parameters);
+      future = getContext().getSqlClient().execute(database, unpreparedSqlQuery, params);
     } else {
       var preparedQuery = preparedQueryContainer.preparedQuery();
-      future =
-          this.getContext()
-              .getSqlClient()
-              .execute(resolvedQuery.getQuery().getDatabase(), preparedQuery, parameters);
+      future = getContext().getSqlClient().execute(preparedQuery, params);
     }
 
     // map the resultSet to json for GraphQL response

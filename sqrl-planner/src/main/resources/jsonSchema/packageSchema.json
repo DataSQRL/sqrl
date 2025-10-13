@@ -154,6 +154,10 @@
           "properties": {
             "url": {
               "type": "string"
+            },
+            "config": {
+              "type": "object",
+              "minProperties": 1
             }
           },
           "required": ["url"]
