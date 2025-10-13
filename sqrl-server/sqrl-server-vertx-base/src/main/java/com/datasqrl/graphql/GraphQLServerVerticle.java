@@ -21,6 +21,8 @@ import com.datasqrl.graphql.auth.AuthMetadataReader;
 import com.datasqrl.graphql.auth.JwtFailureHandler;
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.jdbc.DatabaseType;
+import com.datasqrl.graphql.jdbc.JdbcClientsConfig;
+import com.datasqrl.graphql.jdbc.VertxJdbcClient;
 import com.datasqrl.graphql.server.CustomScalars;
 import com.datasqrl.graphql.server.GraphQLEngineBuilder;
 import com.datasqrl.graphql.server.MetadataReader;
@@ -32,7 +34,6 @@ import graphql.GraphQL;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import io.vertx.ext.auth.jwt.JWTAuth;
-import io.vertx.ext.web.Route;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.JWTAuthHandler;
 import io.vertx.ext.web.handler.graphql.GraphQLHandler;
@@ -92,8 +93,8 @@ public class GraphQLServerVerticle extends AbstractVerticle {
     }
 
     // Setup database clients
-    JdbcClientsConfig jdbcConfig = new JdbcClientsConfig(vertx, config);
-    Map<DatabaseType, SqlClient> clients = jdbcConfig.createClients();
+    var jdbcConfig = new JdbcClientsConfig(vertx, config);
+    var dbClients = jdbcConfig.createClients();
 
     // Setup GraphQL endpoint with auth if configured
     var handler = router.route(this.config.getServletConfig().getGraphQLEndpoint(modelVersion));
@@ -109,7 +110,7 @@ public class GraphQLServerVerticle extends AbstractVerticle {
         });
 
     // Create GraphQL engine
-    this.graphQLEngine = createGraphQL(clients, startPromise, createMetadataReaders());
+    this.graphQLEngine = createGraphQL(dbClients, startPromise, createMetadataReaders());
 
     handler
         .handler(GraphQLWSHandler.create(this.graphQLEngine))
@@ -129,12 +130,6 @@ public class GraphQLServerVerticle extends AbstractVerticle {
     return readers.build();
   }
 
-  private Route routeVersioned(Router router, String version, String endpoint) {
-    var versionedRoute = '/' + version + endpoint;
-
-    return router.route(versionedRoute);
-  }
-
   /**
    * Returns the GraphQL engine instance for internal use by other verticles.
    *
@@ -145,11 +140,11 @@ public class GraphQLServerVerticle extends AbstractVerticle {
   }
 
   public GraphQL createGraphQL(
-      Map<DatabaseType, SqlClient> client,
+      Map<DatabaseType, SqlClient> clients,
       Promise<Void> startPromise,
       Map<MetadataType, MetadataReader> headerReaders) {
     try {
-      var vertxJdbcClient = new VertxJdbcClient(client);
+      var vertxJdbcClient = new VertxJdbcClient(clients);
       var graphQL =
           model.accept(
               new GraphQLEngineBuilder.Builder()
