@@ -293,7 +293,8 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
       errors.checkFatal(
           relNode instanceof TableScan,
           "The Kafka engine currently only supports"
-              + "simple filter queries without any transformations, but got: %s",
+              + "simple filter queries without any transformations, but got: %s explain: %s",
+          relNode.getClass().getName(),
           relNode.explain());
       errors.checkFatal(
           !query.function().isPassthrough(),
