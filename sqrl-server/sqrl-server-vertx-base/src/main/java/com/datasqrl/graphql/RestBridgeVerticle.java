@@ -181,9 +181,18 @@ public class RestBridgeVerticle extends AbstractBridgeVerticle {
             var fut = bridgeRequestToGraphQL(ctx, operation, variables);
             fut.onSuccess(
                     executionResult -> {
-                      ctx.response()
-                          .setStatusCode(executionResult.getErrors().isEmpty() ? 200 : 400)
-                          .putHeader("content-type", "application/json");
+                      var response = ctx.response();
+                      var currentStatus = response.getStatusCode();
+
+                      // Preserve status code if already set to non-200 (e.g., 403 for missing
+                      // claims)
+                      // Otherwise use 200 for success or 400 for errors
+                      if (currentStatus == 200) {
+                        response.setStatusCode(executionResult.getErrors().isEmpty() ? 200 : 400);
+                      }
+
+                      response.putHeader("content-type", "application/json");
+
                       if (!executionResult.getErrors().isEmpty()) {
                         var json = new JsonObject();
                         json.put(
