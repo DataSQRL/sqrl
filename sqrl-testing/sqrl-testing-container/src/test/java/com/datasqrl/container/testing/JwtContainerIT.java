@@ -64,12 +64,12 @@ public class JwtContainerIT extends SqrlContainerTestBase {
 
   // Feign client for testing REST endpoints
   interface RestClient {
-    @RequestLine("GET /v1/rest/queries/MyTable?limit={limit}")
-    MyTableResponse getMyTable(@Param("limit") int limit);
+    @RequestLine("GET /v1/rest/queries/AuthMyTable?limit={limit}")
+    MyTableResponse getAuthMyTable(@Param("limit") int limit);
 
-    @RequestLine("GET /v1/rest/queries/MyTable?limit={limit}")
+    @RequestLine("GET /v1/rest/queries/AuthMyTable?limit={limit}")
     @Headers("Authorization: Bearer {token}")
-    MyTableResponse getMyTableWithAuth(@Param("token") String token, @Param("limit") int limit);
+    MyTableResponse getAuthMyTableWithAuth(@Param("token") String token, @Param("limit") int limit);
   }
 
   private PostgreSQLContainer<?> postgresql;
@@ -142,7 +142,7 @@ public class JwtContainerIT extends SqrlContainerTestBase {
   void givenJwt_whenUnauthenticatedGraphQL_thenReturns401() {
     compileAndStartServer("jwt-authorized-base.sqrl", testDir);
 
-    var response = executeGraphQLQuery("{\"query\":\"query { __typename }\"}");
+    var response = executeGraphQLQuery("{\"query\":\"query { AuthMyTable(limit: 5) { val } }\"}");
 
     assertThat(response.getStatusLine().getStatusCode()).isEqualTo(401);
   }
@@ -150,10 +150,16 @@ public class JwtContainerIT extends SqrlContainerTestBase {
   @Test
   @SneakyThrows
   void givenJwt_whenAuthenticatedGraphQL_thenSucceeds() {
-    compileAndStartServer("jwt-authorized-base.sqrl", testDir);
+    compileAndStartServerWithDatabase("jwt-authorized-base.sqrl", testDir);
 
-    var response = executeGraphQLQuery("{\"query\":\"query { __typename }\"}", generateJwtToken());
-    validateBasicGraphQLResponse(response);
+    var response =
+        executeGraphQLQuery(
+            "{\"query\":\"query { AuthMyTable(limit: 5) { val } }\"}", generateJwtToken());
+
+    assertThat(response.getStatusLine().getStatusCode()).isEqualTo(200);
+    var responseBody = EntityUtils.toString(response.getEntity());
+    assertThat(responseBody).contains("\"data\"");
+    assertThat(responseBody).contains("\"AuthMyTable\"");
   }
 
   @Test
@@ -163,7 +169,8 @@ public class JwtContainerIT extends SqrlContainerTestBase {
 
     // Generate token with RS256 algorithm while server expects HS256
     var response =
-        executeGraphQLQuery("{\"query\":\"query { __typename }\"}", generateRS256JwtToken());
+        executeGraphQLQuery(
+            "{\"query\":\"query { AuthMyTable(limit: 5) { val } }\"}", generateRS256JwtToken());
 
     assertThat(response.getStatusLine().getStatusCode()).isEqualTo(401);
 
@@ -181,7 +188,9 @@ public class JwtContainerIT extends SqrlContainerTestBase {
     compileAndStartServer("jwt-authorized-base.sqrl", testDir);
 
     // Generate token with RS256 algorithm while server expects HS256
-    var response = executeGraphQLQuery("{\"query\":\"query { __typename }\"}", "dummy-invalid-jwt");
+    var response =
+        executeGraphQLQuery(
+            "{\"query\":\"query { AuthMyTable(limit: 5) { val } }\"}", "dummy-invalid-jwt");
 
     assertThat(response.getStatusLine().getStatusCode()).isEqualTo(401);
 
@@ -192,6 +201,29 @@ public class JwtContainerIT extends SqrlContainerTestBase {
     assertThat(responseBody).contains("\"JWT auth failed\"");
     assertThat(responseBody).contains("\"cause\"");
     assertThat(responseBody).contains("\"IllegalArgumentException: Invalid format for JWT\"");
+  }
+
+  @Test
+  @SneakyThrows
+  void givenJwt_whenMissingRequiredClaims_thenReturns403() {
+    compileAndStartServer("jwt-authorized-base.sqrl", testDir);
+
+    try {
+      // Generate valid JWT token but with empty claims (missing required claims)
+      var response =
+          executeGraphQLQuery(
+              "{\"query\":\"query { AuthMyTable(limit: 5) { val } }\"}",
+              generateJwtToken(Map.of()));
+
+      // Valid token but missing required claims should return 403 Forbidden
+      var responseBody = EntityUtils.toString(response.getEntity());
+      assertThat(response.getStatusLine().getStatusCode()).isEqualTo(403);
+      assertThat(responseBody).contains("\"errors\"");
+    } finally {
+      var logs = serverContainer.getLogs();
+      log.info("Detailed server logs:");
+      System.out.println(logs);
+    }
   }
 
   @Test
@@ -251,7 +283,7 @@ public class JwtContainerIT extends SqrlContainerTestBase {
       // Test calling a tool that doesn't require auth metadata
       var myTableTool =
           tools.tools().stream()
-              .filter(tool -> "GetMyTable".equals(tool.name()))
+              .filter(tool -> "GetAuthMyTable".equals(tool.name()))
               .findFirst()
               .orElseThrow(() -> new RuntimeException("GetMyTable tool not found"));
       log.info("Testing tool call: {}", myTableTool.name());
@@ -276,8 +308,58 @@ public class JwtContainerIT extends SqrlContainerTestBase {
 
   @Test
   @SneakyThrows
+  void givenJwt_whenMissingRequiredClaimsMcp_thenFails() {
+    compileAndStartServer("jwt-authorized-base.sqrl", testDir);
+
+    var mcpUrl =
+        String.format(
+            "http://localhost:%d/v1/mcp", serverContainer.getMappedPort(HTTP_SERVER_PORT));
+    var jwtToken = generateJwtToken(Map.of());
+    log.info("Testing MCP endpoint with JWT missing claims: {}", mcpUrl);
+
+    // Create MCP client with JWT authentication but missing required claims
+    var transport =
+        HttpClientStreamableHttpTransport.builder(mcpUrl)
+            .customizeRequest(r -> r.header("Authorization", "Bearer " + jwtToken))
+            .endpoint("/v1/mcp")
+            .build();
+
+    try (var client = McpClient.sync(transport).requestTimeout(Duration.ofSeconds(10)).build(); ) {
+      // Should succeed with proper JWT - authentication passes
+      client.initialize();
+
+      var tools = client.listTools();
+
+      log.info("Successfully listed {} tools", tools.tools().size());
+      assertThat(tools).isNotNull();
+      assertThat(tools.tools()).isNotNull();
+      assertThat(tools.tools()).isNotEmpty();
+
+      // Test calling a tool that requires auth metadata - should fail with Forbidden
+      var myTableTool =
+          tools.tools().stream()
+              .filter(tool -> "GetAuthMyTable".equals(tool.name()))
+              .findFirst()
+              .orElseThrow(() -> new RuntimeException("GetAuthMyTable tool not found"));
+      log.info("Testing tool call: {}", myTableTool.name());
+
+      var callRequest =
+          McpSchema.CallToolRequest.builder()
+              .name(myTableTool.name())
+              .arguments(Map.of("limit", 5))
+              .build();
+
+      // Should throw exception when calling tool with missing required claims
+      assertThatThrownBy(() -> client.callTool(callRequest))
+          .isInstanceOf(RuntimeException.class)
+          .hasMessageContaining("Forbidden");
+    }
+  }
+
+  @Test
+  @SneakyThrows
   void givenJwt_whenUnauthenticatedRest_thenReturns401() {
-    compileAndStartServerWithDatabase("jwt-authorized-base.sqrl", testDir);
+    compileAndStartServer("jwt-authorized-base.sqrl", testDir);
 
     var restUrl =
         String.format("http://localhost:%d", serverContainer.getMappedPort(HTTP_SERVER_PORT));
@@ -289,8 +371,8 @@ public class JwtContainerIT extends SqrlContainerTestBase {
             .decoder(new JacksonDecoder())
             .target(RestClient.class, restUrl);
 
-    // When JWT is enabled, all REST endpoints require authentication
-    assertThatThrownBy(() -> restClient.getMyTable(5))
+    // AuthMyTable endpoint requires authentication
+    assertThatThrownBy(() -> restClient.getAuthMyTable(5))
         .isInstanceOf(FeignException.Unauthorized.class)
         .hasMessageContaining("JWT auth failed");
   }
@@ -312,7 +394,7 @@ public class JwtContainerIT extends SqrlContainerTestBase {
             .target(RestClient.class, restUrl);
 
     // REST endpoint should work with valid JWT
-    var response = restClient.getMyTableWithAuth(jwtToken, 5);
+    var response = restClient.getAuthMyTableWithAuth(jwtToken, 5);
     log.info("REST endpoint response with JWT: {}", response);
 
     assertThat(response).isNotNull();
@@ -321,19 +403,53 @@ public class JwtContainerIT extends SqrlContainerTestBase {
     assertThat(response.data).allSatisfy(item -> assertThat(item.val).isPositive());
   }
 
+  @Test
+  @SneakyThrows
+  void givenJwt_whenMissingRequiredClaimsRest_thenReturns403() {
+    compileAndStartServer("jwt-authorized-base.sqrl", testDir);
+
+    var restUrl =
+        String.format("http://localhost:%d", serverContainer.getMappedPort(HTTP_SERVER_PORT));
+    var jwtToken = generateJwtToken(Map.of());
+    log.info("Testing REST endpoint with JWT missing claims: {}", restUrl);
+
+    try {
+      var restClient =
+          Feign.builder()
+              .encoder(new JacksonEncoder())
+              .decoder(new JacksonDecoder())
+              .target(RestClient.class, restUrl);
+
+      // Valid token but missing required claims should return 403 Forbidden
+      assertThatThrownBy(() -> restClient.getAuthMyTableWithAuth(jwtToken, 5))
+          .isInstanceOf(FeignException.Forbidden.class);
+    } finally {
+      var logs = serverContainer.getLogs();
+      log.info("Detailed MCP Validation Results:");
+      System.out.println(logs);
+    }
+  }
+
   private String generateJwtToken() {
+    return generateJwtToken(Map.of("val", 1, "values", List.of(1, 2, 3)));
+  }
+
+  private String generateJwtToken(Map<String, Object> claims) {
     var now = Instant.now();
     var expiration = now.plus(1, ChronoUnit.HOURS);
 
-    return Jwts.builder()
-        .issuer("my-test-issuer")
-        .audience()
-        .add("my-test-audience")
-        .and()
-        .issuedAt(Date.from(now))
-        .expiration(Date.from(expiration))
-        .claim("val", 1)
-        .claim("values", List.of(1, 2, 3))
+    var builder =
+        Jwts.builder()
+            .issuer("my-test-issuer")
+            .audience()
+            .add("my-test-audience")
+            .and()
+            .issuedAt(Date.from(now))
+            .expiration(Date.from(expiration));
+
+    claims.forEach(builder::claim);
+
+    return builder
         .signWith(
             new SecretKeySpec(
                 "testSecretThatIsAtLeast256BitsLong32Chars".getBytes(UTF_8), "HmacSHA256"))

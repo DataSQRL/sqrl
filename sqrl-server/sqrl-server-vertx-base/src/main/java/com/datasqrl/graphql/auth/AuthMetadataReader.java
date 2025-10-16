@@ -36,11 +36,23 @@ public class AuthMetadataReader implements MetadataReader {
 
     if (isRequired && !principal.containsKey(name)) {
       log.warn(
-          "Attribute {} is not present on authorization, attributes: {}",
+          "Required claim '{}' is not present on authorization, attributes: {}",
           name,
           principal.attributes());
-      throw new IllegalArgumentException(
-          "Attribute '%s' is not present on authorization".formatted(name));
+
+      // Set the HTTP status to 403 directly
+      rc.response().setStatusCode(403);
+      rc.response()
+          .putHeader(
+              "WWW-Authenticate",
+              "Bearer error=\"insufficient_scope\", error_description=\"Required claim missing\"");
+
+      throw new MissingRequiredClaimException(
+          name,
+          env.getField().getSourceLocation() != null
+              ? java.util.List.of(env.getField().getSourceLocation())
+              : null,
+          env.getExecutionStepInfo().getPath());
     }
 
     var value = principal.get(name);
