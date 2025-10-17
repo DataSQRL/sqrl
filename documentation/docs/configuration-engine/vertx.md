@@ -35,19 +35,33 @@ For secure APIs with JWT authentication:
           "pubSecKeys": [
             {
               "algorithm": "HS256",
-              "buffer": "<signer-secret>"   // Base64 encoded signer secret string
+              "buffer": "<signer-secret>" // Base64 encoded signer secret string
             }
           ],
           "jwtOptions": {
             "issuer": "<jwt-issuer>",
             "audience": ["<jwt-audience>"],
-            "expiresInSeconds": "3600",
-            "leeway": "60"
+            "expiresInSeconds": 3600,
+            "leeway": 30
           }
         }
       }
     }
   }
+}
+```
+
+As these config fields will be mapped to Vert.x Java POJOs, the name of the key fields are very important.
+For `pubSecKeys`, it is also possible to use different algorithms, thet requires the key in a different (mostly PEM) format.
+For example, for `ES256`, this would look something like this:
+```json
+{
+  "pubSecKeys": [
+    {
+      "algorithm": "ES256",
+      "buffer": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhk...restOfBase64...\n-----END PUBLIC KEY-----"
+    }
+  ]
 }
 ```
 
