@@ -27,7 +27,6 @@ Imports a single function `hypot` from the `math` library under the name `hypote
 
 Check out the [full list of function libraries](functions-library-generated).
 
-
 ## User Defined Functions
 
 Users can define custom functions and import them into a SQRL script. 
@@ -44,7 +43,6 @@ IMPORT myjavafunction.target.MyScalarFunction;
 ```
 
 Check out this [complete example](https://github.com/DataSQRL/datasqrl-examples/tree/main/user-defined-function).
-
 
 ### JavaScript
 

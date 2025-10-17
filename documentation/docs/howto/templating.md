@@ -4,7 +4,8 @@ DataSQRL uses the Mustache templating engine to substitute configuration variabl
 
 ## How It Works
 
-Variables in your SQRL script are wrapped in double curly braces `{{variableName}}`. When DataSQRL compiles the script, it replaces these placeholders with values defined in the `script.config` section of your [`package.json`](../configuration) configuration file.
+Variables in your SQRL script are wrapped in double curly braces `{{variableName}}`.
+When DataSQRL compiles the script, it replaces these placeholders with values defined in the `script.config` section of your [`package.json`](../configuration) configuration file.
 
 ## Example
 

@@ -38,12 +38,12 @@ Refer to the [Flink Documentation](hhttps://nightlies.apache.org/flink/flink-doc
 
 Flink supports deployment-specific configuration options for managing cluster resources:
 
-| Key                  | Type        | Default | Description                                                          |
-|----------------------|-------------|---------|----------------------------------------------------------------------|
-| `jobmanager-size`    | **string**  | -       | Job manager instance size: `dev`, `small`, `medium`, `large`        |
-| `taskmanager-size`   | **string**  | -       | Task manager instance size with resource variants                     |
-| `taskmanager-count`  | **integer** | -       | Number of task manager instances (minimum: 1)                       |
-| `secrets`            | **array**   | `null`  | Array of secret names to inject, or `null` if no secrets needed     |
+| Key                 | Type        | Default | Description                                                     |
+|---------------------|-------------|---------|-----------------------------------------------------------------|
+| `jobmanager-size`   | **string**  | -       | Job manager instance size: `dev`, `small`, `medium`, `large`    |
+| `taskmanager-size`  | **string**  | -       | Task manager instance size with resource variants               |
+| `taskmanager-count` | **integer** | -       | Number of task manager instances (minimum: 1)                   |
+| `secrets`           | **array**   | `null`  | Array of secret names to inject, or `null` if no secrets needed |
 
 ### Task Manager Size Options
 

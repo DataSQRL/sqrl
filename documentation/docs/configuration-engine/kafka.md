@@ -4,11 +4,11 @@ Apache Kafka is a streaming data platform that serves as the log engine in DataS
 
 ## Configuration Options
 
-| Key                    | Type        | Default   | Description                                                             |
-|------------------------|-------------|-----------|-------------------------------------------------------------------------|
-| `retention`            | **string**  | `null`    | Topic retention time (e.g., "7d", "24h") or indefinite when `null`      |
-| `watermark`            | **string**  | `"0 ms"`  | Watermark delay for event time processing                               |
-| `transaction-watermark`| **string**  | `"0 ms"`  | Watermark delay for event time processing when transactions are enabled |
+| Key                     | Type       | Default  | Description                                                             |
+|-------------------------|------------|----------|-------------------------------------------------------------------------|
+| `retention`             | **string** | `null`   | Topic retention time (e.g., "7d", "24h") or indefinite when `null`      |
+| `watermark`             | **string** | `"0 ms"` | Watermark delay for event time processing                               |
+| `transaction-watermark` | **string** | `"0 ms"` | Watermark delay for event time processing when transactions are enabled |
 
 Additional custom Kafka settings can be added under the `config` section.
 

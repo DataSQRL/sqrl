@@ -36,7 +36,8 @@ SQRL inherits full FlinkSQL grammar for
 Refer to the [FlinkSQL documentation](https://nightlies.apache.org/flink/flink-docs-release-1.19/docs/dev/table/sql/overview/) for a detailed specification.
 
 ## Type System
-In SQRL, every table and function has a type based on how the table represents data. The type determines the semantic validity of queries against tables and how data is processed by different engines.
+In SQRL, every table and function has a type based on how the table represents data.
+The type determines the semantic validity of queries against tables and how data is processed by different engines.
 
 SQRL assigns one of the following types to tables based on the definition:
 - **STREAM**: Represents a stream of immutable records with an assigned timestamp (often referred to as the "event time"). Streams are append-only. Stream tables represent events or actions over time.
@@ -56,7 +57,8 @@ IMPORT qualifiedPath.*;             -- wildcard
 
 Imports another SQRL script into the current script. The `qualifiedPath` is a `.` separated path that maps to the local file system relative to the current script, e.g. `IMPORT my.custom.script` maps to the relative path `./my/custom/script.sqrl`.
 
-Imports that end in `.*` are imported inline which means that the statement from that script are executed verbatim in the current script. Otherwise, imports are available within a namespace that's equal to the name of the script or the optional `AS` identifier.
+Imports that end in `.*` are imported inline which means that the statement from that script are executed verbatim in the current script.
+Otherwise, imports are available within a namespace that's equal to the name of the script or the optional `AS` identifier.
 
 Examples:
 * `IMPORT my.custom.script.*`: All table definitions from the script are imported inline and can be referenced directly as `MyTable` in `FROM` clauses.
@@ -65,7 +67,9 @@ Examples:
 
 ## CREATE TABLE (internal vs external)
 
-SQRL understands the complete FlinkSQL `CREATE TABLE` syntax, but distinguishes between **internal** and **external** source tables. External source tables are standard FlinkSQL tables that connect to an external data source (e.g. database or Kafka cluster). Internal tables connect to a data source that is managed by SQRL (depending on the configured `log` engine, e.g. a Kafka topic) and exposed for data ingestion in the interface.
+SQRL understands the complete FlinkSQL `CREATE TABLE` syntax, but distinguishes between **internal** and **external** source tables.
+External source tables are standard FlinkSQL tables that connect to an external data source (e.g. database or Kafka cluster).
+Internal tables connect to a data source that is managed by SQRL (depending on the configured `log` engine, e.g. a Kafka topic) and exposed for data ingestion in the interface.
 
 | Feature                       | Internal source (managed by SQRL)                               | External Source (connector) |
 |-------------------------------|-----------------------------------------------------------------|-----------------------------|
@@ -225,7 +229,10 @@ Employees.allReports RETURNS (employeeid BIGINT NOT NULL, name STRING NOT NULL, 
 
 ## Interfaces
 
-The tables and functions defined in a SQRL script are exposed through an interface. The term "interface" is used generically to describe a means by which a client, user, or external system can access the processed data. The interface depends on the [configured engines](configuration.md#engines-engines): API endpoints for servers, queries and views for databases, and topics for logs. An interface is a sink in the data processing DAG that's defined by a SQRL script.
+The tables and functions defined in a SQRL script are exposed through an interface.
+The term "interface" is used generically to describe a means by which a client, user, or external system can access the processed data.
+The interface depends on the [configured engines](configuration.md#engines-enabled-engines): API endpoints for servers, queries and views for databases, and topics for logs.
+An interface is a sink in the data processing DAG that's defined by a SQRL script.
 
 How a table or function is exposed in the interface depends on the access type. The access type is one of the following:
 
@@ -346,7 +353,8 @@ NEXT_BATCH;
 ```
 
 :::warning
-Sub-batches are executed stand-alone, meaning each sub-batch reads the data from source and not from the intermediate results of the previous sub-batch. If you wish to start with those, you need to explicitly write them out and read them.
+Sub-batches are executed stand-alone, meaning each sub-batch reads the data from source and not from the intermediate results of the previous sub-batch.
+If you wish to start with those, you need to explicitly write them out and read them.
 :::
 
 
