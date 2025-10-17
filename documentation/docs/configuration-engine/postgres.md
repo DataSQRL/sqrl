@@ -24,10 +24,10 @@ No mandatory configuration keys are required. Physical DDL (tables, indexes, vie
 
 PostgreSQL supports deployment-specific configuration for database scaling and high availability:
 
-| Key              | Type        | Default | Description                                             |
-|------------------|-------------|---------|---------------------------------------------------------|
-| `instance-size`  | **string**  | -       | Database instance size for compute and memory          |
-| `replica-count`  | **integer** | -       | Number of read replicas (minimum: 0, maximum varies)   |
+| Key             | Type        | Default | Description                                          |
+|-----------------|-------------|---------|------------------------------------------------------|
+| `instance-size` | **string**  | -       | Database instance size for compute and memory        |
+| `replica-count` | **integer** | -       | Number of read replicas (minimum: 0, maximum varies) |
 
 ### Instance Size Options
 

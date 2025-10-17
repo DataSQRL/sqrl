@@ -4,8 +4,8 @@ DuckDB is a vectorized database query engine that excels at analytical queries a
 
 ## Configuration Options
 
-| Key   | Type       | Default          | Description    |
-|-------|------------|------------------|----------------|
+| Key   | Type       | Default          | Description                           |
+|-------|------------|------------------|---------------------------------------|
 | `url` | **string** | `"jdbc:duckdb:"` | Full JDBC URL for database connection |
 
 ## Example Configuration

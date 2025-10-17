@@ -1,14 +1,17 @@
 # Enriching Data Streams
 
-A common requirement in stream processing is to enrich a **STREAM** of events with dimensional data in a time-consistent manner. This pattern is particularly useful when you need to join real-time events with slowly changing dimensional data while maintaining temporal consistency.
+A common requirement in stream processing is to enrich a **STREAM** of events with dimensional data in a time-consistent manner.
+This pattern is particularly useful when you need to join real-time events with slowly changing dimensional data while maintaining temporal consistency.
 
 ## Use Case: Transaction Enrichment
 
-Suppose we want to enrich transaction events with the account balance that was valid **at the time of the transaction**. This ensures we get consistent, point-in-time data for analysis.
+Suppose we want to enrich transaction events with the account balance that was valid **at the time of the transaction**.
+This ensures we get consistent, point-in-time data for analysis.
 
 ## Defining Source Tables
 
-First, define your data sources. These can be internal tables (managed by DataSQRL) or external tables with connector configuration:
+First, define your data sources.
+These can be internal tables (managed by DataSQRL) or external tables with connector configuration:
 
 ```sql
 -- Transaction events stream (STREAM type)

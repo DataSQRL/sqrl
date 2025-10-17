@@ -4,10 +4,10 @@ Eclipse Vert.x is a reactive server framework that serves as the GraphQL API ser
 
 ## Configuration Options
 
-| Key          | Type       | Default   | Notes                     |
-|--------------|------------|-----------|---------------------------|
-| `authKind`   | **string** | `"NONE"`  | Authentication type: `"NONE"` or `"JWT"` |
-| `config`     | **object** | see below | Vert.x-specific configuration including JWT settings |
+| Key        | Type       | Default   | Notes                                                |
+|------------|------------|-----------|------------------------------------------------------|
+| `authKind` | **string** | `"NONE"`  | Authentication type: `"NONE"` or `"JWT"`             |
+| `config`   | **object** | see below | Vert.x-specific configuration including JWT settings |
 
 ## Basic Configuration
 
@@ -55,10 +55,10 @@ For secure APIs with JWT authentication:
 
 Vert.x supports deployment-specific configuration options for scaling the API server:
 
-| Key               | Type        | Default | Description                                                    |
-|-------------------|-------------|---------|----------------------------------------------------------------|
-| `instance-size`   | **string**  | -       | Server instance size with storage variants                    |
-| `instance-count`  | **integer** | -       | Number of server instances to run (minimum: 1)               |
+| Key              | Type        | Default | Description                                    |
+|------------------|-------------|---------|------------------------------------------------|
+| `instance-size`  | **string**  | -       | Server instance size with storage variants     |
+| `instance-count` | **integer** | -       | Number of server instances to run (minimum: 1) |
 
 ### Instance Size Options
 

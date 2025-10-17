@@ -15,4 +15,5 @@ ResultA := SELECT a, c FROM MyComputedTable WHERE noop(a,b,c);
 ResultB := SELECT b, c FROM MyCOmputedTable WHERE noop(a,b,c);
 ```
 
-Because `ResultA` and `ResultB` select different subsets of columns, those selections can get optimized down to the source `InputData` table resulting in `expensive_function` being executed twice because the relational trees are slightly different. By adding the `noop` function we inhibit that push-down optimization.
+Because `ResultA` and `ResultB` select different subsets of columns, those selections can get optimized down to the source `InputData` table resulting in `expensive_function` being executed twice because the relational trees are slightly different.
+By adding the `noop` function we inhibit that push-down optimization.

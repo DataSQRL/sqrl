@@ -17,8 +17,8 @@
           "jwtOptions": {
             "issuer": "my-test-issuer",
             "audience": ["my-test-audience"],
-            "expiresInSeconds": "3600",
-            "leeway": "60"
+            "expiresInSeconds": 3600,
+            "leeway": 30
           }
         }
       }
