@@ -23,22 +23,30 @@ Take a look at the [DataSQRL Examples Repository](https://github.com/DataSQRL/da
 
 DataSQRL consists of three main components that work together:
 
-### 1. [SQRL Language](sqrl-language)
+### 1. [SQRL Language](../sqrl-language)
 SQRL extends Flink SQL with features specifically designed for reactive data processing:
 - **IMPORT/EXPORT** statements for connecting data systems
-- **Table functions and relationships** for interface definitions  
+- **Table functions and relationships** for interface definitions
 - **Hints** to control pipeline structure and execution
 - **Subscription syntax** for real-time data streaming
 - **Type system** for stream processing semantics
 
-### 2. [Configuration](configuration) 
+### 2. [Interface Design](../interface)
+DataSQRL automatically generates interfaces from your SQRL script for multiple protocols:
+- **Data Products** as database/data lake views and tables
+- **GraphQL APIs** with queries, mutations, and subscriptions
+- **REST endpoints** with GET/POST operations
+- **MCP tools/resources** for AI agent integration
+- **Schema customization** and operation control
+
+### 3. [Configuration](../configuration)
 JSON configuration files that define:
 - **Engines**: Data technologies (Flink, Postgres, Kafka, etc.)
 - **Connectors**: Templates for data sources and sinks
 - **Dependencies**: External data packages and libraries
 - **Compiler options**: Optimization and deployment settings
 
-### 3. [Compiler](compiler)
+### 4. [Compiler](../compiler)
 The DataSQRL compiler:
 - **Transpiles** SQRL scripts into deployment assets
 - **Optimizes** data processing DAGs across multiple engines
@@ -52,19 +60,20 @@ The DataSQRL compiler:
 - [**Tutorials**](tutorials) - Practical examples for specific use cases
 
 ### 📚 **Core Documentation**
-- [**SQRL Language**](sqrl-language) - Complete language specification and syntax
-- [**Configuration**](configuration) - Engine setup and project configuration  
-- [**Compiler**](compiler) - Command-line interface and compilation options
-- [**Functions**](functions) - Built-in functions and custom function libraries
+- [**SQRL Language**](../sqrl-language) - Complete language specification and syntax
+- [**Interface Design**](../interface) - API generation and data product interfaces
+- [**Configuration**](../configuration) - Engine setup and project configuration
+- [**Compiler**](../compiler) - Command-line interface and compilation options
+- [**Functions**](../functions) - Built-in functions and custom function libraries
 
 ### 🔌 **Integration & Deployment**
-- [**Connectors**](connectors) - Ingest from and export to external systems
+- [**Connectors**](../connectors) - Ingest from and export to external systems
 - [**Concepts**](concepts) - Key concepts in stream processing (time, watermarks, etc.)
-- [**How-To Guides**](howto) - Best practices and implementation patterns
+- [**How-To Guides**](/docs/category/-how-to) - Best practices and implementation patterns
 
 ### 🛠️ **Advanced Topics**
-- [**Developer Documentation**](deepdive) - Internal architecture and advanced customization
-- [**Compatibility**](compatibility) - Version compatibility and migration guides
+- [**Developer Documentation**](../deepdive) - Internal architecture and advanced customization
+- [**Compatibility**](../compatibility) - Version compatibility and migration guides
 
 ## Use Cases
 
