@@ -167,7 +167,7 @@
     <commons-csv.version>1.9.0</commons-csv.version>
     <guice.version>7.0.0</guice.version>
     <guice-multibindings.version>4.2.3</guice-multibindings.version>
-    <flink-connector-postgres-cdc.version>3.4.0</flink-connector-postgres-cdc.version>
+    <flink-connector-postgres-cdc.version>3.5.0</flink-connector-postgres-cdc.version>
     <zookeeper.version>3.9.4</zookeeper.version>
     <snakeyaml.version>2.5</snakeyaml.version>
     <aws-sdk-bom.version>2.35.10</aws-sdk-bom.version>
