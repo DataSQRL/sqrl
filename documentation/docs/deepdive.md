@@ -1,6 +1,6 @@
 # Deep Dive: How DataSQRL Works
 
-The DataSQRL Compiler executes the following steps:
+The DataSQRL `compile` executes the following steps:
 
 1. **Read Configuration**: Read and combine all package.json configuration files to initialize the configuration for the compiler
 2. **Build Project**: The [packager](#packager) builds the project structure in `build/` directory.
@@ -12,20 +12,19 @@ The DataSQRL Compiler executes the following steps:
 8. **Generate Physical Plans**: The [Physical Planner](#physical-planner) generates deployment assets for each engine and connector configuration to move data between engines.
 9. **Write Deployment Artifacts**: The deployment artifacts are written to the `build/deploy` folder with the engine plans in `build/deploy/plan`.
 
-The DataSQRL run command executes all compilation steps above and:
+The DataSQRL `run` command executes all compilation steps above and:
 1. **Launch**: Launches all engines in docker
 2. **Deploy**: Deploys the deployment assets to the engines, e.g. installs the database schema, passes the GraphQL execution plan to Vert.x, creates topics in RedPanda, and executes the compiled plan in Flink.
 3. **Runs**: Runs and monitors the engines as they execute the pipeline.
 
 The running data pipeline and the individual engines running each component are accessible locally via the mapped ports.
 
-The DataSQRL test command executes all compilation and run steps above and:
+The DataSQRL `test` command executes all compilation and run steps above and:
 1. **Subscriptions**: Installs subscription queries to listen for test results (if any)
 2. **Mutations**: Runs the mutation queries against the API in order (if any) and snapshots the results.
-   * Waits for the configured interval, number of checkpoints, or Flink job completion based on configuration.
+3. **Await**: Waits for the configured interval, number of checkpoints, or Flink job completion based on configuration.
 4. **Queries**: Runs the queries against the API to snapshot the results.
 5. **Snapshots**: Snapshots all subscription results in string order.
-
 
 ## Architecture
 
@@ -54,7 +53,8 @@ DataSQRL supports the following types of stages:
   * [GraphQL Java](https://www.graphql-java.com/)
 * Cache: For caching data on the server (coming soon)
 
-Currently, DataSQRL is closely tied to Flink as the stream processing engine. The other engines are modular, making it simple to add additional engines.
+Currently, DataSQRL is closely tied to Flink as the stream processing engine.
+The other engines are modular, making it simple to add additional engines.
 
 A data pipeline topology is a sequence of stages. A pipeline topology may contain
 multiple stages of the same type (e.g. two different database stages).
@@ -88,8 +88,6 @@ In addition, the packager executes the following special purpose preprocessors:
 
 Preprocessors are internal to DataSQRL and can be extended within the framework.
 
-
-
 ### Parser
 
 The parser is the first stage of the compiler. The parser parses the
@@ -113,7 +111,6 @@ that contains information needed by the planner.
 1. It keeps track of important metadata like timestamps, primary keys, sort orders, etc
 2. It analyzes the SQL to identify potential issues, semantic inconsistencies, or optimization potential and produces warnings or notices.
 3. It extracts cost information for the optimizer.
-
 
 ### DAG Planner
 
