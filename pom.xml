@@ -141,7 +141,7 @@
     <lombok.version>1.18.42</lombok.version>
     <junit.jupiter.version>5.13.4</junit.jupiter.version>
     <calcite.version>1.27.0</calcite.version>
-    <graphql-java.version>19.2</graphql-java.version>
+    <graphql-java.version>24.3</graphql-java.version>
     <graphql-java-extended-scalars.version>22.0</graphql-java-extended-scalars.version>
     <projectreactor.version>3.7.12</projectreactor.version>
     <avro.version>1.12.1</avro.version>
