@@ -167,12 +167,12 @@ CREATE TABLE `CustomerMessage_2` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Customer_1`
-(SELECT *
- FROM `default_catalog`.`default_database`.`Customer`)
+SELECT *
+ FROM `default_catalog`.`default_database`.`Customer`
 ;
 INSERT INTO `default_catalog`.`default_database`.`CustomerMessage_2`
- (SELECT *
-  FROM `default_catalog`.`default_database`.`CustomerMessage`)
+ SELECT *
+  FROM `default_catalog`.`default_database`.`CustomerMessage`
  ;
  END
 >>>kafka.json

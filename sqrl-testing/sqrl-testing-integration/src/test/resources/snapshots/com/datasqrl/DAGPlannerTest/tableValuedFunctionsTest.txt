@@ -38,7 +38,7 @@ Schema:
 Plan:
 LogicalAggregate(group=[{0, 1}], total=[COUNT()])
   LogicalProject(window_start=[$5], window_end=[$6])
-    LogicalTableFunctionScan(invocation=[CUMULATE(DESCRIPTOR($4), 300000:INTERVAL MINUTE, 600000:INTERVAL MINUTE)], rowType=[RecordType(BIGINT customerid, VARCHAR(2147483647) email, VARCHAR(2147483647) name, BIGINT lastUpdated, TIMESTAMP_LTZ(3) *ROWTIME* timestamp, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end, TIMESTAMP_LTZ(3) *ROWTIME* window_time)])
+    LogicalTableFunctionScan(invocation=[CUMULATE(TABLE(#0), DESCRIPTOR('timestamp'), 300000:INTERVAL MINUTE, 600000:INTERVAL MINUTE)], rowType=[RecordType(BIGINT customerid, VARCHAR(2147483647) email, VARCHAR(2147483647) name, BIGINT lastUpdated, TIMESTAMP_LTZ(3) *ROWTIME* timestamp, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end, TIMESTAMP_LTZ(3) *ROWTIME* window_time)])
       LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
         LogicalTableScan(table=[[default_catalog, default_database, Customer]])
 SQL: CREATE VIEW `CustomerCumulate` AS  SELECT window_start, window_end, COUNT(customerid) AS total
@@ -62,7 +62,7 @@ Schema:
 Plan:
 LogicalAggregate(group=[{0, 1, 2}], total=[COUNT()])
   LogicalProject(window_start=[$5], window_end=[$6], window_time=[$7])
-    LogicalTableFunctionScan(invocation=[HOP(DESCRIPTOR($4), 300000:INTERVAL MINUTE, 600000:INTERVAL MINUTE)], rowType=[RecordType(BIGINT customerid, VARCHAR(2147483647) email, VARCHAR(2147483647) name, BIGINT lastUpdated, TIMESTAMP_LTZ(3) *ROWTIME* timestamp, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end, TIMESTAMP_LTZ(3) *ROWTIME* window_time)])
+    LogicalTableFunctionScan(invocation=[HOP(TABLE(#0), DESCRIPTOR('timestamp'), 300000:INTERVAL MINUTE, 600000:INTERVAL MINUTE)], rowType=[RecordType(BIGINT customerid, VARCHAR(2147483647) email, VARCHAR(2147483647) name, BIGINT lastUpdated, TIMESTAMP_LTZ(3) *ROWTIME* timestamp, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end, TIMESTAMP_LTZ(3) *ROWTIME* window_time)])
       LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
         LogicalTableScan(table=[[default_catalog, default_database, Customer]])
 SQL: CREATE VIEW `CustomerHop` AS  SELECT window_start, window_end, window_time, COUNT(customerid) AS total
@@ -89,7 +89,7 @@ Plan:
 LogicalProject(customerid=[$3], window_start=[$0], window_end=[$1], window_time=[$2], total=[$4])
   LogicalAggregate(group=[{0, 1, 2, 3}], total=[COUNT()])
     LogicalProject(window_start=[$5], window_end=[$6], window_time=[$7], customerid=[$0])
-      LogicalTableFunctionScan(invocation=[SESSION(PARTITION BY($0), DESCRIPTOR($4), 600000:INTERVAL MINUTE)], rowType=[RecordType(BIGINT customerid, VARCHAR(2147483647) email, VARCHAR(2147483647) name, BIGINT lastUpdated, TIMESTAMP_LTZ(3) *ROWTIME* timestamp, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end, TIMESTAMP_LTZ(3) *ROWTIME* window_time)])
+      LogicalTableFunctionScan(invocation=[SESSION(TABLE(#0) PARTITION BY($0), DESCRIPTOR('timestamp'), 600000:INTERVAL MINUTE)], rowType=[RecordType(BIGINT customerid, VARCHAR(2147483647) email, VARCHAR(2147483647) name, BIGINT lastUpdated, TIMESTAMP_LTZ(3) *ROWTIME* timestamp, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end, TIMESTAMP_LTZ(3) *ROWTIME* window_time)])
         LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
           LogicalTableScan(table=[[default_catalog, default_database, Customer]])
 SQL: CREATE VIEW `CustomerSession` AS  SELECT customerid, window_start, window_end, window_time, COUNT(customerid) AS total
@@ -112,7 +112,7 @@ Schema:
 Plan:
 LogicalAggregate(group=[{0, 1}], total=[COUNT()])
   LogicalProject(window_start=[$5], window_end=[$6])
-    LogicalTableFunctionScan(invocation=[TUMBLE(DESCRIPTOR($4), 600000:INTERVAL MINUTE)], rowType=[RecordType(BIGINT customerid, VARCHAR(2147483647) email, VARCHAR(2147483647) name, BIGINT lastUpdated, TIMESTAMP_LTZ(3) *ROWTIME* timestamp, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end, TIMESTAMP_LTZ(3) *ROWTIME* window_time)])
+    LogicalTableFunctionScan(invocation=[TUMBLE(TABLE(#0), DESCRIPTOR('timestamp'), 600000:INTERVAL MINUTE)], rowType=[RecordType(BIGINT customerid, VARCHAR(2147483647) email, VARCHAR(2147483647) name, BIGINT lastUpdated, TIMESTAMP_LTZ(3) *ROWTIME* timestamp, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end, TIMESTAMP_LTZ(3) *ROWTIME* window_time)])
       LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
         LogicalTableScan(table=[[default_catalog, default_database, Customer]])
 SQL: CREATE VIEW `CustomerTumble` AS  SELECT window_start, window_end, COUNT(customerid) AS total
@@ -279,28 +279,28 @@ CREATE TABLE `StreamJoin_6` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Customer_1`
-(SELECT *
- FROM `default_catalog`.`default_database`.`Customer`)
+SELECT *
+ FROM `default_catalog`.`default_database`.`Customer`
 ;
 INSERT INTO `default_catalog`.`default_database`.`CustomerCumulate_2`
- (SELECT *
-  FROM `default_catalog`.`default_database`.`CustomerCumulate`)
+ SELECT *
+  FROM `default_catalog`.`default_database`.`CustomerCumulate`
  ;
  INSERT INTO `default_catalog`.`default_database`.`CustomerHop_3`
-  (SELECT *
-   FROM `default_catalog`.`default_database`.`CustomerHop`)
+  SELECT *
+   FROM `default_catalog`.`default_database`.`CustomerHop`
   ;
   INSERT INTO `default_catalog`.`default_database`.`CustomerSession_4`
-   (SELECT *
-    FROM `default_catalog`.`default_database`.`CustomerSession`)
+   SELECT *
+    FROM `default_catalog`.`default_database`.`CustomerSession`
    ;
    INSERT INTO `default_catalog`.`default_database`.`CustomerTumble_5`
-    (SELECT *
-     FROM `default_catalog`.`default_database`.`CustomerTumble`)
+    SELECT *
+     FROM `default_catalog`.`default_database`.`CustomerTumble`
     ;
     INSERT INTO `default_catalog`.`default_database`.`StreamJoin_6`
-     (SELECT `window_start`, `window_end`, `window_time`, `total`, `customerid`, `window_start0`, `window_end0`, CAST(`window_time0` AS TIMESTAMP(3) WITH LOCAL TIME ZONE) AS `window_time0`, `total0`
-      FROM `default_catalog`.`default_database`.`StreamJoin`)
+     SELECT `window_start`, `window_end`, `window_time`, `total`, `customerid`, `window_start0`, `window_end0`, CAST(`window_time0` AS TIMESTAMP(3) WITH LOCAL TIME ZONE) AS `window_time0`, `total0`
+      FROM `default_catalog`.`default_database`.`StreamJoin`
      ;
      END
 >>>kafka.json

@@ -66,12 +66,12 @@ CREATE TABLE `MyTable2_2` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`MyTable_1`
-(SELECT *
- FROM `default_catalog`.`default_database`.`MyTable`)
+SELECT *
+ FROM `default_catalog`.`default_database`.`MyTable`
 ;
 INSERT INTO `default_catalog`.`default_database`.`MyTable2_2`
- (SELECT *
-  FROM `default_catalog`.`default_database`.`MyTable2`)
+ SELECT *
+  FROM `default_catalog`.`default_database`.`MyTable2`
  ;
  END
 >>>kafka.json

@@ -292,36 +292,36 @@ CREATE TABLE `Orders_7` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Customer_1`
-(SELECT *
- FROM `default_catalog`.`default_database`.`Customer`)
+SELECT *
+ FROM `default_catalog`.`default_database`.`Customer`
 ;
 INSERT INTO `default_catalog`.`default_database`.`CustomerExport`
- (SELECT *
-  FROM `default_catalog`.`default_database`.`CustomerSubset`)
+ SELECT *
+  FROM `default_catalog`.`default_database`.`CustomerSubset`
  ;
  INSERT INTO `default_catalog`.`default_database`.`CustomerSubset_2`
-  (SELECT `customerid`, `name`, `timestamp`, `hash_columns`(`customerid`, `name`, `timestamp`) AS `__pk_hash`
-   FROM `default_catalog`.`default_database`.`CustomerSubset`)
+  SELECT `customerid`, `name`, `timestamp`, `hash_columns`(`customerid`, `name`, `timestamp`) AS `__pk_hash`
+   FROM `default_catalog`.`default_database`.`CustomerSubset`
   ;
   INSERT INTO `default_catalog`.`default_database`.`DistinctStream_3`
-   (SELECT *
-    FROM `default_catalog`.`default_database`.`DistinctCustomer`)
+   SELECT *
+    FROM `default_catalog`.`default_database`.`DistinctCustomer`
    ;
    INSERT INTO `default_catalog`.`default_database`.`DistinctCustomer_4`
-    (SELECT *
-     FROM `default_catalog`.`default_database`.`Customer`)
+    SELECT *
+     FROM `default_catalog`.`default_database`.`Customer`
     ;
     INSERT INTO `default_catalog`.`default_database`.`JoinStream_5`
-     (SELECT *
-      FROM `default_catalog`.`default_database`.`JoinStream`)
+     SELECT *
+      FROM `default_catalog`.`default_database`.`JoinStream`
      ;
      INSERT INTO `default_catalog`.`default_database`.`JoinStream_6`
-      (SELECT `id`, `name`, `hash_columns`(`id`, `name`) AS `__pk_hash`
-       FROM `default_catalog`.`default_database`.`JoinStream`)
+      SELECT `id`, `name`, `hash_columns`(`id`, `name`) AS `__pk_hash`
+       FROM `default_catalog`.`default_database`.`JoinStream`
       ;
       INSERT INTO `default_catalog`.`default_database`.`Orders_7`
-       (SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`
-        FROM `default_catalog`.`default_database`.`Orders`)
+       SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`
+        FROM `default_catalog`.`default_database`.`Orders`
        ;
        END
 >>>kafka.json

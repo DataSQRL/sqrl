@@ -147,16 +147,16 @@ CREATE TABLE `Orders_3` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`CustomerAgg1_1`
-(SELECT *
- FROM `default_catalog`.`default_database`.`CustomerAgg1`)
+SELECT *
+ FROM `default_catalog`.`default_database`.`CustomerAgg1`
 ;
 INSERT INTO `default_catalog`.`default_database`.`CustomerAgg3_2`
- (SELECT *
-  FROM `default_catalog`.`default_database`.`CustomerAgg3`)
+ SELECT *
+  FROM `default_catalog`.`default_database`.`CustomerAgg3`
  ;
  INSERT INTO `default_catalog`.`default_database`.`Orders_3`
-  (SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`, `_ingest_time`
-   FROM `default_catalog`.`default_database`.`Orders`)
+  SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`, `_ingest_time`
+   FROM `default_catalog`.`default_database`.`Orders`
   ;
   END
 >>>kafka.json

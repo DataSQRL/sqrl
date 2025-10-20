@@ -197,7 +197,7 @@ Plan:
 LogicalProject(total=[$2], total_id=[$3], window_start=[$0], window_end=[$1])
   LogicalAggregate(group=[{0, 1}], total=[COUNT()], total_id=[SUM($2)])
     LogicalProject(window_start=[$3], window_end=[$4], customerid=[$2])
-      LogicalTableFunctionScan(invocation=[TUMBLE(DESCRIPTOR($0), 1000:INTERVAL SECOND)], rowType=[RecordType(TIMESTAMP_LTZ(3) *ROWTIME* time, BIGINT id, BIGINT customerid, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end, TIMESTAMP_LTZ(3) *ROWTIME* window_time)])
+      LogicalTableFunctionScan(invocation=[TUMBLE(TABLE(#0), DESCRIPTOR('time'), 1000:INTERVAL SECOND)], rowType=[RecordType(TIMESTAMP_LTZ(3) *ROWTIME* time, BIGINT id, BIGINT customerid, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end, TIMESTAMP_LTZ(3) *ROWTIME* window_time)])
         LogicalProject(time=[$0], id=[$1], customerid=[$2])
           LogicalTableScan(table=[[default_catalog, default_database, OrderCustomerLeftExcludedTimeBound]])
 SQL: CREATE VIEW `VerifyStream` AS  SELECT
@@ -353,20 +353,20 @@ CREATE TABLE `VerifyStream_4` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Customer_1`
-(SELECT *
- FROM `default_catalog`.`default_database`.`Customer`)
+SELECT *
+ FROM `default_catalog`.`default_database`.`Customer`
 ;
 INSERT INTO `default_catalog`.`default_database`.`OrderCustomerLeftExcludedTimeBound_2`
- (SELECT *
-  FROM `default_catalog`.`default_database`.`OrderCustomerLeftExcludedTimeBound`)
+ SELECT *
+  FROM `default_catalog`.`default_database`.`OrderCustomerLeftExcludedTimeBound`
  ;
  INSERT INTO `default_catalog`.`default_database`.`Orders_3`
-  (SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`
-   FROM `default_catalog`.`default_database`.`Orders`)
+  SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`
+   FROM `default_catalog`.`default_database`.`Orders`
   ;
   INSERT INTO `default_catalog`.`default_database`.`VerifyStream_4`
-   (SELECT *
-    FROM `default_catalog`.`default_database`.`VerifyStream`)
+   SELECT *
+    FROM `default_catalog`.`default_database`.`VerifyStream`
    ;
    END
 >>>kafka.json

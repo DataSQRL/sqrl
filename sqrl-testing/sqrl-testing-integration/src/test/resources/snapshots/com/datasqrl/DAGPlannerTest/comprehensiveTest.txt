@@ -216,7 +216,7 @@ Schema:
 Plan:
 LogicalAggregate(group=[{0, 1}], unique_email_count=[COUNT(DISTINCT $2)])
   LogicalProject(window_start=[$5], window_end=[$6], email=[$1])
-    LogicalTableFunctionScan(invocation=[TUMBLE(DESCRIPTOR($4), 60000:INTERVAL MINUTE)], rowType=[RecordType(BIGINT customerid, VARCHAR(2147483647) email, VARCHAR(2147483647) name, BIGINT lastUpdated, TIMESTAMP_LTZ(3) *ROWTIME* timestamp, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end, TIMESTAMP_LTZ(3) *ROWTIME* window_time)])
+    LogicalTableFunctionScan(invocation=[TUMBLE(TABLE(#0), DESCRIPTOR('timestamp'), 60000:INTERVAL MINUTE)], rowType=[RecordType(BIGINT customerid, VARCHAR(2147483647) email, VARCHAR(2147483647) name, BIGINT lastUpdated, TIMESTAMP_LTZ(3) *ROWTIME* timestamp, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end, TIMESTAMP_LTZ(3) *ROWTIME* window_time)])
       LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
         LogicalTableScan(table=[[default_catalog, default_database, SelectCustomers]])
 SQL: CREATE VIEW `CustomerTimeWindow` AS  SELECT
@@ -587,8 +587,8 @@ CREATE VIEW `AnotherCustomer`
 AS
 WITH `customer_subset` AS (SELECT *
   FROM `_Customer`
-  WHERE `customerid` > 100) (SELECT `customerid`, `email`, `lastUpdated`
-  FROM `customer_subset`);
+  WHERE `customerid` > 100) SELECT `customerid`, `email`, `lastUpdated`
+  FROM `customer_subset`;
 CREATE VIEW `CustomerByMultipleTime`
 AS
 SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`
@@ -905,72 +905,72 @@ CREATE TABLE `UnnestOrders_16` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`AnotherCustomer_1`
-(SELECT *
- FROM `default_catalog`.`default_database`.`AnotherCustomer`)
+SELECT *
+ FROM `default_catalog`.`default_database`.`AnotherCustomer`
 ;
 INSERT INTO `default_catalog`.`default_database`.`Customer_2`
- (SELECT *
-  FROM `default_catalog`.`default_database`.`Customer`)
+ SELECT *
+  FROM `default_catalog`.`default_database`.`Customer`
  ;
  INSERT INTO `default_catalog`.`default_database`.`Customer_3`
-  (SELECT *
-   FROM `default_catalog`.`default_database`.`Customer`)
+  SELECT *
+   FROM `default_catalog`.`default_database`.`Customer`
   ;
   INSERT INTO `default_catalog`.`default_database`.`CustomerByMultipleTime_4`
-   (SELECT *
-    FROM `default_catalog`.`default_database`.`Customer`)
+   SELECT *
+    FROM `default_catalog`.`default_database`.`Customer`
    ;
    INSERT INTO `default_catalog`.`default_database`.`CustomerByTime2_5`
-    (SELECT *
-     FROM `default_catalog`.`default_database`.`Customer`)
+    SELECT *
+     FROM `default_catalog`.`default_database`.`Customer`
     ;
     INSERT INTO `default_catalog`.`default_database`.`CustomerFilteredDistinct_6`
-     (SELECT *
-      FROM `default_catalog`.`default_database`.`CustomerFilteredDistinct`)
+     SELECT *
+      FROM `default_catalog`.`default_database`.`CustomerFilteredDistinct`
      ;
      INSERT INTO `default_catalog`.`default_database`.`CustomerSubscription_7`
-      (SELECT *
-       FROM `default_catalog`.`default_database`.`CustomerSubscription`)
+      SELECT *
+       FROM `default_catalog`.`default_database`.`CustomerSubscription`
       ;
       INSERT INTO `default_catalog`.`default_database`.`TimeWindow_8`
-       (SELECT *
-        FROM `default_catalog`.`default_database`.`CustomerTimeWindow`)
+       SELECT *
+        FROM `default_catalog`.`default_database`.`CustomerTimeWindow`
        ;
        INSERT INTO `default_catalog`.`default_database`.`CustomerTimeWindow_9`
-        (SELECT *
-         FROM `default_catalog`.`default_database`.`CustomerTimeWindow`)
+        SELECT *
+         FROM `default_catalog`.`default_database`.`CustomerTimeWindow`
         ;
         INSERT INTO `default_catalog`.`default_database`.`ExplicitDistinct_10`
-         (SELECT *
-          FROM `default_catalog`.`default_database`.`ExplicitDistinct`)
+         SELECT *
+          FROM `default_catalog`.`default_database`.`ExplicitDistinct`
          ;
          INSERT INTO `default_catalog`.`default_database`.`ExternalOrders_11`
-          (SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`
-           FROM `default_catalog`.`default_database`.`ExternalOrders`)
+          SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`
+           FROM `default_catalog`.`default_database`.`ExternalOrders`
           ;
           INSERT INTO `default_catalog`.`default_database`.`InvalidDistinct_12`
-           (SELECT *
-            FROM `default_catalog`.`default_database`.`InvalidDistinct`)
+           SELECT *
+            FROM `default_catalog`.`default_database`.`InvalidDistinct`
            ;
            INSERT INTO `default_catalog`.`default_database`.`Orders_13`
-            (SELECT *
-             FROM `default_catalog`.`default_database`.`Orders`)
+            SELECT *
+             FROM `default_catalog`.`default_database`.`Orders`
             ;
             INSERT INTO `default_catalog`.`default_database`.`SelectCustomers_14`
-             (SELECT *
-              FROM `default_catalog`.`default_database`.`SelectCustomers`)
+             SELECT *
+              FROM `default_catalog`.`default_database`.`SelectCustomers`
              ;
              INSERT INTO `default_catalog`.`default_database`.`MyPrintSink_ex1`
-              (SELECT *
-               FROM `default_catalog`.`default_database`.`TemporalJoin`)
+              SELECT *
+               FROM `default_catalog`.`default_database`.`TemporalJoin`
               ;
               INSERT INTO `default_catalog`.`default_database`.`TemporalJoin_15`
-               (SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`, `customerid0`, CAST(`timestamp` AS TIMESTAMP(3) WITH LOCAL TIME ZONE) AS `timestamp`, `name`
-                FROM `default_catalog`.`default_database`.`TemporalJoin`)
+               SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`, `customerid0`, CAST(`timestamp` AS TIMESTAMP(3) WITH LOCAL TIME ZONE) AS `timestamp`, `name`
+                FROM `default_catalog`.`default_database`.`TemporalJoin`
                ;
                INSERT INTO `default_catalog`.`default_database`.`UnnestOrders_16`
-                (SELECT `id`, `customerid`, `time`, `productid`, `quantity`, `discount`, `newId`, `hash_columns`(`id`, `customerid`, `time`, `productid`, `quantity`, `discount`, `newId`) AS `__pk_hash`
-                 FROM `default_catalog`.`default_database`.`UnnestOrders`)
+                SELECT `id`, `customerid`, `time`, `productid`, `quantity`, `discount`, `newId`, `hash_columns`(`id`, `customerid`, `time`, `productid`, `quantity`, `discount`, `newId`) AS `__pk_hash`
+                 FROM `default_catalog`.`default_database`.`UnnestOrders`
                 ;
                 END
 >>>kafka.json

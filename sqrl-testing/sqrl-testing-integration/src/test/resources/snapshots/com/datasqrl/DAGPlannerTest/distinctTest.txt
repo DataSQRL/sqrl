@@ -430,40 +430,40 @@ CREATE TABLE `ExplicitDistinct_9` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Customer_1`
-(SELECT *
- FROM `default_catalog`.`default_database`.`Customer`)
+SELECT *
+ FROM `default_catalog`.`default_database`.`Customer`
 ;
 INSERT INTO `default_catalog`.`default_database`.`CustomerByMultiple_2`
- (SELECT *
-  FROM `default_catalog`.`default_database`.`CustomerByMultiple`)
+ SELECT *
+  FROM `default_catalog`.`default_database`.`CustomerByMultiple`
  ;
  INSERT INTO `default_catalog`.`default_database`.`CustomerByMultipleTime_3`
-  (SELECT *
-   FROM `default_catalog`.`default_database`.`Customer`)
+  SELECT *
+   FROM `default_catalog`.`default_database`.`Customer`
   ;
   INSERT INTO `default_catalog`.`default_database`.`CustomerByTime_4`
-   (SELECT *
-    FROM `default_catalog`.`default_database`.`Customer`)
+   SELECT *
+    FROM `default_catalog`.`default_database`.`Customer`
    ;
    INSERT INTO `default_catalog`.`default_database`.`CustomerByTime2_5`
-    (SELECT *
-     FROM `default_catalog`.`default_database`.`Customer`)
+    SELECT *
+     FROM `default_catalog`.`default_database`.`Customer`
     ;
     INSERT INTO `default_catalog`.`default_database`.`CustomerByTimeAsc_6`
-     (SELECT *
-      FROM `default_catalog`.`default_database`.`CustomerByTimeAsc`)
+     SELECT *
+      FROM `default_catalog`.`default_database`.`CustomerByTimeAsc`
      ;
      INSERT INTO `default_catalog`.`default_database`.`CustomerByUpdated_7`
-      (SELECT *
-       FROM `default_catalog`.`default_database`.`CustomerByUpdated`)
+      SELECT *
+       FROM `default_catalog`.`default_database`.`CustomerByUpdated`
       ;
       INSERT INTO `default_catalog`.`default_database`.`CustomerByUpdatedAsc_8`
-       (SELECT *
-        FROM `default_catalog`.`default_database`.`CustomerByUpdatedAsc`)
+       SELECT *
+        FROM `default_catalog`.`default_database`.`CustomerByUpdatedAsc`
        ;
        INSERT INTO `default_catalog`.`default_database`.`ExplicitDistinct_9`
-        (SELECT *
-         FROM `default_catalog`.`default_database`.`ExplicitDistinct`)
+        SELECT *
+         FROM `default_catalog`.`default_database`.`ExplicitDistinct`
         ;
         END
 >>>kafka.json
