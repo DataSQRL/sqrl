@@ -309,12 +309,12 @@ CREATE TABLE `CustomerStream_2` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Customer_1`
-(SELECT *
- FROM `default_catalog`.`default_database`.`CustomerStream`)
+SELECT *
+ FROM `default_catalog`.`default_database`.`CustomerStream`
 ;
 INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
- (SELECT *
-  FROM `default_catalog`.`default_database`.`CustomerStream`)
+ SELECT *
+  FROM `default_catalog`.`default_database`.`CustomerStream`
  ;
  END
 >>>kafka.json

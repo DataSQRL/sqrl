@@ -149,12 +149,12 @@ CREATE TABLE `_Input_2` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`InputDistinct_1`
-(SELECT `_uuid`, `userid`, `event_time`, `unique_id`, `hash_columns`(`userid`) AS `__pk_hash`
- FROM `default_catalog`.`default_database`.`_Input`)
+SELECT `_uuid`, `userid`, `event_time`, `unique_id`, `hash_columns`(`userid`) AS `__pk_hash`
+ FROM `default_catalog`.`default_database`.`_Input`
 ;
 INSERT INTO `default_catalog`.`default_database`.`_Input_2`
- (SELECT *
-  FROM `default_catalog`.`default_database`.`_Input`)
+ SELECT *
+  FROM `default_catalog`.`default_database`.`_Input`
  ;
  END
 >>>kafka.json

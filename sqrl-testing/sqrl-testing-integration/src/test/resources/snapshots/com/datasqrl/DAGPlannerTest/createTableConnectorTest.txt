@@ -37,7 +37,7 @@ Plan:
 LogicalProject(sensorid=[$0], time_hour=[$3], avg_temperature=[$4])
   LogicalAggregate(group=[{0, 1, 2, 3}], avg_temperature=[AVG($4)])
     LogicalProject(sensorid=[$1], window_start=[$5], window_end=[$6], time_hour=[$7], temperature=[$3])
-      LogicalTableFunctionScan(invocation=[TUMBLE(DESCRIPTOR($4), 3600000:INTERVAL MINUTE)], rowType=[RecordType(VARCHAR(2147483647) uuid, BIGINT sensorid, BIGINT epoch_timestamp, DOUBLE temperature, TIMESTAMP_LTZ(3) *ROWTIME* timestamp, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end, TIMESTAMP_LTZ(3) *ROWTIME* window_time)])
+      LogicalTableFunctionScan(invocation=[TUMBLE(TABLE(#0), DESCRIPTOR('timestamp'), 3600000:INTERVAL MINUTE)], rowType=[RecordType(VARCHAR(2147483647) uuid, BIGINT sensorid, BIGINT epoch_timestamp, DOUBLE temperature, TIMESTAMP_LTZ(3) *ROWTIME* timestamp, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end, TIMESTAMP_LTZ(3) *ROWTIME* window_time)])
         LogicalProject(uuid=[$0], sensorid=[$1], epoch_timestamp=[$2], temperature=[$3], timestamp=[$4])
           LogicalTableScan(table=[[default_catalog, default_database, SensorReading]])
 SQL: CREATE VIEW `SensorTempByHour` AS  SELECT sensorid, window_time as time_hour, AVG(temperature) AS avg_temperature
@@ -100,12 +100,12 @@ CREATE TABLE `SensorTempByHour_2` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`SensorReading_1`
-(SELECT `uuid`, `sensorid`, `epoch_timestamp`, `temperature`, `timestamp`, `hash_columns`(`uuid`, `sensorid`, `epoch_timestamp`, `temperature`, `timestamp`) AS `__pk_hash`
- FROM `default_catalog`.`default_database`.`SensorReading`)
+SELECT `uuid`, `sensorid`, `epoch_timestamp`, `temperature`, `timestamp`, `hash_columns`(`uuid`, `sensorid`, `epoch_timestamp`, `temperature`, `timestamp`) AS `__pk_hash`
+ FROM `default_catalog`.`default_database`.`SensorReading`
 ;
 INSERT INTO `default_catalog`.`default_database`.`SensorTempByHour_2`
- (SELECT *
-  FROM `default_catalog`.`default_database`.`SensorTempByHour`)
+ SELECT *
+  FROM `default_catalog`.`default_database`.`SensorTempByHour`
  ;
  END
 >>>kafka.json

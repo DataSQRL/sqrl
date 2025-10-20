@@ -164,16 +164,16 @@ CREATE TABLE `Orders_3` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Customer_1`
-(SELECT *
- FROM `default_catalog`.`default_database`.`Customer`)
+SELECT *
+ FROM `default_catalog`.`default_database`.`Customer`
 ;
 INSERT INTO `default_catalog`.`default_database`.`CustomerOrdersJoin_2`
- (SELECT `customerid`, `email`, `name`, `lastUpdated`, `_ingest_time`, `id`, `customerid0`, `time`, `to_jsonb`(`entries`) AS `entries`, CAST(`_ingest_time0` AS TIMESTAMP(3) WITH LOCAL TIME ZONE) AS `_ingest_time0`
-  FROM `default_catalog`.`default_database`.`CustomerOrdersJoin`)
+ SELECT `customerid`, `email`, `name`, `lastUpdated`, `_ingest_time`, `id`, `customerid0`, `time`, `to_jsonb`(`entries`) AS `entries`, CAST(`_ingest_time0` AS TIMESTAMP(3) WITH LOCAL TIME ZONE) AS `_ingest_time0`
+  FROM `default_catalog`.`default_database`.`CustomerOrdersJoin`
  ;
  INSERT INTO `default_catalog`.`default_database`.`Orders_3`
-  (SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`, `_ingest_time`
-   FROM `default_catalog`.`default_database`.`Orders`)
+  SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`, `_ingest_time`
+   FROM `default_catalog`.`default_database`.`Orders`
   ;
   END
 >>>kafka.json

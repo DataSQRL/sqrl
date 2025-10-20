@@ -94,12 +94,12 @@ CREATE TABLE `Product_2` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`FunctionCalls_1`
-(SELECT `searchResult`, `format`, `hash_columns`(`searchResult`, `format`) AS `__pk_hash`
- FROM `default_catalog`.`default_database`.`FunctionCalls`)
+SELECT `searchResult`, `format`, `hash_columns`(`searchResult`, `format`) AS `__pk_hash`
+ FROM `default_catalog`.`default_database`.`FunctionCalls`
 ;
 INSERT INTO `default_catalog`.`default_database`.`Product_2`
- (SELECT *
-  FROM `default_catalog`.`default_database`.`Product`)
+ SELECT *
+  FROM `default_catalog`.`default_database`.`Product`
  ;
  END
 >>>kafka.json
