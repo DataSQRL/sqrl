@@ -63,8 +63,8 @@ import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.configuration.CheckpointingOptions;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.configuration.ExecutionOptions;
+import org.apache.flink.configuration.StateRecoveryOptions;
 import org.apache.flink.core.execution.SavepointFormatType;
-import org.apache.flink.runtime.jobgraph.SavepointConfigOptions;
 import org.apache.flink.table.api.TableResult;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
@@ -196,7 +196,7 @@ public class DatasqrlRun {
         .ifPresent(
             sp -> {
               log.info("Trying to restore from savepoint: {}", sp);
-              flinkConfig.set(SavepointConfigOptions.SAVEPOINT_PATH, sp);
+              flinkConfig.set(StateRecoveryOptions.SAVEPOINT_PATH, sp);
             });
 
     var runner = new SqrlRunner(execMode, flinkConfig, resolver, sqlFile, planFile, udfPath);

@@ -106,11 +106,11 @@
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
-      <artifactId>flink-connector-kafka</artifactId>
+      <artifactId>flink-connector-jdbc-postgres</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
-      <artifactId>flink-connector-jdbc</artifactId>
+      <artifactId>flink-connector-kafka</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
@@ -269,12 +269,7 @@
     </dependency>
     <dependency>
       <groupId>org.apache.iceberg</groupId>
-      <artifactId>iceberg-flink-runtime-1.19</artifactId>
-      <version>${iceberg.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.iceberg</groupId>
-      <artifactId>iceberg-hive-metastore</artifactId>
+      <artifactId>iceberg-flink-runtime-2.0</artifactId>
       <version>${iceberg.version}</version>
     </dependency>
 
