@@ -17,6 +17,7 @@ package com.datasqrl.calcite;
 
 import com.datasqrl.calcite.function.OperatorRuleTransform;
 import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.plan.rules.SqrlRelMetadataProvider;
 import com.datasqrl.util.ServiceLoaderDiscovery;
 import java.util.HashMap;
 import java.util.List;
@@ -65,7 +66,7 @@ public class OperatorRuleTransformer {
             .collect(Collectors.toList());
     // Apply the rules to relnode
     relNode =
-        Programs.hep(rules, false, null)
+        Programs.hep(rules, false, SqrlRelMetadataProvider.INSTANCE)
             .run(null, relNode, relNode.getTraitSet(), List.of(), List.of());
 
     return relNode;

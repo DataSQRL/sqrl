@@ -43,7 +43,7 @@ public class SqrlRelMetadataProvider extends ChainedRelMetadataProvider {
 
   public static final RelMetadataProvider INSTANCE = new SqrlRelMetadataProvider();
 
-  public SqrlRelMetadataProvider() {
+  private SqrlRelMetadataProvider() {
     super(
         ImmutableList.of(
             RelMdPercentageOriginalRows.SOURCE,
