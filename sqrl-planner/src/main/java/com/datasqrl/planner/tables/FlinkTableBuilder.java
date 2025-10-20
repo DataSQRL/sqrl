@@ -191,7 +191,7 @@ public class FlinkTableBuilder {
         columnList,
         tableConstraints,
         propertyList,
-        //        FlinkSqlNodeFactory.NO_DISTRIBUTION,
+        FlinkSqlNodeFactory.NO_DISTRIBUTION,
         partitionKeyList,
         watermark,
         null,

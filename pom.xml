@@ -97,7 +97,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
     <!-- Flink runner props -->
-    <flinkrunner.version>0.8.2</flinkrunner.version>
+    <flinkrunner.version>0.9-SNAPSHOT</flinkrunner.version>
     <flinkrunner.image.repo>docker.io</flinkrunner.image.repo>
 
     <!-- Params -->
@@ -110,7 +110,9 @@
     <vertx.version>5.0.4</vertx.version>
     <agroal.version>2.8</agroal.version>
     <kafka.version>3.4.0</kafka.version>
-    <flink.version>1.19.3</flink.version>
+    <flink.version>2.1.0</flink.version>
+    <flink.connector.jdbc.version>4.0.0-2.0</flink.connector.jdbc.version>
+    <flink.connector.kafka.version>4.0.1-2.0</flink.connector.kafka.version>
     <slf4j.version>1.7.36</slf4j.version>
     <postgres.version>42.7.8</postgres.version>
     <log4j.version>2.25.2</log4j.version>
@@ -148,7 +150,7 @@
     <freemarker.version>2.3.34</freemarker.version>
     <mustache.version>0.9.14</mustache.version>
     <jsonschema.version>1.5.9</jsonschema.version>
-    <iceberg.version>1.9.2</iceberg.version>
+    <iceberg.version>1.10.0</iceberg.version>
     <!-- Do not touch Hadoop version unless it has been updated on the Flink side.
          Otherwise, it might break the Flink filesystem integration. -->
     <hadoop.version>3.3.4</hadoop.version>
@@ -167,7 +169,7 @@
     <commons-csv.version>1.9.0</commons-csv.version>
     <guice.version>7.0.0</guice.version>
     <guice-multibindings.version>4.2.3</guice-multibindings.version>
-    <flink-connector-postgres-cdc.version>3.4.0</flink-connector-postgres-cdc.version>
+    <flink-connector-postgres-cdc.version>3.5.0</flink-connector-postgres-cdc.version>
     <zookeeper.version>3.9.4</zookeeper.version>
     <snakeyaml.version>2.5</snakeyaml.version>
     <aws-sdk-bom.version>2.35.10</aws-sdk-bom.version>
@@ -479,13 +481,13 @@
       </dependency>
       <dependency>
         <groupId>org.apache.flink</groupId>
-        <artifactId>flink-connector-jdbc</artifactId>
-        <version>3.2.0-1.19</version>
+        <artifactId>flink-connector-jdbc-postgres</artifactId>
+        <version>${flink.connector.jdbc.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.flink</groupId>
         <artifactId>flink-connector-kafka</artifactId>
-        <version>3.2.0-1.19</version>
+        <version>${flink.connector.kafka.version}</version>
       </dependency>
 
       <!-- calcite -->
