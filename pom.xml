@@ -143,7 +143,7 @@
     <calcite.version>1.27.0</calcite.version>
     <graphql-java.version>19.2</graphql-java.version>
     <graphql-java-extended-scalars.version>22.0</graphql-java-extended-scalars.version>
-    <projectreactor.version>3.7.11</projectreactor.version>
+    <projectreactor.version>3.7.12</projectreactor.version>
     <avro.version>1.12.0</avro.version>
     <freemarker.version>2.3.34</freemarker.version>
     <mustache.version>0.9.14</mustache.version>
