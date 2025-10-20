@@ -124,7 +124,7 @@ public class SqrlTypeRelDataTypeConverter implements SqrlTypeConverter<RelDataTy
         case INTERVAL_YEAR_MONTH:
         case INTERVAL_MONTH:
           return IntervalType.INSTANCE;
-          // TODO: support those 3
+        // TODO: support those 3
         case DATE:
         case TIME:
         case TIME_WITH_LOCAL_TIME_ZONE:

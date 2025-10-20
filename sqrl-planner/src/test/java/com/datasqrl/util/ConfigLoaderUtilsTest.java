@@ -455,7 +455,8 @@ class ConfigLoaderUtilsTest {
     Path planDir = tempDir.resolve("plan");
     Files.createDirectories(planDir);
 
-    String emptyPostgresJson = """
+    String emptyPostgresJson =
+        """
         {
           "statements": []
         }

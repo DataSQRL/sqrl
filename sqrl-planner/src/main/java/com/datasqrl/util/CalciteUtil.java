@@ -676,21 +676,21 @@ public class CalciteUtil {
     var sqlType = type.getSqlTypeName();
     return switch (sqlType) {
       case CHAR,
-              VARCHAR,
-              BOOLEAN,
-              TINYINT,
-              SMALLINT,
-              INTEGER,
-              BIGINT,
-              FLOAT,
-              REAL,
-              DOUBLE,
-              DATE,
-              TIME,
-              TIMESTAMP,
-              TIMESTAMP_WITH_LOCAL_TIME_ZONE,
-              TIME_WITH_LOCAL_TIME_ZONE,
-              DECIMAL ->
+          VARCHAR,
+          BOOLEAN,
+          TINYINT,
+          SMALLINT,
+          INTEGER,
+          BIGINT,
+          FLOAT,
+          REAL,
+          DOUBLE,
+          DATE,
+          TIME,
+          TIMESTAMP,
+          TIMESTAMP_WITH_LOCAL_TIME_ZONE,
+          TIME_WITH_LOCAL_TIME_ZONE,
+          DECIMAL ->
           true;
       default -> false;
     };

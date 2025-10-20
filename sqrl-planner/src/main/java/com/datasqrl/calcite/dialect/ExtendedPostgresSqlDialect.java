@@ -126,7 +126,7 @@ public class ExtendedPostgresSqlDialect extends PostgresqlSqlDialect {
         case NULL:
           castSpec = "NULL"; // Postgres supports the NULL type, though it's rarely used explicitly
           break;
-          // May need to create user-defined types in PostgreSQL or use JSON/JSONB types
+        // May need to create user-defined types in PostgreSQL or use JSON/JSONB types
         case ROW:
         case MAP:
           castSpec = "jsonb";

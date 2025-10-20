@@ -161,12 +161,12 @@ public class GraphqlSchemaUtil {
       case CHAR:
       case VARCHAR:
         return Optional.of(Scalars.GraphQLString);
-        // arity many, create a GraphQLList of the component type
+      // arity many, create a GraphQLList of the component type
       case ARRAY:
       case MULTISET:
         return getGraphQLType(metaType, type.getComponentType(), namePath, extendedScalarTypes)
             .map(GraphQLList::list);
-        // nested type, arity 1
+      // nested type, arity 1
       case STRUCTURED:
       case ROW:
         return createGraphQLStructuredType(metaType, type, namePath, extendedScalarTypes);

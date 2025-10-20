@@ -42,7 +42,7 @@ class FlexibleSchemaTest {
         getSchema(Path.of("../sqrl-examples/conference/mysourcepackage/authtokens.schema.yml"));
 
     String tableSql =
-        """
+"""
 CREATE TABLE MyUserTable (
   `id` STRING NOT NULL,
   `value` STRING NOT NULL,
