@@ -181,7 +181,7 @@
     <maven-source-plugin.version>3.3.1</maven-source-plugin.version>
     <maven-gpg-plugin.version>3.2.8</maven-gpg-plugin.version>
     <license-maven-plugin.version>5.0.0</license-maven-plugin.version>
-    <git-code-format-maven-plugin.version>5.3</git-code-format-maven-plugin.version>
+    <git-code-format-maven-plugin.version>5.4</git-code-format-maven-plugin.version>
     <sortpom.plugin.version>4.0.0</sortpom.plugin.version>
     <dockerfile-maven-plugin.version>1.4.13</dockerfile-maven-plugin.version>
     <easy-jacoco-maven-plugin.version>0.1.4</easy-jacoco-maven-plugin.version>
