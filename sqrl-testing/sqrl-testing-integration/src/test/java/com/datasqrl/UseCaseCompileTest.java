@@ -55,7 +55,7 @@ public class UseCaseCompileTest extends AbstractUseCaseTest {
   @Disabled
   void runTestCaseByName(Path script, Path graphQlFile, Path packageFile) {
     assumeTrue(
-        script.toString().endsWith("avro-schema.sqrl"), "Not the test marked for execution.");
+        script.toString().endsWith("iceberg-export.sqrl"), "Not the test marked for execution.");
 
     super.testUsecase(script, graphQlFile, packageFile);
   }

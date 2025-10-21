@@ -637,48 +637,48 @@ CREATE TABLE `LoanTypesStream_11` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`AddChatMessage_1`
-(SELECT `_uuid`, `role`, `content`, `name`, `to_jsonb`(`context`) AS `context`, `event_time`
- FROM `default_catalog`.`default_database`.`AddChatMessage`)
+SELECT `_uuid`, `role`, `content`, `name`, `to_jsonb`(`context`) AS `context`, `event_time`
+ FROM `default_catalog`.`default_database`.`AddChatMessage`
 ;
 INSERT INTO `default_catalog`.`default_database`.`ApplicationAlert_2`
- (SELECT *
-  FROM `default_catalog`.`default_database`.`ApplicationAlert`)
+ SELECT *
+  FROM `default_catalog`.`default_database`.`ApplicationAlert`
  ;
  INSERT INTO `default_catalog`.`default_database`.`ApplicationStatus_3`
-  (SELECT *
-   FROM `default_catalog`.`default_database`.`ApplicationStatus`)
+  SELECT *
+   FROM `default_catalog`.`default_database`.`ApplicationStatus`
   ;
   INSERT INTO `default_catalog`.`default_database`.`ApplicationUpdates_4`
-   (SELECT *
-    FROM `default_catalog`.`default_database`.`ApplicationUpdates`)
+   SELECT *
+    FROM `default_catalog`.`default_database`.`ApplicationUpdates`
    ;
    INSERT INTO `default_catalog`.`default_database`.`Applications_5`
-    (SELECT *
-     FROM `default_catalog`.`default_database`.`ApplicationsStream`)
+    SELECT *
+     FROM `default_catalog`.`default_database`.`ApplicationsStream`
     ;
     INSERT INTO `default_catalog`.`default_database`.`ApplicationsStream_6`
-     (SELECT *
-      FROM `default_catalog`.`default_database`.`ApplicationsStream`)
+     SELECT *
+      FROM `default_catalog`.`default_database`.`ApplicationsStream`
      ;
      INSERT INTO `default_catalog`.`default_database`.`CustomerChatMessage_7`
-      (SELECT *
-       FROM `default_catalog`.`default_database`.`CustomerChatMessage`)
+      SELECT *
+       FROM `default_catalog`.`default_database`.`CustomerChatMessage`
       ;
       INSERT INTO `default_catalog`.`default_database`.`Customers_8`
-       (SELECT *
-        FROM `default_catalog`.`default_database`.`CustomersStream`)
+       SELECT *
+        FROM `default_catalog`.`default_database`.`CustomersStream`
        ;
        INSERT INTO `default_catalog`.`default_database`.`CustomersStream_9`
-        (SELECT *
-         FROM `default_catalog`.`default_database`.`CustomersStream`)
+        SELECT *
+         FROM `default_catalog`.`default_database`.`CustomersStream`
         ;
         INSERT INTO `default_catalog`.`default_database`.`LoanTypes_10`
-         (SELECT *
-          FROM `default_catalog`.`default_database`.`LoanTypesStream`)
+         SELECT *
+          FROM `default_catalog`.`default_database`.`LoanTypesStream`
          ;
          INSERT INTO `default_catalog`.`default_database`.`LoanTypesStream_11`
-          (SELECT *
-           FROM `default_catalog`.`default_database`.`LoanTypesStream`)
+          SELECT *
+           FROM `default_catalog`.`default_database`.`LoanTypesStream`
           ;
           END
 >>>kafka.json

@@ -138,7 +138,7 @@ Plan:
 LogicalProject(sensorid=[$0], endOfMin=[$3], avg_temperature=[$4])
   LogicalAggregate(group=[{0, 1, 2, 3}], avg_temperature=[AVG($4)])
     LogicalProject(sensorid=[$1], window_start=[$4], window_end=[$5], endOfMin=[$6], temperature=[$2])
-      LogicalTableFunctionScan(invocation=[HOP(DESCRIPTOR($3), 10000:INTERVAL SECOND, 60000:INTERVAL MINUTE)], rowType=[RecordType(VARCHAR(2147483647) uuid, INTEGER sensorid, FLOAT temperature, TIMESTAMP_LTZ(3) *ROWTIME* event_time, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end, TIMESTAMP_LTZ(3) *ROWTIME* window_time)])
+      LogicalTableFunctionScan(invocation=[HOP(TABLE(#0), DESCRIPTOR('event_time'), 10000:INTERVAL SECOND, 60000:INTERVAL MINUTE)], rowType=[RecordType(VARCHAR(2147483647) uuid, INTEGER sensorid, FLOAT temperature, TIMESTAMP_LTZ(3) *ROWTIME* event_time, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end, TIMESTAMP_LTZ(3) *ROWTIME* window_time)])
         LogicalProject(uuid=[$0], sensorid=[$1], temperature=[$2], event_time=[$3])
           LogicalTableScan(table=[[default_catalog, default_database, SensorReading]])
 SQL: CREATE VIEW `_SensorMaxTempLastMinWindow` AS  SELECT sensorid, window_time as endOfMin,
@@ -238,20 +238,20 @@ CREATE TABLE `SensorReading_4` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`HighTempAlert_1`
-(SELECT *
- FROM `default_catalog`.`default_database`.`HighTempAlert`)
+SELECT *
+ FROM `default_catalog`.`default_database`.`HighTempAlert`
 ;
 INSERT INTO `default_catalog`.`default_database`.`SensorAnalysis_2`
- (SELECT *
-  FROM `default_catalog`.`default_database`.`SensorAnalysis`)
+ SELECT *
+  FROM `default_catalog`.`default_database`.`SensorAnalysis`
  ;
  INSERT INTO `default_catalog`.`default_database`.`SensorMaxTempLastMin_3`
-  (SELECT *
-   FROM `default_catalog`.`default_database`.`_SensorMaxTempLastMinWindow`)
+  SELECT *
+   FROM `default_catalog`.`default_database`.`_SensorMaxTempLastMinWindow`
   ;
   INSERT INTO `default_catalog`.`default_database`.`SensorReading_4`
-   (SELECT *
-    FROM `default_catalog`.`default_database`.`SensorReading`)
+   SELECT *
+    FROM `default_catalog`.`default_database`.`SensorReading`
    ;
    END
 >>>kafka.json

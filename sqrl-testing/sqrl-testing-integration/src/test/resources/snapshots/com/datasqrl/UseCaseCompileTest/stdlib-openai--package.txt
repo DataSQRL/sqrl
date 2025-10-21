@@ -73,12 +73,12 @@ CREATE TABLE `results_2` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`data_1`
-(SELECT `val`, 1 AS `__pk_hash`
- FROM `default_catalog`.`default_database`.`data`)
+SELECT `val`, 1 AS `__pk_hash`
+ FROM `default_catalog`.`default_database`.`data`
 ;
 INSERT INTO `default_catalog`.`default_database`.`results_2`
- (SELECT `completions_result`, `extract_json_result_response`, `extract_json_result_with_schema_response`, 1 AS `__pk_hash`
-  FROM `default_catalog`.`default_database`.`results`)
+ SELECT `completions_result`, `extract_json_result_response`, `extract_json_result_with_schema_response`, 1 AS `__pk_hash`
+  FROM `default_catalog`.`default_database`.`results`
  ;
  END
 >>>kafka.json

@@ -130,12 +130,12 @@ CREATE TABLE `UnmodifiedJsonData_2` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Json_1`
-(SELECT *
- FROM `default_catalog`.`default_database`.`Json`)
+SELECT *
+ FROM `default_catalog`.`default_database`.`Json`
 ;
 INSERT INTO `default_catalog`.`default_database`.`UnmodifiedJsonData_2`
- (SELECT *
-  FROM `default_catalog`.`default_database`.`UnmodifiedJsonData`)
+ SELECT *
+  FROM `default_catalog`.`default_database`.`UnmodifiedJsonData`
  ;
  END
 >>>kafka.json
