@@ -311,12 +311,12 @@ CREATE TABLE `StreamJoin_2` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`ApplicationStatus_1`
-(SELECT *
- FROM `default_catalog`.`default_database`.`ApplicationStatus`)
+SELECT *
+ FROM `default_catalog`.`default_database`.`ApplicationStatus`
 ;
 INSERT INTO `default_catalog`.`default_database`.`StreamJoin_2`
- (SELECT *
-  FROM `default_catalog`.`default_database`.`_FakeStreamJoin`)
+ SELECT *
+  FROM `default_catalog`.`default_database`.`_FakeStreamJoin`
  ;
  END
 >>>kafka.json

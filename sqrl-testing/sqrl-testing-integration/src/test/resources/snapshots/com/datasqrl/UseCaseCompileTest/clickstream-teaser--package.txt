@@ -174,20 +174,20 @@ CREATE TABLE `VisitAfter_4` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Click_1`
-(SELECT *
- FROM `default_catalog`.`default_database`.`Click`)
+SELECT *
+ FROM `default_catalog`.`default_database`.`Click`
 ;
 INSERT INTO `default_catalog`.`default_database`.`Recommendation_2`
- (SELECT *
-  FROM `default_catalog`.`default_database`.`Recommendation`)
+ SELECT *
+  FROM `default_catalog`.`default_database`.`Recommendation`
  ;
  INSERT INTO `default_catalog`.`default_database`.`Trending_3`
-  (SELECT *
-   FROM `default_catalog`.`default_database`.`Trending`)
+  SELECT *
+   FROM `default_catalog`.`default_database`.`Trending`
   ;
   INSERT INTO `default_catalog`.`default_database`.`VisitAfter_4`
-   (SELECT `beforeURL`, `afterURL`, `timestamp`, `hash_columns`(`beforeURL`, `afterURL`, `timestamp`) AS `__pk_hash`
-    FROM `default_catalog`.`default_database`.`VisitAfter`)
+   SELECT `beforeURL`, `afterURL`, `timestamp`, `hash_columns`(`beforeURL`, `afterURL`, `timestamp`) AS `__pk_hash`
+    FROM `default_catalog`.`default_database`.`VisitAfter`
    ;
    END
 >>>postgres-schema.sql

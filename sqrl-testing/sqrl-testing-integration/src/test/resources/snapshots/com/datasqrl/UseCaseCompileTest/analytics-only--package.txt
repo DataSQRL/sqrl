@@ -354,16 +354,16 @@ CREATE TABLE `_LoanTypes_3` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`ApplicationStatus_1`
-(SELECT *
- FROM `default_catalog`.`default_database`.`ApplicationStatus`)
+SELECT *
+ FROM `default_catalog`.`default_database`.`ApplicationStatus`
 ;
 INSERT INTO `default_catalog`.`default_database`.`_Applications_2`
- (SELECT *
-  FROM `default_catalog`.`default_database`.`_ApplicationsStream`)
+ SELECT *
+  FROM `default_catalog`.`default_database`.`_ApplicationsStream`
  ;
  INSERT INTO `default_catalog`.`default_database`.`_LoanTypes_3`
-  (SELECT *
-   FROM `default_catalog`.`default_database`.`_LoanTypesStream`)
+  SELECT *
+   FROM `default_catalog`.`default_database`.`_LoanTypesStream`
   ;
   END
 >>>iceberg-duckdb-schema.sql

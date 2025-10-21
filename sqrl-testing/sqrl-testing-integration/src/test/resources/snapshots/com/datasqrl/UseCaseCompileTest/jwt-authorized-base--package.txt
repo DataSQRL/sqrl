@@ -141,12 +141,12 @@ CREATE TABLE `MyTable_2` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`MyStringTable_1`
-(SELECT *
- FROM `default_catalog`.`default_database`.`MyStringTable`)
+SELECT *
+ FROM `default_catalog`.`default_database`.`MyStringTable`
 ;
 INSERT INTO `default_catalog`.`default_database`.`MyTable_2`
- (SELECT *
-  FROM `default_catalog`.`default_database`.`MyTable`)
+ SELECT *
+  FROM `default_catalog`.`default_database`.`MyTable`
  ;
  END
 >>>kafka.json

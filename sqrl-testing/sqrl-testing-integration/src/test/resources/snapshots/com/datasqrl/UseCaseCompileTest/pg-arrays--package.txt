@@ -214,20 +214,20 @@ CREATE TABLE `StringVals_4` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`IntArray_1`
-(SELECT `id`, `to_jsonb`(`int_array`) AS `int_array`
- FROM `default_catalog`.`default_database`.`IntArray`)
+SELECT `id`, `to_jsonb`(`int_array`) AS `int_array`
+ FROM `default_catalog`.`default_database`.`IntArray`
 ;
 INSERT INTO `default_catalog`.`default_database`.`NestedArray_2`
- (SELECT `id`, `to_jsonb`(`nested_array`) AS `nested_array`
-  FROM `default_catalog`.`default_database`.`NestedArray`)
+ SELECT `id`, `to_jsonb`(`nested_array`) AS `nested_array`
+  FROM `default_catalog`.`default_database`.`NestedArray`
  ;
  INSERT INTO `default_catalog`.`default_database`.`StringArray_3`
-  (SELECT `id`, `to_jsonb`(`string_array`) AS `string_array`
-   FROM `default_catalog`.`default_database`.`StringArray`)
+  SELECT `id`, `to_jsonb`(`string_array`) AS `string_array`
+   FROM `default_catalog`.`default_database`.`StringArray`
   ;
   INSERT INTO `default_catalog`.`default_database`.`StringVals_4`
-   (SELECT *
-    FROM `default_catalog`.`default_database`.`StringVals`)
+   SELECT *
+    FROM `default_catalog`.`default_database`.`StringVals`
    ;
    END
 >>>postgres-schema.sql

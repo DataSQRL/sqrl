@@ -43,9 +43,9 @@ Schema:
  - variant0: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - repoURL: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
 Plan:
-LogicalProject(name=[$0], version=[$1], variant=[$2], latest=[$3], type=[$4], license=[$5], repository=[$6], homepage=[$7], documentation=[$8], readme=[$9], description=[$10], keywords=[$11], uniqueId=[$12], file=[$13], hash=[$14], authorId=[$15], submissionTime=[$16], event_time=[$17], variant0=[COALESCE($2, 'default')], repoURL=[CONCAT('https://repository.datasqrl.com/', $13)])
+LogicalProject(name=[$0], version=[$1], variant=[$2], latest=[$3], type=[$4], license=[$5], repository=[$6], homepage=[$7], documentation=[$8], readme=[$9], description=[$10], keywords=[$11], uniqueId=[$12], file=[$13], hash=[$14], authorId=[$15], submissionTime=[$16], event_time=[$17], variant0=[IFNULL($2, 'default')], repoURL=[CONCAT('https://repository.datasqrl.com/', $13)])
   LogicalTableScan(table=[[default_catalog, default_database, _SubmissionRaw]])
-SQL: CREATE VIEW `Submission` AS  SELECT *,  COALESCE(variant, 'default') AS variant0,
+SQL: CREATE VIEW `Submission` AS  SELECT *, IFNULL(`variant`, 'default') AS variant0,
                      concat('https://repository.datasqrl.com/',file) AS repoURL
               FROM _SubmissionRaw;
 
@@ -176,7 +176,7 @@ CREATE TABLE `_SubmissionRaw` (
 );
 CREATE VIEW `Submission`
 AS
-SELECT *, COALESCE(`variant`, 'default') AS `variant0`, `concat`('https://repository.datasqrl.com/', `file`) AS `repoURL`
+SELECT *, `IFNULL`(`variant`, 'default') AS `variant0`, `concat`('https://repository.datasqrl.com/', `file`) AS `repoURL`
 FROM `_SubmissionRaw`;
 CREATE VIEW `Package`
 AS
@@ -281,24 +281,24 @@ CREATE TABLE `TopicSearch_5` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Package_1`
-(SELECT *
- FROM `default_catalog`.`default_database`.`Package`)
+SELECT *
+ FROM `default_catalog`.`default_database`.`Package`
 ;
 INSERT INTO `default_catalog`.`default_database`.`Submission_2`
- (SELECT `name`, `version`, `variant`, `latest`, `type`, `license`, `repository`, `homepage`, `documentation`, `readme`, `description`, `to_jsonb`(`keywords`) AS `keywords`, `uniqueId`, `file`, `hash`, `authorId`, `submissionTime`, `event_time`, `variant0`, `repoURL`, `hash_columns`(`name`, `version`, `variant`, `latest`, `type`, `license`, `repository`, `homepage`, `documentation`, `readme`, `description`, `keywords`, `uniqueId`, `file`, `hash`, `authorId`, `submissionTime`, `event_time`, `variant0`, `repoURL`) AS `__pk_hash`
-  FROM `default_catalog`.`default_database`.`Submission`)
+ SELECT `name`, `version`, `variant`, `latest`, `type`, `license`, `repository`, `homepage`, `documentation`, `readme`, `description`, `to_jsonb`(`keywords`) AS `keywords`, `uniqueId`, `file`, `hash`, `authorId`, `submissionTime`, `event_time`, `variant0`, `repoURL`, `hash_columns`(`name`, `version`, `variant`, `latest`, `type`, `license`, `repository`, `homepage`, `documentation`, `readme`, `description`, `keywords`, `uniqueId`, `file`, `hash`, `authorId`, `submissionTime`, `event_time`, `variant0`, `repoURL`) AS `__pk_hash`
+  FROM `default_catalog`.`default_database`.`Submission`
  ;
  INSERT INTO `default_catalog`.`default_database`.`SubmissionTopics_3`
-  (SELECT `pkgName`, `topicName`, `submissionTime`, `hash_columns`(`pkgName`, `topicName`, `submissionTime`) AS `__pk_hash`
-   FROM `default_catalog`.`default_database`.`SubmissionTopics`)
+  SELECT `pkgName`, `topicName`, `submissionTime`, `hash_columns`(`pkgName`, `topicName`, `submissionTime`) AS `__pk_hash`
+   FROM `default_catalog`.`default_database`.`SubmissionTopics`
   ;
   INSERT INTO `default_catalog`.`default_database`.`TopicPackages_4`
-   (SELECT *
-    FROM `default_catalog`.`default_database`.`TopicPackages`)
+   SELECT *
+    FROM `default_catalog`.`default_database`.`TopicPackages`
    ;
    INSERT INTO `default_catalog`.`default_database`.`TopicSearch_5`
-    (SELECT *
-     FROM `default_catalog`.`default_database`.`TopicSearch`)
+    SELECT *
+     FROM `default_catalog`.`default_database`.`TopicSearch`
     ;
     END
 >>>postgres-schema.sql

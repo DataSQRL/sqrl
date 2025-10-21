@@ -124,7 +124,7 @@ Plan:
 LogicalProject(customerid=[$0], week=[$3], spend=[$4], saved=[$5])
   LogicalAggregate(group=[{0, 1, 2, 3}], spend=[SUM($4)], saved=[SUM($5)])
     LogicalProject(customerid=[$2], window_start=[$5], window_end=[$6], week=[$7], price=[$3], saving=[$4])
-      LogicalTableFunctionScan(invocation=[TUMBLE(DESCRIPTOR($1), 604800000:INTERVAL DAY)], rowType=[RecordType(BIGINT id, TIMESTAMP_LTZ(3) *ROWTIME* time, BIGINT customerid, DOUBLE price, DOUBLE saving, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end, TIMESTAMP_LTZ(3) *ROWTIME* window_time)])
+      LogicalTableFunctionScan(invocation=[TUMBLE(TABLE(#0), DESCRIPTOR('time'), 604800000:INTERVAL DAY)], rowType=[RecordType(BIGINT id, TIMESTAMP_LTZ(3) *ROWTIME* time, BIGINT customerid, DOUBLE price, DOUBLE saving, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end, TIMESTAMP_LTZ(3) *ROWTIME* window_time)])
         LogicalProject(id=[$0], time=[$1], customerid=[$2], price=[$3], saving=[$4])
           LogicalTableScan(table=[[default_catalog, default_database, OrdersTotals]])
 SQL: CREATE VIEW `CustomersSpending` AS  SELECT customerid, window_time AS week,
@@ -175,7 +175,7 @@ Plan:
 LogicalProject(id=[$0], time=[$4], customerid=[$1], price=[$5], saving=[$6])
   LogicalAggregate(group=[{0, 1, 2, 3, 4}], price=[SUM($5)], saving=[SUM($6)])
     LogicalProject(id=[$0], customerid=[$2], window_start=[$7], window_end=[$8], time=[$9], $f5=[-(*($4, $5), coalesce($6, 0.0:DOUBLE))], $f6=[coalesce($6, 0.0:DOUBLE)])
-      LogicalTableFunctionScan(invocation=[TUMBLE(DESCRIPTOR($1), 1:INTERVAL SECOND)], rowType=[RecordType(BIGINT id, TIMESTAMP_LTZ(3) *ROWTIME* time, BIGINT customerid, BIGINT productid, BIGINT quantity, DOUBLE unit_price, DOUBLE discount, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end, TIMESTAMP_LTZ(3) *ROWTIME* window_time)])
+      LogicalTableFunctionScan(invocation=[TUMBLE(TABLE(#0), DESCRIPTOR('time'), 1:INTERVAL SECOND)], rowType=[RecordType(BIGINT id, TIMESTAMP_LTZ(3) *ROWTIME* time, BIGINT customerid, BIGINT productid, BIGINT quantity, DOUBLE unit_price, DOUBLE discount, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end, TIMESTAMP_LTZ(3) *ROWTIME* window_time)])
         LogicalProject(id=[$0], time=[$1], customerid=[$2], productid=[$3], quantity=[$4], unit_price=[$5], discount=[$6])
           LogicalTableScan(table=[[default_catalog, default_database, _OrderItems]])
 SQL: CREATE VIEW `OrdersTotals` AS  SELECT id, window_time AS `time`, customerid, sum(quantity * unit_price - coalesce(discount, 0.0)) as price,
@@ -645,44 +645,44 @@ CREATE TABLE `ProductsByCountry_9` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`SinkTable_ex1`
-(SELECT *
- FROM `default_catalog`.`default_database`.`CustomerPromotion`)
+SELECT *
+ FROM `default_catalog`.`default_database`.`CustomerPromotion`
 ;
 INSERT INTO `default_catalog`.`default_database`.`CustomerPromotion_1`
- (SELECT *
-  FROM `default_catalog`.`default_database`.`CustomerPromotion`)
+ SELECT *
+  FROM `default_catalog`.`default_database`.`CustomerPromotion`
  ;
  INSERT INTO `default_catalog`.`default_database`.`Customers_2`
-  (SELECT *
-   FROM `default_catalog`.`default_database`.`_CustomersStream`)
+  SELECT *
+   FROM `default_catalog`.`default_database`.`_CustomersStream`
   ;
   INSERT INTO `default_catalog`.`default_database`.`CustomersOrderStats_3`
-   (SELECT *
-    FROM `default_catalog`.`default_database`.`CustomersOrderStats`)
+   SELECT *
+    FROM `default_catalog`.`default_database`.`CustomersOrderStats`
    ;
    INSERT INTO `default_catalog`.`default_database`.`CustomersPastPurchases_4`
-    (SELECT *
-     FROM `default_catalog`.`default_database`.`CustomersPastPurchases`)
+    SELECT *
+     FROM `default_catalog`.`default_database`.`CustomersPastPurchases`
     ;
     INSERT INTO `default_catalog`.`default_database`.`CustomersSpending_5`
-     (SELECT `customerid`, `week`, `spend`, `saved`, `hash_columns`(`customerid`, `week`, `spend`, `saved`) AS `__pk_hash`
-      FROM `default_catalog`.`default_database`.`CustomersSpending`)
+     SELECT `customerid`, `week`, `spend`, `saved`, `hash_columns`(`customerid`, `week`, `spend`, `saved`) AS `__pk_hash`
+      FROM `default_catalog`.`default_database`.`CustomersSpending`
      ;
      INSERT INTO `default_catalog`.`default_database`.`Orders_6`
-      (SELECT `id`, `customerid`, `time`, `to_jsonb`(`items`) AS `items`
-       FROM `default_catalog`.`default_database`.`Orders`)
+      SELECT `id`, `customerid`, `time`, `to_jsonb`(`items`) AS `items`
+       FROM `default_catalog`.`default_database`.`Orders`
       ;
       INSERT INTO `default_catalog`.`default_database`.`OrdersTotals_7`
-       (SELECT `id`, `time`, `customerid`, `price`, `saving`, `hash_columns`(`id`, `time`, `customerid`, `price`, `saving`) AS `__pk_hash`
-        FROM `default_catalog`.`default_database`.`OrdersTotals`)
+       SELECT `id`, `time`, `customerid`, `price`, `saving`, `hash_columns`(`id`, `time`, `customerid`, `price`, `saving`) AS `__pk_hash`
+        FROM `default_catalog`.`default_database`.`OrdersTotals`
        ;
        INSERT INTO `default_catalog`.`default_database`.`Products_8`
-        (SELECT *
-         FROM `default_catalog`.`default_database`.`_ProductsStream`)
+        SELECT *
+         FROM `default_catalog`.`default_database`.`_ProductsStream`
         ;
         INSERT INTO `default_catalog`.`default_database`.`ProductsByCountry_9`
-         (SELECT `productid`, `country`, `quantity`, `spend`, `weight`, `hash_columns`(`productid`, `country`) AS `__pk_hash`
-          FROM `default_catalog`.`default_database`.`ProductsByCountry`)
+         SELECT `productid`, `country`, `quantity`, `spend`, `weight`, `hash_columns`(`productid`, `country`) AS `__pk_hash`
+          FROM `default_catalog`.`default_database`.`ProductsByCountry`
          ;
          END
 >>>kafka.json

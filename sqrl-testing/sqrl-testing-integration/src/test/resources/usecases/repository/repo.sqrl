@@ -1,6 +1,6 @@
 IMPORT datasqrl-central.submission AS _SubmissionRaw;
 
-Submission := SELECT *,  COALESCE(variant, 'default') AS variant0,
+Submission := SELECT *, IFNULL(`variant`, 'default') AS variant0,
                      concat('https://repository.datasqrl.com/',file) AS repoURL
               FROM _SubmissionRaw;
 
@@ -8,7 +8,7 @@ Submission := SELECT *,  COALESCE(variant, 'default') AS variant0,
 Package := SELECT DISTINCT name FROM Submission;
 
 Package.latest := SELECT * FROM Submission s WHERE this.name = s.name AND s.latest = TRUE ORDER BY s.submissionTime DESC LIMIT 1;
-Package.versions(version String, variant String) := SELECT * FROM  Submission s WHERE this.name = s.name AND (:version IS NULL OR :version=s.version) AND (:variant IS NULL OR :variant=s.variant)
+Package.versions(version String, `variant` String) := SELECT * FROM  Submission s WHERE this.name = s.name AND (:version IS NULL OR :version=s.version) AND (:`variant` IS NULL OR :`variant`=s.`variant`)
                                                                                       ORDER BY s.submissionTime DESC;
 
 SubmissionTopics := SELECT s.name AS pkgName, k.name AS topicName, s.submissionTime
