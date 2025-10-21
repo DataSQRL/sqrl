@@ -18,6 +18,7 @@ package com.datasqrl.planner;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import com.datasqrl.engine.EnginePhysicalPlan;
+import com.datasqrl.engine.database.relational.IcebergEngineFactory;
 import com.datasqrl.planner.tables.FlinkConnectorConfig;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.collect.ImmutableList;
@@ -33,6 +34,7 @@ import lombok.Value;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.configuration.PipelineOptions;
 import org.apache.flink.sql.parser.ddl.SqlCreateFunction;
 import org.apache.flink.sql.parser.ddl.SqlCreateTable;
 import org.apache.flink.sql.parser.ddl.SqlTableOption;
@@ -53,6 +55,12 @@ import org.apache.flink.table.api.ExplainFormat;
 @Value
 @Builder
 public class FlinkPhysicalPlan implements EnginePhysicalPlan {
+
+  private static final List<String> ICEBERG_SERIALIZATION_CONFIG =
+      List.of(
+          "org.apache.iceberg.SerializableByteBufferMap: {type: kryo, kryo-type: registered, class: com.esotericsoftware.kryo.serializers.JavaSerializer}",
+          "org.apache.iceberg.GenericDataFile: {type: kryo, kryo-type: registered, class: com.esotericsoftware.kryo.serializers.JavaSerializer}",
+          "org.apache.iceberg.io.WriteResult: {type: kryo, kryo-type: registered, class: com.esotericsoftware.kryo.serializers.JavaSerializer}");
 
   List<String> flinkSql;
   Set<String> connectors;
@@ -169,6 +177,18 @@ public class FlinkPhysicalPlan implements EnginePhysicalPlan {
               plan ->
                   plan.explain(
                       ExplainFormat.TEXT, ExplainDetail.CHANGELOG_MODE, ExplainDetail.PLAN_ADVICE));
+
+      if (connectors.contains(IcebergEngineFactory.ENGINE_NAME)) {
+        // We need to enforce the Kryo JavaSerializer for some built-in Iceberg classes
+        var updatedSerConf =
+            ImmutableList.<String>builder()
+                .addAll(config.get(PipelineOptions.SERIALIZATION_CONFIG, new ArrayList<>()))
+                .addAll(ICEBERG_SERIALIZATION_CONFIG)
+                .build();
+
+        config.set(PipelineOptions.SERIALIZATION_CONFIG, updatedSerConf);
+      }
+
       return new FlinkPhysicalPlan(
           flinkSql,
           connectors,
