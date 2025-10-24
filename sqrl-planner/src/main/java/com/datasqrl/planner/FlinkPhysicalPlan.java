@@ -97,9 +97,11 @@ public class FlinkPhysicalPlan implements EnginePhysicalPlan {
     private final Set<String> fullyResolvedFunctions = new HashSet<>();
     private final List<List<RichSqlInsert>> statementSets = new ArrayList<>();
 
+    private final boolean addIcebergSerializationConfig;
     private Configuration config;
 
-    public Builder(Configuration config) {
+    public Builder(Configuration config, boolean addIcebergSerializationConfig) {
+      this.addIcebergSerializationConfig = addIcebergSerializationConfig;
       this.config = config.clone();
       nextBatch();
     }
@@ -178,7 +180,7 @@ public class FlinkPhysicalPlan implements EnginePhysicalPlan {
                   plan.explain(
                       ExplainFormat.TEXT, ExplainDetail.CHANGELOG_MODE, ExplainDetail.PLAN_ADVICE));
 
-      if (connectors.contains(IcebergEngineFactory.ENGINE_NAME)) {
+      if (connectors.contains(IcebergEngineFactory.ENGINE_NAME) && addIcebergSerializationConfig) {
         // We need to enforce the Kryo JavaSerializer for some built-in Iceberg classes
         var updatedSerConf =
             ImmutableList.<String>builder()

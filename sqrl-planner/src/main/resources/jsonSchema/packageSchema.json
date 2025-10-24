@@ -39,6 +39,9 @@
         "compile-flink-plan": {
           "type": "boolean"
         },
+        "add-iceberg-serialization-config": {
+          "type": "boolean"
+        },
         "cost-model": {
           "type": "string",
           "enum": ["DEFAULT", "READ", "WRITE"],
