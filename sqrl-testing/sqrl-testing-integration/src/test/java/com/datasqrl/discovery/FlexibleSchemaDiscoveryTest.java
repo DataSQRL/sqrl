@@ -27,6 +27,7 @@ import com.datasqrl.loaders.schema.SchemaLoaderImpl;
 import com.datasqrl.util.SnapshotTest.Snapshot;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 import lombok.SneakyThrows;
@@ -55,7 +56,7 @@ public class FlexibleSchemaDiscoveryTest {
   void scripts(Path file) {
     assertThat(Files.exists(file)).isTrue();
     String filename = file.getFileName().toString();
-    Optional<SchemaConversionResult> result = schemaLoader.loadSchema(filename, filename);
+    Optional<SchemaConversionResult> result = schemaLoader.loadSchema(filename, filename, Map.of());
     assertThat(result.isPresent()).isTrue();
     var snapshot = Snapshot.of(getDisplayName(file), getClass());
     snapshot.addContent(result.get().type().getFullTypeString(), "type");

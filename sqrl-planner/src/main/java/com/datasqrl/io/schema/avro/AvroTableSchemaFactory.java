@@ -25,16 +25,19 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.Set;
 import org.apache.avro.Schema;
+import org.apache.flink.formats.avro.AvroFormatOptions;
 
 @AutoService(TableSchemaFactory.class)
 public class AvroTableSchemaFactory implements TableSchemaFactory {
 
-  public static final Set<String> SCHEMA_EXTENSION = Set.of("avsc");
-
-  public static final String SCHEMA_TYPE = "avro";
+  private static final Set<String> SCHEMA_EXTENSION = Set.of("avsc");
+  private static final String SCHEMA_TYPE = "avro";
+  private static final String LEGACY_TIMESTAMP_MAPPING_KEY =
+      SCHEMA_TYPE + '.' + AvroFormatOptions.AVRO_TIMESTAMP_LEGACY_MAPPING.key();
 
   @Override
-  public SchemaConversionResult convert(Path location, ErrorCollector errors) {
+  public SchemaConversionResult convert(
+      Path location, Map<String, String> tableProps, ErrorCollector errors) {
     var schemaDefinition = BaseFileUtil.readFile(location);
     errors = errors.withScript(location, schemaDefinition);
     Schema schema;
@@ -43,14 +46,14 @@ public class AvroTableSchemaFactory implements TableSchemaFactory {
     } catch (Exception e) {
       throw errors.exception(ErrorCode.SCHEMA_ERROR, "Could not parse schema: %s", e);
     }
-    var legacyTimestampMapping = getLegacyTimestampMapping();
+
+    // Will be turned to 'false' if not present
+    var legacyTimestampMappingStr = tableProps.get(LEGACY_TIMESTAMP_MAPPING_KEY);
+    var legacyTimestampMapping = Boolean.parseBoolean(legacyTimestampMappingStr);
 
     var converter = new AvroToRelDataTypeConverter(errors, legacyTimestampMapping);
-    return new SchemaConversionResult(converter.convert(schema), Map.of());
-  }
 
-  private boolean getLegacyTimestampMapping() {
-    return false;
+    return new SchemaConversionResult(converter.convert(schema), Map.of());
   }
 
   @Override
