@@ -41,6 +41,11 @@ public class CompilerConfigImpl implements PackageJson.CompilerConfig {
   }
 
   @Override
+  public boolean addIcebergSerializationConfig() {
+    return sqrlConfig.asBool("add-iceberg-serialization-config").get();
+  }
+
+  @Override
   public CostModel getCostModel() {
     var costModel = sqrlConfig.as("cost-model", Type.class).get();
 

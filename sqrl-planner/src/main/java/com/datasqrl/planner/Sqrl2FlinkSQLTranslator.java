@@ -202,7 +202,7 @@ public class Sqrl2FlinkSQLTranslator {
           jarUrls.stream().map(URL::toString).collect(Collectors.toList()));
     }
 
-    this.planBuilder = new Builder(config.clone());
+    this.planBuilder = new Builder(config.clone(), compilerConfig.addIcebergSerializationConfig());
 
     if (executionMode == RuntimeExecutionMode.STREAMING) {
       planBuilder.addInferredConfig(flink.getStreamingSpecificConfig());
