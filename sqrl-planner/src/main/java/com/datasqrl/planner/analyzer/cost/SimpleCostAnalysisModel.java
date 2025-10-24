@@ -48,7 +48,7 @@ public record SimpleCostAnalysisModel(@NonNull Type type) implements CostModel {
           cost = cost * 1.3;
         }
         break;
-      case STREAMS:
+      case PROCESS:
         cost =
             switch (type) {
               // We assume that pre-computing is generally cheaper (by factor of 10) unless

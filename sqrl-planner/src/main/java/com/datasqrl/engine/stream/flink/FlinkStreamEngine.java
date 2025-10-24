@@ -45,7 +45,7 @@ public class FlinkStreamEngine extends ExecutionEngine.Base implements StreamEng
 
   @Inject
   public FlinkStreamEngine(PackageJson json) {
-    super(FlinkEngineFactory.ENGINE_NAME, EngineType.STREAMS, FLINK_CAPABILITIES);
+    super(FlinkEngineFactory.ENGINE_NAME, EngineType.PROCESS, FLINK_CAPABILITIES);
     this.engineConfig = json.getEngines().getEngineConfigOrEmpty(FlinkEngineFactory.ENGINE_NAME);
   }
 
