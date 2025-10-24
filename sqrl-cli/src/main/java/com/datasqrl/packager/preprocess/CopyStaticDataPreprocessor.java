@@ -33,13 +33,15 @@ import java.util.Set;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
-/*
- * Copies jsonl and csv files (optionally with compression) to data directory to be added to flink
+/**
+ * Copies {@code .jsonl}, {@code .csv}, and {@code .avro} files (optionally with compression) to the
+ * data folder, so they can be useb by Flink.
  */
 @Slf4j
 public class CopyStaticDataPreprocessor implements Preprocessor {
 
-  private static final FilenameAnalyzer DATA_PATTERN = FilenameAnalyzer.of(Set.of("jsonl", "csv"));
+  private static final FilenameAnalyzer DATA_PATTERN =
+      FilenameAnalyzer.of(Set.of("jsonl", "csv", "avro"));
 
   @SneakyThrows
   @Override

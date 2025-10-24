@@ -1,1 +1,0 @@
-Uses avro as a schema.

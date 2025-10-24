@@ -1,0 +1,32 @@
+{
+  "type": "record",
+  "name": "TestRecord",
+  "namespace": "com.example.avro",
+  "fields": [
+    {
+      "name": "uuidField",
+      "type": {
+        "type": "string",
+        "logicalType": "uuid"
+      },
+      "doc": "A UUID string field"
+    },
+    {
+      "name": "timestampMillisField",
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      },
+      "doc": "A timestamp with millisecond precision"
+    },
+    {
+      "name": "nullableTimestampMillisField",
+      "type": ["null", {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      }],
+      "default": null,
+      "doc": "A nullable timestamp with millisecond precision"
+    }
+  ]
+}

@@ -32,7 +32,6 @@ import org.apache.avro.Schema.Field;
 import org.apache.avro.Schema.Type;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.flink.formats.avro.typeutils.AvroSchemaConverter;
-import org.apache.flink.table.types.DataType;
 
 @AllArgsConstructor
 public class AvroToRelDataTypeConverter {
@@ -47,10 +46,8 @@ public class AvroToRelDataTypeConverter {
   public RelDataType convert(Schema schema) {
     validateSchema(schema, NamePath.ROOT, new HashSet<>()); // recursion stack
 
-    DataType dataType =
-        AvroSchemaConverter.convertToDataType(schema.toString(false), legacyTimestampMapping);
-
-    TypeFactory typeFactory = TypeFactory.getTypeFactory();
+    var dataType = AvroSchemaConverter.convertToDataType(schema.toString(), legacyTimestampMapping);
+    var typeFactory = TypeFactory.getTypeFactory();
 
     return typeFactory.createFieldTypeFromLogicalType(dataType.getLogicalType());
   }

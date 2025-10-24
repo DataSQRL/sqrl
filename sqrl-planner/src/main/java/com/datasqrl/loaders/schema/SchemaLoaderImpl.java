@@ -23,6 +23,7 @@ import com.datasqrl.io.schema.TableSchemaFactory;
 import com.datasqrl.loaders.resolver.ResourceResolver;
 import com.datasqrl.util.FilenameAnalyzer;
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 
@@ -34,7 +35,7 @@ public class SchemaLoaderImpl implements SchemaLoader {
 
   @Override
   public Optional<SchemaConversionResult> loadSchema(
-      String tableName, String relativeSchemaFilePath) {
+      String tableName, String relativeSchemaFilePath, Map<String, String> tableProps) {
     var schemaFactoryMap = TableSchemaFactory.factoriesByExtension();
     var fileAnalyzer = FilenameAnalyzer.of(schemaFactoryMap.keySet());
     var fileComponentsOpt = fileAnalyzer.analyze(relativeSchemaFilePath);
@@ -55,7 +56,7 @@ public class SchemaLoaderImpl implements SchemaLoader {
         namePath,
         resourceResolver);
     SchemaConversionResult schemaResult =
-        schemaFactoryMap.get(fileComponents.extension()).convert(path.get(), errors);
+        schemaFactoryMap.get(fileComponents.extension()).convert(path.get(), tableProps, errors);
     return Optional.of(schemaResult);
   }
 }

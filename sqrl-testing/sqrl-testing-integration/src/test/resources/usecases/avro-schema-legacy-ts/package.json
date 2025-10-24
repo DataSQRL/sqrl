@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "script": {
+    "main": "avro-schema-legacy-ts.sqrl"
+  },
+  "test-runner": {
+    "delay-sec": -1
+  }
+}

@@ -25,7 +25,8 @@ import org.apache.commons.lang3.tuple.Pair;
 
 public interface TableSchemaFactory {
 
-  SchemaConversionResult convert(Path location, ErrorCollector errors);
+  SchemaConversionResult convert(
+      Path location, Map<String, String> tableProps, ErrorCollector errors);
 
   String getType();
 

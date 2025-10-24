@@ -164,6 +164,25 @@ class AvroToRelDataTypeConverterTest {
   }
 
   @Test
+  void testLegacyTimestampMapping() {
+    converter = new AvroToRelDataTypeConverter(errors, true);
+
+    // Timestamp (millis)
+    var timestampMillisSchema = Schema.create(Type.LONG);
+    LogicalTypes.timestampMillis().addToSchema(timestampMillisSchema);
+    var timestampMillisType = converter.convert(timestampMillisSchema);
+    assertThat(timestampMillisType.getSqlTypeName()).isEqualTo(SqlTypeName.TIMESTAMP);
+    assertThat(timestampMillisType.getPrecision()).isEqualTo(3);
+
+    // Timestamp (micros)
+    var timestampMicrosSchema = Schema.create(Type.LONG);
+    LogicalTypes.timestampMicros().addToSchema(timestampMicrosSchema);
+    var timestampMicrosType = converter.convert(timestampMicrosSchema);
+    assertThat(timestampMicrosType.getSqlTypeName()).isEqualTo(SqlTypeName.TIMESTAMP);
+    assertThat(timestampMicrosType.getPrecision()).isEqualTo(6);
+  }
+
+  @Test
   void unionTypes() {
     // Union of NULL and INT (nullable INT)
     var nullableIntSchema =

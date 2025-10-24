@@ -40,7 +40,8 @@ public class FlexibleTableSchemaFactory implements TableSchemaFactory {
   private static final String SCHEMA_TYPE = "flexible";
 
   @Override
-  public SchemaConversionResult convert(Path location, ErrorCollector errors) {
+  public SchemaConversionResult convert(
+      Path location, Map<String, String> tableProps, ErrorCollector errors) {
     var schemaDefinition = BaseFileUtil.readFile(location);
     errors = errors.withScript(location, schemaDefinition);
     var deserializer = Deserializer.INSTANCE;
