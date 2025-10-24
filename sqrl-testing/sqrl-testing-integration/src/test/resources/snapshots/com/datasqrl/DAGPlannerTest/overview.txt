@@ -385,40 +385,40 @@ CREATE TABLE `UnnestOrders_8` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Customer_1`
-(SELECT *
- FROM `default_catalog`.`default_database`.`CustomerImport`)
+SELECT *
+ FROM `default_catalog`.`default_database`.`CustomerImport`
 ;
 INSERT INTO `default_catalog`.`default_database`.`MyPrintSink_ex1`
- (SELECT *
-  FROM `default_catalog`.`default_database`.`CustomerImport`)
+ SELECT *
+  FROM `default_catalog`.`default_database`.`CustomerImport`
  ;
  INSERT INTO `default_catalog`.`default_database`.`CustomerImport_2`
-  (SELECT *
-   FROM `default_catalog`.`default_database`.`CustomerImport`)
+  SELECT *
+   FROM `default_catalog`.`default_database`.`CustomerImport`
   ;
   INSERT INTO `default_catalog`.`default_database`.`LargeOrders_3`
-   (SELECT *
-    FROM `default_catalog`.`default_database`.`LargeOrders`)
+   SELECT *
+    FROM `default_catalog`.`default_database`.`LargeOrders`
    ;
    INSERT INTO `default_catalog`.`default_database`.`LargeOrders_4`
-    (SELECT *
-     FROM `default_catalog`.`default_database`.`LargeOrders`)
+    SELECT *
+     FROM `default_catalog`.`default_database`.`LargeOrders`
     ;
     INSERT INTO `default_catalog`.`default_database`.`Orders_5`
-     (SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`
-      FROM `default_catalog`.`default_database`.`Orders`)
+     SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`
+      FROM `default_catalog`.`default_database`.`Orders`
      ;
      INSERT INTO `default_catalog`.`default_database`.`SimpleOrders_6`
-      (SELECT *
-       FROM `default_catalog`.`default_database`.`SimpleOrders`)
+      SELECT *
+       FROM `default_catalog`.`default_database`.`SimpleOrders`
       ;
       INSERT INTO `default_catalog`.`default_database`.`Unnestorders_7`
-       (SELECT *
-        FROM `default_catalog`.`default_database`.`UnnestOrders`)
+       SELECT *
+        FROM `default_catalog`.`default_database`.`UnnestOrders`
        ;
        INSERT INTO `default_catalog`.`default_database`.`UnnestOrders_8`
-        (SELECT `id`, `customerid`, `time`, `productid`, `quantity`, `discount`, `hash_columns`(`id`, `customerid`, `time`, `productid`, `quantity`, `discount`) AS `__pk_hash`
-         FROM `default_catalog`.`default_database`.`UnnestOrders`)
+        SELECT `id`, `customerid`, `time`, `productid`, `quantity`, `discount`, `hash_columns`(`id`, `customerid`, `time`, `productid`, `quantity`, `discount`) AS `__pk_hash`
+         FROM `default_catalog`.`default_database`.`UnnestOrders`
         ;
         END
 >>>kafka.json

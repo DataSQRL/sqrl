@@ -305,16 +305,16 @@ CREATE TABLE `UsageAlert_3` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`TotalOrgTokens_1`
-(SELECT *
- FROM `default_catalog`.`default_database`.`TotalOrgTokens`)
+SELECT *
+ FROM `default_catalog`.`default_database`.`TotalOrgTokens`
 ;
 INSERT INTO `default_catalog`.`default_database`.`TotalUserTokens_2`
- (SELECT *
-  FROM `default_catalog`.`default_database`.`TotalUserTokens`)
+ SELECT *
+  FROM `default_catalog`.`default_database`.`TotalUserTokens`
  ;
  INSERT INTO `default_catalog`.`default_database`.`UsageAlert_3`
-  (SELECT *
-   FROM `default_catalog`.`default_database`.`UsageAlert`)
+  SELECT *
+   FROM `default_catalog`.`default_database`.`UsageAlert`
   ;
   END
 >>>kafka.json

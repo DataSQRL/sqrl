@@ -16,8 +16,8 @@
 package com.datasqrl.engine.stream.flink;
 
 import static com.datasqrl.engine.EngineFeature.STANDARD_STREAM;
-import static org.apache.flink.streaming.api.environment.ExecutionCheckpointingOptions.CHECKPOINTING_INTERVAL;
-import static org.apache.flink.streaming.api.environment.ExecutionCheckpointingOptions.MIN_PAUSE_BETWEEN_CHECKPOINTS;
+import static org.apache.flink.configuration.CheckpointingOptions.CHECKPOINTING_INTERVAL;
+import static org.apache.flink.configuration.CheckpointingOptions.MIN_PAUSE_BETWEEN_CHECKPOINTS;
 import static org.apache.flink.table.api.config.ExecutionConfigOptions.TABLE_EXEC_SOURCE_IDLE_TIMEOUT;
 
 import com.datasqrl.config.EngineType;

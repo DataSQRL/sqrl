@@ -138,12 +138,12 @@ CREATE TABLE `Orders_2` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`DistinctOrders_1`
-(SELECT *
- FROM `default_catalog`.`default_database`.`DistinctOrders`)
+SELECT *
+ FROM `default_catalog`.`default_database`.`DistinctOrders`
 ;
 INSERT INTO `default_catalog`.`default_database`.`Orders_2`
- (SELECT *
-  FROM `default_catalog`.`default_database`.`Orders`)
+ SELECT *
+  FROM `default_catalog`.`default_database`.`Orders`
  ;
  END
 >>>kafka.json

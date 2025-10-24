@@ -202,7 +202,7 @@ public class Sqrl2FlinkSQLTranslator {
           jarUrls.stream().map(URL::toString).collect(Collectors.toList()));
     }
 
-    this.planBuilder = new Builder(config.clone());
+    this.planBuilder = new Builder(config.clone(), compilerConfig.addIcebergSerializationConfig());
 
     if (executionMode == RuntimeExecutionMode.STREAMING) {
       planBuilder.addInferredConfig(flink.getStreamingSpecificConfig());
@@ -844,7 +844,7 @@ public class Sqrl2FlinkSQLTranslator {
               tableDefinition.getColumnList(),
               tableDefinition.getTableConstraints(),
               tableDefinition.getPropertyList(),
-              //          tableDefinition.getDistribution(),
+              tableDefinition.getDistribution(),
               tableDefinition.getPartitionKeyList(),
               tableDefinition.getWatermark().orElse(null),
               tableDefinition.getComment().orElse(null),
@@ -860,7 +860,7 @@ public class Sqrl2FlinkSQLTranslator {
               tableDefinition.getColumnList(),
               tableDefinition.getTableConstraints(),
               tableDefinition.getPropertyList(),
-              //          tableDefinition.getDistribution(),
+              tableDefinition.getDistribution(),
               tableDefinition.getPartitionKeyList(),
               tableDefinition.getWatermark().orElse(null),
               tableDefinition.getComment().orElse(null),

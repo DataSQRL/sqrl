@@ -184,20 +184,20 @@ CREATE TABLE `Orders_4` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`CombinedState_1`
-(SELECT *
- FROM `default_catalog`.`default_database`.`CombinedState`)
+SELECT *
+ FROM `default_catalog`.`default_database`.`CombinedState`
 ;
 INSERT INTO `default_catalog`.`default_database`.`CombinedStream_2`
- (SELECT `customerid`, `hash_columns`(`customerid`) AS `__pk_hash`
-  FROM `default_catalog`.`default_database`.`CombinedStream`)
+ SELECT `customerid`, `hash_columns`(`customerid`) AS `__pk_hash`
+  FROM `default_catalog`.`default_database`.`CombinedStream`
  ;
  INSERT INTO `default_catalog`.`default_database`.`Customer_3`
-  (SELECT *
-   FROM `default_catalog`.`default_database`.`Customer`)
+  SELECT *
+   FROM `default_catalog`.`default_database`.`Customer`
   ;
   INSERT INTO `default_catalog`.`default_database`.`Orders_4`
-   (SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`, `_ingest_time`
-    FROM `default_catalog`.`default_database`.`Orders`)
+   SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`, `_ingest_time`
+    FROM `default_catalog`.`default_database`.`Orders`
    ;
    END
 >>>kafka.json

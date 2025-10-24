@@ -526,20 +526,20 @@ CREATE TABLE `_UserLikes_4` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`EventLikeCount_1`
-(SELECT *
- FROM `default_catalog`.`default_database`.`EventLikeCount`)
+SELECT *
+ FROM `default_catalog`.`default_database`.`EventLikeCount`
 ;
 INSERT INTO `default_catalog`.`default_database`.`Events_2`
- (SELECT `url`, `date`, `time`, `title`, `abstract`, `location`, `to_jsonb`(`speakers`) AS `speakers`, `last_updated`, `id`, `full_text`, `startTime`, `embedding`, `startTimestamp`
-  FROM `default_catalog`.`default_database`.`_ProcessedEventStream`)
+ SELECT `url`, `date`, `time`, `title`, `abstract`, `location`, `to_jsonb`(`speakers`) AS `speakers`, `last_updated`, `id`, `full_text`, `startTime`, `embedding`, `startTimestamp`
+  FROM `default_catalog`.`default_database`.`_ProcessedEventStream`
  ;
  INSERT INTO `default_catalog`.`default_database`.`_UserInterests_3`
-  (SELECT *
-   FROM `default_catalog`.`default_database`.`_UserInterests`)
+  SELECT *
+   FROM `default_catalog`.`default_database`.`_UserInterests`
   ;
   INSERT INTO `default_catalog`.`default_database`.`_UserLikes_4`
-   (SELECT *
-    FROM `default_catalog`.`default_database`.`_Likes`)
+   SELECT *
+    FROM `default_catalog`.`default_database`.`_Likes`
    ;
    END
 >>>kafka.json

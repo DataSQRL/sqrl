@@ -137,7 +137,7 @@
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
-      <artifactId>flink-connector-jdbc</artifactId>
+      <artifactId>flink-connector-jdbc-postgres</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>

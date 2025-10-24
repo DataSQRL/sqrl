@@ -43,6 +43,7 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.flink.sql.parser.ddl.SqlCreateFunction;
 import org.apache.flink.sql.parser.ddl.SqlCreateTable;
 import org.apache.flink.sql.parser.ddl.SqlCreateView;
+import org.apache.flink.sql.parser.ddl.SqlDistribution;
 import org.apache.flink.sql.parser.ddl.SqlTableColumn;
 import org.apache.flink.sql.parser.ddl.SqlTableOption;
 import org.apache.flink.sql.parser.ddl.SqlWatermark;
@@ -53,6 +54,8 @@ import org.apache.flink.sql.parser.dml.RichSqlInsert;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 
 public class FlinkSqlNodeFactory {
+
+  public static final SqlDistribution NO_DISTRIBUTION = null;
 
   public static SqlIdentifier identifier(String str) {
     return new SqlIdentifier(str, SqlParserPos.ZERO);
@@ -208,15 +211,13 @@ public class FlinkSqlNodeFactory {
         createColumns(relDataType, metadataConfig, expressionParser),
         createConstraints(primaryKeyConstraint),
         createPropertiesAndRemoveDefaults(connectorProperties),
-        //        NO_DISTRIBUTION,
+        NO_DISTRIBUTION,
         partitionKeysNode,
         watermark,
         null,
         false,
         false);
   }
-
-  //  public static final SqlDistribution NO_DISTRIBUTION = null;
 
   public static SqlCreateTable createTable(
       String tableName,
@@ -229,7 +230,7 @@ public class FlinkSqlNodeFactory {
         createColumns(relDataType),
         Collections.emptyList(),
         FlinkSqlNodeFactory.createProperties(connectorOptions),
-        //        NO_DISTRIBUTION,
+        NO_DISTRIBUTION,
         SqlNodeList.EMPTY,
         null,
         null,
