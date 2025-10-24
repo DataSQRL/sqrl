@@ -169,7 +169,7 @@ public class DAGPlanner {
    * @return
    */
   public PhysicalPlan assemble(PipelineDAG dag, Sqrl2FlinkSQLTranslator sqrlEnv) {
-    var streamStage = pipeline.getStageByType(EngineType.STREAMS).orElseThrow();
+    var streamStage = pipeline.getStageByType(EngineType.PROCESS).orElseThrow();
     var serverEngine = pipeline.getServerEngine();
     var serverPlan = ServerStagePlan.builder();
     List<ExecutionStage> dataStoreStages =

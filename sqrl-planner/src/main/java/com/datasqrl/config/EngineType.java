@@ -16,7 +16,7 @@
 package com.datasqrl.config;
 
 public enum EngineType {
-  STREAMS,
+  PROCESS,
   DATABASE,
   SERVER,
   LOG,
@@ -24,7 +24,7 @@ public enum EngineType {
   EXPORT;
 
   public boolean isWrite() {
-    return this == STREAMS;
+    return this == PROCESS;
   }
 
   public boolean isRead() {

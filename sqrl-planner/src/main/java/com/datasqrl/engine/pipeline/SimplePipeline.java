@@ -48,7 +48,7 @@ public record SimplePipeline(
     var stages = new ArrayList<EngineStage>();
     // A simple pipeline expects a certain set of stages
     var logStage = getSingleStage(EngineType.LOG, engines);
-    var streamStage = getSingleStage(EngineType.STREAMS, engines);
+    var streamStage = getSingleStage(EngineType.PROCESS, engines);
     errors.checkFatal(streamStage.isPresent(), "Need to configure an enabled stream engine");
     var dbStages = getStage(EngineType.DATABASE, engines);
     // TODO: create two stages for each configured server: one for logStage and one for dbStages

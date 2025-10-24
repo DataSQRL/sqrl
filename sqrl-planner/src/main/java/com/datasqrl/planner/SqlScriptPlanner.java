@@ -176,7 +176,7 @@ public class SqlScriptPlanner {
     this.costModel = packageJson.getCompilerConfig().getCostModel();
     this.dagBuilder = new DAGBuilder();
     // Extract the various types of stages supported by the configured pipeline
-    var streamStage = pipeline.getStageByType(EngineType.STREAMS);
+    var streamStage = pipeline.getStageByType(EngineType.PROCESS);
     errorCollector.checkFatal(
         streamStage.isPresent(), "Need to configure a stream execution engine");
     this.streamStage = streamStage.get();
@@ -187,7 +187,7 @@ public class SqlScriptPlanner {
         pipeline.stages().stream()
             .filter(
                 stage ->
-                    stage.getType() == EngineType.DATABASE || stage.getType() == EngineType.STREAMS)
+                    stage.getType() == EngineType.DATABASE || stage.getType() == EngineType.PROCESS)
             .collect(Collectors.toList());
     this.queryStages =
         pipeline.stages().stream()

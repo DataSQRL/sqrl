@@ -1,4 +1,4 @@
 IMPORT ecommerce.orders;
 CustomerAgg1 := SELECT customerid, COUNT(id) as num FROM Orders GROUP BY customerid;
 /*+ EXEC(database) */ CustomerAgg2 := SELECT customerid, COUNT(id) + 1 as num FROM Orders GROUP BY customerid;
-/*+ EXEC(streams) */ CustomerAgg3 := SELECT customerid, COUNT(id) + 2 as num FROM Orders GROUP BY customerid;
+/*+ EXEC(process) */ CustomerAgg3 := SELECT customerid, COUNT(id) + 2 as num FROM Orders GROUP BY customerid;

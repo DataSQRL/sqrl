@@ -31,7 +31,7 @@ public class FlinkEngineFactory implements EngineFactory {
 
   @Override
   public EngineType getEngineType() {
-    return EngineType.STREAMS;
+    return EngineType.PROCESS;
   }
 
   @Override
