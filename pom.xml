@@ -98,7 +98,7 @@
 
     <!-- Flink runner props -->
     <flinkrunner.version>0.9-SNAPSHOT</flinkrunner.version>
-    <flinkrunner.image.repo>docker.io</flinkrunner.image.repo>
+    <flinkrunner.image.repo>ghcr.io</flinkrunner.image.repo>
 
     <!-- Params -->
     <docker.image.tag>local</docker.image.tag>
