@@ -1,0 +1,13 @@
+{
+  "data" : {
+    "MySchema" : [ {
+      "uuidField" : "223e4567-e89b-12d3-a456-426614174001",
+      "timestampMillisField" : "2023-08-08T03:29:39.000Z",
+      "nullableTimestampMillisField" : "2023-08-08T03:29:39.000Z"
+    }, {
+      "uuidField" : "123e4567-e89b-12d3-a456-426614174000",
+      "timestampMillisField" : "2023-08-08T03:29:39.000Z",
+      "nullableTimestampMillisField" : null
+    } ]
+  }
+}

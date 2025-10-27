@@ -1047,14 +1047,14 @@ public class SqlScriptPlanner {
       var flinkTable = ExternalFlinkTable.fromNamespaceObject(sinkTable, errorCollector);
       AtomicReference<RelDataType> exportSchemaRef = new AtomicReference<>(null);
       SchemaLoader schemaLoader =
-          (tableName, schemaReference) -> {
+          (tableName, schemaReference, tableProps) -> {
             var exportSchema = schemaReference.equalsIgnoreCase(".");
             if (schemaReference.equalsIgnoreCase("*") || exportSchema) {
               if (exportSchema) exportSchemaRef.set(inputNode.getTableAnalysis().getRowType());
               return Optional.of(
                   new SchemaConversionResult(inputNode.getTableAnalysis().getRowType(), Map.of()));
             }
-            return flinkTable.schemaLoader.loadSchema(tableName, schemaReference);
+            return flinkTable.schemaLoader.loadSchema(tableName, schemaReference, tableProps);
           };
 
       AddTableResult addTableResult;

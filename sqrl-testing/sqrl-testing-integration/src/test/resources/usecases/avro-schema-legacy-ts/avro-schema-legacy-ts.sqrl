@@ -1,0 +1,6 @@
+IMPORT tables.my_schema AS _MySchema;
+
+Res := SELECT * FROM _MySchema ORDER BY uuidField DESC;
+
+/*+test*/
+MySchema := SELECT * FROM Res;

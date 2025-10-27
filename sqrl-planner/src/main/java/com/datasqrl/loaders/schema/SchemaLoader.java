@@ -16,12 +16,14 @@
 package com.datasqrl.loaders.schema;
 
 import com.datasqrl.io.schema.SchemaConversionResult;
+import java.util.Map;
 import java.util.Optional;
 
 @FunctionalInterface
 public interface SchemaLoader {
 
-  SchemaLoader NONE = (t, r) -> Optional.empty();
+  SchemaLoader NONE = (t, r, p) -> Optional.empty();
 
-  Optional<SchemaConversionResult> loadSchema(String tableName, String relativeSchemaFilePath);
+  Optional<SchemaConversionResult> loadSchema(
+      String tableName, String relativeSchemaFilePath, Map<String, String> tableProps);
 }

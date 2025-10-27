@@ -812,12 +812,13 @@ public class Sqrl2FlinkSQLTranslator {
     var tableDefinition = (SqlCreateTable) tableSqlNode;
     var fullTable = tableDefinition;
     final var finalTableName = tableNameModifier.apply(tableDefinition.getTableName().getSimple());
-    if (fullTable instanceof SqlCreateTableLike) {
+    if (fullTable instanceof SqlCreateTableLike likeTable) {
       // Check if the LIKE clause is referencing an external schema
-      SqlTableLike likeClause = ((SqlCreateTableLike) fullTable).getTableLike();
+      SqlTableLike likeClause = likeTable.getTableLike();
       var likeTableName = likeClause.getSourceTable().toString();
+      var likeTableProps = FlinkSqlNodeFactory.propertiesToMap(likeTable.getPropertyList());
       Optional<SchemaConversionResult> schema =
-          schemaLoader.loadSchema(finalTableName, likeTableName);
+          schemaLoader.loadSchema(finalTableName, likeTableName, likeTableProps);
       if (schema.isPresent()) {
         // Use LIKE to merge schema with table definition
         var schemaTableName = finalTableName + SCHEMA_SUFFIX;
