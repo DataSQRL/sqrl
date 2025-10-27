@@ -47,10 +47,7 @@ public class AvroTableSchemaFactory implements TableSchemaFactory {
       throw errors.exception(ErrorCode.SCHEMA_ERROR, "Could not parse schema: %s", e);
     }
 
-    // Will be turned to 'false' if not present
-    var legacyTimestampMappingStr = tableProps.get(LEGACY_TIMESTAMP_MAPPING_KEY);
-    var legacyTimestampMapping = Boolean.parseBoolean(legacyTimestampMappingStr);
-
+    var legacyTimestampMapping = getLegacyTimestampMapping(tableProps);
     var converter = new AvroToRelDataTypeConverter(errors, legacyTimestampMapping);
 
     return new SchemaConversionResult(converter.convert(schema), Map.of());
@@ -64,5 +61,19 @@ public class AvroTableSchemaFactory implements TableSchemaFactory {
   @Override
   public Set<String> getExtensions() {
     return SCHEMA_EXTENSION;
+  }
+
+  /**
+   * Extracts the legacy timestamp mapping setting from table properties, checking both direct and
+   * value-prefixed property keys. Returns false if the keys are null or undefined.
+   */
+  private boolean getLegacyTimestampMapping(Map<String, String> tableProps) {
+    var legacyTimestampMappingStr = tableProps.get(LEGACY_TIMESTAMP_MAPPING_KEY);
+
+    if (legacyTimestampMappingStr == null) {
+      legacyTimestampMappingStr = tableProps.get("value." + LEGACY_TIMESTAMP_MAPPING_KEY);
+    }
+
+    return Boolean.parseBoolean(legacyTimestampMappingStr);
   }
 }
