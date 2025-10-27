@@ -45,7 +45,8 @@ public abstract class AbstractDiscoveryTableSchemaFactory implements TableSchema
   public static final String DATA_PATH = "DATA_PATH";
 
   @Override
-  public SchemaConversionResult convert(Path location, ErrorCollector errors) {
+  public SchemaConversionResult convert(
+      Path location, Map<String, String> tableProps, ErrorCollector errors) {
     var localErrors = errors.withConfig(location);
     var matcher = FilenameAnalyzer.of(getExtensions());
     var match = matcher.analyze(location);
