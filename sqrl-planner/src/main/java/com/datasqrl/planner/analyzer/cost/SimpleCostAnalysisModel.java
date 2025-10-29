@@ -52,9 +52,9 @@ public record SimpleCostAnalysisModel(@NonNull Type type) implements CostModel {
       case STREAMS:
         cost =
             switch (type) {
-                // We assume that pre-computing is generally cheaper (by factor of 10) unless
-                // (standard) joins are involved which can lead to combinatorial explosion.
-                // So, we primarily cost the joins
+              // We assume that pre-computing is generally cheaper (by factor of 10) unless
+              // (standard) joins are involved which can lead to combinatorial explosion.
+              // So, we primarily cost the joins
               case DEFAULT -> joinCost(tableAnalysis.getCosts()) / 10;
               case WRITE -> cost / 10; // Make it always cheaper than database
               case READ -> cost * 2; // Make it more expensive than database to favor reads
