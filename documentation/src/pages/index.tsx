@@ -21,7 +21,7 @@ const header: HomepageHeaderProps = {
         Build data APIs or data products, serve data via MCP or RAG.
       </>
   ),
-  buttonLink: 'docs/getting-started',
+  buttonLink: 'docs/intro/getting-started',
   buttonText: 'Automate Your Data Pipelines',
   image: "/img/diagrams/architecture_overview.png"
 };
@@ -414,7 +414,7 @@ EnrichedTransactions := SELECT
                     {/*Watch the video to see for yourself.*/}
                   </p>
                   <Link className="button button--primary button--lg"
-                        to="/docs/getting-started">Get Started</Link>
+                        to="/docs/intro/getting-started">Get Started</Link>
                   <Link className="button button--primary button--lg"
                         to="/docs/intro">Learn More</Link>
                 </div>

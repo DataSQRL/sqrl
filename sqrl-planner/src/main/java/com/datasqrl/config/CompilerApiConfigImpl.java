@@ -58,8 +58,10 @@ public class CompilerApiConfigImpl implements CompilerApiConfig {
   }
 
   public enum Endpoints {
-    OPS_ONLY,
-    GRAPHQL,
-    FULL;
+    OPS_ONLY, // only support the pre-defined operations in the GraphQL API, do not support flexible
+    // GraphQL queries TODO: not yet implemented
+    GRAPHQL, // support flexible GraphQL API but only pre-defined operations for other protocols
+    FULL; // support flexible GraphQL API and add generated operations from GraphQL schema to
+    // pre-defined ones for other protocols
   }
 }

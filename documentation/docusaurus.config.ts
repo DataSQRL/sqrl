@@ -39,6 +39,10 @@ const config: Config = {
   onBrokenLinks: 'warn',
   onBrokenMarkdownLinks: 'warn',
 
+  markdown: {
+    mermaid: true,
+  },
+
   // Even if you don't use internationalization, you can use this field to set
   // useful metadata like html lang. For example, if your site is Chinese, you
   // may want to replace "en" with "zh-Hans".
@@ -90,6 +94,7 @@ const config: Config = {
         searchResultContextMaxLength: 50
       }),
     ],
+    '@docusaurus/theme-mermaid',
   ],
 
   themeConfig: {
@@ -125,7 +130,7 @@ const config: Config = {
           items: [
             {
               label: 'Getting Started',
-              to: '/docs/getting-started',
+              to: '/docs/intro/getting-started',
             },
             {
               label: 'User Documentation',

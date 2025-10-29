@@ -4,16 +4,16 @@
 
 SQRL supports all of [Flink's built-in system functions](https://nightlies.apache.org/flink/flink-docs-release-1.19/docs/dev/table/functions/systemfunctions/).
 
-SQRL adds [system functions](stdlib-docs/stdlib-docs/system-functions) with support for:
+SQRL adds [system functions](functions-system-generated) with support for:
 * a binary JSON type (JSONB) to represent semi-structured data efficiently.
 * a vector type to represent embeddings.
 * text manipulation and full text search.
 
-System functions are always available and do not need to be imported. Take a look at the [full list of SQRL system function](stdlib-docs/stdlib-docs/system-functions).
+System functions are always available and do not need to be imported. Take a look at the [full list of SQRL system function](functions-system-generated).
 
 ## Function Libraries
 
-SQRL includes [standard libraries](stdlib-docs/stdlib-docs/library-functions) that can be imported into a SQRL script as follows:
+SQRL includes [standard libraries](functions-library-generated) that can be imported into a SQRL script as follows:
 
 ```sql
 IMPORT stdlib.math;
@@ -25,8 +25,7 @@ IMPORT stdlib.math.hypot AS hypotenuse;
 ```
 Imports a single function `hypot` from the `math` library under the name `hypotenuse`. The renaming with `AS` is optional and is omitted when you want to use the original name.
 
-Check out the [full list of function libraries](stdlib-docs/stdlib-docs/library-functions).
-
+Check out the [full list of function libraries](functions-library-generated).
 
 ## User Defined Functions
 
@@ -44,7 +43,6 @@ IMPORT myjavafunction.target.MyScalarFunction;
 ```
 
 Check out this [complete example](https://github.com/DataSQRL/datasqrl-examples/tree/main/user-defined-function).
-
 
 ### JavaScript
 

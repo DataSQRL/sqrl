@@ -36,25 +36,7 @@ class GenericJavaServerEngineTest {
   @Test
   void test() {
     // innermost object: a single pub-/sec key
-    Map<String, Object> pubSecKey =
-        Map.of(
-            "algorithm", "HS256",
-            "buffer", "dGVzdFNlY3JldA==");
-
-    // JWT options
-    Map<String, Object> jwtOptions =
-        Map.of(
-            "issuer", "my-test-issuer",
-            "audience", List.of("my-test-audience"),
-            "expiresInSeconds", "3600",
-            "leeway", "60");
-
-    // jwtAuth node
-    Map<String, Object> jwtAuth =
-        Map.of("pubSecKeys", List.of(pubSecKey), "jwtOptions", jwtOptions);
-
-    // root
-    Map<String, Object> config = Map.of("jwtAuth", jwtAuth);
+    var config = getConfigMap();
 
     var defaultConfig = underTest.readDefaultConfig();
     assertThat(defaultConfig.getJwtAuth()).isNull();
@@ -72,22 +54,7 @@ class GenericJavaServerEngineTest {
   @SneakyThrows
   void givenJwtConfiguration_whenConfigMerged_thenBuffersAreStringValues() {
     // Create JWT configuration with buffer as simple string (not complex object)
-    Map<String, Object> pubSecKey =
-        Map.of(
-            "algorithm", "HS256",
-            "buffer", "dGVzdFNlY3JldA==");
-
-    Map<String, Object> jwtOptions =
-        Map.of(
-            "issuer", "my-test-issuer",
-            "audience", List.of("my-test-audience"),
-            "expiresInSeconds", "3600",
-            "leeway", "60");
-
-    Map<String, Object> jwtAuth =
-        Map.of("pubSecKeys", List.of(pubSecKey), "jwtOptions", jwtOptions);
-
-    Map<String, Object> config = Map.of("jwtAuth", jwtAuth);
+    var config = getConfigMap();
 
     // Test the configuration merging that would happen during serverConfig() generation
     var defaultConfig = underTest.readDefaultConfig();
@@ -113,6 +80,28 @@ class GenericJavaServerEngineTest {
     // Ensure buffer is not a complex object (would have been corrupted by old VertxModule usage)
     assertThat(bufferNode.isObject()).isFalse();
     assertThat(bufferNode.has("bytes")).isFalse();
+  }
+
+  private static Map<String, Object> getConfigMap() {
+    var pubSecKey =
+        Map.of(
+            "algorithm", "HS256",
+            "buffer", "dGVzdFNlY3JldA==");
+
+    var jwtOptions =
+        Map.of(
+            "issuer",
+            "my-test-issuer",
+            "audience",
+            List.of("my-test-audience"),
+            "expiresInSeconds",
+            3600,
+            "leeway",
+            30);
+
+    var jwtAuth = Map.of("pubSecKeys", List.of(pubSecKey), "jwtOptions", jwtOptions);
+
+    return Map.of("jwtAuth", jwtAuth);
   }
 
   private static class DummyConverter implements QueryEngineConfigConverter {

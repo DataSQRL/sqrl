@@ -11,63 +11,65 @@ DataSQRL uses Apache Flink connectors and formats. To find a connector for your 
 
 ## Connector Management
 
-The best practice for managing connectors in your DataSQRL project is to create a folder for each system that you are
-connecting to and place all source or sink `CREATE TABLE` statements in separate files ending in `.table.sql` in that folder.
-You can then import from and export to those sources and sinks in the SQRL script.
+The best practice for managing connectors in your DataSQRL project is to place all `CREATE TABLE` statements for one data source in a single `.sqrl` file inside the `connectors` folder. This provides a modular structure for sources and sinks that supports reusability and replacing connectors for testing or different environments. [Import](sqrl-language#import-statement) those connector files into your main script.
 
-For example, to ingest data from the `User` and `Transaction` topics of a Kafka cluster, you would:
-1. Create a sub-directory `kafka-sources` in your project directory that contains your SQRL script
-2. Create two files `user.table.sql` and `transaction.table.sql`.
-3. Each file contains a `CREATE TABLE` statement that defines columns for each field in the message and a `WITH` clause
-   that contains the connector configuration. They will look like this:
-    ```sql
-    CREATE TABLE User (
-      user_id BIGINT,
-      user_name STRING,
-      last_updated TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
-      WATERMARK FOR last_updated AS last_updated - INTERVAL '1' SECOND
-      WATERMARK 
-    ) WITH (
-      'connector' = 'kafka',
-      'topic' = 'user',
-      'properties.bootstrap.servers' = 'localhost:9092',
-      'properties.group.id' = 'user-consumer-group',
-      'scan.startup.mode' = 'earliest-offset',
-      'format' = 'avro',
-    );
-    ```
-4. Import those sources into your SQRL script with `IMPORT kafak-sources.User;`
-5. Keep sources and sinks in separate folders (e.g. `kafka-sink`)
+We **strongly encourage** the use of event-time processing and ensuring that all sources are configured with a proper watermark. While processing-time is supported, only event-time ensures consistent data processing and sane, reproducible results.
 
-By following this structure, you modularize your sources and sinks from your processing logic
-which makes it easier to read and maintain.
+When ingesting data from external data sources it is important to note the [type of table](sqrl-language#type-system) you are creating: an append-only `STREAM` (e.g. with the `filesystem` connector), `VERSIONED_STATE` retraction stream (e.g. with the `upsert-kafka` connector), or a `LOOKUP` table (e.g. with the `jdbc` connector). The table type determines what operations a table supports and how it should be processed.
 
-## External Schemas
+Specifically, entity data is often ingested as a stream of updates. To re-create the underlying entity `VERSIONED_STATE` table, use the `DISTINCT` statement with the entity's primary key.
 
-When ingesting data from external systems, the schema is often defined in or by those systems.
-For example, Avro is a popular schema language for encoding messages in Kafka topics.
-It can be very cumbersome to convert that schema to SQL and maintain that translation.
+## LIKE Clause for Schema Loading
 
-With DataSQRL, you can easily create a table that fetches the schema from a given avro schema file.
-Following the example above and assuming that the schema for the `User` topic is `user.avsc`,
-and that file is placed next to the `user.table.sql` file, then a `LIKE <schema-file-path>` statement can be added
-to the `CREATE TABLE` statement, so in the `user.table.sql` we only need to define the metadata, the watermark,
-and the connector options:
+DataSQRL supports automatic schema loading from external schema files using the `LIKE` clause. This feature eliminates the need to manually define column definitions when the schema already exists in a supported format.
+
+```sql
+CREATE TABLE MyTable (
+  ...
+) WITH (
+  ...
+) LIKE 'mytable.avsc';
+```
+
+The `LIKE` clause:
+- **Automatically populates** column definitions from the referenced schema file
+- **Maintains schema consistency** between your data pipeline and external systems
+- **Reduces maintenance overhead** by eliminating manual schema translations
+- **Supports relative paths** to schema files in your project structure
+
+DataSQRL currently supports loading schemas from:
+- **Avro schema files** (`.avsc`)
+
+Assuming you have an Avro schema file `user.avsc` for a Kafka topic:
+
 ```sql
 CREATE TABLE User (
   last_updated TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
   WATERMARK FOR last_updated AS last_updated - INTERVAL '1' SECOND
-  WATERMARK 
 ) WITH (
   'connector' = 'kafka',
-  'topic' = 'user',
-  'properties.bootstrap.servers' = 'localhost:9092',
-  'properties.group.id' = 'user-consumer-group',
-  'scan.startup.mode' = 'earliest-offset',
-  'format' = 'avro',
-) LIKE `user.avsc`;
+  ...
+) LIKE 'user.avsc';
 ```
 
-:::info
-We can even include files from other folder via relative path, but in most cases it makes sense to put the schema file next to the table sql.
-:::
+In this example:
+- The `LIKE 'user.avsc'` clause loads all column definitions from the Avro schema
+- You add **metadata columns** (like `last_updated`) and **watermark specifications**
+- The **connector configuration** remains in the `WITH` clause as usual
+
+### Inferring Schema from Data Files
+
+To automatically discover the schema of a JSONL or CSV file, add the filename in the `LIKE` clause.
+In addition to generating the table columns based on the inferred schema of the data, this also configures the `filesystem` connector to access the data.
+
+For example, suppose you have a `users.jsonl` file in the `connectors` directory, you can define the `User` table simply as:
+
+```sql
+CREATE TABLE User (
+  WATERMARK FOR last_updated AS last_updated - INTERVAL '1' SECOND
+) WITH (
+  'source.monitor-interval' = '10 sec', -- remove for batch processing
+) LIKE 'users.jsonl';
+```
+
+This syntax is useful when building DataSQRL projects from data files since it eliminates the manual schema creation.
