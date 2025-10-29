@@ -16,7 +16,6 @@
 package com.datasqrl.graphql.auth;
 
 import graphql.GraphQLError;
-import graphql.GraphqlErrorBuilder;
 import graphql.execution.ResultPath;
 import graphql.language.SourceLocation;
 import java.util.List;
@@ -66,17 +65,5 @@ public class MissingRequiredClaimException extends RuntimeException implements G
   @Override
   public List<Object> getPath() {
     return path != null ? path.toList() : null;
-  }
-
-  public GraphQLError toGraphQLError() {
-    return GraphqlErrorBuilder.newError()
-        .message("Forbidden")
-        .extensions(
-            java.util.Map.of(
-                "code", "FORBIDDEN",
-                "reason", "MISSING_REQUIRED_CLAIM"))
-        .locations(locations)
-        .path(path)
-        .build();
   }
 }
