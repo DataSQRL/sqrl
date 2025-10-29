@@ -69,8 +69,8 @@ INSERT INTO `default_catalog`.`default_database`.`SinkA_ex1`
  END;
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `TableB`
-(SELECT COUNT(*) AS `recordCount`
- FROM `TableA`)
+(SELECT *
+ FROM `Src`)
 ;
 INSERT INTO `default_catalog`.`default_database`.`SinkB_ex2`
  (SELECT *

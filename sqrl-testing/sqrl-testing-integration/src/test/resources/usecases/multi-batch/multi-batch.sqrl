@@ -18,6 +18,6 @@ EXPORT Src TO tables.sink_a;
 
 NEXT_BATCH;
 
-INSERT INTO TableB SELECT COUNT(*) AS recordCount FROM TableA;
+INSERT INTO TableB SELECT * FROM Src;
 
 EXPORT Src TO tables.sink_b;
