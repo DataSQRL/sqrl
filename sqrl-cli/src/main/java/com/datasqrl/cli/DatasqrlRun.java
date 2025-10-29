@@ -73,6 +73,8 @@ import org.apache.kafka.clients.admin.NewTopic;
 @Slf4j
 public class DatasqrlRun {
 
+  private static final int TOPIC_CREATE_TIMEOUT_MS = 8000;
+
   private final Path planDir;
   private final PackageJson sqrlConfig;
   private final Configuration flinkConfig;
@@ -225,6 +227,7 @@ public class DatasqrlRun {
 
     Properties props = new Properties();
     props.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+    props.put(AdminClientConfig.REQUEST_TIMEOUT_MS_CONFIG, TOPIC_CREATE_TIMEOUT_MS);
     try (AdminClient adminClient = AdminClient.create(props)) {
       Set<String> existingTopics = adminClient.listTopics().names().get();
       for (String topicName : topicsToCreate) {
@@ -234,6 +237,11 @@ public class DatasqrlRun {
         NewTopic newTopic = new NewTopic(topicName, 1, (short) 1);
         adminClient.createTopics(Collections.singletonList(newTopic)).all().get();
       }
+    } catch (Exception e) {
+      log.warn(
+          "Failed to create Kafka topic(s). One or more required topics for the SQRL pipeline might not exist."
+              + " Please ensure all topics are pre-created, as automatic topic creation is only available for the internal Kafka instance.");
+      log.debug("Topic creation error details:", e);
     }
   }
 
