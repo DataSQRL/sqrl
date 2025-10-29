@@ -94,10 +94,28 @@ The following is the [default configuration file](https://raw.githubusercontent.
 
 ## Connector Template Variables
 
-The connector templates configured under `connectors` use SQRL-specific variables like `${sqrl:table-name}`.
+The connector templates configured under `connectors` can use environment variables and SQRL-specific variables for dynamic configuration.
 
-SQRL-specific variables start with a `sqrl:` prefix and are substituted by the compiler at compile-time in configuration files. SQRL env variables `${sqrl:<identifier>}` are used for templating inside connector configuration templates and support the following identifiers:
-`table-name`, `original-table-name`, `filename`, `format`, and `kafka-key`.
+### Environment Variables
+
+You can reference environment variables using the `${VAR_NAME}` placeholder syntax, for example `${POSTGRES_PASSWORD}`.
+At runtime, these placeholders are automatically resolved using the environment variables defined in the system or deployment environment.
+
+This can help decouple security credentials or add flexibility across different deployment environments.
+
+### SQRL Variables
+
+SQRL-specific variables start with a `sqrl:` prefix and are used for templating inside connector configuration options.
+The proper syntax look like `${sqrl:<identifier>}`.
+
+Supported identifiers include:
+- `table-name`
+- `original-table-name`
+- `filename`
+- `format`
+- `kafka-key`
+
+These are typically used within connector templates to inject table-specific or context-aware configuration values.
 
 :::warning
 Unresolved `${sqrl:*}` placeholders raise a validation error.
