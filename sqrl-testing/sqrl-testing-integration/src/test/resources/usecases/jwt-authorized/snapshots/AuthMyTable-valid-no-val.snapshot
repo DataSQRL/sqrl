@@ -1,6 +1,6 @@
 {
   "errors" : [ {
-    "message" : "Exception while fetching data (/AuthMyTable) : Attribute 'val' is not present on authorization",
+    "message" : "Exception while fetching data (/AuthMyTable) : Forbidden",
     "locations" : [ {
       "line" : 2,
       "column" : 3
