@@ -31,7 +31,6 @@
         "rest.address": "localhost",
         "rest.port": 8081,
         "state.backend.type": "rocksdb",
-        "table.exec.resource.default-parallelism": 1,
         "taskmanager.memory.network.max": "800m"
       }
     },
