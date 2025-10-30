@@ -64,14 +64,31 @@ public class AvroTableSchemaFactory implements TableSchemaFactory {
   }
 
   /**
-   * Extracts the legacy timestamp mapping setting from table properties, checking both direct and
-   * value-prefixed property keys. Returns false if the keys are null or undefined.
+   * Extracts the legacy timestamp mapping setting from table properties.
+   *
+   * <p>Checks for the property in the following order:
+   *
+   * <ol>
+   *   <li>Direct property key
+   *   <li>Value-prefixed property key
+   *   <li>If not found and any property key contains "avro-confluent", returns true
+   *   <li>Otherwise returns false
+   * </ol>
+   *
+   * @param tableProps the table properties to extract the setting from
+   * @return true if legacy timestamp mapping should be used, false otherwise
    */
-  private boolean getLegacyTimestampMapping(Map<String, String> tableProps) {
+  boolean getLegacyTimestampMapping(Map<String, String> tableProps) {
     var legacyTimestampMappingStr = tableProps.get(LEGACY_TIMESTAMP_MAPPING_KEY);
 
     if (legacyTimestampMappingStr == null) {
       legacyTimestampMappingStr = tableProps.get("value." + LEGACY_TIMESTAMP_MAPPING_KEY);
+    }
+
+    // avro-confluent uses legacy no matter what
+    if (legacyTimestampMappingStr == null
+        && tableProps.keySet().stream().anyMatch(key -> key.contains("avro-confluent"))) {
+      return true;
     }
 
     return Boolean.parseBoolean(legacyTimestampMappingStr);
