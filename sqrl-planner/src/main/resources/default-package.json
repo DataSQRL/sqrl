@@ -41,7 +41,7 @@
       "retention": null,
       "watermark": "0 ms",
       "transaction-watermark": "0 ms"
-  }
+    }
   },
   "connectors": {
     "kafka-mutation": {
