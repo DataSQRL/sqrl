@@ -15,20 +15,21 @@
  */
 package com.datasqrl.graphql;
 
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.ext.web.RoutingContext;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.Delegate;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class DetailedRequestTracer implements Handler<RoutingContext> {
 
-  private DetailedRequestTracer() {
+  public DetailedRequestTracer() {
     log.info("DetailedRequestTracer enabled");
   }
 
@@ -37,33 +38,38 @@ public class DetailedRequestTracer implements Handler<RoutingContext> {
     var request = context.request();
     var response = context.response();
     var startTime = System.currentTimeMillis();
-
-    // Generate unique request ID for correlation
     var requestId = generateRequestId();
 
-    // Log incoming request details
-    logIncomingRequest(request, requestId);
+    // Capture request data
+    var requestData = captureRequestData(request, context.body());
 
-    // Capture request body
-    var body = context.body();
-    logRequestBody(body != null ? body.buffer() : null, requestId);
+    // Capture response body by wrapping the response
+    var responseBodyCapture = Buffer.buffer();
+    var wrappedResponse =
+        new ResponseCapturingWrapper(
+            response, responseBodyCapture, requestId, requestData, startTime);
 
-    // Wrap response to capture body data
-    var responseBodyCapture = new ArrayList<Buffer>();
-    wrapResponse(response, responseBodyCapture);
-
-    // Hook into response end to log final details
-    response.endHandler(
-        v -> {
-          var endTime = System.currentTimeMillis();
-          var duration = endTime - startTime;
-          logOutgoingResponse(response, requestId, duration, responseBodyCapture);
-        });
+    // Replace the response in the routing context using reflection
+    try {
+      var implClass = context.getClass();
+      var field = implClass.getDeclaredField("response");
+      field.setAccessible(true);
+      field.set(context, wrappedResponse);
+    } catch (Exception e) {
+      log.warn("[{}] Could not wrap response for body capture: {}", requestId, e.getMessage());
+      // Fall back to logging without response body
+      response.endHandler(
+          v -> {
+            var duration = System.currentTimeMillis() - startTime;
+            logCompleteTrace(requestId, requestData, response, responseBodyCapture, duration);
+          });
+    }
 
     context.next();
   }
 
-  private void logIncomingRequest(HttpServerRequest request, String requestId) {
+  private RequestData captureRequestData(
+      HttpServerRequest request, io.vertx.ext.web.RequestBody body) {
     var headers =
         request.headers().entries().stream()
             .map(entry -> entry.getKey() + ": " + entry.getValue())
@@ -74,85 +80,169 @@ public class DetailedRequestTracer implements Handler<RoutingContext> {
             .map(entry -> entry.getKey() + "=" + entry.getValue())
             .collect(Collectors.joining("&"));
 
-    log.debug(
-        "[{}] INCOMING REQUEST - Method: {}, URI: {}, Headers: [{}], Params: [{}], RemoteAddress: {}",
-        requestId,
-        request.method(),
+    String requestBody = null;
+    Integer requestBodySize = null;
+    if (body != null && body.buffer() != null) {
+      var buffer = body.buffer();
+      requestBodySize = buffer.length();
+      requestBody = buffer.toString();
+      if (requestBody.length() > 10000) {
+        requestBody = requestBody.substring(0, 10000) + "... [TRUNCATED]";
+      }
+    }
+
+    return new RequestData(
+        request.method().toString(),
         request.uri(),
         headers.isEmpty() ? "none" : headers,
         params.isEmpty() ? "none" : params,
-        request.remoteAddress());
+        request.remoteAddress() != null ? request.remoteAddress().toString() : "unknown",
+        requestBody,
+        requestBodySize);
   }
 
-  private void logRequestBody(Buffer body, String requestId) {
-    if (body == null) {
-      log.debug("[{}] REQUEST BODY - No body (null)", requestId);
-      return;
-    }
-
-    var bodyStr = body.toString();
-    if (bodyStr.isEmpty()) {
-      log.debug("[{}] REQUEST BODY - Size: {} bytes, Content: [EMPTY]", requestId, body.length());
-      return;
-    }
-
-    log.debug("[{}] REQUEST BODY - Size: {} bytes, Content: {}", requestId, body.length(), bodyStr);
-  }
-
-  private void logOutgoingResponse(
-      HttpServerResponse response,
+  private void logCompleteTrace(
       String requestId,
-      long durationMs,
-      List<Buffer> responseBodyCapture) {
-    var headers =
+      RequestData requestData,
+      HttpServerResponse response,
+      Buffer responseBodyCapture,
+      long durationMs) {
+    var responseHeaders =
         response.headers().entries().stream()
             .map(entry -> entry.getKey() + ": " + entry.getValue())
             .collect(Collectors.joining(", "));
 
-    log.debug(
-        "[{}] OUTGOING RESPONSE - Status: {}, Headers: [{}], Duration: {}ms",
-        requestId,
-        response.getStatusCode(),
-        headers.isEmpty() ? "none" : headers,
-        durationMs);
+    String responseBody = null;
+    Integer responseBodySize = null;
+    if (responseBodyCapture.length() > 0) {
+      responseBodySize = responseBodyCapture.length();
+      responseBody = responseBodyCapture.toString();
+      if (responseBody.length() > 10000) {
+        responseBody = responseBody.substring(0, 10000) + "... [TRUNCATED]";
+      }
+    }
 
-    logResponseBody(responseBodyCapture, requestId);
+    log.debug(
+        "[{}] {} {} | Status: {} | Duration: {}ms | RemoteAddr: {} | ReqHeaders: [{}] | ReqParams: [{}] | ReqBody: {} bytes {} | RespHeaders: [{}] | RespBody: {} bytes {}",
+        requestId,
+        requestData.method,
+        requestData.uri,
+        response.getStatusCode(),
+        durationMs,
+        requestData.remoteAddress,
+        requestData.headers,
+        requestData.params,
+        requestData.requestBodySize != null ? requestData.requestBodySize : 0,
+        requestData.requestBody != null ? "- " + requestData.requestBody : "- [EMPTY]",
+        responseHeaders.isEmpty() ? "none" : responseHeaders,
+        responseBodySize != null ? responseBodySize : 0,
+        responseBody != null ? "- " + responseBody : "- [EMPTY]");
   }
 
   private String generateRequestId() {
     return "REQ-" + System.nanoTime() + "-" + Thread.currentThread().getId();
   }
 
-  private void wrapResponse(HttpServerResponse response, List<Buffer> responseBodyCapture) {
-    // Response body logging is complex in Vert.x due to the streaming nature
-    // For now, we'll log that response body capture is not yet implemented
-    // Future enhancement could use a custom HttpServerResponse wrapper
-    log.trace(
-        "Response body capture initialized (requires custom response wrapper for full implementation)");
-  }
+  private record RequestData(
+      String method,
+      String uri,
+      String headers,
+      String params,
+      String remoteAddress,
+      String requestBody,
+      Integer requestBodySize) {}
 
-  private void logResponseBody(List<Buffer> responseBodyCapture, String requestId) {
-    if (responseBodyCapture.isEmpty()) {
-      log.debug(
-          "[{}] RESPONSE BODY - No body data captured (requires response wrapping enhancement)",
-          requestId);
-      return;
+  @RequiredArgsConstructor
+  private class ResponseCapturingWrapper implements HttpServerResponse {
+    @Delegate(excludes = BodyCaptureMethods.class)
+    private final HttpServerResponse delegate;
+
+    private final Buffer capture;
+    private final String requestId;
+    private final RequestData requestData;
+    private final long startTime;
+    private boolean logged = false;
+
+    @Override
+    public Future<Void> write(Buffer data) {
+      if (data != null) {
+        capture.appendBuffer(data);
+      }
+      return delegate.write(data);
     }
 
-    var totalSize = responseBodyCapture.stream().mapToInt(Buffer::length).sum();
-    var combinedBody = Buffer.buffer();
-    responseBodyCapture.forEach(combinedBody::appendBuffer);
-
-    var bodyStr = combinedBody.toString();
-    if (bodyStr.length() > 10000) {
-      // Truncate very large responses
-      bodyStr = bodyStr.substring(0, 10000) + "... [TRUNCATED]";
+    @Override
+    public Future<Void> write(String chunk) {
+      if (chunk != null) {
+        capture.appendString(chunk);
+      }
+      return delegate.write(chunk);
     }
 
-    log.debug("[{}] RESPONSE BODY - Size: {} bytes, Content: {}", requestId, totalSize, bodyStr);
-  }
+    @Override
+    public Future<Void> write(String chunk, String enc) {
+      if (chunk != null) {
+        capture.appendString(chunk, enc);
+      }
+      return delegate.write(chunk, enc);
+    }
 
-  public static DetailedRequestTracer create() {
-    return new DetailedRequestTracer();
+    @Override
+    public Future<Void> end() {
+      logIfNotLogged();
+      return delegate.end();
+    }
+
+    @Override
+    public Future<Void> end(Buffer chunk) {
+      if (chunk != null) {
+        capture.appendBuffer(chunk);
+      }
+      logIfNotLogged();
+      return delegate.end(chunk);
+    }
+
+    @Override
+    public Future<Void> end(String chunk) {
+      if (chunk != null) {
+        capture.appendString(chunk);
+      }
+      logIfNotLogged();
+      return delegate.end(chunk);
+    }
+
+    @Override
+    public Future<Void> end(String chunk, String enc) {
+      if (chunk != null) {
+        capture.appendString(chunk, enc);
+      }
+      logIfNotLogged();
+      return delegate.end(chunk, enc);
+    }
+
+    private void logIfNotLogged() {
+      if (!logged) {
+        logged = true;
+        var duration = System.currentTimeMillis() - startTime;
+        logCompleteTrace(requestId, requestData, delegate, capture, duration);
+      }
+    }
+
+    @SuppressWarnings("unused")
+    private interface BodyCaptureMethods {
+      Future<Void> write(Buffer data);
+
+      Future<Void> write(String chunk);
+
+      Future<Void> write(String chunk, String enc);
+
+      Future<Void> end();
+
+      Future<Void> end(Buffer chunk);
+
+      Future<Void> end(String chunk);
+
+      Future<Void> end(String chunk, String enc);
+    }
   }
 }

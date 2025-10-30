@@ -53,7 +53,7 @@ public class VertxContainerIT extends SqrlContainerTestBase {
     var response = executeGraphQLQuery(testQuery);
     validateBasicGraphQLResponse(response);
 
-    assertTraceLogContains("REQUEST BODY");
+    assertTraceLogContains("ReqBody:");
   }
 
   @Test
@@ -65,7 +65,7 @@ public class VertxContainerIT extends SqrlContainerTestBase {
     var response = executeGraphQLQuery(testQuery);
     validateBasicGraphQLResponse(response);
 
-    assertTraceLogContains("REQUEST BODY", testQuery, "/v1/graphql");
+    assertTraceLogContains("ReqBody:", testQuery, "/v1/graphql");
 
     var randomPath = "/random/test/path/12345";
     var testBody = "{\"test\":\"data\",\"random\":\"content\"}";
@@ -75,7 +75,7 @@ public class VertxContainerIT extends SqrlContainerTestBase {
 
     sharedHttpClient.execute(randomRequest);
 
-    assertTraceLogContains("REQUEST BODY", testBody, randomPath);
+    assertTraceLogContains("ReqBody:", testBody, randomPath);
 
     var graphiqlResponse = sharedHttpClient.execute(new HttpGet(getBaseUrl() + "/v1/graphiql/"));
 
@@ -97,7 +97,7 @@ public class VertxContainerIT extends SqrlContainerTestBase {
         .contains("static/css/main.")
         .contains("<div id=\"root\"></div>");
 
-    assertTraceLogContains("INCOMING REQUEST", "Method: GET", "URI: /v1/graphiql/");
+    assertTraceLogContains("GET /v1/graphiql/");
   }
 
   @Test
@@ -109,10 +109,10 @@ public class VertxContainerIT extends SqrlContainerTestBase {
     var response = executeGraphQLQuery(testQuery);
     validateBasicGraphQLResponse(response);
 
-    // Verify that log entries contain request ID prefix in the expected format [REQ-...]
-    assertTraceLogMatchesPattern("\\[REQ-\\d+-\\d+\\] INCOMING REQUEST");
-    assertTraceLogMatchesPattern("\\[REQ-\\d+-\\d+\\] REQUEST BODY");
-    assertTraceLogMatchesPattern("\\[REQ-\\d+-\\d+\\] OUTGOING RESPONSE");
+    // Verify that log entries contain request ID prefix and all key elements in single line
+    assertTraceLogMatchesPattern("\\[REQ-\\d+-\\d+\\] POST /v1/graphql \\| Status: \\d+");
+    assertTraceLogMatchesPattern("ReqBody: \\d+ bytes");
+    assertTraceLogMatchesPattern("RespBody: \\d+ bytes");
   }
 
   @SneakyThrows
