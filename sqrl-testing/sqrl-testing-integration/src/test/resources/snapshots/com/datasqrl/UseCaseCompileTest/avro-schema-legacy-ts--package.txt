@@ -79,8 +79,8 @@ CREATE TABLE `Res_1` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Res_1`
-(SELECT *
- FROM `default_catalog`.`default_database`.`Res`)
+SELECT *
+ FROM `default_catalog`.`default_database`.`Res`
 ;
 END
 >>>kafka.json
