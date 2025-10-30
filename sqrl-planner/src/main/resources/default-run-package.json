@@ -2,9 +2,14 @@
   "engines" : {
     "flink" : {
       "config": {
-        "table.exec.resource.default-parallelism": 1,
+        "execution.target": "local",
+        "execution.attached": true,
+        "rest.address": "localhost",
+        "rest.port": 8081,
         "state.checkpoints.dir": "file:///data/flink/checkpoints",
-        "state.savepoints.dir": "file:///data/flink/savepoints"
+        "state.savepoints.dir": "file:///data/flink/savepoints",
+        "table.exec.resource.default-parallelism": 1,
+        "taskmanager.memory.network.max": "800m"
       }
     }
   }
