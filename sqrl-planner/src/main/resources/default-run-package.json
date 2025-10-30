@@ -2,6 +2,7 @@
   "engines" : {
     "flink" : {
       "config": {
+        "table.exec.resource.default-parallelism": 1,
         "state.checkpoints.dir": "file:///data/flink/checkpoints",
         "state.savepoints.dir": "file:///data/flink/savepoints"
       }
