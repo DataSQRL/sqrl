@@ -22,13 +22,14 @@ import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.ext.web.RoutingContext;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import lombok.experimental.Delegate;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class DetailedRequestTracer implements Handler<RoutingContext> {
 
-  private DetailedRequestTracer() {
+  public DetailedRequestTracer() {
     log.info("DetailedRequestTracer enabled");
   }
 
@@ -142,37 +143,16 @@ public class DetailedRequestTracer implements Handler<RoutingContext> {
     return "REQ-" + System.nanoTime() + "-" + Thread.currentThread().getId();
   }
 
-  private static class RequestData {
-    final String method;
-    final String uri;
-    final String headers;
-    final String params;
-    final String remoteAddress;
-    final String requestBody;
-    final Integer requestBodySize;
+  private record RequestData(
+      String method,
+      String uri,
+      String headers,
+      String params,
+      String remoteAddress,
+      String requestBody,
+      Integer requestBodySize) {}
 
-    RequestData(
-        String method,
-        String uri,
-        String headers,
-        String params,
-        String remoteAddress,
-        String requestBody,
-        Integer requestBodySize) {
-      this.method = method;
-      this.uri = uri;
-      this.headers = headers;
-      this.params = params;
-      this.remoteAddress = remoteAddress;
-      this.requestBody = requestBody;
-      this.requestBodySize = requestBodySize;
-    }
-  }
-
-  public static DetailedRequestTracer create() {
-    return new DetailedRequestTracer();
-  }
-
+  @RequiredArgsConstructor
   private class ResponseCapturingWrapper implements HttpServerResponse {
     @Delegate(excludes = BodyCaptureMethods.class)
     private final HttpServerResponse delegate;
@@ -182,19 +162,6 @@ public class DetailedRequestTracer implements Handler<RoutingContext> {
     private final RequestData requestData;
     private final long startTime;
     private boolean logged = false;
-
-    ResponseCapturingWrapper(
-        HttpServerResponse delegate,
-        Buffer capture,
-        String requestId,
-        RequestData requestData,
-        long startTime) {
-      this.delegate = delegate;
-      this.capture = capture;
-      this.requestId = requestId;
-      this.requestData = requestData;
-      this.startTime = startTime;
-    }
 
     @Override
     public Future<Void> write(Buffer data) {
@@ -261,6 +228,7 @@ public class DetailedRequestTracer implements Handler<RoutingContext> {
       }
     }
 
+    @SuppressWarnings("unused")
     private interface BodyCaptureMethods {
       Future<Void> write(Buffer data);
 

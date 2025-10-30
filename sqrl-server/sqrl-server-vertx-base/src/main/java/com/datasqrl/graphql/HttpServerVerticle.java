@@ -155,7 +155,7 @@ public class HttpServerVerticle extends AbstractVerticle {
 
     // Use detailed tracing if enabled, otherwise use standard logging (must be after BodyHandler)
     if (System.getenv("SQRL_DEBUG") != null) {
-      router.route().handler(DetailedRequestTracer.create());
+      router.route().handler(new DetailedRequestTracer());
     } else {
       router.route().handler(LoggerHandler.create());
     }
