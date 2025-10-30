@@ -5,7 +5,6 @@
     "logger": "print",
     "extended-scalar-types": true,
     "compile-flink-plan": true,
-    "add-iceberg-serialization-config": true,
     "cost-model": "DEFAULT",
     "explain": {
       "text": true,

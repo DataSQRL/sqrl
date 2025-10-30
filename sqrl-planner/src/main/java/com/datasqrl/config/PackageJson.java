@@ -54,8 +54,6 @@ public interface PackageJson {
 
     boolean compileFlinkPlan();
 
-    boolean addIcebergSerializationConfig();
-
     CostModel getCostModel();
 
     ExplainConfig getExplain();
