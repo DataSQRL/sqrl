@@ -142,7 +142,7 @@
     <guava.version>33.5.0-jre</guava.version>
     <lombok.version>1.18.42</lombok.version>
     <junit.jupiter.version>5.13.4</junit.jupiter.version>
-    <calcite.version>1.27.0</calcite.version>
+    <calcite.version>1.40.0</calcite.version>
     <graphql-java.version>19.2</graphql-java.version>
     <graphql-java-extended-scalars.version>22.0</graphql-java-extended-scalars.version>
     <projectreactor.version>3.7.12</projectreactor.version>
@@ -161,7 +161,6 @@
     <jakarta.annotation.version>3.0.0</jakarta.annotation.version>
     <graphql-micrometer.version>1.0.1</graphql-micrometer.version>
     <micrometer.version>1.15.5</micrometer.version>
-    <calcite-core.version>1.40.0</calcite-core.version>
     <duckdb.version>1.4.1.0</duckdb.version>
     <snowflake-jdbc.version>3.27.0</snowflake-jdbc.version>
     <reflections.version>0.10.2</reflections.version>

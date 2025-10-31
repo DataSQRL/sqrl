@@ -104,7 +104,7 @@
     <dependency>
       <groupId>org.apache.calcite</groupId>
       <artifactId>calcite-core</artifactId>
-      <version>${calcite-core.version}</version>
+      <version>${calcite.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
