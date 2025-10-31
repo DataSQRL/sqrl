@@ -174,7 +174,7 @@
     <snakeyaml.version>2.5</snakeyaml.version>
     <swagger-core.version>2.2.39</swagger-core.version>
     <testcontainers.version>1.21.3</testcontainers.version>
-    <vertx.version>5.0.4</vertx.version>
+    <vertx.version>5.0.5</vertx.version>
 
     <!-- Plugin versions -->
     <dockerfile-maven-plugin.version>1.4.13</dockerfile-maven-plugin.version>
