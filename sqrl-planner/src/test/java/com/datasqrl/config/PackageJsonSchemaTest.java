@@ -40,6 +40,7 @@ class PackageJsonSchemaTest {
         "validPackageWithUrls.json",
         "onlyVersionFieldExists.json",
         "scriptApiVersion.json",
+        "compilerEndpointsOpsOnly.json",
         "validFlinkDeployment.json",
         "validPostgresDeployment.json",
         "validVertxDeployment.json",

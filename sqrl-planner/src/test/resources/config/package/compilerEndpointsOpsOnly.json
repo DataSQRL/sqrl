@@ -1,0 +1,8 @@
+{
+  "version": "1",
+  "compiler": {
+    "api": {
+      "endpoints": "OPS_ONLY"
+    }
+  }
+}
