@@ -718,7 +718,7 @@ public class Sqrl2FlinkSQLTranslator {
   @FunctionalInterface
   public interface MutationBuilder {
     MutationQueryBuilder createMutation(
-        FlinkTableBuilder flinkTableBuilder, RelDataType relDataType);
+        String origTableName, FlinkTableBuilder tableBuilder, RelDataType dataType);
   }
 
   public TableAnalysis createTableWithSchema(
@@ -734,16 +734,14 @@ public class Sqrl2FlinkSQLTranslator {
       Function<String, String> tableNameModifier,
       String tableDefinition,
       SchemaLoader schemaLoader) {
-    var result =
-        addTable(
-            tableNameModifier,
-            tableDefinition,
-            schemaLoader,
-            (x, y) -> {
-              throw new UnsupportedOperationException(
-                  "Export tables require connector configuration");
-            });
-    return result;
+
+    return addTable(
+        tableNameModifier,
+        tableDefinition,
+        schemaLoader,
+        (x, y, z) -> {
+          throw new UnsupportedOperationException("Export tables require connector configuration");
+        });
   }
 
   public Optional<TableAnalysis> createTable(
@@ -811,7 +809,8 @@ public class Sqrl2FlinkSQLTranslator {
         tableSqlNode instanceof SqlCreateTable, "Expected CREATE TABLE statement");
     var tableDefinition = (SqlCreateTable) tableSqlNode;
     var fullTable = tableDefinition;
-    final var finalTableName = tableNameModifier.apply(tableDefinition.getTableName().getSimple());
+    var origTableName = fullTable.getTableName().getSimple();
+    final var finalTableName = tableNameModifier.apply(origTableName);
     if (fullTable instanceof SqlCreateTableLike likeTable) {
       // Check if the LIKE clause is referencing an external schema
       SqlTableLike likeClause = likeTable.getTableLike();
@@ -879,7 +878,7 @@ public class Sqrl2FlinkSQLTranslator {
       Note, that this requires we replace the table with the actual table (and the correct connector)
       in the schema with an ALTER TABLE statement.
        */
-      mutationBld = mutationBuilder.createMutation(tableBuilder, null);
+      mutationBld = mutationBuilder.createMutation(origTableName, tableBuilder, null);
       fullTable = tableBuilder.buildSql(false);
     }
     var tableOp = (CreateTableOperation) executeSqlNode(fullTable);

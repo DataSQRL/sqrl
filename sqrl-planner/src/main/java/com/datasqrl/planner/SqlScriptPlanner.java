@@ -906,7 +906,7 @@ public class SqlScriptPlanner {
   private MutationBuilder getLogEngineBuilder(HintsAndDocs hintsAndDocs) {
     var logStage = pipeline.getMutationStage();
     if (logStage.isEmpty()) {
-      return (t, d) -> {
+      return (n, t, d) -> {
         throw new StatementParserException(
             ErrorLabel.GENERIC,
             FileLocation.START,
@@ -914,8 +914,7 @@ public class SqlScriptPlanner {
       };
     }
     var engine = (LogEngine) logStage.get().engine();
-    return (tableBuilder, datatype) -> {
-      var originalTableName = tableBuilder.getTableName();
+    return (origTableName, tableBuilder, dataType) -> {
       var mutationBuilder = MutationQuery.builder();
       mutationBuilder.generateAccess(scriptContext.generateAccess);
       mutationBuilder.stage(logStage.get());
@@ -928,12 +927,12 @@ public class SqlScriptPlanner {
       mutationBuilder.createTopic(
           engine.createMutation(
               logStage.get(),
-              originalTableName,
+              origTableName,
               tableBuilder,
-              datatype,
+              dataType,
               insertType,
               hintsAndDocs.hints().getHint(TtlHint.class).flatMap(TtlHint::getTtl)));
-      mutationBuilder.name(Name.system(originalTableName));
+      mutationBuilder.name(Name.system(origTableName));
       mutationBuilder.insertType(insertType);
       mutationBuilder.documentation(hintsAndDocs.documentation());
       // UUID and TIMESTAMP are special cases
