@@ -1,6 +1,7 @@
 IMPORT loan-local.customers AS CustomersStream;
 IMPORT loan-local.applications AS ApplicationsStream;
 IMPORT loan-local.loan_types AS LoanTypesStream;
+IMPORT loan-local.chat_message AS AddChatMessage;
 
 /*+insert(transaction) */
 CREATE TABLE ApplicationUpdates (
@@ -37,15 +38,6 @@ ApplicationStatus := SELECT u._uuid, u.status, u.message, u.event_time, a.id, a.
 ApplicationAlert := SELECT _uuid, id, customer_id, loan_type_id, max_amount, min_amount, amount
                     FROM ApplicationStatus a
                     WHERE status = 'underwriting' AND (amount > max_amount OR amount < min_amount);
-
-CREATE TABLE AddChatMessage (
-    _uuid STRING NOT NULL METADATA FROM 'uuid',
-    role STRING NOT NULL,
-    content STRING NOT NULL,
-    name STRING,
-    context ROW(`customerid` INT) NOT NULL,
-    event_time TIMESTAMP_LTZ(3) METADATA FROM 'timestamp'
-);
 
 CustomerChatMessage := SELECT role, content, name, c.context.customerid, event_time AS `timestamp`,
                         _uuid AS uuid
