@@ -42,7 +42,7 @@
         "cost-model": {
           "type": "string",
           "enum": ["DEFAULT", "READ", "WRITE"],
-          "pattern": "^[A-Z]+$"
+          "pattern": "^[A-Z_]+$"
         },
         "explain": {
           "type": "object",
@@ -76,13 +76,13 @@
               "items": {
                 "type": "string",
                 "enum": ["GRAPHQL", "REST", "MCP"],
-                "pattern": "^[A-Z]+$"
+                "pattern": "^[A-Z_]+$"
               }
             },
             "endpoints": {
               "type": "string",
               "enum": ["OPS_ONLY", "GRAPHQL", "FULL"],
-              "pattern": "^[A-Z]+$"
+              "pattern": "^[A-Z_]+$"
             },
             "add-prefix": {
               "type": "boolean"
