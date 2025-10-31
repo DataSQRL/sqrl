@@ -188,11 +188,6 @@
       <artifactId>postgresql</artifactId>
       <scope>compile</scope>
     </dependency>
-    <dependency>
-      <groupId>org.apache.zookeeper</groupId>
-      <artifactId>zookeeper</artifactId>
-      <version>${zookeeper.version}</version>
-    </dependency>
 
     <!-- Hadoop dependencies -->
     <dependency>
