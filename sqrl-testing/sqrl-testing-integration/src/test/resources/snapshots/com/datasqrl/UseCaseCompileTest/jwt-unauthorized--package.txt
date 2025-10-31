@@ -62,8 +62,8 @@ CREATE TABLE `MyTable_1` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`MyTable_1`
-(SELECT *
- FROM `default_catalog`.`default_database`.`MyTable`)
+SELECT *
+ FROM `default_catalog`.`default_database`.`MyTable`
 ;
 END
 >>>kafka.json

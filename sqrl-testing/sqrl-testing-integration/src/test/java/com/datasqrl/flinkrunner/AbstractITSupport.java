@@ -46,8 +46,8 @@ public class AbstractITSupport {
   void startFlink() {
     var imgRepo = System.getProperty("flinkrunner.image.repo", "ghcr.io");
     var tag = System.getProperty("flinkrunner.version", "latest");
-    if (!tag.equals("latest")) {
-      tag += "-flink-1.19";
+    if (!tag.equals("latest") && !tag.toLowerCase().endsWith("snapshot")) {
+      tag += "-flink-2.1";
     }
 
     flinkContainer =

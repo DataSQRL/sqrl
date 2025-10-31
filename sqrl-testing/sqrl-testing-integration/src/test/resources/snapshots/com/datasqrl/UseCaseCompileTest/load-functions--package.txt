@@ -40,8 +40,8 @@ CREATE TABLE `FunctionApplied_1` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`FunctionApplied_1`
-(SELECT *
- FROM `default_catalog`.`default_database`.`FunctionApplied`)
+SELECT *
+ FROM `default_catalog`.`default_database`.`FunctionApplied`
 ;
 END
 >>>kafka.json

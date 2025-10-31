@@ -374,36 +374,36 @@ CREATE TABLE `SelectOrders3_8` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Customer_1`
-(SELECT *
- FROM `default_catalog`.`default_database`.`Customer`)
+SELECT *
+ FROM `default_catalog`.`default_database`.`Customer`
 ;
 INSERT INTO `default_catalog`.`default_database`.`Orders_2`
- (SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`
-  FROM `default_catalog`.`default_database`.`Orders`)
+ SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`
+  FROM `default_catalog`.`default_database`.`Orders`
  ;
  INSERT INTO `default_catalog`.`default_database`.`Product_3`
-  (SELECT *
-   FROM `default_catalog`.`default_database`.`Product`)
+  SELECT *
+   FROM `default_catalog`.`default_database`.`Product`
   ;
   INSERT INTO `default_catalog`.`default_database`.`ProductFilter1_4`
-   (SELECT *
-    FROM `default_catalog`.`default_database`.`ProductFilter1`)
+   SELECT *
+    FROM `default_catalog`.`default_database`.`ProductFilter1`
    ;
    INSERT INTO `default_catalog`.`default_database`.`ProductFilter2_5`
-    (SELECT *
-     FROM `default_catalog`.`default_database`.`ProductFilter2`)
+    SELECT *
+     FROM `default_catalog`.`default_database`.`ProductFilter2`
     ;
     INSERT INTO `default_catalog`.`default_database`.`SelectOrders1_6`
-     (SELECT *
-      FROM `default_catalog`.`default_database`.`SelectOrders1`)
+     SELECT *
+      FROM `default_catalog`.`default_database`.`SelectOrders1`
      ;
      INSERT INTO `default_catalog`.`default_database`.`SelectOrders2_7`
-      (SELECT *
-       FROM `default_catalog`.`default_database`.`SelectOrders2`)
+      SELECT *
+       FROM `default_catalog`.`default_database`.`SelectOrders2`
       ;
       INSERT INTO `default_catalog`.`default_database`.`SelectOrders3_8`
-       (SELECT *
-        FROM `default_catalog`.`default_database`.`SelectOrders3`)
+       SELECT *
+        FROM `default_catalog`.`default_database`.`SelectOrders3`
        ;
        END
 >>>kafka.json

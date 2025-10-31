@@ -68,7 +68,7 @@ Plan:
 LogicalProject(sensorid=[$0], timeSec=[$3], temp=[$4])
   LogicalAggregate(group=[{0, 1, 2, 3}], temp=[AVG($4)])
     LogicalProject(sensorid=[$0], window_start=[$5], window_end=[$6], timeSec=[$7], temperature=[$2])
-      LogicalTableFunctionScan(invocation=[TUMBLE(DESCRIPTOR($4), 1000:INTERVAL SECOND)], rowType=[RecordType(BIGINT sensorid, BIGINT time, DOUBLE temperature, DOUBLE humidity, TIMESTAMP_LTZ(3) *ROWTIME* timestamp, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end, TIMESTAMP_LTZ(3) *ROWTIME* window_time)])
+      LogicalTableFunctionScan(invocation=[TUMBLE(TABLE(#0), DESCRIPTOR('timestamp'), 1000:INTERVAL SECOND)], rowType=[RecordType(BIGINT sensorid, BIGINT time, DOUBLE temperature, DOUBLE humidity, TIMESTAMP_LTZ(3) *ROWTIME* timestamp, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end, TIMESTAMP_LTZ(3) *ROWTIME* window_time)])
         LogicalProject(sensorid=[$0], time=[$1], temperature=[$2], humidity=[$3], timestamp=[$4])
           LogicalTableScan(table=[[default_catalog, default_database, SensorReading]])
 SQL: CREATE VIEW `SecReading` AS  SELECT sensorid, window_time as timeSec,
@@ -209,7 +209,7 @@ Plan:
 LogicalProject(sensorid=[$0], window_time=[$3], avgTemp=[$4], maxTemp=[$5])
   LogicalAggregate(group=[{0, 1, 2, 3}], avgTemp=[AVG($4)], maxTemp=[MAX($4)])
     LogicalProject(sensorid=[$0], window_start=[$3], window_end=[$4], window_time=[$5], temp=[$2])
-      LogicalTableFunctionScan(invocation=[HOP(DESCRIPTOR($1), 60000:INTERVAL MINUTE, 3600000:INTERVAL MINUTE)], rowType=[RecordType(BIGINT sensorid, TIMESTAMP_LTZ(3) *ROWTIME* timeSec, DOUBLE temp, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end, TIMESTAMP_LTZ(3) *ROWTIME* window_time)])
+      LogicalTableFunctionScan(invocation=[HOP(TABLE(#0), DESCRIPTOR('timeSec'), 60000:INTERVAL MINUTE, 3600000:INTERVAL MINUTE)], rowType=[RecordType(BIGINT sensorid, TIMESTAMP_LTZ(3) *ROWTIME* timeSec, DOUBLE temp, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end, TIMESTAMP_LTZ(3) *ROWTIME* window_time)])
         LogicalProject(sensorid=[$0], timeSec=[$1], temp=[$2])
           LogicalTableScan(table=[[default_catalog, default_database, SecReading]])
 SQL: CREATE VIEW `_SensorMaxTempWindow` AS  SELECT sensorid, window_time, avg(temp) as avgTemp, max(temp) as maxTemp
@@ -454,32 +454,32 @@ CREATE TABLE `Sensors_7` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`HighTemp_1`
-(SELECT *
- FROM `default_catalog`.`default_database`.`HighTemp`)
+SELECT *
+ FROM `default_catalog`.`default_database`.`HighTemp`
 ;
 INSERT INTO `default_catalog`.`default_database`.`Machine_2`
- (SELECT *
-  FROM `default_catalog`.`default_database`.`Machine`)
+ SELECT *
+  FROM `default_catalog`.`default_database`.`Machine`
  ;
  INSERT INTO `default_catalog`.`default_database`.`SecReading_3`
-  (SELECT *
-   FROM `default_catalog`.`default_database`.`SecReading`)
+  SELECT *
+   FROM `default_catalog`.`default_database`.`SecReading`
   ;
   INSERT INTO `default_catalog`.`default_database`.`SensorLastHour_4`
-   (SELECT *
-    FROM `default_catalog`.`default_database`.`_SensorMaxTempWindow`)
+   SELECT *
+    FROM `default_catalog`.`default_database`.`_SensorMaxTempWindow`
    ;
    INSERT INTO `default_catalog`.`default_database`.`SensorReading_5`
-    (SELECT *
-     FROM `default_catalog`.`default_database`.`SensorReading`)
+    SELECT *
+     FROM `default_catalog`.`default_database`.`SensorReading`
     ;
     INSERT INTO `default_catalog`.`default_database`.`SensorUpdates_6`
-     (SELECT *
-      FROM `default_catalog`.`default_database`.`SensorUpdates`)
+     SELECT *
+      FROM `default_catalog`.`default_database`.`SensorUpdates`
      ;
      INSERT INTO `default_catalog`.`default_database`.`Sensors_7`
-      (SELECT *
-       FROM `default_catalog`.`default_database`.`SensorUpdates`)
+      SELECT *
+       FROM `default_catalog`.`default_database`.`SensorUpdates`
       ;
       END
 >>>kafka.json

@@ -97,94 +97,94 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
     <!-- Flink runner props -->
-    <flinkrunner.version>0.8.2</flinkrunner.version>
-    <flinkrunner.image.repo>docker.io</flinkrunner.image.repo>
+    <flinkrunner.image.repo>ghcr.io</flinkrunner.image.repo>
+    <flinkrunner.version>0.9-SNAPSHOT</flinkrunner.version>
 
     <!-- Params -->
     <docker.image.tag>local</docker.image.tag>
     <snapshots.update>false</snapshots.update>
 
+    <!-- Flink versions -->
+    <flink.version>2.1.0</flink.version>
+    <flink.cdc.version>3.5.0</flink.cdc.version>
+    <flink.connector.jdbc.version>4.0.0-2.0</flink.connector.jdbc.version>
+    <flink.connector.kafka.version>4.0.1-2.0</flink.connector.kafka.version>
+    <flink-client.version>1.1.4</flink-client.version>
+
     <!-- Dependency versions -->
-    <mockito.version>4.8.0</mockito.version>
-    <jackson.version>2.20.0</jackson.version>
-    <vertx.version>5.0.4</vertx.version>
     <agroal.version>2.8</agroal.version>
-    <kafka.version>3.4.0</kafka.version>
-    <flink.version>1.19.3</flink.version>
-    <slf4j.version>1.7.36</slf4j.version>
-    <postgres.version>42.7.8</postgres.version>
-    <log4j.version>2.25.2</log4j.version>
-    <scala.version>2.12</scala.version>
-    <guava.version>33.5.0-jre</guava.version>
-    <commonsio.version>2.20.0</commonsio.version>
-    <commons-lang3.version>3.19.0</commons-lang3.version>
+    <antlr.version>4.13.2</antlr.version>
+    <assertj.version>3.27.6</assertj.version>
+    <autoservice.version>1.1.1</autoservice.version>
+    <avro.version>1.12.1</avro.version>
+    <awaitility.version>4.3.0</awaitility.version>
+    <aws-sdk-bom.version>2.35.10</aws-sdk-bom.version>
+    <calcite.version>1.40.0</calcite.version>
+    <commons-bean.version>1.11.0</commons-bean.version>
+    <commons-collections.version>4.5.0</commons-collections.version>
     <!-- hadoop shades in commons-config 2.1.1, so upgrade path here is very narrow -->
     <commons-config.version>2.3</commons-config.version>
-    <commons-collections.version>4.5.0</commons-collections.version>
+    <commons-csv.version>1.9.0</commons-csv.version>
     <commons-exec.version>1.5.0</commons-exec.version>
-    <httpcomponents.version>4.5.14</httpcomponents.version>
-    <commons-bean.version>1.11.0</commons-bean.version>
-    <h2.version>2.4.240</h2.version>
-    <opencsv.version>5.12.0</opencsv.version>
-    <javax.validation.version>2.0.1.Final</javax.validation.version>
-    <glassfish.version>3.0.0</glassfish.version>
-    <reactive-streams.version>1.0.4</reactive-streams.version>
-    <testcontainers.version>1.21.3</testcontainers.version>
-    <scram.version>2.1</scram.version>
-    <protobuf.version>4.33.0</protobuf.version>
-    <picocli.version>4.7.7</picocli.version>
     <commonscodec.version>1.19.0</commonscodec.version>
-    <guice.version>5.1.0</guice.version>
-    <autoservice.version>1.1.1</autoservice.version>
-    <antlr.version>4.13.2</antlr.version>
-    <guava.version>33.5.0-jre</guava.version>
-    <lombok.version>1.18.42</lombok.version>
-    <junit.jupiter.version>5.13.4</junit.jupiter.version>
-    <calcite.version>1.27.0</calcite.version>
-    <graphql-java.version>19.2</graphql-java.version>
-    <graphql-java-extended-scalars.version>22.0</graphql-java-extended-scalars.version>
-    <projectreactor.version>3.7.12</projectreactor.version>
-    <avro.version>1.12.1</avro.version>
+    <commonsio.version>2.20.0</commonsio.version>
+    <commons-lang3.version>3.19.0</commons-lang3.version>
+    <duckdb.version>1.4.1.0</duckdb.version>
+    <feign.version>13.6</feign.version>
     <freemarker.version>2.3.34</freemarker.version>
-    <mustache.version>0.9.14</mustache.version>
-    <jsonschema.version>1.5.9</jsonschema.version>
-    <iceberg.version>1.9.2</iceberg.version>
+    <glassfish.version>3.0.0</glassfish.version>
+    <graphql-java-extended-scalars.version>22.0</graphql-java-extended-scalars.version>
+    <graphql-java.version>19.2</graphql-java.version>
+    <graphql-micrometer.version>1.0.1</graphql-micrometer.version>
+    <guava.version>33.5.0-jre</guava.version>
+    <guice-multibindings.version>4.2.3</guice-multibindings.version>
+    <guice.version>7.0.0</guice.version>
+    <h2.version>2.4.240</h2.version>
     <!-- Do not touch Hadoop version unless it has been updated on the Flink side.
          Otherwise, it might break the Flink filesystem integration. -->
     <hadoop.version>3.3.4</hadoop.version>
+    <httpcomponents.version>4.5.14</httpcomponents.version>
+    <iceberg.version>1.10.0</iceberg.version>
+    <jackson.version>2.20.0</jackson.version>
     <jacoco.version>0.8.14</jacoco.version>
-    <jjwt.version>0.13.0</jjwt.version>
-    <assertj.version>3.27.6</assertj.version>
-    <awaitility.version>4.3.0</awaitility.version>
     <jakarta.annotation.version>3.0.0</jakarta.annotation.version>
-    <graphql-micrometer.version>1.0.1</graphql-micrometer.version>
-    <micrometer.version>1.15.5</micrometer.version>
-    <calcite-core.version>1.40.0</calcite-core.version>
-    <duckdb.version>1.4.1.0</duckdb.version>
-    <snowflake-jdbc.version>3.27.0</snowflake-jdbc.version>
-    <reflections.version>0.10.2</reflections.version>
-    <swagger-core.version>2.2.39</swagger-core.version>
-    <commons-csv.version>1.9.0</commons-csv.version>
-    <guice.version>7.0.0</guice.version>
-    <guice-multibindings.version>4.2.3</guice-multibindings.version>
-    <flink-connector-postgres-cdc.version>3.4.0</flink-connector-postgres-cdc.version>
-    <zookeeper.version>3.9.4</zookeeper.version>
-    <snakeyaml.version>2.5</snakeyaml.version>
-    <aws-sdk-bom.version>2.35.10</aws-sdk-bom.version>
-    <openai-gpt3-java.version>0.18.2</openai-gpt3-java.version>
-    <flink-client.version>1.1.4</flink-client.version>
+    <javax.validation.version>2.0.1.Final</javax.validation.version>
+    <jjwt.version>0.13.0</jjwt.version>
+    <jsonschema.version>1.5.9</jsonschema.version>
+    <junit.jupiter.version>5.13.4</junit.jupiter.version>
+    <kafka.version>3.4.0</kafka.version>
+    <log4j.version>2.25.2</log4j.version>
+    <lombok.version>1.18.42</lombok.version>
     <mcp-sdk.version>0.14.1</mcp-sdk.version>
-    <feign.version>13.6</feign.version>
+    <micrometer.version>1.15.5</micrometer.version>
+    <mockito.version>4.8.0</mockito.version>
+    <mustache.version>0.9.14</mustache.version>
+    <openai-gpt3-java.version>0.18.2</openai-gpt3-java.version>
+    <opencsv.version>5.12.0</opencsv.version>
+    <picocli.version>4.7.7</picocli.version>
+    <postgres.version>42.7.8</postgres.version>
+    <projectreactor.version>3.7.12</projectreactor.version>
+    <protobuf.version>4.33.0</protobuf.version>
+    <reactive-streams.version>1.0.4</reactive-streams.version>
+    <reflections.version>0.10.2</reflections.version>
+    <scala.version>2.12</scala.version>
+    <scram.version>2.1</scram.version>
+    <slf4j.version>1.7.36</slf4j.version>
+    <snowflake-jdbc.version>3.27.0</snowflake-jdbc.version>
+    <snakeyaml.version>2.5</snakeyaml.version>
+    <swagger-core.version>2.2.39</swagger-core.version>
+    <testcontainers.version>1.21.3</testcontainers.version>
+    <vertx.version>5.0.4</vertx.version>
 
     <!-- Plugin versions -->
-    <maven-javadoc-plugin.version>3.12.0</maven-javadoc-plugin.version>
-    <maven-source-plugin.version>3.3.1</maven-source-plugin.version>
-    <maven-gpg-plugin.version>3.2.8</maven-gpg-plugin.version>
-    <license-maven-plugin.version>5.0.0</license-maven-plugin.version>
-    <git-code-format-maven-plugin.version>5.4</git-code-format-maven-plugin.version>
-    <sortpom.plugin.version>4.0.0</sortpom.plugin.version>
     <dockerfile-maven-plugin.version>1.4.13</dockerfile-maven-plugin.version>
     <easy-jacoco-maven-plugin.version>0.1.4</easy-jacoco-maven-plugin.version>
+    <git-code-format-maven-plugin.version>5.4</git-code-format-maven-plugin.version>
+    <license-maven-plugin.version>5.0.0</license-maven-plugin.version>
+    <maven-gpg-plugin.version>3.2.8</maven-gpg-plugin.version>
+    <maven-javadoc-plugin.version>3.12.0</maven-javadoc-plugin.version>
+    <maven-source-plugin.version>3.3.1</maven-source-plugin.version>
+    <sortpom.plugin.version>4.0.0</sortpom.plugin.version>
   </properties>
 
   <dependencyManagement>
@@ -479,13 +479,13 @@
       </dependency>
       <dependency>
         <groupId>org.apache.flink</groupId>
-        <artifactId>flink-connector-jdbc</artifactId>
-        <version>3.2.0-1.19</version>
+        <artifactId>flink-connector-jdbc-postgres</artifactId>
+        <version>${flink.connector.jdbc.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.flink</groupId>
         <artifactId>flink-connector-kafka</artifactId>
-        <version>3.2.0-1.19</version>
+        <version>${flink.connector.kafka.version}</version>
       </dependency>
 
       <!-- calcite -->

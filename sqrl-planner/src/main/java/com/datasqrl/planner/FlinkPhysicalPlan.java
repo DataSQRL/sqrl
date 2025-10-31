@@ -18,6 +18,7 @@ package com.datasqrl.planner;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import com.datasqrl.engine.EnginePhysicalPlan;
+import com.datasqrl.engine.database.relational.IcebergEngineFactory;
 import com.datasqrl.planner.tables.FlinkConnectorConfig;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.collect.ImmutableList;
@@ -169,6 +170,12 @@ public class FlinkPhysicalPlan implements EnginePhysicalPlan {
               plan ->
                   plan.explain(
                       ExplainFormat.TEXT, ExplainDetail.CHANGELOG_MODE, ExplainDetail.PLAN_ADVICE));
+
+      if (connectors.contains(IcebergEngineFactory.ENGINE_NAME)) {
+        // Make sure we use the V2 sink
+        config.setString("table.exec.iceberg.use-v2-sink", "true");
+      }
+
       return new FlinkPhysicalPlan(
           flinkSql,
           connectors,

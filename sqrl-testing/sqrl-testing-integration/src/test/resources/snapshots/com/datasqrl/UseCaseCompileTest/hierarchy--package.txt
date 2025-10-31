@@ -162,12 +162,12 @@ CREATE TABLE `Reporting_2` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Employees_1`
-(SELECT *
- FROM `default_catalog`.`default_database`.`_Employees`)
+SELECT *
+ FROM `default_catalog`.`default_database`.`_Employees`
 ;
 INSERT INTO `default_catalog`.`default_database`.`Reporting_2`
- (SELECT *
-  FROM `default_catalog`.`default_database`.`_Reporting`)
+ SELECT *
+  FROM `default_catalog`.`default_database`.`_Reporting`
  ;
  END
 >>>postgres-schema.sql

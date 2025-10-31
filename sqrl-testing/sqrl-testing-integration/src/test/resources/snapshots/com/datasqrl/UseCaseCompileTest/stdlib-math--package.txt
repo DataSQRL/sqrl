@@ -94,8 +94,8 @@ CREATE TABLE `MathFunctions_1` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`MathFunctions_1`
-(SELECT *
- FROM `default_catalog`.`default_database`.`MathFunctions`)
+SELECT *
+ FROM `default_catalog`.`default_database`.`MathFunctions`
 ;
 END
 >>>kafka.json

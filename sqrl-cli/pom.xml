@@ -106,16 +106,16 @@
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
+      <artifactId>flink-connector-jdbc-postgres</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flink</groupId>
       <artifactId>flink-connector-kafka</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
-      <artifactId>flink-connector-jdbc</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.flink</groupId>
       <artifactId>flink-connector-postgres-cdc</artifactId>
-      <version>${flink-connector-postgres-cdc.version}</version>
+      <version>${flink.cdc.version}</version>
     </dependency>
 
     <!-- Kafka dependencies -->
@@ -187,11 +187,6 @@
       <groupId>org.testcontainers</groupId>
       <artifactId>postgresql</artifactId>
       <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.zookeeper</groupId>
-      <artifactId>zookeeper</artifactId>
-      <version>${zookeeper.version}</version>
     </dependency>
 
     <!-- Hadoop dependencies -->
@@ -269,12 +264,7 @@
     </dependency>
     <dependency>
       <groupId>org.apache.iceberg</groupId>
-      <artifactId>iceberg-flink-runtime-1.19</artifactId>
-      <version>${iceberg.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.iceberg</groupId>
-      <artifactId>iceberg-hive-metastore</artifactId>
+      <artifactId>iceberg-flink-runtime-2.0</artifactId>
       <version>${iceberg.version}</version>
     </dependency>
 

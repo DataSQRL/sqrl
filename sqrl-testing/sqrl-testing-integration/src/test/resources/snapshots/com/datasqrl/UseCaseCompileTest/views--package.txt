@@ -33,8 +33,8 @@ CREATE TABLE `MyView_1` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`MyView_1`
-(SELECT *
- FROM `default_catalog`.`default_database`.`MyView`)
+SELECT *
+ FROM `default_catalog`.`default_database`.`MyView`
 ;
 END
 >>>postgres-schema.sql

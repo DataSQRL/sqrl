@@ -164,4 +164,14 @@ public class PostgresConformance implements SqlConformance {
   public SqlLibrary semantics() {
     return SqlLibrary.POSTGRESQL; // Use PostgreSQL semantics.
   }
+
+  @Override
+  public boolean isValueAllowed() {
+    return true;
+  }
+
+  @Override
+  public boolean allowCoercionStringToArray() {
+    return true;
+  }
 }

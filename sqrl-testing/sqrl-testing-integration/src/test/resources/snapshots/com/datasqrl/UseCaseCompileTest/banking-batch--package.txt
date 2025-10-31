@@ -288,20 +288,20 @@ CREATE TABLE `Customers_4` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`ApplicationUpdates_1`
-(SELECT *
- FROM `default_catalog`.`default_database`.`ApplicationUpdates`)
+SELECT *
+ FROM `default_catalog`.`default_database`.`ApplicationUpdates`
 ;
 INSERT INTO `default_catalog`.`default_database`.`Applications_2`
- (SELECT *
-  FROM `default_catalog`.`default_database`.`Applications`)
+ SELECT *
+  FROM `default_catalog`.`default_database`.`Applications`
  ;
  INSERT INTO `default_catalog`.`default_database`.`CustomerUpdates_3`
-  (SELECT *
-   FROM `default_catalog`.`default_database`.`CustomerUpdates`)
+  SELECT *
+   FROM `default_catalog`.`default_database`.`CustomerUpdates`
   ;
   INSERT INTO `default_catalog`.`default_database`.`Customers_4`
-   (SELECT *
-    FROM `default_catalog`.`default_database`.`Customers`)
+   SELECT *
+    FROM `default_catalog`.`default_database`.`Customers`
    ;
    END
 >>>postgres-schema.sql

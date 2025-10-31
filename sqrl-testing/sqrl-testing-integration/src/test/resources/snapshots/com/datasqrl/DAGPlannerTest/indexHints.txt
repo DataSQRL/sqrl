@@ -237,24 +237,24 @@ CREATE TABLE `MyOrdersTwoIndex_5` (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`MyOrdersIndexBtree_1`
-(SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`
- FROM `default_catalog`.`default_database`.`MyOrdersIndexBtree`)
+SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`
+ FROM `default_catalog`.`default_database`.`MyOrdersIndexBtree`
 ;
 INSERT INTO `default_catalog`.`default_database`.`MyOrdersIndexHash_2`
- (SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`
-  FROM `default_catalog`.`default_database`.`MyOrdersIndexHash`)
+ SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`
+  FROM `default_catalog`.`default_database`.`MyOrdersIndexHash`
  ;
  INSERT INTO `default_catalog`.`default_database`.`MyOrdersNoHint_3`
-  (SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`
-   FROM `default_catalog`.`default_database`.`MyOrdersNoHint`)
+  SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`
+   FROM `default_catalog`.`default_database`.`MyOrdersNoHint`
   ;
   INSERT INTO `default_catalog`.`default_database`.`MyOrdersNoIndex_4`
-   (SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`
-    FROM `default_catalog`.`default_database`.`MyOrdersNoIndex`)
+   SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`
+    FROM `default_catalog`.`default_database`.`MyOrdersNoIndex`
    ;
    INSERT INTO `default_catalog`.`default_database`.`MyOrdersTwoIndex_5`
-    (SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`
-     FROM `default_catalog`.`default_database`.`MyOrdersTwoIndex`)
+    SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`
+     FROM `default_catalog`.`default_database`.`MyOrdersTwoIndex`
     ;
     END
 >>>kafka.json

@@ -106,8 +106,8 @@ class FlinkSqlNodeFactoryTest {
     var expectedSql =
         """
         INSERT INTO `target_table`
-        (SELECT `*`
-         FROM `source_table`)""";
+        SELECT `*`
+         FROM `source_table`""";
     assertThat(sql.trim()).isEqualTo(expectedSql);
   }
 
