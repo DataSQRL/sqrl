@@ -119,7 +119,7 @@
     <avro.version>1.12.1</avro.version>
     <awaitility.version>4.3.0</awaitility.version>
     <aws-sdk-bom.version>2.37.2</aws-sdk-bom.version>
-    <calcite.version>1.40.0</calcite.version>
+    <calcite.version>1.41.0</calcite.version>
     <commons-bean.version>1.11.0</commons-bean.version>
     <commons-collections.version>4.5.0</commons-collections.version>
     <!-- hadoop shades in commons-config 2.1.1, so upgrade path here is very narrow -->
