@@ -15,9 +15,11 @@
  */
 package com.datasqrl.planner.tables;
 
+import com.datasqrl.graphql.exec.FlinkExecFunction;
 import com.datasqrl.graphql.server.ResolvedMetadata;
 import java.util.Optional;
 import lombok.EqualsAndHashCode;
+import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
@@ -26,6 +28,7 @@ import org.apache.calcite.schema.FunctionParameter;
 
 /** A parameter of {@link SqrlTableFunction} */
 @Value
+@RequiredArgsConstructor
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @ToString(onlyExplicitlyIncluded = true)
 public class SqrlFunctionParameter implements FunctionParameter {
@@ -33,15 +36,22 @@ public class SqrlFunctionParameter implements FunctionParameter {
   @EqualsAndHashCode.Include @ToString.Include
   String name; // the properly resolved name of the argument
 
-  int ordinal; // the index within the list of query arguments
+  String description;
 
-  @EqualsAndHashCode.Include @ToString.Include
-  RelDataType relDataType; // this is the type of the argument
+  int ordinal;
+
+  @EqualsAndHashCode.Include @ToString.Include RelDataType relDataType;
 
   // if true, this is a column on the "this" table, else a user provided argument
   boolean isParentField;
 
   Optional<ResolvedMetadata> metadata;
+
+  Optional<FlinkExecFunction> function;
+
+  public SqrlFunctionParameter(String name, int ordinal, RelDataType relDataType) {
+    this(name, "", ordinal, relDataType, false, Optional.empty(), Optional.empty());
+  }
 
   @Override
   public RelDataType getType(RelDataTypeFactory relDataTypeFactory) {
@@ -55,6 +65,10 @@ public class SqrlFunctionParameter implements FunctionParameter {
 
   public boolean isMetadata() {
     return metadata.isPresent();
+  }
+
+  public boolean isFunction() {
+    return function.isPresent();
   }
 
   public boolean isExternalArgument() {

@@ -42,9 +42,6 @@ public class ServerPhysicalPlan implements EnginePhysicalPlan {
   /**
    * The generated API for the server. This gets generated after the planning and is added to the
    * plan later.
-   *
-   * <p>TODO: generalize to support multiple types of APIs (e.g. REST, GraphQL, gRPC) and make a
-   * list
    */
   final Map<String, RootGraphqlModel> models = new LinkedHashMap<>();
 }

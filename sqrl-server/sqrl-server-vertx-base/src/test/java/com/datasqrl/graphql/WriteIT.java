@@ -199,7 +199,8 @@ class WriteIT {
                     .withMutationConfiguration(new MutationConfigurationImpl(vertx, config))
                     .withSubscriptionConfiguration(new SubscriptionConfigurationImpl(vertx, config))
                     .build(),
-                new VertxContext(new VertxJdbcClient(Map.of(DatabaseType.POSTGRES, client)), null))
+                new VertxContext(
+                    new VertxJdbcClient(Map.of(DatabaseType.POSTGRES, client)), null, null))
             .build();
 
     ExecutionInput executionInput =

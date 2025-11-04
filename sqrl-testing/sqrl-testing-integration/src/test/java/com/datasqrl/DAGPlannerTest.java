@@ -16,11 +16,13 @@
 package com.datasqrl;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assumptions.assumeThat;
 
 import com.datasqrl.util.SnapshotTest.Snapshot;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.function.Predicate;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
@@ -65,6 +67,14 @@ public class DAGPlannerTest extends AbstractAssetSnapshotTest {
     }
   }
 
+  @ParameterizedTest
+  @ArgumentsSource(DagPlannerSQRLFiles.class)
+  @Disabled
+  void specificScript(Path script) {
+    assumeThat(script.toString()).endsWith("functionParameterExpressionTest.sqrl");
+    scripts(script);
+  }
+
   @Override
   public Predicate<Path> getBuildDirFilter() {
     return file -> {
@@ -85,6 +95,7 @@ public class DAGPlannerTest extends AbstractAssetSnapshotTest {
       if (path.getFileName().toString().contains("flink")
           || path.getFileName().toString().contains("schema")
           || path.getFileName().toString().contains("views")
+          || path.getFileName().toString().endsWith("ser")
           || path.getFileName().toString().startsWith("vertx-config.json")) {
         return false;
       }
