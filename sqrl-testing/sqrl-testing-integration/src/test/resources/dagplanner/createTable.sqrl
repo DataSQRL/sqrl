@@ -9,7 +9,8 @@ CREATE TABLE _SensorReading (
      event_id STRING NOT NULL METADATA FROM 'uuid',
      sensorid INT,
      temperature FLOAT,
-     event_time TIMESTAMP_LTZ(3) METADATA FROM 'timestamp'
+     event_time TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
+     WATERMARK FOR `event_time` AS `event_time` - INTERVAL '5' SECOND
 );
 
 MachineReading := SELECT r.sensorid, r.temperature, r.event_time, s.machineid

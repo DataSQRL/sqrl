@@ -171,9 +171,10 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
       for (SqlNode node : tableBuilder.getColumnList().getList()) {
         if (node instanceof SqlTableColumn.SqlMetadataColumn metadataColumn) {
           if (metadataColumn
-              .getMetadataAlias()
-              .filter(s -> s.equalsIgnoreCase("timestamp"))
-              .isPresent()) {
+                  .getMetadataAlias()
+                  .filter(s -> s.equalsIgnoreCase("timestamp"))
+                  .isPresent()
+              && !tableBuilder.hasWatermark()) {
             long watermarkMillis =
                 isTransactional ? transactionWatermark.toMillis() : defaultWatermark.toMillis();
             tableBuilder.setWatermarkMillis(metadataColumn.getName().getSimple(), watermarkMillis);

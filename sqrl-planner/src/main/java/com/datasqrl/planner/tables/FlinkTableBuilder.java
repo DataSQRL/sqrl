@@ -138,6 +138,10 @@ public class FlinkTableBuilder {
     return this;
   }
 
+  public boolean hasWatermark() {
+    return watermark != null;
+  }
+
   public FlinkTableBuilder setPartition(List<String> partitionColumns) {
     if (partitionColumns.isEmpty()) {
       setPartitionKeyList(SqlNodeList.EMPTY);
