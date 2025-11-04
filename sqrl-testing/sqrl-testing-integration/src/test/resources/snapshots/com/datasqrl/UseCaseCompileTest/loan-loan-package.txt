@@ -102,7 +102,7 @@ Schema:
  - message: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME*
 Plan:
-LogicalWatermarkAssigner(rowtime=[event_time], watermark=[-($4, 0:INTERVAL SECOND)])
+LogicalWatermarkAssigner(rowtime=[event_time], watermark=[-($4, 1:INTERVAL SECOND)])
   LogicalProject(_uuid=[$0], loan_application_id=[$1], status=[$2], message=[$3], event_time=[CAST($4):TIMESTAMP_LTZ(3) *ROWTIME*])
     LogicalTableScan(table=[[default_catalog, default_database, ApplicationUpdates, metadata=[timestamp]]])
 SQL: CREATE VIEW `ApplicationUpdates__view`
@@ -388,7 +388,7 @@ CREATE TABLE `ApplicationUpdates` (
   `status` STRING NOT NULL,
   `message` STRING,
   `event_time` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
-  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
+  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.001' SECOND
 ) WITH (
   'connector' = 'kafka',
   'flexible-json.timestamp-format.standard' = 'ISO-8601',
