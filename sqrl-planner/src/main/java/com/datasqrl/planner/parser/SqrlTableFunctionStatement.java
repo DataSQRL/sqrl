@@ -16,6 +16,7 @@
 package com.datasqrl.planner.parser;
 
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.graphql.exec.FlinkExecFunction;
 import com.datasqrl.graphql.server.MetadataType;
 import com.datasqrl.graphql.server.ResolvedMetadata;
 import com.google.common.base.Preconditions;
@@ -59,16 +60,18 @@ public class SqrlTableFunctionStatement extends SqrlDefinition {
     ParsedObject<String> name;
     RelDataType resolvedRelDataType;
     Optional<ResolvedMetadata> resolvedMetadata;
+    Optional<FlinkExecFunction> execFunction;
     boolean isParentField;
     int index;
 
     public ParsedArgument(ParsedObject<String> name, boolean isParentField, int index) {
-      this(name, null, null, isParentField, index);
+      this(name, null, Optional.empty(), Optional.empty(), isParentField, index);
     }
 
     public ParsedArgument withResolvedType(RelDataType resolvedRelDataType, int index) {
       Preconditions.checkArgument(!hasResolvedType());
-      return new ParsedArgument(name, resolvedRelDataType, Optional.empty(), isParentField, index);
+      return new ParsedArgument(
+          name, resolvedRelDataType, Optional.empty(), Optional.empty(), isParentField, index);
     }
 
     public boolean hasResolvedType() {

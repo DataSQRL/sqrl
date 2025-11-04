@@ -13,18 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.planner.dag.plan;
+package com.datasqrl.graphql.server;
 
-import com.datasqrl.engine.ExecutionEngine;
-import com.datasqrl.graphql.exec.FlinkExecFunctionFactory;
-import com.datasqrl.planner.tables.SqrlTableFunction;
-import java.util.List;
-import lombok.Builder;
-import lombok.Singular;
+import graphql.schema.DataFetchingEnvironment;
 
-@Builder
-public record ServerStagePlan(
-    ExecutionEngine serverEngine,
-    FlinkExecFunctionFactory execFnFactory,
-    @Singular List<SqrlTableFunction> functions,
-    @Singular List<MutationQuery> mutations) {}
+public interface FunctionExecutor {
+
+  Object execute(DataFetchingEnvironment env, String functionId);
+}

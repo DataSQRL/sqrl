@@ -18,6 +18,7 @@ package com.datasqrl.graphql.exec;
 import com.datasqrl.graphql.server.Context;
 import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
 import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentParameter;
+import com.datasqrl.graphql.server.RootGraphqlModel.ComputedParameter;
 import com.datasqrl.graphql.server.RootGraphqlModel.MetadataParameter;
 import com.datasqrl.graphql.server.RootGraphqlModel.ParameterHandlerVisitor;
 import com.datasqrl.graphql.server.RootGraphqlModel.ParentParameter;
@@ -68,5 +69,13 @@ public class StandardExecutionContext<C extends Context>
         .getContext()
         .getMetadataReader(md.metadataType())
         .read(context.getEnvironment(), md.name(), md.required());
+  }
+
+  @Override
+  public Object visitComputedParameter(
+      ComputedParameter computedParameter, ExecutionContext context) {
+    var fnId = computedParameter.getFunctionId();
+
+    return context.getContext().getFunctionExecutor().execute(context.getEnvironment(), fnId);
   }
 }

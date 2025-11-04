@@ -13,18 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.planner.dag.plan;
+package com.datasqrl.graphql.exec;
 
-import com.datasqrl.engine.ExecutionEngine;
-import com.datasqrl.graphql.exec.FlinkExecFunctionFactory;
-import com.datasqrl.planner.tables.SqrlTableFunction;
-import java.util.List;
-import lombok.Builder;
-import lombok.Singular;
+import com.datasqrl.graphql.server.FunctionExecutor;
+import graphql.schema.DataFetchingEnvironment;
+import java.util.Optional;
+import lombok.RequiredArgsConstructor;
 
-@Builder
-public record ServerStagePlan(
-    ExecutionEngine serverEngine,
-    FlinkExecFunctionFactory execFnFactory,
-    @Singular List<SqrlTableFunction> functions,
-    @Singular List<MutationQuery> mutations) {}
+@RequiredArgsConstructor
+public class FlinkFunctionExecutor implements FunctionExecutor {
+
+  private final Optional<FlinkExecFunctionPlan> plan;
+
+  @Override
+  public Object execute(DataFetchingEnvironment env, String functionId) {
+    throw new UnsupportedOperationException("No impl yet.");
+  }
+}

@@ -20,10 +20,13 @@ import static com.datasqrl.graphql.config.ServerConfigUtil.createVersionedGraphi
 import com.datasqrl.graphql.auth.AuthMetadataReader;
 import com.datasqrl.graphql.auth.JwtFailureHandler;
 import com.datasqrl.graphql.config.ServerConfig;
+import com.datasqrl.graphql.exec.FlinkExecFunctionPlan;
+import com.datasqrl.graphql.exec.FlinkFunctionExecutor;
 import com.datasqrl.graphql.jdbc.DatabaseType;
 import com.datasqrl.graphql.jdbc.JdbcClientsConfig;
 import com.datasqrl.graphql.jdbc.VertxJdbcClient;
 import com.datasqrl.graphql.server.CustomScalars;
+import com.datasqrl.graphql.server.FunctionExecutor;
 import com.datasqrl.graphql.server.GraphQLEngineBuilder;
 import com.datasqrl.graphql.server.MetadataReader;
 import com.datasqrl.graphql.server.MetadataType;
@@ -59,6 +62,7 @@ public class GraphQLServerVerticle extends AbstractVerticle {
   private final String modelVersion;
   private final RootGraphqlModel model;
   private final Optional<JWTAuth> authProvider;
+  private final Optional<FlinkExecFunctionPlan> execFunctionPlan;
 
   private GraphQL graphQLEngine;
 
@@ -113,7 +117,12 @@ public class GraphQLServerVerticle extends AbstractVerticle {
     var subscriptionConfig = new SubscriptionConfigurationImpl(vertx, config);
 
     // Create GraphQL engine
-    this.graphQLEngine = createGraphQL(dbClients, subscriptionConfig, createMetadataReaders());
+    this.graphQLEngine =
+        createGraphQL(
+            dbClients,
+            subscriptionConfig,
+            createMetadataReaders(),
+            new FlinkFunctionExecutor(execFunctionPlan));
 
     handler
         .handler(GraphQLWSHandler.create(this.graphQLEngine))
@@ -149,7 +158,8 @@ public class GraphQLServerVerticle extends AbstractVerticle {
   public GraphQL createGraphQL(
       Map<DatabaseType, SqlClient> clients,
       SubscriptionConfigurationImpl subscriptionConfig,
-      Map<MetadataType, MetadataReader> headerReaders) {
+      Map<MetadataType, MetadataReader> metadataReaders,
+      FunctionExecutor functionExecutor) {
     try {
       var vertxJdbcClient = new VertxJdbcClient(clients);
       var graphQL =
@@ -159,7 +169,7 @@ public class GraphQLServerVerticle extends AbstractVerticle {
                   .withSubscriptionConfiguration(subscriptionConfig)
                   .withExtendedScalarTypes(CustomScalars.getExtendedScalars())
                   .build(),
-              new VertxContext(vertxJdbcClient, headerReaders));
+              new VertxContext(vertxJdbcClient, metadataReaders, functionExecutor));
       var meterRegistry = BackendRegistries.getDefaultNow();
       if (meterRegistry != null) {
         graphQL.instrumentation(new MicrometerInstrumentation(meterRegistry));

@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "script": {
+    "main": "server-functions.sqrl"
+  },
+  "test-runner": {
+    "delay-sec": 300
+  }
+}
