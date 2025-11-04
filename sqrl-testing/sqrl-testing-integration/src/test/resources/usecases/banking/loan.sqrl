@@ -9,8 +9,7 @@ CREATE TABLE ApplicationUpdates (
   loan_application_id BIGINT NOT NULL,
   status STRING NOT NULL,
   message STRING,
-  event_time TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
-  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.001' SECOND
+  event_time TIMESTAMP_LTZ(3) METADATA FROM 'timestamp'
 );
 
 Customers := DISTINCT CustomersStream ON id ORDER BY updated_at DESC;
