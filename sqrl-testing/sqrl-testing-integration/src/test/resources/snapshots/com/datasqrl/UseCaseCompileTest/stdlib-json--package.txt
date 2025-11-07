@@ -161,11 +161,11 @@ CREATE TABLE IF NOT EXISTS "UnmodifiedJsonData" ("id" BIGINT NOT NULL, "val" TEX
             "arguments" : [
               {
                 "type" : "variable",
-                "path" : "offset"
+                "path" : "limit"
               },
               {
                 "type" : "variable",
-                "path" : "limit"
+                "path" : "offset"
               }
             ],
             "query" : {
@@ -186,11 +186,11 @@ CREATE TABLE IF NOT EXISTS "UnmodifiedJsonData" ("id" BIGINT NOT NULL, "val" TEX
             "arguments" : [
               {
                 "type" : "variable",
-                "path" : "offset"
+                "path" : "limit"
               },
               {
                 "type" : "variable",
-                "path" : "limit"
+                "path" : "offset"
               }
             ],
             "query" : {
