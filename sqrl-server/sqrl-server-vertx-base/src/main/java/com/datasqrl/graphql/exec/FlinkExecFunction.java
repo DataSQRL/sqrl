@@ -43,20 +43,6 @@ public class FlinkExecFunction implements Serializable {
 
   public void instantiateFunction(ClassLoader classLoader) {
     instantiatedFunction = function.newInstance(classLoader);
-    // TODO: Do we need to instantiate the runtime context?
-    /*
-    if (fn instanceof org.apache.flink.api.common.functions.RichFunction rich) {
-      try {
-        RuntimeContext rtCtx = null; //mirror MockStreamingRuntimeContext from Apache Flink
-        rich.setRuntimeContext(rtCtx);
-        rich.open(new OpenContext() {
-        });
-      } catch (Exception e) {
-        throw new RuntimeException("Could not instantiate function [%s] for [%s]"
-            .formatted(functionId, functionDescription), e);
-      }
-    }
-     */
   }
 
   public String getCode() {

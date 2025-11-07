@@ -4,6 +4,6 @@
     "main": "server-functions.sqrl"
   },
   "test-runner": {
-    "delay-sec": 300
+    "delay-sec": -1
   }
 }

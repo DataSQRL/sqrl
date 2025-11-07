@@ -1,4 +1,4 @@
 IMPORT ecommerce.customers;
 
-CustomersByName(inputName STRING NOT NULL, shortName AS LEFT(hash_columns(inputName), 5)) :=
-SELECT * FROM Customers WHERE name LIKE :shortName;
+CustomersByName(inputName STRING NOT NULL, shortName AS CONCAT(LEFT(inputName, 3), '%')) :=
+    SELECT * FROM Customers WHERE name LIKE :shortName;

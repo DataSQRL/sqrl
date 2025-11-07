@@ -24,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rex.RexNode;
 import org.apache.flink.table.api.TableConfig;
+import org.apache.flink.table.data.GenericRowData;
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.apache.flink.table.types.logical.LogicalType;
 import org.apache.flink.table.types.logical.RowType;
@@ -32,7 +33,7 @@ import org.apache.flink.table.types.logical.RowType;
 @Slf4j
 public class FlinkExecFunctionFactory {
 
-  public static final String FUNCTON_NAME_TEMPLATE = "SqrlExec%s";
+  public static final String FUNCTON_NAME_TEMPLATE = "SqrlExecFn%s";
 
   FlinkExecFunctionPlanBuilder planBuilder = FlinkExecFunctionPlan.builder();
   AtomicInteger fnCounter = new AtomicInteger();
@@ -61,8 +62,7 @@ public class FlinkExecFunctionFactory {
             inRowType, // logical input type
             uniqueFunctionName, // class-name stub
             outRowType, // logical output type
-            org.apache.flink.table.data.binary.BinaryRowData.class,
-            // concrete RowData impl
+            GenericRowData.class, // concrete RowData impl
             expressions, // Seq[RexNode]  –  projection
             filter, // Option[RexNode] – no filter
             tableConfig, // planner / code-gen settings
