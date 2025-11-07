@@ -1,0 +1,6 @@
+query {
+  CustomersByName(inputName:"Bobblabla") {
+    customerid
+    name
+  }
+}
