@@ -324,11 +324,11 @@ CREATE TABLE IF NOT EXISTS "Customers" ("id" BIGINT NOT NULL, "first_name" TEXT 
             "arguments" : [
               {
                 "type" : "variable",
-                "path" : "offset"
+                "path" : "limit"
               },
               {
                 "type" : "variable",
-                "path" : "limit"
+                "path" : "offset"
               }
             ],
             "query" : {
@@ -349,11 +349,11 @@ CREATE TABLE IF NOT EXISTS "Customers" ("id" BIGINT NOT NULL, "first_name" TEXT 
             "arguments" : [
               {
                 "type" : "variable",
-                "path" : "offset"
+                "path" : "limit"
               },
               {
                 "type" : "variable",
-                "path" : "limit"
+                "path" : "offset"
               }
             ],
             "query" : {
@@ -374,11 +374,11 @@ CREATE TABLE IF NOT EXISTS "Customers" ("id" BIGINT NOT NULL, "first_name" TEXT 
             "arguments" : [
               {
                 "type" : "variable",
-                "path" : "offset"
+                "path" : "limit"
               },
               {
                 "type" : "variable",
-                "path" : "limit"
+                "path" : "offset"
               }
             ],
             "query" : {
@@ -399,11 +399,11 @@ CREATE TABLE IF NOT EXISTS "Customers" ("id" BIGINT NOT NULL, "first_name" TEXT 
             "arguments" : [
               {
                 "type" : "variable",
-                "path" : "offset"
+                "path" : "limit"
               },
               {
                 "type" : "variable",
-                "path" : "limit"
+                "path" : "offset"
               }
             ],
             "query" : {

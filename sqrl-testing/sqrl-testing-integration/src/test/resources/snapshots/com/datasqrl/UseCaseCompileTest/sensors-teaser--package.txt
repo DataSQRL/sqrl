@@ -227,15 +227,15 @@ CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" BIGINT NOT NULL, "time" B
             "arguments" : [
               {
                 "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
                 "path" : "offset"
               },
               {
                 "type" : "variable",
                 "path" : "sensorid"
-              },
-              {
-                "type" : "variable",
-                "path" : "limit"
               }
             ],
             "query" : {
@@ -261,15 +261,15 @@ CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" BIGINT NOT NULL, "time" B
             "arguments" : [
               {
                 "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
                 "path" : "offset"
               },
               {
                 "type" : "variable",
                 "path" : "sensorid"
-              },
-              {
-                "type" : "variable",
-                "path" : "limit"
               }
             ],
             "query" : {
@@ -295,11 +295,11 @@ CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" BIGINT NOT NULL, "time" B
             "arguments" : [
               {
                 "type" : "variable",
-                "path" : "offset"
+                "path" : "limit"
               },
               {
                 "type" : "variable",
-                "path" : "limit"
+                "path" : "offset"
               }
             ],
             "query" : {

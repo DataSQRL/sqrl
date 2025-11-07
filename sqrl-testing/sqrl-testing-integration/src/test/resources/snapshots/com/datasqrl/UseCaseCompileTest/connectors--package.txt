@@ -303,11 +303,11 @@ CREATE TABLE IF NOT EXISTS "upsert_kafka_confluent_avro" ("user_id" INTEGER NOT 
             "arguments" : [
               {
                 "type" : "variable",
-                "path" : "offset"
+                "path" : "limit"
               },
               {
                 "type" : "variable",
-                "path" : "limit"
+                "path" : "offset"
               }
             ],
             "query" : {
@@ -328,11 +328,11 @@ CREATE TABLE IF NOT EXISTS "upsert_kafka_confluent_avro" ("user_id" INTEGER NOT 
             "arguments" : [
               {
                 "type" : "variable",
-                "path" : "offset"
+                "path" : "limit"
               },
               {
                 "type" : "variable",
-                "path" : "limit"
+                "path" : "offset"
               }
             ],
             "query" : {
@@ -353,11 +353,11 @@ CREATE TABLE IF NOT EXISTS "upsert_kafka_confluent_avro" ("user_id" INTEGER NOT 
             "arguments" : [
               {
                 "type" : "variable",
-                "path" : "offset"
+                "path" : "limit"
               },
               {
                 "type" : "variable",
-                "path" : "limit"
+                "path" : "offset"
               }
             ],
             "query" : {
@@ -378,11 +378,11 @@ CREATE TABLE IF NOT EXISTS "upsert_kafka_confluent_avro" ("user_id" INTEGER NOT 
             "arguments" : [
               {
                 "type" : "variable",
-                "path" : "offset"
+                "path" : "limit"
               },
               {
                 "type" : "variable",
-                "path" : "limit"
+                "path" : "offset"
               }
             ],
             "query" : {
@@ -403,11 +403,11 @@ CREATE TABLE IF NOT EXISTS "upsert_kafka_confluent_avro" ("user_id" INTEGER NOT 
             "arguments" : [
               {
                 "type" : "variable",
-                "path" : "offset"
+                "path" : "limit"
               },
               {
                 "type" : "variable",
-                "path" : "limit"
+                "path" : "offset"
               }
             ],
             "query" : {
@@ -428,11 +428,11 @@ CREATE TABLE IF NOT EXISTS "upsert_kafka_confluent_avro" ("user_id" INTEGER NOT 
             "arguments" : [
               {
                 "type" : "variable",
-                "path" : "offset"
+                "path" : "limit"
               },
               {
                 "type" : "variable",
-                "path" : "limit"
+                "path" : "offset"
               }
             ],
             "query" : {

@@ -120,11 +120,11 @@ CREATE TABLE IF NOT EXISTS "MathFunctions" ("d" NUMERIC NOT NULL, "b" INTEGER NO
             "arguments" : [
               {
                 "type" : "variable",
-                "path" : "offset"
+                "path" : "limit"
               },
               {
                 "type" : "variable",
-                "path" : "limit"
+                "path" : "offset"
               }
             ],
             "query" : {

@@ -191,10 +191,6 @@ CREATE INDEX IF NOT EXISTS "Reporting_hash_c1" ON "Reporting" USING hash ("manag
             "arguments" : [
               {
                 "type" : "variable",
-                "path" : "offset"
-              },
-              {
-                "type" : "variable",
                 "path" : "employeeid"
               },
               {
@@ -204,6 +200,10 @@ CREATE INDEX IF NOT EXISTS "Reporting_hash_c1" ON "Reporting" USING hash ("manag
               {
                 "type" : "variable",
                 "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
               }
             ],
             "query" : {
@@ -233,11 +233,11 @@ CREATE INDEX IF NOT EXISTS "Reporting_hash_c1" ON "Reporting" USING hash ("manag
             "arguments" : [
               {
                 "type" : "variable",
-                "path" : "offset"
+                "path" : "limit"
               },
               {
                 "type" : "variable",
-                "path" : "limit"
+                "path" : "offset"
               }
             ],
             "query" : {
@@ -263,11 +263,11 @@ CREATE INDEX IF NOT EXISTS "Reporting_hash_c1" ON "Reporting" USING hash ("manag
             "arguments" : [
               {
                 "type" : "variable",
-                "path" : "offset"
+                "path" : "limit"
               },
               {
                 "type" : "variable",
-                "path" : "limit"
+                "path" : "offset"
               }
             ],
             "query" : {

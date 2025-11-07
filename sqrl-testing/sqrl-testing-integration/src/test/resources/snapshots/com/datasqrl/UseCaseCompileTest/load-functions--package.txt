@@ -66,11 +66,11 @@ CREATE TABLE IF NOT EXISTS "FunctionApplied" ("id" INTEGER NOT NULL, "fct_result
             "arguments" : [
               {
                 "type" : "variable",
-                "path" : "offset"
+                "path" : "limit"
               },
               {
                 "type" : "variable",
-                "path" : "limit"
+                "path" : "offset"
               }
             ],
             "query" : {

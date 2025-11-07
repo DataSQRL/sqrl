@@ -571,7 +571,7 @@ CREATE INDEX IF NOT EXISTS "Events_text_c3c4" ON "Events" USING GIN (to_tsvector
             "arguments" : [
               {
                 "type" : "variable",
-                "path" : "offset"
+                "path" : "limit"
               },
               {
                 "type" : "variable",
@@ -579,7 +579,7 @@ CREATE INDEX IF NOT EXISTS "Events_text_c3c4" ON "Events" USING GIN (to_tsvector
               },
               {
                 "type" : "variable",
-                "path" : "limit"
+                "path" : "offset"
               }
             ],
             "query" : {
@@ -605,11 +605,11 @@ CREATE INDEX IF NOT EXISTS "Events_text_c3c4" ON "Events" USING GIN (to_tsvector
             "arguments" : [
               {
                 "type" : "variable",
-                "path" : "offset"
+                "path" : "limit"
               },
               {
                 "type" : "variable",
-                "path" : "limit"
+                "path" : "offset"
               }
             ],
             "query" : {
@@ -635,11 +635,11 @@ CREATE INDEX IF NOT EXISTS "Events_text_c3c4" ON "Events" USING GIN (to_tsvector
             "arguments" : [
               {
                 "type" : "variable",
-                "path" : "offset"
+                "path" : "limit"
               },
               {
                 "type" : "variable",
-                "path" : "limit"
+                "path" : "offset"
               },
               {
                 "type" : "variable",
@@ -669,19 +669,19 @@ CREATE INDEX IF NOT EXISTS "Events_text_c3c4" ON "Events" USING GIN (to_tsvector
             "arguments" : [
               {
                 "type" : "variable",
-                "path" : "offset"
-              },
-              {
-                "type" : "variable",
                 "path" : "limit"
               },
               {
                 "type" : "variable",
-                "path" : "query"
+                "path" : "offset"
               },
               {
                 "type" : "variable",
                 "path" : "userid"
+              },
+              {
+                "type" : "variable",
+                "path" : "query"
               }
             ],
             "query" : {
@@ -711,11 +711,11 @@ CREATE INDEX IF NOT EXISTS "Events_text_c3c4" ON "Events" USING GIN (to_tsvector
             "arguments" : [
               {
                 "type" : "variable",
-                "path" : "offset"
+                "path" : "limit"
               },
               {
                 "type" : "variable",
-                "path" : "limit"
+                "path" : "offset"
               },
               {
                 "type" : "variable",

@@ -130,11 +130,11 @@ FROM (SELECT "sensorid", MAX("temperature") AS "maxTemp", AVG("temperature") AS 
             "arguments" : [
               {
                 "type" : "variable",
-                "path" : "offset"
+                "path" : "limit"
               },
               {
                 "type" : "variable",
-                "path" : "limit"
+                "path" : "offset"
               }
             ],
             "query" : {
@@ -155,11 +155,11 @@ FROM (SELECT "sensorid", MAX("temperature") AS "maxTemp", AVG("temperature") AS 
             "arguments" : [
               {
                 "type" : "variable",
-                "path" : "offset"
+                "path" : "limit"
               },
               {
                 "type" : "variable",
-                "path" : "limit"
+                "path" : "offset"
               }
             ],
             "query" : {
@@ -180,15 +180,15 @@ FROM (SELECT "sensorid", MAX("temperature") AS "maxTemp", AVG("temperature") AS 
             "arguments" : [
               {
                 "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
                 "path" : "offset"
               },
               {
                 "type" : "variable",
                 "path" : "sensorid"
-              },
-              {
-                "type" : "variable",
-                "path" : "limit"
               }
             ],
             "query" : {

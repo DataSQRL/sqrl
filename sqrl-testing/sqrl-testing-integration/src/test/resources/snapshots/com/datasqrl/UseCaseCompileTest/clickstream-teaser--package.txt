@@ -210,11 +210,11 @@ CREATE TABLE IF NOT EXISTS "VisitAfter" ("beforeURL" TEXT NOT NULL, "afterURL" T
             "arguments" : [
               {
                 "type" : "variable",
-                "path" : "offset"
+                "path" : "limit"
               },
               {
                 "type" : "variable",
-                "path" : "limit"
+                "path" : "offset"
               }
             ],
             "query" : {
@@ -235,7 +235,7 @@ CREATE TABLE IF NOT EXISTS "VisitAfter" ("beforeURL" TEXT NOT NULL, "afterURL" T
             "arguments" : [
               {
                 "type" : "variable",
-                "path" : "url"
+                "path" : "limit"
               },
               {
                 "type" : "variable",
@@ -243,7 +243,7 @@ CREATE TABLE IF NOT EXISTS "VisitAfter" ("beforeURL" TEXT NOT NULL, "afterURL" T
               },
               {
                 "type" : "variable",
-                "path" : "limit"
+                "path" : "url"
               }
             ],
             "query" : {
@@ -269,11 +269,11 @@ CREATE TABLE IF NOT EXISTS "VisitAfter" ("beforeURL" TEXT NOT NULL, "afterURL" T
             "arguments" : [
               {
                 "type" : "variable",
-                "path" : "offset"
+                "path" : "limit"
               },
               {
                 "type" : "variable",
-                "path" : "limit"
+                "path" : "offset"
               }
             ],
             "query" : {
@@ -294,11 +294,11 @@ CREATE TABLE IF NOT EXISTS "VisitAfter" ("beforeURL" TEXT NOT NULL, "afterURL" T
             "arguments" : [
               {
                 "type" : "variable",
-                "path" : "offset"
+                "path" : "limit"
               },
               {
                 "type" : "variable",
-                "path" : "limit"
+                "path" : "offset"
               }
             ],
             "query" : {
