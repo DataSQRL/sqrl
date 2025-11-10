@@ -17,17 +17,12 @@ package com.datasqrl.graphql.exec;
 
 import com.datasqrl.graphql.server.FunctionExecutor;
 import graphql.schema.DataFetchingEnvironment;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.apache.flink.table.data.GenericRowData;
-import org.apache.flink.table.data.conversion.DataStructureConverter;
-import org.apache.flink.table.data.conversion.DataStructureConverters;
 import org.apache.flink.table.types.logical.RowType;
-import org.apache.flink.table.types.utils.TypeConversions;
 
 @RequiredArgsConstructor
 public class FlinkFunctionExecutor implements FunctionExecutor {
@@ -52,12 +47,13 @@ public class FlinkFunctionExecutor implements FunctionExecutor {
 
     fn.instantiateFunction(getClass().getClassLoader());
 
-    var converter = new RowTypeConverter(inputType);
-    var rowData = converter.toInternal(env.getArguments());
+    var converter = new RowDataMapper(inputType);
+    var rowData = converter.toRowData(env.getArguments());
 
-    var internalRes = fn.execute(List.of(rowData));
-    var res = converter.toExternal((GenericRowData) internalRes.get(0));
+    var internalRes = fn.execute(List.of(rowData)).get(0);
+    var res = converter.fromRowData((GenericRowData) internalRes);
 
+    // TODO: make sure we return as a collection if necessary
     return res.get(0);
   }
 
@@ -71,53 +67,6 @@ public class FlinkFunctionExecutor implements FunctionExecutor {
       throw new IllegalArgumentException(
           "Cannot execute function. Missing required input fields: "
               + String.join(", ", missingFields));
-    }
-  }
-
-  public static class RowTypeConverter {
-
-    private final RowType rowType;
-    private final List<DataStructureConverter<Object, Object>> fieldConverters;
-
-    public RowTypeConverter(RowType rowType) {
-      this.rowType = rowType;
-      var rowDataType = TypeConversions.fromLogicalToDataType(rowType);
-
-      this.fieldConverters = new ArrayList<>(rowType.getFieldCount());
-      for (int i = 0; i < rowType.getFieldCount(); i++) {
-        var fieldDataType = rowDataType.getChildren().get(i);
-        var converter = DataStructureConverters.getConverter(fieldDataType);
-        converter.open(getClass().getClassLoader());
-
-        fieldConverters.add(converter);
-      }
-    }
-
-    public GenericRowData toInternal(Map<String, Object> args) {
-      var rowData = new GenericRowData(rowType.getFieldCount());
-
-      for (int i = 0; i < rowType.getFieldCount(); i++) {
-        var fieldName = rowType.getFieldNames().get(i);
-        var external = args.get(fieldName);
-        var internal = fieldConverters.get(i).toInternalOrNull(external);
-
-        rowData.setField(i, internal);
-      }
-
-      return rowData;
-    }
-
-    public List<Object> toExternal(GenericRowData rowData) {
-      var res = new ArrayList<>(rowData.getArity());
-
-      for (int i = 0; i < rowData.getArity(); i++) {
-        var internal = rowData.getField(i);
-        var external = fieldConverters.get(i).toExternalOrNull(internal);
-
-        res.add(external);
-      }
-
-      return res;
     }
   }
 }
