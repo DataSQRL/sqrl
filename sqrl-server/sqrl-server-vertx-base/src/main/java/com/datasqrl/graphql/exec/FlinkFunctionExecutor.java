@@ -17,7 +17,6 @@ package com.datasqrl.graphql.exec;
 
 import com.datasqrl.graphql.server.FunctionExecutor;
 import graphql.schema.DataFetchingEnvironment;
-import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -31,12 +30,7 @@ public class FlinkFunctionExecutor implements FunctionExecutor {
 
   @Override
   public Object execute(DataFetchingEnvironment env, String functionId) {
-
-    if (optPlan.isEmpty()) {
-      throw new IllegalStateException("Exec function plan is empty");
-    }
-
-    var plan = optPlan.get();
+    var plan = optPlan.orElseThrow(() -> new IllegalStateException("Exec function plan not found"));
     var fn =
         plan.getFunction(functionId)
             .orElseThrow(
@@ -47,11 +41,11 @@ public class FlinkFunctionExecutor implements FunctionExecutor {
 
     fn.instantiateFunction(getClass().getClassLoader());
 
-    var converter = new RowDataMapper(inputType);
-    var rowData = converter.toRowData(env.getArguments());
+    var mapper = new RowDataMapper(inputType);
+    var rowData = mapper.toRowData(env.getArguments());
 
-    var internalRes = fn.execute(List.of(rowData)).get(0);
-    var res = converter.fromRowData((GenericRowData) internalRes);
+    var internalRes = fn.execute(rowData);
+    var res = mapper.fromRowData((GenericRowData) internalRes);
 
     // TODO: make sure we return as a collection if necessary
     return res.get(0);

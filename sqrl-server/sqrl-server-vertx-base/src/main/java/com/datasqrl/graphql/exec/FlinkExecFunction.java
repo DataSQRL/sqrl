@@ -49,6 +49,12 @@ public class FlinkExecFunction implements Serializable {
     return function.getCode();
   }
 
+  public <T extends RowData> RowData execute(T input) {
+    var res = execute(List.of(input));
+
+    return res.get(0);
+  }
+
   public List<RowData> execute(List<? extends RowData> inputs) {
     if (instantiatedFunction == null) {
       throw new IllegalStateException("Function %s not instantiated".formatted(functionId));
