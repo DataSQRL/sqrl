@@ -17,7 +17,9 @@ package com.datasqrl.graphql.exec;
 
 import com.datasqrl.graphql.server.FunctionExecutor;
 import graphql.schema.DataFetchingEnvironment;
+import io.vertx.core.Vertx;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.apache.flink.table.data.GenericRowData;
@@ -26,10 +28,11 @@ import org.apache.flink.table.types.logical.RowType;
 @RequiredArgsConstructor
 public class FlinkFunctionExecutor implements FunctionExecutor {
 
+  private final Vertx vertx;
   private final Optional<FlinkExecFunctionPlan> optPlan;
 
   @Override
-  public Object execute(DataFetchingEnvironment env, String functionId) {
+  public CompletableFuture<Object> execute(DataFetchingEnvironment env, String functionId) {
     var plan = optPlan.orElseThrow(() -> new IllegalStateException("Exec function plan not found"));
     var fn =
         plan.getFunction(functionId)
@@ -39,16 +42,24 @@ public class FlinkFunctionExecutor implements FunctionExecutor {
     var inputType = fn.getInputType();
     validateInputFields(env, inputType);
 
-    fn.instantiateFunction(getClass().getClassLoader());
+    // Execute blocking function operations on Vert.x worker pool
+    return vertx
+        .executeBlocking(
+            () -> {
+              fn.instantiateFunction(Thread.currentThread().getContextClassLoader());
 
-    var mapper = new RowDataMapper(inputType);
-    var rowData = mapper.toRowData(env.getArguments());
+              var mapper = new RowDataMapper(inputType);
+              var rowData = mapper.toRowData(env.getArguments());
 
-    var internalRes = fn.execute(rowData);
-    var res = mapper.fromRowData((GenericRowData) internalRes);
+              var internalRes = fn.execute(rowData);
+              var res = mapper.fromRowData((GenericRowData) internalRes);
 
-    // TODO: make sure we return as a collection if necessary
-    return res.get(0);
+              // TODO: make sure we return as a collection if necessary
+              return res.get(0);
+            },
+            false) // false -> unordered execution (better concurrency)
+        .toCompletionStage()
+        .toCompletableFuture();
   }
 
   private void validateInputFields(DataFetchingEnvironment env, RowType inputType) {

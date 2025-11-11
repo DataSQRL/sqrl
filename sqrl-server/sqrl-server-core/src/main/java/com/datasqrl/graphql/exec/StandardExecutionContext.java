@@ -25,6 +25,7 @@ import com.datasqrl.graphql.server.RootGraphqlModel.ParentParameter;
 import graphql.schema.DataFetchingEnvironment;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -72,7 +73,7 @@ public class StandardExecutionContext<C extends Context>
   }
 
   @Override
-  public Object visitComputedParameter(
+  public CompletableFuture<Object> visitComputedParameter(
       ComputedParameter computedParameter, ExecutionContext context) {
     var fnId = computedParameter.getFunctionId();
 

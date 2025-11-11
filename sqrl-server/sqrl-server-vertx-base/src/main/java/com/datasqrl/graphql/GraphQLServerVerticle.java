@@ -122,7 +122,7 @@ public class GraphQLServerVerticle extends AbstractVerticle {
             dbClients,
             subscriptionConfig,
             createMetadataReaders(),
-            new FlinkFunctionExecutor(execFunctionPlan));
+            new FlinkFunctionExecutor(vertx, execFunctionPlan));
 
     handler
         .handler(GraphQLWSHandler.create(this.graphQLEngine))

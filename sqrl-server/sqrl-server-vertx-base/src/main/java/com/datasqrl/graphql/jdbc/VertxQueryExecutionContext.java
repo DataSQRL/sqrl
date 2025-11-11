@@ -25,7 +25,6 @@ import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedSqlQuery;
 import graphql.schema.DataFetchingEnvironment;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.Tuple;
@@ -33,7 +32,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 /**
@@ -57,8 +55,28 @@ public class VertxQueryExecutionContext extends AbstractQueryExecutionContext<Ve
 
   @Override
   public CompletableFuture<Object> runQuery(ResolvedSqlQuery resolvedQuery, boolean isList) {
+    return getParamArgumentsFuture(resolvedQuery.getQuery().getParameters())
+        .thenCompose(paramObj -> runQueryInternal(resolvedQuery, isList, paramObj));
+  }
+
+  @Override
+  protected Object mapParamArgumentType(Object param) {
+    if (param instanceof List<?> l) {
+      return l.toArray();
+    }
+
+    if (param instanceof JsonArray arr) {
+      // Unwrap JsonArray to plain Java array to avoid pgclient treating it as JSONB
+      return arr.getList().toArray();
+    }
+
+    return param;
+  }
+
+  private CompletableFuture<Object> runQueryInternal(
+      ResolvedSqlQuery resolvedQuery, boolean isList, List<Object> paramObj) {
+
     var preparedQueryContainer = (PreparedSqrlQueryImpl) resolvedQuery.getPreparedQueryContainer();
-    final var paramObj = getParamArguments(resolvedQuery.getQuery().getParameters());
     var query = resolvedQuery.getQuery();
     var unpreparedSqlQuery = query.getSql();
     switch (query.getPagination()) {
@@ -68,8 +86,8 @@ public class VertxQueryExecutionContext extends AbstractQueryExecutionContext<Ve
         Optional<Integer> limit = Optional.ofNullable(getEnvironment().getArgument(LIMIT));
         Optional<Integer> offset = Optional.ofNullable(getEnvironment().getArgument(OFFSET));
 
-        // special case where database doesn't support binding for limit/offset => need to execute
-        // dynamically
+        // special case where database doesn't support binding for limit/offset => need
+        // to execute dynamically
         if (!query.getDatabase().supportsLimitOffsetBinding) {
           assert preparedQueryContainer == null;
           unpreparedSqlQuery =
@@ -110,23 +128,9 @@ public class VertxQueryExecutionContext extends AbstractQueryExecutionContext<Ve
     return cf;
   }
 
-  @Override
-  protected Object mapParamArgumentType(Object param) {
-    if (param instanceof List<?> l) {
-      return l.toArray();
-    }
-
-    if (param instanceof JsonArray arr) {
-      // Unwrap JsonArray to plain Java array to avoid pgclient treating it as JSONB
-      return arr.getList().toArray();
-    }
-
-    return param;
-  }
-
   private Object resultMapper(RowSet<Row> r, boolean isList) {
-    List<JsonObject> o =
-        StreamSupport.stream(r.spliterator(), false).map(Row::toJson).collect(Collectors.toList());
+    var o = StreamSupport.stream(r.spliterator(), false).map(Row::toJson).toList();
+
     return unboxList(o, isList);
   }
 }

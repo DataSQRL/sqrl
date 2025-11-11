@@ -16,8 +16,9 @@
 package com.datasqrl.graphql.server;
 
 import graphql.schema.DataFetchingEnvironment;
+import java.util.concurrent.CompletableFuture;
 
 public interface FunctionExecutor {
 
-  Object execute(DataFetchingEnvironment env, String functionId);
+  CompletableFuture<Object> execute(DataFetchingEnvironment env, String functionId);
 }
