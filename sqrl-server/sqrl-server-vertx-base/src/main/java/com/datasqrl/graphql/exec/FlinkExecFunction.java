@@ -21,15 +21,15 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.table.data.RowData;
 import org.apache.flink.table.runtime.generated.GeneratedFunction;
 import org.apache.flink.table.types.logical.RowType;
 import org.apache.flink.util.Collector;
 
-@AllArgsConstructor(access = AccessLevel.PACKAGE)
+@RequiredArgsConstructor(access = AccessLevel.PACKAGE)
 public class FlinkExecFunction implements Serializable {
 
   @Serial private static final long serialVersionUID = 1L;
@@ -37,6 +37,7 @@ public class FlinkExecFunction implements Serializable {
   @Getter private final String functionId;
   @Getter private final String functionDescription;
   @Getter private final RowType inputType;
+  @Getter private final boolean listOutput;
   @JsonIgnore private final GeneratedFunction<FlatMapFunction<RowData, RowData>> function;
 
   @JsonIgnore private transient FlatMapFunction<RowData, RowData> instantiatedFunction;

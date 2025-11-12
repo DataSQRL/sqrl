@@ -54,8 +54,7 @@ public class FlinkFunctionExecutor implements FunctionExecutor {
               var internalRes = fn.execute(rowData);
               var res = mapper.fromRowData((GenericRowData) internalRes);
 
-              // TODO: make sure we return as a collection if necessary
-              return res.get(0);
+              return fn.isListOutput() ? res : res.get(0);
             },
             false) // false -> unordered execution (better concurrency)
         .toCompletionStage()

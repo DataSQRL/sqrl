@@ -41,15 +41,17 @@ public class FlinkExecFunctionFactory {
   TableConfig tableConfig;
   FlinkTypeFactory typeFactory;
 
-  public FlinkExecFunction create(RexNode expression, String description, RelDataType inputType) {
-    return create(List.of(expression), Optional.empty(), description, inputType);
+  public FlinkExecFunction create(
+      RexNode expression, String description, RelDataType inputType, boolean listOutput) {
+    return create(List.of(expression), Optional.empty(), description, inputType, listOutput);
   }
 
   public FlinkExecFunction create(
       List<RexNode> expressions,
       Optional<RexNode> filter,
       String description,
-      RelDataType inputType) {
+      RelDataType inputType,
+      boolean listOutput) {
     // Translate type information
     var inRowType = (RowType) typeFactory.toLogicalType(inputType);
     var outRowType = toRowTypeFromRexNodes(expressions);
@@ -71,7 +73,8 @@ public class FlinkExecFunctionFactory {
     var fnCode = genFn.getCode();
     log.debug("Generated executable function [{}]: {}", uniqueFunctionName, fnCode);
 
-    var execFn = new FlinkExecFunction(uniqueFunctionName, description, inRowType, genFn, null);
+    var execFn =
+        new FlinkExecFunction(uniqueFunctionName, description, inRowType, listOutput, genFn);
 
     planBuilder.function(execFn);
 
