@@ -146,6 +146,7 @@ import org.apache.flink.table.planner.operations.SqlNodeConvertContext;
 import org.apache.flink.table.planner.operations.SqlNodeToOperationConversion;
 import org.apache.flink.table.planner.parse.CalciteParser;
 import org.apache.flink.table.planner.utils.RowLevelModificationContextUtils;
+import org.apache.flink.table.types.CollectionDataType;
 import org.apache.flink.table.types.DataType;
 
 /**
@@ -1049,10 +1050,11 @@ public class Sqrl2FlinkSQLTranslator {
         var rexExp = (RexNodeExpression) computedColumn.getExpression();
 
         if (createFunctions) {
+          var listOutput = rexExp.getOutputDataType() instanceof CollectionDataType;
           function =
               Optional.of(
                   execFnFactory.create(
-                      rexExp.getRexNode(), rexExp.asSummaryString(), physicalType));
+                      rexExp.getRexNode(), rexExp.asSummaryString(), physicalType, listOutput));
         }
       }
 
