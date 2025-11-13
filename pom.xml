@@ -127,7 +127,7 @@
     <commons-csv.version>1.9.0</commons-csv.version>
     <commons-exec.version>1.5.0</commons-exec.version>
     <commonscodec.version>1.19.0</commonscodec.version>
-    <commonsio.version>2.20.0</commonsio.version>
+    <commonsio.version>2.21.0</commonsio.version>
     <commons-lang3.version>3.19.0</commons-lang3.version>
     <duckdb.version>1.4.1.0</duckdb.version>
     <feign.version>13.6</feign.version>
