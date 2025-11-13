@@ -105,7 +105,7 @@
     <snapshots.update>false</snapshots.update>
 
     <!-- Flink versions -->
-    <flink.version>2.1.0</flink.version>
+    <flink.version>2.1.1</flink.version>
     <flink.cdc.version>3.5.0</flink.cdc.version>
     <flink.connector.jdbc.version>4.0.0-2.0</flink.connector.jdbc.version>
     <flink.connector.kafka.version>4.0.1-2.0</flink.connector.kafka.version>
