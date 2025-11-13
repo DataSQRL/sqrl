@@ -120,15 +120,10 @@
     <awaitility.version>4.3.0</awaitility.version>
     <aws-sdk-bom.version>2.37.2</aws-sdk-bom.version>
     <calcite.version>1.40.0</calcite.version>
-    <commons-bean.version>1.11.0</commons-bean.version>
-    <commons-collections.version>4.5.0</commons-collections.version>
-    <!-- hadoop shades in commons-config 2.1.1, so upgrade path here is very narrow -->
-    <commons-config.version>2.3</commons-config.version>
-    <commons-csv.version>1.9.0</commons-csv.version>
+    <commons-collections4.version>4.5.0</commons-collections4.version>
+    <commons-csv.version>1.14.1</commons-csv.version>
     <commons-exec.version>1.5.0</commons-exec.version>
-    <commonscodec.version>1.19.0</commonscodec.version>
-    <commonsio.version>2.20.0</commonsio.version>
-    <commons-lang3.version>3.19.0</commons-lang3.version>
+    <commons-io.version>2.21.0</commons-io.version>
     <duckdb.version>1.4.1.0</duckdb.version>
     <feign.version>13.6</feign.version>
     <freemarker.version>2.3.34</freemarker.version>
@@ -288,24 +283,14 @@
         <version>${autoservice.version}</version>
       </dependency>
       <dependency>
-        <groupId>commons-io</groupId>
-        <artifactId>commons-io</artifactId>
-        <version>${commonsio.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>commons-codec</groupId>
-        <artifactId>commons-codec</artifactId>
-        <version>${commonscodec.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.commons</groupId>
-        <artifactId>commons-lang3</artifactId>
-        <version>${commons-lang3.version}</version>
-      </dependency>
-      <dependency>
         <groupId>org.apache.commons</groupId>
         <artifactId>commons-collections4</artifactId>
-        <version>${commons-collections.version}</version>
+        <version>${commons-collections4.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-csv</artifactId>
+        <version>${commons-csv.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.commons</groupId>
@@ -313,14 +298,14 @@
         <version>${commons-exec.version}</version>
       </dependency>
       <dependency>
+        <groupId>commons-io</groupId>
+        <artifactId>commons-io</artifactId>
+        <version>${commons-io.version}</version>
+      </dependency>
+      <dependency>
         <groupId>org.apache.httpcomponents</groupId>
         <artifactId>httpmime</artifactId>
         <version>${httpcomponents.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>commons-beanutils</groupId>
-        <artifactId>commons-beanutils</artifactId>
-        <version>${commons-bean.version}</version>
       </dependency>
       <dependency>
         <groupId>info.picocli</groupId>
