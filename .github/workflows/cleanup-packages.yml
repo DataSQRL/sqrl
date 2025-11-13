@@ -16,7 +16,7 @@ jobs:
     steps:
       - name: Discover and cleanup Maven packages
         env:
-          GITHUB_TOKEN: ${{ secrets.BOT_PAT }}
+          GITHUB_TOKEN: ${{ secrets.PACKAGES_BOT_PAT }}
         run: |
           echo "Discovering Maven packages..."
           
@@ -69,7 +69,7 @@ jobs:
 
       - name: Discover and cleanup Container packages
         env:
-          GITHUB_TOKEN: ${{ secrets.BOT_PAT }}
+          GITHUB_TOKEN: ${{ secrets.PACKAGES_BOT_PAT }}
         run: |
           cutoff_date="${{ steps.cutoff-date.outputs.cutoff_date }}"
           echo "Using cutoff date: $cutoff_date"

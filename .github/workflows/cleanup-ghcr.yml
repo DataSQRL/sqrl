@@ -49,7 +49,7 @@ jobs:
             echo "EOF"
           } >> $GITHUB_OUTPUT
         env:
-          GH_TOKEN: ${{ secrets.BOT_PAT }}
+          GH_TOKEN: ${{ secrets.PACKAGES_BOT_PAT }}
 
       - name: Calculate cutoff date
         id: cutoff-date
@@ -115,4 +115,4 @@ jobs:
             echo "--- Finished processing $pkg ---"
           done
         env:
-          GH_TOKEN: ${{ secrets.BOT_PAT }}
+          GH_TOKEN: ${{ secrets.PACKAGES_BOT_PAT }}
