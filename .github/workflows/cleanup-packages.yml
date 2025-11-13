@@ -19,30 +19,42 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.PACKAGES_BOT_PAT }}
         run: |
           echo "Discovering Maven packages..."
-          
+
+          # Calculate cutoff date for Maven snapshots (10 days ago)
+          snapshot_cutoff_date=$(date -u -d '10 days ago' +%Y-%m-%dT%H:%M:%SZ)
+          echo "Maven SNAPSHOT cutoff date: $snapshot_cutoff_date"
+
           # Get all Maven packages for the organization (with pagination)
           packages=$(gh api "/orgs/DataSQRL/packages?package_type=maven&per_page=100" --paginate --jq '.[].name' 2>/dev/null || echo "")
-          
+
           if [ -z "$packages" ]; then
             echo "No Maven packages found or insufficient permissions"
             exit 0
           fi
-          
+
           echo "Found Maven packages:"
           echo "$packages"
-          
+
           # Clean up each package
           echo "$packages" | while read -r package_name; do
             if [ -n "$package_name" ]; then
               echo "Cleaning up Maven package: $package_name"
+
+              # Get all SNAPSHOT versions, sort by updated_at descending, skip the latest one, and delete old ones
               gh api \
                 --method GET \
                 -H "Accept: application/vnd.github+json" \
                 "/orgs/DataSQRL/packages/maven/$package_name/versions" \
-                --jq '.[] | select(.metadata.package_type == "maven" and (.name | test("SNAPSHOT|alpha|beta|rc|dev"; "i"))) | .id' | \
-                while read -r version_id; do
+                --jq --arg cutoff "$snapshot_cutoff_date" '
+                  [.[] | select(.metadata.package_type == "maven" and (.name | test("SNAPSHOT"; "i")))] |
+                  sort_by(.updated_at) | reverse |
+                  .[1:] |
+                  .[] | select(.updated_at < $cutoff) |
+                  "\(.id) \(.name) \(.updated_at)"
+                ' | \
+                while read -r version_id version_name version_date; do
                   if [ -n "$version_id" ]; then
-                    echo "Deleting version ID: $version_id"
+                    echo "Deleting old SNAPSHOT version: $version_name (ID: $version_id, updated: $version_date)"
                     gh api \
                       --method DELETE \
                       -H "Accept: application/vnd.github+json" \
