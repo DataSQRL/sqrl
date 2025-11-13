@@ -137,18 +137,18 @@ jobs:
                   echo "No untagged versions found for $package_name"
                 fi
 
-                # Delete tagged versions older than 30 days
-                echo "Fetching tagged versions older than $cutoff_date for $package_name..."
+                # Delete tagged versions older than 30 days (excluding dev, latest, and semver tags)
+                echo "Fetching tagged versions older than $cutoff_date for $package_name (excluding dev, latest, and semver tags)..."
                 old_tagged_versions=$(gh api \
                   --method GET \
                   -H "Accept: application/vnd.github+json" \
                   "/$endpoint/packages/container/$package_name/versions" \
-                  --jq --arg cutoff "$cutoff_date" '.[] | select(.metadata.container.tags | length > 0) | select(.updated_at < $cutoff) | .id' 2>/dev/null || echo "")
+                  --jq --arg cutoff "$cutoff_date" '.[] | select(.metadata.container.tags | length > 0) | select(.updated_at < $cutoff) | select(.metadata.container.tags | any(. == "dev" or . == "latest" or test("^\\d+\\.\\d+\\.\\d+(-.*)?$")) | not) | .id' 2>/dev/null || echo "")
 
                 if [ -n "$old_tagged_versions" ]; then
                   echo "$old_tagged_versions" | while read -r version_id; do
                     if [ -n "$version_id" ]; then
-                      echo "Deleting old tagged version ID: $version_id (updated before $cutoff_date)"
+                      echo "Deleting old tagged version ID: $version_id (updated before $cutoff_date, excluding protected tags)"
                       gh api \
                         --method DELETE \
                         -H "Accept: application/vnd.github+json" \
@@ -156,7 +156,7 @@ jobs:
                     fi
                   done
                 else
-                  echo "No old tagged versions found for $package_name"
+                  echo "No old tagged versions found for $package_name (after excluding protected tags)"
                 fi
 
                 # If we found versions, break out of endpoint loop

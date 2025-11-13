@@ -97,14 +97,14 @@ jobs:
                 echo "No images with 'pr-' tags found for $pkg."
               fi
 
-              # Delete tagged images older than 30 days
-              echo "Fetching tagged images older than $cutoff_date for $pkg..."
-              old_tagged_ids=$(gh api --paginate "$endpoint/packages/container/$pkg/versions" | jq --arg cutoff "$cutoff_date" '.[] | select(.metadata.container.tags | length > 0) | select(.updated_at < $cutoff) | .id' 2>/dev/null || echo "")
+              # Delete tagged images older than 30 days (excluding dev, latest, and semver tags)
+              echo "Fetching tagged images older than $cutoff_date for $pkg (excluding dev, latest, and semver tags)..."
+              old_tagged_ids=$(gh api --paginate "$endpoint/packages/container/$pkg/versions" | jq --arg cutoff "$cutoff_date" '.[] | select(.metadata.container.tags | length > 0) | select(.updated_at < $cutoff) | select(.metadata.container.tags | any(. == "dev" or . == "latest" or test("^\\d+\\.\\d+\\.\\d+(-.*)?$")) | not) | .id' 2>/dev/null || echo "")
               if [ -n "$old_tagged_ids" ]; then
-                echo "Deleting old tagged images for $pkg (older than $cutoff_date):"
+                echo "Deleting old tagged images for $pkg (older than $cutoff_date, excluding protected tags):"
                 echo "$old_tagged_ids" | xargs -I {} gh api --method DELETE "$endpoint/packages/container/$pkg/versions/{}" --silent || echo "Could not delete some old tagged images for $pkg. This might be due to download counts or other restrictions."
               else
-                echo "No old tagged images found for $pkg."
+                echo "No old tagged images found for $pkg (after excluding protected tags)."
               fi
 
               # If we found versions, break out of the endpoint loop
