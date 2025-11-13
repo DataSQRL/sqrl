@@ -20,21 +20,63 @@ jobs:
       - name: Get all container packages in the organization
         id: get-packages
         run: |
-          # Try organization packages first, then repository packages
-          package_names=$(gh api /orgs/DataSQRL/packages?package_type=container --jq '.[].name' 2>/dev/null || gh api /repos/DataSQRL/sqrl/packages?package_type=container --jq '.[].name' 2>/dev/null || echo "")
-          echo "packages=$package_names" >> $GITHUB_OUTPUT
+          set +e  # Don't exit on error
+          echo "Attempting to fetch container packages..."
+
+          # Try organization packages first
+          package_names=$(gh api /orgs/DataSQRL/packages?package_type=container --jq '.[].name' 2>&1)
+          exit_code=$?
+
+          if [ $exit_code -ne 0 ]; then
+            echo "Organization endpoint failed, trying repository endpoint..."
+            package_names=$(gh api /repos/DataSQRL/sqrl/packages?package_type=container --jq '.[].name' 2>&1)
+            exit_code=$?
+          fi
+
+          if [ $exit_code -ne 0 ]; then
+            echo "Failed to fetch packages from both endpoints"
+            echo "Error: $package_names"
+            package_names=""
+          else
+            echo "Successfully fetched packages:"
+            echo "$package_names"
+          fi
+
+          # Save packages to output (will be empty if both failed)
+          {
+            echo "packages<<EOF"
+            echo "$package_names"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Delete untagged and pr- tagged images
+      - name: Calculate cutoff date
+        id: cutoff-date
         run: |
-          for pkg in ${{ steps.get-packages.outputs.packages }}; do
+          # Calculate date 30 days ago in ISO 8601 format
+          cutoff_date=$(date -u -d '30 days ago' +%Y-%m-%dT%H:%M:%SZ)
+          echo "cutoff_date=$cutoff_date" >> $GITHUB_OUTPUT
+          echo "Cutoff date for old images: $cutoff_date"
+
+      - name: Delete untagged, pr- tagged, and old images
+        run: |
+          cutoff_date="${{ steps.cutoff-date.outputs.cutoff_date }}"
+          echo "Using cutoff date: $cutoff_date"
+
+          packages="${{ steps.get-packages.outputs.packages }}"
+          if [ -z "$packages" ]; then
+            echo "No packages found to clean up"
+            exit 0
+          fi
+
+          for pkg in $packages; do
             echo "--- Processing package: $pkg ---"
 
             # Try both organization and repository endpoints
             for endpoint in "/orgs/DataSQRL" "/repos/DataSQRL/sqrl"; do
               echo "Trying endpoint: $endpoint"
-              
+
               # Delete untagged images
               echo "Fetching untagged images for $pkg..."
               untagged_ids=$(gh api --paginate "$endpoint/packages/container/$pkg/versions" | jq '.[] | select(.metadata.container.tags | length == 0) | .id' 2>/dev/null || echo "")
@@ -54,9 +96,19 @@ jobs:
               else
                 echo "No images with 'pr-' tags found for $pkg."
               fi
-              
+
+              # Delete tagged images older than 30 days
+              echo "Fetching tagged images older than $cutoff_date for $pkg..."
+              old_tagged_ids=$(gh api --paginate "$endpoint/packages/container/$pkg/versions" | jq --arg cutoff "$cutoff_date" '.[] | select(.metadata.container.tags | length > 0) | select(.updated_at < $cutoff) | .id' 2>/dev/null || echo "")
+              if [ -n "$old_tagged_ids" ]; then
+                echo "Deleting old tagged images for $pkg (older than $cutoff_date):"
+                echo "$old_tagged_ids" | xargs -I {} gh api --method DELETE "$endpoint/packages/container/$pkg/versions/{}" --silent || echo "Could not delete some old tagged images for $pkg. This might be due to download counts or other restrictions."
+              else
+                echo "No old tagged images found for $pkg."
+              fi
+
               # If we found versions, break out of the endpoint loop
-              if [ -n "$untagged_ids" ] || [ -n "$pr_tagged_ids" ]; then
+              if [ -n "$untagged_ids" ] || [ -n "$pr_tagged_ids" ] || [ -n "$old_tagged_ids" ]; then
                 break
               fi
             done

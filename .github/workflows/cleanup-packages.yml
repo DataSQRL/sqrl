@@ -59,27 +59,37 @@ jobs:
       contents: read
 
     steps:
+      - name: Calculate cutoff date
+        id: cutoff-date
+        run: |
+          # Calculate date 30 days ago in ISO 8601 format
+          cutoff_date=$(date -u -d '30 days ago' +%Y-%m-%dT%H:%M:%SZ)
+          echo "cutoff_date=$cutoff_date" >> $GITHUB_OUTPUT
+          echo "Cutoff date for old images: $cutoff_date"
+
       - name: Discover and cleanup Container packages
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          cutoff_date="${{ steps.cutoff-date.outputs.cutoff_date }}"
+          echo "Using cutoff date: $cutoff_date"
           echo "Discovering Container packages..."
-          
+
           # Function to get container packages from an endpoint
           get_container_packages() {
             local endpoint=$1
             echo "Trying to get container packages from: $endpoint"
-            
+
             # Try to get packages and filter out error responses
             response=$(gh api "$endpoint/packages?package_type=container&per_page=100" --paginate 2>/dev/null || echo "")
-            
+
             if [ -n "$response" ] && echo "$response" | jq -e 'type == "array"' >/dev/null 2>&1; then
               echo "$response" | jq -r '.[].name' 2>/dev/null || echo ""
             else
               echo ""
             fi
           }
-          
+
           # Try different endpoints to find container packages
           packages=""
           for endpoint in "/orgs/DataSQRL" "/user"; do
@@ -90,28 +100,31 @@ jobs:
               break
             fi
           done
-          
+
           if [ -z "$packages" ]; then
             echo "No Container packages found or insufficient permissions"
             exit 0
           fi
-          
+
           # Clean up each package
           echo "$packages" | while read -r package_name; do
             if [ -n "$package_name" ] && [ "$package_name" != "null" ]; then
               echo "Cleaning up Container package: $package_name"
-              
+
               # Try org packages first, then user packages
               for endpoint in "orgs/DataSQRL" "user"; do
                 echo "Trying endpoint: $endpoint"
-                versions=$(gh api \
+
+                # Delete untagged versions
+                echo "Fetching untagged versions for $package_name..."
+                untagged_versions=$(gh api \
                   --method GET \
                   -H "Accept: application/vnd.github+json" \
                   "/$endpoint/packages/container/$package_name/versions" \
                   --jq '.[] | select(.metadata.container.tags | length == 0) | .id' 2>/dev/null || echo "")
-                
-                if [ -n "$versions" ]; then
-                  echo "$versions" | while read -r version_id; do
+
+                if [ -n "$untagged_versions" ]; then
+                  echo "$untagged_versions" | while read -r version_id; do
                     if [ -n "$version_id" ]; then
                       echo "Deleting untagged version ID: $version_id"
                       gh api \
@@ -120,6 +133,34 @@ jobs:
                         "/$endpoint/packages/container/$package_name/versions/$version_id" || echo "Failed to delete version $version_id"
                     fi
                   done
+                else
+                  echo "No untagged versions found for $package_name"
+                fi
+
+                # Delete tagged versions older than 30 days
+                echo "Fetching tagged versions older than $cutoff_date for $package_name..."
+                old_tagged_versions=$(gh api \
+                  --method GET \
+                  -H "Accept: application/vnd.github+json" \
+                  "/$endpoint/packages/container/$package_name/versions" \
+                  --jq --arg cutoff "$cutoff_date" '.[] | select(.metadata.container.tags | length > 0) | select(.updated_at < $cutoff) | .id' 2>/dev/null || echo "")
+
+                if [ -n "$old_tagged_versions" ]; then
+                  echo "$old_tagged_versions" | while read -r version_id; do
+                    if [ -n "$version_id" ]; then
+                      echo "Deleting old tagged version ID: $version_id (updated before $cutoff_date)"
+                      gh api \
+                        --method DELETE \
+                        -H "Accept: application/vnd.github+json" \
+                        "/$endpoint/packages/container/$package_name/versions/$version_id" || echo "Failed to delete version $version_id"
+                    fi
+                  done
+                else
+                  echo "No old tagged versions found for $package_name"
+                fi
+
+                # If we found versions, break out of endpoint loop
+                if [ -n "$untagged_versions" ] || [ -n "$old_tagged_versions" ]; then
                   break
                 fi
               done
