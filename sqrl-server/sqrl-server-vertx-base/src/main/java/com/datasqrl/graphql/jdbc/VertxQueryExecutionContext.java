@@ -55,8 +55,17 @@ public class VertxQueryExecutionContext extends AbstractQueryExecutionContext<Ve
 
   @Override
   public CompletableFuture<Object> runQuery(ResolvedSqlQuery resolvedQuery, boolean isList) {
-    return getParamArgumentsFuture(resolvedQuery.getQuery().getParameters())
-        .thenCompose(paramObj -> runQueryInternal(resolvedQuery, isList, paramObj));
+    getParamArgumentsFuture(resolvedQuery.getQuery().getParameters())
+        .whenComplete(
+            (paramObj, throwable) -> {
+              if (throwable != null) {
+                cf.completeExceptionally(throwable);
+              } else {
+                runQueryInternal(resolvedQuery, isList, paramObj);
+              }
+            });
+
+    return cf;
   }
 
   @Override
