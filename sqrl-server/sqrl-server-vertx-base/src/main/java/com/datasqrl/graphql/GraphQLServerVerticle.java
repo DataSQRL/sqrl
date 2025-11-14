@@ -109,14 +109,21 @@ public class GraphQLServerVerticle extends AbstractVerticle {
           handler.failureHandler(new JwtFailureHandler());
         });
 
+    // Create subscription configuration to track async subscription setups
+    var subscriptionConfig = new SubscriptionConfigurationImpl(vertx, config);
+
     // Create GraphQL engine
-    this.graphQLEngine = createGraphQL(dbClients, startPromise, createMetadataReaders());
+    this.graphQLEngine = createGraphQL(dbClients, subscriptionConfig, createMetadataReaders());
 
     handler
         .handler(GraphQLWSHandler.create(this.graphQLEngine))
         .handler(GraphQLHandler.create(this.graphQLEngine, this.config.getGraphQLHandlerOptions()));
 
-    startPromise.complete();
+    // Wait for all subscriptions to be set up before completing the promise
+    subscriptionConfig
+        .getAllSubscriptionsFuture()
+        .onSuccess(v -> startPromise.complete())
+        .onFailure(startPromise::fail);
   }
 
   private Map<MetadataType, MetadataReader> createMetadataReaders() {
@@ -141,7 +148,7 @@ public class GraphQLServerVerticle extends AbstractVerticle {
 
   public GraphQL createGraphQL(
       Map<DatabaseType, SqlClient> clients,
-      Promise<Void> startPromise,
+      SubscriptionConfigurationImpl subscriptionConfig,
       Map<MetadataType, MetadataReader> headerReaders) {
     try {
       var vertxJdbcClient = new VertxJdbcClient(clients);
@@ -149,8 +156,7 @@ public class GraphQLServerVerticle extends AbstractVerticle {
           model.accept(
               new GraphQLEngineBuilder.Builder()
                   .withMutationConfiguration(new MutationConfigurationImpl(vertx, config))
-                  .withSubscriptionConfiguration(
-                      new SubscriptionConfigurationImpl(vertx, config, startPromise))
+                  .withSubscriptionConfiguration(subscriptionConfig)
                   .withExtendedScalarTypes(CustomScalars.getExtendedScalars())
                   .build(),
               new VertxContext(vertxJdbcClient, headerReaders));

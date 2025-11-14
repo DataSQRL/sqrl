@@ -23,10 +23,12 @@ import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.graphql.server.RootGraphqlModel.SubscriptionCoordsVisitor;
 import com.datasqrl.graphql.server.SubscriptionConfiguration;
 import graphql.schema.DataFetcher;
-import io.vertx.core.Promise;
+import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.kafka.client.consumer.KafkaConsumer;
-import lombok.AllArgsConstructor;
+import java.util.ArrayList;
+import java.util.List;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -38,27 +40,38 @@ import lombok.extern.slf4j.Slf4j;
  * fetchers for Kafka and PostgreSQL.
  */
 @Slf4j
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class SubscriptionConfigurationImpl implements SubscriptionConfiguration<DataFetcher<?>> {
 
-  Vertx vertx;
-  ServerConfig config;
-  Promise<Void> startPromise;
+  private final Vertx vertx;
+  private final ServerConfig config;
+  private final List<Future<Void>> subscriptionFutures = new ArrayList<>();
 
   @Override
   public SubscriptionCoordsVisitor<DataFetcher<?>, Context> createSubscriptionFetcherVisitor() {
     return (coords, context) -> {
       KafkaConsumer<String, String> consumer =
           KafkaConsumer.create(vertx, config.getKafkaSubscriptionConfig().asMap());
-      consumer
-          .subscribe(coords.getTopic())
-          .onSuccess(v -> log.info("Subscribed to topic: {}", coords.getTopic()))
-          .onFailure(
-              err -> {
-                log.error("Failed to subscribe to topic: {}", coords.getTopic(), err);
-                startPromise.fail(err);
-              });
+      var subscriptionFuture =
+          consumer
+              .subscribe(coords.getTopic())
+              .onSuccess(v -> log.info("Subscribed to topic: {}", coords.getTopic()))
+              .onFailure(
+                  err -> log.error("Failed to subscribe to topic: {}", coords.getTopic(), err));
+      subscriptionFutures.add(subscriptionFuture);
       return KafkaDataFetcherFactory.create(new KafkaSinkConsumer<>(consumer), coords, context);
     };
+  }
+
+  /**
+   * Returns a composite future that completes when all subscriptions have been set up successfully,
+   * or fails if any subscription fails.
+   *
+   * @return a future that tracks all subscription setups
+   */
+  public Future<Void> getAllSubscriptionsFuture() {
+    return subscriptionFutures.isEmpty()
+        ? Future.succeededFuture()
+        : Future.all(subscriptionFutures).mapEmpty();
   }
 }
