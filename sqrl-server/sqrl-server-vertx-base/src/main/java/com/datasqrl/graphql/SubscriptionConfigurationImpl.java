@@ -28,6 +28,7 @@ import io.vertx.core.Vertx;
 import io.vertx.kafka.client.consumer.KafkaConsumer;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -39,23 +40,19 @@ import lombok.extern.slf4j.Slf4j;
  * fetchers for Kafka and PostgreSQL.
  */
 @Slf4j
+@RequiredArgsConstructor
 public class SubscriptionConfigurationImpl implements SubscriptionConfiguration<DataFetcher<?>> {
 
   private final Vertx vertx;
   private final ServerConfig config;
   private final List<Future<Void>> subscriptionFutures = new ArrayList<>();
 
-  public SubscriptionConfigurationImpl(Vertx vertx, ServerConfig config) {
-    this.vertx = vertx;
-    this.config = config;
-  }
-
   @Override
   public SubscriptionCoordsVisitor<DataFetcher<?>, Context> createSubscriptionFetcherVisitor() {
     return (coords, context) -> {
       KafkaConsumer<String, String> consumer =
           KafkaConsumer.create(vertx, config.getKafkaSubscriptionConfig().asMap());
-      Future<Void> subscriptionFuture =
+      var subscriptionFuture =
           consumer
               .subscribe(coords.getTopic())
               .onSuccess(v -> log.info("Subscribed to topic: {}", coords.getTopic()))
@@ -73,9 +70,8 @@ public class SubscriptionConfigurationImpl implements SubscriptionConfiguration<
    * @return a future that tracks all subscription setups
    */
   public Future<Void> getAllSubscriptionsFuture() {
-    if (subscriptionFutures.isEmpty()) {
-      return Future.succeededFuture();
-    }
-    return Future.all(subscriptionFutures).mapEmpty();
+    return subscriptionFutures.isEmpty()
+        ? Future.succeededFuture()
+        : Future.all(subscriptionFutures).mapEmpty();
   }
 }
