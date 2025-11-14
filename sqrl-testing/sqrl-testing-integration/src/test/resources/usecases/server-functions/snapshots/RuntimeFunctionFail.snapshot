@@ -1,0 +1,16 @@
+{
+  "errors" : [ {
+    "message" : "Exception while fetching data (/CustomersByNames) : Could not execute function [SqrlExecFn1] for [`SPLIT`(`nameList`, ',')]",
+    "locations" : [ {
+      "line" : 2,
+      "column" : 3
+    } ],
+    "path" : [ "CustomersByNames" ],
+    "extensions" : {
+      "classification" : "DataFetchingException"
+    }
+  } ],
+  "data" : {
+    "CustomersByNames" : null
+  }
+}
