@@ -26,6 +26,7 @@
     "flink": {
       "config": {
         "execution.runtime-mode": "STREAMING",
+        "security.delegation.tokens.enabled": false,
         "state.backend.type": "rocksdb"
       }
     },
