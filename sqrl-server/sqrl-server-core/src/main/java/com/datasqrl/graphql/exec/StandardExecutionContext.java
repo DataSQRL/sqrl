@@ -18,12 +18,14 @@ package com.datasqrl.graphql.exec;
 import com.datasqrl.graphql.server.Context;
 import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
 import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentParameter;
+import com.datasqrl.graphql.server.RootGraphqlModel.ComputedParameter;
 import com.datasqrl.graphql.server.RootGraphqlModel.MetadataParameter;
 import com.datasqrl.graphql.server.RootGraphqlModel.ParameterHandlerVisitor;
 import com.datasqrl.graphql.server.RootGraphqlModel.ParentParameter;
 import graphql.schema.DataFetchingEnvironment;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -68,5 +70,13 @@ public class StandardExecutionContext<C extends Context>
         .getContext()
         .getMetadataReader(md.metadataType())
         .read(context.getEnvironment(), md.name(), md.required());
+  }
+
+  @Override
+  public CompletableFuture<Object> visitComputedParameter(
+      ComputedParameter computedParameter, ExecutionContext context) {
+    var fnId = computedParameter.getFunctionId();
+
+    return context.getContext().getFunctionExecutor().execute(context.getEnvironment(), fnId);
   }
 }

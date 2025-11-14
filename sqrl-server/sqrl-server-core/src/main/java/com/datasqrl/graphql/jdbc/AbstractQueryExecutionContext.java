@@ -24,7 +24,7 @@ import graphql.schema.DataFetchingEnvironment;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.concurrent.CompletableFuture;
 
 public abstract class AbstractQueryExecutionContext<C extends Context>
     extends StandardExecutionContext<C> implements QueryExecutionContext {
@@ -43,11 +43,33 @@ public abstract class AbstractQueryExecutionContext<C extends Context>
     return param;
   }
 
-  protected List<Object> getParamArguments(
+  protected CompletableFuture<List<Object>> getParamArgumentsFuture(
       List<RootGraphqlModel.QueryParameterHandler> parameters) {
-    return parameters.stream()
-        .map(param -> param.accept(this, this))
-        .map(this::mapParamArgumentType)
-        .collect(Collectors.toCollection(() -> new ArrayList<>(parameters.size() + 2)));
+
+    var paramFutures =
+        parameters.stream()
+            .map(param -> param.accept(this, this))
+            .map(this::wrapToFuture)
+            .map(future -> future.thenApply(this::mapParamArgumentType))
+            .toArray(CompletableFuture[]::new);
+
+    return CompletableFuture.allOf(paramFutures)
+        .thenApply(
+            v -> {
+              var result = new ArrayList<>();
+              for (CompletableFuture<?> paramFuture : paramFutures) {
+                result.add(paramFuture.join());
+              }
+
+              return result;
+            });
+  }
+
+  private CompletableFuture<Object> wrapToFuture(Object paramRes) {
+    if (paramRes instanceof CompletableFuture<?>) {
+      return (CompletableFuture<Object>) paramRes;
+    }
+
+    return CompletableFuture.completedFuture(paramRes);
   }
 }

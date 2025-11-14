@@ -326,15 +326,15 @@ CREATE INDEX IF NOT EXISTS "Submission_btree_c0c3" ON "Submission" USING btree (
             "arguments" : [
               {
                 "type" : "variable",
-                "path" : "offset"
-              },
-              {
-                "type" : "variable",
                 "path" : "name"
               },
               {
                 "type" : "variable",
                 "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
               }
             ],
             "query" : {
@@ -381,7 +381,7 @@ CREATE INDEX IF NOT EXISTS "Submission_btree_c0c3" ON "Submission" USING btree (
             "arguments" : [
               {
                 "type" : "variable",
-                "path" : "offset"
+                "path" : "limit"
               },
               {
                 "type" : "variable",
@@ -389,11 +389,11 @@ CREATE INDEX IF NOT EXISTS "Submission_btree_c0c3" ON "Submission" USING btree (
               },
               {
                 "type" : "variable",
-                "path" : "variant"
+                "path" : "offset"
               },
               {
                 "type" : "variable",
-                "path" : "limit"
+                "path" : "variant"
               }
             ],
             "query" : {
@@ -427,7 +427,7 @@ CREATE INDEX IF NOT EXISTS "Submission_btree_c0c3" ON "Submission" USING btree (
             "arguments" : [
               {
                 "type" : "variable",
-                "path" : "offset"
+                "path" : "limit"
               },
               {
                 "type" : "variable",
@@ -435,7 +435,7 @@ CREATE INDEX IF NOT EXISTS "Submission_btree_c0c3" ON "Submission" USING btree (
               },
               {
                 "type" : "variable",
-                "path" : "limit"
+                "path" : "offset"
               }
             ],
             "query" : {
@@ -461,7 +461,7 @@ CREATE INDEX IF NOT EXISTS "Submission_btree_c0c3" ON "Submission" USING btree (
             "arguments" : [
               {
                 "type" : "variable",
-                "path" : "offset"
+                "path" : "limit"
               },
               {
                 "type" : "variable",
@@ -469,7 +469,7 @@ CREATE INDEX IF NOT EXISTS "Submission_btree_c0c3" ON "Submission" USING btree (
               },
               {
                 "type" : "variable",
-                "path" : "limit"
+                "path" : "offset"
               }
             ],
             "query" : {

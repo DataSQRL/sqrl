@@ -299,11 +299,11 @@ CREATE INDEX IF NOT EXISTS "SensorReading_hash_c1" ON "SensorReading" USING hash
             "arguments" : [
               {
                 "type" : "variable",
-                "path" : "offset"
+                "path" : "limit"
               },
               {
                 "type" : "variable",
-                "path" : "limit"
+                "path" : "offset"
               }
             ],
             "query" : {
@@ -324,15 +324,15 @@ CREATE INDEX IF NOT EXISTS "SensorReading_hash_c1" ON "SensorReading" USING hash
             "arguments" : [
               {
                 "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
                 "path" : "offset"
               },
               {
                 "type" : "variable",
                 "path" : "sensorid"
-              },
-              {
-                "type" : "variable",
-                "path" : "limit"
               }
             ],
             "query" : {
@@ -358,15 +358,15 @@ CREATE INDEX IF NOT EXISTS "SensorReading_hash_c1" ON "SensorReading" USING hash
             "arguments" : [
               {
                 "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
                 "path" : "offset"
               },
               {
                 "type" : "variable",
                 "path" : "sensorid"
-              },
-              {
-                "type" : "variable",
-                "path" : "limit"
               }
             ],
             "query" : {

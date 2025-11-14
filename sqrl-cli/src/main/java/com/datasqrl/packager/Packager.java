@@ -38,6 +38,7 @@ import com.github.mustachejava.MustacheFactory;
 import com.google.inject.Inject;
 import java.io.File;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.file.Files;
@@ -175,10 +176,15 @@ public class Packager {
             plan.getDeploymentArtifacts(), List.of(new DeploymentArtifact(".json", plan)));
     for (var artifact : artifacts) {
       var filePath = planDir.resolve(name + artifact.fileSuffix()).toAbsolutePath();
-      if (artifact.content() instanceof String content) {
-        writeTextToFile(filePath, content);
-      } else { // serialize as json
-        jsonWriter.writeValue(filePath.toFile(), plan);
+
+      switch (artifact.artifactType()) {
+        case JSON -> jsonWriter.writeValue(filePath.toFile(), artifact.content());
+        case STRING -> writeTextToFile(filePath, (String) artifact.content());
+        case SERIALIZED -> {
+          try (var out = new ObjectOutputStream(Files.newOutputStream(filePath))) {
+            out.writeObject(artifact.content());
+          }
+        }
       }
     }
   }

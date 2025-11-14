@@ -16,6 +16,7 @@
 package com.datasqrl.engine;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -31,7 +32,11 @@ public interface EnginePhysicalPlan {
     return List.of();
   }
 
-  record DeploymentArtifact(String fileSuffix, Object content) {
+  record DeploymentArtifact(String fileSuffix, Object content, ArtifactType artifactType) {
+
+    public DeploymentArtifact(String fileSuffix, Object content) {
+      this(fileSuffix, content, ArtifactType.fromObject(content));
+    }
 
     public static String toSqlString(Stream<String> statements) {
       return statements.collect(Collectors.joining(";\n"));
@@ -43,6 +48,23 @@ public interface EnginePhysicalPlan {
 
     public static String toYamlString(Configuration config) {
       return String.join("\n", ConfigurationUtils.convertConfigToWritableLines(config, false));
+    }
+  }
+
+  enum ArtifactType {
+    STRING,
+    JSON,
+    SERIALIZED;
+
+    public static ArtifactType fromObject(Object content) {
+      if (content instanceof String) {
+        return STRING;
+      }
+      if (content instanceof Serializable) {
+        return SERIALIZED;
+      }
+
+      return JSON;
     }
   }
 }

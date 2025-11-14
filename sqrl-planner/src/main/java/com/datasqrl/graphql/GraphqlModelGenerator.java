@@ -28,6 +28,8 @@ import com.datasqrl.graphql.server.PaginationType;
 import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
 import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentLookupQueryCoords;
+import com.datasqrl.graphql.server.RootGraphqlModel.ArgumentParameter;
+import com.datasqrl.graphql.server.RootGraphqlModel.ComputedParameter;
 import com.datasqrl.graphql.server.RootGraphqlModel.FieldLookupQueryCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.KafkaMutationCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.KafkaSubscriptionCoords;
@@ -193,7 +195,11 @@ public class GraphqlModelGenerator extends GraphqlSchemaWalker {
       return new MetadataParameter(sqrlParam.getMetadata().get());
     }
 
-    return new RootGraphqlModel.ArgumentParameter(sqrlParam.getName());
+    if (sqrlParam.isFunction()) {
+      return new ComputedParameter(sqrlParam.getFunction().get().getFunctionId());
+    }
+
+    return new ArgumentParameter(sqrlParam.getName());
   }
 
   private static Set<Argument> createArguments(FieldDefinition field) {

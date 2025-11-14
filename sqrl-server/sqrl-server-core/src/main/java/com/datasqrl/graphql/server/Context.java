@@ -35,4 +35,6 @@ public interface Context {
       GraphQLEngineBuilder server, Set<Argument> arguments, ResolvedQuery resolvedQuery);
 
   MetadataReader getMetadataReader(@NonNull MetadataType metadataType);
+
+  FunctionExecutor getFunctionExecutor();
 }

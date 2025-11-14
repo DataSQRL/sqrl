@@ -24,11 +24,11 @@ import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -345,6 +345,7 @@ public class RootGraphqlModel {
   @Getter
   @AllArgsConstructor
   @NoArgsConstructor
+  @EqualsAndHashCode(exclude = {"value"})
   public static class VariableArgument implements Argument {
 
     static final String type = "variable";
@@ -353,24 +354,6 @@ public class RootGraphqlModel {
 
     public <R, C> R accept(VariableArgumentVisitor<R, C> visitor, C context) {
       return visitor.visitVariableArgument(this, context);
-    }
-
-    // Exclude the value for variable arguments
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-      var that = (VariableArgument) o;
-      return Objects.equals(type, VariableArgument.type) && Objects.equals(path, that.path);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(type, path);
     }
 
     @Override
@@ -412,7 +395,8 @@ public class RootGraphqlModel {
   @JsonSubTypes({
     @Type(value = ParentParameter.class, name = ParentParameter.type),
     @Type(value = ArgumentParameter.class, name = ArgumentParameter.type),
-    @Type(value = MetadataParameter.class, name = MetadataParameter.type)
+    @Type(value = MetadataParameter.class, name = MetadataParameter.type),
+    @Type(value = ComputedParameter.class, name = ComputedParameter.type)
   })
   public interface QueryParameterHandler {
 
@@ -426,6 +410,8 @@ public class RootGraphqlModel {
     R visitMetadataParameter(MetadataParameter metadataParameter, C context);
 
     R visitArgumentParameter(ArgumentParameter argumentParameter, C context);
+
+    R visitComputedParameter(ComputedParameter computedParameter, C context);
   }
 
   /** Parameter is passed in from the parent table that a relationship is defined on. */
@@ -475,6 +461,23 @@ public class RootGraphqlModel {
     @Override
     public <R, C> R accept(ParameterHandlerVisitor<R, C> visitor, C context) {
       return visitor.visitMetadataParameter(this, context);
+    }
+  }
+
+  /** Parameter is computed based on other input arguments */
+  @Getter
+  @AllArgsConstructor
+  @NoArgsConstructor
+  @Builder
+  @ToString
+  public static class ComputedParameter implements QueryParameterHandler {
+
+    static final String type = "computed";
+    String functionId;
+
+    @Override
+    public <R, C> R accept(ParameterHandlerVisitor<R, C> visitor, C context) {
+      return visitor.visitComputedParameter(this, context);
     }
   }
 

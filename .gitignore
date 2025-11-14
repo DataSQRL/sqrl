@@ -1,12 +1,7 @@
 ##############################
-## Test Data (too large for git)
+## SQRL
 ##############################
-sqrl-examples/nutshop/data-medium/
-
-##############################
-## Test settings
-##############################
-sqrl-core/src/test/resources/local.properties
+plan-output/
 
 ##############################
 ## Java
@@ -59,7 +54,6 @@ out/
 ## Eclipse
 ##############################
 .settings/
-bin/
 tmp/
 .metadata
 .classpath
@@ -68,7 +62,6 @@ tmp/
 *.bak
 *.swp
 *~.nib
-sqrl-core/src/test/resources/local.properties
 .loadpath
 .factorypath
 m2e-target/
@@ -77,17 +70,11 @@ m2e-target/
 ## NetBeans
 ##############################
 nbproject/private/
-build/
 nbbuild/
 dist/
 nbdist/
 nbactions.xml
 nb-configuration.xml
-
-##############################
-## Go
-##############################
-sqrl-cli/datasqrl
 
 ##############################
 ## Visual Studio Code
@@ -131,5 +118,5 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-#Generated markdown files
+# Generated markdown files
 *-generated.md
