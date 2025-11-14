@@ -38,6 +38,22 @@ LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timesta
 SQL: CREATE VIEW `CustomersByName` AS 
     SELECT * FROM Customers WHERE name LIKE ?         ;
 
+=== CustomersByNames
+ID:     default_catalog.default_database.CustomersByNames
+Type:   query
+Stage:  postgres
+Inputs: default_catalog.default_database.Customers
+Annotations:
+ - stream-root: Customers
+ - parameters: nameList, nameSplit
+ - base-table: Customers
+Plan:
+LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
+  LogicalFilter(condition=[ARRAY_CONTAINS(CAST(?1):VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL ARRAY, $2)])
+    LogicalTableScan(table=[[default_catalog, default_database, Customers]])
+SQL: CREATE VIEW `CustomersByNames` AS 
+    SELECT * FROM Customers WHERE ARRAY_CONTAINS(CAST(?          AS STRING ARRAY), name);
+
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `Customers__schema` (
   `customerid` BIGINT NOT NULL,
@@ -158,6 +174,48 @@ CREATE TABLE IF NOT EXISTS "Customers" ("customerid" BIGINT NOT NULL, "email" TE
               "database" : "POSTGRES"
             }
           }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "CustomersByNames",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "nameList"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "nameSplit"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Customers\"\nWHERE (\"name\" = ANY (CAST($2 AS TEXT ARRAY)))",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "nameList"
+                },
+                {
+                  "type" : "computed",
+                  "functionId" : "SqrlExecFn1"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
         }
       ],
       "mutations" : [ ],
@@ -222,11 +280,48 @@ CREATE TABLE IF NOT EXISTS "Customers" ("customerid" BIGINT NOT NULL, "email" TE
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
           "uriTemplate" : "queries/CustomersByName{?offset,limit,shortName,inputName}"
+        },
+        {
+          "function" : {
+            "name" : "GetCustomersByNames",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "nameList" : {
+                  "type" : "string"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "nameSplit" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "string"
+                  }
+                }
+              },
+              "required" : [
+                "nameList"
+              ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query CustomersByNames($nameList: String!, $nameSplit: [String], $limit: Int = 10, $offset: Int = 0) {\nCustomersByNames(nameList: $nameList, nameSplit: $nameSplit, limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+            "queryName" : "CustomersByNames",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomersByNames{?offset,nameList,limit,nameSplit}"
         }
       ],
       "schema" : {
         "type" : "string",
-        "schema" : "type Customers {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  Customers(limit: Int = 10, offset: Int = 0): [Customers!]\n  CustomersByName(inputName: String!, shortName: String, limit: Int = 10, offset: Int = 0): [Customers!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+        "schema" : "type Customers {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  Customers(limit: Int = 10, offset: Int = 0): [Customers!]\n  CustomersByName(inputName: String!, shortName: String, limit: Int = 10, offset: Int = 0): [Customers!]\n  CustomersByNames(nameList: String!, nameSplit: [String], limit: Int = 10, offset: Int = 0): [Customers!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
     }
   }
