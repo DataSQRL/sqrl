@@ -74,6 +74,7 @@ import com.datasqrl.planner.parser.AccessModifier;
 import com.datasqrl.planner.parser.FlinkSQLStatement;
 import com.datasqrl.planner.parser.ParsePosUtil;
 import com.datasqrl.planner.parser.ParsedObject;
+import com.datasqrl.planner.parser.ParsedStatement;
 import com.datasqrl.planner.parser.SQLStatement;
 import com.datasqrl.planner.parser.SqlScriptStatementSplitter;
 import com.datasqrl.planner.parser.SqrlAddColumnStatement;
@@ -101,6 +102,7 @@ import com.google.inject.Inject;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -115,6 +117,7 @@ import lombok.Getter;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.schema.FunctionParameter;
+import org.apache.calcite.sql.SqlNode;
 import org.apache.flink.sql.parser.ddl.SqlAlterTable;
 import org.apache.flink.sql.parser.ddl.SqlAlterView;
 import org.apache.flink.sql.parser.ddl.SqlAlterViewAs;
@@ -158,6 +161,9 @@ public class SqlScriptPlanner {
   /** Manages the context of the script that is processed, adjusted for imports */
   private ScriptContext scriptContext;
 
+  /** Used to assemble the full script with imports as a string */
+  @Getter private final ScriptWriter completeScript;
+
   @Inject
   public SqlScriptPlanner(
       ErrorCollector errorCollector,
@@ -168,6 +174,7 @@ public class SqlScriptPlanner {
       ExecutionGoal executionGoal) {
     this.errorCollector = errorCollector;
     this.scriptContext = new ScriptContext(moduleLoader, FLINK_DEFAULT_DATABASE, true);
+    this.completeScript = new ScriptWriter();
     this.sqrlParser = sqrlParser;
     this.packageJson = packageJson;
     this.pipeline = pipeline;
@@ -211,7 +218,8 @@ public class SqlScriptPlanner {
     var scriptErrors = errorCollector.withScript(mainScript.getPath(), mainScript.getContent());
     var statements = sqrlParser.parseScript(mainScript.getContent(), scriptErrors);
     List<StackableStatement> statementStack = new ArrayList<>();
-    for (ParsedObject<SQLStatement> statement : statements) {
+    for (ParsedStatement sourceStmt : statements) {
+      var statement = sourceStmt.statement();
       var lineErrors = scriptErrors.atFile(statement.getFileLocation());
       var sqlStatement = statement.get();
       try {
@@ -245,6 +253,9 @@ public class SqlScriptPlanner {
         }
         // Use registered error handlers
         throw lineErrors.handle(e);
+      }
+      if (!(sqlStatement instanceof SqrlImportStatement)) {
+        completeScript.append(sourceStmt.source());
       }
       /*Some SQRL statements extend previous statements, so we stack them to keep
       of the lineage as needed for planning
@@ -863,6 +874,7 @@ public class SqlScriptPlanner {
                 getLogEngineBuilder(hintsAndDocs));
         hintsAndDocs.hints().updateColumnNamesHints(tableAnalysis::getField);
         addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv);
+        completeScript.append(tableAnalysis.getOriginalSql());
       } catch (Throwable e) {
         throw flinkTable.errorCollector.handle(e);
       }
@@ -872,7 +884,8 @@ public class SqlScriptPlanner {
           "Expected UDF: " + fnsObject.function());
       Class<?> udfClass = fnsObject.function().getClass();
       var name = importNameModifier.apply(FunctionUtil.getFunctionName(udfClass).getDisplay());
-      sqrlEnv.addUserDefinedFunction(name, udfClass.getName(), false);
+      var sqlNode = sqrlEnv.addUserDefinedFunction(name, udfClass.getName(), false);
+      completeScript.append(sqlNode);
     } else if (nsObject instanceof ScriptNamespaceObject scriptObject) {
       final ScriptContext priorContext = scriptContext;
       scriptContext =
@@ -883,14 +896,16 @@ public class SqlScriptPlanner {
 
       if (priorContext.hasDifferentDatabase(scriptContext)) {
         // Switch DB
-        sqrlEnv.setDatabase(scriptContext.databaseName(), false);
+        var stmts = sqrlEnv.setDatabase(scriptContext.databaseName(), false);
+        completeScript.append(stmts);
       }
 
       planMain(scriptObject.getScript(), sqrlEnv);
 
       if (priorContext.hasDifferentDatabase(scriptContext)) {
         // Switch it back
-        sqrlEnv.setDatabase(priorContext.databaseName(), true);
+        var stmts = sqrlEnv.setDatabase(priorContext.databaseName(), true);
+        completeScript.append(stmts);
       }
       scriptContext = priorContext;
     } else {
@@ -1152,6 +1167,32 @@ public class SqlScriptPlanner {
 
     public ObjectIdentifier toIdentifier(Name name) {
       return toIdentifier(name.getDisplay());
+    }
+  }
+
+  public static class ScriptWriter {
+
+    private StringBuffer result = new StringBuffer();
+
+    public void append(String stmt) {
+      if (stmt.endsWith(";")) stmt = stmt + "\n";
+      else if (stmt.trim().endsWith(";")) stmt = stmt; // do nothing
+      else stmt = stmt + ";\n";
+      result.append(stmt);
+    }
+
+    public void append(SqlNode sqlNode) {
+      append(sqlNode.toString());
+    }
+
+    public void append(Collection<String> stmts) {
+      for (String stmt : stmts) {
+        append(stmt);
+      }
+    }
+
+    public String getScript() {
+      return result.toString();
     }
   }
 }

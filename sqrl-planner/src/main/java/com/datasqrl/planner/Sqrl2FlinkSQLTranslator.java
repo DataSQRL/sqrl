@@ -424,14 +424,22 @@ public class Sqrl2FlinkSQLTranslator {
         .unwrap(CalciteCatalogReader.class);
   }
 
-  public void setDatabase(String databaseName, boolean withCatalog) {
+  public List<String> setDatabase(String databaseName, boolean withCatalog) {
+    List<String> allStmts = new ArrayList<>();
     if (withCatalog) {
-      executeSQL("USE CATALOG `%s`;".formatted(FLINK_DEFAULT_CATALOG));
+      var stmt = "USE CATALOG `%s`;".formatted(FLINK_DEFAULT_CATALOG);
+      executeSQL(stmt);
+      allStmts.add(stmt);
     }
     if (createdDatabases.add(databaseName)) {
-      executeSQL("CREATE DATABASE IF NOT EXISTS `%s`;".formatted(databaseName));
+      var stmt = "CREATE DATABASE IF NOT EXISTS `%s`;".formatted(databaseName);
+      executeSQL(stmt);
+      allStmts.add(stmt);
     }
-    executeSQL("USE `%s`;".formatted(databaseName));
+    var stmt = "USE `%s`;".formatted(databaseName);
+    executeSQL(stmt);
+    allStmts.add(stmt);
+    return allStmts;
   }
 
   public FlinkRelBuilder getTableScan(ObjectIdentifier identifier) {
@@ -782,7 +790,9 @@ public class Sqrl2FlinkSQLTranslator {
         createScanView(addResult.tableName + TEMP_VIEW_SUFFIX, addResult.baseTableIdentifier);
     var viewAnalysis = analyzeView(view, false, PlannerHints.EMPTY, ErrorCollector.root());
     TableAnalysis.TableAnalysisBuilder tbBuilder = viewAnalysis.tableAnalysis();
-    tbBuilder.objectIdentifier(addResult.baseTableIdentifier).originalSql(toSqlString(view));
+    tbBuilder
+        .objectIdentifier(addResult.baseTableIdentifier)
+        .originalSql(addResult.completeCreateTableSql);
     // Remove trivial LogicalProject so that subsequent references match
     RelNode relNode = tbBuilder.build().getOriginalRelnode();
     if (CalciteUtil.isTrivialProject(relNode)) relNode = relNode.getInput(0);
@@ -795,7 +805,8 @@ public class Sqrl2FlinkSQLTranslator {
       String tableName,
       ObjectIdentifier baseTableIdentifier,
       boolean isSourceTable,
-      SqlCreateTable createdTable) {}
+      SqlCreateTable createdTable,
+      String completeCreateTableSql) {}
 
   /**
    * Adds a table to Flink and analyzes the table for schema and primary key definition. If the
@@ -819,6 +830,7 @@ public class Sqrl2FlinkSQLTranslator {
     var fullTable = tableDefinition;
     var origTableName = fullTable.getTableName().getSimple();
     final var finalTableName = tableNameModifier.apply(origTableName);
+    String completeCreateTableSql = "";
     if (fullTable instanceof SqlCreateTableLike likeTable) {
       // Check if the LIKE clause is referencing an external schema
       SqlTableLike likeClause = likeTable.getTableLike();
@@ -838,6 +850,7 @@ public class Sqrl2FlinkSQLTranslator {
             FlinkSqlNodeFactory.createTable(
                 schemaTableName, schema.get().type(), connectorOptions, true);
         executeSqlNode(schemaTable);
+        completeCreateTableSql += toSqlString(schemaTable) + ";\n";
 
         likeClause =
             new SqlTableLike(
@@ -948,8 +961,9 @@ public class Sqrl2FlinkSQLTranslator {
             connector.getTableType(),
             pk);
     tableLookup.registerTable(tableAnalysis);
-
-    return new AddTableResult(finalTableName, tableId, connector.isSourceConnector(), fullTable);
+    completeCreateTableSql += toSqlString(fullTable);
+    return new AddTableResult(
+        finalTableName, tableId, connector.isSourceConnector(), fullTable, completeCreateTableSql);
   }
 
   public ObjectIdentifier createSinkTable(FlinkTableBuilder tableBuilder) {
@@ -996,7 +1010,7 @@ public class Sqrl2FlinkSQLTranslator {
     return list.get(0);
   }
 
-  public void addUserDefinedFunction(String name, String clazz, boolean isSystem) {
+  public SqlNode addUserDefinedFunction(String name, String clazz, boolean isSystem) {
     var functionSql = FlinkSqlNodeFactory.createFunction(name, clazz, isSystem);
     var addFctOp = executeSqlNode(functionSql);
     // Function definitions are not in the compiled plan, have to add them explicitly but with fully
@@ -1007,6 +1021,7 @@ public class Sqrl2FlinkSQLTranslator {
               FlinkSqlNodeFactory.identifier(operation.getFunctionIdentifier()), clazz, isSystem);
     }
     planBuilder.addFullyResolvedFunction(toSqlString(functionSql));
+    return functionSql;
   }
 
   private static void checkResultOk(TableResultInternal result) {
