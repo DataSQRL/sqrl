@@ -240,6 +240,7 @@ public abstract class AbstractAssetSnapshotTest {
     return Files.walk(directory, includeNested ? Integer.MAX_VALUE : 1)
         .filter(path -> !Files.isDirectory(path))
         .filter(path -> path.toString().endsWith(SQRL_EXTENSION))
+        .filter(path -> !path.getFileName().toString().equalsIgnoreCase("sources" + SQRL_EXTENSION))
         .filter(path -> !path.toString().contains("/build/"))
         .filter(
             path -> {

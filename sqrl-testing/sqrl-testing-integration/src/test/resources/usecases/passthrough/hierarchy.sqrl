@@ -1,9 +1,11 @@
-IMPORT hr-data.* AS _;
+IMPORT hr-data.sources AS hr;
+
+IMPORT stdlib.math.*; --to test script printing
 
 /*+ query_by_any(employeeid, name) */
-Employees := DISTINCT _Employees ON employeeid ORDER BY updatedDate DESC;
+Employees := DISTINCT hr.Employees ON employeeid ORDER BY updatedDate DESC;
 /*+ no_query */
-Reporting := DISTINCT _Reporting ON employeeid, managerid ORDER BY updatedDate DESC;
+Reporting := DISTINCT hr.Reporting ON employeeid, managerid ORDER BY updatedDate DESC;
 
 Employees.directReports := SELECT e.* FROM Reporting r JOIN Employees e ON r.employeeid = e.employeeid
                            WHERE r.managerid = this.employeeid ORDER BY e.employeeid;

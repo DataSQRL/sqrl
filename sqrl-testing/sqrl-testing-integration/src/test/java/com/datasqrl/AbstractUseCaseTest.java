@@ -22,6 +22,7 @@ import com.datasqrl.util.SnapshotTest.Snapshot;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Predicate;
@@ -118,14 +119,19 @@ public class AbstractUseCaseTest extends AbstractAssetSnapshotTest {
   @AllArgsConstructor
   public abstract static class SqrlScriptsAndLocalPackages implements ArgumentsProvider {
 
-    private final Path directory;
+    private final Path[] directories;
     private final boolean includeFails;
+
+    public SqrlScriptsAndLocalPackages(Path directory, boolean includeFails) {
+      this(new Path[] {directory}, includeFails);
+    }
 
     @Override
     public Stream<? extends Arguments> provideArguments(
         ParameterDeclarations parameters, ExtensionContext context) {
       // Look for all package jsons
-      return getSQRLScripts(directory, includeFails)
+      return Arrays.stream(directories)
+          .flatMap(directory -> getSQRLScripts(directory, includeFails))
           .sorted(Comparator.comparing(p -> p.toFile().getName()))
           .flatMap(
               path -> {
