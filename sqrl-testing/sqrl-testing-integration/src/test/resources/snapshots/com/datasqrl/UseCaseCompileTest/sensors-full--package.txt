@@ -138,10 +138,25 @@ Plan:
 LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
   LogicalProject(sensorid=[$0], time=[$1], temperature=[$2], humidity=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($1, 3), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
     LogicalTableScan(table=[[default_catalog, default_database, SensorReading]])
-SQL: CREATE VIEW `SensorReading__view`
-AS
-SELECT `SensorReading`.`sensorid`, `SensorReading`.`time`, `SensorReading`.`temperature`, `SensorReading`.`humidity`, `SensorReading`.`timestamp`
-FROM `default_catalog`.`default_database`.`SensorReading` AS `SensorReading`
+SQL: CREATE TEMPORARY TABLE `SensorReading__schema` (
+  `sensorid` BIGINT NOT NULL,
+  `time` BIGINT NOT NULL,
+  `temperature` DOUBLE NOT NULL,
+  `humidity` DOUBLE NOT NULL
+) WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `SensorReading` (
+  `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`time`, 3), CAST(TIMESTAMP '1970-01-01 00:00:00.000' AS TIMESTAMP(3) WITH LOCAL TIME ZONE)),
+  PRIMARY KEY (`sensorid`, `time`) NOT ENFORCED,
+  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
+) WITH (
+  'format' = 'flexible-csv',
+  'path' = '${DATA_PATH}/sensorreading.csv.gz',
+  'connector' = 'filesystem',
+  'flexible-csv.skip-header' = 'true'
+)
+LIKE `SensorReading__schema`
 === SensorUpdates
 ID:     default_catalog.default_database.SensorUpdates
 Type:   stream
@@ -160,10 +175,23 @@ Plan:
 LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($3, 1:INTERVAL SECOND)])
   LogicalProject(id=[$0], machineId=[$1], placed=[$2], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($2, 3), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
     LogicalTableScan(table=[[default_catalog, default_database, SensorUpdates]])
-SQL: CREATE VIEW `SensorUpdates__view`
-AS
-SELECT `SensorUpdates`.`id`, `SensorUpdates`.`machineId`, `SensorUpdates`.`placed`, `SensorUpdates`.`timestamp`
-FROM `default_catalog`.`default_database`.`SensorUpdates` AS `SensorUpdates`
+SQL: CREATE TEMPORARY TABLE `SensorUpdates__schema` (
+  `id` BIGINT NOT NULL,
+  `machineId` BIGINT NOT NULL,
+  `placed` BIGINT NOT NULL
+) WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `SensorUpdates` (
+  `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`placed`, 3), CAST(TIMESTAMP '1970-01-01 00:00:00.000' AS TIMESTAMP(3) WITH LOCAL TIME ZONE)),
+  PRIMARY KEY (`id`, `placed`) NOT ENFORCED,
+  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
+) WITH (
+  'format' = 'flexible-json',
+  'path' = '${DATA_PATH}/sensors.jsonl',
+  'connector' = 'filesystem'
+)
+LIKE `SensorUpdates__schema`
 === Sensors
 ID:     default_catalog.default_database.Sensors
 Type:   state

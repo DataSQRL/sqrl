@@ -16,10 +16,25 @@ Plan:
 LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
   LogicalProject(uuid=[$0], sensorid=[$1], epoch_timestamp=[$2], temperature=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($2, 3), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
     LogicalTableScan(table=[[default_catalog, default_database, SensorReading]])
-SQL: CREATE VIEW `SensorReading__view`
-AS
-SELECT `SensorReading`.`uuid`, `SensorReading`.`sensorid`, `SensorReading`.`epoch_timestamp`, `SensorReading`.`temperature`, `SensorReading`.`timestamp`
-FROM `default_catalog`.`default_database`.`SensorReading` AS `SensorReading`
+SQL: CREATE TABLE `SensorReading` (
+  `uuid` STRING NOT NULL,
+  `sensorid` BIGINT NOT NULL,
+  `epoch_timestamp` BIGINT NOT NULL,
+  `temperature` DOUBLE NOT NULL,
+  `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`epoch_timestamp`, 3), CAST(TIMESTAMP '1970-01-01 00:00:00.000' AS TIMESTAMP(3) WITH LOCAL TIME ZONE)),
+  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
+) WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '1000',
+  'fields.sensorid.kind' = 'sequence',
+  'fields.sensorid.start' = '0',
+  'fields.sensorid.end' = '9',
+  'fields.epoch_timestamp.kind' = 'sequence',
+  'fields.epoch_timestamp.start' = '1719318565000',
+  'fields.epoch_timestamp.end' = '1719319565000',
+  'fields.uuid.kind' = 'random',
+  'fields.temperature.kind' = 'random'
+)
 === SensorTempByHour
 ID:     default_catalog.default_database.SensorTempByHour
 Type:   stream

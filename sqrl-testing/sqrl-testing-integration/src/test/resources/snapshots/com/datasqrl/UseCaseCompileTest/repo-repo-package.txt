@@ -143,10 +143,32 @@ Plan:
 LogicalWatermarkAssigner(rowtime=[event_time], watermark=[-($17, 1:INTERVAL SECOND)])
   LogicalProject(name=[$0], version=[$1], variant=[$2], latest=[$3], type=[$4], license=[$5], repository=[$6], homepage=[$7], documentation=[$8], readme=[$9], description=[$10], keywords=[$11], uniqueId=[$12], file=[$13], hash=[$14], authorId=[$15], submissionTime=[$16], event_time=[NOW()])
     LogicalTableScan(table=[[default_catalog, default_database, _SubmissionRaw]])
-SQL: CREATE VIEW `_SubmissionRaw__view`
-AS
-SELECT `_SubmissionRaw`.`name`, `_SubmissionRaw`.`version`, `_SubmissionRaw`.`variant`, `_SubmissionRaw`.`latest`, `_SubmissionRaw`.`type`, `_SubmissionRaw`.`license`, `_SubmissionRaw`.`repository`, `_SubmissionRaw`.`homepage`, `_SubmissionRaw`.`documentation`, `_SubmissionRaw`.`readme`, `_SubmissionRaw`.`description`, `_SubmissionRaw`.`keywords`, `_SubmissionRaw`.`uniqueId`, `_SubmissionRaw`.`file`, `_SubmissionRaw`.`hash`, `_SubmissionRaw`.`authorId`, `_SubmissionRaw`.`submissionTime`, `_SubmissionRaw`.`event_time`
-FROM `default_catalog`.`default_database`.`_SubmissionRaw` AS `_SubmissionRaw`
+SQL: CREATE TABLE `_SubmissionRaw` (
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `version` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `variant` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `latest` BOOLEAN NOT NULL,
+  `type` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `license` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `repository` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `homepage` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `documentation` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `readme` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `keywords` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL ARRAY NOT NULL,
+  `uniqueId` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `file` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `hash` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `authorId` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `submissionTime` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `event_time` AS NOW(),
+  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.001' SECOND
+) WITH (
+  'connector' = 'filesystem',
+  'format' = 'flexible-json',
+  'path' = '${DATA_PATH}/submission.jsonl',
+  'source.monitor-interval' = '10 sec'
+)
 >>>flink-sql-no-functions.sql
 CREATE TABLE `_SubmissionRaw` (
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
