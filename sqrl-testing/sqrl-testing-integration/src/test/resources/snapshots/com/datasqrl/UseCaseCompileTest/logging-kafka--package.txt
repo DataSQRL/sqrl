@@ -17,10 +17,24 @@ Plan:
 LogicalWatermarkAssigner(rowtime=[TIMESTAMP], watermark=[-($3, 1:INTERVAL SECOND)])
   LogicalProject(ID=[$0], EPOCH_TIMESTAMP=[$1], SOME_VALUE=[$2], TIMESTAMP=[COALESCE(TO_TIMESTAMP_LTZ($1, 3), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
     LogicalTableScan(table=[[default_catalog, default_database, Data]])
-SQL: CREATE VIEW `Data__view`
-AS
-SELECT `Data`.`ID`, `Data`.`EPOCH_TIMESTAMP`, `Data`.`SOME_VALUE`, `Data`.`TIMESTAMP`
-FROM `default_catalog`.`default_database`.`Data` AS `Data`
+SQL: CREATE TABLE `Data` (
+  `ID` BIGINT NOT NULL,
+  `EPOCH_TIMESTAMP` BIGINT NOT NULL,
+  `SOME_VALUE` STRING NOT NULL,
+  `TIMESTAMP` AS COALESCE(`TO_TIMESTAMP_LTZ`(`EPOCH_TIMESTAMP`, 3), CAST(TIMESTAMP '1970-01-01 00:00:00.000' AS TIMESTAMP(3) WITH LOCAL TIME ZONE)),
+  PRIMARY KEY (`ID`) NOT ENFORCED,
+  WATERMARK FOR `TIMESTAMP` AS `TIMESTAMP` - INTERVAL '0.001' SECOND
+) WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10',
+  'fields.ID.kind' = 'sequence',
+  'fields.ID.start' = '0',
+  'fields.ID.end' = '9',
+  'fields.EPOCH_TIMESTAMP.kind' = 'sequence',
+  'fields.EPOCH_TIMESTAMP.start' = '1719318565000',
+  'fields.EPOCH_TIMESTAMP.end' = '1719319565000',
+  'fields.SOME_VALUE.kind' = 'random'
+)
 === LogData
 ID:     logger.LogData
 Type:   export

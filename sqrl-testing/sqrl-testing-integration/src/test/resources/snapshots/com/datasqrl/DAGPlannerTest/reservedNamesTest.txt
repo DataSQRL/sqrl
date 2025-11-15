@@ -17,10 +17,24 @@ Schema:
 Plan:
 LogicalWatermarkAssigner(rowtime=[time], watermark=[-($2, 1:INTERVAL SECOND)])
   LogicalTableScan(table=[[default_catalog, default_database, Order]])
-SQL: CREATE VIEW `Order__view`
-AS
-SELECT `Order`.`id`, `Order`.`customerid`, `Order`.`time`, `Order`.`entries`
-FROM `default_catalog`.`default_database`.`Order` AS `Order`
+SQL: CREATE TEMPORARY TABLE `Order__schema` (
+  `id` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL
+) WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `Order` (
+  PRIMARY KEY (`id`, `time`) NOT ENFORCED,
+  WATERMARK FOR `time` AS `time` - INTERVAL '0.001' SECOND
+) WITH (
+  'format' = 'flexible-json',
+  'path' = 'file:/mock',
+  'source.monitor-interval' = '10 sec',
+  'connector' = 'filesystem'
+)
+LIKE `Order__schema`
 === Where
 ID:     default_catalog.default_database.Where
 Type:   stream

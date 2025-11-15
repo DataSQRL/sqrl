@@ -151,10 +151,23 @@ Schema:
 Plan:
 LogicalWatermarkAssigner(rowtime=[time], watermark=[-($2, 1:INTERVAL SECOND)])
   LogicalTableScan(table=[[default_catalog, default_database, Orders]])
-SQL: CREATE VIEW `Orders__view`
-AS
-SELECT `Orders`.`id`, `Orders`.`customerid`, `Orders`.`time`, `Orders`.`items`
-FROM `default_catalog`.`default_database`.`Orders` AS `Orders`
+SQL: CREATE TEMPORARY TABLE `Orders__schema` (
+  `id` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `items` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL
+) WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `Orders` (
+  PRIMARY KEY (`id`, `time`) NOT ENFORCED,
+  WATERMARK FOR `time` AS `time` - INTERVAL '0.001' SECOND
+) WITH (
+  'format' = 'flexible-json',
+  'path' = '${DATA_PATH}/order_items.jsonl',
+  'connector' = 'filesystem'
+)
+LIKE `Orders__schema`
 === OrdersTotals
 ID:     default_catalog.default_database.OrdersTotals
 Type:   stream
@@ -303,10 +316,27 @@ Plan:
 LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($7, 1:INTERVAL SECOND)])
   LogicalProject(id=[$0], first_name=[$1], last_name=[$2], email=[$3], ip_address=[$4], country=[$5], changed_on=[$6], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($6, 3), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
     LogicalTableScan(table=[[default_catalog, default_database, _CustomersStream]])
-SQL: CREATE VIEW `_CustomersStream__view`
-AS
-SELECT `_CustomersStream`.`id`, `_CustomersStream`.`first_name`, `_CustomersStream`.`last_name`, `_CustomersStream`.`email`, `_CustomersStream`.`ip_address`, `_CustomersStream`.`country`, `_CustomersStream`.`changed_on`, `_CustomersStream`.`timestamp`
-FROM `default_catalog`.`default_database`.`_CustomersStream` AS `_CustomersStream`
+SQL: CREATE TEMPORARY TABLE `_CustomersStream__schema` (
+  `id` BIGINT NOT NULL,
+  `first_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `last_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `ip_address` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `country` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `changed_on` BIGINT NOT NULL
+) WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `_CustomersStream` (
+  `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`changed_on`, 3), CAST(TIMESTAMP '1970-01-01 00:00:00.000' AS TIMESTAMP(3) WITH LOCAL TIME ZONE)),
+  PRIMARY KEY (`id`, `changed_on`) NOT ENFORCED,
+  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
+) WITH (
+  'format' = 'flexible-json',
+  'path' = '${DATA_PATH}/customers.jsonl',
+  'connector' = 'filesystem'
+)
+LIKE `_CustomersStream__schema`
 === _OrderItems
 ID:     default_catalog.default_database._OrderItems
 Type:   stream
@@ -354,10 +384,27 @@ Schema:
 Plan:
 LogicalWatermarkAssigner(rowtime=[updated], watermark=[-($7, 1:INTERVAL SECOND)])
   LogicalTableScan(table=[[default_catalog, default_database, _ProductsStream]])
-SQL: CREATE VIEW `_ProductsStream__view`
-AS
-SELECT `_ProductsStream`.`id`, `_ProductsStream`.`name`, `_ProductsStream`.`sizing`, `_ProductsStream`.`weight_in_gram`, `_ProductsStream`.`type`, `_ProductsStream`.`category`, `_ProductsStream`.`usda_id`, `_ProductsStream`.`updated`
-FROM `default_catalog`.`default_database`.`_ProductsStream` AS `_ProductsStream`
+SQL: CREATE TEMPORARY TABLE `_ProductsStream__schema` (
+  `id` BIGINT NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `sizing` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `weight_in_gram` BIGINT NOT NULL,
+  `type` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `usda_id` BIGINT NOT NULL,
+  `updated` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+) WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `_ProductsStream` (
+  PRIMARY KEY (`id`, `updated`) NOT ENFORCED,
+  WATERMARK FOR `updated` AS `updated` - INTERVAL '0.001' SECOND
+) WITH (
+  'format' = 'flexible-json',
+  'path' = '${DATA_PATH}/products.jsonl',
+  'connector' = 'filesystem'
+)
+LIKE `_ProductsStream__schema`
 === promotion
 ID:     local-sink.promotion
 Type:   export

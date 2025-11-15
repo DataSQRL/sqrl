@@ -17,10 +17,21 @@ Plan:
 LogicalWatermarkAssigner(rowtime=[event_time], watermark=[-($3, 0:INTERVAL SECOND)])
   LogicalProject(event_id=[$0], val=[$1], message=[$2], event_time=[CAST($3):TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL])
     LogicalTableScan(table=[[default_catalog, default_database, AuthInputData, metadata=[timestamp]]])
-SQL: CREATE VIEW `AuthInputData__view`
-AS
-SELECT `AuthInputData`.`event_id`, `AuthInputData`.`val`, `AuthInputData`.`message`, `AuthInputData`.`event_time`
-FROM `default_catalog`.`default_database`.`AuthInputData` AS `AuthInputData`
+SQL: CREATE TABLE `AuthInputData` (
+  `event_id` STRING NOT NULL,
+  `val` BIGINT NOT NULL,
+  `message` STRING NOT NULL,
+  `event_time` TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
+  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
+) WITH (
+  'connector' = 'kafka',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
+  'properties.auto.offset.reset' = 'earliest',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'topic' = 'AuthInputData'
+)
 === AuthMyTable
 ID:     default_catalog.default_database.AuthMyTable
 Type:   query

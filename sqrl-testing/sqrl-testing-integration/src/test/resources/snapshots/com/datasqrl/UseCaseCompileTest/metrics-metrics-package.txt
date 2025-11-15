@@ -99,10 +99,21 @@ Plan:
 LogicalWatermarkAssigner(rowtime=[event_time], watermark=[-($3, 0:INTERVAL SECOND)])
   LogicalProject(uuid=[$0], sensorid=[$1], temperature=[$2], event_time=[CAST($3):TIMESTAMP_LTZ(3) *ROWTIME*])
     LogicalTableScan(table=[[default_catalog, default_database, SensorReading, metadata=[timestamp]]])
-SQL: CREATE VIEW `SensorReading__view`
-AS
-SELECT `SensorReading`.`uuid`, `SensorReading`.`sensorid`, `SensorReading`.`temperature`, `SensorReading`.`event_time`
-FROM `default_catalog`.`default_database`.`SensorReading` AS `SensorReading`
+SQL: CREATE TABLE `SensorReading` (
+  `uuid` STRING NOT NULL,
+  `sensorid` INTEGER NOT NULL,
+  `temperature` FLOAT NOT NULL,
+  `event_time` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
+  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
+) WITH (
+  'connector' = 'kafka',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
+  'properties.auto.offset.reset' = 'earliest',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'topic' = 'SensorReading'
+)
 === SensorReadingById
 ID:     default_catalog.default_database.SensorReadingById
 Type:   query

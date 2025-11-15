@@ -70,10 +70,26 @@ Schema:
 Plan:
 LogicalWatermarkAssigner(rowtime=[updated_at], watermark=[-($6, 1:INTERVAL SECOND)])
   LogicalTableScan(table=[[default_catalog, default_database, _Applications]])
-SQL: CREATE VIEW `_Applications__view`
-AS
-SELECT `_Applications`.`id`, `_Applications`.`customer_id`, `_Applications`.`loan_type_id`, `_Applications`.`amount`, `_Applications`.`duration`, `_Applications`.`application_date`, `_Applications`.`updated_at`
-FROM `default_catalog`.`default_database`.`_Applications` AS `_Applications`
+SQL: CREATE TEMPORARY TABLE `_Applications__schema` (
+  `id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `loan_type_id` BIGINT NOT NULL,
+  `amount` DOUBLE NOT NULL,
+  `duration` BIGINT NOT NULL,
+  `application_date` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+) WITH (
+  'connector' = 'filesystem',
+  'format' = 'flexible-json',
+  'path' = '${DATA_PATH}/applications.jsonl'
+);
+CREATE TABLE `_Applications` (
+  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED,
+  WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '0.001' SECOND
+) WITH (
+  'source.monitor-interval' = '1'
+)
+LIKE `_Applications__schema`
 === _MyApplications1
 ID:     default_catalog.default_database._MyApplications1
 Type:   stream

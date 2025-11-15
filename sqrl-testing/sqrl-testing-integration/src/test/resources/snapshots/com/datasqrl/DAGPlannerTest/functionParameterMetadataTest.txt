@@ -18,10 +18,25 @@ Plan:
 LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
   LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($3, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW `Customer__view`
-AS
-SELECT `Customer`.`customerid`, `Customer`.`email`, `Customer`.`name`, `Customer`.`lastUpdated`, `Customer`.`timestamp`
-FROM `default_catalog`.`default_database`.`Customer` AS `Customer`
+SQL: CREATE TEMPORARY TABLE `Customer__schema` (
+  `customerid` BIGINT NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `lastUpdated` BIGINT NOT NULL
+) WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `Customer` (
+  `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`lastUpdated`, 0), CAST(TIMESTAMP '1970-01-01 00:00:00.000' AS TIMESTAMP(3) WITH LOCAL TIME ZONE)),
+  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
+  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
+) WITH (
+  'format' = 'flexible-json',
+  'path' = 'file:/mock',
+  'source.monitor-interval' = '10 sec',
+  'connector' = 'filesystem'
+)
+LIKE `Customer__schema`
 === CustomerMessage
 ID:     default_catalog.default_database.CustomerMessage
 Type:   stream
@@ -93,10 +108,21 @@ Plan:
 LogicalWatermarkAssigner(rowtime=[event_time], watermark=[-($3, 0:INTERVAL SECOND)])
   LogicalProject(event_id=[$0], customerid=[$1], message=[$2], event_time=[CAST($3):TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL])
     LogicalTableScan(table=[[default_catalog, default_database, _InputData, metadata=[timestamp]]])
-SQL: CREATE VIEW `_InputData__view`
-AS
-SELECT `_InputData`.`event_id`, `_InputData`.`customerid`, `_InputData`.`message`, `_InputData`.`event_time`
-FROM `default_catalog`.`default_database`.`_InputData` AS `_InputData`
+SQL: CREATE TABLE `_InputData` (
+  `event_id` STRING NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `message` STRING NOT NULL,
+  `event_time` TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
+  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
+) WITH (
+  'connector' = 'kafka',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
+  'properties.auto.offset.reset' = 'earliest',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'topic' = 'kafka-mutation-_InputData'
+)
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `Customer__schema` (
   `customerid` BIGINT NOT NULL,

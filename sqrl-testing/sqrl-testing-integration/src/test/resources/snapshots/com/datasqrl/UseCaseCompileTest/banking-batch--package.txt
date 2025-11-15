@@ -15,10 +15,22 @@ Schema:
  - event_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
 LogicalTableScan(table=[[default_catalog, default_database, ApplicationUpdates]])
-SQL: CREATE VIEW `ApplicationUpdates__view`
-AS
-SELECT `ApplicationUpdates`.`loan_application_id`, `ApplicationUpdates`.`status`, `ApplicationUpdates`.`message`, `ApplicationUpdates`.`event_time`
-FROM `default_catalog`.`default_database`.`ApplicationUpdates` AS `ApplicationUpdates`
+SQL: CREATE TEMPORARY TABLE `ApplicationUpdates__schema` (
+  `loan_application_id` BIGINT NOT NULL,
+  `status` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `message` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+) WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `ApplicationUpdates` (
+  PRIMARY KEY (`loan_application_id`, `event_time`) NOT ENFORCED
+) WITH (
+  'format' = 'flexible-json',
+  'path' = '${DATA_PATH}/application_updates.jsonl',
+  'connector' = 'filesystem'
+)
+LIKE `ApplicationUpdates__schema`
 === Applications
 ID:     default_catalog.default_database.Applications
 Type:   state
@@ -118,10 +130,25 @@ Schema:
  - updated_at: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
 LogicalTableScan(table=[[default_catalog, default_database, _ApplicationsStream]])
-SQL: CREATE VIEW `_ApplicationsStream__view`
-AS
-SELECT `_ApplicationsStream`.`id`, `_ApplicationsStream`.`customer_id`, `_ApplicationsStream`.`loan_type_id`, `_ApplicationsStream`.`amount`, `_ApplicationsStream`.`duration`, `_ApplicationsStream`.`application_date`, `_ApplicationsStream`.`updated_at`
-FROM `default_catalog`.`default_database`.`_ApplicationsStream` AS `_ApplicationsStream`
+SQL: CREATE TEMPORARY TABLE `_ApplicationsStream__schema` (
+  `id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `loan_type_id` BIGINT NOT NULL,
+  `amount` DOUBLE NOT NULL,
+  `duration` BIGINT NOT NULL,
+  `application_date` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+) WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `_ApplicationsStream` (
+  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED
+) WITH (
+  'format' = 'flexible-json',
+  'path' = '${DATA_PATH}/applications.jsonl',
+  'connector' = 'filesystem'
+)
+LIKE `_ApplicationsStream__schema`
 === _CustomersStream
 ID:     default_catalog.default_database._CustomersStream
 Type:   stream
@@ -142,10 +169,26 @@ Schema:
  - updated_at: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Plan:
 LogicalTableScan(table=[[default_catalog, default_database, _CustomersStream]])
-SQL: CREATE VIEW `_CustomersStream__view`
-AS
-SELECT `_CustomersStream`.`id`, `_CustomersStream`.`first_name`, `_CustomersStream`.`last_name`, `_CustomersStream`.`email`, `_CustomersStream`.`phone`, `_CustomersStream`.`address`, `_CustomersStream`.`date_of_birth`, `_CustomersStream`.`updated_at`
-FROM `default_catalog`.`default_database`.`_CustomersStream` AS `_CustomersStream`
+SQL: CREATE TEMPORARY TABLE `_CustomersStream__schema` (
+  `id` BIGINT NOT NULL,
+  `first_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `last_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `phone` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `address` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `date_of_birth` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+) WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `_CustomersStream` (
+  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED
+) WITH (
+  'format' = 'flexible-json',
+  'path' = '${DATA_PATH}/customers.jsonl',
+  'connector' = 'filesystem'
+)
+LIKE `_CustomersStream__schema`
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `_CustomersStream__schema` (
   `id` BIGINT NOT NULL,

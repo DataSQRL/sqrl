@@ -85,10 +85,20 @@ Plan:
 LogicalWatermarkAssigner(rowtime=[request_time], watermark=[-($2, 0:INTERVAL SECOND)])
   LogicalProject(userid=[$0], tokens=[$1], request_time=[CAST($2):TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL])
     LogicalTableScan(table=[[default_catalog, default_database, UserTokens, metadata=[timestamp]]])
-SQL: CREATE VIEW `UserTokens__view`
-AS
-SELECT `UserTokens`.`userid`, `UserTokens`.`tokens`, `UserTokens`.`request_time`
-FROM `default_catalog`.`default_database`.`UserTokens` AS `UserTokens`
+SQL: CREATE TABLE `UserTokens` (
+  `userid` BIGINT NOT NULL,
+  `tokens` BIGINT NOT NULL,
+  `request_time` TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
+  WATERMARK FOR `request_time` AS `request_time` - INTERVAL '0.0' SECOND
+) WITH (
+  'connector' = 'kafka',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
+  'properties.auto.offset.reset' = 'earliest',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'topic' = 'UserTokens'
+)
 === _CurrentUserInfo
 ID:     default_catalog.default_database._CurrentUserInfo
 Type:   state
@@ -150,10 +160,18 @@ Plan:
 LogicalWatermarkAssigner(rowtime=[event_time], watermark=[-($3, 1:INTERVAL SECOND)])
   LogicalProject(userid=[$0], orgid=[$1], last_updated=[$2], event_time=[NOW()])
     LogicalTableScan(table=[[default_catalog, default_database, _UserInfo]])
-SQL: CREATE VIEW `_UserInfo__view`
-AS
-SELECT `_UserInfo`.`userid`, `_UserInfo`.`orgid`, `_UserInfo`.`last_updated`, `_UserInfo`.`event_time`
-FROM `default_catalog`.`default_database`.`_UserInfo` AS `_UserInfo`
+SQL: CREATE TABLE `_UserInfo` (
+  `userid` BIGINT NOT NULL,
+  `orgid` BIGINT NOT NULL,
+  `last_updated` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `event_time` AS NOW(),
+  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.001' SECOND
+) WITH (
+  'connector' = 'filesystem',
+  'format' = 'flexible-json',
+  'path' = '${DATA_PATH}/userinfo.jsonl',
+  'source.monitor-interval' = '10 sec'
+)
 >>>schema.graphqls
 "An RFC-3339 compliant DateTime Scalar"
 scalar DateTime

@@ -41,10 +41,26 @@ Plan:
 LogicalWatermarkAssigner(rowtime=[_source_time], watermark=[$4])
   LogicalProject(id=[$0], customerid=[$1], time=[$2], items=[$3], _source_time=[CAST($4):TIMESTAMP_LTZ(3) *ROWTIME*])
     LogicalTableScan(table=[[default_catalog, default_database, Orders, metadata=[timestamp]]])
-SQL: CREATE VIEW `Orders__view`
-AS
-SELECT `Orders`.`id`, `Orders`.`customerid`, `Orders`.`time`, `Orders`.`items`, `Orders`.`_source_time`
-FROM `default_catalog`.`default_database`.`Orders` AS `Orders`
+SQL: CREATE TEMPORARY TABLE `Orders__schema` (
+  `id` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `time` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `items` ROW(`productid` INTEGER NOT NULL, `quantity` INTEGER NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL
+) WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `Orders` (
+  `_source_time` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
+  WATERMARK FOR `_source_time` AS `_source_time`
+) WITH (
+  'format' = 'avro',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.group.id' = 'datasqrl-orders',
+  'topic' = '${sqrl:topic}',
+  'connector' = 'kafka',
+  'avro.timestamp_mapping.legacy' = 'false'
+)
+LIKE `Orders__schema`
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `Orders__schema` (
   `id` BIGINT NOT NULL,
