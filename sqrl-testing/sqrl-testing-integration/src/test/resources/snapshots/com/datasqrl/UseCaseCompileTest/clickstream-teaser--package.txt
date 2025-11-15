@@ -15,10 +15,23 @@ Schema:
 Plan:
 LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($1, 1000:INTERVAL SECOND)])
   LogicalTableScan(table=[[default_catalog, default_database, Click]])
-SQL: CREATE VIEW `Click__view`
-AS
-SELECT `Click`.`url`, `Click`.`timestamp`, `Click`.`userid`
-FROM `default_catalog`.`default_database`.`Click` AS `Click`
+SQL: CREATE TEMPORARY TABLE `Click__schema` (
+  `url` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `userid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL
+) WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `Click` (
+  PRIMARY KEY (`url`, `userid`, `timestamp`) NOT ENFORCED,
+  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '1' SECOND
+) WITH (
+  'format' = 'flexible-json',
+  'path' = '${DATA_PATH}/click.jsonl',
+  'source.monitor-interval' = '10 sec',
+  'connector' = 'filesystem'
+)
+LIKE `Click__schema`
 === Recommendation
 ID:     default_catalog.default_database.Recommendation
 Type:   state

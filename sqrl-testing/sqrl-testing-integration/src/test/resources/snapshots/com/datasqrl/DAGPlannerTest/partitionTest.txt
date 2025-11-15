@@ -62,10 +62,24 @@ Schema:
 Plan:
 LogicalWatermarkAssigner(rowtime=[time], watermark=[-($2, 1:INTERVAL SECOND)])
   LogicalTableScan(table=[[default_catalog, default_database, _OrdersStream]])
-SQL: CREATE VIEW `_OrdersStream__view`
-AS
-SELECT `_OrdersStream`.`id`, `_OrdersStream`.`customerid`, `_OrdersStream`.`time`, `_OrdersStream`.`entries`
-FROM `default_catalog`.`default_database`.`_OrdersStream` AS `_OrdersStream`
+SQL: CREATE TEMPORARY TABLE `_OrdersStream__schema` (
+  `id` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL
+) WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `_OrdersStream` (
+  PRIMARY KEY (`id`, `time`) NOT ENFORCED,
+  WATERMARK FOR `time` AS `time` - INTERVAL '0.001' SECOND
+) WITH (
+  'format' = 'flexible-json',
+  'path' = 'file:/mock',
+  'source.monitor-interval' = '10 sec',
+  'connector' = 'filesystem'
+)
+LIKE `_OrdersStream__schema`
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `_OrdersStream__schema` (
   `id` BIGINT NOT NULL,

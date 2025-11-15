@@ -65,10 +65,20 @@ Plan:
 LogicalWatermarkAssigner(rowtime=[event_time], watermark=[-($2, 0:INTERVAL SECOND)])
   LogicalProject(_uuid=[$0], userid=[$1], event_time=[CAST($2):TIMESTAMP_LTZ(3) *ROWTIME*])
     LogicalTableScan(table=[[default_catalog, default_database, SimpleInput, metadata=[timestamp]]])
-SQL: CREATE VIEW `SimpleInput__view`
-AS
-SELECT `SimpleInput`.`_uuid`, `SimpleInput`.`userid`, `SimpleInput`.`event_time`
-FROM `default_catalog`.`default_database`.`SimpleInput` AS `SimpleInput`
+SQL: CREATE TABLE `SimpleInput` (
+  `_uuid` STRING NOT NULL,
+  `userid` INTEGER,
+  `event_time` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
+  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
+) WITH (
+  'connector' = 'kafka',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
+  'properties.auto.offset.reset' = 'earliest',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'topic' = 'kafka-mutation-SimpleInput'
+)
 === _Input
 ID:     default_catalog.default_database._Input
 Type:   stream

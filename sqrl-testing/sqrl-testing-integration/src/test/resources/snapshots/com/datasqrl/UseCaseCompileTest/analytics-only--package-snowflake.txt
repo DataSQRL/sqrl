@@ -88,10 +88,23 @@ Schema:
 Plan:
 LogicalWatermarkAssigner(rowtime=[event_time], watermark=[$3])
   LogicalTableScan(table=[[default_catalog, default_database, _ApplicationUpdates]])
-SQL: CREATE VIEW `_ApplicationUpdates__view`
-AS
-SELECT `_ApplicationUpdates`.`loan_application_id`, `_ApplicationUpdates`.`status`, `_ApplicationUpdates`.`message`, `_ApplicationUpdates`.`event_time`
-FROM `default_catalog`.`default_database`.`_ApplicationUpdates` AS `_ApplicationUpdates`
+SQL: CREATE TEMPORARY TABLE `_ApplicationUpdates__schema` (
+  `loan_application_id` BIGINT NOT NULL,
+  `status` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `message` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+) WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `_ApplicationUpdates` (
+  PRIMARY KEY (`loan_application_id`, `event_time`) NOT ENFORCED,
+  WATERMARK FOR `event_time` AS `event_time`
+) WITH (
+  'format' = 'flexible-json',
+  'path' = '${DATA_PATH}/application_updates.jsonl',
+  'connector' = 'filesystem'
+)
+LIKE `_ApplicationUpdates__schema`
 === _Applications
 ID:     default_catalog.default_database._Applications
 Type:   state
@@ -141,10 +154,27 @@ Schema:
 Plan:
 LogicalWatermarkAssigner(rowtime=[updated_at], watermark=[-($6, 1:INTERVAL SECOND)])
   LogicalTableScan(table=[[default_catalog, default_database, _ApplicationsStream]])
-SQL: CREATE VIEW `_ApplicationsStream__view`
-AS
-SELECT `_ApplicationsStream`.`id`, `_ApplicationsStream`.`customer_id`, `_ApplicationsStream`.`loan_type_id`, `_ApplicationsStream`.`amount`, `_ApplicationsStream`.`duration`, `_ApplicationsStream`.`application_date`, `_ApplicationsStream`.`updated_at`
-FROM `default_catalog`.`default_database`.`_ApplicationsStream` AS `_ApplicationsStream`
+SQL: CREATE TEMPORARY TABLE `_ApplicationsStream__schema` (
+  `id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `loan_type_id` BIGINT NOT NULL,
+  `amount` DOUBLE NOT NULL,
+  `duration` BIGINT NOT NULL,
+  `application_date` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+) WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `_ApplicationsStream` (
+  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED,
+  WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '0.001' SECOND
+) WITH (
+  'format' = 'flexible-json',
+  'path' = '${DATA_PATH}/applications.jsonl',
+  'source.monitor-interval' = '10 sec',
+  'connector' = 'filesystem'
+)
+LIKE `_ApplicationsStream__schema`
 === _LoanTypes
 ID:     default_catalog.default_database._LoanTypes
 Type:   state
@@ -198,10 +228,29 @@ Schema:
 Plan:
 LogicalWatermarkAssigner(rowtime=[updated_at], watermark=[-($8, 1:INTERVAL SECOND)])
   LogicalTableScan(table=[[default_catalog, default_database, _LoanTypesStream]])
-SQL: CREATE VIEW `_LoanTypesStream__view`
-AS
-SELECT `_LoanTypesStream`.`id`, `_LoanTypesStream`.`name`, `_LoanTypesStream`.`description`, `_LoanTypesStream`.`interest_rate`, `_LoanTypesStream`.`max_amount`, `_LoanTypesStream`.`min_amount`, `_LoanTypesStream`.`max_duration`, `_LoanTypesStream`.`min_duration`, `_LoanTypesStream`.`updated_at`
-FROM `default_catalog`.`default_database`.`_LoanTypesStream` AS `_LoanTypesStream`
+SQL: CREATE TEMPORARY TABLE `_LoanTypesStream__schema` (
+  `id` BIGINT NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `interest_rate` DOUBLE NOT NULL,
+  `max_amount` DOUBLE NOT NULL,
+  `min_amount` DOUBLE NOT NULL,
+  `max_duration` BIGINT NOT NULL,
+  `min_duration` BIGINT NOT NULL,
+  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+) WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `_LoanTypesStream` (
+  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED,
+  WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '0.001' SECOND
+) WITH (
+  'format' = 'flexible-json',
+  'path' = '${DATA_PATH}/loan_types.jsonl',
+  'source.monitor-interval' = '10 sec',
+  'connector' = 'filesystem'
+)
+LIKE `_LoanTypesStream__schema`
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `_ApplicationsStream__schema` (
   `id` BIGINT NOT NULL,

@@ -63,10 +63,24 @@ Plan:
 LogicalWatermarkAssigner(rowtime=[updatedTime], watermark=[-($2, 0:INTERVAL SECOND)])
   LogicalProject(sensorid=[$0], machineid=[$1], updatedTime=[CAST($2):TIMESTAMP_LTZ(3) *ROWTIME*])
     LogicalTableScan(table=[[default_catalog, default_database, Sensors, metadata=[timestamp]]])
-SQL: CREATE VIEW `Sensors__view`
-AS
-SELECT `Sensors`.`sensorid`, `Sensors`.`machineid`, `Sensors`.`updatedTime`
-FROM `default_catalog`.`default_database`.`Sensors` AS `Sensors`
+SQL: CREATE TABLE `Sensors` (
+  `sensorid` INTEGER NOT NULL,
+  `machineid` INTEGER,
+  `updatedTime` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
+  PRIMARY KEY (`sensorid`) NOT ENFORCED,
+  WATERMARK FOR `updatedTime` AS `updatedTime` - INTERVAL '0.0' SECOND
+) WITH (
+  'connector' = 'upsert-kafka',
+  'key.flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'key.format' = 'flexible-json',
+  'properties.auto.offset.reset' = 'earliest',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'properties.isolation.level' = 'read_committed',
+  'topic' = 'kafka-mutation-Sensors',
+  'value.flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'value.format' = 'flexible-json'
+)
 === _SensorReading
 ID:     default_catalog.default_database._SensorReading
 Type:   stream
@@ -85,10 +99,21 @@ Plan:
 LogicalWatermarkAssigner(rowtime=[event_time], watermark=[-($3, 0:INTERVAL SECOND)])
   LogicalProject(event_id=[$0], sensorid=[$1], temperature=[$2], event_time=[CAST($3):TIMESTAMP_LTZ(3) *ROWTIME*])
     LogicalTableScan(table=[[default_catalog, default_database, _SensorReading, metadata=[timestamp]]])
-SQL: CREATE VIEW `_SensorReading__view`
-AS
-SELECT `_SensorReading`.`event_id`, `_SensorReading`.`sensorid`, `_SensorReading`.`temperature`, `_SensorReading`.`event_time`
-FROM `default_catalog`.`default_database`.`_SensorReading` AS `_SensorReading`
+SQL: CREATE TABLE `_SensorReading` (
+  `event_id` STRING NOT NULL,
+  `sensorid` INTEGER,
+  `temperature` FLOAT,
+  `event_time` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
+  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
+) WITH (
+  'connector' = 'kafka',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
+  'properties.auto.offset.reset' = 'earliest',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'topic' = 'kafka-mutation-_SensorReading'
+)
 >>>flink-sql-no-functions.sql
 CREATE TABLE `Sensors` (
   `sensorid` INTEGER,
