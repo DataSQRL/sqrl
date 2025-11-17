@@ -64,7 +64,7 @@
     "description" : "Click"
   } ],
   "plan" : "LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($1, 1000:INTERVAL SECOND)])\n  LogicalTableScan(table=[[default_catalog, default_database, Click]])\n",
-  "sql" : "CREATE VIEW `Click__view`\nAS\nSELECT `Click`.`url`, `Click`.`timestamp`, `Click`.`userid`\nFROM `default_catalog`.`default_database`.`Click` AS `Click`",
+  "sql" : "CREATE TEMPORARY TABLE `Click__schema` (\n  `url` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `userid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL\n) WITH (\n  'connector' = 'datagen'\n);\nCREATE TABLE `Click` (\n  PRIMARY KEY (`url`, `userid`, `timestamp`) NOT ENFORCED,\n  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '1' SECOND\n) WITH (\n  'format' = 'flexible-json',\n  'path' = '${DATA_PATH}/click.jsonl',\n  'source.monitor-interval' = '10 sec',\n  'connector' = 'filesystem'\n)\nLIKE `Click__schema`",
   "primary_key" : [ "url", "userid", "timestamp" ],
   "timestamp" : "timestamp",
   "schema" : [ {
@@ -155,3 +155,41 @@
     "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL"
   } ]
 } ]
+>>>pipeline_source.sqrl
+CREATE TEMPORARY TABLE `Click__schema` (
+  `url` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `userid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL
+) WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `Click` (
+  PRIMARY KEY (`url`, `userid`, `timestamp`) NOT ENFORCED,
+  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '1' SECOND
+) WITH (
+  'format' = 'flexible-json',
+  'path' = '${DATA_PATH}/click.jsonl',
+  'source.monitor-interval' = '10 sec',
+  'connector' = 'filesystem'
+)
+LIKE `Click__schema`;
+/* Most visited pages */
+Trending := SELECT url, count(1) AS total
+    FROM Click
+    GROUP BY url ORDER BY total DESC, url ASC;
+/* Find next page visits within 10 minutes */
+VisitAfter := SELECT b.url AS beforeURL, a.url AS afterURL,
+    a.`timestamp` AS `timestamp`
+    FROM Click b JOIN Click a ON b.userid=a.userid AND
+        b.`timestamp` < a.`timestamp` AND
+        b.`timestamp` >= a.`timestamp` - INTERVAL 10 MINUTE;
+/* Recommend pages that are visited shortly after */
+/*+query_by_all(url) */
+Recommendation := SELECT beforeURL AS url, afterURL AS rec,
+    count(1) AS frequency FROM VisitAfter
+    GROUP BY beforeURL, afterURL ORDER BY url ASC, frequency DESC;
+/*+test */
+RankTest := SELECT url, count(1) AS total
+            FROM Click
+            GROUP BY url ORDER BY total DESC, url ASC;
+

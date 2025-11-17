@@ -21,10 +21,13 @@ import java.util.function.Predicate;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
-/** Creates a DAG plan for a single use case test (clickstream) */
+/** Creates and snapshots a DAG plan and complete script printout for a few use cases */
 public class DAGWriterJsonTest extends AbstractUseCaseTest {
 
-  public static final Path USECASE_DIR = getResourcesDirectory("usecases/clickstream");
+  public static final Path[] USECASE_DIRS =
+      new Path[] {
+        getResourcesDirectory("usecases/clickstream"), getResourcesDirectory("usecases/passthrough")
+      };
 
   @Override
   @ParameterizedTest
@@ -35,13 +38,17 @@ public class DAGWriterJsonTest extends AbstractUseCaseTest {
 
   static class UseCaseFiles extends SqrlScriptsAndLocalPackages {
     public UseCaseFiles() {
-      super(USECASE_DIR, false);
+      super(USECASE_DIRS, false);
     }
   }
 
   @Override
   public Predicate<Path> getBuildDirFilter() {
-    return path -> path.getFileName().toString().endsWith(DagWriter.EXPLAIN_JSON_FILENAME);
+    return path -> {
+      String filename = path.getFileName().toString();
+      return filename.endsWith(DagWriter.EXPLAIN_JSON_FILENAME)
+          || filename.endsWith(DagWriter.FULL_SOURCE_CODE);
+    };
   }
 
   @Override

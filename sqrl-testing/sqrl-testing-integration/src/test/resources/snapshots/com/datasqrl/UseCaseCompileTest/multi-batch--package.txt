@@ -10,10 +10,16 @@ Schema:
  - val: INTEGER NOT NULL
 Plan:
 LogicalTableScan(table=[[default_catalog, default_database, Src]])
-SQL: CREATE VIEW `Src__view`
-AS
-SELECT `Src`.`val`
-FROM `default_catalog`.`default_database`.`Src` AS `Src`
+SQL: CREATE TABLE `Src` (
+  `val` INTEGER NOT NULL
+) WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '5',
+  'rows-per-second' = '5',
+  'fields.val.kind' = 'random',
+  'fields.val.min' = '1',
+  'fields.val.max' = '5'
+)
 === sink_a
 ID:     tables.sink_a
 Type:   export

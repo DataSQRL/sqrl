@@ -124,15 +124,18 @@ public class SqrlStatementParser {
    * @param scriptErrors
    * @return
    */
-  public List<ParsedObject<SQLStatement>> parseScript(String script, ErrorCollector scriptErrors) {
-    List<ParsedObject<SQLStatement>> sqlStatements = new ArrayList<>();
+  public List<ParsedStatement> parseScript(String script, ErrorCollector scriptErrors) {
+    List<ParsedStatement> sqlStatements = new ArrayList<>();
     var localErrors = scriptErrors;
     try {
       var statements = sqlSplitter.splitStatements(script);
       for (ParsedObject<String> statement : statements) {
         localErrors = scriptErrors.atFile(statement.getFileLocation());
         sqlStatements.add(
-            new ParsedObject<>(parseStatement(statement.getObject()), statement.getFileLocation()));
+            new ParsedStatement(
+                new ParsedObject<>(
+                    parseStatement(statement.getObject()), statement.getFileLocation()),
+                statement.get()));
       }
     } catch (StatementParserException e) {
       throw localErrors.handle(e);

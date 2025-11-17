@@ -39,6 +39,7 @@ public class DagWriter {
   public static final String EXPLAIN_TEXT_FILENAME = "pipeline_explain.txt";
   public static final String EXPLAIN_VISUAL_FILENAME = "pipeline_visual.html";
   public static final String EXPLAIN_JSON_FILENAME = "pipeline_explain.json";
+  public static final String FULL_SOURCE_CODE = "pipeline_source.sqrl";
 
   public static final String VISUAL_HTML_FILENAME = "visualize_dag.html";
 
@@ -47,8 +48,9 @@ public class DagWriter {
   private final BuildPath buildDir;
   private final CompilerConfig compilerConfig;
 
-  public void run(PipelineDAG dag) {
+  public void run(PipelineDAG dag, String source) {
     writeExplain(dag);
+    writeFile(buildDir.buildDir().resolve(FULL_SOURCE_CODE), source);
   }
 
   @SneakyThrows

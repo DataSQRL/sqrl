@@ -35,10 +35,25 @@ Schema:
  - event_time: BIGINT NOT NULL
 Plan:
 LogicalTableScan(table=[[default_catalog, default_database, SensorReading]])
-SQL: CREATE VIEW `SensorReading__view`
-AS
-SELECT `SensorReading`.`sensorid`, `SensorReading`.`temperature`, `SensorReading`.`event_time`
-FROM `default_catalog`.`default_database`.`SensorReading` AS `SensorReading`
+SQL: CREATE TABLE `SensorReading` (
+  `sensorid` INTEGER NOT NULL,
+  `temperature` FLOAT NOT NULL,
+  `event_time` BIGINT NOT NULL,
+  PRIMARY KEY (`sensorid`, `event_time`) NOT ENFORCED
+) WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10',
+  'rows-per-second' = '10',
+  'fields.sensorid.kind' = 'random',
+  'fields.sensorid.min' = '1',
+  'fields.sensorid.max' = '1',
+  'fields.temperature.kind' = 'sequence',
+  'fields.temperature.start' = '20',
+  'fields.temperature.end' = '29',
+  'fields.event_time.kind' = 'sequence',
+  'fields.event_time.start' = '1750533400',
+  'fields.event_time.end' = '1750533429'
+)
 === SensorReadingById
 ID:     default_catalog.default_database.SensorReadingById
 Type:   query

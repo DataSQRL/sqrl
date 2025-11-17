@@ -74,6 +74,7 @@ import com.datasqrl.planner.parser.AccessModifier;
 import com.datasqrl.planner.parser.FlinkSQLStatement;
 import com.datasqrl.planner.parser.ParsePosUtil;
 import com.datasqrl.planner.parser.ParsedObject;
+import com.datasqrl.planner.parser.ParsedStatement;
 import com.datasqrl.planner.parser.SQLStatement;
 import com.datasqrl.planner.parser.SqlScriptStatementSplitter;
 import com.datasqrl.planner.parser.SqrlAddColumnStatement;
@@ -93,6 +94,7 @@ import com.datasqrl.planner.parser.StatementParserException;
 import com.datasqrl.planner.tables.AccessVisibility;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
 import com.datasqrl.planner.tables.SqrlTableFunction;
+import com.datasqrl.planner.util.SqlScriptWriter;
 import com.datasqrl.planner.util.SqlTableNameExtractor;
 import com.datasqrl.util.FunctionUtil;
 import com.datasqrl.util.StringUtil;
@@ -142,6 +144,9 @@ public class SqlScriptPlanner {
 
   private final ErrorCollector errorCollector;
 
+  /** Used to assemble the full script with imports as a string */
+  @Getter private final SqlScriptWriter completeScript;
+
   private final SqrlStatementParser sqrlParser;
   private final PackageJson packageJson;
   private final ExecutionPipeline pipeline;
@@ -167,6 +172,7 @@ public class SqlScriptPlanner {
       ExecutionPipeline pipeline,
       ExecutionGoal executionGoal) {
     this.errorCollector = errorCollector;
+    this.completeScript = new SqlScriptWriter();
     this.scriptContext = new ScriptContext(moduleLoader, FLINK_DEFAULT_DATABASE, true);
     this.sqrlParser = sqrlParser;
     this.packageJson = packageJson;
@@ -211,7 +217,8 @@ public class SqlScriptPlanner {
     var scriptErrors = errorCollector.withScript(mainScript.getPath(), mainScript.getContent());
     var statements = sqrlParser.parseScript(mainScript.getContent(), scriptErrors);
     List<StackableStatement> statementStack = new ArrayList<>();
-    for (ParsedObject<SQLStatement> statement : statements) {
+    for (ParsedStatement sourceStmt : statements) {
+      var statement = sourceStmt.statement();
       var lineErrors = scriptErrors.atFile(statement.getFileLocation());
       var sqlStatement = statement.get();
       try {
@@ -245,6 +252,9 @@ public class SqlScriptPlanner {
         }
         // Use registered error handlers
         throw lineErrors.handle(e);
+      }
+      if (!(sqlStatement instanceof SqrlImportStatement)) {
+        completeScript.append(sourceStmt.source());
       }
       /*Some SQRL statements extend previous statements, so we stack them to keep
       of the lineage as needed for planning
@@ -862,6 +872,7 @@ public class SqlScriptPlanner {
                 getLogEngineBuilder(hintsAndDocs));
         hintsAndDocs.hints().updateColumnNamesHints(tableAnalysis::getField);
         addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv);
+        completeScript.append(tableAnalysis.getOriginalSql());
       } catch (Throwable e) {
         throw flinkTable.errorCollector.handle(e);
       }
@@ -871,7 +882,8 @@ public class SqlScriptPlanner {
           "Expected UDF: " + fnsObject.function());
       Class<?> udfClass = fnsObject.function().getClass();
       var name = importNameModifier.apply(FunctionUtil.getFunctionName(udfClass).getDisplay());
-      sqrlEnv.addUserDefinedFunction(name, udfClass.getName(), false);
+      var sqlNode = sqrlEnv.addUserDefinedFunction(name, udfClass.getName(), false);
+      completeScript.append(sqlNode);
     } else if (nsObject instanceof ScriptNamespaceObject scriptObject) {
       final ScriptContext priorContext = scriptContext;
       scriptContext =
@@ -882,14 +894,16 @@ public class SqlScriptPlanner {
 
       if (priorContext.hasDifferentDatabase(scriptContext)) {
         // Switch DB
-        sqrlEnv.setDatabase(scriptContext.databaseName(), false);
+        var stmts = sqrlEnv.setDatabase(scriptContext.databaseName(), false);
+        completeScript.append(stmts);
       }
 
       planMain(scriptObject.getScript(), sqrlEnv);
 
       if (priorContext.hasDifferentDatabase(scriptContext)) {
         // Switch it back
-        sqrlEnv.setDatabase(priorContext.databaseName(), true);
+        var stmts = sqrlEnv.setDatabase(priorContext.databaseName(), true);
+        completeScript.append(stmts);
       }
       scriptContext = priorContext;
     } else {

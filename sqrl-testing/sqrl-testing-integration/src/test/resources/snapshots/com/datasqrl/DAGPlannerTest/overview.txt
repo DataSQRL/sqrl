@@ -60,10 +60,25 @@ Plan:
 LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
   LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($3, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
     LogicalTableScan(table=[[default_catalog, default_database, CustomerImport]])
-SQL: CREATE VIEW `CustomerImport__view`
-AS
-SELECT `CustomerImport`.`customerid`, `CustomerImport`.`email`, `CustomerImport`.`name`, `CustomerImport`.`lastUpdated`, `CustomerImport`.`timestamp`
-FROM `default_catalog`.`default_database`.`CustomerImport` AS `CustomerImport`
+SQL: CREATE TEMPORARY TABLE `CustomerImport__schema` (
+  `customerid` BIGINT NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `lastUpdated` BIGINT NOT NULL
+) WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `CustomerImport` (
+  `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`lastUpdated`, 0), CAST(TIMESTAMP '1970-01-01 00:00:00.000' AS TIMESTAMP(3) WITH LOCAL TIME ZONE)),
+  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
+  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
+) WITH (
+  'format' = 'flexible-json',
+  'path' = 'file:/mock',
+  'source.monitor-interval' = '10 sec',
+  'connector' = 'filesystem'
+)
+LIKE `CustomerImport__schema`
 === LargeOrderSubscription
 ID:     default_catalog.default_database.LargeOrderSubscription
 Type:   query
@@ -118,10 +133,24 @@ Schema:
 Plan:
 LogicalWatermarkAssigner(rowtime=[time], watermark=[-($2, 1:INTERVAL SECOND)])
   LogicalTableScan(table=[[default_catalog, default_database, Orders]])
-SQL: CREATE VIEW `Orders__view`
-AS
-SELECT `Orders`.`id`, `Orders`.`customerid`, `Orders`.`time`, `Orders`.`entries`
-FROM `default_catalog`.`default_database`.`Orders` AS `Orders`
+SQL: CREATE TEMPORARY TABLE `Orders__schema` (
+  `id` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL
+) WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `Orders` (
+  PRIMARY KEY (`id`, `time`) NOT ENFORCED,
+  WATERMARK FOR `time` AS `time` - INTERVAL '0.001' SECOND
+) WITH (
+  'format' = 'flexible-json',
+  'path' = 'file:/mock',
+  'source.monitor-interval' = '10 sec',
+  'connector' = 'filesystem'
+)
+LIKE `Orders__schema`
 === SimpleOrders
 ID:     default_catalog.default_database.SimpleOrders
 Type:   stream
@@ -141,10 +170,22 @@ Plan:
 LogicalWatermarkAssigner(rowtime=[orderTime], watermark=[-($4, 0:INTERVAL SECOND)])
   LogicalProject(_uuid=[$0], orderid=[$1], customerid=[$2], amount=[$3], orderTime=[CAST($4):TIMESTAMP_LTZ(3) *ROWTIME*])
     LogicalTableScan(table=[[default_catalog, default_database, SimpleOrders, metadata=[timestamp]]])
-SQL: CREATE VIEW `SimpleOrders__view`
-AS
-SELECT `SimpleOrders`.`_uuid`, `SimpleOrders`.`orderid`, `SimpleOrders`.`customerid`, `SimpleOrders`.`amount`, `SimpleOrders`.`orderTime`
-FROM `default_catalog`.`default_database`.`SimpleOrders` AS `SimpleOrders`
+SQL: CREATE TABLE `SimpleOrders` (
+  `_uuid` VARCHAR NOT NULL,
+  `orderid` INTEGER,
+  `customerid` BIGINT,
+  `amount` FLOAT,
+  `orderTime` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
+  WATERMARK FOR `orderTime` AS `orderTime` - INTERVAL '0.0' SECOND
+) WITH (
+  'connector' = 'kafka',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
+  'properties.auto.offset.reset' = 'earliest',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'topic' = 'kafka-mutation-SimpleOrders'
+)
 === UnnestOrders
 ID:     default_catalog.default_database.UnnestOrders
 Type:   stream

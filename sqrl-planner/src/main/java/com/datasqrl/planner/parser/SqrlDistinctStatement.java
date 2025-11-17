@@ -16,12 +16,12 @@
 package com.datasqrl.planner.parser;
 
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.engine.stream.flink.sql.RelToFlinkSql;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
 import com.datasqrl.planner.hint.PlannerHints;
 import com.datasqrl.util.CalciteUtil;
 import java.util.List;
-import java.util.stream.Collectors;
 import org.apache.calcite.rel.logical.LogicalFilter;
 import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rex.RexOver;
@@ -80,9 +80,7 @@ public class SqrlDistinctStatement extends SqrlDefinition {
           (RexOver) rowNum.getProjects().get(rowNum.getProjects().size() - 1); // last one is over
       var window = over.getWindow();
       List<Integer> partition =
-          window.partitionKeys.stream()
-              .map(n -> CalciteUtil.getInputRef(n).get())
-              .collect(Collectors.toUnmodifiableList());
+          window.partitionKeys.stream().map(n -> CalciteUtil.getInputRef(n).get()).toList();
       var collation = window.orderKeys.get(0);
       int orderIdx = CalciteUtil.getInputRef(collation.getKey()).get();
       relB.push(rowNum.getInput());
@@ -95,8 +93,8 @@ public class SqrlDistinctStatement extends SqrlDefinition {
     }
     // Filter out last field for the row number
     relB.project(CalciteUtil.getIdentityRex(relB, relB.peek().getRowType().getFieldCount() - 1));
-    var rewrittenSQL =
-        sqrlEnv.toSqlString(sqrlEnv.updateViewQuery(sqrlEnv.toSqlNode(relB.build()), view));
-    return rewrittenSQL;
+    var rewrittenSql = sqrlEnv.updateViewQuery(RelToFlinkSql.convertToSqlNode(relB.build()), view);
+
+    return RelToFlinkSql.convertToString(rewrittenSql);
   }
 }

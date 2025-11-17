@@ -150,10 +150,24 @@ Schema:
 Plan:
 LogicalWatermarkAssigner(rowtime=[event_time], watermark=[-($3, 1:INTERVAL SECOND)])
   LogicalTableScan(table=[[default_catalog, default_database, _AddInterestStream]])
-SQL: CREATE VIEW `_AddInterestStream__view`
-AS
-SELECT `_AddInterestStream`.`_uuid`, `_AddInterestStream`.`userid`, `_AddInterestStream`.`text`, `_AddInterestStream`.`event_time`
-FROM `default_catalog`.`default_database`.`_AddInterestStream` AS `_AddInterestStream`
+SQL: CREATE TEMPORARY TABLE `_AddInterestStream__schema` (
+  `_uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `userid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `text` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+) WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `_AddInterestStream` (
+  PRIMARY KEY (`_uuid`) NOT ENFORCED,
+  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.001' SECOND
+) WITH (
+  'format' = 'flexible-json',
+  'path' = '${DATA_PATH}/add_interest.jsonl',
+  'source.monitor-interval' = '1',
+  'connector' = 'filesystem'
+)
+LIKE `_AddInterestStream__schema`
 === _EventStream
 ID:     default_catalog.default_database._EventStream
 Type:   stream
@@ -176,10 +190,29 @@ Schema:
 Plan:
 LogicalWatermarkAssigner(rowtime=[last_updated], watermark=[-($7, 1:INTERVAL SECOND)])
   LogicalTableScan(table=[[default_catalog, default_database, _EventStream]])
-SQL: CREATE VIEW `_EventStream__view`
-AS
-SELECT `_EventStream`.`url`, `_EventStream`.`date`, `_EventStream`.`time`, `_EventStream`.`title`, `_EventStream`.`abstract`, `_EventStream`.`location`, `_EventStream`.`speakers`, `_EventStream`.`last_updated`
-FROM `default_catalog`.`default_database`.`_EventStream` AS `_EventStream`
+SQL: CREATE TEMPORARY TABLE `_EventStream__schema` (
+  `url` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `date` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `time` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `title` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `abstract` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `location` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `speakers` ROW(`name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`, `title` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`, `company` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`) NOT NULL ARRAY NOT NULL,
+  `last_updated` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+) WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `_EventStream` (
+  PRIMARY KEY (`url`, `last_updated`) NOT ENFORCED,
+  WATERMARK FOR `last_updated` AS `last_updated` - INTERVAL '0.001' SECOND
+) WITH (
+  'format' = 'json',
+  'path' = '${DATA_PATH}/events.jsonl',
+  'json.timestamp-format.standard' = 'ISO-8601',
+  'source.monitor-interval' = '1 sec',
+  'connector' = 'filesystem'
+)
+LIKE `_EventStream__schema`
 === _LikeVector
 ID:     default_catalog.default_database._LikeVector
 Type:   stream
@@ -225,10 +258,26 @@ Schema:
 Plan:
 LogicalWatermarkAssigner(rowtime=[event_time], watermark=[-($4, 1:INTERVAL SECOND)])
   LogicalTableScan(table=[[default_catalog, default_database, _Likes]])
-SQL: CREATE VIEW `_Likes__view`
-AS
-SELECT `_Likes`.`_uuid`, `_Likes`.`eventid`, `_Likes`.`userid`, `_Likes`.`liked`, `_Likes`.`event_time`
-FROM `default_catalog`.`default_database`.`_Likes` AS `_Likes`
+SQL: CREATE TEMPORARY TABLE `_Likes__schema` (
+  `_uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `eventid` BIGINT NOT NULL,
+  `userid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `liked` BOOLEAN NOT NULL,
+  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+) WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `_Likes` (
+  PRIMARY KEY (`_uuid`) NOT ENFORCED,
+  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.001' SECOND
+) WITH (
+  'format' = 'flexible-json',
+  'path' = '${DATA_PATH}/likes.jsonl',
+  'source.monitor-interval' = '1 sec',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'connector' = 'filesystem'
+)
+LIKE `_Likes__schema`
 === _ProcessedEventStream
 ID:     default_catalog.default_database._ProcessedEventStream
 Type:   stream
