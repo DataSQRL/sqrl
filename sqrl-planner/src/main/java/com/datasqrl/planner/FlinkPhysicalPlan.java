@@ -19,6 +19,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.database.relational.IcebergEngineFactory;
+import com.datasqrl.engine.stream.flink.sql.RelToFlinkSql;
 import com.datasqrl.planner.tables.FlinkConnectorConfig;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.collect.ImmutableList;
@@ -110,8 +111,8 @@ public class FlinkPhysicalPlan implements EnginePhysicalPlan {
       statementSets.add(new ArrayList<>());
     }
 
-    public void add(SqlNode sqlNode, Sqrl2FlinkSQLTranslator sqrlEnv) {
-      add(sqlNode, sqrlEnv.toSqlString(sqlNode));
+    public void add(SqlNode sqlNode) {
+      add(sqlNode, RelToFlinkSql.convertToString(sqlNode));
     }
 
     public void addFullyResolvedFunction(String createFunction) {

@@ -74,7 +74,7 @@ public class CompilationProcess {
         ServiceLoaderDiscovery.getAll(PhysicalPlanRewriter.class);
     physicalPlan = physicalPlan.applyRewriting(rewriters, environment);
 
-    writeDeploymentArtifactsHook.run(dag);
+    writeDeploymentArtifactsHook.run(dag, planner.getCompleteScript().toString());
 
     TestPlan testPlan = null;
     // There can only be a single server plan

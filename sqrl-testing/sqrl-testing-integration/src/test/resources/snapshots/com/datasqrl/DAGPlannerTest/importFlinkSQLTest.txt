@@ -15,10 +15,18 @@ Plan:
 LogicalWatermarkAssigner(rowtime=[updateTime], watermark=[-($3, 1:INTERVAL SECOND)])
   LogicalProject(categoryid=[$0], name=[$1], description=[$2], updateTime=[NOW()])
     LogicalTableScan(table=[[default_catalog, default_database, Category]])
-SQL: CREATE VIEW `Category__view`
-AS
-SELECT `Category`.`categoryid`, `Category`.`name`, `Category`.`description`, `Category`.`updateTime`
-FROM `default_catalog`.`default_database`.`Category` AS `Category`
+SQL: CREATE TABLE `Category` (
+  `categoryid` INTEGER NOT NULL,
+  `name` STRING NOT NULL,
+  `description` STRING,
+  `updateTime` AS NOW(),
+  WATERMARK FOR `updateTime` AS `updateTime` - INTERVAL '0.001' SECOND
+) WITH (
+  'format' = 'flexible-json',
+  'path' = 'file:/mock',
+  'source.monitor-interval' = '10 sec',
+  'connector' = 'filesystem'
+)
 === CategoryDistinct
 ID:     default_catalog.default_database.CategoryDistinct
 Type:   state
