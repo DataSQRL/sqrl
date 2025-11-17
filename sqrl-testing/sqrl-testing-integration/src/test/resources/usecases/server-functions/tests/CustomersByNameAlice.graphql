@@ -1,5 +1,5 @@
 query {
-  CustomersByName(inputName:"Aliceasd") {
+  CustomersByName(inputName: "Aliceasd") {
     customerid
     name
   }

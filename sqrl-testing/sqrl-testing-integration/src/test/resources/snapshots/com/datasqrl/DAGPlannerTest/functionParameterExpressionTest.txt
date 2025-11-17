@@ -425,10 +425,6 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerVectorEmbed_2`
               },
               {
                 "type" : "variable",
-                "path" : "shortName"
-              },
-              {
-                "type" : "variable",
                 "path" : "offset"
               },
               {
@@ -561,9 +557,6 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerVectorEmbed_2`
                 "limit" : {
                   "type" : "integer"
                 },
-                "shortName" : {
-                  "type" : "string"
-                },
                 "inputName" : {
                   "type" : "string"
                 }
@@ -575,13 +568,13 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerVectorEmbed_2`
           },
           "format" : "JSON",
           "apiQuery" : {
-            "query" : "query CustomersByName($inputName: String!, $shortName: String, $limit: Int = 10, $offset: Int = 0) {\nCustomersByName(inputName: $inputName, shortName: $shortName, limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+            "query" : "query CustomersByName($inputName: String!, $limit: Int = 10, $offset: Int = 0) {\nCustomersByName(inputName: $inputName, limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
             "queryName" : "CustomersByName",
             "operationType" : "QUERY"
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/CustomersByName{?offset,limit,shortName,inputName}"
+          "uriTemplate" : "queries/CustomersByName{?offset,limit,inputName}"
         },
         {
           "function" : {
@@ -617,7 +610,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerVectorEmbed_2`
       ],
       "schema" : {
         "type" : "string",
-        "schema" : "type Customer {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\ntype CustomerVectorEmbed {\n  customerid: Long!\n  name: String!\n}\n\ntype CustomersByVector {\n  customerid: Long!\n  name: String!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerVectorEmbed(limit: Int = 10, offset: Int = 0): [CustomerVectorEmbed!]\n  CustomersByName(inputName: String!, shortName: String, limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomersByVector(name: String!, limit: Int = 10, offset: Int = 0): [CustomersByVector!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+        "schema" : "type Customer {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\ntype CustomerVectorEmbed {\n  customerid: Long!\n  name: String!\n}\n\ntype CustomersByVector {\n  customerid: Long!\n  name: String!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerVectorEmbed(limit: Int = 10, offset: Int = 0): [CustomerVectorEmbed!]\n  CustomersByName(inputName: String!, limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomersByVector(name: String!, limit: Int = 10, offset: Int = 0): [CustomersByVector!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
     }
   }

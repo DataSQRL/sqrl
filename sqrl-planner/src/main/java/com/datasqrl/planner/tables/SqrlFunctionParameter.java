@@ -72,6 +72,6 @@ public class SqrlFunctionParameter implements FunctionParameter {
   }
 
   public boolean isExternalArgument() {
-    return !isParentField && metadata.isEmpty();
+    return !isParentField && metadata.isEmpty() && function.isEmpty();
   }
 }

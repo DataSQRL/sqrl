@@ -1,0 +1,32 @@
+{
+  "data" : {
+    "CustomersById" : [ {
+      "customerid" : 1,
+      "name" : "Alice Smith"
+    }, {
+      "customerid" : 2,
+      "name" : "Bob Jones"
+    }, {
+      "customerid" : 3,
+      "name" : "Carol Miller"
+    }, {
+      "customerid" : 4,
+      "name" : "David Wilson"
+    }, {
+      "customerid" : 5,
+      "name" : "Emily Brown"
+    }, {
+      "customerid" : 6,
+      "name" : "Frank Moore"
+    }, {
+      "customerid" : 7,
+      "name" : "Grace Taylor"
+    }, {
+      "customerid" : 8,
+      "name" : "Henry Anderson"
+    }, {
+      "customerid" : 9,
+      "name" : "Isabella Thomas"
+    } ]
+  }
+}
