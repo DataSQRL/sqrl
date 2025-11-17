@@ -755,11 +755,11 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerCumulate_2`
             "arguments" : [
               {
                 "type" : "variable",
-                "path" : "offset"
+                "path" : "limit"
               },
               {
                 "type" : "variable",
-                "path" : "limit"
+                "path" : "offset"
               }
             ],
             "query" : {
@@ -780,11 +780,11 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerCumulate_2`
             "arguments" : [
               {
                 "type" : "variable",
-                "path" : "offset"
+                "path" : "limit"
               },
               {
                 "type" : "variable",
-                "path" : "limit"
+                "path" : "offset"
               }
             ],
             "query" : {
@@ -805,11 +805,11 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerCumulate_2`
             "arguments" : [
               {
                 "type" : "variable",
-                "path" : "offset"
+                "path" : "limit"
               },
               {
                 "type" : "variable",
-                "path" : "limit"
+                "path" : "offset"
               }
             ],
             "query" : {
@@ -830,11 +830,11 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerCumulate_2`
             "arguments" : [
               {
                 "type" : "variable",
-                "path" : "offset"
+                "path" : "limit"
               },
               {
                 "type" : "variable",
-                "path" : "limit"
+                "path" : "offset"
               }
             ],
             "query" : {
@@ -855,11 +855,11 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerCumulate_2`
             "arguments" : [
               {
                 "type" : "variable",
-                "path" : "offset"
+                "path" : "limit"
               },
               {
                 "type" : "variable",
-                "path" : "limit"
+                "path" : "offset"
               }
             ],
             "query" : {
@@ -880,11 +880,11 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerCumulate_2`
             "arguments" : [
               {
                 "type" : "variable",
-                "path" : "offset"
+                "path" : "limit"
               },
               {
                 "type" : "variable",
-                "path" : "limit"
+                "path" : "offset"
               }
             ],
             "query" : {

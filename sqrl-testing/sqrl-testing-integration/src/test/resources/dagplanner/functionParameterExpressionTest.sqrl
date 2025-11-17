@@ -1,0 +1,12 @@
+IMPORT ecommerceTs.customer;
+
+CustomersByName(inputName STRING NOT NULL, shortName AS LEFT(hash_columns(inputName), 5)) :=
+    SELECT * FROM Customer WHERE name LIKE :shortName;
+
+IMPORT stdlib.openai.vector_embed;
+
+CustomerVectorEmbed := SELECT customerid, name, vector_embed(name, 'test-model') AS name_vector
+                       FROM Customer;
+
+CustomersByVector(name STRING NOT NULL, vector AS vector_embed(name, 'test-model')) :=
+                SELECT * FROM CustomerVectorEmbed ORDER BY cosine_similarity(:vector, name_vector) DESC;

@@ -21,6 +21,7 @@ import com.datasqrl.graphql.jdbc.JdbcClient;
 import com.datasqrl.graphql.jdbc.VertxJdbcClient;
 import com.datasqrl.graphql.jdbc.VertxQueryExecutionContext;
 import com.datasqrl.graphql.server.Context;
+import com.datasqrl.graphql.server.FunctionExecutor;
 import com.datasqrl.graphql.server.GraphQLEngineBuilder;
 import com.datasqrl.graphql.server.MetadataReader;
 import com.datasqrl.graphql.server.MetadataType;
@@ -39,17 +40,14 @@ import lombok.NonNull;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * Purpose: Implements Context for Vert.x, providing SQL clients and data fetchers. Collaboration:
- * Uses {@link VertxJdbcClient} for database operations and {@link NameCanonicalizer} for name
- * handling.
- */
+/** Implements {@link Context} for Vert.x, providing SQL clients and data fetchers. */
 @Slf4j
 @Value
 public class VertxContext implements Context {
 
   VertxJdbcClient sqlClient;
   Map<MetadataType, MetadataReader> metadataReaders;
+  FunctionExecutor functionExecutor;
 
   @Override
   public JdbcClient getClient() {
@@ -108,5 +106,10 @@ public class VertxContext implements Context {
   @Override
   public MetadataReader getMetadataReader(@NonNull MetadataType metadataType) {
     return checkNotNull(metadataReaders.get(metadataType), "Invalid metadataType %s", metadataType);
+  }
+
+  @Override
+  public FunctionExecutor getFunctionExecutor() {
+    return functionExecutor;
   }
 }

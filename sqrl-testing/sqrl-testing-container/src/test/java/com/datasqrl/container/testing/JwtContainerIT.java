@@ -15,11 +15,6 @@
  */
 package com.datasqrl.container.testing;
 
-import static com.datasqrl.env.EnvVariableNames.KAFKA_BOOTSTRAP_SERVERS;
-import static com.datasqrl.env.EnvVariableNames.POSTGRES_DATABASE;
-import static com.datasqrl.env.EnvVariableNames.POSTGRES_HOST;
-import static com.datasqrl.env.EnvVariableNames.POSTGRES_PASSWORD;
-import static com.datasqrl.env.EnvVariableNames.POSTGRES_USERNAME;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -35,8 +30,9 @@ import io.jsonwebtoken.Jwts;
 import io.modelcontextprotocol.client.McpClient;
 import io.modelcontextprotocol.client.transport.HttpClientStreamableHttpTransport;
 import io.modelcontextprotocol.spec.McpSchema;
-import java.nio.file.Path;
 import java.security.KeyPairGenerator;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -48,10 +44,9 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.util.EntityUtils;
 import org.junit.jupiter.api.Test;
-import org.testcontainers.containers.PostgreSQLContainer;
 
 @Slf4j
-public class JwtContainerIT extends SqrlContainerTestBase {
+public class JwtContainerIT extends SqrlWithPostgresContainerTestBase {
 
   // Response types for REST endpoints
   static class MyTableItem {
@@ -72,69 +67,25 @@ public class JwtContainerIT extends SqrlContainerTestBase {
     MyTableResponse getAuthMyTableWithAuth(@Param("token") String token, @Param("limit") int limit);
   }
 
-  private PostgreSQLContainer<?> postgresql;
-
   @Override
   protected String getTestCaseName() {
     return "jwt-authorized";
   }
 
-  private void startPostgreSQLContainer() {
-    if (postgresql == null) {
-      postgresql =
-          new PostgreSQLContainer<>("postgres:17")
-              .withDatabaseName("datasqrl")
-              .withUsername("datasqrl")
-              .withPassword("password")
-              .withNetwork(sharedNetwork)
-              .withNetworkAliases("postgresql");
-      postgresql.start();
-      log.info("PostgreSQL container started on port {}", postgresql.getMappedPort(5432));
-      createTestTables();
-    }
-  }
-
-  @SneakyThrows
-  private void createTestTables() {
-    // Create and populate tables as defined in jwt-authorized-base.sqrl
-    try (var connection = postgresql.createConnection("")) {
-      try (var stmt = connection.createStatement()) {
-        // Create MyTable and populate with values 1-10
-        stmt.execute("CREATE TABLE IF NOT EXISTS \"MyTable\" (val INTEGER)");
-        stmt.execute(
-            "INSERT INTO \"MyTable\" (val) VALUES (1), (2), (3), (4), (5), (6), (7), (8), (9), (10)");
-
-        // Create MyStringTable and populate with 'a', 'b', 'c', 'd'
-        stmt.execute("CREATE TABLE IF NOT EXISTS \"MyStringTable\" (val VARCHAR(1))");
-        stmt.execute("INSERT INTO \"MyStringTable\" (val) VALUES ('a'), ('b'), ('c'), ('d')");
-
-        log.info("Test tables created and populated successfully");
-      }
-    }
-  }
-
-  private void compileAndStartServerWithDatabase(String scriptName, Path testDir) {
-    startPostgreSQLContainer();
-    compileSqrlScript(scriptName, testDir);
-    startGraphQLServer(
-        testDir,
-        container -> {
-          container
-              .withEnv(POSTGRES_HOST, "postgresql")
-              .withEnv(POSTGRES_USERNAME, postgresql.getUsername())
-              .withEnv(POSTGRES_PASSWORD, postgresql.getPassword())
-              .withEnv(POSTGRES_DATABASE, postgresql.getDatabaseName())
-              .withEnv(KAFKA_BOOTSTRAP_SERVERS, "localhost:9092");
-        });
-  }
-
   @Override
-  protected void commonTearDown() {
-    super.commonTearDown();
-    if (postgresql != null) {
-      postgresql.stop();
-      postgresql = null;
-    }
+  protected void executeStatements(Statement stmt) throws SQLException {
+    // Create and populate tables as defined in jwt-authorized-base.sqrl
+
+    // Create MyTable and populate with values 1-10
+    stmt.execute("CREATE TABLE IF NOT EXISTS \"MyTable\" (val INTEGER)");
+    stmt.execute(
+        "INSERT INTO \"MyTable\" (val) VALUES (1), (2), (3), (4), (5), (6), (7), (8), (9), (10)");
+
+    // Create MyStringTable and populate with 'a', 'b', 'c', 'd'
+    stmt.execute("CREATE TABLE IF NOT EXISTS \"MyStringTable\" (val VARCHAR(1))");
+    stmt.execute("INSERT INTO \"MyStringTable\" (val) VALUES ('a'), ('b'), ('c'), ('d')");
+
+    log.info("Test tables created and populated successfully");
   }
 
   @Test

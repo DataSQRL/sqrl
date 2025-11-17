@@ -192,11 +192,11 @@ CREATE TABLE IF NOT EXISTS "MyTableDifferentCase" ("val" INTEGER NOT NULL, "fn" 
             "arguments" : [
               {
                 "type" : "variable",
-                "path" : "offset"
+                "path" : "limit"
               },
               {
                 "type" : "variable",
-                "path" : "limit"
+                "path" : "offset"
               }
             ],
             "query" : {
@@ -217,11 +217,11 @@ CREATE TABLE IF NOT EXISTS "MyTableDifferentCase" ("val" INTEGER NOT NULL, "fn" 
             "arguments" : [
               {
                 "type" : "variable",
-                "path" : "offset"
+                "path" : "limit"
               },
               {
                 "type" : "variable",
-                "path" : "limit"
+                "path" : "offset"
               }
             ],
             "query" : {
@@ -242,11 +242,11 @@ CREATE TABLE IF NOT EXISTS "MyTableDifferentCase" ("val" INTEGER NOT NULL, "fn" 
             "arguments" : [
               {
                 "type" : "variable",
-                "path" : "offset"
+                "path" : "limit"
               },
               {
                 "type" : "variable",
-                "path" : "limit"
+                "path" : "offset"
               }
             ],
             "query" : {
@@ -267,11 +267,11 @@ CREATE TABLE IF NOT EXISTS "MyTableDifferentCase" ("val" INTEGER NOT NULL, "fn" 
             "arguments" : [
               {
                 "type" : "variable",
-                "path" : "offset"
+                "path" : "limit"
               },
               {
                 "type" : "variable",
-                "path" : "limit"
+                "path" : "offset"
               }
             ],
             "query" : {

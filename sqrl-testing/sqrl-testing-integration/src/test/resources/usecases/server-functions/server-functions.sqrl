@@ -1,0 +1,7 @@
+IMPORT ecommerce.customers;
+
+CustomersByName(inputName STRING NOT NULL, shortName AS CONCAT(LEFT(inputName, 3), '%')) :=
+    SELECT * FROM Customers WHERE name LIKE :shortName;
+
+CustomersById(a BIGINT NOT NULL, b BIGINT NOT NULL, modId AS MOD(a, b)) :=
+    SELECT * FROM Customers WHERE customerid < :modId ORDER BY customerid;

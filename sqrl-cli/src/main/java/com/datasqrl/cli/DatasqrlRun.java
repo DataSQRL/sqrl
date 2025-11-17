@@ -295,7 +295,7 @@ public class DatasqrlRun {
     var baseServerConfig = ServerConfigUtil.fromConfigMap(json);
 
     var serverConfig = ServerConfigUtil.mergeConfigs(baseServerConfig, vertxConfig());
-    var serverVerticle = new HttpServerVerticle(serverConfig, rootGraphqlModel);
+    var serverVerticle = new HttpServerVerticle(serverConfig, rootGraphqlModel, planDir);
     var prometheusMeterRegistry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
     var metricsOptions =
         new MicrometerMetricsFactory(prometheusMeterRegistry).newOptions().setEnabled(true);

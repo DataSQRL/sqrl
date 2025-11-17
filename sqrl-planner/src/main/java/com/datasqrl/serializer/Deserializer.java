@@ -16,6 +16,7 @@
 package com.datasqrl.serializer;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
@@ -25,6 +26,8 @@ import io.vertx.core.json.jackson.VertxModule;
 import java.io.IOException;
 import java.nio.file.Path;
 import lombok.Getter;
+import org.apache.flink.table.types.logical.LogicalType;
+import org.apache.flink.table.types.logical.RowType;
 
 @Getter
 public class Deserializer {
@@ -41,7 +44,9 @@ public class Deserializer {
             .registerModule(new JavaTimeModule())
             .registerModule(new VertxModule())
             .registerModule(module)
-            .setSerializationInclusion(JsonInclude.Include.NON_NULL);
+            .setSerializationInclusion(JsonInclude.Include.NON_NULL)
+            .addMixIn(LogicalType.class, AlphabeticMixin.class)
+            .addMixIn(RowType.RowField.class, AlphabeticMixin.class);
 
     yamlMapper = new YAMLMapper();
     yamlMapper
@@ -103,4 +108,7 @@ public class Deserializer {
     var writer = yamlMapper.writer().withDefaultPrettyPrinter();
     writer.writeValue(file.toFile(), object);
   }
+
+  @JsonPropertyOrder(alphabetic = true)
+  private interface AlphabeticMixin {}
 }

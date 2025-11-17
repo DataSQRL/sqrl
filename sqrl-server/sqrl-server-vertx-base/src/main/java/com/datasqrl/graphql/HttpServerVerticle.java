@@ -18,6 +18,7 @@ package com.datasqrl.graphql;
 import com.datasqrl.graphql.config.CorsHandlerOptions;
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.config.ServerConfigUtil;
+import com.datasqrl.graphql.exec.FlinkExecFunctionPlan;
 import com.datasqrl.graphql.server.ModelContainer;
 import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.graphql.server.operation.ApiOperation;
@@ -41,11 +42,14 @@ import io.vertx.ext.web.handler.LoggerHandler;
 import io.vertx.ext.web.healthchecks.HealthCheckHandler;
 import io.vertx.micrometer.backends.BackendRegistries;
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
@@ -67,6 +71,8 @@ public class HttpServerVerticle extends AbstractVerticle {
   /** Server model */
   private Map<String, RootGraphqlModel> models;
 
+  @Nullable private Path configDir;
+
   // ---------------------------------------------------------------------------
   // Lifecyle
   // ---------------------------------------------------------------------------
@@ -75,11 +81,14 @@ public class HttpServerVerticle extends AbstractVerticle {
   public HttpServerVerticle() {
     this.config = null;
     this.models = null;
+    this.configDir = null;
   }
 
-  public HttpServerVerticle(ServerConfig config, Map<String, RootGraphqlModel> models) {
+  public HttpServerVerticle(
+      ServerConfig config, Map<String, RootGraphqlModel> models, @Nullable Path configDir) {
     this.config = config;
     this.models = models;
+    this.configDir = configDir;
   }
 
   @Override
@@ -230,9 +239,16 @@ public class HttpServerVerticle extends AbstractVerticle {
       log.info("JWT authentication disabled - no JWT configuration found");
     }
 
-    var graphQLVerticle = new GraphQLServerVerticle(router, config, modelVersion, model, jwtOpt);
+    var execFunctionPlan = loadExecFunctionPlan();
+    if (execFunctionPlan.isPresent()) {
+      log.info("Exec function plan loaded");
+    }
+
+    var graphQLVerticle =
+        new GraphQLServerVerticle(router, config, modelVersion, model, jwtOpt, execFunctionPlan);
     var hasMcp = model.getOperations().stream().anyMatch(ApiOperation::isMcpEndpoint);
     var hasRest = model.getOperations().stream().anyMatch(ApiOperation::isRestEndpoint);
+
     return vertx
         .deployVerticle(graphQLVerticle, childOpts)
         .onSuccess(
@@ -299,6 +315,17 @@ public class HttpServerVerticle extends AbstractVerticle {
               }
             });
     return promise.future();
+  }
+
+  private Optional<FlinkExecFunctionPlan> loadExecFunctionPlan() {
+    var parent = configDir != null ? configDir : Path.of(".");
+    var planFile = parent.resolve("vertx-exec-functions.ser");
+
+    if (!Files.exists(planFile)) {
+      return Optional.empty();
+    }
+
+    return Optional.of(FlinkExecFunctionPlan.deserialize(planFile));
   }
 
   private void registerJvmMetrics(PrometheusMeterRegistry registry) {

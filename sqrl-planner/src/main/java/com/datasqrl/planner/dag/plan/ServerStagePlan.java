@@ -16,21 +16,15 @@
 package com.datasqrl.planner.dag.plan;
 
 import com.datasqrl.engine.ExecutionEngine;
+import com.datasqrl.graphql.exec.FlinkExecFunctionFactory;
 import com.datasqrl.planner.tables.SqrlTableFunction;
 import java.util.List;
 import lombok.Builder;
 import lombok.Singular;
-import lombok.Value;
 
-@Value
 @Builder
-public class ServerStagePlan {
-
-  ExecutionEngine serverEngine;
-
-  /** All accessible functions */
-  @Singular List<SqrlTableFunction> functions;
-
-  /** All mutations */
-  @Singular List<MutationQuery> mutations;
-}
+public record ServerStagePlan(
+    ExecutionEngine serverEngine,
+    FlinkExecFunctionFactory execFnFactory,
+    @Singular List<SqrlTableFunction> functions,
+    @Singular List<MutationQuery> mutations) {}

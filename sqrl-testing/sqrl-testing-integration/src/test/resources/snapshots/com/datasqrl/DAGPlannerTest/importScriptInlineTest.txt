@@ -355,11 +355,11 @@ INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
             "arguments" : [
               {
                 "type" : "variable",
-                "path" : "offset"
+                "path" : "limit"
               },
               {
                 "type" : "variable",
-                "path" : "limit"
+                "path" : "offset"
               }
             ],
             "query" : {
@@ -380,11 +380,11 @@ INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
             "arguments" : [
               {
                 "type" : "variable",
-                "path" : "offset"
+                "path" : "limit"
               },
               {
                 "type" : "variable",
-                "path" : "limit"
+                "path" : "offset"
               }
             ],
             "query" : {
@@ -405,7 +405,7 @@ INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
             "arguments" : [
               {
                 "type" : "variable",
-                "path" : "machineid"
+                "path" : "limit"
               },
               {
                 "type" : "variable",
@@ -413,7 +413,7 @@ INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
               },
               {
                 "type" : "variable",
-                "path" : "limit"
+                "path" : "machineid"
               }
             ],
             "query" : {

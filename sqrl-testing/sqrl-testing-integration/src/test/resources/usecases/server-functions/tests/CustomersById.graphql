@@ -1,0 +1,6 @@
+query {
+  CustomersById(a: 10, b: 20) {
+    customerid
+    name
+  }
+}
