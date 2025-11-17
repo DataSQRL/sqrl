@@ -249,7 +249,7 @@ public class HttpServerVerticle extends AbstractVerticle {
     var hasMcp = model.getOperations().stream().anyMatch(ApiOperation::isMcpEndpoint);
     var hasRest = model.getOperations().stream().anyMatch(ApiOperation::isRestEndpoint);
 
-   return vertx
+    return vertx
         .deployVerticle(graphQLVerticle, childOpts)
         .onSuccess(
             graphQLDeploymentId -> {
