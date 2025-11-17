@@ -163,20 +163,29 @@ public class HttpServerVerticle extends AbstractVerticle {
     // ── Health checks ────────────────────────────────────────────────────────
     router.get("/health*").handler(HealthCheckHandler.create(vertx));
 
-    // Deploy GraphQL verticle first
+    // Deploy GraphQL verticles and collect futures
+    var deploymentFutures = new ArrayList<Future<String>>();
     for (var modelEntry : models.entrySet()) {
-      deployVersionedModel(router, modelEntry.getKey(), modelEntry.getValue());
+      var deploymentFuture =
+          deployVersionedModel(router, modelEntry.getKey(), modelEntry.getValue());
+      deploymentFutures.add(deploymentFuture);
     }
 
-    // ── Start the HTTP server ────────────────────────────────────────────────
-    vertx
-        .createHttpServer(config.getHttpServerOptions())
-        .requestHandler(router)
-        .listen(config.getHttpServerOptions().getPort())
+    // Wait for all GraphQL verticles to deploy, then start HTTP server
+    Future.all(deploymentFutures)
         .onSuccess(
-            srv -> {
-              log.info("HTTP server listening on port {}", srv.actualPort());
-              startPromise.complete();
+            compositeFuture -> {
+              // ── Start the HTTP server ────────────────────────────────────────────────
+              vertx
+                  .createHttpServer(config.getHttpServerOptions())
+                  .requestHandler(router)
+                  .listen(config.getHttpServerOptions().getPort())
+                  .onSuccess(
+                      srv -> {
+                        log.info("HTTP server listening on port {}", srv.actualPort());
+                        startPromise.complete();
+                      })
+                  .onFailure(startPromise::fail);
             })
         .onFailure(startPromise::fail);
   }
@@ -204,7 +213,8 @@ public class HttpServerVerticle extends AbstractVerticle {
         "Unable to register metrics to: " + registry.getClass().getSimpleName());
   }
 
-  private void deployVersionedModel(Router router, String modelVersion, RootGraphqlModel model) {
+  private Future<String> deployVersionedModel(
+      Router router, String modelVersion, RootGraphqlModel model) {
     var childOpts = new DeploymentOptions().setInstances(1);
 
     // inside bootstrap() in HttpServerVerticle
@@ -223,7 +233,7 @@ public class HttpServerVerticle extends AbstractVerticle {
     var graphQLVerticle = new GraphQLServerVerticle(router, config, modelVersion, model, jwtOpt);
     var hasMcp = model.getOperations().stream().anyMatch(ApiOperation::isMcpEndpoint);
     var hasRest = model.getOperations().stream().anyMatch(ApiOperation::isRestEndpoint);
-    vertx
+    return vertx
         .deployVerticle(graphQLVerticle, childOpts)
         .onSuccess(
             graphQLDeploymentId -> {
