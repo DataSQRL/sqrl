@@ -73,7 +73,8 @@ public class VertxContainerIT extends SqrlContainerTestBase {
     var randomRequest = new HttpPost(getBaseUrl() + randomPath);
     randomRequest.setEntity(new StringEntity(testBody, ContentType.APPLICATION_JSON));
 
-    sharedHttpClient.execute(randomRequest);
+    var randomResponse = sharedHttpClient.execute(randomRequest);
+    EntityUtils.consume(randomResponse.getEntity());
 
     assertTraceLogContains("ReqBody:", testBody, randomPath);
 

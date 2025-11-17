@@ -132,8 +132,8 @@ public abstract class SqrlContainerTestBase {
         .withFileSystemBind(deployPlanPath.toString(), "/opt/sqrl/config", BindMode.READ_ONLY)
         .withEnv("SQRL_DEBUG", "1")
         .waitingFor(
-            Wait.forLogMessage(".*GraphQL verticle deployed successfully.*", 1)
-                .withStartupTimeout(Duration.ofSeconds(20)));
+            Wait.forLogMessage(".*HTTP server listening on port 8888.*", 1)
+                .withStartupTimeout(Duration.ofSeconds(30)));
   }
 
   protected void compileSqrlScript(String scriptName, Path workingDir) {
