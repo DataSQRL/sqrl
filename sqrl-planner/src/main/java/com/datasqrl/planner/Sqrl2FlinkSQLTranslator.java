@@ -269,18 +269,6 @@ public class Sqrl2FlinkSQLTranslator {
     return parsed.get(0);
   }
 
-  public SqlNode toSqlNode(RelNode relNode) {
-    return RelToFlinkSql.convertToSqlNode(relNode);
-  }
-
-  public List<String> toSqlString(List<? extends SqlNode> sqlNode) {
-    return sqlNode.stream().map(this::toSqlString).toList();
-  }
-
-  public String toSqlString(SqlNode sqlNode) {
-    return RelToFlinkSql.convertToString(sqlNode);
-  }
-
   /**
    * Builds the statement set and compiles the plan for Flink which is the final component needed
    * for the {@link FlinkPhysicalPlan}.
@@ -294,7 +282,7 @@ public class Sqrl2FlinkSQLTranslator {
       throw new UnsupportedOperationException("Multiple batches are only supported in BATCH mode");
     }
 
-    var insert = toSqlString(execute);
+    var insert = RelToFlinkSql.convertToSqlString(execute);
     planBuilder.add(execute, insert);
 
     var compiledPlan = Optional.<CompiledPlan>empty();
@@ -425,20 +413,23 @@ public class Sqrl2FlinkSQLTranslator {
   }
 
   public List<String> setDatabase(String databaseName, boolean withCatalog) {
-    List<String> allStmts = new ArrayList<>();
+    var allStmts = new ArrayList<String>();
     if (withCatalog) {
       var stmt = "USE CATALOG `%s`;".formatted(FLINK_DEFAULT_CATALOG);
       executeSQL(stmt);
       allStmts.add(stmt);
     }
+
     if (createdDatabases.add(databaseName)) {
       var stmt = "CREATE DATABASE IF NOT EXISTS `%s`;".formatted(databaseName);
       executeSQL(stmt);
       allStmts.add(stmt);
     }
+
     var stmt = "USE `%s`;".formatted(databaseName);
     executeSQL(stmt);
     allStmts.add(stmt);
+
     return allStmts;
   }
 
@@ -655,7 +646,7 @@ public class Sqrl2FlinkSQLTranslator {
       RelNode relNode,
       List<FunctionParameter> parameters,
       TableAnalysis baseTable) {
-    var sql = toSqlString(toSqlNode(relNode));
+    var sql = RelToFlinkSql.convertToString(RelToFlinkSql.convertToSqlNode(relNode));
     var tableAnalysis =
         TableAnalysis.builder()
             .originalRelnode(relNode)
@@ -850,7 +841,7 @@ public class Sqrl2FlinkSQLTranslator {
             FlinkSqlNodeFactory.createTable(
                 schemaTableName, schema.get().type(), connectorOptions, true);
         executeSqlNode(schemaTable);
-        completeCreateTableSql += toSqlString(schemaTable) + ";\n";
+        completeCreateTableSql += RelToFlinkSql.convertToString(schemaTable) + ";\n";
 
         likeClause =
             new SqlTableLike(
@@ -961,7 +952,7 @@ public class Sqrl2FlinkSQLTranslator {
             connector.getTableType(),
             pk);
     tableLookup.registerTable(tableAnalysis);
-    completeCreateTableSql += toSqlString(fullTable);
+    completeCreateTableSql += RelToFlinkSql.convertToString(fullTable);
     return new AddTableResult(
         finalTableName, tableId, connector.isSourceConnector(), fullTable, completeCreateTableSql);
   }
@@ -977,7 +968,7 @@ public class Sqrl2FlinkSQLTranslator {
 
   public void insertInto(
       RelNode relNode, ObjectIdentifier sinkTableId, @Nullable Integer batchIdx) {
-    var selectQuery = toSqlNode(relNode);
+    var selectQuery = RelToFlinkSql.convertToSqlNode(relNode);
     planBuilder.addInsert(FlinkSqlNodeFactory.createInsert(selectQuery, sinkTableId), batchIdx);
   }
 
@@ -1020,7 +1011,7 @@ public class Sqrl2FlinkSQLTranslator {
           FlinkSqlNodeFactory.createFunction(
               FlinkSqlNodeFactory.identifier(operation.getFunctionIdentifier()), clazz, isSystem);
     }
-    planBuilder.addFullyResolvedFunction(toSqlString(functionSql));
+    planBuilder.addFullyResolvedFunction(RelToFlinkSql.convertToString(functionSql));
     return functionSql;
   }
 
@@ -1129,7 +1120,7 @@ public class Sqrl2FlinkSQLTranslator {
   }
 
   public Operation executeSqlNode(SqlNode sqlNode) {
-    planBuilder.add(sqlNode, this);
+    planBuilder.add(sqlNode);
     var operation = getOperation(sqlNode);
     checkResultOk(tEnv.executeInternal(operation));
     return operation;

@@ -94,6 +94,7 @@ import com.datasqrl.planner.parser.StatementParserException;
 import com.datasqrl.planner.tables.AccessVisibility;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
 import com.datasqrl.planner.tables.SqrlTableFunction;
+import com.datasqrl.planner.util.SqlScriptWriter;
 import com.datasqrl.planner.util.SqlTableNameExtractor;
 import com.datasqrl.util.FunctionUtil;
 import com.datasqrl.util.StringUtil;
@@ -102,7 +103,6 @@ import com.google.inject.Inject;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -117,7 +117,6 @@ import lombok.Getter;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.schema.FunctionParameter;
-import org.apache.calcite.sql.SqlNode;
 import org.apache.flink.sql.parser.ddl.SqlAlterTable;
 import org.apache.flink.sql.parser.ddl.SqlAlterView;
 import org.apache.flink.sql.parser.ddl.SqlAlterViewAs;
@@ -145,6 +144,9 @@ public class SqlScriptPlanner {
 
   private final ErrorCollector errorCollector;
 
+  /** Used to assemble the full script with imports as a string */
+  @Getter private final SqlScriptWriter completeScript;
+
   private final SqrlStatementParser sqrlParser;
   private final PackageJson packageJson;
   private final ExecutionPipeline pipeline;
@@ -161,9 +163,6 @@ public class SqlScriptPlanner {
   /** Manages the context of the script that is processed, adjusted for imports */
   private ScriptContext scriptContext;
 
-  /** Used to assemble the full script with imports as a string */
-  @Getter private final ScriptWriter completeScript;
-
   @Inject
   public SqlScriptPlanner(
       ErrorCollector errorCollector,
@@ -173,8 +172,8 @@ public class SqlScriptPlanner {
       ExecutionPipeline pipeline,
       ExecutionGoal executionGoal) {
     this.errorCollector = errorCollector;
+    this.completeScript = new SqlScriptWriter();
     this.scriptContext = new ScriptContext(moduleLoader, FLINK_DEFAULT_DATABASE, true);
-    this.completeScript = new ScriptWriter();
     this.sqrlParser = sqrlParser;
     this.packageJson = packageJson;
     this.pipeline = pipeline;
@@ -1167,32 +1166,6 @@ public class SqlScriptPlanner {
 
     public ObjectIdentifier toIdentifier(Name name) {
       return toIdentifier(name.getDisplay());
-    }
-  }
-
-  public static class ScriptWriter {
-
-    private StringBuffer result = new StringBuffer();
-
-    public void append(String stmt) {
-      if (stmt.endsWith(";")) stmt = stmt + "\n";
-      else if (stmt.trim().endsWith(";")) stmt = stmt; // do nothing
-      else stmt = stmt + ";\n";
-      result.append(stmt);
-    }
-
-    public void append(SqlNode sqlNode) {
-      append(sqlNode.toString());
-    }
-
-    public void append(Collection<String> stmts) {
-      for (String stmt : stmts) {
-        append(stmt);
-      }
-    }
-
-    public String getScript() {
-      return result.toString();
     }
   }
 }
