@@ -267,7 +267,8 @@ public class HttpServerVerticle extends AbstractVerticle {
             })
         .onFailure(
             err -> {
-              log.error("Failed to deploy GraphQL verticle: {}", err.getMessage(), err);
+              log.error("Failed to deploy GraphQL verticle, shutting down application", err);
+              System.exit(1);
             });
   }
 
