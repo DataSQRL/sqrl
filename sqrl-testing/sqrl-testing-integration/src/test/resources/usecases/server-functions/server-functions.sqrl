@@ -2,8 +2,3 @@ IMPORT ecommerce.customers;
 
 CustomersByName(inputName STRING NOT NULL, shortName AS CONCAT(LEFT(inputName, 3), '%')) :=
     SELECT * FROM Customers WHERE name LIKE :shortName;
-
--- FIXME: ARRAYS do not work currently, because some Flink internal array writer obj
---  is not initialized properly on the server
-CustomersByNames(nameList STRING NOT NULL, nameSplit AS SPLIT(nameList, ',')) :=
-    SELECT * FROM Customers WHERE ARRAY_CONTAINS(CAST(:nameSplit AS STRING ARRAY), name);

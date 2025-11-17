@@ -1,6 +1,0 @@
-query {
-  CustomersByNames(nameList: "Alice,Bob,David") {
-    customerid
-    name
-  }
-}
