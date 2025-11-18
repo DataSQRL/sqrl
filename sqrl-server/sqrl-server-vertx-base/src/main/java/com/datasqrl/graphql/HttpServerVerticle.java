@@ -211,9 +211,17 @@ public class HttpServerVerticle extends AbstractVerticle {
                         log.info("HTTP server listening on port {}", srv.actualPort());
                         completePromiseSafely(startPromise, true, null);
                       })
-                  .onFailure(err -> completePromiseSafely(startPromise, false, err));
+                  .onFailure(
+                      err -> {
+                        log.error("Failed to start HTTP server", err);
+                        completePromiseSafely(startPromise, false, err);
+                      });
             })
-        .onFailure(err -> completePromiseSafely(startPromise, false, err));
+        .onFailure(
+            err -> {
+              log.error("Failed to deploy GraphQL verticle, will trigger orderly shutdown", err);
+              completePromiseSafely(startPromise, false, err);
+            });
   }
 
   private Optional<PrometheusMeterRegistry> findMeterRegistry() {
