@@ -173,21 +173,24 @@ public class HttpServerVerticle extends AbstractVerticle {
 
     // Wait for all GraphQL verticles to deploy, then start HTTP server
     Future.all(deploymentFutures)
-        .onSuccess(
+        .compose(
             compositeFuture -> {
               // ── Start the HTTP server ────────────────────────────────────────────────
-              vertx
+              return vertx
                   .createHttpServer(config.getHttpServerOptions())
                   .requestHandler(router)
-                  .listen(config.getHttpServerOptions().getPort())
-                  .onSuccess(
-                      srv -> {
-                        log.info("HTTP server listening on port {}", srv.actualPort());
-                        startPromise.complete();
-                      })
-                  .onFailure(startPromise::fail);
+                  .listen(config.getHttpServerOptions().getPort());
             })
-        .onFailure(startPromise::fail);
+        .onSuccess(
+            server -> {
+              log.info("HTTP server listening on port {}", server.actualPort());
+              startPromise.complete();
+            })
+        .onFailure(
+            err -> {
+              log.error("Failed to start application", err);
+              startPromise.fail(err);
+            });
   }
 
   private Optional<PrometheusMeterRegistry> findMeterRegistry() {
@@ -266,10 +269,8 @@ public class HttpServerVerticle extends AbstractVerticle {
               }
             })
         .onFailure(
-            err -> {
-              log.error("Failed to deploy GraphQL verticle, shutting down application", err);
-              System.exit(1);
-            });
+            err ->
+                log.error("Failed to deploy GraphQL verticle, will trigger orderly shutdown", err));
   }
 
   // ---------------------------------------------------------------------------
