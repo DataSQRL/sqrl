@@ -20,7 +20,7 @@ import static org.apache.calcite.sql.SqlKind.COLLECTION_TABLE;
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType;
 import com.datasqrl.flinkrunner.stdlib.vector.FlinkVectorType;
-import com.datasqrl.function.translations.SqlTranslation;
+import com.datasqrl.function.translation.SqlTranslation;
 import com.datasqrl.util.ServiceLoaderDiscovery;
 import java.util.Map;
 import java.util.stream.Collectors;
