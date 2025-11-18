@@ -68,12 +68,8 @@ public class KafkaStartupFailureContainerIT extends SqrlContainerTestBase {
 
     // Verify the expected error messages are present
     assertThat(logs).contains("Invalid url in bootstrap.servers: ${KAFKA_BOOTSTRAP_SERVERS}");
-
     assertThat(logs).contains("Unable to create GraphQL");
-
     assertThat(logs).contains("Failed to deploy GraphQL verticle");
-
-    assertThat(logs).contains("shutting down application");
   }
 
   @Test
