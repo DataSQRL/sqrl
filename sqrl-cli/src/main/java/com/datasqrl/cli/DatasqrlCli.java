@@ -31,8 +31,8 @@ import picocli.CommandLine.ScopeType;
 @Getter
 public class DatasqrlCli implements Runnable {
 
-  @CommandLine.Option(
-      names = {"-c", "--config"},
+  @CommandLine.Parameters(
+      arity = "0..*",
       description = "Package configuration file(s)",
       scope = ScopeType.INHERIT)
   protected List<Path> packageFiles = Collections.emptyList();
