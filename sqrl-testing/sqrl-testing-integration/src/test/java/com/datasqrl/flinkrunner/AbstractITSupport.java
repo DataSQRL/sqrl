@@ -116,7 +116,6 @@ public class AbstractITSupport {
     List<String> arguments = new ArrayList<>();
     arguments.add("compile");
     arguments.add(script.getFileName().toString());
-    arguments.add("-c");
     arguments.add("package.json");
     AssertStatusHook statusHook = new AssertStatusHook();
     int code =

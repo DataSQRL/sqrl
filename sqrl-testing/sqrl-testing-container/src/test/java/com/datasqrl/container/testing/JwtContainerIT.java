@@ -91,7 +91,7 @@ public class JwtContainerIT extends SqrlWithPostgresContainerTestBase {
   @Test
   @SneakyThrows
   void givenJwt_whenUnauthenticatedGraphQL_thenReturns401() {
-    compileAndStartServer("jwt-authorized-base.sqrl", testDir);
+    compileAndStartServer(testDir, "package-base.json");
 
     var response = executeGraphQLQuery("{\"query\":\"query { AuthMyTable(limit: 5) { val } }\"}");
 
@@ -101,7 +101,7 @@ public class JwtContainerIT extends SqrlWithPostgresContainerTestBase {
   @Test
   @SneakyThrows
   void givenJwt_whenAuthenticatedGraphQL_thenSucceeds() {
-    compileAndStartServerWithDatabase("jwt-authorized-base.sqrl", testDir);
+    compileAndStartServerWithDatabase(testDir, "package-base.json");
 
     var response =
         executeGraphQLQuery(
@@ -116,7 +116,7 @@ public class JwtContainerIT extends SqrlWithPostgresContainerTestBase {
   @Test
   @SneakyThrows
   void givenJwt_whenBadToken_thenReturns401() {
-    compileAndStartServer("jwt-authorized-base.sqrl", testDir);
+    compileAndStartServer(testDir, "package-base.json");
 
     // Generate token with RS256 algorithm while server expects HS256
     var response =
@@ -136,7 +136,7 @@ public class JwtContainerIT extends SqrlWithPostgresContainerTestBase {
   @Test
   @SneakyThrows
   void givenJwt_whenCorruptedToken_thenReturns401() {
-    compileAndStartServer("jwt-authorized-base.sqrl", testDir);
+    compileAndStartServer(testDir, "package-base.json");
 
     // Generate token with RS256 algorithm while server expects HS256
     var response =
@@ -157,7 +157,7 @@ public class JwtContainerIT extends SqrlWithPostgresContainerTestBase {
   @Test
   @SneakyThrows
   void givenJwt_whenMissingRequiredClaims_thenReturns403() {
-    compileAndStartServer("jwt-authorized-base.sqrl", testDir);
+    compileAndStartServer(testDir, "package-base.json");
 
     try {
       // Generate valid JWT token but with empty claims (missing required claims)
@@ -180,7 +180,7 @@ public class JwtContainerIT extends SqrlWithPostgresContainerTestBase {
   @Test
   @SneakyThrows
   void givenJwt_whenUnauthenticatedMcp_thenFails() {
-    compileAndStartServer("jwt-authorized-base.sqrl", testDir);
+    compileAndStartServer(testDir, "package-base.json");
 
     var mcpUrl =
         String.format(
@@ -205,7 +205,7 @@ public class JwtContainerIT extends SqrlWithPostgresContainerTestBase {
   @Test
   @SneakyThrows
   void givenJwt_whenAuthenticatedMcp_thenSucceeds() {
-    compileAndStartServerWithDatabase("jwt-authorized-base.sqrl", testDir);
+    compileAndStartServerWithDatabase(testDir, "package-base.json");
 
     var mcpUrl =
         String.format(
@@ -260,7 +260,7 @@ public class JwtContainerIT extends SqrlWithPostgresContainerTestBase {
   @Test
   @SneakyThrows
   void givenJwt_whenMissingRequiredClaimsMcp_thenFails() {
-    compileAndStartServer("jwt-authorized-base.sqrl", testDir);
+    compileAndStartServer(testDir, "package-base.json");
 
     var mcpUrl =
         String.format(
@@ -310,7 +310,7 @@ public class JwtContainerIT extends SqrlWithPostgresContainerTestBase {
   @Test
   @SneakyThrows
   void givenJwt_whenUnauthenticatedRest_thenReturns401() {
-    compileAndStartServer("jwt-authorized-base.sqrl", testDir);
+    compileAndStartServer(testDir, "package-base.json");
 
     var restUrl =
         String.format("http://localhost:%d", serverContainer.getMappedPort(HTTP_SERVER_PORT));
@@ -331,7 +331,7 @@ public class JwtContainerIT extends SqrlWithPostgresContainerTestBase {
   @Test
   @SneakyThrows
   void givenJwt_whenAuthenticatedRest_thenSucceeds() {
-    compileAndStartServerWithDatabase("jwt-authorized-base.sqrl", testDir);
+    compileAndStartServerWithDatabase(testDir, "package-base.json");
 
     var restUrl =
         String.format("http://localhost:%d", serverContainer.getMappedPort(HTTP_SERVER_PORT));
@@ -357,7 +357,7 @@ public class JwtContainerIT extends SqrlWithPostgresContainerTestBase {
   @Test
   @SneakyThrows
   void givenJwt_whenMissingRequiredClaimsRest_thenReturns403() {
-    compileAndStartServer("jwt-authorized-base.sqrl", testDir);
+    compileAndStartServer(testDir, "package-base.json");
 
     var restUrl =
         String.format("http://localhost:%d", serverContainer.getMappedPort(HTTP_SERVER_PORT));

@@ -15,11 +15,11 @@
  */
 package com.datasqrl;
 
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
-
+import com.datasqrl.util.ArgumentsProviders;
 import java.nio.file.Path;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
@@ -34,28 +34,26 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
  */
 public class UseCaseCompileTest extends AbstractUseCaseTest {
 
-  public static final Path USECASE_DIR = getResourcesDirectory("usecases");
+  private static final Path USECASE_DIR = getResourcesDirectory("usecases");
 
   @Override
   @SneakyThrows
   @ParameterizedTest
   @ArgumentsSource(UseCaseFiles.class)
-  void testUsecase(Path script, Path graphQlFile, Path packageFile) {
-    super.testUsecase(script, graphQlFile, packageFile);
+  void testUseCase(Path packageFile) {
+    super.testUseCase(packageFile);
   }
 
-  static class UseCaseFiles extends SqrlScriptsAndLocalPackages {
-    public UseCaseFiles() {
-      super(USECASE_DIR, true);
+  @Disabled("Intended for manual usage")
+  @Test
+  void runTestCaseByName() {
+    var pkg = USECASE_DIR.resolve("banking").resolve("package.json");
+    super.testUseCase(pkg);
+  }
+
+  static class UseCaseFiles extends ArgumentsProviders.PackageProvider {
+    UseCaseFiles() {
+      super(USECASE_DIR);
     }
-  }
-
-  @ParameterizedTest
-  @ArgumentsSource(UseCaseFiles.class)
-  @Disabled
-  void runTestCaseByName(Path script, Path graphQlFile, Path packageFile) {
-    assumeTrue(script.toString().endsWith("loan.sqrl"), "Not the test marked for execution.");
-
-    super.testUsecase(script, graphQlFile, packageFile);
   }
 }

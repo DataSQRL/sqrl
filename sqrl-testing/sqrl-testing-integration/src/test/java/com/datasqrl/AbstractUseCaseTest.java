@@ -19,55 +19,40 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datasqrl.cli.AssertStatusHook;
 import com.datasqrl.util.SnapshotTest.Snapshot;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import lombok.AllArgsConstructor;
-import org.junit.jupiter.api.extension.ExtensionContext;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.ArgumentsProvider;
-import org.junit.jupiter.params.support.ParameterDeclarations;
+import javax.annotation.Nullable;
 
 public class AbstractUseCaseTest extends AbstractAssetSnapshotTest {
 
-  /*
-  We snapshot the GraphQL schema only if it is not provided
-   */
+  // We only snapshot the GraphQL schema if it is not provided
   private boolean hasGraphQL = false;
 
   protected AbstractUseCaseTest() {
     super(null);
   }
 
-  void testUsecase(Path script, Path graphQLFile, Path packageFile) {
-    assertThat(Files.exists(script)).isTrue();
-    var baseDir = script.getParent();
-    List<String> arguments = new ArrayList<>();
-    arguments.add("compile");
-    arguments.add(script.getFileName().toString());
-    // Add optional GraphQL schema and package configuration if present
-    if (graphQLFile != null) {
-      hasGraphQL = true;
-      assert Files.exists(graphQLFile);
-      arguments.add(graphQLFile.getFileName().toString());
+  void testUseCase(Path packageFile) {
+    testUseCase(packageFile, null);
+  }
+
+  void testUseCase(Path packageFile, @Nullable String testName) {
+    assertThat(packageFile).isRegularFile();
+
+    var baseDir = packageFile.getParent();
+    var args = new ArrayList<String>();
+    args.add("compile");
+    args.add(packageFile.getFileName().toString());
+
+    var hook = execute(baseDir, args);
+
+    if (testName == null) {
+      testName = getDisplayName(baseDir) + '-' + getDisplayName(packageFile);
     }
-    if (packageFile != null) {
-      assert Files.exists(packageFile);
-      arguments.add("-c");
-      arguments.add(packageFile.getFileName().toString());
-    }
-    var testname =
-        Stream.of(script, graphQLFile, packageFile)
-            .map(AbstractAssetSnapshotTest::getDisplayName)
-            .collect(Collectors.joining("-"));
-    var hook = execute(baseDir, arguments);
-    snapshot(testname, hook);
+
+    snapshot(testName, hook);
   }
 
   /**
@@ -109,45 +94,5 @@ public class AbstractUseCaseTest extends AbstractAssetSnapshotTest {
       }
       return false;
     };
-  }
-
-  /**
-   * Iterates over all SQRL scripts in a given directory (and sub-directories) and for each script,
-   * finds all associated package.json and GraphQL schema (*.graphqls) files (i.e. they start with
-   * the same name). All combinations of those files are a single test case.
-   */
-  @AllArgsConstructor
-  public abstract static class SqrlScriptsAndLocalPackages implements ArgumentsProvider {
-
-    private final Path[] directories;
-    private final boolean includeFails;
-
-    public SqrlScriptsAndLocalPackages(Path directory, boolean includeFails) {
-      this(new Path[] {directory}, includeFails);
-    }
-
-    @Override
-    public Stream<? extends Arguments> provideArguments(
-        ParameterDeclarations parameters, ExtensionContext context) {
-      // Look for all package jsons
-      return Arrays.stream(directories)
-          .flatMap(directory -> getSQRLScripts(directory, includeFails))
-          .sorted(Comparator.comparing(p -> p.toFile().getName()))
-          .flatMap(
-              path -> {
-                var pkgFiles = getPackageFiles(path.getParent());
-                pkgFiles.sort(Comparator.comparing(p -> p.toFile().getName()));
-                if (pkgFiles.isEmpty()) {
-                  pkgFiles.add(null);
-                }
-                var graphQLFiles = getScriptGraphQLFiles(path);
-                graphQLFiles.sort(Comparator.comparing(p -> p.toFile().getName()));
-                if (graphQLFiles.isEmpty()) {
-                  graphQLFiles.add(null);
-                }
-                return graphQLFiles.stream()
-                    .flatMap(gql -> pkgFiles.stream().map(pkg -> Arguments.of(path, gql, pkg)));
-              });
-    }
   }
 }

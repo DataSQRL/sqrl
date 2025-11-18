@@ -37,7 +37,7 @@ public class SwaggerContainerIT extends SqrlContainerTestBase {
   @SneakyThrows
   void givenSwaggerTest_whenCompiledAndServerStarted_thenSwaggerEndpointsAvailable() {
     // Compile and start the server
-    compileAndStartServer("avro-schema.sqrl", testDir);
+    compileAndStartServer(testDir);
 
     // Test Swagger JSON endpoint
     testSwaggerJsonEndpoint();
@@ -118,7 +118,7 @@ public class SwaggerContainerIT extends SqrlContainerTestBase {
   @SneakyThrows
   void givenDisabledSwaggerConfig_whenCompiledAndServerStarted_thenSwaggerEndpointsNotAvailable() {
     // Compile the script first
-    compileSqrlScript("avro-schema.sqrl", testDir);
+    compileSqrlProject(testDir);
 
     // Modify the server configuration to disable Swagger
     disableSwaggerInConfiguration(testDir);

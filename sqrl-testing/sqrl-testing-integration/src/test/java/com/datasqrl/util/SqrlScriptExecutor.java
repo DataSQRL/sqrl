@@ -31,7 +31,7 @@ public record SqrlScriptExecutor(Path packageJsonPath, String goal) {
 
     // Execute the command
     var cli = new DatasqrlCli(rootDir, hook, true);
-    var exitCode = cli.getCmd().execute(goal, "-c", fileName);
+    var exitCode = cli.getCmd().execute(goal, fileName);
     exitCode += hook.isSuccess() ? 0 : 1;
 
     if (exitCode != 0) {

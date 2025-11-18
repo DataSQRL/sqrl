@@ -24,6 +24,7 @@ import static com.datasqrl.env.EnvVariableNames.POSTGRES_USERNAME;
 import java.nio.file.Path;
 import java.sql.SQLException;
 import java.sql.Statement;
+import javax.annotation.Nullable;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -70,9 +71,13 @@ public abstract class SqrlWithPostgresContainerTestBase extends SqrlContainerTes
     }
   }
 
-  protected void compileAndStartServerWithDatabase(String scriptName, Path workingDir) {
+  protected void compileAndStartServerWithDatabase(Path workingDir) {
+    compileAndStartServerWithDatabase(workingDir, null);
+  }
+
+  protected void compileAndStartServerWithDatabase(Path workingDir, @Nullable String packageFile) {
     startPostgreSQLContainer();
-    compileSqrlScript(scriptName, workingDir);
+    compileSqrlProject(workingDir, packageFile);
 
     startGraphQLServer(
         workingDir,

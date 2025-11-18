@@ -71,7 +71,7 @@ public class MetricsContainerIT extends SqrlContainerTestBase {
   @Test
   @SneakyThrows
   void givenRunningServer_whenAccessingHealthEndpoint_thenReturnsHealthStatus() {
-    compileAndStartServer("myudf.sqrl", testDir);
+    compileAndStartServer(testDir);
 
     var response = sharedHttpClient.execute(new HttpGet(getHealthEndpoint()));
 
@@ -94,7 +94,7 @@ public class MetricsContainerIT extends SqrlContainerTestBase {
 
   @SneakyThrows
   private String getMetricsResult() {
-    compileAndStartServer("myudf.sqrl", testDir);
+    compileAndStartServer(testDir);
 
     var response = sharedHttpClient.execute(new HttpGet(getMetricsEndpoint()));
 

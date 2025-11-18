@@ -15,25 +15,23 @@
  */
 package com.datasqrl;
 
-import static com.datasqrl.config.SqrlConstants.BUILD_DIR_NAME;
-import static com.datasqrl.config.SqrlConstants.PACKAGE_JSON;
-
+import com.datasqrl.AbstractAssetSnapshotTest.TestNameModifier;
+import com.datasqrl.util.ArgumentsProviders;
 import com.datasqrl.util.TestShardingExtension;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.stream.Collectors;
+import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.test.junit5.MiniClusterExtension;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.ArgumentsSource;
+import org.junit.jupiter.params.support.ParameterDeclarations;
 
 /**
  * Runs and Tests the uses cases in `resources/usecases`. This stands up the entire compiled
@@ -48,16 +46,6 @@ public class FullUseCaseIT extends AbstractFullUseCaseTest {
 
   private static final Path USE_CASES = Path.of("src/test/resources/usecases");
 
-  private static final Set<String> DISABLED_USE_CASE_PATHS =
-      Set.of(
-          "iceberg-export", // fails in build server
-          "snowflake", // fails in build server
-          "sensors-full", // flaky (too much data)
-          "flink-only", // not a full test case
-          "multi-batch", // not a full test case
-          "connectors" // not an executable test case
-          );
-
   @Disabled("Intended for manual usage")
   @Test
   void specificUseCase() {
@@ -68,51 +56,38 @@ public class FullUseCaseIT extends AbstractFullUseCaseTest {
   }
 
   @ParameterizedTest
-  @MethodSource("nonDisabledUseCaseProvider")
+  @ArgumentsSource(UseCaseParams.class)
   void useCase(UseCaseParam param) {
     fullUseCaseTest(param);
   }
 
-  @SneakyThrows
-  private static Set<UseCaseParam> nonDisabledUseCaseProvider() {
-    var useCasesDir = USE_CASES.toAbsolutePath();
+  static class UseCaseParams extends ArgumentsProviders.PackageProvider {
+    UseCaseParams() {
+      super(USE_CASES);
+    }
 
-    try (var useCaseStream = Files.list(useCasesDir)) {
-      var sortedPaths =
-          useCaseStream
-              .filter(Files::isDirectory)
-              .flatMap(FullUseCaseIT::collectPackageJsonFiles)
-              .sorted() // Ensure consistent ordering for index assignment
-              .toList();
+    @Override
+    protected String packageJsonRegex() {
+      return "package.json";
+    }
+
+    @Override
+    protected Function<Path, Boolean> testModifierFilter() {
+      return path -> {
+        var mod = TestNameModifier.of(path.getParent());
+        return mod != TestNameModifier.compile && mod != TestNameModifier.disabled;
+      };
+    }
+
+    @Override
+    public Stream<? extends Arguments> provideArguments(
+        ParameterDeclarations params, ExtensionContext ctx) {
+      var jsonFiles = collectPackageJsonFiles().sorted().toList();
 
       // Assign sequential indices and create UseCaseParam objects
-      return IntStream.range(0, sortedPaths.size())
-          .mapToObj(i -> new UseCaseParam(sortedPaths.get(i), "test", i))
-          .collect(Collectors.toCollection(TreeSet::new));
-    }
-  }
-
-  /**
-   * Collect files that match the {@code package.json} pattern from a given use case dir recursively
-   * that are not listed in {@code DISABLED_USE_CASE_PATHS}.
-   */
-  @SneakyThrows
-  private static Stream<Path> collectPackageJsonFiles(Path useCaseDir) {
-    var useCaseName = useCaseDir.getFileName().toString();
-
-    // Skip disabled use cases entirely
-    if (DISABLED_USE_CASE_PATHS.contains(useCaseName)) {
-      return Stream.empty();
-    }
-
-    try (var stream = Files.walk(useCaseDir, 2)) {
-      return stream
-          .filter(Files::isRegularFile)
-          .filter(p -> !DISABLED_USE_CASE_PATHS.contains(p.getParent().getFileName().toString()))
-          .filter(p -> !BUILD_DIR_NAME.equals(p.getParent().getFileName().toString()))
-          .filter(p -> PACKAGE_JSON.equals(p.getFileName().toString()))
-          .toList()
-          .stream();
+      return IntStream.range(0, jsonFiles.size())
+          .mapToObj(i -> new UseCaseParam(jsonFiles.get(i), "test", i))
+          .map(Arguments::of);
     }
   }
 }

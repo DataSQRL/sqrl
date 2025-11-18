@@ -67,7 +67,7 @@ class McpValidationIT extends SqrlContainerTestBase {
   void givenUdfTestCase_whenMcpServerStarted_thenMcpInspectorValidatesSuccessfully()
       throws Exception {
     // Compile first
-    compileSqrlScript("myudf.sqrl", testDir);
+    compileSqrlProject(testDir);
 
     // Create server container with network alias
     var serverAlias = "sqrl-server";
@@ -131,7 +131,7 @@ class McpValidationIT extends SqrlContainerTestBase {
   void givenUdfTestCase_whenMcpServerStarted_thenDetailedProtocolValidationPasses()
       throws Exception {
     // Compile first
-    compileSqrlScript("myudf.sqrl", testDir);
+    compileSqrlProject(testDir);
 
     // Create server container with network alias
     var serverAlias = "sqrl-server";
@@ -195,7 +195,7 @@ class McpValidationIT extends SqrlContainerTestBase {
   @Test
   @SneakyThrows
   void givenUdfTestCase_whenUnauthenticatedMcp_thenSucceeds() {
-    compileSqrlScript("myudf.sqrl", testDir);
+    compileSqrlProject(testDir);
     startGraphQLServer(testDir);
 
     var mcpUrl =

@@ -18,8 +18,8 @@ package com.datasqrl;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assumptions.assumeThat;
 
+import com.datasqrl.util.ArgumentsProviders;
 import com.datasqrl.util.SnapshotTest.Snapshot;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.function.Predicate;
 import org.junit.jupiter.api.Disabled;
@@ -46,7 +46,9 @@ public class DAGPlannerTest extends AbstractAssetSnapshotTest {
   @ParameterizedTest
   @ArgumentsSource(DagPlannerSQRLFiles.class)
   void scripts(Path script) {
-    assertThat(Files.exists(script)).isTrue();
+    assertThat(script).isRegularFile();
+    writeTempPackage(script, "__SQRL_SCRIPT__");
+
     var testModifier = TestNameModifier.of(script);
     var expectFailure = testModifier == TestNameModifier.fail;
     var printMessages =
@@ -56,10 +58,12 @@ public class DAGPlannerTest extends AbstractAssetSnapshotTest {
         execute(
             SCRIPT_DIR,
             "compile",
-            script.getFileName().toString(),
+            tempPackage.getFileName().toString(),
             "-t",
             outputDir.getFileName().toString());
+
     assertThat(hook.isFailed()).as(hook.getMessages()).isEqualTo(expectFailure);
+
     if (printMessages) {
       createMessageSnapshot(hook.getMessages());
     } else {
@@ -103,7 +107,7 @@ public class DAGPlannerTest extends AbstractAssetSnapshotTest {
     };
   }
 
-  static class DagPlannerSQRLFiles extends SqrlScriptArgumentsProvider {
+  static class DagPlannerSQRLFiles extends ArgumentsProviders.SqrlScriptProvider {
     public DagPlannerSQRLFiles() {
       super(SCRIPT_DIR, true);
     }

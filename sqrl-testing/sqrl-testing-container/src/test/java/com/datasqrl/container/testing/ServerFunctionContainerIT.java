@@ -49,7 +49,7 @@ public class ServerFunctionContainerIT extends SqrlWithPostgresContainerTestBase
   @Test
   @SneakyThrows
   void givenScript_whenCompiledAndServerStarted_thenApiRespondsCorrectly() {
-    compileAndStartServerWithDatabase("server-functions.sqrl", testDir);
+    compileAndStartServerWithDatabase(testDir);
     var response =
         executeGraphQLQuery(
             "{\"query\":\"query { CustomersByName(inputName: \\\"Bobasd\\\") { customerid, name } }\"}");
