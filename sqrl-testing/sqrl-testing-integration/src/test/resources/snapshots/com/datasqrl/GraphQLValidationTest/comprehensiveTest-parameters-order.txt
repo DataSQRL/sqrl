@@ -1,3 +1,613 @@
+>>>comprehensiveTest-fail-duplicate-tablefunction.graphqls
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+"A 64-bit signed integer"
+scalar Long
+
+type Customer {
+    customerid: Long!
+    email: String!
+    name: String!
+    lastUpdated: Long!
+    timestamp: DateTime
+    related(limit: Int = 10, offset: Int = 0): [Customer!]
+    relatedByLength(length: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+type Query {
+    TableFunctionCallsTblFct(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+type Subscription {
+    TableFunctionCallsTblFct(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+>>>comprehensiveTest-fail-duplicate-tablefunction2.graphqls
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+"A 64-bit signed integer"
+scalar Long
+
+type Customer {
+    customerid: Long!
+    email: String!
+    name: String!
+    lastUpdated: Long!
+    timestamp: DateTime
+    related(limit: Int = 10, offset: Int = 0): [Customer!]
+    relatedByLength(length: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+type Query {
+    TableFunctionCallsTblFct(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+    TableFunctionCallsTblFct(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+>>>comprehensiveTest-fail-empty-mutation.graphqls
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+"A 64-bit signed integer"
+scalar Long
+
+type Customer {
+    customerid: Long!
+    email: String!
+    name: String!
+    lastUpdated: Long!
+    timestamp: DateTime
+    related(limit: Int = 10, offset: Int = 0): [Customer!]
+    relatedByLength(length: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+type Mutation {
+}
+
+type Query {
+    TableFunctionCallsTblFct(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+>>>comprehensiveTest-fail-empty-query.graphqls
+type Query {
+}
+
+>>>comprehensiveTest-fail-empty-result-type.graphqls
+type Customer {
+}
+
+type Query {
+    TableFunctionCallsTblFct(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+>>>comprehensiveTest-fail-empty-subscription.graphqls
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+"A 64-bit signed integer"
+scalar Long
+
+type Customer {
+    customerid: Long!
+    email: String!
+    name: String!
+    lastUpdated: Long!
+    timestamp: DateTime
+    related(limit: Int = 10, offset: Int = 0): [Customer!]
+    relatedByLength(length: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+type Subscription {
+}
+
+type Query {
+    TableFunctionCallsTblFct(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+>>>comprehensiveTest-fail-invalid-field-name.graphqls
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+"A 64-bit signed integer"
+scalar Long
+
+type Customer {
+    customerid: Long!
+    email: String!
+    name~: String!
+    lastUpdated: Long!
+    timestamp: DateTime
+    related(limit: Int = 10, offset: Int = 0): [Customer!]
+    relatedByLength(length: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+type Query {
+    TableFunctionCallsTblFct(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+>>>comprehensiveTest-fail-invalid-type-name.graphqls
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+"A 64-bit signed integer"
+scalar Long
+
+type Customer~ {
+    customerid: Long!
+    email: String!
+    name: String!
+    lastUpdated: Long!
+    timestamp: DateTime
+    related(limit: Int = 10, offset: Int = 0): [Customer!]
+    relatedByLength(length: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+type Query {
+    TableFunctionCallsTblFct(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer~!]
+}
+
+>>>comprehensiveTest-fail-no-query-root-type.graphqls
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+"A 64-bit signed integer"
+scalar Long
+
+type Customer {
+    customerid: Long!
+    email: String!
+    name: String!
+    lastUpdated: Long!
+    timestamp: DateTime
+    related(limit: Int = 10, offset: Int = 0): [Customer!]
+    relatedByLength(length: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+type Mutation {
+    Orders(event: OrdersInput!): OrdersResultOutput!
+}
+
+input OrdersInput {
+    orderid: Int!
+    amount: Float
+}
+
+type OrdersResultOutput {
+    orderid: Int!
+    amount: Float
+}
+
+type Subscription {
+    CustomerSubscription: Customer
+}
+
+>>>comprehensiveTest-fail-no-type.graphqls
+type Query {
+    AnotherCustomer(limit: Int = 10, offset: Int = 0): [AnotherCustomer!]
+}
+
+>>>comprehensiveTest-fail-not-equal-mutations-field-types.graphqls
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+"A 64-bit signed integer"
+scalar Long
+
+type Customer {
+    customerid: Long!
+    email: String!
+    name: String!
+    lastUpdated: Long!
+    timestamp: DateTime
+    related(limit: Int = 10, offset: Int = 0): [Customer!]
+    relatedByLength(length: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+type Mutation {
+    Orders(event: OrdersInput!): OrdersResultOutput!
+}
+
+input OrdersInput {
+    orderid: Int!
+    amount: Float
+}
+
+type OrdersResultOutput {
+    orderid: Int!
+    amount: Int
+}
+
+type Query {
+    TableFunctionCallsTblFct(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+>>>comprehensiveTest-fail-not-equal-mutations-inout-types.graphqls
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+"A 64-bit signed integer"
+scalar Long
+
+type Customer {
+    customerid: Long!
+    email: String!
+    name: String!
+    lastUpdated: Long!
+    timestamp: DateTime
+    related(limit: Int = 10, offset: Int = 0): [Customer!]
+    relatedByLength(length: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+type Mutation {
+    Orders(event: OrdersInput!): OrdersResultOutput!
+}
+
+input OrdersInput {
+    orderid: Int!
+    amount: Float
+}
+
+type OrdersResultOutput {
+    orderid: Int!
+    amount: Float
+    different_output: Float
+}
+
+type Query {
+    TableFunctionCallsTblFct(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+>>>comprehensiveTest-fail-nullableArgForNotNull.graphqls
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+"A 64-bit signed integer"
+scalar Long
+
+type Customer {
+    customerid: Long!
+    email: String!
+    name: String!
+    lastUpdated: Long!
+    timestamp: DateTime!
+    related(limit: Int = 10, offset: Int = 0): [Customer!]
+    relatedByLength(length: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+type Query {
+    TableFunctionCallsTblFct(arg1: Int, arg2: Int, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+>>>comprehensiveTest-fail-parameters-names.graphqls
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+"A 64-bit signed integer"
+scalar Long
+
+type Customer {
+    customerid: Long!
+    email: String!
+    name: String!
+    lastUpdated: Long!
+    timestamp: DateTime
+    related(limit: Int = 10, offset: Int = 0): [Customer!]
+    relatedByLength(length: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+type Query {
+    TableFunctionCallsTblFct(wrongName: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+>>>comprehensiveTest-fail-parameters-types.graphqls
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+"A 64-bit signed integer"
+scalar Long
+
+type Customer {
+    customerid: Long!
+    email: String!
+    name: String!
+    lastUpdated: Long!
+    timestamp: DateTime
+    related(limit: Int = 10, offset: Int = 0): [Customer!]
+    relatedByLength(length: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+type Query {
+    TableFunctionCallsTblFct(arg1: Float!, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+>>>comprehensiveTest-fail-query-with-no-table-function.graphqls
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+"A 64-bit signed integer"
+scalar Long
+
+type Customer {
+    customerid: Long!
+    email: String!
+    name: String!
+    lastUpdated: Long!
+    timestamp: DateTime
+    related(limit: Int = 10, offset: Int = 0): [Customer!]
+    relatedByLength(length: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+type Query {
+    TableFunctionCallsTblFct1(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+>>>comprehensiveTest-fail-subscription-with-no-table-function.graphqls
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+"A 64-bit signed integer"
+scalar Long
+
+type Customer {
+    customerid: Long!
+    email: String!
+    name: String!
+    lastUpdated: Long!
+    timestamp: DateTime
+    related(limit: Int = 10, offset: Int = 0): [Customer!]
+    relatedByLength(length: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+type Query {
+    TableFunctionCallsTblFct(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+type Subscription {
+    TableFunctionCallsTblFct1(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+>>>comprehensiveTest-fail-unknown-field.graphqls
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+"A 64-bit signed integer"
+scalar Long
+
+type Customer {
+    customerid: Long!
+    email: String!
+    name: String!
+    lastUpdated: Long!
+    timestamp: DateTime
+    related(limit: Int = 10, offset: Int = 0): [Customer!]
+    relatedByLength(length: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+    unknown: Int
+}
+
+type Query {
+    TableFunctionCallsTblFct(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+>>>comprehensiveTest-fail-wrong-query.graphqls
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+"A 64-bit signed integer"
+scalar Long
+
+type Customer {
+    customerid: Long!
+    email: String!
+    name: String!
+    lastUpdated: Long!
+    timestamp: DateTime
+    related(limit: Int = 10, offset: Int = 0): [Customer!]
+    relatedByLength(length: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+type Query {
+    TableFunctionCallsTblFct(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [[Customer!]]
+}
+
+>>>comprehensiveTest-limit-offset-combinations.graphqls
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+"A 64-bit signed integer"
+scalar Long
+
+type Customer {
+    customerid: Long!
+    email: String!
+    name: String!
+    lastUpdated: Long!
+    timestamp: DateTime!
+    related(limit: Int = 10, offset: Int = 0): [Customer!]
+    relatedByLength(length: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+type Query {
+    TableFunctionCallsTblFct(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+    CustomerByTime2: [Customer!]
+    CustomerByMultipleTime(limit: Int = 10): [Customer!]
+    SelectCustomers(offset: Int = 0): [Customer!]
+}
+
+>>>comprehensiveTest-parameters-order.graphqls
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+"A 64-bit signed integer"
+scalar Long
+
+type Customer {
+    customerid: Long!
+    email: String!
+    name: String!
+    lastUpdated: Long!
+    timestamp: DateTime!
+    related(limit: Int = 10, offset: Int = 0): [Customer!]
+    relatedByLength(length: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+type Query {
+    TableFunctionCallsTblFct(arg2: Int!, arg1: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+>>>comprehensiveTest.graphqls
+type AnotherCustomer {
+    customerid: Long!
+    email: String!
+    lastUpdated: Long!
+}
+
+type Customer {
+    customerid: Long!
+    email: String!
+    name: String!
+    lastUpdated: Long!
+    timestamp: DateTime
+    related(limit: Int = 10, offset: Int = 0): [Customer!]
+    relatedByLength(length: Int, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+type CustomerByMultipleTime {
+    customerid: Long!
+    email: String!
+    name: String!
+    lastUpdated: Long!
+    timestamp: DateTime
+}
+
+type CustomerByTime2 {
+    customerid: Long!
+    email: String!
+    name: String!
+    lastUpdated: Long!
+    timestamp: DateTime
+}
+
+type CustomerFilteredDistinct {
+    customerid: Long!
+    email: String!
+    name: String!
+    lastUpdated: Long!
+    timestamp: DateTime
+}
+
+type CustomerTimeWindow {
+    window_start: DateTime!
+    window_end: DateTime!
+    unique_email_count: Long!
+}
+
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+
+type ExplicitDistinct {
+    customerid: Long!
+    timestamp: DateTime
+    name: String!
+}
+
+type ExternalOrders {
+    id: Long!
+    customerid: Long!
+    time: DateTime!
+    entries: [ExternalOrders_entriesOutput]!
+}
+
+type ExternalOrders_entriesOutput {
+    productid: Long!
+    quantity: Long!
+    unit_price: Float!
+    discount: Float
+}
+
+"A 64-bit signed integer"
+scalar Long
+
+type InvalidDistinct {
+    customerid: Long!
+    timestamp: DateTime
+    namee: String!
+}
+
+type MissedTemporalJoin {
+    id: Long!
+    customerid: Long!
+    time: DateTime!
+    entries: [MissedTemporalJoin_entriesOutput]!
+    customerid0: Long!
+    timestamp: DateTime
+    name: String!
+}
+
+type MissedTemporalJoin_entriesOutput {
+    productid: Long!
+    quantity: Long!
+    unit_price: Float!
+    discount: Float
+}
+
+type Mutation {
+    Orders(event: OrdersInput!): OrdersResultOutput!
+}
+
+type Orders {
+    orderid: Int!
+    amount: Float
+}
+
+input OrdersInput {
+    orderid: Int!
+    amount: Float
+}
+
+type OrdersResultOutput {
+    orderid: Int!
+    amount: Float
+}
+
+type Query {
+    AnotherCustomer(limit: Int = 10, offset: Int = 0): [AnotherCustomer!]
+    Customer(limit: Int = 10, offset: Int = 0): [Customer!]
+    CustomerByMultipleTime(limit: Int = 10, offset: Int = 0): [CustomerByMultipleTime!]
+    CustomerByTime2(limit: Int = 10, offset: Int = 0): [CustomerByTime2!]
+    CustomerFilteredDistinct(limit: Int = 10, offset: Int = 0): [CustomerFilteredDistinct!]
+    CustomerTimeWindow(limit: Int = 10, offset: Int = 0): [CustomerTimeWindow!]
+    ExplicitDistinct(limit: Int = 10, offset: Int = 0): [ExplicitDistinct!]
+    ExternalOrders(limit: Int = 10, offset: Int = 0): [ExternalOrders!]
+    InvalidDistinct(limit: Int = 10, offset: Int = 0): [InvalidDistinct!]
+    MissedTemporalJoin(limit: Int = 10, offset: Int = 0): [MissedTemporalJoin!]
+    Orders(limit: Int = 10, offset: Int = 0): [Orders!]
+    """
+    This is for selected customers
+    and their orders
+    """
+    SelectCustomers(limit: Int = 10, offset: Int = 0): [Customer!]
+    TemporalJoin(limit: Int = 10, offset: Int = 0): [TemporalJoin!]
+    UnnestOrders(limit: Int = 10, offset: Int = 0): [UnnestOrders!]
+    CustomerById(minId: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+    CustomerQuery(id: Long!, limit: Int = 10, offset: Int = 0): [AnotherCustomer!]
+    TableFunctionCallsTblFct(arg1: Int, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+type Subscription {
+    CustomerSubscription: Customer
+    CustomerSubscriptionById(minId: Int!): Customer
+}
+
+type TemporalJoin {
+    id: Long!
+    customerid: Long!
+    time: DateTime!
+    entries: [TemporalJoin_entriesOutput]!
+    customerid0: Long!
+    timestamp: DateTime
+    name: String!
+}
+
+type TemporalJoin_entriesOutput {
+    productid: Long!
+    quantity: Long!
+    unit_price: Float!
+    discount: Float
+}
+
+type UnnestOrders {
+    id: Long!
+    customerid: Long!
+    time: DateTime!
+    productid: Long!
+    quantity: Long!
+    discount: Float
+    newId: Long!
+}
+
 >>>pipeline_explain.txt
 === AnotherCustomer
 ID:          default_catalog.default_database.AnotherCustomer
@@ -1011,64 +1621,6 @@ FROM "ExternalOrders" AS "ExternalOrders0"
               "database" : "POSTGRES"
             }
           }
-        },
-        {
-          "type" : "args",
-          "parentType" : "Query",
-          "fieldName" : "CustomerByTime2",
-          "exec" : {
-            "arguments" : [ ],
-            "query" : {
-              "type" : "SqlQuery",
-              "sql" : "SELECT *\nFROM \"CustomerByTime2\"",
-              "parameters" : [ ],
-              "pagination" : "NONE",
-              "cacheDurationMs" : 0,
-              "database" : "POSTGRES"
-            }
-          }
-        },
-        {
-          "type" : "args",
-          "parentType" : "Query",
-          "fieldName" : "CustomerByMultipleTime",
-          "exec" : {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "path" : "limit"
-              }
-            ],
-            "query" : {
-              "type" : "SqlQuery",
-              "sql" : "SELECT *\nFROM \"CustomerByMultipleTime\"",
-              "parameters" : [ ],
-              "pagination" : "LIMIT_AND_OFFSET",
-              "cacheDurationMs" : 0,
-              "database" : "POSTGRES"
-            }
-          }
-        },
-        {
-          "type" : "args",
-          "parentType" : "Query",
-          "fieldName" : "SelectCustomers",
-          "exec" : {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "SqlQuery",
-              "sql" : "SELECT *\nFROM (SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\"\n  FROM \"SelectCustomers\"\n  ORDER BY \"timestamp\" DESC NULLS LAST\n  FETCH NEXT 10 ROWS ONLY) AS \"t\"",
-              "parameters" : [ ],
-              "pagination" : "LIMIT_AND_OFFSET",
-              "cacheDurationMs" : 0,
-              "database" : "POSTGRES"
-            }
-          }
         }
       ],
       "mutations" : [ ],
@@ -1094,90 +1646,25 @@ FROM "ExternalOrders" AS "ExternalOrders0"
                 }
               },
               "required" : [
-                "arg1",
-                "arg2"
+                "arg2",
+                "arg1"
               ]
             }
           },
           "format" : "JSON",
           "apiQuery" : {
-            "query" : "query TableFunctionCallsTblFct($arg1: Int!, $arg2: Int!, $limit: Int = 10, $offset: Int = 0) {\nTableFunctionCallsTblFct(arg1: $arg1, arg2: $arg2, limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+            "query" : "query TableFunctionCallsTblFct($arg2: Int!, $arg1: Int!, $limit: Int = 10, $offset: Int = 0) {\nTableFunctionCallsTblFct(arg2: $arg2, arg1: $arg1, limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
             "queryName" : "TableFunctionCallsTblFct",
             "operationType" : "QUERY"
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
           "uriTemplate" : "queries/TableFunctionCallsTblFct{?arg2,offset,arg1,limit}"
-        },
-        {
-          "function" : {
-            "name" : "GetCustomerByTime2",
-            "parameters" : {
-              "type" : "object",
-              "properties" : { },
-              "required" : [ ]
-            }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query CustomerByTime2() {\nCustomerByTime2 {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
-            "queryName" : "CustomerByTime2",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/CustomerByTime2"
-        },
-        {
-          "function" : {
-            "name" : "GetCustomerByMultipleTime",
-            "parameters" : {
-              "type" : "object",
-              "properties" : {
-                "limit" : {
-                  "type" : "integer"
-                }
-              },
-              "required" : [ ]
-            }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query CustomerByMultipleTime($limit: Int = 10) {\nCustomerByMultipleTime(limit: $limit) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
-            "queryName" : "CustomerByMultipleTime",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/CustomerByMultipleTime{?limit}"
-        },
-        {
-          "function" : {
-            "name" : "GetSelectCustomers",
-            "parameters" : {
-              "type" : "object",
-              "properties" : {
-                "offset" : {
-                  "type" : "integer"
-                }
-              },
-              "required" : [ ]
-            }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query SelectCustomers($offset: Int = 0) {\nSelectCustomers(offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
-            "queryName" : "SelectCustomers",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/SelectCustomers{?offset}"
         }
       ],
       "schema" : {
         "type" : "string",
-        "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Customer {\n    customerid: Long!\n    email: String!\n    name: String!\n    lastUpdated: Long!\n    timestamp: DateTime!\n    related(limit: Int = 10, offset: Int = 0): [Customer!]\n    relatedByLength(length: Int!, limit: Int = 10, offset: Int = 0): [Customer!]\n}\n\ntype Query {\n    TableFunctionCallsTblFct(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]\n    CustomerByTime2: [Customer!]\n    CustomerByMultipleTime(limit: Int = 10): [Customer!]\n    SelectCustomers(offset: Int = 0): [Customer!]\n}\n"
+        "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Customer {\n    customerid: Long!\n    email: String!\n    name: String!\n    lastUpdated: Long!\n    timestamp: DateTime!\n    related(limit: Int = 10, offset: Int = 0): [Customer!]\n    relatedByLength(length: Int!, limit: Int = 10, offset: Int = 0): [Customer!]\n}\n\ntype Query {\n    TableFunctionCallsTblFct(arg2: Int!, arg1: Int!, limit: Int = 10, offset: Int = 0): [Customer!]\n}\n"
       }
     }
   }

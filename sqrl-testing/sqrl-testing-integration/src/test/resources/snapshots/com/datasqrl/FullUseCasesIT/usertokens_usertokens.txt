@@ -1,2 +1,0 @@
->>>addTokens-mutation.graphql
-{"data":{"Token1":{"userid":1},"Token2":{"userid":2},"Token3":{"userid":2},"Token4":{"userid":1}}}

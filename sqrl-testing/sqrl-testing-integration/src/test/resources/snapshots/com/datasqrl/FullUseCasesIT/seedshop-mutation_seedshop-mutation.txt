@@ -1,2 +1,0 @@
->>>productvisit-mutation.graphql
-{"data":{"visit1":{"productid":1,"customerid":1},"visit2":{"productid":9,"customerid":1},"visit3":{"productid":97,"customerid":4},"visit4":{"productid":157,"customerid":1},"visit5":{"productid":122,"customerid":4}}}

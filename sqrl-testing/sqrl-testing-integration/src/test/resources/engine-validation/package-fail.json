@@ -1,6 +1,9 @@
 {
   "version": "1",
   "enabled-engines": ["flink", "iceberg", "vertx"],
+  "script": {
+    "main": "script.sqrl"
+  },
   "connectors" : {
     "iceberg" : {
       "warehouse":"warehouse",

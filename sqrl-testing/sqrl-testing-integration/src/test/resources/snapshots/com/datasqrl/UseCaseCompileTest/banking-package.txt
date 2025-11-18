@@ -1,3 +1,200 @@
+>>>loan.graphqls
+type AddChatMessage {
+  role: String!
+  content: String!
+  name: String
+  context: AddChatMessage_contextOutput!
+  event_time: DateTime
+}
+
+input AddChatMessageInput {
+  role: String!
+  content: String!
+  name: String
+  context: AddChatMessage_contextInput!
+}
+
+type AddChatMessageResultOutput {
+  role: String!
+  content: String!
+  name: String
+  context: AddChatMessageResult_contextOutput!
+  event_time: DateTime
+}
+
+type AddChatMessageResult_contextOutput {
+  customerid: Int
+}
+
+input AddChatMessage_contextInput {
+  customerid: Int
+}
+
+type AddChatMessage_contextOutput {
+  customerid: Int
+}
+
+type ApplicationAlert {
+  id: Long!
+  customer_id: Long!
+  loan_type_id: Long!
+  max_amount: Float!
+  min_amount: Float!
+  amount: Float!
+}
+
+type ApplicationStatus {
+  status: String!
+  message: String
+  event_time: DateTime
+  id: Long!
+  customer_id: Long!
+  loan_type_id: Long!
+  amount: Float!
+  duration: Long!
+  max_amount: Float!
+  min_amount: Float!
+}
+
+type ApplicationUpdates {
+  loan_application_id: Long!
+  status: String!
+  message: String
+  event_time: DateTime
+  application(limit: Int = 10, offset: Int = 0): [Applications!]
+}
+
+input ApplicationUpdatesInput {
+  loan_application_id: Long!
+  status: String!
+  message: String
+}
+
+type ApplicationUpdatesResultOutput {
+  loan_application_id: Long!
+  status: String!
+  message: String
+  event_time: DateTime
+}
+
+type Applications {
+  id: Long!
+  customer_id: Long!
+  loan_type_id: Long!
+  amount: Float!
+  duration: Long!
+  application_date: DateTime!
+  updated_at: DateTime!
+  loanType(limit: Int = 10, offset: Int = 0): [LoanTypes!]
+  updates(limit: Int = 10, offset: Int = 0): [ApplicationUpdates!]
+}
+
+type ApplicationsStream {
+  id: Long!
+  customer_id: Long!
+  loan_type_id: Long!
+  amount: Float!
+  duration: Long!
+  application_date: DateTime!
+  updated_at: DateTime!
+}
+
+type CustomerChatMessage {
+  role: String!
+  content: String!
+  name: String
+  customerid: Int
+  timestamp: DateTime
+  uuid: String!
+}
+
+type Customers {
+  id: Long!
+  first_name: String!
+  last_name: String!
+  email: String!
+  phone: String!
+  address: String!
+  date_of_birth: String!
+  updated_at: DateTime!
+  applications(limit: Int = 10, offset: Int = 0): [Applications!]
+  overview(limit: Int = 10, offset: Int = 0): [Customers_overview!]
+}
+
+type CustomersStream {
+  id: Long!
+  first_name: String!
+  last_name: String!
+  email: String!
+  phone: String!
+  address: String!
+  date_of_birth: String!
+  updated_at: DateTime!
+}
+
+type Customers_overview {
+  loan_type_id: Long!
+  total_amount: Float!
+  total_loans: Long!
+}
+
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+
+"A 64-bit signed integer"
+scalar Long
+
+type LoanTypes {
+  id: Long!
+  name: String!
+  description: String!
+  interest_rate: Float!
+  max_amount: Float!
+  min_amount: Float!
+  max_duration: Long!
+  min_duration: Long!
+  updated_at: DateTime!
+}
+
+type LoanTypesStream {
+  id: Long!
+  name: String!
+  description: String!
+  interest_rate: Float!
+  max_amount: Float!
+  min_amount: Float!
+  max_duration: Long!
+  min_duration: Long!
+  updated_at: DateTime!
+}
+
+type Mutation {
+  ChatMessage(event: AddChatMessageInput!): AddChatMessageResultOutput!
+  ApplicationUpdates(event: [ApplicationUpdatesInput!]!): [ApplicationUpdatesResultOutput!]!
+}
+
+type Query {
+  AddChatMessage(limit: Int = 10, offset: Int = 0): [AddChatMessage!]
+  ApplicationAlert(limit: Int = 10, offset: Int = 0): [ApplicationAlert!]
+  ApplicationStatus(limit: Int = 10, offset: Int = 0): [ApplicationStatus!]
+  ApplicationUpdates(limit: Int = 10, offset: Int = 0): [ApplicationUpdates!]
+  Applications(limit: Int = 10, offset: Int = 0): [Applications!]
+  ApplicationsStream(limit: Int = 10, offset: Int = 0): [ApplicationsStream!]
+  CustomerChatMessage(limit: Int = 10, offset: Int = 0): [CustomerChatMessage!]
+  Customers(limit: Int = 10, offset: Int = 0): [Customers!]
+  CustomersStream(limit: Int = 10, offset: Int = 0): [CustomersStream!]
+  LoanTypes(limit: Int = 10, offset: Int = 0): [LoanTypes!]
+  LoanTypesStream(limit: Int = 10, offset: Int = 0): [LoanTypesStream!]
+}
+
+enum _McpMethodType { NONE, TOOL, RESOURCE }
+enum _RestMethodType { NONE, GET, POST }
+directive @api(
+  mcp: _McpMethodType,
+  rest: _RestMethodType,
+  uri: String
+) on FIELD_DEFINITION | QUERY | MUTATION
+
 >>>pipeline_explain.txt
 === AddChatMessage
 ID:          default_catalog.default_database.AddChatMessage
