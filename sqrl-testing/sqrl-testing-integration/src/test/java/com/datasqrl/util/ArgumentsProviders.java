@@ -59,7 +59,7 @@ public final class ArgumentsProviders {
     protected Stream<Path> collectPackageJsonFiles() {
       return directories.stream()
           .flatMap(p -> collectPackageFiles(p, packageJsonRegex(), testModifierFilter()))
-          .sorted(Comparator.comparing(p -> p.toFile().getName()));
+          .sorted();
     }
 
     @Override
