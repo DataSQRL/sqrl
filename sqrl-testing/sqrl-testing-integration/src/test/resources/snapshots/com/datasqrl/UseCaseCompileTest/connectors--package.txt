@@ -9,21 +9,7 @@ Timestamp  : -
 Schema:
  - user_id: INTEGER
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
-Plan:
-LogicalTableScan(table=[[default_catalog, default_database, iceberg_parquet_table]])
-SQL: CREATE TABLE `iceberg_parquet_table` (
-  `user_id` INTEGER,
-  `name` STRING
-)
-PARTITIONED BY (`user_id`)
-WITH (
-  'connector' = 'iceberg',
-  'catalog-name' = 'local_fs',
-  'catalog-type' = 'hadoop',
-  'warehouse' = 'file:///tmp/iceberg/warehouse',
-  'format-version' = '2',
-  'write.format.default' = 'parquet'
-)
+
 === kafka_avro_table
 ID:     default_catalog.default_database.kafka_avro_table
 Type:   stream
@@ -34,18 +20,7 @@ Timestamp  : -
 Schema:
  - user_id: INTEGER
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
-Plan:
-LogicalTableScan(table=[[default_catalog, default_database, kafka_avro_table]])
-SQL: CREATE TABLE `kafka_avro_table` (
-  `user_id` INTEGER,
-  `name` STRING
-) WITH (
-  'connector' = 'kafka',
-  'topic' = 'users-avro',
-  'properties.bootstrap.servers' = 'localhost:9092',
-  'properties.group.id' = 'flink-kafka-avro-group',
-  'format' = 'avro'
-)
+
 === kafka_debezium_table
 ID:     default_catalog.default_database.kafka_debezium_table
 Type:   stream
@@ -56,18 +31,7 @@ Timestamp  : -
 Schema:
  - user_id: INTEGER
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
-Plan:
-LogicalTableScan(table=[[default_catalog, default_database, kafka_debezium_table]])
-SQL: CREATE TABLE `kafka_debezium_table` (
-  `user_id` INTEGER,
-  `name` STRING
-) WITH (
-  'connector' = 'kafka',
-  'topic' = 'users-debezium',
-  'properties.group.id' = 'flink-kafka-avro-group',
-  'properties.bootstrap.servers' = 'localhost:9092',
-  'format' = 'debezium-json'
-)
+
 === kafka_safe_csv_table
 ID:     default_catalog.default_database.kafka_safe_csv_table
 Type:   stream
@@ -78,18 +42,7 @@ Timestamp  : -
 Schema:
  - user_id: INTEGER
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
-Plan:
-LogicalTableScan(table=[[default_catalog, default_database, kafka_safe_csv_table]])
-SQL: CREATE TABLE `kafka_safe_csv_table` (
-  `user_id` INTEGER,
-  `name` STRING
-) WITH (
-  'connector' = 'kafka-safe',
-  'topic' = 'users-csv-avro',
-  'properties.bootstrap.servers' = 'localhost:9092',
-  'properties.group.id' = 'test',
-  'format' = 'flexible-csv'
-)
+
 === kafka_safe_json_table
 ID:     default_catalog.default_database.kafka_safe_json_table
 Type:   stream
@@ -100,18 +53,7 @@ Timestamp  : -
 Schema:
  - user_id: INTEGER
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
-Plan:
-LogicalTableScan(table=[[default_catalog, default_database, kafka_safe_json_table]])
-SQL: CREATE TABLE `kafka_safe_json_table` (
-  `user_id` INTEGER,
-  `name` STRING
-) WITH (
-  'connector' = 'kafka-safe',
-  'topic' = 'users-json-avro',
-  'properties.bootstrap.servers' = 'localhost:9092',
-  'properties.group.id' = 'test',
-  'format' = 'flexible-json'
-)
+
 === upsert_kafka_confluent_avro
 ID:     default_catalog.default_database.upsert_kafka_confluent_avro
 Type:   state
@@ -122,22 +64,7 @@ Timestamp  : -
 Schema:
  - user_id: INTEGER NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
-Plan:
-LogicalTableScan(table=[[default_catalog, default_database, upsert_kafka_confluent_avro]])
-SQL: CREATE TABLE `upsert_kafka_confluent_avro` (
-  `user_id` INTEGER NOT NULL,
-  `name` STRING,
-  PRIMARY KEY (`user_id`) NOT ENFORCED
-) WITH (
-  'connector' = 'upsert-kafka',
-  'topic' = 'users-upsert',
-  'properties.group.id' = 'flink-kafka-avro-group',
-  'properties.bootstrap.servers' = 'localhost:9092',
-  'key.format' = 'avro-confluent',
-  'key.avro-confluent.schema-registry.url' = 'http://localhost:8081',
-  'value.format' = 'avro-confluent',
-  'value.avro-confluent.schema-registry.url' = 'http://localhost:8081'
-)
+
 >>>flink-sql-no-functions.sql
 CREATE TABLE `kafka_avro_table` (
   `user_id` INTEGER,

@@ -12,12 +12,10 @@ The following is the [default configuration file](https://raw.githubusercontent.
     "compile-flink-plan": true,
     "cost-model": "DEFAULT",
     "explain": {
-      "text": true,
       "sql": false,
-      "logical": true,
+      "logical": false,
       "physical": false,
-      "sorted": true,
-      "visual": true
+      "sorted": true
     },
     "api": {
       "protocols": ["GRAPHQL", "REST", "MCP"],

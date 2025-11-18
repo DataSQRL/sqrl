@@ -13,25 +13,7 @@ Schema:
  - val: BIGINT NOT NULL
  - message: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
-Plan:
-LogicalWatermarkAssigner(rowtime=[event_time], watermark=[-($3, 0:INTERVAL SECOND)])
-  LogicalProject(event_id=[$0], val=[$1], message=[$2], event_time=[CAST($3):TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL])
-    LogicalTableScan(table=[[default_catalog, default_database, AuthInputData, metadata=[timestamp]]])
-SQL: CREATE TABLE `AuthInputData` (
-  `event_id` STRING NOT NULL,
-  `val` BIGINT NOT NULL,
-  `message` STRING NOT NULL,
-  `event_time` TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
-  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
-) WITH (
-  'connector' = 'kafka',
-  'flexible-json.timestamp-format.standard' = 'ISO-8601',
-  'format' = 'flexible-json',
-  'properties.auto.offset.reset' = 'earliest',
-  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
-  'properties.group.id' = '${KAFKA_GROUP_ID}',
-  'topic' = 'AuthInputData'
-)
+
 === AuthMyTable
 ID:     default_catalog.default_database.AuthMyTable
 Type:   query
@@ -40,16 +22,6 @@ Inputs: default_catalog.default_database.MyTable
 Annotations:
  - parameters: val
  - base-table: MyTable
-Plan:
-LogicalSort(sort0=[$0], dir0=[ASC-nulls-first])
-  LogicalProject(val=[$0])
-    LogicalFilter(condition=[=($0, ?0)])
-      LogicalTableScan(table=[[default_catalog, default_database, MyTable]])
-SQL: CREATE VIEW `AuthMyTable` AS 
-    SELECT t.* 
-      FROM MyTable t 
-     WHERE t.val = ?   
-     ORDER BY t.val ASC;
 
 === AuthMyTableValues
 ID:     default_catalog.default_database.AuthMyTableValues
@@ -59,16 +31,6 @@ Inputs: default_catalog.default_database.MyTable
 Annotations:
  - parameters: vals
  - base-table: MyTable
-Plan:
-LogicalSort(sort0=[$0], dir0=[ASC-nulls-first])
-  LogicalProject(val=[$0])
-    LogicalFilter(condition=[array_contains(CAST(?0):BIGINT ARRAY, CAST($0):BIGINT)])
-      LogicalTableScan(table=[[default_catalog, default_database, MyTable]])
-SQL: CREATE VIEW `AuthMyTableValues` AS 
-    SELECT t.* 
-      FROM MyTable t 
-     WHERE array_contains(cast(?     as ARRAY<BIGINT>), t.val)
-     ORDER BY t.val ASC;
 
 === AuthStringMyTableValues
 ID:     default_catalog.default_database.AuthStringMyTableValues
@@ -78,16 +40,6 @@ Inputs: default_catalog.default_database.MyStringTable
 Annotations:
  - parameters: vals
  - base-table: MyStringTable
-Plan:
-LogicalSort(sort0=[$0], dir0=[ASC-nulls-first])
-  LogicalProject(val=[$0])
-    LogicalFilter(condition=[array_contains(CAST(?0):VARCHAR(2147483647) CHARACTER SET "UTF-16LE" ARRAY, CAST($0):VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL)])
-      LogicalTableScan(table=[[default_catalog, default_database, MyStringTable]])
-SQL: CREATE VIEW `AuthStringMyTableValues` AS 
-    SELECT t.*
-      FROM MyStringTable t
-     WHERE array_contains(CAST(?     AS ARRAY<STRING>), CAST(t.val AS STRING))
-     ORDER BY t.val ASC;
 
 === MessageSubscription
 ID:     default_catalog.default_database.MessageSubscription
@@ -98,11 +50,6 @@ Annotations:
  - stream-root: AuthInputData
  - parameters: val
  - base-table: AuthInputData
-Plan:
-LogicalProject(event_id=[$0], val=[$1], message=[$2], event_time=[$3])
-  LogicalFilter(condition=[=($1, ?0)])
-    LogicalTableScan(table=[[default_catalog, default_database, _Messages]])
-SQL: CREATE VIEW `MessageSubscription` AS  SELECT * FROM _Messages WHERE val = ?   ;
 
 === MyStringTable
 ID:     default_catalog.default_database.MyStringTable
@@ -114,10 +61,6 @@ Primary Key: val
 Timestamp  : -
 Schema:
  - val: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL
-Plan:
-LogicalProject(val=[$0])
-  LogicalValues(tuples=[[{ 'a' }, { 'b' }, { 'c' }, { 'd' }]])
-SQL: CREATE VIEW `MyStringTable` AS  SELECT val FROM (VALUES 'a', 'b', 'c', 'd') AS t(val) ORDER BY val;
 
 === MyTable
 ID:     default_catalog.default_database.MyTable
@@ -129,12 +72,6 @@ Primary Key: val
 Timestamp  : -
 Schema:
  - val: INTEGER NOT NULL
-Plan:
-LogicalProject(val=[$0])
-  LogicalValues(tuples=[[{ 1 }, { 2 }, { 3 }, { 4 }, { 5 }, { 6 }, { 7 }, { 8 }, { 9 }, { 10 }]])
-SQL: CREATE VIEW `MyTable` AS  SELECT val
-           FROM (VALUES ((1)), ((2)), ((3)), ((4)), ((5)),
-            ((6)), ((7)), ((8)), ((9)), ((10))) AS t(val) ORDER BY val;
 
 === _Messages
 ID:     default_catalog.default_database._Messages
@@ -150,11 +87,6 @@ Schema:
  - val: BIGINT NOT NULL
  - message: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
-Plan:
-LogicalProject(event_id=[$0], val=[$1], message=[$2], event_time=[$3])
-  LogicalFilter(condition=[<>($2, '')])
-    LogicalTableScan(table=[[default_catalog, default_database, AuthInputData]])
-SQL: CREATE VIEW `_Messages` AS  SELECT * FROM AuthInputData WHERE message <> '';
 
 >>>flink-sql-no-functions.sql
 CREATE VIEW `MyTable`

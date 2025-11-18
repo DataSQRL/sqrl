@@ -120,12 +120,10 @@ Configuration options that control the compiler, such as where logging output is
     "cost-model": "DEFAULT",       // cost model to use for DAG optimization ("DEFAULT" | "READ" | "WRITE")
 
     "explain": {                   // controls what and how the compiler writes pipeline plans to build/pipeline_*
-      "text":     true,           // create text version of the plan
       "sql":      false,          // include SQL code in the plan
-      "logical":  true,           // include the logical plan for each table
+      "logical":  false,           // include the logical plan for each table
       "physical": false,          // include the physical plan for each table
-      "sorted":   true,           // ensure deterministic ordering (mostly for tests)
-      "visual":   true            // create a visual version of the plan
+      "sorted":   true           // ensure deterministic ordering (mostly for tests)
     },
 
     "api": {

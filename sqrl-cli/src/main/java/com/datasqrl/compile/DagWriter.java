@@ -56,41 +56,40 @@ public class DagWriter {
   @SneakyThrows
   private void writeExplain(PipelineDAG dag) {
     ExplainConfig explainConfig = compilerConfig.getExplain();
-    if (explainConfig.isText()) {
-      PipelineDAGExporter exporter =
-          PipelineDAGExporter.builder()
-              .includeQueries(false)
-              .includeImports(false)
-              .withHints(true)
-              .includeLogicalPlan(explainConfig.isLogical())
-              .includeSQL(explainConfig.isSql())
-              .includePhysicalPlan(explainConfig.isPhysical())
-              .build();
-      List<PipelineDAGExporter.Node> nodes = exporter.export(dag);
-      if (explainConfig.isSorted()) Collections.sort(nodes); // make order deterministic
-      writeFile(
-          buildDir.buildDir().resolve(EXPLAIN_TEXT_FILENAME),
-          nodes.stream().map(PipelineDAGExporter.Node::toString).collect(Collectors.joining("\n")));
-    }
-    if (explainConfig.isVisual()) {
-      PipelineDAGExporter exporter =
-          PipelineDAGExporter.builder()
-              .includeQueries(true)
-              .includeImports(true)
-              .withHints(true)
-              .includeLogicalPlan(true)
-              .includeSQL(true)
-              .includePhysicalPlan(true)
-              .build();
-      List<PipelineDAGExporter.Node> nodes = exporter.export(dag);
-      if (explainConfig.isSorted()) Collections.sort(nodes); // make order deterministic
-      String jsonContent = Deserializer.INSTANCE.toJson(nodes);
-      String htmlFile =
-          Resources.toString(Resources.getResource(VISUAL_HTML_FILENAME), StandardCharsets.UTF_8);
-      htmlFile = htmlFile.replace(DAG_PLACEHOLDER, jsonContent);
-      writeFile(buildDir.buildDir().resolve(EXPLAIN_VISUAL_FILENAME), htmlFile);
-      writeFile(buildDir.buildDir().resolve(EXPLAIN_JSON_FILENAME), jsonContent);
-    }
+    // Write Pipeline plan as text
+    PipelineDAGExporter exporter =
+        PipelineDAGExporter.builder()
+            .includeQueries(false)
+            .includeImports(false)
+            .withHints(true)
+            .includeLogicalPlan(explainConfig.isLogical())
+            .includeSQL(explainConfig.isSql())
+            .includePhysicalPlan(explainConfig.isPhysical())
+            .build();
+    List<PipelineDAGExporter.Node> nodes = exporter.export(dag);
+    if (explainConfig.isSorted()) Collections.sort(nodes); // make order deterministic
+    writeFile(
+        buildDir.buildDir().resolve(EXPLAIN_TEXT_FILENAME),
+        nodes.stream().map(PipelineDAGExporter.Node::toString).collect(Collectors.joining("\n")));
+
+    // Write pipeline plan as visual representation
+    exporter =
+        PipelineDAGExporter.builder()
+            .includeQueries(true)
+            .includeImports(true)
+            .withHints(true)
+            .includeLogicalPlan(true)
+            .includeSQL(true)
+            .includePhysicalPlan(true)
+            .build();
+    nodes = exporter.export(dag);
+    if (explainConfig.isSorted()) Collections.sort(nodes); // make order deterministic
+    String jsonContent = Deserializer.INSTANCE.toJson(nodes);
+    String htmlFile =
+        Resources.toString(Resources.getResource(VISUAL_HTML_FILENAME), StandardCharsets.UTF_8);
+    htmlFile = htmlFile.replace(DAG_PLACEHOLDER, jsonContent);
+    writeFile(buildDir.buildDir().resolve(EXPLAIN_VISUAL_FILENAME), htmlFile);
+    writeFile(buildDir.buildDir().resolve(EXPLAIN_JSON_FILENAME), jsonContent);
   }
 
   @SneakyThrows

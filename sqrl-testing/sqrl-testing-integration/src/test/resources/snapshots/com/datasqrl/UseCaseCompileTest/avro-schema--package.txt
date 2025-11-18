@@ -45,10 +45,6 @@ Schema:
  - decimalField: DECIMAL(10, 2) NOT NULL
  - mapField: (VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL) MAP NOT NULL
  - nullableMapField: (VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL) MAP
-Plan:
-LogicalProject(uuidField=[$0], timestampMillisField=[$1], nullableTimestampMillisField=[$2], timestampMicrosField=[$3], nullableTimestampMicrosField=[$4], dateField=[$5], nullableDateField=[$6], timeMillisField=[$7], nullableTimeMillisField=[$8], timeMicrosField=[$9], nullableTimeMicrosField=[$10], complexArrayField=[$11], nullableComplexArrayField=[$12], multiNestedRecord=[$13], stringField=[$14], nullableStringField=[$15], intField=[$16], nullableIntField=[$17], longField=[$18], nullableLongField=[$19], floatField=[$20], nullableFloatField=[$21], doubleField=[$22], nullableDoubleField=[$23], booleanField=[$24], nullableBooleanField=[$25], enumField=[$26], nullableEnumField=[$27], arrayField=[$28], nullableArrayField=[$29], nestedRecord=[$30], nullableNestedRecord=[$31], decimalField=[$32], mapField=[$33], nullableMapField=[$34])
-  LogicalTableScan(table=[[default_catalog, default_database, _Schema]])
-SQL: CREATE VIEW `Schema` AS  SELECT * FROM _Schema ORDER BY uuidField DESC;
 
 === _Schema
 ID:     default_catalog.default_database._Schema
@@ -96,58 +92,7 @@ Schema:
  - decimalField: DECIMAL(10, 2) NOT NULL
  - mapField: (VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL) MAP NOT NULL
  - nullableMapField: (VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL) MAP
-Plan:
-LogicalWatermarkAssigner(rowtime=[timestampMillisField], watermark=[$1])
-  LogicalTableScan(table=[[default_catalog, default_database, _Schema]])
-SQL: CREATE TEMPORARY TABLE `_Schema__schema` (
-  `uuidField` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `timestampMillisField` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `nullableTimestampMillisField` TIMESTAMP(3) WITH LOCAL TIME ZONE,
-  `timestampMicrosField` TIMESTAMP(6) WITH LOCAL TIME ZONE NOT NULL,
-  `nullableTimestampMicrosField` TIMESTAMP(6) WITH LOCAL TIME ZONE,
-  `dateField` DATE NOT NULL,
-  `nullableDateField` DATE,
-  `timeMillisField` TIME(0) NOT NULL,
-  `nullableTimeMillisField` TIME(0),
-  `timeMicrosField` TIME(0) NOT NULL,
-  `nullableTimeMicrosField` TIME(0),
-  `complexArrayField` ROW(`itemFieldOne` INTEGER NOT NULL, `itemFieldTwo` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL) NOT NULL ARRAY NOT NULL,
-  `nullableComplexArrayField` ROW(`nullableItemFieldOne` DOUBLE, `nullableItemFieldTwo` BOOLEAN) ARRAY,
-  `multiNestedRecord` ROW(`nestedLevelOne` ROW(`levelOneField` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL, `nestedLevelTwo` ROW(`levelTwoField` INTEGER NOT NULL) NOT NULL) NOT NULL) NOT NULL,
-  `stringField` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `nullableStringField` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
-  `intField` INTEGER NOT NULL,
-  `nullableIntField` INTEGER,
-  `longField` BIGINT NOT NULL,
-  `nullableLongField` BIGINT,
-  `floatField` FLOAT NOT NULL,
-  `nullableFloatField` FLOAT,
-  `doubleField` DOUBLE NOT NULL,
-  `nullableDoubleField` DOUBLE,
-  `booleanField` BOOLEAN NOT NULL,
-  `nullableBooleanField` BOOLEAN,
-  `enumField` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `nullableEnumField` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
-  `arrayField` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL ARRAY NOT NULL,
-  `nullableArrayField` INTEGER ARRAY,
-  `nestedRecord` ROW(`nestedStringField` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL, `nestedIntField` INTEGER NOT NULL, `nestedArrayField` FLOAT NOT NULL ARRAY NOT NULL, `nestedMapField` MAP< VARCHAR(2147483647) CHARACTER SET `UTF-16LE`, VARCHAR(2147483647) CHARACTER SET `UTF-16LE` > NOT NULL) NOT NULL,
-  `nullableNestedRecord` ROW(`nullableNestedStringField` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`, `nullableNestedLongField` BIGINT),
-  `decimalField` DECIMAL(10, 2) NOT NULL,
-  `mapField` MAP< VARCHAR(2147483647) CHARACTER SET `UTF-16LE`, VARCHAR(2147483647) CHARACTER SET `UTF-16LE` > NOT NULL,
-  `nullableMapField` MAP< VARCHAR(2147483647) CHARACTER SET `UTF-16LE`, VARCHAR(2147483647) CHARACTER SET `UTF-16LE` >
-) WITH (
-  'connector' = 'datagen'
-);
-CREATE TABLE `_Schema` (
-  PRIMARY KEY (`uuidField`, `timestampMillisField`) NOT ENFORCED,
-  WATERMARK FOR `timestampMillisField` AS `timestampMillisField`
-) WITH (
-  'format' = 'json',
-  'json.timestamp-format.standard' = 'ISO-8601',
-  'path' = '${DATA_PATH}/schema.jsonl',
-  'connector' = 'filesystem'
-)
-LIKE `_Schema__schema`
+
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `_Schema__schema` (
   `uuidField` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,

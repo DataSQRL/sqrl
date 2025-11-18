@@ -23,11 +23,6 @@ public class ExplainConfigImpl implements PackageJson.ExplainConfig {
   private final SqrlConfig sqrlConfig;
 
   @Override
-  public boolean isText() {
-    return sqrlConfig.asBool("text").get();
-  }
-
-  @Override
   public boolean isSql() {
     return sqrlConfig.asBool("sql").get();
   }
@@ -45,10 +40,5 @@ public class ExplainConfigImpl implements PackageJson.ExplainConfig {
   @Override
   public boolean isSorted() {
     return sqrlConfig.asBool("sorted").get();
-  }
-
-  @Override
-  public boolean isVisual() {
-    return sqrlConfig.asBool("visual").get();
   }
 }
