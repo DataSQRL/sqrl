@@ -11,7 +11,7 @@ Then, we only need to define a long enough signer secret string on the website.
 
 The only manual step that is required in case of `HS265` is to apply Base64 encoding to your given secret, for example:
 ```sh
-echo mySuperSecretSignerStringThatIsLongEnough | base64
+echo -n mySuperSecretSignerStringThatIsLongEnough | base64
 ```
 
 And then we need to set the encoded secret as the `buffer` in the `package.json` file `vertx` config section:
