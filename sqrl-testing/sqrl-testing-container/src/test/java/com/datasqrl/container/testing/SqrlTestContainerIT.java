@@ -34,7 +34,7 @@ public class SqrlTestContainerIT extends SqrlContainerTestBase {
   @Test
   @SneakyThrows
   void givenAvroSchemaScript_whenTestCommandExecuted_thenSnapshotsValidateSuccessfully() {
-    var result = sqrlCmd(testDir, "test avro-schema.sqrl".split(" "));
+    var result = sqrlCmd(testDir, "test package.json".split(" "));
 
     var logs = result.logs();
     log.info("SQRL test command executed successfully");
@@ -65,7 +65,7 @@ public class SqrlTestContainerIT extends SqrlContainerTestBase {
     ContainerError exception =
         (ContainerError)
             assertThatThrownBy(
-                    () -> sqrlCmd(testDir, "test -c package-no-snapshots.json".split(" ")))
+                    () -> sqrlCmd(testDir, "test package-no-snapshots.json".split(" ")))
                 .isInstanceOf(ContainerError.class)
                 .hasMessageContaining("SQRL compilation failed")
                 .actual();
@@ -83,7 +83,7 @@ public class SqrlTestContainerIT extends SqrlContainerTestBase {
   @Test
   @SneakyThrows
   void givenAvroSchemaScript_whenTestCommandExecutedWithoutDebug_thenNoBashDebugLogsPresent() {
-    var result = sqrlCmd(testDir, false, "test avro-schema.sqrl".split(" "));
+    var result = sqrlCmd(testDir, false, "test package.json".split(" "));
 
     var logs = result.logs();
     log.info("SQRL test command executed without DEBUG=1");
