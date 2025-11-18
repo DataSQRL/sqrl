@@ -73,6 +73,10 @@ public class HttpServerVerticle extends AbstractVerticle {
 
   @Nullable private Path configDir;
 
+  // Synchronization for promise completion to prevent race conditions
+  private volatile boolean startPromiseCompleted = false;
+  private final Object promiseLock = new Object();
+
   // ---------------------------------------------------------------------------
   // Lifecyle
   // ---------------------------------------------------------------------------
@@ -140,6 +144,19 @@ public class HttpServerVerticle extends AbstractVerticle {
   // Bootstrap
   // ---------------------------------------------------------------------------
 
+  private void completePromiseSafely(Promise<Void> promise, boolean success, Throwable error) {
+    synchronized (promiseLock) {
+      if (!startPromiseCompleted && !promise.future().isComplete()) {
+        startPromiseCompleted = true;
+        if (success) {
+          promise.tryComplete();
+        } else {
+          promise.tryFail(error);
+        }
+      }
+    }
+  }
+
   private void bootstrap(Promise<Void> startPromise) {
     var router = Router.router(vertx);
 
@@ -192,11 +209,11 @@ public class HttpServerVerticle extends AbstractVerticle {
                   .onSuccess(
                       srv -> {
                         log.info("HTTP server listening on port {}", srv.actualPort());
-                        startPromise.complete();
+                        completePromiseSafely(startPromise, true, null);
                       })
-                  .onFailure(startPromise::fail);
+                  .onFailure(err -> completePromiseSafely(startPromise, false, err));
             })
-        .onFailure(startPromise::fail);
+        .onFailure(err -> completePromiseSafely(startPromise, false, err));
   }
 
   private Optional<PrometheusMeterRegistry> findMeterRegistry() {
@@ -282,10 +299,8 @@ public class HttpServerVerticle extends AbstractVerticle {
               }
             })
         .onFailure(
-            err -> {
-              log.error("Failed to deploy GraphQL verticle, shutting down application", err);
-              System.exit(1);
-            });
+            err ->
+                log.error("Failed to deploy GraphQL verticle, will trigger orderly shutdown", err));
   }
 
   // ---------------------------------------------------------------------------
