@@ -308,7 +308,8 @@ public class DatasqrlRun {
               if (res.succeeded()) {
                 log.info("Vertx deployment succeeded. ID: {}", res.result());
               } else {
-                log.warn("Vertx deployment failed", res.cause());
+                log.error("Vertx deployment failed", res.cause());
+                vertx.close().onComplete(v -> System.exit(1));
               }
             });
   }
