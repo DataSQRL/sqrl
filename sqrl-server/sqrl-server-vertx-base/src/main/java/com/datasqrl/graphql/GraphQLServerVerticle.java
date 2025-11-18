@@ -66,30 +66,13 @@ public class GraphQLServerVerticle extends AbstractVerticle {
 
   private GraphQL graphQLEngine;
 
-  // Synchronization for promise completion to prevent race conditions
-  private volatile boolean startPromiseCompleted = false;
-  private final Object promiseLock = new Object();
-
   @Override
   public void start(Promise<Void> startPromise) {
     try {
       setupGraphQLRoutes(startPromise);
     } catch (Exception e) {
       log.error("Could not setup GraphQL routes", e);
-      completePromiseSafely(startPromise, false, e);
-    }
-  }
-
-  private void completePromiseSafely(Promise<Void> promise, boolean success, Throwable error) {
-    synchronized (promiseLock) {
-      if (!startPromiseCompleted && !promise.future().isComplete()) {
-        startPromiseCompleted = true;
-        if (success) {
-          promise.tryComplete();
-        } else {
-          promise.tryFail(error);
-        }
-      }
+      startPromise.fail(e);
     }
   }
 
@@ -146,8 +129,8 @@ public class GraphQLServerVerticle extends AbstractVerticle {
     // Wait for all subscriptions to be set up before completing the promise
     subscriptionConfig
         .getAllSubscriptionsFuture()
-        .onSuccess(v -> completePromiseSafely(startPromise, true, null))
-        .onFailure(err -> completePromiseSafely(startPromise, false, err));
+        .onSuccess(v -> startPromise.complete())
+        .onFailure(startPromise::fail);
   }
 
   private Map<MetadataType, MetadataReader> createMetadataReaders() {

@@ -73,10 +73,6 @@ public class HttpServerVerticle extends AbstractVerticle {
 
   @Nullable private Path configDir;
 
-  // Synchronization for promise completion to prevent race conditions
-  private volatile boolean startPromiseCompleted = false;
-  private final Object promiseLock = new Object();
-
   // ---------------------------------------------------------------------------
   // Lifecyle
   // ---------------------------------------------------------------------------
@@ -144,19 +140,6 @@ public class HttpServerVerticle extends AbstractVerticle {
   // Bootstrap
   // ---------------------------------------------------------------------------
 
-  private void completePromiseSafely(Promise<Void> promise, boolean success, Throwable error) {
-    synchronized (promiseLock) {
-      if (!startPromiseCompleted && !promise.future().isComplete()) {
-        startPromiseCompleted = true;
-        if (success) {
-          promise.tryComplete();
-        } else {
-          promise.tryFail(error);
-        }
-      }
-    }
-  }
-
   private void bootstrap(Promise<Void> startPromise) {
     var router = Router.router(vertx);
 
@@ -199,28 +182,23 @@ public class HttpServerVerticle extends AbstractVerticle {
 
     // Wait for all GraphQL verticles to deploy, then start HTTP server
     Future.all(deploymentFutures)
-        .onSuccess(
+        .compose(
             compositeFuture -> {
               // ── Start the HTTP server ────────────────────────────────────────────────
-              vertx
+              return vertx
                   .createHttpServer(config.getHttpServerOptions())
                   .requestHandler(router)
-                  .listen(config.getHttpServerOptions().getPort())
-                  .onSuccess(
-                      srv -> {
-                        log.info("HTTP server listening on port {}", srv.actualPort());
-                        completePromiseSafely(startPromise, true, null);
-                      })
-                  .onFailure(
-                      err -> {
-                        log.error("Failed to start HTTP server", err);
-                        completePromiseSafely(startPromise, false, err);
-                      });
+                  .listen(config.getHttpServerOptions().getPort());
+            })
+        .onSuccess(
+            server -> {
+              log.info("HTTP server listening on port {}", server.actualPort());
+              startPromise.complete();
             })
         .onFailure(
             err -> {
-              log.error("Failed to deploy GraphQL verticle, will trigger orderly shutdown", err);
-              completePromiseSafely(startPromise, false, err);
+              log.error("Failed to start application", err);
+              startPromise.fail(err);
             });
   }
 
