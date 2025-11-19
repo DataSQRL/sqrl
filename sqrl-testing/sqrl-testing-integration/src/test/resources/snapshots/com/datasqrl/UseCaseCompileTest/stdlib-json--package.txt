@@ -52,36 +52,6 @@ CREATE VIEW `UnmodifiedJsonData`
 AS
 SELECT `id`, `val`, `TO_JSONB`('{"a": 1}') AS `json_col`, `TO_JSONB`('{"a": 2}') AS `json_col_2`, `TO_JSONB`('{"b": 1}') AS `json_col_3`, `TO_JSONB`('{"b": 2}') AS `json_col_4`
 FROM `Json`;
-CREATE VIEW `JsonArrayTest`
-AS
-SELECT `id`, `JSONB_ARRAY`(`id`, `json_col`) AS `json_array_string_function`, `JSONB_ARRAY`(`json_col`, `json_col_2`) AS `json_array_json_function`
-FROM `UnmodifiedJsonData`;
-CREATE VIEW `JsonConcatTest`
-AS
-SELECT `id`, `JSONB_CONCAT`(`json_col`, `json_col_2`) AS `json_concat_same_key_function`, `JSONB_CONCAT`(`json_col`, `json_col_3`) AS `json_concat_diff_key_function`
-FROM `UnmodifiedJsonData`;
-CREATE VIEW `JsonExistsTest`
-AS
-SELECT `id`, `JSONB_EXISTS`(`json_col`, '$.a') AS `json_exists_function`, `JSONB_EXISTS`(`json_col`, '$.nonExistentPath') AS `json_not_exists_function`
-FROM `UnmodifiedJsonData`;
-CREATE VIEW `JsonExtractTest`
-AS
-SELECT `id`, `JSONB_EXTRACT`(`json_col`, '$.a') AS `json_extract_function`, `JSONB_EXTRACT`(`json_col`, '$.nonExistentPath') AS `json_extract_not_exists_function`, `JSONB_EXTRACT`(`json_col`, '$.nonExistentPath', 'default') AS `json_extract_with_default_function`, `JSONB_EXTRACT`(`json_col`, '$.a', 100) AS `json_extract_with_default_int_function`
-FROM `UnmodifiedJsonData`;
-CREATE VIEW `JsonArrayAggTest`
-AS
-SELECT `val`, `JSONB_ARRAY_AGG`(`json_col`) AS `json_array_agg_function`
-FROM `UnmodifiedJsonData`
-GROUP BY `val`;
-CREATE VIEW `JsonObjectAggTest`
-AS
-SELECT `val`, `jsonb_object_agg`('key', `json_col`) AS `json_object_agg_function`
-FROM `UnmodifiedJsonData`
-GROUP BY `val`;
-CREATE VIEW `ToJsonTest`
-AS
-SELECT `id`, `TO_JSONB`(`json_col`) AS `to_json_function`
-FROM `UnmodifiedJsonData`;
 CREATE TABLE `Json_1` (
   `id` BIGINT NOT NULL,
   `val` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,

@@ -77,10 +77,6 @@ SELECT `val`, `MyAsyncScalarFunction`(`val`, `ival`) AS `myFnc`
 FROM (VALUES ROW('1', 1),
    ROW('2', 2),
    ROW('3', 3)) AS `t` (`val`, `ival`);
-CREATE VIEW `MyAsyncTableTest`
-AS
-SELECT *
-FROM `MyAsyncTable`;
 CREATE TABLE `MyAsyncTable_1` (
   `val` CHAR(1) CHARACTER SET `UTF-16LE` NOT NULL,
   `myFnc` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,

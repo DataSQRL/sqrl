@@ -64,8 +64,14 @@ CustomerTimeWindow := SELECT
                       GROUP BY
                           window_start, window_end;
 
-/*+ test, workload */
+/*+ test */
 CustomerTimeWindowTest := SELECT * FROM CustomerTimeWindow ORDER BY window_end DESC;
+
+/*+ workload */
+CustomerTimeWindowWorkload := SELECT * FROM CustomerTimeWindow ORDER BY window_end DESC;
+
+/*+ test, workload */
+CustomerTimeWindowTestWorkload := SELECT * FROM CustomerTimeWindow ORDER BY window_end DESC;
 
 /*+ cache(5 min) */
 CustomerQuery(id BIGINT NOT NULL) := SELECT * FROM AnotherCustomer WHERE customerid = :id;

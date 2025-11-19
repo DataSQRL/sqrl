@@ -69,14 +69,6 @@ FROM (VALUES ROW('a'),
    ROW('b'),
    ROW('c'),
    ROW('d')) AS `t` (`val`);
-CREATE VIEW `MyTableTest`
-AS
-SELECT *
-FROM `MyTable`;
-CREATE VIEW `MyStringTableTest`
-AS
-SELECT *
-FROM `MyStringTable`;
 CREATE TABLE `MyStringTable_1` (
   `val` CHAR(1) CHARACTER SET `UTF-16LE` NOT NULL,
   PRIMARY KEY (`val`) NOT ENFORCED

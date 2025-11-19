@@ -321,11 +321,6 @@ SELECT `o`.`customerid`, `i`.`productid`, COUNT(1) AS `num_orders`, SUM(`i`.`qua
 FROM `Orders` AS `o`
  CROSS JOIN UNNEST(`o`.`items`) AS `i`
 GROUP BY `o`.`customerid`, `i`.`productid`;
-CREATE VIEW `CustomerPurchaseTest`
-AS
-SELECT `customerid`, `productid`, COUNT(*) AS `num`
-FROM `CustomersPastPurchases`
-GROUP BY `customerid`, `productid`;
 CREATE VIEW `CustomerPromotion`
 AS
 SELECT `s`.`customerid`, `c`.`first_name`, `c`.`last_name`, `c`.`email`, `s`.`spend`, `s`.`saved`
@@ -350,10 +345,6 @@ CREATE TABLE `SinkTable_ex1` (
   'path' = 's3://test/'
 )
 LIKE `SinkTable_ex1__schema`;
-CREATE VIEW `CustomerPromotionTest`
-AS
-SELECT COUNT(*) AS `numPromotions`
-FROM `CustomerPromotion`;
 CREATE VIEW `Products`
 AS
 SELECT `id`, `name`, `sizing`, `weight_in_gram`, `type`, `category`, `usda_id`, `updated`

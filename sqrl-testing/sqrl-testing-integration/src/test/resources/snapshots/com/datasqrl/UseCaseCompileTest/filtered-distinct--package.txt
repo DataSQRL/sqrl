@@ -70,10 +70,6 @@ FROM (SELECT `id`, `customerid`, `time`, `productid`, `quantity`, `unit_price`, 
       WHERE `time` >= `$f8`) AS `t1`
     WHERE `$f8` IS NULL AND `$f9` IS NULL AND `$f10` IS NULL AND `$f11` IS NULL AND `$f12` IS NULL OR `customerid` <> `$f8` OR (`productid` <> `$f9` OR (`quantity` <> `$f10` OR `unit_price` <> `$f11`)) OR (`unit_price` IS NULL AND `$f11` IS NOT NULL OR `$f11` IS NULL AND `unit_price` IS NOT NULL OR (`discount` <> `$f12` OR (`discount` IS NULL AND `$f12` IS NOT NULL OR `$f12` IS NULL AND `discount` IS NOT NULL)))) AS `t3`) AS `t4`
 WHERE `$f8` = 1;
-CREATE VIEW `DistinctOrdersTest`
-AS
-SELECT *
-FROM `DistinctOrders`;
 CREATE TABLE `DistinctOrders_1` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,

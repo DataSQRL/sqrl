@@ -35,10 +35,6 @@ FROM (VALUES ROW(1.0, 11),
    ROW(8.0, 18),
    ROW(9.0, 19),
    ROW(10.0, 20)) AS `names` (`d`, `b`);
-CREATE VIEW `MathFunctionsTest`
-AS
-SELECT *
-FROM `MathFunctions`;
 CREATE TABLE `MathFunctions_1` (
   `d` DECIMAL(3, 1) NOT NULL,
   `b` INTEGER NOT NULL,

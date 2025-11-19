@@ -72,18 +72,6 @@ AS
 SELECT `id`, `array_of_rows`
 FROM (VALUES ROW(1, ARRAY[ROW('a', 'group1', 1), ROW('b', 'group1', 2), ROW('c', 'group2', 3), ROW('d', 'group2', 4)]),
    ROW(2, ARRAY[ROW('x', 'groupX', 1), ROW('y', 'groupX', 2), ROW('z', 'groupY', 3)])) AS `T` (`id`, `array_of_rows`);
-CREATE VIEW `IntArrayTest`
-AS
-SELECT *
-FROM `IntArray`;
-CREATE VIEW `StringArrayTest`
-AS
-SELECT *
-FROM `StringArray`;
-CREATE VIEW `NestedArrayTest`
-AS
-SELECT *
-FROM `NestedArray`;
 CREATE VIEW `StringVals`
 AS
 SELECT `val`

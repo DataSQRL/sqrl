@@ -29,10 +29,6 @@ CREATE VIEW `results`
 AS
 SELECT `completions`('Reply this exactly: \"Crunching data like a squirrel.\"', 'gpt-4o', 50, 0.1) AS `completions_result`, `extract_json`('Reply this exactly: \"Crunching data like a squirrel.\" in the \"response\" property.', 'gpt-4o', 0.1) AS `extract_json_result_response`, `extract_json`('myField should be equal to \"Hello squirrels!\" ', 'gpt-4o', 0.1, 1.0, '{"$schema":"http://json-schema.org/draft-07/schema#","type":"object","properties":{"response":{"type":"object","properties":{"myField":{"type":"string"}},"required":["myField"],"additionalProperties":false}},"required":["response"],"additionalProperties":false}') AS `extract_json_result_with_schema_response`
 FROM `data`;
-CREATE VIEW `resultsTest`
-AS
-SELECT *
-FROM `results`;
 CREATE TABLE `data_1` (
   `val` INTEGER NOT NULL,
   `__pk_hash` INTEGER NOT NULL,

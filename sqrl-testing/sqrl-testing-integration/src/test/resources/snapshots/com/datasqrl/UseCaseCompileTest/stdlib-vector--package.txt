@@ -52,14 +52,6 @@ AS
 SELECT `category_id`, `vector_to_double`(`CENTER`(`vector`)) AS `center_vector`
 FROM `VectorData`
 GROUP BY `category_id`;
-CREATE VIEW `CentroidTest`
-AS
-SELECT `category_id`, `center_vector`
-FROM `CategoryCentroids`;
-CREATE VIEW `DataTest`
-AS
-SELECT `doc_id`, `category_id`
-FROM `VectorData`;
 CREATE TABLE `CategoryCentroids_1` (
   `category_id` INTEGER NOT NULL,
   `center_vector` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),

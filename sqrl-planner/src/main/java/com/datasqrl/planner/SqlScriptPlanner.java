@@ -335,17 +335,14 @@ public class SqlScriptPlanner {
             .setColumnNames(
                 ((TableNode) tblNodeOpt.get()).getAnalysis().getRowType().getFieldNames());
       }
-      var nameIsHidden = tablePath.getLast().isHidden();
-      // Ignore hidden tables and test tables (that are not queries) when we are not running tests
-      if ((nameIsHidden || (executionGoal != ExecutionGoal.TEST && hints.isTest()))
-          && !hints.isWorkload()) {
-        // Test tables should not have access unless we are running tests or they are also workloads
-        access = AccessModifier.NONE;
-      }
+
       var isHidden =
-          (nameIsHidden || hints.isWorkload())
-              && !(hints.isTest() && executionGoal == ExecutionGoal.TEST);
-      access = adjustAccess(access);
+          tablePath.getLast().isHidden()
+              || (shouldExcludeTestTable(hints))
+              || (hints.isWorkload() && !(hints.isTest() && executionGoal == ExecutionGoal.TEST));
+
+      // Ignore any hidden table
+      access = adjustAccess(isHidden ? AccessModifier.NONE : access);
 
       var originalSql = sqrlDef.toSql(sqrlEnv, statementStack);
       // Relationships and Table functions require special handling
@@ -505,8 +502,15 @@ public class SqlScriptPlanner {
         }
       } else {
         var visibility = new AccessVisibility(access, hints.isTest(), true, isHidden);
-        addTableToDag(
-            sqrlEnv.addView(originalSql, hints, errors), hintsAndDocs, visibility, false, sqrlEnv);
+
+        if (!shouldExcludeTestTable(hints)) {
+          addTableToDag(
+              sqrlEnv.addView(originalSql, hints, errors),
+              hintsAndDocs,
+              visibility,
+              false,
+              sqrlEnv);
+        }
       }
     } else if (stmt instanceof SqrlNextBatch) {
       var enabledEngines = packageJson.getEnabledEngines();
@@ -553,6 +557,10 @@ public class SqlScriptPlanner {
         sqrlEnv.executeSQL(flinkStmt.getSql().get());
       }
     }
+  }
+
+  private boolean shouldExcludeTestTable(PlannerHints hints) {
+    return hints.isTest() && executionGoal != ExecutionGoal.TEST;
   }
 
   /**
