@@ -1,54 +1,63 @@
 >>>pipeline_explain.txt
 === CustomerAggregate1
-ID:     default_catalog.default_database.CustomerAggregate1
-Type:   state
-Stage:  flink
-Inputs: default_catalog.sources.CustomerAggregate
-Primary Key: customerid
-Timestamp  : -
+ID:          default_catalog.default_database.CustomerAggregate1
+Type:        state
+Stage:       flink
+Primary key: customerid
+Timestamp:   -
+---
 Schema:
  - customerid: BIGINT NOT NULL
  - updates: BIGINT NOT NULL
+Inputs:
+ - default_catalog.sources.CustomerAggregate
 Plan:
 LogicalProject(customerid=[$0], updates=[$1])
   LogicalTableScan(table=[[default_catalog, sources, CustomerAggregate]])
-SQL: CREATE VIEW `CustomerAggregate1` AS  SELECT customerid, num_updates * 1 AS updates FROM sources.CustomerAggregate;
+SQL:
+CREATE VIEW `CustomerAggregate1` AS  SELECT customerid, num_updates * 1 AS updates FROM sources.CustomerAggregate;
 
 === CustomerAggregate2
-ID:     default_catalog.default_database.CustomerAggregate2
-Type:   state
-Stage:  flink
-Inputs: default_catalog.mysources.CustomerAggregate
-Primary Key: customerid
-Timestamp  : -
+ID:          default_catalog.default_database.CustomerAggregate2
+Type:        state
+Stage:       flink
+Primary key: customerid
+Timestamp:   -
+---
 Schema:
  - customerid: BIGINT NOT NULL
  - updates: BIGINT NOT NULL
+Inputs:
+ - default_catalog.mysources.CustomerAggregate
 Plan:
 LogicalProject(customerid=[$0], updates=[*($1, 2)])
   LogicalTableScan(table=[[default_catalog, mysources, CustomerAggregate]])
-SQL: CREATE VIEW `CustomerAggregate2` AS  SELECT customerid, num_updates * 2 AS updates FROM mysources.CustomerAggregate;
+SQL:
+CREATE VIEW `CustomerAggregate2` AS  SELECT customerid, num_updates * 2 AS updates FROM mysources.CustomerAggregate;
 
 === Customer
-ID:     default_catalog.mysources.Customer
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.mysources.Customer__base
-Annotations:
- - stream-root: Customer
-Primary Key: customerid, lastUpdated
-Timestamp  : timestamp
+ID:          default_catalog.mysources.Customer
+Type:        stream
+Stage:       flink
+Primary key: customerid, lastUpdated
+Timestamp:   timestamp
+---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.mysources.Customer__base
+Annotations:
+ - stream-root: Customer
 Plan:
 LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
   LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($3, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
     LogicalTableScan(table=[[default_catalog, mysources, Customer]])
-SQL: CREATE TEMPORARY TABLE `Customer__schema` (
+SQL:
+CREATE TEMPORARY TABLE `Customer__schema` (
   `customerid` BIGINT NOT NULL,
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -68,41 +77,47 @@ CREATE TABLE `Customer` (
 )
 LIKE `Customer__schema`
 === CustomerAggregate
-ID:     default_catalog.mysources.CustomerAggregate
-Type:   state
-Stage:  flink
-Inputs: default_catalog.mysources.Customer
-Primary Key: customerid
-Timestamp  : -
+ID:          default_catalog.mysources.CustomerAggregate
+Type:        state
+Stage:       flink
+Primary key: customerid
+Timestamp:   -
+---
 Schema:
  - customerid: BIGINT NOT NULL
  - num_updates: BIGINT NOT NULL
+Inputs:
+ - default_catalog.mysources.Customer
 Plan:
 LogicalAggregate(group=[{0}], num_updates=[COUNT()])
   LogicalProject(customerid=[$0])
     LogicalTableScan(table=[[default_catalog, mysources, Customer]])
-SQL: CREATE VIEW `CustomerAggregate` AS  SELECT customerid, COUNT(*) AS num_updates FROM Customer GROUP BY customerid;
+SQL:
+CREATE VIEW `CustomerAggregate` AS  SELECT customerid, COUNT(*) AS num_updates FROM Customer GROUP BY customerid;
 
 === Customer
-ID:     default_catalog.sources.Customer
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.sources.Customer__base
-Annotations:
- - stream-root: Customer
-Primary Key: customerid, lastUpdated
-Timestamp  : timestamp
+ID:          default_catalog.sources.Customer
+Type:        stream
+Stage:       flink
+Primary key: customerid, lastUpdated
+Timestamp:   timestamp
+---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.sources.Customer__base
+Annotations:
+ - stream-root: Customer
 Plan:
 LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
   LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($3, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
     LogicalTableScan(table=[[default_catalog, sources, Customer]])
-SQL: CREATE TEMPORARY TABLE `Customer__schema` (
+SQL:
+CREATE TEMPORARY TABLE `Customer__schema` (
   `customerid` BIGINT NOT NULL,
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -122,20 +137,23 @@ CREATE TABLE `Customer` (
 )
 LIKE `Customer__schema`
 === CustomerAggregate
-ID:     default_catalog.sources.CustomerAggregate
-Type:   state
-Stage:  flink
-Inputs: default_catalog.sources.Customer
-Primary Key: customerid
-Timestamp  : -
+ID:          default_catalog.sources.CustomerAggregate
+Type:        state
+Stage:       flink
+Primary key: customerid
+Timestamp:   -
+---
 Schema:
  - customerid: BIGINT NOT NULL
  - num_updates: BIGINT NOT NULL
+Inputs:
+ - default_catalog.sources.Customer
 Plan:
 LogicalAggregate(group=[{0}], num_updates=[COUNT()])
   LogicalProject(customerid=[$0])
     LogicalTableScan(table=[[default_catalog, sources, Customer]])
-SQL: CREATE VIEW `CustomerAggregate` AS  SELECT customerid, COUNT(*) AS num_updates FROM Customer GROUP BY customerid;
+SQL:
+CREATE VIEW `CustomerAggregate` AS  SELECT customerid, COUNT(*) AS num_updates FROM Customer GROUP BY customerid;
 
 >>>flink-sql-no-functions.sql
 CREATE DATABASE IF NOT EXISTS `sources`;

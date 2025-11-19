@@ -1,92 +1,106 @@
 >>>pipeline_explain.txt
 === AuthInputData
-ID:     default_catalog.default_database.AuthInputData
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.AuthInputData__base
-Annotations:
- - stream-root: AuthInputData
-Primary Key: event_id
-Timestamp  : event_time
+ID:          default_catalog.default_database.AuthInputData
+Type:        stream
+Stage:       flink
+Primary key: event_id
+Timestamp:   event_time
+---
 Schema:
  - event_id: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - val: BIGINT NOT NULL
  - message: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.AuthInputData__base
+Annotations:
+ - stream-root: AuthInputData
 
 === AuthMyTable
-ID:     default_catalog.default_database.AuthMyTable
-Type:   query
-Stage:  postgres
-Inputs: default_catalog.default_database.MyTable
+ID:          default_catalog.default_database.AuthMyTable
+Type:        query
+Stage:       postgres
+---
+Inputs:
+ - default_catalog.default_database.MyTable
 Annotations:
  - parameters: val
  - base-table: MyTable
 
 === AuthMyTableValues
-ID:     default_catalog.default_database.AuthMyTableValues
-Type:   query
-Stage:  postgres
-Inputs: default_catalog.default_database.MyTable
+ID:          default_catalog.default_database.AuthMyTableValues
+Type:        query
+Stage:       postgres
+---
+Inputs:
+ - default_catalog.default_database.MyTable
 Annotations:
  - parameters: vals
  - base-table: MyTable
 
 === AuthStringMyTableValues
-ID:     default_catalog.default_database.AuthStringMyTableValues
-Type:   query
-Stage:  postgres
-Inputs: default_catalog.default_database.MyStringTable
+ID:          default_catalog.default_database.AuthStringMyTableValues
+Type:        query
+Stage:       postgres
+---
+Inputs:
+ - default_catalog.default_database.MyStringTable
 Annotations:
  - parameters: vals
  - base-table: MyStringTable
 
 === MessageSubscription
-ID:     default_catalog.default_database.MessageSubscription
-Type:   query
-Stage:  kafka
-Inputs: default_catalog.default_database._Messages
+ID:          default_catalog.default_database.MessageSubscription
+Type:        query
+Stage:       kafka
+---
+Inputs:
+ - default_catalog.default_database._Messages
 Annotations:
  - stream-root: AuthInputData
  - parameters: val
  - base-table: AuthInputData
 
 === MyStringTable
-ID:     default_catalog.default_database.MyStringTable
-Type:   state
-Stage:  flink
-Annotations:
- - sort: [0 ASC-nulls-first]
-Primary Key: val
-Timestamp  : -
+ID:          default_catalog.default_database.MyStringTable
+Type:        state
+Stage:       flink
+Primary key: val
+Timestamp:   -
+---
 Schema:
  - val: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL
-
-=== MyTable
-ID:     default_catalog.default_database.MyTable
-Type:   state
-Stage:  flink
 Annotations:
  - sort: [0 ASC-nulls-first]
-Primary Key: val
-Timestamp  : -
+
+=== MyTable
+ID:          default_catalog.default_database.MyTable
+Type:        state
+Stage:       flink
+Primary key: val
+Timestamp:   -
+---
 Schema:
  - val: INTEGER NOT NULL
+Annotations:
+ - sort: [0 ASC-nulls-first]
 
 === _Messages
-ID:     default_catalog.default_database._Messages
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.AuthInputData
-Annotations:
- - stream-root: AuthInputData
-Primary Key: event_id
-Timestamp  : event_time
+ID:          default_catalog.default_database._Messages
+Type:        stream
+Stage:       flink
+Primary key: event_id
+Timestamp:   event_time
+---
 Schema:
  - event_id: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - val: BIGINT NOT NULL
  - message: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.AuthInputData
+Annotations:
+ - stream-root: AuthInputData
 
 >>>flink-sql-no-functions.sql
 CREATE VIEW `MyTable`

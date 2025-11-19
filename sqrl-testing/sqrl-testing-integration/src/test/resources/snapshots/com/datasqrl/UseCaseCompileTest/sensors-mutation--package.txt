@@ -1,60 +1,70 @@
 >>>pipeline_explain.txt
 === HighTempAlert
-ID:     default_catalog.default_database.HighTempAlert
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.SensorReading
-Annotations:
- - sort: [0 DESC-nulls-last]
-Primary Key: -
-Timestamp  : event_time
+ID:          default_catalog.default_database.HighTempAlert
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   event_time
+---
 Schema:
  - sensorid: INTEGER NOT NULL
  - temperature: DECIMAL(8, 2) NOT NULL
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME*
-
-=== SensorMaxTemp
-ID:     default_catalog.default_database.SensorMaxTemp
-Type:   state
-Stage:  flink
-Inputs: default_catalog.default_database.SensorReading
+Inputs:
+ - default_catalog.default_database.SensorReading
 Annotations:
  - sort: [0 DESC-nulls-last]
-Primary Key: sensorid
-Timestamp  : -
+
+=== SensorMaxTemp
+ID:          default_catalog.default_database.SensorMaxTemp
+Type:        state
+Stage:       flink
+Primary key: sensorid
+Timestamp:   -
+---
 Schema:
  - sensorid: INTEGER NOT NULL
  - maxTemp: DECIMAL(8, 2) NOT NULL
+Inputs:
+ - default_catalog.default_database.SensorReading
+Annotations:
+ - sort: [0 DESC-nulls-last]
 
 === SensorReading
-ID:     default_catalog.default_database.SensorReading
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.SensorReading__base
-Primary Key: -
-Timestamp  : event_time
+ID:          default_catalog.default_database.SensorReading
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   event_time
+---
 Schema:
  - sensorid: INTEGER NOT NULL
  - temperature: DECIMAL(8, 2) NOT NULL
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME*
+Inputs:
+ - default_catalog.default_database.SensorReading__base
 
 === SensorReadingSubscription
-ID:     default_catalog.default_database.SensorReadingSubscription
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.SensorReading
-Primary Key: -
-Timestamp  : event_time
+ID:          default_catalog.default_database.SensorReadingSubscription
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   event_time
+---
 Schema:
  - sensorid: INTEGER NOT NULL
  - temperature: DECIMAL(8, 2) NOT NULL
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME*
+Inputs:
+ - default_catalog.default_database.SensorReading
 
 === SensorSubscriptionById
-ID:     default_catalog.default_database.SensorSubscriptionById
-Type:   query
-Stage:  kafka
-Inputs: default_catalog.default_database.SensorReadingSubscription
+ID:          default_catalog.default_database.SensorSubscriptionById
+Type:        query
+Stage:       kafka
+---
+Inputs:
+ - default_catalog.default_database.SensorReadingSubscription
 Annotations:
  - parameters: sensorid
  - base-table: SensorReading

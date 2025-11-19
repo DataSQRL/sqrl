@@ -1,195 +1,221 @@
 >>>pipeline_explain.txt
 === AnotherCustomer
-ID:     default_catalog.default_database.AnotherCustomer
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database._Customer
-Annotations:
- - stream-root: _Customer
-Primary Key: customerid, lastUpdated
-Timestamp  : -
+ID:          default_catalog.default_database.AnotherCustomer
+Type:        stream
+Stage:       flink
+Primary key: customerid, lastUpdated
+Timestamp:   -
+---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
+Inputs:
+ - default_catalog.default_database._Customer
+Annotations:
+ - stream-root: _Customer
 
 === Customer
-ID:     default_catalog.default_database.Customer
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.Customer__base
-Annotations:
- - stream-root: Customer
-Primary Key: customerid, lastUpdated
-Timestamp  : timestamp
+ID:          default_catalog.default_database.Customer
+Type:        stream
+Stage:       flink
+Primary key: customerid, lastUpdated
+Timestamp:   timestamp
+---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Customer__base
+Annotations:
+ - stream-root: Customer
 
 === CustomerById
-ID:     default_catalog.default_database.CustomerById
-Type:   query
-Stage:  postgres
-Inputs: default_catalog.default_database.Customer
+ID:          default_catalog.default_database.CustomerById
+Type:        query
+Stage:       postgres
+---
+Inputs:
+ - default_catalog.default_database.Customer
 Annotations:
  - stream-root: Customer
  - parameters: minId
  - base-table: Customer
 
 === CustomerByMultipleTime
-ID:     default_catalog.default_database.CustomerByMultipleTime
-Type:   state
-Stage:  flink
-Inputs: default_catalog.default_database.Customer
-Annotations:
- - mostRecentDistinct: true
- - stream-root: Customer
-Primary Key: customerid, email
-Timestamp  : timestamp
+ID:          default_catalog.default_database.CustomerByMultipleTime
+Type:        state
+Stage:       flink
+Primary key: customerid, email
+Timestamp:   timestamp
+---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Customer
+Annotations:
+ - mostRecentDistinct: true
+ - stream-root: Customer
 
 === CustomerByTime2
-ID:     default_catalog.default_database.CustomerByTime2
-Type:   state
-Stage:  flink
-Inputs: default_catalog.default_database.Customer
+ID:          default_catalog.default_database.CustomerByTime2
+Type:        state
+Stage:       flink
+Primary key: customerid
+Timestamp:   timestamp
+---
+Schema:
+ - customerid: BIGINT NOT NULL
+ - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - lastUpdated: BIGINT NOT NULL
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Customer
 Annotations:
  - mostRecentDistinct: true
  - stream-root: Customer
-Primary Key: customerid
-Timestamp  : timestamp
-Schema:
- - customerid: BIGINT NOT NULL
- - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - lastUpdated: BIGINT NOT NULL
- - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 
 === CustomerFilteredDistinct
-ID:     default_catalog.default_database.CustomerFilteredDistinct
-Type:   state
-Stage:  flink
-Inputs: default_catalog.default_database.Customer
-Annotations:
- - stream-root: Customer
-Primary Key: customerid
-Timestamp  : timestamp
+ID:          default_catalog.default_database.CustomerFilteredDistinct
+Type:        state
+Stage:       flink
+Primary key: customerid
+Timestamp:   timestamp
+---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Customer
+Annotations:
+ - stream-root: Customer
 
 === CustomerQuery
-ID:     default_catalog.default_database.CustomerQuery
-Type:   query
-Stage:  postgres
-Inputs: default_catalog.default_database.AnotherCustomer
+ID:          default_catalog.default_database.CustomerQuery
+Type:        query
+Stage:       postgres
+---
+Inputs:
+ - default_catalog.default_database.AnotherCustomer
 Annotations:
  - stream-root: _Customer
  - parameters: id
  - base-table: AnotherCustomer
 
 === CustomerSubscription
-ID:     default_catalog.default_database.CustomerSubscription
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.Customer
-Annotations:
- - stream-root: Customer
-Primary Key: customerid, lastUpdated
-Timestamp  : timestamp
+ID:          default_catalog.default_database.CustomerSubscription
+Type:        stream
+Stage:       flink
+Primary key: customerid, lastUpdated
+Timestamp:   timestamp
+---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Customer
+Annotations:
+ - stream-root: Customer
 
 === CustomerSubscriptionById
-ID:     default_catalog.default_database.CustomerSubscriptionById
-Type:   query
-Stage:  kafka
-Inputs: default_catalog.default_database.Customer
+ID:          default_catalog.default_database.CustomerSubscriptionById
+Type:        query
+Stage:       kafka
+---
+Inputs:
+ - default_catalog.default_database.Customer
 Annotations:
  - stream-root: Customer
  - parameters: minId
  - base-table: Customer
 
 === CustomerTimeWindow
-ID:     default_catalog.default_database.CustomerTimeWindow
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.SelectCustomers
-Annotations:
- - features: STREAM_WINDOW_AGGREGATION (feature)
-Primary Key: window_start, window_end
-Timestamp  : -
+ID:          default_catalog.default_database.CustomerTimeWindow
+Type:        stream
+Stage:       flink
+Primary key: window_start, window_end
+Timestamp:   -
+---
 Schema:
  - window_start: TIMESTAMP(3) NOT NULL
  - window_end: TIMESTAMP(3) NOT NULL
  - unique_email_count: BIGINT NOT NULL
+Inputs:
+ - default_catalog.default_database.SelectCustomers
+Annotations:
+ - features: STREAM_WINDOW_AGGREGATION (feature)
 
 === ExplicitDistinct
-ID:     default_catalog.default_database.ExplicitDistinct
-Type:   state
-Stage:  flink
-Inputs: default_catalog.default_database.Customer
-Annotations:
- - stream-root: Customer
-Primary Key: customerid
-Timestamp  : timestamp
+ID:          default_catalog.default_database.ExplicitDistinct
+Type:        state
+Stage:       flink
+Primary key: customerid
+Timestamp:   timestamp
+---
 Schema:
  - customerid: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+Inputs:
+ - default_catalog.default_database.Customer
+Annotations:
+ - stream-root: Customer
 
 === ExternalOrders
-ID:     default_catalog.default_database.ExternalOrders
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.ExternalOrders__base
-Annotations:
- - features: DENORMALIZE (feature)
- - stream-root: ExternalOrders
-Primary Key: id, time
-Timestamp  : time
+ID:          default_catalog.default_database.ExternalOrders
+Type:        stream
+Stage:       flink
+Primary key: id, time
+Timestamp:   time
+---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
  - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - entries: RecordType:peek_no_expand(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
+Inputs:
+ - default_catalog.default_database.ExternalOrders__base
+Annotations:
+ - features: DENORMALIZE (feature)
+ - stream-root: ExternalOrders
 
 === InvalidDistinct
-ID:     default_catalog.default_database.InvalidDistinct
-Type:   state
-Stage:  flink
-Inputs: default_catalog.default_database.Customer
-Annotations:
- - stream-root: Customer
-Primary Key: customerid
-Timestamp  : timestamp
+ID:          default_catalog.default_database.InvalidDistinct
+Type:        state
+Stage:       flink
+Primary key: customerid
+Timestamp:   timestamp
+---
 Schema:
  - customerid: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - namee: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+Inputs:
+ - default_catalog.default_database.Customer
+Annotations:
+ - stream-root: Customer
 
 === MissedTemporalJoin
-ID:     default_catalog.default_database.MissedTemporalJoin
-Type:   state
-Stage:  postgres
-Inputs: default_catalog.default_database.ExplicitDistinct, default_catalog.default_database.ExternalOrders
-Primary Key: id, time
-Timestamp  : time
+ID:          default_catalog.default_database.MissedTemporalJoin
+Type:        state
+Stage:       postgres
+Primary key: id, time
+Timestamp:   time
+---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
@@ -198,40 +224,49 @@ Schema:
  - customerid0: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+Inputs:
+ - default_catalog.default_database.ExplicitDistinct
+ - default_catalog.default_database.ExternalOrders
 
 === Orders
-ID:     default_catalog.default_database.Orders
-Type:   state
-Stage:  flink
-Inputs: default_catalog.default_database.Orders__base
-Primary Key: orderid
-Timestamp  : -
+ID:          default_catalog.default_database.Orders
+Type:        state
+Stage:       flink
+Primary key: orderid
+Timestamp:   -
+---
 Schema:
  - orderid: INTEGER NOT NULL
  - amount: FLOAT
+Inputs:
+ - default_catalog.default_database.Orders__base
 
 === SelectCustomers
-ID:     default_catalog.default_database.SelectCustomers
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.Customer
-Annotations:
- - stream-root: Customer
- - sort: [4 DESC-nulls-last]
-Primary Key: customerid, name
-Timestamp  : timestamp
+ID:          default_catalog.default_database.SelectCustomers
+Type:        stream
+Stage:       flink
+Primary key: customerid, name
+Timestamp:   timestamp
+---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Customer
+Annotations:
+ - stream-root: Customer
+ - sort: [4 DESC-nulls-last]
 
 === TableFunctionCallsTblFct
-ID:     default_catalog.default_database.TableFunctionCallsTblFct
-Type:   query
-Stage:  postgres
-Inputs: default_catalog.default_database.CustomerById
+ID:          default_catalog.default_database.TableFunctionCallsTblFct
+Type:        query
+Stage:       postgres
+---
+Inputs:
+ - default_catalog.default_database.CustomerById
 Annotations:
  - features: TABLE_FUNCTION_SCAN (feature)
  - stream-root: Customer
@@ -239,14 +274,12 @@ Annotations:
  - base-table: Customer
 
 === TemporalJoin
-ID:     default_catalog.default_database.TemporalJoin
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.ExplicitDistinct, default_catalog.default_database.ExternalOrders
-Annotations:
- - stream-root: ExternalOrders
-Primary Key: id, time
-Timestamp  : time
+ID:          default_catalog.default_database.TemporalJoin
+Type:        stream
+Stage:       flink
+Primary key: id, time
+Timestamp:   time
+---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
@@ -255,16 +288,19 @@ Schema:
  - customerid0: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
-
-=== UnnestOrders
-ID:     default_catalog.default_database.UnnestOrders
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.ExternalOrders
+Inputs:
+ - default_catalog.default_database.ExplicitDistinct
+ - default_catalog.default_database.ExternalOrders
 Annotations:
  - stream-root: ExternalOrders
-Primary Key: -
-Timestamp  : time
+
+=== UnnestOrders
+ID:          default_catalog.default_database.UnnestOrders
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   time
+---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
@@ -273,34 +309,44 @@ Schema:
  - quantity: BIGINT NOT NULL
  - discount: DOUBLE
  - newId: BIGINT NOT NULL
+Inputs:
+ - default_catalog.default_database.ExternalOrders
+Annotations:
+ - stream-root: ExternalOrders
 
 === _Customer
-ID:     default_catalog.default_database._Customer
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database._Customer__base
-Annotations:
- - stream-root: _Customer
-Primary Key: customerid, lastUpdated
-Timestamp  : timestamp
+ID:          default_catalog.default_database._Customer
+Type:        stream
+Stage:       flink
+Primary key: customerid, lastUpdated
+Timestamp:   timestamp
+---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database._Customer__base
+Annotations:
+ - stream-root: _Customer
 
 === customersink
-ID:     mysink.customersink
-Type:   export
-Stage:  flink
-Inputs: default_catalog.default_database.TemporalJoin
+ID:          mysink.customersink
+Type:        export
+Stage:       flink
+---
+Inputs:
+ - default_catalog.default_database.TemporalJoin
 
 === TimeWindow
-ID:     print.TimeWindow
-Type:   export
-Stage:  flink
-Inputs: default_catalog.default_database.CustomerTimeWindow
+ID:          print.TimeWindow
+Type:        export
+Stage:       flink
+---
+Inputs:
+ - default_catalog.default_database.CustomerTimeWindow
 
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `Customer__schema` (

@@ -1,32 +1,33 @@
 >>>pipeline_explain.txt
 === OrderEntryJoin
-ID:     default_catalog.default_database.OrderEntryJoin
-Type:   stream
-Stage:  postgres
-Inputs: default_catalog.default_database._OrderEntries
-Primary Key: -
-Timestamp  : -
+ID:          default_catalog.default_database.OrderEntryJoin
+Type:        stream
+Stage:       postgres
+Primary key: -
+Timestamp:   -
+---
 Schema:
  - id1: BIGINT NOT NULL
  - id2: BIGINT NOT NULL
  - multi: BIGINT NOT NULL
+Inputs:
+ - default_catalog.default_database._OrderEntries
 Plan:
 LogicalProject(id1=[$0], id2=[$6], multi=[*($4, $10)])
   LogicalJoin(condition=[=($1, $7)], joinType=[inner])
     LogicalTableScan(table=[[default_catalog, default_database, _OrderEntries]])
     LogicalTableScan(table=[[default_catalog, default_database, _OrderEntries]])
-SQL: CREATE VIEW `OrderEntryJoin` AS  SELECT o1.id AS id1, o2.id AS id2, o1.quantity * o2.quantity AS multi
+SQL:
+CREATE VIEW `OrderEntryJoin` AS  SELECT o1.id AS id1, o2.id AS id2, o1.quantity * o2.quantity AS multi
                   FROM _OrderEntries o1 JOIN _OrderEntries o2 ON o1.customerid = o2.customerid;
 
 === _OrderEntries
-ID:     default_catalog.default_database._OrderEntries
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database._Orders
-Annotations:
- - stream-root: _Orders
-Primary Key: -
-Timestamp  : time
+ID:          default_catalog.default_database._OrderEntries
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   time
+---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
@@ -34,6 +35,10 @@ Schema:
  - productid: BIGINT NOT NULL
  - quantity: BIGINT NOT NULL
  - discount: DOUBLE
+Inputs:
+ - default_catalog.default_database._Orders
+Annotations:
+ - stream-root: _Orders
 Plan:
 LogicalProject(id=[$0], customerid=[$1], time=[$2], productid=[$4], quantity=[$5], discount=[$7])
   LogicalCorrelate(correlation=[$cor1], joinType=[inner], requiredColumns=[{3}])
@@ -41,27 +46,31 @@ LogicalProject(id=[$0], customerid=[$1], time=[$2], productid=[$4], quantity=[$5
     Uncollect
       LogicalProject(entries=[$cor1.entries])
         LogicalValues(tuples=[[{ 0 }]])
-SQL: CREATE VIEW `_OrderEntries` AS  SELECT o.id, o.customerid, o.`time`, e.productid, e.quantity, e.discount FROM _Orders o CROSS JOIN UNNEST(entries) e;
+SQL:
+CREATE VIEW `_OrderEntries` AS  SELECT o.id, o.customerid, o.`time`, e.productid, e.quantity, e.discount FROM _Orders o CROSS JOIN UNNEST(entries) e;
 
 === _Orders
-ID:     default_catalog.default_database._Orders
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database._Orders__base
-Annotations:
- - features: DENORMALIZE (feature)
- - stream-root: _Orders
-Primary Key: id, time
-Timestamp  : time
+ID:          default_catalog.default_database._Orders
+Type:        stream
+Stage:       flink
+Primary key: id, time
+Timestamp:   time
+---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
  - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - entries: RecordType:peek_no_expand(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
+Inputs:
+ - default_catalog.default_database._Orders__base
+Annotations:
+ - features: DENORMALIZE (feature)
+ - stream-root: _Orders
 Plan:
 LogicalWatermarkAssigner(rowtime=[time], watermark=[-($2, 1:INTERVAL SECOND)])
   LogicalTableScan(table=[[default_catalog, default_database, _Orders]])
-SQL: CREATE TEMPORARY TABLE `_Orders__schema` (
+SQL:
+CREATE TEMPORARY TABLE `_Orders__schema` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,

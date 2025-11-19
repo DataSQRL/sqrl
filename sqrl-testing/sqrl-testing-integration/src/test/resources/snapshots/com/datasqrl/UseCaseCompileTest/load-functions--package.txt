@@ -1,10 +1,11 @@
 >>>pipeline_explain.txt
 === FunctionApplied
-ID:     default_catalog.default_database.FunctionApplied
-Type:   state
-Stage:  flink
-Primary Key: id
-Timestamp  : -
+ID:          default_catalog.default_database.FunctionApplied
+Type:        state
+Stage:       flink
+Primary key: id
+Timestamp:   -
+---
 Schema:
  - id: INTEGER NOT NULL
  - fct_result: BOOLEAN

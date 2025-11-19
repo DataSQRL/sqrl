@@ -1,24 +1,28 @@
 >>>pipeline_explain.txt
 === Data
-ID:     default_catalog.default_database.Data
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.Data__base
-Annotations:
- - stream-root: Data
-Primary Key: ID
-Timestamp  : TIMESTAMP
+ID:          default_catalog.default_database.Data
+Type:        stream
+Stage:       flink
+Primary key: ID
+Timestamp:   TIMESTAMP
+---
 Schema:
  - ID: BIGINT NOT NULL
  - EPOCH_TIMESTAMP: BIGINT NOT NULL
  - SOME_VALUE: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - TIMESTAMP: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Data__base
+Annotations:
+ - stream-root: Data
 
 === LogData
-ID:     logger.LogData
-Type:   export
-Stage:  flink
-Inputs: default_catalog.default_database.Data
+ID:          logger.LogData
+Type:        export
+Stage:       flink
+---
+Inputs:
+ - default_catalog.default_database.Data
 
 >>>flink-sql-no-functions.sql
 CREATE TABLE `Data` (

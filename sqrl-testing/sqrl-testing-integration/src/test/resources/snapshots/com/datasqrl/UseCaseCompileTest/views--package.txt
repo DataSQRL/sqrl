@@ -1,14 +1,15 @@
 >>>pipeline_explain.txt
 === MyView
-ID:     default_catalog.default_database.MyView
-Type:   state
-Stage:  flink
-Annotations:
- - sort: [0 ASC-nulls-first]
-Primary Key: val
-Timestamp  : -
+ID:          default_catalog.default_database.MyView
+Type:        state
+Stage:       flink
+Primary key: val
+Timestamp:   -
+---
 Schema:
  - val: INTEGER NOT NULL
+Annotations:
+ - sort: [0 ASC-nulls-first]
 
 >>>flink-sql-no-functions.sql
 CREATE VIEW `MyView`

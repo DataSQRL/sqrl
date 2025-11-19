@@ -1,23 +1,26 @@
 >>>pipeline_explain.txt
 === Orders
-ID:     default_catalog.default_database.Orders
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.Orders__base
-Annotations:
- - features: DENORMALIZE (feature)
- - stream-root: Orders
-Primary Key: id, time
-Timestamp  : time
+ID:          default_catalog.default_database.Orders
+Type:        stream
+Stage:       flink
+Primary key: id, time
+Timestamp:   time
+---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
  - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - entries: RecordType:peek_no_expand(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
+Inputs:
+ - default_catalog.default_database.Orders__base
+Annotations:
+ - features: DENORMALIZE (feature)
+ - stream-root: Orders
 Plan:
 LogicalWatermarkAssigner(rowtime=[time], watermark=[-($2, 1:INTERVAL SECOND)])
   LogicalTableScan(table=[[default_catalog, default_database, Orders]])
-SQL: CREATE TEMPORARY TABLE `Orders__schema` (
+SQL:
+CREATE TEMPORARY TABLE `Orders__schema` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
@@ -36,10 +39,12 @@ CREATE TABLE `Orders` (
 )
 LIKE `Orders__schema`
 === OrdersById1
-ID:     default_catalog.default_database.OrdersById1
-Type:   query
-Stage:  postgres
-Inputs: default_catalog.default_database.SelectOrders1
+ID:          default_catalog.default_database.OrdersById1
+Type:        query
+Stage:       postgres
+---
+Inputs:
+ - default_catalog.default_database.SelectOrders1
 Annotations:
  - stream-root: Orders
  - parameters: id
@@ -48,13 +53,16 @@ Plan:
 LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3])
   LogicalFilter(condition=[=($0, ?0)])
     LogicalTableScan(table=[[default_catalog, default_database, SelectOrders1]])
-SQL: CREATE VIEW `OrdersById1` AS  SELECT * FROM SelectOrders1 WHERE id = ?  ;
+SQL:
+CREATE VIEW `OrdersById1` AS  SELECT * FROM SelectOrders1 WHERE id = ?  ;
 
 === OrdersById2
-ID:     default_catalog.default_database.OrdersById2
-Type:   query
-Stage:  postgres
-Inputs: default_catalog.default_database.SelectOrders2
+ID:          default_catalog.default_database.OrdersById2
+Type:        query
+Stage:       postgres
+---
+Inputs:
+ - default_catalog.default_database.SelectOrders2
 Annotations:
  - stream-root: Orders
  - parameters: id
@@ -63,45 +71,52 @@ Plan:
 LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3])
   LogicalFilter(condition=[=($0, ?0)])
     LogicalTableScan(table=[[default_catalog, default_database, SelectOrders2]])
-SQL: CREATE VIEW `OrdersById2` AS  SELECT * FROM SelectOrders2 WHERE id = ?  ;
+SQL:
+CREATE VIEW `OrdersById2` AS  SELECT * FROM SelectOrders2 WHERE id = ?  ;
 
 === SelectOrders1
-ID:     default_catalog.default_database.SelectOrders1
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.Orders
-Annotations:
- - stream-root: Orders
-Primary Key: id, time
-Timestamp  : time
+ID:          default_catalog.default_database.SelectOrders1
+Type:        stream
+Stage:       flink
+Primary key: id, time
+Timestamp:   time
+---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
  - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - entries: RecordType:peek_no_expand(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
+Inputs:
+ - default_catalog.default_database.Orders
+Annotations:
+ - stream-root: Orders
 Plan:
 LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3])
   LogicalTableScan(table=[[default_catalog, default_database, Orders]])
-SQL: CREATE VIEW `SelectOrders1` AS  SELECT * FROM Orders;
+SQL:
+CREATE VIEW `SelectOrders1` AS  SELECT * FROM Orders;
 
 === SelectOrders2
-ID:     default_catalog.default_database.SelectOrders2
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.Orders
-Annotations:
- - stream-root: Orders
-Primary Key: id, time
-Timestamp  : time
+ID:          default_catalog.default_database.SelectOrders2
+Type:        stream
+Stage:       flink
+Primary key: id, time
+Timestamp:   time
+---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
  - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - entries: RecordType:peek_no_expand(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
+Inputs:
+ - default_catalog.default_database.Orders
+Annotations:
+ - stream-root: Orders
 Plan:
 LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3])
   LogicalTableScan(table=[[default_catalog, default_database, Orders]])
-SQL: CREATE VIEW `SelectOrders2` AS  SELECT * FROM Orders;
+SQL:
+CREATE VIEW `SelectOrders2` AS  SELECT * FROM Orders;
 
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `Orders__schema` (

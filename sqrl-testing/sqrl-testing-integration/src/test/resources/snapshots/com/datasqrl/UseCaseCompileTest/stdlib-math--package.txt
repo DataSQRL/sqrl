@@ -1,10 +1,11 @@
 >>>pipeline_explain.txt
 === MathFunctions
-ID:     default_catalog.default_database.MathFunctions
-Type:   state
-Stage:  flink
-Primary Key: d
-Timestamp  : -
+ID:          default_catalog.default_database.MathFunctions
+Type:        state
+Stage:       flink
+Primary key: d
+Timestamp:   -
+---
 Schema:
  - d: DECIMAL(3, 1) NOT NULL
  - b: INTEGER NOT NULL

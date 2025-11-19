@@ -1,24 +1,27 @@
 >>>pipeline_explain.txt
 === Customer
-ID:     default_catalog.default_database.Customer
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.Customer__base
-Annotations:
- - stream-root: Customer
-Primary Key: customerid, lastUpdated
-Timestamp  : timestamp
+ID:          default_catalog.default_database.Customer
+Type:        stream
+Stage:       flink
+Primary key: customerid, lastUpdated
+Timestamp:   timestamp
+---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Customer__base
+Annotations:
+ - stream-root: Customer
 Plan:
 LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
   LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($3, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE TEMPORARY TABLE `Customer__schema` (
+SQL:
+CREATE TEMPORARY TABLE `Customer__schema` (
   `customerid` BIGINT NOT NULL,
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -38,159 +41,190 @@ CREATE TABLE `Customer` (
 )
 LIKE `Customer__schema`
 === OrderCustomer
-ID:     default_catalog.default_database.OrderCustomer
-Type:   stream
-Stage:  postgres
-Inputs: default_catalog.default_database.Customer, default_catalog.default_database.Orders
-Primary Key: -
-Timestamp  : -
+ID:          default_catalog.default_database.OrderCustomer
+Type:        stream
+Stage:       postgres
+Primary key: -
+Timestamp:   -
+---
 Schema:
  - id: BIGINT NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - customerid: BIGINT NOT NULL
+Inputs:
+ - default_catalog.default_database.Customer
+ - default_catalog.default_database.Orders
 Plan:
 LogicalProject(id=[$0], name=[$6], customerid=[$1])
   LogicalJoin(condition=[=($1, $4)], joinType=[inner])
     LogicalTableScan(table=[[default_catalog, default_database, Orders]])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW `OrderCustomer` AS  SELECT o.id, c.name, o.customerid FROM Orders o INNER JOIN Customer c on o.customerid = c.customerid;
+SQL:
+CREATE VIEW `OrderCustomer` AS  SELECT o.id, c.name, o.customerid FROM Orders o INNER JOIN Customer c on o.customerid = c.customerid;
 
 === OrderCustomerConstant
-ID:     default_catalog.default_database.OrderCustomerConstant
-Type:   stream
-Stage:  postgres
-Inputs: default_catalog.default_database.Customer, default_catalog.default_database.Orders
-Primary Key: -
-Timestamp  : time
+ID:          default_catalog.default_database.OrderCustomerConstant
+Type:        stream
+Stage:       postgres
+Primary key: -
+Timestamp:   time
+---
 Schema:
  - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - id: BIGINT NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - customerid: BIGINT NOT NULL
+Inputs:
+ - default_catalog.default_database.Customer
+ - default_catalog.default_database.Orders
 Plan:
 LogicalProject(time=[$2], id=[$0], name=[$6], customerid=[$1])
   LogicalJoin(condition=[AND(=($1, $4), =($6, 'Robert'), >($0, 5))], joinType=[inner])
     LogicalTableScan(table=[[default_catalog, default_database, Orders]])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW `OrderCustomerConstant` AS  SELECT o.`time`,o.id, c.name, o.customerid FROM Orders o INNER JOIN Customer c ON o.customerid = c.customerid AND c.name = 'Robert' AND o.id > 5;
+SQL:
+CREATE VIEW `OrderCustomerConstant` AS  SELECT o.`time`,o.id, c.name, o.customerid FROM Orders o INNER JOIN Customer c ON o.customerid = c.customerid AND c.name = 'Robert' AND o.id > 5;
 
 === OrderCustomerLeft
-ID:     default_catalog.default_database.OrderCustomerLeft
-Type:   state
-Stage:  postgres
-Inputs: default_catalog.default_database.Customer, default_catalog.default_database.Orders
-Primary Key: -
-Timestamp  : -
+ID:          default_catalog.default_database.OrderCustomerLeft
+Type:        state
+Stage:       postgres
+Primary key: -
+Timestamp:   -
+---
 Schema:
  - cid: BIGINT NOT NULL
  - ctime: BIGINT NOT NULL
  - id: BIGINT NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
  - customerid: BIGINT NOT NULL
+Inputs:
+ - default_catalog.default_database.Customer
+ - default_catalog.default_database.Orders
 Plan:
 LogicalProject(cid=[coalesce($4, 0:BIGINT)], ctime=[coalesce($7, 0:BIGINT)], id=[$0], name=[$6], customerid=[$1])
   LogicalJoin(condition=[=($1, $4)], joinType=[left])
     LogicalTableScan(table=[[default_catalog, default_database, Orders]])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW `OrderCustomerLeft` AS  SELECT coalesce(c.customerid, 0) as cid, coalesce(c.lastUpdated, 0) as ctime, o.id, c.name, o.customerid  FROM Orders o LEFT JOIN Customer c on o.customerid = c.customerid;
+SQL:
+CREATE VIEW `OrderCustomerLeft` AS  SELECT coalesce(c.customerid, 0) as cid, coalesce(c.lastUpdated, 0) as ctime, o.id, c.name, o.customerid  FROM Orders o LEFT JOIN Customer c on o.customerid = c.customerid;
 
 === OrderCustomerLeftExcluded
-ID:     default_catalog.default_database.OrderCustomerLeftExcluded
-Type:   state
-Stage:  postgres
-Inputs: default_catalog.default_database.Customer, default_catalog.default_database.Orders
-Primary Key: id, time
-Timestamp  : time
+ID:          default_catalog.default_database.OrderCustomerLeftExcluded
+Type:        state
+Stage:       postgres
+Primary key: id, time
+Timestamp:   time
+---
 Schema:
  - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
+Inputs:
+ - default_catalog.default_database.Customer
+ - default_catalog.default_database.Orders
 Plan:
 LogicalProject(time=[$2], id=[$0], customerid=[$1])
   LogicalFilter(condition=[AND(IS NULL($4), IS NULL($7))])
     LogicalJoin(condition=[=($1, $4)], joinType=[left])
       LogicalTableScan(table=[[default_catalog, default_database, Orders]])
       LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW `OrderCustomerLeftExcluded` AS  SELECT o.`time`, o.id, o.customerid  FROM Orders o LEFT JOIN Customer c on o.customerid = c.customerid WHERE c.customerid IS NULL AND c.lastUpdated IS NULL;
+SQL:
+CREATE VIEW `OrderCustomerLeftExcluded` AS  SELECT o.`time`, o.id, o.customerid  FROM Orders o LEFT JOIN Customer c on o.customerid = c.customerid WHERE c.customerid IS NULL AND c.lastUpdated IS NULL;
 
 === OrderCustomerLeftExcludedTimeBound
-ID:     default_catalog.default_database.OrderCustomerLeftExcludedTimeBound
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.Customer, default_catalog.default_database.Orders
-Primary Key: id, time
-Timestamp  : time
+ID:          default_catalog.default_database.OrderCustomerLeftExcludedTimeBound
+Type:        stream
+Stage:       flink
+Primary key: id, time
+Timestamp:   time
+---
 Schema:
  - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
+Inputs:
+ - default_catalog.default_database.Customer
+ - default_catalog.default_database.Orders
 Plan:
 LogicalProject(time=[$2], id=[$0], customerid=[$1])
   LogicalFilter(condition=[AND(IS NOT NULL($4), IS NULL($7))])
     LogicalJoin(condition=[AND(=($1, $4), >=($8, $2), <=($8, +($2, *(1, 86400000:INTERVAL DAY))))], joinType=[left])
       LogicalTableScan(table=[[default_catalog, default_database, Orders]])
       LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW `OrderCustomerLeftExcludedTimeBound` AS  SELECT o.`time`, o.id, o.customerid  FROM Orders o LEFT JOIN Customer c ON o.customerid = c.customerid AND (c.`timestamp` BETWEEN o.`time` AND o.`time` + INTERVAL 1 DAY)
+SQL:
+CREATE VIEW `OrderCustomerLeftExcludedTimeBound` AS  SELECT o.`time`, o.id, o.customerid  FROM Orders o LEFT JOIN Customer c ON o.customerid = c.customerid AND (c.`timestamp` BETWEEN o.`time` AND o.`time` + INTERVAL 1 DAY)
                                                                                                                  WHERE c.customerid IS NOT NULL AND c.lastUpdated IS NULL;
 
 === OrderCustomerRight
-ID:     default_catalog.default_database.OrderCustomerRight
-Type:   state
-Stage:  postgres
-Inputs: default_catalog.default_database.Customer, default_catalog.default_database.Orders
-Primary Key: -
-Timestamp  : otime
+ID:          default_catalog.default_database.OrderCustomerRight
+Type:        state
+Stage:       postgres
+Primary key: -
+Timestamp:   otime
+---
 Schema:
  - ouuid: BIGINT NOT NULL
  - otime: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - id: BIGINT
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - customerid: BIGINT
+Inputs:
+ - default_catalog.default_database.Customer
+ - default_catalog.default_database.Orders
 Plan:
 LogicalProject(ouuid=[coalesce($0, 0:BIGINT)], otime=[coalesce($2, PROCTIME())], id=[$0], name=[$6], customerid=[$1])
   LogicalJoin(condition=[=($1, $4)], joinType=[right])
     LogicalTableScan(table=[[default_catalog, default_database, Orders]])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW `OrderCustomerRight` AS  SELECT coalesce(o.id, 0) as ouuid, coalesce(o.`time`, proctime()) as otime,o.id, c.name, o.customerid  FROM Orders o RIGHT JOIN Customer c on o.customerid = c.customerid;
+SQL:
+CREATE VIEW `OrderCustomerRight` AS  SELECT coalesce(o.id, 0) as ouuid, coalesce(o.`time`, proctime()) as otime,o.id, c.name, o.customerid  FROM Orders o RIGHT JOIN Customer c on o.customerid = c.customerid;
 
 === OrderCustomerRightExcluded
-ID:     default_catalog.default_database.OrderCustomerRightExcluded
-Type:   state
-Stage:  postgres
-Inputs: default_catalog.default_database.Customer, default_catalog.default_database.Orders
-Primary Key: lastUpdated
-Timestamp  : -
+ID:          default_catalog.default_database.OrderCustomerRightExcluded
+Type:        state
+Stage:       postgres
+Primary key: lastUpdated
+Timestamp:   -
+---
 Schema:
  - lastUpdated: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+Inputs:
+ - default_catalog.default_database.Customer
+ - default_catalog.default_database.Orders
 Plan:
 LogicalProject(lastUpdated=[$7], customerid=[$4], name=[$6])
   LogicalFilter(condition=[AND(IS NULL($0), IS NULL($2))])
     LogicalJoin(condition=[=($1, $4)], joinType=[right])
       LogicalTableScan(table=[[default_catalog, default_database, Orders]])
       LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW `OrderCustomerRightExcluded` AS  SELECT c.lastUpdated, c.customerid, c.name  FROM Orders o RIGHT JOIN Customer c on o.customerid = c.customerid WHERE o.id IS NULL AND o.`time` IS NULL;
+SQL:
+CREATE VIEW `OrderCustomerRightExcluded` AS  SELECT c.lastUpdated, c.customerid, c.name  FROM Orders o RIGHT JOIN Customer c on o.customerid = c.customerid WHERE o.id IS NULL AND o.`time` IS NULL;
 
 === Orders
-ID:     default_catalog.default_database.Orders
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.Orders__base
-Annotations:
- - features: DENORMALIZE (feature)
- - stream-root: Orders
-Primary Key: id, time
-Timestamp  : time
+ID:          default_catalog.default_database.Orders
+Type:        stream
+Stage:       flink
+Primary key: id, time
+Timestamp:   time
+---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
  - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - entries: RecordType:peek_no_expand(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
+Inputs:
+ - default_catalog.default_database.Orders__base
+Annotations:
+ - features: DENORMALIZE (feature)
+ - stream-root: Orders
 Plan:
 LogicalWatermarkAssigner(rowtime=[time], watermark=[-($2, 1:INTERVAL SECOND)])
   LogicalTableScan(table=[[default_catalog, default_database, Orders]])
-SQL: CREATE TEMPORARY TABLE `Orders__schema` (
+SQL:
+CREATE TEMPORARY TABLE `Orders__schema` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
@@ -209,19 +243,21 @@ CREATE TABLE `Orders` (
 )
 LIKE `Orders__schema`
 === VerifyStream
-ID:     default_catalog.default_database.VerifyStream
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.OrderCustomerLeftExcludedTimeBound
-Annotations:
- - features: STREAM_WINDOW_AGGREGATION (feature)
-Primary Key: window_start, window_end
-Timestamp  : -
+ID:          default_catalog.default_database.VerifyStream
+Type:        stream
+Stage:       flink
+Primary key: window_start, window_end
+Timestamp:   -
+---
 Schema:
  - total: BIGINT NOT NULL
  - total_id: BIGINT NOT NULL
  - window_start: TIMESTAMP(3) NOT NULL
  - window_end: TIMESTAMP(3) NOT NULL
+Inputs:
+ - default_catalog.default_database.OrderCustomerLeftExcludedTimeBound
+Annotations:
+ - features: STREAM_WINDOW_AGGREGATION (feature)
 Plan:
 LogicalProject(total=[$2], total_id=[$3], window_start=[$0], window_end=[$1])
   LogicalAggregate(group=[{0, 1}], total=[COUNT()], total_id=[SUM($2)])
@@ -229,7 +265,8 @@ LogicalProject(total=[$2], total_id=[$3], window_start=[$0], window_end=[$1])
       LogicalTableFunctionScan(invocation=[TUMBLE(TABLE(#0), DESCRIPTOR('time'), 1000:INTERVAL SECOND)], rowType=[RecordType(TIMESTAMP_LTZ(3) *ROWTIME* time, BIGINT id, BIGINT customerid, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end, TIMESTAMP_LTZ(3) *ROWTIME* window_time)])
         LogicalProject(time=[$0], id=[$1], customerid=[$2])
           LogicalTableScan(table=[[default_catalog, default_database, OrderCustomerLeftExcludedTimeBound]])
-SQL: CREATE VIEW `VerifyStream` AS  SELECT
+SQL:
+CREATE VIEW `VerifyStream` AS  SELECT
                       COUNT(*) AS total,
                       SUM(customerid) AS total_id,
                       window_start,

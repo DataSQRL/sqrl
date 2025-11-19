@@ -1,32 +1,36 @@
 >>>pipeline_explain.txt
 === Res
-ID:     default_catalog.default_database.Res
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database._MySchema
+ID:          default_catalog.default_database.Res
+Type:        stream
+Stage:       flink
+Primary key: uuidField, timestampMillisField
+Timestamp:   timestampMillisField
+---
+Schema:
+ - uuidField: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - timestampMillisField: TIMESTAMP(3) *ROWTIME* NOT NULL
+ - nullableTimestampMillisField: TIMESTAMP(3)
+Inputs:
+ - default_catalog.default_database._MySchema
 Annotations:
  - stream-root: _MySchema
  - sort: [0 DESC-nulls-last]
-Primary Key: uuidField, timestampMillisField
-Timestamp  : timestampMillisField
-Schema:
- - uuidField: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - timestampMillisField: TIMESTAMP(3) *ROWTIME* NOT NULL
- - nullableTimestampMillisField: TIMESTAMP(3)
 
 === _MySchema
-ID:     default_catalog.default_database._MySchema
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database._MySchema__base
-Annotations:
- - stream-root: _MySchema
-Primary Key: uuidField, timestampMillisField
-Timestamp  : timestampMillisField
+ID:          default_catalog.default_database._MySchema
+Type:        stream
+Stage:       flink
+Primary key: uuidField, timestampMillisField
+Timestamp:   timestampMillisField
+---
 Schema:
  - uuidField: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - timestampMillisField: TIMESTAMP(3) *ROWTIME* NOT NULL
  - nullableTimestampMillisField: TIMESTAMP(3)
+Inputs:
+ - default_catalog.default_database._MySchema__base
+Annotations:
+ - stream-root: _MySchema
 
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `_MySchema__schema` (

@@ -1,49 +1,55 @@
 >>>pipeline_explain.txt
 === IntArray
-ID:     default_catalog.default_database.IntArray
-Type:   state
-Stage:  flink
-Primary Key: id
-Timestamp  : -
+ID:          default_catalog.default_database.IntArray
+Type:        state
+Stage:       flink
+Primary key: id
+Timestamp:   -
+---
 Schema:
  - id: INTEGER NOT NULL
  - int_array: INTEGER NOT NULL ARRAY NOT NULL
 
 === NestedArray
-ID:     default_catalog.default_database.NestedArray
-Type:   state
-Stage:  flink
-Primary Key: id
-Timestamp  : -
+ID:          default_catalog.default_database.NestedArray
+Type:        state
+Stage:       flink
+Primary key: id
+Timestamp:   -
+---
 Schema:
  - id: INTEGER NOT NULL
  - nested_array: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL ARRAY NOT NULL ARRAY NOT NULL
 
 === StringArray
-ID:     default_catalog.default_database.StringArray
-Type:   state
-Stage:  flink
-Primary Key: id
-Timestamp  : -
+ID:          default_catalog.default_database.StringArray
+Type:        state
+Stage:       flink
+Primary key: id
+Timestamp:   -
+---
 Schema:
  - id: INTEGER NOT NULL
  - string_array: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL ARRAY NOT NULL
 
 === StringArrayFn
-ID:     default_catalog.default_database.StringArrayFn
-Type:   query
-Stage:  postgres
-Inputs: default_catalog.default_database.StringVals
+ID:          default_catalog.default_database.StringArrayFn
+Type:        query
+Stage:       postgres
+---
+Inputs:
+ - default_catalog.default_database.StringVals
 Annotations:
  - parameters: vals
  - base-table: StringVals
 
 === StringVals
-ID:     default_catalog.default_database.StringVals
-Type:   state
-Stage:  flink
-Primary Key: val
-Timestamp  : -
+ID:          default_catalog.default_database.StringVals
+Type:        state
+Stage:       flink
+Primary key: val
+Timestamp:   -
+---
 Schema:
  - val: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL
 

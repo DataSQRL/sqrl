@@ -65,7 +65,6 @@
   } ],
   "plan" : "LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($1, 1000:INTERVAL SECOND)])\n  LogicalTableScan(table=[[default_catalog, default_database, Click]])\n",
   "sql" : "CREATE TEMPORARY TABLE `Click__schema` (\n  `url` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `userid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL\n) WITH (\n  'connector' = 'datagen'\n);\nCREATE TABLE `Click` (\n  PRIMARY KEY (`url`, `userid`, `timestamp`) NOT ENFORCED,\n  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '1' SECOND\n) WITH (\n  'format' = 'flexible-json',\n  'path' = '${DATA_PATH}/click.jsonl',\n  'source.monitor-interval' = '10 sec',\n  'connector' = 'filesystem'\n)\nLIKE `Click__schema`",
-  "primary_key" : [ "url", "userid", "timestamp" ],
   "timestamp" : "timestamp",
   "schema" : [ {
     "name" : "url",
@@ -76,13 +75,13 @@
   }, {
     "name" : "userid",
     "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL"
-  } ]
+  } ],
+  "primary_key" : [ "url", "userid", "timestamp" ]
 }, {
   "id" : "default_catalog.default_database.Click__base",
   "name" : "Click",
   "type" : "import",
   "stage" : "flink",
-  "inputs" : [ ],
   "connector" : {
     "format" : "flexible-json",
     "path" : "${DATA_PATH}/click.jsonl",
@@ -101,7 +100,6 @@
   } ],
   "plan" : "LogicalAggregate(group=[{0, 1}], frequency=[COUNT()])\n  LogicalProject(url=[$0], rec=[$1])\n    LogicalTableScan(table=[[default_catalog, default_database, VisitAfter]])\n",
   "sql" : "CREATE VIEW `Recommendation` AS  SELECT beforeURL AS url, afterURL AS rec,\n    count(1) AS frequency FROM VisitAfter\n    GROUP BY beforeURL, afterURL ORDER BY url ASC, frequency DESC;\n",
-  "primary_key" : [ "url", "rec" ],
   "timestamp" : "-",
   "schema" : [ {
     "name" : "url",
@@ -112,7 +110,8 @@
   }, {
     "name" : "frequency",
     "type" : "BIGINT NOT NULL"
-  } ]
+  } ],
+  "primary_key" : [ "url", "rec" ]
 }, {
   "id" : "default_catalog.default_database.Trending",
   "name" : "Trending",
@@ -125,7 +124,6 @@
   } ],
   "plan" : "LogicalAggregate(group=[{0}], total=[COUNT()])\n  LogicalProject(url=[$0])\n    LogicalTableScan(table=[[default_catalog, default_database, Click]])\n",
   "sql" : "CREATE VIEW `Trending` AS  SELECT url, count(1) AS total\n    FROM Click\n    GROUP BY url ORDER BY total DESC, url ASC;\n",
-  "primary_key" : [ "url" ],
   "timestamp" : "-",
   "schema" : [ {
     "name" : "url",
@@ -133,7 +131,8 @@
   }, {
     "name" : "total",
     "type" : "BIGINT NOT NULL"
-  } ]
+  } ],
+  "primary_key" : [ "url" ]
 }, {
   "id" : "default_catalog.default_database.VisitAfter",
   "name" : "VisitAfter",

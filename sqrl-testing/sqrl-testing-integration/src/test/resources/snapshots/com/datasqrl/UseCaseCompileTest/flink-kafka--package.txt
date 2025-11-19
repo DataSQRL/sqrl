@@ -1,13 +1,11 @@
 >>>pipeline_explain.txt
 === ApplicationStatus
-ID:     default_catalog.default_database.ApplicationStatus
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database._ApplicationUpdates, default_catalog.default_database._Applications, default_catalog.default_database._LoanTypes
-Annotations:
- - stream-root: _ApplicationUpdates
-Primary Key: -
-Timestamp  : event_time
+ID:          default_catalog.default_database.ApplicationStatus
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   event_time
+---
 Schema:
  - status: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - message: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -19,50 +17,58 @@ Schema:
  - duration: BIGINT NOT NULL
  - max_amount: DOUBLE NOT NULL
  - min_amount: DOUBLE NOT NULL
-
-=== _ApplicationUpdates
-ID:     default_catalog.default_database._ApplicationUpdates
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database._ApplicationUpdates__base
+Inputs:
+ - default_catalog.default_database._ApplicationUpdates
+ - default_catalog.default_database._Applications
+ - default_catalog.default_database._LoanTypes
 Annotations:
  - stream-root: _ApplicationUpdates
-Primary Key: loan_application_id, event_time
-Timestamp  : event_time
+
+=== _ApplicationUpdates
+ID:          default_catalog.default_database._ApplicationUpdates
+Type:        stream
+Stage:       flink
+Primary key: loan_application_id, event_time
+Timestamp:   event_time
+---
 Schema:
  - loan_application_id: BIGINT NOT NULL
  - status: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - message: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database._ApplicationUpdates__base
+Annotations:
+ - stream-root: _ApplicationUpdates
 
 === _Applications
-ID:     default_catalog.default_database._Applications
-Type:   state
-Stage:  flink
-Inputs: default_catalog.default_database._ApplicationsStream
+ID:          default_catalog.default_database._Applications
+Type:        state
+Stage:       flink
+Primary key: id
+Timestamp:   updated_at
+---
+Schema:
+ - id: BIGINT NOT NULL
+ - customer_id: BIGINT NOT NULL
+ - loan_type_id: BIGINT NOT NULL
+ - amount: DOUBLE NOT NULL
+ - duration: BIGINT NOT NULL
+ - application_date: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - updated_at: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database._ApplicationsStream
 Annotations:
  - mostRecentDistinct: true
  - stream-root: _ApplicationsStream
-Primary Key: id
-Timestamp  : updated_at
-Schema:
- - id: BIGINT NOT NULL
- - customer_id: BIGINT NOT NULL
- - loan_type_id: BIGINT NOT NULL
- - amount: DOUBLE NOT NULL
- - duration: BIGINT NOT NULL
- - application_date: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
- - updated_at: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 
 === _ApplicationsStream
-ID:     default_catalog.default_database._ApplicationsStream
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database._ApplicationsStream__base
-Annotations:
- - stream-root: _ApplicationsStream
-Primary Key: id, updated_at
-Timestamp  : updated_at
+ID:          default_catalog.default_database._ApplicationsStream
+Type:        stream
+Stage:       flink
+Primary key: id, updated_at
+Timestamp:   updated_at
+---
 Schema:
  - id: BIGINT NOT NULL
  - customer_id: BIGINT NOT NULL
@@ -71,50 +77,57 @@ Schema:
  - duration: BIGINT NOT NULL
  - application_date: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - updated_at: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database._ApplicationsStream__base
+Annotations:
+ - stream-root: _ApplicationsStream
 
 === _FakeStreamJoin
-ID:     default_catalog.default_database._FakeStreamJoin
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database._ApplicationUpdates, default_catalog.default_database._ApplicationsStream
-Primary Key: -
-Timestamp  : event_time
+ID:          default_catalog.default_database._FakeStreamJoin
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   event_time
+---
 Schema:
  - id: BIGINT NOT NULL
  - status: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - message: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database._ApplicationUpdates
+ - default_catalog.default_database._ApplicationsStream
 
 === _LoanTypes
-ID:     default_catalog.default_database._LoanTypes
-Type:   state
-Stage:  flink
-Inputs: default_catalog.default_database._LoanTypesStream
+ID:          default_catalog.default_database._LoanTypes
+Type:        state
+Stage:       flink
+Primary key: id
+Timestamp:   updated_at
+---
+Schema:
+ - id: BIGINT NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - description: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - interest_rate: DOUBLE NOT NULL
+ - max_amount: DOUBLE NOT NULL
+ - min_amount: DOUBLE NOT NULL
+ - max_duration: BIGINT NOT NULL
+ - min_duration: BIGINT NOT NULL
+ - updated_at: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database._LoanTypesStream
 Annotations:
  - mostRecentDistinct: true
  - stream-root: _LoanTypesStream
-Primary Key: id
-Timestamp  : updated_at
-Schema:
- - id: BIGINT NOT NULL
- - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - description: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - interest_rate: DOUBLE NOT NULL
- - max_amount: DOUBLE NOT NULL
- - min_amount: DOUBLE NOT NULL
- - max_duration: BIGINT NOT NULL
- - min_duration: BIGINT NOT NULL
- - updated_at: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 
 === _LoanTypesStream
-ID:     default_catalog.default_database._LoanTypesStream
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database._LoanTypesStream__base
-Annotations:
- - stream-root: _LoanTypesStream
-Primary Key: id, updated_at
-Timestamp  : updated_at
+ID:          default_catalog.default_database._LoanTypesStream
+Type:        stream
+Stage:       flink
+Primary key: id, updated_at
+Timestamp:   updated_at
+---
 Schema:
  - id: BIGINT NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -125,12 +138,18 @@ Schema:
  - max_duration: BIGINT NOT NULL
  - min_duration: BIGINT NOT NULL
  - updated_at: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database._LoanTypesStream__base
+Annotations:
+ - stream-root: _LoanTypesStream
 
 === StreamJoin
-ID:     logger.StreamJoin
-Type:   export
-Stage:  flink
-Inputs: default_catalog.default_database._FakeStreamJoin
+ID:          logger.StreamJoin
+Type:        export
+Stage:       flink
+---
+Inputs:
+ - default_catalog.default_database._FakeStreamJoin
 
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `_ApplicationsStream__schema` (

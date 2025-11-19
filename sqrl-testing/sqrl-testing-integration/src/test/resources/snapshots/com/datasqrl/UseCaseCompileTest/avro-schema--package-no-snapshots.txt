@@ -1,14 +1,60 @@
 >>>pipeline_explain.txt
 === Schema
-ID:     default_catalog.default_database.Schema
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database._Schema
+ID:          default_catalog.default_database.Schema
+Type:        stream
+Stage:       flink
+Primary key: uuidField, timestampMillisField
+Timestamp:   timestampMillisField
+---
+Schema:
+ - uuidField: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - timestampMillisField: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+ - nullableTimestampMillisField: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)
+ - timestampMicrosField: TIMESTAMP_WITH_LOCAL_TIME_ZONE(6) NOT NULL
+ - nullableTimestampMicrosField: TIMESTAMP_WITH_LOCAL_TIME_ZONE(6)
+ - dateField: DATE NOT NULL
+ - nullableDateField: DATE
+ - timeMillisField: TIME(0) NOT NULL
+ - nullableTimeMillisField: TIME(0)
+ - timeMicrosField: TIME(0) NOT NULL
+ - nullableTimeMicrosField: TIME(0)
+ - complexArrayField: RecordType:peek_no_expand(INTEGER NOT NULL itemFieldOne, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL itemFieldTwo) NOT NULL ARRAY NOT NULL
+ - nullableComplexArrayField: RecordType:peek_no_expand(DOUBLE nullableItemFieldOne, BOOLEAN nullableItemFieldTwo) ARRAY
+ - multiNestedRecord: RecordType:peek_no_expand(RecordType:peek_no_expand(VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL levelOneField, RecordType:peek_no_expand(INTEGER NOT NULL levelTwoField) NOT NULL nestedLevelTwo) NOT NULL nestedLevelOne) NOT NULL
+ - stringField: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - nullableStringField: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+ - intField: INTEGER NOT NULL
+ - nullableIntField: INTEGER
+ - longField: BIGINT NOT NULL
+ - nullableLongField: BIGINT
+ - floatField: FLOAT NOT NULL
+ - nullableFloatField: FLOAT
+ - doubleField: DOUBLE NOT NULL
+ - nullableDoubleField: DOUBLE
+ - booleanField: BOOLEAN NOT NULL
+ - nullableBooleanField: BOOLEAN
+ - enumField: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - nullableEnumField: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+ - arrayField: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL ARRAY NOT NULL
+ - nullableArrayField: INTEGER ARRAY
+ - nestedRecord: RecordType:peek_no_expand(VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL nestedStringField, INTEGER NOT NULL nestedIntField, FLOAT NOT NULL ARRAY NOT NULL nestedArrayField, (VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL) MAP NOT NULL nestedMapField) NOT NULL
+ - nullableNestedRecord: RecordType:peek_no_expand(VARCHAR(2147483647) CHARACTER SET "UTF-16LE" nullableNestedStringField, BIGINT nullableNestedLongField)
+ - decimalField: DECIMAL(10, 2) NOT NULL
+ - mapField: (VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL) MAP NOT NULL
+ - nullableMapField: (VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL) MAP
+Inputs:
+ - default_catalog.default_database._Schema
 Annotations:
  - stream-root: _Schema
  - sort: [0 DESC-nulls-last]
-Primary Key: uuidField, timestampMillisField
-Timestamp  : timestampMillisField
+
+=== _Schema
+ID:          default_catalog.default_database._Schema
+Type:        stream
+Stage:       flink
+Primary key: uuidField, timestampMillisField
+Timestamp:   timestampMillisField
+---
 Schema:
  - uuidField: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - timestampMillisField: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
@@ -45,53 +91,11 @@ Schema:
  - decimalField: DECIMAL(10, 2) NOT NULL
  - mapField: (VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL) MAP NOT NULL
  - nullableMapField: (VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL) MAP
-
-=== _Schema
-ID:     default_catalog.default_database._Schema
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database._Schema__base
+Inputs:
+ - default_catalog.default_database._Schema__base
 Annotations:
  - features: DENORMALIZE (feature)
  - stream-root: _Schema
-Primary Key: uuidField, timestampMillisField
-Timestamp  : timestampMillisField
-Schema:
- - uuidField: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - timestampMillisField: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
- - nullableTimestampMillisField: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)
- - timestampMicrosField: TIMESTAMP_WITH_LOCAL_TIME_ZONE(6) NOT NULL
- - nullableTimestampMicrosField: TIMESTAMP_WITH_LOCAL_TIME_ZONE(6)
- - dateField: DATE NOT NULL
- - nullableDateField: DATE
- - timeMillisField: TIME(0) NOT NULL
- - nullableTimeMillisField: TIME(0)
- - timeMicrosField: TIME(0) NOT NULL
- - nullableTimeMicrosField: TIME(0)
- - complexArrayField: RecordType:peek_no_expand(INTEGER NOT NULL itemFieldOne, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL itemFieldTwo) NOT NULL ARRAY NOT NULL
- - nullableComplexArrayField: RecordType:peek_no_expand(DOUBLE nullableItemFieldOne, BOOLEAN nullableItemFieldTwo) ARRAY
- - multiNestedRecord: RecordType:peek_no_expand(RecordType:peek_no_expand(VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL levelOneField, RecordType:peek_no_expand(INTEGER NOT NULL levelTwoField) NOT NULL nestedLevelTwo) NOT NULL nestedLevelOne) NOT NULL
- - stringField: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - nullableStringField: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
- - intField: INTEGER NOT NULL
- - nullableIntField: INTEGER
- - longField: BIGINT NOT NULL
- - nullableLongField: BIGINT
- - floatField: FLOAT NOT NULL
- - nullableFloatField: FLOAT
- - doubleField: DOUBLE NOT NULL
- - nullableDoubleField: DOUBLE
- - booleanField: BOOLEAN NOT NULL
- - nullableBooleanField: BOOLEAN
- - enumField: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - nullableEnumField: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
- - arrayField: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL ARRAY NOT NULL
- - nullableArrayField: INTEGER ARRAY
- - nestedRecord: RecordType:peek_no_expand(VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL nestedStringField, INTEGER NOT NULL nestedIntField, FLOAT NOT NULL ARRAY NOT NULL nestedArrayField, (VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL) MAP NOT NULL nestedMapField) NOT NULL
- - nullableNestedRecord: RecordType:peek_no_expand(VARCHAR(2147483647) CHARACTER SET "UTF-16LE" nullableNestedStringField, BIGINT nullableNestedLongField)
- - decimalField: DECIMAL(10, 2) NOT NULL
- - mapField: (VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL) MAP NOT NULL
- - nullableMapField: (VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL) MAP
 
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `_Schema__schema` (

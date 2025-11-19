@@ -1,37 +1,43 @@
 >>>pipeline_explain.txt
 === SensorAggregate
-ID:     default_catalog.default_database.SensorAggregate
-Type:   state
-Stage:  postgres
-Inputs: default_catalog.default_database.SensorReading
-Annotations:
- - sort: [0 ASC-nulls-first]
-Primary Key: sensorid
-Timestamp  : -
+ID:          default_catalog.default_database.SensorAggregate
+Type:        state
+Stage:       postgres
+Primary key: sensorid
+Timestamp:   -
+---
 Schema:
  - sensorid: INTEGER NOT NULL
  - maxTemp: FLOAT NOT NULL
  - avgTemp: FLOAT NOT NULL
+Inputs:
+ - default_catalog.default_database.SensorReading
+Annotations:
+ - sort: [0 ASC-nulls-first]
 
 === SensorReading
-ID:     default_catalog.default_database.SensorReading
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.SensorReading__base
-Annotations:
- - stream-root: SensorReading
-Primary Key: sensorid, event_time
-Timestamp  : -
+ID:          default_catalog.default_database.SensorReading
+Type:        stream
+Stage:       flink
+Primary key: sensorid, event_time
+Timestamp:   -
+---
 Schema:
  - sensorid: INTEGER NOT NULL
  - temperature: FLOAT NOT NULL
  - event_time: BIGINT NOT NULL
+Inputs:
+ - default_catalog.default_database.SensorReading__base
+Annotations:
+ - stream-root: SensorReading
 
 === SensorReadingById
-ID:     default_catalog.default_database.SensorReadingById
-Type:   query
-Stage:  postgres
-Inputs: default_catalog.default_database.SensorReading
+ID:          default_catalog.default_database.SensorReadingById
+Type:        query
+Stage:       postgres
+---
+Inputs:
+ - default_catalog.default_database.SensorReading
 Annotations:
  - stream-root: SensorReading
  - parameters: sensorid

@@ -1,39 +1,46 @@
 >>>pipeline_explain.txt
 === CategoryCentroids
-ID:     default_catalog.default_database.CategoryCentroids
-Type:   state
-Stage:  flink
-Inputs: default_catalog.default_database.VectorData
-Primary Key: category_id
-Timestamp  : -
+ID:          default_catalog.default_database.CategoryCentroids
+Type:        state
+Stage:       flink
+Primary key: category_id
+Timestamp:   -
+---
 Schema:
  - category_id: INTEGER NOT NULL
  - center_vector: DOUBLE NOT NULL ARRAY
+Inputs:
+ - default_catalog.default_database.VectorData
 
 === DocumentSimilarity
-ID:     default_catalog.default_database.DocumentSimilarity
-Type:   query
-Stage:  postgres
-Inputs: default_catalog.default_database.VectorData
+ID:          default_catalog.default_database.DocumentSimilarity
+Type:        query
+Stage:       postgres
+---
+Inputs:
+ - default_catalog.default_database.VectorData
 Annotations:
  - parameters: doc_id
  - base-table: DocumentSimilarity
 
 === DocumentSimilarityIndex
-ID:     default_catalog.default_database.DocumentSimilarityIndex
-Type:   query
-Stage:  postgres
-Inputs: default_catalog.default_database.VectorData
+ID:          default_catalog.default_database.DocumentSimilarityIndex
+Type:        query
+Stage:       postgres
+---
+Inputs:
+ - default_catalog.default_database.VectorData
 Annotations:
  - parameters: doc_id
  - base-table: DocumentSimilarityIndex
 
 === VectorData
-ID:     default_catalog.default_database.VectorData
-Type:   state
-Stage:  flink
-Primary Key: doc_id
-Timestamp  : -
+ID:          default_catalog.default_database.VectorData
+Type:        state
+Stage:       flink
+Primary key: doc_id
+Timestamp:   -
+---
 Schema:
  - doc_id: INTEGER NOT NULL
  - category_id: INTEGER NOT NULL

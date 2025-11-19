@@ -1,36 +1,41 @@
 >>>pipeline_explain.txt
 === Customer
-ID:     default_catalog.default_database.Customer
-Type:   state
-Stage:  flink
-Inputs: default_catalog.default_database.CustomerImport
-Annotations:
- - mostRecentDistinct: true
- - stream-root: CustomerImport
-Primary Key: customerid
-Timestamp  : timestamp
+ID:          default_catalog.default_database.Customer
+Type:        state
+Stage:       flink
+Primary key: customerid
+Timestamp:   timestamp
+---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.CustomerImport
+Annotations:
+ - mostRecentDistinct: true
+ - stream-root: CustomerImport
 Plan:
 LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
   LogicalFilter(condition=[=($5, 1)])
     LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4], __sqrlinternal_rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $4 DESC NULLS LAST)])
       LogicalTableScan(table=[[default_catalog, default_database, CustomerImport]])
-SQL: CREATE VIEW `Customer`
+SQL:
+CREATE VIEW `Customer`
 AS
 SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`
 FROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC NULLS LAST) AS `__sqrlinternal_rownum`
   FROM `default_catalog`.`default_database`.`CustomerImport`) AS `t`
 WHERE `__sqrlinternal_rownum` = 1
 === CustomerById
-ID:     default_catalog.default_database.CustomerById
-Type:   query
-Stage:  postgres
-Inputs: default_catalog.default_database.Customer
+ID:          default_catalog.default_database.CustomerById
+Type:        query
+Stage:       postgres
+---
+Inputs:
+ - default_catalog.default_database.Customer
 Annotations:
  - stream-root: CustomerImport
  - parameters: customerid
@@ -39,28 +44,32 @@ Plan:
 LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
   LogicalFilter(condition=[=($0, ?0)])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW `CustomerById` AS  SELECT * FROM Customer WHERE customerid = ?          ;
+SQL:
+CREATE VIEW `CustomerById` AS  SELECT * FROM Customer WHERE customerid = ?          ;
 
 === CustomerImport
-ID:     default_catalog.default_database.CustomerImport
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.CustomerImport__base
-Annotations:
- - stream-root: CustomerImport
-Primary Key: customerid, lastUpdated
-Timestamp  : timestamp
+ID:          default_catalog.default_database.CustomerImport
+Type:        stream
+Stage:       flink
+Primary key: customerid, lastUpdated
+Timestamp:   timestamp
+---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.CustomerImport__base
+Annotations:
+ - stream-root: CustomerImport
 Plan:
 LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
   LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($3, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
     LogicalTableScan(table=[[default_catalog, default_database, CustomerImport]])
-SQL: CREATE TEMPORARY TABLE `CustomerImport__schema` (
+SQL:
+CREATE TEMPORARY TABLE `CustomerImport__schema` (
   `customerid` BIGINT NOT NULL,
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -80,10 +89,12 @@ CREATE TABLE `CustomerImport` (
 )
 LIKE `CustomerImport__schema`
 === LargeOrderSubscription
-ID:     default_catalog.default_database.LargeOrderSubscription
-Type:   query
-Stage:  kafka
-Inputs: default_catalog.default_database.LargeOrders
+ID:          default_catalog.default_database.LargeOrderSubscription
+Type:        query
+Stage:       kafka
+---
+Inputs:
+ - default_catalog.default_database.LargeOrders
 Annotations:
  - stream-root: SimpleOrders
  - parameters: customerid
@@ -92,48 +103,55 @@ Plan:
 LogicalProject(_uuid=[$0], orderid=[$1], customerid=[$2], amount=[$3], orderTime=[$4])
   LogicalFilter(condition=[=($2, ?0)])
     LogicalTableScan(table=[[default_catalog, default_database, LargeOrders]])
-SQL: CREATE VIEW `LargeOrderSubscription` AS  SELECT * FROM LargeOrders WHERE customerid = ?          ;
+SQL:
+CREATE VIEW `LargeOrderSubscription` AS  SELECT * FROM LargeOrders WHERE customerid = ?          ;
 
 === LargeOrders
-ID:     default_catalog.default_database.LargeOrders
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.SimpleOrders
-Annotations:
- - stream-root: SimpleOrders
-Primary Key: _uuid
-Timestamp  : orderTime
+ID:          default_catalog.default_database.LargeOrders
+Type:        stream
+Stage:       flink
+Primary key: _uuid
+Timestamp:   orderTime
+---
 Schema:
  - _uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - orderid: INTEGER
  - customerid: BIGINT
  - amount: FLOAT
  - orderTime: TIMESTAMP_LTZ(3) *ROWTIME*
+Inputs:
+ - default_catalog.default_database.SimpleOrders
+Annotations:
+ - stream-root: SimpleOrders
 Plan:
 LogicalProject(_uuid=[$0], orderid=[$1], customerid=[$2], amount=[$3], orderTime=[$4])
   LogicalFilter(condition=[>($3, 100)])
     LogicalTableScan(table=[[default_catalog, default_database, SimpleOrders]])
-SQL: CREATE VIEW `LargeOrders` AS  SELECT * FROM SimpleOrders WHERE amount > 100;
+SQL:
+CREATE VIEW `LargeOrders` AS  SELECT * FROM SimpleOrders WHERE amount > 100;
 
 === Orders
-ID:     default_catalog.default_database.Orders
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.Orders__base
-Annotations:
- - features: DENORMALIZE (feature)
- - stream-root: Orders
-Primary Key: id, time
-Timestamp  : time
+ID:          default_catalog.default_database.Orders
+Type:        stream
+Stage:       flink
+Primary key: id, time
+Timestamp:   time
+---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
  - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - entries: RecordType:peek_no_expand(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
+Inputs:
+ - default_catalog.default_database.Orders__base
+Annotations:
+ - features: DENORMALIZE (feature)
+ - stream-root: Orders
 Plan:
 LogicalWatermarkAssigner(rowtime=[time], watermark=[-($2, 1:INTERVAL SECOND)])
   LogicalTableScan(table=[[default_catalog, default_database, Orders]])
-SQL: CREATE TEMPORARY TABLE `Orders__schema` (
+SQL:
+CREATE TEMPORARY TABLE `Orders__schema` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
@@ -152,25 +170,28 @@ CREATE TABLE `Orders` (
 )
 LIKE `Orders__schema`
 === SimpleOrders
-ID:     default_catalog.default_database.SimpleOrders
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.SimpleOrders__base
-Annotations:
- - stream-root: SimpleOrders
-Primary Key: _uuid
-Timestamp  : orderTime
+ID:          default_catalog.default_database.SimpleOrders
+Type:        stream
+Stage:       flink
+Primary key: _uuid
+Timestamp:   orderTime
+---
 Schema:
  - _uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - orderid: INTEGER
  - customerid: BIGINT
  - amount: FLOAT
  - orderTime: TIMESTAMP_LTZ(3) *ROWTIME*
+Inputs:
+ - default_catalog.default_database.SimpleOrders__base
+Annotations:
+ - stream-root: SimpleOrders
 Plan:
 LogicalWatermarkAssigner(rowtime=[orderTime], watermark=[-($4, 0:INTERVAL SECOND)])
   LogicalProject(_uuid=[$0], orderid=[$1], customerid=[$2], amount=[$3], orderTime=[CAST($4):TIMESTAMP_LTZ(3) *ROWTIME*])
     LogicalTableScan(table=[[default_catalog, default_database, SimpleOrders, metadata=[timestamp]]])
-SQL: CREATE TABLE `SimpleOrders` (
+SQL:
+CREATE TABLE `SimpleOrders` (
   `_uuid` VARCHAR NOT NULL,
   `orderid` INTEGER,
   `customerid` BIGINT,
@@ -187,14 +208,12 @@ SQL: CREATE TABLE `SimpleOrders` (
   'topic' = 'kafka-mutation-SimpleOrders'
 )
 === UnnestOrders
-ID:     default_catalog.default_database.UnnestOrders
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.Orders
-Annotations:
- - stream-root: Orders
-Primary Key: -
-Timestamp  : time
+ID:          default_catalog.default_database.UnnestOrders
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   time
+---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
@@ -202,6 +221,10 @@ Schema:
  - productid: BIGINT NOT NULL
  - quantity: BIGINT NOT NULL
  - discount: DOUBLE
+Inputs:
+ - default_catalog.default_database.Orders
+Annotations:
+ - stream-root: Orders
 Plan:
 LogicalProject(id=[$0], customerid=[$1], time=[$2], productid=[$4], quantity=[$5], discount=[$7])
   LogicalCorrelate(correlation=[$cor1], joinType=[inner], requiredColumns=[{3}])
@@ -209,19 +232,24 @@ LogicalProject(id=[$0], customerid=[$1], time=[$2], productid=[$4], quantity=[$5
     Uncollect
       LogicalProject(entries=[$cor1.entries])
         LogicalValues(tuples=[[{ 0 }]])
-SQL: CREATE VIEW `UnnestOrders` AS  SELECT o.id, o.customerid, o.`time`, e.productid, e.quantity, e.discount FROM Orders o CROSS JOIN UNNEST(entries) e;
+SQL:
+CREATE VIEW `UnnestOrders` AS  SELECT o.id, o.customerid, o.`time`, e.productid, e.quantity, e.discount FROM Orders o CROSS JOIN UNNEST(entries) e;
 
 === customersink
-ID:     mysink.customersink
-Type:   export
-Stage:  flink
-Inputs: default_catalog.default_database.CustomerImport
+ID:          mysink.customersink
+Type:        export
+Stage:       flink
+---
+Inputs:
+ - default_catalog.default_database.CustomerImport
 
 === Unnestorders
-ID:     print.Unnestorders
-Type:   export
-Stage:  flink
-Inputs: default_catalog.default_database.UnnestOrders
+ID:          print.Unnestorders
+Type:        export
+Stage:       flink
+---
+Inputs:
+ - default_catalog.default_database.UnnestOrders
 
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `CustomerImport__schema` (

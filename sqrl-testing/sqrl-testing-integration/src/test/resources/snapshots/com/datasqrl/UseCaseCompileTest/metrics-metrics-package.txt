@@ -1,98 +1,112 @@
 >>>pipeline_explain.txt
 === HighTempAlert
-ID:     default_catalog.default_database.HighTempAlert
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.SensorReading
-Annotations:
- - stream-root: SensorReading
-Primary Key: uuid
-Timestamp  : event_time
+ID:          default_catalog.default_database.HighTempAlert
+Type:        stream
+Stage:       flink
+Primary key: uuid
+Timestamp:   event_time
+---
 Schema:
  - uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - sensorid: INTEGER NOT NULL
  - temperature: FLOAT NOT NULL
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME*
-
-=== SensorAnalysis
-ID:     default_catalog.default_database.SensorAnalysis
-Type:   state
-Stage:  flink
-Inputs: default_catalog.default_database.SensorReading
+Inputs:
+ - default_catalog.default_database.SensorReading
 Annotations:
  - stream-root: SensorReading
- - sort: [0 DESC-nulls-last]
-Primary Key: sensorid
-Timestamp  : -
+
+=== SensorAnalysis
+ID:          default_catalog.default_database.SensorAnalysis
+Type:        state
+Stage:       flink
+Primary key: sensorid
+Timestamp:   -
+---
 Schema:
  - sensorid: INTEGER NOT NULL
  - avg_temperatures: FLOAT NOT NULL
  - max_temperature: FLOAT NOT NULL
+Inputs:
+ - default_catalog.default_database.SensorReading
+Annotations:
+ - stream-root: SensorReading
+ - sort: [0 DESC-nulls-last]
 
 === SensorAnalysisById
-ID:     default_catalog.default_database.SensorAnalysisById
-Type:   query
-Stage:  postgres
-Inputs: default_catalog.default_database.SensorAnalysis
+ID:          default_catalog.default_database.SensorAnalysisById
+Type:        query
+Stage:       postgres
+---
+Inputs:
+ - default_catalog.default_database.SensorAnalysis
 Annotations:
  - stream-root: SensorReading
  - parameters: sensorid
  - base-table: SensorAnalysis
 
 === SensorMaxTempLastMin
-ID:     default_catalog.default_database.SensorMaxTempLastMin
-Type:   state
-Stage:  flink
-Inputs: default_catalog.default_database._SensorMaxTempLastMinWindow
-Annotations:
- - mostRecentDistinct: true
- - stream-root: SensorReading
-Primary Key: sensorid
-Timestamp  : endOfMin
+ID:          default_catalog.default_database.SensorMaxTempLastMin
+Type:        state
+Stage:       flink
+Primary key: sensorid
+Timestamp:   endOfMin
+---
 Schema:
  - sensorid: INTEGER NOT NULL
  - endOfMin: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - avg_temperature: FLOAT NOT NULL
+Inputs:
+ - default_catalog.default_database._SensorMaxTempLastMinWindow
+Annotations:
+ - mostRecentDistinct: true
+ - stream-root: SensorReading
 
 === SensorReading
-ID:     default_catalog.default_database.SensorReading
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.SensorReading__base
-Annotations:
- - stream-root: SensorReading
-Primary Key: uuid
-Timestamp  : event_time
+ID:          default_catalog.default_database.SensorReading
+Type:        stream
+Stage:       flink
+Primary key: uuid
+Timestamp:   event_time
+---
 Schema:
  - uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - sensorid: INTEGER NOT NULL
  - temperature: FLOAT NOT NULL
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME*
+Inputs:
+ - default_catalog.default_database.SensorReading__base
+Annotations:
+ - stream-root: SensorReading
 
 === SensorReadingById
-ID:     default_catalog.default_database.SensorReadingById
-Type:   query
-Stage:  postgres
-Inputs: default_catalog.default_database.SensorReading
+ID:          default_catalog.default_database.SensorReadingById
+Type:        query
+Stage:       postgres
+---
+Inputs:
+ - default_catalog.default_database.SensorReading
 Annotations:
  - stream-root: SensorReading
  - parameters: sensorid
  - base-table: SensorReading
 
 === _SensorMaxTempLastMinWindow
-ID:     default_catalog.default_database._SensorMaxTempLastMinWindow
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.SensorReading
-Annotations:
- - features: STREAM_WINDOW_AGGREGATION (feature)
- - stream-root: SensorReading
-Primary Key: -
-Timestamp  : endOfMin
+ID:          default_catalog.default_database._SensorMaxTempLastMinWindow
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   endOfMin
+---
 Schema:
  - sensorid: INTEGER NOT NULL
  - endOfMin: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - avg_temperature: FLOAT NOT NULL
+Inputs:
+ - default_catalog.default_database.SensorReading
+Annotations:
+ - features: STREAM_WINDOW_AGGREGATION (feature)
+ - stream-root: SensorReading
 
 >>>flink-sql-no-functions.sql
 CREATE TABLE `SensorReading` (

@@ -1,31 +1,35 @@
 >>>pipeline_explain.txt
 === OrderCount
-ID:     default_catalog.default_database.OrderCount
-Type:   state
-Stage:  flink
-Inputs: default_catalog.default_database.Orders
-Primary Key: id
-Timestamp  : -
+ID:          default_catalog.default_database.OrderCount
+Type:        state
+Stage:       flink
+Primary key: id
+Timestamp:   -
+---
 Schema:
  - id: BIGINT NOT NULL
  - number: BIGINT NOT NULL
  - volume: INTEGER NOT NULL
+Inputs:
+ - default_catalog.default_database.Orders
 
 === Orders
-ID:     default_catalog.default_database.Orders
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.Orders__base
-Annotations:
- - features: DENORMALIZE (feature)
-Primary Key: -
-Timestamp  : _source_time
+ID:          default_catalog.default_database.Orders
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   _source_time
+---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
  - time: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - items: RecordType:peek_no_expand(INTEGER NOT NULL productid, INTEGER NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
  - _source_time: TIMESTAMP_LTZ(3) *ROWTIME*
+Inputs:
+ - default_catalog.default_database.Orders__base
+Annotations:
+ - features: DENORMALIZE (feature)
 
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `Orders__schema` (

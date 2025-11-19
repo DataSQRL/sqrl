@@ -1,13 +1,11 @@
 >>>pipeline_explain.txt
 === CustomerPromotion
-ID:     default_catalog.default_database.CustomerPromotion
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.Customers, default_catalog.default_database.CustomersSpending
-Annotations:
- - stream-root: Orders
-Primary Key: -
-Timestamp  : -
+ID:          default_catalog.default_database.CustomerPromotion
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   -
+---
 Schema:
  - customerid: BIGINT NOT NULL
  - first_name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -15,17 +13,19 @@ Schema:
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - spend: DOUBLE NOT NULL
  - saved: DOUBLE NOT NULL
+Inputs:
+ - default_catalog.default_database.Customers
+ - default_catalog.default_database.CustomersSpending
+Annotations:
+ - stream-root: Orders
 
 === Customers
-ID:     default_catalog.default_database.Customers
-Type:   state
-Stage:  flink
-Inputs: default_catalog.default_database._CustomersStream
-Annotations:
- - mostRecentDistinct: true
- - stream-root: _CustomersStream
-Primary Key: id
-Timestamp  : timestamp
+ID:          default_catalog.default_database.Customers
+Type:        state
+Stage:       flink
+Primary key: id
+Timestamp:   timestamp
+---
 Schema:
  - id: BIGINT NOT NULL
  - first_name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -35,114 +35,130 @@ Schema:
  - country: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
  - changed_on: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database._CustomersStream
+Annotations:
+ - mostRecentDistinct: true
+ - stream-root: _CustomersStream
 
 === CustomersOrderStats
-ID:     default_catalog.default_database.CustomersOrderStats
-Type:   state
-Stage:  flink
-Inputs: default_catalog.default_database.OrdersTotals
-Primary Key: customerid
-Timestamp  : first_order
+ID:          default_catalog.default_database.CustomersOrderStats
+Type:        state
+Stage:       flink
+Primary key: customerid
+Timestamp:   first_order
+---
 Schema:
  - customerid: BIGINT NOT NULL
  - first_order: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - total_spend: DOUBLE NOT NULL
  - total_saved: DOUBLE NOT NULL
  - num_orders: BIGINT NOT NULL
+Inputs:
+ - default_catalog.default_database.OrdersTotals
 
 === CustomersPastPurchases
-ID:     default_catalog.default_database.CustomersPastPurchases
-Type:   state
-Stage:  flink
-Inputs: default_catalog.default_database.Orders
-Primary Key: customerid, productid
-Timestamp  : -
+ID:          default_catalog.default_database.CustomersPastPurchases
+Type:        state
+Stage:       flink
+Primary key: customerid, productid
+Timestamp:   -
+---
 Schema:
  - customerid: BIGINT NOT NULL
  - productid: BIGINT NOT NULL
  - num_orders: BIGINT NOT NULL
  - total_quantity: BIGINT NOT NULL
+Inputs:
+ - default_catalog.default_database.Orders
 
 === CustomersSpending
-ID:     default_catalog.default_database.CustomersSpending
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.OrdersTotals
-Annotations:
- - features: STREAM_WINDOW_AGGREGATION (feature)
- - stream-root: Orders
- - sort: [1 DESC-nulls-last]
-Primary Key: -
-Timestamp  : week
+ID:          default_catalog.default_database.CustomersSpending
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   week
+---
 Schema:
  - customerid: BIGINT NOT NULL
  - week: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - spend: DOUBLE NOT NULL
  - saved: DOUBLE NOT NULL
+Inputs:
+ - default_catalog.default_database.OrdersTotals
+Annotations:
+ - features: STREAM_WINDOW_AGGREGATION (feature)
+ - stream-root: Orders
+ - sort: [1 DESC-nulls-last]
 
 === Orders
-ID:     default_catalog.default_database.Orders
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.Orders__base
-Annotations:
- - features: DENORMALIZE (feature)
- - stream-root: Orders
-Primary Key: id, time
-Timestamp  : time
+ID:          default_catalog.default_database.Orders
+Type:        stream
+Stage:       flink
+Primary key: id, time
+Timestamp:   time
+---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
  - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - items: RecordType:peek_no_expand(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
+Inputs:
+ - default_catalog.default_database.Orders__base
+Annotations:
+ - features: DENORMALIZE (feature)
+ - stream-root: Orders
 
 === OrdersTotals
-ID:     default_catalog.default_database.OrdersTotals
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database._OrderItems
-Annotations:
- - features: STREAM_WINDOW_AGGREGATION (feature)
- - stream-root: Orders
-Primary Key: -
-Timestamp  : time
+ID:          default_catalog.default_database.OrdersTotals
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   time
+---
 Schema:
  - id: BIGINT NOT NULL
  - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - customerid: BIGINT NOT NULL
  - price: DOUBLE NOT NULL
  - saving: DOUBLE NOT NULL
+Inputs:
+ - default_catalog.default_database._OrderItems
+Annotations:
+ - features: STREAM_WINDOW_AGGREGATION (feature)
+ - stream-root: Orders
 
 === ProductSearch
-ID:     default_catalog.default_database.ProductSearch
-Type:   query
-Stage:  postgres
-Inputs: default_catalog.default_database.Products
+ID:          default_catalog.default_database.ProductSearch
+Type:        query
+Stage:       postgres
+---
+Inputs:
+ - default_catalog.default_database.Products
 Annotations:
  - stream-root: _ProductsStream
  - parameters: query
  - base-table: ProductSearch
 
 === ProductSearchWithId
-ID:     default_catalog.default_database.ProductSearchWithId
-Type:   query
-Stage:  postgres
-Inputs: default_catalog.default_database.Products
+ID:          default_catalog.default_database.ProductSearchWithId
+Type:        query
+Stage:       postgres
+---
+Inputs:
+ - default_catalog.default_database.Products
 Annotations:
  - stream-root: _ProductsStream
  - parameters: query, id
  - base-table: Products
 
 === Products
-ID:     default_catalog.default_database.Products
-Type:   state
-Stage:  flink
-Inputs: default_catalog.default_database._ProductsStream
-Annotations:
- - mostRecentDistinct: true
- - stream-root: _ProductsStream
-Primary Key: id
-Timestamp  : updated
+ID:          default_catalog.default_database.Products
+Type:        state
+Stage:       flink
+Primary key: id
+Timestamp:   updated
+---
 Schema:
  - id: BIGINT NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -152,30 +168,37 @@ Schema:
  - category: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - usda_id: BIGINT NOT NULL
  - updated: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database._ProductsStream
+Annotations:
+ - mostRecentDistinct: true
+ - stream-root: _ProductsStream
 
 === ProductsByCountry
-ID:     default_catalog.default_database.ProductsByCountry
-Type:   state
-Stage:  flink
-Inputs: default_catalog.default_database.Customers, default_catalog.default_database.Products, default_catalog.default_database._OrderItems
-Primary Key: productid, country
-Timestamp  : -
+ID:          default_catalog.default_database.ProductsByCountry
+Type:        state
+Stage:       flink
+Primary key: productid, country
+Timestamp:   -
+---
 Schema:
  - productid: BIGINT NOT NULL
  - country: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
  - quantity: BIGINT NOT NULL
  - spend: DOUBLE NOT NULL
  - weight: BIGINT NOT NULL
+Inputs:
+ - default_catalog.default_database.Customers
+ - default_catalog.default_database.Products
+ - default_catalog.default_database._OrderItems
 
 === _CustomersStream
-ID:     default_catalog.default_database._CustomersStream
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database._CustomersStream__base
-Annotations:
- - stream-root: _CustomersStream
-Primary Key: id, changed_on
-Timestamp  : timestamp
+ID:          default_catalog.default_database._CustomersStream
+Type:        stream
+Stage:       flink
+Primary key: id, changed_on
+Timestamp:   timestamp
+---
 Schema:
  - id: BIGINT NOT NULL
  - first_name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -185,16 +208,18 @@ Schema:
  - country: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
  - changed_on: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database._CustomersStream__base
+Annotations:
+ - stream-root: _CustomersStream
 
 === _OrderItems
-ID:     default_catalog.default_database._OrderItems
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.Orders
-Annotations:
- - stream-root: Orders
-Primary Key: -
-Timestamp  : time
+ID:          default_catalog.default_database._OrderItems
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   time
+---
 Schema:
  - id: BIGINT NOT NULL
  - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
@@ -203,16 +228,18 @@ Schema:
  - quantity: BIGINT NOT NULL
  - unit_price: DOUBLE NOT NULL
  - discount: DOUBLE
+Inputs:
+ - default_catalog.default_database.Orders
+Annotations:
+ - stream-root: Orders
 
 === _ProductsStream
-ID:     default_catalog.default_database._ProductsStream
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database._ProductsStream__base
-Annotations:
- - stream-root: _ProductsStream
-Primary Key: id, updated
-Timestamp  : updated
+ID:          default_catalog.default_database._ProductsStream
+Type:        stream
+Stage:       flink
+Primary key: id, updated
+Timestamp:   updated
+---
 Schema:
  - id: BIGINT NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -222,12 +249,18 @@ Schema:
  - category: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - usda_id: BIGINT NOT NULL
  - updated: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database._ProductsStream__base
+Annotations:
+ - stream-root: _ProductsStream
 
 === promotion
-ID:     s3-sink.promotion
-Type:   export
-Stage:  flink
-Inputs: default_catalog.default_database.CustomerPromotion
+ID:          s3-sink.promotion
+Type:        export
+Stage:       flink
+---
+Inputs:
+ - default_catalog.default_database.CustomerPromotion
 
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `Orders__schema` (

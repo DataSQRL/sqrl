@@ -1,68 +1,77 @@
 >>>pipeline_explain.txt
 === OrderUpdates
-ID:     default_catalog.default_database.OrderUpdates
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database._OrdersStream
-Annotations:
- - stream-root: _OrdersStream
-Primary Key: id, time
-Timestamp  : time
+ID:          default_catalog.default_database.OrderUpdates
+Type:        stream
+Stage:       flink
+Primary key: id, time
+Timestamp:   time
+---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
  - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - entries: RecordType:peek_no_expand(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
+Inputs:
+ - default_catalog.default_database._OrdersStream
+Annotations:
+ - stream-root: _OrdersStream
 Plan:
 LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3])
   LogicalTableScan(table=[[default_catalog, default_database, _OrdersStream]])
-SQL: CREATE VIEW `OrderUpdates` AS  SELECT * FROM _OrdersStream;
+SQL:
+CREATE VIEW `OrderUpdates` AS  SELECT * FROM _OrdersStream;
 
 === Orders
-ID:     default_catalog.default_database.Orders
-Type:   state
-Stage:  flink
-Inputs: default_catalog.default_database._OrdersStream
-Annotations:
- - mostRecentDistinct: true
- - stream-root: _OrdersStream
-Primary Key: id
-Timestamp  : time
+ID:          default_catalog.default_database.Orders
+Type:        state
+Stage:       flink
+Primary key: id
+Timestamp:   time
+---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
  - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - entries: RecordType:peek_no_expand(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
+Inputs:
+ - default_catalog.default_database._OrdersStream
+Annotations:
+ - mostRecentDistinct: true
+ - stream-root: _OrdersStream
 Plan:
 LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3])
   LogicalFilter(condition=[=($4, 1)])
     LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3], __sqrlinternal_rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
       LogicalTableScan(table=[[default_catalog, default_database, _OrdersStream]])
-SQL: CREATE VIEW `Orders`
+SQL:
+CREATE VIEW `Orders`
 AS
 SELECT `id`, `customerid`, `time`, `entries`
 FROM (SELECT `id`, `customerid`, `time`, `entries`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `time` DESC NULLS LAST) AS `__sqrlinternal_rownum`
   FROM `default_catalog`.`default_database`.`_OrdersStream`) AS `t`
 WHERE `__sqrlinternal_rownum` = 1
 === _OrdersStream
-ID:     default_catalog.default_database._OrdersStream
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database._OrdersStream__base
-Annotations:
- - features: DENORMALIZE (feature)
- - stream-root: _OrdersStream
-Primary Key: id, time
-Timestamp  : time
+ID:          default_catalog.default_database._OrdersStream
+Type:        stream
+Stage:       flink
+Primary key: id, time
+Timestamp:   time
+---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
  - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - entries: RecordType:peek_no_expand(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
+Inputs:
+ - default_catalog.default_database._OrdersStream__base
+Annotations:
+ - features: DENORMALIZE (feature)
+ - stream-root: _OrdersStream
 Plan:
 LogicalWatermarkAssigner(rowtime=[time], watermark=[-($2, 1:INTERVAL SECOND)])
   LogicalTableScan(table=[[default_catalog, default_database, _OrdersStream]])
-SQL: CREATE TEMPORARY TABLE `_OrdersStream__schema` (
+SQL:
+CREATE TEMPORARY TABLE `_OrdersStream__schema` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,

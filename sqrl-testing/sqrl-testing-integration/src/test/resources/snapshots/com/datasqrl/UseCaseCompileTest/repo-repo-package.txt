@@ -1,21 +1,23 @@
 >>>pipeline_explain.txt
 === Package
-ID:     default_catalog.default_database.Package
-Type:   state
-Stage:  flink
-Inputs: default_catalog.default_database.Submission
-Primary Key: name
-Timestamp  : -
+ID:          default_catalog.default_database.Package
+Type:        state
+Stage:       flink
+Primary key: name
+Timestamp:   -
+---
 Schema:
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+Inputs:
+ - default_catalog.default_database.Submission
 
 === Submission
-ID:     default_catalog.default_database.Submission
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database._SubmissionRaw
-Primary Key: -
-Timestamp  : event_time
+ID:          default_catalog.default_database.Submission
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   event_time
+---
 Schema:
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - version: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -37,54 +39,62 @@ Schema:
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - variant0: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - repoURL: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+Inputs:
+ - default_catalog.default_database._SubmissionRaw
 
 === SubmissionTopics
-ID:     default_catalog.default_database.SubmissionTopics
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.Submission
-Primary Key: -
-Timestamp  : -
+ID:          default_catalog.default_database.SubmissionTopics
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   -
+---
 Schema:
  - pkgName: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - topicName: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - submissionTime: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Inputs:
+ - default_catalog.default_database.Submission
 
 === TopicPackages
-ID:     default_catalog.default_database.TopicPackages
-Type:   state
-Stage:  flink
-Inputs: default_catalog.default_database.SubmissionTopics
-Annotations:
- - sort: [2 DESC-nulls-last, 0 ASC-nulls-first]
-Primary Key: pkgName, topicName
-Timestamp  : -
+ID:          default_catalog.default_database.TopicPackages
+Type:        state
+Stage:       flink
+Primary key: pkgName, topicName
+Timestamp:   -
+---
 Schema:
  - pkgName: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - topicName: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - numSubmissions: BIGINT NOT NULL
  - lastSubmission: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Inputs:
+ - default_catalog.default_database.SubmissionTopics
+Annotations:
+ - sort: [2 DESC-nulls-last, 0 ASC-nulls-first]
 
 === TopicSearch
-ID:     default_catalog.default_database.TopicSearch
-Type:   state
-Stage:  flink
-Inputs: default_catalog.default_database.SubmissionTopics
-Annotations:
- - sort: [1 DESC-nulls-last, 0 ASC-nulls-first]
-Primary Key: topicName
-Timestamp  : -
+ID:          default_catalog.default_database.TopicSearch
+Type:        state
+Stage:       flink
+Primary key: topicName
+Timestamp:   -
+---
 Schema:
  - topicName: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - numPackages: BIGINT NOT NULL
+Inputs:
+ - default_catalog.default_database.SubmissionTopics
+Annotations:
+ - sort: [1 DESC-nulls-last, 0 ASC-nulls-first]
 
 === _SubmissionRaw
-ID:     default_catalog.default_database._SubmissionRaw
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database._SubmissionRaw__base
-Primary Key: -
-Timestamp  : event_time
+ID:          default_catalog.default_database._SubmissionRaw
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   event_time
+---
 Schema:
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - version: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -104,6 +114,8 @@ Schema:
  - authorId: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - submissionTime: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database._SubmissionRaw__base
 
 >>>flink-sql-no-functions.sql
 CREATE TABLE `_SubmissionRaw` (

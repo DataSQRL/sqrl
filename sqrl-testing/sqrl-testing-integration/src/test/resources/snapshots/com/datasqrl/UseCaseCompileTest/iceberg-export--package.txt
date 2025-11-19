@@ -1,13 +1,11 @@
 >>>pipeline_explain.txt
 === _Applications
-ID:     default_catalog.default_database._Applications
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database._Applications__base
-Annotations:
- - stream-root: _Applications
-Primary Key: id, updated_at
-Timestamp  : updated_at
+ID:          default_catalog.default_database._Applications
+Type:        stream
+Stage:       flink
+Primary key: id, updated_at
+Timestamp:   updated_at
+---
 Schema:
  - id: BIGINT NOT NULL
  - customer_id: BIGINT NOT NULL
@@ -16,12 +14,18 @@ Schema:
  - duration: BIGINT NOT NULL
  - application_date: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - updated_at: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database._Applications__base
+Annotations:
+ - stream-root: _Applications
 
 === iceberg-sink
-ID:     iceberg.iceberg-sink
-Type:   export
-Stage:  flink
-Inputs: default_catalog.default_database._Applications
+ID:          iceberg.iceberg-sink
+Type:        export
+Stage:       flink
+---
+Inputs:
+ - default_catalog.default_database._Applications
 
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `_Applications__schema` (

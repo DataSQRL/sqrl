@@ -1,99 +1,116 @@
 >>>pipeline_explain.txt
 === TotalOrgTokens
-ID:     default_catalog.default_database.TotalOrgTokens
-Type:   state
-Stage:  flink
-Inputs: default_catalog.default_database._EnrichedUserTokens
-Primary Key: orgid
-Timestamp  : -
+ID:          default_catalog.default_database.TotalOrgTokens
+Type:        state
+Stage:       flink
+Primary key: orgid
+Timestamp:   -
+---
 Schema:
  - orgid: BIGINT NOT NULL
  - total_tokens: BIGINT NOT NULL
  - total_requests: BIGINT NOT NULL
+Inputs:
+ - default_catalog.default_database._EnrichedUserTokens
 
 === TotalOrgTokensByRange
-ID:     default_catalog.default_database.TotalOrgTokensByRange
-Type:   query
-Stage:  postgres
-Inputs: default_catalog.default_database.TotalOrgTokens
+ID:          default_catalog.default_database.TotalOrgTokensByRange
+Type:        query
+Stage:       postgres
+---
+Inputs:
+ - default_catalog.default_database.TotalOrgTokens
 Annotations:
  - parameters: minTokens, maxTokens
  - base-table: TotalOrgTokens
 
 === TotalUserTokens
-ID:     default_catalog.default_database.TotalUserTokens
-Type:   state
-Stage:  flink
-Inputs: default_catalog.default_database.UserTokens
-Primary Key: userid
-Timestamp  : -
+ID:          default_catalog.default_database.TotalUserTokens
+Type:        state
+Stage:       flink
+Primary key: userid
+Timestamp:   -
+---
 Schema:
  - userid: BIGINT NOT NULL
  - total_tokens: BIGINT NOT NULL
  - total_requests: BIGINT NOT NULL
+Inputs:
+ - default_catalog.default_database.UserTokens
 
 === UsageAlert
-ID:     default_catalog.default_database.UsageAlert
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.UserTokens
-Primary Key: -
-Timestamp  : request_time
+ID:          default_catalog.default_database.UsageAlert
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   request_time
+---
 Schema:
  - userid: BIGINT NOT NULL
  - tokens: BIGINT NOT NULL
  - request_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.UserTokens
 
 === UserTokens
-ID:     default_catalog.default_database.UserTokens
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.UserTokens__base
-Primary Key: -
-Timestamp  : request_time
+ID:          default_catalog.default_database.UserTokens
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   request_time
+---
 Schema:
  - userid: BIGINT NOT NULL
  - tokens: BIGINT NOT NULL
  - request_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.UserTokens__base
 
 === _CurrentUserInfo
-ID:     default_catalog.default_database._CurrentUserInfo
-Type:   state
-Stage:  flink
-Inputs: default_catalog.default_database._UserInfo
-Primary Key: userid
-Timestamp  : event_time
+ID:          default_catalog.default_database._CurrentUserInfo
+Type:        state
+Stage:       flink
+Primary key: userid
+Timestamp:   event_time
+---
 Schema:
  - userid: BIGINT NOT NULL
  - orgid: BIGINT NOT NULL
  - last_updated: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database._UserInfo
 
 === _EnrichedUserTokens
-ID:     default_catalog.default_database._EnrichedUserTokens
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.UserTokens, default_catalog.default_database._CurrentUserInfo
-Primary Key: -
-Timestamp  : request_time
+ID:          default_catalog.default_database._EnrichedUserTokens
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   request_time
+---
 Schema:
  - userid: BIGINT NOT NULL
  - tokens: BIGINT NOT NULL
  - request_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - orgid: BIGINT NOT NULL
+Inputs:
+ - default_catalog.default_database.UserTokens
+ - default_catalog.default_database._CurrentUserInfo
 
 === _UserInfo
-ID:     default_catalog.default_database._UserInfo
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database._UserInfo__base
-Primary Key: -
-Timestamp  : event_time
+ID:          default_catalog.default_database._UserInfo
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   event_time
+---
 Schema:
  - userid: BIGINT NOT NULL
  - orgid: BIGINT NOT NULL
  - last_updated: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database._UserInfo__base
 
 >>>schema.graphqls
 "An RFC-3339 compliant DateTime Scalar"

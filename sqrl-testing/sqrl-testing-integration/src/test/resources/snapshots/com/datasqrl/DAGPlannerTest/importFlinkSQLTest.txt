@@ -1,21 +1,24 @@
 >>>pipeline_explain.txt
 === Category
-ID:     default_catalog.default_database.Category
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.Category__base
-Primary Key: -
-Timestamp  : updateTime
+ID:          default_catalog.default_database.Category
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   updateTime
+---
 Schema:
  - categoryid: INTEGER NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - description: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
  - updateTime: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Category__base
 Plan:
 LogicalWatermarkAssigner(rowtime=[updateTime], watermark=[-($3, 1:INTERVAL SECOND)])
   LogicalProject(categoryid=[$0], name=[$1], description=[$2], updateTime=[NOW()])
     LogicalTableScan(table=[[default_catalog, default_database, Category]])
-SQL: CREATE TABLE `Category` (
+SQL:
+CREATE TABLE `Category` (
   `categoryid` INTEGER NOT NULL,
   `name` STRING NOT NULL,
   `description` STRING,
@@ -28,25 +31,28 @@ SQL: CREATE TABLE `Category` (
   'connector' = 'filesystem'
 )
 === CategoryDistinct
-ID:     default_catalog.default_database.CategoryDistinct
-Type:   state
-Stage:  flink
-Inputs: default_catalog.default_database.Category
-Annotations:
- - mostRecentDistinct: true
-Primary Key: categoryid
-Timestamp  : updateTime
+ID:          default_catalog.default_database.CategoryDistinct
+Type:        state
+Stage:       flink
+Primary key: categoryid
+Timestamp:   updateTime
+---
 Schema:
  - categoryid: INTEGER NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - description: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
  - updateTime: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Category
+Annotations:
+ - mostRecentDistinct: true
 Plan:
 LogicalProject(categoryid=[$0], name=[$1], description=[$2], updateTime=[$3])
   LogicalFilter(condition=[=($4, 1)])
     LogicalProject(categoryid=[$0], name=[$1], description=[$2], updateTime=[$3], __sqrlinternal_rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $3 DESC NULLS LAST)])
       LogicalTableScan(table=[[default_catalog, default_database, Category]])
-SQL: CREATE VIEW `CategoryDistinct`
+SQL:
+CREATE VIEW `CategoryDistinct`
 AS
 SELECT `categoryid`, `name`, `description`, `updateTime`
 FROM (SELECT `categoryid`, `name`, `description`, `updateTime`, ROW_NUMBER() OVER (PARTITION BY `categoryid` ORDER BY `updateTime` DESC NULLS LAST) AS `__sqrlinternal_rownum`

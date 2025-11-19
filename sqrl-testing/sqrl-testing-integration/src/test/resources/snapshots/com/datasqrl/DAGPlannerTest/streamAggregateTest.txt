@@ -1,54 +1,63 @@
 >>>pipeline_explain.txt
 === OrderAgg1
-ID:     default_catalog.default_database.OrderAgg1
-Type:   state
-Stage:  flink
-Inputs: default_catalog.default_database.Orders
-Primary Key: customer
-Timestamp  : -
+ID:          default_catalog.default_database.OrderAgg1
+Type:        state
+Stage:       flink
+Primary key: customer
+Timestamp:   -
+---
 Schema:
  - customer: BIGINT NOT NULL
  - order_count: BIGINT NOT NULL
+Inputs:
+ - default_catalog.default_database.Orders
 Plan:
 LogicalAggregate(group=[{0}], order_count=[COUNT()])
   LogicalProject(customer=[$1])
     LogicalTableScan(table=[[default_catalog, default_database, Orders]])
-SQL: CREATE VIEW `OrderAgg1` AS  SELECT o.customerid as customer, COUNT(o.id) as order_count FROM Orders o GROUP BY o.customerid;
+SQL:
+CREATE VIEW `OrderAgg1` AS  SELECT o.customerid as customer, COUNT(o.id) as order_count FROM Orders o GROUP BY o.customerid;
 
 === OrderAgg2
-ID:     default_catalog.default_database.OrderAgg2
-Type:   state
-Stage:  flink
-Inputs: default_catalog.default_database.Orders
-Primary Key: 
-Timestamp  : -
+ID:          default_catalog.default_database.OrderAgg2
+Type:        state
+Stage:       flink
+Primary key: -
+Timestamp:   -
+---
 Schema:
  - order_count: BIGINT NOT NULL
+Inputs:
+ - default_catalog.default_database.Orders
 Plan:
 LogicalAggregate(group=[{}], order_count=[COUNT()])
   LogicalProject($f0=[0])
     LogicalTableScan(table=[[default_catalog, default_database, Orders]])
-SQL: CREATE VIEW `OrderAgg2` AS  SELECT COUNT(o.id) as order_count FROM Orders o;
+SQL:
+CREATE VIEW `OrderAgg2` AS  SELECT COUNT(o.id) as order_count FROM Orders o;
 
 === Orders
-ID:     default_catalog.default_database.Orders
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.Orders__base
-Annotations:
- - features: DENORMALIZE (feature)
- - stream-root: Orders
-Primary Key: id, time
-Timestamp  : time
+ID:          default_catalog.default_database.Orders
+Type:        stream
+Stage:       flink
+Primary key: id, time
+Timestamp:   time
+---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
  - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - entries: RecordType:peek_no_expand(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
+Inputs:
+ - default_catalog.default_database.Orders__base
+Annotations:
+ - features: DENORMALIZE (feature)
+ - stream-root: Orders
 Plan:
 LogicalWatermarkAssigner(rowtime=[time], watermark=[-($2, 1:INTERVAL SECOND)])
   LogicalTableScan(table=[[default_catalog, default_database, Orders]])
-SQL: CREATE TEMPORARY TABLE `Orders__schema` (
+SQL:
+CREATE TEMPORARY TABLE `Orders__schema` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,

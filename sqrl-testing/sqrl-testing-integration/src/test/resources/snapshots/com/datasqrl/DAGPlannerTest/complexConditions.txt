@@ -1,24 +1,27 @@
 >>>pipeline_explain.txt
 === Customer
-ID:     default_catalog.default_database.Customer
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.Customer__base
-Annotations:
- - stream-root: Customer
-Primary Key: customerid, lastUpdated
-Timestamp  : timestamp
+ID:          default_catalog.default_database.Customer
+Type:        stream
+Stage:       flink
+Primary key: customerid, lastUpdated
+Timestamp:   timestamp
+---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Customer__base
+Annotations:
+ - stream-root: Customer
 Plan:
 LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
   LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($3, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE TEMPORARY TABLE `Customer__schema` (
+SQL:
+CREATE TEMPORARY TABLE `Customer__schema` (
   `customerid` BIGINT NOT NULL,
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -38,24 +41,27 @@ CREATE TABLE `Customer` (
 )
 LIKE `Customer__schema`
 === Orders
-ID:     default_catalog.default_database.Orders
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.Orders__base
-Annotations:
- - features: DENORMALIZE (feature)
- - stream-root: Orders
-Primary Key: id, time
-Timestamp  : time
+ID:          default_catalog.default_database.Orders
+Type:        stream
+Stage:       flink
+Primary key: id, time
+Timestamp:   time
+---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
  - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - entries: RecordType:peek_no_expand(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
+Inputs:
+ - default_catalog.default_database.Orders__base
+Annotations:
+ - features: DENORMALIZE (feature)
+ - stream-root: Orders
 Plan:
 LogicalWatermarkAssigner(rowtime=[time], watermark=[-($2, 1:INTERVAL SECOND)])
   LogicalTableScan(table=[[default_catalog, default_database, Orders]])
-SQL: CREATE TEMPORARY TABLE `Orders__schema` (
+SQL:
+CREATE TEMPORARY TABLE `Orders__schema` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
@@ -74,24 +80,27 @@ CREATE TABLE `Orders` (
 )
 LIKE `Orders__schema`
 === Product
-ID:     default_catalog.default_database.Product
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.Product__base
-Annotations:
- - stream-root: Product
-Primary Key: productid, name, description, category
-Timestamp  : _ingest_time
+ID:          default_catalog.default_database.Product
+Type:        stream
+Stage:       flink
+Primary key: productid, name, description, category
+Timestamp:   _ingest_time
+---
 Schema:
  - productid: BIGINT NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - description: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - category: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - _ingest_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Product__base
+Annotations:
+ - stream-root: Product
 Plan:
 LogicalWatermarkAssigner(rowtime=[_ingest_time], watermark=[-($4, 1:INTERVAL SECOND)])
   LogicalTableScan(table=[[default_catalog, default_database, Product]])
-SQL: CREATE TEMPORARY TABLE `Product__schema` (
+SQL:
+CREATE TEMPORARY TABLE `Product__schema` (
   `productid` BIGINT NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -111,59 +120,68 @@ CREATE TABLE `Product` (
 )
 LIKE `Product__schema`
 === ProductFilter1
-ID:     default_catalog.default_database.ProductFilter1
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.Product
-Annotations:
- - stream-root: Product
-Primary Key: productid, name, description, category
-Timestamp  : _ingest_time
+ID:          default_catalog.default_database.ProductFilter1
+Type:        stream
+Stage:       flink
+Primary key: productid, name, description, category
+Timestamp:   _ingest_time
+---
 Schema:
  - productid: BIGINT NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - description: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - category: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - _ingest_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Product
+Annotations:
+ - stream-root: Product
 Plan:
 LogicalProject(productid=[$0], name=[$1], description=[$2], category=[$3], _ingest_time=[$4])
   LogicalFilter(condition=[array_contains(ARRAY('one':VARCHAR(2147483647) CHARACTER SET "UTF-16LE", 'two':VARCHAR(2147483647) CHARACTER SET "UTF-16LE"), $1)])
     LogicalTableScan(table=[[default_catalog, default_database, Product]])
-SQL: CREATE VIEW `ProductFilter1` AS  SELECT * FROM Product WHERE array_contains(ARRAY[CAST('one' AS String), CAST('two' AS String)], name);
+SQL:
+CREATE VIEW `ProductFilter1` AS  SELECT * FROM Product WHERE array_contains(ARRAY[CAST('one' AS String), CAST('two' AS String)], name);
 
 === ProductFilter2
-ID:     default_catalog.default_database.ProductFilter2
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.Product
-Annotations:
- - stream-root: Product
-Primary Key: productid, name, description, category
-Timestamp  : _ingest_time
+ID:          default_catalog.default_database.ProductFilter2
+Type:        stream
+Stage:       flink
+Primary key: productid, name, description, category
+Timestamp:   _ingest_time
+---
 Schema:
  - productid: BIGINT NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - description: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - category: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - _ingest_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Product
+Annotations:
+ - stream-root: Product
 Plan:
 LogicalProject(productid=[$0], name=[$1], description=[$2], category=[$3], _ingest_time=[$4])
   LogicalFilter(condition=[array_contains(split('one, two', ','), $1)])
     LogicalTableScan(table=[[default_catalog, default_database, Product]])
-SQL: CREATE VIEW `ProductFilter2` AS  SELECT * FROM Product WHERE array_contains(split('one, two', ','), name);
+SQL:
+CREATE VIEW `ProductFilter2` AS  SELECT * FROM Product WHERE array_contains(split('one, two', ','), name);
 
 === SelectOrders1
-ID:     default_catalog.default_database.SelectOrders1
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.Customer, default_catalog.default_database.Orders
-Annotations:
- - stream-root: Orders
-Primary Key: id, time
-Timestamp  : time
+ID:          default_catalog.default_database.SelectOrders1
+Type:        stream
+Stage:       flink
+Primary key: id, time
+Timestamp:   time
+---
 Schema:
  - id: BIGINT NOT NULL
  - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Customer
+ - default_catalog.default_database.Orders
+Annotations:
+ - stream-root: Orders
 Plan:
 LogicalProject(id=[$0], time=[$2])
   LogicalFilter(condition=[>($1, $SCALAR_QUERY({
@@ -172,20 +190,24 @@ LogicalProject(customerid=[$0])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
 }))])
     LogicalTableScan(table=[[default_catalog, default_database, Orders]])
-SQL: CREATE VIEW `SelectOrders1` AS  SELECT o.id, o.`time` FROM Orders o WHERE o.customerid > (SELECT c.customerid FROM Customer c WHERE c.name = 'foo');
+SQL:
+CREATE VIEW `SelectOrders1` AS  SELECT o.id, o.`time` FROM Orders o WHERE o.customerid > (SELECT c.customerid FROM Customer c WHERE c.name = 'foo');
 
 === SelectOrders2
-ID:     default_catalog.default_database.SelectOrders2
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.Customer, default_catalog.default_database.Orders
-Annotations:
- - stream-root: Orders
-Primary Key: id, time
-Timestamp  : time
+ID:          default_catalog.default_database.SelectOrders2
+Type:        stream
+Stage:       flink
+Primary key: id, time
+Timestamp:   time
+---
 Schema:
  - id: BIGINT NOT NULL
  - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Customer
+ - default_catalog.default_database.Orders
+Annotations:
+ - stream-root: Orders
 Plan:
 LogicalProject(id=[$0], time=[$2])
   LogicalFilter(condition=[NOT(IN($1, {
@@ -194,20 +216,24 @@ LogicalProject(customerid=[$0])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
 }))])
     LogicalTableScan(table=[[default_catalog, default_database, Orders]])
-SQL: CREATE VIEW `SelectOrders2` AS  SELECT o.id, o.`time` FROM Orders o WHERE o.customerid NOT IN (SELECT c.customerid FROM Customer c WHERE c.name = 'foo');
+SQL:
+CREATE VIEW `SelectOrders2` AS  SELECT o.id, o.`time` FROM Orders o WHERE o.customerid NOT IN (SELECT c.customerid FROM Customer c WHERE c.name = 'foo');
 
 === SelectOrders3
-ID:     default_catalog.default_database.SelectOrders3
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.Customer, default_catalog.default_database.Orders
-Annotations:
- - stream-root: Orders
-Primary Key: id, time
-Timestamp  : time
+ID:          default_catalog.default_database.SelectOrders3
+Type:        stream
+Stage:       flink
+Primary key: id, time
+Timestamp:   time
+---
 Schema:
  - id: BIGINT NOT NULL
  - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Customer
+ - default_catalog.default_database.Orders
+Annotations:
+ - stream-root: Orders
 Plan:
 LogicalProject(id=[$0], time=[$2])
   LogicalFilter(condition=[IN($1, {
@@ -216,7 +242,8 @@ LogicalProject(customerid=[$0])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
 })])
     LogicalTableScan(table=[[default_catalog, default_database, Orders]])
-SQL: CREATE VIEW `SelectOrders3` AS  SELECT o.id, o.`time` FROM Orders o WHERE o.customerid IN (SELECT c.customerid FROM Customer c WHERE c.name = 'foo');
+SQL:
+CREATE VIEW `SelectOrders3` AS  SELECT o.id, o.`time` FROM Orders o WHERE o.customerid IN (SELECT c.customerid FROM Customer c WHERE c.name = 'foo');
 
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `Orders__schema` (
