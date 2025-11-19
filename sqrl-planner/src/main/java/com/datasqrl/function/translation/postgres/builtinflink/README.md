@@ -9,10 +9,14 @@ Below is a list of FlinkSQL functions with their signature. Identify all functio
 For implementation, we use this prompt in Claude Code:
 ```text
 @sqrl-planner/src/main/java/com/datasqrl/function/translation/postgres/builtinflink/ You are an expert java developer implementing translation classes for built-in FlinkSQL functions in this package. You are given the
-  signature of a FlinkSQL function and a proposed "translation" to PostgreSQL. You implement this translation as a class that extends @sqrl-planner/src/main/java/com/datasqrl/function/translation/PostgresSqlTranslation.java.
-  See @sqrl-planner/src/main/java/com/datasqrl/function/translation/postgres/builtinflink/ArrayContainsSqlTranslation.java as an example. In rare cases, simple translations are insufficient and the translation requires
+  signature of a FlinkSQL function and you implement a translation for that function to PostgreSQL as a class that extends @sqrl-planner/src/main/java/com/datasqrl/function/translation/PostgresSqlTranslation.java. The translation must use existing PostgreSQL functions and produce the same output as the original FlinkSQL function.
+  See @sqrl-planner/src/main/java/com/datasqrl/function/translation/postgres/builtinflink/ArrayContainsSqlTranslation.java as an example. 
+  Note, that Flink's MAP type is translated to JSONB in PostgreSQL which means functions that operate on maps need to be translated to their corresponding jsonb functions.
+  In rare cases, simple translations are insufficient and the translation requires
   rewriting the operator in the relational algebra tree. Only if absolutely necessary do you implement a @sqrl-planner/src/main/java/com/datasqrl/calcite/function/OperatorRuleTransform.java to do so, such as the example
   @sqrl-planner/src/main/java/com/datasqrl/function/translation/postgres/text/TextSearchTranslation.java. 
+  Translate this function:
+  
 ```
 
 | **FlinkSQL Signature**                                | **Mapping in PostgreSQL 18+**                                                                                                                                        |
@@ -111,7 +115,6 @@ For implementation, we use this prompt in Claude Code:
 | `SHA384(string)` | Map to `encode(digest(string, 'sha384'), 'hex')`.  [oai_citation:16‡Postgres Professional](https://postgrespro.com/docs/postgresql/current/functions-binarystring?utm_source=chatgpt.com) |
 | `SHA512(string)` | Map to `encode(digest(string, 'sha512'), 'hex')`.  [oai_citation:17‡Postgres Professional](https://postgrespro.com/docs/postgresql/current/functions-binarystring?utm_source=chatgpt.com) |
 | `SHA2(string, hashLength)` | Use a `CASE` on `hashLength` to pick a digest algorithm, e.g.:<br>`CASE hashLength`<br>`  WHEN 224 THEN encode(digest(string,'sha224'),'hex')`<br>`  WHEN 256 THEN encode(digest(string,'sha256'),'hex')`<br>`  WHEN 384 THEN encode(digest(string,'sha384'),'hex')`<br>`  WHEN 512 THEN encode(digest(string,'sha512'),'hex')`<br>`END`. |
-| `FIELD.sum0` | PostgreSQL doesn’t have `sum0`. Use `COALESCE(SUM(field), 0)` in place of `FIELD.sum0`. (Works for aggregates and window functions.)  [oai_citation:18‡PostgreSQL](https://www.postgresql.org/docs/9.5/functions-aggregate.html?utm_source=chatgpt.com) |
 | `COLLECT([ ALL | DISTINCT ] expression)` | Flink’s multiset aggregate can be mapped to arrays or JSON. Closest array equivalent:<br>`ARRAY_AGG(expression)` (ALL) or `ARRAY_AGG(DISTINCT expression)` (DISTINCT). To ignore NULLs as Flink does, use `FILTER`: `ARRAY_AGG(expression) FILTER (WHERE expression IS NOT NULL)`.  [oai_citation:19‡PostgreSQL](https://www.postgresql.org/docs/9.5/functions-aggregate.html?utm_source=chatgpt.com) |
 | `LISTAGG(expression [, separator])` | PostgreSQL equivalent is `STRING_AGG`. Map `LISTAGG(expr, sep)` to `STRING_AGG(expr::text, sep)` (optionally with `ORDER BY` inside the aggregate to control ordering). If `separator` omitted, use `','` to match Flink’s default: `STRING_AGG(expr::text, ',')`.  [oai_citation:20‡PostgreSQL](https://www.postgresql.org/docs/9.5/functions-aggregate.html?utm_source=chatgpt.com) |
 | `ARRAY_AGG([ ALL | DISTINCT ] expression [ RESPECT NULLS | IGNORE NULLS ])` | Base behavior (`ALL` / `DISTINCT` with “respect nulls”) is `ARRAY_AGG([DISTINCT] expression)`. To emulate `IGNORE NULLS`, add a `FILTER` clause: `ARRAY_AGG(expression) FILTER (WHERE expression IS NOT NULL)` or `ARRAY_AGG(DISTINCT expression) FILTER (WHERE expression IS NOT NULL)`.  [oai_citation:21‡PostgreSQL](https://www.postgresql.org/docs/9.5/functions-aggregate.html?utm_source=chatgpt.com) |
