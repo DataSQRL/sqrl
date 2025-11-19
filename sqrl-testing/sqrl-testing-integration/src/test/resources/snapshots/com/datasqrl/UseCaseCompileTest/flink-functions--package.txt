@@ -29,10 +29,6 @@ SELECT `name`, UPPER(`name`) AS `name_upper`, CHAR_LENGTH(`name`) AS `name_lengt
 FROM (VALUES ROW('Alice'),
    ROW('Bob'),
    ROW('Charlie')) AS `names` (`name`);
-CREATE VIEW `FlinkFunctionsTest`
-AS
-SELECT `name_upper`, `name_md5`, `formatted_name`
-FROM `FlinkFunctions`;
 CREATE TABLE `functions_1` (
   `name` VARCHAR(7) CHARACTER SET `UTF-16LE` NOT NULL,
   `name_upper` VARCHAR(7) CHARACTER SET `UTF-16LE` NOT NULL,

@@ -243,24 +243,6 @@ SQL: CREATE VIEW `CustomerTimeWindow` AS  SELECT
                       GROUP BY
                           window_start, window_end;
 
-=== CustomerTimeWindowTest
-ID:     default_catalog.default_database.CustomerTimeWindowTest
-Type:   stream
-Stage:  postgres
-Inputs: default_catalog.default_database.CustomerTimeWindow
-Annotations:
- - sort: [1 DESC-nulls-last]
-Primary Key: window_start, window_end
-Timestamp  : -
-Schema:
- - window_start: TIMESTAMP(3) NOT NULL
- - window_end: TIMESTAMP(3) NOT NULL
- - unique_email_count: BIGINT NOT NULL
-Plan:
-LogicalProject(window_start=[$0], window_end=[$1], unique_email_count=[$2])
-  LogicalTableScan(table=[[default_catalog, default_database, CustomerTimeWindow]])
-SQL: CREATE VIEW `CustomerTimeWindowTest` AS  SELECT * FROM CustomerTimeWindow ORDER BY window_end DESC;
-
 === ExplicitDistinct
 ID:     default_catalog.default_database.ExplicitDistinct
 Type:   state
@@ -712,7 +694,7 @@ AS
 SELECT `window_start`, `window_end`, COUNT(DISTINCT `email`) AS `unique_email_count`
 FROM TABLE(TUMBLE(TABLE `SelectCustomers`, DESCRIPTOR(`timestamp`), INTERVAL '1' MINUTE))
 GROUP BY `window_start`, `window_end`;
-CREATE VIEW `CustomerTimeWindowTest`
+CREATE VIEW `CustomerTimeWindowWorkload`
 AS
 SELECT *
 FROM `CustomerTimeWindow`;
@@ -1699,28 +1681,6 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
       "name" : "CustomerTimeWindow",
       "type" : "VIEW",
       "sql" : "CREATE OR REPLACE VIEW \"CustomerTimeWindow\"(\"window_start\", \"window_end\", \"unique_email_count\") AS SELECT *\nFROM \"CustomerTimeWindow_9\"",
-      "fields" : [
-        {
-          "name" : "window_start",
-          "type" : "TIMESTAMP WITHOUT TIME ZONE",
-          "nullable" : false
-        },
-        {
-          "name" : "window_end",
-          "type" : "TIMESTAMP WITHOUT TIME ZONE",
-          "nullable" : false
-        },
-        {
-          "name" : "unique_email_count",
-          "type" : "BIGINT",
-          "nullable" : false
-        }
-      ]
-    },
-    {
-      "name" : "CustomerTimeWindowTest",
-      "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"CustomerTimeWindowTest\"(\"window_start\", \"window_end\", \"unique_email_count\") AS SELECT *\nFROM (SELECT \"window_start\", \"window_end\", \"unique_email_count\"\n  FROM \"CustomerTimeWindow_9\"\n  ORDER BY \"window_end\" DESC NULLS LAST) AS \"t3\"",
       "fields" : [
         {
           "name" : "window_start",

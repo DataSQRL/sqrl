@@ -225,10 +225,6 @@ SELECT `a`.*, `t`.*, `t2`.`id` AS `id2`
 FROM `_Applications` AS `a`
  INNER JOIN `_LoanTypes` AS `t` ON `t`.`id` = `a`.`loan_type_id`
  LEFT JOIN `_LoanTypes` AS `t2` ON `t2`.`id` = `a`.`customer_id`;
-CREATE VIEW `ApplicationInfoTest`
-AS
-SELECT COUNT(1) AS `num`
-FROM `ApplicationInfo`;
 CREATE TABLE `ApplicationStatus_1` (
   `status` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `message` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,

@@ -85,11 +85,6 @@ AS
 SELECT `beforeURL` AS `url`, `afterURL` AS `rec`, COUNT(1) AS `frequency`
 FROM `VisitAfter`
 GROUP BY `beforeURL`, `afterURL`;
-CREATE VIEW `RankTest`
-AS
-SELECT `url`, COUNT(1) AS `total`
-FROM `Click`
-GROUP BY `url`;
 CREATE TABLE `Click_1` (
   `url` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,

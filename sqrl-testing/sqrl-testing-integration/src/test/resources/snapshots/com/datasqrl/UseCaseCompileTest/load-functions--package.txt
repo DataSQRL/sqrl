@@ -15,10 +15,6 @@ AS
 SELECT `id`, `TestFunction`(`id`) AS `fct_result`
 FROM (VALUES ROW(1),
    ROW(2)) AS `data_table` (`id`);
-CREATE VIEW `FunctionTest`
-AS
-SELECT *
-FROM `FunctionApplied`;
 CREATE TABLE `FunctionApplied_1` (
   `id` INTEGER NOT NULL,
   `fct_result` BOOLEAN,

@@ -139,20 +139,6 @@ Schema:
  - window_end: TIMESTAMP(3) NOT NULL
  - unique_email_count: BIGINT NOT NULL
 
-=== CustomerTimeWindowTest
-ID:     default_catalog.default_database.CustomerTimeWindowTest
-Type:   stream
-Stage:  postgres
-Inputs: default_catalog.default_database.CustomerTimeWindow
-Annotations:
- - sort: [1 DESC-nulls-last]
-Primary Key: window_start, window_end
-Timestamp  : -
-Schema:
- - window_start: TIMESTAMP(3) NOT NULL
- - window_end: TIMESTAMP(3) NOT NULL
- - unique_email_count: BIGINT NOT NULL
-
 === ExplicitDistinct
 ID:     default_catalog.default_database.ExplicitDistinct
 Type:   state
@@ -500,10 +486,6 @@ AS
 SELECT `window_start`, `window_end`, COUNT(DISTINCT `email`) AS `unique_email_count`
 FROM TABLE(TUMBLE(TABLE `SelectCustomers`, DESCRIPTOR(`timestamp`), INTERVAL '1' MINUTE))
 GROUP BY `window_start`, `window_end`;
-CREATE VIEW `CustomerTimeWindowTest`
-AS
-SELECT *
-FROM `CustomerTimeWindow`;
 CREATE TEMPORARY TABLE `MyPrintSink_ex1__schema` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
@@ -866,10 +848,6 @@ CREATE TABLE IF NOT EXISTS "UnnestOrders" ("id" BIGINT NOT NULL, "customerid" BI
 
 CREATE INDEX IF NOT EXISTS "SelectCustomers_hash_c2" ON "SelectCustomers" USING hash ("name")
 >>>postgres-views.sql
-CREATE OR REPLACE VIEW "CustomerTimeWindowTest"("window_start", "window_end", "unique_email_count") AS SELECT *
-FROM (SELECT "window_start", "window_end", "unique_email_count"
-  FROM "CustomerTimeWindow"
-  ORDER BY "window_end" DESC NULLS LAST) AS "t3";
 CREATE OR REPLACE VIEW "MissedTemporalJoin"("id", "customerid", "time", "entries", "customerid0", "timestamp", "name") AS SELECT *
 FROM "ExternalOrders" AS "ExternalOrders0"
  INNER JOIN "ExplicitDistinct" AS "ExplicitDistinct0" ON "ExternalOrders0"."customerid" = "ExplicitDistinct0"."customerid"

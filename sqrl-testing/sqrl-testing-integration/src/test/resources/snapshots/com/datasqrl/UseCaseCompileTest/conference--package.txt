@@ -256,14 +256,6 @@ SELECT `url`, `date`, `time`, `title`, `abstract`, `location`, `speakers`, `last
 FROM (SELECT `url`, `date`, `time`, `title`, `abstract`, `location`, `speakers`, `last_updated`, `id`, `full_text`, `startTime`, `embedding`, `startTimestamp`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `last_updated` DESC NULLS LAST) AS `__sqrlinternal_rownum`
   FROM `default_catalog`.`default_database`.`_ProcessedEventStream`) AS `t`
 WHERE `__sqrlinternal_rownum` = 1;
-CREATE VIEW `CountEventsTest`
-AS
-SELECT COUNT(*) AS `num_events`
-FROM `Events`;
-CREATE VIEW `EventsSubsetTest`
-AS
-SELECT `url`, `date`, `title`
-FROM `Events`;
 CREATE TEMPORARY TABLE `_Likes__schema` (
   `_uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `eventid` BIGINT NOT NULL,
@@ -336,14 +328,6 @@ SELECT `eventid`, COUNT(*) AS `num`, AVG(`eventid`) AS `test`
 FROM `_UserLikes`
 WHERE `liked`
 GROUP BY `eventid`;
-CREATE VIEW `RecommendedEventsTest`
-AS
-SELECT `id`, `title`
-FROM TABLE(`RecommendedEvents`('1'));
-CREATE VIEW `PersonalizedSearchTest`
-AS
-SELECT `id`, `title`
-FROM TABLE(`PersonalizedEventSearch`('flink', '1'));
 CREATE TABLE `EventLikeCount_1` (
   `eventid` BIGINT NOT NULL,
   `num` BIGINT NOT NULL,

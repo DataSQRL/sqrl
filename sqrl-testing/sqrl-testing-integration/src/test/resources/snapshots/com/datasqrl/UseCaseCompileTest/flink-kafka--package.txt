@@ -212,10 +212,6 @@ SELECT `u`.`status`, `u`.`message`, `u`.`event_time`, `a`.`id`, `a`.`customer_id
 FROM `_ApplicationUpdates` AS `u`
  INNER JOIN `_Applications` FOR SYSTEM_TIME AS OF `u`.`event_time` AS `a` ON `a`.`id` = `u`.`loan_application_id`
  INNER JOIN `_LoanTypes` FOR SYSTEM_TIME AS OF `u`.`event_time` AS `t` ON `t`.`id` = `a`.`loan_type_id`;
-CREATE VIEW `ApplicationStatusTest`
-AS
-SELECT COUNT(*) AS `total_count`, CAST(SUM(`amount`) AS INTEGER) AS `total_amount`
-FROM `ApplicationStatus`;
 CREATE VIEW `_FakeStreamJoin`
 AS
 SELECT `a`.`id`, `u`.`status`, `u`.`message`, `u`.`event_time`

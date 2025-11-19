@@ -102,10 +102,6 @@ SELECT `employeeid`, `managerid`, `updatedDate`
 FROM (SELECT `employeeid`, `managerid`, `updatedDate`, ROW_NUMBER() OVER (PARTITION BY `employeeid`, `managerid` ORDER BY `updatedDate` DESC NULLS LAST) AS `__sqrlinternal_rownum`
   FROM `default_catalog`.`hr`.`Reporting`) AS `t`
 WHERE `__sqrlinternal_rownum` = 1;
-CREATE VIEW `EmployeeCountTest`
-AS
-SELECT COUNT(*) AS `num_employees`
-FROM `Employees`;
 CREATE TABLE `Employees_1` (
   `employeeid` BIGINT NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,

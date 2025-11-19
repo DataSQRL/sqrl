@@ -111,7 +111,6 @@ import org.apache.flink.sql.parser.dml.RichSqlInsert;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.CompiledPlan;
 import org.apache.flink.table.api.EnvironmentSettings;
-import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.api.TableException;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.table.api.bridge.java.internal.StreamTableEnvironmentImpl;
@@ -499,14 +498,11 @@ public class Sqrl2FlinkSQLTranslator {
     // Add the view to Flink using the rewritten SqlNode from stage 1.
     var op = executeSqlNode(rewrittenViewDef);
     ObjectIdentifier identifier;
-    Schema schema;
     if (op instanceof AlterViewAsOperation operation) {
       identifier = operation.getViewIdentifier();
-      schema = operation.getNewView().getUnresolvedSchema();
       tableLookup.removeView(identifier); // remove previously planned view
     } else if (op instanceof CreateViewOperation operation) {
       identifier = operation.getViewIdentifier();
-      schema = operation.getCatalogView().getUnresolvedSchema();
     } else {
       throw new UnsupportedOperationException(op.getClass().toString());
     }

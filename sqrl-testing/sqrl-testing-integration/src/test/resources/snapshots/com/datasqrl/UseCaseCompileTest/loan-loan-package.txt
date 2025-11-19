@@ -342,16 +342,6 @@ CREATE VIEW `CustomerChatMessage`
 AS
 SELECT `role`, `content`, `name`, `c`.`context`.`customerid`, `event_time` AS `timestamp`, `_uuid` AS `uuid`
 FROM `AddChatMessage` AS `c`;
-CREATE VIEW `LoanTypesTest`
-AS
-SELECT COUNT(*) AS `num_loan_types`
-FROM `LoanTypes`;
-CREATE VIEW `CustomerApplicationTest`
-AS
-SELECT `c`.`id`, `c`.`email`, COUNT(*) AS `num_applications`, SUM(`a`.`amount`) AS `total`
-FROM `Customers` AS `c`
- INNER JOIN `Applications` AS `a` ON `c`.`id` = `a`.`customer_id`
-GROUP BY `c`.`id`, `c`.`email`;
 CREATE TABLE `AddChatMessage_1` (
   `_uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `role` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
