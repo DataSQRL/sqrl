@@ -11,10 +11,6 @@ Timestamp  : -
 Schema:
  - id: BIGINT NOT NULL
  - hello: CHAR(12) CHARACTER SET "UTF-16LE" NOT NULL
-Plan:
-LogicalProject(id=[$0], hello=['hello world1'])
-  LogicalTableScan(table=[[default_catalog, default_database, _MyApplications1]])
-SQL: CREATE VIEW `MyTable1` AS  SELECT id, 'hello world1' as hello FROM _MyApplications1;
 
 === MyTable2
 ID:     default_catalog.default_database.MyTable2
@@ -28,10 +24,6 @@ Timestamp  : -
 Schema:
  - id: BIGINT NOT NULL
  - hello: CHAR(12) CHARACTER SET "UTF-16LE" NOT NULL
-Plan:
-LogicalProject(id=[$0], hello=['hello world2'])
-  LogicalTableScan(table=[[default_catalog, default_database, _MyApplications2]])
-SQL: CREATE VIEW `MyTable2` AS  SELECT id, 'hello world2' as hello FROM _MyApplications2;
 
 === MyTable3
 ID:     default_catalog.default_database.MyTable3
@@ -45,10 +37,6 @@ Timestamp  : -
 Schema:
  - id: BIGINT NOT NULL
  - hello: CHAR(12) CHARACTER SET "UTF-16LE" NOT NULL
-Plan:
-LogicalProject(id=[$0], hello=['hello world3'])
-  LogicalTableScan(table=[[default_catalog, default_database, _MyApplications2]])
-SQL: CREATE VIEW `MyTable3` AS  SELECT id, 'hello world3' as hello FROM _MyApplications2;
 
 === _Applications
 ID:     default_catalog.default_database._Applications
@@ -67,29 +55,7 @@ Schema:
  - duration: BIGINT NOT NULL
  - application_date: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - updated_at: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
-Plan:
-LogicalWatermarkAssigner(rowtime=[updated_at], watermark=[-($6, 1:INTERVAL SECOND)])
-  LogicalTableScan(table=[[default_catalog, default_database, _Applications]])
-SQL: CREATE TEMPORARY TABLE `_Applications__schema` (
-  `id` BIGINT NOT NULL,
-  `customer_id` BIGINT NOT NULL,
-  `loan_type_id` BIGINT NOT NULL,
-  `amount` DOUBLE NOT NULL,
-  `duration` BIGINT NOT NULL,
-  `application_date` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
-) WITH (
-  'connector' = 'filesystem',
-  'format' = 'flexible-json',
-  'path' = '${DATA_PATH}/applications.jsonl'
-);
-CREATE TABLE `_Applications` (
-  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED,
-  WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '0.001' SECOND
-) WITH (
-  'source.monitor-interval' = '1'
-)
-LIKE `_Applications__schema`
+
 === _MyApplications1
 ID:     default_catalog.default_database._MyApplications1
 Type:   stream
@@ -107,10 +73,6 @@ Schema:
  - duration: BIGINT NOT NULL
  - application_date: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - updated_at: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
-Plan:
-LogicalProject(id=[$0], customer_id=[$1], loan_type_id=[$2], amount=[$3], duration=[$4], application_date=[$5], updated_at=[$6])
-  LogicalTableScan(table=[[default_catalog, default_database, _Applications]])
-SQL: CREATE VIEW `_MyApplications1` AS  SELECT * FROM _Applications;
 
 === _MyApplications2
 ID:     default_catalog.default_database._MyApplications2
@@ -129,11 +91,6 @@ Schema:
  - duration: BIGINT NOT NULL
  - application_date: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - updated_at: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
-Plan:
-LogicalProject(id=[$0], customer_id=[$1], loan_type_id=[$2], amount=[$3], duration=[$4], application_date=[$5], updated_at=[$6])
-  LogicalFilter(condition=[>=($0, 0)])
-    LogicalTableScan(table=[[default_catalog, default_database, _Applications]])
-SQL: CREATE VIEW `_MyApplications2` AS  SELECT * FROM _Applications WHERE id >= 0;
 
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `_Applications__schema` (

@@ -98,7 +98,7 @@ public class PipelineDAGExporter {
                   .stage(stage)
                   .inputs(inputs)
                   .plan(explain(table.getCollapsedRelnode()))
-                  .sql(table.getOriginalSql())
+                  .sql(getSql(table))
                   .primary_key(
                       table.getPrimaryKey().isUndefined()
                           ? null
@@ -140,7 +140,7 @@ public class PipelineDAGExporter {
                 .type(NodeType.QUERY.getName())
                 .stage(stage)
                 .plan(explain(fct.getFunctionAnalysis().getCollapsedRelnode()))
-                .sql(fct.getFunctionAnalysis().getOriginalSql())
+                .sql(getSql(fct.getFunctionAnalysis()))
                 .annotations(getAnnotations(fct))
                 .inputs(inputs)
                 .build());
@@ -149,6 +149,13 @@ public class PipelineDAGExporter {
       }
     }
     return result;
+  }
+
+  private String getSql(TableAnalysis tableAnalysis) {
+    if (!includeSQL) {
+      return null;
+    }
+    return tableAnalysis.getOriginalSql();
   }
 
   private String explain(RelNode relNode) {

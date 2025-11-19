@@ -7,16 +7,6 @@ Inputs: default_catalog.default_database.MyTable
 Annotations:
  - parameters: val
  - base-table: MyTable
-Plan:
-LogicalSort(sort0=[$0], dir0=[ASC-nulls-first])
-  LogicalProject(val=[$0])
-    LogicalFilter(condition=[=($0, ?0)])
-      LogicalTableScan(table=[[default_catalog, default_database, MyTable]])
-SQL: CREATE VIEW `AuthMyTable` AS 
-    SELECT t.* 
-      FROM MyTable t 
-     WHERE t.val = ?   
-     ORDER BY t.val ASC;
 
 === AuthMyTableValues
 ID:     default_catalog.default_database.AuthMyTableValues
@@ -26,16 +16,6 @@ Inputs: default_catalog.default_database.MyTable
 Annotations:
  - parameters: vals
  - base-table: MyTable
-Plan:
-LogicalSort(sort0=[$0], dir0=[ASC-nulls-first])
-  LogicalProject(val=[$0])
-    LogicalFilter(condition=[array_contains(CAST(?0):BIGINT ARRAY, CAST($0):BIGINT)])
-      LogicalTableScan(table=[[default_catalog, default_database, MyTable]])
-SQL: CREATE VIEW `AuthMyTableValues` AS 
-    SELECT t.* 
-      FROM MyTable t 
-     WHERE array_contains(cast(?     as ARRAY<BIGINT>), t.val)
-     ORDER BY t.val ASC;
 
 === AuthStringMyTableValues
 ID:     default_catalog.default_database.AuthStringMyTableValues
@@ -45,16 +25,6 @@ Inputs: default_catalog.default_database.MyStringTable
 Annotations:
  - parameters: vals
  - base-table: MyStringTable
-Plan:
-LogicalSort(sort0=[$0], dir0=[ASC-nulls-first])
-  LogicalProject(val=[$0])
-    LogicalFilter(condition=[array_contains(CAST(?0):VARCHAR(2147483647) CHARACTER SET "UTF-16LE" ARRAY, CAST($0):VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL)])
-      LogicalTableScan(table=[[default_catalog, default_database, MyStringTable]])
-SQL: CREATE VIEW `AuthStringMyTableValues` AS 
-    SELECT t.*
-      FROM MyStringTable t
-     WHERE array_contains(CAST(?     AS ARRAY<STRING>), CAST(t.val AS STRING))
-     ORDER BY t.val ASC;
 
 === MyStringTable
 ID:     default_catalog.default_database.MyStringTable
@@ -66,10 +36,6 @@ Primary Key: val
 Timestamp  : -
 Schema:
  - val: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL
-Plan:
-LogicalProject(val=[$0])
-  LogicalValues(tuples=[[{ 'a' }, { 'b' }, { 'c' }, { 'd' }]])
-SQL: CREATE VIEW `MyStringTable` AS  SELECT val FROM (VALUES 'a', 'b', 'c', 'd') AS t(val) ORDER BY val;
 
 === MyTable
 ID:     default_catalog.default_database.MyTable
@@ -81,12 +47,6 @@ Primary Key: val
 Timestamp  : -
 Schema:
  - val: INTEGER NOT NULL
-Plan:
-LogicalProject(val=[$0])
-  LogicalValues(tuples=[[{ 1 }, { 2 }, { 3 }, { 4 }, { 5 }, { 6 }, { 7 }, { 8 }, { 9 }, { 10 }]])
-SQL: CREATE VIEW `MyTable` AS  SELECT val
-           FROM (VALUES ((1)), ((2)), ((3)), ((4)), ((5)),
-            ((6)), ((7)), ((8)), ((9)), ((10))) AS t(val) ORDER BY val;
 
 >>>flink-sql-no-functions.sql
 CREATE VIEW `MyTable`

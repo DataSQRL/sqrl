@@ -8,26 +8,6 @@ Timestamp  : -
 Schema:
  - id: INTEGER NOT NULL
  - int_array: INTEGER NOT NULL ARRAY NOT NULL
-Plan:
-LogicalProject(id=[$0], int_array=[$1])
-  LogicalProject(id=[$0], int_array=[$1])
-    LogicalUnion(all=[true])
-      LogicalProject(EXPR$0=[1], EXPR$1=[ARRAY(1, 2)])
-        LogicalValues(tuples=[[{ 0 }]])
-      LogicalProject(EXPR$0=[2], EXPR$1=[ARRAY(3)])
-        LogicalValues(tuples=[[{ 0 }]])
-      LogicalProject(EXPR$0=[3], EXPR$1=[ARRAY(4)])
-        LogicalValues(tuples=[[{ 0 }]])
-      LogicalProject(EXPR$0=[4], EXPR$1=[ARRAY(5, 6)])
-        LogicalValues(tuples=[[{ 0 }]])
-SQL: CREATE VIEW `IntArray` AS 
-  SELECT id, int_array
-  FROM (VALUES
-    (1, ARRAY[1, 2]),
-    (2, ARRAY[3]),
-    (3, ARRAY[4]),
-    (4, ARRAY[5, 6])
-  ) AS T(id, int_array);
 
 === NestedArray
 ID:     default_catalog.default_database.NestedArray
@@ -38,32 +18,6 @@ Timestamp  : -
 Schema:
  - id: INTEGER NOT NULL
  - nested_array: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL ARRAY NOT NULL ARRAY NOT NULL
-Plan:
-LogicalProject(id=[$0], nested_array=[$1])
-  LogicalProject(id=[$0], nested_array=[$1])
-    LogicalUnion(all=[true])
-      LogicalProject(EXPR$0=[1], EXPR$1=[ARRAY(ARRAY('a', 'b'), ARRAY('c', 'd'))])
-        LogicalValues(tuples=[[{ 0 }]])
-      LogicalProject(EXPR$0=[2], EXPR$1=[ARRAY(ARRAY('x', 'y'), ARRAY('z'))])
-        LogicalValues(tuples=[[{ 0 }]])
-SQL: CREATE VIEW `NestedArray` AS 
-  SELECT id, nested_array
-  FROM (VALUES
-    (
-      1,
-      ARRAY[
-        ARRAY['a', 'b'],
-        ARRAY['c', 'd']
-      ]
-    ),
-    (
-      2,
-      ARRAY[
-        ARRAY['x', 'y'],
-        ARRAY['z']
-      ]
-    )
-  ) AS T(id, nested_array);
 
 === StringArray
 ID:     default_catalog.default_database.StringArray
@@ -74,26 +28,6 @@ Timestamp  : -
 Schema:
  - id: INTEGER NOT NULL
  - string_array: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL ARRAY NOT NULL
-Plan:
-LogicalProject(id=[$0], string_array=[$1])
-  LogicalProject(id=[$0], string_array=[$1])
-    LogicalUnion(all=[true])
-      LogicalProject(EXPR$0=[1], EXPR$1=[ARRAY('a', 'b')])
-        LogicalValues(tuples=[[{ 0 }]])
-      LogicalProject(EXPR$0=[2], EXPR$1=[ARRAY('c')])
-        LogicalValues(tuples=[[{ 0 }]])
-      LogicalProject(EXPR$0=[3], EXPR$1=[ARRAY('d')])
-        LogicalValues(tuples=[[{ 0 }]])
-      LogicalProject(EXPR$0=[4], EXPR$1=[ARRAY('e', 'f')])
-        LogicalValues(tuples=[[{ 0 }]])
-SQL: CREATE VIEW `StringArray` AS 
-  SELECT id, string_array
-  FROM (VALUES
-    (1, ARRAY['a', 'b']),
-    (2, ARRAY['c']),
-    (3, ARRAY['d']),
-    (4, ARRAY['e', 'f'])
-  ) AS T(id, string_array);
 
 === StringArrayFn
 ID:     default_catalog.default_database.StringArrayFn
@@ -103,11 +37,6 @@ Inputs: default_catalog.default_database.StringVals
 Annotations:
  - parameters: vals
  - base-table: StringVals
-Plan:
-LogicalProject(val=[$0])
-  LogicalFilter(condition=[array_contains(CAST(?0):VARCHAR(2147483647) CHARACTER SET "UTF-16LE" ARRAY, $0)])
-    LogicalTableScan(table=[[default_catalog, default_database, StringVals]])
-SQL: CREATE VIEW `StringArrayFn` AS  SELECT val FROM StringVals WHERE array_contains(CAST(?     AS ARRAY<STRING>), val);
 
 === StringVals
 ID:     default_catalog.default_database.StringVals
@@ -117,10 +46,6 @@ Primary Key: val
 Timestamp  : -
 Schema:
  - val: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL
-Plan:
-LogicalProject(val=[$0])
-  LogicalValues(tuples=[[{ 'a' }, { 'b' }, { 'c' }]])
-SQL: CREATE VIEW `StringVals` AS  SELECT val FROM (VALUES ('a'), ('b'), ('c')) AS T(val);
 
 >>>flink-sql-no-functions.sql
 CREATE VIEW `IntArray`

@@ -10,13 +10,6 @@ Schema:
  - eventid: BIGINT NOT NULL
  - num: BIGINT NOT NULL
  - test: BIGINT NOT NULL
-Plan:
-LogicalAggregate(group=[{0}], num=[COUNT()], test=[AVG($0)])
-  LogicalProject(eventid=[$1])
-    LogicalFilter(condition=[$3])
-      LogicalTableScan(table=[[default_catalog, default_database, _UserLikes]])
-SQL: CREATE VIEW `EventLikeCount` AS  SELECT eventid, count(*) as num, avg(eventid) as test
-                  FROM _UserLikes WHERE liked GROUP BY eventid;
 
 === Events
 ID:     default_catalog.default_database.Events
@@ -42,17 +35,7 @@ Schema:
  - startTime: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
  - embedding: RAW('com.datasqrl.flinkrunner.stdlib.vector.FlinkVectorType', 'AEhjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLnZlY3Rvci5GbGlua1ZlY3RvclR5cGVTZXJpYWxpemVyU25hcHNob3QAAAAD')
  - startTimestamp: TIMESTAMP(3)
-Plan:
-LogicalProject(url=[$0], date=[$1], time=[$2], title=[$3], abstract=[$4], location=[$5], speakers=[$6], last_updated=[$7], id=[$8], full_text=[$9], startTime=[$10], embedding=[$11], startTimestamp=[$12])
-  LogicalFilter(condition=[=($13, 1)])
-    LogicalProject(url=[$0], date=[$1], time=[$2], title=[$3], abstract=[$4], location=[$5], speakers=[$6], last_updated=[$7], id=[$8], full_text=[$9], startTime=[$10], embedding=[$11], startTimestamp=[$12], __sqrlinternal_rownum=[ROW_NUMBER() OVER (PARTITION BY $8 ORDER BY $7 DESC NULLS LAST)])
-      LogicalTableScan(table=[[default_catalog, default_database, _ProcessedEventStream]])
-SQL: CREATE VIEW `Events`
-AS
-SELECT `url`, `date`, `time`, `title`, `abstract`, `location`, `speakers`, `last_updated`, `id`, `full_text`, `startTime`, `embedding`, `startTimestamp`
-FROM (SELECT `url`, `date`, `time`, `title`, `abstract`, `location`, `speakers`, `last_updated`, `id`, `full_text`, `startTime`, `embedding`, `startTimestamp`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `last_updated` DESC NULLS LAST) AS `__sqrlinternal_rownum`
-  FROM `default_catalog`.`default_database`.`_ProcessedEventStream`) AS `t`
-WHERE `__sqrlinternal_rownum` = 1
+
 === EventsLiked
 ID:     default_catalog.default_database.EventsLiked
 Type:   query
@@ -61,16 +44,6 @@ Inputs: default_catalog.default_database.Events, default_catalog.default_databas
 Annotations:
  - parameters: userid
  - base-table: Events
-Plan:
-LogicalSort(sort0=[$12], dir0=[ASC-nulls-first])
-  LogicalProject(url=[$5], date=[$6], time=[$7], title=[$8], abstract=[$9], location=[$10], speakers=[$11], last_updated=[$12], id=[$13], full_text=[$14], startTime=[$15], embedding=[$16], startTimestamp=[$17])
-    LogicalFilter(condition=[=($2, ?0)])
-      LogicalJoin(condition=[=($1, $13)], joinType=[inner])
-        LogicalTableScan(table=[[default_catalog, default_database, _UserLikes]])
-        LogicalTableScan(table=[[default_catalog, default_database, Events]])
-SQL: CREATE VIEW `EventsLiked` AS  SELECT e.* FROM _UserLikes l JOIN Events e ON l.eventid = e.id
-                                WHERE l.userid = ?      
-                                ORDER BY e.startTimestamp ASC;
 
 === PersonalizedEventSearch
 ID:     default_catalog.default_database.PersonalizedEventSearch
@@ -80,19 +53,6 @@ Inputs: default_catalog.default_database.Events, default_catalog.default_databas
 Annotations:
  - parameters: query, userid
  - base-table: PersonalizedEventSearch
-Plan:
-LogicalSort(sort0=[$13], dir0=[DESC-nulls-last])
-  LogicalProject(url=[$0], date=[$1], time=[$2], title=[$3], abstract=[$4], location=[$5], speakers=[$6], last_updated=[$7], id=[$8], full_text=[$9], startTime=[$10], embedding=[$11], startTimestamp=[$12], score=[coalesce(cosine_similarity($14, $11), 0.0:DOUBLE)])
-    LogicalFilter(condition=[>(text_search(CAST(?0):VARCHAR(2147483647) CHARACTER SET "UTF-16LE", $3, $4), 0)])
-      LogicalJoin(condition=[=($13, ?1)], joinType=[left])
-        LogicalTableScan(table=[[default_catalog, default_database, Events]])
-        LogicalTableScan(table=[[default_catalog, default_database, _UserInterests]])
-SQL: CREATE VIEW `PersonalizedEventSearch` AS 
-    SELECT e.*, coalesce(cosine_similarity(i.interestVector, e.embedding),0.0) as score
-        FROM Events e
-        LEFT JOIN _UserInterests i ON i.userid = ?      
-        WHERE text_search(?     , title, abstract) > 0 
-    ORDER BY score DESC;
 
 === RecommendedEvents
 ID:     default_catalog.default_database.RecommendedEvents
@@ -102,16 +62,6 @@ Inputs: default_catalog.default_database.Events, default_catalog.default_databas
 Annotations:
  - parameters: userid
  - base-table: RecommendedEvents
-Plan:
-LogicalSort(sort0=[$13], dir0=[DESC-nulls-last])
-  LogicalProject(url=[$0], date=[$1], time=[$2], title=[$3], abstract=[$4], location=[$5], speakers=[$6], last_updated=[$7], id=[$8], full_text=[$9], startTime=[$10], embedding=[$11], startTimestamp=[$12], score=[cosine_similarity($14, $11)])
-    LogicalJoin(condition=[=($13, ?0)], joinType=[inner])
-      LogicalTableScan(table=[[default_catalog, default_database, Events]])
-      LogicalTableScan(table=[[default_catalog, default_database, _UserInterests]])
-SQL: CREATE VIEW `RecommendedEvents` AS 
-SELECT e.*, cosine_similarity(i.interestVector, e.embedding) as score
-FROM Events e JOIN _UserInterests i ON i.userid = ?      
-ORDER BY score DESC;
 
 === _AddInterest
 ID:     default_catalog.default_database._AddInterest
@@ -128,10 +78,6 @@ Schema:
  - text: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - embedding: RAW('com.datasqrl.flinkrunner.stdlib.vector.FlinkVectorType', 'AEhjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLnZlY3Rvci5GbGlua1ZlY3RvclR5cGVTZXJpYWxpemVyU25hcHNob3QAAAAD')
-Plan:
-LogicalProject(_uuid=[$0], userid=[$1], text=[$2], event_time=[$3], embedding=[vector_embed($2, 'text-embedding-3-small')])
-  LogicalTableScan(table=[[default_catalog, default_database, _AddInterestStream]])
-SQL: CREATE VIEW `_AddInterest` AS  SELECT *, vector_embed(text, 'text-embedding-3-small') AS embedding FROM _AddInterestStream;
 
 === _AddInterestStream
 ID:     default_catalog.default_database._AddInterestStream
@@ -147,27 +93,7 @@ Schema:
  - userid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - text: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
-Plan:
-LogicalWatermarkAssigner(rowtime=[event_time], watermark=[-($3, 1:INTERVAL SECOND)])
-  LogicalTableScan(table=[[default_catalog, default_database, _AddInterestStream]])
-SQL: CREATE TEMPORARY TABLE `_AddInterestStream__schema` (
-  `_uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `userid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `text` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
-) WITH (
-  'connector' = 'datagen'
-);
-CREATE TABLE `_AddInterestStream` (
-  PRIMARY KEY (`_uuid`) NOT ENFORCED,
-  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.001' SECOND
-) WITH (
-  'format' = 'flexible-json',
-  'path' = '${DATA_PATH}/add_interest.jsonl',
-  'source.monitor-interval' = '1',
-  'connector' = 'filesystem'
-)
-LIKE `_AddInterestStream__schema`
+
 === _EventStream
 ID:     default_catalog.default_database._EventStream
 Type:   stream
@@ -187,32 +113,7 @@ Schema:
  - location: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - speakers: RecordType:peek_no_expand(VARCHAR(2147483647) CHARACTER SET "UTF-16LE" name, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" title, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" company) NOT NULL ARRAY NOT NULL
  - last_updated: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
-Plan:
-LogicalWatermarkAssigner(rowtime=[last_updated], watermark=[-($7, 1:INTERVAL SECOND)])
-  LogicalTableScan(table=[[default_catalog, default_database, _EventStream]])
-SQL: CREATE TEMPORARY TABLE `_EventStream__schema` (
-  `url` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `date` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `time` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `title` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `abstract` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `location` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `speakers` ROW(`name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`, `title` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`, `company` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`) NOT NULL ARRAY NOT NULL,
-  `last_updated` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
-) WITH (
-  'connector' = 'datagen'
-);
-CREATE TABLE `_EventStream` (
-  PRIMARY KEY (`url`, `last_updated`) NOT ENFORCED,
-  WATERMARK FOR `last_updated` AS `last_updated` - INTERVAL '0.001' SECOND
-) WITH (
-  'format' = 'json',
-  'path' = '${DATA_PATH}/events.jsonl',
-  'json.timestamp-format.standard' = 'ISO-8601',
-  'source.monitor-interval' = '1 sec',
-  'connector' = 'filesystem'
-)
-LIKE `_EventStream__schema`
+
 === _LikeVector
 ID:     default_catalog.default_database._LikeVector
 Type:   stream
@@ -229,16 +130,6 @@ Schema:
  - abstract: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - location: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
-Plan:
-LogicalProject(userid=[$2], embedding=[$16], title=[$8], abstract=[$9], location=[$10], event_time=[$4])
-  LogicalFilter(condition=[$3])
-    LogicalCorrelate(correlation=[$cor1], joinType=[inner], requiredColumns=[{1, 4}])
-      LogicalTableScan(table=[[default_catalog, default_database, _Likes]])
-      LogicalFilter(condition=[=($cor1.eventid, $8)])
-        LogicalSnapshot(period=[$cor1.event_time])
-          LogicalTableScan(table=[[default_catalog, default_database, Events]])
-SQL: CREATE VIEW `_LikeVector` AS  SELECT l.userid, e.embedding, e.title, e.abstract, e.location, l.event_time
-              FROM _Likes l JOIN Events FOR SYSTEM_TIME AS OF l.event_time e ON l.eventid = e.id WHERE l.liked;
 
 === _Likes
 ID:     default_catalog.default_database._Likes
@@ -255,29 +146,7 @@ Schema:
  - userid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - liked: BOOLEAN NOT NULL
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
-Plan:
-LogicalWatermarkAssigner(rowtime=[event_time], watermark=[-($4, 1:INTERVAL SECOND)])
-  LogicalTableScan(table=[[default_catalog, default_database, _Likes]])
-SQL: CREATE TEMPORARY TABLE `_Likes__schema` (
-  `_uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `eventid` BIGINT NOT NULL,
-  `userid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `liked` BOOLEAN NOT NULL,
-  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
-) WITH (
-  'connector' = 'datagen'
-);
-CREATE TABLE `_Likes` (
-  PRIMARY KEY (`_uuid`) NOT ENFORCED,
-  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.001' SECOND
-) WITH (
-  'format' = 'flexible-json',
-  'path' = '${DATA_PATH}/likes.jsonl',
-  'source.monitor-interval' = '1 sec',
-  'flexible-json.timestamp-format.standard' = 'ISO-8601',
-  'connector' = 'filesystem'
-)
-LIKE `_Likes__schema`
+
 === _ProcessedEventStream
 ID:     default_catalog.default_database._ProcessedEventStream
 Type:   stream
@@ -301,18 +170,7 @@ Schema:
  - startTime: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
  - embedding: RAW('com.datasqrl.flinkrunner.stdlib.vector.FlinkVectorType', 'AEhjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLnZlY3Rvci5GbGlua1ZlY3RvclR5cGVTZXJpYWxpemVyU25hcHNob3QAAAAD')
  - startTimestamp: TIMESTAMP(3)
-Plan:
-LogicalProject(url=[$0], date=[$1], time=[$2], title=[$3], abstract=[$4], location=[$5], speakers=[$6], last_updated=[$7], id=[$8], full_text=[$9], startTime=[$10], embedding=[$11], startTimestamp=[TO_TIMESTAMP(CONCAT($10, ' PDT'), 'MMMM d, yyyy h:mm a z')])
-  LogicalProject(url=[$0], date=[$1], time=[$2], title=[$3], abstract=[$4], location=[$5], speakers=[$6], last_updated=[$7], id=[$8], full_text=[$9], startTime=[$10], embedding=[vector_embed($9, 'text-embedding-3-small')])
-    LogicalProject(url=[$0], date=[$1], time=[$2], title=[$3], abstract=[$4], location=[$5], speakers=[$6], last_updated=[$7], id=[coalesce(CAST(REGEXP_EXTRACT($0, '(\d*)$')):BIGINT, 0:BIGINT)], full_text=[CONCAT($3, '\n', $4)], startTime=[CONCAT(TRIM(FLAG(BOTH), ' ', REGEXP_EXTRACT($1, '^[^-]*')), ' ', TRIM(FLAG(BOTH), ' ', REGEXP_EXTRACT($2, '\d\d?:\d\d\s(AM|PM)')))])
-      LogicalTableScan(table=[[default_catalog, default_database, _EventStream]])
-SQL: ALTER VIEW `_ProcessedEventStream` AS SELECT `url`, `date`, `time`, `title`, `abstract`, `location`, `speakers`, `last_updated`, `id`, `full_text`, `startTime`, `embedding`,  TO_TIMESTAMP(concat(startTime,' PDT'), 'MMMM d, yyyy h:mm a z') AS `startTimestamp` FROM 
-( SELECT `url`, `date`, `time`, `title`, `abstract`, `location`, `speakers`, `last_updated`, `id`, `full_text`, `startTime`,   vector_embed(full_text, 'text-embedding-3-small') AS `embedding` FROM 
-(  SELECT *,
-    coalesce(CAST(REGEXP_EXTRACT(url, '(\d*)$') AS BIGINT),0) AS id,
-    concat(title,'\n',abstract) AS full_text,
-    concat(trim(REGEXP_EXTRACT(`date`, '^[^-]*')),' ',trim(REGEXP_EXTRACT(`time`, '\d\d?:\d\d\s(AM|PM)'))) AS startTime
-    FROM _EventStream ) );
+
 === _UserInterestVectors
 ID:     default_catalog.default_database._UserInterestVectors
 Type:   stream
@@ -324,15 +182,6 @@ Schema:
  - userid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - embedding: RAW('com.datasqrl.flinkrunner.stdlib.vector.FlinkVectorType', 'AEhjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLnZlY3Rvci5GbGlua1ZlY3RvclR5cGVTZXJpYWxpemVyU25hcHNob3QAAAAD')
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
-Plan:
-LogicalUnion(all=[true])
-  LogicalProject(userid=[$0], embedding=[$1], event_time=[$5])
-    LogicalTableScan(table=[[default_catalog, default_database, _LikeVector]])
-  LogicalProject(userid=[$1], embedding=[$4], event_time=[$3])
-    LogicalTableScan(table=[[default_catalog, default_database, _AddInterest]])
-SQL: CREATE VIEW `_UserInterestVectors` AS  SELECT userid, embedding, event_time FROM _LikeVector
-                 UNION ALL
-                 SELECT userid, embedding, event_time FROM _AddInterest;
 
 === _UserInterests
 ID:     default_catalog.default_database._UserInterests
@@ -344,11 +193,6 @@ Timestamp  : -
 Schema:
  - userid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - interestVector: RAW('com.datasqrl.flinkrunner.stdlib.vector.FlinkVectorType', 'AEhjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLnZlY3Rvci5GbGlua1ZlY3RvclR5cGVTZXJpYWxpemVyU25hcHNob3QAAAAD')
-Plan:
-LogicalAggregate(group=[{0}], interestVector=[center($1)])
-  LogicalProject(userid=[$0], embedding=[$1])
-    LogicalTableScan(table=[[default_catalog, default_database, _UserInterestVectors]])
-SQL: CREATE VIEW `_UserInterests` AS  SELECT userid, center(embedding) as interestVector FROM _UserInterestVectors GROUP BY userid;
 
 === _UserLikes
 ID:     default_catalog.default_database._UserLikes
@@ -366,17 +210,7 @@ Schema:
  - userid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - liked: BOOLEAN NOT NULL
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
-Plan:
-LogicalProject(_uuid=[$0], eventid=[$1], userid=[$2], liked=[$3], event_time=[$4])
-  LogicalFilter(condition=[=($5, 1)])
-    LogicalProject(_uuid=[$0], eventid=[$1], userid=[$2], liked=[$3], event_time=[$4], __sqrlinternal_rownum=[ROW_NUMBER() OVER (PARTITION BY $2, $1 ORDER BY $4 DESC NULLS LAST)])
-      LogicalTableScan(table=[[default_catalog, default_database, _Likes]])
-SQL: CREATE VIEW `_UserLikes`
-AS
-SELECT `_uuid`, `eventid`, `userid`, `liked`, `event_time`
-FROM (SELECT `_uuid`, `eventid`, `userid`, `liked`, `event_time`, ROW_NUMBER() OVER (PARTITION BY `userid`, `eventid` ORDER BY `event_time` DESC NULLS LAST) AS `__sqrlinternal_rownum`
-  FROM `default_catalog`.`default_database`.`_Likes`) AS `t`
-WHERE `__sqrlinternal_rownum` = 1
+
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `_EventStream__schema` (
   `url` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,

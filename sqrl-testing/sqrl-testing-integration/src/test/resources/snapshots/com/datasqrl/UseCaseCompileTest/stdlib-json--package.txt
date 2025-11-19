@@ -12,25 +12,7 @@ Schema:
  - id: BIGINT NOT NULL
  - val: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
-Plan:
-LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($2, 1:INTERVAL SECOND)])
-  LogicalTableScan(table=[[default_catalog, default_database, Json]])
-SQL: CREATE TEMPORARY TABLE `Json__schema` (
-  `id` BIGINT NOT NULL,
-  `val` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
-) WITH (
-  'connector' = 'datagen'
-);
-CREATE TABLE `Json` (
-  PRIMARY KEY (`id`) NOT ENFORCED,
-  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
-) WITH (
-  'format' = 'flexible-json',
-  'path' = '${DATA_PATH}/json.jsonl',
-  'connector' = 'filesystem'
-)
-LIKE `Json__schema`
+
 === UnmodifiedJsonData
 ID:     default_catalog.default_database.UnmodifiedJsonData
 Type:   stream
@@ -48,17 +30,6 @@ Schema:
  - json_col_2: RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM=')
  - json_col_3: RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM=')
  - json_col_4: RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM=')
-Plan:
-LogicalProject(id=[$0], val=[$1], json_col=[TO_JSONB('{"a": 1}')], json_col_2=[TO_JSONB('{"a": 2}')], json_col_3=[TO_JSONB('{"b": 1}')], json_col_4=[TO_JSONB('{"b": 2}')])
-  LogicalTableScan(table=[[default_catalog, default_database, Json]])
-SQL: CREATE VIEW `UnmodifiedJsonData` AS  SELECT id,
-                             val,
-                             TO_JSONB('{"a": 1}') AS json_col,
-                             TO_JSONB('{"a": 2}') AS json_col_2,
-                             TO_JSONB('{"b": 1}') AS json_col_3,
-                             TO_JSONB('{"b": 2}') AS json_col_4
-                     FROM Json
-                     ORDER BY id;
 
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `Json__schema` (

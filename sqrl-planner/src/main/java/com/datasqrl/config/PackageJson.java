@@ -82,8 +82,6 @@ public interface PackageJson {
 
   interface ExplainConfig {
 
-    boolean isText();
-
     boolean isSql();
 
     boolean isLogical();
@@ -91,8 +89,6 @@ public interface PackageJson {
     boolean isPhysical();
 
     boolean isSorted();
-
-    boolean isVisual();
   }
 
   interface ScriptConfig {

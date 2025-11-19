@@ -7,16 +7,6 @@ Inputs: default_catalog.default_database.MyTable
 Annotations:
  - parameters: val
  - base-table: MyTable
-Plan:
-LogicalSort(sort0=[$0], dir0=[ASC-nulls-first])
-  LogicalProject(val=[$0])
-    LogicalFilter(condition=[=($0, ?0)])
-      LogicalTableScan(table=[[default_catalog, default_database, MyTable]])
-SQL: CREATE VIEW `AuthMyTable` AS 
-    SELECT t.* 
-      FROM MyTable t 
-     WHERE t.val = ?   
-     ORDER BY t.val ASC;
 
 === MyTable
 ID:     default_catalog.default_database.MyTable
@@ -28,12 +18,6 @@ Primary Key: val
 Timestamp  : -
 Schema:
  - val: INTEGER NOT NULL
-Plan:
-LogicalProject(val=[$0])
-  LogicalValues(tuples=[[{ 1 }, { 2 }, { 3 }, { 4 }, { 5 }, { 6 }, { 7 }, { 8 }, { 9 }, { 10 }]])
-SQL: CREATE VIEW `MyTable` AS  SELECT val
-           FROM (VALUES ((1)), ((2)), ((3)), ((4)), ((5)),
-            ((6)), ((7)), ((8)), ((9)), ((10))) AS t(val) ORDER BY val;
 
 >>>flink-sql-no-functions.sql
 CREATE VIEW `MyTable`
