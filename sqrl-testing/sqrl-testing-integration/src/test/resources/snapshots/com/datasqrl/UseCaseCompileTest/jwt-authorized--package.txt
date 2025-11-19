@@ -109,14 +109,6 @@ FROM (VALUES ROW('a'),
    ROW('b'),
    ROW('c'),
    ROW('d')) AS `t` (`val`);
-CREATE VIEW `MyTableTest`
-AS
-SELECT *
-FROM `MyTable`;
-CREATE VIEW `MyStringTableTest`
-AS
-SELECT *
-FROM `MyStringTable`;
 CREATE TABLE `AuthInputData` (
   `event_id` STRING NOT NULL,
   `val` BIGINT NOT NULL,

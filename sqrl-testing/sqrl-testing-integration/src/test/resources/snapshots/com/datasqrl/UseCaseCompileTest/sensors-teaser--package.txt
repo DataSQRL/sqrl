@@ -95,18 +95,6 @@ SELECT `sensorid`, `window_time`, `maxTemp`
 FROM (SELECT `sensorid`, `window_time`, `maxTemp`, ROW_NUMBER() OVER (PARTITION BY `sensorid` ORDER BY `window_time` DESC NULLS LAST) AS `__sqrlinternal_rownum`
   FROM `default_catalog`.`default_database`.`_SensorMaxTempWindow`) AS `t`
 WHERE `__sqrlinternal_rownum` = 1;
-CREATE VIEW `SecReadingTest`
-AS
-SELECT `sensorid`, `timeSec`, `temp`
-FROM `SecReading`;
-CREATE VIEW `SensorMaxTempTest`
-AS
-SELECT `sensorid`, `maxTemp`
-FROM `SensorMaxTemp`;
-CREATE VIEW `SecReadingFullTest`
-AS
-SELECT *
-FROM `SecReading`;
 CREATE TABLE `SecReading_1` (
   `sensorid` BIGINT NOT NULL,
   `timeSec` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,

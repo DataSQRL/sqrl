@@ -198,14 +198,6 @@ AS
 SELECT `orgid`, SUM(`tokens`) AS `total_tokens`, COUNT(`tokens`) AS `total_requests`
 FROM `_EnrichedUserTokens`
 GROUP BY `orgid`;
-CREATE VIEW `UserTokensTest`
-AS
-SELECT *
-FROM `TotalUserTokens`;
-CREATE VIEW `OrgTokensTest`
-AS
-SELECT *
-FROM `TotalOrgTokens`;
 CREATE TABLE `TotalOrgTokens_1` (
   `orgid` BIGINT NOT NULL,
   `total_tokens` BIGINT NOT NULL,

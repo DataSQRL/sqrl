@@ -256,20 +256,12 @@ SELECT `machineId`, MAX(`temp`) AS `maxTemp`, AVG(`temp`) AS `avgTemp`
 FROM `SecReading` AS `r`
  INNER JOIN `Sensors` FOR SYSTEM_TIME AS OF `r`.`timeSec` AS `s` ON `r`.`sensorid` = `s`.`id`
 GROUP BY `machineId`;
-CREATE VIEW `MachineCountTest`
-AS
-SELECT COUNT(*) AS `num`
-FROM `Machine`;
 CREATE VIEW `HighTemp`
 AS
 SELECT `machineId`, `sensorid`, `temp`, `timeSec`
 FROM `SecReading` AS `r`
  INNER JOIN `Sensors` FOR SYSTEM_TIME AS OF `r`.`timeSec` AS `s` ON `r`.`sensorid` = `s`.`id`
 WHERE `temp` > 35;
-CREATE VIEW `HighTempTest`
-AS
-SELECT COUNT(*) AS `num`, AVG(`temp`) AS `avg_temp`
-FROM `HighTemp`;
 CREATE TABLE `HighTemp_1` (
   `machineId` BIGINT NOT NULL,
   `sensorid` BIGINT NOT NULL,

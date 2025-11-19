@@ -62,10 +62,6 @@ AS
 SELECT `sensorid`, MAX(`temperature`) AS `maxTemp`, AVG(`temperature`) AS `avgTemp`
 FROM `SensorReading`
 GROUP BY `sensorid`;
-CREATE VIEW `SensorAggregateTest`
-AS
-SELECT *
-FROM `SensorAggregate`;
 CREATE TABLE `SensorReading_1` (
   `sensorid` INTEGER NOT NULL,
   `temperature` FLOAT NOT NULL,

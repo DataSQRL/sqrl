@@ -40,10 +40,6 @@ CREATE TABLE `Orders` (
   'connector' = 'filesystem'
 )
 LIKE `Orders__schema`;
-CREATE VIEW `BigIntOrdersTest`
-AS
-SELECT *
-FROM `Orders`;
 CREATE TABLE `Orders_1` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,

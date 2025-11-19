@@ -174,10 +174,6 @@ FROM `Customers` AS `c`
  INNER JOIN `Applications` AS `a` ON `c`.`id` = `a`.`customer_id`
  INNER JOIN `ApplicationUpdates` AS `u` ON `a`.`id` = `u`.`loan_application_id`
 GROUP BY `c`.`id`;
-CREATE VIEW `CustomerUpdatesTest`
-AS
-SELECT *
-FROM `CustomerUpdates`;
 CREATE TABLE `ApplicationUpdates_1` (
   `loan_application_id` BIGINT NOT NULL,
   `status` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,

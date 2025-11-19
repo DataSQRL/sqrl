@@ -84,14 +84,6 @@ AS
 SELECT *
 FROM `SensorReading`
 WHERE `temperature` > 50;
-CREATE VIEW `HighTempAlertTest`
-AS
-SELECT `sensorid`, `temperature`
-FROM `HighTempAlert`;
-CREATE VIEW `SensorMaxTempTest`
-AS
-SELECT `sensorid`, `maxTemp`
-FROM `SensorMaxTemp`;
 CREATE VIEW `SensorReadingSubscription`
 AS
 SELECT *
