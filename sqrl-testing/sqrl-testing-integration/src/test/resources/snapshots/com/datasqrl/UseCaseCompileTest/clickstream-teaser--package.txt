@@ -12,26 +12,7 @@ Schema:
  - url: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - userid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
-Plan:
-LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($1, 1000:INTERVAL SECOND)])
-  LogicalTableScan(table=[[default_catalog, default_database, Click]])
-SQL: CREATE TEMPORARY TABLE `Click__schema` (
-  `url` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `userid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL
-) WITH (
-  'connector' = 'datagen'
-);
-CREATE TABLE `Click` (
-  PRIMARY KEY (`url`, `userid`, `timestamp`) NOT ENFORCED,
-  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '1' SECOND
-) WITH (
-  'format' = 'flexible-json',
-  'path' = '${DATA_PATH}/click.jsonl',
-  'source.monitor-interval' = '10 sec',
-  'connector' = 'filesystem'
-)
-LIKE `Click__schema`
+
 === Recommendation
 ID:     default_catalog.default_database.Recommendation
 Type:   state
@@ -45,13 +26,6 @@ Schema:
  - url: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - rec: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - frequency: BIGINT NOT NULL
-Plan:
-LogicalAggregate(group=[{0, 1}], frequency=[COUNT()])
-  LogicalProject(url=[$0], rec=[$1])
-    LogicalTableScan(table=[[default_catalog, default_database, VisitAfter]])
-SQL: CREATE VIEW `Recommendation` AS  SELECT beforeURL AS url, afterURL AS rec,
-    count(1) AS frequency FROM VisitAfter
-    GROUP BY beforeURL, afterURL ORDER BY url ASC, frequency DESC;
 
 === Trending
 ID:     default_catalog.default_database.Trending
@@ -65,13 +39,6 @@ Timestamp  : -
 Schema:
  - url: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - total: BIGINT NOT NULL
-Plan:
-LogicalAggregate(group=[{0}], total=[COUNT()])
-  LogicalProject(url=[$0])
-    LogicalTableScan(table=[[default_catalog, default_database, Click]])
-SQL: CREATE VIEW `Trending` AS  SELECT url, count(1) AS total
-    FROM Click
-    GROUP BY url ORDER BY total DESC, url ASC;
 
 === VisitAfter
 ID:     default_catalog.default_database.VisitAfter
@@ -84,16 +51,6 @@ Schema:
  - beforeURL: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - afterURL: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
-Plan:
-LogicalProject(beforeURL=[$0], afterURL=[$3], timestamp=[$4])
-  LogicalJoin(condition=[AND(=($2, $5), <($1, $4), >=($1, -($4, *(10, 60000:INTERVAL MINUTE))))], joinType=[inner])
-    LogicalTableScan(table=[[default_catalog, default_database, Click]])
-    LogicalTableScan(table=[[default_catalog, default_database, Click]])
-SQL: CREATE VIEW `VisitAfter` AS  SELECT b.url AS beforeURL, a.url AS afterURL,
-    a.`timestamp` AS `timestamp`
-    FROM Click b JOIN Click a ON b.userid=a.userid AND
-        b.`timestamp` < a.`timestamp` AND
-        b.`timestamp` >= a.`timestamp` - INTERVAL 10 MINUTE;
 
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `Click__schema` (

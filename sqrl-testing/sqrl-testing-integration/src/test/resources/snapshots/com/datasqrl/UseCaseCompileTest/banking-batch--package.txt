@@ -13,24 +13,7 @@ Schema:
  - status: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - message: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - event_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
-Plan:
-LogicalTableScan(table=[[default_catalog, default_database, ApplicationUpdates]])
-SQL: CREATE TEMPORARY TABLE `ApplicationUpdates__schema` (
-  `loan_application_id` BIGINT NOT NULL,
-  `status` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `message` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
-) WITH (
-  'connector' = 'datagen'
-);
-CREATE TABLE `ApplicationUpdates` (
-  PRIMARY KEY (`loan_application_id`, `event_time`) NOT ENFORCED
-) WITH (
-  'format' = 'flexible-json',
-  'path' = '${DATA_PATH}/application_updates.jsonl',
-  'connector' = 'filesystem'
-)
-LIKE `ApplicationUpdates__schema`
+
 === Applications
 ID:     default_catalog.default_database.Applications
 Type:   state
@@ -48,17 +31,7 @@ Schema:
  - duration: BIGINT NOT NULL
  - application_date: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - updated_at: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
-Plan:
-LogicalProject(id=[$0], customer_id=[$1], loan_type_id=[$2], amount=[$3], duration=[$4], application_date=[$5], updated_at=[$6])
-  LogicalFilter(condition=[=($7, 1)])
-    LogicalProject(id=[$0], customer_id=[$1], loan_type_id=[$2], amount=[$3], duration=[$4], application_date=[$5], updated_at=[$6], __sqrlinternal_rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
-      LogicalTableScan(table=[[default_catalog, default_database, _ApplicationsStream]])
-SQL: CREATE VIEW `Applications`
-AS
-SELECT `id`, `customer_id`, `loan_type_id`, `amount`, `duration`, `application_date`, `updated_at`
-FROM (SELECT `id`, `customer_id`, `loan_type_id`, `amount`, `duration`, `application_date`, `updated_at`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `updated_at` DESC NULLS LAST) AS `__sqrlinternal_rownum`
-  FROM `default_catalog`.`default_database`.`_ApplicationsStream`) AS `t`
-WHERE `__sqrlinternal_rownum` = 1
+
 === CustomerUpdates
 ID:     default_catalog.default_database.CustomerUpdates
 Type:   state
@@ -69,18 +42,6 @@ Timestamp  : -
 Schema:
  - customer_id: BIGINT NOT NULL
  - num_updates: BIGINT NOT NULL
-Plan:
-LogicalAggregate(group=[{0}], num_updates=[COUNT()])
-  LogicalProject(customer_id=[$0])
-    LogicalJoin(condition=[=($8, $15)], joinType=[inner])
-      LogicalJoin(condition=[=($0, $9)], joinType=[inner])
-        LogicalTableScan(table=[[default_catalog, default_database, Customers]])
-        LogicalTableScan(table=[[default_catalog, default_database, Applications]])
-      LogicalTableScan(table=[[default_catalog, default_database, ApplicationUpdates]])
-SQL: CREATE VIEW `CustomerUpdates` AS  SELECT c.id AS customer_id, COUNT(*) AS num_updates FROM Customers c
-    JOIN Applications a ON c.id = a.customer_id
-    JOIN ApplicationUpdates u ON a.id = u.loan_application_id
-    GROUP BY c.id;
 
 === Customers
 ID:     default_catalog.default_database.Customers
@@ -100,17 +61,7 @@ Schema:
  - address: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - date_of_birth: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - updated_at: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
-Plan:
-LogicalProject(id=[$0], first_name=[$1], last_name=[$2], email=[$3], phone=[$4], address=[$5], date_of_birth=[$6], updated_at=[$7])
-  LogicalFilter(condition=[=($8, 1)])
-    LogicalProject(id=[$0], first_name=[$1], last_name=[$2], email=[$3], phone=[$4], address=[$5], date_of_birth=[$6], updated_at=[$7], __sqrlinternal_rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $7 DESC NULLS LAST)])
-      LogicalTableScan(table=[[default_catalog, default_database, _CustomersStream]])
-SQL: CREATE VIEW `Customers`
-AS
-SELECT `id`, `first_name`, `last_name`, `email`, `phone`, `address`, `date_of_birth`, `updated_at`
-FROM (SELECT `id`, `first_name`, `last_name`, `email`, `phone`, `address`, `date_of_birth`, `updated_at`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `updated_at` DESC NULLS LAST) AS `__sqrlinternal_rownum`
-  FROM `default_catalog`.`default_database`.`_CustomersStream`) AS `t`
-WHERE `__sqrlinternal_rownum` = 1
+
 === _ApplicationsStream
 ID:     default_catalog.default_database._ApplicationsStream
 Type:   stream
@@ -128,27 +79,7 @@ Schema:
  - duration: BIGINT NOT NULL
  - application_date: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - updated_at: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
-Plan:
-LogicalTableScan(table=[[default_catalog, default_database, _ApplicationsStream]])
-SQL: CREATE TEMPORARY TABLE `_ApplicationsStream__schema` (
-  `id` BIGINT NOT NULL,
-  `customer_id` BIGINT NOT NULL,
-  `loan_type_id` BIGINT NOT NULL,
-  `amount` DOUBLE NOT NULL,
-  `duration` BIGINT NOT NULL,
-  `application_date` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
-) WITH (
-  'connector' = 'datagen'
-);
-CREATE TABLE `_ApplicationsStream` (
-  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED
-) WITH (
-  'format' = 'flexible-json',
-  'path' = '${DATA_PATH}/applications.jsonl',
-  'connector' = 'filesystem'
-)
-LIKE `_ApplicationsStream__schema`
+
 === _CustomersStream
 ID:     default_catalog.default_database._CustomersStream
 Type:   stream
@@ -167,28 +98,7 @@ Schema:
  - address: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - date_of_birth: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - updated_at: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
-Plan:
-LogicalTableScan(table=[[default_catalog, default_database, _CustomersStream]])
-SQL: CREATE TEMPORARY TABLE `_CustomersStream__schema` (
-  `id` BIGINT NOT NULL,
-  `first_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `last_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `phone` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `address` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `date_of_birth` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
-) WITH (
-  'connector' = 'datagen'
-);
-CREATE TABLE `_CustomersStream` (
-  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED
-) WITH (
-  'format' = 'flexible-json',
-  'path' = '${DATA_PATH}/customers.jsonl',
-  'connector' = 'filesystem'
-)
-LIKE `_CustomersStream__schema`
+
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `_CustomersStream__schema` (
   `id` BIGINT NOT NULL,

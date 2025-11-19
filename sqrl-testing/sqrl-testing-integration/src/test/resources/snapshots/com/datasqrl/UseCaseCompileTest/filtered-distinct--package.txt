@@ -17,27 +17,7 @@ Schema:
  - unit_price: DOUBLE
  - discount: DOUBLE
  - _ingest_time: TIMESTAMP_LTZ(3) *PROCTIME* NOT NULL
-Plan:
-LogicalProject(id=[$0], customerid=[$1], time=[$2], productid=[$3], quantity=[$4], unit_price=[$5], discount=[$6], _ingest_time=[$7])
-  LogicalFilter(condition=[=($8, 1)])
-    LogicalProject(id=[$0], customerid=[$1], time=[$2], productid=[$3], quantity=[$4], unit_price=[$5], discount=[$6], _ingest_time=[$7], $f8=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
-      LogicalProject(id=[$0], customerid=[$1], time=[$2], productid=[$3], quantity=[$4], unit_price=[$5], discount=[$6], _ingest_time=[$7])
-        LogicalFilter(condition=[OR(AND(IS NULL($8), IS NULL($9), IS NULL($10), IS NULL($11), IS NULL($12)), <>($1, $8), <>($3, $9), <>($4, $10), <>($5, $11), AND(IS NULL($5), IS NOT NULL($11)), AND(IS NULL($11), IS NOT NULL($5)), <>($6, $12), AND(IS NULL($6), IS NOT NULL($12)), AND(IS NULL($12), IS NOT NULL($6)))])
-          LogicalProject(id=[$0], customerid=[$1], time=[$2], productid=[$3], quantity=[$4], unit_price=[$5], discount=[$6], _ingest_time=[$7], $f8=[LAG($1, 1) OVER (PARTITION BY $0 ORDER BY $7 NULLS FIRST)], $f9=[LAG($3, 1) OVER (PARTITION BY $0 ORDER BY $7 NULLS FIRST)], $f10=[LAG($4, 1) OVER (PARTITION BY $0 ORDER BY $7 NULLS FIRST)], $f11=[LAG($5, 1) OVER (PARTITION BY $0 ORDER BY $7 NULLS FIRST)], $f12=[LAG($6, 1) OVER (PARTITION BY $0 ORDER BY $7 NULLS FIRST)])
-            LogicalFilter(condition=[>=($2, $8)])
-              LogicalProject(id=[$0], customerid=[$1], time=[$2], productid=[$3], quantity=[$4], unit_price=[$5], discount=[$6], _ingest_time=[$7], $f8=[MAX($2) OVER (PARTITION BY $0 ORDER BY $7 NULLS FIRST)])
-                LogicalTableScan(table=[[default_catalog, default_database, Orders]])
-SQL: CREATE VIEW `DistinctOrders`
-AS
-SELECT `id`, `customerid`, `time`, `productid`, `quantity`, `unit_price`, `discount`, `_ingest_time`
-FROM (SELECT `id`, `customerid`, `time`, `productid`, `quantity`, `unit_price`, `discount`, `_ingest_time`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `time` DESC NULLS LAST) AS `$f8`
-  FROM (SELECT `id`, `customerid`, `time`, `productid`, `quantity`, `unit_price`, `discount`, `_ingest_time`
-    FROM (SELECT `id`, `customerid`, `time`, `productid`, `quantity`, `unit_price`, `discount`, `_ingest_time`, LAG(`customerid`, 1) OVER (PARTITION BY `id` ORDER BY `_ingest_time`) AS `$f8`, LAG(`productid`, 1) OVER (PARTITION BY `id` ORDER BY `_ingest_time`) AS `$f9`, LAG(`quantity`, 1) OVER (PARTITION BY `id` ORDER BY `_ingest_time`) AS `$f10`, LAG(`unit_price`, 1) OVER (PARTITION BY `id` ORDER BY `_ingest_time`) AS `$f11`, LAG(`discount`, 1) OVER (PARTITION BY `id` ORDER BY `_ingest_time`) AS `$f12`
-      FROM (SELECT `id`, `customerid`, `time`, `productid`, `quantity`, `unit_price`, `discount`, `_ingest_time`, MAX(`time`) OVER (PARTITION BY `id` ORDER BY `_ingest_time` RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS `$f8`
-        FROM `default_catalog`.`default_database`.`Orders`) AS `t`
-      WHERE `time` >= `$f8`) AS `t1`
-    WHERE `$f8` IS NULL AND `$f9` IS NULL AND `$f10` IS NULL AND `$f11` IS NULL AND `$f12` IS NULL OR `customerid` <> `$f8` OR (`productid` <> `$f9` OR (`quantity` <> `$f10` OR `unit_price` <> `$f11`)) OR (`unit_price` IS NULL AND `$f11` IS NOT NULL OR `$f11` IS NULL AND `unit_price` IS NOT NULL OR (`discount` <> `$f12` OR (`discount` IS NULL AND `$f12` IS NOT NULL OR `$f12` IS NULL AND `discount` IS NOT NULL)))) AS `t3`) AS `t4`
-WHERE `$f8` = 1
+
 === Orders
 ID:     default_catalog.default_database.Orders
 Type:   stream
@@ -56,30 +36,7 @@ Schema:
  - unit_price: DOUBLE
  - discount: DOUBLE
  - _ingest_time: TIMESTAMP_LTZ(3) *PROCTIME* NOT NULL
-Plan:
-LogicalProject(id=[$0], customerid=[$1], time=[$2], productid=[$3], quantity=[$4], unit_price=[$5], discount=[$6], _ingest_time=[PROCTIME()])
-  LogicalTableScan(table=[[default_catalog, default_database, Orders]])
-SQL: CREATE TEMPORARY TABLE `Orders__schema` (
-  `id` BIGINT NOT NULL,
-  `customerid` BIGINT NOT NULL,
-  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `productid` BIGINT NOT NULL,
-  `quantity` BIGINT NOT NULL,
-  `unit_price` DOUBLE,
-  `discount` DOUBLE
-) WITH (
-  'connector' = 'datagen'
-);
-CREATE TABLE `Orders` (
-  `_ingest_time` AS PROCTIME(),
-  PRIMARY KEY (`id`, `customerid`, `time`) NOT ENFORCED
-) WITH (
-  'format' = 'flexible-json',
-  'path' = '${DATA_PATH}/orders.jsonl',
-  'source.monitor-interval' = '10000',
-  'connector' = 'filesystem'
-)
-LIKE `Orders__schema`
+
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `Orders__schema` (
   `id` BIGINT NOT NULL,

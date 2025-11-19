@@ -12,13 +12,6 @@ Schema:
  - sensorid: INTEGER NOT NULL
  - maxTemp: FLOAT NOT NULL
  - avgTemp: FLOAT NOT NULL
-Plan:
-LogicalAggregate(group=[{0}], maxTemp=[MAX($1)], avgTemp=[AVG($1)])
-  LogicalProject(sensorid=[$0], temperature=[$1])
-    LogicalTableScan(table=[[default_catalog, default_database, SensorReading]])
-SQL: CREATE VIEW `SensorAggregate` AS  SELECT sensorid, MAX(temperature) AS maxTemp, AVG(temperature) AS avgTemp
-                   FROM SensorReading
-                   GROUP BY sensorid ORDER BY sensorid ASC;
 
 === SensorReading
 ID:     default_catalog.default_database.SensorReading
@@ -33,27 +26,7 @@ Schema:
  - sensorid: INTEGER NOT NULL
  - temperature: FLOAT NOT NULL
  - event_time: BIGINT NOT NULL
-Plan:
-LogicalTableScan(table=[[default_catalog, default_database, SensorReading]])
-SQL: CREATE TABLE `SensorReading` (
-  `sensorid` INTEGER NOT NULL,
-  `temperature` FLOAT NOT NULL,
-  `event_time` BIGINT NOT NULL,
-  PRIMARY KEY (`sensorid`, `event_time`) NOT ENFORCED
-) WITH (
-  'connector' = 'datagen',
-  'number-of-rows' = '10',
-  'rows-per-second' = '10',
-  'fields.sensorid.kind' = 'random',
-  'fields.sensorid.min' = '1',
-  'fields.sensorid.max' = '1',
-  'fields.temperature.kind' = 'sequence',
-  'fields.temperature.start' = '20',
-  'fields.temperature.end' = '29',
-  'fields.event_time.kind' = 'sequence',
-  'fields.event_time.start' = '1750533400',
-  'fields.event_time.end' = '1750533429'
-)
+
 === SensorReadingById
 ID:     default_catalog.default_database.SensorReadingById
 Type:   query
@@ -63,13 +36,6 @@ Annotations:
  - stream-root: SensorReading
  - parameters: sensorid
  - base-table: SensorReading
-Plan:
-LogicalSort(sort0=[$2], dir0=[DESC-nulls-last])
-  LogicalProject(sensorid=[$0], temperature=[$1], event_time=[$2])
-    LogicalFilter(condition=[=($0, ?0)])
-      LogicalTableScan(table=[[default_catalog, default_database, SensorReading]])
-SQL: CREATE VIEW `SensorReadingById` AS  SELECT * FROM SensorReading
-                    WHERE sensorid = ?         ORDER BY event_time DESC;
 
 >>>flink-sql-no-functions.sql
 CREATE TABLE `SensorReading` (

@@ -16,30 +16,7 @@ Schema:
  - duration: BIGINT NOT NULL
  - application_date: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - updated_at: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
-Plan:
-LogicalWatermarkAssigner(rowtime=[updated_at], watermark=[-($6, 1:INTERVAL SECOND)])
-  LogicalTableScan(table=[[default_catalog, default_database, _Applications]])
-SQL: CREATE TEMPORARY TABLE `_Applications__schema` (
-  `id` BIGINT NOT NULL,
-  `customer_id` BIGINT NOT NULL,
-  `loan_type_id` BIGINT NOT NULL,
-  `amount` DOUBLE NOT NULL,
-  `duration` BIGINT NOT NULL,
-  `application_date` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
-) WITH (
-  'connector' = 'datagen'
-);
-CREATE TABLE `_Applications` (
-  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED,
-  WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '0.001' SECOND
-) WITH (
-  'format' = 'flexible-json',
-  'path' = '${DATA_PATH}/applications.jsonl',
-  'source.monitor-interval' = '10 sec',
-  'connector' = 'filesystem'
-)
-LIKE `_Applications__schema`
+
 === iceberg-sink
 ID:     iceberg.iceberg-sink
 Type:   export

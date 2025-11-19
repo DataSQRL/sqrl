@@ -13,10 +13,6 @@ Schema:
  - uuidField: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - timestampMillisField: TIMESTAMP(3) *ROWTIME* NOT NULL
  - nullableTimestampMillisField: TIMESTAMP(3)
-Plan:
-LogicalProject(uuidField=[$0], timestampMillisField=[$1], nullableTimestampMillisField=[$2])
-  LogicalTableScan(table=[[default_catalog, default_database, _MySchema]])
-SQL: CREATE VIEW `Res` AS  SELECT * FROM _MySchema ORDER BY uuidField DESC;
 
 === _MySchema
 ID:     default_catalog.default_database._MySchema
@@ -31,26 +27,7 @@ Schema:
  - uuidField: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - timestampMillisField: TIMESTAMP(3) *ROWTIME* NOT NULL
  - nullableTimestampMillisField: TIMESTAMP(3)
-Plan:
-LogicalWatermarkAssigner(rowtime=[timestampMillisField], watermark=[$1])
-  LogicalTableScan(table=[[default_catalog, default_database, _MySchema]])
-SQL: CREATE TEMPORARY TABLE `_MySchema__schema` (
-  `uuidField` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `timestampMillisField` TIMESTAMP(3) NOT NULL,
-  `nullableTimestampMillisField` TIMESTAMP(3)
-) WITH (
-  'connector' = 'datagen'
-);
-CREATE TABLE `_MySchema` (
-  PRIMARY KEY (`uuidField`, `timestampMillisField`) NOT ENFORCED,
-  WATERMARK FOR `timestampMillisField` AS `timestampMillisField`
-) WITH (
-  'connector' = 'filesystem',
-  'format' = 'avro',
-  'path' = '${DATA_PATH}/data.avro',
-  'avro.timestamp_mapping.legacy' = 'true'
-)
-LIKE `_MySchema__schema`
+
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `_MySchema__schema` (
   `uuidField` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,

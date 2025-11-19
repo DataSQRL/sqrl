@@ -10,11 +10,6 @@ Timestamp  : -
 Schema:
  - val: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL
  - myFnc: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
-Plan:
-LogicalProject(val=[$0], myFnc=[MyAsyncScalarFunction($0, $1)])
-  LogicalValues(tuples=[[{ '1', 1 }, { '2', 2 }, { '3', 3 }]])
-SQL: CREATE VIEW `MyAsyncTable` AS  SELECT val, MyAsyncScalarFunction(val, ival) AS myFnc
-           FROM (VALUES (('1'), (1)), (('2'), (2)), (('3'), (3))) AS t(val, ival) ORDER BY val;
 
 === MyTable
 ID:     default_catalog.default_database.MyTable
@@ -27,12 +22,6 @@ Timestamp  : -
 Schema:
  - val: INTEGER NOT NULL
  - myFnc: BIGINT
-Plan:
-LogicalProject(val=[$0], myFnc=[MyScalarFunction(CAST($0):BIGINT, CAST($0):BIGINT)])
-  LogicalValues(tuples=[[{ 1 }, { 2 }, { 3 }, { 4 }, { 5 }, { 6 }, { 7 }, { 8 }, { 9 }, { 10 }]])
-SQL: CREATE VIEW `MyTable` AS  SELECT val, MyScalarFunction(val, val) AS myFnc
-           FROM (VALUES ((1)), ((2)), ((3)), ((4)), ((5)),
-            ((6)), ((7)), ((8)), ((9)), ((10))) AS t(val) ORDER BY val;
 
 === MyTableAnother
 ID:     default_catalog.default_database.MyTableAnother
@@ -45,11 +34,6 @@ Timestamp  : -
 Schema:
  - val: INTEGER NOT NULL
  - myFnc: BIGINT
-Plan:
-LogicalProject(val=[$0], myFnc=[AnotherFunction(CAST($0):BIGINT, CAST($0):BIGINT)])
-  LogicalValues(tuples=[[{ 1 }, { 2 }]])
-SQL: CREATE VIEW `MyTableAnother` AS  SELECT val, AnotherFunction(val, val) AS myFnc
-           FROM (VALUES ((1)), ((2))) AS t(val) ORDER BY val;
 
 === MyTableDifferentCase
 ID:     default_catalog.default_database.MyTableDifferentCase
@@ -62,10 +46,6 @@ Timestamp  : -
 Schema:
  - val: INTEGER NOT NULL
  - fn: BIGINT
-Plan:
-LogicalProject(val=[$0], fn=[anotherFunction(CAST($0):BIGINT, CAST($0):BIGINT)])
-  LogicalValues(tuples=[[{ 1 }, { 2 }]])
-SQL: CREATE VIEW `MyTableDifferentCase` AS  SELECT val, anotherFunction(val, val) as fn FROM (VALUES ((1)), ((2))) AS t(val) ORDER BY val;
 
 >>>flink-sql-no-functions.sql
 CREATE VIEW `MyTable`

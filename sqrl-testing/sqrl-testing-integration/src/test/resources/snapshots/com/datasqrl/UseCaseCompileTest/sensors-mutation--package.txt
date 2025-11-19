@@ -12,11 +12,6 @@ Schema:
  - sensorid: INTEGER NOT NULL
  - temperature: DECIMAL(8, 2) NOT NULL
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME*
-Plan:
-LogicalProject(sensorid=[$0], temperature=[$1], event_time=[$2])
-  LogicalFilter(condition=[>($1, 50)])
-    LogicalTableScan(table=[[default_catalog, default_database, SensorReading]])
-SQL: CREATE VIEW `HighTempAlert` AS  SELECT * FROM SensorReading WHERE temperature > 50 ORDER BY sensorid DESC;
 
 === SensorMaxTemp
 ID:     default_catalog.default_database.SensorMaxTemp
@@ -30,14 +25,6 @@ Timestamp  : -
 Schema:
  - sensorid: INTEGER NOT NULL
  - maxTemp: DECIMAL(8, 2) NOT NULL
-Plan:
-LogicalAggregate(group=[{0}], maxTemp=[MAX($1)])
-  LogicalProject(sensorid=[$0], temperature=[$1])
-    LogicalTableScan(table=[[default_catalog, default_database, SensorReading]])
-SQL: CREATE VIEW `SensorMaxTemp` AS  SELECT sensorid, max(temperature) as maxTemp
-    FROM SensorReading
-    GROUP BY sensorid
-    ORDER BY sensorid DESC;
 
 === SensorReading
 ID:     default_catalog.default_database.SensorReading
@@ -50,24 +37,7 @@ Schema:
  - sensorid: INTEGER NOT NULL
  - temperature: DECIMAL(8, 2) NOT NULL
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME*
-Plan:
-LogicalWatermarkAssigner(rowtime=[event_time], watermark=[-($2, 0:INTERVAL SECOND)])
-  LogicalProject(sensorid=[$0], temperature=[$1], event_time=[CAST($2):TIMESTAMP_LTZ(3) *ROWTIME*])
-    LogicalTableScan(table=[[default_catalog, default_database, SensorReading, metadata=[timestamp]]])
-SQL: CREATE TABLE `SensorReading` (
-  `sensorid` INTEGER NOT NULL,
-  `temperature` DECIMAL(8, 2) NOT NULL,
-  `event_time` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
-  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
-) WITH (
-  'connector' = 'kafka',
-  'flexible-json.timestamp-format.standard' = 'ISO-8601',
-  'format' = 'flexible-json',
-  'properties.auto.offset.reset' = 'earliest',
-  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
-  'properties.group.id' = '${KAFKA_GROUP_ID}',
-  'topic' = 'SensorReading'
-)
+
 === SensorReadingSubscription
 ID:     default_catalog.default_database.SensorReadingSubscription
 Type:   stream
@@ -79,10 +49,6 @@ Schema:
  - sensorid: INTEGER NOT NULL
  - temperature: DECIMAL(8, 2) NOT NULL
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME*
-Plan:
-LogicalProject(sensorid=[$0], temperature=[$1], event_time=[$2])
-  LogicalTableScan(table=[[default_catalog, default_database, SensorReading]])
-SQL: CREATE VIEW `SensorReadingSubscription` AS  SELECT * FROM SensorReading;
 
 === SensorSubscriptionById
 ID:     default_catalog.default_database.SensorSubscriptionById
@@ -92,12 +58,6 @@ Inputs: default_catalog.default_database.SensorReadingSubscription
 Annotations:
  - parameters: sensorid
  - base-table: SensorReading
-Plan:
-LogicalProject(sensorid=[$0], temperature=[$1], event_time=[$2])
-  LogicalFilter(condition=[=($0, ?0)])
-    LogicalTableScan(table=[[default_catalog, default_database, SensorReadingSubscription]])
-SQL: CREATE VIEW `SensorSubscriptionById` AS  SELECT * FROM SensorReadingSubscription
-                                                                    WHERE sensorid = ?        ;
 
 >>>flink-sql-no-functions.sql
 CREATE TABLE `SensorReading` (

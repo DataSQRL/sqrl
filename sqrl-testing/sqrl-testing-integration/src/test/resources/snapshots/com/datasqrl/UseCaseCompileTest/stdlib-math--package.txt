@@ -20,35 +20,6 @@ Schema:
  - exponential_distribution: DOUBLE
  - normal_distribution: DOUBLE
  - poisson_distribution: DOUBLE
-Plan:
-LogicalProject(d=[$0], b=[$1], cbrt=[cbrt(CAST($0):DOUBLE)], copy_sign=[copy_sign(CAST($0):DOUBLE, CAST($0):DOUBLE)], expm1=[expm1(CAST($0):DOUBLE)], hypot=[hypot(CAST($0):DOUBLE, CAST($0):DOUBLE)], log1p=[log1p(CAST($0):DOUBLE)], next_after=[next_after(CAST($0):DOUBLE, CAST($0):DOUBLE)], scalb=[scalb(CAST($0):DOUBLE, CAST($1):BIGINT)], ulp=[ulp(CAST($0):DOUBLE)], binomial_distribution=[binomial_distribution(CAST($1):BIGINT, 1:DOUBLE, CAST($1):BIGINT)], exponential_distribution=[exponential_distribution(CAST($0):DOUBLE, CAST($0):DOUBLE)], normal_distribution=[normal_distribution(CAST($0):DOUBLE, CAST($0):DOUBLE, CAST($0):DOUBLE)], poisson_distribution=[poisson_distribution(CAST($0):DOUBLE, CAST($1):BIGINT)])
-  LogicalValues(tuples=[[{ 1.0, 11 }, { 2.0, 12 }, { 3.0, 13 }, { 4.0, 14 }, { 5.0, 15 }, { 6.0, 16 }, { 7.0, 17 }, { 8.0, 18 }, { 9.0, 19 }, { 10.0, 20 }]])
-SQL: CREATE VIEW `MathFunctions` AS  SELECT d, b,
-            cbrt(d) AS cbrt,
-            copy_sign(d, d) AS copy_sign,
-            expm1(d) AS expm1,
-            hypot(d, d) AS hypot,
-            log1p(d) AS log1p,
-            next_after(d, d) AS next_after,
-            scalb(d, b) AS scalb,
-            ulp(d) AS ulp,
-            binomial_distribution(b, 1, b) AS binomial_distribution,
-            exponential_distribution(d, d) AS exponential_distribution,
-            normal_distribution(d, d, d) AS normal_distribution,
-            poisson_distribution(d, b) AS poisson_distribution
-           FROM (
-    VALUES 
-    ( 1.0, 11), 
-    ( 2.0, 12), 
-    ( 3.0, 13), 
-    ( 4.0, 14), 
-    ( 5.0, 15), 
-    ( 6.0, 16), 
-    ( 7.0, 17), 
-    ( 8.0, 18), 
-    ( 9.0, 19), 
-    ( 10.0, 20)
-    ) AS names(d, b);
 
 >>>flink-sql-no-functions.sql
 CREATE VIEW `MathFunctions`

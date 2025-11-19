@@ -10,13 +10,6 @@ Schema:
  - orgid: BIGINT NOT NULL
  - total_tokens: BIGINT NOT NULL
  - total_requests: BIGINT NOT NULL
-Plan:
-LogicalAggregate(group=[{0}], total_tokens=[SUM($1)], total_requests=[COUNT()])
-  LogicalProject(orgid=[$3], tokens=[$1])
-    LogicalTableScan(table=[[default_catalog, default_database, _EnrichedUserTokens]])
-SQL: CREATE VIEW `TotalOrgTokens` AS  SELECT orgid, sum(tokens) as total_tokens,
-                         count(tokens) as total_requests
-                  FROM _EnrichedUserTokens GROUP BY orgid;
 
 === TotalOrgTokensByRange
 ID:     default_catalog.default_database.TotalOrgTokensByRange
@@ -26,13 +19,6 @@ Inputs: default_catalog.default_database.TotalOrgTokens
 Annotations:
  - parameters: minTokens, maxTokens
  - base-table: TotalOrgTokens
-Plan:
-LogicalProject(orgid=[$0], total_tokens=[$1], total_requests=[$2])
-  LogicalFilter(condition=[AND(>=($1, ?0), <=($1, ?1))])
-    LogicalTableScan(table=[[default_catalog, default_database, TotalOrgTokens]])
-SQL: CREATE VIEW `TotalOrgTokensByRange` AS 
-    SELECT * FROM TotalOrgTokens
-    WHERE total_tokens >= ?          AND total_tokens <= ?         ;
 
 === TotalUserTokens
 ID:     default_catalog.default_database.TotalUserTokens
@@ -45,13 +31,6 @@ Schema:
  - userid: BIGINT NOT NULL
  - total_tokens: BIGINT NOT NULL
  - total_requests: BIGINT NOT NULL
-Plan:
-LogicalAggregate(group=[{0}], total_tokens=[SUM($1)], total_requests=[COUNT()])
-  LogicalProject(userid=[$0], tokens=[$1])
-    LogicalTableScan(table=[[default_catalog, default_database, UserTokens]])
-SQL: CREATE VIEW `TotalUserTokens` AS  SELECT userid, sum(tokens) as total_tokens,
-                          count(tokens) as total_requests
-                   FROM UserTokens GROUP BY userid;
 
 === UsageAlert
 ID:     default_catalog.default_database.UsageAlert
@@ -64,11 +43,6 @@ Schema:
  - userid: BIGINT NOT NULL
  - tokens: BIGINT NOT NULL
  - request_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
-Plan:
-LogicalProject(userid=[$0], tokens=[$1], request_time=[$2])
-  LogicalFilter(condition=[>($1, 100000)])
-    LogicalTableScan(table=[[default_catalog, default_database, UserTokens]])
-SQL: CREATE VIEW `UsageAlert` AS  SELECT * FROM UserTokens WHERE tokens > 100000;
 
 === UserTokens
 ID:     default_catalog.default_database.UserTokens
@@ -81,24 +55,7 @@ Schema:
  - userid: BIGINT NOT NULL
  - tokens: BIGINT NOT NULL
  - request_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
-Plan:
-LogicalWatermarkAssigner(rowtime=[request_time], watermark=[-($2, 0:INTERVAL SECOND)])
-  LogicalProject(userid=[$0], tokens=[$1], request_time=[CAST($2):TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL])
-    LogicalTableScan(table=[[default_catalog, default_database, UserTokens, metadata=[timestamp]]])
-SQL: CREATE TABLE `UserTokens` (
-  `userid` BIGINT NOT NULL,
-  `tokens` BIGINT NOT NULL,
-  `request_time` TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
-  WATERMARK FOR `request_time` AS `request_time` - INTERVAL '0.0' SECOND
-) WITH (
-  'connector' = 'kafka',
-  'flexible-json.timestamp-format.standard' = 'ISO-8601',
-  'format' = 'flexible-json',
-  'properties.auto.offset.reset' = 'earliest',
-  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
-  'properties.group.id' = '${KAFKA_GROUP_ID}',
-  'topic' = 'UserTokens'
-)
+
 === _CurrentUserInfo
 ID:     default_catalog.default_database._CurrentUserInfo
 Type:   state
@@ -111,17 +68,7 @@ Schema:
  - orgid: BIGINT NOT NULL
  - last_updated: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
-Plan:
-LogicalProject(userid=[$0], orgid=[$1], last_updated=[$2], event_time=[$3])
-  LogicalFilter(condition=[=($4, 1)])
-    LogicalProject(userid=[$0], orgid=[$1], last_updated=[$2], event_time=[$3], __sqrlinternal_rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
-      LogicalTableScan(table=[[default_catalog, default_database, _UserInfo]])
-SQL: CREATE VIEW `_CurrentUserInfo`
-AS
-SELECT `userid`, `orgid`, `last_updated`, `event_time`
-FROM (SELECT `userid`, `orgid`, `last_updated`, `event_time`, ROW_NUMBER() OVER (PARTITION BY `userid` ORDER BY `last_updated` DESC NULLS LAST) AS `__sqrlinternal_rownum`
-  FROM `default_catalog`.`default_database`.`_UserInfo`) AS `t`
-WHERE `__sqrlinternal_rownum` = 1
+
 === _EnrichedUserTokens
 ID:     default_catalog.default_database._EnrichedUserTokens
 Type:   stream
@@ -134,15 +81,6 @@ Schema:
  - tokens: BIGINT NOT NULL
  - request_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - orgid: BIGINT NOT NULL
-Plan:
-LogicalProject(userid=[$0], tokens=[$1], request_time=[$2], orgid=[$4])
-  LogicalCorrelate(correlation=[$cor1], joinType=[inner], requiredColumns=[{0, 2}])
-    LogicalTableScan(table=[[default_catalog, default_database, UserTokens]])
-    LogicalFilter(condition=[=($0, $cor1.userid)])
-      LogicalSnapshot(period=[$cor1.request_time])
-        LogicalTableScan(table=[[default_catalog, default_database, _CurrentUserInfo]])
-SQL: CREATE VIEW `_EnrichedUserTokens` AS  SELECT t.*, u.orgid FROM UserTokens t
-   JOIN _CurrentUserInfo FOR SYSTEM_TIME AS OF t.request_time u ON u.userid = t.userid;
 
 === _UserInfo
 ID:     default_catalog.default_database._UserInfo
@@ -156,22 +94,7 @@ Schema:
  - orgid: BIGINT NOT NULL
  - last_updated: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
-Plan:
-LogicalWatermarkAssigner(rowtime=[event_time], watermark=[-($3, 1:INTERVAL SECOND)])
-  LogicalProject(userid=[$0], orgid=[$1], last_updated=[$2], event_time=[NOW()])
-    LogicalTableScan(table=[[default_catalog, default_database, _UserInfo]])
-SQL: CREATE TABLE `_UserInfo` (
-  `userid` BIGINT NOT NULL,
-  `orgid` BIGINT NOT NULL,
-  `last_updated` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `event_time` AS NOW(),
-  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.001' SECOND
-) WITH (
-  'connector' = 'filesystem',
-  'format' = 'flexible-json',
-  'path' = '${DATA_PATH}/userinfo.jsonl',
-  'source.monitor-interval' = '10 sec'
-)
+
 >>>schema.graphqls
 "An RFC-3339 compliant DateTime Scalar"
 scalar DateTime

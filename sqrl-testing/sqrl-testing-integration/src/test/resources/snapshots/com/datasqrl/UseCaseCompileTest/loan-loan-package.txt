@@ -16,27 +16,7 @@ Schema:
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
  - context: RecordType:peek_no_expand(INTEGER customerid) NOT NULL
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME*
-Plan:
-LogicalWatermarkAssigner(rowtime=[event_time], watermark=[-($5, 0:INTERVAL SECOND)])
-  LogicalProject(_uuid=[$0], role=[$1], content=[$2], name=[$3], context=[$4], event_time=[CAST($5):TIMESTAMP_LTZ(3) *ROWTIME*])
-    LogicalTableScan(table=[[default_catalog, default_database, AddChatMessage, metadata=[timestamp]]])
-SQL: CREATE TABLE `AddChatMessage` (
-  `_uuid` STRING NOT NULL,
-  `role` STRING NOT NULL,
-  `content` STRING NOT NULL,
-  `name` STRING,
-  `context` ROW(`customerid` INTEGER) NOT NULL,
-  `event_time` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
-  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
-) WITH (
-  'connector' = 'kafka',
-  'flexible-json.timestamp-format.standard' = 'ISO-8601',
-  'format' = 'flexible-json',
-  'properties.auto.offset.reset' = 'earliest',
-  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
-  'properties.group.id' = '${KAFKA_GROUP_ID}',
-  'topic' = 'ChatMessage'
-)
+
 === ApplicationAlert
 ID:     default_catalog.default_database.ApplicationAlert
 Type:   stream
@@ -54,13 +34,6 @@ Schema:
  - max_amount: DOUBLE NOT NULL
  - min_amount: DOUBLE NOT NULL
  - amount: DOUBLE NOT NULL
-Plan:
-LogicalProject(_uuid=[$0], id=[$4], customer_id=[$5], loan_type_id=[$6], max_amount=[$9], min_amount=[$10], amount=[$7])
-  LogicalFilter(condition=[AND(=($1, 'underwriting'), OR(>($7, $9), <($7, $10)))])
-    LogicalTableScan(table=[[default_catalog, default_database, ApplicationStatus]])
-SQL: CREATE VIEW `ApplicationAlert` AS  SELECT _uuid, id, customer_id, loan_type_id, max_amount, min_amount, amount
-                    FROM ApplicationStatus a
-                    WHERE status = 'underwriting' AND (amount > max_amount OR amount < min_amount);
 
 === ApplicationStatus
 ID:     default_catalog.default_database.ApplicationStatus
@@ -83,21 +56,6 @@ Schema:
  - duration: BIGINT NOT NULL
  - max_amount: DOUBLE NOT NULL
  - min_amount: DOUBLE NOT NULL
-Plan:
-LogicalProject(_uuid=[$0], status=[$2], message=[$3], event_time=[$4], id=[$5], customer_id=[$6], loan_type_id=[$7], amount=[$8], duration=[$9], max_amount=[$16], min_amount=[$17])
-  LogicalCorrelate(correlation=[$cor3], joinType=[inner], requiredColumns=[{4, 7}])
-    LogicalCorrelate(correlation=[$cor2], joinType=[inner], requiredColumns=[{1, 4}])
-      LogicalTableScan(table=[[default_catalog, default_database, ApplicationUpdates]])
-      LogicalFilter(condition=[=($0, $cor2.loan_application_id)])
-        LogicalSnapshot(period=[$cor2.event_time])
-          LogicalTableScan(table=[[default_catalog, default_database, Applications]])
-    LogicalFilter(condition=[=($0, $cor3.loan_type_id)])
-      LogicalSnapshot(period=[$cor3.event_time])
-        LogicalTableScan(table=[[default_catalog, default_database, LoanTypes]])
-SQL: CREATE VIEW `ApplicationStatus` AS  SELECT u._uuid, u.status, u.message, u.event_time, a.id, a.customer_id, a.loan_type_id,
-                            a.amount, a.duration, t.max_amount, t.min_amount
-                     FROM ApplicationUpdates u JOIN Applications FOR SYSTEM_TIME AS OF u.`event_time` a ON a.id = u.loan_application_id
-                            JOIN LoanTypes FOR SYSTEM_TIME AS OF u.`event_time` t ON t.id = a.loan_type_id;
 
 === ApplicationUpdates
 ID:     default_catalog.default_database.ApplicationUpdates
@@ -114,27 +72,7 @@ Schema:
  - status: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - message: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME*
-Plan:
-LogicalWatermarkAssigner(rowtime=[event_time], watermark=[-($4, 0:INTERVAL SECOND)])
-  LogicalProject(_uuid=[$0], loan_application_id=[$1], status=[$2], message=[$3], event_time=[CAST($4):TIMESTAMP_LTZ(3) *ROWTIME*])
-    LogicalTableScan(table=[[default_catalog, default_database, ApplicationUpdates, metadata=[timestamp]]])
-SQL: CREATE TABLE `ApplicationUpdates` (
-  `_uuid` STRING NOT NULL,
-  `loan_application_id` BIGINT NOT NULL,
-  `status` STRING NOT NULL,
-  `message` STRING,
-  `event_time` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
-  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
-) WITH (
-  'connector' = 'kafka',
-  'flexible-json.timestamp-format.standard' = 'ISO-8601',
-  'format' = 'flexible-json',
-  'properties.auto.offset.reset' = 'earliest',
-  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
-  'properties.group.id' = '${KAFKA_GROUP_ID}',
-  'properties.isolation.level' = 'read_committed',
-  'topic' = 'ApplicationUpdates'
-)
+
 === Applications
 ID:     default_catalog.default_database.Applications
 Type:   state
@@ -153,17 +91,7 @@ Schema:
  - duration: BIGINT NOT NULL
  - application_date: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - updated_at: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
-Plan:
-LogicalProject(id=[$0], customer_id=[$1], loan_type_id=[$2], amount=[$3], duration=[$4], application_date=[$5], updated_at=[$6])
-  LogicalFilter(condition=[=($7, 1)])
-    LogicalProject(id=[$0], customer_id=[$1], loan_type_id=[$2], amount=[$3], duration=[$4], application_date=[$5], updated_at=[$6], __sqrlinternal_rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $6 DESC NULLS LAST)])
-      LogicalTableScan(table=[[default_catalog, default_database, ApplicationsStream]])
-SQL: CREATE VIEW `Applications`
-AS
-SELECT `id`, `customer_id`, `loan_type_id`, `amount`, `duration`, `application_date`, `updated_at`
-FROM (SELECT `id`, `customer_id`, `loan_type_id`, `amount`, `duration`, `application_date`, `updated_at`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `updated_at` DESC NULLS LAST) AS `__sqrlinternal_rownum`
-  FROM `default_catalog`.`default_database`.`ApplicationsStream`) AS `t`
-WHERE `__sqrlinternal_rownum` = 1
+
 === ApplicationsStream
 ID:     default_catalog.default_database.ApplicationsStream
 Type:   stream
@@ -181,30 +109,7 @@ Schema:
  - duration: BIGINT NOT NULL
  - application_date: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - updated_at: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
-Plan:
-LogicalWatermarkAssigner(rowtime=[updated_at], watermark=[-($6, 1:INTERVAL SECOND)])
-  LogicalTableScan(table=[[default_catalog, default_database, ApplicationsStream]])
-SQL: CREATE TEMPORARY TABLE `ApplicationsStream__schema` (
-  `id` BIGINT NOT NULL,
-  `customer_id` BIGINT NOT NULL,
-  `loan_type_id` BIGINT NOT NULL,
-  `amount` DOUBLE NOT NULL,
-  `duration` BIGINT NOT NULL,
-  `application_date` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
-) WITH (
-  'connector' = 'datagen'
-);
-CREATE TABLE `ApplicationsStream` (
-  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED,
-  WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '0.001' SECOND
-) WITH (
-  'format' = 'flexible-json',
-  'path' = '${DATA_PATH}/applications.jsonl',
-  'source.monitor-interval' = '10 sec',
-  'connector' = 'filesystem'
-)
-LIKE `ApplicationsStream__schema`
+
 === CustomerChatMessage
 ID:     default_catalog.default_database.CustomerChatMessage
 Type:   stream
@@ -222,12 +127,6 @@ Schema:
  - customerid: INTEGER
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME*
  - uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
-Plan:
-LogicalProject(role=[$1], content=[$2], name=[$3], customerid=[$4.customerid], timestamp=[$5], uuid=[$0])
-  LogicalTableScan(table=[[default_catalog, default_database, AddChatMessage]])
-SQL: CREATE VIEW `CustomerChatMessage` AS  SELECT role, content, name, c.context.customerid, event_time AS `timestamp`,
-                        _uuid AS uuid
-                       FROM AddChatMessage c ORDER BY `timestamp` DESC;
 
 === Customers
 ID:     default_catalog.default_database.Customers
@@ -248,17 +147,7 @@ Schema:
  - address: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - date_of_birth: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - updated_at: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
-Plan:
-LogicalProject(id=[$0], first_name=[$1], last_name=[$2], email=[$3], phone=[$4], address=[$5], date_of_birth=[$6], updated_at=[$7])
-  LogicalFilter(condition=[=($8, 1)])
-    LogicalProject(id=[$0], first_name=[$1], last_name=[$2], email=[$3], phone=[$4], address=[$5], date_of_birth=[$6], updated_at=[$7], __sqrlinternal_rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $7 DESC NULLS LAST)])
-      LogicalTableScan(table=[[default_catalog, default_database, CustomersStream]])
-SQL: CREATE VIEW `Customers`
-AS
-SELECT `id`, `first_name`, `last_name`, `email`, `phone`, `address`, `date_of_birth`, `updated_at`
-FROM (SELECT `id`, `first_name`, `last_name`, `email`, `phone`, `address`, `date_of_birth`, `updated_at`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `updated_at` DESC NULLS LAST) AS `__sqrlinternal_rownum`
-  FROM `default_catalog`.`default_database`.`CustomersStream`) AS `t`
-WHERE `__sqrlinternal_rownum` = 1
+
 === CustomersStream
 ID:     default_catalog.default_database.CustomersStream
 Type:   stream
@@ -277,31 +166,7 @@ Schema:
  - address: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - date_of_birth: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - updated_at: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
-Plan:
-LogicalWatermarkAssigner(rowtime=[updated_at], watermark=[-($7, 1:INTERVAL SECOND)])
-  LogicalTableScan(table=[[default_catalog, default_database, CustomersStream]])
-SQL: CREATE TEMPORARY TABLE `CustomersStream__schema` (
-  `id` BIGINT NOT NULL,
-  `first_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `last_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `phone` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `address` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `date_of_birth` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
-) WITH (
-  'connector' = 'datagen'
-);
-CREATE TABLE `CustomersStream` (
-  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED,
-  WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '0.001' SECOND
-) WITH (
-  'format' = 'flexible-json',
-  'path' = '${DATA_PATH}/customers.jsonl',
-  'source.monitor-interval' = '10 sec',
-  'connector' = 'filesystem'
-)
-LIKE `CustomersStream__schema`
+
 === LoanTypes
 ID:     default_catalog.default_database.LoanTypes
 Type:   state
@@ -322,17 +187,7 @@ Schema:
  - max_duration: BIGINT NOT NULL
  - min_duration: BIGINT NOT NULL
  - updated_at: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
-Plan:
-LogicalProject(id=[$0], name=[$1], description=[$2], interest_rate=[$3], max_amount=[$4], min_amount=[$5], max_duration=[$6], min_duration=[$7], updated_at=[$8])
-  LogicalFilter(condition=[=($9, 1)])
-    LogicalProject(id=[$0], name=[$1], description=[$2], interest_rate=[$3], max_amount=[$4], min_amount=[$5], max_duration=[$6], min_duration=[$7], updated_at=[$8], __sqrlinternal_rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $8 DESC NULLS LAST)])
-      LogicalTableScan(table=[[default_catalog, default_database, LoanTypesStream]])
-SQL: CREATE VIEW `LoanTypes`
-AS
-SELECT `id`, `name`, `description`, `interest_rate`, `max_amount`, `min_amount`, `max_duration`, `min_duration`, `updated_at`
-FROM (SELECT `id`, `name`, `description`, `interest_rate`, `max_amount`, `min_amount`, `max_duration`, `min_duration`, `updated_at`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `updated_at` DESC NULLS LAST) AS `__sqrlinternal_rownum`
-  FROM `default_catalog`.`default_database`.`LoanTypesStream`) AS `t`
-WHERE `__sqrlinternal_rownum` = 1
+
 === LoanTypesStream
 ID:     default_catalog.default_database.LoanTypesStream
 Type:   stream
@@ -352,32 +207,7 @@ Schema:
  - max_duration: BIGINT NOT NULL
  - min_duration: BIGINT NOT NULL
  - updated_at: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
-Plan:
-LogicalWatermarkAssigner(rowtime=[updated_at], watermark=[-($8, 1:INTERVAL SECOND)])
-  LogicalTableScan(table=[[default_catalog, default_database, LoanTypesStream]])
-SQL: CREATE TEMPORARY TABLE `LoanTypesStream__schema` (
-  `id` BIGINT NOT NULL,
-  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `interest_rate` DOUBLE NOT NULL,
-  `max_amount` DOUBLE NOT NULL,
-  `min_amount` DOUBLE NOT NULL,
-  `max_duration` BIGINT NOT NULL,
-  `min_duration` BIGINT NOT NULL,
-  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
-) WITH (
-  'connector' = 'datagen'
-);
-CREATE TABLE `LoanTypesStream` (
-  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED,
-  WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '0.001' SECOND
-) WITH (
-  'format' = 'flexible-json',
-  'path' = '${DATA_PATH}/loan_types.jsonl',
-  'source.monitor-interval' = '10 sec',
-  'connector' = 'filesystem'
-)
-LIKE `LoanTypesStream__schema`
+
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `CustomersStream__schema` (
   `id` BIGINT NOT NULL,

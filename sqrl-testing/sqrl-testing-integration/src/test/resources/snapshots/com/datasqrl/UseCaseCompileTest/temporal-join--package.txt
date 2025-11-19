@@ -13,16 +13,6 @@ Schema:
  - temperature: FLOAT NOT NULL
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - sensor_name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
-Plan:
-LogicalProject(sensorid=[$0], temperature=[$1], event_time=[$2], sensor_name=[$4])
-  LogicalCorrelate(correlation=[$cor1], joinType=[left], requiredColumns=[{0, 2}])
-    LogicalTableScan(table=[[default_catalog, default_database, SensorReading]])
-    LogicalFilter(condition=[=($cor1.sensorid, $0)])
-      LogicalSnapshot(period=[$cor1.event_time])
-        LogicalTableScan(table=[[default_catalog, default_database, _SensorDistinct]])
-SQL: CREATE VIEW `EnrichedSensorReading` AS  SELECT r.sensorid, r.temperature, r.event_time, u.sensor_name
-                         FROM SensorReading r LEFT JOIN _SensorDistinct FOR SYSTEM_TIME AS OF r.event_time u on r.sensorid = u.sensorid
-                         ORDER BY r.event_time ASC;
 
 === SensorReading
 ID:     default_catalog.default_database.SensorReading
@@ -35,24 +25,7 @@ Schema:
  - sensorid: INTEGER NOT NULL
  - temperature: FLOAT NOT NULL
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
-Plan:
-LogicalWatermarkAssigner(rowtime=[event_time], watermark=[-($2, 0:INTERVAL SECOND)])
-  LogicalProject(sensorid=[$0], temperature=[$1], event_time=[CAST($2):TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL])
-    LogicalTableScan(table=[[default_catalog, default_database, SensorReading, metadata=[timestamp]]])
-SQL: CREATE TABLE `SensorReading` (
-  `sensorid` INTEGER NOT NULL,
-  `temperature` FLOAT NOT NULL,
-  `event_time` TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
-  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
-) WITH (
-  'connector' = 'kafka',
-  'flexible-json.timestamp-format.standard' = 'ISO-8601',
-  'format' = 'flexible-json',
-  'properties.auto.offset.reset' = 'earliest',
-  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
-  'properties.group.id' = '${KAFKA_GROUP_ID}',
-  'topic' = 'SensorReading'
-)
+
 === SensorUpdates
 ID:     default_catalog.default_database.SensorUpdates
 Type:   stream
@@ -64,24 +37,7 @@ Schema:
  - sensorid: INTEGER NOT NULL
  - sensor_name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
-Plan:
-LogicalWatermarkAssigner(rowtime=[lastUpdated], watermark=[-($2, 0:INTERVAL SECOND)])
-  LogicalProject(sensorid=[$0], sensor_name=[$1], lastUpdated=[CAST($2):TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL])
-    LogicalTableScan(table=[[default_catalog, default_database, SensorUpdates, metadata=[timestamp]]])
-SQL: CREATE TABLE `SensorUpdates` (
-  `sensorid` INTEGER NOT NULL,
-  `sensor_name` STRING NOT NULL,
-  `lastUpdated` TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
-  WATERMARK FOR `lastUpdated` AS `lastUpdated` - INTERVAL '0.0' SECOND
-) WITH (
-  'connector' = 'kafka',
-  'flexible-json.timestamp-format.standard' = 'ISO-8601',
-  'format' = 'flexible-json',
-  'properties.auto.offset.reset' = 'earliest',
-  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
-  'properties.group.id' = '${KAFKA_GROUP_ID}',
-  'topic' = 'SensorUpdates'
-)
+
 === _SensorDistinct
 ID:     default_catalog.default_database._SensorDistinct
 Type:   state
@@ -95,17 +51,7 @@ Schema:
  - sensorid: INTEGER NOT NULL
  - sensor_name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
-Plan:
-LogicalProject(sensorid=[$0], sensor_name=[$1], lastUpdated=[$2])
-  LogicalFilter(condition=[=($3, 1)])
-    LogicalProject(sensorid=[$0], sensor_name=[$1], lastUpdated=[$2], __sqrlinternal_rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $2 DESC NULLS LAST)])
-      LogicalTableScan(table=[[default_catalog, default_database, SensorUpdates]])
-SQL: CREATE VIEW `_SensorDistinct`
-AS
-SELECT `sensorid`, `sensor_name`, `lastUpdated`
-FROM (SELECT `sensorid`, `sensor_name`, `lastUpdated`, ROW_NUMBER() OVER (PARTITION BY `sensorid` ORDER BY `lastUpdated` DESC NULLS LAST) AS `__sqrlinternal_rownum`
-  FROM `default_catalog`.`default_database`.`SensorUpdates`) AS `t`
-WHERE `__sqrlinternal_rownum` = 1
+
 === Result
 ID:     logger.Result
 Type:   export
