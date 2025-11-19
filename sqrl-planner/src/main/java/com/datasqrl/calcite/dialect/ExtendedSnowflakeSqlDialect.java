@@ -16,7 +16,7 @@
 package com.datasqrl.calcite.dialect;
 
 import com.datasqrl.calcite.Dialect;
-import com.datasqrl.function.translations.SqlTranslation;
+import com.datasqrl.function.translation.SqlTranslation;
 import com.datasqrl.util.ServiceLoaderDiscovery;
 import java.util.Map;
 import java.util.stream.Collectors;

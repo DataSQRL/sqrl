@@ -16,6 +16,7 @@
 package com.datasqrl.calcite.function;
 
 import com.datasqrl.calcite.Dialect;
+import com.datasqrl.function.translation.SqlTranslation;
 import java.util.List;
 import org.apache.calcite.plan.RelRule;
 import org.apache.calcite.sql.SqlOperator;
@@ -26,7 +27,7 @@ import org.apache.calcite.sql.SqlOperator;
  * Make sure you annotate your implementation with @AutoService for it to be discovered.
  *
  * <p>Simpler transformations that only require changing the function name and/or arguments should
- * be implemented via {@link com.datasqrl.function.translations.SqlTranslation}.
+ * be implemented via {@link SqlTranslation}.
  */
 public interface OperatorRuleTransform {
   /**

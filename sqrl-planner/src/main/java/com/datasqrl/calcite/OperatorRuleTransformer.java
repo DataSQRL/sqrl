@@ -17,6 +17,7 @@ package com.datasqrl.calcite;
 
 import com.datasqrl.calcite.function.OperatorRuleTransform;
 import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.function.translation.SqlTranslation;
 import com.datasqrl.plan.rules.SqrlRelMetadataProvider;
 import com.datasqrl.util.ServiceLoaderDiscovery;
 import java.util.HashMap;
@@ -40,8 +41,7 @@ import org.apache.calcite.tools.Programs;
  * at the {@link RelNode} level.
  *
  * <p>Simpler transformations that only require switching out the function name or parameter order
- * should be implemented via {@link com.datasqrl.function.translations.SqlTranslation} which happen
- * during unparsing.
+ * should be implemented via {@link SqlTranslation} which happen during unparsing.
  */
 public class OperatorRuleTransformer {
 
