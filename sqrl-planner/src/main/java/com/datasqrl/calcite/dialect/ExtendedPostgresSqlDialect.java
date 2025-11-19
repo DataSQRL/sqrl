@@ -158,8 +158,16 @@ public class ExtendedPostgresSqlDialect extends PostgresqlSqlDialect {
           .unparse(call, writer, leftPrec, rightPrec);
       return;
     }
-
-    super.unparseCall(writer, call, leftPrec, rightPrec);
+    try {
+      super.unparseCall(writer, call, leftPrec, rightPrec);
+    } catch (UnsupportedOperationException e) {
+      throw new UnsupportedOperationException(
+          "Could not unparse:"
+              + call.getOperator().getName()
+              + " -> "
+              + call.getOperandList().toString(),
+          e);
+    }
   }
 
   @Override
