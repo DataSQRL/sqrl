@@ -13,11 +13,6 @@ Schema:
  - sensorid: INTEGER NOT NULL
  - temperature: FLOAT NOT NULL
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME*
-Plan:
-LogicalProject(uuid=[$0], sensorid=[$1], temperature=[$2], event_time=[$3])
-  LogicalFilter(condition=[>($2, 50)])
-    LogicalTableScan(table=[[default_catalog, default_database, SensorReading]])
-SQL: CREATE VIEW `HighTempAlert` AS  SELECT * FROM SensorReading WHERE temperature > 50;
 
 === SensorAnalysis
 ID:     default_catalog.default_database.SensorAnalysis
@@ -33,13 +28,6 @@ Schema:
  - sensorid: INTEGER NOT NULL
  - avg_temperatures: FLOAT NOT NULL
  - max_temperature: FLOAT NOT NULL
-Plan:
-LogicalAggregate(group=[{0}], avg_temperatures=[AVG($1)], max_temperature=[MAX($1)])
-  LogicalProject(sensorid=[$1], temperature=[$2])
-    LogicalTableScan(table=[[default_catalog, default_database, SensorReading]])
-SQL: CREATE VIEW `SensorAnalysis` AS  SELECT sensorid, AVG(temperature) AS avg_temperatures,
-                           MAX(temperature) AS max_temperature
-                    FROM SensorReading GROUP BY sensorid ORDER BY sensorid DESC;
 
 === SensorAnalysisById
 ID:     default_catalog.default_database.SensorAnalysisById
@@ -50,11 +38,6 @@ Annotations:
  - stream-root: SensorReading
  - parameters: sensorid
  - base-table: SensorAnalysis
-Plan:
-LogicalProject(sensorid=[$0], avg_temperatures=[$1], max_temperature=[$2])
-  LogicalFilter(condition=[=($0, ?0)])
-    LogicalTableScan(table=[[default_catalog, default_database, SensorAnalysis]])
-SQL: CREATE VIEW `SensorAnalysisById` AS  SELECT * FROM SensorAnalysis WHERE sensorid = ?        ;
 
 === SensorMaxTempLastMin
 ID:     default_catalog.default_database.SensorMaxTempLastMin
@@ -70,17 +53,7 @@ Schema:
  - sensorid: INTEGER NOT NULL
  - endOfMin: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - avg_temperature: FLOAT NOT NULL
-Plan:
-LogicalProject(sensorid=[$0], endOfMin=[$1], avg_temperature=[$2])
-  LogicalFilter(condition=[=($3, 1)])
-    LogicalProject(sensorid=[$0], endOfMin=[$1], avg_temperature=[$2], __sqrlinternal_rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $1 DESC NULLS LAST)])
-      LogicalTableScan(table=[[default_catalog, default_database, _SensorMaxTempLastMinWindow]])
-SQL: CREATE VIEW `SensorMaxTempLastMin`
-AS
-SELECT `sensorid`, `endOfMin`, `avg_temperature`
-FROM (SELECT `sensorid`, `endOfMin`, `avg_temperature`, ROW_NUMBER() OVER (PARTITION BY `sensorid` ORDER BY `endOfMin` DESC NULLS LAST) AS `__sqrlinternal_rownum`
-  FROM `default_catalog`.`default_database`.`_SensorMaxTempLastMinWindow`) AS `t`
-WHERE `__sqrlinternal_rownum` = 1
+
 === SensorReading
 ID:     default_catalog.default_database.SensorReading
 Type:   stream
@@ -95,25 +68,7 @@ Schema:
  - sensorid: INTEGER NOT NULL
  - temperature: FLOAT NOT NULL
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME*
-Plan:
-LogicalWatermarkAssigner(rowtime=[event_time], watermark=[-($3, 0:INTERVAL SECOND)])
-  LogicalProject(uuid=[$0], sensorid=[$1], temperature=[$2], event_time=[CAST($3):TIMESTAMP_LTZ(3) *ROWTIME*])
-    LogicalTableScan(table=[[default_catalog, default_database, SensorReading, metadata=[timestamp]]])
-SQL: CREATE TABLE `SensorReading` (
-  `uuid` STRING NOT NULL,
-  `sensorid` INTEGER NOT NULL,
-  `temperature` FLOAT NOT NULL,
-  `event_time` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
-  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
-) WITH (
-  'connector' = 'kafka',
-  'flexible-json.timestamp-format.standard' = 'ISO-8601',
-  'format' = 'flexible-json',
-  'properties.auto.offset.reset' = 'earliest',
-  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
-  'properties.group.id' = '${KAFKA_GROUP_ID}',
-  'topic' = 'SensorReading'
-)
+
 === SensorReadingById
 ID:     default_catalog.default_database.SensorReadingById
 Type:   query
@@ -123,13 +78,6 @@ Annotations:
  - stream-root: SensorReading
  - parameters: sensorid
  - base-table: SensorReading
-Plan:
-LogicalSort(sort0=[$3], dir0=[DESC-nulls-last])
-  LogicalProject(uuid=[$0], sensorid=[$1], temperature=[$2], event_time=[$3])
-    LogicalFilter(condition=[=($1, ?0)])
-      LogicalTableScan(table=[[default_catalog, default_database, SensorReading]])
-SQL: CREATE VIEW `SensorReadingById` AS  SELECT * FROM SensorReading
-                                              WHERE sensorid = ?         ORDER BY event_time DESC;
 
 === _SensorMaxTempLastMinWindow
 ID:     default_catalog.default_database._SensorMaxTempLastMinWindow
@@ -145,17 +93,6 @@ Schema:
  - sensorid: INTEGER NOT NULL
  - endOfMin: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - avg_temperature: FLOAT NOT NULL
-Plan:
-LogicalProject(sensorid=[$0], endOfMin=[$3], avg_temperature=[$4])
-  LogicalAggregate(group=[{0, 1, 2, 3}], avg_temperature=[AVG($4)])
-    LogicalProject(sensorid=[$1], window_start=[$4], window_end=[$5], endOfMin=[$6], temperature=[$2])
-      LogicalTableFunctionScan(invocation=[HOP(DESCRIPTOR($3), 10000:INTERVAL SECOND, 60000:INTERVAL MINUTE)], rowType=[RecordType(VARCHAR(2147483647) uuid, INTEGER sensorid, FLOAT temperature, TIMESTAMP_LTZ(3) *ROWTIME* event_time, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end, TIMESTAMP_LTZ(3) *ROWTIME* window_time)])
-        LogicalProject(uuid=[$0], sensorid=[$1], temperature=[$2], event_time=[$3])
-          LogicalTableScan(table=[[default_catalog, default_database, SensorReading]])
-SQL: CREATE VIEW `_SensorMaxTempLastMinWindow` AS  SELECT sensorid, window_time as endOfMin,
-                                      AVG(temperature) AS avg_temperature
-                     FROM TABLE(HOP(TABLE SensorReading, DESCRIPTOR(event_time), INTERVAL '10' SECONDS, INTERVAL '1' MINUTES))
-                     GROUP BY sensorid, window_start, window_end, window_time;
 
 >>>flink-sql-no-functions.sql
 CREATE TABLE `SensorReading` (

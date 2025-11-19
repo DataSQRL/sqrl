@@ -8,11 +8,6 @@ Primary Key: name
 Timestamp  : -
 Schema:
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
-Plan:
-LogicalAggregate(group=[{0}])
-  LogicalProject(name=[$0])
-    LogicalTableScan(table=[[default_catalog, default_database, Submission]])
-SQL: CREATE VIEW `Package` AS  SELECT DISTINCT name FROM Submission;
 
 === Submission
 ID:     default_catalog.default_database.Submission
@@ -42,12 +37,6 @@ Schema:
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - variant0: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - repoURL: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
-Plan:
-LogicalProject(name=[$0], version=[$1], variant=[$2], latest=[$3], type=[$4], license=[$5], repository=[$6], homepage=[$7], documentation=[$8], readme=[$9], description=[$10], keywords=[$11], uniqueId=[$12], file=[$13], hash=[$14], authorId=[$15], submissionTime=[$16], event_time=[$17], variant0=[COALESCE($2, 'default')], repoURL=[CONCAT('https://repository.datasqrl.com/', $13)])
-  LogicalTableScan(table=[[default_catalog, default_database, _SubmissionRaw]])
-SQL: CREATE VIEW `Submission` AS  SELECT *,  COALESCE(variant, 'default') AS variant0,
-                     concat('https://repository.datasqrl.com/',file) AS repoURL
-              FROM _SubmissionRaw;
 
 === SubmissionTopics
 ID:     default_catalog.default_database.SubmissionTopics
@@ -60,16 +49,6 @@ Schema:
  - pkgName: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - topicName: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - submissionTime: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
-Plan:
-LogicalProject(pkgName=[$0], topicName=[$20], submissionTime=[$16])
-  LogicalCorrelate(correlation=[$cor1], joinType=[inner], requiredColumns=[{11}])
-    LogicalTableScan(table=[[default_catalog, default_database, Submission]])
-    LogicalProject(name=[$0])
-      Uncollect
-        LogicalProject(keywords=[$cor1.keywords])
-          LogicalValues(tuples=[[{ 0 }]])
-SQL: CREATE VIEW `SubmissionTopics` AS  SELECT s.name AS pkgName, k.name AS topicName, s.submissionTime
-                    FROM Submission s CROSS JOIN UNNEST(keywords) k(name);
 
 === TopicPackages
 ID:     default_catalog.default_database.TopicPackages
@@ -85,13 +64,6 @@ Schema:
  - topicName: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - numSubmissions: BIGINT NOT NULL
  - lastSubmission: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
-Plan:
-LogicalAggregate(group=[{0, 1}], numSubmissions=[COUNT()], lastSubmission=[MAX($2)])
-  LogicalProject(pkgName=[$0], topicName=[$1], submissionTime=[$2])
-    LogicalTableScan(table=[[default_catalog, default_database, SubmissionTopics]])
-SQL: CREATE VIEW `TopicPackages` AS  SELECT pkgName, topicName, COUNT(1) AS numSubmissions, MAX(submissionTime) AS lastSubmission
-                 FROM SubmissionTopics
-                 GROUP BY pkgName, topicName ORDER BY numSubmissions DESC, pkgName ASC;
 
 === TopicSearch
 ID:     default_catalog.default_database.TopicSearch
@@ -105,13 +77,6 @@ Timestamp  : -
 Schema:
  - topicName: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - numPackages: BIGINT NOT NULL
-Plan:
-LogicalAggregate(group=[{0}], numPackages=[COUNT(DISTINCT $1)])
-  LogicalProject(topicName=[$1], pkgName=[$0])
-    LogicalTableScan(table=[[default_catalog, default_database, SubmissionTopics]])
-SQL: CREATE VIEW `TopicSearch` AS  SELECT topicName, COUNT(DISTINCT pkgName) AS numPackages
-               FROM SubmissionTopics
-               GROUP BY topicName ORDER BY numPackages DESC, topicName ASC;
 
 === _SubmissionRaw
 ID:     default_catalog.default_database._SubmissionRaw
@@ -139,36 +104,7 @@ Schema:
  - authorId: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - submissionTime: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
-Plan:
-LogicalWatermarkAssigner(rowtime=[event_time], watermark=[-($17, 1:INTERVAL SECOND)])
-  LogicalProject(name=[$0], version=[$1], variant=[$2], latest=[$3], type=[$4], license=[$5], repository=[$6], homepage=[$7], documentation=[$8], readme=[$9], description=[$10], keywords=[$11], uniqueId=[$12], file=[$13], hash=[$14], authorId=[$15], submissionTime=[$16], event_time=[NOW()])
-    LogicalTableScan(table=[[default_catalog, default_database, _SubmissionRaw]])
-SQL: CREATE TABLE `_SubmissionRaw` (
-  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `version` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `variant` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `latest` BOOLEAN NOT NULL,
-  `type` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `license` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `repository` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `homepage` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `documentation` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `readme` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `keywords` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL ARRAY NOT NULL,
-  `uniqueId` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `file` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `hash` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `authorId` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `submissionTime` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `event_time` AS NOW(),
-  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.001' SECOND
-) WITH (
-  'connector' = 'filesystem',
-  'format' = 'flexible-json',
-  'path' = '${DATA_PATH}/submission.jsonl',
-  'source.monitor-interval' = '10 sec'
-)
+
 >>>flink-sql-no-functions.sql
 CREATE TABLE `_SubmissionRaw` (
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,

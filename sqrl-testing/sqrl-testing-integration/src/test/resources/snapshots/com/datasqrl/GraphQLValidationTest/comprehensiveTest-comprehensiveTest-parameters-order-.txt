@@ -12,11 +12,6 @@ Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
-Plan:
-LogicalProject(customerid=[$0], email=[$1], lastUpdated=[$3])
-  LogicalFilter(condition=[>($0, 100)])
-    LogicalTableScan(table=[[default_catalog, default_database, _Customer]])
-SQL: CREATE VIEW `AnotherCustomer` AS  SELECT customerid, email, lastUpdated FROM _Customer WHERE customerid > 100;
 
 === Customer
 ID:     default_catalog.default_database.Customer
@@ -33,29 +28,7 @@ Schema:
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
-Plan:
-LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
-  LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($3, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
-    LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE TEMPORARY TABLE `Customer__schema` (
-  `customerid` BIGINT NOT NULL,
-  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `lastUpdated` BIGINT NOT NULL
-) WITH (
-  'connector' = 'datagen'
-);
-CREATE TABLE `Customer` (
-  `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`lastUpdated`, 0), CAST(TIMESTAMP '1970-01-01 00:00:00.000' AS TIMESTAMP(3) WITH LOCAL TIME ZONE)),
-  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
-  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
-) WITH (
-  'format' = 'flexible-json',
-  'path' = 'file:/mock',
-  'source.monitor-interval' = '10 sec',
-  'connector' = 'filesystem'
-)
-LIKE `Customer__schema`
+
 === CustomerById
 ID:     default_catalog.default_database.CustomerById
 Type:   query
@@ -65,11 +38,6 @@ Annotations:
  - stream-root: Customer
  - parameters: minId
  - base-table: Customer
-Plan:
-LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
-  LogicalFilter(condition=[>($0, ?0)])
-    LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW `CustomerById` AS  SELECT * FROM Customer WHERE customerid > ?     ;
 
 === CustomerByMultipleTime
 ID:     default_catalog.default_database.CustomerByMultipleTime
@@ -87,17 +55,7 @@ Schema:
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
-Plan:
-LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
-  LogicalFilter(condition=[=($5, 1)])
-    LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4], __sqrlinternal_rownum=[ROW_NUMBER() OVER (PARTITION BY $0, $1 ORDER BY $4 DESC NULLS LAST, $3 NULLS FIRST)])
-      LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW `CustomerByMultipleTime`
-AS
-SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`
-FROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid`, `email` ORDER BY `timestamp` DESC NULLS LAST, `lastUpdated` NULLS FIRST) AS `__sqrlinternal_rownum`
-  FROM `default_catalog`.`default_database`.`Customer`) AS `t`
-WHERE `__sqrlinternal_rownum` = 1
+
 === CustomerByTime2
 ID:     default_catalog.default_database.CustomerByTime2
 Type:   state
@@ -114,17 +72,7 @@ Schema:
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
-Plan:
-LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
-  LogicalFilter(condition=[=($5, 1)])
-    LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4], __sqrlinternal_rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $4 DESC NULLS LAST)])
-      LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW `CustomerByTime2`
-AS
-SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`
-FROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC NULLS LAST) AS `__sqrlinternal_rownum`
-  FROM `default_catalog`.`default_database`.`Customer`) AS `t`
-WHERE `__sqrlinternal_rownum` = 1
+
 === CustomerFilteredDistinct
 ID:     default_catalog.default_database.CustomerFilteredDistinct
 Type:   state
@@ -140,27 +88,7 @@ Schema:
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
-Plan:
-LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
-  LogicalFilter(condition=[=($5, 1)])
-    LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4], $f5=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $3 DESC NULLS LAST)])
-      LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
-        LogicalFilter(condition=[OR(AND(IS NULL($5), IS NULL($6)), <>($1, $5), <>($2, $6))])
-          LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4], $f5=[LAG($1, 1) OVER (PARTITION BY $0 ORDER BY $4 NULLS FIRST)], $f6=[LAG($2, 1) OVER (PARTITION BY $0 ORDER BY $4 NULLS FIRST)])
-            LogicalFilter(condition=[>=($3, $5)])
-              LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4], $f5=[MAX($3) OVER (PARTITION BY $0 ORDER BY $4 NULLS FIRST)])
-                LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW `CustomerFilteredDistinct`
-AS
-SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`
-FROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `lastUpdated` DESC NULLS LAST) AS `$f5`
-  FROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`
-    FROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, LAG(`email`, 1) OVER (PARTITION BY `customerid` ORDER BY `timestamp`) AS `$f5`, LAG(`name`, 1) OVER (PARTITION BY `customerid` ORDER BY `timestamp`) AS `$f6`
-      FROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, MAX(`lastUpdated`) OVER (PARTITION BY `customerid` ORDER BY `timestamp` RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS `$f5`
-        FROM `default_catalog`.`default_database`.`Customer`) AS `t`
-      WHERE `lastUpdated` >= `$f5`) AS `t1`
-    WHERE `$f5` IS NULL AND `$f6` IS NULL OR `email` <> `$f5` OR `name` <> `$f6`) AS `t3`) AS `t4`
-WHERE `$f5` = 1
+
 === CustomerQuery
 ID:     default_catalog.default_database.CustomerQuery
 Type:   query
@@ -170,11 +98,6 @@ Annotations:
  - stream-root: _Customer
  - parameters: id
  - base-table: AnotherCustomer
-Plan:
-LogicalProject(customerid=[$0], email=[$1], lastUpdated=[$2])
-  LogicalFilter(condition=[=($0, ?0)])
-    LogicalTableScan(table=[[default_catalog, default_database, AnotherCustomer]])
-SQL: CREATE VIEW `CustomerQuery` AS  SELECT * FROM AnotherCustomer WHERE customerid = ?  ;
 
 === CustomerSubscription
 ID:     default_catalog.default_database.CustomerSubscription
@@ -191,10 +114,6 @@ Schema:
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
-Plan:
-LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
-  LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW `CustomerSubscription` AS  SELECT * FROM Customer;
 
 === CustomerSubscriptionById
 ID:     default_catalog.default_database.CustomerSubscriptionById
@@ -205,11 +124,6 @@ Annotations:
  - stream-root: Customer
  - parameters: minId
  - base-table: Customer
-Plan:
-LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
-  LogicalFilter(condition=[=($0, ?0)])
-    LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW `CustomerSubscriptionById` AS  SELECT * FROM Customer WHERE customerid = ?     ;
 
 === CustomerTimeWindow
 ID:     default_catalog.default_database.CustomerTimeWindow
@@ -224,20 +138,6 @@ Schema:
  - window_start: TIMESTAMP(3) NOT NULL
  - window_end: TIMESTAMP(3) NOT NULL
  - unique_email_count: BIGINT NOT NULL
-Plan:
-LogicalAggregate(group=[{0, 1}], unique_email_count=[COUNT(DISTINCT $2)])
-  LogicalProject(window_start=[$5], window_end=[$6], email=[$1])
-    LogicalTableFunctionScan(invocation=[TUMBLE(DESCRIPTOR($4), 60000:INTERVAL MINUTE)], rowType=[RecordType(BIGINT customerid, VARCHAR(2147483647) email, VARCHAR(2147483647) name, BIGINT lastUpdated, TIMESTAMP_LTZ(3) *ROWTIME* timestamp, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end, TIMESTAMP_LTZ(3) *ROWTIME* window_time)])
-      LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
-        LogicalTableScan(table=[[default_catalog, default_database, SelectCustomers]])
-SQL: CREATE VIEW `CustomerTimeWindow` AS  SELECT
-                          window_start, window_end,
-                          COUNT(DISTINCT email) AS unique_email_count
-                      FROM TABLE(
-                              TUMBLE(TABLE SelectCustomers, DESCRIPTOR(`timestamp`), INTERVAL '1' MINUTE)
-                           )
-                      GROUP BY
-                          window_start, window_end;
 
 === CustomerTimeWindowTest
 ID:     default_catalog.default_database.CustomerTimeWindowTest
@@ -252,10 +152,6 @@ Schema:
  - window_start: TIMESTAMP(3) NOT NULL
  - window_end: TIMESTAMP(3) NOT NULL
  - unique_email_count: BIGINT NOT NULL
-Plan:
-LogicalProject(window_start=[$0], window_end=[$1], unique_email_count=[$2])
-  LogicalTableScan(table=[[default_catalog, default_database, CustomerTimeWindow]])
-SQL: CREATE VIEW `CustomerTimeWindowTest` AS  SELECT * FROM CustomerTimeWindow ORDER BY window_end DESC;
 
 === ExplicitDistinct
 ID:     default_catalog.default_database.ExplicitDistinct
@@ -270,12 +166,6 @@ Schema:
  - customerid: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
-Plan:
-LogicalProject(customerid=[$0], timestamp=[$4], name=[$2])
-  LogicalFilter(condition=[=($5, 1)])
-    LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $4 DESC NULLS LAST)])
-      LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW `ExplicitDistinct` AS  SELECT customerid, `timestamp`, name FROM (SELECT *, (ROW_NUMBER() OVER (PARTITION BY customerid ORDER BY `timestamp` DESC)) AS _rownum FROM Customer) WHERE (_rownum = 1);
 
 === ExternalOrders
 ID:     default_catalog.default_database.ExternalOrders
@@ -292,27 +182,7 @@ Schema:
  - customerid: BIGINT NOT NULL
  - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - entries: RecordType:peek_no_expand(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
-Plan:
-LogicalWatermarkAssigner(rowtime=[time], watermark=[-($2, 1:INTERVAL SECOND)])
-  LogicalTableScan(table=[[default_catalog, default_database, ExternalOrders]])
-SQL: CREATE TEMPORARY TABLE `ExternalOrders__schema` (
-  `id` BIGINT NOT NULL,
-  `customerid` BIGINT NOT NULL,
-  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL
-) WITH (
-  'connector' = 'datagen'
-);
-CREATE TABLE `ExternalOrders` (
-  PRIMARY KEY (`id`, `time`) NOT ENFORCED,
-  WATERMARK FOR `time` AS `time` - INTERVAL '0.001' SECOND
-) WITH (
-  'format' = 'flexible-json',
-  'path' = 'file:/mock',
-  'source.monitor-interval' = '10 sec',
-  'connector' = 'filesystem'
-)
-LIKE `ExternalOrders__schema`
+
 === InvalidDistinct
 ID:     default_catalog.default_database.InvalidDistinct
 Type:   state
@@ -326,12 +196,6 @@ Schema:
  - customerid: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - namee: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
-Plan:
-LogicalProject(customerid=[$0], timestamp=[$4], namee=[$2])
-  LogicalFilter(condition=[=($5, 1)])
-    LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $4 DESC NULLS LAST)])
-      LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW `InvalidDistinct` AS  SELECT customerid, `timestamp`, name AS namee FROM (SELECT *, (ROW_NUMBER() OVER (PARTITION BY customerid ORDER BY `timestamp` DESC)) AS _rownum FROM Customer) WHERE (_rownum = 1);
 
 === MissedTemporalJoin
 ID:     default_catalog.default_database.MissedTemporalJoin
@@ -348,12 +212,6 @@ Schema:
  - customerid0: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
-Plan:
-LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3], customerid0=[$4], timestamp=[$5], name=[$6])
-  LogicalJoin(condition=[=($1, $4)], joinType=[inner])
-    LogicalTableScan(table=[[default_catalog, default_database, ExternalOrders]])
-    LogicalTableScan(table=[[default_catalog, default_database, ExplicitDistinct]])
-SQL: CREATE VIEW `MissedTemporalJoin` AS  SELECT * FROM ExternalOrders o JOIN ExplicitDistinct c ON o.customerid = c.customerid;
 
 === Orders
 ID:     default_catalog.default_database.Orders
@@ -365,23 +223,7 @@ Timestamp  : -
 Schema:
  - orderid: INTEGER NOT NULL
  - amount: FLOAT
-Plan:
-LogicalTableScan(table=[[default_catalog, default_database, Orders]])
-SQL: CREATE TABLE `Orders` (
-  `orderid` INTEGER NOT NULL,
-  `amount` FLOAT,
-  PRIMARY KEY (`orderid`) NOT ENFORCED
-) WITH (
-  'connector' = 'upsert-kafka',
-  'key.flexible-json.timestamp-format.standard' = 'ISO-8601',
-  'key.format' = 'flexible-json',
-  'properties.auto.offset.reset' = 'earliest',
-  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
-  'properties.group.id' = '${KAFKA_GROUP_ID}',
-  'topic' = 'Orders',
-  'value.flexible-json.timestamp-format.standard' = 'ISO-8601',
-  'value.format' = 'flexible-json'
-)
+
 === SelectCustomers
 ID:     default_catalog.default_database.SelectCustomers
 Type:   stream
@@ -398,11 +240,6 @@ Schema:
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
-Plan:
-LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
-  LogicalFilter(condition=[>($0, 0)])
-    LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW `SelectCustomers` AS  SELECT * From Customer WHERE customerid > 0 ORDER BY `timestamp` DESC LIMIT 10;
 
 === TableFunctionCallsTblFct
 ID:     default_catalog.default_database.TableFunctionCallsTblFct
@@ -414,11 +251,6 @@ Annotations:
  - stream-root: Customer
  - parameters: arg1, arg2
  - base-table: Customer
-Plan:
-LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
-  LogicalFilter(condition=[>($0, ?0)])
-    LogicalTableFunctionScan(invocation=[CustomerById(?1)], rowType=[RecordType(BIGINT customerid, VARCHAR(2147483647) email, VARCHAR(2147483647) name, BIGINT lastUpdated, TIMESTAMP_LTZ(3) *ROWTIME* timestamp)], elementType=[class [Ljava.lang.Object;])
-SQL: CREATE VIEW `TableFunctionCallsTblFct` AS  SELECT * FROM Table(CustomerById(?    )) WHERE customerid > ?    ;
 
 === TemporalJoin
 ID:     default_catalog.default_database.TemporalJoin
@@ -437,14 +269,6 @@ Schema:
  - customerid0: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
-Plan:
-LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3], customerid0=[$4], timestamp=[$5], name=[$6])
-  LogicalCorrelate(correlation=[$cor1], joinType=[inner], requiredColumns=[{1, 2}])
-    LogicalTableScan(table=[[default_catalog, default_database, ExternalOrders]])
-    LogicalFilter(condition=[=($cor1.customerid, $0)])
-      LogicalSnapshot(period=[$cor1.time])
-        LogicalTableScan(table=[[default_catalog, default_database, ExplicitDistinct]])
-SQL: CREATE VIEW `TemporalJoin` AS  SELECT * FROM ExternalOrders o JOIN ExplicitDistinct FOR SYSTEM_TIME AS OF `time` c ON o.customerid = c.customerid;
 
 === UnnestOrders
 ID:     default_catalog.default_database.UnnestOrders
@@ -463,16 +287,7 @@ Schema:
  - quantity: BIGINT NOT NULL
  - discount: DOUBLE
  - newId: BIGINT NOT NULL
-Plan:
-LogicalProject(id=[$0], customerid=[$1], time=[$2], productid=[$3], quantity=[$4], discount=[$5], newId=[+($0, $3)])
-  LogicalProject(id=[$0], customerid=[$1], time=[$2], productid=[$4], quantity=[$5], discount=[$7])
-    LogicalCorrelate(correlation=[$cor5], joinType=[inner], requiredColumns=[{3}])
-      LogicalTableScan(table=[[default_catalog, default_database, ExternalOrders]])
-      Uncollect
-        LogicalProject(entries=[$cor5.entries])
-          LogicalValues(tuples=[[{ 0 }]])
-SQL: ALTER VIEW `UnnestOrders` AS SELECT `id`, `customerid`, `time`, `productid`, `quantity`, `discount`,  id + productid AS `newId` FROM 
-(  SELECT o.id, o.customerid, o.`time`, e.productid, e.quantity, e.discount FROM ExternalOrders o CROSS JOIN UNNEST(entries) e );
+
 === _Customer
 ID:     default_catalog.default_database._Customer
 Type:   stream
@@ -488,29 +303,7 @@ Schema:
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
-Plan:
-LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
-  LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($3, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
-    LogicalTableScan(table=[[default_catalog, default_database, _Customer]])
-SQL: CREATE TEMPORARY TABLE `_Customer__schema` (
-  `customerid` BIGINT NOT NULL,
-  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `lastUpdated` BIGINT NOT NULL
-) WITH (
-  'connector' = 'datagen'
-);
-CREATE TABLE `_Customer` (
-  `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`lastUpdated`, 0), CAST(TIMESTAMP '1970-01-01 00:00:00.000' AS TIMESTAMP(3) WITH LOCAL TIME ZONE)),
-  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
-  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
-) WITH (
-  'format' = 'flexible-json',
-  'path' = 'file:/mock',
-  'source.monitor-interval' = '10 sec',
-  'connector' = 'filesystem'
-)
-LIKE `_Customer__schema`
+
 === customersink
 ID:     mysink.customersink
 Type:   export

@@ -21,7 +21,7 @@ SQL: CREATE TABLE `SensorReading` (
   `sensorid` BIGINT NOT NULL,
   `epoch_timestamp` BIGINT NOT NULL,
   `temperature` DOUBLE NOT NULL,
-  `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`epoch_timestamp`, 3), CAST(TIMESTAMP '1970-01-01 00:00:00.000' AS TIMESTAMP(3) WITH LOCAL TIME ZONE)),
+  `timestamp` AS COALESCE(TO_TIMESTAMP_LTZ(`epoch_timestamp`, 3), CAST(TIMESTAMP '1970-01-01 00:00:00.000' AS TIMESTAMP(3) WITH LOCAL TIME ZONE)),
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
 ) WITH (
   'connector' = 'datagen',

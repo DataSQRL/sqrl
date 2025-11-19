@@ -15,17 +15,6 @@ Schema:
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - spend: DOUBLE NOT NULL
  - saved: DOUBLE NOT NULL
-Plan:
-LogicalProject(customerid=[$0], first_name=[$5], last_name=[$6], email=[$7], spend=[$2], saved=[$3])
-  LogicalFilter(condition=[>($2, 250)])
-    LogicalCorrelate(correlation=[$cor19], joinType=[inner], requiredColumns=[{0, 1}])
-      LogicalTableScan(table=[[default_catalog, default_database, CustomersSpending]])
-      LogicalFilter(condition=[=($cor19.customerid, $0)])
-        LogicalSnapshot(period=[$cor19.week])
-          LogicalTableScan(table=[[default_catalog, default_database, Customers]])
-SQL: CREATE VIEW `CustomerPromotion` AS  SELECT s.customerid, c.first_name, c.last_name, c.email, s.spend, s.saved
-        FROM CustomersSpending s JOIN Customers FOR SYSTEM_TIME AS OF `week` c ON s.customerid = c.id
-        WHERE s.spend > 250;
 
 === Customers
 ID:     default_catalog.default_database.Customers
@@ -46,17 +35,7 @@ Schema:
  - country: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
  - changed_on: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
-Plan:
-LogicalProject(id=[$0], first_name=[$1], last_name=[$2], email=[$3], ip_address=[$4], country=[$5], changed_on=[$6], timestamp=[$7])
-  LogicalFilter(condition=[=($8, 1)])
-    LogicalProject(id=[$0], first_name=[$1], last_name=[$2], email=[$3], ip_address=[$4], country=[$5], changed_on=[$6], timestamp=[$7], __sqrlinternal_rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $7 DESC NULLS LAST)])
-      LogicalTableScan(table=[[default_catalog, default_database, _CustomersStream]])
-SQL: CREATE VIEW `Customers`
-AS
-SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`
-FROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `timestamp` DESC NULLS LAST) AS `__sqrlinternal_rownum`
-  FROM `default_catalog`.`default_database`.`_CustomersStream`) AS `t`
-WHERE `__sqrlinternal_rownum` = 1
+
 === CustomersOrderStats
 ID:     default_catalog.default_database.CustomersOrderStats
 Type:   state
@@ -70,14 +49,6 @@ Schema:
  - total_spend: DOUBLE NOT NULL
  - total_saved: DOUBLE NOT NULL
  - num_orders: BIGINT NOT NULL
-Plan:
-LogicalAggregate(group=[{0}], first_order=[MIN($1)], total_spend=[SUM($2)], total_saved=[SUM($3)], num_orders=[COUNT()])
-  LogicalProject(customerid=[$2], time=[$1], price=[$3], saving=[$4])
-    LogicalTableScan(table=[[default_catalog, default_database, OrdersTotals]])
-SQL: CREATE VIEW `CustomersOrderStats` AS  SELECT customerid, min(`time`) as first_order,
-                              sum(price) as total_spend, sum(saving) as total_saved,
-                              count(1) as num_orders
-                       FROM OrdersTotals GROUP BY customerid;
 
 === CustomersPastPurchases
 ID:     default_catalog.default_database.CustomersPastPurchases
@@ -91,18 +62,6 @@ Schema:
  - productid: BIGINT NOT NULL
  - num_orders: BIGINT NOT NULL
  - total_quantity: BIGINT NOT NULL
-Plan:
-LogicalAggregate(group=[{0, 1}], num_orders=[COUNT()], total_quantity=[SUM($2)])
-  LogicalProject(customerid=[$1], productid=[$4], quantity=[$5])
-    LogicalCorrelate(correlation=[$cor12], joinType=[inner], requiredColumns=[{3}])
-      LogicalTableScan(table=[[default_catalog, default_database, Orders]])
-      Uncollect
-        LogicalProject(items=[$cor12.items])
-          LogicalValues(tuples=[[{ 0 }]])
-SQL: CREATE VIEW `CustomersPastPurchases` AS  SELECT o.customerid, i.productid, count(1) as num_orders,
-         sum(i.quantity) as total_quantity
-      FROM Orders o CROSS JOIN UNNEST(o.items) i
-      GROUP BY o.customerid, i.productid;
 
 === CustomersSpending
 ID:     default_catalog.default_database.CustomersSpending
@@ -120,18 +79,6 @@ Schema:
  - week: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - spend: DOUBLE NOT NULL
  - saved: DOUBLE NOT NULL
-Plan:
-LogicalProject(customerid=[$0], week=[$3], spend=[$4], saved=[$5])
-  LogicalAggregate(group=[{0, 1, 2, 3}], spend=[SUM($4)], saved=[SUM($5)])
-    LogicalProject(customerid=[$2], window_start=[$5], window_end=[$6], week=[$7], price=[$3], saving=[$4])
-      LogicalTableFunctionScan(invocation=[TUMBLE(DESCRIPTOR($1), 604800000:INTERVAL DAY)], rowType=[RecordType(BIGINT id, TIMESTAMP_LTZ(3) *ROWTIME* time, BIGINT customerid, DOUBLE price, DOUBLE saving, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end, TIMESTAMP_LTZ(3) *ROWTIME* window_time)])
-        LogicalProject(id=[$0], time=[$1], customerid=[$2], price=[$3], saving=[$4])
-          LogicalTableScan(table=[[default_catalog, default_database, OrdersTotals]])
-SQL: CREATE VIEW `CustomersSpending` AS  SELECT customerid, window_time AS week,
-         sum(price) AS spend, sum(saving) AS saved
-      FROM TABLE(TUMBLE(TABLE OrdersTotals, DESCRIPTOR(`time`), INTERVAL '7' DAYS))
-      GROUP BY customerid, window_start, window_end, window_time
-      ORDER BY week DESC;
 
 === Orders
 ID:     default_catalog.default_database.Orders
@@ -148,26 +95,7 @@ Schema:
  - customerid: BIGINT NOT NULL
  - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - items: RecordType:peek_no_expand(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
-Plan:
-LogicalWatermarkAssigner(rowtime=[time], watermark=[-($2, 1:INTERVAL SECOND)])
-  LogicalTableScan(table=[[default_catalog, default_database, Orders]])
-SQL: CREATE TEMPORARY TABLE `Orders__schema` (
-  `id` BIGINT NOT NULL,
-  `customerid` BIGINT NOT NULL,
-  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `items` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL
-) WITH (
-  'connector' = 'datagen'
-);
-CREATE TABLE `Orders` (
-  PRIMARY KEY (`id`, `time`) NOT ENFORCED,
-  WATERMARK FOR `time` AS `time` - INTERVAL '0.001' SECOND
-) WITH (
-  'format' = 'flexible-json',
-  'path' = '${DATA_PATH}/order_items.jsonl',
-  'connector' = 'filesystem'
-)
-LIKE `Orders__schema`
+
 === OrdersTotals
 ID:     default_catalog.default_database.OrdersTotals
 Type:   stream
@@ -184,17 +112,6 @@ Schema:
  - customerid: BIGINT NOT NULL
  - price: DOUBLE NOT NULL
  - saving: DOUBLE NOT NULL
-Plan:
-LogicalProject(id=[$0], time=[$4], customerid=[$1], price=[$5], saving=[$6])
-  LogicalAggregate(group=[{0, 1, 2, 3, 4}], price=[SUM($5)], saving=[SUM($6)])
-    LogicalProject(id=[$0], customerid=[$2], window_start=[$7], window_end=[$8], time=[$9], $f5=[-(*($4, $5), coalesce($6, 0.0:DOUBLE))], $f6=[coalesce($6, 0.0:DOUBLE)])
-      LogicalTableFunctionScan(invocation=[TUMBLE(DESCRIPTOR($1), 1:INTERVAL SECOND)], rowType=[RecordType(BIGINT id, TIMESTAMP_LTZ(3) *ROWTIME* time, BIGINT customerid, BIGINT productid, BIGINT quantity, DOUBLE unit_price, DOUBLE discount, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end, TIMESTAMP_LTZ(3) *ROWTIME* window_time)])
-        LogicalProject(id=[$0], time=[$1], customerid=[$2], productid=[$3], quantity=[$4], unit_price=[$5], discount=[$6])
-          LogicalTableScan(table=[[default_catalog, default_database, _OrderItems]])
-SQL: CREATE VIEW `OrdersTotals` AS  SELECT id, window_time AS `time`, customerid, sum(quantity * unit_price - coalesce(discount, 0.0)) as price,
-                  sum(coalesce(discount, 0.0)) as saving
-                FROM TABLE(TUMBLE(TABLE _OrderItems, DESCRIPTOR(`time`), INTERVAL '0.001' SECONDS))
-                GROUP BY id, customerid, window_start, window_end, window_time;
 
 === ProductSearch
 ID:     default_catalog.default_database.ProductSearch
@@ -205,15 +122,6 @@ Annotations:
  - stream-root: _ProductsStream
  - parameters: query
  - base-table: ProductSearch
-Plan:
-LogicalSort(sort0=[$8], sort1=[$0], dir0=[DESC-nulls-last], dir1=[ASC-nulls-first])
-  LogicalProject(id=[$0], name=[$1], sizing=[$2], weight_in_gram=[$3], type=[$4], category=[$5], usda_id=[$6], updated=[$7], score=[text_search(?0, $1)])
-    LogicalFilter(condition=[>(text_search(CAST(?0):VARCHAR(2147483647) CHARACTER SET "UTF-16LE", $1), 0)])
-      LogicalTableScan(table=[[default_catalog, default_database, Products]])
-SQL: CREATE VIEW `ProductSearch` AS  SELECT p.*, text_search(?     , name) as score
-                                 FROM Products p
-                                 WHERE text_search(?     , name) > 0
-                                 ORDER BY score DESC, id ASC;
 
 === ProductSearchWithId
 ID:     default_catalog.default_database.ProductSearchWithId
@@ -224,13 +132,6 @@ Annotations:
  - stream-root: _ProductsStream
  - parameters: query, id
  - base-table: Products
-Plan:
-LogicalSort(sort0=[$0], dir0=[ASC-nulls-first])
-  LogicalProject(id=[$0], name=[$1], sizing=[$2], weight_in_gram=[$3], type=[$4], category=[$5], usda_id=[$6], updated=[$7])
-    LogicalFilter(condition=[AND(>(text_search(CAST(?0):VARCHAR(2147483647) CHARACTER SET "UTF-16LE", $1, $5), 0), >($0, ?1))])
-      LogicalTableScan(table=[[default_catalog, default_database, Products]])
-SQL: CREATE VIEW `ProductSearchWithId` AS  SELECT * FROM Products WHERE text_search(?     , name, category) > 0
-                                                                          AND id > ?   ORDER BY id ASC;
 
 === Products
 ID:     default_catalog.default_database.Products
@@ -251,17 +152,7 @@ Schema:
  - category: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - usda_id: BIGINT NOT NULL
  - updated: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
-Plan:
-LogicalProject(id=[$0], name=[$1], sizing=[$2], weight_in_gram=[$3], type=[$4], category=[$5], usda_id=[$6], updated=[$7])
-  LogicalFilter(condition=[=($8, 1)])
-    LogicalProject(id=[$0], name=[$1], sizing=[$2], weight_in_gram=[$3], type=[$4], category=[$5], usda_id=[$6], updated=[$7], __sqrlinternal_rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $7 DESC NULLS LAST)])
-      LogicalTableScan(table=[[default_catalog, default_database, _ProductsStream]])
-SQL: CREATE VIEW `Products`
-AS
-SELECT `id`, `name`, `sizing`, `weight_in_gram`, `type`, `category`, `usda_id`, `updated`
-FROM (SELECT `id`, `name`, `sizing`, `weight_in_gram`, `type`, `category`, `usda_id`, `updated`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `updated` DESC NULLS LAST) AS `__sqrlinternal_rownum`
-  FROM `default_catalog`.`default_database`.`_ProductsStream`) AS `t`
-WHERE `__sqrlinternal_rownum` = 1
+
 === ProductsByCountry
 ID:     default_catalog.default_database.ProductsByCountry
 Type:   state
@@ -275,24 +166,6 @@ Schema:
  - quantity: BIGINT NOT NULL
  - spend: DOUBLE NOT NULL
  - weight: BIGINT NOT NULL
-Plan:
-LogicalAggregate(group=[{0, 1}], quantity=[SUM($2)], spend=[SUM($3)], weight=[SUM($4)])
-  LogicalProject(productid=[$7], country=[$20], quantity=[$4], $f3=[*($4, $5)], $f4=[*($4, $10)])
-    LogicalCorrelate(correlation=[$cor29], joinType=[inner], requiredColumns=[{1, 2}])
-      LogicalCorrelate(correlation=[$cor28], joinType=[inner], requiredColumns=[{1, 3}])
-        LogicalTableScan(table=[[default_catalog, default_database, _OrderItems]])
-        LogicalFilter(condition=[=($cor28.productid, $0)])
-          LogicalSnapshot(period=[$cor28.time])
-            LogicalTableScan(table=[[default_catalog, default_database, Products]])
-      LogicalFilter(condition=[=($cor29.customerid, $0)])
-        LogicalSnapshot(period=[$cor29.time])
-          LogicalTableScan(table=[[default_catalog, default_database, Customers]])
-SQL: CREATE VIEW `ProductsByCountry` AS  SELECT p.id AS productid, c.country AS country, sum(o.quantity) as quantity,
-         sum(o.quantity * o.unit_price) as spend, sum(o.quantity * p.weight_in_gram) as weight
-      FROM _OrderItems o
-          JOIN Products FOR SYSTEM_TIME AS OF o.`time` p ON o.productid = p.id
-          JOIN Customers FOR SYSTEM_TIME AS OF o.`time`  c ON o.customerid =c.id
-      GROUP BY p.id, c.country;
 
 === _CustomersStream
 ID:     default_catalog.default_database._CustomersStream
@@ -312,31 +185,7 @@ Schema:
  - country: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
  - changed_on: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
-Plan:
-LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($7, 1:INTERVAL SECOND)])
-  LogicalProject(id=[$0], first_name=[$1], last_name=[$2], email=[$3], ip_address=[$4], country=[$5], changed_on=[$6], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($6, 3), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
-    LogicalTableScan(table=[[default_catalog, default_database, _CustomersStream]])
-SQL: CREATE TEMPORARY TABLE `_CustomersStream__schema` (
-  `id` BIGINT NOT NULL,
-  `first_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `last_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `ip_address` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
-  `country` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
-  `changed_on` BIGINT NOT NULL
-) WITH (
-  'connector' = 'datagen'
-);
-CREATE TABLE `_CustomersStream` (
-  `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`changed_on`, 3), CAST(TIMESTAMP '1970-01-01 00:00:00.000' AS TIMESTAMP(3) WITH LOCAL TIME ZONE)),
-  PRIMARY KEY (`id`, `changed_on`) NOT ENFORCED,
-  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
-) WITH (
-  'format' = 'flexible-json',
-  'path' = '${DATA_PATH}/customers.jsonl',
-  'connector' = 'filesystem'
-)
-LIKE `_CustomersStream__schema`
+
 === _OrderItems
 ID:     default_catalog.default_database._OrderItems
 Type:   stream
@@ -354,14 +203,6 @@ Schema:
  - quantity: BIGINT NOT NULL
  - unit_price: DOUBLE NOT NULL
  - discount: DOUBLE
-Plan:
-LogicalProject(id=[$0], time=[$2], customerid=[$1], productid=[$4], quantity=[$5], unit_price=[$6], discount=[$7])
-  LogicalCorrelate(correlation=[$cor1], joinType=[inner], requiredColumns=[{3}])
-    LogicalTableScan(table=[[default_catalog, default_database, Orders]])
-    Uncollect
-      LogicalProject(items=[$cor1.items])
-        LogicalValues(tuples=[[{ 0 }]])
-SQL: CREATE VIEW `_OrderItems` AS  SELECT o.id, o.`time`, o.customerid, i.* FROM Orders o CROSS JOIN UNNEST(o.items) i;
 
 === _ProductsStream
 ID:     default_catalog.default_database._ProductsStream
@@ -381,30 +222,7 @@ Schema:
  - category: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - usda_id: BIGINT NOT NULL
  - updated: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
-Plan:
-LogicalWatermarkAssigner(rowtime=[updated], watermark=[-($7, 1:INTERVAL SECOND)])
-  LogicalTableScan(table=[[default_catalog, default_database, _ProductsStream]])
-SQL: CREATE TEMPORARY TABLE `_ProductsStream__schema` (
-  `id` BIGINT NOT NULL,
-  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `sizing` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `weight_in_gram` BIGINT NOT NULL,
-  `type` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `usda_id` BIGINT NOT NULL,
-  `updated` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
-) WITH (
-  'connector' = 'datagen'
-);
-CREATE TABLE `_ProductsStream` (
-  PRIMARY KEY (`id`, `updated`) NOT ENFORCED,
-  WATERMARK FOR `updated` AS `updated` - INTERVAL '0.001' SECOND
-) WITH (
-  'format' = 'flexible-json',
-  'path' = '${DATA_PATH}/products.jsonl',
-  'connector' = 'filesystem'
-)
-LIKE `_ProductsStream__schema`
+
 === promotion
 ID:     s3-sink.promotion
 Type:   export
