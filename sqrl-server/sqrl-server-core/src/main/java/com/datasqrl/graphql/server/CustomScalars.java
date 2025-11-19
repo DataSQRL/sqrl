@@ -15,11 +15,12 @@
  */
 package com.datasqrl.graphql.server;
 
+import graphql.GraphQLContext;
 import graphql.Scalars;
+import graphql.execution.CoercedVariables;
+import graphql.language.Value;
 import graphql.scalars.ExtendedScalars;
 import graphql.schema.Coercing;
-import graphql.schema.CoercingParseLiteralException;
-import graphql.schema.CoercingParseValueException;
 import graphql.schema.CoercingSerializeException;
 import graphql.schema.GraphQLScalarType;
 import java.math.BigDecimal;
@@ -32,6 +33,7 @@ import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoField;
 import java.util.List;
+import java.util.Locale;
 
 public class CustomScalars {
 
@@ -41,8 +43,11 @@ public class CustomScalars {
           .description("A Float with rounding applied")
           .coercing(
               new Coercing() {
+
                 @Override
-                public Object serialize(Object dataFetcherResult) {
+                public Object serialize(
+                    Object dataFetcherResult, GraphQLContext ctx, Locale locale) {
+
                   if (dataFetcherResult instanceof Double doubleValue) {
                     var bd =
                         new BigDecimal(doubleValue)
@@ -51,18 +56,21 @@ public class CustomScalars {
                     // Convert back to normal readable number
                     return new BigDecimal(bd.toPlainString());
                   } else {
-                    return Scalars.GraphQLFloat.getCoercing().serialize(dataFetcherResult);
+                    return Scalars.GraphQLFloat.getCoercing()
+                        .serialize(dataFetcherResult, ctx, locale);
                   }
                 }
 
                 @Override
-                public Object parseValue(Object input) {
-                  return Scalars.GraphQLFloat.getCoercing().parseValue(input);
+                public Object parseValue(Object input, GraphQLContext ctx, Locale locale) {
+                  return Scalars.GraphQLFloat.getCoercing().parseValue(input, ctx, locale);
                 }
 
                 @Override
-                public Object parseLiteral(Object input) {
-                  return Scalars.GraphQLFloat.getCoercing().parseLiteral(input);
+                public Object parseLiteral(
+                    Value input, CoercedVariables variables, GraphQLContext ctx, Locale locale) {
+                  return Scalars.GraphQLFloat.getCoercing()
+                      .parseLiteral(input, variables, ctx, locale);
                 }
               })
           .build();
@@ -113,9 +121,9 @@ public class CustomScalars {
             .toFormatter();
 
     @Override
-    public String serialize(Object dataFetcherResult) throws CoercingSerializeException {
+    public String serialize(Object dataFetcherResult, GraphQLContext ctx, Locale locale) {
       try {
-        return (String) DATE_TIME_COERCING.serialize(dataFetcherResult);
+        return (String) DATE_TIME_COERCING.serialize(dataFetcherResult, ctx, locale);
 
       } catch (CoercingSerializeException e) {
         // Try to normalize if it's a string
@@ -123,7 +131,7 @@ public class CustomScalars {
           var normalizedTimestamp = normalizeTimestamp(timestampStr);
 
           if (normalizedTimestamp != null) {
-            return (String) DATE_TIME_COERCING.serialize(normalizedTimestamp);
+            return (String) DATE_TIME_COERCING.serialize(normalizedTimestamp, ctx, locale);
           }
         }
         throw e;
@@ -131,9 +139,9 @@ public class CustomScalars {
     }
 
     @Override
-    public OffsetDateTime parseValue(Object input) throws CoercingParseValueException {
+    public OffsetDateTime parseValue(Object input, GraphQLContext ctx, Locale locale) {
       try {
-        return (OffsetDateTime) DATE_TIME_COERCING.parseValue(input);
+        return (OffsetDateTime) DATE_TIME_COERCING.parseValue(input, ctx, locale);
 
       } catch (Exception e) {
         // Try to normalize if it's a string
@@ -141,17 +149,18 @@ public class CustomScalars {
           var normalizedTimestamp = normalizeTimestamp(timestampStr);
 
           if (normalizedTimestamp != null) {
-            return (OffsetDateTime) DATE_TIME_COERCING.parseValue(normalizedTimestamp);
+            return (OffsetDateTime) DATE_TIME_COERCING.parseValue(normalizedTimestamp, ctx, locale);
           }
         }
-
         throw e;
       }
     }
 
     @Override
-    public OffsetDateTime parseLiteral(Object input) throws CoercingParseLiteralException {
-      return (OffsetDateTime) DATE_TIME_COERCING.parseLiteral(input);
+    public OffsetDateTime parseLiteral(
+        Value<?> input, CoercedVariables variables, GraphQLContext ctx, Locale locale) {
+
+      return (OffsetDateTime) DATE_TIME_COERCING.parseLiteral(input, variables, ctx, locale);
     }
 
     static String normalizeTimestamp(String timestamp) {

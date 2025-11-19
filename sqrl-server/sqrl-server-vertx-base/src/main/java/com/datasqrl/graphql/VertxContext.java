@@ -29,10 +29,8 @@ import com.datasqrl.graphql.server.QueryExecutionContext;
 import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedQuery;
+import com.datasqrl.graphql.util.CaseInsensitiveJsonDataFetcher;
 import graphql.schema.DataFetcher;
-import graphql.schema.DataFetchingEnvironment;
-import graphql.schema.PropertyDataFetcher;
-import io.vertx.core.json.JsonObject;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -56,33 +54,7 @@ public class VertxContext implements Context {
 
   @Override
   public DataFetcher<Object> createPropertyFetcher(String name) {
-    return VertxCreateCaseInsensitivePropertyDataFetcher.createCaseInsensitive(name);
-  }
-
-  public interface VertxCreateCaseInsensitivePropertyDataFetcher {
-
-    static PropertyDataFetcher<Object> createCaseInsensitive(String propertyName) {
-      return new PropertyDataFetcher<>(propertyName) {
-        @Override
-        public Object get(DataFetchingEnvironment environment) {
-          var source = environment.getSource();
-          if (source instanceof JsonObject jsonObject) {
-            var value = jsonObject.getValue(getPropertyName());
-            if (value != null) {
-              return value;
-            }
-            // Case-insensitive lookup for drivers that may not preserve sensitivity
-            return jsonObject.getMap().entrySet().stream()
-                .filter(e -> e.getKey().equalsIgnoreCase(getPropertyName()))
-                .filter(e -> e.getValue() != null)
-                .map(Map.Entry::getValue)
-                .findAny()
-                .orElse(null);
-          }
-          return super.get(environment);
-        }
-      };
-    }
+    return new CaseInsensitiveJsonDataFetcher(name);
   }
 
   @Override

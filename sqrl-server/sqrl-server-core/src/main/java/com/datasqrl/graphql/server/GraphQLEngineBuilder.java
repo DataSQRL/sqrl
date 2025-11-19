@@ -174,6 +174,7 @@ public class GraphQLEngineBuilder
       TypeDefinitionRegistry registry, GraphQLCodeRegistry.Builder codeRegistry) {
     var wiring =
         RuntimeWiring.newRuntimeWiring()
+            .strictMode(false)
             .codeRegistry(codeRegistry)
             .scalar(CustomScalars.DOUBLE)
             .scalar(CustomScalars.FLEXIBLE_DATETIME)

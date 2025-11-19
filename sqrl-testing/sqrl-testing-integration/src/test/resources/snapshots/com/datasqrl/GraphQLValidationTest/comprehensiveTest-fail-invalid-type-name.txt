@@ -19,7 +19,7 @@ in script:comprehensiveTest.sqrl [51:1]:
 CustomerTimeWindow := SELECT
 ^
 
-[FATAL] errors=[InvalidSyntaxError{ message=Invalid Syntax : token recognition error at: '~' at line 6 column 14 ,offendingToken=null ,locations=[SourceLocation{line=6, column=14}] ,sourcePreview="A 64-bit signed integer"
+[FATAL] errors=[InvalidSyntaxError{ message=Invalid syntax with ANTLR error 'token recognition error at: '~'' at line 6 column 14 ,offendingToken=null ,locations=[SourceLocation{line=6, column=14}] ,sourcePreview="A 64-bit signed integer"
 scalar Long
 
 type Customer~ {
