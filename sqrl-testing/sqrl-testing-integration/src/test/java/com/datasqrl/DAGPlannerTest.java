@@ -71,7 +71,7 @@ public class DAGPlannerTest extends AbstractAssetSnapshotTest {
   @ArgumentsSource(DagPlannerSQRLFiles.class)
   @Disabled
   void specificScript(Path script) {
-    assumeThat(script.toString()).endsWith("functionParameterExpressionTest.sqrl");
+    assumeThat(script.toString()).endsWith("comprehensiveTest.sqrl");
     scripts(script);
   }
 
