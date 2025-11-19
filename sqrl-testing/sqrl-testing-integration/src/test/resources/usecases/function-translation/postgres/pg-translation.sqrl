@@ -1,0 +1,131 @@
+_InputData := SELECT * FROM (VALUES (1)) AS base(dummy);
+
+/*+engine(postgres)*/
+FunctionCalls := SELECT
+    LOG2(8)                                          AS log2_example,
+    LOG(10)                                          AS log_nat_example,
+    LOG(2, 8)                                        AS log_base_example,
+    E()                                              AS e_example,
+    RAND() IS NOT NULL                               AS rand_example,
+    RAND(42) IS NOT NULL                             AS rand_seed_example,
+    RAND_INTEGER(10) IS NOT NULL                     AS rand_int_example,
+    RAND_INTEGER(12345, 100) IS NOT NULL             AS rand_int_seed_range_example,
+    UUID() IS NOT NULL                               AS uuid_example,
+    BIN(10)                                          AS bin_example,
+    HEX(255)                                         AS hex_numeric_example,
+    HEX('AB')                                        AS hex_string_example,
+    UNHEX('4142')                                    AS unhex_example,
+    TRUNCATE(123.456, 2)                             AS truncate_scale_example,
+    TRUNCATE(123.456)                                AS truncate_default_example,
+    PRINTF('Hello %s %d', 'world', 42)               AS printf_example,
+    STARTSWITH('FlinkSQL', 'Flink')                  AS startswith_example,
+    ENDSWITH('FlinkSQL', 'SQL')                      AS endswith_example,
+    REGEXP_EXTRACT('abc-123-def', '(\\d+)', 1)       AS regexp_extract_example,
+    REGEXP_EXTRACT_ALL('a1b2c3', '(\\d)', 1)         AS regexp_extract_all_example,
+    DECODE(ENCODE('hi', 'UTF-8'), 'UTF-8')           AS decode_example,
+    ENCODE('hi', 'UTF-8') IS NOT NULL                AS encode_example,
+    FROM_BASE64(TO_BASE64('hello'))                  AS from_base64_example,
+    TO_BASE64('hello')                               AS to_base64_example,
+    INSTR('hello world', 'world')                    AS instr_example,
+    LOCATE('l', 'hello', 3)                          AS locate_example,
+    REGEXP('foo123bar', '\\d+')                      AS regexp_example,
+    SPLIT_INDEX('a,b,c', ',', 1)                     AS split_index_example,
+    JSON_QUOTE('hello "json"')                       AS json_quote_example,
+    ELT(2, 'first', 'second', 'third')               AS elt_example,
+
+    NOW() IS NOT NULL                                AS now_example,
+--    LOCALTIME  IS NOT NULL                         AS local_time_example,
+--    LOCALTIMESTAMP  IS NOT NULL                    AS local_timestamp_example,
+--     CURRENT_TIME  IS NOT NULL                       AS current_time_example,
+--     CURRENT_DATE   IS NOT NULL                      AS current_date_example,
+--     CURRENT_TIMESTAMP  IS NOT NULL                  AS current_timestamp_example,
+
+    YEAR(DATE '2024-01-02')                          AS year_example,
+    QUARTER(DATE '2024-01-02')                       AS quarter_example,
+    MONTH(DATE '2024-01-02')                         AS month_example,
+    WEEK(DATE '2024-01-02')                          AS week_example,
+    DAYOFYEAR(DATE '2024-01-02')                     AS dayofyear_example,
+    DAYOFMONTH(DATE '2024-01-02')                    AS dayofmonth_example,
+    DAYOFWEEK(DATE '2024-01-02')                     AS dayofweek_example,
+    HOUR(TIMESTAMP '2024-01-02 03:04:05')            AS hour_example,
+    MINUTE(TIMESTAMP '2024-01-02 03:04:05')          AS minute_example,
+    SECOND(TIMESTAMP '2024-01-02 03:04:05')          AS second_example,
+
+     FLOOR(TIMESTAMP '2024-01-02 03:04:05' TO MINUTE) AS floor_minute_example,
+
+     CEIL(TIMESTAMP '2024-01-02 03:04:05' TO MINUTE) AS ceil_minute_example,
+
+    DATE_FORMAT(TIMESTAMP '2024-01-02 03:04:05', 'yyyy-MM-dd') AS date_format_example,
+    TIMESTAMPADD(DAY, 1, TIMESTAMP '2024-01-02 03:04:05') AS timestampadd_example,
+    --TODO: figure out why this causes unparsing errors in Postgres dialect of calcite
+--     TIMESTAMPDIFF(
+--         DAY,
+--         TIMESTAMP '2024-01-01 00:00:00',
+--         TIMESTAMP '2024-01-02 00:00:00'
+--     )                                                          AS timestampdiff_example,
+    CONVERT_TZ('2024-01-02 03:04:05', 'UTC', 'America/Los_Angeles')
+                                                            AS convert_tz_example,
+    FROM_UNIXTIME(1700000000, 'yyyy-MM-dd HH:mm:ss')           AS from_unixtime_example,
+    UNIX_TIMESTAMP() IS NOT NULL                               AS unix_timestamp_now_example,
+    UNIX_TIMESTAMP('2024-01-02 03:04:05')                      AS unix_timestamp_str_example,
+    TO_DATE('2024-01-02', 'yyyy-MM-dd')                        AS to_date_func_example,
+    TO_TIMESTAMP_LTZ(1700000000, 0)                            AS to_timestamp_ltz_epoch_example,
+    TO_TIMESTAMP_LTZ('2024-01-02 03:04:05', 'yyyy-MM-dd HH:mm:ss')
+                                                            AS to_timestamp_ltz_str_example,
+    TO_TIMESTAMP('2024-01-02 03:04:05', 'yyyy-MM-dd HH:mm:ss')
+                                                            AS to_timestamp_func_example,
+
+    IF(1 < 2, 'yes', 'no')                                     AS if_example,
+    IS_ALPHA('OnlyLetters')                                    AS is_alpha_example,
+    IS_DECIMAL('123.45')                                       AS is_decimal_example,
+    IS_DIGIT('12345')                                          AS is_digit_example,
+
+    ELEMENT(ARRAY[3])                                         AS element_example,
+    CARDINALITY(MAP['a', 1, 'b', 2])                          AS cardinality_example,
+    MAP['a', 1, 'b', 2]['a']                                  AS map_index_example,
+    ARRAY_CONTAINS(ARRAY[1, 2, 3], 2)                         AS array_contains_example,
+    ARRAY_DISTINCT(ARRAY['a', 'b', 'b', 'c']) AS array_distinct_example,
+    ARRAY_PREPEND(ARRAY['b', 'c'], 'a')                       AS array_prepend_example,
+    ARRAY_SLICE(ARRAY['a', 'b', 'c', 'd', 'e'], 2, 4)         AS array_slice_example,
+    ARRAY_UNION(ARRAY['a', 'b'], ARRAY['b', 'c'])             AS array_union_example,
+    ARRAY_CONCAT(ARRAY['a', 'b'], ARRAY['c', 'd'], ARRAY['e']) AS array_concat_example,
+    ARRAY_EXCEPT(ARRAY['a', 'b', 'c'], ARRAY['b'])            AS array_except_example,
+    ARRAY_REVERSE(ARRAY['a', 'b', 'c'])                       AS array_reverse_example,
+    ARRAY_SORT(ARRAY['c', 'a', 'b'])                          AS array_sort_example,
+    ARRAY_INTERSECT(ARRAY['a', 'b', 'c'], ARRAY['b', 'c', 'd']) AS array_intersect_example,
+    ARRAY_MAX(ARRAY['a', 'b', 'c'])                           AS array_max_example,
+    ARRAY_MIN(ARRAY[1, 2, 3])                                 AS array_min_example,
+    ARRAY_JOIN(ARRAY['a', NULL, 'c'], '-', '')                AS array_join_example,
+    MAP_KEYS(MAP['a', 1, 'b', 2])                             AS map_keys_example,
+    MAP_UNION(MAP['a', 1], MAP['b', 2])                       AS map_union_example,
+    MAP_VALUES(MAP['a', 1, 'b', 2])                           AS map_values_example,
+    MAP_ENTRIES(MAP['a', 1, 'b', 2])                          AS map_entries_example,
+    MAP_FROM_ARRAYS(ARRAY['a', 'b'], ARRAY[1, 2])             AS map_from_arrays_example,
+    STR_TO_MAP('k1=1,k2=2', ',', '=')                         AS str_to_map_example,
+    SPLIT('a|b|c', '|')                                       AS split_example,
+
+    SHA1('hello')                                             AS sha1_example,
+    SHA224('hello')                                           AS sha224_example,
+    SHA256('hello')                                           AS sha256_example,
+    SHA384('hello')                                           AS sha384_example,
+    SHA512('hello')                                           AS sha512_example,
+    SHA2('hello', 256)                                        AS sha2_example,
+
+    'end' AS the_end
+FROM _InputData;
+
+_ArrayData := SELECT * FROM (VALUES ('x'), ('y'), ('z')) AS t(val);
+
+/*+engine(postgres)*/
+ArrayFunctions := SELECT
+                    LISTAGG(val, ',')           AS listagg_example,
+                    -- TODO: map multisets to valid postgres datatype
+--                    ARRAY_JOIN(COLLECT(val), ',','')                AS collect_example,
+                    ARRAY_AGG(val   )           AS arrayagg_example
+                  FROM _ArrayData;
+
+/*+test */
+FunctionCallsTest := SELECT * FROM FunctionCalls;
+
+/*+test */
+ArrayFunctionsTest := SELECT * FROM ArrayFunctions;

@@ -15,9 +15,12 @@ For implementation, we use this prompt in Claude Code:
   In rare cases, simple translations are insufficient and the translation requires
   rewriting the operator in the relational algebra tree. Only if absolutely necessary do you implement a @sqrl-planner/src/main/java/com/datasqrl/calcite/function/OperatorRuleTransform.java to do so, such as the example
   @sqrl-planner/src/main/java/com/datasqrl/function/translation/postgres/text/TextSearchTranslation.java. 
-  Translate this function:
-  
+  Translate this FlinkSQL function:
+  LOG2
 ```
+
+@sqrl-testing/sqrl-testing-integration/src/test/resources/usecases/function-translation/postgres/pg-translation.sqrl
+@sqrl-testing/sqrl-testing-integration/src/test/java/com/datasqrl/FullUseCaseIT.java#L63-64
 
 | **FlinkSQL Signature**                                | **Mapping in PostgreSQL 18+**                                                                                                                                        |
 | ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
