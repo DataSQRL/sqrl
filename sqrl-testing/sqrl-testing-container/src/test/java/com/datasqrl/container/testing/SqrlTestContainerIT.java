@@ -64,8 +64,7 @@ public class SqrlTestContainerIT extends SqrlContainerTestBase {
     // Assert that the test command throws a RuntimeException and capture the exception
     ContainerError exception =
         (ContainerError)
-            assertThatThrownBy(
-                    () -> sqrlCmd(testDir, "test package-no-snapshots.json".split(" ")))
+            assertThatThrownBy(() -> sqrlCmd(testDir, "test package-no-snapshots.json".split(" ")))
                 .isInstanceOf(ContainerError.class)
                 .hasMessageContaining("SQRL compilation failed")
                 .actual();
