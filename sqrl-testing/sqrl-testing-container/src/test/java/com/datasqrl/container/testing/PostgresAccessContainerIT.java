@@ -40,7 +40,7 @@ public class PostgresAccessContainerIT extends SqrlContainerTestBase {
     // Start the run container which compiles and runs the server
     runContainer =
         createCmdContainer(testDir)
-            .withCommand("run", "avro-schema.sqrl")
+            .withCommand("run")
             .withExposedPorts(HTTP_SERVER_PORT)
             .waitingFor(
                 Wait.forHttp("/health")

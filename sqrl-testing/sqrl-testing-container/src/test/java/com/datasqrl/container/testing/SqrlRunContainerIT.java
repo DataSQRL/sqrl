@@ -45,7 +45,7 @@ public class SqrlRunContainerIT extends SqrlContainerTestBase {
     // Start the run container which compiles and runs the server all in one
     runContainer =
         createCmdContainer(testDir)
-            .withCommand("run", "avro-schema.sqrl")
+            .withCommand("run")
             .withExposedPorts(HTTP_SERVER_PORT)
             .waitingFor(
                 Wait.forHttp("/health")
