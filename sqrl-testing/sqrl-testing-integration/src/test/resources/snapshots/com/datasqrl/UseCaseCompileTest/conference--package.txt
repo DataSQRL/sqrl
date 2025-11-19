@@ -1,26 +1,25 @@
 >>>pipeline_explain.txt
 === EventLikeCount
-ID:     default_catalog.default_database.EventLikeCount
-Type:   state
-Stage:  flink
-Inputs: default_catalog.default_database._UserLikes
-Primary Key: eventid
-Timestamp  : -
+ID:          default_catalog.default_database.EventLikeCount
+Type:        state
+Stage:       flink
+Primary key: eventid
+Timestamp:   -
+---
 Schema:
  - eventid: BIGINT NOT NULL
  - num: BIGINT NOT NULL
  - test: BIGINT NOT NULL
+Inputs:
+ - default_catalog.default_database._UserLikes
 
 === Events
-ID:     default_catalog.default_database.Events
-Type:   state
-Stage:  flink
-Inputs: default_catalog.default_database._ProcessedEventStream
-Annotations:
- - mostRecentDistinct: true
- - stream-root: _EventStream
-Primary Key: id
-Timestamp  : last_updated
+ID:          default_catalog.default_database.Events
+Type:        state
+Stage:       flink
+Primary key: id
+Timestamp:   last_updated
+---
 Schema:
  - url: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - date: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -35,75 +34,90 @@ Schema:
  - startTime: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
  - embedding: RAW('com.datasqrl.flinkrunner.stdlib.vector.FlinkVectorType', 'AEhjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLnZlY3Rvci5GbGlua1ZlY3RvclR5cGVTZXJpYWxpemVyU25hcHNob3QAAAAD')
  - startTimestamp: TIMESTAMP(3)
+Inputs:
+ - default_catalog.default_database._ProcessedEventStream
+Annotations:
+ - mostRecentDistinct: true
+ - stream-root: _EventStream
 
 === EventsLiked
-ID:     default_catalog.default_database.EventsLiked
-Type:   query
-Stage:  postgres
-Inputs: default_catalog.default_database.Events, default_catalog.default_database._UserLikes
+ID:          default_catalog.default_database.EventsLiked
+Type:        query
+Stage:       postgres
+---
+Inputs:
+ - default_catalog.default_database.Events
+ - default_catalog.default_database._UserLikes
 Annotations:
  - parameters: userid
  - base-table: Events
 
 === PersonalizedEventSearch
-ID:     default_catalog.default_database.PersonalizedEventSearch
-Type:   query
-Stage:  postgres
-Inputs: default_catalog.default_database.Events, default_catalog.default_database._UserInterests
+ID:          default_catalog.default_database.PersonalizedEventSearch
+Type:        query
+Stage:       postgres
+---
+Inputs:
+ - default_catalog.default_database.Events
+ - default_catalog.default_database._UserInterests
 Annotations:
  - parameters: query, userid
  - base-table: PersonalizedEventSearch
 
 === RecommendedEvents
-ID:     default_catalog.default_database.RecommendedEvents
-Type:   query
-Stage:  postgres
-Inputs: default_catalog.default_database.Events, default_catalog.default_database._UserInterests
+ID:          default_catalog.default_database.RecommendedEvents
+Type:        query
+Stage:       postgres
+---
+Inputs:
+ - default_catalog.default_database.Events
+ - default_catalog.default_database._UserInterests
 Annotations:
  - parameters: userid
  - base-table: RecommendedEvents
 
 === _AddInterest
-ID:     default_catalog.default_database._AddInterest
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database._AddInterestStream
-Annotations:
- - stream-root: _AddInterestStream
-Primary Key: _uuid
-Timestamp  : event_time
+ID:          default_catalog.default_database._AddInterest
+Type:        stream
+Stage:       flink
+Primary key: _uuid
+Timestamp:   event_time
+---
 Schema:
  - _uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - userid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - text: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - embedding: RAW('com.datasqrl.flinkrunner.stdlib.vector.FlinkVectorType', 'AEhjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLnZlY3Rvci5GbGlua1ZlY3RvclR5cGVTZXJpYWxpemVyU25hcHNob3QAAAAD')
-
-=== _AddInterestStream
-ID:     default_catalog.default_database._AddInterestStream
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database._AddInterestStream__base
+Inputs:
+ - default_catalog.default_database._AddInterestStream
 Annotations:
  - stream-root: _AddInterestStream
-Primary Key: _uuid
-Timestamp  : event_time
+
+=== _AddInterestStream
+ID:          default_catalog.default_database._AddInterestStream
+Type:        stream
+Stage:       flink
+Primary key: _uuid
+Timestamp:   event_time
+---
 Schema:
  - _uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - userid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - text: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database._AddInterestStream__base
+Annotations:
+ - stream-root: _AddInterestStream
 
 === _EventStream
-ID:     default_catalog.default_database._EventStream
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database._EventStream__base
-Annotations:
- - features: DENORMALIZE (feature)
- - stream-root: _EventStream
-Primary Key: url, last_updated
-Timestamp  : last_updated
+ID:          default_catalog.default_database._EventStream
+Type:        stream
+Stage:       flink
+Primary key: url, last_updated
+Timestamp:   last_updated
+---
 Schema:
  - url: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - date: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -113,16 +127,19 @@ Schema:
  - location: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - speakers: RecordType:peek_no_expand(VARCHAR(2147483647) CHARACTER SET "UTF-16LE" name, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" title, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" company) NOT NULL ARRAY NOT NULL
  - last_updated: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database._EventStream__base
+Annotations:
+ - features: DENORMALIZE (feature)
+ - stream-root: _EventStream
 
 === _LikeVector
-ID:     default_catalog.default_database._LikeVector
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.Events, default_catalog.default_database._Likes
-Annotations:
- - stream-root: _Likes
-Primary Key: -
-Timestamp  : event_time
+ID:          default_catalog.default_database._LikeVector
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   event_time
+---
 Schema:
  - userid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - embedding: RAW('com.datasqrl.flinkrunner.stdlib.vector.FlinkVectorType', 'AEhjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLnZlY3Rvci5GbGlua1ZlY3RvclR5cGVTZXJpYWxpemVyU25hcHNob3QAAAAD')
@@ -130,32 +147,37 @@ Schema:
  - abstract: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - location: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
-
-=== _Likes
-ID:     default_catalog.default_database._Likes
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database._Likes__base
+Inputs:
+ - default_catalog.default_database.Events
+ - default_catalog.default_database._Likes
 Annotations:
  - stream-root: _Likes
-Primary Key: _uuid
-Timestamp  : event_time
+
+=== _Likes
+ID:          default_catalog.default_database._Likes
+Type:        stream
+Stage:       flink
+Primary key: _uuid
+Timestamp:   event_time
+---
 Schema:
  - _uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - eventid: BIGINT NOT NULL
  - userid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - liked: BOOLEAN NOT NULL
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database._Likes__base
+Annotations:
+ - stream-root: _Likes
 
 === _ProcessedEventStream
-ID:     default_catalog.default_database._ProcessedEventStream
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database._EventStream
-Annotations:
- - stream-root: _EventStream
-Primary Key: url, last_updated
-Timestamp  : last_updated
+ID:          default_catalog.default_database._ProcessedEventStream
+Type:        stream
+Stage:       flink
+Primary key: url, last_updated
+Timestamp:   last_updated
+---
 Schema:
  - url: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - date: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -170,46 +192,57 @@ Schema:
  - startTime: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
  - embedding: RAW('com.datasqrl.flinkrunner.stdlib.vector.FlinkVectorType', 'AEhjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLnZlY3Rvci5GbGlua1ZlY3RvclR5cGVTZXJpYWxpemVyU25hcHNob3QAAAAD')
  - startTimestamp: TIMESTAMP(3)
+Inputs:
+ - default_catalog.default_database._EventStream
+Annotations:
+ - stream-root: _EventStream
 
 === _UserInterestVectors
-ID:     default_catalog.default_database._UserInterestVectors
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database._AddInterest, default_catalog.default_database._LikeVector
-Primary Key: -
-Timestamp  : event_time
+ID:          default_catalog.default_database._UserInterestVectors
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   event_time
+---
 Schema:
  - userid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - embedding: RAW('com.datasqrl.flinkrunner.stdlib.vector.FlinkVectorType', 'AEhjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLnZlY3Rvci5GbGlua1ZlY3RvclR5cGVTZXJpYWxpemVyU25hcHNob3QAAAAD')
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database._AddInterest
+ - default_catalog.default_database._LikeVector
 
 === _UserInterests
-ID:     default_catalog.default_database._UserInterests
-Type:   state
-Stage:  flink
-Inputs: default_catalog.default_database._UserInterestVectors
-Primary Key: userid
-Timestamp  : -
+ID:          default_catalog.default_database._UserInterests
+Type:        state
+Stage:       flink
+Primary key: userid
+Timestamp:   -
+---
 Schema:
  - userid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - interestVector: RAW('com.datasqrl.flinkrunner.stdlib.vector.FlinkVectorType', 'AEhjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLnZlY3Rvci5GbGlua1ZlY3RvclR5cGVTZXJpYWxpemVyU25hcHNob3QAAAAD')
+Inputs:
+ - default_catalog.default_database._UserInterestVectors
 
 === _UserLikes
-ID:     default_catalog.default_database._UserLikes
-Type:   state
-Stage:  flink
-Inputs: default_catalog.default_database._Likes
-Annotations:
- - mostRecentDistinct: true
- - stream-root: _Likes
-Primary Key: userid, eventid
-Timestamp  : event_time
+ID:          default_catalog.default_database._UserLikes
+Type:        state
+Stage:       flink
+Primary key: userid, eventid
+Timestamp:   event_time
+---
 Schema:
  - _uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - eventid: BIGINT NOT NULL
  - userid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - liked: BOOLEAN NOT NULL
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database._Likes
+Annotations:
+ - mostRecentDistinct: true
+ - stream-root: _Likes
 
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `_EventStream__schema` (

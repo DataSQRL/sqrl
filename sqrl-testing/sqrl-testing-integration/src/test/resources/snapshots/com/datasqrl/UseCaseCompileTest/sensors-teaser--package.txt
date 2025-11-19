@@ -1,63 +1,71 @@
 >>>pipeline_explain.txt
 === SecReading
-ID:     default_catalog.default_database.SecReading
-Type:   state
-Stage:  flink
-Inputs: default_catalog.default_database.SensorReading
-Annotations:
- - features: STREAM_WINDOW_AGGREGATION (feature)
- - stream-root: SensorReading
- - sort: [1 DESC-nulls-last]
-Primary Key: sensorid, timeStart, timeEnd, timeSec
-Timestamp  : timeSec
+ID:          default_catalog.default_database.SecReading
+Type:        state
+Stage:       flink
+Primary key: sensorid, timeStart, timeEnd, timeSec
+Timestamp:   timeSec
+---
 Schema:
  - sensorid: BIGINT NOT NULL
  - timeSec: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - timeStart: TIMESTAMP(3) NOT NULL
  - timeEnd: TIMESTAMP(3) NOT NULL
  - temp: DOUBLE NOT NULL
+Inputs:
+ - default_catalog.default_database.SensorReading
+Annotations:
+ - features: STREAM_WINDOW_AGGREGATION (feature)
+ - stream-root: SensorReading
+ - sort: [1 DESC-nulls-last]
 
 === SensorMaxTemp
-ID:     default_catalog.default_database.SensorMaxTemp
-Type:   state
-Stage:  flink
-Inputs: default_catalog.default_database._SensorMaxTempWindow
-Primary Key: sensorid
-Timestamp  : window_time
+ID:          default_catalog.default_database.SensorMaxTemp
+Type:        state
+Stage:       flink
+Primary key: sensorid
+Timestamp:   window_time
+---
 Schema:
  - sensorid: BIGINT NOT NULL
  - window_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - maxTemp: DOUBLE NOT NULL
+Inputs:
+ - default_catalog.default_database._SensorMaxTempWindow
 
 === SensorReading
-ID:     default_catalog.default_database.SensorReading
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.SensorReading__base
-Annotations:
- - stream-root: SensorReading
-Primary Key: sensorid, time
-Timestamp  : timestamp
+ID:          default_catalog.default_database.SensorReading
+Type:        stream
+Stage:       flink
+Primary key: sensorid, time
+Timestamp:   timestamp
+---
 Schema:
  - sensorid: BIGINT NOT NULL
  - time: BIGINT NOT NULL
  - temperature: DOUBLE NOT NULL
  - humidity: DOUBLE NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.SensorReading__base
+Annotations:
+ - stream-root: SensorReading
 
 === _SensorMaxTempWindow
-ID:     default_catalog.default_database._SensorMaxTempWindow
-Type:   state
-Stage:  flink
-Inputs: default_catalog.default_database.SecReading
-Annotations:
- - features: STREAM_WINDOW_AGGREGATION (feature)
-Primary Key: -
-Timestamp  : window_time
+ID:          default_catalog.default_database._SensorMaxTempWindow
+Type:        state
+Stage:       flink
+Primary key: -
+Timestamp:   window_time
+---
 Schema:
  - sensorid: BIGINT NOT NULL
  - window_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - maxTemp: DOUBLE NOT NULL
+Inputs:
+ - default_catalog.default_database.SecReading
+Annotations:
+ - features: STREAM_WINDOW_AGGREGATION (feature)
 
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `SensorReading__schema` (

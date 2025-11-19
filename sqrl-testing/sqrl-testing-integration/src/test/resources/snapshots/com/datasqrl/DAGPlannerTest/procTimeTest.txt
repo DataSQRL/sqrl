@@ -1,23 +1,26 @@
 >>>pipeline_explain.txt
 === Customer
-ID:     default_catalog.default_database.Customer
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.Customer__base
-Annotations:
- - stream-root: Customer
-Primary Key: customerid, lastUpdated
-Timestamp  : _ingest_time
+ID:          default_catalog.default_database.Customer
+Type:        stream
+Stage:       flink
+Primary key: customerid, lastUpdated
+Timestamp:   _ingest_time
+---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
  - _ingest_time: TIMESTAMP_LTZ(3) *PROCTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Customer__base
+Annotations:
+ - stream-root: Customer
 Plan:
 LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], _ingest_time=[PROCTIME()])
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE TEMPORARY TABLE `Customer__schema` (
+SQL:
+CREATE TEMPORARY TABLE `Customer__schema` (
   `customerid` BIGINT NOT NULL,
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -36,12 +39,12 @@ CREATE TABLE `Customer` (
 )
 LIKE `Customer__schema`
 === CustomerOrdersJoin
-ID:     default_catalog.default_database.CustomerOrdersJoin
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.Customer, default_catalog.default_database.Orders
-Primary Key: customerid, lastUpdated, id, time
-Timestamp  : _ingest_time
+ID:          default_catalog.default_database.CustomerOrdersJoin
+Type:        stream
+Stage:       flink
+Primary key: customerid, lastUpdated, id, time
+Timestamp:   _ingest_time
+---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
@@ -53,34 +56,41 @@ Schema:
  - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - entries: RecordType:peek_no_expand(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
  - _ingest_time0: TIMESTAMP_LTZ(3) *PROCTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Customer
+ - default_catalog.default_database.Orders
 Plan:
 LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], _ingest_time=[$4], id=[$5], customerid0=[$6], time=[$7], entries=[$8], _ingest_time0=[$9])
   LogicalJoin(condition=[AND(=($0, $6), <($4, $9))], joinType=[inner])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
     LogicalTableScan(table=[[default_catalog, default_database, Orders]])
-SQL: CREATE VIEW `CustomerOrdersJoin` AS  SELECT * FROM Customer c JOIN Orders o ON c.customerid = o.customerid
+SQL:
+CREATE VIEW `CustomerOrdersJoin` AS  SELECT * FROM Customer c JOIN Orders o ON c.customerid = o.customerid
                       AND c._ingest_time < o._ingest_time;
 
 === Orders
-ID:     default_catalog.default_database.Orders
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.Orders__base
-Annotations:
- - features: DENORMALIZE (feature)
- - stream-root: Orders
-Primary Key: id, time
-Timestamp  : _ingest_time
+ID:          default_catalog.default_database.Orders
+Type:        stream
+Stage:       flink
+Primary key: id, time
+Timestamp:   _ingest_time
+---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
  - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - entries: RecordType:peek_no_expand(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
  - _ingest_time: TIMESTAMP_LTZ(3) *PROCTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Orders__base
+Annotations:
+ - features: DENORMALIZE (feature)
+ - stream-root: Orders
 Plan:
 LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3], _ingest_time=[PROCTIME()])
   LogicalTableScan(table=[[default_catalog, default_database, Orders]])
-SQL: CREATE TEMPORARY TABLE `Orders__schema` (
+SQL:
+CREATE TEMPORARY TABLE `Orders__schema` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,

@@ -1,28 +1,28 @@
 >>>pipeline_explain.txt
 === ApplicationUpdates
-ID:     default_catalog.default_database.ApplicationUpdates
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.ApplicationUpdates__base
-Annotations:
- - stream-root: ApplicationUpdates
-Primary Key: loan_application_id, event_time
-Timestamp  : -
+ID:          default_catalog.default_database.ApplicationUpdates
+Type:        stream
+Stage:       flink
+Primary key: loan_application_id, event_time
+Timestamp:   -
+---
 Schema:
  - loan_application_id: BIGINT NOT NULL
  - status: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - message: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - event_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Inputs:
+ - default_catalog.default_database.ApplicationUpdates__base
+Annotations:
+ - stream-root: ApplicationUpdates
 
 === Applications
-ID:     default_catalog.default_database.Applications
-Type:   state
-Stage:  flink
-Inputs: default_catalog.default_database._ApplicationsStream
-Annotations:
- - stream-root: _ApplicationsStream
-Primary Key: id
-Timestamp  : -
+ID:          default_catalog.default_database.Applications
+Type:        state
+Stage:       flink
+Primary key: id
+Timestamp:   -
+---
 Schema:
  - id: BIGINT NOT NULL
  - customer_id: BIGINT NOT NULL
@@ -31,27 +31,33 @@ Schema:
  - duration: BIGINT NOT NULL
  - application_date: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - updated_at: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Inputs:
+ - default_catalog.default_database._ApplicationsStream
+Annotations:
+ - stream-root: _ApplicationsStream
 
 === CustomerUpdates
-ID:     default_catalog.default_database.CustomerUpdates
-Type:   state
-Stage:  flink
-Inputs: default_catalog.default_database.ApplicationUpdates, default_catalog.default_database.Applications, default_catalog.default_database.Customers
-Primary Key: customer_id
-Timestamp  : -
+ID:          default_catalog.default_database.CustomerUpdates
+Type:        state
+Stage:       flink
+Primary key: customer_id
+Timestamp:   -
+---
 Schema:
  - customer_id: BIGINT NOT NULL
  - num_updates: BIGINT NOT NULL
+Inputs:
+ - default_catalog.default_database.ApplicationUpdates
+ - default_catalog.default_database.Applications
+ - default_catalog.default_database.Customers
 
 === Customers
-ID:     default_catalog.default_database.Customers
-Type:   state
-Stage:  flink
-Inputs: default_catalog.default_database._CustomersStream
-Annotations:
- - stream-root: _CustomersStream
-Primary Key: id
-Timestamp  : -
+ID:          default_catalog.default_database.Customers
+Type:        state
+Stage:       flink
+Primary key: id
+Timestamp:   -
+---
 Schema:
  - id: BIGINT NOT NULL
  - first_name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -61,16 +67,18 @@ Schema:
  - address: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - date_of_birth: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - updated_at: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Inputs:
+ - default_catalog.default_database._CustomersStream
+Annotations:
+ - stream-root: _CustomersStream
 
 === _ApplicationsStream
-ID:     default_catalog.default_database._ApplicationsStream
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database._ApplicationsStream__base
-Annotations:
- - stream-root: _ApplicationsStream
-Primary Key: id, updated_at
-Timestamp  : -
+ID:          default_catalog.default_database._ApplicationsStream
+Type:        stream
+Stage:       flink
+Primary key: id, updated_at
+Timestamp:   -
+---
 Schema:
  - id: BIGINT NOT NULL
  - customer_id: BIGINT NOT NULL
@@ -79,16 +87,18 @@ Schema:
  - duration: BIGINT NOT NULL
  - application_date: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - updated_at: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Inputs:
+ - default_catalog.default_database._ApplicationsStream__base
+Annotations:
+ - stream-root: _ApplicationsStream
 
 === _CustomersStream
-ID:     default_catalog.default_database._CustomersStream
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database._CustomersStream__base
-Annotations:
- - stream-root: _CustomersStream
-Primary Key: id, updated_at
-Timestamp  : -
+ID:          default_catalog.default_database._CustomersStream
+Type:        stream
+Stage:       flink
+Primary key: id, updated_at
+Timestamp:   -
+---
 Schema:
  - id: BIGINT NOT NULL
  - first_name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -98,6 +108,10 @@ Schema:
  - address: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - date_of_birth: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - updated_at: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Inputs:
+ - default_catalog.default_database._CustomersStream__base
+Annotations:
+ - stream-root: _CustomersStream
 
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `_CustomersStream__schema` (

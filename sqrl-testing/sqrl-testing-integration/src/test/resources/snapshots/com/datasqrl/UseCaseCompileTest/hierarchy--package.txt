@@ -1,57 +1,65 @@
 >>>pipeline_explain.txt
 === Employees
-ID:     default_catalog.default_database.Employees
-Type:   state
-Stage:  flink
-Inputs: default_catalog.hr.Employees
-Annotations:
- - mostRecentDistinct: true
-Primary Key: employeeid
-Timestamp  : updatedDate
+ID:          default_catalog.default_database.Employees
+Type:        state
+Stage:       flink
+Primary key: employeeid
+Timestamp:   updatedDate
+---
 Schema:
  - employeeid: BIGINT NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - updatedDate: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
-
-=== Reporting
-ID:     default_catalog.default_database.Reporting
-Type:   state
-Stage:  flink
-Inputs: default_catalog.hr.Reporting
+Inputs:
+ - default_catalog.hr.Employees
 Annotations:
  - mostRecentDistinct: true
-Primary Key: employeeid, managerid
-Timestamp  : updatedDate
+
+=== Reporting
+ID:          default_catalog.default_database.Reporting
+Type:        state
+Stage:       flink
+Primary key: employeeid, managerid
+Timestamp:   updatedDate
+---
 Schema:
  - employeeid: BIGINT NOT NULL
  - managerid: BIGINT NOT NULL
  - updatedDate: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.hr.Reporting
+Annotations:
+ - mostRecentDistinct: true
 
 === Employees
-ID:     default_catalog.hr.Employees
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.hr.Employees__base
-Primary Key: -
-Timestamp  : updatedDate
+ID:          default_catalog.hr.Employees
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   updatedDate
+---
 Schema:
  - employeeid: BIGINT NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - updatedDate: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.hr.Employees__base
 
 === Reporting
-ID:     default_catalog.hr.Reporting
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.hr.Reporting__base
-Primary Key: -
-Timestamp  : updatedDate
+ID:          default_catalog.hr.Reporting
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   updatedDate
+---
 Schema:
  - employeeid: BIGINT NOT NULL
  - managerid: BIGINT NOT NULL
  - updatedDate: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.hr.Reporting__base
 
 >>>flink-sql-no-functions.sql
 CREATE DATABASE IF NOT EXISTS `hr`;

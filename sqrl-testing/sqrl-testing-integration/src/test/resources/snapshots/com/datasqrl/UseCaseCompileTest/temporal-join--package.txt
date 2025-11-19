@@ -1,74 +1,89 @@
 >>>pipeline_explain.txt
 === EnrichedSensorReading
-ID:     default_catalog.default_database.EnrichedSensorReading
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.SensorReading, default_catalog.default_database._SensorDistinct
-Annotations:
- - sort: [2 ASC-nulls-first]
-Primary Key: -
-Timestamp  : event_time
+ID:          default_catalog.default_database.EnrichedSensorReading
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   event_time
+---
 Schema:
  - sensorid: INTEGER NOT NULL
  - temperature: FLOAT NOT NULL
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - sensor_name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+Inputs:
+ - default_catalog.default_database.SensorReading
+ - default_catalog.default_database._SensorDistinct
+Annotations:
+ - sort: [2 ASC-nulls-first]
 
 === SensorReading
-ID:     default_catalog.default_database.SensorReading
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.SensorReading__base
-Primary Key: -
-Timestamp  : event_time
+ID:          default_catalog.default_database.SensorReading
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   event_time
+---
 Schema:
  - sensorid: INTEGER NOT NULL
  - temperature: FLOAT NOT NULL
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.SensorReading__base
 
 === SensorUpdates
-ID:     default_catalog.default_database.SensorUpdates
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.SensorUpdates__base
-Primary Key: -
-Timestamp  : lastUpdated
+ID:          default_catalog.default_database.SensorUpdates
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   lastUpdated
+---
 Schema:
  - sensorid: INTEGER NOT NULL
  - sensor_name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.SensorUpdates__base
 
 === _SensorDistinct
-ID:     default_catalog.default_database._SensorDistinct
-Type:   state
-Stage:  flink
-Inputs: default_catalog.default_database.SensorUpdates
-Annotations:
- - mostRecentDistinct: true
-Primary Key: sensorid
-Timestamp  : lastUpdated
+ID:          default_catalog.default_database._SensorDistinct
+Type:        state
+Stage:       flink
+Primary key: sensorid
+Timestamp:   lastUpdated
+---
 Schema:
  - sensorid: INTEGER NOT NULL
  - sensor_name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.SensorUpdates
+Annotations:
+ - mostRecentDistinct: true
 
 === Result
-ID:     logger.Result
-Type:   export
-Stage:  flink
-Inputs: default_catalog.default_database.EnrichedSensorReading
+ID:          logger.Result
+Type:        export
+Stage:       flink
+---
+Inputs:
+ - default_catalog.default_database.EnrichedSensorReading
 
 === SensorReading
-ID:     logger.SensorReading
-Type:   export
-Stage:  flink
-Inputs: default_catalog.default_database.SensorReading
+ID:          logger.SensorReading
+Type:        export
+Stage:       flink
+---
+Inputs:
+ - default_catalog.default_database.SensorReading
 
 === SensorUpdates
-ID:     logger.SensorUpdates
-Type:   export
-Stage:  flink
-Inputs: default_catalog.default_database.SensorUpdates
+ID:          logger.SensorUpdates
+Type:        export
+Stage:       flink
+---
+Inputs:
+ - default_catalog.default_database.SensorUpdates
 
 >>>flink-sql-no-functions.sql
 CREATE TABLE `SensorReading` (

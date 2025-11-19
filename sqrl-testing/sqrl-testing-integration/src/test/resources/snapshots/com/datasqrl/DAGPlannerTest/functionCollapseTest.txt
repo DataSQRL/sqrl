@@ -1,24 +1,27 @@
 >>>pipeline_explain.txt
 === Customer
-ID:     default_catalog.default_database.Customer
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.Customer__base
-Annotations:
- - stream-root: Customer
-Primary Key: customerid, lastUpdated
-Timestamp  : timestamp
+ID:          default_catalog.default_database.Customer
+Type:        stream
+Stage:       flink
+Primary key: customerid, lastUpdated
+Timestamp:   timestamp
+---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Customer__base
+Annotations:
+ - stream-root: Customer
 Plan:
 LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
   LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($3, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE TEMPORARY TABLE `Customer__schema` (
+SQL:
+CREATE TEMPORARY TABLE `Customer__schema` (
   `customerid` BIGINT NOT NULL,
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -38,42 +41,48 @@ CREATE TABLE `Customer` (
 )
 LIKE `Customer__schema`
 === CustomerHighCount
-ID:     default_catalog.default_database.CustomerHighCount
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.CustomerTimeWindow
-Primary Key: window_start, window_end
-Timestamp  : -
+ID:          default_catalog.default_database.CustomerHighCount
+Type:        stream
+Stage:       flink
+Primary key: window_start, window_end
+Timestamp:   -
+---
 Schema:
  - window_start: TIMESTAMP(3) NOT NULL
  - window_end: TIMESTAMP(3) NOT NULL
  - unique_email_count: BIGINT NOT NULL
+Inputs:
+ - default_catalog.default_database.CustomerTimeWindow
 Plan:
 LogicalProject(window_start=[$0], window_end=[$1], unique_email_count=[$2])
   LogicalFilter(condition=[>($2, 1)])
     LogicalTableScan(table=[[default_catalog, default_database, CustomerTimeWindow]])
-SQL: CREATE VIEW `CustomerHighCount` AS  SELECT * FROM CustomerTimeWindow WHERE unique_email_count > 1;
+SQL:
+CREATE VIEW `CustomerHighCount` AS  SELECT * FROM CustomerTimeWindow WHERE unique_email_count > 1;
 
 === CustomerTimeWindow
-ID:     default_catalog.default_database.CustomerTimeWindow
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.Customer
-Annotations:
- - features: STREAM_WINDOW_AGGREGATION (feature)
-Primary Key: window_start, window_end
-Timestamp  : -
+ID:          default_catalog.default_database.CustomerTimeWindow
+Type:        stream
+Stage:       flink
+Primary key: window_start, window_end
+Timestamp:   -
+---
 Schema:
  - window_start: TIMESTAMP(3) NOT NULL
  - window_end: TIMESTAMP(3) NOT NULL
  - unique_email_count: BIGINT NOT NULL
+Inputs:
+ - default_catalog.default_database.Customer
+Annotations:
+ - features: STREAM_WINDOW_AGGREGATION (feature)
 Plan:
 LogicalAggregate(group=[{0, 1}], unique_email_count=[COUNT(DISTINCT $2)])
   LogicalProject(window_start=[$5], window_end=[$6], email=[$1])
     LogicalTableFunctionScan(invocation=[TUMBLE(TABLE(#0), DESCRIPTOR('timestamp'), 60000:INTERVAL MINUTE)], rowType=[RecordType(BIGINT customerid, VARCHAR(2147483647) email, VARCHAR(2147483647) name, BIGINT lastUpdated, TIMESTAMP_LTZ(3) *ROWTIME* timestamp, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end, TIMESTAMP_LTZ(3) *ROWTIME* window_time)])
       LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
         LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW `CustomerTimeWindow` AS  SELECT
+SQL:
+CREATE VIEW `CustomerTimeWindow` AS  SELECT
                           window_start, window_end,
                           COUNT(DISTINCT email) AS unique_email_count
                       FROM TABLE(

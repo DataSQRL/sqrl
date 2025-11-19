@@ -56,7 +56,6 @@
   } ],
   "plan" : "LogicalProject(employeeid=[$0], name=[$1], email=[$2], updatedDate=[$3])\n  LogicalFilter(condition=[=($4, 1)])\n    LogicalProject(employeeid=[$0], name=[$1], email=[$2], updatedDate=[$3], __sqrlinternal_rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $3 DESC NULLS LAST)])\n      LogicalTableScan(table=[[default_catalog, hr, Employees]])\n",
   "sql" : "CREATE VIEW `Employees`\nAS\nSELECT `employeeid`, `name`, `email`, `updatedDate`\nFROM (SELECT `employeeid`, `name`, `email`, `updatedDate`, ROW_NUMBER() OVER (PARTITION BY `employeeid` ORDER BY `updatedDate` DESC NULLS LAST) AS `__sqrlinternal_rownum`\n  FROM `default_catalog`.`hr`.`Employees`) AS `t`\nWHERE `__sqrlinternal_rownum` = 1",
-  "primary_key" : [ "employeeid" ],
   "timestamp" : "updatedDate",
   "schema" : [ {
     "name" : "employeeid",
@@ -70,7 +69,8 @@
   }, {
     "name" : "updatedDate",
     "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL"
-  } ]
+  } ],
+  "primary_key" : [ "employeeid" ]
 }, {
   "id" : "default_catalog.default_database.Reporting",
   "name" : "Reporting",
@@ -83,7 +83,6 @@
   } ],
   "plan" : "LogicalProject(employeeid=[$0], managerid=[$1], updatedDate=[$2])\n  LogicalFilter(condition=[=($3, 1)])\n    LogicalProject(employeeid=[$0], managerid=[$1], updatedDate=[$2], __sqrlinternal_rownum=[ROW_NUMBER() OVER (PARTITION BY $0, $1 ORDER BY $2 DESC NULLS LAST)])\n      LogicalTableScan(table=[[default_catalog, hr, Reporting]])\n",
   "sql" : "CREATE VIEW `Reporting`\nAS\nSELECT `employeeid`, `managerid`, `updatedDate`\nFROM (SELECT `employeeid`, `managerid`, `updatedDate`, ROW_NUMBER() OVER (PARTITION BY `employeeid`, `managerid` ORDER BY `updatedDate` DESC NULLS LAST) AS `__sqrlinternal_rownum`\n  FROM `default_catalog`.`hr`.`Reporting`) AS `t`\nWHERE `__sqrlinternal_rownum` = 1",
-  "primary_key" : [ "employeeid", "managerid" ],
   "timestamp" : "updatedDate",
   "schema" : [ {
     "name" : "employeeid",
@@ -94,7 +93,8 @@
   }, {
     "name" : "updatedDate",
     "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL"
-  } ]
+  } ],
+  "primary_key" : [ "employeeid", "managerid" ]
 }, {
   "id" : "default_catalog.hr.Employees",
   "name" : "Employees",
@@ -123,7 +123,6 @@
   "name" : "Employees",
   "type" : "import",
   "stage" : "flink",
-  "inputs" : [ ],
   "connector" : {
     "format" : "flexible-json",
     "path" : "${DATA_PATH}/employees.jsonl",
@@ -155,7 +154,6 @@
   "name" : "Reporting",
   "type" : "import",
   "stage" : "flink",
-  "inputs" : [ ],
   "connector" : {
     "format" : "flexible-json",
     "path" : "${DATA_PATH}/reporting.jsonl",

@@ -1,47 +1,53 @@
 >>>pipeline_explain.txt
 === AnotherCustomer
-ID:     default_catalog.default_database.AnotherCustomer
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database._Customer
-Annotations:
- - stream-root: _Customer
-Primary Key: customerid, lastUpdated
-Timestamp  : -
+ID:          default_catalog.default_database.AnotherCustomer
+Type:        stream
+Stage:       flink
+Primary key: customerid, lastUpdated
+Timestamp:   -
+---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
+Inputs:
+ - default_catalog.default_database._Customer
+Annotations:
+ - stream-root: _Customer
 Plan:
 LogicalProject(customerid=[$0], email=[$1], lastUpdated=[$3])
   LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
     LogicalFilter(condition=[>($0, 100)])
       LogicalTableScan(table=[[default_catalog, default_database, _Customer]])
-SQL: CREATE VIEW `AnotherCustomer` AS  WITH customer_subset AS (
+SQL:
+CREATE VIEW `AnotherCustomer` AS  WITH customer_subset AS (
     SELECT * FROM _Customer WHERE customerid > 100
 )
 SELECT customerid, email, lastUpdated FROM customer_subset;
 
 === Customer
-ID:     default_catalog.default_database.Customer
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.Customer__base
-Annotations:
- - stream-root: Customer
-Primary Key: customerid, lastUpdated
-Timestamp  : timestamp
+ID:          default_catalog.default_database.Customer
+Type:        stream
+Stage:       flink
+Primary key: customerid, lastUpdated
+Timestamp:   timestamp
+---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Customer__base
+Annotations:
+ - stream-root: Customer
 Plan:
 LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
   LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($3, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE TEMPORARY TABLE `Customer__schema` (
+SQL:
+CREATE TEMPORARY TABLE `Customer__schema` (
   `customerid` BIGINT NOT NULL,
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -61,10 +67,12 @@ CREATE TABLE `Customer` (
 )
 LIKE `Customer__schema`
 === CustomerById
-ID:     default_catalog.default_database.CustomerById
-Type:   query
-Stage:  postgres
-Inputs: default_catalog.default_database.Customer
+ID:          default_catalog.default_database.CustomerById
+Type:        query
+Stage:       postgres
+---
+Inputs:
+ - default_catalog.default_database.Customer
 Annotations:
  - stream-root: Customer
  - parameters: minId
@@ -73,77 +81,86 @@ Plan:
 LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
   LogicalFilter(condition=[>($0, ?0)])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW `CustomerById` AS  SELECT * FROM Customer WHERE customerid > ?     ;
+SQL:
+CREATE VIEW `CustomerById` AS  SELECT * FROM Customer WHERE customerid > ?     ;
 
 === CustomerByMultipleTime
-ID:     default_catalog.default_database.CustomerByMultipleTime
-Type:   state
-Stage:  flink
-Inputs: default_catalog.default_database.Customer
-Annotations:
- - mostRecentDistinct: true
- - stream-root: Customer
-Primary Key: customerid, email
-Timestamp  : timestamp
+ID:          default_catalog.default_database.CustomerByMultipleTime
+Type:        state
+Stage:       flink
+Primary key: customerid, email
+Timestamp:   timestamp
+---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Customer
+Annotations:
+ - mostRecentDistinct: true
+ - stream-root: Customer
 Plan:
 LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
   LogicalFilter(condition=[=($5, 1)])
     LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4], __sqrlinternal_rownum=[ROW_NUMBER() OVER (PARTITION BY $0, $1 ORDER BY $4 DESC NULLS LAST, $3 NULLS FIRST)])
       LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW `CustomerByMultipleTime`
+SQL:
+CREATE VIEW `CustomerByMultipleTime`
 AS
 SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`
 FROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid`, `email` ORDER BY `timestamp` DESC NULLS LAST, `lastUpdated` NULLS FIRST) AS `__sqrlinternal_rownum`
   FROM `default_catalog`.`default_database`.`Customer`) AS `t`
 WHERE `__sqrlinternal_rownum` = 1
 === CustomerByTime2
-ID:     default_catalog.default_database.CustomerByTime2
-Type:   state
-Stage:  flink
-Inputs: default_catalog.default_database.Customer
-Annotations:
- - mostRecentDistinct: true
- - stream-root: Customer
-Primary Key: customerid
-Timestamp  : timestamp
+ID:          default_catalog.default_database.CustomerByTime2
+Type:        state
+Stage:       flink
+Primary key: customerid
+Timestamp:   timestamp
+---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Customer
+Annotations:
+ - mostRecentDistinct: true
+ - stream-root: Customer
 Plan:
 LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
   LogicalFilter(condition=[=($5, 1)])
     LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4], __sqrlinternal_rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $4 DESC NULLS LAST)])
       LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW `CustomerByTime2`
+SQL:
+CREATE VIEW `CustomerByTime2`
 AS
 SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`
 FROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC NULLS LAST) AS `__sqrlinternal_rownum`
   FROM `default_catalog`.`default_database`.`Customer`) AS `t`
 WHERE `__sqrlinternal_rownum` = 1
 === CustomerFilteredDistinct
-ID:     default_catalog.default_database.CustomerFilteredDistinct
-Type:   state
-Stage:  flink
-Inputs: default_catalog.default_database.Customer
-Annotations:
- - stream-root: Customer
-Primary Key: customerid
-Timestamp  : timestamp
+ID:          default_catalog.default_database.CustomerFilteredDistinct
+Type:        state
+Stage:       flink
+Primary key: customerid
+Timestamp:   timestamp
+---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Customer
+Annotations:
+ - stream-root: Customer
 Plan:
 LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
   LogicalFilter(condition=[=($5, 1)])
@@ -154,7 +171,8 @@ LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timesta
             LogicalFilter(condition=[>=($3, $5)])
               LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4], $f5=[MAX($3) OVER (PARTITION BY $0 ORDER BY $4 NULLS FIRST)])
                 LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW `CustomerFilteredDistinct`
+SQL:
+CREATE VIEW `CustomerFilteredDistinct`
 AS
 SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`
 FROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `lastUpdated` DESC NULLS LAST) AS `$f5`
@@ -166,10 +184,12 @@ FROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMB
     WHERE `$f5` IS NULL AND `$f6` IS NULL OR `email` <> `$f5` OR `name` <> `$f6`) AS `t3`) AS `t4`
 WHERE `$f5` = 1
 === CustomerQuery
-ID:     default_catalog.default_database.CustomerQuery
-Type:   query
-Stage:  postgres
-Inputs: default_catalog.default_database.AnotherCustomer
+ID:          default_catalog.default_database.CustomerQuery
+Type:        query
+Stage:       postgres
+---
+Inputs:
+ - default_catalog.default_database.AnotherCustomer
 Annotations:
  - stream-root: _Customer
  - parameters: id
@@ -178,33 +198,39 @@ Plan:
 LogicalProject(customerid=[$0], email=[$1], lastUpdated=[$2])
   LogicalFilter(condition=[=($0, ?0)])
     LogicalTableScan(table=[[default_catalog, default_database, AnotherCustomer]])
-SQL: CREATE VIEW `CustomerQuery` AS  SELECT * FROM AnotherCustomer WHERE customerid = ?  ;
+SQL:
+CREATE VIEW `CustomerQuery` AS  SELECT * FROM AnotherCustomer WHERE customerid = ?  ;
 
 === CustomerSubscription
-ID:     default_catalog.default_database.CustomerSubscription
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.Customer
-Annotations:
- - stream-root: Customer
-Primary Key: customerid, lastUpdated
-Timestamp  : timestamp
+ID:          default_catalog.default_database.CustomerSubscription
+Type:        stream
+Stage:       flink
+Primary key: customerid, lastUpdated
+Timestamp:   timestamp
+---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Customer
+Annotations:
+ - stream-root: Customer
 Plan:
 LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW `CustomerSubscription` AS  SELECT * FROM Customer;
+SQL:
+CREATE VIEW `CustomerSubscription` AS  SELECT * FROM Customer;
 
 === CustomerSubscriptionById
-ID:     default_catalog.default_database.CustomerSubscriptionById
-Type:   query
-Stage:  kafka
-Inputs: default_catalog.default_database.Customer
+ID:          default_catalog.default_database.CustomerSubscriptionById
+Type:        query
+Stage:       kafka
+---
+Inputs:
+ - default_catalog.default_database.Customer
 Annotations:
  - stream-root: Customer
  - parameters: minId
@@ -213,28 +239,32 @@ Plan:
 LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
   LogicalFilter(condition=[=($0, ?0)])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW `CustomerSubscriptionById` AS  SELECT * FROM Customer WHERE customerid = ?     ;
+SQL:
+CREATE VIEW `CustomerSubscriptionById` AS  SELECT * FROM Customer WHERE customerid = ?     ;
 
 === CustomerTimeWindow
-ID:     default_catalog.default_database.CustomerTimeWindow
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.SelectCustomers
-Annotations:
- - features: STREAM_WINDOW_AGGREGATION (feature)
-Primary Key: window_start, window_end
-Timestamp  : -
+ID:          default_catalog.default_database.CustomerTimeWindow
+Type:        stream
+Stage:       flink
+Primary key: window_start, window_end
+Timestamp:   -
+---
 Schema:
  - window_start: TIMESTAMP(3) NOT NULL
  - window_end: TIMESTAMP(3) NOT NULL
  - unique_email_count: BIGINT NOT NULL
+Inputs:
+ - default_catalog.default_database.SelectCustomers
+Annotations:
+ - features: STREAM_WINDOW_AGGREGATION (feature)
 Plan:
 LogicalAggregate(group=[{0, 1}], unique_email_count=[COUNT(DISTINCT $2)])
   LogicalProject(window_start=[$5], window_end=[$6], email=[$1])
     LogicalTableFunctionScan(invocation=[TUMBLE(TABLE(#0), DESCRIPTOR('timestamp'), 60000:INTERVAL MINUTE)], rowType=[RecordType(BIGINT customerid, VARCHAR(2147483647) email, VARCHAR(2147483647) name, BIGINT lastUpdated, TIMESTAMP_LTZ(3) *ROWTIME* timestamp, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end, TIMESTAMP_LTZ(3) *ROWTIME* window_time)])
       LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
         LogicalTableScan(table=[[default_catalog, default_database, SelectCustomers]])
-SQL: CREATE VIEW `CustomerTimeWindow` AS  SELECT
+SQL:
+CREATE VIEW `CustomerTimeWindow` AS  SELECT
                           window_start, window_end,
                           COUNT(DISTINCT email) AS unique_email_count
                       FROM TABLE(
@@ -244,44 +274,50 @@ SQL: CREATE VIEW `CustomerTimeWindow` AS  SELECT
                           window_start, window_end;
 
 === ExplicitDistinct
-ID:     default_catalog.default_database.ExplicitDistinct
-Type:   state
-Stage:  flink
-Inputs: default_catalog.default_database.Customer
-Annotations:
- - stream-root: Customer
-Primary Key: customerid
-Timestamp  : timestamp
+ID:          default_catalog.default_database.ExplicitDistinct
+Type:        state
+Stage:       flink
+Primary key: customerid
+Timestamp:   timestamp
+---
 Schema:
  - customerid: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+Inputs:
+ - default_catalog.default_database.Customer
+Annotations:
+ - stream-root: Customer
 Plan:
 LogicalProject(customerid=[$0], timestamp=[$4], name=[$2])
   LogicalFilter(condition=[=($5, 1)])
     LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $4 DESC NULLS LAST)])
       LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW `ExplicitDistinct` AS  SELECT customerid, `timestamp`, name FROM (SELECT *, (ROW_NUMBER() OVER (PARTITION BY customerid ORDER BY `timestamp` DESC)) AS _rownum FROM Customer) WHERE (_rownum = 1);
+SQL:
+CREATE VIEW `ExplicitDistinct` AS  SELECT customerid, `timestamp`, name FROM (SELECT *, (ROW_NUMBER() OVER (PARTITION BY customerid ORDER BY `timestamp` DESC)) AS _rownum FROM Customer) WHERE (_rownum = 1);
 
 === ExternalOrders
-ID:     default_catalog.default_database.ExternalOrders
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.ExternalOrders__base
-Annotations:
- - features: DENORMALIZE (feature)
- - stream-root: ExternalOrders
-Primary Key: id, time
-Timestamp  : time
+ID:          default_catalog.default_database.ExternalOrders
+Type:        stream
+Stage:       flink
+Primary key: id, time
+Timestamp:   time
+---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
  - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - entries: RecordType:peek_no_expand(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
+Inputs:
+ - default_catalog.default_database.ExternalOrders__base
+Annotations:
+ - features: DENORMALIZE (feature)
+ - stream-root: ExternalOrders
 Plan:
 LogicalWatermarkAssigner(rowtime=[time], watermark=[-($2, 1:INTERVAL SECOND)])
   LogicalTableScan(table=[[default_catalog, default_database, ExternalOrders]])
-SQL: CREATE TEMPORARY TABLE `ExternalOrders__schema` (
+SQL:
+CREATE TEMPORARY TABLE `ExternalOrders__schema` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
@@ -300,32 +336,35 @@ CREATE TABLE `ExternalOrders` (
 )
 LIKE `ExternalOrders__schema`
 === InvalidDistinct
-ID:     default_catalog.default_database.InvalidDistinct
-Type:   state
-Stage:  flink
-Inputs: default_catalog.default_database.Customer
-Annotations:
- - stream-root: Customer
-Primary Key: customerid
-Timestamp  : timestamp
+ID:          default_catalog.default_database.InvalidDistinct
+Type:        state
+Stage:       flink
+Primary key: customerid
+Timestamp:   timestamp
+---
 Schema:
  - customerid: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - namee: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+Inputs:
+ - default_catalog.default_database.Customer
+Annotations:
+ - stream-root: Customer
 Plan:
 LogicalProject(customerid=[$0], timestamp=[$4], namee=[$2])
   LogicalFilter(condition=[=($5, 1)])
     LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4], _rownum=[ROW_NUMBER() OVER (PARTITION BY $0 ORDER BY $4 DESC NULLS LAST)])
       LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW `InvalidDistinct` AS  SELECT customerid, `timestamp`, name AS namee FROM (SELECT *, (ROW_NUMBER() OVER (PARTITION BY customerid ORDER BY `timestamp` DESC)) AS _rownum FROM Customer) WHERE (_rownum = 1);
+SQL:
+CREATE VIEW `InvalidDistinct` AS  SELECT customerid, `timestamp`, name AS namee FROM (SELECT *, (ROW_NUMBER() OVER (PARTITION BY customerid ORDER BY `timestamp` DESC)) AS _rownum FROM Customer) WHERE (_rownum = 1);
 
 === MissedTemporalJoin
-ID:     default_catalog.default_database.MissedTemporalJoin
-Type:   state
-Stage:  postgres
-Inputs: default_catalog.default_database.ExplicitDistinct, default_catalog.default_database.ExternalOrders
-Primary Key: id, time
-Timestamp  : time
+ID:          default_catalog.default_database.MissedTemporalJoin
+Type:        state
+Stage:       postgres
+Primary key: id, time
+Timestamp:   time
+---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
@@ -334,26 +373,33 @@ Schema:
  - customerid0: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+Inputs:
+ - default_catalog.default_database.ExplicitDistinct
+ - default_catalog.default_database.ExternalOrders
 Plan:
 LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3], customerid0=[$4], timestamp=[$5], name=[$6])
   LogicalJoin(condition=[=($1, $4)], joinType=[inner])
     LogicalTableScan(table=[[default_catalog, default_database, ExternalOrders]])
     LogicalTableScan(table=[[default_catalog, default_database, ExplicitDistinct]])
-SQL: CREATE VIEW `MissedTemporalJoin` AS  SELECT * FROM ExternalOrders o JOIN ExplicitDistinct c ON o.customerid = c.customerid;
+SQL:
+CREATE VIEW `MissedTemporalJoin` AS  SELECT * FROM ExternalOrders o JOIN ExplicitDistinct c ON o.customerid = c.customerid;
 
 === Orders
-ID:     default_catalog.default_database.Orders
-Type:   state
-Stage:  flink
-Inputs: default_catalog.default_database.Orders__base
-Primary Key: orderid
-Timestamp  : -
+ID:          default_catalog.default_database.Orders
+Type:        state
+Stage:       flink
+Primary key: orderid
+Timestamp:   -
+---
 Schema:
  - orderid: INTEGER NOT NULL
  - amount: FLOAT
+Inputs:
+ - default_catalog.default_database.Orders__base
 Plan:
 LogicalTableScan(table=[[default_catalog, default_database, Orders]])
-SQL: CREATE TABLE `Orders` (
+SQL:
+CREATE TABLE `Orders` (
   `orderid` INTEGER NOT NULL,
   `amount` FLOAT,
   PRIMARY KEY (`orderid`) NOT ENFORCED
@@ -369,32 +415,37 @@ SQL: CREATE TABLE `Orders` (
   'value.format' = 'flexible-json'
 )
 === SelectCustomers
-ID:     default_catalog.default_database.SelectCustomers
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.Customer
-Annotations:
- - stream-root: Customer
- - sort: [4 DESC-nulls-last]
-Primary Key: customerid, name
-Timestamp  : timestamp
+ID:          default_catalog.default_database.SelectCustomers
+Type:        stream
+Stage:       flink
+Primary key: customerid, name
+Timestamp:   timestamp
+---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Customer
+Annotations:
+ - stream-root: Customer
+ - sort: [4 DESC-nulls-last]
 Plan:
 LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
   LogicalFilter(condition=[>($0, 0)])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW `SelectCustomers` AS  SELECT * From Customer WHERE customerid > 0 ORDER BY `timestamp` DESC LIMIT 10;
+SQL:
+CREATE VIEW `SelectCustomers` AS  SELECT * From Customer WHERE customerid > 0 ORDER BY `timestamp` DESC LIMIT 10;
 
 === TableFunctionCallsTblFct
-ID:     default_catalog.default_database.TableFunctionCallsTblFct
-Type:   query
-Stage:  postgres
-Inputs: default_catalog.default_database.CustomerById
+ID:          default_catalog.default_database.TableFunctionCallsTblFct
+Type:        query
+Stage:       postgres
+---
+Inputs:
+ - default_catalog.default_database.CustomerById
 Annotations:
  - features: TABLE_FUNCTION_SCAN (feature)
  - stream-root: Customer
@@ -404,17 +455,16 @@ Plan:
 LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
   LogicalFilter(condition=[>($0, ?0)])
     LogicalTableFunctionScan(invocation=[CustomerById(?1)], rowType=[RecordType(BIGINT customerid, VARCHAR(2147483647) email, VARCHAR(2147483647) name, BIGINT lastUpdated, TIMESTAMP_LTZ(3) *ROWTIME* timestamp)], elementType=[class [Ljava.lang.Object;])
-SQL: CREATE VIEW `TableFunctionCallsTblFct` AS  SELECT * FROM Table(CustomerById(?    )) WHERE customerid > ?    ;
+SQL:
+CREATE VIEW `TableFunctionCallsTblFct` AS  SELECT * FROM Table(CustomerById(?    )) WHERE customerid > ?    ;
 
 === TemporalJoin
-ID:     default_catalog.default_database.TemporalJoin
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.ExplicitDistinct, default_catalog.default_database.ExternalOrders
-Annotations:
- - stream-root: ExternalOrders
-Primary Key: id, time
-Timestamp  : time
+ID:          default_catalog.default_database.TemporalJoin
+Type:        stream
+Stage:       flink
+Primary key: id, time
+Timestamp:   time
+---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
@@ -423,6 +473,11 @@ Schema:
  - customerid0: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+Inputs:
+ - default_catalog.default_database.ExplicitDistinct
+ - default_catalog.default_database.ExternalOrders
+Annotations:
+ - stream-root: ExternalOrders
 Plan:
 LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3], customerid0=[$4], timestamp=[$5], name=[$6])
   LogicalCorrelate(correlation=[$cor1], joinType=[inner], requiredColumns=[{1, 2}])
@@ -430,17 +485,16 @@ LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3], customerid0=[$
     LogicalFilter(condition=[=($cor1.customerid, $0)])
       LogicalSnapshot(period=[$cor1.time])
         LogicalTableScan(table=[[default_catalog, default_database, ExplicitDistinct]])
-SQL: CREATE VIEW `TemporalJoin` AS  SELECT * FROM ExternalOrders o JOIN ExplicitDistinct FOR SYSTEM_TIME AS OF `time` c ON o.customerid = c.customerid;
+SQL:
+CREATE VIEW `TemporalJoin` AS  SELECT * FROM ExternalOrders o JOIN ExplicitDistinct FOR SYSTEM_TIME AS OF `time` c ON o.customerid = c.customerid;
 
 === UnnestOrders
-ID:     default_catalog.default_database.UnnestOrders
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.ExternalOrders
-Annotations:
- - stream-root: ExternalOrders
-Primary Key: -
-Timestamp  : time
+ID:          default_catalog.default_database.UnnestOrders
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   time
+---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
@@ -449,6 +503,10 @@ Schema:
  - quantity: BIGINT NOT NULL
  - discount: DOUBLE
  - newId: BIGINT NOT NULL
+Inputs:
+ - default_catalog.default_database.ExternalOrders
+Annotations:
+ - stream-root: ExternalOrders
 Plan:
 LogicalProject(id=[$0], customerid=[$1], time=[$2], productid=[$3], quantity=[$4], discount=[$5], newId=[+($0, $3)])
   LogicalProject(id=[$0], customerid=[$1], time=[$2], productid=[$4], quantity=[$5], discount=[$7])
@@ -457,28 +515,32 @@ LogicalProject(id=[$0], customerid=[$1], time=[$2], productid=[$3], quantity=[$4
       Uncollect
         LogicalProject(entries=[$cor5.entries])
           LogicalValues(tuples=[[{ 0 }]])
-SQL: ALTER VIEW `UnnestOrders` AS SELECT `id`, `customerid`, `time`, `productid`, `quantity`, `discount`,  id + productid AS `newId` FROM 
+SQL:
+ALTER VIEW `UnnestOrders` AS SELECT `id`, `customerid`, `time`, `productid`, `quantity`, `discount`,  id + productid AS `newId` FROM 
 (  SELECT o.id, o.customerid, o.`time`, e.productid, e.quantity, e.discount FROM ExternalOrders o CROSS JOIN UNNEST(entries) e );
 === _Customer
-ID:     default_catalog.default_database._Customer
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database._Customer__base
-Annotations:
- - stream-root: _Customer
-Primary Key: customerid, lastUpdated
-Timestamp  : timestamp
+ID:          default_catalog.default_database._Customer
+Type:        stream
+Stage:       flink
+Primary key: customerid, lastUpdated
+Timestamp:   timestamp
+---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database._Customer__base
+Annotations:
+ - stream-root: _Customer
 Plan:
 LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
   LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($3, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
     LogicalTableScan(table=[[default_catalog, default_database, _Customer]])
-SQL: CREATE TEMPORARY TABLE `_Customer__schema` (
+SQL:
+CREATE TEMPORARY TABLE `_Customer__schema` (
   `customerid` BIGINT NOT NULL,
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -498,16 +560,20 @@ CREATE TABLE `_Customer` (
 )
 LIKE `_Customer__schema`
 === customersink
-ID:     mysink.customersink
-Type:   export
-Stage:  flink
-Inputs: default_catalog.default_database.TemporalJoin
+ID:          mysink.customersink
+Type:        export
+Stage:       flink
+---
+Inputs:
+ - default_catalog.default_database.TemporalJoin
 
 === TimeWindow
-ID:     print.TimeWindow
-Type:   export
-Stage:  flink
-Inputs: default_catalog.default_database.CustomerTimeWindow
+ID:          print.TimeWindow
+Type:        export
+Stage:       flink
+---
+Inputs:
+ - default_catalog.default_database.CustomerTimeWindow
 
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `Customer__schema` (

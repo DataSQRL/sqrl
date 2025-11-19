@@ -1,69 +1,81 @@
 >>>pipeline_explain.txt
 === iceberg_parquet_table
-ID:     default_catalog.default_database.iceberg_parquet_table
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.iceberg_parquet_table__base
-Primary Key: -
-Timestamp  : -
+ID:          default_catalog.default_database.iceberg_parquet_table
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   -
+---
 Schema:
  - user_id: INTEGER
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+Inputs:
+ - default_catalog.default_database.iceberg_parquet_table__base
 
 === kafka_avro_table
-ID:     default_catalog.default_database.kafka_avro_table
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.kafka_avro_table__base
-Primary Key: -
-Timestamp  : -
+ID:          default_catalog.default_database.kafka_avro_table
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   -
+---
 Schema:
  - user_id: INTEGER
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+Inputs:
+ - default_catalog.default_database.kafka_avro_table__base
 
 === kafka_debezium_table
-ID:     default_catalog.default_database.kafka_debezium_table
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.kafka_debezium_table__base
-Primary Key: -
-Timestamp  : -
+ID:          default_catalog.default_database.kafka_debezium_table
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   -
+---
 Schema:
  - user_id: INTEGER
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+Inputs:
+ - default_catalog.default_database.kafka_debezium_table__base
 
 === kafka_safe_csv_table
-ID:     default_catalog.default_database.kafka_safe_csv_table
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.kafka_safe_csv_table__base
-Primary Key: -
-Timestamp  : -
+ID:          default_catalog.default_database.kafka_safe_csv_table
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   -
+---
 Schema:
  - user_id: INTEGER
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+Inputs:
+ - default_catalog.default_database.kafka_safe_csv_table__base
 
 === kafka_safe_json_table
-ID:     default_catalog.default_database.kafka_safe_json_table
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.kafka_safe_json_table__base
-Primary Key: -
-Timestamp  : -
+ID:          default_catalog.default_database.kafka_safe_json_table
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   -
+---
 Schema:
  - user_id: INTEGER
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+Inputs:
+ - default_catalog.default_database.kafka_safe_json_table__base
 
 === upsert_kafka_confluent_avro
-ID:     default_catalog.default_database.upsert_kafka_confluent_avro
-Type:   state
-Stage:  flink
-Inputs: default_catalog.default_database.upsert_kafka_confluent_avro__base
-Primary Key: user_id
-Timestamp  : -
+ID:          default_catalog.default_database.upsert_kafka_confluent_avro
+Type:        state
+Stage:       flink
+Primary key: user_id
+Timestamp:   -
+---
 Schema:
  - user_id: INTEGER NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+Inputs:
+ - default_catalog.default_database.upsert_kafka_confluent_avro__base
 
 >>>flink-sql-no-functions.sql
 CREATE TABLE `kafka_avro_table` (

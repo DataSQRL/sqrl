@@ -1,18 +1,21 @@
 >>>pipeline_explain.txt
 === MachineReading
-ID:     default_catalog.default_database.MachineReading
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database._SensorReading, default_catalog.default_database._Sensors
-Annotations:
- - stream-root: _SensorReading
-Primary Key: -
-Timestamp  : event_time
+ID:          default_catalog.default_database.MachineReading
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   event_time
+---
 Schema:
  - sensorid: INTEGER
  - temperature: FLOAT
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME*
  - machineid: INTEGER
+Inputs:
+ - default_catalog.default_database._SensorReading
+ - default_catalog.default_database._Sensors
+Annotations:
+ - stream-root: _SensorReading
 Plan:
 LogicalProject(sensorid=[$1], temperature=[$2], event_time=[$3], machineid=[$5])
   LogicalCorrelate(correlation=[$cor1], joinType=[inner], requiredColumns=[{1, 3}])
@@ -20,23 +23,26 @@ LogicalProject(sensorid=[$1], temperature=[$2], event_time=[$3], machineid=[$5])
     LogicalFilter(condition=[=($cor1.sensorid, $0)])
       LogicalSnapshot(period=[$cor1.event_time])
         LogicalTableScan(table=[[default_catalog, default_database, _Sensors]])
-SQL: CREATE VIEW `MachineReading` AS  SELECT r.sensorid, r.temperature, r.event_time, s.machineid
+SQL:
+CREATE VIEW `MachineReading` AS  SELECT r.sensorid, r.temperature, r.event_time, s.machineid
                   FROM _SensorReading r JOIN _Sensors FOR SYSTEM_TIME AS OF r.event_time s ON r.sensorid = s.sensorid;
 
 === MachineTempByHour
-ID:     default_catalog.default_database.MachineTempByHour
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.MachineReading
-Annotations:
- - features: STREAM_WINDOW_AGGREGATION (feature)
- - stream-root: _SensorReading
-Primary Key: -
-Timestamp  : time_hour
+ID:          default_catalog.default_database.MachineTempByHour
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   time_hour
+---
 Schema:
  - machineid: INTEGER
  - time_hour: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - avg_temperature: FLOAT
+Inputs:
+ - default_catalog.default_database.MachineReading
+Annotations:
+ - features: STREAM_WINDOW_AGGREGATION (feature)
+ - stream-root: _SensorReading
 Plan:
 LogicalProject(machineid=[$0], time_hour=[$3], avg_temperature=[$4])
   LogicalAggregate(group=[{0, 1, 2, 3}], avg_temperature=[AVG($4)])
@@ -44,29 +50,33 @@ LogicalProject(machineid=[$0], time_hour=[$3], avg_temperature=[$4])
       LogicalTableFunctionScan(invocation=[TUMBLE(TABLE(#0), DESCRIPTOR('event_time'), 3600000:INTERVAL MINUTE)], rowType=[RecordType(INTEGER sensorid, FLOAT temperature, TIMESTAMP_LTZ(3) *ROWTIME* event_time, INTEGER machineid, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end, TIMESTAMP_LTZ(3) *ROWTIME* window_time)])
         LogicalProject(sensorid=[$0], temperature=[$1], event_time=[$2], machineid=[$3])
           LogicalTableScan(table=[[default_catalog, default_database, MachineReading]])
-SQL: CREATE VIEW `MachineTempByHour` AS  SELECT machineid, window_time as time_hour, AVG(temperature) AS avg_temperature
+SQL:
+CREATE VIEW `MachineTempByHour` AS  SELECT machineid, window_time as time_hour, AVG(temperature) AS avg_temperature
                      FROM TABLE(TUMBLE(TABLE MachineReading, DESCRIPTOR(event_time), INTERVAL '60' MINUTES))
                      GROUP BY machineid, window_start, window_end, window_time;
 
 === _SensorReading
-ID:     default_catalog.default_database._SensorReading
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database._SensorReading__base
-Annotations:
- - stream-root: _SensorReading
-Primary Key: event_id
-Timestamp  : event_time
+ID:          default_catalog.default_database._SensorReading
+Type:        stream
+Stage:       flink
+Primary key: event_id
+Timestamp:   event_time
+---
 Schema:
  - event_id: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - sensorid: INTEGER
  - temperature: FLOAT
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME*
+Inputs:
+ - default_catalog.default_database._SensorReading__base
+Annotations:
+ - stream-root: _SensorReading
 Plan:
 LogicalWatermarkAssigner(rowtime=[event_time], watermark=[-($3, 5000:INTERVAL SECOND)])
   LogicalProject(event_id=[$0], sensorid=[$1], temperature=[$2], event_time=[CAST($3):TIMESTAMP_LTZ(3) *ROWTIME*])
     LogicalTableScan(table=[[default_catalog, default_database, _SensorReading, metadata=[timestamp]]])
-SQL: CREATE TABLE `_SensorReading` (
+SQL:
+CREATE TABLE `_SensorReading` (
   `event_id` STRING NOT NULL,
   `sensorid` INTEGER,
   `temperature` FLOAT,
@@ -82,21 +92,24 @@ SQL: CREATE TABLE `_SensorReading` (
   'topic' = 'kafka-mutation-_SensorReading'
 )
 === _Sensors
-ID:     default_catalog.default_database._Sensors
-Type:   state
-Stage:  flink
-Inputs: default_catalog.default_database._Sensors__base
-Primary Key: sensorid
-Timestamp  : updatedTime
+ID:          default_catalog.default_database._Sensors
+Type:        state
+Stage:       flink
+Primary key: sensorid
+Timestamp:   updatedTime
+---
 Schema:
  - sensorid: INTEGER NOT NULL
  - machineid: INTEGER
  - updatedTime: TIMESTAMP_LTZ(3) *ROWTIME*
+Inputs:
+ - default_catalog.default_database._Sensors__base
 Plan:
 LogicalWatermarkAssigner(rowtime=[updatedTime], watermark=[-($2, 0:INTERVAL SECOND)])
   LogicalProject(sensorid=[$0], machineid=[$1], updatedTime=[CAST($2):TIMESTAMP_LTZ(3) *ROWTIME*])
     LogicalTableScan(table=[[default_catalog, default_database, _Sensors, metadata=[timestamp]]])
-SQL: CREATE TABLE `_Sensors` (
+SQL:
+CREATE TABLE `_Sensors` (
   `sensorid` INTEGER NOT NULL,
   `machineid` INTEGER,
   `updatedTime` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',

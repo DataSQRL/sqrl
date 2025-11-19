@@ -1,135 +1,155 @@
 >>>pipeline_explain.txt
 === HighTemp
-ID:     default_catalog.default_database.HighTemp
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.SecReading, default_catalog.default_database.Sensors
-Annotations:
- - stream-root: SensorReading
-Primary Key: sensorid, timeSec
-Timestamp  : timeSec
+ID:          default_catalog.default_database.HighTemp
+Type:        stream
+Stage:       flink
+Primary key: sensorid, timeSec
+Timestamp:   timeSec
+---
 Schema:
  - machineId: BIGINT NOT NULL
  - sensorid: BIGINT NOT NULL
  - temp: DOUBLE NOT NULL
  - timeSec: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.SecReading
+ - default_catalog.default_database.Sensors
+Annotations:
+ - stream-root: SensorReading
 
 === Machine
-ID:     default_catalog.default_database.Machine
-Type:   state
-Stage:  flink
-Inputs: default_catalog.default_database.SecReading, default_catalog.default_database.Sensors
-Primary Key: machineId
-Timestamp  : -
+ID:          default_catalog.default_database.Machine
+Type:        state
+Stage:       flink
+Primary key: machineId
+Timestamp:   -
+---
 Schema:
  - machineId: BIGINT NOT NULL
  - maxTemp: DOUBLE NOT NULL
  - avgTemp: DOUBLE NOT NULL
+Inputs:
+ - default_catalog.default_database.SecReading
+ - default_catalog.default_database.Sensors
 
 === SecReading
-ID:     default_catalog.default_database.SecReading
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.SensorReading
-Annotations:
- - features: STREAM_WINDOW_AGGREGATION (feature)
- - stream-root: SensorReading
- - sort: [1 DESC-nulls-last]
-Primary Key: sensorid, timeSec
-Timestamp  : timeSec
+ID:          default_catalog.default_database.SecReading
+Type:        stream
+Stage:       flink
+Primary key: sensorid, timeSec
+Timestamp:   timeSec
+---
 Schema:
  - sensorid: BIGINT NOT NULL
  - timeSec: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - temp: DOUBLE NOT NULL
+Inputs:
+ - default_catalog.default_database.SensorReading
+Annotations:
+ - features: STREAM_WINDOW_AGGREGATION (feature)
+ - stream-root: SensorReading
+ - sort: [1 DESC-nulls-last]
 
 === SecReadingByTemp
-ID:     default_catalog.default_database.SecReadingByTemp
-Type:   query
-Stage:  postgres
-Inputs: default_catalog.default_database.SecReading
+ID:          default_catalog.default_database.SecReadingByTemp
+Type:        query
+Stage:       postgres
+---
+Inputs:
+ - default_catalog.default_database.SecReading
 Annotations:
  - stream-root: SensorReading
  - parameters: temp
  - base-table: SecReading
 
 === SensorLastHour
-ID:     default_catalog.default_database.SensorLastHour
-Type:   state
-Stage:  flink
-Inputs: default_catalog.default_database._SensorMaxTempWindow
-Annotations:
- - mostRecentDistinct: true
- - stream-root: SensorReading
-Primary Key: sensorid
-Timestamp  : window_time
+ID:          default_catalog.default_database.SensorLastHour
+Type:        state
+Stage:       flink
+Primary key: sensorid
+Timestamp:   window_time
+---
 Schema:
  - sensorid: BIGINT NOT NULL
  - window_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - avgTemp: DOUBLE NOT NULL
  - maxTemp: DOUBLE NOT NULL
+Inputs:
+ - default_catalog.default_database._SensorMaxTempWindow
+Annotations:
+ - mostRecentDistinct: true
+ - stream-root: SensorReading
 
 === SensorReading
-ID:     default_catalog.default_database.SensorReading
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.SensorReading__base
-Annotations:
- - stream-root: SensorReading
-Primary Key: sensorid, time
-Timestamp  : timestamp
+ID:          default_catalog.default_database.SensorReading
+Type:        stream
+Stage:       flink
+Primary key: sensorid, time
+Timestamp:   timestamp
+---
 Schema:
  - sensorid: BIGINT NOT NULL
  - time: BIGINT NOT NULL
  - temperature: DOUBLE NOT NULL
  - humidity: DOUBLE NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.SensorReading__base
+Annotations:
+ - stream-root: SensorReading
 
 === SensorUpdates
-ID:     default_catalog.default_database.SensorUpdates
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.SensorUpdates__base
-Annotations:
- - stream-root: SensorUpdates
-Primary Key: id, placed
-Timestamp  : timestamp
+ID:          default_catalog.default_database.SensorUpdates
+Type:        stream
+Stage:       flink
+Primary key: id, placed
+Timestamp:   timestamp
+---
 Schema:
  - id: BIGINT NOT NULL
  - machineId: BIGINT NOT NULL
  - placed: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.SensorUpdates__base
+Annotations:
+ - stream-root: SensorUpdates
 
 === Sensors
-ID:     default_catalog.default_database.Sensors
-Type:   state
-Stage:  flink
-Inputs: default_catalog.default_database.SensorUpdates
+ID:          default_catalog.default_database.Sensors
+Type:        state
+Stage:       flink
+Primary key: id
+Timestamp:   timestamp
+---
+Schema:
+ - id: BIGINT NOT NULL
+ - machineId: BIGINT NOT NULL
+ - placed: BIGINT NOT NULL
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.SensorUpdates
 Annotations:
  - mostRecentDistinct: true
  - stream-root: SensorUpdates
-Primary Key: id
-Timestamp  : timestamp
-Schema:
- - id: BIGINT NOT NULL
- - machineId: BIGINT NOT NULL
- - placed: BIGINT NOT NULL
- - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 
 === _SensorMaxTempWindow
-ID:     default_catalog.default_database._SensorMaxTempWindow
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.SecReading
-Annotations:
- - features: STREAM_WINDOW_AGGREGATION (feature)
- - stream-root: SensorReading
-Primary Key: -
-Timestamp  : window_time
+ID:          default_catalog.default_database._SensorMaxTempWindow
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   window_time
+---
 Schema:
  - sensorid: BIGINT NOT NULL
  - window_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - avgTemp: DOUBLE NOT NULL
  - maxTemp: DOUBLE NOT NULL
+Inputs:
+ - default_catalog.default_database.SecReading
+Annotations:
+ - features: STREAM_WINDOW_AGGREGATION (feature)
+ - stream-root: SensorReading
 
 >>>generated-schema.graphqls
 "An RFC-3339 compliant DateTime Scalar"

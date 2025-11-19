@@ -1,24 +1,27 @@
 >>>pipeline_explain.txt
 === data
-ID:     default_catalog.default_database.data
-Type:   state
-Stage:  flink
-Primary Key: 
-Timestamp  : -
+ID:          default_catalog.default_database.data
+Type:        state
+Stage:       flink
+Primary key: -
+Timestamp:   -
+---
 Schema:
  - val: INTEGER NOT NULL
 
 === results
-ID:     default_catalog.default_database.results
-Type:   state
-Stage:  flink
-Inputs: default_catalog.default_database.data
-Primary Key: 
-Timestamp  : -
+ID:          default_catalog.default_database.results
+Type:        state
+Stage:       flink
+Primary key: -
+Timestamp:   -
+---
 Schema:
  - completions_result: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
  - extract_json_result_response: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
  - extract_json_result_with_schema_response: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+Inputs:
+ - default_catalog.default_database.data
 
 >>>flink-sql-no-functions.sql
 CREATE VIEW `data`

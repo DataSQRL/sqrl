@@ -1,37 +1,40 @@
 >>>pipeline_explain.txt
 === InputDistinct
-ID:     default_catalog.default_database.InputDistinct
-Type:   state
-Stage:  flink
-Inputs: default_catalog.default_database._Input
-Annotations:
- - mostRecentDistinct: true
- - stream-root: SimpleInput
-Primary Key: userid
-Timestamp  : event_time
+ID:          default_catalog.default_database.InputDistinct
+Type:        state
+Stage:       flink
+Primary key: userid
+Timestamp:   event_time
+---
 Schema:
  - _uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - userid: INTEGER
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME*
  - unique_id: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+Inputs:
+ - default_catalog.default_database._Input
+Annotations:
+ - mostRecentDistinct: true
+ - stream-root: SimpleInput
 Plan:
 LogicalProject(_uuid=[$0], userid=[$1], event_time=[$2], unique_id=[$3])
   LogicalFilter(condition=[=($4, 1)])
     LogicalProject(_uuid=[$0], userid=[$1], event_time=[$2], unique_id=[$3], __sqrlinternal_rownum=[ROW_NUMBER() OVER (PARTITION BY $1 ORDER BY $2 DESC NULLS LAST)])
       LogicalTableScan(table=[[default_catalog, default_database, _Input]])
-SQL: CREATE VIEW `InputDistinct`
+SQL:
+CREATE VIEW `InputDistinct`
 AS
 SELECT `_uuid`, `userid`, `event_time`, `unique_id`
 FROM (SELECT `_uuid`, `userid`, `event_time`, `unique_id`, ROW_NUMBER() OVER (PARTITION BY `userid` ORDER BY `event_time` DESC NULLS LAST) AS `__sqrlinternal_rownum`
   FROM `default_catalog`.`default_database`.`_Input`) AS `t`
 WHERE `__sqrlinternal_rownum` = 1
 === JoinTable
-ID:     default_catalog.default_database.JoinTable
-Type:   state
-Stage:  postgres
-Inputs: default_catalog.default_database.InputDistinct, default_catalog.default_database._Input
-Primary Key: userid, _uuid0, unique_id0
-Timestamp  : event_time
+ID:          default_catalog.default_database.JoinTable
+Type:        state
+Stage:       postgres
+Primary key: userid, _uuid0, unique_id0
+Timestamp:   event_time
+---
 Schema:
  - _uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - userid: INTEGER
@@ -41,31 +44,38 @@ Schema:
  - userid0: INTEGER
  - event_time0: TIMESTAMP_LTZ(3) *ROWTIME*
  - unique_id0: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+Inputs:
+ - default_catalog.default_database.InputDistinct
+ - default_catalog.default_database._Input
 Plan:
 LogicalProject(_uuid=[$0], userid=[$1], event_time=[$2], unique_id=[$3], _uuid0=[$4], userid0=[$5], event_time0=[$6], unique_id0=[$7])
   LogicalJoin(condition=[=($5, $1)], joinType=[inner])
     LogicalTableScan(table=[[default_catalog, default_database, InputDistinct]])
     LogicalTableScan(table=[[default_catalog, default_database, _Input]])
-SQL: CREATE VIEW `JoinTable` AS  SELECT * FROM InputDistinct i2 JOIN _Input i1 ON i1.userid = i2.userid;
+SQL:
+CREATE VIEW `JoinTable` AS  SELECT * FROM InputDistinct i2 JOIN _Input i1 ON i1.userid = i2.userid;
 
 === SimpleInput
-ID:     default_catalog.default_database.SimpleInput
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.SimpleInput__base
-Annotations:
- - stream-root: SimpleInput
-Primary Key: _uuid
-Timestamp  : event_time
+ID:          default_catalog.default_database.SimpleInput
+Type:        stream
+Stage:       flink
+Primary key: _uuid
+Timestamp:   event_time
+---
 Schema:
  - _uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - userid: INTEGER
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME*
+Inputs:
+ - default_catalog.default_database.SimpleInput__base
+Annotations:
+ - stream-root: SimpleInput
 Plan:
 LogicalWatermarkAssigner(rowtime=[event_time], watermark=[-($2, 0:INTERVAL SECOND)])
   LogicalProject(_uuid=[$0], userid=[$1], event_time=[CAST($2):TIMESTAMP_LTZ(3) *ROWTIME*])
     LogicalTableScan(table=[[default_catalog, default_database, SimpleInput, metadata=[timestamp]]])
-SQL: CREATE TABLE `SimpleInput` (
+SQL:
+CREATE TABLE `SimpleInput` (
   `_uuid` STRING NOT NULL,
   `userid` INTEGER,
   `event_time` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
@@ -80,23 +90,26 @@ SQL: CREATE TABLE `SimpleInput` (
   'topic' = 'kafka-mutation-SimpleInput'
 )
 === _Input
-ID:     default_catalog.default_database._Input
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.SimpleInput
-Annotations:
- - stream-root: SimpleInput
-Primary Key: _uuid, unique_id
-Timestamp  : event_time
+ID:          default_catalog.default_database._Input
+Type:        stream
+Stage:       flink
+Primary key: _uuid, unique_id
+Timestamp:   event_time
+---
 Schema:
  - _uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - userid: INTEGER
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME*
  - unique_id: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+Inputs:
+ - default_catalog.default_database.SimpleInput
+Annotations:
+ - stream-root: SimpleInput
 Plan:
 LogicalProject(_uuid=[$0], userid=[$1], event_time=[$2], unique_id=[$0])
   LogicalTableScan(table=[[default_catalog, default_database, SimpleInput]])
-SQL: CREATE VIEW `_Input` AS  SELECT *, _uuid AS unique_id FROM SimpleInput;
+SQL:
+CREATE VIEW `_Input` AS  SELECT *, _uuid AS unique_id FROM SimpleInput;
 
 >>>flink-sql-no-functions.sql
 CREATE TABLE `SimpleInput` (

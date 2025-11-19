@@ -1,13 +1,11 @@
 >>>pipeline_explain.txt
 === Orders
-ID:     default_catalog.default_database.Orders
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.Orders__base
-Annotations:
- - stream-root: Orders
-Primary Key: id, customerid, time
-Timestamp  : _ingest_time
+ID:          default_catalog.default_database.Orders
+Type:        stream
+Stage:       flink
+Primary key: id, customerid, time
+Timestamp:   _ingest_time
+---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
@@ -17,6 +15,10 @@ Schema:
  - unit_price: DOUBLE
  - discount: DOUBLE
  - _ingest_time: TIMESTAMP_LTZ(3) *PROCTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Orders__base
+Annotations:
+ - stream-root: Orders
 
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `Orders__schema` (

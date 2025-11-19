@@ -1,57 +1,68 @@
 >>>pipeline_explain.txt
 === CombinedState
-ID:     default_catalog.default_database.CombinedState
-Type:   state
-Stage:  flink
-Inputs: default_catalog.default_database.Customer, default_catalog.default_database.Orders
-Primary Key: customerid
-Timestamp  : -
+ID:          default_catalog.default_database.CombinedState
+Type:        state
+Stage:       flink
+Primary key: customerid
+Timestamp:   -
+---
 Schema:
  - customerid: BIGINT NOT NULL
+Inputs:
+ - default_catalog.default_database.Customer
+ - default_catalog.default_database.Orders
 Plan:
 LogicalUnion(all=[false])
   LogicalProject(customerid=[$1])
     LogicalTableScan(table=[[default_catalog, default_database, Orders]])
   LogicalProject(customerid=[$0])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW `CombinedState` AS  SELECT o.customerid FROM Orders o UNION SELECT c.customerid FROM Customer c;
+SQL:
+CREATE VIEW `CombinedState` AS  SELECT o.customerid FROM Orders o UNION SELECT c.customerid FROM Customer c;
 
 === CombinedStream
-ID:     default_catalog.default_database.CombinedStream
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.Customer, default_catalog.default_database.Orders
-Primary Key: -
-Timestamp  : -
+ID:          default_catalog.default_database.CombinedStream
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   -
+---
 Schema:
  - customerid: BIGINT NOT NULL
+Inputs:
+ - default_catalog.default_database.Customer
+ - default_catalog.default_database.Orders
 Plan:
 LogicalUnion(all=[true])
   LogicalProject(customerid=[$1])
     LogicalTableScan(table=[[default_catalog, default_database, Orders]])
   LogicalProject(customerid=[$0])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW `CombinedStream` AS  SELECT o.customerid FROM Orders o UNION ALL SELECT c.customerid FROM Customer c;
+SQL:
+CREATE VIEW `CombinedStream` AS  SELECT o.customerid FROM Orders o UNION ALL SELECT c.customerid FROM Customer c;
 
 === Customer
-ID:     default_catalog.default_database.Customer
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.Customer__base
-Annotations:
- - stream-root: Customer
-Primary Key: customerid, lastUpdated
-Timestamp  : _ingest_time
+ID:          default_catalog.default_database.Customer
+Type:        stream
+Stage:       flink
+Primary key: customerid, lastUpdated
+Timestamp:   _ingest_time
+---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
  - _ingest_time: TIMESTAMP_LTZ(3) *PROCTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Customer__base
+Annotations:
+ - stream-root: Customer
 Plan:
 LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], _ingest_time=[PROCTIME()])
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE TEMPORARY TABLE `Customer__schema` (
+SQL:
+CREATE TEMPORARY TABLE `Customer__schema` (
   `customerid` BIGINT NOT NULL,
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -70,25 +81,28 @@ CREATE TABLE `Customer` (
 )
 LIKE `Customer__schema`
 === Orders
-ID:     default_catalog.default_database.Orders
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.Orders__base
-Annotations:
- - features: DENORMALIZE (feature)
- - stream-root: Orders
-Primary Key: id, time
-Timestamp  : _ingest_time
+ID:          default_catalog.default_database.Orders
+Type:        stream
+Stage:       flink
+Primary key: id, time
+Timestamp:   _ingest_time
+---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
  - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - entries: RecordType:peek_no_expand(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
  - _ingest_time: TIMESTAMP_LTZ(3) *PROCTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Orders__base
+Annotations:
+ - features: DENORMALIZE (feature)
+ - stream-root: Orders
 Plan:
 LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3], _ingest_time=[PROCTIME()])
   LogicalTableScan(table=[[default_catalog, default_database, Orders]])
-SQL: CREATE TEMPORARY TABLE `Orders__schema` (
+SQL:
+CREATE TEMPORARY TABLE `Orders__schema` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,

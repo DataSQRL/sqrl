@@ -1,52 +1,56 @@
 >>>pipeline_explain.txt
 === MyTable1
-ID:     default_catalog.default_database.MyTable1
-Type:   stream
-Stage:  iceberg
-Inputs: default_catalog.default_database._MyApplications1
-Annotations:
- - stream-root: _Applications
-Primary Key: -
-Timestamp  : -
+ID:          default_catalog.default_database.MyTable1
+Type:        stream
+Stage:       iceberg
+Primary key: -
+Timestamp:   -
+---
 Schema:
  - id: BIGINT NOT NULL
  - hello: CHAR(12) CHARACTER SET "UTF-16LE" NOT NULL
+Inputs:
+ - default_catalog.default_database._MyApplications1
+Annotations:
+ - stream-root: _Applications
 
 === MyTable2
-ID:     default_catalog.default_database.MyTable2
-Type:   stream
-Stage:  iceberg
-Inputs: default_catalog.default_database._MyApplications2
-Annotations:
- - stream-root: _Applications
-Primary Key: -
-Timestamp  : -
+ID:          default_catalog.default_database.MyTable2
+Type:        stream
+Stage:       iceberg
+Primary key: -
+Timestamp:   -
+---
 Schema:
  - id: BIGINT NOT NULL
  - hello: CHAR(12) CHARACTER SET "UTF-16LE" NOT NULL
+Inputs:
+ - default_catalog.default_database._MyApplications2
+Annotations:
+ - stream-root: _Applications
 
 === MyTable3
-ID:     default_catalog.default_database.MyTable3
-Type:   stream
-Stage:  postgres
-Inputs: default_catalog.default_database._MyApplications2
-Annotations:
- - stream-root: _Applications
-Primary Key: -
-Timestamp  : -
+ID:          default_catalog.default_database.MyTable3
+Type:        stream
+Stage:       postgres
+Primary key: -
+Timestamp:   -
+---
 Schema:
  - id: BIGINT NOT NULL
  - hello: CHAR(12) CHARACTER SET "UTF-16LE" NOT NULL
+Inputs:
+ - default_catalog.default_database._MyApplications2
+Annotations:
+ - stream-root: _Applications
 
 === _Applications
-ID:     default_catalog.default_database._Applications
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database._Applications__base
-Annotations:
- - stream-root: _Applications
-Primary Key: id, updated_at
-Timestamp  : updated_at
+ID:          default_catalog.default_database._Applications
+Type:        stream
+Stage:       flink
+Primary key: id, updated_at
+Timestamp:   updated_at
+---
 Schema:
  - id: BIGINT NOT NULL
  - customer_id: BIGINT NOT NULL
@@ -55,16 +59,18 @@ Schema:
  - duration: BIGINT NOT NULL
  - application_date: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - updated_at: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database._Applications__base
+Annotations:
+ - stream-root: _Applications
 
 === _MyApplications1
-ID:     default_catalog.default_database._MyApplications1
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database._Applications
-Annotations:
- - stream-root: _Applications
-Primary Key: id, updated_at
-Timestamp  : updated_at
+ID:          default_catalog.default_database._MyApplications1
+Type:        stream
+Stage:       flink
+Primary key: id, updated_at
+Timestamp:   updated_at
+---
 Schema:
  - id: BIGINT NOT NULL
  - customer_id: BIGINT NOT NULL
@@ -73,16 +79,18 @@ Schema:
  - duration: BIGINT NOT NULL
  - application_date: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - updated_at: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database._Applications
+Annotations:
+ - stream-root: _Applications
 
 === _MyApplications2
-ID:     default_catalog.default_database._MyApplications2
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database._Applications
-Annotations:
- - stream-root: _Applications
-Primary Key: id, updated_at
-Timestamp  : updated_at
+ID:          default_catalog.default_database._MyApplications2
+Type:        stream
+Stage:       flink
+Primary key: id, updated_at
+Timestamp:   updated_at
+---
 Schema:
  - id: BIGINT NOT NULL
  - customer_id: BIGINT NOT NULL
@@ -91,6 +99,10 @@ Schema:
  - duration: BIGINT NOT NULL
  - application_date: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - updated_at: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database._Applications
+Annotations:
+ - stream-root: _Applications
 
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `_Applications__schema` (

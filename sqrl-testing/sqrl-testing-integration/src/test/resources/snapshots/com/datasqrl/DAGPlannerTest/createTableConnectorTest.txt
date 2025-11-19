@@ -1,22 +1,25 @@
 >>>pipeline_explain.txt
 === SensorReading
-ID:     default_catalog.default_database.SensorReading
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.SensorReading__base
-Primary Key: -
-Timestamp  : timestamp
+ID:          default_catalog.default_database.SensorReading
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   timestamp
+---
 Schema:
  - uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - sensorid: BIGINT NOT NULL
  - epoch_timestamp: BIGINT NOT NULL
  - temperature: DOUBLE NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.SensorReading__base
 Plan:
 LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
   LogicalProject(uuid=[$0], sensorid=[$1], epoch_timestamp=[$2], temperature=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($2, 3), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
     LogicalTableScan(table=[[default_catalog, default_database, SensorReading]])
-SQL: CREATE TABLE `SensorReading` (
+SQL:
+CREATE TABLE `SensorReading` (
   `uuid` STRING NOT NULL,
   `sensorid` BIGINT NOT NULL,
   `epoch_timestamp` BIGINT NOT NULL,
@@ -36,18 +39,20 @@ SQL: CREATE TABLE `SensorReading` (
   'fields.temperature.kind' = 'random'
 )
 === SensorTempByHour
-ID:     default_catalog.default_database.SensorTempByHour
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.SensorReading
-Annotations:
- - features: STREAM_WINDOW_AGGREGATION (feature)
-Primary Key: sensorid, time_hour
-Timestamp  : time_hour
+ID:          default_catalog.default_database.SensorTempByHour
+Type:        stream
+Stage:       flink
+Primary key: sensorid, time_hour
+Timestamp:   time_hour
+---
 Schema:
  - sensorid: BIGINT NOT NULL
  - time_hour: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - avg_temperature: DOUBLE NOT NULL
+Inputs:
+ - default_catalog.default_database.SensorReading
+Annotations:
+ - features: STREAM_WINDOW_AGGREGATION (feature)
 Plan:
 LogicalProject(sensorid=[$0], time_hour=[$3], avg_temperature=[$4])
   LogicalAggregate(group=[{0, 1, 2, 3}], avg_temperature=[AVG($4)])
@@ -55,7 +60,8 @@ LogicalProject(sensorid=[$0], time_hour=[$3], avg_temperature=[$4])
       LogicalTableFunctionScan(invocation=[TUMBLE(TABLE(#0), DESCRIPTOR('timestamp'), 3600000:INTERVAL MINUTE)], rowType=[RecordType(VARCHAR(2147483647) uuid, BIGINT sensorid, BIGINT epoch_timestamp, DOUBLE temperature, TIMESTAMP_LTZ(3) *ROWTIME* timestamp, TIMESTAMP(3) window_start, TIMESTAMP(3) window_end, TIMESTAMP_LTZ(3) *ROWTIME* window_time)])
         LogicalProject(uuid=[$0], sensorid=[$1], epoch_timestamp=[$2], temperature=[$3], timestamp=[$4])
           LogicalTableScan(table=[[default_catalog, default_database, SensorReading]])
-SQL: CREATE VIEW `SensorTempByHour` AS  SELECT sensorid, window_time as time_hour, AVG(temperature) AS avg_temperature
+SQL:
+CREATE VIEW `SensorTempByHour` AS  SELECT sensorid, window_time as time_hour, AVG(temperature) AS avg_temperature
                      FROM TABLE(TUMBLE(TABLE SensorReading, DESCRIPTOR(`timestamp`), INTERVAL '60' MINUTES))
                      GROUP BY sensorid, window_start, window_end, window_time;
 

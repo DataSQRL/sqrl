@@ -1,51 +1,55 @@
 >>>pipeline_explain.txt
 === MyAsyncTable
-ID:     default_catalog.default_database.MyAsyncTable
-Type:   state
-Stage:  flink
-Annotations:
- - sort: [0 ASC-nulls-first]
-Primary Key: val
-Timestamp  : -
+ID:          default_catalog.default_database.MyAsyncTable
+Type:        state
+Stage:       flink
+Primary key: val
+Timestamp:   -
+---
 Schema:
  - val: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL
  - myFnc: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+Annotations:
+ - sort: [0 ASC-nulls-first]
 
 === MyTable
-ID:     default_catalog.default_database.MyTable
-Type:   state
-Stage:  flink
-Annotations:
- - sort: [0 ASC-nulls-first]
-Primary Key: val
-Timestamp  : -
+ID:          default_catalog.default_database.MyTable
+Type:        state
+Stage:       flink
+Primary key: val
+Timestamp:   -
+---
 Schema:
  - val: INTEGER NOT NULL
  - myFnc: BIGINT
+Annotations:
+ - sort: [0 ASC-nulls-first]
 
 === MyTableAnother
-ID:     default_catalog.default_database.MyTableAnother
-Type:   state
-Stage:  flink
-Annotations:
- - sort: [0 ASC-nulls-first]
-Primary Key: val
-Timestamp  : -
+ID:          default_catalog.default_database.MyTableAnother
+Type:        state
+Stage:       flink
+Primary key: val
+Timestamp:   -
+---
 Schema:
  - val: INTEGER NOT NULL
  - myFnc: BIGINT
-
-=== MyTableDifferentCase
-ID:     default_catalog.default_database.MyTableDifferentCase
-Type:   state
-Stage:  flink
 Annotations:
  - sort: [0 ASC-nulls-first]
-Primary Key: val
-Timestamp  : -
+
+=== MyTableDifferentCase
+ID:          default_catalog.default_database.MyTableDifferentCase
+Type:        state
+Stage:       flink
+Primary key: val
+Timestamp:   -
+---
 Schema:
  - val: INTEGER NOT NULL
  - fn: BIGINT
+Annotations:
+ - sort: [0 ASC-nulls-first]
 
 >>>flink-sql-no-functions.sql
 CREATE VIEW `MyTable`

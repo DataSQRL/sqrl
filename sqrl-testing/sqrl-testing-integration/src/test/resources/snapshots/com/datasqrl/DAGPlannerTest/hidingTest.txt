@@ -1,45 +1,51 @@
 >>>pipeline_explain.txt
 === AnotherCustomer
-ID:     default_catalog.default_database.AnotherCustomer
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database._Customer
-Annotations:
- - stream-root: _Customer
-Primary Key: customerid, lastUpdated
-Timestamp  : timestamp
+ID:          default_catalog.default_database.AnotherCustomer
+Type:        stream
+Stage:       flink
+Primary key: customerid, lastUpdated
+Timestamp:   timestamp
+---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database._Customer
+Annotations:
+ - stream-root: _Customer
 Plan:
 LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
   LogicalFilter(condition=[>($0, 0)])
     LogicalTableScan(table=[[default_catalog, default_database, _Customer]])
-SQL: CREATE VIEW `AnotherCustomer` AS  SELECT * FROM _Customer WHERE customerid > 0;
+SQL:
+CREATE VIEW `AnotherCustomer` AS  SELECT * FROM _Customer WHERE customerid > 0;
 
 === Customer
-ID:     default_catalog.default_database.Customer
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.Customer__base
-Annotations:
- - stream-root: Customer
-Primary Key: customerid, lastUpdated
-Timestamp  : timestamp
+ID:          default_catalog.default_database.Customer
+Type:        stream
+Stage:       flink
+Primary key: customerid, lastUpdated
+Timestamp:   timestamp
+---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Customer__base
+Annotations:
+ - stream-root: Customer
 Plan:
 LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
   LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($3, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE TEMPORARY TABLE `Customer__schema` (
+SQL:
+CREATE TEMPORARY TABLE `Customer__schema` (
   `customerid` BIGINT NOT NULL,
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -59,42 +65,48 @@ CREATE TABLE `Customer` (
 )
 LIKE `Customer__schema`
 === FinalCustomer
-ID:     default_catalog.default_database.FinalCustomer
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database._SomeCustomer
-Annotations:
- - stream-root: Customer
-Primary Key: customerid, lastUpdated
-Timestamp  : -
+ID:          default_catalog.default_database.FinalCustomer
+Type:        stream
+Stage:       flink
+Primary key: customerid, lastUpdated
+Timestamp:   -
+---
 Schema:
  - customerid: BIGINT NOT NULL
  - lastUpdated: BIGINT NOT NULL
+Inputs:
+ - default_catalog.default_database._SomeCustomer
+Annotations:
+ - stream-root: Customer
 Plan:
 LogicalProject(customerid=[$0], lastUpdated=[$3])
   LogicalTableScan(table=[[default_catalog, default_database, _SomeCustomer]])
-SQL: CREATE VIEW `FinalCustomer` AS  SELECT customerid, lastUpdated FROM _SomeCustomer;
+SQL:
+CREATE VIEW `FinalCustomer` AS  SELECT customerid, lastUpdated FROM _SomeCustomer;
 
 === _Customer
-ID:     default_catalog.default_database._Customer
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database._Customer__base
-Annotations:
- - stream-root: _Customer
-Primary Key: customerid, lastUpdated
-Timestamp  : timestamp
+ID:          default_catalog.default_database._Customer
+Type:        stream
+Stage:       flink
+Primary key: customerid, lastUpdated
+Timestamp:   timestamp
+---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database._Customer__base
+Annotations:
+ - stream-root: _Customer
 Plan:
 LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
   LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($3, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
     LogicalTableScan(table=[[default_catalog, default_database, _Customer]])
-SQL: CREATE TEMPORARY TABLE `_Customer__schema` (
+SQL:
+CREATE TEMPORARY TABLE `_Customer__schema` (
   `customerid` BIGINT NOT NULL,
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -114,25 +126,28 @@ CREATE TABLE `_Customer` (
 )
 LIKE `_Customer__schema`
 === _SomeCustomer
-ID:     default_catalog.default_database._SomeCustomer
-Type:   stream
-Stage:  flink
-Inputs: default_catalog.default_database.Customer
-Annotations:
- - stream-root: Customer
-Primary Key: customerid, lastUpdated
-Timestamp  : timestamp
+ID:          default_catalog.default_database._SomeCustomer
+Type:        stream
+Stage:       flink
+Primary key: customerid, lastUpdated
+Timestamp:   timestamp
+---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Customer
+Annotations:
+ - stream-root: Customer
 Plan:
 LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
   LogicalFilter(condition=[>($0, 1)])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL: CREATE VIEW `_SomeCustomer` AS  SELECT * FROM Customer WHERE customerid > 1;
+SQL:
+CREATE VIEW `_SomeCustomer` AS  SELECT * FROM Customer WHERE customerid > 1;
 
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `Customer__schema` (

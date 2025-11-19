@@ -1,10 +1,11 @@
 >>>pipeline_explain.txt
 === FlinkFunctions
-ID:     default_catalog.default_database.FlinkFunctions
-Type:   state
-Stage:  flink
-Primary Key: name
-Timestamp  : -
+ID:          default_catalog.default_database.FlinkFunctions
+Type:        state
+Stage:       flink
+Primary key: name
+Timestamp:   -
+---
 Schema:
  - name: VARCHAR(7) CHARACTER SET "UTF-16LE" NOT NULL
  - name_upper: VARCHAR(7) CHARACTER SET "UTF-16LE" NOT NULL
@@ -17,10 +18,12 @@ Schema:
  - name_json: RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM=')
 
 === functions
-ID:     print.functions
-Type:   export
-Stage:  flink
-Inputs: default_catalog.default_database.FlinkFunctions
+ID:          print.functions
+Type:        export
+Stage:       flink
+---
+Inputs:
+ - default_catalog.default_database.FlinkFunctions
 
 >>>flink-sql-no-functions.sql
 CREATE VIEW `FlinkFunctions`

@@ -28,7 +28,7 @@ import com.datasqrl.planner.tables.FlinkConnectorConfig;
 import com.datasqrl.planner.tables.SqrlTableFunction;
 import com.datasqrl.util.CalciteHacks;
 import com.datasqrl.util.StreamUtil;
-import com.google.common.base.Strings;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -41,13 +41,15 @@ import lombok.experimental.SuperBuilder;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.schema.FunctionParameter;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
 @Value
 @Builder
 public class PipelineDAGExporter {
 
-  public static final String LINEBREAK = "\n";
+  private static final String LINEBREAK = "\n";
+  private static final String N_A = "-";
 
   @Builder.Default boolean includeQueries = true;
 
@@ -64,13 +66,9 @@ public class PipelineDAGExporter {
 
   public List<Node> export(PipelineDAG dag) {
     CalciteHacks.resetToSqrlMetadataProvider();
-    List<Node> result = new ArrayList<>();
+    var result = new ArrayList<Node>();
     for (PipelineNode node : dag) {
-      List<String> inputs =
-          dag.getInputs(node).stream()
-              .map(PipelineNode::getId)
-              .sorted()
-              .collect(Collectors.toUnmodifiableList());
+      var inputs = dag.getInputs(node).stream().map(PipelineNode::getId).sorted().toList();
       var stage = node.getChosenStage().engine().getName().toLowerCase();
       if (node instanceof TableNode tableNode) {
         var table = tableNode.getTableAnalysis();
@@ -99,23 +97,23 @@ public class PipelineDAGExporter {
                   .inputs(inputs)
                   .plan(explain(table.getCollapsedRelnode()))
                   .sql(getSql(table))
-                  .primary_key(
+                  .primaryKey(
                       table.getPrimaryKey().isUndefined()
                           ? null
                           : table.getPrimaryKey().asList().stream()
                               .flatMap(set -> set.getIndexes().stream().sorted())
                               .map(fields::get)
                               .map(RelDataTypeField::getName)
-                              .collect(Collectors.toUnmodifiableList()))
+                              .toList())
                   .timestamp(
-                      timestampIdx.map(fields::get).map(RelDataTypeField::getName).orElse("-"))
+                      timestampIdx.map(fields::get).map(RelDataTypeField::getName).orElse(N_A))
                   .schema(
                       fields.stream()
                           .map(
                               field ->
                                   new SchemaColumn(
                                       field.getName(), field.getType().getFullTypeString()))
-                          .collect(Collectors.toUnmodifiableList()))
+                          .toList())
                   .annotations(getAnnotations(table))
                   .build());
         }
@@ -171,7 +169,8 @@ public class PipelineDAGExporter {
   }
 
   private static List<Annotation> getAnnotations(SqrlTableFunction function) {
-    List<Annotation> result = new ArrayList<>(getAnnotations(function.getFunctionAnalysis()));
+    var result = new ArrayList<>(getAnnotations(function.getFunctionAnalysis()));
+
     if (!function.getParameters().isEmpty()) {
       result.add(
           new Annotation(
@@ -180,16 +179,19 @@ public class PipelineDAGExporter {
                   .map(FunctionParameter::getName)
                   .collect(Collectors.joining(", "))));
     }
+
     result.add(new Annotation("base-table", function.getBaseTable().getName()));
+
     return result;
   }
 
   private static List<Annotation> getAnnotations(TableAnalysis tableAnalysis) {
-    List<Annotation> result = new ArrayList<>();
-    List<EngineCapability.Feature> capabilities =
+    var result = new ArrayList<Annotation>();
+    var capabilities =
         StreamUtil.filterByClass(
                 tableAnalysis.getRequiredCapabilities(), EngineCapability.Feature.class)
-            .collect(Collectors.toList());
+            .toList();
+
     if (!capabilities.isEmpty()) {
       result.add(
           new Annotation(
@@ -198,16 +200,20 @@ public class PipelineDAGExporter {
                   .map(EngineCapability::getName)
                   .collect(Collectors.joining(", "))));
     }
+
     if (tableAnalysis.isMostRecentDistinct()) {
       result.add(new Annotation("mostRecentDistinct", "true"));
     }
+
     if (tableAnalysis.getStreamRoot().isPresent()) {
       result.add(new Annotation("stream-root", tableAnalysis.getStreamRoot().get().getName()));
     }
+
     if (tableAnalysis.getTopLevelSort().isPresent()) {
       var sort = tableAnalysis.getTopLevelSort().get();
       result.add(new Annotation("sort", sort.getCollation().toString()));
     }
+
     return result;
   }
 
@@ -233,7 +239,6 @@ public class PipelineDAGExporter {
         case RELATION -> RELATION;
         case STREAM -> STREAM;
         case STATE, STATIC, LOOKUP, VERSIONED_STATE -> STATE;
-        default -> throw new UnsupportedOperationException("Unexpected type: " + tableType);
       };
     }
   }
@@ -249,27 +254,41 @@ public class PipelineDAGExporter {
     String name;
     String type;
     String stage;
-    @Builder.Default List<String> inputs = List.of();
+    List<String> inputs;
     List<Annotation> annotations;
 
     @Override
     public String toString() {
-      return baseToString();
+      return getBaseHeaderString() + "---" + LINEBREAK + getBaseListsString();
     }
 
-    String baseToString() {
+    String getBaseHeaderString() {
+      return "=== "
+          + name
+          + LINEBREAK
+          + "ID:          "
+          + id
+          + LINEBREAK
+          + "Type:        "
+          + type
+          + LINEBREAK
+          + "Stage:       "
+          + stage
+          + LINEBREAK;
+    }
+
+    String getBaseListsString() {
       var s = new StringBuilder();
-      s.append("=== ").append(name).append(LINEBREAK);
-      s.append("ID:     ").append(id).append(LINEBREAK);
-      s.append("Type:   ").append(type).append(LINEBREAK);
-      s.append("Stage:  ").append(stage).append(LINEBREAK);
-      if (!inputs.isEmpty()) {
-        s.append("Inputs: ").append(StringUtils.join(inputs, ", ")).append(LINEBREAK);
+      if (CollectionUtils.isNotEmpty(inputs)) {
+        s.append("Inputs:").append(LINEBREAK);
+        toListString(s, inputs);
       }
-      if (annotations != null && !annotations.isEmpty()) {
+
+      if (CollectionUtils.isNotEmpty(annotations)) {
         s.append("Annotations:").append(LINEBREAK);
         toListString(s, annotations);
       }
+
       return s.toString();
     }
 
@@ -287,14 +306,14 @@ public class PipelineDAGExporter {
 
     String connectorString() {
       if (connector != null && connector.get(FlinkConnectorConfig.CONNECTOR_KEY) != null) {
-        return "Connector: " + connector.get(FlinkConnectorConfig.CONNECTOR_KEY);
+        return "Connector:   " + connector.get(FlinkConnectorConfig.CONNECTOR_KEY) + LINEBREAK;
       }
       return "";
     }
 
     @Override
     public String toString() {
-      return super.toString() + connectorString();
+      return getBaseHeaderString() + connectorString() + getBaseListsString();
     }
   }
 
@@ -305,22 +324,23 @@ public class PipelineDAGExporter {
     String plan;
     String sql;
 
-    String planToString() {
+    String getPlanString() {
       var s = new StringBuilder();
-      if (!Strings.isNullOrEmpty(plan)) {
-        s.append("Plan:").append(LINEBREAK);
-        s.append(plan);
-        //            s.append("---------------------").append(LINEBREAK);
+
+      if (StringUtils.isNotBlank(plan)) {
+        s.append("Plan:").append(LINEBREAK).append(plan);
       }
-      if (!Strings.isNullOrEmpty(sql)) {
-        s.append("SQL: ").append(sql);
+
+      if (StringUtils.isNotBlank(sql)) {
+        s.append("SQL:").append(LINEBREAK).append(sql);
       }
+
       return s.toString();
     }
 
     @Override
     public String toString() {
-      return super.toString() + planToString();
+      return super.toString() + getPlanString();
     }
   }
 
@@ -328,21 +348,26 @@ public class PipelineDAGExporter {
   @SuperBuilder
   public static class Table extends Query {
 
-    List<String> primary_key;
+    @JsonProperty("primary_key")
+    List<String> primaryKey;
+
     String timestamp;
     List<SchemaColumn> schema;
 
     @Override
     public String toString() {
       var s = new StringBuilder();
-      s.append(baseToString());
-      s.append("Primary Key: ")
-          .append(primary_key == null ? "-" : StringUtils.join(primary_key, ", "))
-          .append(LINEBREAK);
-      s.append("Timestamp  : ").append(timestamp).append(LINEBREAK);
+      var pKey = CollectionUtils.isEmpty(primaryKey) ? N_A : String.join(", ", primaryKey);
+
+      s.append(getBaseHeaderString());
+      s.append("Primary key: ").append(pKey).append(LINEBREAK);
+      s.append("Timestamp:   ").append(timestamp).append(LINEBREAK);
+      s.append("---").append(LINEBREAK);
       s.append("Schema:").append(LINEBREAK);
       toListString(s, schema);
-      s.append(planToString());
+      s.append(getBaseListsString());
+      s.append(getPlanString());
+
       return s.toString();
     }
   }
@@ -351,7 +376,7 @@ public class PipelineDAGExporter {
     items.forEach(i -> s.append(" - ").append(i.toString()).append(LINEBREAK));
   }
 
-  public record SchemaColumn(String name, String type) {
+  private record SchemaColumn(String name, String type) {
 
     @Override
     public String toString() {
@@ -359,7 +384,7 @@ public class PipelineDAGExporter {
     }
   }
 
-  public record Annotation(String name, String description) {
+  private record Annotation(String name, String description) {
 
     @Override
     public String toString() {
