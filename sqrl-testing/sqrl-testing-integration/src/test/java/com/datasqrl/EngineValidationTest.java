@@ -18,33 +18,32 @@ package com.datasqrl;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datasqrl.util.SnapshotTest.Snapshot;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 
 class EngineValidationTest extends AbstractAssetSnapshotTest {
 
-  public static final Path SCRIPT_DIR = getResourcesDirectory("engine-validation");
+  public static final Path PROJECT_DIR = getResourcesDirectory("engine-validation");
 
   protected EngineValidationTest() {
-    super(SCRIPT_DIR.resolve("plan-output"));
+    super(PROJECT_DIR.resolve("plan-output"));
   }
 
   @Test
   void testInvalidEngine() {
-    var script = SCRIPT_DIR.resolve("invalidPackage-fail.sqrl");
+    var pkg = PROJECT_DIR.resolve("package-fail.json");
+    assertThat(pkg).isRegularFile();
 
-    assertThat(Files.exists(script)).isTrue();
-    var testModifier = TestNameModifier.of(script);
+    var testModifier = TestNameModifier.of(pkg);
     var expectFailure = testModifier == TestNameModifier.fail;
     var printMessages =
         testModifier == TestNameModifier.fail || testModifier == TestNameModifier.warn;
-    this.snapshot = Snapshot.of(getDisplayName(script), getClass());
+    this.snapshot = Snapshot.of(getDisplayName(pkg), getClass());
     var hook =
         execute(
-            SCRIPT_DIR,
+            PROJECT_DIR,
             "compile",
-            script.getFileName().toString(),
+            pkg.getFileName().toString(),
             "-t",
             outputDir.getFileName().toString());
     assertThat(hook.isFailed()).as(hook.getMessages()).isEqualTo(expectFailure);

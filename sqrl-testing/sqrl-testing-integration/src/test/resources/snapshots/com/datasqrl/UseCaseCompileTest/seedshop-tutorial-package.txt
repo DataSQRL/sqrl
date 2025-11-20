@@ -1,0 +1,1414 @@
+>>>inferred_schema.graphqls
+type CustomerPromotion {
+  customerid: Long!
+  first_name: String!
+  last_name: String!
+  email: String!
+  spend: Float!
+  saved: Float!
+}
+
+type Customers {
+  id: Long!
+  first_name: String!
+  last_name: String!
+  email: String!
+  ip_address: String
+  country: String
+  changed_on: Long!
+  timestamp: DateTime!
+  order_stats(limit: Int = 10, offset: Int = 0): [CustomersOrderStats!]
+  past_purchases(limit: Int = 10, offset: Int = 0): [CustomersPastPurchases!]
+  purchases(limit: Int = 10, offset: Int = 0): [Orders!]
+  spending(limit: Int = 10, offset: Int = 0): [CustomersSpending!]
+}
+
+type CustomersOrderStats {
+  customerid: Long!
+  first_order: DateTime!
+  total_spend: Float!
+  total_saved: Float!
+  num_orders: Long!
+}
+
+type CustomersPastPurchases {
+  customerid: Long!
+  productid: Long!
+  num_orders: Long!
+  total_quantity: Long!
+}
+
+type CustomersSpending {
+  customerid: Long!
+  week: DateTime!
+  spend: Float!
+  saved: Float!
+}
+
+"An RFC-3339 compliant Full Date Scalar"
+scalar Date
+
+"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats"
+scalar DateTime
+
+"A JSON scalar"
+scalar JSON
+
+"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`."
+scalar LocalTime
+
+"A 64-bit signed integer"
+scalar Long
+
+type Orders {
+  id: Long!
+  customerid: Long!
+  time: DateTime!
+  items: [Orders_itemsOutput]!
+  customer(limit: Int = 10, offset: Int = 0): [Customers!]
+  totals(limit: Int = 10, offset: Int = 0): [OrdersTotals!]
+}
+
+type OrdersTotals {
+  id: Long!
+  time: DateTime!
+  customerid: Long!
+  price: Float!
+  saving: Float!
+}
+
+type Orders_itemsOutput {
+  productid: Long!
+  quantity: Long!
+  unit_price: Float!
+  discount: Float
+}
+
+type ProductSearch {
+  id: Long!
+  name: String!
+  sizing: String!
+  weight_in_gram: Long!
+  type: String!
+  category: String!
+  usda_id: Long!
+  updated: DateTime!
+  score: Float
+}
+
+type Products {
+  id: Long!
+  name: String!
+  sizing: String!
+  weight_in_gram: Long!
+  type: String!
+  category: String!
+  usda_id: Long!
+  updated: DateTime!
+}
+
+type ProductsByCountry {
+  productid: Long!
+  country: String
+  quantity: Long!
+  spend: Float!
+  weight: Long!
+}
+
+type Query {
+  Customers(id: Long, email: String, limit: Int = 10, offset: Int = 0): [Customers!]
+  Orders(limit: Int = 10, offset: Int = 0): [Orders!]
+  Products(id: Long!, limit: Int = 10, offset: Int = 0): [Products!]
+  ProductsByCountry(productid: Long!, limit: Int = 10, offset: Int = 0): [ProductsByCountry!]
+  ProductSearch(query: String!, limit: Int = 10, offset: Int = 0): [ProductSearch!]
+  ProductSearchWithId(query: String!, id: Int!, limit: Int = 10, offset: Int = 0): [Products!]
+}
+
+type Subscription {
+  CustomerPromotion: CustomerPromotion
+}
+
+enum _McpMethodType {
+  NONE
+  TOOL
+  RESOURCE
+}
+
+enum _RestMethodType {
+  NONE
+  GET
+  POST
+}
+
+directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION
+
+>>>pipeline_explain.txt
+=== CustomerPromotion
+ID:          default_catalog.default_database.CustomerPromotion
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   -
+---
+Schema:
+ - customerid: BIGINT NOT NULL
+ - first_name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - last_name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - spend: DOUBLE NOT NULL
+ - saved: DOUBLE NOT NULL
+Inputs:
+ - default_catalog.default_database.Customers
+ - default_catalog.default_database.CustomersSpending
+Annotations:
+ - stream-root: Orders
+
+=== Customers
+ID:          default_catalog.default_database.Customers
+Type:        state
+Stage:       flink
+Primary key: id
+Timestamp:   timestamp
+---
+Schema:
+ - id: BIGINT NOT NULL
+ - first_name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - last_name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - ip_address: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+ - country: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+ - changed_on: BIGINT NOT NULL
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database._CustomersStream
+Annotations:
+ - mostRecentDistinct: true
+ - stream-root: _CustomersStream
+
+=== CustomersOrderStats
+ID:          default_catalog.default_database.CustomersOrderStats
+Type:        state
+Stage:       flink
+Primary key: customerid
+Timestamp:   first_order
+---
+Schema:
+ - customerid: BIGINT NOT NULL
+ - first_order: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+ - total_spend: DOUBLE NOT NULL
+ - total_saved: DOUBLE NOT NULL
+ - num_orders: BIGINT NOT NULL
+Inputs:
+ - default_catalog.default_database.OrdersTotals
+
+=== CustomersPastPurchases
+ID:          default_catalog.default_database.CustomersPastPurchases
+Type:        state
+Stage:       flink
+Primary key: customerid, productid
+Timestamp:   -
+---
+Schema:
+ - customerid: BIGINT NOT NULL
+ - productid: BIGINT NOT NULL
+ - num_orders: BIGINT NOT NULL
+ - total_quantity: BIGINT NOT NULL
+Inputs:
+ - default_catalog.default_database.Orders
+
+=== CustomersSpending
+ID:          default_catalog.default_database.CustomersSpending
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   week
+---
+Schema:
+ - customerid: BIGINT NOT NULL
+ - week: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+ - spend: DOUBLE NOT NULL
+ - saved: DOUBLE NOT NULL
+Inputs:
+ - default_catalog.default_database.OrdersTotals
+Annotations:
+ - features: STREAM_WINDOW_AGGREGATION (feature)
+ - stream-root: Orders
+ - sort: [1 DESC-nulls-last]
+
+=== Orders
+ID:          default_catalog.default_database.Orders
+Type:        stream
+Stage:       flink
+Primary key: id, time
+Timestamp:   time
+---
+Schema:
+ - id: BIGINT NOT NULL
+ - customerid: BIGINT NOT NULL
+ - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+ - items: RecordType:peek_no_expand(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
+Inputs:
+ - default_catalog.default_database.Orders__base
+Annotations:
+ - features: DENORMALIZE (feature)
+ - stream-root: Orders
+
+=== OrdersTotals
+ID:          default_catalog.default_database.OrdersTotals
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   time
+---
+Schema:
+ - id: BIGINT NOT NULL
+ - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+ - customerid: BIGINT NOT NULL
+ - price: DOUBLE NOT NULL
+ - saving: DOUBLE NOT NULL
+Inputs:
+ - default_catalog.default_database._OrderItems
+Annotations:
+ - features: STREAM_WINDOW_AGGREGATION (feature)
+ - stream-root: Orders
+
+=== ProductSearch
+ID:          default_catalog.default_database.ProductSearch
+Type:        query
+Stage:       postgres
+---
+Inputs:
+ - default_catalog.default_database.Products
+Annotations:
+ - stream-root: _ProductsStream
+ - parameters: query
+ - base-table: ProductSearch
+
+=== ProductSearchWithId
+ID:          default_catalog.default_database.ProductSearchWithId
+Type:        query
+Stage:       postgres
+---
+Inputs:
+ - default_catalog.default_database.Products
+Annotations:
+ - stream-root: _ProductsStream
+ - parameters: query, id
+ - base-table: Products
+
+=== Products
+ID:          default_catalog.default_database.Products
+Type:        state
+Stage:       flink
+Primary key: id
+Timestamp:   updated
+---
+Schema:
+ - id: BIGINT NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - sizing: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - weight_in_gram: BIGINT NOT NULL
+ - type: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - category: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - usda_id: BIGINT NOT NULL
+ - updated: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database._ProductsStream
+Annotations:
+ - mostRecentDistinct: true
+ - stream-root: _ProductsStream
+
+=== ProductsByCountry
+ID:          default_catalog.default_database.ProductsByCountry
+Type:        state
+Stage:       flink
+Primary key: productid, country
+Timestamp:   -
+---
+Schema:
+ - productid: BIGINT NOT NULL
+ - country: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+ - quantity: BIGINT NOT NULL
+ - spend: DOUBLE NOT NULL
+ - weight: BIGINT NOT NULL
+Inputs:
+ - default_catalog.default_database.Customers
+ - default_catalog.default_database.Products
+ - default_catalog.default_database._OrderItems
+
+=== _CustomersStream
+ID:          default_catalog.default_database._CustomersStream
+Type:        stream
+Stage:       flink
+Primary key: id, changed_on
+Timestamp:   timestamp
+---
+Schema:
+ - id: BIGINT NOT NULL
+ - first_name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - last_name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - ip_address: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+ - country: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+ - changed_on: BIGINT NOT NULL
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database._CustomersStream__base
+Annotations:
+ - stream-root: _CustomersStream
+
+=== _OrderItems
+ID:          default_catalog.default_database._OrderItems
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   time
+---
+Schema:
+ - id: BIGINT NOT NULL
+ - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+ - customerid: BIGINT NOT NULL
+ - productid: BIGINT NOT NULL
+ - quantity: BIGINT NOT NULL
+ - unit_price: DOUBLE NOT NULL
+ - discount: DOUBLE
+Inputs:
+ - default_catalog.default_database.Orders
+Annotations:
+ - stream-root: Orders
+
+=== _ProductsStream
+ID:          default_catalog.default_database._ProductsStream
+Type:        stream
+Stage:       flink
+Primary key: id, updated
+Timestamp:   updated
+---
+Schema:
+ - id: BIGINT NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - sizing: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - weight_in_gram: BIGINT NOT NULL
+ - type: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - category: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - usda_id: BIGINT NOT NULL
+ - updated: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database._ProductsStream__base
+Annotations:
+ - stream-root: _ProductsStream
+
+=== promotion
+ID:          local-sink.promotion
+Type:        export
+Stage:       flink
+---
+Inputs:
+ - default_catalog.default_database.CustomerPromotion
+
+>>>flink-sql-no-functions.sql
+CREATE TEMPORARY TABLE `Orders__schema` (
+  `id` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `items` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL
+) WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `Orders` (
+  PRIMARY KEY (`id`, `time`) NOT ENFORCED,
+  WATERMARK FOR `time` AS `time` - INTERVAL '0.001' SECOND
+) WITH (
+  'format' = 'flexible-json',
+  'path' = '${DATA_PATH}/order_items.jsonl',
+  'connector' = 'filesystem'
+)
+LIKE `Orders__schema`;
+CREATE TEMPORARY TABLE `_ProductsStream__schema` (
+  `id` BIGINT NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `sizing` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `weight_in_gram` BIGINT NOT NULL,
+  `type` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `usda_id` BIGINT NOT NULL,
+  `updated` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+) WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `_ProductsStream` (
+  PRIMARY KEY (`id`, `updated`) NOT ENFORCED,
+  WATERMARK FOR `updated` AS `updated` - INTERVAL '0.001' SECOND
+) WITH (
+  'format' = 'flexible-json',
+  'path' = '${DATA_PATH}/products.jsonl',
+  'connector' = 'filesystem'
+)
+LIKE `_ProductsStream__schema`;
+CREATE TEMPORARY TABLE `_CustomersStream__schema` (
+  `id` BIGINT NOT NULL,
+  `first_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `last_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `ip_address` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `country` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `changed_on` BIGINT NOT NULL
+) WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `_CustomersStream` (
+  `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`changed_on`, 3), TIMESTAMP '1970-01-01 00:00:00.000'),
+  PRIMARY KEY (`id`, `changed_on`) NOT ENFORCED,
+  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
+) WITH (
+  'format' = 'flexible-json',
+  'path' = '${DATA_PATH}/customers.jsonl',
+  'connector' = 'filesystem'
+)
+LIKE `_CustomersStream__schema`;
+CREATE VIEW `_OrderItems`
+AS
+SELECT `o`.`id`, `o`.`time`, `o`.`customerid`, `i`.*
+FROM `Orders` AS `o`
+ CROSS JOIN UNNEST(`o`.`items`) AS `i`;
+CREATE VIEW `OrdersTotals`
+AS
+SELECT `id`, `window_time` AS `time`, `customerid`, SUM(`quantity` * `unit_price` - COALESCE(`discount`, 0.0)) AS `price`, SUM(COALESCE(`discount`, 0.0)) AS `saving`
+FROM TABLE(TUMBLE(TABLE `_OrderItems`, DESCRIPTOR(`time`), INTERVAL '0.001' SECOND))
+GROUP BY `id`, `customerid`, `window_start`, `window_end`, `window_time`;
+CREATE VIEW `Customers`
+AS
+SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`
+FROM (SELECT `id`, `first_name`, `last_name`, `email`, `ip_address`, `country`, `changed_on`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `timestamp` DESC NULLS LAST) AS `__sqrlinternal_rownum`
+  FROM `default_catalog`.`default_database`.`_CustomersStream`) AS `t`
+WHERE `__sqrlinternal_rownum` = 1;
+CREATE VIEW `CustomersSpending`
+AS
+SELECT `customerid`, `window_time` AS `week`, SUM(`price`) AS `spend`, SUM(`saving`) AS `saved`
+FROM TABLE(TUMBLE(TABLE `OrdersTotals`, DESCRIPTOR(`time`), INTERVAL '7' DAY))
+GROUP BY `customerid`, `window_start`, `window_end`, `window_time`;
+CREATE VIEW `CustomersOrderStats`
+AS
+SELECT `customerid`, MIN(`time`) AS `first_order`, SUM(`price`) AS `total_spend`, SUM(`saving`) AS `total_saved`, COUNT(1) AS `num_orders`
+FROM `OrdersTotals`
+GROUP BY `customerid`;
+CREATE VIEW `CustomersPastPurchases`
+AS
+SELECT `o`.`customerid`, `i`.`productid`, COUNT(1) AS `num_orders`, SUM(`i`.`quantity`) AS `total_quantity`
+FROM `Orders` AS `o`
+ CROSS JOIN UNNEST(`o`.`items`) AS `i`
+GROUP BY `o`.`customerid`, `i`.`productid`;
+CREATE VIEW `CustomerPromotion`
+AS
+SELECT `s`.`customerid`, `c`.`first_name`, `c`.`last_name`, `c`.`email`, `s`.`spend`, `s`.`saved`
+FROM `CustomersSpending` AS `s`
+ INNER JOIN `Customers` FOR SYSTEM_TIME AS OF `week` AS `c` ON `s`.`customerid` = `c`.`id`
+WHERE `s`.`spend` > 250;
+CREATE TEMPORARY TABLE `SinkTable_ex1__schema` (
+  `customerid` BIGINT NOT NULL,
+  `first_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `last_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `spend` DOUBLE NOT NULL,
+  `saved` DOUBLE NOT NULL
+) WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `SinkTable_ex1` (
+  PRIMARY KEY (`customerid`) NOT ENFORCED
+) WITH (
+  'format' = 'flexible-json',
+  'path' = '/tmp/sink/',
+  'connector' = 'filesystem'
+)
+LIKE `SinkTable_ex1__schema`;
+CREATE VIEW `Products`
+AS
+SELECT `id`, `name`, `sizing`, `weight_in_gram`, `type`, `category`, `usda_id`, `updated`
+FROM (SELECT `id`, `name`, `sizing`, `weight_in_gram`, `type`, `category`, `usda_id`, `updated`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `updated` DESC NULLS LAST) AS `__sqrlinternal_rownum`
+  FROM `default_catalog`.`default_database`.`_ProductsStream`) AS `t`
+WHERE `__sqrlinternal_rownum` = 1;
+CREATE VIEW `ProductsByCountry`
+AS
+SELECT `p`.`id` AS `productid`, `c`.`country` AS `country`, SUM(`o`.`quantity`) AS `quantity`, SUM(`o`.`quantity` * `o`.`unit_price`) AS `spend`, SUM(`o`.`quantity` * `p`.`weight_in_gram`) AS `weight`
+FROM `_OrderItems` AS `o`
+ INNER JOIN `Products` FOR SYSTEM_TIME AS OF `o`.`time` AS `p` ON `o`.`productid` = `p`.`id`
+ INNER JOIN `Customers` FOR SYSTEM_TIME AS OF `o`.`time` AS `c` ON `o`.`customerid` = `c`.`id`
+GROUP BY `p`.`id`, `c`.`country`;
+CREATE TABLE `CustomerPromotion_1` (
+  `customerid` BIGINT NOT NULL,
+  `first_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `last_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `spend` DOUBLE NOT NULL,
+  `saved` DOUBLE NOT NULL
+) WITH (
+  'connector' = 'kafka',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'topic' = 'CustomerPromotion'
+);
+CREATE TABLE `Customers_2` (
+  `id` BIGINT NOT NULL,
+  `first_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `last_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `ip_address` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `country` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `changed_on` BIGINT NOT NULL,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`id`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = 'Customers',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `CustomersOrderStats_3` (
+  `customerid` BIGINT NOT NULL,
+  `first_order` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `total_spend` DOUBLE NOT NULL,
+  `total_saved` DOUBLE NOT NULL,
+  `num_orders` BIGINT NOT NULL,
+  PRIMARY KEY (`customerid`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = 'CustomersOrderStats',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `CustomersPastPurchases_4` (
+  `customerid` BIGINT NOT NULL,
+  `productid` BIGINT NOT NULL,
+  `num_orders` BIGINT NOT NULL,
+  `total_quantity` BIGINT NOT NULL,
+  PRIMARY KEY (`customerid`, `productid`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = 'CustomersPastPurchases',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `CustomersSpending_5` (
+  `customerid` BIGINT NOT NULL,
+  `week` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `spend` DOUBLE NOT NULL,
+  `saved` DOUBLE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = 'CustomersSpending',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `Orders_6` (
+  `id` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `items` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
+  PRIMARY KEY (`id`, `time`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = 'Orders',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `OrdersTotals_7` (
+  `id` BIGINT NOT NULL,
+  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `price` DOUBLE NOT NULL,
+  `saving` DOUBLE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = 'OrdersTotals',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `Products_8` (
+  `id` BIGINT NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `sizing` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `weight_in_gram` BIGINT NOT NULL,
+  `type` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `usda_id` BIGINT NOT NULL,
+  `updated` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`id`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = 'Products',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `ProductsByCountry_9` (
+  `productid` BIGINT NOT NULL,
+  `country` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `quantity` BIGINT NOT NULL,
+  `spend` DOUBLE NOT NULL,
+  `weight` BIGINT NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = 'ProductsByCountry',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`SinkTable_ex1`
+SELECT *
+ FROM `default_catalog`.`default_database`.`CustomerPromotion`
+;
+INSERT INTO `default_catalog`.`default_database`.`CustomerPromotion_1`
+ SELECT *
+  FROM `default_catalog`.`default_database`.`CustomerPromotion`
+ ;
+ INSERT INTO `default_catalog`.`default_database`.`Customers_2`
+  SELECT *
+   FROM `default_catalog`.`default_database`.`_CustomersStream`
+  ;
+  INSERT INTO `default_catalog`.`default_database`.`CustomersOrderStats_3`
+   SELECT *
+    FROM `default_catalog`.`default_database`.`CustomersOrderStats`
+   ;
+   INSERT INTO `default_catalog`.`default_database`.`CustomersPastPurchases_4`
+    SELECT *
+     FROM `default_catalog`.`default_database`.`CustomersPastPurchases`
+    ;
+    INSERT INTO `default_catalog`.`default_database`.`CustomersSpending_5`
+     SELECT `customerid`, `week`, `spend`, `saved`, `hash_columns`(`customerid`, `week`, `spend`, `saved`) AS `__pk_hash`
+      FROM `default_catalog`.`default_database`.`CustomersSpending`
+     ;
+     INSERT INTO `default_catalog`.`default_database`.`Orders_6`
+      SELECT `id`, `customerid`, `time`, `to_jsonb`(`items`) AS `items`
+       FROM `default_catalog`.`default_database`.`Orders`
+      ;
+      INSERT INTO `default_catalog`.`default_database`.`OrdersTotals_7`
+       SELECT `id`, `time`, `customerid`, `price`, `saving`, `hash_columns`(`id`, `time`, `customerid`, `price`, `saving`) AS `__pk_hash`
+        FROM `default_catalog`.`default_database`.`OrdersTotals`
+       ;
+       INSERT INTO `default_catalog`.`default_database`.`Products_8`
+        SELECT *
+         FROM `default_catalog`.`default_database`.`_ProductsStream`
+        ;
+        INSERT INTO `default_catalog`.`default_database`.`ProductsByCountry_9`
+         SELECT `productid`, `country`, `quantity`, `spend`, `weight`, `hash_columns`(`productid`, `country`) AS `__pk_hash`
+          FROM `default_catalog`.`default_database`.`ProductsByCountry`
+         ;
+         END
+>>>kafka.json
+{
+  "topics" : [
+    {
+      "topicName" : "CustomerPromotion",
+      "tableName" : "CustomerPromotion_1",
+      "format" : "flexible-json",
+      "numPartitions" : 1,
+      "replicationFactor" : 3,
+      "type" : "SUBSCRIPTION",
+      "config" : { }
+    }
+  ],
+  "testRunnerTopics" : [ ]
+}
+>>>postgres-schema.sql
+CREATE TABLE IF NOT EXISTS "Customers" ("id" BIGINT NOT NULL, "first_name" TEXT NOT NULL, "last_name" TEXT NOT NULL, "email" TEXT NOT NULL, "ip_address" TEXT, "country" TEXT, "changed_on" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("id"));
+CREATE TABLE IF NOT EXISTS "CustomersOrderStats" ("customerid" BIGINT NOT NULL, "first_order" TIMESTAMP WITH TIME ZONE NOT NULL, "total_spend" DOUBLE PRECISION NOT NULL, "total_saved" DOUBLE PRECISION NOT NULL, "num_orders" BIGINT NOT NULL, PRIMARY KEY ("customerid"));
+CREATE TABLE IF NOT EXISTS "CustomersPastPurchases" ("customerid" BIGINT NOT NULL, "productid" BIGINT NOT NULL, "num_orders" BIGINT NOT NULL, "total_quantity" BIGINT NOT NULL, PRIMARY KEY ("customerid","productid"));
+CREATE TABLE IF NOT EXISTS "CustomersSpending" ("customerid" BIGINT NOT NULL, "week" TIMESTAMP WITH TIME ZONE NOT NULL, "spend" DOUBLE PRECISION NOT NULL, "saved" DOUBLE PRECISION NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "Orders" ("id" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "time" TIMESTAMP WITH TIME ZONE NOT NULL, "items" JSONB, PRIMARY KEY ("id","time"));
+CREATE TABLE IF NOT EXISTS "OrdersTotals" ("id" BIGINT NOT NULL, "time" TIMESTAMP WITH TIME ZONE NOT NULL, "customerid" BIGINT NOT NULL, "price" DOUBLE PRECISION NOT NULL, "saving" DOUBLE PRECISION NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "Products" ("id" BIGINT NOT NULL, "name" TEXT NOT NULL, "sizing" TEXT NOT NULL, "weight_in_gram" BIGINT NOT NULL, "type" TEXT NOT NULL, "category" TEXT NOT NULL, "usda_id" BIGINT NOT NULL, "updated" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("id"));
+CREATE TABLE IF NOT EXISTS "ProductsByCountry" ("productid" BIGINT NOT NULL, "country" TEXT, "quantity" BIGINT NOT NULL, "spend" DOUBLE PRECISION NOT NULL, "weight" BIGINT NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
+
+CREATE INDEX IF NOT EXISTS "Customers_hash_c3" ON "Customers" USING hash ("email");
+CREATE INDEX IF NOT EXISTS "OrdersTotals_hash_c0" ON "OrdersTotals" USING hash ("id");
+CREATE INDEX IF NOT EXISTS "Orders_hash_c1" ON "Orders" USING hash ("customerid");
+CREATE INDEX IF NOT EXISTS "ProductsByCountry_hash_c0" ON "ProductsByCountry" USING hash ("productid");
+CREATE INDEX IF NOT EXISTS "Products_text_c1c5" ON "Products" USING GIN (to_tsvector('english', coalesce("name", '') || ' ' || coalesce("category", '') ))
+>>>postgres-views.sql
+
+>>>vertx.json
+{
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Customers",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "email"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "id"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Customers\"\nWHERE (\"id\" = $1 OR $1 IS NULL) AND (\"email\" = $2 OR $2 IS NULL)",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "id"
+                },
+                {
+                  "type" : "arg",
+                  "path" : "email"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Customers",
+          "fieldName" : "order_stats",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"CustomersOrderStats\"\nWHERE \"customerid\" = $1",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "key" : "id"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Customers",
+          "fieldName" : "past_purchases",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"CustomersPastPurchases\"\nWHERE \"customerid\" = $1\nORDER BY \"num_orders\" DESC NULLS LAST, \"total_quantity\" DESC NULLS LAST",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "key" : "id"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Customers",
+          "fieldName" : "purchases",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Orders\"\nWHERE \"customerid\" = $1",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "key" : "id"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Orders",
+          "fieldName" : "customer",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Customers\"\nWHERE $1 = \"id\"",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "key" : "customerid"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Orders",
+          "fieldName" : "totals",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"id\", \"time\", \"customerid\", \"price\", \"saving\"\n  FROM \"OrdersTotals\") AS \"t\"\nWHERE $1 = \"id\"",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "key" : "id"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Customers",
+          "fieldName" : "spending",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"customerid\", \"week\", \"spend\", \"saved\"\n  FROM \"CustomersSpending\"\n  ORDER BY \"week\" DESC NULLS LAST) AS \"t0\"\nWHERE \"customerid\" = $1",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "key" : "id"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Orders",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Orders\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Products",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "id"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Products\"\nWHERE \"id\" = $1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "id"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "ProductsByCountry",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "productid"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"productid\", \"country\", \"quantity\", \"spend\", \"weight\"\n  FROM \"ProductsByCountry\") AS \"t\"\nWHERE \"productid\" = $1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "productid"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "ProductSearch",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "query"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"id\", \"name\", \"sizing\", \"weight_in_gram\", \"type\", \"category\", \"usda_id\", \"updated\", \"ts_rank_cd\"(\"to_tsvector\"('english', COALESCE(\"name\", ' ')), \"websearch_to_tsquery\"('english', $1)) AS \"score\"\nFROM \"Products\"\nWHERE (\"to_tsvector\"('english', COALESCE(\"name\", ' ')) @@ \"websearch_to_tsquery\"('english', CAST($1 AS TEXT)))\nORDER BY \"ts_rank_cd\"(\"to_tsvector\"('english', COALESCE(\"name\", ' ')), \"websearch_to_tsquery\"('english', $1)) DESC NULLS LAST, \"id\" NULLS FIRST",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "query"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "ProductSearchWithId",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "id"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "query"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Products\"\nWHERE (\"to_tsvector\"('english', COALESCE(\"name\", ' ') || ' ' || COALESCE(\"category\", ' ')) @@ \"websearch_to_tsquery\"('english', CAST($1 AS TEXT))) AND \"id\" > $2\nORDER BY \"id\" NULLS FIRST",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "query"
+                },
+                {
+                  "type" : "arg",
+                  "path" : "id"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        }
+      ],
+      "mutations" : [ ],
+      "subscriptions" : [
+        {
+          "type" : "kafka",
+          "fieldName" : "CustomerPromotion",
+          "topic" : "CustomerPromotion",
+          "sinkConfig" : { },
+          "equalityConditions" : { }
+        }
+      ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetCustomers",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "order_stats_offset" : {
+                  "type" : "integer"
+                },
+                "offset" : {
+                  "type" : "integer"
+                },
+                "past_purchases_limit" : {
+                  "type" : "integer"
+                },
+                "purchases_offset" : {
+                  "type" : "integer"
+                },
+                "purchases_limit" : {
+                  "type" : "integer"
+                },
+                "purchases_totals_offset" : {
+                  "type" : "integer"
+                },
+                "spending_offset" : {
+                  "type" : "integer"
+                },
+                "spending_limit" : {
+                  "type" : "integer"
+                },
+                "order_stats_limit" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "purchases_totals_limit" : {
+                  "type" : "integer"
+                },
+                "id" : {
+                  "type" : "integer"
+                },
+                "email" : {
+                  "type" : "string"
+                },
+                "past_purchases_offset" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query Customers($id: Long, $email: String, $limit: Int = 10, $offset: Int = 0$order_stats_limit: Int = 10, $order_stats_offset: Int = 0$past_purchases_limit: Int = 10, $past_purchases_offset: Int = 0$purchases_limit: Int = 10, $purchases_offset: Int = 0$purchases_totals_limit: Int = 10, $purchases_totals_offset: Int = 0$spending_limit: Int = 10, $spending_offset: Int = 0) {\nCustomers(id: $id, email: $email, limit: $limit, offset: $offset) {\nid\nfirst_name\nlast_name\nemail\nip_address\ncountry\nchanged_on\ntimestamp\norder_stats(limit: $order_stats_limit, offset: $order_stats_offset) {\ncustomerid\nfirst_order\ntotal_spend\ntotal_saved\nnum_orders\n}\npast_purchases(limit: $past_purchases_limit, offset: $past_purchases_offset) {\ncustomerid\nproductid\nnum_orders\ntotal_quantity\n}\npurchases(limit: $purchases_limit, offset: $purchases_offset) {\nid\ncustomerid\ntime\nitems {\nproductid\nquantity\nunit_price\ndiscount\n}\ntotals(limit: $purchases_totals_limit, offset: $purchases_totals_offset) {\nid\ntime\ncustomerid\nprice\nsaving\n}\n}\nspending(limit: $spending_limit, offset: $spending_offset) {\ncustomerid\nweek\nspend\nsaved\n}\n}\n\n}",
+            "queryName" : "Customers",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Customers{?order_stats_offset,offset,past_purchases_limit,purchases_offset,purchases_limit,purchases_totals_offset,spending_offset,spending_limit,order_stats_limit,limit,purchases_totals_limit,id,email,past_purchases_offset}"
+        },
+        {
+          "function" : {
+            "name" : "GetOrders",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "customer_past_purchases_limit" : {
+                  "type" : "integer"
+                },
+                "customer_past_purchases_offset" : {
+                  "type" : "integer"
+                },
+                "totals_limit" : {
+                  "type" : "integer"
+                },
+                "offset" : {
+                  "type" : "integer"
+                },
+                "customer_order_stats_offset" : {
+                  "type" : "integer"
+                },
+                "totals_offset" : {
+                  "type" : "integer"
+                },
+                "customer_limit" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "customer_order_stats_limit" : {
+                  "type" : "integer"
+                },
+                "customer_offset" : {
+                  "type" : "integer"
+                },
+                "customer_spending_offset" : {
+                  "type" : "integer"
+                },
+                "customer_spending_limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query Orders($limit: Int = 10, $offset: Int = 0$customer_limit: Int = 10, $customer_offset: Int = 0$customer_order_stats_limit: Int = 10, $customer_order_stats_offset: Int = 0$customer_past_purchases_limit: Int = 10, $customer_past_purchases_offset: Int = 0$customer_spending_limit: Int = 10, $customer_spending_offset: Int = 0$totals_limit: Int = 10, $totals_offset: Int = 0) {\nOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nitems {\nproductid\nquantity\nunit_price\ndiscount\n}\ncustomer(limit: $customer_limit, offset: $customer_offset) {\nid\nfirst_name\nlast_name\nemail\nip_address\ncountry\nchanged_on\ntimestamp\norder_stats(limit: $customer_order_stats_limit, offset: $customer_order_stats_offset) {\ncustomerid\nfirst_order\ntotal_spend\ntotal_saved\nnum_orders\n}\npast_purchases(limit: $customer_past_purchases_limit, offset: $customer_past_purchases_offset) {\ncustomerid\nproductid\nnum_orders\ntotal_quantity\n}\nspending(limit: $customer_spending_limit, offset: $customer_spending_offset) {\ncustomerid\nweek\nspend\nsaved\n}\n}\ntotals(limit: $totals_limit, offset: $totals_offset) {\nid\ntime\ncustomerid\nprice\nsaving\n}\n}\n\n}",
+            "queryName" : "Orders",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Orders{?customer_past_purchases_limit,customer_past_purchases_offset,totals_limit,offset,customer_order_stats_offset,totals_offset,customer_limit,limit,customer_order_stats_limit,customer_offset,customer_spending_offset,customer_spending_limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetProducts",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "id" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "id"
+              ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query Products($id: Long!, $limit: Int = 10, $offset: Int = 0) {\nProducts(id: $id, limit: $limit, offset: $offset) {\nid\nname\nsizing\nweight_in_gram\ntype\ncategory\nusda_id\nupdated\n}\n\n}",
+            "queryName" : "Products",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Products{?offset,limit,id}"
+        },
+        {
+          "function" : {
+            "name" : "GetProductsByCountry",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "productid" : {
+                  "type" : "integer"
+                },
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "productid"
+              ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query ProductsByCountry($productid: Long!, $limit: Int = 10, $offset: Int = 0) {\nProductsByCountry(productid: $productid, limit: $limit, offset: $offset) {\nproductid\ncountry\nquantity\nspend\nweight\n}\n\n}",
+            "queryName" : "ProductsByCountry",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/ProductsByCountry{?productid,offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetProductSearch",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "query" : {
+                  "type" : "string"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "query"
+              ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query ProductSearch($query: String!, $limit: Int = 10, $offset: Int = 0) {\nProductSearch(query: $query, limit: $limit, offset: $offset) {\nid\nname\nsizing\nweight_in_gram\ntype\ncategory\nusda_id\nupdated\nscore\n}\n\n}",
+            "queryName" : "ProductSearch",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/ProductSearch{?offset,query,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetProductSearchWithId",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "query" : {
+                  "type" : "string"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "id" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "query",
+                "id"
+              ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query ProductSearchWithId($query: String!, $id: Int!, $limit: Int = 10, $offset: Int = 0) {\nProductSearchWithId(query: $query, id: $id, limit: $limit, offset: $offset) {\nid\nname\nsizing\nweight_in_gram\ntype\ncategory\nusda_id\nupdated\n}\n\n}",
+            "queryName" : "ProductSearchWithId",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/ProductSearchWithId{?offset,query,limit,id}"
+        }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "type CustomerPromotion {\n  customerid: Long!\n  first_name: String!\n  last_name: String!\n  email: String!\n  spend: Float!\n  saved: Float!\n}\n\ntype Customers {\n  id: Long!\n  first_name: String!\n  last_name: String!\n  email: String!\n  ip_address: String\n  country: String\n  changed_on: Long!\n  timestamp: DateTime!\n  order_stats(limit: Int = 10, offset: Int = 0): [CustomersOrderStats!]\n  past_purchases(limit: Int = 10, offset: Int = 0): [CustomersPastPurchases!]\n  purchases(limit: Int = 10, offset: Int = 0): [Orders!]\n  spending(limit: Int = 10, offset: Int = 0): [CustomersSpending!]\n}\n\ntype CustomersOrderStats {\n  customerid: Long!\n  first_order: DateTime!\n  total_spend: Float!\n  total_saved: Float!\n  num_orders: Long!\n}\n\ntype CustomersPastPurchases {\n  customerid: Long!\n  productid: Long!\n  num_orders: Long!\n  total_quantity: Long!\n}\n\ntype CustomersSpending {\n  customerid: Long!\n  week: DateTime!\n  spend: Float!\n  saved: Float!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Orders {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  items: [Orders_itemsOutput]!\n  customer(limit: Int = 10, offset: Int = 0): [Customers!]\n  totals(limit: Int = 10, offset: Int = 0): [OrdersTotals!]\n}\n\ntype OrdersTotals {\n  id: Long!\n  time: DateTime!\n  customerid: Long!\n  price: Float!\n  saving: Float!\n}\n\ntype Orders_itemsOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\ntype ProductSearch {\n  id: Long!\n  name: String!\n  sizing: String!\n  weight_in_gram: Long!\n  type: String!\n  category: String!\n  usda_id: Long!\n  updated: DateTime!\n  score: Float\n}\n\ntype Products {\n  id: Long!\n  name: String!\n  sizing: String!\n  weight_in_gram: Long!\n  type: String!\n  category: String!\n  usda_id: Long!\n  updated: DateTime!\n}\n\ntype ProductsByCountry {\n  productid: Long!\n  country: String\n  quantity: Long!\n  spend: Float!\n  weight: Long!\n}\n\ntype Query {\n  Customers(id: Long, email: String, limit: Int = 10, offset: Int = 0): [Customers!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n  Products(id: Long!, limit: Int = 10, offset: Int = 0): [Products!]\n  ProductsByCountry(productid: Long!, limit: Int = 10, offset: Int = 0): [ProductsByCountry!]\n  ProductSearch(query: String!, limit: Int = 10, offset: Int = 0): [ProductSearch!]\n  ProductSearchWithId(query: String!, id: Int!, limit: Int = 10, offset: Int = 0): [Products!]\n}\n\ntype Subscription {\n  CustomerPromotion: CustomerPromotion\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      }
+    }
+  }
+}

@@ -1,0 +1,439 @@
+>>>inferred_schema.graphqls
+"An RFC-3339 compliant Full Date Scalar"
+scalar Date
+
+"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats"
+scalar DateTime
+
+"A JSON scalar"
+scalar JSON
+
+"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`."
+scalar LocalTime
+
+"A 64-bit signed integer"
+scalar Long
+
+type MyAsyncTable {
+  val: String!
+  myFnc: String
+}
+
+type MyTable {
+  val: Int!
+  myFnc: Long
+}
+
+type MyTableAnother {
+  val: Int!
+  myFnc: Long
+}
+
+type MyTableDifferentCase {
+  val: Int!
+  fn: Long
+}
+
+type Query {
+  MyAsyncTable(limit: Int = 10, offset: Int = 0): [MyAsyncTable!]
+  MyTable(limit: Int = 10, offset: Int = 0): [MyTable!]
+  MyTableAnother(limit: Int = 10, offset: Int = 0): [MyTableAnother!]
+  MyTableDifferentCase(limit: Int = 10, offset: Int = 0): [MyTableDifferentCase!]
+}
+
+enum _McpMethodType {
+  NONE
+  TOOL
+  RESOURCE
+}
+
+enum _RestMethodType {
+  NONE
+  GET
+  POST
+}
+
+directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION
+
+>>>pipeline_explain.txt
+=== MyAsyncTable
+ID:          default_catalog.default_database.MyAsyncTable
+Type:        state
+Stage:       flink
+Primary key: val
+Timestamp:   -
+---
+Schema:
+ - val: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL
+ - myFnc: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+Annotations:
+ - sort: [0 ASC-nulls-first]
+
+=== MyTable
+ID:          default_catalog.default_database.MyTable
+Type:        state
+Stage:       flink
+Primary key: val
+Timestamp:   -
+---
+Schema:
+ - val: INTEGER NOT NULL
+ - myFnc: BIGINT
+Annotations:
+ - sort: [0 ASC-nulls-first]
+
+=== MyTableAnother
+ID:          default_catalog.default_database.MyTableAnother
+Type:        state
+Stage:       flink
+Primary key: val
+Timestamp:   -
+---
+Schema:
+ - val: INTEGER NOT NULL
+ - myFnc: BIGINT
+Annotations:
+ - sort: [0 ASC-nulls-first]
+
+=== MyTableDifferentCase
+ID:          default_catalog.default_database.MyTableDifferentCase
+Type:        state
+Stage:       flink
+Primary key: val
+Timestamp:   -
+---
+Schema:
+ - val: INTEGER NOT NULL
+ - fn: BIGINT
+Annotations:
+ - sort: [0 ASC-nulls-first]
+
+>>>flink-sql-no-functions.sql
+CREATE VIEW `MyTable`
+AS
+SELECT `val`, `MyScalarFunction`(`val`, `val`) AS `myFnc`
+FROM (VALUES ROW(1),
+   ROW(2),
+   ROW(3),
+   ROW(4),
+   ROW(5),
+   ROW(6),
+   ROW(7),
+   ROW(8),
+   ROW(9),
+   ROW(10)) AS `t` (`val`);
+CREATE VIEW `MyTableAnother`
+AS
+SELECT `val`, `AnotherFunction`(`val`, `val`) AS `myFnc`
+FROM (VALUES ROW(1),
+   ROW(2)) AS `t` (`val`);
+CREATE VIEW `MyTableDifferentCase`
+AS
+SELECT `val`, `anotherFunction`(`val`, `val`) AS `fn`
+FROM (VALUES ROW(1),
+   ROW(2)) AS `t` (`val`);
+CREATE VIEW `MyAsyncTable`
+AS
+SELECT `val`, `MyAsyncScalarFunction`(`val`, `ival`) AS `myFnc`
+FROM (VALUES ROW('1', 1),
+   ROW('2', 2),
+   ROW('3', 3)) AS `t` (`val`, `ival`);
+CREATE TABLE `MyAsyncTable_1` (
+  `val` CHAR(1) CHARACTER SET `UTF-16LE` NOT NULL,
+  `myFnc` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`val`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = 'MyAsyncTable',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `MyTable_2` (
+  `val` INTEGER NOT NULL,
+  `myFnc` BIGINT,
+  PRIMARY KEY (`val`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = 'MyTable',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `MyTableAnother_3` (
+  `val` INTEGER NOT NULL,
+  `myFnc` BIGINT,
+  PRIMARY KEY (`val`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = 'MyTableAnother',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `MyTableDifferentCase_4` (
+  `val` INTEGER NOT NULL,
+  `fn` BIGINT,
+  PRIMARY KEY (`val`) NOT ENFORCED
+) WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = 'MyTableDifferentCase',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`MyAsyncTable_1`
+SELECT *
+ FROM `default_catalog`.`default_database`.`MyAsyncTable`
+;
+INSERT INTO `default_catalog`.`default_database`.`MyTable_2`
+ SELECT *
+  FROM `default_catalog`.`default_database`.`MyTable`
+ ;
+ INSERT INTO `default_catalog`.`default_database`.`MyTableAnother_3`
+  SELECT *
+   FROM `default_catalog`.`default_database`.`MyTableAnother`
+  ;
+  INSERT INTO `default_catalog`.`default_database`.`MyTableDifferentCase_4`
+   SELECT *
+    FROM `default_catalog`.`default_database`.`MyTableDifferentCase`
+   ;
+   END
+>>>kafka.json
+{
+  "topics" : [ ],
+  "testRunnerTopics" : [ ]
+}
+>>>postgres-schema.sql
+CREATE TABLE IF NOT EXISTS "MyAsyncTable" ("val" TEXT NOT NULL, "myFnc" TEXT, PRIMARY KEY ("val"));
+CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, "myFnc" BIGINT, PRIMARY KEY ("val"));
+CREATE TABLE IF NOT EXISTS "MyTableAnother" ("val" INTEGER NOT NULL, "myFnc" BIGINT, PRIMARY KEY ("val"));
+CREATE TABLE IF NOT EXISTS "MyTableDifferentCase" ("val" INTEGER NOT NULL, "fn" BIGINT, PRIMARY KEY ("val"))
+>>>postgres-views.sql
+
+>>>vertx.json
+{
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "MyAsyncTable",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"val\", \"myFnc\"\n  FROM \"MyAsyncTable\"\n  ORDER BY \"val\" NULLS FIRST) AS \"t\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "MyTable",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"val\", \"myFnc\"\n  FROM \"MyTable\"\n  ORDER BY \"val\" NULLS FIRST) AS \"t\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "MyTableAnother",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"val\", \"myFnc\"\n  FROM \"MyTableAnother\"\n  ORDER BY \"val\" NULLS FIRST) AS \"t\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "MyTableDifferentCase",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"val\", \"fn\"\n  FROM \"MyTableDifferentCase\"\n  ORDER BY \"val\" NULLS FIRST) AS \"t\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        }
+      ],
+      "mutations" : [ ],
+      "subscriptions" : [ ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetMyAsyncTable",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query MyAsyncTable($limit: Int = 10, $offset: Int = 0) {\nMyAsyncTable(limit: $limit, offset: $offset) {\nval\nmyFnc\n}\n\n}",
+            "queryName" : "MyAsyncTable",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/MyAsyncTable{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetMyTable",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query MyTable($limit: Int = 10, $offset: Int = 0) {\nMyTable(limit: $limit, offset: $offset) {\nval\nmyFnc\n}\n\n}",
+            "queryName" : "MyTable",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/MyTable{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetMyTableAnother",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query MyTableAnother($limit: Int = 10, $offset: Int = 0) {\nMyTableAnother(limit: $limit, offset: $offset) {\nval\nmyFnc\n}\n\n}",
+            "queryName" : "MyTableAnother",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/MyTableAnother{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetMyTableDifferentCase",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query MyTableDifferentCase($limit: Int = 10, $offset: Int = 0) {\nMyTableDifferentCase(limit: $limit, offset: $offset) {\nval\nfn\n}\n\n}",
+            "queryName" : "MyTableDifferentCase",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/MyTableDifferentCase{?offset,limit}"
+        }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype MyAsyncTable {\n  val: String!\n  myFnc: String\n}\n\ntype MyTable {\n  val: Int!\n  myFnc: Long\n}\n\ntype MyTableAnother {\n  val: Int!\n  myFnc: Long\n}\n\ntype MyTableDifferentCase {\n  val: Int!\n  fn: Long\n}\n\ntype Query {\n  MyAsyncTable(limit: Int = 10, offset: Int = 0): [MyAsyncTable!]\n  MyTable(limit: Int = 10, offset: Int = 0): [MyTable!]\n  MyTableAnother(limit: Int = 10, offset: Int = 0): [MyTableAnother!]\n  MyTableDifferentCase(limit: Int = 10, offset: Int = 0): [MyTableDifferentCase!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      }
+    }
+  }
+}

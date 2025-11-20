@@ -1,5 +1,8 @@
 {
   "version": "1",
+  "script": {
+    "main": "__SQRL_SCRIPT__"
+  },
   "compiler": {
     "explain": {
       "sql": true,

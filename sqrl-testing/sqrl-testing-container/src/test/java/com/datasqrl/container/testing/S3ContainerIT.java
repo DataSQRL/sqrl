@@ -89,7 +89,7 @@ public class S3ContainerIT extends SqrlContainerTestBase {
             .withNetwork(sharedNetwork)
             .withEnv("AWS_ACCESS_KEY_ID", CRED)
             .withEnv("AWS_SECRET_KEY", CRED)
-            .withCommand("test", "-c", "package-s3.json");
+            .withCommand("test", "package-s3.json");
 
     cmd.start();
 

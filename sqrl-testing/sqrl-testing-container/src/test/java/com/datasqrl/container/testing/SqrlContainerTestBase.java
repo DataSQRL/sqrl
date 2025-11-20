@@ -28,6 +28,7 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
+import javax.annotation.Nullable;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -136,15 +137,19 @@ public abstract class SqrlContainerTestBase {
                 .withStartupTimeout(Duration.ofSeconds(30)));
   }
 
-  protected void compileSqrlScript(String scriptName, Path workingDir) {
-    sqrlScript(workingDir, "compile", scriptName);
+  protected void compileSqrlProject(Path workingDir) {
+    compileSqrlProject(workingDir, null);
   }
 
-  protected ContainerResult sqrlScript(Path workingDir, String... command) {
-    return sqrlScript(workingDir, true, command);
+  protected void compileSqrlProject(Path workingDir, @Nullable String packageFile) {
+    sqrlCmd(workingDir, "compile", packageFile != null ? packageFile : "package.json");
   }
 
-  protected ContainerResult sqrlScript(Path workingDir, boolean debug, String... command) {
+  protected ContainerResult sqrlCmd(Path workingDir, String... command) {
+    return sqrlCmd(workingDir, true, command);
+  }
+
+  protected ContainerResult sqrlCmd(Path workingDir, boolean debug, String... command) {
     cmd = createCmdContainer(workingDir, debug).withCommand(command);
 
     log.info("Docker run command to reproduce:");
@@ -385,15 +390,13 @@ public abstract class SqrlContainerTestBase {
     assertThat(jsonResponse.get("data").get("__typename").asText()).isEqualTo("Query");
   }
 
-  protected void compileAndStartServer(String scriptName, Path testDir) {
-    compileSqrlScript(scriptName, testDir);
-    startGraphQLServer(testDir);
+  protected void compileAndStartServer(Path testDir) {
+    compileAndStartServer(testDir, null);
   }
 
-  protected void compileAndStartServer(
-      String scriptName, Path testDir, Consumer<GenericContainer<?>> containerCustomizer) {
-    compileSqrlScript(scriptName, testDir);
-    startGraphQLServer(testDir, containerCustomizer);
+  protected void compileAndStartServer(Path testDir, @Nullable String packageFile) {
+    compileSqrlProject(testDir, packageFile);
+    startGraphQLServer(testDir);
   }
 
   protected HttpResponse executeGraphQLQuery(String query) throws Exception {

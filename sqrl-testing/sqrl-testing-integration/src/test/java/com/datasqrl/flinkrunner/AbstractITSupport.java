@@ -28,7 +28,6 @@ import com.nextbreakpoint.flink.client.model.TerminationMode;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.List;
 import lombok.SneakyThrows;
 import org.awaitility.core.ThrowingRunnable;
 import org.junit.jupiter.api.AfterEach;
@@ -110,23 +109,20 @@ public class AbstractITSupport {
 
   @SneakyThrows
   public Path compilePlan(String name) {
-    Path script = Path.of("target/test-classes/usecases", name, name + ".sqrl").toAbsolutePath();
-    assertThat(script).exists();
-    Path baseDir = script.getParent();
-    List<String> arguments = new ArrayList<>();
-    arguments.add("compile");
-    arguments.add(script.getFileName().toString());
-    arguments.add("-c");
-    arguments.add("package.json");
-    AssertStatusHook statusHook = new AssertStatusHook();
-    int code =
-        new DatasqrlCli(baseDir, statusHook, true)
-            .getCmd()
-            .execute(arguments.toArray(String[]::new));
-    if (statusHook.failure() != null) {
-      throw statusHook.failure();
-    }
-    if (statusHook.isSuccess() && code != 0) assertThat(code).isZero();
+    var pkg = Path.of("target/test-classes/usecases", name, "package.json").toAbsolutePath();
+    assertThat(pkg).isRegularFile();
+
+    var baseDir = pkg.getParent();
+    var args = new ArrayList<String>();
+    args.add("compile");
+    args.add(pkg.getFileName().toString());
+    var statusHook = new AssertStatusHook();
+    var code =
+        new DatasqrlCli(baseDir, statusHook, true).getCmd().execute(args.toArray(String[]::new));
+
+    assertThat(statusHook.failure()).isNull();
+    assertThat(statusHook.isSuccess());
+    assertThat(code).isZero();
 
     return Path.of("target/test-classes/usecases", name, "deploy/plan/flink-compiled-plan.json");
   }

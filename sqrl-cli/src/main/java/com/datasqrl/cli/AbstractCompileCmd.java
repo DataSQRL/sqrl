@@ -21,50 +21,29 @@ import com.datasqrl.compile.CompilationProcess;
 import com.datasqrl.compile.DirectoryManager;
 import com.datasqrl.compile.TestPlan;
 import com.datasqrl.config.ExecutionEnginesHolder;
+import com.datasqrl.config.PackageJson;
+import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.engine.PhysicalPlan;
-import com.datasqrl.engine.server.ServerPhysicalPlan;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrefix;
-import com.datasqrl.graphql.APIType;
-import com.datasqrl.graphql.server.RootGraphqlModel.StringSchema;
-import com.datasqrl.packager.PackageBootstrap;
 import com.datasqrl.packager.Packager;
 import com.datasqrl.plan.validate.ExecutionGoal;
+import com.datasqrl.util.ConfigLoaderUtils;
 import com.datasqrl.util.FlinkCompileException;
 import com.datasqrl.util.SqrlInjector;
 import com.google.inject.Guice;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
-import java.util.Arrays;
-import lombok.SneakyThrows;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.commons.lang3.tuple.Pair;
-import picocli.CommandLine;
 
 public abstract class AbstractCompileCmd extends AbstractCmd {
-
-  private static final String GRAPHQL_FILE_NAME_PATTERN = "schema.%s.graphqls";
-
-  @CommandLine.Parameters(
-      arity = "0..2",
-      description = "Main script and (optional) API specification")
-  protected Path[] files = new Path[0];
-
-  @CommandLine.Option(
-      names = {"-a", "--api"},
-      description = "Generates the API specification for the given type")
-  protected APIType[] generateAPI = new APIType[0];
 
   public abstract ExecutionGoal getGoal();
 
   protected void compile(ErrorCollector errors) {
-    var packageBootstrap = new PackageBootstrap(errors);
-    var sqrlConfig =
-        packageBootstrap.bootstrap(
-            cli.rootDir,
-            this.cli.packageFiles,
-            this.files,
-            getGoal() == ExecutionGoal.RUN || getGoal() == ExecutionGoal.TEST);
+    var sqrlConfig = initPackageJson(errors, cli.rootDir, cli.packageFiles);
 
     DirectoryManager.prepareTargetDirectory(getTargetDir());
     errors.checkFatal(
@@ -101,10 +80,6 @@ public abstract class AbstractCompileCmd extends AbstractCmd {
       return;
     }
 
-    if (isGenerateGraphql()) {
-      addGraphql(plan.getLeft(), cli.rootDir);
-    }
-
     postprocess(packager, getTargetDir(), plan.getLeft(), plan.getRight());
   }
 
@@ -126,36 +101,47 @@ public abstract class AbstractCompileCmd extends AbstractCmd {
     packager.postprocess(targetDir, plan, testPlan);
   }
 
-  protected boolean isGenerateGraphql() {
-    if (generateAPI != null) {
-      return Arrays.stream(generateAPI).anyMatch(APIType.GraphQL::equals);
+  /**
+   * Initializes the {@link PackageJson} configuration by merging all provided package configuration
+   * files. If no files are provided, attempts to load the default package configuration file.
+   *
+   * @param errors error collector
+   * @param rootDir the root project directory
+   * @param packageFiles the list of given package configuration file paths
+   * @return the merged {@link PackageJson} configuration
+   */
+  private PackageJson initPackageJson(
+      ErrorCollector errors, Path rootDir, List<Path> packageFiles) {
+    var locErrors = errors.withLocation(ErrorPrefix.CONFIG).resolve("package");
+
+    var finalPackageFiles = new ArrayList<Path>();
+    if (packageFiles.isEmpty()) {
+      // Try to find default package
+      var defaultPkg = rootDir.resolve(SqrlConstants.DEFAULT_PACKAGE);
+      if (Files.isRegularFile(defaultPkg)) {
+        finalPackageFiles.add(defaultPkg);
+      }
+
+    } else {
+      packageFiles.stream().map(rootDir::resolve).forEach(finalPackageFiles::add);
     }
-    return false;
-  }
 
-  @SneakyThrows
-  protected void addGraphql(PhysicalPlan plan, Path rootDir) {
-    var serverPlan = plan.getPlans(ServerPhysicalPlan.class).findFirst();
-    if (serverPlan.isEmpty()) {
-      return;
+    if (finalPackageFiles.isEmpty()) {
+      locErrors.fatal("No package file were given, and default %s not found", packageFiles);
     }
 
-    var models = serverPlan.get().getModels();
-    for (var entry : models.entrySet()) {
-      var version = entry.getKey();
-      var model = entry.getValue();
-
-      var path = rootDir.resolve(GRAPHQL_FILE_NAME_PATTERN.formatted(version));
-      Files.deleteIfExists(path);
-
-      var stringSchema = (StringSchema) model.getSchema();
-      Files.writeString(path, stringSchema.getSchema(), StandardOpenOption.CREATE);
-    }
+    return loadRunDefaults()
+        ? ConfigLoaderUtils.loadUnresolvedRunConfig(locErrors, finalPackageFiles)
+        : ConfigLoaderUtils.loadUnresolvedConfig(locErrors, finalPackageFiles);
   }
 
   private void validateTestPath(Path path) {
     if (!Files.isDirectory(path)) {
       throw new RuntimeException("Could not find test path: " + path.toAbsolutePath());
     }
+  }
+
+  private boolean loadRunDefaults() {
+    return getGoal() == ExecutionGoal.RUN || getGoal() == ExecutionGoal.TEST;
   }
 }

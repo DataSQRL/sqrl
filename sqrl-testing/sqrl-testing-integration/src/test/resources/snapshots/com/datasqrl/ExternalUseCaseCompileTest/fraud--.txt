@@ -1,5 +1,0 @@
-[FATAL] Could not find module [work-data.EnrichedPayments] at path: [work-data/EnrichedPayments]
-in script:fraud.sqrl [1:1]:
-IMPORT work-data.EnrichedPayments;
-^
-

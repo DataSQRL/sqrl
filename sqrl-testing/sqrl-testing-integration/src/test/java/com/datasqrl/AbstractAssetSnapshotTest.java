@@ -24,7 +24,7 @@ import com.datasqrl.util.FileUtil;
 import com.datasqrl.util.SnapshotTest.Snapshot;
 import com.google.common.base.Strings;
 import java.io.IOException;
-import java.nio.file.DirectoryStream;
+import java.nio.file.FileVisitOption;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -33,19 +33,14 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.function.Predicate;
-import java.util.stream.Stream;
-import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
-import org.junit.jupiter.api.extension.ExtensionContext;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.ArgumentsProvider;
 
 /**
  * Abstract base class for snapshot testing, i.e. comparing the produced results against previously
@@ -62,7 +57,9 @@ public abstract class AbstractAssetSnapshotTest {
 
   public Path buildDir = null; // Build directory for the compiler
   public Path planDir = null; // Plan directory for the compiler, within the build directory
+
   protected Snapshot snapshot;
+  protected Path tempPackage;
 
   protected AbstractAssetSnapshotTest(Path outputDir) {
     this.outputDir = outputDir;
@@ -74,12 +71,18 @@ public abstract class AbstractAssetSnapshotTest {
     if (outputDir != null) {
       Files.createDirectories(outputDir);
     }
+    if (tempPackage != null) {
+      Files.deleteIfExists(tempPackage);
+    }
   }
 
   @AfterEach
-  public void clearDirs() throws IOException {
+  public void cleanup() throws IOException {
     clearDir(outputDir);
     clearDir(buildDir);
+    if (tempPackage != null) {
+      Files.deleteIfExists(tempPackage);
+    }
   }
 
   /**
@@ -117,7 +120,7 @@ public abstract class AbstractAssetSnapshotTest {
 
   /** Creates the snapshot from the selected files */
   protected void createSnapshot() {
-    snapshotFiles(buildDir, getBuildDirFilter());
+    snapshotFiles(buildDir, 1, getBuildDirFilter());
     snapshotFiles(outputDir, getOutputDirFilter());
     snapshotFiles(planDir, getPlanDirFilter());
     snapshot.createOrValidate();
@@ -129,15 +132,42 @@ public abstract class AbstractAssetSnapshotTest {
   }
 
   @SneakyThrows
+  protected void writeTempPackage(Path script, String templateToReplace) {
+    var templatePkg = script.getParent().resolve("package.json");
+    assertThat(templatePkg).isRegularFile();
+
+    var content = Files.readString(templatePkg);
+    assertThat(content)
+        .as("Template package must contain given template string")
+        .contains(templateToReplace);
+    content = content.replace(templateToReplace, script.getFileName().toString());
+
+    if (tempPackage != null) {
+      Files.deleteIfExists(tempPackage);
+    }
+
+    tempPackage = Files.createTempFile(script.getParent(), "test", "package.json");
+    tempPackage.toFile().deleteOnExit();
+
+    Files.writeString(tempPackage, content);
+  }
+
+  @SneakyThrows
   private void snapshotFiles(Path path, Predicate<Path> predicate) {
+    snapshotFiles(path, Integer.MAX_VALUE, predicate);
+  }
+
+  @SneakyThrows
+  private void snapshotFiles(Path path, int maxDepth, Predicate<Path> predicate) {
     if (path == null || !Files.isDirectory(path)) return;
     List<Path> paths = new ArrayList<>();
     Files.walkFileTree(
         path,
+        EnumSet.noneOf(FileVisitOption.class),
+        maxDepth,
         new SimpleFileVisitor<>() {
           @Override
-          public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
-              throws IOException {
+          public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
             if (predicate.test(file)) {
               paths.add(file);
             }
@@ -145,7 +175,7 @@ public abstract class AbstractAssetSnapshotTest {
           }
 
           @Override
-          public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+          public FileVisitResult visitFileFailed(Path file, IOException exc) {
             return FileVisitResult.CONTINUE;
           }
         });
@@ -204,60 +234,13 @@ public abstract class AbstractAssetSnapshotTest {
     return Path.of("src", "test", "resources").resolve(subdir);
   }
 
-  @SneakyThrows
-  public static List<Path> getPackageFiles(Path dir) {
-    return getFilesByPattern(dir, "package*.json");
-  }
-
-  @SneakyThrows
-  public static List<Path> getScriptGraphQLFiles(Path script) {
-    String scriptName = FileUtil.separateExtension(script).getKey();
-    return getFilesByPattern(script.getParent(), scriptName + "*.graphqls");
-  }
-
-  @SneakyThrows
-  private static List<Path> getFilesByPattern(Path dir, String pattern) {
-    List<Path> result = new ArrayList<>();
-    try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir, pattern)) {
-      for (Path entry : stream) {
-        if (Files.isRegularFile(entry)) {
-          result.add(entry);
-        }
-      }
-    }
-    return result;
-  }
-
-  private static final String SQRL_EXTENSION = ".sqrl";
-
-  public static Stream<Path> getSQRLScripts(Path directory, boolean includeFail) {
-    return getSQRLScripts(directory, true, includeFail);
-  }
-
-  @SneakyThrows
-  public static Stream<Path> getSQRLScripts(
-      Path directory, boolean includeNested, boolean includeFail) {
-    return Files.walk(directory, includeNested ? Integer.MAX_VALUE : 1)
-        .filter(path -> !Files.isDirectory(path))
-        .filter(path -> path.toString().endsWith(SQRL_EXTENSION))
-        .filter(path -> !path.getFileName().toString().equalsIgnoreCase("sources" + SQRL_EXTENSION))
-        .filter(path -> !path.toString().contains("/build/"))
-        .filter(
-            path -> {
-              TestNameModifier mod = TestNameModifier.of(path);
-              return mod == TestNameModifier.none
-                  || (includeFail
-                      && (mod == TestNameModifier.fail || mod == TestNameModifier.warn));
-            })
-        .sorted();
-  }
-
   /**
    * We extract the TestNameModifier from the end of the filename and use it to set expectations for
    * the test.
    */
   public enum TestNameModifier {
     none, // Normal test that we expect to succeed
+    compile, // Test that expected to get compiled, but not executed
     disabled, // Disabled test that is not executed
     warn, // This test should succeed but issue warnings that we are testing
     fail; // This test is expected to fail and we are testing the error message
@@ -278,21 +261,6 @@ public abstract class AbstractAssetSnapshotTest {
         return none;
       }
       return TestNameModifier.of(file.getFileName().toString());
-    }
-  }
-
-  @AllArgsConstructor
-  public abstract static class SqrlScriptArgumentsProvider implements ArgumentsProvider {
-
-    Path directory;
-    boolean includeFail;
-
-    @Override
-    public Stream<? extends Arguments> provideArguments(ExtensionContext context)
-        throws IOException {
-      return getSQRLScripts(directory, false, includeFail)
-          .sorted(Comparator.comparing(c -> c.toFile().getName().toLowerCase()))
-          .map(Arguments::of);
     }
   }
 }

@@ -16,7 +16,9 @@
 package com.datasqrl;
 
 import com.datasqrl.compile.DagWriter;
+import com.datasqrl.util.ArgumentsProviders;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.function.Predicate;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
@@ -24,35 +26,35 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 /** Creates and snapshots a DAG plan and complete script printout for a few use cases */
 public class DAGWriterJsonTest extends AbstractUseCaseTest {
 
-  public static final Path[] USECASE_DIRS =
-      new Path[] {
-        getResourcesDirectory("usecases/clickstream"), getResourcesDirectory("usecases/passthrough")
-      };
+  public static final List<Path> USECASE_DIRS =
+      List.of(
+          getResourcesDirectory("usecases/clickstream"),
+          getResourcesDirectory("usecases/passthrough"));
 
   @Override
   @ParameterizedTest
   @ArgumentsSource(UseCaseFiles.class)
-  void testUsecase(Path script, Path graphQlFile, Path packageFile) {
-    super.testUsecase(script, graphQlFile, packageFile);
-  }
-
-  static class UseCaseFiles extends SqrlScriptsAndLocalPackages {
-    public UseCaseFiles() {
-      super(USECASE_DIRS, false);
-    }
+  void testUseCase(Path packageFile) {
+    super.testUseCase(packageFile);
   }
 
   @Override
   public Predicate<Path> getBuildDirFilter() {
     return path -> {
-      String filename = path.getFileName().toString();
-      return filename.endsWith(DagWriter.EXPLAIN_JSON_FILENAME)
-          || filename.endsWith(DagWriter.FULL_SOURCE_CODE);
+      var fileName = path.getFileName().toString();
+      return fileName.endsWith(DagWriter.EXPLAIN_JSON_FILENAME)
+          || fileName.endsWith(DagWriter.FULL_SOURCE_FILENAME);
     };
   }
 
   @Override
   public Predicate<Path> getPlanDirFilter() {
     return path -> false;
+  }
+
+  static class UseCaseFiles extends ArgumentsProviders.PackageProvider {
+    public UseCaseFiles() {
+      super(USECASE_DIRS);
+    }
   }
 }

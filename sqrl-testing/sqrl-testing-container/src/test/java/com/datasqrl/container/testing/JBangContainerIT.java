@@ -36,7 +36,7 @@ class JBangContainerIT extends SqrlContainerTestBase {
 
   @Test
   void givenProjectWithJBangJarExport_whenTestCommandExecuted_thenCompileAndTestSuccessful() {
-    var res = sqrlScript(testDir, "test", "-c", "package.json");
+    var res = sqrlCmd(testDir, "test", "package.json");
 
     assertThat(res.logs())
         .contains("Snapshot OK for MyTableTest")

@@ -68,7 +68,7 @@ public class ExternalRedpandaContainerIT extends SqrlContainerTestBase {
 
     // When - Compile SQRL script with external Kafka configuration
     var cmdContainer = createCmdContainerWithExternalKafka();
-    cmd = cmdContainer.withCommand("test", "flink-kafka.sqrl");
+    cmd = cmdContainer.withCommand("test", "package.json");
 
     log.info("Starting compilation with external Redpanda container");
     log.info(getDockerRunCommand(cmd, testDir));

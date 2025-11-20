@@ -38,7 +38,7 @@ public class KafkaStartupFailureContainerIT extends SqrlContainerTestBase {
   @Test
   void givenMissingKafkaEnvVar_whenServerStarts_thenServiceTerminatesCleanly() {
     // First compile the SQRL script that uses Kafka
-    compileSqrlScript("sensors-mutation.sqrl", testDir);
+    compileSqrlProject(testDir);
 
     // Create a server container but don't set the KAFKA_BOOTSTRAP_SERVERS env var
     // which should cause the service to fail and terminate
@@ -75,7 +75,7 @@ public class KafkaStartupFailureContainerIT extends SqrlContainerTestBase {
   @Test
   void givenInvalidKafkaBootstrapServers_whenServerStarts_thenServiceTerminatesCleanly() {
     // First compile the SQRL script that uses Kafka
-    compileSqrlScript("sensors-mutation.sqrl", testDir);
+    compileSqrlProject(testDir);
 
     // Create a server container with an invalid Kafka bootstrap server address
     var deployPlanPath = testDir.resolve("build/deploy/plan");

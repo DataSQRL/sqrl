@@ -22,13 +22,8 @@ import org.junit.jupiter.api.Test;
 @Disabled
 public class ExternalUseCaseCompileTest extends AbstractUseCaseTest {
 
-  public static Path USECASE_DIR;
-
   @Test
   public void testIndividual() {
-    super.testUsecase(
-        Path.of("/Users/matthias/git/cloud-backend/core/backend.sqrl"),
-        null,
-        Path.of("/Users/matthias/git/cloud-backend/core/package-deploy.json"));
+    super.testUseCase(Path.of("/Users/matthias/git/cloud-backend/core/package-deploy.json"));
   }
 }
