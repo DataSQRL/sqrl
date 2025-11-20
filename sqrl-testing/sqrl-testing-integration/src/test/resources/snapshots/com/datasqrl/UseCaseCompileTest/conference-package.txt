@@ -1,3 +1,112 @@
+>>>inferred_schema.graphqls
+"An RFC-3339 compliant Full Date Scalar"
+scalar Date
+
+"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats"
+scalar DateTime
+
+type EventLikeCount {
+  eventid: Long!
+  num: Long!
+  test: Long!
+}
+
+type Events {
+  url: String!
+  date: String!
+  time: String!
+  title: String!
+  abstract: String!
+  location: String!
+  speakers: [Events_speakersOutput]!
+  last_updated: DateTime!
+  id: Long!
+  full_text: String!
+  startTime: String
+  startTimestamp: DateTime
+  likeCount(limit: Int = 10, offset: Int = 0): [EventLikeCount!]
+}
+
+type Events_speakersOutput {
+  name: String
+  title: String
+  company: String
+}
+
+"A JSON scalar"
+scalar JSON
+
+"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`."
+scalar LocalTime
+
+"A 64-bit signed integer"
+scalar Long
+
+type PersonalizedEventSearch {
+  url: String!
+  date: String!
+  time: String!
+  title: String!
+  abstract: String!
+  location: String!
+  speakers: [PersonalizedEventSearch_speakersOutput]!
+  last_updated: DateTime!
+  id: Long!
+  full_text: String!
+  startTime: String
+  startTimestamp: DateTime
+  score: Float!
+}
+
+type PersonalizedEventSearch_speakersOutput {
+  name: String
+  title: String
+  company: String
+}
+
+type Query {
+  Events(id: Long!, limit: Int = 10, offset: Int = 0): [Events!]
+  EventsLiked(userid: String!, limit: Int = 10, offset: Int = 0): [Events!]
+  PersonalizedEventSearch(query: String!, userid: String!, limit: Int = 10, offset: Int = 0): [PersonalizedEventSearch!]
+  RecommendedEvents(userid: String!, limit: Int = 10, offset: Int = 0): [RecommendedEvents!]
+}
+
+type RecommendedEvents {
+  url: String!
+  date: String!
+  time: String!
+  title: String!
+  abstract: String!
+  location: String!
+  speakers: [RecommendedEvents_speakersOutput]!
+  last_updated: DateTime!
+  id: Long!
+  full_text: String!
+  startTime: String
+  startTimestamp: DateTime
+  score: Float
+}
+
+type RecommendedEvents_speakersOutput {
+  name: String
+  title: String
+  company: String
+}
+
+enum _McpMethodType {
+  NONE
+  TOOL
+  RESOURCE
+}
+
+enum _RestMethodType {
+  NONE
+  GET
+  POST
+}
+
+directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION
+
 >>>pipeline_explain.txt
 === EventLikeCount
 ID:          default_catalog.default_database.EventLikeCount

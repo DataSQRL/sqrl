@@ -24,6 +24,7 @@ import com.datasqrl.util.FileUtil;
 import com.datasqrl.util.SnapshotTest.Snapshot;
 import com.google.common.base.Strings;
 import java.io.IOException;
+import java.nio.file.FileVisitOption;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -32,6 +33,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.function.Predicate;
 import lombok.SneakyThrows;
@@ -118,7 +120,7 @@ public abstract class AbstractAssetSnapshotTest {
 
   /** Creates the snapshot from the selected files */
   protected void createSnapshot() {
-    snapshotFiles(buildDir, getBuildDirFilter());
+    snapshotFiles(buildDir, 1, getBuildDirFilter());
     snapshotFiles(outputDir, getOutputDirFilter());
     snapshotFiles(planDir, getPlanDirFilter());
     snapshot.createOrValidate();
@@ -152,14 +154,20 @@ public abstract class AbstractAssetSnapshotTest {
 
   @SneakyThrows
   private void snapshotFiles(Path path, Predicate<Path> predicate) {
+    snapshotFiles(path, Integer.MAX_VALUE, predicate);
+  }
+
+  @SneakyThrows
+  private void snapshotFiles(Path path, int maxDepth, Predicate<Path> predicate) {
     if (path == null || !Files.isDirectory(path)) return;
     List<Path> paths = new ArrayList<>();
     Files.walkFileTree(
         path,
+        EnumSet.noneOf(FileVisitOption.class),
+        maxDepth,
         new SimpleFileVisitor<>() {
           @Override
-          public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
-              throws IOException {
+          public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
             if (predicate.test(file)) {
               paths.add(file);
             }
@@ -167,7 +175,7 @@ public abstract class AbstractAssetSnapshotTest {
           }
 
           @Override
-          public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+          public FileVisitResult visitFileFailed(Path file, IOException exc) {
             return FileVisitResult.CONTINUE;
           }
         });

@@ -1,3 +1,73 @@
+>>>inferred_schema.graphqls
+type ApplicationUpdates {
+  loan_application_id: Long!
+  status: String!
+  message: String!
+  event_time: DateTime!
+}
+
+type Applications {
+  id: Long!
+  customer_id: Long!
+  loan_type_id: Long!
+  amount: Float!
+  duration: Long!
+  application_date: DateTime!
+  updated_at: DateTime!
+}
+
+type CustomerUpdates {
+  customer_id: Long!
+  num_updates: Long!
+}
+
+type Customers {
+  id: Long!
+  first_name: String!
+  last_name: String!
+  email: String!
+  phone: String!
+  address: String!
+  date_of_birth: String!
+  updated_at: DateTime!
+}
+
+"An RFC-3339 compliant Full Date Scalar"
+scalar Date
+
+"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats"
+scalar DateTime
+
+"A JSON scalar"
+scalar JSON
+
+"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`."
+scalar LocalTime
+
+"A 64-bit signed integer"
+scalar Long
+
+type Query {
+  ApplicationUpdates(limit: Int = 10, offset: Int = 0): [ApplicationUpdates!]
+  Applications(limit: Int = 10, offset: Int = 0): [Applications!]
+  CustomerUpdates(limit: Int = 10, offset: Int = 0): [CustomerUpdates!]
+  Customers(limit: Int = 10, offset: Int = 0): [Customers!]
+}
+
+enum _McpMethodType {
+  NONE
+  TOOL
+  RESOURCE
+}
+
+enum _RestMethodType {
+  NONE
+  GET
+  POST
+}
+
+directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION
+
 >>>pipeline_explain.txt
 === ApplicationUpdates
 ID:          default_catalog.default_database.ApplicationUpdates

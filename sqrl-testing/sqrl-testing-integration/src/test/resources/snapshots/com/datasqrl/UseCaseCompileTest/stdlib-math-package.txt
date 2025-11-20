@@ -1,3 +1,54 @@
+>>>inferred_schema.graphqls
+"An RFC-3339 compliant Full Date Scalar"
+scalar Date
+
+"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats"
+scalar DateTime
+
+"A JSON scalar"
+scalar JSON
+
+"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`."
+scalar LocalTime
+
+"A 64-bit signed integer"
+scalar Long
+
+type MathFunctions {
+  d: Float!
+  b: Int!
+  cbrt: Float
+  copy_sign: Float
+  expm1: Float
+  hypot: Float
+  log1p: Float
+  next_after: Float
+  scalb: Float
+  ulp: Float
+  binomial_distribution: Float
+  exponential_distribution: Float
+  normal_distribution: Float
+  poisson_distribution: Float
+}
+
+type Query {
+  MathFunctions(limit: Int = 10, offset: Int = 0): [MathFunctions!]
+}
+
+enum _McpMethodType {
+  NONE
+  TOOL
+  RESOURCE
+}
+
+enum _RestMethodType {
+  NONE
+  GET
+  POST
+}
+
+directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION
+
 >>>pipeline_explain.txt
 === MathFunctions
 ID:          default_catalog.default_database.MathFunctions

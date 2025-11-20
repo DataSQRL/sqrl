@@ -117,51 +117,6 @@ Schema:
 Inputs:
  - default_catalog.default_database._SubmissionRaw__base
 
->>>repo.graphqls
-type Package {
-  name: String!
-  latest: Submission
-  versions(version: String!, variant: String!, limit: Int = 10, offset: Int = 0): [Submission!]
-}
-
-type Query {
-  Package(name: String!, limit: Int = 10, offset: Int = 0): [Package!]
-  TopicSearch(topicName: String, limit: Int = 10, offset: Int = 0): [TopicSearch!]
-  TopicPackages(topicName: String!, limit: Int = 10, offset: Int = 0): [TopicPackages!]
-}
-
-type Submission {
-  name: String!
-  version: String!
-  variant: String!
-  latest: Boolean!
-  type: String
-  license: String
-  repository: String
-  homepage: String
-  documentation: String
-  readme: String
-  description: String
-  uniqueId: String!
-  keywords: [String!]
-  repoURL: String!
-  file: String!
-  hash: String!
-  submissionTime: String!
-}
-
-type TopicSearch {
-  topicName: String!
-  numPackages: Int!
-}
-
-type TopicPackages {
-  topicName: String!
-  pkgName: String!
-  lastSubmission: String!
-  numSubmissions: Int!
-  latest: Submission
-}
 >>>flink-sql-no-functions.sql
 CREATE TABLE `_SubmissionRaw` (
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,

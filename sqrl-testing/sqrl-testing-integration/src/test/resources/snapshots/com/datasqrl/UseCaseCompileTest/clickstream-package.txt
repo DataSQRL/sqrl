@@ -1,3 +1,63 @@
+>>>inferred_schema.graphqls
+type Click {
+  url: String!
+  timestamp: DateTime!
+  userid: String!
+}
+
+"An RFC-3339 compliant Full Date Scalar"
+scalar Date
+
+"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats"
+scalar DateTime
+
+"A JSON scalar"
+scalar JSON
+
+"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`."
+scalar LocalTime
+
+"A 64-bit signed integer"
+scalar Long
+
+type Query {
+  Click(limit: Int = 10, offset: Int = 0): [Click!]
+  Recommendation(url: String!, limit: Int = 10, offset: Int = 0): [Recommendation!]
+  Trending(limit: Int = 10, offset: Int = 0): [Trending!]
+  VisitAfter(limit: Int = 10, offset: Int = 0): [VisitAfter!]
+}
+
+type Recommendation {
+  url: String!
+  rec: String!
+  frequency: Long!
+}
+
+type Trending {
+  url: String!
+  total: Long!
+}
+
+type VisitAfter {
+  beforeURL: String!
+  afterURL: String!
+  timestamp: DateTime!
+}
+
+enum _McpMethodType {
+  NONE
+  TOOL
+  RESOURCE
+}
+
+enum _RestMethodType {
+  NONE
+  GET
+  POST
+}
+
+directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION
+
 >>>pipeline_explain.txt
 === Click
 ID:          default_catalog.default_database.Click

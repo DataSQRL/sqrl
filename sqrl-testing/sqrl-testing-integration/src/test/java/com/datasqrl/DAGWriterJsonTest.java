@@ -41,9 +41,9 @@ public class DAGWriterJsonTest extends AbstractUseCaseTest {
   @Override
   public Predicate<Path> getBuildDirFilter() {
     return path -> {
-      String filename = path.getFileName().toString();
-      return filename.endsWith(DagWriter.EXPLAIN_JSON_FILENAME)
-          || filename.endsWith(DagWriter.FULL_SOURCE_CODE);
+      var fileName = path.getFileName().toString();
+      return fileName.endsWith(DagWriter.EXPLAIN_JSON_FILENAME)
+          || fileName.endsWith(DagWriter.FULL_SOURCE_FILENAME);
     };
   }
 

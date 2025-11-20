@@ -1,3 +1,110 @@
+>>>inferred_schema.graphqls
+"An RFC-3339 compliant Full Date Scalar"
+scalar Date
+
+"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats"
+scalar DateTime
+
+"A JSON scalar"
+scalar JSON
+
+"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`."
+scalar LocalTime
+
+"A 64-bit signed integer"
+scalar Long
+
+type Query {
+  Schema(limit: Int = 10, offset: Int = 0): [Schema!]
+}
+
+type Schema {
+  uuidField: String!
+  timestampMillisField: DateTime!
+  nullableTimestampMillisField: DateTime
+  timestampMicrosField: DateTime!
+  nullableTimestampMicrosField: DateTime
+  dateField: Date!
+  nullableDateField: Date
+  timeMillisField: LocalTime!
+  nullableTimeMillisField: LocalTime
+  timeMicrosField: LocalTime!
+  nullableTimeMicrosField: LocalTime
+  complexArrayField: [Schema_complexArrayFieldOutput]!
+  nullableComplexArrayField: [Schema_nullableComplexArrayFieldOutput]
+  multiNestedRecord: Schema_multiNestedRecordOutput!
+  stringField: String!
+  nullableStringField: String
+  intField: Int!
+  nullableIntField: Int
+  longField: Long!
+  nullableLongField: Long
+  floatField: Float!
+  nullableFloatField: Float
+  doubleField: Float!
+  nullableDoubleField: Float
+  booleanField: Boolean!
+  nullableBooleanField: Boolean
+  enumField: String!
+  nullableEnumField: String
+  arrayField: [String]!
+  nullableArrayField: [Int]
+  nestedRecord: Schema_nestedRecordOutput!
+  nullableNestedRecord: Schema_nullableNestedRecordOutput
+  decimalField: Float!
+  mapField: JSON!
+  nullableMapField: JSON
+}
+
+type Schema_complexArrayFieldOutput {
+  itemFieldOne: Int!
+  itemFieldTwo: String!
+}
+
+type Schema_multiNestedRecordOutput {
+  nestedLevelOne: Schema_multiNestedRecord_nestedLevelOneOutput!
+}
+
+type Schema_multiNestedRecord_nestedLevelOneOutput {
+  levelOneField: String!
+  nestedLevelTwo: Schema_multiNestedRecord_nestedLevelOne_nestedLevelTwoOutput!
+}
+
+type Schema_multiNestedRecord_nestedLevelOne_nestedLevelTwoOutput {
+  levelTwoField: Int!
+}
+
+type Schema_nestedRecordOutput {
+  nestedStringField: String!
+  nestedIntField: Int!
+  nestedArrayField: [Float]!
+  nestedMapField: JSON!
+}
+
+type Schema_nullableComplexArrayFieldOutput {
+  nullableItemFieldOne: Float
+  nullableItemFieldTwo: Boolean
+}
+
+type Schema_nullableNestedRecordOutput {
+  nullableNestedStringField: String
+  nullableNestedLongField: Long
+}
+
+enum _McpMethodType {
+  NONE
+  TOOL
+  RESOURCE
+}
+
+enum _RestMethodType {
+  NONE
+  GET
+  POST
+}
+
+directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION
+
 >>>pipeline_explain.txt
 === Schema
 ID:          default_catalog.default_database.Schema

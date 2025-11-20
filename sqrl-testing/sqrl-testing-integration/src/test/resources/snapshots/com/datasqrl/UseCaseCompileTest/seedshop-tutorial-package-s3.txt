@@ -1,3 +1,147 @@
+>>>inferred_schema.graphqls
+type CustomerPromotion {
+  customerid: Long!
+  first_name: String!
+  last_name: String!
+  email: String!
+  spend: Float!
+  saved: Float!
+}
+
+type Customers {
+  id: Long!
+  first_name: String!
+  last_name: String!
+  email: String!
+  ip_address: String
+  country: String
+  changed_on: Long!
+  timestamp: DateTime!
+  order_stats(limit: Int = 10, offset: Int = 0): [CustomersOrderStats!]
+  past_purchases(limit: Int = 10, offset: Int = 0): [CustomersPastPurchases!]
+  purchases(limit: Int = 10, offset: Int = 0): [Orders!]
+  spending(limit: Int = 10, offset: Int = 0): [CustomersSpending!]
+}
+
+type CustomersOrderStats {
+  customerid: Long!
+  first_order: DateTime!
+  total_spend: Float!
+  total_saved: Float!
+  num_orders: Long!
+}
+
+type CustomersPastPurchases {
+  customerid: Long!
+  productid: Long!
+  num_orders: Long!
+  total_quantity: Long!
+}
+
+type CustomersSpending {
+  customerid: Long!
+  week: DateTime!
+  spend: Float!
+  saved: Float!
+}
+
+"An RFC-3339 compliant Full Date Scalar"
+scalar Date
+
+"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats"
+scalar DateTime
+
+"A JSON scalar"
+scalar JSON
+
+"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`."
+scalar LocalTime
+
+"A 64-bit signed integer"
+scalar Long
+
+type Orders {
+  id: Long!
+  customerid: Long!
+  time: DateTime!
+  items: [Orders_itemsOutput]!
+  customer(limit: Int = 10, offset: Int = 0): [Customers!]
+  totals(limit: Int = 10, offset: Int = 0): [OrdersTotals!]
+}
+
+type OrdersTotals {
+  id: Long!
+  time: DateTime!
+  customerid: Long!
+  price: Float!
+  saving: Float!
+}
+
+type Orders_itemsOutput {
+  productid: Long!
+  quantity: Long!
+  unit_price: Float!
+  discount: Float
+}
+
+type ProductSearch {
+  id: Long!
+  name: String!
+  sizing: String!
+  weight_in_gram: Long!
+  type: String!
+  category: String!
+  usda_id: Long!
+  updated: DateTime!
+  score: Float
+}
+
+type Products {
+  id: Long!
+  name: String!
+  sizing: String!
+  weight_in_gram: Long!
+  type: String!
+  category: String!
+  usda_id: Long!
+  updated: DateTime!
+}
+
+type ProductsByCountry {
+  productid: Long!
+  country: String
+  quantity: Long!
+  spend: Float!
+  weight: Long!
+}
+
+type Query {
+  Customers(id: Long, email: String, limit: Int = 10, offset: Int = 0): [Customers!]
+  Orders(limit: Int = 10, offset: Int = 0): [Orders!]
+  Products(id: Long!, limit: Int = 10, offset: Int = 0): [Products!]
+  ProductsByCountry(productid: Long!, limit: Int = 10, offset: Int = 0): [ProductsByCountry!]
+  ProductSearch(query: String!, limit: Int = 10, offset: Int = 0): [ProductSearch!]
+  ProductSearchWithId(query: String!, id: Int!, limit: Int = 10, offset: Int = 0): [Products!]
+}
+
+type Subscription {
+  CustomerPromotion: CustomerPromotion
+}
+
+enum _McpMethodType {
+  NONE
+  TOOL
+  RESOURCE
+}
+
+enum _RestMethodType {
+  NONE
+  GET
+  POST
+}
+
+directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION
+
 >>>pipeline_explain.txt
 === CustomerPromotion
 ID:          default_catalog.default_database.CustomerPromotion

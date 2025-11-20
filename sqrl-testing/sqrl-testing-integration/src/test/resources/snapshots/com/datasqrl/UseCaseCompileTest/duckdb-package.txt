@@ -1,3 +1,54 @@
+>>>inferred_schema.graphqls
+"An RFC-3339 compliant Full Date Scalar"
+scalar Date
+
+"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats"
+scalar DateTime
+
+"A JSON scalar"
+scalar JSON
+
+"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`."
+scalar LocalTime
+
+"A 64-bit signed integer"
+scalar Long
+
+type MyTable1 {
+  id: Long!
+  hello: String!
+}
+
+type MyTable2 {
+  id: Long!
+  hello: String!
+}
+
+type MyTable3 {
+  id: Long!
+  hello: String!
+}
+
+type Query {
+  MyTable1(limit: Int = 10, offset: Int = 0): [MyTable1!]
+  MyTable2(limit: Int = 10, offset: Int = 0): [MyTable2!]
+  MyTable3(limit: Int = 10, offset: Int = 0): [MyTable3!]
+}
+
+enum _McpMethodType {
+  NONE
+  TOOL
+  RESOURCE
+}
+
+enum _RestMethodType {
+  NONE
+  GET
+  POST
+}
+
+directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION
+
 >>>pipeline_explain.txt
 === MyTable1
 ID:          default_catalog.default_database.MyTable1

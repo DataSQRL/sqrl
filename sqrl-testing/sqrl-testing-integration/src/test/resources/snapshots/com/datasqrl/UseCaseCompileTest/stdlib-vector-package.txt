@@ -1,3 +1,60 @@
+>>>inferred_schema.graphqls
+type CategoryCentroids {
+  category_id: Int!
+  center_vector: [Float]
+}
+
+"An RFC-3339 compliant Full Date Scalar"
+scalar Date
+
+"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats"
+scalar DateTime
+
+type DocumentSimilarity {
+  doc_id: Int!
+  score: Float
+}
+
+type DocumentSimilarityIndex {
+  doc_id: Int!
+  category_id: Int!
+}
+
+"A JSON scalar"
+scalar JSON
+
+"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`."
+scalar LocalTime
+
+"A 64-bit signed integer"
+scalar Long
+
+type Query {
+  CategoryCentroids(category_id: Int!, limit: Int = 10, offset: Int = 0): [CategoryCentroids!]
+  VectorData(limit: Int = 10, offset: Int = 0): [VectorData!]
+  DocumentSimilarity(doc_id: Int!, limit: Int = 10, offset: Int = 0): [DocumentSimilarity!]
+  DocumentSimilarityIndex(doc_id: Int!, limit: Int = 10, offset: Int = 0): [DocumentSimilarityIndex!]
+}
+
+type VectorData {
+  doc_id: Int!
+  category_id: Int!
+}
+
+enum _McpMethodType {
+  NONE
+  TOOL
+  RESOURCE
+}
+
+enum _RestMethodType {
+  NONE
+  GET
+  POST
+}
+
+directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION
+
 >>>pipeline_explain.txt
 === CategoryCentroids
 ID:          default_catalog.default_database.CategoryCentroids

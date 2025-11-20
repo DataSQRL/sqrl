@@ -1,3 +1,47 @@
+>>>inferred_schema.graphqls
+type Customers {
+  customerid: Long!
+  email: String!
+  name: String!
+  lastUpdated: Long!
+  timestamp: DateTime!
+}
+
+"An RFC-3339 compliant Full Date Scalar"
+scalar Date
+
+"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats"
+scalar DateTime
+
+"A JSON scalar"
+scalar JSON
+
+"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`."
+scalar LocalTime
+
+"A 64-bit signed integer"
+scalar Long
+
+type Query {
+  Customers(limit: Int = 10, offset: Int = 0): [Customers!]
+  CustomersById(a: Long!, b: Long!, limit: Int = 10, offset: Int = 0): [Customers!]
+  CustomersByName(inputName: String!, limit: Int = 10, offset: Int = 0): [Customers!]
+}
+
+enum _McpMethodType {
+  NONE
+  TOOL
+  RESOURCE
+}
+
+enum _RestMethodType {
+  NONE
+  GET
+  POST
+}
+
+directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION
+
 >>>pipeline_explain.txt
 === Customers
 ID:          default_catalog.default_database.Customers

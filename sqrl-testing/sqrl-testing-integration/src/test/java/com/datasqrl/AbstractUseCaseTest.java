@@ -27,9 +27,6 @@ import javax.annotation.Nullable;
 
 public class AbstractUseCaseTest extends AbstractAssetSnapshotTest {
 
-  // We only snapshot the GraphQL schema if it is not provided
-  private boolean hasGraphQL = false;
-
   protected AbstractUseCaseTest() {
     super(null);
   }
@@ -74,25 +71,25 @@ public class AbstractUseCaseTest extends AbstractAssetSnapshotTest {
   @Override
   public Predicate<Path> getBuildDirFilter() {
     return file ->
-        file.getFileName().toString().equalsIgnoreCase("pipeline_explain.txt")
-            || (!hasGraphQL && file.getFileName().toString().endsWith(".graphqls"));
+        file.getFileName().toString().equals("pipeline_explain.txt")
+            || file.getFileName().toString().equals("inferred_schema.graphqls");
   }
 
   @Override
   public Predicate<Path> getPlanDirFilter() {
     return path -> {
-      if (path.getFileName().toString().equals("flink-sql-no-functions.sql")) {
+      var fileName = path.getFileName().toString();
+      if (fileName.equals("flink-sql-no-functions.sql")) {
         return true;
       }
-      if (path.getFileName().toString().contains("flink")) {
+
+      if (fileName.contains("flink")) {
         return false;
       }
-      if (path.getFileName().toString().contains("schema")
-          || path.getFileName().toString().contains("views")
-          || List.of("kafka.json", "vertx.json").contains(path.getFileName().toString())) {
-        return true;
-      }
-      return false;
+
+      return fileName.contains("schema")
+          || fileName.contains("views")
+          || List.of("kafka.json", "vertx.json").contains(fileName);
     };
   }
 }

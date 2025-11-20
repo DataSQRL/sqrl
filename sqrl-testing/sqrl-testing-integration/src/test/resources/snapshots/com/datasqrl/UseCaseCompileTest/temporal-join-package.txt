@@ -1,3 +1,85 @@
+>>>inferred_schema.graphqls
+"An RFC-3339 compliant Full Date Scalar"
+scalar Date
+
+"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats"
+scalar DateTime
+
+type EnrichedSensorReading {
+  sensorid: Int!
+  temperature: Float!
+  event_time: DateTime!
+  sensor_name: String
+}
+
+"A JSON scalar"
+scalar JSON
+
+"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`."
+scalar LocalTime
+
+"A 64-bit signed integer"
+scalar Long
+
+type Mutation {
+  SensorReading(event: SensorReadingInput!): SensorReadingResultOutput!
+  SensorUpdates(event: SensorUpdatesInput!): SensorUpdatesResultOutput!
+}
+
+type Query {
+  EnrichedSensorReading(limit: Int = 10, offset: Int = 0): [EnrichedSensorReading!]
+  SensorReading(limit: Int = 10, offset: Int = 0): [SensorReading!]
+  SensorUpdates(limit: Int = 10, offset: Int = 0): [SensorUpdates!]
+}
+
+type SensorReading {
+  sensorid: Int!
+  temperature: Float!
+  event_time: DateTime!
+}
+
+input SensorReadingInput {
+  sensorid: Int!
+  temperature: Float!
+}
+
+type SensorReadingResultOutput {
+  sensorid: Int!
+  temperature: Float!
+  event_time: DateTime!
+}
+
+type SensorUpdates {
+  sensorid: Int!
+  sensor_name: String!
+  lastUpdated: DateTime!
+}
+
+input SensorUpdatesInput {
+  sensorid: Int!
+  sensor_name: String!
+}
+
+type SensorUpdatesResultOutput {
+  sensorid: Int!
+  sensor_name: String!
+  lastUpdated: DateTime!
+}
+
+enum _McpMethodType {
+  NONE
+  TOOL
+  RESOURCE
+}
+
+enum _RestMethodType {
+  NONE
+  GET
+  POST
+}
+
+directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION
+
 >>>pipeline_explain.txt
 === EnrichedSensorReading
 ID:          default_catalog.default_database.EnrichedSensorReading

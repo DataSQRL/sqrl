@@ -47,7 +47,7 @@ public class UseCaseCompileTest extends AbstractUseCaseTest {
   @Disabled("Intended for manual usage")
   @Test
   void runTestCaseByName() {
-    var pkg = USECASE_DIR.resolve("banking").resolve("package.json");
+    var pkg = USECASE_DIR.resolve("conference").resolve("package.json");
     super.testUseCase(pkg);
   }
 

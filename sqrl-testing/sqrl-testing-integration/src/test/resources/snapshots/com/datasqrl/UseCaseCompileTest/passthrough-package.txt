@@ -1,3 +1,52 @@
+>>>inferred_schema.graphqls
+"An RFC-3339 compliant Full Date Scalar"
+scalar Date
+
+"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats"
+scalar DateTime
+
+type Employees {
+  employeeid: Long!
+  name: String!
+  email: String!
+  updatedDate: DateTime!
+  allReports(limit: Int = 10, offset: Int = 0): [Employees_allReports!]
+  directReports(limit: Int = 10, offset: Int = 0): [Employees!]
+}
+
+type Employees_allReports {
+  employeeid: Long!
+  name: String!
+  level: Int!
+}
+
+"A JSON scalar"
+scalar JSON
+
+"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`."
+scalar LocalTime
+
+"A 64-bit signed integer"
+scalar Long
+
+type Query {
+  Employees(employeeid: Long, name: String, limit: Int = 10, offset: Int = 0): [Employees!]
+}
+
+enum _McpMethodType {
+  NONE
+  TOOL
+  RESOURCE
+}
+
+enum _RestMethodType {
+  NONE
+  GET
+  POST
+}
+
+directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION
+
 >>>pipeline_explain.txt
 === Employees
 ID:          default_catalog.default_database.Employees

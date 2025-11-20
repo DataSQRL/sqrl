@@ -15,8 +15,10 @@
  */
 package com.datasqrl;
 
+import com.datasqrl.compile.DagWriter;
 import com.datasqrl.util.ArgumentsProviders;
 import java.nio.file.Path;
+import java.util.function.Predicate;
 import lombok.SneakyThrows;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
@@ -36,6 +38,14 @@ public class GraphQLValidationTest extends AbstractUseCaseTest {
     writeTempPackage(graphQLSchema, "__GRAPHQL_SCHEMA__");
 
     super.testUseCase(tempPackage, getDisplayName(graphQLSchema));
+  }
+
+  @Override
+  public Predicate<Path> getBuildDirFilter() {
+    return file -> {
+      var fileName = file.getFileName().toString();
+      return fileName.equals(DagWriter.EXPLAIN_TEXT_FILENAME) || fileName.endsWith(".graphqls");
+    };
   }
 
   static class GraphQLSchemas extends ArgumentsProviders.GraphQLSchemaProvider {

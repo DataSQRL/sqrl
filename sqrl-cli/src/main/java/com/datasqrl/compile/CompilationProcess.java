@@ -70,8 +70,7 @@ public class CompilationProcess {
     var dagBuilder = planner.getDagBuilder();
     var dag = dagPlanner.optimize(dagBuilder.getDag());
     var physicalPlan = dagPlanner.assemble(dag, environment);
-    List<PhysicalPlanRewriter> rewriters =
-        ServiceLoaderDiscovery.getAll(PhysicalPlanRewriter.class);
+    var rewriters = ServiceLoaderDiscovery.getAll(PhysicalPlanRewriter.class);
     physicalPlan = physicalPlan.applyRewriting(rewriters, environment);
 
     writeDeploymentArtifactsHook.run(dag, planner.getCompleteScript().toString());
@@ -95,6 +94,9 @@ public class CompilationProcess {
         var inferredSchema = inferGraphqlSchema.inferGraphQLSchema(serverPlan);
         apiByVersion =
             Map.of(GraphqlSourceLoader.DEFAULT_API_VERSION, new ApiSources(inferredSchema));
+
+        // Write out the inferred API schema to the build dir
+        writeDeploymentArtifactsHook.writeInferredSchema(inferredSchema);
       } else {
         // TODO: ferenc: also pass API version to give better validation error msg
         apiByVersion

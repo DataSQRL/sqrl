@@ -112,56 +112,6 @@ Schema:
 Inputs:
  - default_catalog.default_database._UserInfo__base
 
->>>schema.graphqls
-"An RFC-3339 compliant DateTime Scalar"
-scalar DateTime
-
-"A 64-bit signed integer"
-scalar Long
-
-type Mutation {
-  UserTokens(event: UserTokensInput!): UserTokensResultOutput!
-}
-
-type Query {
-  TotalOrgTokens(limit: Int = 10, offset: Int = 0): [TotalOrgTokens!]
-  TotalUserTokens(userid: Long!, limit: Int = 10, offset: Int = 0): [TotalUserTokens!]
-  TotalOrgTokensByRange(minTokens: Long!, maxTokens: Long!, limit: Int = 10, offset: Int = 0): [TotalOrgTokens!]
-}
-
-type Subscription {
-  UsageAlert: UserTokens
-}
-
-type TotalOrgTokens {
-  orgid: Long!
-  total_tokens: Long!
-  total_requests: Long!
-}
-
-type TotalUserTokens {
-  userid: Long!
-  total_tokens: Long!
-  total_requests: Long!
-}
-
-type UserTokens {
-  userid: Long!
-  tokens: Long!
-  request_time: DateTime!
-}
-
-input UserTokensInput {
-  userid: Long!
-  tokens: Long!
-}
-
-type UserTokensResultOutput {
-  userid: Long!
-  tokens: Long!
-  request_time: DateTime!
-}
-
 >>>flink-sql-no-functions.sql
 CREATE TABLE `UserTokens` (
   `userid` BIGINT NOT NULL,
