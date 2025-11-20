@@ -63,7 +63,6 @@ import graphql.schema.idl.RuntimeWiring;
 import graphql.schema.idl.SchemaGenerator;
 import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.SchemaPrinter;
-import graphql.schema.idl.TypeDefinitionRegistry;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -630,8 +629,8 @@ public class GraphQLSchemaConverter {
   }
 
   public GraphQLSchema getSchema(String schemaString) {
-    TypeDefinitionRegistry typeRegistry = new SchemaParser().parse(schemaString);
-    RuntimeWiring.Builder runtimeWiringBuilder = RuntimeWiring.newRuntimeWiring();
+    var typeRegistry = new SchemaParser().parse(schemaString);
+    var runtimeWiringBuilder = RuntimeWiring.newRuntimeWiring().strictMode(false);
     CustomScalars.getExtendedScalars().forEach(runtimeWiringBuilder::scalar);
 
     return new SchemaGenerator().makeExecutableSchema(typeRegistry, runtimeWiringBuilder.build());

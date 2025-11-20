@@ -13,26 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.graphql;
+package com.datasqrl.graphql.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.when;
 
-import graphql.schema.DataFetcher;
-import graphql.schema.DataFetchingEnvironment;
 import io.vertx.core.json.JsonObject;
-import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 
-class VertxContextTest {
+class CaseInsensitiveJsonDataFetcherTest {
+
+  private final CaseInsensitiveJsonDataFetcher fetcher =
+      new CaseInsensitiveJsonDataFetcher("testkey");
 
   @Test
   void caseInsensitivePropertyFetcherNonNullValue() {
     var jsonObject = new JsonObject();
     jsonObject.put("TestKey", "TestValue");
-    var result = testValue(jsonObject);
-    assertThat(result).isEqualTo("TestValue");
+
+    assertThat(fetcher.fetchJsonObject(jsonObject)).isEqualTo("TestValue");
   }
 
   @Test
@@ -41,8 +39,7 @@ class VertxContextTest {
     var jsonObject = new JsonObject();
     jsonObject.put("TestKey", null);
 
-    var result = testValue(jsonObject);
-    assertThat(result).isNull();
+    assertThat(fetcher.fetchJsonObject(jsonObject)).isNull();
   }
 
   @Test
@@ -51,20 +48,6 @@ class VertxContextTest {
     var jsonObject = new JsonObject();
     jsonObject.put("AnotherKey", "SomeValue");
 
-    var result = testValue(jsonObject);
-    assertThat(result).isNull();
-  }
-
-  @SneakyThrows
-  Object testValue(JsonObject jsonObject) {
-    // Mocking DataFetchingEnvironment
-    DataFetchingEnvironment env = Mockito.mock(DataFetchingEnvironment.class);
-
-    when(env.getSource()).thenReturn(jsonObject);
-
-    DataFetcher<Object> fetcher =
-        VertxContext.VertxCreateCaseInsensitivePropertyDataFetcher.createCaseInsensitive("testkey");
-
-    return fetcher.get(env);
+    assertThat(fetcher.fetchJsonObject(jsonObject)).isNull();
   }
 }
