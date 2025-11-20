@@ -21,6 +21,8 @@ public interface ErrorMessage {
 
   String getMessage();
 
+  String getMessagePrefix();
+
   Severity getSeverity();
 
   ErrorLocation getLocation();
@@ -41,10 +43,16 @@ public interface ErrorMessage {
 
   default String toStringNoSeverity() {
     var loc = getLocation().toString();
-    if (loc != null && !loc.trim().isEmpty()) {
+    if (!loc.trim().isEmpty()) {
       loc += ": ";
     }
-    return loc + getMessage();
+
+    var prefix = getMessagePrefix();
+    if (!prefix.trim().isEmpty()) {
+      prefix += ": ";
+    }
+
+    return loc + prefix + getMessage();
   }
 
   default RuntimeException asException() {
@@ -61,17 +69,28 @@ public interface ErrorMessage {
   class Implementation implements ErrorMessage {
 
     private final ErrorLabel errorLabel;
+    private final String messagePrefix;
     private final String message;
     private final ErrorLocation location;
     private final Severity severity;
 
     public Implementation(String message, ErrorLocation location, Severity severity) {
-      this(ErrorLabel.GENERIC, message, location, severity);
+      this(ErrorLabel.GENERIC, null, message, location, severity);
     }
 
     public Implementation(
         ErrorLabel errorLabel, String message, ErrorLocation location, Severity severity) {
+      this(errorLabel, null, message, location, severity);
+    }
+
+    public Implementation(
+        ErrorLabel errorLabel,
+        String messagePrefix,
+        String message,
+        ErrorLocation location,
+        Severity severity) {
       this.errorLabel = errorLabel;
+      this.messagePrefix = messagePrefix == null ? "" : messagePrefix;
       this.message = message == null ? "" : message;
       this.location = location;
       this.severity = severity;

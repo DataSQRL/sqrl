@@ -115,17 +115,24 @@
         "api": {
           "type": "object",
           "minProperties": 1,
-          "properties": {
-            "schema": {
-              "type": "string"
-            },
-            "operations": {
-              "type": "array",
-              "items": { "type": "string" }
+          "patternProperties": {
+            "^v[0-9]+$": {
+              "type": "object",
+              "minProperties": 1,
+              "properties": {
+                "schema": {
+                  "type": "string"
+                },
+                "operations": {
+                  "type": "array",
+                  "items": { "type": "string" }
+                }
+              },
+              "additionalProperties": false,
+              "required": ["schema"]
             }
           },
-          "additionalProperties": false,
-          "required": ["schema"]
+          "additionalProperties": false
         },
         "config":{
           "type": "object",

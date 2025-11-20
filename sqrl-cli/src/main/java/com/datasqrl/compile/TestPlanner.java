@@ -18,7 +18,7 @@ package com.datasqrl.compile;
 import com.datasqrl.compile.TestPlan.GraphqlQuery;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.engine.database.relational.JdbcStatement;
-import com.datasqrl.graphql.ApiSource;
+import com.datasqrl.graphql.ApiSources;
 import com.datasqrl.util.FileUtil;
 import graphql.language.AstPrinter;
 import graphql.language.Definition;
@@ -47,8 +47,7 @@ public class TestPlanner {
   private final GqlGenerator gqlGenerator;
   private final List<JdbcStatement> jdbcViews;
 
-  public TestPlan generateTestPlan(
-      Map<String, ApiSource> apiSchemaByVersion, Optional<Path> testsPath) {
+  public TestPlan generateTestPlan(List<ApiSources> apiVersions, Optional<Path> testsPath) {
 
     var parser = new Parser();
     var queries = new ArrayList<GraphqlQuery>();
@@ -58,10 +57,7 @@ public class TestPlanner {
     // Get base headers from PackageJson
     var baseHeaders = packageJson.getTestConfig().getHeaders();
 
-    for (var entry : apiSchemaByVersion.entrySet()) {
-      var version = entry.getKey();
-      var schemaSource = entry.getValue();
-
+    for (var api : apiVersions) {
       // TODO: ferenc: Create a way to test specific graphql files against specific versions
       testsPath.ifPresent(
           p -> {
@@ -85,7 +81,7 @@ public class TestPlanner {
                             queries,
                             mutations,
                             subscriptions,
-                            version,
+                            api.version(),
                             prefix,
                             loadHeaders(file.getParent(), prefix, baseHeaders));
                       });
@@ -94,13 +90,16 @@ public class TestPlanner {
             }
           });
 
-      var document = parser.parseDocument(schemaSource.getDefinition());
+      var document = parser.parseDocument(api.schema().getDefinition());
       var queryNodes = gqlGenerator.visitDocument(document, null);
       for (Node<?> definition : queryNodes) {
         var definition1 = (OperationDefinition) definition;
         queries.add(
             new GraphqlQuery(
-                version, definition1.getName(), AstPrinter.printAst(definition1), baseHeaders));
+                api.version(),
+                definition1.getName(),
+                AstPrinter.printAst(definition1),
+                baseHeaders));
       }
     }
 

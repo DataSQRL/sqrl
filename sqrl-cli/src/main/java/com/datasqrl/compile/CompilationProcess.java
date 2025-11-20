@@ -17,7 +17,6 @@ package com.datasqrl.compile;
 
 import com.datasqrl.config.BuildPath;
 import com.datasqrl.config.GraphqlSourceLoader;
-import com.datasqrl.config.GraphqlSourceLoader.ApiSources;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.database.relational.JdbcPhysicalPlan;
@@ -26,6 +25,7 @@ import com.datasqrl.engine.server.ServerPhysicalPlan;
 import com.datasqrl.engine.stream.flink.FlinkStreamEngine;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.graphql.ApiSources;
 import com.datasqrl.graphql.GenerateServerModel;
 import com.datasqrl.graphql.InferGraphqlSchema;
 import com.datasqrl.plan.MainScript;
@@ -38,9 +38,7 @@ import com.datasqrl.util.ServiceLoaderDiscovery;
 import com.google.inject.Inject;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -87,29 +85,24 @@ public class CompilationProcess {
           serverPlan.getFunctions().size(),
           serverPlan.getMutations().size());
 
-      var apiByVersion = graphqlSourceLoader.getApiByVersion();
-      if (apiByVersion.isEmpty()
+      var apiVersions = graphqlSourceLoader.getApiVersions();
+      if (apiVersions.isEmpty()
           || executionGoal == ExecutionGoal.TEST) { // Infer schema from functions
 
         var inferredSchema = inferGraphqlSchema.inferGraphQLSchema(serverPlan);
-        apiByVersion =
-            Map.of(GraphqlSourceLoader.DEFAULT_API_VERSION, new ApiSources(inferredSchema));
+        apiVersions = List.of(new ApiSources(inferredSchema));
 
         // Write out the inferred API schema to the build dir
         writeDeploymentArtifactsHook.writeInferredSchema(inferredSchema);
       } else {
-        // TODO: ferenc: also pass API version to give better validation error msg
-        apiByVersion
-            .values()
-            .forEach(src -> inferGraphqlSchema.validateSchema(src.schema(), serverPlan));
+        apiVersions.forEach(
+            apiVersion -> inferGraphqlSchema.validateSchema(apiVersion, serverPlan));
       }
 
-      apiByVersion.forEach(
-          (version, apiSources) -> {
-            var model =
-                generateServerModel.generateGraphQLModel(
-                    apiSources.schema(), serverPlan, apiSources.operations());
-            serverPlan.getModels().put(version, model);
+      apiVersions.forEach(
+          api -> {
+            var model = generateServerModel.generateGraphQLModel(api, serverPlan);
+            serverPlan.getModels().put(api.version(), model);
           });
 
       // create test artifact
@@ -123,11 +116,7 @@ public class CompilationProcess {
                 .orElse(List.of());
 
         var testPlanner = new TestPlanner(config, gqlGenerator, jdbcViews);
-        var apiSchemaByVersion =
-            apiByVersion.entrySet().stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().schema()));
-
-        testPlan = testPlanner.generateTestPlan(apiSchemaByVersion, testsPath);
+        testPlan = testPlanner.generateTestPlan(apiVersions, testsPath);
       }
     }
 

@@ -15,7 +15,11 @@
   },
   "script": {
     "main": "loan.sqrl",
-    "graphql": "loan.graphqls",
-    "operations": ["operations/query-applications.graphql"]
+    "api": {
+      "v1": {
+        "schema": "loan.graphqls",
+        "operations": ["operations/query-applications.graphql"]
+      }
+    }
   }
 }
