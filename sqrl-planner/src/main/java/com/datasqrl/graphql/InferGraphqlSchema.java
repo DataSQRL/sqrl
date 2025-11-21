@@ -45,13 +45,13 @@ public class InferGraphqlSchema {
     return new SchemaPrinter(opts).print(gqlSchema);
   }
 
-  // Validates the schema
-  public void validateSchema(ApiSource apiSource, ServerPhysicalPlan serverPlan) {
+  public void validateSchema(ApiSources api, ServerPhysicalPlan serverPlan) {
     var schemaValidator =
         new GraphqlSchemaValidator(
             serverPlan.getFunctions(),
             serverPlan.getMutations(),
-            errorCollector.withScript(apiSource.getPath(), apiSource.getDefinition()));
-    schemaValidator.validate(apiSource);
+            errorCollector.withScript(api.schema().getPath(), api.schema().getDefinition()));
+
+    schemaValidator.validate(api.schema(), api.version());
   }
 }

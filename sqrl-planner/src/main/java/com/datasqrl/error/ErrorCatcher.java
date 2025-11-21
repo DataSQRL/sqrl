@@ -46,15 +46,21 @@ public class ErrorCatcher implements Serializable {
   }
 
   public CollectedException handle(Throwable e) {
+    return handle(e, null);
+  }
+
+  public CollectedException handle(Throwable e, String messagePrefix) {
     if (e instanceof CollectedException exception) {
       return exception; // has already been handled
     }
     Optional<ErrorHandler> handler = Optional.ofNullable(handlers.get(e.getClass()));
     ErrorMessage msg;
     if (handler.isPresent()) {
-      msg = handler.get().handle((Exception) e, baseLocation);
+      msg = handler.get().handle((Exception) e, baseLocation, messagePrefix);
     } else {
-      msg = new Implementation(ErrorLabel.GENERIC, e.getMessage(), baseLocation, Severity.FATAL);
+      msg =
+          new Implementation(
+              ErrorLabel.GENERIC, messagePrefix, e.getMessage(), baseLocation, Severity.FATAL);
     }
     errors.addInternal(msg);
     return new CollectedException(e);

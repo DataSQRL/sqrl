@@ -15,10 +15,13 @@
  */
 package com.datasqrl.config;
 
-import com.datasqrl.config.PackageJson.ScriptApiConfig;
+import static com.datasqrl.graphql.ApiSources.DEFAULT_API_VERSION;
+
 import com.datasqrl.graphql.ApiSource;
+import com.datasqrl.graphql.ApiSources;
 import com.datasqrl.graphql.ScriptFiles;
 import com.datasqrl.loaders.resolver.ResourceResolver;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import java.nio.file.Files;
@@ -31,42 +34,52 @@ import lombok.Value;
 @Value
 public class GraphqlSourceLoader {
 
-  public static final String DEFAULT_API_VERSION = "v1";
-
   Map<String, ApiSources> apiByVersion;
+  List<ApiSources> apiVersions;
 
   @Inject
   public GraphqlSourceLoader(ScriptFiles scriptFiles, ResourceResolver resolver) {
     if (!scriptFiles.getApiConfigs().isEmpty()) {
 
+      var apis = ImmutableList.<ApiSources>builder();
       var builder = ImmutableMap.<String, ApiSources>builder();
-      for (ScriptApiConfig apiConf : scriptFiles.getApiConfigs()) {
-        var sources = createApiSources(apiConf.getSchema(), apiConf.getOperations(), resolver);
+      for (var apiConf : scriptFiles.getApiConfigs()) {
+        var sources =
+            createApiSources(
+                apiConf.getVersion(), apiConf.getSchema(), apiConf.getOperations(), resolver);
         builder.put(apiConf.getVersion(), sources);
+        apis.add(sources);
       }
 
+      apiVersions = apis.build();
       apiByVersion = builder.build();
       return;
     }
 
     if (scriptFiles.getGraphql().isEmpty()) {
+      apiVersions = List.of();
       apiByVersion = Map.of();
       return;
     }
 
     var sources =
-        createApiSources(scriptFiles.getGraphql().get(), scriptFiles.getOperations(), resolver);
+        createApiSources(
+            DEFAULT_API_VERSION,
+            scriptFiles.getGraphql().get(),
+            scriptFiles.getOperations(),
+            resolver);
 
+    apiVersions = List.of(sources);
     apiByVersion = Map.of(DEFAULT_API_VERSION, sources);
   }
 
   private static ApiSources createApiSources(
-      String schema, List<String> operations, ResourceResolver resolver) {
+      String version, String schema, List<String> operations, ResourceResolver resolver) {
 
     var schemaSrc = resolvePath(schema, resolver);
     var opSrc = operations.stream().map(file -> resolvePath(file, resolver)).toList();
 
-    return new ApiSources(schemaSrc, opSrc);
+    return new ApiSources(version, schemaSrc, opSrc);
   }
 
   @SneakyThrows
@@ -78,12 +91,5 @@ public class GraphqlSourceLoader {
             .orElseThrow(() -> new IllegalArgumentException("Failed to find file: " + file));
 
     return new ApiSource(relativePath, Files.readString(absolutePath));
-  }
-
-  public record ApiSources(ApiSource schema, List<ApiSource> operations) {
-
-    public ApiSources(String inferredSchema) {
-      this(new ApiSource(inferredSchema), List.of());
-    }
   }
 }

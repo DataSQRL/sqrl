@@ -24,7 +24,8 @@ import com.google.auto.service.AutoService;
 public class StatementParserExceptionHandler implements ErrorHandler<StatementParserException> {
 
   @Override
-  public ErrorMessage handle(StatementParserException e, ErrorLocation baseLocation) {
+  public ErrorMessage handle(
+      StatementParserException e, ErrorLocation baseLocation, String messagePrefix) {
     return new ErrorMessage.Implementation(
         e.errorLabel,
         e.getMessage(),
@@ -35,7 +36,12 @@ public class StatementParserExceptionHandler implements ErrorHandler<StatementPa
   }
 
   @Override
-  public Class getHandleClass() {
+  public ErrorMessage handle(StatementParserException e, ErrorLocation baseLocation) {
+    return handle(e, baseLocation, null);
+  }
+
+  @Override
+  public Class<StatementParserException> getHandleClass() {
     return StatementParserException.class;
   }
 }

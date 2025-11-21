@@ -176,6 +176,10 @@ public class ErrorCollector implements Iterable<ErrorMessage>, Serializable {
     return getCatcher().handle(e);
   }
 
+  public RuntimeException handle(Throwable e, String messagePrefix) {
+    return getCatcher().handle(e, messagePrefix);
+  }
+
   /*
   ==== Factory methods for creating errors ====
    */
