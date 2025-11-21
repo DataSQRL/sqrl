@@ -127,8 +127,8 @@
     <feign.version>13.6</feign.version>
     <freemarker.version>2.3.34</freemarker.version>
     <glassfish.version>3.0.0</glassfish.version>
-    <graphql-java-extended-scalars.version>22.0</graphql-java-extended-scalars.version>
-    <graphql-java.version>19.2</graphql-java.version>
+    <graphql-java-extended-scalars.version>24.0</graphql-java-extended-scalars.version>
+    <graphql-java.version>25.0</graphql-java.version>
     <graphql-micrometer.version>1.0.1</graphql-micrometer.version>
     <guava.version>33.5.0-jre</guava.version>
     <guice-multibindings.version>4.2.3</guice-multibindings.version>
@@ -159,7 +159,6 @@
     <postgres.version>42.7.8</postgres.version>
     <projectreactor.version>3.7.12</projectreactor.version>
     <protobuf.version>4.33.0</protobuf.version>
-    <reactive-streams.version>1.0.4</reactive-streams.version>
     <reflections.version>0.10.2</reflections.version>
     <scala.version>2.12</scala.version>
     <scram.version>2.1</scram.version>
@@ -354,11 +353,6 @@
         <groupId>io.agroal</groupId>
         <artifactId>agroal-pool</artifactId>
         <version>${agroal.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.reactivestreams</groupId>
-        <artifactId>reactive-streams</artifactId>
-        <version>${reactive-streams.version}</version>
       </dependency>
 
       <!-- validation -->
