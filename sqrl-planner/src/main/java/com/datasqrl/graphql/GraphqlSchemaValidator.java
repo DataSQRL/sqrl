@@ -464,7 +464,7 @@ public class GraphqlSchemaValidator extends GraphqlSchemaWalker {
     return type;
   }
 
-  public void validate(ApiSource source) {
+  public void validate(ApiSource source, String version) {
     try {
       var registry = (new SchemaParser()).parse(source.getDefinition());
       var queryType = getType(registry, () -> getQueryTypeName(registry));
@@ -473,7 +473,7 @@ public class GraphqlSchemaValidator extends GraphqlSchemaWalker {
       }
       walkAPISource(source);
     } catch (Exception e) {
-      throw errorCollector.handle(e);
+      throw errorCollector.handle(e, "API " + version);
     }
   }
 }

@@ -3,8 +3,9 @@
   "script": {
     "main": "asd",
     "api": {
-      "schema": "my-schema",
-      "operations": ["op1", "op2"]
+      "v1": {
+        "schema": "my-schema"
+      }
     }
   }
 }

@@ -16,7 +16,6 @@
 package com.datasqrl.graphql;
 
 import com.datasqrl.config.PackageJson;
-import com.datasqrl.config.PackageJson.CompilerApiConfig;
 import com.datasqrl.engine.server.ServerPhysicalPlan;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.converter.GraphQLSchemaConverter;
@@ -26,7 +25,6 @@ import com.datasqrl.graphql.server.RootGraphqlModel.StringSchema;
 import com.datasqrl.graphql.server.operation.ApiOperation;
 import com.google.inject.Inject;
 import java.util.ArrayList;
-import java.util.List;
 import lombok.AllArgsConstructor;
 
 /** Generates the model for the server */
@@ -40,31 +38,29 @@ public class GenerateServerModel {
   /**
    * Generates the {@link RootGraphqlModel} from the server plan and defined operations
    *
-   * @param graphqlSchema The defined or inferred GraphQL schema
+   * @param api Contains the GraphQL schema and any defined operations
    * @param serverPlan The physical plan for the server with all function definitions
-   * @param operationFiles Any explicitly defined operations (empty if none)
    * @return
    */
-  public RootGraphqlModel generateGraphQLModel(
-      ApiSource graphqlSchema, ServerPhysicalPlan serverPlan, List<ApiSource> operationFiles) {
+  public RootGraphqlModel generateGraphQLModel(ApiSources api, ServerPhysicalPlan serverPlan) {
     var graphqlModelGenerator =
         new GraphqlModelGenerator(
             serverPlan.getFunctions(), serverPlan.getMutations(), errorCollector);
-    graphqlModelGenerator.walkAPISource(graphqlSchema);
-    var schema = StringSchema.builder().schema(graphqlSchema.getDefinition()).build();
+    graphqlModelGenerator.walkAPISource(api.schema());
+    var schema = StringSchema.builder().schema(api.schema().getDefinition()).build();
     var graphSchema = converter.getSchema(schema.getSchema());
-    CompilerApiConfig apiConig = configuration.getCompilerConfig().getApiConfig();
-    GraphQLSchemaConverterConfig converterConfig =
+    var apiConfig = configuration.getCompilerConfig().getApiConfig();
+    var converterConfig =
         GraphQLSchemaConverterConfig.builder()
-            .addPrefix(apiConig.isAddOperationsPrefix())
-            .maxDepth(apiConig.getMaxResultDepth())
-            .protocols(apiConig.getProtocols())
+            .addPrefix(apiConfig.isAddOperationsPrefix())
+            .maxDepth(apiConfig.getMaxResultDepth())
+            .protocols(apiConfig.getProtocols())
             .build();
-    ErrorCollector localErrors =
-        errorCollector.withScript(graphqlSchema.getPath(), graphqlSchema.getDefinition());
-    List<ApiOperation> definedOperations = new ArrayList<>();
+    var localErrors =
+        errorCollector.withScript(api.schema().getPath(), api.schema().getDefinition());
+    var definedOperations = new ArrayList<ApiOperation>();
     // First, convert all explicitly defined operations, preserving the original order
-    for (ApiSource operationFile : operationFiles) {
+    for (var operationFile : api.operations()) {
       localErrors =
           errorCollector.withScript(operationFile.getPath(), operationFile.getDefinition());
       try {
@@ -76,7 +72,7 @@ public class GenerateServerModel {
       }
     }
     // Second, we add the automatically generated operations
-    if (apiConig.generateOperations()) {
+    if (apiConfig.generateOperations()) {
       try {
         definedOperations.addAll(converter.convertSchema(converterConfig, graphSchema));
       } catch (Throwable e) {
@@ -84,7 +80,7 @@ public class GenerateServerModel {
       }
     }
     // Third, distincting preserves only the first operation by id
-    List<ApiOperation> dedupedOperations = definedOperations.stream().distinct().toList();
+    var dedupedOperations = definedOperations.stream().distinct().toList();
     return RootGraphqlModel.builder()
         .queries(graphqlModelGenerator.getQueryCoords())
         .mutations(graphqlModelGenerator.getMutations())

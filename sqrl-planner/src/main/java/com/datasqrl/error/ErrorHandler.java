@@ -19,7 +19,11 @@ import java.io.Serializable;
 
 public interface ErrorHandler<E extends Exception> extends Serializable {
 
+  default ErrorMessage handle(E e, ErrorLocation baseLocation, String messagePrefix) {
+    return handle(e, baseLocation);
+  }
+
   ErrorMessage handle(E e, ErrorLocation baseLocation);
 
-  Class getHandleClass();
+  Class<E> getHandleClass();
 }

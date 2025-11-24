@@ -43,7 +43,7 @@ public class SqlParserExceptionHandler implements ErrorHandler<SqlParserExceptio
   }
 
   @Override
-  public Class getHandleClass() {
+  public Class<SqlParserException> getHandleClass() {
     return SqlParserException.class;
   }
 }

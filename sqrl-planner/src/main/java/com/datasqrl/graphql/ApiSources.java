@@ -13,20 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.error;
+package com.datasqrl.graphql;
 
-import java.io.IOException;
+import java.util.List;
 
-public class IOExceptionHandler implements ErrorHandler<IOException> {
+public record ApiSources(String version, ApiSource schema, List<ApiSource> operations) {
 
-  @Override
-  public ErrorMessage handle(IOException e, ErrorLocation baseLocation) {
-    return new ErrorMessage.Implementation(
-        ErrorCode.IOEXCEPTION, e.getMessage(), baseLocation, ErrorMessage.Severity.FATAL);
-  }
+  public static final String DEFAULT_API_VERSION = "v1";
 
-  @Override
-  public Class<IOException> getHandleClass() {
-    return IOException.class;
+  public ApiSources(String inferredSchema) {
+    this(DEFAULT_API_VERSION, new ApiSource(inferredSchema), List.of());
   }
 }
