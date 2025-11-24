@@ -1,0 +1,5 @@
+IMPORT common.views.*;
+
+HavingTable := SELECT country, SUM(v) AS s FROM T GROUP BY country HAVING country = 'DE' AND SUM(v) > 100;
+
+EXPORT HavingTable TO logger.l;

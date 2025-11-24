@@ -4,8 +4,8 @@
   "compiler": {
     "logger": "print",
     "compile-flink-plan": true,
-    "disable-predicate-pushdown": false,
     "extended-scalar-types": true,
+    "predicate-pushdown-rules": "DEFAULT",
     "cost-model": "DEFAULT",
     "explain": {
       "sql": false,

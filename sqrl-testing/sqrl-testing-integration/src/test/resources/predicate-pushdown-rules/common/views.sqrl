@@ -1,0 +1,5 @@
+CREATE TEMPORARY VIEW T AS
+SELECT * FROM (VALUES (1, 'DE', 5), (2, 'US', 50), (3, 'DE', 500)) AS V(a, country, v);
+
+CREATE TEMPORARY VIEW U AS
+SELECT * FROM (VALUES (1, 'x'), (2, 'y'), (3, 'z')) AS V(id, tag);

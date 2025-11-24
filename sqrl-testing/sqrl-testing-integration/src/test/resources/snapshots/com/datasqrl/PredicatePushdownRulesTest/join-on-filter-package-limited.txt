@@ -1,0 +1,302 @@
+>>>flink-compiled-plan.json
+{
+  "flinkVersion" : "2.1",
+  "nodes" : [ {
+    "id" : 7,
+    "type" : "stream-exec-values_1",
+    "tuples" : [ [ {
+      "kind" : "LITERAL",
+      "value" : 1,
+      "type" : "INT NOT NULL"
+    }, {
+      "kind" : "LITERAL",
+      "value" : "DE",
+      "type" : "CHAR(2) NOT NULL"
+    }, {
+      "kind" : "LITERAL",
+      "value" : 5,
+      "type" : "INT NOT NULL"
+    } ], [ {
+      "kind" : "LITERAL",
+      "value" : 2,
+      "type" : "INT NOT NULL"
+    }, {
+      "kind" : "LITERAL",
+      "value" : "US",
+      "type" : "CHAR(2) NOT NULL"
+    }, {
+      "kind" : "LITERAL",
+      "value" : 50,
+      "type" : "INT NOT NULL"
+    } ], [ {
+      "kind" : "LITERAL",
+      "value" : 3,
+      "type" : "INT NOT NULL"
+    }, {
+      "kind" : "LITERAL",
+      "value" : "DE",
+      "type" : "CHAR(2) NOT NULL"
+    }, {
+      "kind" : "LITERAL",
+      "value" : 500,
+      "type" : "INT NOT NULL"
+    } ] ],
+    "outputType" : "ROW<`a` INT NOT NULL, `country` CHAR(2) NOT NULL, `v` INT NOT NULL>",
+    "description" : "Values(tuples=[[{ 1, 'DE', 5 }, { 2, 'US', 50 }, { 3, 'DE', 500 }]])"
+  }, {
+    "id" : 8,
+    "type" : "stream-exec-exchange_1",
+    "inputProperties" : [ {
+      "requiredDistribution" : {
+        "type" : "HASH",
+        "keys" : [ 0 ]
+      },
+      "damBehavior" : "PIPELINED",
+      "priority" : 0
+    } ],
+    "outputType" : "ROW<`a` INT NOT NULL, `country` CHAR(2) NOT NULL, `v` INT NOT NULL>",
+    "description" : "Exchange(distribution=[hash[a]])"
+  }, {
+    "id" : 9,
+    "type" : "stream-exec-values_1",
+    "tuples" : [ [ {
+      "kind" : "LITERAL",
+      "value" : 1,
+      "type" : "INT NOT NULL"
+    }, {
+      "kind" : "LITERAL",
+      "value" : "x",
+      "type" : "CHAR(1) NOT NULL"
+    } ], [ {
+      "kind" : "LITERAL",
+      "value" : 2,
+      "type" : "INT NOT NULL"
+    }, {
+      "kind" : "LITERAL",
+      "value" : "y",
+      "type" : "CHAR(1) NOT NULL"
+    } ], [ {
+      "kind" : "LITERAL",
+      "value" : 3,
+      "type" : "INT NOT NULL"
+    }, {
+      "kind" : "LITERAL",
+      "value" : "z",
+      "type" : "CHAR(1) NOT NULL"
+    } ] ],
+    "outputType" : "ROW<`id` INT NOT NULL, `tag` CHAR(1) NOT NULL>",
+    "description" : "Values(tuples=[[{ 1, 'x' }, { 2, 'y' }, { 3, 'z' }]])"
+  }, {
+    "id" : 10,
+    "type" : "stream-exec-exchange_1",
+    "inputProperties" : [ {
+      "requiredDistribution" : {
+        "type" : "HASH",
+        "keys" : [ 0 ]
+      },
+      "damBehavior" : "PIPELINED",
+      "priority" : 0
+    } ],
+    "outputType" : "ROW<`id` INT NOT NULL, `tag` CHAR(1) NOT NULL>",
+    "description" : "Exchange(distribution=[hash[id]])"
+  }, {
+    "id" : 11,
+    "type" : "stream-exec-join_1",
+    "joinSpec" : {
+      "joinType" : "INNER",
+      "leftKeys" : [ 0 ],
+      "rightKeys" : [ 0 ],
+      "filterNulls" : [ true ],
+      "nonEquiCondition" : {
+        "kind" : "CALL",
+        "syntax" : "BINARY",
+        "internalName" : "$AND$1",
+        "operands" : [ {
+          "kind" : "CALL",
+          "syntax" : "BINARY",
+          "internalName" : "$>$1",
+          "operands" : [ {
+            "kind" : "INPUT_REF",
+            "inputIndex" : 2,
+            "type" : "INT NOT NULL"
+          }, {
+            "kind" : "LITERAL",
+            "value" : 100,
+            "type" : "INT NOT NULL"
+          } ],
+          "type" : "BOOLEAN NOT NULL"
+        }, {
+          "kind" : "CALL",
+          "syntax" : "BINARY",
+          "internalName" : "$=$1",
+          "operands" : [ {
+            "kind" : "INPUT_REF",
+            "inputIndex" : 4,
+            "type" : "CHAR(1) NOT NULL"
+          }, {
+            "kind" : "LITERAL",
+            "value" : "y",
+            "type" : "CHAR(1) NOT NULL"
+          } ],
+          "type" : "BOOLEAN NOT NULL"
+        } ],
+        "type" : "BOOLEAN NOT NULL"
+      }
+    },
+    "state" : [ {
+      "index" : 0,
+      "ttl" : "0 ms",
+      "name" : "leftState"
+    }, {
+      "index" : 1,
+      "ttl" : "0 ms",
+      "name" : "rightState"
+    } ],
+    "inputProperties" : [ {
+      "requiredDistribution" : {
+        "type" : "UNKNOWN"
+      },
+      "damBehavior" : "PIPELINED",
+      "priority" : 0
+    }, {
+      "requiredDistribution" : {
+        "type" : "UNKNOWN"
+      },
+      "damBehavior" : "PIPELINED",
+      "priority" : 0
+    } ],
+    "outputType" : "ROW<`a` INT NOT NULL, `country` CHAR(2) NOT NULL, `v` INT NOT NULL, `id` INT NOT NULL, `tag` CHAR(1) NOT NULL>",
+    "description" : "Join(joinType=[InnerJoin], where=[((a = id) AND (v > 100) AND (tag = 'y'))], select=[a, country, v, id, tag], leftInputSpec=[NoUniqueKey], rightInputSpec=[NoUniqueKey])"
+  }, {
+    "id" : 12,
+    "type" : "stream-exec-calc_1",
+    "projection" : [ {
+      "kind" : "INPUT_REF",
+      "inputIndex" : 0,
+      "type" : "INT NOT NULL"
+    }, {
+      "kind" : "INPUT_REF",
+      "inputIndex" : 1,
+      "type" : "CHAR(2) NOT NULL"
+    }, {
+      "kind" : "INPUT_REF",
+      "inputIndex" : 2,
+      "type" : "INT NOT NULL"
+    }, {
+      "kind" : "INPUT_REF",
+      "inputIndex" : 3,
+      "type" : "INT NOT NULL"
+    }, {
+      "kind" : "LITERAL",
+      "value" : "y",
+      "type" : "CHAR(1) NOT NULL"
+    } ],
+    "condition" : null,
+    "inputProperties" : [ {
+      "requiredDistribution" : {
+        "type" : "UNKNOWN"
+      },
+      "damBehavior" : "PIPELINED",
+      "priority" : 0
+    } ],
+    "outputType" : "ROW<`a` INT NOT NULL, `country` CHAR(2) NOT NULL, `v` INT NOT NULL, `id` INT NOT NULL, `tag` CHAR(1) NOT NULL>",
+    "description" : "Calc(select=[a, country, v, id, 'y' AS tag])"
+  }, {
+    "id" : 13,
+    "type" : "stream-exec-sink_1",
+    "configuration" : {
+      "table.exec.sink.keyed-shuffle" : "AUTO",
+      "table.exec.sink.not-null-enforcer" : "ERROR",
+      "table.exec.sink.rowtime-inserter" : "ENABLED",
+      "table.exec.sink.type-length-enforcer" : "IGNORE",
+      "table.exec.sink.upsert-materialize" : "AUTO"
+    },
+    "dynamicTableSink" : {
+      "table" : {
+        "identifier" : "`default_catalog`.`default_database`.`l_1`",
+        "resolvedTable" : {
+          "schema" : {
+            "columns" : [ {
+              "name" : "a",
+              "dataType" : "INT NOT NULL"
+            }, {
+              "name" : "country",
+              "dataType" : "CHAR(2) NOT NULL"
+            }, {
+              "name" : "v",
+              "dataType" : "INT NOT NULL"
+            }, {
+              "name" : "id",
+              "dataType" : "INT NOT NULL"
+            }, {
+              "name" : "tag",
+              "dataType" : "CHAR(1) NOT NULL"
+            } ],
+            "primaryKey" : {
+              "name" : "PK_a",
+              "type" : "PRIMARY_KEY",
+              "columns" : [ "a" ]
+            }
+          },
+          "options" : {
+            "connector" : "print",
+            "print-identifier" : "l"
+          }
+        }
+      }
+    },
+    "inputChangelogMode" : [ "INSERT" ],
+    "inputProperties" : [ {
+      "requiredDistribution" : {
+        "type" : "UNKNOWN"
+      },
+      "damBehavior" : "PIPELINED",
+      "priority" : 0
+    } ],
+    "outputType" : "ROW<`a` INT NOT NULL, `country` CHAR(2) NOT NULL, `v` INT NOT NULL, `id` INT NOT NULL, `tag` CHAR(1) NOT NULL>",
+    "description" : "Sink(table=[default_catalog.default_database.l_1], fields=[a, country, v, id, tag])"
+  } ],
+  "edges" : [ {
+    "source" : 7,
+    "target" : 8,
+    "shuffle" : {
+      "type" : "FORWARD"
+    },
+    "shuffleMode" : "PIPELINED"
+  }, {
+    "source" : 9,
+    "target" : 10,
+    "shuffle" : {
+      "type" : "FORWARD"
+    },
+    "shuffleMode" : "PIPELINED"
+  }, {
+    "source" : 8,
+    "target" : 11,
+    "shuffle" : {
+      "type" : "FORWARD"
+    },
+    "shuffleMode" : "PIPELINED"
+  }, {
+    "source" : 10,
+    "target" : 11,
+    "shuffle" : {
+      "type" : "FORWARD"
+    },
+    "shuffleMode" : "PIPELINED"
+  }, {
+    "source" : 11,
+    "target" : 12,
+    "shuffle" : {
+      "type" : "FORWARD"
+    },
+    "shuffleMode" : "PIPELINED"
+  }, {
+    "source" : 12,
+    "target" : 13,
+    "shuffle" : {
+      "type" : "FORWARD"
+    },
+    "shuffleMode" : "PIPELINED"
+  } ]
+}

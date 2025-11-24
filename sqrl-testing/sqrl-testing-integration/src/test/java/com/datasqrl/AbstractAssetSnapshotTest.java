@@ -22,6 +22,8 @@ import com.datasqrl.cli.DatasqrlCli;
 import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.util.FileUtil;
 import com.datasqrl.util.SnapshotTest.Snapshot;
+import com.datasqrl.util.SqrlObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.base.Strings;
 import java.io.IOException;
 import java.nio.file.FileVisitOption;
@@ -36,6 +38,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.function.Predicate;
+import javax.annotation.Nullable;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
@@ -131,9 +134,15 @@ public abstract class AbstractAssetSnapshotTest {
     snapshot.createOrValidate();
   }
 
-  @SneakyThrows
   protected void writeTempPackage(Path script, String templateToReplace) {
-    var templatePkg = script.getParent().resolve("package.json");
+    writeTempPackage(script, null, templateToReplace);
+  }
+
+  @SneakyThrows
+  protected void writeTempPackage(
+      Path script, @Nullable String packageName, String templateToReplace) {
+    var pkgName = packageName != null ? packageName : "package.json";
+    var templatePkg = script.getParent().resolve(pkgName);
     assertThat(templatePkg).isRegularFile();
 
     var content = Files.readString(templatePkg);
@@ -182,7 +191,18 @@ public abstract class AbstractAssetSnapshotTest {
     Collections.sort(paths); // Create deterministic order
     for (Path file : paths) {
       try {
-        snapshot.addContent(Files.readString(file), file.getFileName().toString());
+        var fileName = file.getFileName().toString();
+        String fileContent;
+        if (fileName.toLowerCase().endsWith(".json")) {
+          var testMapper = SqrlObjectMapper.INSTANCE.copy();
+          testMapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
+          var jsonNode = testMapper.readTree(file.toFile());
+
+          fileContent = testMapper.writeValueAsString(jsonNode);
+        } else {
+          fileContent = Files.readString(file);
+        }
+        snapshot.addContent(fileContent, fileName);
       } catch (IOException e) {
         e.printStackTrace();
       }
@@ -222,12 +242,16 @@ public abstract class AbstractAssetSnapshotTest {
     if (path == null) {
       return "";
     }
-    var filename = path.getFileName().toString();
-    var length = filename.indexOf('.');
+
+    return getDisplayName(path.getFileName().toString());
+  }
+
+  public static String getDisplayName(String fileName) {
+    var length = fileName.indexOf('.');
     if (length < 0) {
-      length = filename.length();
+      length = fileName.length();
     }
-    return filename.substring(0, length);
+    return fileName.substring(0, length);
   }
 
   public static Path getResourcesDirectory(String subdir) {

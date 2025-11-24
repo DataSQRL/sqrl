@@ -1,0 +1,267 @@
+>>>flink-compiled-plan.json
+{
+  "flinkVersion" : "2.1",
+  "nodes" : [ {
+    "id" : 1,
+    "type" : "stream-exec-values_1",
+    "tuples" : [ [ {
+      "kind" : "LITERAL",
+      "value" : 1,
+      "type" : "INT NOT NULL"
+    }, {
+      "kind" : "LITERAL",
+      "value" : "DE",
+      "type" : "CHAR(2) NOT NULL"
+    }, {
+      "kind" : "LITERAL",
+      "value" : 5,
+      "type" : "INT NOT NULL"
+    } ], [ {
+      "kind" : "LITERAL",
+      "value" : 2,
+      "type" : "INT NOT NULL"
+    }, {
+      "kind" : "LITERAL",
+      "value" : "US",
+      "type" : "CHAR(2) NOT NULL"
+    }, {
+      "kind" : "LITERAL",
+      "value" : 50,
+      "type" : "INT NOT NULL"
+    } ], [ {
+      "kind" : "LITERAL",
+      "value" : 3,
+      "type" : "INT NOT NULL"
+    }, {
+      "kind" : "LITERAL",
+      "value" : "DE",
+      "type" : "CHAR(2) NOT NULL"
+    }, {
+      "kind" : "LITERAL",
+      "value" : 500,
+      "type" : "INT NOT NULL"
+    } ] ],
+    "outputType" : "ROW<`a` INT NOT NULL, `country` CHAR(2) NOT NULL, `v` INT NOT NULL>",
+    "description" : "Values(tuples=[[{ 1, 'DE', 5 }, { 2, 'US', 50 }, { 3, 'DE', 500 }]])"
+  }, {
+    "id" : 2,
+    "type" : "stream-exec-calc_1",
+    "projection" : [ {
+      "kind" : "INPUT_REF",
+      "inputIndex" : 1,
+      "type" : "CHAR(2) NOT NULL"
+    }, {
+      "kind" : "INPUT_REF",
+      "inputIndex" : 2,
+      "type" : "INT NOT NULL"
+    } ],
+    "condition" : null,
+    "inputProperties" : [ {
+      "requiredDistribution" : {
+        "type" : "UNKNOWN"
+      },
+      "damBehavior" : "PIPELINED",
+      "priority" : 0
+    } ],
+    "outputType" : "ROW<`country` CHAR(2) NOT NULL, `v` INT NOT NULL>",
+    "description" : "Calc(select=[country, v])"
+  }, {
+    "id" : 3,
+    "type" : "stream-exec-exchange_1",
+    "inputProperties" : [ {
+      "requiredDistribution" : {
+        "type" : "HASH",
+        "keys" : [ 0 ]
+      },
+      "damBehavior" : "PIPELINED",
+      "priority" : 0
+    } ],
+    "outputType" : "ROW<`country` CHAR(2) NOT NULL, `v` INT NOT NULL>",
+    "description" : "Exchange(distribution=[hash[country]])"
+  }, {
+    "id" : 4,
+    "type" : "stream-exec-group-aggregate_1",
+    "configuration" : {
+      "table.exec.mini-batch.enabled" : "false",
+      "table.exec.mini-batch.size" : "-1"
+    },
+    "grouping" : [ 0 ],
+    "aggCalls" : [ {
+      "name" : "s",
+      "internalName" : "$SUM$1",
+      "argList" : [ 1 ],
+      "filterArg" : -1,
+      "distinct" : false,
+      "approximate" : false,
+      "ignoreNulls" : false,
+      "type" : "INT NOT NULL"
+    } ],
+    "aggCallNeedRetractions" : [ false ],
+    "generateUpdateBefore" : true,
+    "needRetraction" : false,
+    "state" : [ {
+      "index" : 0,
+      "ttl" : "0 ms",
+      "name" : "groupAggregateState"
+    } ],
+    "inputProperties" : [ {
+      "requiredDistribution" : {
+        "type" : "UNKNOWN"
+      },
+      "damBehavior" : "PIPELINED",
+      "priority" : 0
+    } ],
+    "outputType" : "ROW<`country` CHAR(2) NOT NULL, `s` INT NOT NULL>",
+    "description" : "GroupAggregate(groupBy=[country], select=[country, SUM(v) AS s])"
+  }, {
+    "id" : 5,
+    "type" : "stream-exec-calc_1",
+    "projection" : [ {
+      "kind" : "LITERAL",
+      "value" : "DE",
+      "type" : "CHAR(2) NOT NULL"
+    }, {
+      "kind" : "INPUT_REF",
+      "inputIndex" : 1,
+      "type" : "INT NOT NULL"
+    }, {
+      "kind" : "LITERAL",
+      "value" : 1,
+      "type" : "INT NOT NULL"
+    } ],
+    "condition" : {
+      "kind" : "CALL",
+      "syntax" : "BINARY",
+      "internalName" : "$AND$1",
+      "operands" : [ {
+        "kind" : "CALL",
+        "syntax" : "BINARY",
+        "internalName" : "$=$1",
+        "operands" : [ {
+          "kind" : "INPUT_REF",
+          "inputIndex" : 0,
+          "type" : "CHAR(2) NOT NULL"
+        }, {
+          "kind" : "LITERAL",
+          "value" : "DE",
+          "type" : "CHAR(2) NOT NULL"
+        } ],
+        "type" : "BOOLEAN NOT NULL"
+      }, {
+        "kind" : "CALL",
+        "syntax" : "BINARY",
+        "internalName" : "$>$1",
+        "operands" : [ {
+          "kind" : "INPUT_REF",
+          "inputIndex" : 1,
+          "type" : "INT NOT NULL"
+        }, {
+          "kind" : "LITERAL",
+          "value" : 100,
+          "type" : "INT NOT NULL"
+        } ],
+        "type" : "BOOLEAN NOT NULL"
+      } ],
+      "type" : "BOOLEAN NOT NULL"
+    },
+    "inputProperties" : [ {
+      "requiredDistribution" : {
+        "type" : "UNKNOWN"
+      },
+      "damBehavior" : "PIPELINED",
+      "priority" : 0
+    } ],
+    "outputType" : "ROW<`country` CHAR(2) NOT NULL, `s` INT NOT NULL, `__pk_hash` INT NOT NULL>",
+    "description" : "Calc(select=['DE' AS country, s, 1 AS __pk_hash], where=[((country = 'DE') AND (s > 100))])"
+  }, {
+    "id" : 6,
+    "type" : "stream-exec-sink_1",
+    "configuration" : {
+      "table.exec.sink.keyed-shuffle" : "AUTO",
+      "table.exec.sink.not-null-enforcer" : "ERROR",
+      "table.exec.sink.rowtime-inserter" : "ENABLED",
+      "table.exec.sink.type-length-enforcer" : "IGNORE",
+      "table.exec.sink.upsert-materialize" : "AUTO"
+    },
+    "dynamicTableSink" : {
+      "table" : {
+        "identifier" : "`default_catalog`.`default_database`.`l_1`",
+        "resolvedTable" : {
+          "schema" : {
+            "columns" : [ {
+              "name" : "country",
+              "dataType" : "CHAR(2) NOT NULL"
+            }, {
+              "name" : "s",
+              "dataType" : "INT NOT NULL"
+            }, {
+              "name" : "__pk_hash",
+              "dataType" : "INT NOT NULL"
+            } ],
+            "primaryKey" : {
+              "name" : "PK___pk_hash",
+              "type" : "PRIMARY_KEY",
+              "columns" : [ "__pk_hash" ]
+            }
+          },
+          "options" : {
+            "connector" : "print",
+            "print-identifier" : "l"
+          }
+        }
+      }
+    },
+    "inputChangelogMode" : [ "INSERT", "UPDATE_BEFORE", "UPDATE_AFTER" ],
+    "requireUpsertMaterialize" : true,
+    "state" : [ {
+      "index" : 0,
+      "ttl" : "0 ms",
+      "name" : "sinkMaterializeState"
+    } ],
+    "inputProperties" : [ {
+      "requiredDistribution" : {
+        "type" : "UNKNOWN"
+      },
+      "damBehavior" : "PIPELINED",
+      "priority" : 0
+    } ],
+    "outputType" : "ROW<`country` CHAR(2) NOT NULL, `s` INT NOT NULL, `__pk_hash` INT NOT NULL>",
+    "description" : "Sink(table=[default_catalog.default_database.l_1], fields=[country, s, __pk_hash], upsertMaterialize=[true])"
+  } ],
+  "edges" : [ {
+    "source" : 1,
+    "target" : 2,
+    "shuffle" : {
+      "type" : "FORWARD"
+    },
+    "shuffleMode" : "PIPELINED"
+  }, {
+    "source" : 2,
+    "target" : 3,
+    "shuffle" : {
+      "type" : "FORWARD"
+    },
+    "shuffleMode" : "PIPELINED"
+  }, {
+    "source" : 3,
+    "target" : 4,
+    "shuffle" : {
+      "type" : "FORWARD"
+    },
+    "shuffleMode" : "PIPELINED"
+  }, {
+    "source" : 4,
+    "target" : 5,
+    "shuffle" : {
+      "type" : "FORWARD"
+    },
+    "shuffleMode" : "PIPELINED"
+  }, {
+    "source" : 5,
+    "target" : 6,
+    "shuffle" : {
+      "type" : "FORWARD"
+    },
+    "shuffleMode" : "PIPELINED"
+  } ]
+}

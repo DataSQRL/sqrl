@@ -1,0 +1,10 @@
+{
+  "version": "1",
+  "enabled-engines": ["flink"],
+  "script": {
+    "main": "__SQRL_SCRIPT__"
+  },
+  "compiler": {
+    "predicate-pushdown-rules": "LIMITED"
+  }
+}

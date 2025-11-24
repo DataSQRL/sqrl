@@ -57,14 +57,14 @@ public class FlinkPlannerConfigBuilder {
     calciteConfigBuilder.addSqlOperatorTable(sqrlFunctionCatalog.getOperatorTable());
 
     if (compilerConfig.predicatePushdownRules() == PredicatePushdownRules.LIMITED) {
-      var sqrlStreamProgram = buildNoPredicatePushdownStreamProgram();
-      calciteConfigBuilder.replaceStreamProgram(sqrlStreamProgram);
+      var streamProgram = buildLimitedPredicatePushdownStreamProgram();
+      calciteConfigBuilder.replaceStreamProgram(streamProgram);
     }
 
     return calciteConfigBuilder.build();
   }
 
-  private FlinkChainedProgram<StreamOptimizeContext> buildNoPredicatePushdownStreamProgram() {
+  private FlinkChainedProgram<StreamOptimizeContext> buildLimitedPredicatePushdownStreamProgram() {
     var origFlinkStreamProgram = FlinkStreamProgram.buildProgram(flinkConfig);
     var sqrlStreamProgram = new FlinkChainedProgram<StreamOptimizeContext>();
 

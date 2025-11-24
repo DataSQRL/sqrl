@@ -1,0 +1,5 @@
+IMPORT common.views.*;
+
+JoinedTable := SELECT * FROM T JOIN U ON T.a = U.id AND T.v > 100 AND U.tag = 'y';
+
+EXPORT JoinedTable TO logger.l;
