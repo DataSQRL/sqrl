@@ -5,3 +5,6 @@ DistinctOrders := DISTINCT Orders ON id ORDER BY `time` DESC;
 
 /*+test */
 DistinctOrdersTest := SELECT * FROM DistinctOrders ORDER BY id ASC;
+
+/*+test */
+DistinctArrayAggOrdersTest := SELECT productid, ARRAY_AGG(DISTINCT customerid) AS cusomerids FROM Orders GROUP BY productid;
