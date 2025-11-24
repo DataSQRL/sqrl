@@ -49,7 +49,6 @@ import java.util.Optional;
 import lombok.SneakyThrows;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.NewTopic;
-import org.apache.kafka.streams.integration.utils.EmbeddedKafkaCluster;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -58,16 +57,20 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.kafka.KafkaContainer;
 import org.testcontainers.utility.DockerImageName;
 
 @ExtendWith(VertxExtension.class)
 @Testcontainers
 class GraphQLJwtHandlerIT {
-  EmbeddedKafkaCluster CLUSTER = new EmbeddedKafkaCluster(1);
   private static final int SERVER_PORT = 8889; // Use different port to avoid conflicts
 
   @Container
-  private PostgreSQLContainer testDatabase =
+  private final KafkaContainer kafkaContainer =
+      new KafkaContainer(DockerImageName.parse("apache/kafka-native:3.9.1"));
+
+  @Container
+  private final PostgreSQLContainer postgresContainer =
       new PostgreSQLContainer(
               DockerImageName.parse("ankane/pgvector:v0.5.0").asCompatibleSubstituteFor("postgres"))
           .withDatabaseName("datasqrl")
@@ -82,9 +85,9 @@ class GraphQLJwtHandlerIT {
   @SneakyThrows
   @BeforeEach
   void setup(VertxTestContext testContext) {
-    CLUSTER.start();
     try (var admin =
-        AdminClient.create(Map.of(BOOTSTRAP_SERVERS_CONFIG, CLUSTER.bootstrapServers()))) {
+        AdminClient.create(
+            Map.of(BOOTSTRAP_SERVERS_CONFIG, kafkaContainer.getBootstrapServers()))) {
       admin.createTopics(List.of(new NewTopic("mytopic", Optional.empty(), Optional.empty())));
     }
     vertx = Vertx.vertx();
@@ -123,7 +126,7 @@ class GraphQLJwtHandlerIT {
         new KafkaConfig.KafkaSubscriptionConfig(
             Map.of(
                 BOOTSTRAP_SERVERS_CONFIG,
-                CLUSTER.bootstrapServers(),
+                kafkaContainer.getBootstrapServers(),
                 KEY_DESERIALIZER_CLASS_CONFIG,
                 "com.datasqrl.graphql.kafka.JsonDeserializer",
                 VALUE_DESERIALIZER_CLASS_CONFIG,
@@ -131,11 +134,11 @@ class GraphQLJwtHandlerIT {
 
     // Configure PostgreSQL connection
     PgConnectOptions pgOptions = new PgConnectOptions();
-    pgOptions.setDatabase(testDatabase.getDatabaseName());
-    pgOptions.setHost(testDatabase.getHost());
-    pgOptions.setPort(testDatabase.getMappedPort(PostgreSQLContainer.POSTGRESQL_PORT));
-    pgOptions.setUser(testDatabase.getUsername());
-    pgOptions.setPassword(testDatabase.getPassword());
+    pgOptions.setDatabase(postgresContainer.getDatabaseName());
+    pgOptions.setHost(postgresContainer.getHost());
+    pgOptions.setPort(postgresContainer.getMappedPort(PostgreSQLContainer.POSTGRESQL_PORT));
+    pgOptions.setUser(postgresContainer.getUsername());
+    pgOptions.setPassword(postgresContainer.getPassword());
     serverConfig.setPgConnectOptions(pgOptions);
     HttpServerOptions httpServerOptions =
         new HttpServerOptions().setPort(SERVER_PORT).setHost("0.0.0.0");
@@ -193,11 +196,9 @@ class GraphQLJwtHandlerIT {
           .close()
           .onComplete(
               ar -> {
-                CLUSTER.stop();
                 testContext.completeNow();
               });
     } else {
-      CLUSTER.stop();
       testContext.completeNow();
     }
   }
