@@ -48,7 +48,7 @@ import java.util.UUID;
 import lombok.AllArgsConstructor;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
-import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.redpanda.RedpandaContainer;
 import org.testcontainers.utility.DockerImageName;
 
@@ -67,8 +67,8 @@ public class TestContainersForTestGoal implements TestEngineVisitor<TestContaine
   @Override
   public TestContainerHook visit(PostgresTestEngine engine, Void context) {
     return new TestContainerHook() {
-      PostgreSQLContainer<?> testDatabase =
-          new PostgreSQLContainer<>(
+      final PostgreSQLContainer testDatabase =
+          new PostgreSQLContainer(
                   DockerImageName.parse("ankane/pgvector:v0.5.0")
                       .asCompatibleSubstituteFor("postgres"))
               .withDatabaseName("datasqrl")
@@ -119,7 +119,7 @@ public class TestContainersForTestGoal implements TestEngineVisitor<TestContaine
   @Override
   public TestContainerHook visit(KafkaTestEngine engine, Void context) {
     return new TestContainerHook() {
-      RedpandaContainer testKafka =
+      final RedpandaContainer testKafka =
           new RedpandaContainer("docker.redpanda.com/redpandadata/redpanda:v23.1.2");
 
       @Override
