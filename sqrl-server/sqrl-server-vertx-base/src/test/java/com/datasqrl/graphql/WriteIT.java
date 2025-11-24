@@ -15,6 +15,11 @@
  */
 package com.datasqrl.graphql;
 
+import static org.apache.kafka.clients.admin.AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG;
+import static org.apache.kafka.clients.consumer.ConsumerConfig.AUTO_OFFSET_RESET_CONFIG;
+import static org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG;
+import static org.apache.kafka.clients.consumer.ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG;
+import static org.apache.kafka.clients.consumer.ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG;
 import static org.apache.kafka.clients.producer.ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG;
 import static org.apache.kafka.clients.producer.ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -49,12 +54,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import lombok.SneakyThrows;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.errors.WakeupException;
-import org.apache.kafka.streams.integration.utils.EmbeddedKafkaCluster;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -62,25 +67,25 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.kafka.KafkaContainer;
 import org.testcontainers.utility.DockerImageName;
 
 @ExtendWith(VertxExtension.class)
 @Testcontainers
 class WriteIT {
 
-  // will be started before and stopped after each test method
   @Container
-  private PostgreSQLContainer testDatabase =
+  private final KafkaContainer kafkaContainer =
+      new KafkaContainer(DockerImageName.parse("apache/kafka-native:3.9.1"));
+
+  @Container
+  private final PostgreSQLContainer postgresContainer =
       new PostgreSQLContainer(
               DockerImageName.parse("ankane/pgvector:v0.5.0").asCompatibleSubstituteFor("postgres"))
           .withDatabaseName("foo")
           .withUsername("foo")
           .withPassword("secret")
           .withDatabaseName("datasqrl");
-
-  EmbeddedKafkaCluster CLUSTER = new EmbeddedKafkaCluster(1);
-
-  // Todo Add Kafka
 
   private SqlClient client;
 
@@ -93,14 +98,12 @@ class WriteIT {
   @SneakyThrows
   @BeforeEach
   void init(Vertx vertx) {
-    CLUSTER.start();
-
     PgConnectOptions options = new PgConnectOptions();
-    options.setDatabase(testDatabase.getDatabaseName());
-    options.setHost(testDatabase.getHost());
-    options.setPort(testDatabase.getMappedPort(PostgreSQLContainer.POSTGRESQL_PORT));
-    options.setUser(testDatabase.getUsername());
-    options.setPassword(testDatabase.getPassword());
+    options.setDatabase(postgresContainer.getDatabaseName());
+    options.setHost(postgresContainer.getHost());
+    options.setPort(postgresContainer.getMappedPort(PostgreSQLContainer.POSTGRESQL_PORT));
+    options.setUser(postgresContainer.getUsername());
+    options.setPassword(postgresContainer.getPassword());
 
     options.setCachePreparedStatements(true);
     options.setPipeliningLimit(100_000);
@@ -119,15 +122,14 @@ class WriteIT {
 
   private Map<String, String> getKafkaConfig() {
     var props = new HashMap<String, String>();
-    props.put("bootstrap.servers", CLUSTER.bootstrapServers());
-    props.put(ConsumerConfig.GROUP_ID_CONFIG, "kafka-test-listener");
+    props.put(BOOTSTRAP_SERVERS_CONFIG, kafkaContainer.getBootstrapServers());
+    props.put(GROUP_ID_CONFIG, "kafka-test-listener");
     props.put(
-        ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,
-        "org.apache.kafka.common.serialization.StringDeserializer");
+        KEY_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer");
     props.put(
-        ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
+        VALUE_DESERIALIZER_CLASS_CONFIG,
         "org.apache.kafka.common.serialization.StringDeserializer");
-    props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+    props.put(AUTO_OFFSET_RESET_CONFIG, "earliest");
     props.put(KEY_SERIALIZER_CLASS_CONFIG, "com.datasqrl.graphql.kafka.JsonSerializer");
     props.put(VALUE_SERIALIZER_CLASS_CONFIG, "com.datasqrl.graphql.kafka.JsonSerializer");
 
@@ -185,7 +187,13 @@ class WriteIT {
   @SneakyThrows
   @Test
   void test() {
-    CLUSTER.createTopic(topicName);
+    // Create topic using AdminClient
+    var adminProps = new Properties();
+    adminProps.put(BOOTSTRAP_SERVERS_CONFIG, kafkaContainer.getBootstrapServers());
+    try (var adminClient = AdminClient.create(adminProps)) {
+      var newTopic = new NewTopic(topicName, 1, (short) 1);
+      adminClient.createTopics(Collections.singleton(newTopic)).all().get();
+    }
 
     var props = new Properties();
     props.putAll(getKafkaConfig());
