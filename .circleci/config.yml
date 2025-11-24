@@ -14,7 +14,7 @@ orbs:
 executors:
   default-machine:
     machine:
-      image: ubuntu-2004:202111-02
+      image: ubuntu-2404:current
       resource_class: large
     environment:
       TZ: America/Los_Angeles
@@ -384,7 +384,7 @@ jobs:
 
   docker-build-base-image:
     machine:
-      image: ubuntu-2004:202111-02
+      image: ubuntu-2404:current
     steps:
       - checkout
       - compute-base-tag
@@ -424,7 +424,7 @@ jobs:
 
   docker-build-mcp-inspector:
     machine:
-      image: ubuntu-2004:202111-02
+      image: ubuntu-2404:current
     steps:
       - checkout
       - compute-mcp-tag

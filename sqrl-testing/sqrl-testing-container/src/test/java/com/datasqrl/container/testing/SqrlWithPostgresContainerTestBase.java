@@ -27,7 +27,7 @@ import java.sql.Statement;
 import javax.annotation.Nullable;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 
 /**
  * Abstract base class for container tests that require a PostgreSQL database. Extends {@link
@@ -36,7 +36,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 @Slf4j
 public abstract class SqrlWithPostgresContainerTestBase extends SqrlContainerTestBase {
 
-  protected PostgreSQLContainer<?> postgresql;
+  protected PostgreSQLContainer postgresql;
 
   /**
    * Abstract method that subclasses must implement to create and populate their specific test
@@ -54,7 +54,7 @@ public abstract class SqrlWithPostgresContainerTestBase extends SqrlContainerTes
   protected void startPostgreSQLContainer() {
     if (postgresql == null) {
       postgresql =
-          new PostgreSQLContainer<>("postgres:17")
+          new PostgreSQLContainer("postgres:17")
               .withDatabaseName("datasqrl")
               .withUsername("datasqrl")
               .withPassword("password")
