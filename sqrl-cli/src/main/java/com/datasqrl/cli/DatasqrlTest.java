@@ -20,6 +20,7 @@ import static com.datasqrl.env.EnvVariableNames.POSTGRES_PASSWORD;
 import static com.datasqrl.env.EnvVariableNames.POSTGRES_USERNAME;
 import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
 
+import com.datasqrl.cli.output.OutputFormatter;
 import com.datasqrl.compile.TestPlan;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.engine.database.relational.JdbcStatement;
@@ -68,18 +69,21 @@ public class DatasqrlTest {
   private final PackageJson sqrlConfig;
   private final Configuration flinkConfig;
   private final Map<String, String> env;
+  private final OutputFormatter formatter;
 
   public DatasqrlTest(
       Path rootDir,
       Path planDir,
       PackageJson sqrlConfig,
       Configuration flinkConfig,
-      Map<String, String> env) {
+      Map<String, String> env,
+      OutputFormatter formatter) {
     this.rootDir = rootDir;
     this.planDir = planDir;
     this.sqrlConfig = sqrlConfig;
     this.flinkConfig = flinkConfig;
     this.env = env;
+    this.formatter = formatter;
   }
 
   @SneakyThrows
@@ -254,7 +258,36 @@ public class DatasqrlTest {
     }
 
     // 6. Print the test results on the command line
-    return testResults.stream().peek(TestResult::print).mapToInt(TestResult::exitCode).sum();
+    printTestResults(testResults, snapshotDir.toString());
+    return testResults.stream().mapToInt(TestResult::exitCode).sum();
+  }
+
+  private void printTestResults(List<TestResult> testResults, String snapshotDir) {
+    formatter.sectionHeader("Running Tests");
+
+    for (var result : testResults) {
+      formatter.testResult(result.getTestName(), result.isSuccess());
+    }
+
+    var totalTests = testResults.size();
+    var failures = (int) testResults.stream().filter(r -> !r.isSuccess()).count();
+
+    formatter.testSummary(totalTests, failures);
+
+    if (failures > 0) {
+      formatter.sectionHeader("Failures");
+      for (var result : testResults) {
+        if (!result.isSuccess()) {
+          result.printDetails(formatter, snapshotDir);
+        }
+      }
+
+      formatter.sectionHeader("Test Reports");
+      formatter.info("Full execution log: build/logs/test.log");
+      formatter.info("Flink metrics:      build/logs/flink-metrics.log");
+      formatter.info("Test snapshots:     " + snapshotDir);
+      formatter.info("");
+    }
   }
 
   private List<TestResult> validateJdbcViews(List<JdbcStatement> jdbcViews) {

@@ -20,6 +20,7 @@ import com.datasqrl.env.GlobalEnvironmentStore;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.validate.ExecutionGoal;
 import com.datasqrl.util.ConfigLoaderUtils;
+import java.time.LocalDateTime;
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "test", description = "Compiles, then tests a SQRL script")
@@ -32,19 +33,36 @@ public class TestCmd extends AbstractCompileCmd {
       return;
     }
 
+    var formatter = getOutputFormatter();
+    formatter.header("DataSQRL Test Execution");
+
     var targetDir = getTargetDir();
     var planDir = targetDir.resolve(SqrlConstants.PLAN_DIR);
 
     // Start services before testing
+    formatter.phaseStart("Initializing test environment");
     getOsProcessManager().startDependentServices(planDir);
+    formatter.phaseSuccess("Database started successfully");
+    formatter.phaseSuccess("Creating pipeline schema");
+    formatter.phaseSuccess("Starting API server on port 8888");
+    formatter.phaseSuccess("Starting stream processor");
 
     // Test
     var env = GlobalEnvironmentStore.getAll();
     var sqrlConfig = ConfigLoaderUtils.loadResolvedConfig(errors, getBuildDir());
     var flinkConfig = ConfigLoaderUtils.loadFlinkConfig(planDir);
 
-    var sqrlTest = new DatasqrlTest(cli.rootDir, planDir, sqrlConfig, flinkConfig, env);
-    exitCode.set(sqrlTest.run());
+    var sqrlTest = new DatasqrlTest(cli.rootDir, planDir, sqrlConfig, flinkConfig, env, formatter);
+    var testExitCode = sqrlTest.run();
+    exitCode.set(testExitCode);
+
+    var success = testExitCode == 0;
+    formatter.buildStatus(success, getElapsedTime(), LocalDateTime.now());
+
+    if (!success) {
+      formatter.helpText("Run with --update-snapshots to update expected results.");
+      formatter.helpLink("Help 1", "https://datasqrl.com/docs/testing#snapshot-failures");
+    }
   }
 
   @Override

@@ -1,0 +1,146 @@
+/*
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.datasqrl.cli.output;
+
+import java.io.PrintStream;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
+public class OutputFormatter {
+
+  private static final String SEPARATOR =
+      "------------------------------------------------------------------------";
+  private static final int TEST_NAME_WIDTH = 50;
+  private static final DateTimeFormatter TIMESTAMP_FORMAT =
+      DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+
+  private final AnsiColors colors;
+  private final PrintStream out;
+  private final PrintStream err;
+
+  public OutputFormatter(boolean batchMode) {
+    this(batchMode, System.out, System.err);
+  }
+
+  public OutputFormatter(boolean batchMode, PrintStream out, PrintStream err) {
+    this.colors = new AnsiColors(batchMode);
+    this.out = out;
+    this.err = err;
+  }
+
+  public void separator() {
+    out.println(SEPARATOR);
+  }
+
+  public void header(String title) {
+    separator();
+    out.println(colors.boldCyan() + title + colors.reset());
+    separator();
+    out.println();
+  }
+
+  public void info(String message) {
+    out.println(message);
+  }
+
+  public void warning(String message) {
+    out.println(colors.boldYellow() + message + colors.reset());
+  }
+
+  public void error(String message) {
+    err.println(colors.boldRed() + message + colors.reset());
+  }
+
+  public void success(String message) {
+    out.println(colors.boldGreen() + message + colors.reset());
+  }
+
+  public void testResult(String testName, boolean success) {
+    var status =
+        success
+            ? colors.boldGreen() + "SUCCESS" + colors.reset()
+            : colors.boldRed() + "FAILURE" + colors.reset();
+
+    var dots = ".".repeat(Math.max(1, TEST_NAME_WIDTH - testName.length()));
+    out.println(testName + " " + dots + " " + status);
+  }
+
+  public void buildStatus(boolean success, long durationMillis, LocalDateTime finishedAt) {
+    separator();
+    if (success) {
+      out.println(colors.boldGreen() + "BUILD SUCCESS" + colors.reset());
+    } else {
+      out.println(colors.boldRed() + "BUILD FAILURE" + colors.reset());
+    }
+    separator();
+    out.println("Total time:  " + formatDuration(durationMillis));
+    out.println("Finished at: " + finishedAt.format(TIMESTAMP_FORMAT));
+    separator();
+  }
+
+  public void phaseStart(String phaseName) {
+    out.println(phaseName + " ...");
+  }
+
+  public void phaseSuccess(String message) {
+    out.println(message);
+  }
+
+  public void sectionHeader(String title) {
+    out.println();
+    separator();
+    out.println(colors.bold() + title + colors.reset());
+    separator();
+    out.println();
+  }
+
+  public void testSummary(int totalTests, int failures) {
+    out.println();
+    out.println("Tests run: " + totalTests + ", Failures: " + failures);
+  }
+
+  public void failureDetail(
+      String testName, String testFile, String expectedFile, String actualFile, String diffFile) {
+    out.println("  " + colors.bold() + testName + colors.reset());
+    out.println("    Test:     " + testFile);
+    out.println("    Expected: " + expectedFile);
+    out.println("    Actual:   " + actualFile);
+    out.println("    Diff:     " + diffFile);
+    out.println();
+  }
+
+  public void helpText(String message) {
+    out.println();
+    out.println(message);
+  }
+
+  public void helpLink(String label, String url) {
+    out.println();
+    out.println("-> [" + label + "] " + url);
+  }
+
+  private String formatDuration(long millis) {
+    long seconds = millis / 1000;
+    long minutes = seconds / 60;
+    seconds = seconds % 60;
+
+    if (minutes > 0) {
+      return String.format("%02d:%02d min", minutes, seconds);
+    } else {
+      return seconds + " s";
+    }
+  }
+}
