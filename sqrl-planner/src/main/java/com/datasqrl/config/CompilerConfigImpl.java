@@ -15,6 +15,7 @@
  */
 package com.datasqrl.config;
 
+import com.datasqrl.planner.PredicatePushdownRules;
 import com.datasqrl.planner.analyzer.cost.CostModel;
 import com.datasqrl.planner.analyzer.cost.SimpleCostAnalysisModel;
 import com.datasqrl.planner.analyzer.cost.SimpleCostAnalysisModel.Type;
@@ -41,8 +42,8 @@ public class CompilerConfigImpl implements PackageJson.CompilerConfig {
   }
 
   @Override
-  public boolean disablePredicatePushdown() {
-    return sqrlConfig.asBool("disable-predicate-pushdown").get();
+  public PredicatePushdownRules predicatePushdownRules() {
+    return sqrlConfig.as("predicate-pushdown-rules", PredicatePushdownRules.class).get();
   }
 
   @Override

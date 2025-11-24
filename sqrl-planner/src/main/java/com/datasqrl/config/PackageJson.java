@@ -17,6 +17,7 @@ package com.datasqrl.config;
 
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.server.operation.ApiProtocol;
+import com.datasqrl.planner.PredicatePushdownRules;
 import com.datasqrl.planner.analyzer.cost.CostModel;
 import java.nio.file.Path;
 import java.util.EnumSet;
@@ -54,7 +55,7 @@ public interface PackageJson {
 
     boolean compileFlinkPlan();
 
-    boolean disablePredicatePushdown();
+    PredicatePushdownRules predicatePushdownRules();
 
     CostModel getCostModel();
 

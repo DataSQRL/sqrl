@@ -36,8 +36,10 @@
         "compile-flink-plan": {
           "type": "boolean"
         },
-        "disable-predicate-pushdown": {
-          "type": "boolean"
+        "predicate-pushdown-rules": {
+          "type": "string",
+          "enum": ["DEFAULT", "LIMITED"],
+          "pattern": "^[A-Z_]+$"
         },
         "extended-scalar-types": {
           "type": "boolean"

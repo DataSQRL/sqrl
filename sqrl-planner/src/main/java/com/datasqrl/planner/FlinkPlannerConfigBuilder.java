@@ -38,9 +38,8 @@ public class FlinkPlannerConfigBuilder {
   /** Rules to remove from the logical program to disable filter pushdown in specific cases. */
   private static final List<? extends RelOptRule> FILTER_RULES_TO_REMOVE =
       List.of(
-          FlinkFilterJoinRule.FILTER_INTO_JOIN,
           FlinkFilterJoinRule.JOIN_CONDITION_PUSH,
-          // ^^ Removing prevents push filter into the children of a join
+          // ^ Removing prevents push ON filters into the children of a join
           CoreRules.FILTER_AGGREGATE_TRANSPOSE,
           // ^ Removing prevents push filter through an aggregation
           FlinkFilterProjectTransposeRule.INSTANCE,
@@ -57,7 +56,7 @@ public class FlinkPlannerConfigBuilder {
     var calciteConfigBuilder = new CalciteConfigBuilder();
     calciteConfigBuilder.addSqlOperatorTable(sqrlFunctionCatalog.getOperatorTable());
 
-    if (compilerConfig.disablePredicatePushdown()) {
+    if (compilerConfig.predicatePushdownRules() == PredicatePushdownRules.LIMITED) {
       var sqrlStreamProgram = buildNoPredicatePushdownStreamProgram();
       calciteConfigBuilder.replaceStreamProgram(sqrlStreamProgram);
     }
