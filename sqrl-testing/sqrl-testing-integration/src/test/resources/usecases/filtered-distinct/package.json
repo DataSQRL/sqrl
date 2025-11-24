@@ -4,6 +4,6 @@
     "main": "filtered-distinct.sqrl"
   },
   "test-runner": {
-    "snapshot-folder": "snapshots-filtered-distinct"
+    "delay-sec": -1
   }
 }

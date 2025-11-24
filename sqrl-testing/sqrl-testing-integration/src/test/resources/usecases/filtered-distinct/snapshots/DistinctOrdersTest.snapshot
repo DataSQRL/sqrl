@@ -6,32 +6,28 @@
       "time" : "2023-01-03T06:24:00.000Z",
       "productid" : 115,
       "quantity" : 1,
-      "unit_price" : 9.22,
-      "discount" : null
+      "unit_price" : 9.22
     }, {
       "id" : 3,
       "customerid" : 7,
       "time" : "2023-01-03T06:25:00.000Z",
       "productid" : 115,
       "quantity" : 1,
-      "unit_price" : 9.22,
-      "discount" : null
+      "unit_price" : 9.22
     }, {
       "id" : 5,
       "customerid" : 11,
       "time" : "2023-01-03T06:24:00.000Z",
       "productid" : 115,
       "quantity" : 2,
-      "unit_price" : 9.22,
-      "discount" : null
+      "unit_price" : 9.22
     }, {
       "id" : 6,
       "customerid" : 6,
       "time" : "2023-01-03T06:21:00.000Z",
       "productid" : 115,
       "quantity" : 1,
-      "unit_price" : 9.22,
-      "discount" : null
+      "unit_price" : 9.22
     } ]
   }
 }

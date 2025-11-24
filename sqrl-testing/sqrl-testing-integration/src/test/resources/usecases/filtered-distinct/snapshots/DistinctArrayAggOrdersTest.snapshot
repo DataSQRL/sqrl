@@ -1,0 +1,8 @@
+{
+  "data" : {
+    "DistinctArrayAggOrdersTest" : [ {
+      "productid" : 115,
+      "cusomerids" : [ 6, 7, 8, 9, 10, 11 ]
+    } ]
+  }
+}

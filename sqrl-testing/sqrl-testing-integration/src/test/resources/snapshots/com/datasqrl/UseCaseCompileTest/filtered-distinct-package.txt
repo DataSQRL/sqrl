@@ -11,8 +11,7 @@ type DistinctOrders {
   time: DateTime!
   productid: Long!
   quantity: Long!
-  unit_price: Float
-  discount: Float
+  unit_price: Float!
 }
 
 "A JSON scalar"
@@ -30,8 +29,7 @@ type Orders {
   time: DateTime!
   productid: Long!
   quantity: Long!
-  unit_price: Float
-  discount: Float
+  unit_price: Float!
 }
 
 type Query {
@@ -67,8 +65,7 @@ Schema:
  - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - productid: BIGINT NOT NULL
  - quantity: BIGINT NOT NULL
- - unit_price: DOUBLE
- - discount: DOUBLE
+ - unit_price: DOUBLE NOT NULL
  - _ingest_time: TIMESTAMP_LTZ(3) *PROCTIME* NOT NULL
 Inputs:
  - default_catalog.default_database.Orders
@@ -88,8 +85,7 @@ Schema:
  - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - productid: BIGINT NOT NULL
  - quantity: BIGINT NOT NULL
- - unit_price: DOUBLE
- - discount: DOUBLE
+ - unit_price: DOUBLE NOT NULL
  - _ingest_time: TIMESTAMP_LTZ(3) *PROCTIME* NOT NULL
 Inputs:
  - default_catalog.default_database.Orders__base
@@ -103,40 +99,37 @@ CREATE TEMPORARY TABLE `Orders__schema` (
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `productid` BIGINT NOT NULL,
   `quantity` BIGINT NOT NULL,
-  `unit_price` DOUBLE,
-  `discount` DOUBLE
+  `unit_price` DOUBLE NOT NULL
 ) WITH (
-  'connector' = 'datagen'
+  'connector' = 'filesystem',
+  'format' = 'flexible-json',
+  'path' = '${DATA_PATH}/orders.jsonl'
 );
 CREATE TABLE `Orders` (
   `_ingest_time` AS `PROCTIME`(),
   PRIMARY KEY (`id`, `customerid`, `time`) NOT ENFORCED
 ) WITH (
-  'format' = 'flexible-json',
-  'path' = '${DATA_PATH}/orders.jsonl',
-  'source.monitor-interval' = '10000',
-  'connector' = 'filesystem'
+  'source.monitor-interval' = '10000'
 )
 LIKE `Orders__schema`;
 CREATE VIEW `DistinctOrders`
 AS
-SELECT `id`, `customerid`, `time`, `productid`, `quantity`, `unit_price`, `discount`, `_ingest_time`
-FROM (SELECT `id`, `customerid`, `time`, `productid`, `quantity`, `unit_price`, `discount`, `_ingest_time`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `time` DESC NULLS LAST) AS `$f8`
-  FROM (SELECT `id`, `customerid`, `time`, `productid`, `quantity`, `unit_price`, `discount`, `_ingest_time`
-    FROM (SELECT `id`, `customerid`, `time`, `productid`, `quantity`, `unit_price`, `discount`, `_ingest_time`, LAG(`customerid`, 1) OVER (PARTITION BY `id` ORDER BY `_ingest_time`) AS `$f8`, LAG(`productid`, 1) OVER (PARTITION BY `id` ORDER BY `_ingest_time`) AS `$f9`, LAG(`quantity`, 1) OVER (PARTITION BY `id` ORDER BY `_ingest_time`) AS `$f10`, LAG(`unit_price`, 1) OVER (PARTITION BY `id` ORDER BY `_ingest_time`) AS `$f11`, LAG(`discount`, 1) OVER (PARTITION BY `id` ORDER BY `_ingest_time`) AS `$f12`
-      FROM (SELECT `id`, `customerid`, `time`, `productid`, `quantity`, `unit_price`, `discount`, `_ingest_time`, MAX(`time`) OVER (PARTITION BY `id` ORDER BY `_ingest_time` RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS `$f8`
+SELECT `id`, `customerid`, `time`, `productid`, `quantity`, `unit_price`, `_ingest_time`
+FROM (SELECT `id`, `customerid`, `time`, `productid`, `quantity`, `unit_price`, `_ingest_time`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `time` DESC NULLS LAST) AS `$f7`
+  FROM (SELECT `id`, `customerid`, `time`, `productid`, `quantity`, `unit_price`, `_ingest_time`
+    FROM (SELECT `id`, `customerid`, `time`, `productid`, `quantity`, `unit_price`, `_ingest_time`, LAG(`customerid`, 1) OVER (PARTITION BY `id` ORDER BY `_ingest_time`) AS `$f7`, LAG(`productid`, 1) OVER (PARTITION BY `id` ORDER BY `_ingest_time`) AS `$f8`, LAG(`quantity`, 1) OVER (PARTITION BY `id` ORDER BY `_ingest_time`) AS `$f9`, LAG(`unit_price`, 1) OVER (PARTITION BY `id` ORDER BY `_ingest_time`) AS `$f10`
+      FROM (SELECT `id`, `customerid`, `time`, `productid`, `quantity`, `unit_price`, `_ingest_time`, MAX(`time`) OVER (PARTITION BY `id` ORDER BY `_ingest_time` RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS `$f7`
         FROM `default_catalog`.`default_database`.`Orders`) AS `t`
-      WHERE `time` >= `$f8`) AS `t1`
-    WHERE `$f8` IS NULL AND `$f9` IS NULL AND `$f10` IS NULL AND `$f11` IS NULL AND `$f12` IS NULL OR `customerid` <> `$f8` OR (`productid` <> `$f9` OR (`quantity` <> `$f10` OR `unit_price` <> `$f11`)) OR (`unit_price` IS NULL AND `$f11` IS NOT NULL OR `$f11` IS NULL AND `unit_price` IS NOT NULL OR (`discount` <> `$f12` OR (`discount` IS NULL AND `$f12` IS NOT NULL OR `$f12` IS NULL AND `discount` IS NOT NULL)))) AS `t3`) AS `t4`
-WHERE `$f8` = 1;
+      WHERE `time` >= `$f7`) AS `t1`
+    WHERE `$f7` IS NULL AND `$f8` IS NULL AND `$f9` IS NULL AND `$f10` IS NULL OR `customerid` <> `$f7` OR `productid` <> `$f8` OR `quantity` <> `$f9` OR `unit_price` <> `$f10`) AS `t3`) AS `t4`
+WHERE `$f7` = 1;
 CREATE TABLE `DistinctOrders_1` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `productid` BIGINT NOT NULL,
   `quantity` BIGINT NOT NULL,
-  `unit_price` DOUBLE,
-  `discount` DOUBLE,
+  `unit_price` DOUBLE NOT NULL,
   `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`id`) NOT ENFORCED
 ) WITH (
@@ -153,8 +146,7 @@ CREATE TABLE `Orders_2` (
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `productid` BIGINT NOT NULL,
   `quantity` BIGINT NOT NULL,
-  `unit_price` DOUBLE,
-  `discount` DOUBLE,
+  `unit_price` DOUBLE NOT NULL,
   `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`id`, `customerid`, `time`) NOT ENFORCED
 ) WITH (
@@ -181,8 +173,8 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
   "testRunnerTopics" : [ ]
 }
 >>>postgres-schema.sql
-CREATE TABLE IF NOT EXISTS "DistinctOrders" ("id" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "time" TIMESTAMP WITH TIME ZONE NOT NULL, "productid" BIGINT NOT NULL, "quantity" BIGINT NOT NULL, "unit_price" DOUBLE PRECISION, "discount" DOUBLE PRECISION, "_ingest_time" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("id"));
-CREATE TABLE IF NOT EXISTS "Orders" ("id" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "time" TIMESTAMP WITH TIME ZONE NOT NULL, "productid" BIGINT NOT NULL, "quantity" BIGINT NOT NULL, "unit_price" DOUBLE PRECISION, "discount" DOUBLE PRECISION, "_ingest_time" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("id","customerid","time"))
+CREATE TABLE IF NOT EXISTS "DistinctOrders" ("id" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "time" TIMESTAMP WITH TIME ZONE NOT NULL, "productid" BIGINT NOT NULL, "quantity" BIGINT NOT NULL, "unit_price" DOUBLE PRECISION NOT NULL, "_ingest_time" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("id"));
+CREATE TABLE IF NOT EXISTS "Orders" ("id" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "time" TIMESTAMP WITH TIME ZONE NOT NULL, "productid" BIGINT NOT NULL, "quantity" BIGINT NOT NULL, "unit_price" DOUBLE PRECISION NOT NULL, "_ingest_time" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("id","customerid","time"))
 >>>postgres-views.sql
 
 >>>vertx.json
@@ -262,7 +254,7 @@ CREATE TABLE IF NOT EXISTS "Orders" ("id" BIGINT NOT NULL, "customerid" BIGINT N
           },
           "format" : "JSON",
           "apiQuery" : {
-            "query" : "query DistinctOrders($limit: Int = 10, $offset: Int = 0) {\nDistinctOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nproductid\nquantity\nunit_price\ndiscount\n}\n\n}",
+            "query" : "query DistinctOrders($limit: Int = 10, $offset: Int = 0) {\nDistinctOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nproductid\nquantity\nunit_price\n}\n\n}",
             "queryName" : "DistinctOrders",
             "operationType" : "QUERY"
           },
@@ -288,7 +280,7 @@ CREATE TABLE IF NOT EXISTS "Orders" ("id" BIGINT NOT NULL, "customerid" BIGINT N
           },
           "format" : "JSON",
           "apiQuery" : {
-            "query" : "query Orders($limit: Int = 10, $offset: Int = 0) {\nOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nproductid\nquantity\nunit_price\ndiscount\n}\n\n}",
+            "query" : "query Orders($limit: Int = 10, $offset: Int = 0) {\nOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nproductid\nquantity\nunit_price\n}\n\n}",
             "queryName" : "Orders",
             "operationType" : "QUERY"
           },
@@ -299,7 +291,7 @@ CREATE TABLE IF NOT EXISTS "Orders" ("id" BIGINT NOT NULL, "customerid" BIGINT N
       ],
       "schema" : {
         "type" : "string",
-        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\ntype DistinctOrders {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  productid: Long!\n  quantity: Long!\n  unit_price: Float\n  discount: Float\n}\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Orders {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  productid: Long!\n  quantity: Long!\n  unit_price: Float\n  discount: Float\n}\n\ntype Query {\n  DistinctOrders(limit: Int = 10, offset: Int = 0): [DistinctOrders!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\ntype DistinctOrders {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n}\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Orders {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n}\n\ntype Query {\n  DistinctOrders(limit: Int = 10, offset: Int = 0): [DistinctOrders!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
     }
   }
