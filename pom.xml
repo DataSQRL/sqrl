@@ -149,7 +149,7 @@
     <kafka.version>3.9.1</kafka.version>
     <log4j.version>2.25.2</log4j.version>
     <lombok.version>1.18.42</lombok.version>
-    <mcp-sdk.version>0.14.1</mcp-sdk.version>
+    <mcp-sdk.version>0.16.0</mcp-sdk.version>
     <micrometer.version>1.16.0</micrometer.version>
     <mockito.version>4.8.0</mockito.version>
     <mustache.version>0.9.14</mustache.version>
