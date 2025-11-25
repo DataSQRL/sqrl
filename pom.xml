@@ -118,12 +118,12 @@
     <autoservice.version>1.1.1</autoservice.version>
     <avro.version>1.12.1</avro.version>
     <awaitility.version>4.3.0</awaitility.version>
-    <aws-sdk-bom.version>2.37.2</aws-sdk-bom.version>
+    <aws-sdk-bom.version>2.39.2</aws-sdk-bom.version>
     <commons-collections4.version>4.5.0</commons-collections4.version>
     <commons-csv.version>1.14.1</commons-csv.version>
     <commons-exec.version>1.5.0</commons-exec.version>
     <commons-io.version>2.21.0</commons-io.version>
-    <duckdb.version>1.4.1.0</duckdb.version>
+    <duckdb.version>1.4.2.0</duckdb.version>
     <feign.version>13.6</feign.version>
     <freemarker.version>2.3.34</freemarker.version>
     <glassfish.version>3.0.0</glassfish.version>
@@ -139,33 +139,33 @@
     <hadoop.version>3.3.4</hadoop.version>
     <httpcomponents.version>4.5.14</httpcomponents.version>
     <iceberg.version>1.10.0</iceberg.version>
-    <jackson.version>2.20.0</jackson.version>
+    <jackson.version>2.20.1</jackson.version>
     <jacoco.version>0.8.14</jacoco.version>
     <jakarta.annotation.version>3.0.0</jakarta.annotation.version>
     <javax.validation.version>2.0.1.Final</javax.validation.version>
     <jjwt.version>0.13.0</jjwt.version>
     <jsonschema.version>1.5.9</jsonschema.version>
-    <junit.jupiter.version>5.13.4</junit.jupiter.version>
+    <junit.jupiter.version>6.0.1</junit.jupiter.version>
     <kafka.version>3.9.1</kafka.version>
     <log4j.version>2.25.2</log4j.version>
     <lombok.version>1.18.42</lombok.version>
     <mcp-sdk.version>0.14.1</mcp-sdk.version>
-    <micrometer.version>1.15.5</micrometer.version>
+    <micrometer.version>1.16.0</micrometer.version>
     <mockito.version>4.8.0</mockito.version>
     <mustache.version>0.9.14</mustache.version>
     <openai-gpt3-java.version>0.18.2</openai-gpt3-java.version>
     <opencsv.version>5.12.0</opencsv.version>
     <picocli.version>4.7.7</picocli.version>
     <postgres.version>42.7.8</postgres.version>
-    <projectreactor.version>3.7.12</projectreactor.version>
-    <protobuf.version>4.33.0</protobuf.version>
+    <projectreactor.version>3.8.0</projectreactor.version>
+    <protobuf.version>4.33.1</protobuf.version>
     <reflections.version>0.10.2</reflections.version>
     <scala.version>2.12</scala.version>
     <scram.version>2.1</scram.version>
     <slf4j.version>1.7.36</slf4j.version>
-    <snowflake-jdbc.version>3.27.0</snowflake-jdbc.version>
+    <snowflake-jdbc.version>3.27.1</snowflake-jdbc.version>
     <snakeyaml.version>2.5</snakeyaml.version>
-    <swagger-core.version>2.2.39</swagger-core.version>
+    <swagger-core.version>2.2.41</swagger-core.version>
     <testcontainers.version>2.0.2</testcontainers.version>
     <vertx.version>5.0.5</vertx.version>
 
@@ -470,7 +470,7 @@
       <dependency>
         <groupId>org.immutables</groupId>
         <artifactId>value</artifactId>
-        <version>2.11.6</version>
+        <version>2.11.7</version>
         <scope>compile</scope>
       </dependency>
 
@@ -906,7 +906,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-release-plugin</artifactId>
-        <version>3.1.1</version>
+        <version>3.2.0</version>
         <configuration>
           <tagNameFormat>v@{project.version}</tagNameFormat>
           <autoVersionSubmodules>true</autoVersionSubmodules>
@@ -924,7 +924,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
-        <version>3.4.2</version>
+        <version>3.5.0</version>
         <configuration>
           <!-- do not build an empty jar if the project is
                e.g. a pom project -->
