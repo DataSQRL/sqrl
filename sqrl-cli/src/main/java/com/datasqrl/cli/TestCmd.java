@@ -15,6 +15,7 @@
  */
 package com.datasqrl.cli;
 
+import com.datasqrl.cli.output.TestOutputManager;
 import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.env.GlobalEnvironmentStore;
 import com.datasqrl.error.ErrorCollector;
@@ -33,35 +34,37 @@ public class TestCmd extends AbstractCompileCmd {
       return;
     }
 
-    var formatter = getOutputFormatter();
-    formatter.header("DataSQRL Test Execution");
+    try (var outputMgr = new TestOutputManager(cli.rootDir)) {
+      outputMgr.disableConsoleLogs();
 
-    var targetDir = getTargetDir();
-    var planDir = targetDir.resolve(SqrlConstants.PLAN_DIR);
+      var formatter = getOutputFormatter();
+      formatter.header("DataSQRL Test Execution");
 
-    // Start services before testing
-    formatter.phaseStart("Initializing test environment");
-    getOsProcessManager().startDependentServices(planDir);
-    formatter.phaseSuccess("Database started successfully");
-    formatter.phaseSuccess("Creating pipeline schema");
-    formatter.phaseSuccess("Starting API server on port 8888");
-    formatter.phaseSuccess("Starting stream processor");
+      var targetDir = getTargetDir();
+      var planDir = targetDir.resolve(SqrlConstants.PLAN_DIR);
 
-    // Test
-    var env = GlobalEnvironmentStore.getAll();
-    var sqrlConfig = ConfigLoaderUtils.loadResolvedConfig(errors, getBuildDir());
-    var flinkConfig = ConfigLoaderUtils.loadFlinkConfig(planDir);
+      // Start services before testing
+      formatter.phaseStart("Initializing test environment");
+      getOsProcessManager().startDependentServices(planDir);
 
-    var sqrlTest = new DatasqrlTest(cli.rootDir, planDir, sqrlConfig, flinkConfig, env, formatter);
-    var testExitCode = sqrlTest.run();
-    exitCode.set(testExitCode);
+      // Test
+      var env = GlobalEnvironmentStore.getAll();
+      var sqrlConfig = ConfigLoaderUtils.loadResolvedConfig(errors, getBuildDir());
+      var flinkConfig = ConfigLoaderUtils.loadFlinkConfig(planDir);
 
-    var success = testExitCode == 0;
-    formatter.buildStatus(success, getElapsedTime(), LocalDateTime.now());
+      var sqrlTest =
+          new DatasqrlTest(
+              cli.rootDir, planDir, sqrlConfig, flinkConfig, env, outputMgr, formatter);
+      var testExitCode = sqrlTest.run();
+      exitCode.set(testExitCode);
 
-    if (!success) {
-      formatter.helpText("Run with --update-snapshots to update expected results.");
-      formatter.helpLink("Help 1", "https://datasqrl.com/docs/testing#snapshot-failures");
+      var success = testExitCode == 0;
+      formatter.buildStatus(success, getElapsedTime(), LocalDateTime.now());
+
+      if (!success) {
+        formatter.helpText("Run with --update-snapshots to update expected results.");
+        formatter.helpLink("Help 1", "https://datasqrl.com/docs/testing#snapshot-failures");
+      }
     }
   }
 

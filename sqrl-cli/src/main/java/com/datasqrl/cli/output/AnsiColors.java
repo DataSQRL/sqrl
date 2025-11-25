@@ -15,51 +15,45 @@
  */
 package com.datasqrl.cli.output;
 
-public class AnsiColors {
+record AnsiColors(boolean batchMode) {
 
-  private final boolean batchMode;
-
-  public AnsiColors(boolean batchMode) {
-    this.batchMode = batchMode;
-  }
-
-  public String reset() {
+  String reset() {
     return batchMode ? "" : "\u001B[0m";
   }
 
-  public String bold() {
+  String bold() {
     return batchMode ? "" : "\u001B[1m";
   }
 
-  public String green() {
+  String green() {
     return batchMode ? "" : "\u001B[32m";
   }
 
-  public String boldGreen() {
+  String boldGreen() {
     return batchMode ? "" : "\u001B[1;32m";
   }
 
-  public String red() {
+  String red() {
     return batchMode ? "" : "\u001B[31m";
   }
 
-  public String boldRed() {
+  String boldRed() {
     return batchMode ? "" : "\u001B[1;31m";
   }
 
-  public String yellow() {
+  String yellow() {
     return batchMode ? "" : "\u001B[33m";
   }
 
-  public String boldYellow() {
+  String boldYellow() {
     return batchMode ? "" : "\u001B[1;33m";
   }
 
-  public String cyan() {
+  String cyan() {
     return batchMode ? "" : "\u001B[36m";
   }
 
-  public String boldCyan() {
+  String boldCyan() {
     return batchMode ? "" : "\u001B[1;36m";
   }
 }

@@ -21,6 +21,7 @@ import static org.assertj.core.api.Assertions.fail;
 import com.datasqrl.cli.AssertStatusHook;
 import com.datasqrl.cli.DatasqrlTest;
 import com.datasqrl.cli.output.OutputFormatter;
+import com.datasqrl.cli.output.TestOutputManager;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.engines.TestContainersForTestGoal;
@@ -132,8 +133,10 @@ abstract class AbstractFullUseCaseTest {
               .resolve(SqrlConstants.DEPLOY_DIR_NAME)
               .resolve(SqrlConstants.PLAN_DIR);
       var flinkConfig = loadInternalTestFlinkConfig(planDir, env);
-      var formatter = new OutputFormatter(false);
-      var test = new DatasqrlTest(rootDir, planDir, packageJson, flinkConfig, env, formatter);
+      var outputMgr = new TestOutputManager(rootDir);
+      var formatter = new OutputFormatter(true);
+      var test =
+          new DatasqrlTest(rootDir, planDir, packageJson, flinkConfig, env, outputMgr, formatter);
       try {
         var run = test.run();
         if (run != 0) {

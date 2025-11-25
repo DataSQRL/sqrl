@@ -45,11 +45,15 @@ public class OutputFormatter {
     out.println(SEPARATOR);
   }
 
+  public void newline() {
+    out.println();
+  }
+
   public void header(String title) {
     separator();
     out.println(colors.boldCyan() + title + colors.reset());
     separator();
-    out.println();
+    newline();
   }
 
   public void info(String message) {
@@ -100,15 +104,15 @@ public class OutputFormatter {
   }
 
   public void sectionHeader(String title) {
-    out.println();
+    newline();
     separator();
     out.println(colors.bold() + title + colors.reset());
     separator();
-    out.println();
+    newline();
   }
 
   public void testSummary(int totalTests, int failures) {
-    out.println();
+    newline();
     out.println("Tests run: " + totalTests + ", Failures: " + failures);
   }
 
@@ -119,16 +123,16 @@ public class OutputFormatter {
     out.println("    Expected: " + expectedFile);
     out.println("    Actual:   " + actualFile);
     out.println("    Diff:     " + diffFile);
-    out.println();
+    newline();
   }
 
   public void helpText(String message) {
-    out.println();
+    newline();
     out.println(message);
   }
 
   public void helpLink(String label, String url) {
-    out.println();
+    newline();
     out.println("-> [" + label + "] " + url);
   }
 

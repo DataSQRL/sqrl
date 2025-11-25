@@ -107,12 +107,12 @@ public abstract class AbstractCompileCmd extends AbstractCmd {
   }
 
   private void printCompilationResults(com.datasqrl.cli.output.OutputFormatter formatter) {
-    formatter.info("");
+    formatter.newline();
     formatter.sectionHeader("Compilation Results");
     formatter.info("Deployment artifacts: " + getTargetDir());
     formatter.info("Pipeline DAG:         " + getBuildDir().resolve("pipeline_explain.txt"));
     formatter.info("Visual DAG:           " + getBuildDir().resolve("pipeline_visual.html"));
-    formatter.info("");
+    formatter.newline();
 
     formatter.buildStatus(true, getElapsedTime(), LocalDateTime.now());
   }
