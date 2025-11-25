@@ -200,11 +200,13 @@ class OsProcessManagerTest {
     serviceManager = new OsProcessManager(env);
 
     try (MockedStatic<Paths> pathsMocked = mockStatic(Paths.class);
+        MockedStatic<java.nio.file.Files> filesMocked = mockStatic(java.nio.file.Files.class);
         MockedStatic<org.apache.commons.io.FileUtils> fileUtilsMocked =
             mockStatic(org.apache.commons.io.FileUtils.class)) {
 
       Path mockLogPath = mock(Path.class);
       pathsMocked.when(() -> Paths.get("/tmp/logs")).thenReturn(mockLogPath);
+      filesMocked.when(() -> java.nio.file.Files.exists(mockLogPath)).thenReturn(true);
       when(mockLogPath.toFile()).thenReturn(mock(java.io.File.class));
       when(mockTargetDir.toFile()).thenReturn(mock(java.io.File.class));
 
@@ -223,7 +225,7 @@ class OsProcessManagerTest {
         // Then
         fileUtilsMocked.verify(
             () ->
-                org.apache.commons.io.FileUtils.moveDirectory(
+                org.apache.commons.io.FileUtils.copyDirectory(
                     any(java.io.File.class), any(java.io.File.class)));
         assertThat(pbMocked.constructed()).hasSizeGreaterThan(0);
       }

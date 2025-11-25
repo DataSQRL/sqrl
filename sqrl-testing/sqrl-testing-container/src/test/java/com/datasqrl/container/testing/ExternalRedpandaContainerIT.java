@@ -91,7 +91,7 @@ public class ExternalRedpandaContainerIT extends SqrlContainerTestBase {
     log.info("SQRL script test was successful with external Kafka");
 
     // Then - Verify external Kafka configuration in generated artifacts
-    assertThat(logs).contains("Snapshot OK for ApplicationStatusTest");
+    assertThat(logs).contains("ApplicationStatusTest", "BUILD SUCCESS");
 
     // Verify that no internal Kafka processes were started
     assertThat(logs)

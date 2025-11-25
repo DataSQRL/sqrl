@@ -112,4 +112,3 @@ public class SqrlTestContainerIT extends SqrlContainerTestBase {
     log.info("Test completed successfully without bash debug logs");
   }
 }
-

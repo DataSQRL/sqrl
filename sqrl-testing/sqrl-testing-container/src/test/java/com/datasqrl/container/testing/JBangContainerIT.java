@@ -38,8 +38,6 @@ class JBangContainerIT extends SqrlContainerTestBase {
   void givenProjectWithJBangJarExport_whenTestCommandExecuted_thenCompileAndTestSuccessful() {
     var res = sqrlCmd(testDir, "test", "package.json");
 
-    assertThat(res.logs())
-        .contains("Snapshot OK for MyTableTest")
-        .contains("Snapshot OK for MyAsyncTableTest");
+    assertThat(res.logs()).contains("MyTableTest", "MyAsyncTableTest", "BUILD SUCCESS");
   }
 }

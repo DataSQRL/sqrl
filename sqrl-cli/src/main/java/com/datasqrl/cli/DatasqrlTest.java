@@ -27,6 +27,8 @@ import com.datasqrl.engine.database.relational.JdbcStatement;
 import com.datasqrl.graphql.SqrlObjectMapper;
 import com.datasqrl.util.FlinkOperatorStatusChecker;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import java.io.FileOutputStream;
+import java.io.PrintStream;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -47,6 +49,9 @@ import lombok.SneakyThrows;
 import org.apache.flink.api.common.JobStatus;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.core.execution.JobClient;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.config.LoggerConfig;
 
 /**
  * The test runner executes the test against the running DataSQRL pipeline and snapshots the
@@ -63,13 +68,19 @@ public class DatasqrlTest {
 
   private static final String GRAPHQL_ENDPOINT = "http://localhost:8888/%s/graphql";
   private static final String SNAPSHOT_EXT = ".snapshot";
+  private static final String TEST_LOG_FILE = "test.log";
 
   private final Path rootDir;
   private final Path planDir;
+  private final Path logsDir;
   private final PackageJson sqrlConfig;
   private final Configuration flinkConfig;
   private final Map<String, String> env;
   private final OutputFormatter formatter;
+
+  private PrintStream originalOut;
+  private PrintStream originalErr;
+  private PrintStream logFileStream;
 
   public DatasqrlTest(
       Path rootDir,
@@ -80,6 +91,7 @@ public class DatasqrlTest {
       OutputFormatter formatter) {
     this.rootDir = rootDir;
     this.planDir = planDir;
+    this.logsDir = rootDir.resolve("build/logs");
     this.sqrlConfig = sqrlConfig;
     this.flinkConfig = flinkConfig;
     this.env = env;
@@ -88,6 +100,8 @@ public class DatasqrlTest {
 
   @SneakyThrows
   public int run() {
+    redirectOutputToFile();
+
     // 1. Init DatasqrlRun
     var run = DatasqrlRun.nonBlocking(planDir, sqrlConfig, flinkConfig, env);
 
@@ -255,6 +269,7 @@ public class DatasqrlTest {
     } finally {
       run.cancel();
       Thread.sleep(1000); // wait for log lines to clear out
+      restoreOutput();
     }
 
     // 6. Print the test results on the command line
@@ -399,5 +414,40 @@ public class DatasqrlTest {
   private String getRequiredEnv(String envVarName) {
     return Objects.requireNonNull(
         env.get(envVarName), "Missing environment variable: " + envVarName);
+  }
+
+  @SneakyThrows
+  private void redirectOutputToFile() {
+    originalOut = System.out;
+    originalErr = System.err;
+
+    Files.createDirectories(logsDir);
+    var logFile = logsDir.resolve(TEST_LOG_FILE).toFile();
+    logFileStream = new PrintStream(new FileOutputStream(logFile, true));
+
+    System.setOut(logFileStream);
+    System.setErr(logFileStream);
+
+    var context = (LoggerContext) LogManager.getContext(false);
+    var config = context.getConfiguration();
+
+    for (LoggerConfig loggerConfig : config.getLoggers().values()) {
+      loggerConfig.removeAppender("Console");
+    }
+    config.getRootLogger().removeAppender("Console");
+
+    context.updateLoggers();
+  }
+
+  private void restoreOutput() {
+    if (originalOut != null) {
+      System.setOut(originalOut);
+    }
+    if (originalErr != null) {
+      System.setErr(originalErr);
+    }
+    if (logFileStream != null) {
+      logFileStream.close();
+    }
   }
 }

@@ -106,8 +106,13 @@ public class OsProcessManager {
    * @throws Exception if log file movement fails or ownership setting encounters errors
    */
   public void teardown(Path buildDir) throws Exception {
+    Path source = Paths.get(LOGS_PATH);
     Path target = buildDir.resolve("logs");
-    FileUtils.moveDirectory(Paths.get(LOGS_PATH).toFile(), target.toFile());
+
+    if (Files.exists(source)) {
+      FileUtils.copyDirectory(source.toFile(), target.toFile());
+    }
+
     setOwnerForDir(buildDir.getParent());
   }
 
