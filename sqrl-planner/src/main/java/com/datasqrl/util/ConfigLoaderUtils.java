@@ -29,8 +29,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.annotations.VisibleForTesting;
-import com.networknt.schema.JsonSchemaFactory;
-import com.networknt.schema.SpecVersion;
+import com.networknt.schema.SchemaRegistry;
+import com.networknt.schema.SchemaRegistryConfig;
+import com.networknt.schema.dialect.Dialects;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
@@ -163,15 +164,22 @@ public final class ConfigLoaderUtils {
       collector.fatal("Could not parse json schema file [%s]: %s", jsonSchemaResource, e);
       return false;
     }
+
+    var schemaRegistryConf = SchemaRegistryConfig.builder().formatAssertionsEnabled(true).build();
     var schema =
-        JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V202012).getSchema(schemaNode);
-    var messages =
-        schema.validate(json, ctx -> ctx.getExecutionConfig().setFormatAssertionsEnabled(true));
+        SchemaRegistry.withDefaultDialect(
+                Dialects.getDraft202012(),
+                builder -> builder.schemaRegistryConfig(schemaRegistryConf))
+            .getSchema(schemaNode);
+
+    var messages = schema.validate(json);
     if (messages.isEmpty()) {
       return true;
     }
+
     messages.forEach(
         vm -> collector.fatal("%s at location [%s]", vm.getMessage(), vm.getInstanceLocation()));
+
     return false;
   }
 
