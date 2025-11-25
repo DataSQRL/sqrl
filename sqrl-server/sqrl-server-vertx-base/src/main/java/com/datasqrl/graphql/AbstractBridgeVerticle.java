@@ -23,10 +23,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.networknt.schema.JsonSchema;
-import com.networknt.schema.JsonSchemaFactory;
-import com.networknt.schema.SpecVersion;
-import com.networknt.schema.ValidationMessage;
+import com.networknt.schema.Error;
+import com.networknt.schema.Schema;
+import com.networknt.schema.SchemaRegistry;
+import com.networknt.schema.dialect.Dialects;
 import graphql.ExecutionInput;
 import graphql.ExecutionResult;
 import io.vertx.core.AbstractVerticle;
@@ -96,12 +96,12 @@ public abstract class AbstractBridgeVerticle extends AbstractVerticle {
       return; // No validation required
     }
     final JsonNode arguments;
-    final JsonSchema schema;
+    final Schema schema;
     try {
       // Build a JSON Schema from the parameters definition
       var schemaText = getSchemaMapper().writeValueAsString(parameters);
-      var factory = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V202012);
-      schema = factory.getSchema(schemaText);
+      var schemaRegistry = SchemaRegistry.withDefaultDialect(Dialects.getDraft202012());
+      schema = schemaRegistry.getSchema(schemaText);
 
       // Convert the collected variables to a JsonNode
       if (variables == null || variables.isEmpty()) {
@@ -117,7 +117,7 @@ public abstract class AbstractBridgeVerticle extends AbstractVerticle {
     var schemaErrors = schema.validate(arguments);
     if (!schemaErrors.isEmpty()) {
       var schemaErrorsText =
-          schemaErrors.stream().map(ValidationMessage::toString).collect(Collectors.joining("; "));
+          schemaErrors.stream().map(Error::toString).collect(Collectors.joining("; "));
       log.info("Function call had schema errors: {}", schemaErrorsText);
       throw new ValidationException("Invalid Schema: " + schemaErrorsText);
     }

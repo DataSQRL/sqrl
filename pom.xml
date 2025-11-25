@@ -144,7 +144,7 @@
     <jakarta.annotation.version>3.0.0</jakarta.annotation.version>
     <javax.validation.version>2.0.1.Final</javax.validation.version>
     <jjwt.version>0.13.0</jjwt.version>
-    <jsonschema.version>1.5.9</jsonschema.version>
+    <json-schema.version>2.0.0</json-schema.version>
     <junit.jupiter.version>6.0.1</junit.jupiter.version>
     <kafka.version>3.9.1</kafka.version>
     <log4j.version>2.25.2</log4j.version>
@@ -580,11 +580,11 @@
         <scope>import</scope>
       </dependency>
 
-      <!-- JSON SChema -->
+      <!-- JSON Schema -->
       <dependency>
         <groupId>com.networknt</groupId>
         <artifactId>json-schema-validator</artifactId>
-        <version>${jsonschema.version}</version>
+        <version>${json-schema.version}</version>
       </dependency>
 
       <dependency>
