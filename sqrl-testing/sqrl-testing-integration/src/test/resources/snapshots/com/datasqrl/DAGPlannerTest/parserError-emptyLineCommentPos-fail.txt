@@ -1,0 +1,7 @@
+[FATAL] Non-query expression encountered in illegal context
+in script:parserError-emptyLineCommentPos-fail.sqrl [13:1]:
+-- Combined with empty lines as well
+
+AnotherCustomer : SELECT * FROM Customer WHERE customerid > 0;
+^
+

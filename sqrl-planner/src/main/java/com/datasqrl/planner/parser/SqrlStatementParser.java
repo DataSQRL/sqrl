@@ -24,13 +24,11 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorLocation.FileLocation;
 import com.datasqrl.planner.hint.PlannerHints;
 import com.datasqrl.planner.parser.SqrlTableFunctionStatement.ParsedArgument;
-import com.google.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 
@@ -49,7 +47,6 @@ import org.apache.flink.table.catalog.ObjectIdentifier;
  * the code and complexity in this implementation is due to that. We use {@link ParsedObject} to
  * keep file locations. This is handled through {@link ParsedObject}.
  */
-@AllArgsConstructor(onConstructor_ = @Inject)
 public class SqrlStatementParser {
 
   public static final String IDENTIFIER_REGEX = "[\\w\\.`*-]+?";
@@ -115,8 +112,6 @@ public class SqrlStatementParser {
   public static final Pattern NEXT_BATCH_PARSER =
       Pattern.compile(NEXT_BATCH_REGEX, Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
 
-  private SqlScriptStatementSplitter sqlSplitter;
-
   /**
    * Main entry point for parsing a script
    *
@@ -128,7 +123,7 @@ public class SqrlStatementParser {
     List<ParsedStatement> sqlStatements = new ArrayList<>();
     var localErrors = scriptErrors;
     try {
-      var statements = sqlSplitter.splitStatements(script);
+      var statements = SqlScriptStatementSplitter.splitStatements(script);
       for (ParsedObject<String> statement : statements) {
         localErrors = scriptErrors.atFile(statement.getFileLocation());
         sqlStatements.add(

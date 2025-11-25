@@ -1,0 +1,17 @@
+
+/*
+    Empty lines and
+    multi line comments
+    should not mess up
+    line pos.
+*/
+
+
+IMPORT ecommerceTs.customer;
+/*
+   Same applies
+   here as well.
+*/
+
+
+AnotherCustomer : SELECT * FROM Customer WHERE customerid > 0;

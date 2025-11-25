@@ -16,13 +16,17 @@
 package com.datasqrl.planner.parser;
 
 import com.datasqrl.error.ErrorLocation.FileLocation;
+import com.google.common.base.CharMatcher;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
 /**
- * Takes a script and splits it into individual statements delimited by `;`. Also filters out `--`
- * comments
+ * Takes a script and splits it into individual statements delimited by `;`. Also filters out line
+ * comments and block comments while preserving SQL hints and docs.
  *
  * <p>Contains some additional utility methods for statement delimiter handling.
  *
@@ -32,17 +36,16 @@ import java.util.List;
  *     href="https://github.com/apache/flink-kubernetes-operator/blob/main/examples/flink-sql-runner-example/src/main/java/org/apache/flink/examples/SqlRunner.java">Flink's
  *     SqlRunner</a>
  */
-public record SqlScriptStatementSplitter(boolean removeBlockComments) {
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+public final class SqlScriptStatementSplitter {
 
-  public static final String STATEMENT_DELIMITER = ";"; // a statement should end with `;`
-  public static final String LINE_DELIMITER = "\n";
+  private static final String STATEMENT_DELIMITER = ";"; // a statement should end with `;`
+  private static final String LINE_DELIMITER = "\n";
 
-  private static final String LINE_COMMENT_PATTERN = "--.*";
-  public static final String BLOCK_COMMENT_PATTERN = "((/\\*)+?[\\w\\W]+?(\\*/)+)";
-
-  public SqlScriptStatementSplitter() {
-    this(false);
-  }
+  private static final Pattern LINE_COMMENT_PATTERN = Pattern.compile("--.*");
+  // Matches block comments that are NOT hints or doc comments
+  private static final Pattern BLOCK_COMMENT_PATTERN =
+      Pattern.compile("/\\*(?!\\s*\\+)(?!\\*)[\\s\\S]*?\\*/");
 
   /**
    * Parses SQL statements from a script.
@@ -50,37 +53,42 @@ public record SqlScriptStatementSplitter(boolean removeBlockComments) {
    * @param script The SQL script content.
    * @return A list of individual SQL statements.
    */
-  public List<ParsedObject<String>> splitStatements(String script) {
+  public static List<ParsedObject<String>> splitStatements(String script) {
     if (script.isBlank()) {
       throw new StatementParserException("Script is empty");
     }
-    var formatted = formatEndOfSqlFile(script).replaceAll(LINE_COMMENT_PATTERN, "");
-    if (removeBlockComments) {
-      formatted = formatted.replaceAll(BLOCK_COMMENT_PATTERN, "");
-    }
 
-    List<ParsedObject<String>> statements = new ArrayList<>();
+    var statements = new ArrayList<ParsedObject<String>>();
+
+    var formatted = formatEndOfSqlFile(script);
+    formatted = removeBlockComments(formatted);
 
     StringBuilder current = null;
     var statementLineNo = 0;
     var lineNo = 0;
-    for (String line : formatted.split(LINE_DELIMITER)) {
+    for (var line : formatted.split(LINE_DELIMITER)) {
       lineNo++;
-      if (line.isBlank()) {
+
+      var rawLine = LINE_COMMENT_PATTERN.matcher(line).replaceAll("");
+      if (rawLine.isBlank()) {
         continue;
       }
+
       if (current == null) {
         statementLineNo = lineNo;
         current = new StringBuilder();
       }
-      current.append(line);
+
+      current.append(rawLine);
       current.append(LINE_DELIMITER);
-      if (line.trim().endsWith(STATEMENT_DELIMITER)) {
+
+      if (rawLine.trim().endsWith(STATEMENT_DELIMITER)) {
         statements.add(
             new ParsedObject<>(current.toString(), new FileLocation(statementLineNo, 1)));
         current = null;
       }
     }
+
     return statements;
   }
 
@@ -104,7 +112,7 @@ public record SqlScriptStatementSplitter(boolean removeBlockComments) {
    * @return Formatted SQL content.
    */
   public static String formatEndOfSqlFile(String sqlScript) {
-    var trimmed = sqlScript.trim();
+    var trimmed = CharMatcher.whitespace().trimTrailingFrom(sqlScript);
     var formatted = new StringBuilder();
     formatted.append(trimmed);
     if (!trimmed.endsWith(STATEMENT_DELIMITER)) {
@@ -127,5 +135,32 @@ public record SqlScriptStatementSplitter(boolean removeBlockComments) {
       return statement;
     }
     return statement + STATEMENT_DELIMITER;
+  }
+
+  /**
+   * Removes block comments from SQL script while preserving SQL hints and doc comments.
+   *
+   * <p>Newlines within removed comments are preserved as blank lines to maintain accurate line
+   * numbering for error reporting.
+   *
+   * @param text The SQL script text.
+   * @return The text with regular block comments removed.
+   */
+  private static String removeBlockComments(String text) {
+    var matcher = BLOCK_COMMENT_PATTERN.matcher(text);
+    var result = new StringBuilder();
+    var lastEnd = 0;
+
+    while (matcher.find()) {
+      result.append(text, lastEnd, matcher.start());
+      // Count newlines in the comment and preserve them as blank lines
+      var comment = matcher.group();
+      var newlineCount = comment.chars().filter(ch -> ch == '\n').count();
+      result.append(LINE_DELIMITER.repeat((int) newlineCount));
+      lastEnd = matcher.end();
+    }
+    result.append(text.substring(lastEnd));
+
+    return result.toString();
   }
 }
