@@ -94,7 +94,7 @@ public class S3ContainerIT extends SqrlContainerTestBase {
     cmd.start();
 
     await().atMost(Duration.ofSeconds(90)).until(() -> !cmd.isRunning());
-    assertThat(cmd.getLogs()).contains("Snapshot OK");
+    assertThat(cmd.getLogs()).contains("BUILD SUCCESS");
 
     var objList = s3Client.listObjects(BUCKET_NAME);
     var objSummaries = objList.getObjectSummaries();

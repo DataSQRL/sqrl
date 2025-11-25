@@ -15,6 +15,7 @@
  */
 package com.datasqrl.cli;
 
+import com.datasqrl.cli.output.OutputFormatter;
 import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCollector;
@@ -39,11 +40,18 @@ public abstract class AbstractCmd implements Runnable, IExitCodeGenerator {
       description = "Target directory for deployment artifacts and plans")
   protected Path targetDir = DEFAULT_TARGET_DIR;
 
+  @CommandLine.Option(
+      names = {"-B", "--batch-mode"},
+      description = "Run in batch mode (disable colored output)")
+  protected boolean batchMode = false;
+
   protected final AtomicInteger exitCode = new AtomicInteger(0);
+  protected long startTime;
 
   @Override
   @SneakyThrows
   public void run() {
+    startTime = System.currentTimeMillis();
     ErrorCollector collector = ErrorCollector.root();
     try {
       runInternal(collector);
@@ -74,6 +82,14 @@ public abstract class AbstractCmd implements Runnable, IExitCodeGenerator {
   }
 
   protected abstract void runInternal(ErrorCollector errors) throws Exception;
+
+  protected OutputFormatter getOutputFormatter() {
+    return new OutputFormatter(batchMode);
+  }
+
+  protected long getElapsedTime() {
+    return System.currentTimeMillis() - startTime;
+  }
 
   protected OsProcessManager getOsProcessManager() {
     return new OsProcessManager(System.getenv());

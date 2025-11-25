@@ -91,11 +91,14 @@ public class ExternalRedpandaContainerIT extends SqrlContainerTestBase {
     log.info("SQRL script test was successful with external Kafka");
 
     // Then - Verify external Kafka configuration in generated artifacts
-    assertThat(logs).contains("Snapshot OK for ApplicationStatusTest");
+    assertThat(logs).contains("ApplicationStatusTest", "BUILD SUCCESS");
 
     // Verify that no internal Kafka processes were started
-    assertThat(logs)
+    var cliLogs = testDir.resolve("build").resolve("logs").resolve("datasqrl-cli.log");
+    assertThat(cliLogs).isRegularFile();
+    assertThat(cliLogs)
         .as("Should not start internal Kafka when external Kafka is configured")
+        .content()
         .contains(
             "Skip starting Redpanda, because KAFKA_BOOTSTRAP_SERVERS=redpanda:9093 is provided");
 

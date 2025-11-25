@@ -41,7 +41,11 @@ public class SqrlTestContainerIT extends SqrlContainerTestBase {
     log.info("Container logs:\n{}", logs);
 
     // Verify the expected success messages are present in the logs
-    assertThat(logs).contains("Snapshot OK for MySchemaQuery").contains("Snapshot OK for MySchema");
+    assertThat(logs)
+        .contains("Running Tests")
+        .contains("MySchemaQuery")
+        .contains("MySchema")
+        .contains("BUILD SUCCESS");
 
     // Assert no SLF4J warnings are present in the logs
     assertThat(logs)
@@ -73,7 +77,7 @@ public class SqrlTestContainerIT extends SqrlContainerTestBase {
     log.info("Container logs:\n{}", logs);
 
     // Assert that the logs contain the expected error messages
-    assertThat(logs).contains("Snapshot created for test: MySchema");
+    assertThat(logs).contains("Snapshot created for test:");
 
     assertOwner(snapshots, logs);
     FileUtils.deleteDirectory(snapshots.toFile());
@@ -89,7 +93,11 @@ public class SqrlTestContainerIT extends SqrlContainerTestBase {
     log.info("Container logs:\n{}", logs);
 
     // Verify the expected success messages are present in the logs
-    assertThat(logs).contains("Snapshot OK for MySchemaQuery").contains("Snapshot OK for MySchema");
+    assertThat(logs)
+        .contains("Running Tests")
+        .contains("MySchemaQuery")
+        .contains("MySchema")
+        .contains("BUILD SUCCESS");
 
     // Assert no bash debug logs are present (no SQRL_DEBUG=1 output)
     assertThat(logs)

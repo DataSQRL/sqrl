@@ -34,6 +34,7 @@ import com.datasqrl.util.SqrlInjector;
 import com.google.inject.Guice;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.lang3.tuple.Pair;
@@ -43,6 +44,15 @@ public abstract class AbstractCompileCmd extends AbstractCmd {
   public abstract ExecutionGoal getGoal();
 
   protected void compile(ErrorCollector errors) {
+    var formatter = getOutputFormatter();
+
+    if (getGoal() == ExecutionGoal.COMPILE) {
+      formatter.header("DataSQRL Compilation");
+    }
+
+    if (getGoal() == ExecutionGoal.COMPILE) {
+      formatter.phaseStart("Initializing build environment");
+    }
     var sqrlConfig = initPackageJson(errors, cli.rootDir, cli.packageFiles);
 
     DirectoryManager.prepareTargetDirectory(getTargetDir());
@@ -57,12 +67,18 @@ public abstract class AbstractCompileCmd extends AbstractCmd {
     var engineHolder = injector.getInstance(ExecutionEnginesHolder.class);
     engineHolder.initEnabledEngines();
 
+    if (getGoal() == ExecutionGoal.COMPILE) {
+      formatter.phaseStart("Processing dependencies");
+    }
     var packager = injector.getInstance(Packager.class);
     packager.preprocess(errors.withLocation(ErrorPrefix.CONFIG.resolve(PACKAGE_JSON)));
     if (errors.hasErrors()) {
       return;
     }
 
+    if (getGoal() == ExecutionGoal.COMPILE) {
+      formatter.phaseStart("Compiling SQRL script");
+    }
     var compilationProcess = injector.getInstance(CompilationProcess.class);
     var testDir = sqrlConfig.getTestConfig().getTestDir(cli.rootDir);
     testDir.ifPresent(this::validateTestPath);
@@ -80,7 +96,25 @@ public abstract class AbstractCompileCmd extends AbstractCmd {
       return;
     }
 
+    if (getGoal() == ExecutionGoal.COMPILE) {
+      formatter.phaseStart("Generating deployment artifacts");
+    }
     postprocess(packager, getTargetDir(), plan.getLeft(), plan.getRight());
+
+    if (getGoal() == ExecutionGoal.COMPILE) {
+      printCompilationResults(formatter);
+    }
+  }
+
+  private void printCompilationResults(com.datasqrl.cli.output.OutputFormatter formatter) {
+    formatter.newline();
+    formatter.sectionHeader("Compilation Results");
+    formatter.info("Deployment artifacts: " + getTargetDir());
+    formatter.info("Pipeline DAG:         " + getBuildDir().resolve("pipeline_explain.txt"));
+    formatter.info("Visual DAG:           " + getBuildDir().resolve("pipeline_visual.html"));
+    formatter.newline();
+
+    formatter.buildStatus(true, getElapsedTime(), LocalDateTime.now());
   }
 
   protected void execute(ErrorCollector errors) throws Exception {

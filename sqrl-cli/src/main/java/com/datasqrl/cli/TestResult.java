@@ -15,19 +15,17 @@
  */
 package com.datasqrl.cli;
 
+import com.datasqrl.cli.output.OutputFormatter;
+
 public abstract class TestResult {
 
-  public abstract void print();
+  public abstract String getTestName();
+
+  public abstract boolean isSuccess();
 
   public abstract int exitCode();
 
-  void printGreen(String line) {
-    System.out.println("\u001B[32m" + line + "\u001B[0m");
-  }
-
-  void printRed(String line) {
-    System.err.println("\u001B[31m" + line + "\u001B[0m");
-  }
+  public abstract void printDetails(OutputFormatter formatter, String snapshotDir);
 
   abstract static class NamedResult extends TestResult {
 
@@ -35,6 +33,11 @@ public abstract class TestResult {
 
     NamedResult(String snapshotName) {
       this.snapshotName = snapshotName;
+    }
+
+    @Override
+    public String getTestName() {
+      return snapshotName.replace(".snapshot", "");
     }
   }
 
@@ -45,14 +48,17 @@ public abstract class TestResult {
     }
 
     @Override
-    public void print() {
-      printGreen("Snapshot OK for " + snapshotName);
+    public boolean isSuccess() {
+      return true;
     }
 
     @Override
     public int exitCode() {
       return 0;
     }
+
+    @Override
+    public void printDetails(OutputFormatter formatter, String snapshotDir) {}
   }
 
   public static class SnapshotCreate extends NamedResult {
@@ -62,14 +68,19 @@ public abstract class TestResult {
     }
 
     @Override
-    public void print() {
-      printGreen("Snapshot created for test: " + snapshotName);
-      printGreen("Rerun to verify.");
+    public boolean isSuccess() {
+      return false;
     }
 
     @Override
     public int exitCode() {
       return 1;
+    }
+
+    @Override
+    public void printDetails(OutputFormatter formatter, String snapshotDir) {
+      formatter.warning("Snapshot created for test: " + getTestName());
+      formatter.warning("Rerun to verify.");
     }
   }
 
@@ -80,37 +91,49 @@ public abstract class TestResult {
     }
 
     @Override
-    public void print() {
-      printRed("Snapshot on filesystem but not in result: " + snapshotName);
+    public boolean isSuccess() {
+      return false;
     }
 
     @Override
     public int exitCode() {
       return 1;
+    }
+
+    @Override
+    public void printDetails(OutputFormatter formatter, String snapshotDir) {
+      formatter.error("Snapshot on filesystem but not in result: " + getTestName());
     }
   }
 
   public static class SnapshotMismatch extends NamedResult {
 
-    private final String expected;
-    private final String actual;
+    private final String expectedPath;
+    private final String actualPath;
 
-    public SnapshotMismatch(String testName, String expected, String actual) {
+    public SnapshotMismatch(String testName, String expectedPath, String actualPath) {
       super(testName);
-      this.expected = expected;
-      this.actual = actual;
+      this.expectedPath = expectedPath;
+      this.actualPath = actualPath;
     }
 
     @Override
-    public void print() {
-      printRed("Snapshot mismatch for test: " + snapshotName);
-      printRed("Expected: " + expected);
-      printRed("Actual  : " + actual);
+    public boolean isSuccess() {
+      return false;
     }
 
     @Override
     public int exitCode() {
       return 1;
+    }
+
+    @Override
+    public void printDetails(OutputFormatter formatter, String snapshotDir) {
+      var testName = getTestName();
+      var testFile = "build/test/" + testName + ".graphql";
+      var diffFile = snapshotDir + "/" + testName + ".diff";
+
+      formatter.failureDetail(testName, testFile, expectedPath, actualPath, diffFile);
     }
   }
 
@@ -125,24 +148,34 @@ public abstract class TestResult {
     }
 
     public static Failure flink(Throwable cause) {
-      return new Failure("Flink job failed to start", cause);
+      return new Failure("Flink job failed", cause);
     }
 
     public static Failure jdbc(Throwable cause) {
-      return new Failure("Failed to validate JDBC views", cause);
+      return new Failure("JDBC validation failed", cause);
     }
 
     @Override
-    public void print() {
-      printRed(msg);
-      if (cause != null) {
-        cause.printStackTrace();
-      }
+    public String getTestName() {
+      return msg;
+    }
+
+    @Override
+    public boolean isSuccess() {
+      return false;
     }
 
     @Override
     public int exitCode() {
       return 2;
+    }
+
+    @Override
+    public void printDetails(OutputFormatter formatter, String snapshotDir) {
+      formatter.error(msg);
+      if (cause != null) {
+        cause.printStackTrace();
+      }
     }
   }
 }

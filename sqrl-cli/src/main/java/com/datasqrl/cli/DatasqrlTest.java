@@ -20,6 +20,8 @@ import static com.datasqrl.env.EnvVariableNames.POSTGRES_PASSWORD;
 import static com.datasqrl.env.EnvVariableNames.POSTGRES_USERNAME;
 import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
 
+import com.datasqrl.cli.output.OutputFormatter;
+import com.datasqrl.cli.output.TestOutputManager;
 import com.datasqrl.compile.TestPlan;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.engine.database.relational.JdbcStatement;
@@ -42,6 +44,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.apache.flink.api.common.JobStatus;
 import org.apache.flink.configuration.Configuration;
@@ -58,6 +61,7 @@ import org.apache.flink.core.execution.JobClient;
  * or the configured delay 4. Run the queries against the API and snapshot the results 5. Print the
  * test results on the command line
  */
+@RequiredArgsConstructor
 public class DatasqrlTest {
 
   private static final String GRAPHQL_ENDPOINT = "http://localhost:8888/%s/graphql";
@@ -68,19 +72,8 @@ public class DatasqrlTest {
   private final PackageJson sqrlConfig;
   private final Configuration flinkConfig;
   private final Map<String, String> env;
-
-  public DatasqrlTest(
-      Path rootDir,
-      Path planDir,
-      PackageJson sqrlConfig,
-      Configuration flinkConfig,
-      Map<String, String> env) {
-    this.rootDir = rootDir;
-    this.planDir = planDir;
-    this.sqrlConfig = sqrlConfig;
-    this.flinkConfig = flinkConfig;
-    this.env = env;
-  }
+  private final TestOutputManager outputManager;
+  private final OutputFormatter formatter;
 
   @SneakyThrows
   public int run() {
@@ -113,9 +106,12 @@ public class DatasqrlTest {
 
     // 2. Run the DataSQRL pipeline
     try {
+      formatter.phaseStart("Starting stream processor");
       var result = run.run();
       Thread.sleep(1000);
 
+      formatter.sectionHeader("Running Tests");
+      outputManager.redirectStd();
       var subscriptionClients = new ArrayList<SubscriptionClient>();
       // 3. Execute subscription & mutation operations against the API and snapshot results
       if (testPlan != null) {
@@ -251,10 +247,38 @@ public class DatasqrlTest {
     } finally {
       run.cancel();
       Thread.sleep(1000); // wait for log lines to clear out
+      outputManager.restoreStd();
     }
 
     // 6. Print the test results on the command line
-    return testResults.stream().peek(TestResult::print).mapToInt(TestResult::exitCode).sum();
+    printTestResults(testResults, snapshotDir.toString());
+    return testResults.stream().mapToInt(TestResult::exitCode).sum();
+  }
+
+  private void printTestResults(List<TestResult> testResults, String snapshotDir) {
+    for (var result : testResults) {
+      formatter.testResult(result.getTestName(), result.isSuccess());
+    }
+
+    var totalTests = testResults.size();
+    var failures = (int) testResults.stream().filter(r -> !r.isSuccess()).count();
+
+    formatter.testSummary(totalTests, failures);
+
+    if (failures > 0) {
+      formatter.sectionHeader("Failures");
+      for (var result : testResults) {
+        if (!result.isSuccess()) {
+          result.printDetails(formatter, snapshotDir);
+        }
+      }
+
+      formatter.sectionHeader("Test Reports");
+      formatter.info("Full execution log: build/logs/test.log");
+      formatter.info("Flink metrics:      build/logs/flink-metrics.log");
+      formatter.info("Test snapshots:     " + snapshotDir);
+      formatter.info("");
+    }
   }
 
   private List<TestResult> validateJdbcViews(List<JdbcStatement> jdbcViews) {
