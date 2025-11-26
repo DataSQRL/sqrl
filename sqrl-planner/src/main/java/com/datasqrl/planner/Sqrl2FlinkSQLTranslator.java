@@ -264,7 +264,12 @@ public class Sqrl2FlinkSQLTranslator {
     }
     var sqlNodeList = parser.parseSqlList(sqlStatement);
     List<SqlNode> parsed = sqlNodeList.getList();
-    checkArgument(parsed.size() == 1);
+    checkArgument(
+        parsed.size() == 1,
+        "Expected exactly 1 SQL statement but found %s. SQL: [%s]. Parsed statements: %s",
+        parsed.size(),
+        sqlStatement.length() > 500 ? sqlStatement.substring(0, 500) + "..." : sqlStatement,
+        parsed);
     return parsed.get(0);
   }
 
