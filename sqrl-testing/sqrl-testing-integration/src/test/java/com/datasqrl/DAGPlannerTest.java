@@ -16,13 +16,13 @@
 package com.datasqrl;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assumptions.assumeThat;
 
 import com.datasqrl.util.ArgumentsProviders;
 import com.datasqrl.util.SnapshotTest.Snapshot;
 import java.nio.file.Path;
 import java.util.function.Predicate;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
@@ -71,11 +71,10 @@ public class DAGPlannerTest extends AbstractAssetSnapshotTest {
     }
   }
 
-  @ParameterizedTest
-  @ArgumentsSource(DagPlannerSQRLFiles.class)
   @Disabled
-  void specificScript(Path script) {
-    assumeThat(script.toString()).endsWith("comprehensiveTest.sqrl");
+  @Test
+  void specificScript() {
+    var script = SCRIPT_DIR.resolve("parserError-emptyLineBlockCommentPos-fail.sqrl");
     scripts(script);
   }
 
