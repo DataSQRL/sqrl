@@ -16,6 +16,7 @@
 package com.datasqrl.planner;
 
 import com.datasqrl.config.PackageJson.CompilerConfig;
+import com.google.common.annotations.VisibleForTesting;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
@@ -30,7 +31,6 @@ import org.apache.flink.table.planner.plan.optimize.program.FlinkChainedProgram;
 import org.apache.flink.table.planner.plan.optimize.program.FlinkOptimizeProgram;
 import org.apache.flink.table.planner.plan.optimize.program.FlinkStreamProgram;
 import org.apache.flink.table.planner.plan.optimize.program.StreamOptimizeContext;
-import org.apache.flink.table.planner.plan.rules.logical.FlinkFilterJoinRule;
 import org.apache.flink.table.planner.plan.rules.logical.FlinkFilterProjectTransposeRule;
 import scala.Tuple2;
 
@@ -41,8 +41,6 @@ public class FlinkPlannerConfigBuilder {
   /** Rules to remove from the logical program to disable filter pushdown in specific cases. */
   private static final List<? extends RelOptRule> FILTER_RULES_TO_REMOVE =
       List.of(
-          FlinkFilterJoinRule.JOIN_CONDITION_PUSH,
-          // ^ Removing prevents push ON filters into the children of a join
           CoreRules.FILTER_AGGREGATE_TRANSPOSE,
           // ^ Removing prevents push filter through an aggregation
           FlinkFilterProjectTransposeRule.INSTANCE,
@@ -55,9 +53,16 @@ public class FlinkPlannerConfigBuilder {
   private final SqrlFunctionCatalog sqrlFunctionCatalog;
   private final Configuration flinkConfig;
 
+  @VisibleForTesting
+  public FlinkPlannerConfigBuilder(CompilerConfig compilerConfig, Configuration flinkConfig) {
+    this(compilerConfig, null, flinkConfig);
+  }
+
   public PlannerConfig build() {
     var calciteConfigBuilder = new CalciteConfigBuilder();
-    calciteConfigBuilder.addSqlOperatorTable(sqrlFunctionCatalog.getOperatorTable());
+    if (sqrlFunctionCatalog != null) {
+      calciteConfigBuilder.addSqlOperatorTable(sqrlFunctionCatalog.getOperatorTable());
+    }
 
     if (compilerConfig.predicatePushdownRules() != PredicatePushdownRules.DEFAULT) {
       var streamProgram = buildCustomStreamProgram(compilerConfig.predicatePushdownRules());
@@ -83,7 +88,7 @@ public class FlinkPlannerConfigBuilder {
        * - PushFilterIntoTableSourceScanRule
        * - PushFilterIntoLegacyTableSourceScanRule
        */
-      if (rules != PredicatePushdownRules.LIMITED_PP_RULES
+      if (rules == PredicatePushdownRules.LIMITED_PP_RULES
           && programName.equals(FlinkStreamProgram.PREDICATE_PUSHDOWN())) {
 
         var program = origStreamProgram.get(programName).get();

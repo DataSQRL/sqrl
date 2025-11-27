@@ -102,6 +102,26 @@ public final class ArgumentsProviders {
     }
   }
 
+  @AllArgsConstructor
+  public abstract static class FileProvider implements ArgumentsProvider {
+
+    Path directory;
+    String extension;
+
+    @Override
+    public Stream<? extends Arguments> provideArguments(
+        ParameterDeclarations params, ExtensionContext ctx) {
+
+      return getCollectedFiles().map(Arguments::of);
+    }
+
+    protected Stream<Path> getCollectedFiles() {
+      return collectFiles(directory, false)
+          .filter(p -> p.getFileName().toString().toLowerCase().endsWith(extension.toLowerCase()))
+          .sorted();
+    }
+  }
+
   // Helper functions
 
   public static Stream<Path> collectPackageFiles(
@@ -134,7 +154,7 @@ public final class ArgumentsProviders {
   }
 
   @SneakyThrows
-  private static Stream<Path> collectFiles(Path dir, boolean includeNested) {
+  public static Stream<Path> collectFiles(Path dir, boolean includeNested) {
     return Files.walk(dir, includeNested ? Integer.MAX_VALUE : 1)
         .filter(path -> !Files.isDirectory(path))
         .filter(path -> !path.toString().contains("/build/"));
