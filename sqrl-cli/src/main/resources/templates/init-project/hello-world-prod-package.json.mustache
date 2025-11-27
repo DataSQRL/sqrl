@@ -1,0 +1,17 @@
+{
+  "version": "1",
+  "enabled-engines": [{{{prod-engines}}}],
+  "script": {
+    "main": "hello_world.sqrl",
+    "config": {
+      "source-type": "prod"
+    }
+  },
+  "engines": {
+    "flink": {
+      "config": {
+        "execution.runtime-mode": "{{exec-mode}}"
+      }
+    }
+  }
+}

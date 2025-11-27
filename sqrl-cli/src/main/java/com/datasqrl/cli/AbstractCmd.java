@@ -23,26 +23,37 @@ import com.datasqrl.error.ErrorPrinter;
 import com.datasqrl.util.OsProcessManager;
 import com.google.inject.ProvisionException;
 import java.nio.file.Path;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.SneakyThrows;
 import picocli.CommandLine;
 import picocli.CommandLine.IExitCodeGenerator;
+import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
+import picocli.CommandLine.ParentCommand;
 
 public abstract class AbstractCmd implements Runnable, IExitCodeGenerator {
 
   protected static final Path DEFAULT_TARGET_DIR =
       Path.of(SqrlConstants.BUILD_DIR_NAME, SqrlConstants.DEPLOY_DIR_NAME);
 
-  @CommandLine.ParentCommand protected DatasqrlCli cli;
+  @ParentCommand protected DatasqrlCli cli;
 
-  @CommandLine.Option(
+  @Parameters(
+      arity = "0..*",
+      description = "Package configuration file(s)",
+      scope = CommandLine.ScopeType.INHERIT)
+  protected List<Path> packageFiles = Collections.emptyList();
+
+  @Option(
       names = {"-t", "--target"},
       description = "Target directory for deployment artifacts and plans")
   protected Path targetDir = DEFAULT_TARGET_DIR;
 
-  @CommandLine.Option(
-      names = {"-B", "--batch-mode"},
-      description = "Run in batch mode (disable colored output)")
+  @Option(
+      names = {"-B", "--batch-output"},
+      description = "Run in batch output mode (disable colored output)")
   protected boolean batchMode = false;
 
   protected final AtomicInteger exitCode = new AtomicInteger(0);

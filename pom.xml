@@ -159,7 +159,6 @@
     <postgres.version>42.7.8</postgres.version>
     <projectreactor.version>3.8.0</projectreactor.version>
     <protobuf.version>4.33.1</protobuf.version>
-    <reflections.version>0.10.2</reflections.version>
     <scala.version>2.12</scala.version>
     <scram.version>2.1</scram.version>
     <slf4j.version>1.7.36</slf4j.version>
@@ -1004,6 +1003,7 @@
               <header>com/mycila/maven/plugin/license/templates/APACHE-2.txt</header>
               <excludes>
                 <exclude>**/src/test/resources/**</exclude>
+                <exclude>**/resources/templates/init-project/**</exclude>
                 <exclude>**/m2e-target/**</exclude>
                 <exclude>bin/**</exclude>
                 <exclude>documentation/**/index_features_list.txt</exclude>

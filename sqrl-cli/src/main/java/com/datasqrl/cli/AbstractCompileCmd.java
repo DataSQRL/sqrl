@@ -53,7 +53,7 @@ public abstract class AbstractCompileCmd extends AbstractCmd {
     if (getGoal() == ExecutionGoal.COMPILE) {
       formatter.phaseStart("Initializing build environment");
     }
-    var sqrlConfig = initPackageJson(errors, cli.rootDir, cli.packageFiles);
+    var sqrlConfig = initPackageJson(errors, cli.rootDir, packageFiles);
 
     DirectoryManager.prepareTargetDirectory(getTargetDir());
     errors.checkFatal(
