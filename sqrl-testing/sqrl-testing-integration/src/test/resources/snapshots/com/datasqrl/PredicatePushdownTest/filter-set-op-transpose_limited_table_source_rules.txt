@@ -1,0 +1,23 @@
+== Abstract Syntax Tree ==
+LogicalProject(a=[$0], v=[$1])
++- LogicalFilter(condition=[>($0, 1)])
+   +- LogicalUnion(all=[true])
+      :- LogicalProject(a=[$0], v=[$2])
+      :  +- LogicalProject(a=[$0], country=[$1], v=[$2])
+      :     +- LogicalValues(tuples=[[{ 1, 'DE', 5 }, { 2, 'US', 50 }, { 3, 'DE', 500 }]])
+      +- LogicalProject(a=[$0], v=[$2])
+         +- LogicalProject(a=[$0], country=[$1], v=[$2])
+            +- LogicalValues(tuples=[[{ 1, 'DE', 5 }, { 2, 'US', 50 }, { 3, 'DE', 500 }]])
+
+== Optimized Physical Plan ==
+Union(all=[true], union=[a, v])
+:- Calc(select=[a, v], where=[>(a, 1)])
+:  +- Values(type=[RecordType(INTEGER a, CHAR(2) country, INTEGER v)], tuples=[[{ 1, 'DE', 5 }, { 2, 'US', 50 }, { 3, 'DE', 500 }]])
++- Calc(select=[a, v], where=[>(a, 1)])
+   +- Values(type=[RecordType(INTEGER a, CHAR(2) country, INTEGER v)], tuples=[[{ 1, 'DE', 5 }, { 2, 'US', 50 }, { 3, 'DE', 500 }]])
+
+== Optimized Execution Plan ==
+Union(all=[true], union=[a, v])
+:- Calc(select=[a, v], where=[(a > 1)])(reuse_id=[1])
+:  +- Values(tuples=[[{ 1, 'DE', 5 }, { 2, 'US', 50 }, { 3, 'DE', 500 }]])
++- Reused(reference_id=[1])

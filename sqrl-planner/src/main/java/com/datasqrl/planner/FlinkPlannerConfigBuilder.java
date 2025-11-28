@@ -19,6 +19,7 @@ import com.datasqrl.config.PackageJson.CompilerConfig;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,26 +29,47 @@ import org.apache.flink.configuration.Configuration;
 import org.apache.flink.table.api.PlannerConfig;
 import org.apache.flink.table.planner.calcite.CalciteConfigBuilder;
 import org.apache.flink.table.planner.plan.optimize.program.FlinkChainedProgram;
+import org.apache.flink.table.planner.plan.optimize.program.FlinkGroupProgram;
 import org.apache.flink.table.planner.plan.optimize.program.FlinkOptimizeProgram;
 import org.apache.flink.table.planner.plan.optimize.program.FlinkStreamProgram;
 import org.apache.flink.table.planner.plan.optimize.program.StreamOptimizeContext;
-import org.apache.flink.table.planner.plan.rules.logical.FlinkFilterProjectTransposeRule;
+import org.apache.flink.table.planner.plan.rules.logical.PushFilterInCalcIntoTableSourceScanRule;
+import org.apache.flink.table.planner.plan.rules.logical.PushFilterIntoLegacyTableSourceScanRule;
+import org.apache.flink.table.planner.plan.rules.logical.PushFilterIntoTableSourceScanRule;
+import org.apache.flink.table.planner.plan.rules.logical.PushPartitionIntoLegacyTableSourceScanRule;
+import org.apache.flink.table.planner.plan.rules.logical.PushPartitionIntoTableSourceScanRule;
+import org.apache.flink.table.planner.plan.rules.logical.PushProjectIntoLegacyTableSourceScanRule;
+import org.apache.flink.table.planner.plan.rules.logical.PushProjectIntoTableSourceScanRule;
 import scala.Tuple2;
 
 @RequiredArgsConstructor
 @Slf4j
 public class FlinkPlannerConfigBuilder {
 
-  /** Rules to remove from the logical program to disable filter pushdown in specific cases. */
-  private static final List<? extends RelOptRule> FILTER_RULES_TO_REMOVE =
+  /** We do not touch these programs. */
+  private static final Set<String> IGNORED_PROGRAMS =
+      Set.of(
+          FlinkStreamProgram.DECORRELATE(),
+          FlinkStreamProgram.PHYSICAL_REWRITE(),
+          FlinkStreamProgram.TIME_INDICATOR());
+
+  /** Rules to remove in case of {@link PredicatePushdownRules#LIMITED_TABLE_SOURCE_RULES}. */
+  private static final List<? extends RelOptRule> TABLE_SOURCE_RULES_TO_REMOVE =
       List.of(
+          PushFilterIntoLegacyTableSourceScanRule.INSTANCE,
+          PushFilterIntoTableSourceScanRule.INSTANCE,
+          PushPartitionIntoLegacyTableSourceScanRule.INSTANCE(),
+          PushPartitionIntoTableSourceScanRule.INSTANCE,
+          PushProjectIntoLegacyTableSourceScanRule.INSTANCE(),
+          PushProjectIntoTableSourceScanRule.INSTANCE);
+
+  /** Extra rules to remove in case of {@link PredicatePushdownRules#LIMITED_RULES}. */
+  private static final List<? extends RelOptRule> GENERAL_FILTER_RULES_TO_REMOVE =
+      List.of(
+          // Removing prevents push filter through an aggregation
           CoreRules.FILTER_AGGREGATE_TRANSPOSE,
-          // ^ Removing prevents push filter through an aggregation
-          FlinkFilterProjectTransposeRule.INSTANCE,
-          // ^ Removing prevents push a filter past a project
-          CoreRules.FILTER_SET_OP_TRANSPOSE
-          // ^ Removing prevents cloning filters to each UNION/INTERSECT leg
-          );
+          // Removing prevents cloning filters to each UNION/INTERSECT leg
+          CoreRules.FILTER_SET_OP_TRANSPOSE);
 
   private final CompilerConfig compilerConfig;
   private final SqrlFunctionCatalog sqrlFunctionCatalog;
@@ -79,88 +101,125 @@ public class FlinkPlannerConfigBuilder {
     var customStreamProgram = new FlinkChainedProgram<StreamOptimizeContext>();
 
     for (var programName : origStreamProgram.getProgramNames()) {
+      var program = origStreamProgram.get(programName).get();
 
-      /*
-       * Strip table scan related rules from PREDICATE_PUSHDOWN program.
-       * This effectively means the following rules:
-       * - PushPartitionIntoLegacyTableSourceScanRule
-       * - PushPartitionIntoTableSourceScanRule
-       * - PushFilterIntoTableSourceScanRule
-       * - PushFilterIntoLegacyTableSourceScanRule
-       */
-      if (rules == PredicatePushdownRules.LIMITED_PP_RULES
-          && programName.equals(FlinkStreamProgram.PREDICATE_PUSHDOWN())) {
-
-        var program = origStreamProgram.get(programName).get();
-        var changed =
-            stripPrograms(
-                program, elem -> elem._2 != null && elem._2.toLowerCase().contains("table scan"));
-
-        if (!changed) {
-          log.warn("Could not remove table scan related rules from PREDICATE_PUSHDOWN program");
-        }
+      // Programs that can be ignored.
+      if (IGNORED_PROGRAMS.contains(programName)) {
+        customStreamProgram.addLast(programName, program);
+        continue;
       }
 
-      // Remove PREDICATE_PUSHDOWN program completely, and strip filter rules from the logical
-      // program.
-      if (rules == PredicatePushdownRules.LIMITED_FILTER_RULES) {
-
-        if (programName.equals(FlinkStreamProgram.PREDICATE_PUSHDOWN())) {
-          continue;
-        }
-
-        if (programName.equals(FlinkStreamProgram.LOGICAL())) {
-          var logicalProgram = origStreamProgram.get(programName).get();
-          stripRules(
-              logicalProgram,
-              r ->
-                  FILTER_RULES_TO_REMOVE.stream()
-                      .map(fr -> fr.getClass())
-                      .anyMatch(cls -> cls.isInstance(r)));
-        }
+      if (rules == PredicatePushdownRules.LIMITED_TABLE_SOURCE_RULES) {
+        removeTableSourceScanRules(programName, program);
       }
 
-      customStreamProgram.addLast(programName, origStreamProgram.get(programName).get());
+      if (rules == PredicatePushdownRules.LIMITED_RULES) {
+        removeTableSourceScanRules(programName, program);
+        stripRules(programName, program, r -> anyMatch(GENERAL_FILTER_RULES_TO_REMOVE, r));
+      }
+
+      customStreamProgram.addLast(programName, program);
     }
 
     return customStreamProgram;
   }
 
+  private void removeTableSourceScanRules(
+      String programName, FlinkOptimizeProgram<StreamOptimizeContext> program) {
+
+    if (programName.equals(FlinkStreamProgram.PREDICATE_PUSHDOWN())) {
+      var changed =
+          stripPrograms(
+              program, elem -> elem._2 != null && elem._2.toLowerCase().contains("table scan"));
+
+      if (!changed) {
+        log.warn("Could not remove table scan related rules from PREDICATE_PUSHDOWN program");
+      }
+    }
+
+    stripRules(programName, program, r -> anyMatch(TABLE_SOURCE_RULES_TO_REMOVE, r));
+    stripRules(
+        programName, program, r -> matches(PushFilterInCalcIntoTableSourceScanRule.INSTANCE, r));
+  }
+
+  private <T extends RelOptRule> boolean matches(T ruleToMatch, RelOptRule rule) {
+    return anyMatch(List.of(ruleToMatch), rule);
+  }
+
+  private boolean anyMatch(List<? extends RelOptRule> rulesToMatch, RelOptRule rule) {
+    return rulesToMatch.stream().map(fr -> fr.getClass()).anyMatch(cls -> cls.isInstance(rule));
+  }
+
+  ////////////////////////////////////////////////////////////////////////////////
+  ///// Reflection utils to access private Flink class fields
+  ////////////////////////////////////////////////////////////////////////////////
+
   // Strip program(s) from a FlinkGroupProgram instance based on a predicate.
-  @SuppressWarnings({"unchecked"})
   private boolean stripPrograms(
       FlinkOptimizeProgram<?> flinkGroupProgram,
       Predicate<Tuple2<FlinkOptimizeProgram<?>, String>> shouldRemove) {
-    try {
-      var f = flinkGroupProgram.getClass().getDeclaredField("programs");
-      f.setAccessible(true);
 
-      var programs = (List<Tuple2<FlinkOptimizeProgram<?>, String>>) f.get(flinkGroupProgram);
+    var programs = extractGroupPrograms(flinkGroupProgram);
 
-      return programs.removeIf(shouldRemove);
-
-    } catch (ReflectiveOperationException e) {
-      throw new RuntimeException("Failed to strip programs from FlinkGroupProgram", e);
-    }
+    return programs.removeIf(shouldRemove);
   }
 
   // Strip rule(s) from a FlinkOptimizeProgram instance based on a predicate.
+  // In case of a FlinkGroupProgram, rule strip happens for every program.
   @SuppressWarnings("unchecked")
   private void stripRules(
-      FlinkOptimizeProgram<?> flinkRuleSetProgram, Predicate<RelOptRule> shouldRemove) {
-    try {
-      var f = flinkRuleSetProgram.getClass().getSuperclass().getDeclaredField("rules");
-      f.setAccessible(true);
+      String programName, FlinkOptimizeProgram<?> program, Predicate<RelOptRule> shouldRemove) {
 
-      var current = (List<RelOptRule>) f.get(flinkRuleSetProgram);
-      var mutable = new ArrayList<>(current);
+    List<?> programs;
+    if (program instanceof FlinkGroupProgram) {
+      programs = extractGroupPrograms(program).stream().map(t -> t._1).toList();
 
-      var changed = mutable.removeIf(shouldRemove);
-      if (changed) {
-        f.set(flinkRuleSetProgram, List.copyOf(mutable));
-      }
-    } catch (ReflectiveOperationException e) {
-      throw new RuntimeException("Failed to strip rules from FlinkRuleSetProgram", e);
+    } else {
+      programs = List.of(program);
     }
+
+    for (var internalProgram : programs) {
+      if (internalProgram instanceof FlinkGroupProgram) {
+        stripRules(programName, (FlinkOptimizeProgram<?>) internalProgram, shouldRemove);
+        continue;
+      }
+
+      try {
+        var f = internalProgram.getClass().getSuperclass().getDeclaredField("rules");
+        f.setAccessible(true);
+
+        var current = (List<RelOptRule>) f.get(internalProgram);
+        var mutable = new ArrayList<>(current);
+
+        var changed = mutable.removeIf(shouldRemove);
+        if (changed) {
+          f.set(internalProgram, List.copyOf(mutable));
+        }
+      } catch (ReflectiveOperationException e) {
+        log.warn("Could not strip rules from program: " + programName, e);
+      }
+    }
+  }
+
+  // Extract the internal program list of a FlinkGroupProgram.
+  @SuppressWarnings("unchecked")
+  private List<Tuple2<FlinkOptimizeProgram<?>, String>> extractGroupPrograms(
+      FlinkOptimizeProgram<?> groupProgram) {
+
+    if (groupProgram instanceof FlinkGroupProgram) {
+      try {
+        var f = groupProgram.getClass().getDeclaredField("programs");
+        f.setAccessible(true);
+
+        return (List<Tuple2<FlinkOptimizeProgram<?>, String>>) f.get(groupProgram);
+
+      } catch (ReflectiveOperationException e) {
+        log.warn("Could not extract internal program list of a FlinkGroupProgram", e);
+      }
+    } else {
+      log.warn("Expected a FlinkGroupProgram, got: {}", groupProgram.getClass());
+    }
+
+    return List.of();
   }
 }

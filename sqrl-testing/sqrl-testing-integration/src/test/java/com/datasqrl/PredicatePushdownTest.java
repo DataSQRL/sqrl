@@ -22,48 +22,68 @@ import static org.mockito.Mockito.when;
 import com.datasqrl.config.CompilerConfigImpl;
 import com.datasqrl.planner.FlinkPlannerConfigBuilder;
 import com.datasqrl.planner.PredicatePushdownRules;
+import com.datasqrl.planner.parser.ParsedObject;
 import com.datasqrl.planner.parser.SqlScriptStatementSplitter;
 import com.datasqrl.util.ArgumentsProviders;
 import com.datasqrl.util.SnapshotTest;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.function.Predicate;
+import java.util.List;
 import java.util.stream.Stream;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.flink.configuration.Configuration;
-import org.apache.flink.table.api.ExplainDetail;
 import org.apache.flink.table.api.ExplainFormat;
 import org.apache.flink.table.api.TableEnvironment;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsSource;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.support.ParameterDeclarations;
 
 class PredicatePushdownTest extends AbstractAssetSnapshotTest {
 
   public static final Path SCRIPT_DIR = getResourcesDirectory("predicate-pushdown");
 
+  @TempDir private Path tempDir;
+
   PredicatePushdownTest() {
     super(null);
+  }
+
+  @AfterEach
+  @Override
+  public void cleanup() throws IOException {
+    super.cleanup();
+    clearDir(Path.of("/tmp", "pp-tests"));
   }
 
   @ParameterizedTest
   @ArgumentsSource(SqlFiles.class)
   void testPredicatePushdownRules(Path sqlFile, PredicatePushdownRules rules) throws Exception {
-    var flinkConf = new Configuration();
-    var compilerConf = mock(CompilerConfigImpl.class);
-    when(compilerConf.predicatePushdownRules()).thenReturn(rules);
+    executeTest(sqlFile, rules);
+  }
 
-    var configBuilder = new FlinkPlannerConfigBuilder(compilerConf, flinkConf);
+  @Disabled("Intended for manual usage")
+  @ParameterizedTest
+  @EnumSource(PredicatePushdownRules.class)
+  void testSingleFile(PredicatePushdownRules rules) throws Exception {
+    var sqlFile = SCRIPT_DIR.resolve("filter-set-op-transpose.sql");
+    assertThat(sqlFile).isRegularFile();
 
-    var tEnv = TableEnvironment.create(flinkConf);
-    tEnv.getConfig().setPlannerConfig(configBuilder.build());
+    executeTest(sqlFile, rules);
+  }
 
-    var sourceSql = Files.readString(sqlFile);
-    var stmts = SqlScriptStatementSplitter.splitStatements(sourceSql);
+  private void executeTest(Path sqlFile, PredicatePushdownRules rules) throws Exception {
+    var stmts = parseStatements(sqlFile);
+    var tEnv = initTableEnv(rules);
 
+    // Execute SQL statements
     String planText = null;
     var it = stmts.iterator();
     while (it.hasNext()) {
@@ -73,12 +93,13 @@ class PredicatePushdownTest extends AbstractAssetSnapshotTest {
         tEnv.executeSql(stmt.get());
       } else {
         // Explain the last SELECT
-        planText = tEnv.explainSql(stmt.get(), ExplainFormat.TEXT, ExplainDetail.CHANGELOG_MODE);
+        planText = tEnv.explainSql(stmt.get(), ExplainFormat.TEXT);
       }
     }
 
     assertThat(planText).isNotBlank();
 
+    // Create snapshot
     var snapshotName =
         FilenameUtils.removeExtension(sqlFile.getFileName().toString())
             + '_'
@@ -91,9 +112,26 @@ class PredicatePushdownTest extends AbstractAssetSnapshotTest {
     createSnapshot();
   }
 
-  @Override
-  public Predicate<Path> getPlanDirFilter() {
-    return path -> false;
+  private List<ParsedObject<String>> parseStatements(Path sqlFile) throws Exception {
+    var sourceSql =
+        Files.readString(sqlFile).replaceAll("__tempdir__", tempDir.toAbsolutePath().toString());
+
+    return SqlScriptStatementSplitter.splitStatements(sourceSql);
+  }
+
+  private TableEnvironment initTableEnv(PredicatePushdownRules rules) {
+    var flinkConf = new Configuration();
+    flinkConf.setString("table.exec.iceberg.use-v2-sink", "true");
+
+    var compilerConf = mock(CompilerConfigImpl.class);
+    when(compilerConf.predicatePushdownRules()).thenReturn(rules);
+
+    var tEnv = TableEnvironment.create(flinkConf);
+
+    var configBuilder = new FlinkPlannerConfigBuilder(compilerConf, flinkConf);
+    tEnv.getConfig().setPlannerConfig(configBuilder.build());
+
+    return tEnv;
   }
 
   static class SqlFiles extends ArgumentsProviders.FileProvider {

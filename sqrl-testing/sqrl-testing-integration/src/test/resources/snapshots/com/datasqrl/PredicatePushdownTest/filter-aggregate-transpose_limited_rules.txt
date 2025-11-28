@@ -1,0 +1,20 @@
+== Abstract Syntax Tree ==
+LogicalFilter(condition=[=($0, 'DE')])
++- LogicalAggregate(group=[{0}], c=[COUNT()])
+   +- LogicalProject(country=[$1])
+      +- LogicalProject(a=[$0], country=[$1], v=[$2])
+         +- LogicalValues(tuples=[[{ 1, 'DE', 5 }, { 2, 'US', 50 }, { 3, 'DE', 500 }]])
+
+== Optimized Physical Plan ==
+Calc(select=[country, c], where=[=(country, 'DE')])
++- GroupAggregate(groupBy=[country], select=[country, COUNT(*) AS c])
+   +- Exchange(distribution=[hash[country]])
+      +- Calc(select=[country])
+         +- Values(type=[RecordType(INTEGER a, CHAR(2) country, INTEGER v)], tuples=[[{ 1, 'DE', 5 }, { 2, 'US', 50 }, { 3, 'DE', 500 }]])
+
+== Optimized Execution Plan ==
+Calc(select=[country, c], where=[(country = 'DE')])
++- GroupAggregate(groupBy=[country], select=[country, COUNT(*) AS c])
+   +- Exchange(distribution=[hash[country]])
+      +- Calc(select=[country])
+         +- Values(tuples=[[{ 1, 'DE', 5 }, { 2, 'US', 50 }, { 3, 'DE', 500 }]])

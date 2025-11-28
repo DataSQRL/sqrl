@@ -17,15 +17,15 @@ package com.datasqrl.planner;
 
 public enum PredicatePushdownRules {
 
-  /** Use the default Flink stream program. */
+  /** Use the default Flink stream program set and rules. */
   DEFAULT,
 
-  /** Strip table scan related rules from the PREDICATE_PUSHDOWN program. */
-  LIMITED_PP_RULES,
+  /** Strip all table source related predicate pushdown rules from any stream program. */
+  LIMITED_TABLE_SOURCE_RULES,
 
   /**
-   * Completely omit the PREDICATE_PUSHDOWN program, and also strip filter rules from the LOGICAL
-   * program.
+   * All {@code LIMITED_TABLE_SOURCE_RULES} changes, and also strip some additional filter rules
+   * from the LOGICAL program.
    */
-  LIMITED_FILTER_RULES
+  LIMITED_RULES
 }
