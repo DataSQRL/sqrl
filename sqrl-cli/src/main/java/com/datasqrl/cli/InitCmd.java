@@ -40,11 +40,18 @@ import picocli.CommandLine.Parameters;
 public class InitCmd implements Runnable, IExitCodeGenerator {
 
   private static final String INIT_PROJECT_DIR = "templates/init-project";
+  private static final String PROJECT_NAME_PLACEHOLDER = "__projectname__";
 
   private final MustacheFactory mustacheFactory = new DefaultMustacheFactory();
 
   @Parameters(index = "0", description = "Project type. Valid values: ${COMPLETION-CANDIDATES}")
   ProjectType projectType = ProjectType.STREAM;
+
+  @Parameters(
+      index = "1",
+      description =
+          "Project name. The SQRL script and package config files will be named like this")
+  String projectName;
 
   @Option(
       names = {"--batch"},
@@ -106,21 +113,15 @@ public class InitCmd implements Runnable, IExitCodeGenerator {
         .collect(
             Collectors.toMap(
                 e -> e.getKey().toString().substring(prefix.length()),
-                e -> parseValue(e.getValue().toString())));
+                e -> e.getValue().toString()));
   }
 
-  private static Object parseValue(String value) {
-    try {
-      return Integer.parseInt(value.trim());
-
-    } catch (NumberFormatException e) {
-      return value.trim();
-    }
-  }
-
-  private static Path getTargetPath(Path targetRoot, String resourcePath) {
+  private Path getTargetPath(Path targetRoot, String resourcePath) {
     var subProjectPath =
-        resourcePath.replace(INIT_PROJECT_DIR, "").replaceFirst("^/", ""); // Strip leading slash
+        resourcePath
+            .replace(INIT_PROJECT_DIR, "")
+            .replace(PROJECT_NAME_PLACEHOLDER, projectName)
+            .replaceFirst("^/", ""); // Strip leading slash
 
     return targetRoot.resolve(subProjectPath);
   }

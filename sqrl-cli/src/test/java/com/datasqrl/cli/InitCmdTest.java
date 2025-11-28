@@ -32,6 +32,8 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 class InitCmdTest {
 
+  private static final String PROJECT_NAME = "dummy-project";
+
   @TempDir private Path tempDir;
 
   private InitCmd initCmd;
@@ -39,6 +41,7 @@ class InitCmdTest {
   @BeforeEach
   void setup() {
     initCmd = new InitCmd();
+    initCmd.projectName = PROJECT_NAME;
   }
 
   @Test
@@ -67,7 +70,7 @@ class InitCmdTest {
     initCmd.initProject(() -> tempDir);
 
     // Then
-    var prodPkg = tempDir.resolve("hello-world-prod-package.json");
+    var prodPkg = tempDir.resolve(PROJECT_NAME + "-prod-package.json");
     assertThat(prodPkg).exists();
 
     var prodContent = Files.readString(prodPkg);
@@ -85,8 +88,8 @@ class InitCmdTest {
     initCmd.initProject(() -> tempDir);
 
     // Then
-    var prodPkg = tempDir.resolve("hello-world-prod-package.json");
-    var testPkg = tempDir.resolve("hello-world-test-package.json");
+    var prodPkg = tempDir.resolve(PROJECT_NAME + "-prod-package.json");
+    var testPkg = tempDir.resolve(PROJECT_NAME + "-test-package.json");
     assertThat(prodPkg).exists();
     assertThat(testPkg).exists();
 
