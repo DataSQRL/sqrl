@@ -57,10 +57,7 @@
     },
     "iceberg": {
       "connector": "iceberg",
-      "catalog-table": "${sqrl:table-name}",
-      "warehouse": "iceberg-data",
-      "catalog-type": "hadoop",
-      "catalog-name": "mycatalog"
+      "catalog-table": "${sqrl:table-name}"
     },
     "postgres": {
       "connector": "jdbc-sqrl",
