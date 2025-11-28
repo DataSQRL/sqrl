@@ -1,0 +1,5 @@
+CREATE TABLE Messages (
+    uuid STRING NOT NULL METADATA FROM 'uuid',
+    message STRING NOT NULL,
+    message_time TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp'
+)

@@ -28,13 +28,6 @@
   <name>SQRL :: Planner</name>
 
   <dependencies>
-    <!-- Utils -->
-    <dependency>
-      <groupId>org.reflections</groupId>
-      <artifactId>reflections</artifactId>
-      <version>${reflections.version}</version>
-    </dependency>
-
     <dependency>
       <groupId>org.apache.avro</groupId>
       <artifactId>avro</artifactId>

@@ -1,0 +1,5 @@
+CREATE TABLE Messages (
+    WATERMARK FOR `message_time` AS `message_time`
+) WITH (
+    'source.monitor-interval' = '10 sec'
+) LIKE `test-data/messages.jsonl`; -- infers table schema from data to ensure that test data is in-sync with prod sources

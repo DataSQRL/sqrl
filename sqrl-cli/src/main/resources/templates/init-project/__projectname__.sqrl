@@ -1,0 +1,6 @@
+IMPORT connectors.sources-{{source-type}} AS sources;
+
+HelloWorld := SELECT * FROM sources.Messages ORDER BY message_time DESC;
+
+/*+ test */
+HelloWorldTest := SELECT COUNT(*) AS message_count FROM HelloWorld;

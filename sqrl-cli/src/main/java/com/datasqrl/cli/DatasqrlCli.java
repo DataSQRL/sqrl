@@ -16,26 +16,17 @@
 package com.datasqrl.cli;
 
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.List;
 import lombok.Getter;
 import lombok.NonNull;
 import picocli.CommandLine;
-import picocli.CommandLine.ScopeType;
 
 @CommandLine.Command(
     name = "datasqrl",
     mixinStandardHelpOptions = true,
     versionProvider = CliVersionProvider.class,
-    subcommands = {CompileCmd.class, TestCmd.class, RunCmd.class, ExecuteCmd.class})
+    subcommands = {InitCmd.class, CompileCmd.class, TestCmd.class, RunCmd.class, ExecuteCmd.class})
 @Getter
 public class DatasqrlCli implements Runnable {
-
-  @CommandLine.Parameters(
-      arity = "0..*",
-      description = "Package configuration file(s)",
-      scope = ScopeType.INHERIT)
-  protected List<Path> packageFiles = Collections.emptyList();
 
   @Override
   public void run() {

@@ -1,0 +1,5 @@
+{"uuid": "f47ac10b-58cc-4372-a567-0e02b2c3d479", "message": "Hello, World!", "message_time": "2025-10-10T09:15:30.000Z"}
+{"uuid": "550e8400-e29b-41d4-a716-446655440000", "message": "Welcome to the system", "message_time": "2025-10-10T10:22:45.123Z"}
+{"uuid": "6ba7b810-9dad-11d1-80b4-00c04fd430c8", "message": "Data pipeline initialized", "message_time": "2025-10-10T11:05:12.456Z"}
+{"uuid": "9c3a7f5e-1234-4b89-a567-89abcdef1234", "message": "Processing batch records", "message_time": "2025-10-10T12:30:00.789Z"}
+{"uuid": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d", "message": "System health check passed", "message_time": "2025-10-10T13:45:18.012Z"}

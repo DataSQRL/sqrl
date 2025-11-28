@@ -1,0 +1,22 @@
+{
+  "version": "1",
+  "enabled-engines": [{{{test-engines}}}],
+  "script": {
+    "main": "hello_world.sqrl",
+    "config": {
+      "source-type": "test"
+    }
+  },
+  "engines": {
+    "flink": {
+      "config": {
+        "execution.runtime-mode": "{{exec-mode}}",
+        "table.exec.source.idle-timeout": "1 s"
+      }
+    }
+  },
+  "test-runner": {
+    "delay-sec": -1,
+    "required-checkpoints": {{required-checkpoints}}
+  }
+}
