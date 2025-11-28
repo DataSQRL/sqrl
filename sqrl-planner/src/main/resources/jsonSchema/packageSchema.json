@@ -33,10 +33,15 @@
         "logger": {
           "type": "string"
         },
-        "extended-scalar-types": {
+        "compile-flink-plan": {
           "type": "boolean"
         },
-        "compile-flink-plan": {
+        "predicate-pushdown-rules": {
+          "type": "string",
+          "enum": ["DEFAULT", "LIMITED_TABLE_SOURCE_RULES", "LIMITED_RULES"],
+          "pattern": "^[A-Z_]+$"
+        },
+        "extended-scalar-types": {
           "type": "boolean"
         },
         "cost-model": {

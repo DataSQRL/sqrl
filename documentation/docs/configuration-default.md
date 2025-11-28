@@ -8,8 +8,9 @@ The following is the [default configuration file](https://raw.githubusercontent.
   "enabled-engines": ["vertx", "postgres", "kafka", "flink"],
   "compiler": {
     "logger": "print",
-    "extended-scalar-types": true,
     "compile-flink-plan": true,
+    "extended-scalar-types": true,
+    "predicate-pushdown-rules": "LIMITED_TABLE_SOURCE_RULES",
     "cost-model": "DEFAULT",
     "explain": {
       "sql": false,
