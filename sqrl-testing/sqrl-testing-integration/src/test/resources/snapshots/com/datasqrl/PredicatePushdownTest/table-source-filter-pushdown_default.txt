@@ -1,0 +1,12 @@
+== Abstract Syntax Tree ==
+LogicalProject(id=[$0], category=[$1], price=[$2])
++- LogicalFilter(condition=[AND(=($1, 'book'), <($2, 20))])
+   +- LogicalTableScan(table=[[ctl, default, items]], hints=[[[OPTIONS inheritPath:[] options:{streaming=true, monitor-interval=1s}]]])
+
+== Optimized Physical Plan ==
+Calc(select=[id, CAST('book':VARCHAR(2147483647) CHARACTER SET "UTF-16LE" AS VARCHAR(2147483647) CHARACTER SET "UTF-16LE") AS category, price], where=[AND(=(category, 'book':VARCHAR(2147483647) CHARACTER SET "UTF-16LE"), <(price, 20))])
++- TableSourceScan(table=[[ctl, default, items, filter=[and(=(category, 'book':VARCHAR(2147483647) CHARACTER SET "UTF-16LE"), <(price, 20))]]], fields=[id, category, price], hints=[[[OPTIONS options:{streaming=true, monitor-interval=1s}]]])
+
+== Optimized Execution Plan ==
+Calc(select=[id, CAST('book' AS VARCHAR(2147483647)) AS category, price], where=[((category = 'book') AND (price < 20))])
++- TableSourceScan(table=[[ctl, default, items, filter=[and(=(category, 'book':VARCHAR(2147483647) CHARACTER SET "UTF-16LE"), <(price, 20))]]], fields=[id, category, price], hints=[[[OPTIONS options:{streaming=true, monitor-interval=1s}]]])

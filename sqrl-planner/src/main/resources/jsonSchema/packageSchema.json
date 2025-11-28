@@ -38,7 +38,7 @@
         },
         "predicate-pushdown-rules": {
           "type": "string",
-          "enum": ["DEFAULT", "LIMITED_PP_RULES", "LIMITED_FILTER_RULES"],
+          "enum": ["DEFAULT", "LIMITED_TABLE_SOURCE_RULES", "LIMITED_RULES"],
           "pattern": "^[A-Z_]+$"
         },
         "extended-scalar-types": {

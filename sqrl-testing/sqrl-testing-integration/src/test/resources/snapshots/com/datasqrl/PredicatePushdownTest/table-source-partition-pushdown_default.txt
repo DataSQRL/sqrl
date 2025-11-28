@@ -4,8 +4,8 @@ LogicalProject(a=[$0], country=[$1])
    +- LogicalTableScan(table=[[default_catalog, default_database, fs_t]])
 
 == Optimized Physical Plan ==
-Calc(select=[a, country], where=[>(v, 10)], changelogMode=[I])
-+- TableSourceScan(table=[[default_catalog, default_database, fs_t, partitions=[{dt=2025-01-01}], filter=[>(v, 10)], project=[a, country, v], metadata=[]]], fields=[a, country, v], changelogMode=[I])
+Calc(select=[a, country], where=[>(v, 10)])
++- TableSourceScan(table=[[default_catalog, default_database, fs_t, partitions=[{dt=2025-01-01}], filter=[>(v, 10)], project=[a, country, v], metadata=[]]], fields=[a, country, v])
 
 == Optimized Execution Plan ==
 Calc(select=[a, country], where=[(v > 10)])

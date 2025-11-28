@@ -5,7 +5,7 @@
     "logger": "print",
     "compile-flink-plan": true,
     "extended-scalar-types": true,
-    "predicate-pushdown-rules": "LIMITED_PP_RULES",
+    "predicate-pushdown-rules": "LIMITED_TABLE_SOURCE_RULES",
     "cost-model": "DEFAULT",
     "explain": {
       "sql": false,
