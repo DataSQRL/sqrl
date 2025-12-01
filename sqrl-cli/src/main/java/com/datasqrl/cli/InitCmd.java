@@ -15,9 +15,9 @@
  */
 package com.datasqrl.cli;
 
-import static com.datasqrl.config.SqrlConstants.BUILD_DIR_NAME;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.util.ResourceUtils;
 import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.MustacheFactory;
@@ -32,12 +32,11 @@ import lombok.SneakyThrows;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.flink.api.common.RuntimeExecutionMode;
 import picocli.CommandLine;
-import picocli.CommandLine.IExitCodeGenerator;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 @CommandLine.Command(name = "init", description = "Initializes an empty SQRL project")
-public class InitCmd implements Runnable, IExitCodeGenerator {
+public class InitCmd extends BaseCmd {
 
   private static final String INIT_PROJECT_DIR = "templates/init-project";
   private static final String PROJECT_NAME_PLACEHOLDER = "__projectname__";
@@ -59,8 +58,8 @@ public class InitCmd implements Runnable, IExitCodeGenerator {
   boolean batch = false;
 
   @Override
-  public void run() {
-    initProject(() -> Path.of('/' + BUILD_DIR_NAME));
+  protected void runInternal(ErrorCollector errors) {
+    initProject(() -> cli.rootDir);
   }
 
   @SneakyThrows
@@ -124,11 +123,6 @@ public class InitCmd implements Runnable, IExitCodeGenerator {
             .replaceFirst("^/", ""); // Strip leading slash
 
     return targetRoot.resolve(subProjectPath);
-  }
-
-  @Override
-  public int getExitCode() {
-    return 0;
   }
 
   public enum ProjectType {

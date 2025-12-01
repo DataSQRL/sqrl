@@ -35,6 +35,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -103,9 +104,9 @@ public class OsProcessManager {
    * directory and setting proper file ownership.
    *
    * @param buildDir the build directory where logs should be moved and ownership should be set
-   * @throws Exception if log file movement fails or ownership setting encounters errors
    */
-  public void teardown(Path buildDir) throws Exception {
+  @SneakyThrows
+  public void teardown(Path buildDir) {
     Path source = Paths.get(LOGS_PATH);
     Path target = buildDir.resolve("logs");
 

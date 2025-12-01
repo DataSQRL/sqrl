@@ -24,7 +24,7 @@ import picocli.CommandLine;
 @CommandLine.Command(
     name = "execute",
     description = "Executes an already compiled SQRL script using its existing build artifacts")
-public class ExecuteCmd extends AbstractCmd {
+public class ExecuteCmd extends BasePackageConfCmd {
 
   @Override
   protected void runInternal(ErrorCollector errors) throws Exception {

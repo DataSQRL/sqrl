@@ -15,55 +15,31 @@
  */
 package com.datasqrl.cli;
 
-import com.datasqrl.cli.output.OutputFormatter;
 import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrinter;
-import com.datasqrl.util.OsProcessManager;
 import com.google.inject.ProvisionException;
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.SneakyThrows;
-import picocli.CommandLine;
 import picocli.CommandLine.IExitCodeGenerator;
-import picocli.CommandLine.Option;
-import picocli.CommandLine.Parameters;
 import picocli.CommandLine.ParentCommand;
 
-public abstract class AbstractCmd implements Runnable, IExitCodeGenerator {
-
-  protected static final Path DEFAULT_TARGET_DIR =
-      Path.of(SqrlConstants.BUILD_DIR_NAME, SqrlConstants.DEPLOY_DIR_NAME);
+public abstract class BaseCmd implements Runnable, IExitCodeGenerator {
 
   @ParentCommand protected DatasqrlCli cli;
 
-  @Parameters(
-      arity = "0..*",
-      description = "Package configuration file(s)",
-      scope = CommandLine.ScopeType.INHERIT)
-  protected List<Path> packageFiles = Collections.emptyList();
-
-  @Option(
-      names = {"-t", "--target"},
-      description = "Target directory for deployment artifacts and plans")
-  protected Path targetDir = DEFAULT_TARGET_DIR;
-
-  @Option(
-      names = {"-B", "--batch-output"},
-      description = "Run in batch output mode (disable colored output)")
-  protected boolean batchMode = false;
-
   protected final AtomicInteger exitCode = new AtomicInteger(0);
-  protected long startTime;
+
+  private long startTime;
 
   @Override
   @SneakyThrows
   public void run() {
     startTime = System.currentTimeMillis();
-    ErrorCollector collector = ErrorCollector.root();
+    var collector = ErrorCollector.root();
+
     try {
       runInternal(collector);
       cli.statusHook.onSuccess(collector);
@@ -79,14 +55,13 @@ public abstract class AbstractCmd implements Runnable, IExitCodeGenerator {
       collector.getCatcher().handle(e);
       e.printStackTrace();
       cli.statusHook.onFailure(e, collector);
+
+    } finally {
+      teardown();
     }
 
     if (collector.hasErrors()) {
       exitCode.set(1);
-    }
-
-    if (!cli.internalTestExec) {
-      getOsProcessManager().teardown(getBuildDir());
     }
 
     System.out.println(ErrorPrinter.prettyPrint(collector));
@@ -94,28 +69,16 @@ public abstract class AbstractCmd implements Runnable, IExitCodeGenerator {
 
   protected abstract void runInternal(ErrorCollector errors) throws Exception;
 
-  protected OutputFormatter getOutputFormatter() {
-    return new OutputFormatter(batchMode);
+  protected void teardown() {
+    // By default, do nothing
   }
 
   protected long getElapsedTime() {
     return System.currentTimeMillis() - startTime;
   }
 
-  protected OsProcessManager getOsProcessManager() {
-    return new OsProcessManager(System.getenv());
-  }
-
   protected Path getBuildDir() {
     return cli.rootDir.resolve(SqrlConstants.BUILD_DIR_NAME);
-  }
-
-  protected Path getTargetDir() {
-    if (targetDir.isAbsolute()) {
-      return targetDir;
-    }
-
-    return cli.rootDir.resolve(targetDir);
   }
 
   @Override
