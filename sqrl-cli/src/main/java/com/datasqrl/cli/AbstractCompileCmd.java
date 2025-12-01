@@ -39,7 +39,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.lang3.tuple.Pair;
 
-public abstract class AbstractCompileCmd extends AbstractCmd {
+public abstract class AbstractCompileCmd extends BasePackageConfCmd {
 
   public abstract ExecutionGoal getGoal();
 
@@ -99,7 +99,8 @@ public abstract class AbstractCompileCmd extends AbstractCmd {
     if (getGoal() == ExecutionGoal.COMPILE) {
       formatter.phaseStart("Generating deployment artifacts");
     }
-    postprocess(packager, getTargetDir(), plan.getLeft(), plan.getRight());
+
+    packager.postprocess(getTargetDir(), plan.getLeft(), plan.getRight());
 
     if (getGoal() == ExecutionGoal.COMPILE) {
       printCompilationResults(formatter);
@@ -128,11 +129,6 @@ public abstract class AbstractCompileCmd extends AbstractCmd {
     if (!errors.hasErrors()) {
       execute(errors);
     }
-  }
-
-  protected void postprocess(
-      Packager packager, Path targetDir, PhysicalPlan plan, TestPlan testPlan) {
-    packager.postprocess(targetDir, plan, testPlan);
   }
 
   /**

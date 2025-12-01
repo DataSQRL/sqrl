@@ -21,7 +21,7 @@ import lombok.NonNull;
 import picocli.CommandLine;
 
 @CommandLine.Command(
-    name = "datasqrl",
+    name = "sqrl",
     mixinStandardHelpOptions = true,
     versionProvider = CliVersionProvider.class,
     subcommands = {InitCmd.class, CompileCmd.class, TestCmd.class, RunCmd.class, ExecuteCmd.class})
