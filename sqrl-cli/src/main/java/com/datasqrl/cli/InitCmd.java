@@ -59,7 +59,11 @@ public class InitCmd extends BaseCmd {
 
   @Override
   protected void runInternal(ErrorCollector errors) {
-    initProject(() -> cli.rootDir);
+    try {
+      initProject(() -> cli.rootDir);
+    } catch (Exception e) {
+      throw errors.exception("Project initialization failed: %s", e);
+    }
   }
 
   @SneakyThrows

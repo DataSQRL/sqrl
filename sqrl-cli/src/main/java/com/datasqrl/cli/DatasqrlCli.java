@@ -24,7 +24,14 @@ import picocli.CommandLine;
     name = "sqrl",
     mixinStandardHelpOptions = true,
     versionProvider = CliVersionProvider.class,
-    subcommands = {InitCmd.class, CompileCmd.class, TestCmd.class, RunCmd.class, ExecuteCmd.class})
+    subcommands = {
+      InitCmd.class,
+      AddUdfCmd.class,
+      CompileCmd.class,
+      TestCmd.class,
+      RunCmd.class,
+      ExecuteCmd.class
+    })
 @Getter
 public class DatasqrlCli implements Runnable {
 
