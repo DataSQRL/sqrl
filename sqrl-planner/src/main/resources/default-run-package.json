@@ -12,5 +12,12 @@
         "taskmanager.memory.network.max": "800m"
       }
     }
+  },
+  "connectors": {
+    "iceberg": {
+      "warehouse": "iceberg-data",
+      "catalog-type": "hadoop",
+      "catalog-name": "default_catalog"
+    }
   }
 }

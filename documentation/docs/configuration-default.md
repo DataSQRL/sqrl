@@ -29,18 +29,18 @@ The following is the [default configuration file](https://raw.githubusercontent.
     "flink": {
       "config": {
         "execution.runtime-mode": "STREAMING",
-        "execution.target": "local",
-        "execution.attached": true,
-        "rest.address": "localhost",
-        "rest.port": 8081,
-        "state.backend.type": "rocksdb",
-        "table.exec.resource.default-parallelism": 1,
-        "taskmanager.memory.network.max": "800m"
+        "security.delegation.tokens.enabled": false,
+        "state.backend.type": "rocksdb"
       }
     },
     "duckdb": {
       "url": "jdbc:duckdb:"
-    }
+    },
+    "kafka": {
+      "retention": null,
+      "watermark": "0 ms",
+      "transaction-watermark": "0 ms"
+  }
   },
   "connectors": {
     "kafka-mutation": {
@@ -62,10 +62,7 @@ The following is the [default configuration file](https://raw.githubusercontent.
     },
     "iceberg": {
       "connector": "iceberg",
-      "catalog-table": "${sqrl:table-name}",
-      "warehouse": "iceberg-data",
-      "catalog-type": "hadoop",
-      "catalog-name": "mycatalog"
+      "catalog-table": "${sqrl:table-name}"
     },
     "postgres": {
       "connector": "jdbc-sqrl",
