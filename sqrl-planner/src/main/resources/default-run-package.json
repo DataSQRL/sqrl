@@ -17,7 +17,7 @@
     "iceberg": {
       "warehouse": "iceberg-data",
       "catalog-type": "hadoop",
-      "catalog-name": "mycatalog"
+      "catalog-name": "default_catalog"
     }
   }
 }
