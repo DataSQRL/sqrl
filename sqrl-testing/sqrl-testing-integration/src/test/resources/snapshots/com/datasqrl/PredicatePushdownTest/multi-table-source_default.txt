@@ -1,0 +1,22 @@
+== Abstract Syntax Tree ==
+LogicalUnion(all=[true])
+:- LogicalProject(country=[$0], z=[$2])
+:  +- LogicalProject(my_country=[CONCAT($1, '-x')], country=[$1], z=[+($2, 5)], dt=[$3], a=[$0])
+:     +- LogicalTableScan(table=[[default_catalog, default_database, fs_t]])
++- LogicalProject(country=[$3], z=[$4])
+   +- LogicalProject(my_country=[CONCAT($1, '-x')], country=[$1], z=[+($2, 5)], dt=[$3], a=[$0])
+      +- LogicalTableScan(table=[[default_catalog, default_database, fs_t]])
+
+== Optimized Physical Plan ==
+Union(all=[true], union=[country, z])
+:- Calc(select=[CONCAT(country, '-x') AS country, +(v, 5) AS z])
+:  +- TableSourceScan(table=[[default_catalog, default_database, fs_t, project=[a, country, v, dt], metadata=[]]], fields=[a, country, v, dt])
++- Calc(select=[dt, a])
+   +- TableSourceScan(table=[[default_catalog, default_database, fs_t, project=[a, country, v, dt], metadata=[]]], fields=[a, country, v, dt])
+
+== Optimized Execution Plan ==
+Union(all=[true], union=[country, z])
+:- Calc(select=[CONCAT(country, '-x') AS country, (v + 5) AS z])
+:  +- TableSourceScan(table=[[default_catalog, default_database, fs_t, project=[a, country, v, dt], metadata=[]]], fields=[a, country, v, dt])(reuse_id=[1])
++- Calc(select=[dt, a])
+   +- Reused(reference_id=[1])

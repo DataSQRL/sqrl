@@ -1,0 +1,9 @@
+== Abstract Syntax Tree ==
+LogicalProject(a=[$0], country=[$1])
++- LogicalTableScan(table=[[default_catalog, default_database, fs_t]])
+
+== Optimized Physical Plan ==
+TableSourceScan(table=[[default_catalog, default_database, fs_t, project=[a, country], metadata=[]]], fields=[a, country])
+
+== Optimized Execution Plan ==
+TableSourceScan(table=[[default_catalog, default_database, fs_t, project=[a, country], metadata=[]]], fields=[a, country])
