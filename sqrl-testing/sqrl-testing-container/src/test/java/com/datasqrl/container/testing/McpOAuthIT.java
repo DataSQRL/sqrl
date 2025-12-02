@@ -59,7 +59,7 @@ class McpOAuthIT extends SqrlContainerTestBase {
 
   @Override
   protected String getTestCaseName() {
-    return "oauth-authorized";
+    return "oauth-authorized_compile";
   }
 
   @BeforeAll
