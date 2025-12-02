@@ -54,6 +54,12 @@ public class OAuth2AuthFactory {
 
     var oauth2Options = new OAuth2Options().setSite(site);
 
+    if (config.getClientId() != null && !config.getClientId().isBlank()) {
+      oauth2Options.setClientId(config.getClientId());
+    } else {
+      oauth2Options.setClientId("datasqrl-mcp");
+    }
+
     return OpenIDConnectAuth.discover(vertx, oauth2Options)
         .map(
             oauth2 -> {

@@ -8,7 +8,7 @@ MyTable := SELECT val
 MyTableTest := SELECT * FROM MyTable;
 
 -- Query exposed via MCP tools endpoint
-MyTableQuery(limit INT NOT NULL) :=
+MyTableQuery(maxResults INT NOT NULL) :=
     SELECT t.*
       FROM MyTable t
-     LIMIT :limit;
+     LIMIT :maxResults;
