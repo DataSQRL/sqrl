@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -34,17 +35,17 @@ import lombok.extern.slf4j.Slf4j;
 // Simplified example WebSocket client code using Vert.x
 @RequiredArgsConstructor
 @Slf4j
-public class SubscriptionClient {
+public class SubscriptionClient implements AutoCloseable {
   private static final int MAX_RETRIES = 3;
   private static final long INITIAL_DELAY_MS = 100;
 
   private final ObjectMapper objectMapper = new ObjectMapper();
   private final Vertx vertx = Vertx.vertx();
   private final CompletableFuture<Void> connectedFuture = new CompletableFuture<>();
-  private final List<String> messages = new ArrayList<>();
+  @Getter private final List<String> messages = new ArrayList<>();
 
   private final String version;
-  private final String name;
+  @Getter private final String name;
   private final String query;
   private final Map<String, String> headers;
 
@@ -107,7 +108,7 @@ public class SubscriptionClient {
               // Send initial connection message
               sendConnectionInit()
                   .onComplete(success -> connectedFuture.complete(null))
-                  .onFailure(error -> connectedFuture.completeExceptionally(error));
+                  .onFailure(connectedFuture::completeExceptionally);
             })
         .onFailure(
             throwable -> {
@@ -188,28 +189,18 @@ public class SubscriptionClient {
     }
   }
 
-  public void stop() {
-    // Send 'complete' message to close the subscription properly
-    Map<String, Object> message = Map.of("id", System.nanoTime(), "type", "complete");
-    waitCompletion(sendMessage(message));
-
-    // Close WebSocket
-    if (webSocket != null) {
+  @Override
+  public void close() throws Exception {
+    if (webSocket != null && !webSocket.isClosed()) {
+      // Send 'complete' message to close the subscription properly
+      waitCompletion(sendMessage(Map.of("id", System.nanoTime(), "type", "complete")));
       waitCompletion(webSocket.close());
     }
     waitCompletion(vertx.close());
   }
 
   @SneakyThrows
-  private <E> E waitCompletion(Future<E> future) {
-    return future.toCompletionStage().toCompletableFuture().get();
-  }
-
-  public List<String> getMessages() {
-    return messages;
-  }
-
-  public String getName() {
-    return name;
+  private void waitCompletion(Future<?> future) {
+    future.toCompletionStage().toCompletableFuture().get();
   }
 }
