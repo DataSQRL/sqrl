@@ -73,7 +73,7 @@ class PredicatePushdownTest extends AbstractAssetSnapshotTest {
   @ParameterizedTest
   @EnumSource(PredicatePushdownRules.class)
   void testSingleFile(PredicatePushdownRules rules) throws Exception {
-    var sqlFile = SCRIPT_DIR.resolve("filter-set-op-transpose.sql");
+    var sqlFile = SCRIPT_DIR.resolve("multi-table-source.sql");
     assertThat(sqlFile).isRegularFile();
 
     executeTest(sqlFile, rules);
@@ -92,7 +92,7 @@ class PredicatePushdownTest extends AbstractAssetSnapshotTest {
       if (it.hasNext()) {
         tEnv.executeSql(stmt.get());
       } else {
-        // Explain the last SELECT
+        // Explain the last SELECT to get the physical plan
         planText = tEnv.explainSql(stmt.get(), ExplainFormat.TEXT);
       }
     }
