@@ -206,7 +206,7 @@ public class DatasqrlTest {
 
         // Stop subscriptions
         for (var client : subscriptionClients) {
-          client.stop();
+          client.close();
         }
 
         // Collect messages and write to snapshots
