@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.fail;
 
 import com.datasqrl.cli.AssertStatusHook;
 import com.datasqrl.cli.DatasqrlTest;
-import com.datasqrl.cli.output.OutputFormatter;
+import com.datasqrl.cli.output.NoOutputFormatter;
 import com.datasqrl.cli.output.TestOutputManager;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.SqrlConstants;
@@ -134,9 +134,9 @@ abstract class AbstractFullUseCaseTest {
               .resolve(SqrlConstants.PLAN_DIR);
       var flinkConfig = loadInternalTestFlinkConfig(planDir, env);
       var outputMgr = new TestOutputManager(rootDir);
-      var formatter = new OutputFormatter(true);
       var test =
-          new DatasqrlTest(rootDir, planDir, packageJson, flinkConfig, env, outputMgr, formatter);
+          new DatasqrlTest(
+              rootDir, planDir, packageJson, flinkConfig, env, outputMgr, new NoOutputFormatter());
       try {
         var run = test.run();
         if (run != 0) {

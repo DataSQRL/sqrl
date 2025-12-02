@@ -133,7 +133,7 @@ public abstract class TestResult {
       var testFile = "build/test/" + testName + ".graphql";
       var diffFile = snapshotDir + "/" + testName + ".diff";
 
-      formatter.failureDetail(testName, testFile, expectedPath, actualPath, diffFile);
+      formatter.failureDetails(testName, testFile, expectedPath, actualPath, diffFile);
     }
   }
 

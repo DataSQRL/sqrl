@@ -15,136 +15,38 @@
  */
 package com.datasqrl.cli.output;
 
-import java.io.PrintStream;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 
-public class OutputFormatter {
+public interface OutputFormatter {
 
-  private static final String SEPARATOR =
-      "------------------------------------------------------------------------";
-  private static final int TEST_NAME_WIDTH = 50;
-  private static final DateTimeFormatter TIMESTAMP_FORMAT =
-      DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+  void separator();
 
-  private final AnsiColors colors;
-  private final PrintStream out;
-  private final PrintStream err;
+  void newline();
 
-  public OutputFormatter(boolean batchMode) {
-    this(batchMode, System.out, System.err);
-  }
+  void header(String title);
 
-  public OutputFormatter(boolean batchMode, PrintStream out, PrintStream err) {
-    this.colors = new AnsiColors(batchMode);
-    this.out = out;
-    this.err = err;
-  }
+  void sectionHeader(String title);
 
-  public void separator() {
-    out.println(SEPARATOR);
-  }
+  void phaseStart(String phaseName);
 
-  public void newline() {
-    out.println();
-  }
+  void info(String message);
 
-  public void header(String title) {
-    separator();
-    out.println(colors.boldCyan() + title + colors.reset());
-    separator();
-    newline();
-  }
+  void warning(String message);
 
-  public void info(String message) {
-    out.println(message);
-  }
+  void error(String message);
 
-  public void warning(String message) {
-    out.println(colors.boldYellow() + message + colors.reset());
-  }
+  void success(String message);
 
-  public void error(String message) {
-    err.println(colors.boldRed() + message + colors.reset());
-  }
+  void helpText(String message);
 
-  public void success(String message) {
-    out.println(colors.boldGreen() + message + colors.reset());
-  }
+  void helpLink(String label, String url);
 
-  public void testResult(String testName, boolean success) {
-    var status =
-        success
-            ? colors.boldGreen() + "SUCCESS" + colors.reset()
-            : colors.boldRed() + "FAILURE" + colors.reset();
+  void buildStatus(boolean success, long durationMillis, LocalDateTime finishedAt);
 
-    var dots = ".".repeat(Math.max(1, TEST_NAME_WIDTH - testName.length()));
-    out.println(testName + " " + dots + " " + status);
-  }
+  void testResult(String testName, boolean success);
 
-  public void buildStatus(boolean success, long durationMillis, LocalDateTime finishedAt) {
-    separator();
-    if (success) {
-      out.println(colors.boldGreen() + "BUILD SUCCESS" + colors.reset());
-    } else {
-      out.println(colors.boldRed() + "BUILD FAILURE" + colors.reset());
-    }
-    separator();
-    out.println("Total time:  " + formatDuration(durationMillis));
-    out.println("Finished at: " + finishedAt.format(TIMESTAMP_FORMAT));
-    separator();
-  }
+  void testSummary(int totalTests, int failures);
 
-  public void phaseStart(String phaseName) {
-    out.println(phaseName + " ...");
-  }
-
-  public void phaseSuccess(String message) {
-    out.println(message);
-  }
-
-  public void sectionHeader(String title) {
-    newline();
-    separator();
-    out.println(colors.bold() + title + colors.reset());
-    separator();
-    newline();
-  }
-
-  public void testSummary(int totalTests, int failures) {
-    newline();
-    out.println("Tests run: " + totalTests + ", Failures: " + failures);
-  }
-
-  public void failureDetail(
-      String testName, String testFile, String expectedFile, String actualFile, String diffFile) {
-    out.println("  " + colors.bold() + testName + colors.reset());
-    out.println("    Test:     " + testFile);
-    out.println("    Expected: " + expectedFile);
-    out.println("    Actual:   " + actualFile);
-    out.println("    Diff:     " + diffFile);
-    newline();
-  }
-
-  public void helpText(String message) {
-    newline();
-    out.println(message);
-  }
-
-  public void helpLink(String label, String url) {
-    newline();
-    out.println("-> [" + label + "] " + url);
-  }
-
-  private String formatDuration(long millis) {
-    long seconds = millis / 1000;
-    long minutes = seconds / 60;
-    seconds = seconds % 60;
-
-    if (minutes > 0) {
-      return String.format("%02d:%02d min", minutes, seconds);
-    } else {
-      return seconds + " s";
-    }
-  }
+  void failureDetails(
+      String testName, String testFile, String expectedFile, String actualFile, String diffFile);
 }
