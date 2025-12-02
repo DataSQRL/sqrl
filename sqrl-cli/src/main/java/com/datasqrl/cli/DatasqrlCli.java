@@ -26,7 +26,7 @@ import picocli.CommandLine;
     versionProvider = CliVersionProvider.class,
     subcommands = {
       InitCmd.class,
-      AddUdfCmd.class,
+      AddFuncCmd.class,
       CompileCmd.class,
       TestCmd.class,
       RunCmd.class,

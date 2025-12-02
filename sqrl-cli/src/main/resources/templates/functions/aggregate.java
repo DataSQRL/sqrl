@@ -11,7 +11,7 @@ import org.apache.flink.table.functions.AggregateFunction;
     },
     output = @DataTypeHint("DOUBLE")
 )
-public class __udfname__ extends AggregateFunction<Double, __udfname__.Accumulator> {
+public class __fnname__ extends AggregateFunction<Double, __fnname__.Accumulator> {
 
   public static class Accumulator {
     public double weightedSum;

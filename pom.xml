@@ -1004,7 +1004,7 @@
               <excludes>
                 <exclude>**/src/test/resources/**</exclude>
                 <exclude>**/resources/templates/init-project/**</exclude>
-                <exclude>**/resources/templates/udfs/**</exclude>
+                <exclude>**/resources/templates/functions/**</exclude>
                 <exclude>**/m2e-target/**</exclude>
                 <exclude>bin/**</exclude>
                 <exclude>documentation/**/index_features_list.txt</exclude>

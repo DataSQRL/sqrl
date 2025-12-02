@@ -30,24 +30,22 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 @CommandLine.Command(
-    name = "add-udf",
+    name = "add-func",
     description =
-        "Adds a new user-defined function into the 'functions' folder of an existing project")
-public class AddUdfCmd extends BaseCmd {
+        "Adds a new function definition into the 'functions' folder of an existing project")
+public class AddFuncCmd extends BaseCmd {
 
-  private static final String UDF_TEMPLATE_DIR = "templates/udfs";
-  private static final String AGGREGATE_UDF_TEMPLATE = UDF_TEMPLATE_DIR + "/aggregate.java";
-  private static final String SCALAR_UDF_TEMPLATE = UDF_TEMPLATE_DIR + "/scalar.java";
-  private static final String UDF_NAME_PLACEHOLDER = "__udfname__";
+  private static final String FN_TEMPLATE_DIR = "templates/functions";
+  private static final String FN_NAME_PLACEHOLDER = "__fnname__";
+  private static final String AGGREGATE_UDF_TEMPLATE = FN_TEMPLATE_DIR + "/aggregate.java";
+  private static final String SCALAR_UDF_TEMPLATE = FN_TEMPLATE_DIR + "/scalar.java";
 
-  @Parameters(
-      index = "0",
-      description = "Name of the newly added user-defined Java file and function class")
-  String udfName;
+  @Parameters(index = "0", description = "Name of the function")
+  String fnName;
 
   @Option(
       names = {"--aggregate"},
-      description = "Add an aggregate UDF function instead of a scalar one")
+      description = "Adds an aggregate function instead of the default scalar one")
   boolean aggregate = false;
 
   @Override
@@ -55,7 +53,7 @@ public class AddUdfCmd extends BaseCmd {
     try {
       addUdf(() -> cli.rootDir);
     } catch (Exception e) {
-      throw errors.exception("Failed to add UDF %s: %s", udfName, e);
+      throw errors.exception("Failed to add function '%s': %s", fnName, e);
     }
   }
 
@@ -64,10 +62,10 @@ public class AddUdfCmd extends BaseCmd {
     var resource = aggregate ? AGGREGATE_UDF_TEMPLATE : SCALAR_UDF_TEMPLATE;
 
     try (var is = ResourceUtils.getResourceAsStream(resource)) {
-      var targetPath = targetRoot.get().resolve("functions").resolve(udfName + ".java");
+      var targetPath = targetRoot.get().resolve("functions").resolve(fnName + ".java");
       Files.createDirectories(targetPath.getParent());
 
-      var content = IOUtils.toString(is, UTF_8).replaceAll(UDF_NAME_PLACEHOLDER, udfName);
+      var content = IOUtils.toString(is, UTF_8).replaceAll(FN_NAME_PLACEHOLDER, fnName);
       Files.writeString(targetPath, content, StandardOpenOption.CREATE_NEW);
     }
   }

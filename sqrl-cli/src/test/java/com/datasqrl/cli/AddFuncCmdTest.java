@@ -28,34 +28,34 @@ import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-class AddUdfCmdTest {
+class AddFuncCmdTest {
 
   private static final String UDF_NAME = "DummyFn";
 
   @TempDir private Path tempDir;
 
-  private AddUdfCmd addUdfCmd;
+  private AddFuncCmd addFuncCmd;
 
   @BeforeEach
   void setup() {
-    addUdfCmd = new AddUdfCmd();
-    addUdfCmd.udfName = UDF_NAME;
+    addFuncCmd = new AddFuncCmd();
+    addFuncCmd.fnName = UDF_NAME;
   }
 
   @Test
   void givenExistingDirectory_whenInitProject_thenThrowsException() {
     // Initialize once
-    addUdfCmd.addUdf(() -> tempDir);
+    addFuncCmd.addUdf(() -> tempDir);
 
     // When & Then - try to initialize again in same directory
-    assertThatThrownBy(() -> addUdfCmd.addUdf(() -> tempDir))
+    assertThatThrownBy(() -> addFuncCmd.addUdf(() -> tempDir))
         .isInstanceOf(FileAlreadyExistsException.class);
   }
 
   @Test
   void givenUdfName_whenAddUdf_thenCreatesFileWithCorrectName() {
     // When
-    addUdfCmd.addUdf(() -> tempDir);
+    addFuncCmd.addUdf(() -> tempDir);
 
     // Then
     var udfFile = tempDir.resolve("functions").resolve(UDF_NAME + ".java");
@@ -65,7 +65,7 @@ class AddUdfCmdTest {
   @Test
   void givenUdfName_whenAddUdf_thenReplacesPlaceholderInContent() throws IOException {
     // When
-    addUdfCmd.addUdf(() -> tempDir);
+    addFuncCmd.addUdf(() -> tempDir);
 
     // Then
     var udfFile = tempDir.resolve("functions").resolve(UDF_NAME + ".java");
@@ -80,10 +80,10 @@ class AddUdfCmdTest {
   void givenAggregateFlag_whenAddUdf_thenCreatesCorrectUdfType(boolean aggregate)
       throws IOException {
     // Given
-    addUdfCmd.aggregate = aggregate;
+    addFuncCmd.aggregate = aggregate;
 
     // When
-    addUdfCmd.addUdf(() -> tempDir);
+    addFuncCmd.addUdf(() -> tempDir);
 
     // Then
     var udfFile = tempDir.resolve("functions").resolve(UDF_NAME + ".java");
@@ -105,7 +105,7 @@ class AddUdfCmdTest {
     assertThat(functionsDir).doesNotExist();
 
     // When
-    addUdfCmd.addUdf(() -> tempDir);
+    addFuncCmd.addUdf(() -> tempDir);
 
     // Then
     assertThat(functionsDir).exists().isDirectory();
@@ -114,10 +114,10 @@ class AddUdfCmdTest {
   @Test
   void givenScalarUdf_whenAddUdf_thenContainsExpectedImports() throws IOException {
     // Given
-    addUdfCmd.aggregate = false;
+    addFuncCmd.aggregate = false;
 
     // When
-    addUdfCmd.addUdf(() -> tempDir);
+    addFuncCmd.addUdf(() -> tempDir);
 
     // Then
     var udfFile = tempDir.resolve("functions").resolve(UDF_NAME + ".java");
@@ -131,10 +131,10 @@ class AddUdfCmdTest {
   @Test
   void givenAggregateUdf_whenAddUdf_thenContainsExpectedStructure() throws IOException {
     // Given
-    addUdfCmd.aggregate = true;
+    addFuncCmd.aggregate = true;
 
     // When
-    addUdfCmd.addUdf(() -> tempDir);
+    addFuncCmd.addUdf(() -> tempDir);
 
     // Then
     var udfFile = tempDir.resolve("functions").resolve(UDF_NAME + ".java");
