@@ -240,8 +240,18 @@
           "type": "object",
           "properties": {
             "authKind": {
+              "description": "Deprecated: use enabledAuth instead. Authentication type.",
               "type": "string",
               "enum": ["NONE", "JWT"]
+            },
+            "enabledAuth": {
+              "description": "List of enabled authentication methods.",
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["JWT", "OAUTH"]
+              },
+              "uniqueItems": true
             },
             "config": {
               "type": "object",

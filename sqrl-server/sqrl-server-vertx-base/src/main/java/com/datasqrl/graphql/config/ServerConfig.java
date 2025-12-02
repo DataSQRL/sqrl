@@ -20,6 +20,7 @@ import static com.datasqrl.graphql.SqrlObjectMapper.MAPPER;
 import com.datasqrl.env.EnvVariableNames;
 import com.datasqrl.env.GlobalEnvironmentStore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonObject;
@@ -48,6 +49,9 @@ public class ServerConfig {
   private CorsHandlerOptions corsHandlerOptions = new CorsHandlerOptions();
   private SwaggerConfig swaggerConfig = new SwaggerConfig();
   private JWTAuthOptions jwtAuth;
+
+  @JsonProperty("oauthConfig")
+  private OAuthConfig oauthConfig;
 
   private KafkaConfig.KafkaMutationConfig kafkaMutationConfig;
   private KafkaConfig.KafkaSubscriptionConfig kafkaSubscriptionConfig;
@@ -115,6 +119,11 @@ public class ServerConfig {
   @JsonSetter("jwtAuth")
   public void setJwtAuthFromJson(Map<String, Object> options) {
     this.jwtAuth = options == null ? null : new JWTAuthOptions(new JsonObject(options));
+  }
+
+  @JsonSetter("oauthConfig")
+  public void setOauthConfigFromJson(Map<String, Object> options) {
+    this.oauthConfig = options == null ? null : MAPPER.convertValue(options, OAuthConfig.class);
   }
 
   ////////////////////////////////////////////////////////////////////////////////

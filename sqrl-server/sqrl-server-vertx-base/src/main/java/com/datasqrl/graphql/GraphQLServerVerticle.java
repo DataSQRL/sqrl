@@ -36,9 +36,12 @@ import com.symbaloo.graphqlmicrometer.MicrometerInstrumentation;
 import graphql.GraphQL;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
+import io.vertx.ext.auth.authentication.AuthenticationProvider;
 import io.vertx.ext.auth.jwt.JWTAuth;
+import io.vertx.ext.auth.oauth2.OAuth2Auth;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.JWTAuthHandler;
+import io.vertx.ext.web.handler.OAuth2AuthHandler;
 import io.vertx.ext.web.handler.graphql.GraphQLHandler;
 import io.vertx.ext.web.handler.graphql.GraphiQLHandler;
 import io.vertx.ext.web.handler.graphql.ws.GraphQLWSHandler;
@@ -61,7 +64,7 @@ public class GraphQLServerVerticle extends AbstractVerticle {
   private final ServerConfig config;
   private final String modelVersion;
   private final RootGraphqlModel model;
-  private final Optional<JWTAuth> authProvider;
+  private final Optional<AuthenticationProvider> authProvider;
   private final Optional<FlinkExecFunctionPlan> execFunctionPlan;
 
   private GraphQL graphQLEngine;
@@ -103,11 +106,11 @@ public class GraphQLServerVerticle extends AbstractVerticle {
     authProvider.ifPresent(
         (auth) -> {
           log.info(
-              "Applying JWT authentication to GraphQL endpoint: {}",
+              "Applying authentication to GraphQL endpoint: {}",
               this.config.getServletConfig().getGraphQLEndpoint(modelVersion));
           // Required for adding auth on ws handler
           System.setProperty("io.vertx.web.router.setup.lenient", "true");
-          handler.handler(JWTAuthHandler.create(auth));
+          handler.handler(createAuthHandler(auth));
           handler.failureHandler(new JwtFailureHandler());
         });
 
@@ -137,11 +140,22 @@ public class GraphQLServerVerticle extends AbstractVerticle {
     var readers = ImmutableMap.<MetadataType, MetadataReader>builder();
     authProvider.ifPresent(
         (auth) -> {
-          log.debug("Configuring JWT authentication metadata reader");
+          log.debug("Configuring authentication metadata reader");
           readers.put(MetadataType.AUTH, new AuthMetadataReader());
         });
 
     return readers.build();
+  }
+
+  private io.vertx.ext.web.handler.AuthenticationHandler createAuthHandler(
+      AuthenticationProvider auth) {
+    if (auth instanceof JWTAuth jwtAuth) {
+      return JWTAuthHandler.create(jwtAuth);
+    } else if (auth instanceof OAuth2Auth oauth2Auth) {
+      return OAuth2AuthHandler.create(vertx, oauth2Auth);
+    } else {
+      throw new IllegalArgumentException("Unsupported auth provider type: " + auth.getClass());
+    }
   }
 
   /**

@@ -1,0 +1,23 @@
+{
+  "version": "1",
+  "script": {
+    "main": "oauth-authorized.sqrl"
+  },
+  "compiler": {
+    "compile-flink-plan": false
+  },
+  "engines": {
+    "vertx": {
+      "enabledAuth": ["OAUTH"],
+      "config": {
+        "oauthConfig": {
+          "provider": "keycloak",
+          "issuer": "${KEYCLOAK_ISSUER}",
+          "audience": "datasqrl-mcp",
+          "scopesSupported": ["mcp:tools", "mcp:resources"],
+          "useJwks": true
+        }
+      }
+    }
+  }
+}

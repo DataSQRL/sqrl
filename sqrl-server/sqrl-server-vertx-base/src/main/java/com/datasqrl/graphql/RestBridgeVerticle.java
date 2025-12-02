@@ -23,10 +23,13 @@ import com.datasqrl.graphql.server.operation.RestMethodType;
 import com.datasqrl.graphql.swagger.SwaggerService;
 import io.vertx.core.Promise;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.auth.authentication.AuthenticationProvider;
 import io.vertx.ext.auth.jwt.JWTAuth;
+import io.vertx.ext.auth.oauth2.OAuth2Auth;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.JWTAuthHandler;
+import io.vertx.ext.web.handler.OAuth2AuthHandler;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -55,9 +58,9 @@ public class RestBridgeVerticle extends AbstractBridgeVerticle {
       ServerConfig config,
       String modelVersion,
       RootGraphqlModel model,
-      Optional<JWTAuth> jwtAuth,
+      Optional<AuthenticationProvider> authProvider,
       GraphQLServerVerticle graphQLServerVerticle) {
-    super(router, config, modelVersion, model, jwtAuth, graphQLServerVerticle);
+    super(router, config, modelVersion, model, authProvider, graphQLServerVerticle);
   }
 
   @Override
@@ -166,10 +169,10 @@ public class RestBridgeVerticle extends AbstractBridgeVerticle {
           case NONE -> throw new UnsupportedOperationException("Should not be called");
         };
 
-    // Add JWT auth if configured
-    jwtAuth.ifPresent(
+    // Add auth if configured
+    authProvider.ifPresent(
         auth -> {
-          route.handler(JWTAuthHandler.create(auth));
+          route.handler(createAuthHandler(auth));
           route.failureHandler(new JwtFailureHandler());
         });
 
@@ -267,6 +270,17 @@ public class RestBridgeVerticle extends AbstractBridgeVerticle {
       // Use the actual server port from the request
       var port = ctx.request().localAddress().port();
       return scheme + "://" + (host != null ? host : "localhost") + ":" + port;
+    }
+  }
+
+  private io.vertx.ext.web.handler.AuthenticationHandler createAuthHandler(
+      AuthenticationProvider auth) {
+    if (auth instanceof JWTAuth jwtAuth) {
+      return JWTAuthHandler.create(jwtAuth);
+    } else if (auth instanceof OAuth2Auth oauth2Auth) {
+      return OAuth2AuthHandler.create(vertx, oauth2Auth);
+    } else {
+      throw new IllegalArgumentException("Unsupported auth provider type: " + auth.getClass());
     }
   }
 }
