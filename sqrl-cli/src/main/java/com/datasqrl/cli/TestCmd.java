@@ -15,6 +15,7 @@
  */
 package com.datasqrl.cli;
 
+import com.datasqrl.cli.output.OutputFormatter;
 import com.datasqrl.cli.output.TestOutputManager;
 import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.env.GlobalEnvironmentStore;
@@ -35,9 +36,11 @@ public class TestCmd extends AbstractCompileCmd {
     }
 
     try (var outputMgr = new TestOutputManager(cli.rootDir)) {
+      outputMgr.init();
       outputMgr.disableConsoleLogs();
 
-      var formatter = getOutputFormatter();
+      var formatter =
+          new OutputFormatter(batchMode, outputMgr.getOriginalOut(), outputMgr.getOriginalErr());
       formatter.header("DataSQRL Test Execution");
 
       var targetDir = getTargetDir();
@@ -53,8 +56,7 @@ public class TestCmd extends AbstractCompileCmd {
       var flinkConfig = ConfigLoaderUtils.loadFlinkConfig(planDir);
 
       var sqrlTest =
-          new DatasqrlTest(
-              cli.rootDir, planDir, sqrlConfig, flinkConfig, env, outputMgr, formatter);
+          new DatasqrlTest(cli.rootDir, planDir, sqrlConfig, flinkConfig, env, formatter);
       var testExitCode = sqrlTest.run();
       exitCode.set(testExitCode);
 

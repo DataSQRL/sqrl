@@ -21,7 +21,6 @@ import static com.datasqrl.env.EnvVariableNames.POSTGRES_USERNAME;
 import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
 
 import com.datasqrl.cli.output.OutputFormatter;
-import com.datasqrl.cli.output.TestOutputManager;
 import com.datasqrl.compile.TestPlan;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.engine.database.relational.JdbcStatement;
@@ -72,7 +71,6 @@ public class DatasqrlTest {
   private final PackageJson sqrlConfig;
   private final Configuration flinkConfig;
   private final Map<String, String> env;
-  private final TestOutputManager outputManager;
   private final OutputFormatter formatter;
 
   @SneakyThrows
@@ -111,7 +109,6 @@ public class DatasqrlTest {
       Thread.sleep(1000);
 
       formatter.sectionHeader("Running Tests");
-      outputManager.redirectStd();
       var subscriptionClients = new ArrayList<SubscriptionClient>();
       // 3. Execute subscription & mutation operations against the API and snapshot results
       if (testPlan != null) {
@@ -247,7 +244,6 @@ public class DatasqrlTest {
     } finally {
       run.cancel();
       Thread.sleep(1000); // wait for log lines to clear out
-      outputManager.restoreStd();
     }
 
     // 6. Print the test results on the command line
