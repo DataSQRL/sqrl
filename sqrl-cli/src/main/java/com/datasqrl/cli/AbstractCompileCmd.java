@@ -17,6 +17,7 @@ package com.datasqrl.cli;
 
 import static com.datasqrl.config.SqrlConstants.PACKAGE_JSON;
 
+import com.datasqrl.cli.output.OutputFormatter;
 import com.datasqrl.compile.CompilationProcess;
 import com.datasqrl.compile.DirectoryManager;
 import com.datasqrl.compile.TestPlan;
@@ -107,7 +108,7 @@ public abstract class AbstractCompileCmd extends BasePackageConfCmd {
     }
   }
 
-  private void printCompilationResults(com.datasqrl.cli.output.OutputFormatter formatter) {
+  private void printCompilationResults(OutputFormatter formatter) {
     formatter.newline();
     formatter.sectionHeader("Compilation Results");
     formatter.info("Deployment artifacts: " + getTargetDir());

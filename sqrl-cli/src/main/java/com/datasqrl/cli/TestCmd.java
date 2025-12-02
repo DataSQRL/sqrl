@@ -62,8 +62,7 @@ public class TestCmd extends AbstractCompileCmd {
       formatter.buildStatus(success, getElapsedTime(), LocalDateTime.now());
 
       if (!success) {
-        formatter.helpText("Run with --update-snapshots to update expected results.");
-        formatter.helpLink("Help 1", "https://datasqrl.com/docs/testing#snapshot-failures");
+        formatter.helpLink("Help 1", "https://docs.datasqrl.com/docs/howto/testing");
       }
     }
   }

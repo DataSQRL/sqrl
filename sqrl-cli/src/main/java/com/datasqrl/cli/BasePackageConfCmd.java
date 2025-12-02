@@ -15,6 +15,8 @@
  */
 package com.datasqrl.cli;
 
+import com.datasqrl.cli.output.DefaultOutputFormatter;
+import com.datasqrl.cli.output.NoOutputFormatter;
 import com.datasqrl.cli.output.OutputFormatter;
 import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.util.OsProcessManager;
@@ -54,7 +56,7 @@ public abstract class BasePackageConfCmd extends BaseCmd {
   }
 
   protected OutputFormatter getOutputFormatter() {
-    return new OutputFormatter(batchMode);
+    return cli.internalTestExec ? new NoOutputFormatter() : new DefaultOutputFormatter(batchMode);
   }
 
   protected OsProcessManager getOsProcessManager() {
