@@ -15,7 +15,6 @@
  */
 package com.datasqrl.cli;
 
-import com.datasqrl.cli.output.DefaultOutputFormatter;
 import com.datasqrl.cli.output.TestOutputManager;
 import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.env.GlobalEnvironmentStore;
@@ -36,12 +35,9 @@ public class TestCmd extends AbstractCompileCmd {
     }
 
     try (var outputMgr = new TestOutputManager(cli.rootDir)) {
-      outputMgr.init();
       outputMgr.disableConsoleLogs();
 
-      var formatter =
-          new DefaultOutputFormatter(
-              batchMode, outputMgr.getOriginalOut(), outputMgr.getOriginalErr());
+      var formatter = getOutputFormatter();
       formatter.header("DataSQRL Test Execution");
 
       var targetDir = getTargetDir();
@@ -77,8 +73,7 @@ public class TestCmd extends AbstractCompileCmd {
       formatter.buildStatus(success, getElapsedTime(), LocalDateTime.now());
 
       if (!success) {
-        formatter.helpText("Run with --update-snapshots to update expected results.");
-        formatter.helpLink("Help 1", "https://datasqrl.com/docs/testing#snapshot-failures");
+        formatter.helpLink("Help 1", "https://docs.datasqrl.com/docs/howto/testing");
       }
     }
   }

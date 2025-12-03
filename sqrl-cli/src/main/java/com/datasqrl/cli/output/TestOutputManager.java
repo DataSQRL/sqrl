@@ -20,25 +20,23 @@ import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
+import lombok.Getter;
 import lombok.SneakyThrows;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.LoggerContext;
 
-@RequiredArgsConstructor
 public class TestOutputManager implements AutoCloseable {
 
   private static final String TEST_LOG_FILE = "test-execution.log";
 
-  private final Path rootDir;
-
   private final PrintStream originalOut = System.out;
   private final PrintStream originalErr = System.err;
-  private PrintStream logStream;
-  private ErrorCapturingStream errorCapturingStream;
+  private final PrintStream logStream;
+
+  @Getter private final ErrorCapturingStream errorCapturingStream;
 
   @SneakyThrows
-  public void init() {
+  public TestOutputManager(Path rootDir) {
     var logsDir = rootDir.resolve("build/logs");
     Files.createDirectories(logsDir);
 
@@ -49,14 +47,6 @@ public class TestOutputManager implements AutoCloseable {
 
     System.setOut(logStream);
     System.setErr(logStream);
-  }
-
-  public PrintStream getOriginalOut() {
-    return originalOut;
-  }
-
-  public PrintStream getOriginalErr() {
-    return originalErr;
   }
 
   public void disableConsoleLogs() {
@@ -71,14 +61,11 @@ public class TestOutputManager implements AutoCloseable {
   }
 
   public List<String> getCapturedErrors() {
-    if (errorCapturingStream == null) {
-      return List.of();
-    }
     return errorCapturingStream.getCapturedErrors();
   }
 
   public boolean hasErrors() {
-    return errorCapturingStream != null && errorCapturingStream.hasErrors();
+    return errorCapturingStream.hasErrors();
   }
 
   public void printCapturedErrors(OutputFormatter formatter) {

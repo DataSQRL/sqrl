@@ -100,15 +100,16 @@ class ErrorCapturingStreamTest {
   }
 
   @Test
-  void givenLongStackTrace_whenWriting_thenStackTraceTruncated() {
+  void givenLongStackTrace_whenWriting_thenFullStackTraceCaptured() {
     printStream.println("java.lang.RuntimeException: Test error");
     for (int i = 0; i < 30; i++) {
       printStream.println("    at com.example.Class" + i + ".method(Class.java:" + i + ")");
     }
 
     var errors = stream.getCapturedErrors();
-    assertThat(errors).hasSizeLessThanOrEqualTo(22);
-    assertThat(errors).anyMatch(e -> e.contains("truncated"));
+    assertThat(errors).hasSize(31);
+    assertThat(errors.get(0)).contains("RuntimeException");
+    assertThat(errors.get(30)).contains("Class29");
   }
 
   @Test

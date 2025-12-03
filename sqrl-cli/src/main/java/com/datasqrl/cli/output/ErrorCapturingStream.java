@@ -29,9 +29,6 @@ import java.util.regex.Pattern;
  */
 public class ErrorCapturingStream extends OutputStream {
 
-  private static final int MAX_CAPTURED_LINES = 100;
-  private static final int MAX_STACK_TRACE_LINES = 20;
-
   private static final Pattern EXCEPTION_PATTERN =
       Pattern.compile("^(.*Exception|.*Error|Caused by:).*", Pattern.CASE_INSENSITIVE);
   private static final Pattern LOG_ERROR_PATTERN = Pattern.compile("^\\[(WARN|ERROR)].*");
@@ -42,7 +39,6 @@ public class ErrorCapturingStream extends OutputStream {
   private final List<String> capturedErrors = new ArrayList<>();
 
   private boolean capturingStackTrace = false;
-  private int stackTraceLineCount = 0;
 
   public ErrorCapturingStream(OutputStream delegate) {
     this.delegate = delegate;
@@ -89,29 +85,16 @@ public class ErrorCapturingStream extends OutputStream {
     var line = lineBuffer.toString();
     lineBuffer.reset();
 
-    if (capturedErrors.size() >= MAX_CAPTURED_LINES) {
-      capturingStackTrace = false;
-      return;
-    }
-
     if (EXCEPTION_PATTERN.matcher(line).matches()) {
       capturedErrors.add(line);
       capturingStackTrace = true;
-      stackTraceLineCount = 0;
     } else if (LOG_ERROR_PATTERN.matcher(line).matches()) {
       capturedErrors.add(line);
       capturingStackTrace = false;
     } else if (capturingStackTrace && STACK_TRACE_PATTERN.matcher(line).matches()) {
-      if (stackTraceLineCount < MAX_STACK_TRACE_LINES) {
-        capturedErrors.add(line);
-        stackTraceLineCount++;
-      } else if (stackTraceLineCount == MAX_STACK_TRACE_LINES) {
-        capturedErrors.add("    ... (stack trace truncated)");
-        stackTraceLineCount++;
-      }
+      capturedErrors.add(line);
     } else {
       capturingStackTrace = false;
-      stackTraceLineCount = 0;
     }
   }
 
@@ -126,6 +109,5 @@ public class ErrorCapturingStream extends OutputStream {
   public void clear() {
     capturedErrors.clear();
     capturingStackTrace = false;
-    stackTraceLineCount = 0;
   }
 }
