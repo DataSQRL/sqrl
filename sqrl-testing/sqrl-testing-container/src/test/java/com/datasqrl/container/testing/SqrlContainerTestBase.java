@@ -353,11 +353,16 @@ public abstract class SqrlContainerTestBase {
 
   @SneakyThrows
   protected static Path itPath(String relativePath) {
-    var path =
+    var localPath = Paths.get("src/test/resources/usecases", relativePath).toAbsolutePath();
+    if (Files.exists(localPath) && Files.isDirectory(localPath)) {
+      return localPath.toRealPath();
+    }
+
+    var integrationPath =
         Paths.get("../sqrl-testing-integration/src/test/resources/usecases", relativePath)
             .toAbsolutePath();
-    assertThat(path).exists().isDirectory();
-    return path.toRealPath();
+    assertThat(integrationPath).exists().isDirectory();
+    return integrationPath.toRealPath();
   }
 
   protected static void assertBuildNotOwnedByRoot(Path testDir, String logs) {
