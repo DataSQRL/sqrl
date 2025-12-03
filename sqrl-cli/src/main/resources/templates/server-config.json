@@ -172,7 +172,8 @@
     "exposedHeaders" : [ ]
   },
   "jwtAuth" : null,
-  "oauthConfig" : null,
+  "oauth2Options" : null,
+  "oauthDiscovery" : null,
   "swaggerConfig" : {
     "enabled" : true,
     "endpoint" : "/swagger",
